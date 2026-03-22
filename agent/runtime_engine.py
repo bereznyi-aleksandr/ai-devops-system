@@ -1,6 +1,8 @@
 import os
 import subprocess
 import json
+import urllib.request
+import urllib.error
 from datetime import datetime
 
 
@@ -28,6 +30,7 @@ class RuntimeEngine:
     def __init__(self):
         self.runtime = RuntimeState()
         self.baseline = BaselineState()
+        self.model = os.getenv("OPENAI_MODEL", "gpt-5.4")
 
     def observe_runtime(self):
         print("OBSERVE: collecting runtime state")
@@ -74,16 +77,98 @@ class RuntimeEngine:
         print("System healthy")
         return "healthy"
 
+    def _clean_json_content(self, content):
+        cleaned = content.strip()
+
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+
+        return cleaned.strip()
+
+    def ask_openai(self, analysis):
+        api_key = os.getenv("OPENAI_API_KEY")
+
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY is not set")
+
+        system_prompt = (
+            "You are a deterministic DevOps decision engine. "
+            "Return only valid JSON with keys: action, reason, next_steps. "
+            "Allowed action values: no_action, investigate, collect_state."
+        )
+
+        user_payload = {
+            "analysis": analysis,
+            "runtime": {
+                "service": self.runtime.service,
+                "revision": self.runtime.revision,
+                "image": self.runtime.image,
+                "url": self.runtime.url,
+            },
+            "baseline": {
+                "service": self.baseline.service,
+                "revision": self.baseline.revision,
+                "image": self.baseline.image,
+                "url": self.baseline.url,
+            },
+        }
+
+        body = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": json.dumps(user_payload)},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0,
+        }
+
+        request = urllib.request.Request(
+            "https://api.openai.com/v1/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            },
+            method="POST",
+        )
+
+        with urllib.request.urlopen(request, timeout=60) as response:
+            raw = response.read().decode("utf-8")
+
+        payload = json.loads(raw)
+        content = payload["choices"][0]["message"]["content"]
+        cleaned = self._clean_json_content(content)
+        return json.loads(cleaned)
+
     def decide(self, analysis):
         print("DECIDE: selecting action")
 
-        if analysis == "healthy":
-            return "no_action"
+        try:
+            decision = self.ask_openai(analysis)
+            action = decision.get("action")
 
-        if analysis == "drift":
-            return "investigate"
+            if action not in ("no_action", "investigate", "collect_state"):
+                raise ValueError(f"Unsupported action: {action}")
 
-        return "collect_state"
+            print("LLM decision:", decision)
+            return action
+
+        except Exception as e:
+            print("LLM decision failed, fallback to deterministic path:", e)
+
+            if analysis == "healthy":
+                return "no_action"
+
+            if analysis == "drift":
+                return "investigate"
+
+            return "collect_state"
 
     def act(self, action):
         print("ACT:", action)
