@@ -2,6 +2,7 @@ import os
 import json
 import urllib.request
 import urllib.error
+import urllib.parse
 from datetime import datetime
 
 
@@ -22,6 +23,7 @@ class BaselineState:
         self.revision = None
         self.image = None
         self.url = None
+        self.saved_at = None
 
 
 class RuntimeEngine:
@@ -33,6 +35,8 @@ class RuntimeEngine:
         self.region = os.getenv("CLOUD_RUN_REGION", "europe-west4")
         self.service_name = os.getenv("CLOUD_RUN_SERVICE", "barber-app")
         self.model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+        self.baseline_gcs_bucket = os.getenv("BASELINE_GCS_BUCKET", "barber-agent-state")
+        self.baseline_gcs_object = os.getenv("BASELINE_GCS_OBJECT", "baseline.json")
 
     def _get_gcp_access_token(self):
         request = urllib.request.Request(
@@ -50,6 +54,98 @@ class RuntimeEngine:
             raise RuntimeError("GCP access token not found in metadata response")
 
         return access_token
+
+    def _gcs_request(self, method, url, data=None, headers=None, timeout=30):
+        access_token = self._get_gcp_access_token()
+        request_headers = {
+            "Authorization": f"Bearer {access_token}",
+        }
+
+        if headers:
+            request_headers.update(headers)
+
+        request = urllib.request.Request(
+            url,
+            data=data,
+            headers=request_headers,
+            method=method,
+        )
+
+        return urllib.request.urlopen(request, timeout=timeout)
+
+    def load_baseline(self):
+        print("BASELINE: loading baseline from GCS")
+
+        object_name = urllib.parse.quote(self.baseline_gcs_object, safe="")
+        url = (
+            f"https://storage.googleapis.com/storage/v1/b/"
+            f"{self.baseline_gcs_bucket}/o/{object_name}?alt=media"
+        )
+
+        try:
+            with self._gcs_request("GET", url, timeout=30) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+
+            self.baseline.service = payload.get("service")
+            self.baseline.revision = payload.get("revision")
+            self.baseline.image = payload.get("image")
+            self.baseline.url = payload.get("url")
+            self.baseline.saved_at = payload.get("saved_at")
+
+            print("Baseline loaded from GCS")
+
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                print("Baseline not found in GCS")
+                return
+
+            print("Baseline load failed:", e)
+            raise
+
+        except Exception as e:
+            print("Baseline load failed:", e)
+            raise
+
+    def save_baseline_from_runtime(self):
+        print("BASELINE: saving baseline to GCS")
+
+        payload = {
+            "service": self.runtime.service,
+            "revision": self.runtime.revision,
+            "image": self.runtime.image,
+            "url": self.runtime.url,
+            "saved_at": datetime.utcnow().isoformat() + "Z",
+        }
+
+        object_name = urllib.parse.quote(self.baseline_gcs_object, safe="")
+        url = (
+            f"https://storage.googleapis.com/upload/storage/v1/b/"
+            f"{self.baseline_gcs_bucket}/o?uploadType=media&name={object_name}"
+        )
+
+        data = json.dumps(payload).encode("utf-8")
+
+        try:
+            with self._gcs_request(
+                "POST",
+                url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+                timeout=30,
+            ):
+                pass
+
+            self.baseline.service = payload.get("service")
+            self.baseline.revision = payload.get("revision")
+            self.baseline.image = payload.get("image")
+            self.baseline.url = payload.get("url")
+            self.baseline.saved_at = payload.get("saved_at")
+
+            print("Baseline saved to GCS")
+
+        except Exception as e:
+            print("Baseline save failed:", e)
+            raise
 
     def observe_runtime(self):
         print("OBSERVE: collecting runtime state")
@@ -89,8 +185,9 @@ class RuntimeEngine:
         print("ANALYZE: comparing runtime with baseline")
 
         if self.baseline.revision is None:
-            print("No baseline defined")
-            return "unknown"
+            print("No baseline defined, creating baseline")
+            self.save_baseline_from_runtime()
+            return "baseline_created"
 
         if self.runtime.revision != self.baseline.revision:
             print("Revision drift detected")
@@ -137,6 +234,7 @@ class RuntimeEngine:
                 "revision": self.baseline.revision,
                 "image": self.baseline.image,
                 "url": self.baseline.url,
+                "saved_at": self.baseline.saved_at,
             },
         }
 
@@ -147,7 +245,7 @@ class RuntimeEngine:
             "messages": [
                 {"role": "user", "content": json.dumps(user_payload)}
             ],
-            "temperature": 0
+            "temperature": 0,
         }
 
         request = urllib.request.Request(
@@ -185,7 +283,7 @@ class RuntimeEngine:
         except Exception as e:
             print("LLM decision failed, fallback to deterministic path:", e)
 
-            if analysis == "healthy":
+            if analysis in ("healthy", "baseline_created"):
                 return "no_action"
 
             if analysis == "drift":
@@ -210,6 +308,7 @@ class RuntimeEngine:
         print("Timestamp:", datetime.utcnow())
 
         self.observe_runtime()
+        self.load_baseline()
 
         analysis = self.analyze()
 
