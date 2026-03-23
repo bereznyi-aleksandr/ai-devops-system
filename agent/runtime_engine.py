@@ -30,7 +30,7 @@ class RuntimeEngine:
     def __init__(self):
         self.runtime = RuntimeState()
         self.baseline = BaselineState()
-        self.model = os.getenv("OPENAI_MODEL", "gpt-5.4")
+        self.model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
 
     def observe_runtime(self):
         print("OBSERVE: collecting runtime state")
@@ -90,11 +90,11 @@ class RuntimeEngine:
 
         return cleaned.strip()
 
-    def ask_openai(self, analysis):
-        api_key = os.getenv("OPENAI_API_KEY")
+    def ask_anthropic(self, analysis):
+        api_key = os.getenv("ANTHROPIC_API_KEY")
 
         if not api_key:
-            raise RuntimeError("OPENAI_API_KEY is not set")
+            raise RuntimeError("ANTHROPIC_API_KEY is not set")
 
         system_prompt = (
             "You are a deterministic DevOps decision engine. "
@@ -120,20 +120,21 @@ class RuntimeEngine:
 
         body = {
             "model": self.model,
+            "max_tokens": 256,
+            "system": system_prompt,
             "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": json.dumps(user_payload)},
+                {"role": "user", "content": json.dumps(user_payload)}
             ],
-            "response_format": {"type": "json_object"},
-            "temperature": 0,
+            "temperature": 0
         }
 
         request = urllib.request.Request(
-            "https://api.openai.com/v1/chat/completions",
+            "https://api.anthropic.com/v1/messages",
             data=json.dumps(body).encode("utf-8"),
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}",
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
             },
             method="POST",
         )
@@ -142,7 +143,7 @@ class RuntimeEngine:
             raw = response.read().decode("utf-8")
 
         payload = json.loads(raw)
-        content = payload["choices"][0]["message"]["content"]
+        content = payload["content"][0]["text"]
         cleaned = self._clean_json_content(content)
         return json.loads(cleaned)
 
@@ -150,7 +151,7 @@ class RuntimeEngine:
         print("DECIDE: selecting action")
 
         try:
-            decision = self.ask_openai(analysis)
+            decision = self.ask_anthropic(analysis)
             action = decision.get("action")
 
             if action not in ("no_action", "investigate", "collect_state"):
