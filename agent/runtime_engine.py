@@ -1,5 +1,4 @@
 import os
-import subprocess
 import json
 import urllib.request
 import urllib.error
@@ -30,33 +29,56 @@ class RuntimeEngine:
     def __init__(self):
         self.runtime = RuntimeState()
         self.baseline = BaselineState()
+        self.project_id = os.getenv("GCP_PROJECT", "barber-483016")
+        self.region = os.getenv("CLOUD_RUN_REGION", "europe-west4")
+        self.service_name = os.getenv("CLOUD_RUN_SERVICE", "barber-app")
         self.model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+
+    def _get_gcp_access_token(self):
+        request = urllib.request.Request(
+            "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+            headers={"Metadata-Flavor": "Google"},
+            method="GET",
+        )
+
+        with urllib.request.urlopen(request, timeout=10) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+
+        access_token = payload.get("access_token")
+
+        if not access_token:
+            raise RuntimeError("GCP access token not found in metadata response")
+
+        return access_token
 
     def observe_runtime(self):
         print("OBSERVE: collecting runtime state")
 
         try:
-            cmd = [
-                "gcloud",
-                "run",
-                "services",
-                "describe",
-                "barber-app",
-                "--region",
-                "europe-west1",
-                "--format=json"
-            ]
+            access_token = self._get_gcp_access_token()
+            service_path = (
+                f"projects/{self.project_id}/locations/{self.region}/services/{self.service_name}"
+            )
 
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            request = urllib.request.Request(
+                f"https://run.googleapis.com/v2/{service_path}",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                },
+                method="GET",
+            )
 
-            data = json.loads(result.stdout)
+            with urllib.request.urlopen(request, timeout=30) as response:
+                data = json.loads(response.read().decode("utf-8"))
 
-            self.runtime.service = data["metadata"]["name"]
-            self.runtime.url = data["status"]["url"]
-            self.runtime.revision = data["status"]["latestReadyRevisionName"]
+            containers = data.get("template", {}).get("containers", []) or []
+            first = containers[0] if containers else {}
 
-            container = data["spec"]["template"]["spec"]["containers"][0]
-            self.runtime.image = container["image"]
+            self.runtime.service = self.service_name
+            self.runtime.url = data.get("uri")
+            self.runtime.revision = data.get("latestReadyRevision")
+            self.runtime.image = first.get("image")
 
             print("Runtime state collected")
 
