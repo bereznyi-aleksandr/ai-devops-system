@@ -41,8 +41,14 @@ class RuntimeEngine:
         self.model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
         self.baseline_gcs_bucket = os.getenv("BASELINE_GCS_BUCKET", "barber-agent-state")
         self.baseline_gcs_object = os.getenv("BASELINE_GCS_OBJECT", "baseline.json")
+        self.history_gcs_object = os.getenv("HISTORY_GCS_OBJECT", "execution-history.json")
+        self.history_limit = 10
+        self.history_payload_limit = 5
+        self.history = []
         self.allowed_actions = ("no_action", "investigate", "collect_state")
         self.llm_test_mode = os.getenv("LLM_TEST_MODE", "off")
+        self.last_decision_source = None
+        self.last_reason_summary = None
 
     def _get_gcp_access_token(self):
         request = urllib.request.Request(
@@ -153,6 +159,65 @@ class RuntimeEngine:
             print("Baseline save failed:", e)
             raise
 
+    def load_history(self):
+        print("HISTORY: loading execution history from GCS")
+
+        object_name = urllib.parse.quote(self.history_gcs_object, safe="")
+        url = (
+            f"https://storage.googleapis.com/storage/v1/b/"
+            f"{self.baseline_gcs_bucket}/o/{object_name}?alt=media"
+        )
+
+        try:
+            with self._gcs_request("GET", url, timeout=30) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+
+            if not isinstance(payload, list):
+                raise RuntimeError("execution history payload must be a JSON list")
+
+            self.history = payload[-self.history_limit:]
+            print("History loaded from GCS")
+
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                print("History not found in GCS")
+                self.history = []
+                return
+
+            print("History load failed:", e)
+            raise
+
+        except Exception as e:
+            print("History load failed:", e)
+            raise
+
+    def save_history(self):
+        print("HISTORY: saving execution history to GCS")
+
+        object_name = urllib.parse.quote(self.history_gcs_object, safe="")
+        url = (
+            f"https://storage.googleapis.com/upload/storage/v1/b/"
+            f"{self.baseline_gcs_bucket}/o?uploadType=media&name={object_name}"
+        )
+
+        data = json.dumps(self.history).encode("utf-8")
+
+        try:
+            with self._gcs_request(
+                "POST",
+                url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+                timeout=30,
+            ):
+                pass
+
+            print("History saved to GCS")
+
+        except Exception as e:
+            print("History save failed:", e)
+            raise
+
     def observe_runtime(self):
         print("OBSERVE: collecting runtime state")
 
@@ -251,6 +316,22 @@ class RuntimeEngine:
         print("LLM response contract valid")
         return decision
 
+    def _history_payload(self):
+        return self.history[-self.history_payload_limit:]
+
+    def _reason_summary_from_llm(self, analysis, decision):
+        action = decision.get("action", "unknown_action")
+        return f"{analysis}_llm_{action}"
+
+    def _reason_summary_from_fallback(self, analysis, reason):
+        normalized_reason = (
+            reason.lower()
+            .replace(" ", "_")
+            .replace(":", "")
+            .replace("/", "_")
+        )
+        return f"{analysis}_fallback_{normalized_reason}"
+
     def _get_simulated_llm_content(self):
         if self.llm_test_mode == "invalid_json":
             return '{"action": "no_action", "reason": "broken"'
@@ -312,6 +393,7 @@ class RuntimeEngine:
                 "url": self.baseline.url,
                 "saved_at": self.baseline.saved_at,
             },
+            "history": self._history_payload(),
         }
 
         body = {
@@ -356,6 +438,8 @@ class RuntimeEngine:
         print("Fallback reason:", reason)
         action = self._deterministic_fallback(analysis)
         print("Fallback action selected:", action)
+        self.last_decision_source = "fallback"
+        self.last_reason_summary = self._reason_summary_from_fallback(analysis, reason)
         return action
 
     def decide(self, analysis):
@@ -367,6 +451,8 @@ class RuntimeEngine:
         try:
             decision = self.ask_anthropic(analysis)
             action = decision.get("action")
+            self.last_decision_source = "llm"
+            self.last_reason_summary = self._reason_summary_from_llm(analysis, decision)
             print("Decision source: llm")
             print("LLM decision:", decision)
             return action
@@ -391,6 +477,32 @@ class RuntimeEngine:
             print("Decision source: fallback")
             return self.select_fallback_action(analysis, "unexpected LLM decision error")
 
+    def build_history_record(self, analysis, action, decision_source, reason_summary):
+        return {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "analysis": analysis,
+            "decision_source": decision_source,
+            "action": action,
+            "reason_summary": reason_summary,
+            "runtime_revision": self.runtime.revision,
+            "baseline_revision": self.baseline.revision,
+            "llm_test_mode": self.llm_test_mode,
+        }
+
+    def append_history_record(self, analysis, action):
+        print("HISTORY: appending execution record")
+
+        record = self.build_history_record(
+            analysis=analysis,
+            action=action,
+            decision_source=self.last_decision_source,
+            reason_summary=self.last_reason_summary,
+        )
+
+        self.history.append(record)
+        self.history = self.history[-self.history_limit:]
+        self.save_history()
+
     def act(self, action):
         print("ACT:", action)
 
@@ -409,10 +521,11 @@ class RuntimeEngine:
 
         self.observe_runtime()
         self.load_baseline()
+        self.load_history()
 
         analysis = self.analyze()
-
         action = self.decide(analysis)
+        self.append_history_record(analysis, action)
 
         self.act(action)
 
