@@ -6,6 +6,10 @@ import urllib.parse
 from datetime import datetime
 
 
+class InvalidDecisionContractError(Exception):
+    pass
+
+
 class RuntimeState:
 
     def __init__(self):
@@ -37,6 +41,7 @@ class RuntimeEngine:
         self.model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
         self.baseline_gcs_bucket = os.getenv("BASELINE_GCS_BUCKET", "barber-agent-state")
         self.baseline_gcs_object = os.getenv("BASELINE_GCS_OBJECT", "baseline.json")
+        self.allowed_actions = ("no_action", "investigate", "collect_state")
 
     def _get_gcp_access_token(self):
         request = urllib.request.Request(
@@ -209,6 +214,42 @@ class RuntimeEngine:
 
         return cleaned.strip()
 
+    def _normalize_llm_content(self, content):
+        return self._clean_json_content(content)
+
+    def _parse_llm_decision(self, content):
+        print("LLM response parsing started")
+        normalized = self._normalize_llm_content(content)
+        decision = json.loads(normalized)
+        print("LLM response parsed")
+        return decision
+
+    def validate_decision(self, decision):
+        if not isinstance(decision, dict):
+            raise InvalidDecisionContractError("decision must be a JSON object")
+
+        required_keys = ("action", "reason", "next_steps")
+
+        for key in required_keys:
+            if key not in decision:
+                raise InvalidDecisionContractError(f"missing required key: {key}")
+
+        action = decision.get("action")
+        reason = decision.get("reason")
+        next_steps = decision.get("next_steps")
+
+        if action not in self.allowed_actions:
+            raise InvalidDecisionContractError(f"unsupported action: {action}")
+
+        if not isinstance(reason, str):
+            raise InvalidDecisionContractError("reason must be a string")
+
+        if not isinstance(next_steps, list):
+            raise InvalidDecisionContractError("next_steps must be a list")
+
+        print("LLM response contract valid")
+        return decision
+
     def ask_anthropic(self, analysis):
         api_key = os.getenv("ANTHROPIC_API_KEY")
 
@@ -264,8 +305,17 @@ class RuntimeEngine:
 
         payload = json.loads(raw)
         content = payload["content"][0]["text"]
-        cleaned = self._clean_json_content(content)
-        return json.loads(cleaned)
+        decision = self._parse_llm_decision(content)
+        return self.validate_decision(decision)
+
+    def _deterministic_fallback(self, analysis):
+        if analysis in ("healthy", "baseline_created"):
+            return "no_action"
+
+        if analysis == "drift":
+            return "investigate"
+
+        return "collect_state"
 
     def decide(self, analysis):
         print("DECIDE: selecting action")
@@ -273,23 +323,28 @@ class RuntimeEngine:
         try:
             decision = self.ask_anthropic(analysis)
             action = decision.get("action")
-
-            if action not in ("no_action", "investigate", "collect_state"):
-                raise ValueError(f"Unsupported action: {action}")
-
             print("LLM decision:", decision)
             return action
 
+        except urllib.error.HTTPError as e:
+            print("LLM request failed:", e)
+            print("Fallback selected due to LLM request failure")
+            return self._deterministic_fallback(analysis)
+
+        except json.JSONDecodeError as e:
+            print("LLM response parse failed:", e)
+            print("Fallback selected due to invalid JSON response")
+            return self._deterministic_fallback(analysis)
+
+        except InvalidDecisionContractError as e:
+            print("LLM response contract invalid:", e)
+            print("Fallback selected due to invalid LLM response contract")
+            return self._deterministic_fallback(analysis)
+
         except Exception as e:
-            print("LLM decision failed, fallback to deterministic path:", e)
-
-            if analysis in ("healthy", "baseline_created"):
-                return "no_action"
-
-            if analysis == "drift":
-                return "investigate"
-
-            return "collect_state"
+            print("LLM decision failed:", e)
+            print("Fallback selected due to unexpected LLM decision error")
+            return self._deterministic_fallback(analysis)
 
     def act(self, action):
         print("ACT:", action)
