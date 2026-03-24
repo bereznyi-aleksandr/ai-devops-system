@@ -42,6 +42,7 @@ class RuntimeEngine:
         self.baseline_gcs_bucket = os.getenv("BASELINE_GCS_BUCKET", "barber-agent-state")
         self.baseline_gcs_object = os.getenv("BASELINE_GCS_OBJECT", "baseline.json")
         self.allowed_actions = ("no_action", "investigate", "collect_state")
+        self.llm_test_mode = os.getenv("LLM_TEST_MODE", "off")
 
     def _get_gcp_access_token(self):
         request = urllib.request.Request(
@@ -250,7 +251,41 @@ class RuntimeEngine:
         print("LLM response contract valid")
         return decision
 
+    def _get_simulated_llm_content(self):
+        if self.llm_test_mode == "invalid_json":
+            return '{"action": "no_action", "reason": "broken"'
+
+        if self.llm_test_mode == "missing_next_steps":
+            return json.dumps({
+                "action": "no_action",
+                "reason": "Simulated missing next_steps",
+            })
+
+        if self.llm_test_mode == "unsupported_action":
+            return json.dumps({
+                "action": "deploy_now",
+                "reason": "Simulated unsupported action",
+                "next_steps": [],
+            })
+
+        return None
+
     def ask_anthropic(self, analysis):
+        if self.llm_test_mode == "request_error":
+            raise urllib.error.HTTPError(
+                url="https://api.anthropic.com/v1/messages",
+                code=503,
+                msg="Simulated request error",
+                hdrs=None,
+                fp=None,
+            )
+
+        simulated_content = self._get_simulated_llm_content()
+
+        if simulated_content is not None:
+            decision = self._parse_llm_decision(simulated_content)
+            return self.validate_decision(decision)
+
         api_key = os.getenv("ANTHROPIC_API_KEY")
 
         if not api_key:
@@ -317,34 +352,44 @@ class RuntimeEngine:
 
         return "collect_state"
 
+    def select_fallback_action(self, analysis, reason):
+        print("Fallback reason:", reason)
+        action = self._deterministic_fallback(analysis)
+        print("Fallback action selected:", action)
+        return action
+
     def decide(self, analysis):
         print("DECIDE: selecting action")
+
+        if self.llm_test_mode != "off":
+            print("LLM test mode active:", self.llm_test_mode)
 
         try:
             decision = self.ask_anthropic(analysis)
             action = decision.get("action")
+            print("Decision source: llm")
             print("LLM decision:", decision)
             return action
 
         except urllib.error.HTTPError as e:
             print("LLM request failed:", e)
-            print("Fallback selected due to LLM request failure")
-            return self._deterministic_fallback(analysis)
+            print("Decision source: fallback")
+            return self.select_fallback_action(analysis, "LLM request failure")
 
         except json.JSONDecodeError as e:
             print("LLM response parse failed:", e)
-            print("Fallback selected due to invalid JSON response")
-            return self._deterministic_fallback(analysis)
+            print("Decision source: fallback")
+            return self.select_fallback_action(analysis, "invalid JSON response")
 
         except InvalidDecisionContractError as e:
             print("LLM response contract invalid:", e)
-            print("Fallback selected due to invalid LLM response contract")
-            return self._deterministic_fallback(analysis)
+            print("Decision source: fallback")
+            return self.select_fallback_action(analysis, "invalid LLM response contract")
 
         except Exception as e:
             print("LLM decision failed:", e)
-            print("Fallback selected due to unexpected LLM decision error")
-            return self._deterministic_fallback(analysis)
+            print("Decision source: fallback")
+            return self.select_fallback_action(analysis, "unexpected LLM decision error")
 
     def act(self, action):
         print("ACT:", action)
