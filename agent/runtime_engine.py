@@ -535,15 +535,12 @@ class RuntimeEngine:
         if not self.repo_file_content:
             return None
 
-        if "# AGENT_WRITE_PROOF" in self.repo_file_content:
-            return self.repo_file_content
+        timestamp_line = f"# AGENT_WRITE_TIMESTAMP = {datetime.utcnow().isoformat()}Z\n"
 
-        proof_block = (
-            "\n\n"
-            "# AGENT_WRITE_PROOF = true\n"
-            "# AGENT_WRITE_MODE = controlled\n"
-        )
-        return self.repo_file_content + proof_block
+        if self.repo_file_content.endswith("\n"):
+            return self.repo_file_content + timestamp_line
+
+        return self.repo_file_content + "\n" + timestamp_line
 
     def prepare_repo_write_plan(self):
         print("REPO WRITE: preparing write plan")
