@@ -75,6 +75,12 @@ class RuntimeEngine:
             "selected",
             "blocked",
         )
+        self.allowed_repo_file_read_statuses = (
+            "not_started",
+            "loaded",
+            "blocked",
+        )
+
         self.repo_root = os.path.expanduser("~/ai-devops-system")
         self.repo_branch = None
         self.repo_clean_tree = None
@@ -94,6 +100,15 @@ class RuntimeEngine:
         self.github_deny_reason = None
         self.repo_target = None
         self.repo_target_selection_status = "blocked"
+
+        self.repo_file_read_max_bytes = int(os.getenv("REPO_FILE_READ_MAX_BYTES", "200000"))
+        self.repo_file_content = None
+        self.repo_file_size_bytes = None
+        self.repo_file_sha = None
+        self.repo_file_line_count = None
+        self.repo_file_content_loaded = False
+        self.repo_file_read_status = "not_started"
+        self.repo_file_read_deny_reason = None
 
         self.llm_test_mode = os.getenv("LLM_TEST_MODE", "off")
         self.last_decision_source = None
@@ -322,7 +337,7 @@ class RuntimeEngine:
                     self.github_deny_reason = f"github_target_unreadable:{relative_path}"
                     break
 
-                decoded = base64.b64decode(encoded_content).decode("utf-8")
+                decoded = base64.b64decode(encoded_content.replace("\n", "")).decode("utf-8")
                 if decoded == "":
                     allowlist_verified = False
                     self.github_deny_reason = f"github_target_unreadable:{relative_path}"
@@ -361,6 +376,131 @@ class RuntimeEngine:
             print("GitHub branch exists:", str(self.github_branch_exists).lower())
             print("GitHub allowlist verified:", str(self.github_allowlist_status).lower())
             print("GitHub deny reason:", self.github_deny_reason)
+
+    def _reset_repo_file_read_state(self):
+        self.repo_file_content = None
+        self.repo_file_size_bytes = None
+        self.repo_file_sha = None
+        self.repo_file_line_count = None
+        self.repo_file_content_loaded = False
+        self.repo_file_read_status = "not_started"
+        self.repo_file_read_deny_reason = None
+
+    def read_repo_target(self):
+        print("REPO READ: loading selected target")
+        self._reset_repo_file_read_state()
+        self.repo_action_class = "repo_safe_read"
+
+        if self.repo_target_selection_status != "selected":
+            self.repo_file_read_status = "blocked"
+            self.repo_file_read_deny_reason = "repo_target_not_selected"
+            print("Repo file read status:", self.repo_file_read_status)
+            print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+            return
+
+        if self.repo_target not in self.repo_target_allowlist:
+            self.repo_file_read_status = "blocked"
+            self.repo_file_read_deny_reason = "repo_target_not_allowlisted"
+            print("Repo file read status:", self.repo_file_read_status)
+            print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+            return
+
+        if not self.github_branch_head_sha:
+            self.repo_file_read_status = "blocked"
+            self.repo_file_read_deny_reason = "github_branch_sha_missing"
+            print("Repo file read status:", self.repo_file_read_status)
+            print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+            return
+
+        repo_base = (
+            f"https://api.github.com/repos/"
+            f"{self.github_repo_owner}/{self.github_repo_name}"
+        )
+
+        try:
+            print("Repo read target:", self.repo_target)
+            print("Repo read ref sha:", self.github_branch_head_sha)
+
+            payload = self._github_json(
+                "GET",
+                f"{repo_base}/contents/{urllib.parse.quote(self.repo_target, safe='/')}"
+                f"?ref={urllib.parse.quote(self.github_branch_head_sha, safe='')}",
+            )
+
+            if payload.get("type") != "file":
+                self.repo_file_read_status = "blocked"
+                self.repo_file_read_deny_reason = "github_read_unexpected_payload"
+                print("Repo file read status:", self.repo_file_read_status)
+                print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+                return
+
+            file_sha = payload.get("sha")
+            file_size = payload.get("size")
+            encoded_content = payload.get("content")
+
+            if file_sha is None or file_size is None or encoded_content is None:
+                self.repo_file_read_status = "blocked"
+                self.repo_file_read_deny_reason = "github_read_unexpected_payload"
+                print("Repo file read status:", self.repo_file_read_status)
+                print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+                return
+
+            if file_size > self.repo_file_read_max_bytes:
+                self.repo_file_read_status = "blocked"
+                self.repo_file_read_deny_reason = "github_file_too_large"
+                print("Repo file read status:", self.repo_file_read_status)
+                print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+                return
+
+            try:
+                cleaned_content = encoded_content.replace("\n", "").replace("\r", "").replace(" ", "")
+                decoded_content = base64.b64decode(cleaned_content).decode("utf-8")
+            except Exception:
+                self.repo_file_read_status = "blocked"
+                self.repo_file_read_deny_reason = "github_file_decode_failed"
+                print("Repo file read status:", self.repo_file_read_status)
+                print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+                return
+
+            if decoded_content == "":
+                self.repo_file_read_status = "blocked"
+                self.repo_file_read_deny_reason = "github_file_empty"
+                print("Repo file read status:", self.repo_file_read_status)
+                print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+                return
+
+            self.repo_file_content = decoded_content
+            self.repo_file_size_bytes = file_size
+            self.repo_file_sha = file_sha
+            self.repo_file_line_count = len(decoded_content.splitlines())
+            self.repo_file_content_loaded = True
+            self.repo_file_read_status = "loaded"
+
+            if self.repo_file_read_status not in self.allowed_repo_file_read_statuses:
+                raise RuntimeError(
+                    f"unsupported repo file read status selected: {self.repo_file_read_status}"
+                )
+
+            print("Repo file sha:", self.repo_file_sha)
+            print("Repo file size bytes:", self.repo_file_size_bytes)
+            print("Repo file line count:", self.repo_file_line_count)
+            print("Repo file read status:", self.repo_file_read_status)
+
+        except urllib.error.HTTPError as e:
+            self.repo_file_read_status = "blocked"
+            if e.code == 404:
+                self.repo_file_read_deny_reason = "github_file_not_found"
+            else:
+                self.repo_file_read_deny_reason = "github_file_read_failed"
+            print("Repo file read status:", self.repo_file_read_status)
+            print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+
+        except Exception as e:
+            self.repo_file_read_status = "blocked"
+            self.repo_file_read_deny_reason = "github_file_read_failed"
+            print("Repo file read failed:", e)
+            print("Repo file read status:", self.repo_file_read_status)
+            print("Repo file read deny reason:", self.repo_file_read_deny_reason)
 
     def load_baseline(self):
         print("BASELINE: loading baseline from GCS")
@@ -920,6 +1060,12 @@ class RuntimeEngine:
             "repo_target_selection_status": self.repo_target_selection_status,
             "github_branch_head_sha": self.github_branch_head_sha,
             "github_deny_reason": self.github_deny_reason,
+            "repo_file_read_status": self.repo_file_read_status,
+            "repo_file_read_deny_reason": self.repo_file_read_deny_reason,
+            "repo_file_sha": self.repo_file_sha,
+            "repo_file_size_bytes": self.repo_file_size_bytes,
+            "repo_file_content_loaded": self.repo_file_content_loaded,
+            "repo_file_line_count": self.repo_file_line_count,
         }
 
     def append_history_record(self, analysis, action):
@@ -966,6 +1112,7 @@ class RuntimeEngine:
         next_goal = self.select_next_goal(analysis, action)
         self.evaluate_approval_boundary(analysis, action, next_goal)
         self.select_repo_target()
+        self.read_repo_target()
         self.append_history_record(analysis, action)
 
         self.act(action)
