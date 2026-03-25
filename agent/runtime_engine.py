@@ -1,5 +1,6 @@
 import os
 import json
+import subprocess
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -65,12 +66,34 @@ class RuntimeEngine:
             "granted",
             "rejected",
         )
+        self.allowed_repo_observation_statuses = (
+            "ready",
+            "blocked",
+        )
+        self.repo_root = os.path.expanduser("~/ai-devops-system")
+        self.repo_branch = None
+        self.repo_clean_tree = None
+        self.repo_target_allowlist = ("agent/runtime_engine.py",)
+        self.repo_target_status = None
+        self.repo_observation_status = None
+        self.repo_action_class = "repo_read_only"
+        self.repo_deny_reason = None
         self.llm_test_mode = os.getenv("LLM_TEST_MODE", "off")
         self.last_decision_source = None
         self.last_reason_summary = None
         self.last_next_goal = None
         self.last_risky_intent = None
         self.last_approval_status = None
+
+    def _run_repo_command(self, args):
+        completed = subprocess.run(
+            args,
+            cwd=self.repo_root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return completed.stdout.strip()
 
     def _get_gcp_access_token(self):
         request = urllib.request.Request(
@@ -106,6 +129,97 @@ class RuntimeEngine:
         )
 
         return urllib.request.urlopen(request, timeout=timeout)
+
+    def observe_repo(self):
+        print("REPO: observing repository state")
+
+        self.repo_branch = None
+        self.repo_clean_tree = None
+        self.repo_target_status = "allowlist_unverified"
+        self.repo_observation_status = "blocked"
+        self.repo_action_class = "repo_read_only"
+        self.repo_deny_reason = None
+
+        print("Repo root:", self.repo_root)
+
+        if not os.path.isdir(self.repo_root):
+            self.repo_deny_reason = "repo_root_missing"
+            print("Repo allowlist verified: false")
+            print("Repo observation status:", self.repo_observation_status)
+            print("Repo deny reason:", self.repo_deny_reason)
+            return
+
+        git_dir = os.path.join(self.repo_root, ".git")
+        if not os.path.exists(git_dir):
+            self.repo_deny_reason = "git_metadata_missing"
+            print("Repo allowlist verified: false")
+            print("Repo observation status:", self.repo_observation_status)
+            print("Repo deny reason:", self.repo_deny_reason)
+            return
+
+        try:
+            branch = self._run_repo_command(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+            if not branch or branch == "HEAD":
+                self.repo_deny_reason = "repo_branch_unresolved"
+                print("Repo branch: unresolved")
+                print("Repo allowlist verified: false")
+                print("Repo observation status:", self.repo_observation_status)
+                print("Repo deny reason:", self.repo_deny_reason)
+                return
+
+            self.repo_branch = branch
+            print("Repo branch:", self.repo_branch)
+
+            porcelain = self._run_repo_command(["git", "status", "--porcelain"])
+            self.repo_clean_tree = porcelain == ""
+            print("Repo clean tree:", str(self.repo_clean_tree).lower())
+
+            allowlist_verified = True
+            for relative_path in self.repo_target_allowlist:
+                absolute_path = os.path.join(self.repo_root, relative_path)
+
+                if not os.path.isfile(absolute_path):
+                    allowlist_verified = False
+                    self.repo_deny_reason = f"allowlist_target_missing:{relative_path}"
+                    break
+
+            print("Repo allowlist verified:", str(allowlist_verified).lower())
+
+            if not allowlist_verified:
+                print("Repo observation status:", self.repo_observation_status)
+                print("Repo deny reason:", self.repo_deny_reason)
+                return
+
+            self.repo_target_status = "allowlist_verified"
+
+            if not self.repo_clean_tree:
+                self.repo_deny_reason = "working_tree_dirty"
+                print("Repo observation status:", self.repo_observation_status)
+                print("Repo deny reason:", self.repo_deny_reason)
+                return
+
+            self.repo_observation_status = "ready"
+
+            if self.repo_observation_status not in self.allowed_repo_observation_statuses:
+                raise RuntimeError(
+                    f"unsupported repo observation status selected: {self.repo_observation_status}"
+                )
+
+            print("Repo observation status:", self.repo_observation_status)
+
+        except subprocess.CalledProcessError as e:
+            self.repo_deny_reason = "repo_command_failed"
+            print("Repo command failed:", e)
+            print("Repo allowlist verified: false")
+            print("Repo observation status:", self.repo_observation_status)
+            print("Repo deny reason:", self.repo_deny_reason)
+
+        except Exception as e:
+            self.repo_deny_reason = "repo_observation_failed"
+            print("Repo observation failed:", e)
+            print("Repo allowlist verified: false")
+            print("Repo observation status:", self.repo_observation_status)
+            print("Repo deny reason:", self.repo_deny_reason)
 
     def load_baseline(self):
         print("BASELINE: loading baseline from GCS")
@@ -611,6 +725,11 @@ class RuntimeEngine:
             "next_goal": next_goal,
             "risky_intent": risky_intent,
             "approval_status": approval_status,
+            "repo_branch": self.repo_branch,
+            "repo_clean_tree": self.repo_clean_tree,
+            "repo_action_class": self.repo_action_class,
+            "repo_observation_status": self.repo_observation_status,
+            "repo_deny_reason": self.repo_deny_reason,
         }
 
     def append_history_record(self, analysis, action):
@@ -647,6 +766,7 @@ class RuntimeEngine:
         print("Timestamp:", datetime.utcnow())
 
         self.observe_runtime()
+        self.observe_repo()
         self.load_baseline()
         self.load_history()
 
