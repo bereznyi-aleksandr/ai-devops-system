@@ -53,10 +53,24 @@ class RuntimeEngine:
             "watch_llm_response_reliability",
             "collect_more_state_on_repeat_fallback",
         )
+        self.allowed_risky_intents = (
+            "none",
+            "propose_baseline_update",
+            "propose_manual_deploy_review",
+            "propose_manual_rollback_review",
+        )
+        self.allowed_approval_statuses = (
+            "not_required",
+            "required",
+            "granted",
+            "rejected",
+        )
         self.llm_test_mode = os.getenv("LLM_TEST_MODE", "off")
         self.last_decision_source = None
         self.last_reason_summary = None
         self.last_next_goal = None
+        self.last_risky_intent = None
+        self.last_approval_status = None
 
     def _get_gcp_access_token(self):
         request = urllib.request.Request(
@@ -490,6 +504,14 @@ class RuntimeEngine:
         records = self._recent_history(limit)
         return sum(1 for record in records if record.get("decision_source") == "fallback")
 
+    def _recent_drift_count(self, limit=3):
+        records = self._recent_history(limit)
+        return sum(1 for record in records if record.get("analysis") == "drift")
+
+    def _recent_non_healthy_count(self, limit=3):
+        records = self._recent_history(limit)
+        return sum(1 for record in records if record.get("analysis") != "healthy")
+
     def _last_history_goal(self):
         if not self.history:
             return None
@@ -525,7 +547,58 @@ class RuntimeEngine:
         print("Next goal selected:", next_goal)
         return next_goal
 
-    def build_history_record(self, analysis, action, decision_source, reason_summary, next_goal):
+    def _deterministic_risky_intent(self, analysis, action, next_goal):
+        recent_fallback_count = self._recent_fallback_count(limit=3)
+        recent_drift_count = self._recent_drift_count(limit=3)
+        recent_non_healthy_count = self._recent_non_healthy_count(limit=3)
+
+        if analysis == "baseline_created":
+            return "propose_baseline_update"
+
+        if analysis == "drift":
+            if recent_fallback_count >= 2 or recent_drift_count >= 2 or recent_non_healthy_count >= 2:
+                return "propose_manual_rollback_review"
+            return "propose_manual_deploy_review"
+
+        if analysis == "healthy" and action == "no_action" and next_goal == "monitor_runtime_stability":
+            return "none"
+
+        return "none"
+
+    def _deterministic_approval_status(self, risky_intent):
+        if risky_intent == "none":
+            return "not_required"
+        return "required"
+
+    def evaluate_approval_boundary(self, analysis, action, next_goal):
+        print("APPROVAL: evaluating risk boundary")
+        risky_intent = self._deterministic_risky_intent(analysis, action, next_goal)
+        approval_status = self._deterministic_approval_status(risky_intent)
+
+        if risky_intent not in self.allowed_risky_intents:
+            raise RuntimeError(f"unsupported risky intent selected: {risky_intent}")
+
+        if approval_status not in self.allowed_approval_statuses:
+            raise RuntimeError(f"unsupported approval status selected: {approval_status}")
+
+        self.last_risky_intent = risky_intent
+        self.last_approval_status = approval_status
+
+        print("Risky intent selected:", risky_intent)
+        print("Approval status:", approval_status)
+
+        return risky_intent, approval_status
+
+    def build_history_record(
+        self,
+        analysis,
+        action,
+        decision_source,
+        reason_summary,
+        next_goal,
+        risky_intent,
+        approval_status,
+    ):
         return {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "analysis": analysis,
@@ -536,6 +609,8 @@ class RuntimeEngine:
             "baseline_revision": self.baseline.revision,
             "llm_test_mode": self.llm_test_mode,
             "next_goal": next_goal,
+            "risky_intent": risky_intent,
+            "approval_status": approval_status,
         }
 
     def append_history_record(self, analysis, action):
@@ -547,6 +622,8 @@ class RuntimeEngine:
             decision_source=self.last_decision_source,
             reason_summary=self.last_reason_summary,
             next_goal=self.last_next_goal,
+            risky_intent=self.last_risky_intent,
+            approval_status=self.last_approval_status,
         )
 
         self.history.append(record)
@@ -575,7 +652,8 @@ class RuntimeEngine:
 
         analysis = self.analyze()
         action = self.decide(analysis)
-        self.select_next_goal(analysis, action)
+        next_goal = self.select_next_goal(analysis, action)
+        self.evaluate_approval_boundary(analysis, action, next_goal)
         self.append_history_record(analysis, action)
 
         self.act(action)
