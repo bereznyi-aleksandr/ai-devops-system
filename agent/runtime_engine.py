@@ -80,6 +80,12 @@ class RuntimeEngine:
             "loaded",
             "blocked",
         )
+        self.allowed_repo_file_write_statuses = (
+            "not_started",
+            "planned",
+            "blocked",
+            "written",
+        )
 
         self.repo_root = os.path.expanduser("~/ai-devops-system")
         self.repo_branch = None
@@ -102,6 +108,7 @@ class RuntimeEngine:
         self.repo_target_selection_status = "blocked"
 
         self.repo_file_read_max_bytes = int(os.getenv("REPO_FILE_READ_MAX_BYTES", "200000"))
+        self.repo_file_write_max_bytes = int(os.getenv("REPO_FILE_WRITE_MAX_BYTES", "200000"))
         self.repo_file_content = None
         self.repo_file_size_bytes = None
         self.repo_file_sha = None
@@ -109,6 +116,17 @@ class RuntimeEngine:
         self.repo_file_content_loaded = False
         self.repo_file_read_status = "not_started"
         self.repo_file_read_deny_reason = None
+
+        self.repo_file_proposed_content = None
+        self.repo_file_proposed_content_loaded = False
+        self.repo_file_write_status = "not_started"
+        self.repo_file_write_deny_reason = None
+        self.repo_file_write_commit_sha = None
+        self.repo_file_write_commit_url = None
+        self.repo_file_write_applied = False
+        self.repo_file_write_previous_sha = None
+        self.repo_file_write_target = None
+        self.repo_write_approval = os.getenv("REPO_WRITE_APPROVAL", "").strip().lower()
 
         self.llm_test_mode = os.getenv("LLM_TEST_MODE", "off")
         self.last_decision_source = None
@@ -386,6 +404,17 @@ class RuntimeEngine:
         self.repo_file_read_status = "not_started"
         self.repo_file_read_deny_reason = None
 
+    def _reset_repo_file_write_state(self):
+        self.repo_file_proposed_content = None
+        self.repo_file_proposed_content_loaded = False
+        self.repo_file_write_status = "not_started"
+        self.repo_file_write_deny_reason = None
+        self.repo_file_write_commit_sha = None
+        self.repo_file_write_commit_url = None
+        self.repo_file_write_applied = False
+        self.repo_file_write_previous_sha = None
+        self.repo_file_write_target = None
+
     def read_repo_target(self):
         print("REPO READ: loading selected target")
         self._reset_repo_file_read_state()
@@ -501,6 +530,177 @@ class RuntimeEngine:
             print("Repo file read failed:", e)
             print("Repo file read status:", self.repo_file_read_status)
             print("Repo file read deny reason:", self.repo_file_read_deny_reason)
+
+    def _build_proposed_repo_content(self):
+        if not self.repo_file_content:
+            return None
+
+        if "# AGENT_WRITE_PROOF" in self.repo_file_content:
+            return self.repo_file_content
+
+        proof_block = (
+            "\n\n"
+            "# AGENT_WRITE_PROOF = true\n"
+            "# AGENT_WRITE_MODE = controlled\n"
+        )
+        return self.repo_file_content + proof_block
+
+    def prepare_repo_write_plan(self):
+        print("REPO WRITE: preparing write plan")
+        self._reset_repo_file_write_state()
+        self.repo_action_class = "repo_controlled_write"
+
+        proposed_content = self._build_proposed_repo_content()
+
+        if proposed_content is None:
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "proposed_content_missing"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        if not isinstance(proposed_content, str) or proposed_content == "":
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "proposed_content_missing"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        if len(proposed_content.encode("utf-8")) > self.repo_file_write_max_bytes:
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "proposed_content_too_large"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        self.repo_file_proposed_content = proposed_content
+        self.repo_file_proposed_content_loaded = True
+        self.repo_file_write_status = "planned"
+        self.repo_file_write_target = self.repo_target
+
+        print("Repo write target:", self.repo_file_write_target)
+        print("Repo write status:", self.repo_file_write_status)
+
+    def execute_repo_write_if_allowed(self):
+        print("REPO WRITE: validating preconditions")
+        self.repo_action_class = "repo_controlled_write"
+
+        if self.repo_target_selection_status != "selected":
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "repo_target_not_selected"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        if self.repo_target not in self.repo_target_allowlist:
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "repo_target_not_allowlisted"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        if self.repo_file_read_status != "loaded":
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "read_before_write_lock_failed"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        if not self.repo_file_sha:
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "repo_file_sha_missing"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        if not self.repo_file_content_loaded or self.repo_file_content is None:
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "repo_file_content_missing"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        if not self.repo_file_proposed_content_loaded or self.repo_file_proposed_content is None:
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "proposed_content_missing"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        content_changed = self.repo_file_proposed_content != self.repo_file_content
+        print("Repo write target:", self.repo_target)
+        print("Repo write current file sha:", self.repo_file_sha)
+        print("Repo write approval status:", self.repo_write_approval)
+        print("Repo write content changed:", str(content_changed).lower())
+
+        if not content_changed:
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "proposed_content_unchanged"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        if self.repo_write_approval != "granted":
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "approval_not_granted"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+            return
+
+        repo_base = (
+            f"https://api.github.com/repos/"
+            f"{self.github_repo_owner}/{self.github_repo_name}"
+        )
+
+        payload = {
+            "message": f"Agent: controlled update {self.repo_target}",
+            "content": base64.b64encode(
+                self.repo_file_proposed_content.encode("utf-8")
+            ).decode("utf-8"),
+            "sha": self.repo_file_sha,
+            "branch": self.github_target_branch,
+        }
+
+        try:
+            response_payload = self._github_json(
+                "PUT",
+                f"{repo_base}/contents/{urllib.parse.quote(self.repo_target, safe='/')}",
+                data=json.dumps(payload).encode("utf-8"),
+            )
+
+            commit = response_payload.get("commit", {})
+            content = response_payload.get("content", {})
+
+            self.repo_file_write_previous_sha = self.repo_file_sha
+            self.repo_file_sha = content.get("sha", self.repo_file_sha)
+            self.repo_file_content = self.repo_file_proposed_content
+            self.repo_file_size_bytes = len(self.repo_file_content.encode("utf-8"))
+            self.repo_file_line_count = len(self.repo_file_content.splitlines())
+            self.repo_file_content_loaded = True
+            self.repo_file_write_status = "written"
+            self.repo_file_write_applied = True
+            self.repo_file_write_commit_sha = commit.get("sha")
+            self.repo_file_write_commit_url = commit.get("html_url")
+
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write commit sha:", self.repo_file_write_commit_sha)
+            print("Repo write commit url:", self.repo_file_write_commit_url)
+
+        except urllib.error.HTTPError as e:
+            self.repo_file_write_status = "blocked"
+            if e.code == 409:
+                self.repo_file_write_deny_reason = "github_write_conflict"
+            else:
+                self.repo_file_write_deny_reason = "github_write_failed"
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
+
+        except Exception as e:
+            self.repo_file_write_status = "blocked"
+            self.repo_file_write_deny_reason = "github_write_failed"
+            print("Repo write failed:", e)
+            print("Repo write status:", self.repo_file_write_status)
+            print("Repo write deny reason:", self.repo_file_write_deny_reason)
 
     def load_baseline(self):
         print("BASELINE: loading baseline from GCS")
@@ -1066,6 +1266,13 @@ class RuntimeEngine:
             "repo_file_size_bytes": self.repo_file_size_bytes,
             "repo_file_content_loaded": self.repo_file_content_loaded,
             "repo_file_line_count": self.repo_file_line_count,
+            "repo_file_write_status": self.repo_file_write_status,
+            "repo_file_write_deny_reason": self.repo_file_write_deny_reason,
+            "repo_file_write_commit_sha": self.repo_file_write_commit_sha,
+            "repo_file_write_commit_url": self.repo_file_write_commit_url,
+            "repo_file_write_applied": self.repo_file_write_applied,
+            "repo_file_write_previous_sha": self.repo_file_write_previous_sha,
+            "repo_file_write_target": self.repo_file_write_target,
         }
 
     def append_history_record(self, analysis, action):
@@ -1113,6 +1320,8 @@ class RuntimeEngine:
         self.evaluate_approval_boundary(analysis, action, next_goal)
         self.select_repo_target()
         self.read_repo_target()
+        self.prepare_repo_write_plan()
+        self.execute_repo_write_if_allowed()
         self.append_history_record(analysis, action)
 
         self.act(action)
