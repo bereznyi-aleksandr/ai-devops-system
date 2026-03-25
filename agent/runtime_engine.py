@@ -1,5 +1,6 @@
 import os
 import json
+import base64
 import subprocess
 import urllib.request
 import urllib.error
@@ -70,6 +71,10 @@ class RuntimeEngine:
             "ready",
             "blocked",
         )
+        self.allowed_repo_target_selection_statuses = (
+            "selected",
+            "blocked",
+        )
         self.repo_root = os.path.expanduser("~/ai-devops-system")
         self.repo_branch = None
         self.repo_clean_tree = None
@@ -78,6 +83,18 @@ class RuntimeEngine:
         self.repo_observation_status = None
         self.repo_action_class = "repo_read_only"
         self.repo_deny_reason = None
+
+        self.github_repo_owner = os.getenv("GITHUB_REPO_OWNER", "bereznyi-aleksandr")
+        self.github_repo_name = os.getenv("GITHUB_REPO_NAME", "ai-devops-system")
+        self.github_target_branch = os.getenv("GITHUB_TARGET_BRANCH", "main")
+        self.github_repo_access = False
+        self.github_branch_exists = False
+        self.github_allowlist_status = False
+        self.github_branch_head_sha = None
+        self.github_deny_reason = None
+        self.repo_target = None
+        self.repo_target_selection_status = "blocked"
+
         self.llm_test_mode = os.getenv("LLM_TEST_MODE", "off")
         self.last_decision_source = None
         self.last_reason_summary = None
@@ -129,6 +146,29 @@ class RuntimeEngine:
         )
 
         return urllib.request.urlopen(request, timeout=timeout)
+
+    def _github_request(self, method, url, data=None, timeout=30):
+        token = os.getenv("GITHUB_TOKEN")
+
+        if not token:
+            raise RuntimeError("GITHUB_TOKEN is not set")
+
+        request = urllib.request.Request(
+            url,
+            data=data,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+            method=method,
+        )
+
+        return urllib.request.urlopen(request, timeout=timeout)
+
+    def _github_json(self, method, url, data=None, timeout=30):
+        with self._github_request(method, url, data=data, timeout=timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
 
     def observe_repo(self):
         print("REPO: observing repository state")
@@ -220,6 +260,107 @@ class RuntimeEngine:
             print("Repo allowlist verified: false")
             print("Repo observation status:", self.repo_observation_status)
             print("Repo deny reason:", self.repo_deny_reason)
+
+    def observe_github_repo(self):
+        print("GITHUB: observing repository state")
+
+        self.github_repo_access = False
+        self.github_branch_exists = False
+        self.github_allowlist_status = False
+        self.github_branch_head_sha = None
+        self.github_deny_reason = None
+        self.repo_target = None
+        self.repo_target_selection_status = "blocked"
+        self.repo_action_class = "repo_patch_plan"
+
+        token = os.getenv("GITHUB_TOKEN")
+        if not token:
+            self.github_deny_reason = "github_token_missing"
+            print("GitHub repo access: false")
+            print("GitHub branch exists: false")
+            print("GitHub allowlist verified: false")
+            print("GitHub deny reason:", self.github_deny_reason)
+            return
+
+        repo_base = (
+            f"https://api.github.com/repos/"
+            f"{self.github_repo_owner}/{self.github_repo_name}"
+        )
+
+        try:
+            repo_payload = self._github_json("GET", repo_base)
+            default_branch = repo_payload.get("default_branch")
+            self.github_repo_access = True
+            print("GitHub repo access: true")
+            print("GitHub default branch:", default_branch)
+
+            branch_payload = self._github_json(
+                "GET",
+                f"{repo_base}/branches/{urllib.parse.quote(self.github_target_branch, safe='')}",
+            )
+            self.github_branch_exists = True
+            self.github_branch_head_sha = branch_payload.get("commit", {}).get("sha")
+            print("GitHub branch exists: true")
+            print("GitHub branch head sha:", self.github_branch_head_sha)
+
+            allowlist_verified = True
+            for relative_path in self.repo_target_allowlist:
+                contents_payload = self._github_json(
+                    "GET",
+                    f"{repo_base}/contents/{urllib.parse.quote(relative_path, safe='/')}"
+                    f"?ref={urllib.parse.quote(self.github_target_branch, safe='')}",
+                )
+
+                if contents_payload.get("type") != "file":
+                    allowlist_verified = False
+                    self.github_deny_reason = f"github_target_unreadable:{relative_path}"
+                    break
+
+                encoded_content = contents_payload.get("content", "")
+                if not encoded_content:
+                    allowlist_verified = False
+                    self.github_deny_reason = f"github_target_unreadable:{relative_path}"
+                    break
+
+                decoded = base64.b64decode(encoded_content).decode("utf-8")
+                if decoded == "":
+                    allowlist_verified = False
+                    self.github_deny_reason = f"github_target_unreadable:{relative_path}"
+                    break
+
+            self.github_allowlist_status = allowlist_verified
+            print("GitHub allowlist verified:", str(self.github_allowlist_status).lower())
+
+            if not self.github_allowlist_status and self.github_deny_reason is None:
+                self.github_deny_reason = "github_allowlist_verification_failed"
+
+            if self.github_deny_reason:
+                print("GitHub deny reason:", self.github_deny_reason)
+
+        except urllib.error.HTTPError as e:
+            if e.code == 404 and not self.github_repo_access:
+                self.github_deny_reason = "github_repo_not_found"
+            elif e.code == 404:
+                self.github_deny_reason = "github_branch_missing"
+            elif e.code == 401:
+                self.github_deny_reason = "github_unauthorized"
+            elif e.code == 403:
+                self.github_deny_reason = "github_forbidden"
+            else:
+                self.github_deny_reason = f"github_http_error:{e.code}"
+
+            print("GitHub repo access:", str(self.github_repo_access).lower())
+            print("GitHub branch exists:", str(self.github_branch_exists).lower())
+            print("GitHub allowlist verified:", str(self.github_allowlist_status).lower())
+            print("GitHub deny reason:", self.github_deny_reason)
+
+        except Exception as e:
+            self.github_deny_reason = "github_observation_failed"
+            print("GitHub repo observation failed:", e)
+            print("GitHub repo access:", str(self.github_repo_access).lower())
+            print("GitHub branch exists:", str(self.github_branch_exists).lower())
+            print("GitHub allowlist verified:", str(self.github_allowlist_status).lower())
+            print("GitHub deny reason:", self.github_deny_reason)
 
     def load_baseline(self):
         print("BASELINE: loading baseline from GCS")
@@ -703,6 +844,51 @@ class RuntimeEngine:
 
         return risky_intent, approval_status
 
+    def select_repo_target(self):
+        print("REPO TARGET: selecting target")
+
+        self.repo_target = None
+        self.repo_target_selection_status = "blocked"
+
+        if not self.github_repo_access:
+            if not self.github_deny_reason:
+                self.github_deny_reason = "github_repo_access_unavailable"
+            print("Repo target selection status:", self.repo_target_selection_status)
+            print("GitHub deny reason:", self.github_deny_reason)
+            return None
+
+        if not self.github_branch_exists:
+            if not self.github_deny_reason:
+                self.github_deny_reason = "github_branch_missing"
+            print("Repo target selection status:", self.repo_target_selection_status)
+            print("GitHub deny reason:", self.github_deny_reason)
+            return None
+
+        if not self.github_allowlist_status:
+            if not self.github_deny_reason:
+                self.github_deny_reason = "github_allowlist_verification_failed"
+            print("Repo target selection status:", self.repo_target_selection_status)
+            print("GitHub deny reason:", self.github_deny_reason)
+            return None
+
+        if len(self.repo_target_allowlist) != 1:
+            self.github_deny_reason = "repo_target_ambiguous"
+            print("Repo target selection status:", self.repo_target_selection_status)
+            print("GitHub deny reason:", self.github_deny_reason)
+            return None
+
+        self.repo_target = self.repo_target_allowlist[0]
+        self.repo_target_selection_status = "selected"
+
+        if self.repo_target_selection_status not in self.allowed_repo_target_selection_statuses:
+            raise RuntimeError(
+                f"unsupported repo target selection status selected: {self.repo_target_selection_status}"
+            )
+
+        print("Repo target selected:", self.repo_target)
+        print("Repo target selection status:", self.repo_target_selection_status)
+        return self.repo_target
+
     def build_history_record(
         self,
         analysis,
@@ -730,6 +916,10 @@ class RuntimeEngine:
             "repo_action_class": self.repo_action_class,
             "repo_observation_status": self.repo_observation_status,
             "repo_deny_reason": self.repo_deny_reason,
+            "repo_target": self.repo_target,
+            "repo_target_selection_status": self.repo_target_selection_status,
+            "github_branch_head_sha": self.github_branch_head_sha,
+            "github_deny_reason": self.github_deny_reason,
         }
 
     def append_history_record(self, analysis, action):
@@ -767,6 +957,7 @@ class RuntimeEngine:
 
         self.observe_runtime()
         self.observe_repo()
+        self.observe_github_repo()
         self.load_baseline()
         self.load_history()
 
@@ -774,6 +965,7 @@ class RuntimeEngine:
         action = self.decide(analysis)
         next_goal = self.select_next_goal(analysis, action)
         self.evaluate_approval_boundary(analysis, action, next_goal)
+        self.select_repo_target()
         self.append_history_record(analysis, action)
 
         self.act(action)
