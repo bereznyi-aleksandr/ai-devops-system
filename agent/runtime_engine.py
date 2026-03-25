@@ -46,9 +46,17 @@ class RuntimeEngine:
         self.history_payload_limit = 5
         self.history = []
         self.allowed_actions = ("no_action", "investigate", "collect_state")
+        self.allowed_next_goals = (
+            "monitor_runtime_stability",
+            "monitor_revision_drift",
+            "watch_baseline_consistency",
+            "watch_llm_response_reliability",
+            "collect_more_state_on_repeat_fallback",
+        )
         self.llm_test_mode = os.getenv("LLM_TEST_MODE", "off")
         self.last_decision_source = None
         self.last_reason_summary = None
+        self.last_next_goal = None
 
     def _get_gcp_access_token(self):
         request = urllib.request.Request(
@@ -372,12 +380,6 @@ class RuntimeEngine:
         if not api_key:
             raise RuntimeError("ANTHROPIC_API_KEY is not set")
 
-        system_prompt = (
-            "You are a deterministic DevOps decision engine. "
-            "Return only valid JSON with keys: action, reason, next_steps. "
-            "Allowed action values: no_action, investigate, collect_state."
-        )
-
         user_payload = {
             "analysis": analysis,
             "runtime": {
@@ -399,7 +401,11 @@ class RuntimeEngine:
         body = {
             "model": self.model,
             "max_tokens": 256,
-            "system": system_prompt,
+            "system": (
+                "You are a deterministic DevOps decision engine. "
+                "Return only valid JSON with keys: action, reason, next_steps. "
+                "Allowed action values: no_action, investigate, collect_state."
+            ),
             "messages": [
                 {"role": "user", "content": json.dumps(user_payload)}
             ],
@@ -477,7 +483,49 @@ class RuntimeEngine:
             print("Decision source: fallback")
             return self.select_fallback_action(analysis, "unexpected LLM decision error")
 
-    def build_history_record(self, analysis, action, decision_source, reason_summary):
+    def _recent_history(self, limit):
+        return self.history[-limit:]
+
+    def _recent_fallback_count(self, limit=3):
+        records = self._recent_history(limit)
+        return sum(1 for record in records if record.get("decision_source") == "fallback")
+
+    def _last_history_goal(self):
+        if not self.history:
+            return None
+        return self.history[-1].get("next_goal")
+
+    def _deterministic_next_goal(self, analysis, action):
+        if analysis == "baseline_created":
+            return "watch_baseline_consistency"
+
+        if analysis == "drift":
+            return "monitor_revision_drift"
+
+        if self.last_decision_source == "fallback":
+            recent_fallback_count = self._recent_fallback_count(limit=3)
+            if recent_fallback_count >= 2:
+                print("Goal selected from recent fallback trend")
+                return "collect_more_state_on_repeat_fallback"
+            return "watch_llm_response_reliability"
+
+        if analysis == "healthy" and action == "no_action":
+            return "monitor_runtime_stability"
+
+        return "watch_baseline_consistency"
+
+    def select_next_goal(self, analysis, action):
+        print("GOAL: selecting next goal")
+        next_goal = self._deterministic_next_goal(analysis, action)
+
+        if next_goal not in self.allowed_next_goals:
+            raise RuntimeError(f"unsupported next goal selected: {next_goal}")
+
+        self.last_next_goal = next_goal
+        print("Next goal selected:", next_goal)
+        return next_goal
+
+    def build_history_record(self, analysis, action, decision_source, reason_summary, next_goal):
         return {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "analysis": analysis,
@@ -487,6 +535,7 @@ class RuntimeEngine:
             "runtime_revision": self.runtime.revision,
             "baseline_revision": self.baseline.revision,
             "llm_test_mode": self.llm_test_mode,
+            "next_goal": next_goal,
         }
 
     def append_history_record(self, analysis, action):
@@ -497,6 +546,7 @@ class RuntimeEngine:
             action=action,
             decision_source=self.last_decision_source,
             reason_summary=self.last_reason_summary,
+            next_goal=self.last_next_goal,
         )
 
         self.history.append(record)
@@ -525,6 +575,7 @@ class RuntimeEngine:
 
         analysis = self.analyze()
         action = self.decide(analysis)
+        self.select_next_goal(analysis, action)
         self.append_history_record(analysis, action)
 
         self.act(action)
