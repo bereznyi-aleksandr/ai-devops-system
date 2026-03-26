@@ -10,7 +10,7 @@
 
 ## E2 — Code Agent (В ПРОЦЕССЕ)
 
-- [ ] E2.1: Создать agents/code_agent.py с классом CodeAgent
+- [x] E2.1: Создать agents/code_agent.py с классом CodeAgent
 - [ ] E2.2: CodeAgent читает файл из репозитория через GitHub API
 - [ ] E2.3: CodeAgent отправляет код в Claude API с задачей на анализ
 - [ ] E2.4: CodeAgent получает предложение изменения и валидирует его
@@ -21,3 +21,4 @@
 ---
 
 [Thu Mar 26 20:24:54 UTC 2026] ЗАДАЧА: Создан PROGRESS.md со статусом E1 (завершён) и E2 (в процессе), выполнен git commit СТАТУС: успешно
+[Thu Mar 26 20:54:09 UTC 2026] ЗАДАЧА: Создан agents/code_agent.py с классом CodeAgent (методы read_file_from_github, analyze_with_claude, save_result, run); результат сохраняется в results/code-agent-log.json; code_agent добавлен в orchestrator/agents.json СТАТУС: успешно

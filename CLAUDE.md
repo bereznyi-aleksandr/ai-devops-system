@@ -12,7 +12,7 @@
 - Оркестратор: orchestrator/orchestrator.py
 
 ## ТЕКУЩАЯ ФАЗА
-CURRENT_PHASE: E1_COMPLETE
+CURRENT_PHASE: E2.1_COMPLETE
 
 ## ПРАВИЛА РАБОТЫ
 1. Перед каждым действием читай этот файл
@@ -36,12 +36,12 @@ CURRENT_PHASE: E1_COMPLETE
 Цель: создать агента который анализирует код и предлагает осмысленные изменения через Claude API.
 
 Шаги:
-- [ ] E2.1: Создать agents/code_agent.py с классом CodeAgent
-- [ ] E2.2: CodeAgent читает файл из репозитория через GitHub API
-- [ ] E2.3: CodeAgent отправляет код в Claude API с задачей на анализ
-- [ ] E2.4: CodeAgent получает предложение изменения и валидирует его
+- [x] E2.1: Создать agents/code_agent.py с классом CodeAgent
+- [x] E2.2: CodeAgent читает файл из репозитория через GitHub API
+- [x] E2.3: CodeAgent отправляет код в Claude API с задачей на анализ
+- [x] E2.4: CodeAgent получает предложение изменения и валидирует его
 - [ ] E2.5: CodeAgent записывает результат в gs://barber-agent-state/code-agent-log.json
-- [ ] E2.6: Добавить code_agent в orchestrator/agents.json
+- [x] E2.6: Добавить code_agent в orchestrator/agents.json
 - [ ] E2.7: Проверить что orchestrator запускает оба агента
 
 ### E3 — Связка агентов (ПОСЛЕ E2)
