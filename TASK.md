@@ -1,1 +1,1 @@
-Создай файл PROGRESS.md в корне репозитория со списком завершённых этапов E1 и текущим статусом E2. Затем выполни git add PROGRESS.md и git commit.
+Создай файл agents/code_agent.py с классом CodeAgent с методами read_file_from_github, analyze_with_claude, save_result и run. Сохраняй результат в файл results/code-agent-log.json в репозитории. После создания обнови PROGRESS.md и сделай коммит.
