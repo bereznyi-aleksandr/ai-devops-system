@@ -7,6 +7,9 @@ import urllib.parse
 from datetime import datetime
 
 
+MAX_AGENTS = 10
+
+
 class InvalidAgentConfigError(Exception):
     pass
 
@@ -26,7 +29,9 @@ class Orchestrator:
         )
         self.log_limit = 50
 
-        self.repo_root = os.path.expanduser("~/ai-devops-system")
+        self.repo_root = os.getenv(
+            "ORCHESTRATOR_REPO_ROOT", os.path.abspath(".")
+        )
 
         self.allowed_agent_keys = ("name", "script", "enabled")
         self.allowed_run_statuses = ("ok", "failed", "skipped", "disabled")
@@ -95,6 +100,12 @@ class Orchestrator:
                 f"agent entry at index {index} field 'enabled' must be a boolean"
             )
 
+        unknown_keys = set(entry.keys()) - set(self.allowed_agent_keys)
+        if unknown_keys:
+            raise InvalidAgentConfigError(
+                f"agent entry at index {index} contains unknown keys: {sorted(unknown_keys)}"
+            )
+
     def load_agents(self):
         print("ORCHESTRATOR: loading agents from", self.agents_config_path)
 
@@ -117,6 +128,11 @@ class Orchestrator:
 
         if not isinstance(entries, list):
             raise InvalidAgentConfigError("agents.json must contain a JSON array")
+
+        if len(entries) > MAX_AGENTS:
+            raise InvalidAgentConfigError(
+                f"agents.json defines {len(entries)} agents, maximum is {MAX_AGENTS}"
+            )
 
         for index, entry in enumerate(entries):
             self._validate_agent_entry(entry, index)
