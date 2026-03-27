@@ -22,3 +22,5 @@
 
 [Thu Mar 26 20:24:54 UTC 2026] ЗАДАЧА: Создан PROGRESS.md со статусом E1 (завершён) и E2 (в процессе), выполнен git commit СТАТУС: успешно
 [Thu Mar 26 20:54:09 UTC 2026] ЗАДАЧА: Создан agents/code_agent.py с классом CodeAgent (методы read_file_from_github, analyze_with_claude, save_result, run); результат сохраняется в results/code-agent-log.json; code_agent добавлен в orchestrator/agents.json СТАТУС: успешно
+[Fri Mar 27 03:48:00 UTC 2026] E2.2 — УСПЕШНО — Создан .gitignore (__pycache__/ *.pyc *.pyo .env); agents/__pycache__/ удалён из git index; импорты agents.code_agent и orchestrator.orchestrator проверены — оба OK
+[Fri Mar 27 03:48:00 UTC 2026] ЗАДАЧА: Создан .gitignore, удалён agents/__pycache__/ из git, проверены импорты CodeAgent и Orchestrator СТАТУС: успешно
