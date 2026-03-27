@@ -60,7 +60,8 @@ class CodeAgent:
             f"You are a code reviewer. Analyze the following file and suggest one concrete "
             f"improvement (a specific code change, not a general comment). "
             f"Respond with JSON: {{\"issue\": \"<short description>\", \"suggestion\": \"<specific change>\", "
-            f"\"severity\": \"low|medium|high\"}}.\n\n"
+            f"\"severity\": \"low|medium|high\"}}.\n"
+            f"{experience_note}\n"
             f"File: {file_path}\n\n```\n{file_content[:8000]}\n```"
             f"{experience_note}"
         )
