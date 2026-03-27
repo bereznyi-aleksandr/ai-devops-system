@@ -31,3 +31,4 @@
 
 [2026-03-27] E3.1 — УСПЕШНО — Создан eventbus/event_bus.py с классом EventBus (методы: publish, subscribe, clear); события хранятся в results/events.json; используются только стандартные библиотеки Python
 [2026-03-27] E3.2 — УСПЕШНО — eventbus/event_bus.py подтверждён: синтаксис OK; EventBus.publish добавляет событие с event_type/timestamp/payload; EventBus.subscribe возвращает последнее событие нужного типа; EventBus.clear очищает файл; готов к интеграции с Runtime Agent
+[2026-03-27] E3.1 — ИТОГ — eventbus/event_bus.py (67 строк, stdlib-only): EventBus.publish/subscribe/clear работают корректно; py_compile: OK; CURRENT_PHASE обновлён до E3.1_COMPLETE; следующий шаг — E3.2: Runtime Agent публикует событие при обнаружении drift

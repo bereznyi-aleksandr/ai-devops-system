@@ -12,7 +12,7 @@
 - Оркестратор: orchestrator/orchestrator.py
 
 ## ТЕКУЩАЯ ФАЗА
-CURRENT_PHASE: E2.7_COMPLETE
+CURRENT_PHASE: E3.1_COMPLETE
 
 ## ПРАВИЛА РАБОТЫ
 1. Перед каждым действием читай этот файл
