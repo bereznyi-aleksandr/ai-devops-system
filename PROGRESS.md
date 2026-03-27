@@ -45,6 +45,17 @@
 
 [2026-03-27] ПРОЕКТ ЗАВЕРШЁН — Система готова к автономной эксплуатации
 
+## M1 — ReportBus
+
+[2026-03-27] M1 — УСПЕШНО — Создан reportbus/report_bus.py с классом ReportBus:
+  - write(agent_name, action, result, policy_rule, anomaly): атомарная запись в results/reports.json (tmp + rename)
+  - read_recent(limit=10): последние N отчётов
+  - read_by_agent(agent_name, limit=5): последние N отчётов конкретного агента
+  - detect_anomalies(): агенты у которых последние 3 результата одинаковые
+  - stdlib-only; py_compile: OK
+  - CodeAgent.run() интегрирован: write("run_started") в начале, write("run_completed", status) в конце
+  - agents/code_agent.py py_compile: OK
+
 ## M0 — Улучшения CodeAgent
 
 [2026-03-27] M0 — УСПЕШНО — Добавлен метод write_file_to_github(file_path, new_content) в CodeAgent:

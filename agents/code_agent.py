@@ -5,6 +5,7 @@ import urllib.request
 import urllib.error
 from datetime import datetime
 from knowledge.knowledge_store import KnowledgeStore
+from reportbus.report_bus import ReportBus
 
 
 RESULTS_PATH = os.path.join(
@@ -167,6 +168,9 @@ class CodeAgent:
         if file_path is None:
             file_path = os.getenv("CODE_AGENT_FILE", "agent/runtime_engine.py")
 
+        rb = ReportBus()
+        rb.write("code_agent", "run_started", {"file_path": file_path})
+
         timestamp = datetime.utcnow().isoformat() + "Z"
         result = {
             "timestamp": timestamp,
@@ -210,6 +214,7 @@ class CodeAgent:
                 result["write"] = None
 
         self.save_result(result)
+        rb.write("code_agent", "run_completed", result.get("status"))
         return result
 
 
