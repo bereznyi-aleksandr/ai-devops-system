@@ -28,7 +28,8 @@ jobs:
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
-          echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
+          printf '%s' "$GCP_SA_KEY" > /tmp/gcp-sa-key.json
+          gcloud auth activate-service-account --key-file=/tmp/gcp-sa-key.json
           gcloud config set project barber-483016
 
       - name: Run Claude Code
