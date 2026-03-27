@@ -12,7 +12,7 @@
 - Оркестратор: orchestrator/orchestrator.py
 
 ## ТЕКУЩАЯ ФАЗА
-CURRENT_PHASE: E2.1_COMPLETE
+CURRENT_PHASE: E2.7_COMPLETE
 
 ## ПРАВИЛА РАБОТЫ
 1. Перед каждым действием читай этот файл
@@ -42,7 +42,7 @@ CURRENT_PHASE: E2.1_COMPLETE
 - [x] E2.4: CodeAgent получает предложение изменения и валидирует его
 - [ ] E2.5: CodeAgent записывает результат в gs://barber-agent-state/code-agent-log.json
 - [x] E2.6: Добавить code_agent в orchestrator/agents.json
-- [ ] E2.7: Проверить что orchestrator запускает оба агента
+- [x] E2.7: Проверить что orchestrator запускает оба агента
 
 ### E3 — Связка агентов (ПОСЛЕ E2)
 Цель: Runtime Agent обнаруживает проблему и передаёт сигнал Code Agent через общий Event Bus в GCS.
