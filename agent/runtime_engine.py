@@ -8,6 +8,7 @@ import urllib.parse
 from datetime import datetime
 
 from eventbus.event_bus import EventBus
+from knowledge.knowledge_store import KnowledgeStore
 
 
 class InvalidDecisionContractError(Exception):
