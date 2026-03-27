@@ -5,7 +5,7 @@ on:
     paths:
       - 'TASK.md'
   issues:
-    types: [opened, labeled]
+    types: [labeled]
 
 jobs:
   run-claude:
