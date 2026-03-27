@@ -100,6 +100,49 @@ class CodeAgent:
         except Exception as exc:
             return {"error": str(exc), "suggestion": None}
 
+    def write_file_to_github(self, file_path: str, new_content: str) -> dict:
+        if not self.github_repo:
+            return {"error": "GITHUB_REPO env var not set", "commit_sha": None}
+        if not self.github_token:
+            return {"error": "GITHUB_TOKEN env var not set", "commit_sha": None}
+
+        # Step 1: GET current SHA
+        read_result = self.read_file_from_github(file_path)
+        if read_result["error"]:
+            return {"error": f"Failed to read file SHA: {read_result['error']}", "commit_sha": None}
+
+        current_sha = read_result.get("sha")
+        if not current_sha:
+            return {"error": "Could not retrieve file SHA", "commit_sha": None}
+
+        # Step 2: PUT new content
+        branch = os.getenv("GITHUB_TARGET_BRANCH", "main")
+        url = f"https://api.github.com/repos/{self.github_repo}/contents/{file_path}"
+
+        payload = json.dumps({
+            "message": f"Agent: code improvement in {file_path}",
+            "content": base64.b64encode(new_content.encode("utf-8")).decode("utf-8"),
+            "sha": current_sha,
+            "branch": branch,
+        }).encode()
+
+        req = urllib.request.Request(url, data=payload, method="PUT")
+        req.add_header("Accept", "application/vnd.github+json")
+        req.add_header("Authorization", f"Bearer {self.github_token}")
+        req.add_header("Content-Type", "application/json")
+        req.add_header("X-GitHub-Api-Version", "2022-11-28")
+
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode())
+            commit_sha = data.get("commit", {}).get("sha")
+            return {"error": None, "commit_sha": commit_sha}
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode(errors="replace")
+            return {"error": f"HTTP {exc.code}: {body[:200]}", "commit_sha": None}
+        except Exception as exc:
+            return {"error": str(exc), "commit_sha": None}
+
     def save_result(self, result: dict) -> bool:
         os.makedirs(os.path.dirname(self.results_path), exist_ok=True)
         log = []
@@ -153,6 +196,18 @@ class CodeAgent:
             suggestion = analysis["suggestion"]
             print(f"[CodeAgent] {file_path} — {suggestion.get('severity','?').upper()}: {suggestion.get('issue','')}")
             print(f"[CodeAgent] Suggestion: {suggestion.get('suggestion','')}")
+
+            improved_code = suggestion.get("improved_code", "").strip() if isinstance(suggestion, dict) else ""
+            if improved_code:
+                print(f"[CodeAgent] Improved code found, writing to GitHub: {file_path}")
+                write_result = self.write_file_to_github(file_path, improved_code)
+                result["write"] = write_result
+                if write_result["error"]:
+                    print(f"[CodeAgent] Write error: {write_result['error']}")
+                else:
+                    print(f"[CodeAgent] Write commit sha: {write_result['commit_sha']}")
+            else:
+                result["write"] = None
 
         self.save_result(result)
         return result

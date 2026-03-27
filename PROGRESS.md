@@ -44,3 +44,13 @@
   - Система полностью функциональна и готова к автономной работе
 
 [2026-03-27] ПРОЕКТ ЗАВЕРШЁН — Система готова к автономной эксплуатации
+
+## M0 — Улучшения CodeAgent
+
+[2026-03-27] M0 — УСПЕШНО — Добавлен метод write_file_to_github(file_path, new_content) в CodeAgent:
+  - GET текущего SHA файла через read_file_from_github (GitHub Contents API)
+  - PUT нового содержимого через GitHub Contents API с message, base64-content, sha, branch
+  - Возвращает {"error": None, "commit_sha": "..."} при успехе или {"error": "...", "commit_sha": None}
+  - Ветвь берётся из GITHUB_TARGET_BRANCH (default: main)
+  - run() после analyze_with_claude() проверяет suggestion.get("improved_code"): если не пусто — вызывает write_file_to_github() и сохраняет результат в result["write"]
+  - py_compile: OK
