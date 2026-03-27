@@ -1,14 +1,18 @@
-Измени файл .github/workflows/claude-agent.yml
+Измени файл .github/workflows/claude-agent.yml — только два изменения:
 
-Добавь второй триггер issues с типами opened и labeled.
+1. Добавь в секцию permissions строку:
+   issues: write
 
-Логика выбора задачи:
-- если триггер от issue используй github.event.issue.body как задачу
-- если триггер от push TASK.md используй cat TASK.md
+2. Добавь триггер issues со следующей конфигурацией:
+   issues:
+     types: [opened, labeled]
 
-После выполнения задачи:
-- пиши результат в PROGRESS.md
-- добавь комментарий к issue через GitHub API с результатом
-- закрой issue через GitHub API
+3. В шаге Run Claude Code замени текущую команду на:
+   if [ "${{ github.event_name }}" = "issues" ]; then
+     TASK="${{ github.event.issue.body }}"
+   else
+     TASK="$(cat TASK.md)"
+   fi
+   claude --dangerously-skip-permissions -p "$TASK. После выполнения обнови PROGRESS.md записью о результате."
 
-Обнови PROGRESS.md записью о старте E3 и сделай коммит.
+Больше ничего не меняй. Обнови PROGRESS.md и сделай коммит.
