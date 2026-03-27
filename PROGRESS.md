@@ -18,8 +18,12 @@
 [2026-03-26] E2.6 — УСПЕШНО — code_agent добавлен в orchestrator/agents.json
 [2026-03-26] E2.7 — УСПЕШНО — Orchestrator загружает 2 агента: runtime_engine и code_agent (оба enabled=True)
 
-## E3 — Связка агентов (В ПРОЦЕССЕ)
+## E3 — Связка агентов (ВЫПОЛНЕНО)
+
+## E4 — Knowledge Layer (В ПРОЦЕССЕ)
 
 [2026-03-27] E3.1 — УСПЕШНО — Создан eventbus/event_bus.py с классом EventBus (методы: publish, subscribe, clear); события хранятся в results/events.json; stdlib-only; py_compile: OK
 [2026-03-27] E3.2 — УСПЕШНО — Runtime Agent импортирует EventBus; при обнаружении revision drift вызывает EventBus().publish("drift_detected", {"revision": self.runtime.revision}); синтаксис проверен; results/events.json создаётся при запуске
 [2026-03-27] E3.4 — ДОКАЗАНО — EventBus публикует боевое событие drift_detected; assert event_type == 'drift_detected' и assert payload.revision == 'test-revision-001' прошли успешно; вывод: DRIFT EVENT OK с timestamp 2026-03-27T08:53:27Z
+
+[2026-03-27] E4.1 — УСПЕШНО — Создан knowledge/knowledge_store.py с классом KnowledgeStore (методы: save_pattern, get_patterns, get_recent); хранит паттерны в results/knowledge.json; stdlib-only; py_compile: OK; все assertions прошли

@@ -12,7 +12,7 @@
 - Оркестратор: orchestrator/orchestrator.py
 
 ## ТЕКУЩАЯ ФАЗА
-CURRENT_PHASE: E3.1_COMPLETE
+CURRENT_PHASE: E4.1_COMPLETE
 
 ## ПРАВИЛА РАБОТЫ
 1. Перед каждым действием читай этот файл
@@ -58,7 +58,7 @@ CURRENT_PHASE: E3.1_COMPLETE
 Цель: агенты накапливают знания и используют историю для улучшения решений.
 
 Шаги:
-- [ ] E4.1: Создать knowledge/knowledge_store.py
+- [x] E4.1: Создать knowledge/knowledge_store.py
 - [ ] E4.2: Хранить паттерны успешных решений в GCS
 - [ ] E4.3: Code Agent использует базу знаний при анализе
 - [ ] E4.4: Runtime Agent обновляет базу знаний после каждого цикла
