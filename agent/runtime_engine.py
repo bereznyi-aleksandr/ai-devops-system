@@ -7,6 +7,8 @@ import urllib.error
 import urllib.parse
 from datetime import datetime
 
+from eventbus.event_bus import EventBus
+
 
 class InvalidDecisionContractError(Exception):
     pass
@@ -1084,6 +1086,7 @@ class RuntimeEngine:
 
         if self.runtime.revision != self.baseline.revision:
             print("Revision drift detected")
+            EventBus().publish("drift_detected", {"revision": self.runtime.revision})
             return "drift"
 
         print("System healthy")
