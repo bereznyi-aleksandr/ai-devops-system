@@ -1082,15 +1082,24 @@ class RuntimeEngine:
         if self.baseline.revision is None:
             print("No baseline defined, creating baseline")
             self.save_baseline_from_runtime()
-            return "baseline_created"
-
-        if self.runtime.revision != self.baseline.revision:
+            analysis = "baseline_created"
+        elif self.runtime.revision != self.baseline.revision:
             print("Revision drift detected")
             EventBus().publish("drift_detected", {"revision": self.runtime.revision})
-            return "drift"
+            analysis = "drift"
+        else:
+            print("System healthy")
+            analysis = "healthy"
 
-        print("System healthy")
-        return "healthy"
+        from knowledge.knowledge_store import KnowledgeStore
+        ks = KnowledgeStore()
+        ks.save_pattern("runtime_analysis", {
+            "result": analysis,
+            "revision": self.runtime.revision,
+            "baseline_revision": self.baseline.revision,
+        })
+
+        return analysis
 
     def _clean_json_content(self, content):
         cleaned = content.strip()
