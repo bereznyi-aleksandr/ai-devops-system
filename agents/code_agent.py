@@ -4,6 +4,7 @@ import base64
 import urllib.request
 import urllib.error
 from datetime import datetime
+from knowledge.knowledge_store import KnowledgeStore
 
 
 RESULTS_PATH = os.path.join(
@@ -49,12 +50,19 @@ class CodeAgent:
         if not self.anthropic_api_key:
             return {"error": "ANTHROPIC_API_KEY env var not set", "suggestion": None}
 
+        ks = KnowledgeStore()
+        recent = ks.get_recent(3)
+        experience_note = ""
+        if recent:
+            experience_note = "\nУчти предыдущий опыт: " + str(recent) + "\n"
+
         prompt = (
             f"You are a code reviewer. Analyze the following file and suggest one concrete "
             f"improvement (a specific code change, not a general comment). "
             f"Respond with JSON: {{\"issue\": \"<short description>\", \"suggestion\": \"<specific change>\", "
             f"\"severity\": \"low|medium|high\"}}.\n\n"
             f"File: {file_path}\n\n```\n{file_content[:8000]}\n```"
+            f"{experience_note}"
         )
 
         payload = json.dumps({
@@ -83,6 +91,7 @@ class CodeAgent:
                 suggestion = json.loads(text[start:end])
             else:
                 suggestion = {"issue": "parse error", "suggestion": text, "severity": "low"}
+            ks.save_pattern("code_analysis", {"file": file_path, "result": "success"})
             return {"error": None, "suggestion": suggestion}
         except urllib.error.HTTPError as exc:
             body = exc.read().decode(errors="replace")
