@@ -26,3 +26,7 @@
 [Fri Mar 27 03:48:00 UTC 2026] ЗАДАЧА: Создан .gitignore, удалён agents/__pycache__/ из git, проверены импорты CodeAgent и Orchestrator СТАТУС: успешно
 [Fri Mar 27 03:58:28 UTC 2026] E2.7 — УСПЕШНО — Orchestrator загружает 2 агента: runtime_engine (agent/runtime_engine.py, enabled=True) и code_agent (agents/code_agent.py, enabled=True). Этап E2 завершён (кроме E2.5 — запись в GCS требует credentials).
 [Fri Mar 27 03:58:28 UTC 2026] ЗАДАЧА: Финальная проверка E2 — orchestrator запускает оба агента СТАТУС: успешно
+
+## E3 — Связка агентов (В ПРОЦЕССЕ)
+
+[2026-03-27] E3.1 — УСПЕШНО — Создан eventbus/event_bus.py с классом EventBus (методы: publish, subscribe, clear); события хранятся в results/events.json; используются только стандартные библиотеки Python
