@@ -27,3 +27,4 @@
 [2026-03-27] E3.4 — ДОКАЗАНО — EventBus публикует боевое событие drift_detected; assert event_type == 'drift_detected' и assert payload.revision == 'test-revision-001' прошли успешно; вывод: DRIFT EVENT OK с timestamp 2026-03-27T08:53:27Z
 
 [2026-03-27] E4.1 — УСПЕШНО — Создан knowledge/knowledge_store.py с классом KnowledgeStore (методы: save_pattern, get_patterns, get_recent); хранит паттерны в results/knowledge.json; stdlib-only; py_compile: OK; все assertions прошли
+[2026-03-27] E4.2 — УСПЕШНО — Три точечных исправления: results/knowledge.json создан и закоммичен (KNOWLEDGE OK: id=1, E4.1 proof); удалён неиспользуемый import os из knowledge_store.py; удалена строка AGENT_WRITE_TIMESTAMP из agent/runtime_engine.py
