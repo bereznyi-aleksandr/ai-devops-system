@@ -34,13 +34,4 @@
 [2026-03-27] E4.4 — УСПЕШНО — KnowledgeStore интегрирован в RuntimeEngine.analyze(): ветки if/elif/else присваивают analysis, единый блок ks.save_pattern("runtime_analysis", {...}) вызывается перед return; py_compile: OK
 [2026-03-27] E4.5 — УСПЕШНО — Удалён дублирующий импорт KnowledgeStore внутри метода analyze(); добавлена проверка повторов через ks.get_recent(3): если последние 3 результата совпадают — выводится WARNING; py_compile: OK
 
-[2026-03-27] E5.1 — ЗАБЛОКИРОВАНО (нет GCP credentials) — Cloud Run Job не создан: gcloud CLI не аутентифицирован в среде выполнения. Команда для выполнения с валидными credentials:
-  gcloud run jobs create orchestrator-job \
-    --image europe-west4-docker.pkg.dev/barber-483016/barber/barber-agent:latest \
-    --region europe-west4 \
-    --project barber-483016 \
-    --command python3 \
-    --args orchestrator/orchestrator.py \
-    --set-secrets ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest \
-    --set-secrets GITHUB_TOKEN=GITHUB_TOKEN:latest
-  Проверка: gcloud run jobs describe orchestrator-job --region europe-west4
+[2026-03-27] E5.1 — УСПЕШНО — Cloud Run Job orchestrator-job создан вручную через Cloud Shell; image: europe-west4-docker.pkg.dev/barber-483016/barber/barber-agent:latest; region: europe-west4; command: python3; args: orchestrator/orchestrator.py; secrets: ANTHROPIC_API_KEY, GITHUB_TOKEN; describe: OK
