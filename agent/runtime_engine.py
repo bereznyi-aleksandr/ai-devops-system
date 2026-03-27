@@ -1092,13 +1092,17 @@ class RuntimeEngine:
             print("System healthy")
             analysis = "healthy"
 
-        from knowledge.knowledge_store import KnowledgeStore
         ks = KnowledgeStore()
         ks.save_pattern("runtime_analysis", {
             "result": analysis,
             "revision": self.runtime.revision,
             "baseline_revision": self.baseline.revision,
         })
+
+        recent = ks.get_recent(3)
+        repeated = [p for p in recent if p.get("data", {}).get("result") == analysis]
+        if len(repeated) >= 3:
+            print("WARNING: repeated analysis result:", analysis)
 
         return analysis
 

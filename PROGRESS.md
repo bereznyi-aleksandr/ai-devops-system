@@ -30,3 +30,4 @@
 [2026-03-27] E4.2 — УСПЕШНО — Три точечных исправления: results/knowledge.json создан и закоммичен (KNOWLEDGE OK: id=1, E4.1 proof); удалён неиспользуемый import os из knowledge_store.py; удалена строка AGENT_WRITE_TIMESTAMP из agent/runtime_engine.py
 [2026-03-27] E4.3 — УСПЕШНО — KnowledgeStore интегрирован в CodeAgent: импорт добавлен; analyze_with_claude загружает get_recent(3) и включает в prompt; после успешного анализа вызывает save_pattern("code_analysis", ...); py_compile: OK
 [2026-03-27] E4.4 — УСПЕШНО — KnowledgeStore интегрирован в RuntimeEngine.analyze(): ветки if/elif/else присваивают analysis, единый блок ks.save_pattern("runtime_analysis", {...}) вызывается перед return; py_compile: OK
+[2026-03-27] E4.5 — УСПЕШНО — Удалён дублирующий импорт KnowledgeStore внутри метода analyze(); добавлена проверка повторов через ks.get_recent(3): если последние 3 результата совпадают — выводится WARNING; py_compile: OK
