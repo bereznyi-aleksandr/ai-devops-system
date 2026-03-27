@@ -12,7 +12,7 @@
 - Оркестратор: orchestrator/orchestrator.py
 
 ## ТЕКУЩАЯ ФАЗА
-CURRENT_PHASE: E5.1_BLOCKED_NO_GCP_CREDENTIALS
+CURRENT_PHASE: E5.4_FINAL_TEST_PASSED
 
 ## ПРАВИЛА РАБОТЫ
 1. Перед каждым действием читай этот файл
