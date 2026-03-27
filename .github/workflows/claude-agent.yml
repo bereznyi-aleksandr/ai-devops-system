@@ -28,13 +28,14 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
           if [ "${{ github.event_name }}" = "issues" ]; then
-            TASK="${{ github.event.issue.body }}"
+            printf '%s' "$ISSUE_BODY" > /tmp/task.txt
           else
-            TASK="$(cat TASK.md)"
+            cp TASK.md /tmp/task.txt
           fi
-          claude --dangerously-skip-permissions -p "$TASK. После выполнения обнови PROGRESS.md записью о результате."
+          claude --dangerously-skip-permissions -p "$(cat /tmp/task.txt). После выполнения обнови PROGRESS.md записью о результате."
 
       - name: Commit results
         run: |
