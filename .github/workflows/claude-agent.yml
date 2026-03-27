@@ -36,10 +36,11 @@ jobs:
           fi  
           claude --dangerously-skip-permissions -p "$TASK. После выполнения обнови PROGRESS.md записью о результате."  
   
-      - name: Commit results  
-        run: |  
-          git config user.name "Claude Code Agent"  
-          git config user.email "agent@claude.ai"  
-          git add -A  
-          git diff --staged --quiet || git commit -m "Agent: task completed"  
-          git push
+      - name: Commit results
+        run: |
+          git config user.name "Claude Code Agent"
+          git config user.email "agent@claude.ai"
+          git add -A
+          git diff --staged --quiet || git commit -m "Agent: task completed"
+          git pull --rebase origin main
+          git push origin main
