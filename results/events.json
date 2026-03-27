@@ -5,5 +5,13 @@
     "payload": {
       "msg": "ok"
     }
+  },
+  {
+    "event_type": "drift_detected",
+    "timestamp": "2026-03-27T08:53:27Z",
+    "payload": {
+      "revision": "test-revision-001",
+      "source": "runtime_engine"
+    }
   }
 ]

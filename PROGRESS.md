@@ -22,3 +22,4 @@
 
 [2026-03-27] E3.1 — УСПЕШНО — Создан eventbus/event_bus.py с классом EventBus (методы: publish, subscribe, clear); события хранятся в results/events.json; stdlib-only; py_compile: OK
 [2026-03-27] E3.2 — УСПЕШНО — Runtime Agent импортирует EventBus; при обнаружении revision drift вызывает EventBus().publish("drift_detected", {"revision": self.runtime.revision}); синтаксис проверен; results/events.json создаётся при запуске
+[2026-03-27] E3.4 — ДОКАЗАНО — EventBus публикует боевое событие drift_detected; assert event_type == 'drift_detected' и assert payload.revision == 'test-revision-001' прошли успешно; вывод: DRIFT EVENT OK с timestamp 2026-03-27T08:53:27Z
