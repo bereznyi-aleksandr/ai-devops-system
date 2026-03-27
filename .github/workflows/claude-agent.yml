@@ -1,37 +1,45 @@
-name: Claude Code Agent
-
-on:
-  push:
-    paths:
-      - 'TASK.md'
-
-jobs:
-  run-claude:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
-
-      - name: Run Claude Code
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          claude --dangerously-skip-permissions -p "$(cat TASK.md). После выполнения задачи обнови файл PROGRESS.md добавив запись о результате в формате: [$(date)] ЗАДАЧА: <что сделано> СТАТУС: <успешно/ошибка>"
-
-      - name: Commit results
-        run: |
-          git config user.name "Claude Code Agent"
-          git config user.email "agent@claude.ai"
-          git add -A
-          git diff --staged --quiet || git commit -m "Agent: $(head -1 TASK.md)"
+name: Claude Code Agent  
+  
+on:  
+  push:  
+    paths:  
+      - 'TASK.md'  
+  issues:  
+    types: [opened, labeled]  
+  
+jobs:  
+  run-claude:  
+    runs-on: ubuntu-latest  
+    permissions:  
+      contents: write  
+      issues: write  
+    steps:  
+      - uses: actions/checkout@v4  
+  
+      - name: Setup Node.js  
+        uses: actions/setup-node@v4  
+        with:  
+          node-version: '20'  
+  
+      - name: Install Claude Code  
+        run: npm install -g @anthropic-ai/claude-code  
+  
+      - name: Run Claude Code  
+        env:  
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}  
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+        run: |  
+          if [ "${{ github.event_name }}" = "issues" ]; then  
+            TASK="${{ github.event.issue.body }}"  
+          else  
+            TASK="$(cat TASK.md)"  
+          fi  
+          claude --dangerously-skip-permissions -p "$TASK. После выполнения обнови PROGRESS.md записью о результате."  
+  
+      - name: Commit results  
+        run: |  
+          git config user.name "Claude Code Agent"  
+          git config user.email "agent@claude.ai"  
+          git add -A  
+          git diff --staged --quiet || git commit -m "Agent: task completed"  
           git push
