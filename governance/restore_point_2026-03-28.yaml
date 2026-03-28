@@ -1,0 +1,94 @@
+restore_point_id: RESTORE-2026-03-28-01
+snapshot_date: 2026-03-28
+ssot_file: MASTER_PROMPT_v151_CANON_FINAL.txt
+ssot_version: v151_CANON_FINAL
+restore_cycle_mode: MANUAL_BOOTSTRAP_UNDER_OPERATOR_OVERRIDE
+
+final_verdict:
+  restore_point_status: COMPLETED_WITH_CONDITIONS
+  restore_artifact_completeness: COMPLETE_WITH_KNOWN_RISKS
+  restore_artifact_integrity: PASS_WITH_KNOWN_RISKS
+  restore_readiness: LIMITED_RESTORE_READINESS
+  final_approval: APPROVE_WITH_CONDITIONS
+
+bm2_route_source_snapshot:
+  primary_master_prompt: MASTER_PROMPT_v151_CANON_FINAL.txt
+  ssot_status: CONFIRMED
+  route_source_verdict: COMPLETED_AND_CONFIRMED
+
+bm3_repo_state_snapshot:
+  repository_full_name: bereznyi-aleksandr/ai-devops-system
+  local_active_branch: master
+  remote_default_branch: main
+  commit_sha: 108507c5642298e34adf24964d553cc123bd859
+  working_tree_status: DIRTY
+  pending_changes: PRESENT_MANY
+  artifacts_presence_absence:
+    PROGRESS.md: ABSENT
+    governance/exchange_ledger.csv: ABSENT
+    governance/dispatch_registry.json: ABSENT
+    governance/transition_map.json: ABSENT
+    governance/ledger_schema.json: ABSENT
+    governance/action_registry.json: ABSENT
+
+bm4_runtime_secrets_storage_snapshot:
+  runtime_object: orchestrator-job
+  region: europe-west4
+  executions_list_result: NO_ITEMS_RETURNED
+  image: europe-west4-docker.pkg.dev/barber-483016/barber/barber-agent:latest
+  command: python3
+  args: orchestrator/orchestrator.py
+  memory: 512Mi
+  cpu: 1000m
+  task_timeout: 10m
+  max_retries: 3
+  service_account: 753833012856-compute@developer.gserviceaccount.com
+  runtime_secret_bindings:
+    - ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest
+    - GITHUB_TOKEN=GITHUB_TOKEN:latest
+  secret_snapshot_scope:
+    meaning:
+      - TOPOLOGY_NAMES
+      - OBSERVED_BINDINGS
+    does_not_prove:
+      - SECRET_VALUE_VALIDITY
+      - SECRET_VALUE_CORRECTNESS
+  storage_snapshot:
+    target: gs://barber-agent-state/
+    result: NOT_FOUND
+
+bm5_restore_artifact_assembly:
+  assembly_verdict: ASSEMBLY_COMPLETENESS_CONFIRMED
+  included_blocks:
+    - BM-2_ROUTE_SOURCE_SNAPSHOT
+    - BM-3_REPO_STATE_SNAPSHOT
+    - BM-4_RUNTIME_SECRETS_STORAGE_SNAPSHOT
+    - UNRESOLVED_CONFLICTS
+
+bm6_integrity_approval_gate:
+  completeness_status: COMPLETE_WITH_KNOWN_RISKS
+  integrity_status: PASS_WITH_KNOWN_RISKS
+  restore_readiness: LIMITED_RESTORE_READINESS
+  approval_decision: APPROVE_WITH_CONDITIONS
+
+unresolved_conflicts:
+  - conflict_id: CONFLICT-001
+    conflict_type: STORAGE_CONFLICT
+    truth_source: CONFLICT_DETECTED
+    target: gs://barber-agent-state/
+    observed_result: NOT_FOUND
+    impact: HIGH
+  - conflict_id: CONFLICT-002
+    conflict_type: DIRTY_WORKING_TREE
+    truth_source: CONFIRMED
+    observed_result: PRESENT_MANY
+    impact: MEDIUM_TO_HIGH
+  - conflict_id: CONFLICT-003
+    conflict_type: BRANCH_DIVERGENCE
+    truth_source: CONFIRMED
+    detail: local_master_vs_remote_main
+    impact: MEDIUM
+
+p0_status:
+  allowed_now: NO
+  unlock_condition: exchange_ledger_and_trace_contour_normalized
