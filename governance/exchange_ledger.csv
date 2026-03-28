@@ -1,2 +1,3 @@
 task_id,event_time,step_name,actor_role,event_type,description,status
 TASK-LEDGER-0001,2026-03-28T09:43:04+03:00,Exchange Ledger Bootstrap,Оператор,OPERATOR_OVERRIDE,"Оператор явно распорядился создать governance/exchange_ledger.csv в репозитории как каноническое хранилище exchange-ledger до прохождения обычного pre-action audit loop. Файл создан исполнителем по прямой команде оператора.",OVERRIDE
+TASK-LEDGER-0002,2026-03-28T09:46:30+03:00,Exchange Ledger Bootstrap,Исполнитель,TASK_PROPOSED,"Первая каноническая запись о создании exchange-ledger. Исполнитель фиксирует факт создания governance/exchange_ledger.csv и передает результат на аудит. Ожидается решение аудитора по факту bootstrap exchange-ledger.",IN_REVIEW
