@@ -33,8 +33,7 @@ jobs:
         run: |
           mkdir -p .tmp
           echo "Workflow execution layer upgraded for issue/comment-triggered server-side ledger write contour."
-          echo "Proof-run remains out of scope for WRITE-PATH-BUILD-3."
-
+          echo "Proof-run remains out of scope for executor-layer build steps."
       - name: Validate ledger writer presence
         run: |
           test -f governance/ledger_writer.py
@@ -89,7 +88,43 @@ jobs:
           out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           print(f'PAYLOAD_FILE={out.as_posix()}')
           PY
+      - name: Materialize P0.1 executor artifact
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
 
+          payload = json.loads(Path('.tmp/p0_task_proposed_payload.json').read_text(encoding='utf-8'))
+          if payload.get('step_name') != 'P0.1':
+              print('NO_EXECUTOR_ACTION_FOR_STEP')
+              raise SystemExit(0)
+
+          target = Path('governance/action_registry.json')
+          target.parent.mkdir(parents=True, exist_ok=True)
+          content = {
+              'schema_version': 'v153-p0',
+              'registry_name': 'action_registry',
+              'actions': [
+                  {
+                      'action_id': 'P0.1',
+                      'action_name': 'create_action_registry',
+                      'phase': 'P0',
+                      'description': 'Create governance/action_registry.json in the repository as the machine-readable unified action dictionary bootstrap artifact.',
+                      'status': 'DEFINED',
+                  }
+              ],
+          }
+          target.write_text(json.dumps(content, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          subprocess.run(['git', 'add', 'governance/action_registry.json'], check=True)
+          staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], text=True, capture_output=True, check=True).stdout.strip()
+          if 'governance/action_registry.json' not in staged:
+              raise SystemExit('action_registry not staged for commit')
+          subprocess.run(['git', 'commit', '-m', 'Create action registry for P0.1'], check=True)
+          artifact_commit_sha = subprocess.run(['git', 'rev-parse', 'HEAD'], text=True, capture_output=True, check=True).stdout.strip()
+          Path('.tmp/action_registry_commit_sha.txt').write_text(artifact_commit_sha + '\n', encoding='utf-8')
+          print(f'ACTION_REGISTRY_COMMIT_SHA={artifact_commit_sha}')
+          PY
       - name: Execute ledger writer
         run: |
           python3 governance/ledger_writer.py \
