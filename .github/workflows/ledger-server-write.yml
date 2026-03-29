@@ -110,8 +110,12 @@ jobs:
           from pathlib import Path
 
           payload = json.loads(Path('.tmp/p0_task_proposed_payload.json').read_text(encoding='utf-8'))
-          if payload.get('step_name') != 'P0.1':
-              print('NO_EXECUTOR_ACTION_FOR_STEP')
+          if not (
+              payload.get('step_name') == 'P0.1' and
+              payload.get('actor_role') == 'EXECUTOR' and
+              payload.get('event_type') == 'ACTION_EXECUTION_REQUEST'
+          ):
+              print('NO_EXECUTOR_ACTION_FOR_EVENT')
               raise SystemExit(0)
 
           target = Path('governance/action_registry.json')
