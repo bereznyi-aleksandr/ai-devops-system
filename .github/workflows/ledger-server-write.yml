@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -30,16 +32,48 @@ jobs:
       - name: Prepare server-side write contour
         run: |
           mkdir -p .tmp
-          echo "Workflow entrypoint materialized for issue/comment-triggered server-side ledger write contour."
-          echo "Proof-run is intentionally out of scope for WRITE-PATH-BUILD-1."
+          echo "Workflow execution layer upgraded for issue/comment-triggered server-side ledger write contour."
+          echo "Proof-run remains out of scope for WRITE-PATH-BUILD-2."
 
       - name: Validate ledger writer presence
         run: |
           test -f governance/ledger_writer.py
           python3 -m py_compile governance/ledger_writer.py
 
+      - name: Prepare canonical payload template
+        run: |
+          cat > .tmp/p0_task_proposed_payload.json <<'JSON'
+          {
+            "schema_version": "v151",
+            "event_id": "TASK-P0-PROPOSED-0001",
+            "parent_event_id": "LEDGER-ROUTER-TEST-0001",
+            "task_id": "TASK-P0-0001",
+            "event_time": "2026-03-29T18:40:00+03:00",
+            "step_name": "P0.1",
+            "actor_role": "ANALYST",
+            "event_type": "TASK_PROPOSED",
+            "description": "Create governance/action_registry.json as the first Phase 0 Governance Bootstrap step in the current SSOT. Scope is limited to action_registry only; out of scope are Policy Director, Report Bus, Proof Ledger, router redesign, dispatch redesign, and delivery execution.",
+            "status": "IN_REVIEW",
+            "next_actor_role": "AUDITOR",
+            "next_expected_event": "TASK_APPROVED",
+            "routing_decision_basis": "WRITE_PATH_PROOF_1",
+            "commit_sha": ""
+          }
+          JSON
+
+      - name: Writer invocation path
+        run: |
+          echo "Prepared canonical payload at .tmp/p0_task_proposed_payload.json"
+          echo "Server-side writer invocation path:"
+          echo "python3 governance/ledger_writer.py --payload-file .tmp/p0_task_proposed_payload.json --repo-root . --ledger-path governance/exchange_ledger.csv --commit-message 'Update exchange ledger' --binding-commit-message 'Bind commit sha in ledger row'"
+
+      - name: Commit and commit_sha path
+        run: |
+          echo "Commit creation and commit_sha are produced inside governance/ledger_writer.py via git commit and rev-parse HEAD."
+          echo "Proof-run must execute this path in a separate next step."
+
       - name: Guardrail
         run: |
-          echo "This workflow is an entrypoint only."
           echo "Governance decision is not made here."
-          echo "Ledger write proof-run must be executed in a separate step."
+          echo "This step materializes workflow execution-layer only."
+          echo "Actual proof-run remains a separate next step."
