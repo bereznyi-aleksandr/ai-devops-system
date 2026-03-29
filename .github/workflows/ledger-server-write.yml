@@ -1,0 +1,45 @@
+name: ledger-server-write
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  ledger_server_write:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request == null &&
+        contains(github.event.comment.body, 'ledger-write-request')
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prepare server-side write contour
+        run: |
+          mkdir -p .tmp
+          echo "Workflow entrypoint materialized for issue/comment-triggered server-side ledger write contour."
+          echo "Proof-run is intentionally out of scope for WRITE-PATH-BUILD-1."
+
+      - name: Validate ledger writer presence
+        run: |
+          test -f governance/ledger_writer.py
+          python3 -m py_compile governance/ledger_writer.py
+
+      - name: Guardrail
+        run: |
+          echo "This workflow is an entrypoint only."
+          echo "Governance decision is not made here."
+          echo "Ledger write proof-run must be executed in a separate step."
