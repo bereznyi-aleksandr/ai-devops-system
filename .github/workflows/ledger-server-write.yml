@@ -33,47 +33,86 @@ jobs:
         run: |
           mkdir -p .tmp
           echo "Workflow execution layer upgraded for issue/comment-triggered server-side ledger write contour."
-          echo "Proof-run remains out of scope for WRITE-PATH-BUILD-2."
+          echo "Proof-run remains out of scope for WRITE-PATH-BUILD-3."
 
       - name: Validate ledger writer presence
         run: |
           test -f governance/ledger_writer.py
           python3 -m py_compile governance/ledger_writer.py
 
-      - name: Prepare canonical payload template
+      - name: Configure git identity for server-side writer
         run: |
-          cat > .tmp/p0_task_proposed_payload.json <<'JSON'
-          {
-            "schema_version": "v151",
-            "event_id": "TASK-P0-PROPOSED-0001",
-            "parent_event_id": "LEDGER-ROUTER-TEST-0001",
-            "task_id": "TASK-P0-0001",
-            "event_time": "2026-03-29T18:40:00+03:00",
-            "step_name": "P0.1",
-            "actor_role": "ANALYST",
-            "event_type": "TASK_PROPOSED",
-            "description": "Create governance/action_registry.json as the first Phase 0 Governance Bootstrap step in the current SSOT. Scope is limited to action_registry only; out of scope are Policy Director, Report Bus, Proof Ledger, router redesign, dispatch redesign, and delivery execution.",
-            "status": "IN_REVIEW",
-            "next_actor_role": "AUDITOR",
-            "next_expected_event": "TASK_APPROVED",
-            "routing_decision_basis": "WRITE_PATH_PROOF_1",
-            "commit_sha": ""
-          }
-          JSON
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Writer invocation path
+      - name: Build payload from issue comment
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          echo "Prepared canonical payload at .tmp/p0_task_proposed_payload.json"
-          echo "Server-side writer invocation path:"
-          echo "python3 governance/ledger_writer.py --payload-file .tmp/p0_task_proposed_payload.json --repo-root . --ledger-path governance/exchange_ledger.csv --commit-message 'Update exchange ledger' --binding-commit-message 'Bind commit sha in ledger row'"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
 
-      - name: Commit and commit_sha path
+          body = os.environ.get('COMMENT_BODY', '')
+          payload = {}
+          for line in body.splitlines():
+              line = line.strip()
+              if not line or line == 'ledger-write-request':
+                  continue
+              if '=' not in line:
+                  continue
+              key, value = line.split('=', 1)
+              payload[key.strip()] = value.strip()
+
+          required = [
+              'schema_version',
+              'event_id',
+              'parent_event_id',
+              'task_id',
+              'event_time',
+              'step_name',
+              'actor_role',
+              'event_type',
+              'description',
+              'status',
+              'next_actor_role',
+              'next_expected_event',
+              'routing_decision_basis',
+          ]
+          missing = [key for key in required if key not in payload]
+          if missing:
+              raise SystemExit(f"Missing payload fields from issue comment: {', '.join(missing)}")
+
+          payload['commit_sha'] = ''
+          out = Path('.tmp/p0_task_proposed_payload.json')
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(f'PAYLOAD_FILE={out.as_posix()}')
+          PY
+
+      - name: Execute ledger writer
         run: |
-          echo "Commit creation and commit_sha are produced inside governance/ledger_writer.py via git commit and rev-parse HEAD."
-          echo "Proof-run must execute this path in a separate next step."
+          python3 governance/ledger_writer.py \
+            --payload-file .tmp/p0_task_proposed_payload.json \
+            --repo-root . \
+            --ledger-path governance/exchange_ledger.csv \
+            --commit-message "Update exchange ledger" \
+            --binding-commit-message "Bind commit sha in ledger row" \
+            | tee .tmp/ledger_writer_output.txt
+
+      - name: Capture writer outputs
+        run: |
+          grep '^EVENT_ID=' .tmp/ledger_writer_output.txt
+          grep '^TASK_ID=' .tmp/ledger_writer_output.txt
+          grep '^EVENT_COMMIT_SHA=' .tmp/ledger_writer_output.txt
+          grep '^BINDING_COMMIT_SHA=' .tmp/ledger_writer_output.txt
+
+      - name: Push server-side repo write
+        run: |
+          git push origin HEAD:main
 
       - name: Guardrail
         run: |
           echo "Governance decision is not made here."
-          echo "This step materializes workflow execution-layer only."
-          echo "Actual proof-run remains a separate next step."
+          echo "This workflow now contains actual writer execution path."
+          echo "Proof-run remains a separate next step."
