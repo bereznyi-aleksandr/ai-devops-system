@@ -4,6 +4,11 @@ on:
   issue_comment:
     types: [created]
   workflow_dispatch:
+    inputs:
+      payload_json:
+        description: 'Machine-readable event payload as JSON'
+        required: true
+        type: string
 
 jobs:
   ledger_server_write:
@@ -44,25 +49,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Build payload from issue comment
+      - name: Build payload from ingress
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
+          DISPATCH_PAYLOAD_JSON: ${{ inputs.payload_json }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
           python3 - <<'PY'
           import json
           import os
           from pathlib import Path
-
-          body = os.environ.get('COMMENT_BODY', '')
-          payload = {}
-          for line in body.splitlines():
-              line = line.strip()
-              if not line or line == 'ledger-write-request':
-                  continue
-              if '=' not in line:
-                  continue
-              key, value = line.split('=', 1)
-              payload[key.strip()] = value.strip()
 
           required = [
               'schema_version',
@@ -79,9 +75,27 @@ jobs:
               'next_expected_event',
               'routing_decision_basis',
           ]
+
+          if os.environ.get('GITHUB_EVENT_NAME') == 'workflow_dispatch':
+              raw = os.environ.get('DISPATCH_PAYLOAD_JSON', '').strip()
+              if not raw:
+                  raise SystemExit('Missing payload_json for workflow_dispatch')
+              payload = json.loads(raw)
+          else:
+              body = os.environ.get('COMMENT_BODY', '')
+              payload = {}
+              for line in body.splitlines():
+                  line = line.strip()
+                  if not line or line == 'ledger-write-request':
+                      continue
+                  if '=' not in line:
+                      continue
+                  key, value = line.split('=', 1)
+                  payload[key.strip()] = value.strip()
+
           missing = [key for key in required if key not in payload]
           if missing:
-              raise SystemExit(f"Missing payload fields from issue comment: {', '.join(missing)}")
+              raise SystemExit(f"Missing payload fields from ingress: {', '.join(missing)}")
 
           payload['commit_sha'] = ''
           out = Path('.tmp/p0_task_proposed_payload.json')
@@ -149,5 +163,6 @@ jobs:
       - name: Guardrail
         run: |
           echo "Governance decision is not made here."
-          echo "This workflow now contains actual writer execution path."
+          echo "This workflow accepts issue_comment and workflow_dispatch ingress."
+          echo "workflow_dispatch.payload_json is available for auditor closure-events."
           echo "Proof-run remains a separate next step."
