@@ -5,12 +5,13 @@ Responsibilities:
 - accept a validated event payload
 - append exactly one event to governance/exchange_ledger.csv
 - create a git commit for the append-only update
-- return the resulting commit SHA
+- bind the event commit SHA inside the written ledger row
+- return the resulting commit SHA data
 
 Out of scope:
 - governance decisions
 - routing / dispatch
-- mutation of historical rows
+- schema changes
 """
 
 from __future__ import annotations
@@ -132,21 +133,36 @@ def append_event(ledger_path: Path, payload: Dict[str, str]) -> None:
     write_rows_atomic(ledger_path, rows)
 
 
-def commit_ledger_update(repo_root: Path, ledger_path: Path, commit_message: str) -> str:
+def bind_commit_sha(ledger_path: Path, event_id: str, commit_sha: str) -> None:
+    rows = read_existing_rows(ledger_path)
+    updated = False
+    for row in rows:
+        if row["event_id"] == event_id:
+            row["commit_sha"] = commit_sha
+            updated = True
+            break
+    if not updated:
+        raise LedgerWriterError(f"Unable to bind commit_sha. event_id not found: {event_id}")
+    write_rows_atomic(ledger_path, rows)
+
+
+def stage_ledger(repo_root: Path, ledger_path: Path) -> None:
     relative_path = ledger_path.relative_to(repo_root).as_posix()
     run_git(["add", relative_path], repo_root)
 
+
+def commit_ledger_update(repo_root: Path, ledger_path: Path, commit_message: str) -> str:
+    stage_ledger(repo_root, ledger_path)
     staged_paths = run_git(["diff", "--cached", "--name-only"], repo_root)
     if not staged_paths:
         raise LedgerWriterError("No staged changes found for ledger update")
-
     run_git(["commit", "-m", commit_message], repo_root)
     return run_git(["rev-parse", "HEAD"], repo_root)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Append one event to governance/exchange_ledger.csv and commit it."
+        description="Append one event to governance/exchange_ledger.csv, then bind commit_sha in a follow-up commit."
     )
     parser.add_argument("--payload-file", required=True, help="Path to event payload JSON")
     parser.add_argument(
@@ -164,6 +180,11 @@ def main() -> int:
         default="Update exchange ledger",
         help="Commit message for the append-only ledger update",
     )
+    parser.add_argument(
+        "--binding-commit-message",
+        default="Bind commit sha in ledger row",
+        help="Commit message for the follow-up commit that binds commit_sha inside the row",
+    )
     args = parser.parse_args()
 
     repo_root = Path(args.repo_root).resolve()
@@ -172,8 +193,11 @@ def main() -> int:
 
     try:
         payload = load_payload(payload_path)
+        payload["commit_sha"] = ""
         append_event(ledger_path, payload)
-        commit_sha = commit_ledger_update(repo_root, ledger_path, args.commit_message)
+        event_commit_sha = commit_ledger_update(repo_root, ledger_path, args.commit_message)
+        bind_commit_sha(ledger_path, payload["event_id"], event_commit_sha)
+        binding_commit_sha = commit_ledger_update(repo_root, ledger_path, args.binding_commit_message)
     except LedgerWriterError as exc:
         print(f"LEDGER_WRITER_ERROR={exc}", file=sys.stderr)
         return 1
@@ -181,7 +205,8 @@ def main() -> int:
     print(f"LEDGER_PATH={ledger_path.relative_to(repo_root).as_posix()}")
     print(f"EVENT_ID={payload['event_id']}")
     print(f"TASK_ID={payload['task_id']}")
-    print(f"COMMIT_SHA={commit_sha}")
+    print(f"EVENT_COMMIT_SHA={event_commit_sha}")
+    print(f"BINDING_COMMIT_SHA={binding_commit_sha}")
     return 0
 
 
