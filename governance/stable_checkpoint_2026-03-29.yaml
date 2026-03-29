@@ -33,6 +33,11 @@ closed_blockers:
   - STORAGE_CONFLICT
 
 final_verdict:
-  stable_checkpoint_status: STABLE_CHECKPOINT_CANDIDATE
+  stable_checkpoint_status: CONDITIONAL_APPROVAL
   rollback_readiness: HIGH
   p0_allowed_now: NO
+
+approval_constraints:
+  p0_unlock_status: NO
+  reason_code: TRACE_CONTOUR_NOT_NORMALIZED
+  reason_text: p0 remains locked until exchange_ledger and trace contour are normalized
