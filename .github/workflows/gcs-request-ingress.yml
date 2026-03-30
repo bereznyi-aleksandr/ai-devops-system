@@ -1,0 +1,116 @@
+name: gcs-request-ingress
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+jobs:
+  gcs_request_ingress:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Resolve next GCS request object
+        id: gcs_request
+        shell: bash
+        run: |
+          mkdir -p .tmp governance/inbox/requests
+          set +e
+          gcloud storage ls gs://barber-agent-state/governance/inbox/requests/*.json > .tmp/gcs_request_list.txt 2> .tmp/gcs_request_err.txt
+          status=$?
+          set -e
+          if [ $status -ne 0 ]; then
+            if grep -qi "matched no objects" .tmp/gcs_request_err.txt; then
+              echo "has_request=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            cat .tmp/gcs_request_err.txt
+            exit 1
+          fi
+          request_uri=$(head -n 1 .tmp/gcs_request_list.txt | tr -d '\r')
+          if [ -z "$request_uri" ]; then
+            echo "has_request=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          request_name=$(basename "$request_uri")
+          gcloud storage cp "$request_uri" "governance/inbox/requests/$request_name"
+          echo "has_request=true" >> "$GITHUB_OUTPUT"
+          echo "request_uri=$request_uri" >> "$GITHUB_OUTPUT"
+          echo "request_name=$request_name" >> "$GITHUB_OUTPUT"
+
+      - name: Validate downloaded request payload
+        if: steps.gcs_request.outputs.has_request == 'true'
+        env:
+          REQUEST_NAME: ${{ steps.gcs_request.outputs.request_name }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          required = [
+              'schema_version',
+              'event_id',
+              'parent_event_id',
+              'task_id',
+              'event_time',
+              'step_name',
+              'actor_role',
+              'event_type',
+              'description',
+              'status',
+              'next_actor_role',
+              'next_expected_event',
+              'routing_decision_basis',
+          ]
+          path = Path('governance/inbox/requests') / os.environ['REQUEST_NAME']
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          missing = [key for key in required if key not in payload]
+          if missing:
+              raise SystemExit(f"Missing payload fields in GCS request object: {', '.join(missing)}")
+          print(f'VALIDATED_REQUEST={path.as_posix()}')
+          PY
+
+      - name: Commit repo request file for downstream contour
+        if: steps.gcs_request.outputs.has_request == 'true'
+        run: |
+          git add governance/inbox/requests/*.json
+          staged=$(git diff --cached --name-only)
+          test -n "$staged"
+          git commit -m "Mirror GCS request into repo inbox"
+          git push origin HEAD:main
+
+      - name: Archive processed GCS request object
+        if: steps.gcs_request.outputs.has_request == 'true'
+        env:
+          REQUEST_URI: ${{ steps.gcs_request.outputs.request_uri }}
+          REQUEST_NAME: ${{ steps.gcs_request.outputs.request_name }}
+        run: |
+          gcloud storage mv "$REQUEST_URI" "gs://barber-agent-state/governance/inbox/processed/$REQUEST_NAME"
+
+      - name: Guardrail
+        run: |
+          echo "Governance decision is not made here."
+          echo "This workflow polls gs://barber-agent-state/governance/inbox/requests/*.json and mirrors one request into the repo inbox."
+          echo "Existing ledger-request-ingress remains the downstream processing contour."
+          echo "Proof-run remains a separate next step."
