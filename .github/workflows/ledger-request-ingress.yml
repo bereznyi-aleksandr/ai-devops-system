@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'governance/inbox/requests/*.json'
+  workflow_dispatch:
 
 jobs:
   ledger_request_ingress:
