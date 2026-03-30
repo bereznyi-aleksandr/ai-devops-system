@@ -1,0 +1,110 @@
+name: request-file-create
+
+on:
+  workflow_call:
+    inputs:
+      request_filename:
+        required: true
+        type: string
+      payload_json:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      request_filename:
+        description: 'Request file name under governance/inbox/requests/'
+        required: true
+        type: string
+      payload_json:
+        description: 'Machine-readable request payload as JSON'
+        required: true
+        type: string
+
+jobs:
+  create_request_file:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Validate autonomous request payload
+        env:
+          REQUEST_FILENAME: ${{ inputs.request_filename }}
+          PAYLOAD_JSON: ${{ inputs.payload_json }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          required = [
+              'schema_version',
+              'event_id',
+              'parent_event_id',
+              'task_id',
+              'event_time',
+              'step_name',
+              'actor_role',
+              'event_type',
+              'description',
+              'status',
+              'next_actor_role',
+              'next_expected_event',
+              'routing_decision_basis',
+          ]
+
+          request_filename = os.environ.get('REQUEST_FILENAME', '').strip()
+          if not request_filename:
+              raise SystemExit('Missing request_filename')
+          if '/' in request_filename or '\\' in request_filename:
+              raise SystemExit('request_filename must be a file name only')
+          if not request_filename.endswith('.json'):
+              raise SystemExit('request_filename must end with .json')
+
+          raw = os.environ.get('PAYLOAD_JSON', '').strip()
+          if not raw:
+              raise SystemExit('Missing payload_json')
+
+          payload = json.loads(raw)
+          missing = [key for key in required if key not in payload]
+          if missing:
+              raise SystemExit(f"Missing payload fields: {', '.join(missing)}")
+
+          target = Path('governance/inbox/requests') / request_filename
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(f'REQUEST_FILE={target.as_posix()}')
+          PY
+
+      - name: Commit request file
+        run: |
+          git add governance/inbox/requests/*.json
+          staged=$(git diff --cached --name-only)
+          test -n "$staged"
+          git commit -m "Create autonomous request file"
+
+      - name: Push autonomous request file
+        run: |
+          git push origin HEAD:main
+
+      - name: Guardrail
+        run: |
+          echo "Governance decision is not made here."
+          echo "This workflow creates governance/inbox/requests/*.json from machine-readable payload only."
+          echo "Existing ledger-request-ingress remains the downstream processing contour."
+          echo "Proof-run remains a separate next step."
