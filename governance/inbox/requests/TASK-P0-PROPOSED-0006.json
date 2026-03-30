@@ -1,0 +1,15 @@
+{
+  "schema_version": "v153-p0",
+  "event_id": "TASK-P0-PROPOSED-0006",
+  "parent_event_id": "TASK-P0-ACCEPT-0005",
+  "task_id": "TASK-P0-0004",
+  "event_time": "2026-03-30T13:45:00+03:00",
+  "step_name": "P0.2",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "Propose Phase 0 step P0.2: migrate data and state artifacts out of the repository into gs://barber-agent-state/ so that the repository remains the canonical source for code only. Scope is limited to identifying and migrating data/state artifacts and preserving the repo=code, GCS=data contract. Out of scope: Policy Director, Report Bus upgrade, Proof Ledger implementation, Phase 1 components, and any redesign beyond P0.2 migration contour.",
+  "status": "IN_REVIEW",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "TASK_APPROVED",
+  "routing_decision_basis": "NEXT_ROADMAP_STEP_FROM_SSOT_P0_2"
+}
