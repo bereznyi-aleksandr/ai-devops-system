@@ -1,0 +1,15 @@
+{
+  "schema_version": "v153-p0",
+  "event_id": "TASK-P0-ACCEPT-0008",
+  "parent_event_id": "TASK-P0-EXEC-0007",
+  "task_id": "TASK-P0-0004",
+  "event_time": "2026-03-30T19:05:00+03:00",
+  "step_name": "P0.2",
+  "actor_role": "AUDITOR",
+  "event_type": "RESULT_ACCEPTED",
+  "description": "Auditor accepted the current P0.2 execution-phase result for GCS-driven ingress proof progression.",
+  "status": "ACCEPTED",
+  "next_actor_role": "ANALYST",
+  "next_expected_event": "TASK_PROPOSED",
+  "routing_decision_basis": "AUDITOR_POST_P0_2_EXECUTION_PROOF"
+}
