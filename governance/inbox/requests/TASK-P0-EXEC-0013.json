@@ -1,0 +1,16 @@
+{
+  "schema_version": "v154",
+  "event_id": "TASK-P0-EXEC-0013",
+  "parent_event_id": "TASK-P0-PROPOSED-0011",
+  "task_id": "TASK-P0-0011",
+  "event_time": "2026-03-31T00:00:00Z",
+  "step_name": "P0.3",
+  "actor_role": "EXECUTOR",
+  "event_type": "TASK_PROPOSED",
+  "description": "Create governance/tasks/.gitkeep, governance/current_task.json, .github/workflows/ledger-router.yml",
+  "status": "PROPOSED",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_DECISION",
+  "routing_decision_basis": "P0_3_SUBMITTED_FOR_AUDIT",
+  "commit_sha": ""
+}
