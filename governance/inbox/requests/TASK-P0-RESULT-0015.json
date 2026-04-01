@@ -1,0 +1,16 @@
+{
+  "schema_version": "v154",
+  "event_id": "TASK-P0-RESULT-0015",
+  "parent_event_id": "TASK-P0-EXEC-0014",
+  "task_id": "TASK-P0-0011",
+  "event_time": "2026-03-31T14:00:00Z",
+  "step_name": "P0.3",
+  "actor_role": "AUDITOR",
+  "event_type": "RESULT_ACCEPTED",
+  "description": "P0.3 accepted with remarks. All three files created and verified. Deviation: 3 commits instead of 1. Non-blocking.",
+  "status": "ACCEPTED",
+  "next_actor_role": "ANALYST",
+  "next_expected_event": "TASK_PROPOSED",
+  "routing_decision_basis": "AUDITOR_POST_P0_3_RESULT_ACCEPTED_WITH_REMARKS",
+  "commit_sha": "69d5578"
+}
