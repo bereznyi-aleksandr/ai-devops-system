@@ -1,0 +1,16 @@
+{
+  "schema_version": "v154",
+  "event_id": "TASK-P0-EXEC-0017",
+  "parent_event_id": "TASK-P0-PROPOSED-0016",
+  "task_id": "TASK-P0-0012",
+  "event_time": "2026-03-31T14:30:00Z",
+  "step_name": "P0.4",
+  "actor_role": "EXECUTOR",
+  "event_type": "ACTION_EXECUTION_REQUEST",
+  "description": "Create .github/workflows/executor-runner.yml using anthropics/claude-code-action@v1 with prompt parameter. Triggers on push to current_task.json with status APPROVED or RETRY_REQUIRED.",
+  "status": "IN_PROGRESS",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "RESULT_ACCEPTED",
+  "routing_decision_basis": "AUDITOR_PRE_ACTION_APPROVED_P0_4",
+  "commit_sha": ""
+}
