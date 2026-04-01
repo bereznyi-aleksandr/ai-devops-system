@@ -1,0 +1,16 @@
+{
+  "schema_version": "v154",
+  "event_id": "TASK-P0-EXEC-0014",
+  "parent_event_id": "TASK-P0-EXEC-0013",
+  "task_id": "TASK-P0-0011",
+  "event_time": "2026-03-31T12:00:00Z",
+  "step_name": "P0.3",
+  "actor_role": "EXECUTOR",
+  "event_type": "ACTION_EXECUTION_REQUEST",
+  "description": "Create three files: governance/tasks/.gitkeep, governance/current_task.json with status EMPTY, .github/workflows/ledger-router.yml with repository_dispatch trigger. Single commit.",
+  "status": "IN_PROGRESS",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "RESULT_ACCEPTED",
+  "routing_decision_basis": "AUDITOR_PRE_ACTION_APPROVED_P0_3",
+  "commit_sha": ""
+}
