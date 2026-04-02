@@ -1,0 +1,16 @@
+{
+  "schema_version": "v154",
+  "event_id": "TASK-P0-EXEC-0021",
+  "parent_event_id": "TASK-P0-PROPOSED-0020",
+  "task_id": "TASK-P0-0013",
+  "event_time": "2026-04-01T10:30:00Z",
+  "step_name": "P0.5",
+  "actor_role": "EXECUTOR",
+  "event_type": "ACTION_EXECUTION_REQUEST",
+  "description": "Create .github/workflows/analyst-runner.yml with Claude API call, schema validation gate, ledger write, repository_dispatch.",
+  "status": "IN_PROGRESS",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "RESULT_ACCEPTED",
+  "routing_decision_basis": "AUDITOR_PRE_ACTION_APPROVED_P0_5",
+  "commit_sha": ""
+}
