@@ -1,0 +1,111 @@
+name: Executor Runner
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'governance/current_task.json'
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: 'Task ID to execute'
+        required: false
+        type: string
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read current_task.json
+        id: task
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          task = json.loads(
+            Path('governance/current_task.json').read_text(encoding='utf-8')
+          )
+          status = task.get('status', '')
+          task_id = task.get('task_id', '')
+          allowed = {'APPROVED', 'RETRY_REQUIRED'}
+
+          out = Path(os.environ['GITHUB_OUTPUT'])
+          with out.open('a') as f:
+            f.write(f'status={status}\n')
+            f.write(f'task_id={task_id}\n')
+            f.write(f'should_run={"true" if status in allowed else "false"}\n')
+
+          print(f'STATUS={status}')
+          print(f'TASK_ID={task_id}')
+          print(f'SHOULD_RUN={"true" if status in allowed else "false"}')
+          PY
+
+      - name: Skip if not APPROVED
+        if: steps.task.outputs.should_run != 'true'
+        run: |
+          echo "status=${{ steps.task.outputs.status }}"
+          echo "Skipped — status is not APPROVED or RETRY_REQUIRED."
+
+      - name: Authenticate to Google Cloud
+        if: steps.task.outputs.should_run == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud SDK
+        if: steps.task.outputs.should_run == 'true'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get GitHub PAT from Secret Manager
+        if: steps.task.outputs.should_run == 'true'
+        id: get_pat
+        run: |
+          PAT=$(gcloud secrets versions access latest \
+            --secret="GITHUB_TOKEN" \
+            --project="barber-483016")
+          echo "::add-mask::$PAT"
+          echo "pat=$PAT" >> $GITHUB_OUTPUT
+
+      - name: Configure git identity
+        if: steps.task.outputs.should_run == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run Claude Code Executor
+        if: steps.task.outputs.should_run == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ steps.get_pat.outputs.pat }}
+          prompt: |
+            You are the Executor in an autonomous multi-agent DevOps system.
+            SSOT: MASTER_PROMPT_v154_CANON_FINAL
+            Repository: bereznyi-aleksandr/ai-devops-system
+
+            Read governance/current_task.json for your task payload.
+            Execute exactly what is described in the payload.
+            After execution:
+            1. Commit all changes with message:
+               Agent: <step_name> — <description>
+            2. Record result in governance/exchange_ledger.csv
+               using governance/ledger_writer.py
+            3. Set governance/current_task.json status to EMPTY
+          claude_args: |
+            --max-turns 20
+            --allowedTools Edit,Read,Write,Bash
+
+      - name: Guardrail
+        run: |
+          echo "Governance decision is not made here."
+          echo "Executor runs only on APPROVED or RETRY_REQUIRED status."
