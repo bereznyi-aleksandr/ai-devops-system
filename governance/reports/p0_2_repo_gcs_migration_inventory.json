@@ -4,310 +4,440 @@
   "step_name": "P0.2",
   "status": "PRE_MIGRATION_PLAN_ONLY",
   "bucket_target": "gs://barber-agent-state/",
-  "summary": {
-    "tracked_files_scanned": 27,
-    "code_artifact_count": 27,
-    "data_artifact_count": 0,
+  "methodology": {
+    "default_to_code_logic_used": false,
+    "classification_mode": "factual path-by-path review",
     "actual_migration_performed": false
   },
-  "rules_used": {
-    "storage_split": {
-      "repository": "code",
-      "gcs": "data"
+  "summary": {
+    "tracked_files_scanned": 28,
+    "code_artifact_count": 13,
+    "data_artifact_count": 15,
+    "actual_migration_performed": false
+  },
+  "special_artifact_review": {
+    "governance/exchange_ledger.csv": {
+      "classification": "data",
+      "rationale": "ledger event/state record; mutable governance data"
     },
-    "actual_migration_allowed": false
+    "governance/current_task.json": {
+      "classification": "data",
+      "rationale": "current task runtime/state snapshot"
+    },
+    "governance/dispatch_registry.json": {
+      "classification": "data",
+      "rationale": "dispatch/state registry used for operations"
+    },
+    "governance/inbox/requests/*": {
+      "classification": "data",
+      "rationale": "request queue payload/state artifacts"
+    },
+    "governance/inbox/processed/*": {
+      "classification": "data",
+      "rationale": "processed queue archive/history artifacts"
+    }
   },
   "inventory": [
     {
       "path": ".github/workflows/analyst-runner.yml",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/auditor-runner.yml",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/executor-runner.yml",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/gcs-request-ingress.yml",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/ledger-request-ingress.yml",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/ledger-router.yml",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/ledger-server-write.yml",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/operator-notify.yml",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/request-file-create.yml",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": "governance/action_registry.json",
       "classification": "code",
-      "rationale": "canonical governance file remains in repository"
+      "factual_rationale": "canonical governance registry/source artifact"
     },
     {
       "path": "governance/current_task.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "current task runtime/state snapshot; mutable governance state"
     },
     {
       "path": "governance/dispatch_registry.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "dispatch/state registry; operational mutable data"
     },
     {
       "path": "governance/exchange_ledger.csv",
-      "classification": "code",
-      "rationale": "canonical governance file remains in repository"
+      "classification": "data",
+      "factual_rationale": "ledger event/state record; mutable governance data, not source code"
     },
     {
       "path": "governance/inbox/processed/TASK-P0-ACCEPT-0008.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
     },
     {
       "path": "governance/inbox/processed/TASK-P0-CLOSED-0019.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
     },
     {
       "path": "governance/inbox/processed/TASK-P0-EXEC-0013.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
     },
     {
       "path": "governance/inbox/processed/TASK-P0-EXEC-0014.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
     },
     {
       "path": "governance/inbox/processed/TASK-P0-EXEC-0017.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
     },
     {
       "path": "governance/inbox/processed/TASK-P0-EXEC-0021.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
     },
     {
       "path": "governance/inbox/processed/TASK-P0-EXEC-0023.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
     },
     {
       "path": "governance/inbox/processed/TASK-P0-RESULT-0015.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
     },
     {
       "path": "governance/inbox/processed/TASK-P0-RESULT-0018.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
     },
     {
       "path": "governance/inbox/requests/TASK-P0-EXEC-0007.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "inbox request payload/state artifact; operational queue data"
     },
     {
       "path": "governance/inbox/requests/TASK-P0-PROPOSED-0006.json",
-      "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "classification": "data",
+      "factual_rationale": "inbox request payload/state artifact; operational queue data"
     },
     {
       "path": "governance/ledger_router.py",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "source/config/documentation artifact"
     },
     {
       "path": "governance/ledger_writer.py",
       "classification": "code",
-      "rationale": "workflow/policy/governance source artifact"
+      "factual_rationale": "source/config/documentation artifact"
+    },
+    {
+      "path": "governance/reports/p0_2_repo_gcs_migration_inventory.json",
+      "classification": "data",
+      "factual_rationale": "structured/report/state artifact by path semantics"
     },
     {
       "path": "governance/tasks/.gitkeep",
       "classification": "code",
-      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+      "factual_rationale": "task directory scaffold / controlled repository artifact"
     }
   ],
   "code_artifacts": [
-    ".github/workflows/analyst-runner.yml",
-    ".github/workflows/auditor-runner.yml",
-    ".github/workflows/executor-runner.yml",
-    ".github/workflows/gcs-request-ingress.yml",
-    ".github/workflows/ledger-request-ingress.yml",
-    ".github/workflows/ledger-router.yml",
-    ".github/workflows/ledger-server-write.yml",
-    ".github/workflows/operator-notify.yml",
-    ".github/workflows/request-file-create.yml",
-    "governance/action_registry.json",
-    "governance/current_task.json",
-    "governance/dispatch_registry.json",
-    "governance/exchange_ledger.csv",
-    "governance/inbox/processed/TASK-P0-ACCEPT-0008.json",
-    "governance/inbox/processed/TASK-P0-CLOSED-0019.json",
-    "governance/inbox/processed/TASK-P0-EXEC-0013.json",
-    "governance/inbox/processed/TASK-P0-EXEC-0014.json",
-    "governance/inbox/processed/TASK-P0-EXEC-0017.json",
-    "governance/inbox/processed/TASK-P0-EXEC-0021.json",
-    "governance/inbox/processed/TASK-P0-EXEC-0023.json",
-    "governance/inbox/processed/TASK-P0-RESULT-0015.json",
-    "governance/inbox/processed/TASK-P0-RESULT-0018.json",
-    "governance/inbox/requests/TASK-P0-EXEC-0007.json",
-    "governance/inbox/requests/TASK-P0-PROPOSED-0006.json",
-    "governance/ledger_router.py",
-    "governance/ledger_writer.py",
-    "governance/tasks/.gitkeep"
-  ],
-  "data_artifacts": [],
-  "exact_migration_set_to_gcs": [],
-  "excluded_code_artifacts": [
     {
       "path": ".github/workflows/analyst-runner.yml",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/auditor-runner.yml",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/executor-runner.yml",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/gcs-request-ingress.yml",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/ledger-request-ingress.yml",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/ledger-router.yml",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/ledger-server-write.yml",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/operator-notify.yml",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": ".github/workflows/request-file-create.yml",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "workflow source artifact remains in repository code layer"
     },
     {
       "path": "governance/action_registry.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/current_task.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/dispatch_registry.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/exchange_ledger.csv",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/processed/TASK-P0-ACCEPT-0008.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/processed/TASK-P0-CLOSED-0019.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/processed/TASK-P0-EXEC-0013.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/processed/TASK-P0-EXEC-0014.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/processed/TASK-P0-EXEC-0017.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/processed/TASK-P0-EXEC-0021.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/processed/TASK-P0-EXEC-0023.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/processed/TASK-P0-RESULT-0015.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/processed/TASK-P0-RESULT-0018.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/requests/TASK-P0-EXEC-0007.json",
-      "reason": "classified as code; excluded from GCS migration"
-    },
-    {
-      "path": "governance/inbox/requests/TASK-P0-PROPOSED-0006.json",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "canonical governance registry/source artifact"
     },
     {
       "path": "governance/ledger_router.py",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "source/config/documentation artifact"
     },
     {
       "path": "governance/ledger_writer.py",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "source/config/documentation artifact"
     },
     {
       "path": "governance/tasks/.gitkeep",
-      "reason": "classified as code; excluded from GCS migration"
+      "factual_rationale": "task directory scaffold / controlled repository artifact"
+    }
+  ],
+  "data_artifacts": [
+    {
+      "path": "governance/current_task.json",
+      "factual_rationale": "current task runtime/state snapshot; mutable governance state"
+    },
+    {
+      "path": "governance/dispatch_registry.json",
+      "factual_rationale": "dispatch/state registry; operational mutable data"
+    },
+    {
+      "path": "governance/exchange_ledger.csv",
+      "factual_rationale": "ledger event/state record; mutable governance data, not source code"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-ACCEPT-0008.json",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-CLOSED-0019.json",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0013.json",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0014.json",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0017.json",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0021.json",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0023.json",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-RESULT-0015.json",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-RESULT-0018.json",
+      "factual_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "path": "governance/inbox/requests/TASK-P0-EXEC-0007.json",
+      "factual_rationale": "inbox request payload/state artifact; operational queue data"
+    },
+    {
+      "path": "governance/inbox/requests/TASK-P0-PROPOSED-0006.json",
+      "factual_rationale": "inbox request payload/state artifact; operational queue data"
+    },
+    {
+      "path": "governance/reports/p0_2_repo_gcs_migration_inventory.json",
+      "factual_rationale": "structured/report/state artifact by path semantics"
+    }
+  ],
+  "exact_migration_set_to_gcs": [
+    {
+      "source_path": "governance/current_task.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/current_task.json",
+      "migration_rationale": "current task runtime/state snapshot; mutable governance state"
+    },
+    {
+      "source_path": "governance/dispatch_registry.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/dispatch_registry.json",
+      "migration_rationale": "dispatch/state registry; operational mutable data"
+    },
+    {
+      "source_path": "governance/exchange_ledger.csv",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/exchange_ledger.csv",
+      "migration_rationale": "ledger event/state record; mutable governance data, not source code"
+    },
+    {
+      "source_path": "governance/inbox/processed/TASK-P0-ACCEPT-0008.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/processed/TASK-P0-ACCEPT-0008.json",
+      "migration_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "source_path": "governance/inbox/processed/TASK-P0-CLOSED-0019.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/processed/TASK-P0-CLOSED-0019.json",
+      "migration_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "source_path": "governance/inbox/processed/TASK-P0-EXEC-0013.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/processed/TASK-P0-EXEC-0013.json",
+      "migration_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "source_path": "governance/inbox/processed/TASK-P0-EXEC-0014.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/processed/TASK-P0-EXEC-0014.json",
+      "migration_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "source_path": "governance/inbox/processed/TASK-P0-EXEC-0017.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/processed/TASK-P0-EXEC-0017.json",
+      "migration_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "source_path": "governance/inbox/processed/TASK-P0-EXEC-0021.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/processed/TASK-P0-EXEC-0021.json",
+      "migration_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "source_path": "governance/inbox/processed/TASK-P0-EXEC-0023.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/processed/TASK-P0-EXEC-0023.json",
+      "migration_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "source_path": "governance/inbox/processed/TASK-P0-RESULT-0015.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/processed/TASK-P0-RESULT-0015.json",
+      "migration_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "source_path": "governance/inbox/processed/TASK-P0-RESULT-0018.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/processed/TASK-P0-RESULT-0018.json",
+      "migration_rationale": "processed inbox archive/state artifact; operational history data"
+    },
+    {
+      "source_path": "governance/inbox/requests/TASK-P0-EXEC-0007.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/requests/TASK-P0-EXEC-0007.json",
+      "migration_rationale": "inbox request payload/state artifact; operational queue data"
+    },
+    {
+      "source_path": "governance/inbox/requests/TASK-P0-PROPOSED-0006.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/inbox/requests/TASK-P0-PROPOSED-0006.json",
+      "migration_rationale": "inbox request payload/state artifact; operational queue data"
+    },
+    {
+      "source_path": "governance/reports/p0_2_repo_gcs_migration_inventory.json",
+      "target_gcs_uri": "gs://barber-agent-state/repo-migrated/governance/reports/p0_2_repo_gcs_migration_inventory.json",
+      "migration_rationale": "structured/report/state artifact by path semantics"
+    }
+  ],
+  "excluded_code_artifacts": [
+    {
+      "path": ".github/workflows/analyst-runner.yml",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": ".github/workflows/auditor-runner.yml",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": ".github/workflows/executor-runner.yml",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": ".github/workflows/gcs-request-ingress.yml",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": ".github/workflows/ledger-request-ingress.yml",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": ".github/workflows/ledger-router.yml",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": ".github/workflows/ledger-server-write.yml",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": ".github/workflows/operator-notify.yml",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": ".github/workflows/request-file-create.yml",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": "governance/action_registry.json",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": "governance/ledger_router.py",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": "governance/ledger_writer.py",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
+    },
+    {
+      "path": "governance/tasks/.gitkeep",
+      "reason_for_exclusion": "classified as code after factual path-by-path review"
     }
   ],
   "transfer_plan": {
-    "precondition": "auditor acceptance of inventory and plan",
-    "execution_mode": "separate future step only",
     "source_of_truth_bucket": "gs://barber-agent-state/",
     "target_prefix_rule": "repo-migrated/<repo-relative-path>",
+    "execution_mode": "separate future step only",
     "notes": [
-      "No actual file transfer executed in P0.2",
-      "This artifact is inventory + classification + plan only",
-      "Migration candidates must be revalidated before execution step"
+      "No actual file transfer executed in corrective P0.2",
+      "Migration set is included only for artifacts factually classified as data",
+      "Excluded code set is produced only after path-by-path factual classification"
     ]
   },
   "explicit_no_migration_result": {
     "actual_migration_performed": false,
-    "reason": "P0.2 scope explicitly excludes execution"
+    "reason": "Corrective P0.2 scope explicitly excludes migration execution"
   }
 }
