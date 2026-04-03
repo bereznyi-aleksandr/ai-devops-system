@@ -7,68 +7,104 @@ on:
 jobs:
   route:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     steps:
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup gcloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Get GitHub PAT from Secret Manager
-        id: get_pat
+      - name: Validate dispatch contract
+        env:
+          NEXT_ROLE: ${{ github.event.client_payload.next_actor_role }}
+          TASK_ID: ${{ github.event.client_payload.task_id }}
+          EVENT_ID: ${{ github.event.client_payload.event_id }}
         run: |
-          PAT=$(gcloud secrets versions access latest \
-            --secret="GITHUB_TOKEN" \
-            --project="barber-483016")
-          echo "::add-mask::$PAT"
-          echo "pat=$PAT" >> $GITHUB_OUTPUT
+          python3 - <<'PY'
+          import os, sys
 
-      - name: Read routing payload
-        id: routing
-        run: |
-          echo "next_actor_role=${{ github.event.client_payload.next_actor_role }}" \
-            >> $GITHUB_OUTPUT
-          echo "task_id=${{ github.event.client_payload.task_id }}" \
-            >> $GITHUB_OUTPUT
+          allowed_roles = {
+              'ANALYST',
+              'AUDITOR',
+              'CLOUD_CODE',
+              'OPERATOR',
+              'LEDGER_WRITER',
+              'LEDGER_ROUTER',
+              'NONE'
+          }
+
+          next_role = os.environ.get('NEXT_ROLE', '').strip()
+          task_id = os.environ.get('TASK_ID', '').strip()
+          event_id = os.environ.get('EVENT_ID', '').strip()
+
+          if not next_role:
+              print('VALIDATION_FAILED: missing next_actor_role', file=sys.stderr)
+              sys.exit(1)
+
+          if next_role not in allowed_roles:
+              print(f'VALIDATION_FAILED: invalid next_actor_role: {next_role}', file=sys.stderr)
+              sys.exit(1)
+
+          if not task_id:
+              print('VALIDATION_FAILED: missing task_id', file=sys.stderr)
+              sys.exit(1)
+
+          if not event_id:
+              print('VALIDATION_FAILED: missing event_id', file=sys.stderr)
+              sys.exit(1)
+
+          print('DISPATCH_CONTRACT=PASSED')
+          PY
 
       - name: Route to ANALYST
-        if: steps.routing.outputs.next_actor_role == 'ANALYST'
+        if: ${{ github.event.client_payload.next_actor_role == 'ANALYST' }}
         env:
-          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh workflow run analyst-runner.yml \
-            -f task_id=${{ steps.routing.outputs.task_id }} \
-            --repo bereznyi-aleksandr/ai-devops-system || \
-            echo "WARNING: analyst-runner.yml not found - pending P0.5"
+            --repo bereznyi-aleksandr/ai-devops-system \
+            -f task_id="${{ github.event.client_payload.task_id }}"
 
       - name: Route to AUDITOR
-        if: steps.routing.outputs.next_actor_role == 'AUDITOR'
+        if: ${{ github.event.client_payload.next_actor_role == 'AUDITOR' }}
         env:
-          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh workflow run auditor-runner.yml \
-            -f task_id=${{ steps.routing.outputs.task_id }} \
-            --repo bereznyi-aleksandr/ai-devops-system || \
-            echo "WARNING: auditor-runner.yml not found - pending P0.6"
+            --repo bereznyi-aleksandr/ai-devops-system \
+            -f task_id="${{ github.event.client_payload.task_id }}"
+
+      - name: Route to CLOUD_CODE
+        if: ${{ github.event.client_payload.next_actor_role == 'CLOUD_CODE' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run executor-runner.yml \
+            --repo bereznyi-aleksandr/ai-devops-system \
+            -f task_id="${{ github.event.client_payload.task_id }}"
 
       - name: Route to OPERATOR
-        if: steps.routing.outputs.next_actor_role == 'OPERATOR'
+        if: ${{ github.event.client_payload.next_actor_role == 'OPERATOR' }}
         env:
-          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh workflow run operator-notify.yml \
-            -f task_id=${{ steps.routing.outputs.task_id }} \
-            --repo bereznyi-aleksandr/ai-devops-system || \
-            echo "WARNING: operator-notify.yml not found - pending P0.8"
+            --repo bereznyi-aleksandr/ai-devops-system \
+            -f task_id="${{ github.event.client_payload.task_id }}"
 
-      - name: EXECUTOR note
-        if: steps.routing.outputs.next_actor_role == 'EXECUTOR'
+      - name: Route to NONE
+        if: ${{ github.event.client_payload.next_actor_role == 'NONE' }}
         run: |
-          echo "EXECUTOR route: executor-runner triggers on current_task.json push"
+          echo "No downstream workflow required."
+
+      - name: Reject unsupported non-routable roles
+        if: ${{ github.event.client_payload.next_actor_role == 'LEDGER_WRITER' || github.event.client_payload.next_actor_role == 'LEDGER_ROUTER' }}
+        run: |
+          echo "Transport-only router does not self-route to internal ledger roles."
+          exit 1
 
       - name: Guardrail
         run: |
-          echo "Governance decision is not made here."
-          echo "This workflow only routes based on next_actor_role from ledger event."
+          echo "GitHub Actions router is transport-only."
+          echo "Router does not make governance decisions."
+          echo "Router only forwards by canonical v155 next_actor_role."
