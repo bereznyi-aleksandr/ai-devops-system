@@ -1,13 +1,80 @@
 {
-  "schema_version": "v153-p0",
-  "registry_name": "action_registry",
-  "actions": [
-    {
-      "action_id": "P0.1",
-      "action_name": "create_action_registry",
-      "phase": "P0",
-      "description": "Create governance/action_registry.json in the repository as the machine-readable unified action dictionary bootstrap artifact.",
-      "status": "DEFINED"
+  "schema_version": "v155",
+  "registry_version": 1,
+  "registry_type": "action_registry",
+  "description": "Canonical machine-readable action dictionary for the governance board and execution system.",
+  "actions": {
+    "READ_REPO_STATE": {
+      "action_id": "READ_REPO_STATE",
+      "description": "Read repository state, files, workflow definitions, and tracked artifacts without mutating repo state.",
+      "allowed_actor_roles": ["ANALYST", "AUDITOR", "CLOUD_CODE", "OPERATOR"],
+      "risk_level": "LOW",
+      "proof_required": false,
+      "enabled": true
+    },
+    "PROPOSE_TASK": {
+      "action_id": "PROPOSE_TASK",
+      "description": "Create canonical TASK_PROPOSED artifacts for roadmap-driven work.",
+      "allowed_actor_roles": ["ANALYST"],
+      "risk_level": "LOW",
+      "proof_required": true,
+      "enabled": true
+    },
+    "APPROVE_PRE_ACTION": {
+      "action_id": "APPROVE_PRE_ACTION",
+      "description": "Approve or reject a pre-action proposal before execution starts.",
+      "allowed_actor_roles": ["AUDITOR"],
+      "risk_level": "MEDIUM",
+      "proof_required": true,
+      "enabled": true
+    },
+    "EXECUTE_APPROVED_CHANGE": {
+      "action_id": "EXECUTE_APPROVED_CHANGE",
+      "description": "Perform approved repository or workflow changes within the execution contour.",
+      "allowed_actor_roles": ["CLOUD_CODE"],
+      "risk_level": "HIGH",
+      "proof_required": true,
+      "enabled": true
+    },
+    "WRITE_LEDGER_EVENT": {
+      "action_id": "WRITE_LEDGER_EVENT",
+      "description": "Write validated governance events to exchange_ledger.csv through the canonical ledger writer.",
+      "allowed_actor_roles": ["ANALYST", "AUDITOR", "CLOUD_CODE", "OPERATOR", "LEDGER_WRITER"],
+      "risk_level": "MEDIUM",
+      "proof_required": true,
+      "enabled": true
+    },
+    "ROUTE_NEXT_ACTOR": {
+      "action_id": "ROUTE_NEXT_ACTOR",
+      "description": "Route the next canonical actor through transport-only workflow dispatch.",
+      "allowed_actor_roles": ["LEDGER_ROUTER"],
+      "risk_level": "LOW",
+      "proof_required": true,
+      "enabled": true
+    },
+    "NOTIFY_OPERATOR": {
+      "action_id": "NOTIFY_OPERATOR",
+      "description": "Produce operator-facing handoff or notification records without making audit or implementation decisions.",
+      "allowed_actor_roles": ["OPERATOR"],
+      "risk_level": "LOW",
+      "proof_required": true,
+      "enabled": true
+    },
+    "CLOSE_TASK": {
+      "action_id": "CLOSE_TASK",
+      "description": "Close a task after accepted result and completed governance flow.",
+      "allowed_actor_roles": ["AUDITOR"],
+      "risk_level": "MEDIUM",
+      "proof_required": true,
+      "enabled": true
+    },
+    "BLOCK_EMERGENCY": {
+      "action_id": "BLOCK_EMERGENCY",
+      "description": "Block execution or workflow progression under emergency or policy breach conditions.",
+      "allowed_actor_roles": ["AUDITOR"],
+      "risk_level": "HIGH",
+      "proof_required": true,
+      "enabled": true
     }
-  ]
+  }
 }
