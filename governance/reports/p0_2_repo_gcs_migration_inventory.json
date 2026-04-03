@@ -1,0 +1,313 @@
+{
+  "schema_version": "v155",
+  "artifact_type": "repo_gcs_migration_inventory",
+  "step_name": "P0.2",
+  "status": "PRE_MIGRATION_PLAN_ONLY",
+  "bucket_target": "gs://barber-agent-state/",
+  "summary": {
+    "tracked_files_scanned": 27,
+    "code_artifact_count": 27,
+    "data_artifact_count": 0,
+    "actual_migration_performed": false
+  },
+  "rules_used": {
+    "storage_split": {
+      "repository": "code",
+      "gcs": "data"
+    },
+    "actual_migration_allowed": false
+  },
+  "inventory": [
+    {
+      "path": ".github/workflows/analyst-runner.yml",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": ".github/workflows/auditor-runner.yml",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": ".github/workflows/executor-runner.yml",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": ".github/workflows/gcs-request-ingress.yml",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": ".github/workflows/ledger-request-ingress.yml",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": ".github/workflows/ledger-router.yml",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": ".github/workflows/ledger-server-write.yml",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": ".github/workflows/operator-notify.yml",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": ".github/workflows/request-file-create.yml",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": "governance/action_registry.json",
+      "classification": "code",
+      "rationale": "canonical governance file remains in repository"
+    },
+    {
+      "path": "governance/current_task.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/dispatch_registry.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/exchange_ledger.csv",
+      "classification": "code",
+      "rationale": "canonical governance file remains in repository"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-ACCEPT-0008.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-CLOSED-0019.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0013.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0014.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0017.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0021.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0023.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-RESULT-0015.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-RESULT-0018.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/requests/TASK-P0-EXEC-0007.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/inbox/requests/TASK-P0-PROPOSED-0006.json",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    },
+    {
+      "path": "governance/ledger_router.py",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": "governance/ledger_writer.py",
+      "classification": "code",
+      "rationale": "workflow/policy/governance source artifact"
+    },
+    {
+      "path": "governance/tasks/.gitkeep",
+      "classification": "code",
+      "rationale": "defaulted to code to avoid unsafe migration of source artifacts"
+    }
+  ],
+  "code_artifacts": [
+    ".github/workflows/analyst-runner.yml",
+    ".github/workflows/auditor-runner.yml",
+    ".github/workflows/executor-runner.yml",
+    ".github/workflows/gcs-request-ingress.yml",
+    ".github/workflows/ledger-request-ingress.yml",
+    ".github/workflows/ledger-router.yml",
+    ".github/workflows/ledger-server-write.yml",
+    ".github/workflows/operator-notify.yml",
+    ".github/workflows/request-file-create.yml",
+    "governance/action_registry.json",
+    "governance/current_task.json",
+    "governance/dispatch_registry.json",
+    "governance/exchange_ledger.csv",
+    "governance/inbox/processed/TASK-P0-ACCEPT-0008.json",
+    "governance/inbox/processed/TASK-P0-CLOSED-0019.json",
+    "governance/inbox/processed/TASK-P0-EXEC-0013.json",
+    "governance/inbox/processed/TASK-P0-EXEC-0014.json",
+    "governance/inbox/processed/TASK-P0-EXEC-0017.json",
+    "governance/inbox/processed/TASK-P0-EXEC-0021.json",
+    "governance/inbox/processed/TASK-P0-EXEC-0023.json",
+    "governance/inbox/processed/TASK-P0-RESULT-0015.json",
+    "governance/inbox/processed/TASK-P0-RESULT-0018.json",
+    "governance/inbox/requests/TASK-P0-EXEC-0007.json",
+    "governance/inbox/requests/TASK-P0-PROPOSED-0006.json",
+    "governance/ledger_router.py",
+    "governance/ledger_writer.py",
+    "governance/tasks/.gitkeep"
+  ],
+  "data_artifacts": [],
+  "exact_migration_set_to_gcs": [],
+  "excluded_code_artifacts": [
+    {
+      "path": ".github/workflows/analyst-runner.yml",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": ".github/workflows/auditor-runner.yml",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": ".github/workflows/executor-runner.yml",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": ".github/workflows/gcs-request-ingress.yml",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": ".github/workflows/ledger-request-ingress.yml",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": ".github/workflows/ledger-router.yml",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": ".github/workflows/ledger-server-write.yml",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": ".github/workflows/operator-notify.yml",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": ".github/workflows/request-file-create.yml",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/action_registry.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/current_task.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/dispatch_registry.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/exchange_ledger.csv",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-ACCEPT-0008.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-CLOSED-0019.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0013.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0014.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0017.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0021.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-EXEC-0023.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-RESULT-0015.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/processed/TASK-P0-RESULT-0018.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/requests/TASK-P0-EXEC-0007.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/inbox/requests/TASK-P0-PROPOSED-0006.json",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/ledger_router.py",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/ledger_writer.py",
+      "reason": "classified as code; excluded from GCS migration"
+    },
+    {
+      "path": "governance/tasks/.gitkeep",
+      "reason": "classified as code; excluded from GCS migration"
+    }
+  ],
+  "transfer_plan": {
+    "precondition": "auditor acceptance of inventory and plan",
+    "execution_mode": "separate future step only",
+    "source_of_truth_bucket": "gs://barber-agent-state/",
+    "target_prefix_rule": "repo-migrated/<repo-relative-path>",
+    "notes": [
+      "No actual file transfer executed in P0.2",
+      "This artifact is inventory + classification + plan only",
+      "Migration candidates must be revalidated before execution step"
+    ]
+  },
+  "explicit_no_migration_result": {
+    "actual_migration_performed": false,
+    "reason": "P0.2 scope explicitly excludes execution"
+  }
+}
