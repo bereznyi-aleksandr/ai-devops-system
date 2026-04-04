@@ -1,0 +1,14 @@
+{
+  "schema_version": "v155",
+  "task_id": "TASK-P2-0002",
+  "step_name": "P2.2",
+  "status": "PROPOSED",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "parent_event_id": "TASK-AUTO-LAUNCH-0046",
+  "description": "Propose Phase 2 step P2.2: create governance/agent_factory_step_2.py as the next Agent Factory component after P2.1. Scope is limited to extending the Agent Factory contour from the confirmed P2.1 baseline and the proven live autonomy state. The new artifact must preserve the canonical v155 machine-readable contract, keep AUDITOR verdict authority external, keep existing governance components non-replaced, and formalize the next post-P2.1 factory step in code. Out of scope: ledger backfill, retroactive normalization of historical events, workflow redesign, and mutation of already accepted P1/P2.1 artifacts.",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "BASELINE_ACCEPTED_AFTER_TASK_AUTO_LAUNCH_0046_AND_NEXT_AGENT_FACTORY_STEP",
+  "source_event_id": "TASK-P2-PROPOSED-0047"
+}
