@@ -228,6 +228,17 @@ jobs:
           print('SCHEMA_VALIDATION=PASSED')
           PY
 
+      - name: Debug proof inputs
+        run: |
+          pwd
+          ls -l /tmp/auditor_validated_output.json /tmp/auditor_raw_output.txt /tmp/task_context.json || true
+          python3 - <<'PY'
+          from pathlib import Path
+          for x in ['/tmp/auditor_validated_output.json','/tmp/auditor_raw_output.txt','/tmp/task_context.json']:
+              p = Path(x)
+              print(x, 'exists=', p.exists(), 'size=', p.stat().st_size if p.exists() else 'NA')
+          PY
+
       - name: Enforce proof target for accepted results
         run: |
           python3 - <<'PY'
