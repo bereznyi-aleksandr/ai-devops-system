@@ -14,10 +14,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Prepare runtime dir
-        run: mkdir -p .runtime
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Prepare runtime dir
+        run: mkdir -p .runtime
         with:
           fetch-depth: 0
 
