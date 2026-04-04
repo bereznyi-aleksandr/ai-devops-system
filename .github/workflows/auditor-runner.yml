@@ -71,7 +71,7 @@ jobs:
               "ledger_tail": last_rows
           }
 
-          out_file = Path('.tmp/auditor_context.json')
+          out_file = Path('.runtime/task-context.json')
           out_file.parent.mkdir(parents=True, exist_ok=True)
           out_file.write_text(
               json.dumps(context, ensure_ascii=False, indent=2),
@@ -94,7 +94,7 @@ jobs:
           api_key = os.environ['ANTHROPIC_API_KEY']
           task_id = os.environ['TASK_ID']
           model = os.getenv('LLM_MODEL') or 'claude-sonnet-4-20250514'
-          context = json.loads(Path('.tmp/auditor_context.json').read_text(encoding='utf-8'))
+          context = json.loads(Path('.runtime/task-context.json').read_text(encoding='utf-8'))
 
           system_prompt = """You are the AUDITOR in an autonomous multi-agent DevOps system.
           SSOT: MASTER_PROMPT_v155_CANON_FINAL
