@@ -234,10 +234,10 @@ jobs:
       - name: Debug proof inputs
         run: |
           pwd
-          ls -l .runtime/auditor_validated_output.json .runtime/auditor_raw_output.txt .runtime/task_context.json || true
+          ls -l .runtime/auditor_validated_output.json .runtime/auditor_raw_output.txt .runtime/task-context.json || true
           python3 - <<'PY'
           from pathlib import Path
-          for x in ['.runtime/auditor_validated_output.json','.runtime/auditor_raw_output.txt','.runtime/task_context.json']:
+          for x in ['.runtime/auditor_validated_output.json','.runtime/auditor_raw_output.txt','.runtime/task-context.json']:
               p = Path(x)
               print(x, 'exists=', p.exists(), 'size=', p.stat().st_size if p.exists() else 'NA')
           PY
@@ -259,7 +259,7 @@ jobs:
               print('VALIDATION_FAILED: neither .runtime/auditor_validated_output.json nor .runtime/auditor_raw_output.txt exists', file=sys.stderr)
               raise SystemExit(1)
 
-          context = json.loads(Path('.runtime/task_context.json').read_text(encoding='utf-8'))
+          context = json.loads(Path('.runtime/task-context.json').read_text(encoding='utf-8'))
 
           if payload.get('event_type') != 'RESULT_ACCEPTED':
               print('PROOF_CHECK_SKIPPED')
