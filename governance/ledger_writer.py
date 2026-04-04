@@ -126,11 +126,23 @@ def write_rows_atomic(ledger_path: Path, rows: List[Dict[str, str]]) -> None:
     temp_path.replace(ledger_path)
 
 
-def append_event(ledger_path: Path, payload: Dict[str, str]) -> None:
+def has_task_closed(rows: List[Dict[str, str]], task_id: str) -> bool:
+    return any(
+        row.get('task_id') == task_id and row.get('event_type') == 'TASK_CLOSED'
+        for row in rows
+    )
+
+
+def append_event(ledger_path: Path, payload: Dict[str, str]) -> bool:
     rows = read_existing_rows(ledger_path)
-    ensure_unique_event_id(rows, payload["event_id"])
+    ensure_unique_event_id(rows, payload['event_id'])
+
+    if payload.get('event_type') == 'TASK_CLOSED' and has_task_closed(rows, payload.get('task_id', '')):
+        return False
+
     rows.append(payload)
     write_rows_atomic(ledger_path, rows)
+    return True
 
 
 def bind_commit_sha(ledger_path: Path, event_id: str, commit_sha: str) -> None:
@@ -194,7 +206,10 @@ def main() -> int:
     try:
         payload = load_payload(payload_path)
         payload["commit_sha"] = ""
-        append_event(ledger_path, payload)
+        appended = append_event(ledger_path, payload)
+        if not appended:
+            print('LEDGER_WRITER_SKIPPED_DUPLICATE_TASK_CLOSED')
+            return 0
         event_commit_sha = commit_ledger_update(repo_root, ledger_path, args.commit_message)
         bind_commit_sha(ledger_path, payload["event_id"], event_commit_sha)
         binding_commit_sha = commit_ledger_update(repo_root, ledger_path, args.binding_commit_message)
