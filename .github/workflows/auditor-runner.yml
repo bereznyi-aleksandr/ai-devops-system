@@ -289,7 +289,7 @@ jobs:
       - name: Write validated output to ledger
         run: |
           python3 governance/ledger_writer.py \
-            --payload-file .tmp/auditor_validated_output.json \
+            --payload-file .runtime/auditor_validated_output.json \
             --repo-root . \
             --ledger-path governance/exchange_ledger.csv \
             --commit-message "Auditor: decision written to ledger" \
