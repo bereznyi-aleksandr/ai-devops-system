@@ -228,6 +228,41 @@ jobs:
           print('SCHEMA_VALIDATION=PASSED')
           PY
 
+      - name: Enforce proof target for accepted results
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          payload = json.loads(Path('/tmp/auditor_validated_output.json').read_text(encoding='utf-8'))
+          context = json.loads(Path('/tmp/task_context.json').read_text(encoding='utf-8'))
+
+          if payload.get('event_type') != 'RESULT_ACCEPTED':
+              print('PROOF_CHECK_SKIPPED')
+              raise SystemExit(0)
+
+          if str(context.get('proof_target', '')).strip() != 'file exists in main with v155 contract':
+              print('PROOF_CHECK_SKIPPED_UNSUPPORTED_TARGET')
+              raise SystemExit(0)
+
+          predecessor = context.get('payload', {}).get('predecessor', '')
+          if predecessor != 'governance/agent_factory_step_1.py':
+              print(f'VALIDATION_FAILED: unsupported predecessor for proof check: {predecessor}', file=sys.stderr)
+              raise SystemExit(1)
+
+          expected = Path('governance/agent_factory_step_2.py')
+          if not expected.exists():
+              print(f'VALIDATION_FAILED: proof_target failed, missing file: {expected}', file=sys.stderr)
+              raise SystemExit(1)
+
+          body = expected.read_text(encoding='utf-8')
+          if 'v155' not in body:
+              print(f'VALIDATION_FAILED: proof_target failed, v155 marker missing in {expected}', file=sys.stderr)
+              raise SystemExit(1)
+
+          print(f'PROOF_CHECK_PASSED:{expected}')
+          PY
+
       - name: Write validated output to ledger
         run: |
           python3 governance/ledger_writer.py \
