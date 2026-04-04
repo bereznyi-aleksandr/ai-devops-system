@@ -234,7 +234,17 @@ jobs:
           import json, sys
           from pathlib import Path
 
-          payload = json.loads(Path('/tmp/auditor_validated_output.json').read_text(encoding='utf-8'))
+          validated = Path('/tmp/auditor_validated_output.json')
+          raw = Path('/tmp/auditor_raw_output.txt')
+
+          if validated.exists():
+              payload = json.loads(validated.read_text(encoding='utf-8'))
+          elif raw.exists():
+              payload = json.loads(raw.read_text(encoding='utf-8'))
+          else:
+              print('VALIDATION_FAILED: neither /tmp/auditor_validated_output.json nor /tmp/auditor_raw_output.txt exists', file=sys.stderr)
+              raise SystemExit(1)
+
           context = json.loads(Path('/tmp/task_context.json').read_text(encoding='utf-8'))
 
           if payload.get('event_type') != 'RESULT_ACCEPTED':
