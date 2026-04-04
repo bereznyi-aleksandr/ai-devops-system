@@ -1,0 +1,13 @@
+{
+  "schema_version": "v155",
+  "task_id": "TASK-P2-0003",
+  "step_name": "P2.3",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "Create .github/workflows/analyst-task-writer.yml. Accepts task_payload JSON via workflow_dispatch. Parses payload, creates governance/tasks/<task_id>.json, commits to main, dispatches ledger-updated with next_actor_role=AUDITOR.",
+  "status": "APPROVED",
+  "proof_target": ".github/workflows/analyst-task-writer.yml exists in main",
+  "parent_event_id": "TASK-P2-0002-TASK-CLOSED-20260404T154321Z",
+  "next_actor_role": "AUDITOR",
+  "routing_decision_basis": "AUDITOR_PRE_ACTION_APPROVED_P2_3"
+}
