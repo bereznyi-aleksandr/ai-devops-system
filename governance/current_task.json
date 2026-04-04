@@ -1,8 +1,13 @@
 {
-  "schema_version": "v154",
-  "status": "EMPTY",
-  "task_id": null,
-  "payload": null,
+  "schema_version": "v155",
+  "status": "APPROVED",
+  "task_id": "TASK-P2-0002",
+  "payload": {
+    "step": "P2.2",
+    "description": "Create governance/agent_factory_step_2.py extending Agent Factory contour from P2.1 baseline. Must reference agent_factory_step_1 as predecessor. Preserve v155 contract.",
+    "predecessor": "governance/agent_factory_step_1.py",
+    "proof_target": "file exists in main with v155 contract"
+  },
   "updated_by": "AUDITOR",
-  "updated_at": null
+  "updated_at": "2026-04-04T12:00:00Z"
 }
