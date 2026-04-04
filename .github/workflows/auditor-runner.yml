@@ -116,7 +116,7 @@ jobs:
             "event_time": "<ISO timestamp>",
             "step_name": "<P0.X or P1.X>",
             "actor_role": "AUDITOR",
-            "event_type": "<one of: TASK_PROPOSED, PRE_ACTION_APPROVED, PRE_ACTION_REJECTED, ACTION_EXECUTION_REQUEST, ACTION_COMPLETED, RESULT_ACCEPTED, RESULT_REJECTED, TASK_CLOSED, EMERGENCY_BLOCKED, VALIDATION_FAILED>",
+            "event_type": "<one of: TASK_PROPOSED, PRE_ACTION_APPROVED, PRE_ACTION_REJECTED, ACTION_EXECUTION_REQUEST, ACTION_COMPLETED, RESULT_ACCEPTED, RESULT_REJECTED, EMERGENCY_BLOCKED, VALIDATION_FAILED>",
             "description": "<audit decision description>",
             "status": "<status>",
             "next_actor_role": "<ANALYST or AUDITOR or CLOUD_CODE or OPERATOR or LEDGER_WRITER or LEDGER_ROUTER or NONE>",
@@ -184,8 +184,7 @@ jobs:
               'ACTION_COMPLETED',
               'RESULT_ACCEPTED',
               'RESULT_REJECTED',
-              'TASK_CLOSED',
-              'EMERGENCY_BLOCKED',
+                    'EMERGENCY_BLOCKED',
               'VALIDATION_FAILED'
           }
 
