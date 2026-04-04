@@ -14,6 +14,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Prepare runtime dir
+        run: mkdir -p .runtime
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -231,10 +233,10 @@ jobs:
       - name: Debug proof inputs
         run: |
           pwd
-          ls -l /tmp/auditor_validated_output.json /tmp/auditor_raw_output.txt /tmp/task_context.json || true
+          ls -l .runtime/auditor_validated_output.json .runtime/auditor_raw_output.txt .runtime/task_context.json || true
           python3 - <<'PY'
           from pathlib import Path
-          for x in ['/tmp/auditor_validated_output.json','/tmp/auditor_raw_output.txt','/tmp/task_context.json']:
+          for x in ['.runtime/auditor_validated_output.json','.runtime/auditor_raw_output.txt','.runtime/task_context.json']:
               p = Path(x)
               print(x, 'exists=', p.exists(), 'size=', p.stat().st_size if p.exists() else 'NA')
           PY
@@ -245,18 +247,18 @@ jobs:
           import json, sys
           from pathlib import Path
 
-          validated = Path('/tmp/auditor_validated_output.json')
-          raw = Path('/tmp/auditor_raw_output.txt')
+          validated = Path('.runtime/auditor_validated_output.json')
+          raw = Path('.runtime/auditor_raw_output.txt')
 
           if validated.exists():
               payload = json.loads(validated.read_text(encoding='utf-8'))
           elif raw.exists():
               payload = json.loads(raw.read_text(encoding='utf-8'))
           else:
-              print('VALIDATION_FAILED: neither /tmp/auditor_validated_output.json nor /tmp/auditor_raw_output.txt exists', file=sys.stderr)
+              print('VALIDATION_FAILED: neither .runtime/auditor_validated_output.json nor .runtime/auditor_raw_output.txt exists', file=sys.stderr)
               raise SystemExit(1)
 
-          context = json.loads(Path('/tmp/task_context.json').read_text(encoding='utf-8'))
+          context = json.loads(Path('.runtime/task_context.json').read_text(encoding='utf-8'))
 
           if payload.get('event_type') != 'RESULT_ACCEPTED':
               print('PROOF_CHECK_SKIPPED')
