@@ -145,8 +145,13 @@ jobs:
               }
           )
 
-          with urllib.request.urlopen(req) as resp:
-              result = json.loads(resp.read())
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  result = json.loads(resp.read())
+          except urllib.error.HTTPError as e:
+              body = e.read().decode('utf-8', errors='replace')
+              print(body)
+              raise
 
           raw_output = result['content'][0]['text'].strip()
           Path('.tmp/auditor_raw_output.txt').write_text(raw_output, encoding='utf-8')
