@@ -32,9 +32,9 @@ jobs:
         run: |
           PAT=$(gcloud secrets versions access latest \
             --secret="GITHUB_TOKEN" \
-            --project="barber-483016")
+            --project="barber-483016" | tr -d '\r\n')
           echo "::add-mask::$PAT"
-          echo "pat=$PAT" >> $GITHUB_OUTPUT
+          printf 'pat=%s\n' "$PAT" >> "$GITHUB_OUTPUT"
 
       - name: Configure git identity
         run: |
