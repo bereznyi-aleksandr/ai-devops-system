@@ -1,0 +1,13 @@
+{
+  "schema_version": "v155",
+  "task_id": "TASK-P2-0004",
+  "step_name": "P2.4",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "Modify .github/workflows/executor-runner.yml: add push trigger on governance/current_task.json, make workflow_dispatch task_id optional, read task_id from current_task.json for push-triggered runs, validate status APPROVED or RETRY_REQUIRED before execution.",
+  "status": "APPROVED",
+  "proof_target": ".github/workflows/executor-runner.yml has push trigger on governance/current_task.json in main",
+  "parent_event_id": "TASK-P2-0002-TASK-CLOSED-20260404T154321Z",
+  "next_actor_role": "AUDITOR",
+  "routing_decision_basis": "AUDITOR_PRE_ACTION_APPROVED_P2_4"
+}
