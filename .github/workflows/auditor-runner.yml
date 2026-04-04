@@ -251,7 +251,7 @@ jobs:
 
       - name: Dispatch ledger-updated event
         env:
-          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           LAST_EVENT=$(python3 -c "
           import csv
