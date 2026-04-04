@@ -113,7 +113,7 @@ jobs:
             "event_time": "<ISO timestamp>",
             "step_name": "<P0.X or P1.X>",
             "actor_role": "CLOUD_CODE",
-            "event_type": "<allowed v155 event type>",
+            "event_type": "<one of: ACTION_EXECUTION_REQUEST, ACTION_COMPLETED, RESULT_ACCEPTED, RESULT_REJECTED, TASK_CLOSED, VALIDATION_FAILED>",
             "description": "<execution/result description>",
             "status": "<status>",
             "next_actor_role": "<ANALYST or AUDITOR or CLOUD_CODE or OPERATOR or LEDGER_WRITER or LEDGER_ROUTER or NONE>",
