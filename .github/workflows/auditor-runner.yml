@@ -156,7 +156,7 @@ jobs:
               raise
 
           raw_output = result['content'][0]['text'].strip()
-          Path('.tmp/auditor_raw_output.txt').write_text(raw_output, encoding='utf-8')
+          Path('.runtime/auditor_raw_output.txt').write_text(raw_output, encoding='utf-8')
           print('AUDITOR_OUTPUT_READY=true')
           PY
 
@@ -198,7 +198,7 @@ jobs:
               'NONE'
           }
 
-          raw = Path('.tmp/auditor_raw_output.txt').read_text(encoding='utf-8')
+          raw = Path('.runtime/auditor_raw_output.txt').read_text(encoding='utf-8')
 
           try:
               payload = json.loads(raw)
@@ -223,7 +223,7 @@ jobs:
               print(f'VALIDATION_FAILED: invalid next_actor_role: {payload["next_actor_role"]}', file=sys.stderr)
               sys.exit(1)
 
-          Path('.tmp/auditor_validated_output.json').write_text(
+          Path('.runtime/auditor_validated_output.json').write_text(
               json.dumps(payload, ensure_ascii=False, indent=2),
               encoding='utf-8'
           )
@@ -294,14 +294,14 @@ jobs:
             --ledger-path governance/exchange_ledger.csv \
             --commit-message "Auditor: decision written to ledger" \
             --binding-commit-message "Auditor: bind commit sha" \
-            | tee .tmp/auditor_writer_output.txt
+            | tee .runtime/auditor_writer_output.txt
 
       - name: Capture writer outputs
         run: |
-          grep '^EVENT_ID=' .tmp/auditor_writer_output.txt
-          grep '^TASK_ID=' .tmp/auditor_writer_output.txt
-          grep '^EVENT_COMMIT_SHA=' .tmp/auditor_writer_output.txt
-          grep '^BINDING_COMMIT_SHA=' .tmp/auditor_writer_output.txt
+          grep '^EVENT_ID=' .runtime/auditor_writer_output.txt
+          grep '^TASK_ID=' .runtime/auditor_writer_output.txt
+          grep '^EVENT_COMMIT_SHA=' .runtime/auditor_writer_output.txt
+          grep '^BINDING_COMMIT_SHA=' .runtime/auditor_writer_output.txt
 
       - name: Push ledger update
         run: |
