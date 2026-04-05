@@ -119,6 +119,90 @@ jobs:
         if: steps.context.outputs.should_execute != 'true'
         run: echo "${{ steps.context.outputs.skip_reason }}"
 
+      - name: Resolve controlled mutation policy
+        if: steps.context.outputs.should_execute == 'true'
+        id: mutation_policy
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+
+          fixed_allowlist = [
+              'governance/current_task.json',
+              'ssot/MASTER_PROMPT_v162_CANON_FINAL.txt',
+          ]
+          allowlist_set = set(fixed_allowlist)
+
+          context = json.loads(Path('.tmp/executor_context.json').read_text(encoding='utf-8'))
+          task = context.get('task', {})
+          task_id = str(task.get('task_id', context.get('task_id', ''))).strip()
+          step_name = str(task.get('step_name', '')).strip()
+          requested_targets = task.get('allowed_target_files') or task.get('target_files') or []
+          if requested_targets and not isinstance(requested_targets, list):
+              print('VALIDATION_FAILED: requested target files must be a list', file=sys.stderr)
+              sys.exit(1)
+
+          is_controlled_mutation_task = bool(requested_targets) or step_name == 'P2.6-CORRECTIVE'
+          if requested_targets:
+              unsupported = sorted(set(requested_targets) - allowlist_set)
+              if unsupported:
+                  print(f'VALIDATION_FAILED: target files outside allowlist: {unsupported}', file=sys.stderr)
+                  sys.exit(1)
+
+          mutation_apply = False
+
+          out = Path(os.environ['GITHUB_OUTPUT'])
+          with out.open('a', encoding='utf-8') as f:
+              f.write(f"controlled_mutation_task={'true' if is_controlled_mutation_task else 'false'}\n")
+              f.write(f"mutation_apply={'true' if mutation_apply else 'false'}\n")
+              f.write('allowlist=governance/current_task.json,ssot/MASTER_PROMPT_v162_CANON_FINAL.txt\n')
+              f.write(f'task_id={task_id}\n')
+
+          Path('.tmp/mutation_policy.json').write_text(
+              json.dumps({
+                  'task_id': task_id,
+                  'step_name': step_name,
+                  'controlled_mutation_task': is_controlled_mutation_task,
+                  'mutation_apply': mutation_apply,
+                  'allowlist': fixed_allowlist,
+                  'requested_targets': requested_targets,
+                  'guardrails': [
+                      'allowlist only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt',
+                      'hard reject for targets outside allowlist',
+                      'no arbitrary free-form repo mutation',
+                      'no audit decisions in executor',
+                      'TASK-P2-0007 must not execute TASK-P2-0006 payload changes'
+                  ]
+              }, ensure_ascii=False, indent=2),
+              encoding='utf-8'
+          )
+          print('CONTROLLED_MUTATION_POLICY=READY')
+          PY
+
+      - name: Guardrail summary
+        if: steps.context.outputs.should_execute == 'true'
+        run: |
+          cat .tmp/mutation_policy.json
+          echo "Executor supports controlled mutation allowlist only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt."
+          echo "Executor must not execute arbitrary free-form repo mutation."
+          echo "Executor must not take audit decisions."
+
+      - name: Apply controlled mutation for approved tasks
+        if: steps.context.outputs.should_execute == 'true' && steps.mutation_policy.outputs.mutation_apply == 'true'
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          context = json.loads(Path('.tmp/executor_context.json').read_text(encoding='utf-8'))
+
+          if context.get('task_id') == 'TASK-P2-0007':
+              print('VALIDATION_FAILED: TASK-P2-0007 must not execute TASK-P2-0006 mutations', file=sys.stderr)
+              sys.exit(1)
+
+          print('NO_MUTATION_APPLIED')
+          PY
+
       - name: Run Claude API as Cloud Code
         if: steps.context.outputs.should_execute == 'true'
         env:
@@ -134,6 +218,8 @@ jobs:
           task_id = os.environ['TASK_ID']
           model = os.getenv('LLM_MODEL') or 'claude-sonnet-4-20250514'
           context = json.loads(Path('.tmp/executor_context.json').read_text(encoding='utf-8'))
+          mutation_policy = json.loads(Path('.tmp/mutation_policy.json').read_text(encoding='utf-8'))
+          context['mutation_policy'] = mutation_policy
 
           system_prompt = """You are CLOUD_CODE in an autonomous multi-agent DevOps system.
           SSOT: MASTER_PROMPT_v162_CANON_FINAL
@@ -257,4 +343,7 @@ jobs:
         run: rm -rf .tmp
 
       - name: Guardrail
-        run: echo "Executor writes execution events only. No audit decisions here."
+        run: |
+          echo "Executor writes execution events only. No audit decisions here."
+          echo "Controlled mutation path is allowlisted to governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt only."
+          echo "TASK-P2-0007 does not execute TASK-P2-0006 mutations."
