@@ -1,0 +1,13 @@
+{
+  "schema_version": "v155",
+  "task_id": "TASK-P2-0006",
+  "step_name": "P2.6",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "Update section 3 CURRENT SYSTEM SNAPSHOT in ssot/MASTER_PROMPT_v162_CANON_FINAL.txt so the SSOT reflects the repo-visible state after full SSOT materialization in main.",
+  "status": "APPROVED",
+  "proof_target": "Section 3 CURRENT SYSTEM SNAPSHOT in ssot/MASTER_PROMPT_v162_CANON_FINAL.txt is updated in main and matches the repo-visible state.",
+  "parent_event_id": "TASK-P2-0003-TASK-CLOSED-20260404T163000Z",
+  "next_actor_role": "AUDITOR",
+  "routing_decision_basis": "AUDITOR_PRE_ACTION_APPROVED_P2_6"
+}
