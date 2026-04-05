@@ -1,11 +1,14 @@
 name: Executor Runner
 
 on:
+  push:
+    branches: [main]
+    paths: ['governance/current_task.json']
   workflow_dispatch:
     inputs:
       task_id:
-        description: 'Task ID for executor to process'
-        required: true
+        description: 'Task ID'
+        required: false
         type: string
 
 jobs:
@@ -42,46 +45,85 @@ jobs:
           git config user.email \
             "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Read task context
+      - name: Resolve task context
         id: context
         env:
-          TASK_ID: ${{ github.event.inputs.task_id }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TASK_ID: ${{ github.event.inputs.task_id }}
         run: |
           python3 - <<'PY'
           import json, os
           from pathlib import Path
 
-          task_id = os.environ['TASK_ID']
-          task_file = Path(f'governance/tasks/{task_id}.json')
+          event_name = (os.environ.get('EVENT_NAME') or '').strip()
+          input_task_id = (os.environ.get('INPUT_TASK_ID') or '').strip()
+          resolved_task_id = ''
+          current_status = ''
+          should_execute = False
+          skip_reason = ''
 
-          if task_file.exists():
-              task = json.loads(task_file.read_text(encoding='utf-8'))
+          if event_name == 'push':
+              p = Path('governance/current_task.json')
+              if not p.exists():
+                  skip_reason = 'skip: governance/current_task.json missing'
+              else:
+                  ct = json.loads(p.read_text(encoding='utf-8'))
+                  resolved_task_id = str(ct.get('task_id', '')).strip()
+                  current_status = str(ct.get('status', '')).strip()
+                  if not resolved_task_id:
+                      skip_reason = 'skip: no task_id in current_task.json'
+                  elif current_status not in {'APPROVED', 'RETRY_REQUIRED'}:
+                      skip_reason = f'skip: status={current_status} not APPROVED/RETRY_REQUIRED'
+                  else:
+                      should_execute = True
+          elif event_name == 'workflow_dispatch':
+              resolved_task_id = input_task_id
+              if not resolved_task_id:
+                  skip_reason = 'skip: no task_id in workflow_dispatch'
+              else:
+                  should_execute = True
           else:
-              task = {"task_id": task_id, "description": "No task file found"}
+              skip_reason = f'skip: unsupported event={event_name}'
 
-          ledger = Path('governance/exchange_ledger.csv').read_text(encoding='utf-8')
-          last_rows = '\n'.join(ledger.strip().splitlines()[-5:])
+          out = Path(os.environ['GITHUB_OUTPUT'])
+          with out.open('a', encoding='utf-8') as f:
+              f.write(f'task_id={resolved_task_id}\n')
+              f.write(f'current_status={current_status}\n')
+              f.write(f"should_execute={'true' if should_execute else 'false'}\n")
+              f.write(f'skip_reason={skip_reason}\n')
 
-          context = {
-              "task_id": task_id,
+          if not should_execute:
+              print(skip_reason)
+              raise SystemExit(0)
+
+          tf = Path(f'governance/tasks/{resolved_task_id}.json')
+          task = json.loads(tf.read_text(encoding='utf-8')) if tf.exists() else {"task_id": resolved_task_id}
+          ledger = Path('governance/exchange_ledger.csv')
+          tail = '\n'.join(ledger.read_text(encoding='utf-8').strip().splitlines()[-5:]) if ledger.exists() else ''
+          ctx = {
+              "event_name": event_name,
+              "task_id": resolved_task_id,
+              "current_status": current_status,
               "task": task,
-              "ledger_tail": last_rows
+              "ledger_tail": tail
           }
-
-          out_file = Path('.tmp/executor_context.json')
-          out_file.parent.mkdir(parents=True, exist_ok=True)
-          out_file.write_text(
-              json.dumps(context, ensure_ascii=False, indent=2),
+          Path('.tmp').mkdir(exist_ok=True)
+          Path('.tmp/executor_context.json').write_text(
+              json.dumps(ctx, ensure_ascii=False, indent=2),
               encoding='utf-8'
           )
           print('CONTEXT_READY=true')
           PY
 
+      - name: Show skip reason
+        if: steps.context.outputs.should_execute != 'true'
+        run: echo "${{ steps.context.outputs.skip_reason }}"
+
       - name: Run Claude API as Cloud Code
-        id: executor
+        if: steps.context.outputs.should_execute == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          TASK_ID: ${{ github.event.inputs.task_id }}
+          TASK_ID: ${{ steps.context.outputs.task_id }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
         run: |
           python3 - <<'PY'
@@ -94,45 +136,17 @@ jobs:
           context = json.loads(Path('.tmp/executor_context.json').read_text(encoding='utf-8'))
 
           system_prompt = """You are CLOUD_CODE in an autonomous multi-agent DevOps system.
-          SSOT: MASTER_PROMPT_v155_CANON_FINAL
-          Repository: bereznyi-aleksandr/ai-devops-system
-
-          Your role:
-          - Execute approved implementation work
-          - Produce execution or result events only
-          - Never produce audit decisions
-
-          Respond ONLY with a valid JSON object.
-          No preamble. No markdown. No backticks.
-          Required fields:
-          {
-            "schema_version": "v155",
-            "event_id": "<new unique event id>",
-            "parent_event_id": "<last event_id from ledger>",
-            "task_id": "<existing task id>",
-            "event_time": "<ISO timestamp>",
-            "step_name": "<P0.X or P1.X>",
-            "actor_role": "CLOUD_CODE",
-            "event_type": "<one of: ACTION_EXECUTION_REQUEST, ACTION_COMPLETED, RESULT_ACCEPTED, RESULT_REJECTED, TASK_CLOSED, VALIDATION_FAILED>",
-            "description": "<execution/result description>",
-            "status": "<status>",
-            "next_actor_role": "<ANALYST or AUDITOR or CLOUD_CODE or OPERATOR or LEDGER_WRITER or LEDGER_ROUTER or NONE>",
-            "next_expected_event": "<next expected event>",
-            "routing_decision_basis": "<basis>",
-            "commit_sha": ""
-          }"""
-
-          user_message = f"""Task context:
-          {json.dumps(context, ensure_ascii=False, indent=2)}
-
-          Prepare the correct execution/result event for task_id: {task_id}
-          using only the v155 ledger contract and allowed actor roles."""
+          SSOT: MASTER_PROMPT_v162_CANON_FINAL
+          Respond ONLY with valid JSON. No preamble. No markdown.
+          Required fields: schema_version(v162), event_id, parent_event_id, task_id,
+          event_time, step_name, actor_role(CLOUD_CODE), event_type, description,
+          status, next_actor_role, next_expected_event, routing_decision_basis, commit_sha"""
 
           payload = {
               "model": model,
               "max_tokens": 2000,
               "system": system_prompt,
-              "messages": [{"role": "user", "content": user_message}]
+              "messages": [{"role": "user", "content": f"Context: {json.dumps(context, ensure_ascii=False)}"}]
           }
 
           req = urllib.request.Request(
@@ -144,142 +158,103 @@ jobs:
                   'anthropic-version': '2023-06-01'
               }
           )
+          with urllib.request.urlopen(req) as r:
+              result = json.loads(r.read())
 
-          with urllib.request.urlopen(req) as resp:
-              result = json.loads(resp.read())
-
-          raw_output = result['content'][0]['text'].strip()
-          Path('.tmp/executor_raw_output.txt').write_text(raw_output, encoding='utf-8')
-          print('EXECUTOR_OUTPUT_READY=true')
+          Path('.tmp/executor_raw_output.txt').write_text(
+              result['content'][0]['text'].strip(),
+              encoding='utf-8'
+          )
           PY
 
       - name: Validate LLM output schema
-        id: validate
+        if: steps.context.outputs.should_execute == 'true'
         run: |
           python3 - <<'PY'
           import json, sys
           from pathlib import Path
 
-          required = [
-              'schema_version', 'event_id', 'parent_event_id',
-              'task_id', 'event_time', 'step_name', 'actor_role',
-              'event_type', 'description', 'status',
-              'next_actor_role', 'next_expected_event',
-              'routing_decision_basis', 'commit_sha'
-          ]
-
-          allowed_event_types = {
-              'TASK_PROPOSED',
-              'PRE_ACTION_APPROVED',
-              'PRE_ACTION_REJECTED',
-              'ACTION_EXECUTION_REQUEST',
-              'ACTION_COMPLETED',
-              'RESULT_ACCEPTED',
-              'RESULT_REJECTED',
-              'TASK_CLOSED',
-              'EMERGENCY_BLOCKED',
-              'VALIDATION_FAILED'
-          }
-
-          allowed_roles = {
-              'ANALYST',
-              'AUDITOR',
-              'CLOUD_CODE',
-              'OPERATOR',
-              'LEDGER_WRITER',
-              'LEDGER_ROUTER',
-              'NONE'
-          }
+          required = ['schema_version','event_id','parent_event_id','task_id','event_time',
+                      'step_name','actor_role','event_type','description','status',
+                      'next_actor_role','next_expected_event','routing_decision_basis','commit_sha']
+          allowed_types = {'TASK_PROPOSED','PRE_ACTION_APPROVED','PRE_ACTION_REJECTED',
+                           'ACTION_EXECUTION_REQUEST','ACTION_COMPLETED','RESULT_ACCEPTED',
+                           'RESULT_REJECTED','TASK_CLOSED','EMERGENCY_BLOCKED','VALIDATION_FAILED'}
+          allowed_roles = {'ANALYST','AUDITOR','CLOUD_CODE','OPERATOR',
+                           'LEDGER_WRITER','LEDGER_ROUTER','NONE'}
 
           raw = Path('.tmp/executor_raw_output.txt').read_text(encoding='utf-8')
-
           try:
-              payload = json.loads(raw)
-          except json.JSONDecodeError as e:
-              print(f'VALIDATION_FAILED: invalid JSON — {e}', file=sys.stderr)
+              p = json.loads(raw)
+          except Exception as e:
+              print(f'VALIDATION_FAILED: {e}', file=sys.stderr)
               sys.exit(1)
 
-          missing = [f for f in required if f not in payload]
+          missing = [f for f in required if f not in p]
           if missing:
-              print(f'VALIDATION_FAILED: missing fields: {missing}', file=sys.stderr)
+              print(f'VALIDATION_FAILED: missing {missing}', file=sys.stderr)
               sys.exit(1)
-
-          if payload['schema_version'] != 'v155':
-              print(f'VALIDATION_FAILED: schema_version must be v155, got {payload["schema_version"]}', file=sys.stderr)
+          if p['schema_version'] != 'v162':
+              print('VALIDATION_FAILED: wrong schema_version', file=sys.stderr)
               sys.exit(1)
-
-          if payload['actor_role'] != 'CLOUD_CODE':
-              print(f'VALIDATION_FAILED: actor_role must be CLOUD_CODE, got {payload["actor_role"]}', file=sys.stderr)
+          if p['actor_role'] != 'CLOUD_CODE':
+              print('VALIDATION_FAILED: actor_role must be CLOUD_CODE', file=sys.stderr)
               sys.exit(1)
-
-          if payload['event_type'] not in allowed_event_types:
-              print(f'VALIDATION_FAILED: invalid event_type: {payload["event_type"]}', file=sys.stderr)
+          if p['event_type'] not in allowed_types:
+              print('VALIDATION_FAILED: invalid event_type', file=sys.stderr)
               sys.exit(1)
-
-          if payload['next_actor_role'] not in allowed_roles:
-              print(f'VALIDATION_FAILED: invalid next_actor_role: {payload["next_actor_role"]}', file=sys.stderr)
+          if p['next_actor_role'] not in allowed_roles:
+              print('VALIDATION_FAILED: invalid next_actor_role', file=sys.stderr)
               sys.exit(1)
 
           Path('.tmp/executor_validated_output.json').write_text(
-              json.dumps(payload, ensure_ascii=False, indent=2),
+              json.dumps(p, ensure_ascii=False, indent=2),
               encoding='utf-8'
           )
           print('SCHEMA_VALIDATION=PASSED')
           PY
 
-      - name: Write validated output to ledger
+      - name: Write to ledger
+        if: steps.context.outputs.should_execute == 'true'
         run: |
           python3 governance/ledger_writer.py \
             --payload-file .tmp/executor_validated_output.json \
             --repo-root . \
             --ledger-path governance/exchange_ledger.csv \
-            --commit-message "Cloud Code: execution result written to ledger" \
-            --binding-commit-message "Cloud Code: bind commit sha" \
-            | tee .tmp/executor_writer_output.txt
+            --commit-message "Cloud Code: execution result" \
+            --binding-commit-message "Cloud Code: bind sha" \
+            | tee .tmp/writer_output.txt
 
-      - name: Capture writer outputs
-        run: |
-          grep '^EVENT_ID=' .tmp/executor_writer_output.txt
-          grep '^TASK_ID=' .tmp/executor_writer_output.txt
-          grep '^EVENT_COMMIT_SHA=' .tmp/executor_writer_output.txt
-          grep '^BINDING_COMMIT_SHA=' .tmp/executor_writer_output.txt
+      - name: Push ledger
+        if: steps.context.outputs.should_execute == 'true'
+        run: git push origin HEAD:main
 
-      - name: Push ledger update
-        run: |
-          git push origin HEAD:main
-
-      - name: Dispatch ledger-updated event
+      - name: Dispatch ledger-updated
+        if: steps.context.outputs.should_execute == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          RESOLVED_TASK_ID: ${{ steps.context.outputs.task_id }}
         run: |
-          LAST_EVENT=$(python3 -c "
-          import csv
-          with open('governance/exchange_ledger.csv') as f:
-              rows = list(csv.DictReader(f))
-              last = rows[-1]
-              print(last['event_id'])
-          ")
-          TASK_ID="${{ github.event.inputs.task_id }}"
           NEXT_ROLE=$(python3 -c "
           import csv
           with open('governance/exchange_ledger.csv') as f:
-              rows = list(csv.DictReader(f))
-              last = rows[-1]
-              print(last['next_actor_role'])
+              print(list(csv.DictReader(f))[-1]['next_actor_role'])
+          ")
+          LAST_EVENT=$(python3 -c "
+          import csv
+          with open('governance/exchange_ledger.csv') as f:
+              print(list(csv.DictReader(f))[-1]['event_id'])
           ")
           gh api repos/bereznyi-aleksandr/ai-devops-system/dispatches \
             --method POST \
             -f event_type=ledger-updated \
             -f client_payload[next_actor_role]="$NEXT_ROLE" \
-            -f client_payload[task_id]="$TASK_ID" \
+            -f client_payload[task_id]="$RESOLVED_TASK_ID" \
             -f client_payload[event_id]="$LAST_EVENT"
 
-      - name: Cleanup temp files
+      - name: Cleanup
         if: always()
-        run: |
-          rm -rf .tmp
+        run: rm -rf .tmp
 
       - name: Guardrail
-        run: |
-          echo "Executor workflow may perform approved implementation and write execution/result events."
-          echo "Audit decisions must not be performed here."
+        run: echo "Executor writes execution events only. No audit decisions here."
