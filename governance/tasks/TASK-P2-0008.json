@@ -1,0 +1,64 @@
+{
+  "task_id": "TASK-P2-0008",
+  "schema_version": "v162",
+  "step_name": "P2.6-RETRY",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "status": "PROPOSED",
+  "title": "Re-execute TASK-P2-0006 through controlled SA-backed mutation workload",
+  "scope": "Execute the original TASK-P2-0006 objective again through the accepted controlled SA-backed mutation workload in main.",
+  "workload": ".github/workflows/executor-runner.yml",
+  "goal": {
+    "actions": [
+      "switch governance/current_task.json to TASK-P2-0006",
+      "update section 3 CURRENT SYSTEM SNAPSHOT in ssot/MASTER_PROMPT_v162_CANON_FINAL.txt"
+    ]
+  },
+  "allowed_target_files": [
+    "governance/current_task.json",
+    "ssot/MASTER_PROMPT_v162_CANON_FINAL.txt"
+  ],
+  "required_mutation_result": [
+    "governance/current_task.json after execution points to task_id TASK-P2-0006",
+    "ssot/MASTER_PROMPT_v162_CANON_FINAL.txt section 3 CURRENT SYSTEM SNAPSHOT is updated",
+    "SSOT update is constrained to section 3 only",
+    "update is based only on repo-visible state"
+  ],
+  "execution_requirement": [
+    "use accepted controlled mutation logic in .github/workflows/executor-runner.yml",
+    "use strict allowlist",
+    "use guardrails",
+    "preserve commit/push path",
+    "preserve SA-backed execution contour"
+  ],
+  "guardrails": [
+    "Mutation is allowed only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt.",
+    "No other target files are allowed.",
+    "current_task.json must point only to TASK-P2-0006 after execution.",
+    "SSOT mutation must be constrained only to section 3 CURRENT SYSTEM SNAPSHOT.",
+    "Arbitrary free-form mutation is forbidden.",
+    "Audit decisions are forbidden in execution workload.",
+    "Proof is only repo-visible main state."
+  ],
+  "proof_target": {
+    "success_conditions": [
+      "governance/current_task.json updated in main and points to TASK-P2-0006",
+      "ssot/MASTER_PROMPT_v162_CANON_FINAL.txt updated in main in section 3 CURRENT SYSTEM SNAPSHOT",
+      "no out-of-scope file mutation occurred",
+      "mutation performed through accepted controlled SA-backed workload path"
+    ]
+  },
+  "files_expected_to_change_in_main": [
+    "governance/current_task.json",
+    "ssot/MASTER_PROMPT_v162_CANON_FINAL.txt"
+  ],
+  "out_of_scope": [
+    "changing any other files",
+    "changing sections outside CURRENT SYSTEM SNAPSHOT",
+    "changing workflow scope beyond accepted TASK-P2-0007 workload",
+    "new enablement steps"
+  ],
+  "expected_result": "TASK-P2-0006 objective completed through controlled SA-backed mutation workload with repo-visible proof in main.",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED"
+}
