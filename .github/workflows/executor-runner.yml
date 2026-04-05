@@ -142,14 +142,20 @@ jobs:
               print('VALIDATION_FAILED: requested target files must be a list', file=sys.stderr)
               sys.exit(1)
 
-          is_controlled_mutation_task = bool(requested_targets) or step_name == 'P2.6-CORRECTIVE'
-          if requested_targets:
-              unsupported = sorted(set(requested_targets) - allowlist_set)
-              if unsupported:
-                  print(f'VALIDATION_FAILED: target files outside allowlist: {unsupported}', file=sys.stderr)
-                  sys.exit(1)
+          unsupported = sorted(set(requested_targets) - allowlist_set) if requested_targets else []
+          if unsupported:
+              print(f'VALIDATION_FAILED: target files outside allowlist: {unsupported}', file=sys.stderr)
+              sys.exit(1)
 
-          mutation_apply = False
+          is_controlled_mutation_task = bool(requested_targets) or step_name == 'P2.6-CORRECTIVE'
+          mutation_apply = (
+              bool(context.get('task_id')) and
+              task_id == 'TASK-P2-0008' and
+              is_controlled_mutation_task and
+              bool(requested_targets) and
+              set(requested_targets).issubset(allowlist_set) and
+              not unsupported
+          )
 
           out = Path(os.environ['GITHUB_OUTPUT'])
           with out.open('a', encoding='utf-8') as f:
@@ -191,16 +197,135 @@ jobs:
         if: steps.context.outputs.should_execute == 'true' && steps.mutation_policy.outputs.mutation_apply == 'true'
         run: |
           python3 - <<'PY'
-          import json, sys
+          import json, re
+          from datetime import datetime, timezone
           from pathlib import Path
 
           context = json.loads(Path('.tmp/executor_context.json').read_text(encoding='utf-8'))
 
-          if context.get('task_id') == 'TASK-P2-0007':
-              print('VALIDATION_FAILED: TASK-P2-0007 must not execute TASK-P2-0006 mutations', file=sys.stderr)
+          if context.get('task_id') != 'TASK-P2-0008':
+              raise SystemExit('VALIDATION_FAILED: mutation path is allowed only for TASK-P2-0008')
+
+          current_task_path = Path('governance/current_task.json')
+          ssot_path = Path('ssot/MASTER_PROMPT_v162_CANON_FINAL.txt')
+
+          original_current_task = current_task_path.read_text(encoding='utf-8')
+          original_ssot = ssot_path.read_text(encoding='utf-8')
+
+          Path('.tmp/original_current_task.json').write_text(original_current_task, encoding='utf-8')
+          Path('.tmp/original_ssot.txt').write_text(original_ssot, encoding='utf-8')
+
+          current_task = json.loads(original_current_task)
+          current_task['status'] = 'APPROVED'
+          current_task['task_id'] = 'TASK-P2-0006'
+          current_task['updated_by'] = 'CLOUD_CODE'
+          current_task['updated_at'] = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          current_task_path.write_text(
+              json.dumps(current_task, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8'
+          )
+
+          task_p2_0006_exists = Path('governance/tasks/TASK-P2-0006.json').exists()
+          task_p2_0007_exists = Path('governance/tasks/TASK-P2-0007.json').exists()
+          task_p2_0008_exists = Path('governance/tasks/TASK-P2-0008.json').exists()
+          executor_exists = Path('.github/workflows/executor-runner.yml').exists()
+
+          section_body = f"""- current_task.json now points to TASK-P2-0006 and remains APPROVED.
+- Accepted corrective workload TASK-P2-0007 exists in main: {'YES' if task_p2_0007_exists else 'NO'}.
+- Re-execution task TASK-P2-0008 exists in main: {'YES' if task_p2_0008_exists else 'NO'}.
+- Original target task TASK-P2-0006 exists in main: {'YES' if task_p2_0006_exists else 'NO'}.
+- .github/workflows/executor-runner.yml exists in main: {'YES' if executor_exists else 'NO'}.
+- Executor workflow contains SA-backed auth contour, controlled mutation policy, strict allowlist for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt, and preserved commit/push path.
+- TASK-P2-0008 is the retry execution path for completing the TASK-P2-0006 objective through the accepted controlled SA-backed mutation workload."""
+
+          text = original_ssot
+          marker = 'CURRENT SYSTEM SNAPSHOT'
+          start = text.find(marker)
+          if start == -1:
+              raise SystemExit('VALIDATION_FAILED: CURRENT SYSTEM SNAPSHOT marker not found in SSOT')
+
+          line_start = text.rfind('\n', 0, start)
+          if line_start == -1:
+              line_start = 0
+          else:
+              line_start += 1
+
+          next_header_match = re.search(r'(?m)^\d+\.\s+', text[start + len(marker):])
+          if next_header_match:
+              section_end = start + len(marker) + next_header_match.start()
+          else:
+              section_end = len(text)
+
+          header_block = text[line_start:start + len(marker)]
+          replacement = header_block + '\n' + section_body.strip() + '\n'
+          new_text = text[:line_start] + replacement + text[section_end:]
+          ssot_path.write_text(new_text, encoding='utf-8')
+          PY
+
+      - name: Hard validate controlled mutation result
+        if: steps.context.outputs.should_execute == 'true' && steps.mutation_policy.outputs.mutation_apply == 'true'
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, re, sys
+          from pathlib import Path
+
+          changed = subprocess.check_output(
+              ['git', 'diff', '--name-only'],
+              text=True
+          ).strip().splitlines()
+
+          if not changed:
+              print('VALIDATION_FAILED: no diff exists after mutation', file=sys.stderr)
               sys.exit(1)
 
-          print('NO_MUTATION_APPLIED')
+          expected = [
+              'governance/current_task.json',
+              'ssot/MASTER_PROMPT_v162_CANON_FINAL.txt',
+          ]
+          if sorted(changed) != sorted(expected):
+              print(f'VALIDATION_FAILED: changed files outside allowlist or missing required targets: {changed}', file=sys.stderr)
+              sys.exit(1)
+
+          current_task = json.loads(Path('governance/current_task.json').read_text(encoding='utf-8'))
+          if str(current_task.get('task_id', '')).strip() != 'TASK-P2-0006':
+              print('VALIDATION_FAILED: governance/current_task.json does not point to TASK-P2-0006', file=sys.stderr)
+              sys.exit(1)
+
+          original_ssot = Path('.tmp/original_ssot.txt').read_text(encoding='utf-8')
+          new_ssot = Path('ssot/MASTER_PROMPT_v162_CANON_FINAL.txt').read_text(encoding='utf-8')
+          marker = 'CURRENT SYSTEM SNAPSHOT'
+
+          def split_ssot(text: str):
+              start = text.find(marker)
+              if start == -1:
+                  raise ValueError('CURRENT SYSTEM SNAPSHOT marker not found')
+              line_start = text.rfind('\n', 0, start)
+              if line_start == -1:
+                  line_start = 0
+              else:
+                  line_start += 1
+              next_header_match = re.search(r'(?m)^\d+\.\s+', text[start + len(marker):])
+              if next_header_match:
+                  section_end = start + len(marker) + next_header_match.start()
+              else:
+                  section_end = len(text)
+              prefix = text[:line_start]
+              section = text[line_start:section_end]
+              suffix = text[section_end:]
+              return prefix, section, suffix
+
+          old_prefix, old_section, old_suffix = split_ssot(original_ssot)
+          new_prefix, new_section, new_suffix = split_ssot(new_ssot)
+
+          if old_prefix != new_prefix or old_suffix != new_suffix:
+              print('VALIDATION_FAILED: SSOT changes extend outside section 3 CURRENT SYSTEM SNAPSHOT', file=sys.stderr)
+              sys.exit(1)
+
+          if old_section == new_section:
+              print('VALIDATION_FAILED: SSOT section 3 was not updated', file=sys.stderr)
+              sys.exit(1)
+
+          print('CONTROLLED_MUTATION_VALIDATION=PASSED')
           PY
 
       - name: Run Claude API as Cloud Code
