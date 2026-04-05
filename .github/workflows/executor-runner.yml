@@ -332,7 +332,7 @@ jobs:
           PY
 
       - name: Run Claude API as Cloud Code
-        if: steps.context.outputs.should_execute == 'true'
+        if: steps.context.outputs.should_execute == 'true' && steps.mutation_policy.outputs.mutation_apply != 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TASK_ID: ${{ steps.context.outputs.task_id }}
@@ -382,7 +382,7 @@ jobs:
           PY
 
       - name: Validate LLM output schema
-        if: steps.context.outputs.should_execute == 'true'
+        if: steps.context.outputs.should_execute == 'true' && steps.mutation_policy.outputs.mutation_apply != 'true'
         run: |
           python3 - <<'PY'
           import json, sys
@@ -429,7 +429,7 @@ jobs:
           PY
 
       - name: Write to ledger
-        if: steps.context.outputs.should_execute == 'true'
+        if: steps.context.outputs.should_execute == 'true' && steps.mutation_policy.outputs.mutation_apply != 'true'
         run: |
           python3 governance/ledger_writer.py \
             --payload-file .tmp/executor_validated_output.json \
@@ -440,11 +440,11 @@ jobs:
             | tee .tmp/writer_output.txt
 
       - name: Push ledger
-        if: steps.context.outputs.should_execute == 'true'
+        if: steps.context.outputs.should_execute == 'true' && steps.mutation_policy.outputs.mutation_apply != 'true'
         run: git push origin HEAD:main
 
       - name: Dispatch ledger-updated
-        if: steps.context.outputs.should_execute == 'true'
+        if: steps.context.outputs.should_execute == 'true' && steps.mutation_policy.outputs.mutation_apply != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           RESOLVED_TASK_ID: ${{ steps.context.outputs.task_id }}
