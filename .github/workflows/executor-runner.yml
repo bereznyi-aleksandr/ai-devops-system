@@ -230,13 +230,16 @@ jobs:
           task_p2_0008_exists = Path('governance/tasks/TASK-P2-0008.json').exists()
           executor_exists = Path('.github/workflows/executor-runner.yml').exists()
 
-          section_body = f"""- current_task.json now points to TASK-P2-0006 and remains APPROVED.
-- Accepted corrective workload TASK-P2-0007 exists in main: {'YES' if task_p2_0007_exists else 'NO'}.
-- Re-execution task TASK-P2-0008 exists in main: {'YES' if task_p2_0008_exists else 'NO'}.
-- Original target task TASK-P2-0006 exists in main: {'YES' if task_p2_0006_exists else 'NO'}.
-- .github/workflows/executor-runner.yml exists in main: {'YES' if executor_exists else 'NO'}.
-- Executor workflow contains SA-backed auth contour, controlled mutation policy, strict allowlist for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt, and preserved commit/push path.
-- TASK-P2-0008 is the retry execution path for completing the TASK-P2-0006 objective through the accepted controlled SA-backed mutation workload."""
+          section_lines = [
+              f"- current_task.json now points to TASK-P2-0006 and remains APPROVED.",
+              f"- Accepted corrective workload TASK-P2-0007 exists in main: {'YES' if task_p2_0007_exists else 'NO'}.",
+              f"- Re-execution task TASK-P2-0008 exists in main: {'YES' if task_p2_0008_exists else 'NO'}.",
+              f"- Original target task TASK-P2-0006 exists in main: {'YES' if task_p2_0006_exists else 'NO'}.",
+              f"- .github/workflows/executor-runner.yml exists in main: {'YES' if executor_exists else 'NO'}.",
+              f"- Executor workflow contains SA-backed auth contour, controlled mutation policy, strict allowlist for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt, and preserved commit/push path.",
+              f"- TASK-P2-0008 is the retry execution path for completing the TASK-P2-0006 objective through the accepted controlled SA-backed mutation workload.",
+          ]
+          section_body = "\n".join(section_lines)
 
           text = original_ssot
           marker = 'CURRENT SYSTEM SNAPSHOT'
