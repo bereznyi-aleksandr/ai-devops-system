@@ -3,7 +3,8 @@ name: Executor Runner
 on:
   push:
     branches: [main]
-    paths: ['governance/current_task.json']
+    paths:
+      - governance/current_task.json
   workflow_dispatch:
     inputs:
       task_id:
