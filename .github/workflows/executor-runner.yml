@@ -265,37 +265,37 @@ jobs:
           new_text = text[:line_start] + replacement + text[section_end:]
           ssot_path.write_text(new_text, encoding='utf-8')
 
-written_current_task = current_task_path.read_text(encoding='utf-8')
-if written_current_task == original_current_task:
-    raise SystemExit('VALIDATION_FAILED: current_task.json remained unchanged after mutation write')
+            written_current_task = current_task_path.read_text(encoding='utf-8')
+            if written_current_task == original_current_task:
+            raise SystemExit('VALIDATION_FAILED: current_task.json remained unchanged after mutation write')
 
-written_current = json.loads(written_current_task)
-if str(written_current.get('task_id', '')).strip() != 'TASK-P2-0006':
-    raise SystemExit('VALIDATION_FAILED: current_task.json does not contain TASK-P2-0006 after mutation write')
+            written_current = json.loads(written_current_task)
+            if str(written_current.get('task_id', '')).strip() != 'TASK-P2-0006':
+            raise SystemExit('VALIDATION_FAILED: current_task.json does not contain TASK-P2-0006 after mutation write')
 
-written_ssot = ssot_path.read_text(encoding='utf-8')
-if written_ssot == original_ssot:
-    raise SystemExit('VALIDATION_FAILED: SSOT remained unchanged after mutation write')
+            written_ssot = ssot_path.read_text(encoding='utf-8')
+            if written_ssot == original_ssot:
+            raise SystemExit('VALIDATION_FAILED: SSOT remained unchanged after mutation write')
 
-def extract_section(text: str):
-    marker = 'CURRENT SYSTEM SNAPSHOT'
-    start = text.find(marker)
-    if start == -1:
-        raise SystemExit('VALIDATION_FAILED: CURRENT SYSTEM SNAPSHOT marker not found during post-mutation assertion')
-    line_start = text.rfind('\\n', 0, start)
-    if line_start == -1:
-        line_start = 0
-    else:
-        line_start += 1
-    next_header_match = re.search(r'(?m)^\\d+\\.\\s+', text[start + len(marker):])
-    if next_header_match:
-        section_end = start + len(marker) + next_header_match.start()
-    else:
-        section_end = len(text)
-    return text[line_start:section_end]
+            def extract_section(text: str):
+            marker = 'CURRENT SYSTEM SNAPSHOT'
+            start = text.find(marker)
+            if start == -1:
+            raise SystemExit('VALIDATION_FAILED: CURRENT SYSTEM SNAPSHOT marker not found during post-mutation assertion')
+            line_start = text.rfind('\\n', 0, start)
+            if line_start == -1:
+            line_start = 0
+            else:
+            line_start += 1
+            next_header_match = re.search(r'(?m)^\\d+\\.\\s+', text[start + len(marker):])
+            if next_header_match:
+            section_end = start + len(marker) + next_header_match.start()
+            else:
+            section_end = len(text)
+            return text[line_start:section_end]
 
-if extract_section(written_ssot) == extract_section(original_ssot):
-    raise SystemExit('VALIDATION_FAILED: SSOT section 3 remained unchanged after mutation write')
+            if extract_section(written_ssot) == extract_section(original_ssot):
+            raise SystemExit('VALIDATION_FAILED: SSOT section 3 remained unchanged after mutation write')
           PY
 
       - name: Hard validate controlled mutation result
