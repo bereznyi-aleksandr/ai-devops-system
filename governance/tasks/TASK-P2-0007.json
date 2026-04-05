@@ -1,0 +1,53 @@
+{
+  "schema_version": "v162",
+  "task_id": "TASK-P2-0007",
+  "step_name": "P2.6-CORRECTIVE",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "status": "PROPOSED",
+  "title": "Create controlled SA-backed mutation workload for approved repo file updates",
+  "description": "Create or extend one SA-backed execution workload that can perform controlled repo mutation only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt, with mandatory guardrails, commit/push path, and repo-visible proof. This corrective step enables the mutation path only and must not execute TASK-P2-0006 itself.",
+  "allowed_target_files": [
+    "governance/current_task.json",
+    "ssot/MASTER_PROMPT_v162_CANON_FINAL.txt"
+  ],
+  "allowed_strategy": [
+    "extend .github/workflows/executor-runner.yml",
+    "or add one dedicated controlled mutation workflow under .github/workflows/"
+  ],
+  "guardrails": [
+    "Mutation is allowed only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt.",
+    "Any mutation attempt outside allowlist must hard fail.",
+    "Task status must be APPROVED before mutation execution.",
+    "Mutation scope must be constrained to declared target files only.",
+    "If SSOT mutation is supported, target section must exist before mutation.",
+    "Workflow must not perform arbitrary free-form repo mutation.",
+    "Workflow must not take audit decisions.",
+    "Workflow must not execute TASK-P2-0006 within TASK-P2-0007."
+  ],
+  "proof_target": {
+    "repo_visible_files_required": [
+      ".github/workflows/executor-runner.yml"
+    ],
+    "success_conditions": [
+      "A repo-visible workflow file exists in main with controlled mutation logic.",
+      "The workflow contains allowlist limited to governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt.",
+      "The workflow contains mandatory guardrails before mutation.",
+      "The workflow contains commit/push execution path.",
+      "The workflow contains SA-backed execution contour."
+    ]
+  },
+  "files_expected_to_change_in_main": [
+    ".github/workflows/executor-runner.yml"
+  ],
+  "out_of_scope": [
+    "actual mutation of governance/current_task.json",
+    "actual update of section 3 CURRENT SYSTEM SNAPSHOT",
+    "execution of TASK-P2-0006",
+    "expanding mutation scope beyond the two allowed files"
+  ],
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "TASK_P2_0007_PROPOSES_CORRECTIVE_ENABLEMENT_OF_CONTROLLED_SA_BACKED_MUTATION_WORKLOAD",
+  "proof_target_summary": "A repo-visible workflow file exists in main with SA-backed controlled mutation logic, strict allowlist limited to governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt, mandatory guardrails, and commit/push execution path."
+}
