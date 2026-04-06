@@ -1,0 +1,40 @@
+{
+  "task_id": "TASK-P2-0009",
+  "title": "Formalize baseline version of .github/workflows/executor-runner.yml as accepted controlled-mutation executor",
+  "scope": [
+    "Formalize and fix the current working baseline of .github/workflows/executor-runner.yml only",
+    "Preserve current policy scope without redesign",
+    "Preserve strict allowlist only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt",
+    "Preserve current branch split between mutation and non-mutation paths",
+    "Preserve hard validation in controlled mutation path",
+    "Preserve SA-backed contour",
+    "Preserve non-mutation repository_dispatch path",
+    "Allow one hygiene improvement only: reject duplicate requested_targets"
+  ],
+  "constraints": [
+    "No allowlist expansion",
+    "No new target files",
+    "No policy scope expansion",
+    "No broad executor redesign",
+    "No workflow purpose change beyond baseline fixation"
+  ],
+  "proof_target": [
+    "governance/tasks/TASK-P2-0009.json exists in main",
+    ".github/workflows/executor-runner.yml exists in main in baseline form",
+    "Strict allowlist exists only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt",
+    "Branch split exists between controlled mutation path and non-mutation path",
+    "Hard validation exists for controlled mutation result",
+    "SA-backed contour exists",
+    "Non-mutation dispatch path exists",
+    "requested_targets duplicate rejection exists if hygiene improvement is applied"
+  ],
+  "expected_repo_visible_change_in_main": [
+    "governance/tasks/TASK-P2-0009.json exists in main",
+    ".github/workflows/executor-runner.yml is present in main as the accepted baseline controlled-mutation executor",
+    "If hygiene improvement is included, the same workflow contains explicit rejection of duplicate requested_targets without changing scope or allowlist"
+  ],
+  "status": "TASK_PROPOSED",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "Formalize accepted baseline executor only, with no scope expansion and optional single hygiene guard"
+}
