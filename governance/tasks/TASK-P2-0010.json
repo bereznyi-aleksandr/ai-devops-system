@@ -1,0 +1,31 @@
+{
+  "task_id": "TASK-P2-0010",
+  "title": "Formally fix current .github/workflows/executor-runner.yml as accepted baseline executor",
+  "scope": [
+    "Formal acceptance and baseline fixation of the current .github/workflows/executor-runner.yml version only",
+    "Preserve current accepted workflow structure without redesign",
+    "Preserve strict allowlist only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt",
+    "Preserve execution_mode split between mutation and non-mutation paths",
+    "Preserve hard validation in the controlled mutation path",
+    "Preserve SA-backed contour",
+    "Preserve non-mutation dispatch path",
+    "Preserve duplicate requested_targets rejection"
+  ],
+  "proof_target": [
+    ".github/workflows/executor-runner.yml exists in main in accepted baseline form",
+    "Strict allowlist exists only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt",
+    "execution_mode split exists",
+    "Hard validation exists",
+    "SA-backed contour exists",
+    "Non-mutation dispatch path exists",
+    "duplicate requested_targets rejection exists"
+  ],
+  "expected_repo_visible_change_in_main": [
+    "governance/tasks/TASK-P2-0010.json exists in main",
+    ".github/workflows/executor-runner.yml remains present in main as the accepted baseline executor without scope expansion"
+  ],
+  "status": "TASK_PROPOSED",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "Formal baseline fixation only, with no redesign, no allowlist expansion, no new target files, and no policy scope change"
+}
