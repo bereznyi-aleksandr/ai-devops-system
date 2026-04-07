@@ -1,12 +1,12 @@
 {
   "schema_version": "v155",
-  "status": "APPROVED",
-  "task_id": "TASK-P2-0003",
+  "status": "RETRY_REQUIRED",
+  "task_id": "TASK-P2-0005",
   "payload": {
-    "step": "P2.3",
-    "description": "Create .github/workflows/analyst-task-writer.yml. Accepts task_payload JSON via workflow_dispatch. Parses payload, creates governance/tasks/<task_id>.json, commits to main, dispatches ledger-updated with next_actor_role=AUDITOR.",
-    "proof_target": ".github/workflows/analyst-task-writer.yml exists in main"
+    "step": "P2.2",
+    "description": "Retry TASK-P2-0005: create governance/agent_factory_step_2.py as second Agent Factory component. Must reference governance/agent_factory_step_1.py as predecessor. Preserve v162 machine-readable contract.",
+    "proof_target": "governance/agent_factory_step_2.py exists in main"
   },
   "updated_by": "AUDITOR",
-  "updated_at": "2026-04-04T16:30:00Z"
+  "updated_at": "2026-04-07T19:18:00Z"
 }
