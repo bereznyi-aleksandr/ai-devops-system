@@ -1,0 +1,130 @@
+name: Analyst Task Writer
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_payload:
+        description: 'Full task payload as JSON string'
+        required: true
+        type: string
+
+jobs:
+  write_task:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Parse task payload and write task file
+        id: prepare_task
+        env:
+          TASK_PAYLOAD: ${{ github.event.inputs.task_payload }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/tasks .tmp
+
+          python3 - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+
+          raw = os.environ.get("TASK_PAYLOAD", "").strip()
+          if not raw:
+              print("VALIDATION_FAILED: task_payload is empty", file=sys.stderr)
+              sys.exit(1)
+
+          try:
+              payload = json.loads(raw)
+          except Exception as exc:
+              print(f"VALIDATION_FAILED: not valid JSON: {exc}", file=sys.stderr)
+              sys.exit(1)
+
+          if not isinstance(payload, dict):
+              print("VALIDATION_FAILED: must be a JSON object", file=sys.stderr)
+              sys.exit(1)
+
+          task_id = str(payload.get("task_id", "")).strip()
+          if not task_id:
+              print("VALIDATION_FAILED: task_id is required", file=sys.stderr)
+              sys.exit(1)
+
+          if "/" in task_id or "\\" in task_id:
+              print("VALIDATION_FAILED: task_id contains invalid characters", file=sys.stderr)
+              sys.exit(1)
+
+          task_path = Path("governance/tasks") / f"{task_id}.json"
+          task_path.write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          Path(".tmp/task_meta.json").write_text(
+              json.dumps({"task_id": task_id, "task_path": str(task_path)},
+                         ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(f"TASK_ID={task_id}")
+          PY
+
+          TASK_ID="$(python3 -c "
+          import json
+          from pathlib import Path
+          print(json.loads(Path('.tmp/task_meta.json').read_text())['task_id'])
+          ")"
+          TASK_PATH="$(python3 -c "
+          import json
+          from pathlib import Path
+          print(json.loads(Path('.tmp/task_meta.json').read_text())['task_path'])
+          ")"
+          echo "task_id=$TASK_ID" >> "$GITHUB_OUTPUT"
+          echo "task_path=$TASK_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Commit task file to main
+        id: commit_task
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add "${{ steps.prepare_task.outputs.task_path }}"
+
+          if git diff --cached --quiet; then
+            echo "No task file change to commit"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+            echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "Analyst: create task file for ${{ steps.prepare_task.outputs.task_id }}"
+          git push origin HEAD:main
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch ledger-updated
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TASK_ID: ${{ steps.prepare_task.outputs.task_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/${{ github.repository }}/dispatches \
+            --method POST \
+            -f event_type=ledger-updated \
+            -f client_payload[next_actor_role]=AUDITOR \
+            -f client_payload[task_id]="$TASK_ID"
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: rm -rf .tmp
