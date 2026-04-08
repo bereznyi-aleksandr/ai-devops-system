@@ -313,8 +313,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git pull --rebase origin main
-          git push origin HEAD:main
+          echo 'Ledger write via GCS contour — no direct git push needed'
 
       - name: Dispatch ledger-updated event
         env:
