@@ -1,0 +1,183 @@
+name: Analyst Verifier Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: 'Task ID being verified'
+        required: true
+        type: string
+      verification_result:
+        description: 'CONFIRMED or FAILED'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for verification result'
+        required: true
+        type: string
+      parent_event_id:
+        description: 'Parent event ID from ACTION_COMPLETED'
+        required: true
+        type: string
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Validate inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, sys
+
+          task_id = os.environ.get('INPUT_TASK_ID', '').strip()
+          result = os.environ.get('INPUT_RESULT', '').strip()
+          reason = os.environ.get('INPUT_REASON', '').strip()
+          parent = os.environ.get('INPUT_PARENT', '').strip()
+
+          if not task_id:
+              print('VALIDATION_FAILED: task_id is required', file=sys.stderr)
+              sys.exit(1)
+          if result not in {'CONFIRMED', 'FAILED'}:
+              print(f'VALIDATION_FAILED: verification_result must be CONFIRMED or FAILED, got: {result}', file=sys.stderr)
+              sys.exit(1)
+          if not reason:
+              print('VALIDATION_FAILED: reason is required', file=sys.stderr)
+              sys.exit(1)
+          if not parent:
+              print('VALIDATION_FAILED: parent_event_id is required', file=sys.stderr)
+              sys.exit(1)
+
+          print(f'VALIDATION_PASSED: task_id={task_id} result={result}')
+          PY
+        env:
+          INPUT_TASK_ID: ${{ github.event.inputs.task_id }}
+          INPUT_RESULT: ${{ github.event.inputs.verification_result }}
+          INPUT_REASON: ${{ github.event.inputs.reason }}
+          INPUT_PARENT: ${{ github.event.inputs.parent_event_id }}
+
+      - name: Build verification payload
+        id: payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/verifier
+
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          task_id = os.environ['INPUT_TASK_ID'].strip()
+          result = os.environ['INPUT_RESULT'].strip()
+          reason = os.environ['INPUT_REASON'].strip()
+          parent = os.environ['INPUT_PARENT'].strip()
+
+          event_type = f'VERIFICATION_{result}'
+          event_id = f'{task_id}-VERIFY-{datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")}'
+
+          payload = {
+              'schema_version': 'v164',
+              'event_id': event_id,
+              'parent_event_id': parent,
+              'task_id': task_id,
+              'event_time': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+              'step_name': 'VERIFICATION',
+              'actor_role': 'ANALYST',
+              'event_type': event_type,
+              'description': reason,
+              'status': result,
+              'next_actor_role': 'AUDITOR',
+              'next_expected_event': 'RESULT_ACCEPTED' if result == 'CONFIRMED' else 'RESULT_REJECTED',
+              'routing_decision_basis': f'ANALYST_VERIFICATION_{result}',
+              'commit_sha': ''
+          }
+
+          out = Path('/tmp/verifier/payload.json')
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(f'EVENT_ID={event_id}')
+          print(f'EVENT_TYPE={event_type}')
+          PY
+        env:
+          INPUT_TASK_ID: ${{ github.event.inputs.task_id }}
+          INPUT_RESULT: ${{ github.event.inputs.verification_result }}
+          INPUT_REASON: ${{ github.event.inputs.reason }}
+          INPUT_PARENT: ${{ github.event.inputs.parent_event_id }}
+
+      - name: Write payload to GCS
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('/tmp/verifier/payload.json').read_text())
+          event_id = payload['event_id']
+          print(f'Writing {event_id} to GCS')
+          PY
+
+          EVENT_ID=$(python3 -c "
+          import json
+          from pathlib import Path
+          p = json.loads(Path('/tmp/verifier/payload.json').read_text())
+          print(p['event_id'])
+          ")
+
+          gcloud storage cp /tmp/verifier/payload.json \
+            gs://barber-agent-state/governance/inbox/requests/${EVENT_ID}.json \
+            --project=barber-483016
+
+          echo "GCS_PATH=governance/inbox/requests/${EVENT_ID}.json" >> "$GITHUB_ENV"
+          echo "EVENT_ID=${EVENT_ID}" >> "$GITHUB_ENV"
+
+      - name: Trigger ledger ingress
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAT=$(gcloud secrets versions access latest \
+            --secret="GITHUB_TOKEN" \
+            --project="barber-483016" | tr -d '\r\n')
+          echo "::add-mask::$PAT"
+
+          gh workflow run ledger-request-ingress.yml \
+            --repo bereznyi-aleksandr/ai-devops-system \
+            --ref main \
+            -f request_path="${GCS_PATH}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Dispatch ledger-updated
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAT=$(gcloud secrets versions access latest \
+            --secret="GITHUB_TOKEN" \
+            --project="barber-483016" | tr -d '\r\n')
+          echo "::add-mask::$PAT"
+
+          gh api repos/bereznyi-aleksandr/ai-devops-system/dispatches \
+            --method POST \
+            -f event_type=ledger-updated \
+            -f client_payload[next_actor_role]=AUDITOR \
+            -f client_payload[task_id]="${{ github.event.inputs.task_id }}" \
+            -f client_payload[event_id]="${EVENT_ID}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Guardrail
+        run: |
+          echo "Analyst Verifier writes verification outcomes only."
+          echo "No audit decisions here."
