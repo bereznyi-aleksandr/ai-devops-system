@@ -1,0 +1,17 @@
+{
+  "schema_version": "v164",
+  "event_id": "TASK-P3-PROPOSED-0011",
+  "parent_event_id": "TASK-P2-0009-EXEC-0001",
+  "task_id": "TASK-P3-0011",
+  "event_time": "2026-04-08T15:35:00Z",
+  "step_name": "P3.2",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "Fix .github/workflows/auditor-runner.yml so that after PRE_ACTION_APPROVED the workflow reads the approved task payload from governance/tasks/<task_id>.json, forms governance/current_task.json, and updates governance/current_task.json through GitHub API inside the workflow.",
+  "status": "PROPOSED",
+  "proof_target": ".github/workflows/auditor-runner.yml exists in main with a server-side step that updates governance/current_task.json only when decision == PRE_ACTION_APPROVED",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "BEM_346_TASK_1_AUDITOR_RUNNER_SELF_UPDATES_CURRENT_TASK",
+  "commit_sha": ""
+}
