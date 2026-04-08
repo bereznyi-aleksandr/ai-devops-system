@@ -1,12 +1,12 @@
 {
-  "schema_version": "v155",
-  "status": "RETRY_REQUIRED",
-  "task_id": "TASK-P2-0005",
+  "schema_version": "v164",
+  "status": "APPROVED",
+  "task_id": "TASK-P2-0009",
   "payload": {
-    "step": "P2.2",
-    "description": "Retry TASK-P2-0005: create governance/agent_factory_step_2.py as second Agent Factory component. Must reference governance/agent_factory_step_1.py as predecessor. Preserve v162 machine-readable contract.",
-    "proof_target": "governance/agent_factory_step_2.py exists in main"
+    "step": "P2.5",
+    "description": "Create .github/workflows/analyst-verifier-runner.yml. Triggered via workflow_dispatch with inputs: task_id, verification_result (CONFIRMED/FAILED), reason, parent_event_id. Validates inputs. Writes VERIFICATION_CONFIRMED or VERIFICATION_FAILED to ledger via GCS contour. Dispatches ledger-updated with next_actor_role=AUDITOR.",
+    "proof_target": ".github/workflows/analyst-verifier-runner.yml exists in main"
   },
   "updated_by": "AUDITOR",
-  "updated_at": "2026-04-07T19:18:00Z"
+  "updated_at": "2026-04-08T08:00:00Z"
 }
