@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,7 +35,9 @@ jobs:
 
       - name: Get GitHub PAT from Secret Manager
         id: get_pat
+        shell: bash
         run: |
+          set -euo pipefail
           PAT=$(gcloud secrets versions access latest \
             --secret="GITHUB_TOKEN" \
             --project="barber-483016" | tr -d '\r\n')
@@ -41,17 +45,20 @@ jobs:
           printf 'pat=%s\n' "$PAT" >> "$GITHUB_OUTPUT"
 
       - name: Configure git identity
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
-          git config user.email \
-            "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Resolve task context
         id: context
         env:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_TASK_ID: ${{ github.event.inputs.task_id }}
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           import json, os
           from pathlib import Path
@@ -101,23 +108,15 @@ jobs:
           task = json.loads(tf.read_text(encoding='utf-8')) if tf.exists() else {"task_id": resolved_task_id}
           ledger = Path('governance/exchange_ledger.csv')
           tail = '\n'.join(ledger.read_text(encoding='utf-8').strip().splitlines()[-5:]) if ledger.exists() else ''
-          ctx = {
-              "event_name": event_name,
-              "task_id": resolved_task_id,
-              "current_status": current_status,
-              "task": task,
-              "ledger_tail": tail
-          }
           Path('.tmp').mkdir(exist_ok=True)
-          Path('.tmp/executor_context.json').write_text(
-              json.dumps(ctx, ensure_ascii=False, indent=2),
-              encoding='utf-8'
-          )
+          ctx = {"event_name": event_name, "task_id": resolved_task_id, "current_status": current_status, "task": task, "ledger_tail": tail}
+          Path('.tmp/executor_context.json').write_text(json.dumps(ctx, ensure_ascii=False, indent=2), encoding='utf-8')
           print('CONTEXT_READY=true')
           PY
 
       - name: Show skip reason
         if: steps.context.outputs.should_execute != 'true'
+        shell: bash
         run: echo "${{ steps.context.outputs.skip_reason }}"
 
       - name: Run Claude API as Cloud Code
@@ -126,7 +125,9 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TASK_ID: ${{ steps.context.outputs.task_id }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           import json, os, urllib.request
           from pathlib import Path
@@ -136,48 +137,39 @@ jobs:
           model = os.getenv('LLM_MODEL') or 'claude-sonnet-4-20250514'
           context = json.loads(Path('.tmp/executor_context.json').read_text(encoding='utf-8'))
 
-          system_prompt = """You are CLOUD_CODE in an autonomous multi-agent DevOps system.
-          SSOT: MASTER_PROMPT_v164_CANON_FINAL
-          Respond ONLY with valid JSON. No preamble. No markdown.
-          STRICT CONTRACT FOR THIS EXECUTION PATH:
-          - actor_role MUST be exactly: CLOUD_CODE
-          - event_type MUST be exactly: ACTION_COMPLETED
-          - next_actor_role MUST be exactly: ANALYST
-          - next_expected_event MUST be exactly: VERIFICATION_REQUIRED
-          - status MUST be exactly: COMPLETED
-          DO NOT use any other event_type. ACTION_COMPLETED is the only valid value.
-          Required fields: schema_version(v162), event_id, parent_event_id, task_id,
-          event_time, step_name, actor_role(CLOUD_CODE), event_type, description,
-          status, next_actor_role, next_expected_event, routing_decision_basis, commit_sha"""
-
-          payload = {
-              "model": model,
-              "max_tokens": 2000,
-              "system": system_prompt,
-              "messages": [{"role": "user", "content": f"Context: {json.dumps(context, ensure_ascii=False)}"}]
-          }
-
-          req = urllib.request.Request(
-              'https://api.anthropic.com/v1/messages',
-              data=json.dumps(payload).encode(),
-              headers={
-                  'Content-Type': 'application/json',
-                  'x-api-key': api_key,
-                  'anthropic-version': '2023-06-01'
-              }
+          system_prompt = (
+              "You are CLOUD_CODE in an autonomous multi-agent DevOps system.\n"
+              "SSOT: MASTER_PROMPT_v164_CANON_FINAL\n"
+              "Respond ONLY with valid JSON. No preamble. No markdown.\n"
+              "STRICT CONTRACT:\n"
+              "- actor_role MUST be: CLOUD_CODE\n"
+              "- event_type MUST be: ACTION_COMPLETED\n"
+              "- next_actor_role MUST be: ANALYST\n"
+              "- next_expected_event MUST be: VERIFICATION_REQUIRED\n"
+              "- status MUST be: COMPLETED\n"
+              "Required fields: schema_version(v164), event_id, parent_event_id, task_id, "
+              "event_time, step_name, actor_role, event_type, description, "
+              "status, next_actor_role, next_expected_event, routing_decision_basis, commit_sha"
           )
+
+          payload = {"model": model, "max_tokens": 2000, "system": system_prompt,
+                     "messages": [{"role": "user", "content": f"Context: {json.dumps(context, ensure_ascii=False)}"}]}
+          req = urllib.request.Request('https://api.anthropic.com/v1/messages',
+              data=json.dumps(payload).encode(),
+              headers={'Content-Type': 'application/json', 'x-api-key': api_key, 'anthropic-version': '2023-06-01'})
           with urllib.request.urlopen(req) as r:
               result = json.loads(r.read())
-
-          Path('.tmp/executor_raw_output.txt').write_text(
-              result['content'][0]['text'].strip(),
-              encoding='utf-8'
-          )
+          raw_text = result['content'][0]['text'].strip()
+          if not raw_text:
+              raise SystemExit('EMPTY_LLM_OUTPUT')
+          Path('.tmp/executor_raw_output.txt').write_text(raw_text, encoding='utf-8')
           PY
 
       - name: Validate LLM output schema
         if: steps.context.outputs.should_execute == 'true'
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           import json, sys
           from pathlib import Path
@@ -185,76 +177,159 @@ jobs:
           required = ['schema_version','event_id','parent_event_id','task_id','event_time',
                       'step_name','actor_role','event_type','description','status',
                       'next_actor_role','next_expected_event','routing_decision_basis','commit_sha']
-          allowed_types = {'TASK_PROPOSED','PRE_ACTION_APPROVED','PRE_ACTION_REJECTED',
-                           'ACTION_EXECUTION_REQUEST','ACTION_COMPLETED','RESULT_ACCEPTED',
-                           'RESULT_REJECTED','TASK_CLOSED','EMERGENCY_BLOCKED','VALIDATION_FAILED'}
-          allowed_roles = {'ANALYST','AUDITOR','CLOUD_CODE','OPERATOR',
-                           'LEDGER_WRITER','LEDGER_ROUTER','NONE'}
 
           raw = Path('.tmp/executor_raw_output.txt').read_text(encoding='utf-8')
           try:
               p = json.loads(raw)
           except Exception as e:
-              print(f'VALIDATION_FAILED: {e}', file=sys.stderr)
-              sys.exit(1)
+              print(f'VALIDATION_FAILED: {e}', file=sys.stderr); sys.exit(1)
 
           missing = [f for f in required if f not in p]
           if missing:
-              print(f'VALIDATION_FAILED: missing {missing}', file=sys.stderr)
-              sys.exit(1)
-          if p['schema_version'] != 'v162':
-              print('VALIDATION_FAILED: wrong schema_version', file=sys.stderr)
-              sys.exit(1)
+              print(f'VALIDATION_FAILED: missing {missing}', file=sys.stderr); sys.exit(1)
+          if p['schema_version'] != 'v164':
+              print('VALIDATION_FAILED: wrong schema_version', file=sys.stderr); sys.exit(1)
           if p['actor_role'] != 'CLOUD_CODE':
-              print('VALIDATION_FAILED: actor_role must be CLOUD_CODE', file=sys.stderr)
-              sys.exit(1)
-          if p['event_type'] not in allowed_types:
-              print('VALIDATION_FAILED: invalid event_type', file=sys.stderr)
-              sys.exit(1)
-          if p['next_actor_role'] not in allowed_roles:
-              print('VALIDATION_FAILED: invalid next_actor_role', file=sys.stderr)
-              sys.exit(1)
+              print('VALIDATION_FAILED: actor_role must be CLOUD_CODE', file=sys.stderr); sys.exit(1)
+          if p['event_type'] != 'ACTION_COMPLETED':
+              print('VALIDATION_FAILED: event_type must be ACTION_COMPLETED', file=sys.stderr); sys.exit(1)
+          if p['status'] != 'COMPLETED':
+              print('VALIDATION_FAILED: status must be COMPLETED', file=sys.stderr); sys.exit(1)
+          if p['next_actor_role'] != 'ANALYST':
+              print('VALIDATION_FAILED: next_actor_role must be ANALYST', file=sys.stderr); sys.exit(1)
+          if p['next_expected_event'] != 'VERIFICATION_REQUIRED':
+              print('VALIDATION_FAILED: next_expected_event must be VERIFICATION_REQUIRED', file=sys.stderr); sys.exit(1)
 
-          Path('.tmp/executor_validated_output.json').write_text(
-              json.dumps(p, ensure_ascii=False, indent=2),
-              encoding='utf-8'
-          )
+          Path('.tmp/executor_validated_output.json').write_text(json.dumps(p, ensure_ascii=False, indent=2), encoding='utf-8')
           print('SCHEMA_VALIDATION=PASSED')
           PY
 
-      - name: Write to ledger
+      - name: Materialize proof target file
         if: steps.context.outputs.should_execute == 'true'
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          CURRENT_STATUS: ${{ steps.context.outputs.current_status }}
+          TASK_ID: ${{ steps.context.outputs.task_id }}
+        shell: bash
         run: |
-          python3 governance/ledger_writer.py \
-            --payload-file .tmp/executor_validated_output.json \
-            --repo-root . \
-            --ledger-path governance/exchange_ledger.csv \
-            --commit-message "Cloud Code: execution result" \
-            --binding-commit-message "Cloud Code: bind sha" \
-            | tee .tmp/writer_output.txt
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, re, urllib.request
+          from pathlib import Path
 
-      - name: Push ledger
+          context = json.loads(Path('.tmp/executor_context.json').read_text(encoding='utf-8'))
+          task = context.get('task', {})
+          proof_target = str(task.get('proof_target', '')).strip()
+          description = str(task.get('description', '')).strip()
+          current_status = (os.environ.get('CURRENT_STATUS') or '').strip()
+          api_key = os.environ['ANTHROPIC_API_KEY']
+          model = os.getenv('LLM_MODEL') or 'claude-sonnet-4-20250514'
+
+          if not proof_target:
+              raise SystemExit('VALIDATION_FAILED: proof_target missing')
+          if ' exists in main' not in proof_target:
+              raise SystemExit('VALIDATION_FAILED: proof_target must contain exists in main')
+
+          target_path = proof_target.split(' exists in main', 1)[0].strip()
+          if not target_path:
+              raise SystemExit('VALIDATION_FAILED: target path parse failed')
+          if not target_path.startswith(('governance/', '.github/workflows/')):
+              raise SystemExit(f'VALIDATION_FAILED: disallowed target path: {target_path}')
+
+          file_type = {'.py':'python','.yml':'yaml','.yaml':'yaml','.json':'json','.md':'markdown','.txt':'text','.sh':'bash'}.get(Path(target_path).suffix.lower(), 'text')
+
+          Path('.tmp/materialize_meta.json').write_text(
+              json.dumps({"target_path": target_path, "file_type": file_type, "current_status": current_status, "task_id": context.get('task_id','')}, ensure_ascii=False, indent=2),
+              encoding='utf-8'
+          )
+
+          payload = {"model": model, "max_tokens": 4000,
+              "system": f"Generate exact content for file: {target_path}\nFile type: {file_type}\nBased on task: {description}\nReturn only raw file content. No markdown fences. No explanation.",
+              "messages": [{"role": "user", "content": json.dumps({"task": task, "target_path": target_path}, ensure_ascii=False)}]}
+          req = urllib.request.Request('https://api.anthropic.com/v1/messages',
+              data=json.dumps(payload).encode(),
+              headers={'Content-Type': 'application/json', 'x-api-key': api_key, 'anthropic-version': '2023-06-01'})
+          with urllib.request.urlopen(req) as r:
+              result = json.loads(r.read())
+          raw_text = re.sub(r'^```[a-zA-Z0-9_-]*\n?', '', result['content'][0]['text'].strip())
+          raw_text = re.sub(r'\n?```$', '', raw_text).strip()
+          if not raw_text:
+              raise SystemExit('EMPTY_FILE_CONTENT')
+          Path('.tmp/materialized_file_content.txt').write_text(raw_text, encoding='utf-8')
+          print(f'MATERIALIZE_READY: {target_path}')
+          PY
+
+          TARGET_PATH="$(python3 -c "import json; from pathlib import Path; print(json.loads(Path('.tmp/materialize_meta.json').read_text())['target_path'])")"
+          CURRENT_STATUS_VALUE="$(python3 -c "import json; from pathlib import Path; print(json.loads(Path('.tmp/materialize_meta.json').read_text()).get('current_status',''))")"
+          EXISTING_SHA="$(gh api repos/${{ github.repository }}/contents/${TARGET_PATH} --jq '.sha' 2>/dev/null || true)"
+          CONTENT_B64="$(base64 -w 0 .tmp/materialized_file_content.txt)"
+
+          if [ -n "$EXISTING_SHA" ] && [ "$CURRENT_STATUS_VALUE" != "RETRY_REQUIRED" ]; then
+            echo "VALIDATION_FAILED: target exists and status not RETRY_REQUIRED: $TARGET_PATH" >&2; exit 1
+          fi
+          if [ -n "$EXISTING_SHA" ]; then
+            gh api --method PUT repos/${{ github.repository }}/contents/${TARGET_PATH} \
+              -f message="Executor: retry materialize ${TARGET_PATH} for ${TASK_ID}" \
+              -f content="$CONTENT_B64" -f sha="$EXISTING_SHA" >/dev/null
+          else
+            gh api --method PUT repos/${{ github.repository }}/contents/${TARGET_PATH} \
+              -f message="Executor: materialize ${TARGET_PATH} for ${TASK_ID}" \
+              -f content="$CONTENT_B64" >/dev/null
+          fi
+          gh api repos/${{ github.repository }}/contents/${TARGET_PATH} --jq '.path,.sha' >/dev/null
+
+      - name: Write ledger payload to GCS inbox
         if: steps.context.outputs.should_execute == 'true'
+        id: gcs_write
+        shell: bash
         run: |
-          git pull --rebase origin main
-          git push origin HEAD:main
+          set -euo pipefail
+          EVENT_ID="$(python3 -c "import json; from pathlib import Path; print(json.loads(Path('.tmp/executor_validated_output.json').read_text())['event_id'])")"
+          GCS_PATH="governance/inbox/requests/${EVENT_ID}.json"
+          gcloud storage cp .tmp/executor_validated_output.json "gs://barber-agent-state/${GCS_PATH}" --project=barber-483016
+          echo "event_id=${EVENT_ID}" >> "$GITHUB_OUTPUT"
+          echo "gcs_path=${GCS_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger ledger ingress
+        if: steps.context.outputs.should_execute == 'true'
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run ledger-request-ingress.yml \
+            --repo bereznyi-aleksandr/ai-devops-system \
+            --ref main \
+            -f request_path="${{ steps.gcs_write.outputs.gcs_path }}"
+          sleep 15
 
       - name: Dispatch ledger-updated
         if: steps.context.outputs.should_execute == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
           RESOLVED_TASK_ID: ${{ steps.context.outputs.task_id }}
+        shell: bash
         run: |
-          NEXT_ROLE=$(python3 -c "
-          import csv
-          with open('governance/exchange_ledger.csv') as f:
-              print(list(csv.DictReader(f))[-1]['next_actor_role'])
-          ")
-          LAST_EVENT=$(python3 -c "
-          import csv
-          with open('governance/exchange_ledger.csv') as f:
-              print(list(csv.DictReader(f))[-1]['event_id'])
-          ")
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv, json
+          from pathlib import Path
+
+          allowed = {"ANALYST","AUDITOR","CLOUD_CODE","OPERATOR","NONE"}
+          with open('governance/exchange_ledger.csv', encoding='utf-8') as f:
+              rows = list(csv.DictReader(f))
+          last = rows[-1]
+          next_role = last['next_actor_role']
+          if next_role not in allowed:
+              print(f"ROUTER_ROLE_WARNING: {next_role} → NONE")
+              next_role = "NONE"
+          Path('.tmp/dispatch.json').write_text(json.dumps({"next_actor_role": next_role, "event_id": last['event_id']}), encoding='utf-8')
+          PY
+
+          NEXT_ROLE="$(python3 -c "import json; from pathlib import Path; print(json.loads(Path('.tmp/dispatch.json').read_text())['next_actor_role'])")"
+          LAST_EVENT="$(python3 -c "import json; from pathlib import Path; print(json.loads(Path('.tmp/dispatch.json').read_text())['event_id'])")"
           gh api repos/bereznyi-aleksandr/ai-devops-system/dispatches \
             --method POST \
             -f event_type=ledger-updated \
@@ -264,8 +339,13 @@ jobs:
 
       - name: Cleanup
         if: always()
+        shell: bash
         run: rm -rf .tmp
 
       - name: Guardrail
+        shell: bash
         run: |
-          echo "Executor writes execution events only. No audit decisions here."
+          echo "Executor materializes proof-target files only under governance/ and .github/workflows/."
+          echo "ACTION_COMPLETED written only after file materialization succeeds."
+          echo "Ledger via GCS contour. No direct git push."
+          echo "No audit decisions here."
