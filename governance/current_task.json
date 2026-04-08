@@ -1,12 +1,12 @@
 {
   "schema_version": "v164",
   "status": "APPROVED",
-  "task_id": "TASK-P3-0011",
+  "task_id": "TASK-P3-0012",
   "payload": {
-    "step": "P3.2",
-    "description": "Fix .github/workflows/auditor-runner.yml so that after PRE_ACTION_APPROVED the workflow reads the approved task payload from governance/tasks/<task_id>.json, forms governance/current_task.json, and updates governance/current_task.json through GitHub API inside the workflow.",
-    "proof_target": ".github/workflows/auditor-runner.yml exists in main with a server-side step that updates governance/current_task.json only when decision == PRE_ACTION_APPROVED"
+    "step": "P3.2A",
+    "description": "Fix auditor-runner dispatch role filter",
+    "proof_target": ".github/workflows/auditor-runner.yml exists in main with a dispatch filter that replaces unsupported next_actor_role values with NONE before ledger-updated dispatch"
   },
   "updated_by": "AUDITOR",
-  "updated_at": "2026-04-08T15:36:00Z"
+  "updated_at": "2026-04-08T16:46:00Z"
 }
