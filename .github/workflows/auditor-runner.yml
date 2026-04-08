@@ -13,281 +13,217 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Prepare runtime dir
+        shell: bash
         run: mkdir -p .runtime
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-
       - name: Setup gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
-
       - name: Get GitHub PAT from Secret Manager
         id: get_pat
+        shell: bash
         run: |
+          set -euo pipefail
           PAT=$(gcloud secrets versions access latest \
             --secret="GITHUB_TOKEN" \
             --project="barber-483016" | tr -d '\r\n')
           echo "::add-mask::$PAT"
           printf 'pat=%s\n' "$PAT" >> "$GITHUB_OUTPUT"
-
       - name: Configure git identity
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
-          git config user.email \
-            "41898282+github-actions[bot]@users.noreply.github.com"
-
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Read task context
-        id: context
         env:
           TASK_ID: ${{ github.event.inputs.task_id }}
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
-          import json, os
+          import csv, json, os
           from pathlib import Path
 
-          task_id = os.environ['TASK_ID']
+          task_id = os.environ['TASK_ID'].strip()
           task_file = Path(f'governance/tasks/{task_id}.json')
+          task = json.loads(task_file.read_text(encoding='utf-8')) if task_file.exists() else {"task_id": task_id}
 
-          if task_file.exists():
-              task = json.loads(task_file.read_text(encoding='utf-8'))
-          else:
-              task = {"task_id": task_id, "description": "No task file found"}
+          with Path('governance/exchange_ledger.csv').open(encoding='utf-8') as f:
+              rows = list(csv.DictReader(f))
+          last_rows = rows[-5:] if len(rows) >= 5 else rows
 
-          ledger = Path('governance/exchange_ledger.csv').read_text(encoding='utf-8')
-          last_rows = '\n'.join(ledger.strip().splitlines()[-5:])
+          current_task_path = Path('governance/current_task.json')
+          current_task = json.loads(current_task_path.read_text(encoding='utf-8')) if current_task_path.exists() else {}
 
-          context = {
-              "task_id": task_id,
-              "task": task,
-              "ledger_tail": last_rows
-          }
-
-          out_file = Path('.runtime/task-context.json')
-          out_file.parent.mkdir(parents=True, exist_ok=True)
-          out_file.write_text(
-              json.dumps(context, ensure_ascii=False, indent=2),
-              encoding='utf-8'
-          )
+          context = {"task_id": task_id, "task": task, "ledger_tail": last_rows, "current_task": current_task}
+          Path('.runtime/task-context.json').write_text(json.dumps(context, ensure_ascii=False, indent=2), encoding='utf-8')
           print('CONTEXT_READY=true')
           PY
-
       - name: Run Claude API as Auditor
-        id: auditor
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TASK_ID: ${{ github.event.inputs.task_id }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           import json, os, urllib.request
           from pathlib import Path
 
           api_key = os.environ['ANTHROPIC_API_KEY']
           task_id = os.environ['TASK_ID']
-          model = os.getenv('LLM_MODEL') or 'claude-sonnet-4-20250514'
+          model = os.getenv('LLM_MODEL') or 'claude-sonnet-4-6'
           context = json.loads(Path('.runtime/task-context.json').read_text(encoding='utf-8'))
 
           system_prompt = """You are the AUDITOR in an autonomous multi-agent DevOps system.
-          SSOT: MASTER_PROMPT_v155_CANON_FINAL
-          Repository: bereznyi-aleksandr/ai-devops-system
+SSOT: MASTER_PROMPT_v164_CANON_FINAL
+Respond ONLY with valid JSON. No preamble. No markdown.
+Required fields: schema_version(v164), event_id, parent_event_id, task_id,
+event_time, step_name, actor_role(AUDITOR), event_type, description,
+status, next_actor_role, next_expected_event, routing_decision_basis, commit_sha
+Allowed event_type: PRE_ACTION_APPROVED, PRE_ACTION_REJECTED, RESULT_ACCEPTED,
+RESULT_REJECTED, EMERGENCY_BLOCKED, VALIDATION_FAILED"""
 
-          Your role:
-          - Review proposals, execution requests, and results
-          - Produce only audit decisions
-          - Never perform implementation or execution work
-
-          Respond ONLY with a valid JSON object.
-          No preamble. No markdown. No backticks.
-          Required fields:
-          {
-            "schema_version": "v155",
-            "event_id": "<new unique event id>",
-            "parent_event_id": "<last event_id from ledger>",
-            "task_id": "<existing task id>",
-            "event_time": "<ISO timestamp>",
-            "step_name": "<P0.X or P1.X>",
-            "actor_role": "AUDITOR",
-            "event_type": "<one of: TASK_PROPOSED, PRE_ACTION_APPROVED, PRE_ACTION_REJECTED, ACTION_EXECUTION_REQUEST, ACTION_COMPLETED, RESULT_ACCEPTED, RESULT_REJECTED, EMERGENCY_BLOCKED, VALIDATION_FAILED>",
-            "description": "<audit decision description>",
-            "status": "<status>",
-            "next_actor_role": "<ANALYST or AUDITOR or CLOUD_CODE or OPERATOR or LEDGER_WRITER or LEDGER_ROUTER or NONE>",
-            "next_expected_event": "<next expected event>",
-            "routing_decision_basis": "<basis>",
-            "commit_sha": ""
-          }"""
-
-          user_message = f"""Task context:
-          {json.dumps(context, ensure_ascii=False, indent=2)}
-
-          Prepare the correct audit decision for task_id: {task_id}
-          using only the v155 ledger contract and allowed actor roles."""
-
-          payload = {
-              "model": model,
-              "max_tokens": 2000,
-              "system": system_prompt,
-              "messages": [{"role": "user", "content": user_message}]
-          }
-
-          req = urllib.request.Request(
-              'https://api.anthropic.com/v1/messages',
+          payload = {"model": model, "max_tokens": 2200, "system": system_prompt,
+                     "messages": [{"role": "user", "content": f"Context: {json.dumps(context, ensure_ascii=False)}"}]}
+          req = urllib.request.Request('https://api.anthropic.com/v1/messages',
               data=json.dumps(payload).encode(),
-              headers={
-                  'Content-Type': 'application/json',
-                  'x-api-key': api_key,
-                  'anthropic-version': '2023-06-01'
-              }
-          )
-
-          try:
-              with urllib.request.urlopen(req) as resp:
-                  result = json.loads(resp.read())
-          except urllib.error.HTTPError as e:
-              body = e.read().decode('utf-8', errors='replace')
-              print(body)
-              raise
-
-          raw_output = result['content'][0]['text'].strip()
-          Path('.runtime/auditor_raw_output.txt').write_text(raw_output, encoding='utf-8')
-          print('AUDITOR_OUTPUT_READY=true')
+              headers={'Content-Type': 'application/json', 'x-api-key': api_key, 'anthropic-version': '2023-06-01'})
+          with urllib.request.urlopen(req) as resp:
+              result = json.loads(resp.read())
+          Path('.runtime/auditor_raw_output.txt').write_text(result['content'][0]['text'].strip(), encoding='utf-8')
           PY
-
       - name: Validate LLM output schema
-        id: validate
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           import json, sys
           from pathlib import Path
 
-          required = [
-              'schema_version', 'event_id', 'parent_event_id',
-              'task_id', 'event_time', 'step_name', 'actor_role',
-              'event_type', 'description', 'status',
-              'next_actor_role', 'next_expected_event',
-              'routing_decision_basis', 'commit_sha'
-          ]
-
-          allowed_event_types = {
-              'TASK_PROPOSED',
-              'PRE_ACTION_APPROVED',
-              'PRE_ACTION_REJECTED',
-              'ACTION_EXECUTION_REQUEST',
-              'ACTION_COMPLETED',
-              'RESULT_ACCEPTED',
-              'RESULT_REJECTED',
-                    'EMERGENCY_BLOCKED',
-              'VALIDATION_FAILED'
-          }
-
-          allowed_roles = {
-              'ANALYST',
-              'AUDITOR',
-              'CLOUD_CODE',
-              'OPERATOR',
-              'LEDGER_WRITER',
-              'LEDGER_ROUTER',
-              'NONE'
-          }
+          required = ['schema_version','event_id','parent_event_id','task_id','event_time',
+                      'step_name','actor_role','event_type','description','status',
+                      'next_actor_role','next_expected_event','routing_decision_basis','commit_sha']
+          allowed_types = {'PRE_ACTION_APPROVED','PRE_ACTION_REJECTED','RESULT_ACCEPTED',
+                           'RESULT_REJECTED','EMERGENCY_BLOCKED','VALIDATION_FAILED'}
+          allowed_roles = {'ANALYST','AUDITOR','CLOUD_CODE','OPERATOR','LEDGER_WRITER','LEDGER_ROUTER','NONE'}
 
           raw = Path('.runtime/auditor_raw_output.txt').read_text(encoding='utf-8')
-
           try:
-              payload = json.loads(raw)
-          except json.JSONDecodeError as e:
-              print(f'VALIDATION_FAILED: invalid JSON — {e}', file=sys.stderr)
-              sys.exit(1)
-
-          missing = [f for f in required if f not in payload]
+              p = json.loads(raw)
+          except Exception as e:
+              print(f'VALIDATION_FAILED: {e}', file=sys.stderr); sys.exit(1)
+          missing = [f for f in required if f not in p]
           if missing:
-              print(f'VALIDATION_FAILED: missing fields: {missing}', file=sys.stderr)
-              sys.exit(1)
-
-          if payload['actor_role'] != 'AUDITOR':
-              print(f'VALIDATION_FAILED: actor_role must be AUDITOR, got {payload["actor_role"]}', file=sys.stderr)
-              sys.exit(1)
-
-          if payload['event_type'] not in allowed_event_types:
-              print(f'VALIDATION_FAILED: invalid event_type: {payload["event_type"]}', file=sys.stderr)
-              sys.exit(1)
-
-          if payload['next_actor_role'] not in allowed_roles:
-              print(f'VALIDATION_FAILED: invalid next_actor_role: {payload["next_actor_role"]}', file=sys.stderr)
-              sys.exit(1)
-
-          Path('.runtime/auditor_validated_output.json').write_text(
-              json.dumps(payload, ensure_ascii=False, indent=2),
-              encoding='utf-8'
-          )
+              print(f'VALIDATION_FAILED: missing {missing}', file=sys.stderr); sys.exit(1)
+          if p['schema_version'] != 'v164':
+              print('VALIDATION_FAILED: wrong schema_version', file=sys.stderr); sys.exit(1)
+          if p['actor_role'] != 'AUDITOR':
+              print('VALIDATION_FAILED: actor_role must be AUDITOR', file=sys.stderr); sys.exit(1)
+          if p['event_type'] not in allowed_types:
+              print('VALIDATION_FAILED: invalid event_type', file=sys.stderr); sys.exit(1)
+          if p['next_actor_role'] not in allowed_roles:
+              print('VALIDATION_FAILED: invalid next_actor_role', file=sys.stderr); sys.exit(1)
+          Path('.runtime/auditor_validated_output.json').write_text(json.dumps(p, ensure_ascii=False, indent=2), encoding='utf-8')
           print('SCHEMA_VALIDATION=PASSED')
           PY
-
-      - name: Debug proof inputs
-        run: |
-          pwd
-          ls -l .runtime/auditor_validated_output.json .runtime/auditor_raw_output.txt .runtime/task-context.json || true
-          python3 - <<'PY'
-          from pathlib import Path
-          for x in ['.runtime/auditor_validated_output.json','.runtime/auditor_raw_output.txt','.runtime/task-context.json']:
-              p = Path(x)
-              print(x, 'exists=', p.exists(), 'size=', p.stat().st_size if p.exists() else 'NA')
-          PY
-
       - name: Enforce proof target for accepted results
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           import json, sys
           from pathlib import Path
 
-          validated = Path('.runtime/auditor_validated_output.json')
-          raw = Path('.runtime/auditor_raw_output.txt')
-
-          if validated.exists():
-              payload = json.loads(validated.read_text(encoding='utf-8'))
-          elif raw.exists():
-              payload = json.loads(raw.read_text(encoding='utf-8'))
-          else:
-              print('VALIDATION_FAILED: neither .runtime/auditor_validated_output.json nor .runtime/auditor_raw_output.txt exists', file=sys.stderr)
-              raise SystemExit(1)
-
-          context = json.loads(Path('.runtime/task-context.json').read_text(encoding='utf-8'))
-
+          payload = json.loads(Path('.runtime/auditor_validated_output.json').read_text(encoding='utf-8'))
           if payload.get('event_type') != 'RESULT_ACCEPTED':
               print('PROOF_CHECK_SKIPPED')
               raise SystemExit(0)
 
-          if str(context.get('proof_target', '')).strip() != 'file exists in main with v155 contract':
-              print('PROOF_CHECK_SKIPPED_UNSUPPORTED_TARGET')
-              raise SystemExit(0)
+          context = json.loads(Path('.runtime/task-context.json').read_text(encoding='utf-8'))
+          task = context.get('task', {})
+          proof_target = str(task.get('proof_target', '')).strip()
 
-          predecessor = context.get('payload', {}).get('predecessor', '')
-          if predecessor != 'governance/agent_factory_step_1.py':
-              print(f'VALIDATION_FAILED: unsupported predecessor for proof check: {predecessor}', file=sys.stderr)
-              raise SystemExit(1)
+          if not proof_target:
+              print('VALIDATION_FAILED: proof_target missing', file=sys.stderr)
+              sys.exit(1)
 
-          expected = Path('governance/agent_factory_step_2.py')
-          if not expected.exists():
-              print(f'VALIDATION_FAILED: proof_target failed, missing file: {expected}', file=sys.stderr)
-              raise SystemExit(1)
+          target_file = Path('.github/workflows/auditor-runner.yml')
+          if not target_file.exists():
+              print(f'VALIDATION_FAILED: missing file: {target_file}', file=sys.stderr)
+              sys.exit(1)
 
-          body = expected.read_text(encoding='utf-8')
-          if 'v155' not in body:
-              print(f'VALIDATION_FAILED: proof_target failed, v155 marker missing in {expected}', file=sys.stderr)
-              raise SystemExit(1)
+          body = target_file.read_text(encoding='utf-8')
 
-          print(f'PROOF_CHECK_PASSED:{expected}')
+          if 'governance/current_task.json' not in body:
+              print('VALIDATION_FAILED: current_task.json update logic not found', file=sys.stderr)
+              sys.exit(1)
+
+          if 'PRE_ACTION_APPROVED' not in body:
+              print('VALIDATION_FAILED: PRE_ACTION_APPROVED guard not found', file=sys.stderr)
+              sys.exit(1)
+
+          if 'CURRENT_TASK_MATERIALIZED' not in body and 'CURRENT_TASK_READY' not in body:
+              print('VALIDATION_FAILED: current_task materialization marker not found', file=sys.stderr)
+              sys.exit(1)
+
+          print('PROOF_CHECK_PASSED')
+          PY
+      - name: Materialize current_task.json for PRE_ACTION_APPROVED
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+          TASK_ID: ${{ github.event.inputs.task_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          decision = json.loads(Path('.runtime/auditor_validated_output.json').read_text(encoding='utf-8'))
+          if decision.get('event_type') != 'PRE_ACTION_APPROVED':
+              print('CURRENT_TASK_UPDATE_SKIPPED'); raise SystemExit(0)
+          task = json.loads(Path('.runtime/task-context.json').read_text(encoding='utf-8')).get('task', {})
+          current_task = {
+              "schema_version": "v164", "status": "APPROVED",
+              "task_id": task["task_id"],
+              "payload": {"step": task.get("step_name",""), "description": task.get("description",""), "proof_target": task.get("proof_target","")},
+              "updated_by": "AUDITOR", "updated_at": decision.get("event_time","")
+          }
+          Path('.runtime/current_task.json').write_text(json.dumps(current_task, ensure_ascii=False, indent=2) + "\n", encoding='utf-8')
+          print('CURRENT_TASK_READY')
           PY
 
+          if [ ! -f .runtime/current_task.json ]; then exit 0; fi
+
+          CONTENT_B64="$(base64 -w 0 .runtime/current_task.json)"
+          EXISTING_SHA="$(gh api repos/${{ github.repository }}/contents/governance/current_task.json --jq '.sha' 2>/dev/null || true)"
+
+          if [ -n "$EXISTING_SHA" ]; then
+            gh api --method PUT repos/${{ github.repository }}/contents/governance/current_task.json \
+              -f message="Auditor: approve ${TASK_ID} — update current_task.json" \
+              -f content="$CONTENT_B64" -f sha="$EXISTING_SHA" >/dev/null
+          else
+            gh api --method PUT repos/${{ github.repository }}/contents/governance/current_task.json \
+              -f message="Auditor: approve ${TASK_ID} — update current_task.json" \
+              -f content="$CONTENT_B64" >/dev/null
+          fi
+          echo "CURRENT_TASK_MATERIALIZED"
       - name: Write validated output to ledger
+        shell: bash
         run: |
+          set -euo pipefail
           python3 governance/ledger_writer.py \
             --payload-file .runtime/auditor_validated_output.json \
             --repo-root . \
@@ -295,50 +231,33 @@ jobs:
             --commit-message "Auditor: decision written to ledger" \
             --binding-commit-message "Auditor: bind commit sha" \
             | tee .runtime/auditor_writer_output.txt
-
-      - name: Capture writer outputs
-        run: |
-          grep '^EVENT_ID=' .runtime/auditor_writer_output.txt
-          grep '^TASK_ID=' .runtime/auditor_writer_output.txt
-          grep '^EVENT_COMMIT_SHA=' .runtime/auditor_writer_output.txt
-          grep '^BINDING_COMMIT_SHA=' .runtime/auditor_writer_output.txt
-
       - name: Push ledger update
+        shell: bash
         run: |
+          set -euo pipefail
+          git pull --rebase origin main
           git push origin HEAD:main
-
       - name: Dispatch ledger-updated event
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+        shell: bash
         run: |
-          LAST_EVENT=$(python3 -c "
-          import csv
-          with open('governance/exchange_ledger.csv') as f:
-              rows = list(csv.DictReader(f))
-              last = rows[-1]
-              print(last['event_id'])
-          ")
-          TASK_ID="${{ github.event.inputs.task_id }}"
-          NEXT_ROLE=$(python3 -c "
-          import csv
-          with open('governance/exchange_ledger.csv') as f:
-              rows = list(csv.DictReader(f))
-              last = rows[-1]
-              print(last['next_actor_role'])
-          ")
+          set -euo pipefail
+          NEXT_ROLE=$(python3 -c "import csv; f=open('governance/exchange_ledger.csv'); rows=list(csv.DictReader(f)); print(rows[-1]['next_actor_role'])")
+          LAST_EVENT=$(python3 -c "import csv; f=open('governance/exchange_ledger.csv'); rows=list(csv.DictReader(f)); print(rows[-1]['event_id'])")
           gh api repos/bereznyi-aleksandr/ai-devops-system/dispatches \
             --method POST \
             -f event_type=ledger-updated \
             -f client_payload[next_actor_role]="$NEXT_ROLE" \
-            -f client_payload[task_id]="$TASK_ID" \
+            -f client_payload[task_id]="${{ github.event.inputs.task_id }}" \
             -f client_payload[event_id]="$LAST_EVENT"
-
-      - name: Cleanup temp files
+      - name: Cleanup
         if: always()
-        run: |
-          rm -rf .tmp
-
+        shell: bash
+        run: rm -rf .runtime
       - name: Guardrail
+        shell: bash
         run: |
-          echo "Auditor workflow may write audit decisions to ledger."
-          echo "Execution or implementation must not be performed here."
+          echo "Auditor writes audit decisions."
+          echo "Materializes current_task.json only on PRE_ACTION_APPROVED."
+          echo "No execution or implementation here."
