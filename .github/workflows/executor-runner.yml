@@ -137,8 +137,15 @@ jobs:
           context = json.loads(Path('.tmp/executor_context.json').read_text(encoding='utf-8'))
 
           system_prompt = """You are CLOUD_CODE in an autonomous multi-agent DevOps system.
-          SSOT: MASTER_PROMPT_v162_CANON_FINAL
+          SSOT: MASTER_PROMPT_v164_CANON_FINAL
           Respond ONLY with valid JSON. No preamble. No markdown.
+          STRICT CONTRACT FOR THIS EXECUTION PATH:
+          - actor_role MUST be exactly: CLOUD_CODE
+          - event_type MUST be exactly: ACTION_COMPLETED
+          - next_actor_role MUST be exactly: ANALYST
+          - next_expected_event MUST be exactly: VERIFICATION_REQUIRED
+          - status MUST be exactly: COMPLETED
+          DO NOT use any other event_type. ACTION_COMPLETED is the only valid value.
           Required fields: schema_version(v162), event_id, parent_event_id, task_id,
           event_time, step_name, actor_role(CLOUD_CODE), event_type, description,
           status, next_actor_role, next_expected_event, routing_decision_basis, commit_sha"""
