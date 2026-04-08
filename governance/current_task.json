@@ -1,12 +1,12 @@
 {
   "schema_version": "v164",
   "status": "APPROVED",
-  "task_id": "TASK-P3-0012",
+  "task_id": "TASK-P3-TEST-0001",
   "payload": {
-    "step": "P3.2A",
-    "description": "Fix auditor-runner dispatch role filter",
-    "proof_target": ".github/workflows/auditor-runner.yml exists in main with a dispatch filter that replaces unsupported next_actor_role values with NONE before ledger-updated dispatch"
+    "step": "P3.TEST",
+    "description": "Create governance/executor_materialization_probe.txt through executor-runner server-side file materialization path. Return a simple plain-text probe file proving executor can create a repo-visible artifact before ACTION_COMPLETED.",
+    "proof_target": "governance/executor_materialization_probe.txt exists in main"
   },
   "updated_by": "AUDITOR",
-  "updated_at": "2026-04-08T16:46:00Z"
+  "updated_at": "2026-04-08T18:10:00Z"
 }
