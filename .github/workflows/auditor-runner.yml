@@ -139,10 +139,19 @@ jobs:
           with urllib.request.urlopen(req) as resp:
               result = json.loads(resp.read())
 
+          raw_text = result['content'][0]['text'].strip()
+          if not raw_text:
+              raise SystemExit('EMPTY_LLM_OUTPUT: auditor returned empty response')
+          import re
+          raw_text = re.sub(r'^```[a-zA-Z]*\n?', '', raw_text)
+          raw_text = re.sub(r'\n?```$', '', raw_text).strip()
+          if not raw_text:
+              raise SystemExit('EMPTY_LLM_OUTPUT: response empty after stripping markdown')
           Path('.runtime/auditor_raw_output.txt').write_text(
-              result['content'][0]['text'].strip(),
+              raw_text,
               encoding='utf-8'
           )
+          print(f'LLM_OUTPUT_PREVIEW: {raw_text[:200]}')
           PY
 
       - name: Validate LLM output schema
