@@ -1,12 +1,12 @@
 {
   "schema_version": "v164",
   "status": "APPROVED",
-  "task_id": "TASK-P2-0009",
+  "task_id": "TASK-P3-0011",
   "payload": {
-    "step": "P2.5",
-    "description": "Create .github/workflows/analyst-verifier-runner.yml. Triggered via workflow_dispatch with inputs: task_id, verification_result (CONFIRMED/FAILED), reason, parent_event_id. Validates inputs. Writes VERIFICATION_CONFIRMED or VERIFICATION_FAILED to ledger via GCS contour. Dispatches ledger-updated with next_actor_role=AUDITOR.",
-    "proof_target": ".github/workflows/analyst-verifier-runner.yml exists in main"
+    "step": "P3.2",
+    "description": "Fix .github/workflows/auditor-runner.yml so that after PRE_ACTION_APPROVED the workflow reads the approved task payload from governance/tasks/<task_id>.json, forms governance/current_task.json, and updates governance/current_task.json through GitHub API inside the workflow.",
+    "proof_target": ".github/workflows/auditor-runner.yml exists in main with a server-side step that updates governance/current_task.json only when decision == PRE_ACTION_APPROVED"
   },
   "updated_by": "AUDITOR",
-  "updated_at": "2026-04-08T08:00:00Z"
+  "updated_at": "2026-04-08T15:36:00Z"
 }
