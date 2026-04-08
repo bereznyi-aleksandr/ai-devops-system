@@ -49,7 +49,9 @@ jobs:
           set -euo pipefail
           mkdir -p .tmp
           python3 - <<'PY'
-          import csv, json, os
+          import csv
+          import json
+          import os
           from pathlib import Path
 
           task_id = os.environ["TASK_ID"].strip()
@@ -103,7 +105,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json, os, urllib.request
+          import json
+          import os
+          import urllib.request
           from pathlib import Path
 
           api_key = os.environ["ANTHROPIC_API_KEY"]
@@ -111,51 +115,35 @@ jobs:
           model = os.getenv("LLM_MODEL") or "claude-sonnet-4-6"
           context = json.loads(Path(".tmp/analyst_context.json").read_text(encoding="utf-8"))
 
-          system_prompt = """You are the ANALYST / PLANNER in an autonomous multi-agent DevOps system.
-SSOT: MASTER_PROMPT_v164_CANON_FINAL
-Repository: bereznyi-aleksandr/ai-devops-system
+          system_prompt = (
+              "You are the ANALYST / PLANNER in an autonomous multi-agent DevOps system.\n"
+              "SSOT: MASTER_PROMPT_v164_CANON_FINAL\n"
+              "Repository: bereznyi-aleksandr/ai-devops-system\n\n"
+              "Your role:\n"
+              "- Read SSOT and exchange ledger\n"
+              "- Determine the next roadmap-valid task\n"
+              "- Prepare one TASK_PROPOSED only\n"
+              "- Do not execute code\n"
+              "- Do not make audit decisions\n\n"
+              "Return ONLY valid JSON with exactly two top-level keys: task_file and ledger_event.\n"
+              "task_file must contain: schema_version, task_id, step_name, actor_role, event_type, description, status, proof_target, next_actor_role, routing_decision_basis.\n"
+              "ledger_event must contain: schema_version, event_id, parent_event_id, task_id, event_time, step_name, actor_role, event_type, description, status, next_actor_role, next_expected_event, routing_decision_basis, commit_sha.\n"
+              "Hard rules:\n"
+              "- schema_version must be v164 in both objects\n"
+              "- task_id in both objects must equal the workflow input task_id exactly\n"
+              "- actor_role must be ANALYST\n"
+              "- event_type must be TASK_PROPOSED\n"
+              "- status must be PROPOSED\n"
+              "- next_actor_role must be AUDITOR\n"
+              "- next_expected_event must be PRE_ACTION_APPROVED\n"
+              "- Output JSON only. No markdown. No prose outside JSON."
+          )
 
-Your role:
-- Read SSOT and exchange ledger
-- Determine the next roadmap-valid task
-- Prepare one TASK_PROPOSED only
-- Do not execute code
-- Do not make audit decisions
-
-Return ONLY valid JSON with this exact structure:
-{
-  "task_file": {
-    "schema_version": "v164",
-    "task_id": "<exact workflow input task_id>",
-    "step_name": "<P3.X>",
-    "actor_role": "ANALYST",
-    "event_type": "TASK_PROPOSED",
-    "description": "<proposal>",
-    "status": "PROPOSED",
-    "proof_target": "<repo-visible proof>",
-    "next_actor_role": "AUDITOR",
-    "routing_decision_basis": "<basis>"
-  },
-  "ledger_event": {
-    "schema_version": "v164",
-    "event_id": "<unique id>",
-    "parent_event_id": "<last ledger event_id>",
-    "task_id": "<exact workflow input task_id>",
-    "event_time": "<ISO UTC>",
-    "step_name": "<same>",
-    "actor_role": "ANALYST",
-    "event_type": "TASK_PROPOSED",
-    "description": "<same>",
-    "status": "PROPOSED",
-    "next_actor_role": "AUDITOR",
-    "next_expected_event": "PRE_ACTION_APPROVED",
-    "routing_decision_basis": "<same>",
-    "commit_sha": ""
-  }
-}
-No markdown. No prose. JSON only."""
-
-          user_message = f"Workflow input task_id: {task_id}\n\nContext:\n{json.dumps(context, ensure_ascii=False, indent=2)}\n\nPrepare next roadmap-valid TASK_PROPOSED in v164 format."
+          user_message = (
+              f"Workflow input task_id: {task_id}\n\n"
+              f"Context:\n{json.dumps(context, ensure_ascii=False, indent=2)}\n\n"
+              "Prepare the next roadmap-valid TASK_PROPOSED in v164 format."
+          )
 
           payload = {
               "model": model,
@@ -189,7 +177,9 @@ No markdown. No prose. JSON only."""
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json, os, sys
+          import json
+          import os
+          import sys
           from pathlib import Path
 
           wf_task_id = os.environ["TASK_ID"].strip()
@@ -198,40 +188,67 @@ No markdown. No prose. JSON only."""
           try:
               payload = json.loads(raw)
           except Exception as e:
-              print(f"VALIDATION_FAILED: invalid JSON: {e}", file=sys.stderr); sys.exit(1)
+              print(f"VALIDATION_FAILED: invalid JSON: {e}", file=sys.stderr)
+              sys.exit(1)
 
           for key in ("task_file", "ledger_event"):
               if key not in payload:
-                  print(f"VALIDATION_FAILED: missing {key}", file=sys.stderr); sys.exit(1)
+                  print(f"VALIDATION_FAILED: missing {key}", file=sys.stderr)
+                  sys.exit(1)
 
-          tf, le = payload["task_file"], payload["ledger_event"]
+          tf = payload["task_file"]
+          le = payload["ledger_event"]
 
           for f in ["schema_version","task_id","step_name","actor_role","event_type","description","status","proof_target","next_actor_role","routing_decision_basis"]:
               if f not in tf:
-                  print(f"VALIDATION_FAILED: task_file missing {f}", file=sys.stderr); sys.exit(1)
+                  print(f"VALIDATION_FAILED: task_file missing {f}", file=sys.stderr)
+                  sys.exit(1)
 
           for f in ["schema_version","event_id","parent_event_id","task_id","event_time","step_name","actor_role","event_type","description","status","next_actor_role","next_expected_event","routing_decision_basis","commit_sha"]:
               if f not in le:
-                  print(f"VALIDATION_FAILED: ledger_event missing {f}", file=sys.stderr); sys.exit(1)
+                  print(f"VALIDATION_FAILED: ledger_event missing {f}", file=sys.stderr)
+                  sys.exit(1)
 
           checks = [
               (tf["schema_version"] == "v164", "task_file.schema_version must be v164"),
               (le["schema_version"] == "v164", "ledger_event.schema_version must be v164"),
               (tf["task_id"] == wf_task_id, "task_file.task_id must match input"),
               (le["task_id"] == wf_task_id, "ledger_event.task_id must match input"),
-              (tf["actor_role"] == "ANALYST", "actor_role must be ANALYST"),
-              (tf["event_type"] == "TASK_PROPOSED", "event_type must be TASK_PROPOSED"),
-              (tf["status"] == "PROPOSED", "status must be PROPOSED"),
-              (tf["next_actor_role"] == "AUDITOR", "next_actor_role must be AUDITOR"),
-              (le["next_expected_event"] == "PRE_ACTION_APPROVED", "next_expected_event must be PRE_ACTION_APPROVED"),
+              (tf["actor_role"] == "ANALYST", "task_file.actor_role must be ANALYST"),
+              (le["actor_role"] == "ANALYST", "ledger_event.actor_role must be ANALYST"),
+              (tf["event_type"] == "TASK_PROPOSED", "task_file.event_type must be TASK_PROPOSED"),
+              (le["event_type"] == "TASK_PROPOSED", "ledger_event.event_type must be TASK_PROPOSED"),
+              (tf["status"] == "PROPOSED", "task_file.status must be PROPOSED"),
+              (le["status"] == "PROPOSED", "ledger_event.status must be PROPOSED"),
+              (tf["next_actor_role"] == "AUDITOR", "task_file.next_actor_role must be AUDITOR"),
+              (le["next_actor_role"] == "AUDITOR", "ledger_event.next_actor_role must be AUDITOR"),
+              (le["next_expected_event"] == "PRE_ACTION_APPROVED", "ledger_event.next_expected_event must be PRE_ACTION_APPROVED"),
           ]
           for ok, msg in checks:
               if not ok:
-                  print(f"VALIDATION_FAILED: {msg}", file=sys.stderr); sys.exit(1)
+                  print(f"VALIDATION_FAILED: {msg}", file=sys.stderr)
+                  sys.exit(1)
 
-          Path(".tmp/task_file.json").write_text(json.dumps(tf, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          Path(".tmp/ledger_event.json").write_text(json.dumps(le, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          Path(".tmp/task_meta.json").write_text(json.dumps({"task_id": wf_task_id, "task_path": f"governance/tasks/{wf_task_id}.json", "event_id": le["event_id"]}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          Path(".tmp/task_file.json").write_text(
+              json.dumps(tf, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8"
+          )
+          Path(".tmp/ledger_event.json").write_text(
+              json.dumps(le, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8"
+          )
+          Path(".tmp/task_meta.json").write_text(
+              json.dumps(
+                  {
+                      "task_id": wf_task_id,
+                      "task_path": f"governance/tasks/{wf_task_id}.json",
+                      "event_id": le["event_id"]
+                  },
+                  ensure_ascii=False,
+                  indent=2
+              ) + "\n",
+              encoding="utf-8"
+          )
           print("SCHEMA_VALIDATION=PASSED")
           PY
 
@@ -246,15 +263,18 @@ No markdown. No prose. JSON only."""
           TASK_PATH="governance/tasks/${TASK_ID}.json"
           CONTENT_B64="$(base64 -w 0 .tmp/task_file.json)"
           EXISTING_SHA="$(gh api repos/${{ github.repository }}/contents/${TASK_PATH} --jq '.sha' 2>/dev/null || true)"
+
           if [ -n "$EXISTING_SHA" ]; then
             gh api --method PUT repos/${{ github.repository }}/contents/${TASK_PATH} \
               -f message="Analyst: update task file for ${TASK_ID}" \
-              -f content="$CONTENT_B64" -f sha="$EXISTING_SHA" >/dev/null
+              -f content="$CONTENT_B64" \
+              -f sha="$EXISTING_SHA" >/dev/null
           else
             gh api --method PUT repos/${{ github.repository }}/contents/${TASK_PATH} \
               -f message="Analyst: create task file for ${TASK_ID}" \
               -f content="$CONTENT_B64" >/dev/null
           fi
+
           echo "task_path=${TASK_PATH}" >> "$GITHUB_OUTPUT"
 
       - name: Verify task file exists in main
