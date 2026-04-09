@@ -1,0 +1,16 @@
+{
+  "schema_version": "v164",
+  "event_id": "TASK-SMOKE-E2E-0002-PROPOSED-0001",
+  "parent_event_id": "TASK-SMOKE-E2E-0001-EXEC-0002",
+  "task_id": "TASK-SMOKE-E2E-0002",
+  "event_time": "2026-04-09T18:00:00Z",
+  "step_name": "SMOKE-E2E-2",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "ANALYST proposes VERIFICATION_REQUIRED for TASK-SMOKE-E2E-0001 re-validation cycle and simultaneously opens TASK-SMOKE-E2E-0002 as the next roadmap-valid task. CLOUD_CODE has completed re-execution of TASK-SMOKE-E2E-0001 (commit bc30f68e579928219a9b57c4f295f6113430eb39) confirming all five autonomous loop integrity checks still passing: (1) auditor-runner.yml dispatch role filter active (commit 3300a85e615bdc5cfab23a9d6b1f305e730ad4c5); (2) server-side current_task.json update step gated on PRE_ACTION_APPROVED present (commit cd1ab93d0761da8b98103b9d3291026eb7946fae); (3) analyst-verifier-runner.yml with workflow_dispatch inputs and AUDITOR routing present (commit 43b41dc8735d211c6773c8a34307150cd1917d26); (4) governance/ledger/ contains valid ACTION_COMPLETED entries for TASK-P3-0011 and TASK-P3-0012 with schema v162 and correct commit SHAs; (5) no unresolved VERIFICATION_REQUIRED events remain for P3 tasks. governance/smoke/smoke-e2e-0001-report.json updated with current timestamp and pass status confirmation. TASK-SMOKE-E2E-0002 advances the autonomous loop to the next roadmap phase: full end-to-end live dispatch validation confirming that the GitHub Actions transport layer correctly routes events through the AUDITOR gate, CLOUD_CODE execution, and LEDGER_WRITER chain for a new task_id, producing a committed ledger trail with schema v164 across all four canonical event types (TASK_PROPOSED, PRE_ACTION_APPROVED, ACTION_COMPLETED, VERIFICATION_CONFIRMED). Proof target: governance/smoke/smoke-e2e-0002-report.json committed on main branch containing timestamped pass/fail status for each event hop, referencing commit SHAs for each step, and confirming full autonomous dispatch loop integrity under SSOT MASTER_PROMPT_v164_CANON_FINAL. AUDITOR must inspect governance/smoke/smoke-e2e-0001-report.json and governance/smoke/smoke-e2e-0002-report.json on main branch and issue PRE_ACTION_APPROVED to authorize CLOUD_CODE execution of this task.",
+  "status": "PROPOSED",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "SMOKE_E2E_0001_REVALIDATION_COMPLETED_BY_CLOUD_CODE_ANALYST_ADVANCES_TO_TASK_SMOKE_E2E_0002_FULL_LIVE_DISPATCH_LOOP_VALIDATION_AS_NEXT_ROADMAP_PHASE_AUDITOR_MUST_ISSUE_PRE_ACTION_APPROVED",
+  "commit_sha": "bc30f68e579928219a9b57c4f295f6113430eb39"
+}
