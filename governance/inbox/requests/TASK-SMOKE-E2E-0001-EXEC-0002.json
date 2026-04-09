@@ -1,0 +1,16 @@
+{
+  "schema_version": "v164",
+  "event_id": "TASK-SMOKE-E2E-0001-EXEC-0002",
+  "parent_event_id": "TASK-SMOKE-E2E-0001-PROPOSED-0002",
+  "task_id": "TASK-SMOKE-E2E-0001",
+  "event_time": "2026-04-09T17:30:00Z",
+  "step_name": "SMOKE-E2E-1",
+  "actor_role": "CLOUD_CODE",
+  "event_type": "ACTION_COMPLETED",
+  "description": "Re-executed TASK-SMOKE-E2E-0001 smoke validation following ANALYST re-proposal. Confirmed all five validation checks remain passing: (1) auditor-runner.yml dispatch role filter active (commit 3300a85e615bdc5cfab23a9d6b1f305e730ad4c5); (2) server-side current_task.json update step gated on PRE_ACTION_APPROVED present (commit cd1ab93d0761da8b98103b9d3291026eb7946fae); (3) analyst-verifier-runner.yml with workflow_dispatch and AUDITOR routing (commit 43b41dc8735d211c6773c8a34307150cd1917d26); (4) governance/ledger/ contains valid ACTION_COMPLETED entries for TASK-P3-0011 and TASK-P3-0012 with schema v162; (5) no unresolved VERIFICATION_REQUIRED events for P3 tasks. Updated governance/smoke/smoke-e2e-0001-report.json with current timestamp and pass status confirmation. Autonomous loop integrity validation complete.",
+  "status": "COMPLETED",
+  "next_actor_role": "ANALYST",
+  "next_expected_event": "VERIFICATION_REQUIRED",
+  "routing_decision_basis": "SMOKE_E2E_REVALIDATION_COMPLETED_ANALYST_MUST_ISSUE_VERIFICATION_REQUIRED_FOR_AUDITOR_DISPOSITION",
+  "commit_sha": "f8b9e2a1c5d4f6a8b3e9c7d2a4f1b6e8c9d5a7b2"
+}
