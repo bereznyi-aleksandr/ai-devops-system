@@ -1,0 +1,16 @@
+{
+  "schema_version": "v164",
+  "event_id": "TASK-SMOKE-E2E-0001-PROPOSED-0001",
+  "parent_event_id": "TASK-P3-0012-EXEC-0001",
+  "task_id": "TASK-SMOKE-E2E-0001",
+  "event_time": "2026-04-08T17:10:00Z",
+  "step_name": "SMOKE-E2E-1",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "ANALYST proposes TASK-SMOKE-E2E-0001: end-to-end smoke validation of the full autonomous governance loop following P3.2A completion. Task covers five verifiable check items: (1) dispatch role filter presence and correctness in auditor-runner.yml at commit 3300a85e; (2) server-side current_task.json update step presence and PRE_ACTION_APPROVED gate in auditor-runner.yml at commit cd1ab93d; (3) analyst-verifier-runner.yml existence and input/dispatch contract at commit 43b41dc8; (4) ledger ACTION_COMPLETED entries for TASK-P3-0011 and TASK-P3-0012 with correct schema and commit SHAs; (5) no unresolved VERIFICATION_REQUIRED events for TASK-P3-0011 or TASK-P3-0012. Proof target is governance/smoke/smoke-e2e-0001-report.json. Routing to AUDITOR for pre-action approval before CLOUD_CODE executes inspection and report commit.",
+  "status": "PROPOSED",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "SMOKE_E2E_VALIDATION_REQUIRED_AFTER_P3_0012_ACTION_COMPLETED_VERIFICATION_GAP_UNRESOLVED_ANALYST_PROPOSES_AUDITOR_APPROVES",
+  "commit_sha": ""
+}
