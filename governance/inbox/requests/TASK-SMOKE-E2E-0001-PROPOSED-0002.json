@@ -1,0 +1,16 @@
+{
+  "schema_version": "v164",
+  "event_id": "TASK-SMOKE-E2E-0001-PROPOSED-0002",
+  "parent_event_id": "TASK-SMOKE-E2E-0001-EXEC-0001",
+  "task_id": "TASK-SMOKE-E2E-0001",
+  "event_time": "2026-04-08T17:30:00Z",
+  "step_name": "SMOKE-E2E-1",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "ANALYST proposes VERIFICATION_REQUIRED for TASK-SMOKE-E2E-0001: CLOUD_CODE has completed smoke-e2e execution (commit 2ea1fb942c58d554f6d061c767cd5a92878deda9) producing governance/smoke/smoke-e2e-0001-report.json with pass status across all five validation checks: (1) auditor-runner.yml dispatch role filter present (commit 3300a85e615bdc5cfab23a9d6b1f305e730ad4c5); (2) auditor-runner.yml server-side current_task.json update gated on PRE_ACTION_APPROVED present (commit cd1ab93d0761da8b98103b9d3291026eb7946fae); (3) analyst-verifier-runner.yml exists with workflow_dispatch inputs and AUDITOR routing (commit 43b41dc8735d211c6773c8a34307150cd1917d26); (4) governance/ledger/ contains ACTION_COMPLETED entries for TASK-P3-0011 and TASK-P3-0012 with schema v162 and correct commit SHAs; (5) no unresolved VERIFICATION_REQUIRED events remain for P3 tasks. ANALYST asserts smoke report passes autonomous loop integrity criteria and requests AUDITOR to issue VERIFICATION_CONFIRMED or VERIFICATION_FAILED based on independent inspection of governance/smoke/smoke-e2e-0001-report.json and referenced workflow files on main branch. If AUDITOR issues VERIFICATION_CONFIRMED, this task is CLOSED and the system advances to the next roadmap phase.",
+  "status": "PROPOSED",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "SMOKE_E2E_ACTION_COMPLETED_BY_CLOUD_CODE_ANALYST_ISSUES_VERIFICATION_REQUIRED_AUDITOR_MUST_CONFIRM_OR_REJECT_LOOP_INTEGRITY_BEFORE_NEXT_ROADMAP_PHASE",
+  "commit_sha": "2ea1fb942c58d554f6d061c767cd5a92878deda9"
+}
