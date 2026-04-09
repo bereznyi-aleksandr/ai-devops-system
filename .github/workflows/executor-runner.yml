@@ -221,8 +221,13 @@ jobs:
 
           context = json.loads(Path('.tmp/executor_context.json').read_text(encoding='utf-8'))
           task = context.get('task', {})
-          proof_target = str(task.get('proof_target', '')).strip()
-          description = str(task.get('description', '')).strip()
+          current_task_payload = {}
+          current_task_path = Path('governance/current_task.json')
+          if current_task_path.exists():
+              current_task = json.loads(current_task_path.read_text(encoding='utf-8'))
+              current_task_payload = current_task.get('payload', {}) or {}
+          proof_target = str(task.get('proof_target') or current_task_payload.get('proof_target', '')).strip()
+          description = str(task.get('description') or current_task_payload.get('description', '')).strip()
           current_status = (os.environ.get('CURRENT_STATUS') or '').strip()
           api_key = os.environ['ANTHROPIC_API_KEY']
           model = os.getenv('LLM_MODEL') or 'claude-sonnet-4-20250514'
