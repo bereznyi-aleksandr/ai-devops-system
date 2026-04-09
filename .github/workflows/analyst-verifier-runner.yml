@@ -143,22 +143,6 @@ jobs:
           echo "GCS_PATH=governance/inbox/requests/${EVENT_ID}.json" >> "$GITHUB_ENV"
           echo "EVENT_ID=${EVENT_ID}" >> "$GITHUB_ENV"
 
-      - name: Trigger ledger ingress
-        shell: bash
-        run: |
-          set -euo pipefail
-          PAT=$(gcloud secrets versions access latest \
-            --secret="GITHUB_TOKEN" \
-            --project="barber-483016" | tr -d '\r\n')
-          echo "::add-mask::$PAT"
-
-          gh workflow run ledger-request-ingress.yml \
-            --repo bereznyi-aleksandr/ai-devops-system \
-            --ref main \
-            -f request_path="${GCS_PATH}"
-        env:
-          GH_TOKEN: ${{ github.token }}
-
       - name: Dispatch ledger-updated
         shell: bash
         run: |
