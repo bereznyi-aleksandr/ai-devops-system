@@ -165,6 +165,17 @@ jobs:
               result = json.loads(resp.read())
 
           raw = result["content"][0]["text"].strip()
+          if not raw:
+              raise SystemExit("EMPTY_LLM_OUTPUT: analyst returned empty response")
+          import re as _re
+          raw = _re.sub(r'^```[a-zA-Z0-9_-]*\n?', '', raw)
+          raw = _re.sub(r'\n?```$', '', raw).strip()
+          match = _re.search(r'\{[\s\S]*\}', raw)
+          if match:
+              raw = match.group(0).strip()
+          if not raw:
+              raise SystemExit("EMPTY_LLM_OUTPUT: response empty after normalization")
+          print(f"LLM_OUTPUT_PREVIEW: {raw[:300]}")
           Path(".tmp/analyst_raw_output.txt").write_text(raw, encoding="utf-8")
           print("ANALYST_OUTPUT_READY=true")
           PY
