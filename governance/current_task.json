@@ -1,12 +1,12 @@
 {
   "schema_version": "v164",
   "status": "APPROVED",
-  "task_id": "TASK-P3-TEST-0001",
+  "task_id": "TASK-SMOKE-E2E-0001",
   "payload": {
-    "step": "P3.TEST",
-    "description": "Create governance/executor_materialization_probe.txt through executor-runner server-side file materialization path. Return a simple plain-text probe file proving executor can create a repo-visible artifact before ACTION_COMPLETED.",
-    "proof_target": "governance/executor_materialization_probe.txt exists in main"
+    "step": "SMOKE-E2E-1",
+    "description": "Execute end-to-end smoke test of the autonomous multi-agent governance loop as implemented through P2 and P3 phases. The smoke test must verify that a full cycle completes without manual intervention: (1) ANALYST proposes a minimal well-scoped task and writes governance/tasks/TASK-SMOKE-E2E-0001.json to the repository; (2) auditor-runner.yml receives workflow_dispatch, reads the task payload, applies PRE_ACTION_APPROVED gate, writes governance/current_task.json via GitHub Contents API using SA-backed token; (3) ledger-updated dispatch routes to CLOUD_CODE; (4) CLOUD_CODE executor performs a trivially verifiable mutation (e.g., appends a timestamped line to governance/smoke_test_log.txt); (5) ACTION_COMPLETED event is written to ledger; (6) analyst-verifier-runner.yml receives VERIFICATION_CONFIRMED and writes the final ledger event with next_actor_role=AUDITOR. Proof target is the presence of governance/smoke_test_log.txt on main branch with a committed timestamped entry, plus a complete ledger trail containing TASK_PROPOSED, PRE_ACTION_APPROVED, ACTION_COMPLETED, and VERIFICATION_CONFIRMED events all referencing task_id TASK-SMOKE-E2E-0001. This task validates that all infrastructure built in P2 and P3 (auditor-runner current_task write, dispatch role filter, analyst-verifier-runner, ledger writer path) operates correctly as an integrated autonomous loop under v164 schema_version compliance.",
+    "proof_target": "governance/smoke_test_log.txt present on main branch with timestamped entry committed by SA-backed token; ledger contains sequential events TASK_PROPOSED → PRE_ACTION_APPROVED → ACTION_COMPLETED → VERIFICATION_CONFIRMED all with task_id=TASK-SMOKE-E2E-0001 and schema_version=v164"
   },
   "updated_by": "AUDITOR",
-  "updated_at": "2026-04-08T18:10:00Z"
+  "updated_at": "2026-04-08T18:30:00Z"
 }
