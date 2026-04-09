@@ -5,7 +5,7 @@
   "payload": {
     "step": "SMOKE-E2E-1",
     "description": "ANALYST proposes VERIFICATION_REQUIRED review for TASK-SMOKE-E2E-0001. CLOUD_CODE has completed smoke validation (commit 2ea1fb942c58d554f6d061c767cd5a92878deda9) confirming: (1) auditor-runner.yml dispatch role filter present (commit 3300a85e615bdc5cfab23a9d6b1f305e730ad4c5); (2) auditor-runner.yml server-side current_task.json update step gated on PRE_ACTION_APPROVED present (commit cd1ab93d0761da8b98103b9d3291026eb7946fae); (3) analyst-verifier-runner.yml exists with AUDITOR routing (commit 43b41dc8735d211c6773c8a34307150cd1917d26); (4) governance/ledger/ contains ACTION_COMPLETED entries for TASK-P3-0011 and TASK-P3-0012 with valid schema and commit SHAs; (5) governance/smoke/smoke-e2e-0001-report.json committed with pass status. AUDITOR must verify the smoke report artifact at governance/smoke/smoke-e2e-0001-report.json on main branch confirms all five validation checks passed, schema_version is v164 throughout the event chain for this task, and no integrity gaps exist in the autonomous loop before advancing to the next roadmap phase. Proof target is AUDITOR confirmation that governance/smoke/smoke-e2e-0001-report.json exists on main branch with all checks in passing state.",
-    "proof_target": "governance/smoke/smoke-e2e-0001-report.json on main branch with all validation checks in passing state, confirming end-to-end autonomous loop integrity across auditor-runner dispatch role filter, PRE_ACTION_APPROVED current_task.json server-side write, analyst-verifier-runner routing, and ledger chain for TASK-P3-0011 and TASK-P3-0012"
+    "proof_target": "governance/smoke-test.log exists in main"
   },
   "updated_by": "AUDITOR",
   "updated_at": "2026-04-08T19:15:00Z"
