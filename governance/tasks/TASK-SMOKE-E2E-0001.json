@@ -1,0 +1,12 @@
+{
+  "schema_version": "v164",
+  "task_id": "TASK-SMOKE-E2E-0001",
+  "step_name": "SMOKE-E2E-1",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "Execute end-to-end smoke test of the autonomous multi-agent governance loop as implemented through P2 and P3 phases. The smoke test must verify that a full cycle completes without manual intervention: (1) ANALYST proposes a minimal well-scoped task and writes governance/tasks/TASK-SMOKE-E2E-0001.json to the repository; (2) auditor-runner.yml receives workflow_dispatch, reads the task payload, applies PRE_ACTION_APPROVED gate, writes governance/current_task.json via GitHub Contents API using SA-backed token; (3) ledger-updated dispatch routes to CLOUD_CODE; (4) CLOUD_CODE executor performs a trivially verifiable mutation (e.g., appends a timestamped line to governance/smoke_test_log.txt); (5) ACTION_COMPLETED event is written to ledger; (6) analyst-verifier-runner.yml receives VERIFICATION_CONFIRMED and writes the final ledger event with next_actor_role=AUDITOR. Proof target is the presence of governance/smoke_test_log.txt on main branch with a committed timestamped entry, plus a complete ledger trail containing TASK_PROPOSED, PRE_ACTION_APPROVED, ACTION_COMPLETED, and VERIFICATION_CONFIRMED events all referencing task_id TASK-SMOKE-E2E-0001. This task validates that all infrastructure built in P2 and P3 (auditor-runner current_task write, dispatch role filter, analyst-verifier-runner, ledger writer path) operates correctly as an integrated autonomous loop under v164 schema_version compliance.",
+  "status": "PROPOSED",
+  "proof_target": "governance/smoke_test_log.txt present on main branch with timestamped entry committed by SA-backed token; ledger contains sequential events TASK_PROPOSED → PRE_ACTION_APPROVED → ACTION_COMPLETED → VERIFICATION_CONFIRMED all with task_id=TASK-SMOKE-E2E-0001 and schema_version=v164",
+  "next_actor_role": "AUDITOR",
+  "routing_decision_basis": "P2_P3_INFRASTRUCTURE_COMPLETE_SMOKE_E2E_VALIDATES_INTEGRATED_AUTONOMOUS_LOOP_BEFORE_NEXT_ROADMAP_PHASE"
+}
