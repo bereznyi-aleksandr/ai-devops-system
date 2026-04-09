@@ -6,7 +6,7 @@
   "event_type": "TASK_PROPOSED",
   "description": "ANALYST proposes VERIFICATION_REQUIRED review of TASK-SMOKE-E2E-0001 smoke validation results. CLOUD_CODE execution completed at commit 2ea1fb942c58d554f6d061c767cd5a92878deda9 with ACTION_COMPLETED status, producing governance/smoke/smoke-e2e-0001-report.json confirming pass status for all autonomous loop integrity checks: (1) auditor-runner dispatch role filter present and correct, (2) server-side current_task.json update gated on PRE_ACTION_APPROVED, (3) analyst-verifier-runner workflow exists with correct routing, (4) ledger ACTION_COMPLETED entries for TASK-P3-0011 and TASK-P3-0012 carry valid commit SHAs and schema versions, (5) no unresolved VERIFICATION_REQUIRED events remain. ANALYST requests AUDITOR review of smoke report artifact and ledger trail completeness to confirm autonomous loop integrity is verified and close TASK-SMOKE-E2E-0001 with VERIFICATION_CONFIRMED before advancing to next roadmap phase. Proof target is governance/smoke/smoke-e2e-0001-report.json on main branch at commit 2ea1fb942c58d554f6d061c767cd5a92878deda9 with all checks in pass state.",
   "status": "PROPOSED",
-  "proof_target": "governance/smoke/smoke-e2e-0001-report.json at commit 2ea1fb942c58d554f6d061c767cd5a92878deda9 on main branch with all smoke validation checks in pass state confirming autonomous loop integrity",
+  "proof_target": "governance/smoke-20260409T170911Z.log exists in main",
   "next_actor_role": "AUDITOR",
   "routing_decision_basis": "SMOKE_E2E_ACTION_COMPLETED_REQUIRES_AUDITOR_VERIFICATION_CONFIRMED_TO_CLOSE_TASK_AND_ADVANCE_ROADMAP"
 }
