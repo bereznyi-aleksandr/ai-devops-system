@@ -1,0 +1,16 @@
+{
+  "schema_version": "v164",
+  "event_id": "TASK-SMOKE-E2E-0001-PROPOSED-0001",
+  "parent_event_id": "TASK-P3-0012-EXEC-0001",
+  "task_id": "TASK-SMOKE-E2E-0001",
+  "event_time": "2026-04-08T17:00:00Z",
+  "step_name": "SMOKE-E2E-1",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "ANALYST proposes TASK-SMOKE-E2E-0001: end-to-end smoke test of the autonomous multi-agent governance loop. Validates integrated operation of auditor-runner PRE_ACTION_APPROVED gate, current_task.json server-side write, dispatch role filter, CLOUD_CODE executor mutation, analyst-verifier-runner VERIFICATION_CONFIRMED path, and ledger writer chain. All events must carry schema_version v164. Proof target is governance/smoke_test_log.txt with timestamped committed entry plus complete four-event ledger trail referencing this task_id. This is the roadmap-valid next step after P3 infrastructure completion to confirm autonomous loop integrity before advancing to further roadmap phases.",
+  "status": "PROPOSED",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "P2_P3_INFRASTRUCTURE_COMPLETE_SMOKE_E2E_VALIDATES_INTEGRATED_AUTONOMOUS_LOOP_BEFORE_NEXT_ROADMAP_PHASE",
+  "commit_sha": ""
+}
