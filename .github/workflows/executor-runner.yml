@@ -306,19 +306,6 @@ jobs:
           echo "event_id=${EVENT_ID}" >> "$GITHUB_OUTPUT"
           echo "request_path=${REQUEST_PATH}" >> "$GITHUB_OUTPUT"
 
-      - name: Trigger ledger ingress
-        if: steps.context.outputs.should_execute == 'true'
-        env:
-          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          gh workflow run ledger-request-ingress.yml \
-            --repo bereznyi-aleksandr/ai-devops-system \
-            --ref main \
-            -f request_path="${{ steps.request_file.outputs.request_path }}"
-          sleep 15
-
       - name: Dispatch ledger-updated
         if: steps.context.outputs.should_execute == 'true'
         env:

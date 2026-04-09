@@ -308,17 +308,6 @@ jobs:
           echo "event_id=${EVENT_ID}" >> "$GITHUB_OUTPUT"
           echo "gcs_path=${GCS_PATH}" >> "$GITHUB_OUTPUT"
 
-      - name: Trigger ledger ingress
-        env:
-          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          gh workflow run ledger-request-ingress.yml \
-            --repo bereznyi-aleksandr/ai-devops-system \
-            --ref main \
-            -f request_path="${{ steps.gcs.outputs.gcs_path }}"
-
       - name: Dispatch ledger-updated
         env:
           GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
