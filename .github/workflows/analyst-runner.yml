@@ -136,7 +136,12 @@ jobs:
               "- status must be PROPOSED\n"
               "- next_actor_role must be AUDITOR\n"
               "- next_expected_event must be PRE_ACTION_APPROVED\n"
-              "- Output JSON only. No markdown. No prose outside JSON."
+              "- Output JSON only. No markdown. No prose outside JSON.\n              "- proof_target MUST be in exact format: \"<path> exists in main\"\n"\
+              "- proof_target MUST end with \" exists in main\"\n"\
+              "- proof_target path MUST start with governance/ or .github/workflows/\n"\
+              "- Do NOT add description or prose to proof_target\n"\
+              "- WRONG: \"governance/file.py committed on main branch with details\"\n"\
+              "- CORRECT: \"governance/file.py exists in main\"""
           )
 
           user_message = (
