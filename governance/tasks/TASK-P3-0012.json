@@ -9,7 +9,7 @@
   "event_type": "TASK_PROPOSED",
   "description": "Fix auditor-runner dispatch role filter",
   "status": "PROPOSED",
-  "proof_target": ".github/workflows/auditor-runner.yml exists in main with a dispatch filter that replaces unsupported next_actor_role values with NONE before ledger-updated dispatch",
+  "proof_target": ".github/workflows/auditor-runner.yml exists in main",
   "next_actor_role": "AUDITOR",
   "next_expected_event": "PRE_ACTION_APPROVED",
   "routing_decision_basis": "BEM_355_STEP1_AUDITOR_DISPATCH_ROLE_FILTER",
