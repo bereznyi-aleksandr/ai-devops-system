@@ -1,0 +1,46 @@
+{
+  "report_id": "AUTONOMY-TEST-20260410T223101Z",
+  "schema_version": "v164",
+  "generated_at": "2026-04-10T22:31:01Z",
+  "overall_status": "ALL_PASS",
+  "tests": [
+    {
+      "test_id": "TEST-1",
+      "status": "PASS",
+      "details": {
+        "count": 6
+      }
+    },
+    {
+      "test_id": "TEST-2",
+      "status": "PASS",
+      "details": {
+        "rows": 63
+      }
+    },
+    {
+      "test_id": "TEST-3",
+      "status": "PASS",
+      "details": {
+        "task_files_checked": 19
+      }
+    },
+    {
+      "test_id": "TEST-4",
+      "status": "PASS",
+      "details": {
+        "task_id": "TASK-SMOKE-E2E-0003"
+      }
+    },
+    {
+      "test_id": "TEST-5",
+      "status": "PASS",
+      "details": {
+        "proof_files": [
+          "governance/test-artifacts/autonomy-proof-001.txt"
+        ]
+      }
+    }
+  ],
+  "failures": []
+}
