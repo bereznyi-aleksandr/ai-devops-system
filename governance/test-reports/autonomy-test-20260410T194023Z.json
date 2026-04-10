@@ -1,0 +1,126 @@
+{
+  "report_id": "AUTONOMY-TEST-20260410T194023Z",
+  "schema_version": "v164",
+  "generated_at": "2026-04-10T19:40:23Z",
+  "overall_status": "FAILURES_DETECTED",
+  "tests": [
+    {
+      "test_id": "TEST-1",
+      "status": "PASS",
+      "details": {
+        "count": 6
+      }
+    },
+    {
+      "test_id": "TEST-2",
+      "status": "PASS",
+      "details": {
+        "rows": 63
+      }
+    },
+    {
+      "test_id": "TEST-3",
+      "status": "FAIL",
+      "details": {
+        "bad_tasks_count": 9,
+        "bad_tasks": [
+          {
+            "file": "governance/tasks/TASK-P2-0002.json",
+            "proof_target": ""
+          },
+          {
+            "file": "governance/tasks/TASK-P2-0004.json",
+            "proof_target": "executor-runner.yml in main contains push trigger on governance/current_task.json"
+          },
+          {
+            "file": "governance/tasks/TASK-P2-0005.json",
+            "proof_target": ""
+          },
+          {
+            "file": "governance/tasks/TASK-P2-0006.json",
+            "proof_target": "Section 3 CURRENT SYSTEM SNAPSHOT in ssot/MASTER_PROMPT_v162_CANON_FINAL.txt is updated in main and matches the repo-visible state."
+          },
+          {
+            "file": "governance/tasks/TASK-P2-0007.json",
+            "proof_target": "{'repo_visible_files_required': ['.github/workflows/executor-runner.yml'], 'success_conditions': ['A repo-visible workflow file exists in main with controlled mutation logic.', 'The workflow contains allowlist limited to governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt.', 'The workflow contains mandatory guardrails before mutation.', 'The workflow contains commit/push execution path.', 'The workflow contains SA-backed execution contour.']}"
+          },
+          {
+            "file": "governance/tasks/TASK-P2-0008.json",
+            "proof_target": "{'success_conditions': ['governance/current_task.json updated in main and points to TASK-P2-0006', 'ssot/MASTER_PROMPT_v162_CANON_FINAL.txt updated in main in section 3 CURRENT SYSTEM SNAPSHOT', 'no out-of-scope file mutation occurred', 'mutation performed through accepted controlled SA-backed workload path']}"
+          },
+          {
+            "file": "governance/tasks/TASK-P2-0010.json",
+            "proof_target": "['.github/workflows/executor-runner.yml exists in main in accepted baseline form', 'Strict allowlist exists only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt', 'execution_mode split exists', 'Hard validation exists', 'SA-backed contour exists', 'Non-mutation dispatch path exists', 'duplicate requested_targets rejection exists']"
+          },
+          {
+            "file": "governance/tasks/TASK-P3-0011.json",
+            "proof_target": ".github/workflows/auditor-runner.yml exists in main with a server-side step that updates governance/current_task.json only when decision == PRE_ACTION_APPROVED"
+          },
+          {
+            "file": "governance/tasks/TASK-SMOKE-0001.json",
+            "proof_target": "TASK-SMOKE-0001 in governance/tasks/"
+          }
+        ]
+      }
+    },
+    {
+      "test_id": "TEST-4",
+      "status": "PASS",
+      "details": {
+        "task_id": "TASK-SMOKE-E2E-0003"
+      }
+    },
+    {
+      "test_id": "TEST-5",
+      "status": "PASS",
+      "details": {
+        "proof_files": [
+          "governance/test-artifacts/autonomy-proof-001.txt"
+        ]
+      }
+    }
+  ],
+  "failures": [
+    {
+      "test_id": "TEST-3",
+      "bad_tasks": [
+        {
+          "file": "governance/tasks/TASK-P2-0002.json",
+          "proof_target": ""
+        },
+        {
+          "file": "governance/tasks/TASK-P2-0004.json",
+          "proof_target": "executor-runner.yml in main contains push trigger on governance/current_task.json"
+        },
+        {
+          "file": "governance/tasks/TASK-P2-0005.json",
+          "proof_target": ""
+        },
+        {
+          "file": "governance/tasks/TASK-P2-0006.json",
+          "proof_target": "Section 3 CURRENT SYSTEM SNAPSHOT in ssot/MASTER_PROMPT_v162_CANON_FINAL.txt is updated in main and matches the repo-visible state."
+        },
+        {
+          "file": "governance/tasks/TASK-P2-0007.json",
+          "proof_target": "{'repo_visible_files_required': ['.github/workflows/executor-runner.yml'], 'success_conditions': ['A repo-visible workflow file exists in main with controlled mutation logic.', 'The workflow contains allowlist limited to governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt.', 'The workflow contains mandatory guardrails before mutation.', 'The workflow contains commit/push execution path.', 'The workflow contains SA-backed execution contour.']}"
+        },
+        {
+          "file": "governance/tasks/TASK-P2-0008.json",
+          "proof_target": "{'success_conditions': ['governance/current_task.json updated in main and points to TASK-P2-0006', 'ssot/MASTER_PROMPT_v162_CANON_FINAL.txt updated in main in section 3 CURRENT SYSTEM SNAPSHOT', 'no out-of-scope file mutation occurred', 'mutation performed through accepted controlled SA-backed workload path']}"
+        },
+        {
+          "file": "governance/tasks/TASK-P2-0010.json",
+          "proof_target": "['.github/workflows/executor-runner.yml exists in main in accepted baseline form', 'Strict allowlist exists only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt', 'execution_mode split exists', 'Hard validation exists', 'SA-backed contour exists', 'Non-mutation dispatch path exists', 'duplicate requested_targets rejection exists']"
+        },
+        {
+          "file": "governance/tasks/TASK-P3-0011.json",
+          "proof_target": ".github/workflows/auditor-runner.yml exists in main with a server-side step that updates governance/current_task.json only when decision == PRE_ACTION_APPROVED"
+        },
+        {
+          "file": "governance/tasks/TASK-SMOKE-0001.json",
+          "proof_target": "TASK-SMOKE-0001 in governance/tasks/"
+        }
+      ]
+    }
+  ]
+}
