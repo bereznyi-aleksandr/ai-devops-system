@@ -1,0 +1,44 @@
+{
+  "smoke_test_id": "TASK-SMOKE-E2E-0001",
+  "schema_version": "v164",
+  "execution_timestamp": "2024-12-19T17:45:23Z",
+  "validation_cycle": "smoke-e2e-revalidation",
+  "executing_commit": "bc30f68e579928219a9b57c4f295f6113430eb39",
+  "status": "PASSED",
+  "checks": [
+    {
+      "check_id": 1,
+      "description": "auditor-runner.yml dispatch role filter active",
+      "commit": "3300a85e615bdc5cfab23a9d6b1f305e730ad4c5",
+      "status": "PASSED"
+    },
+    {
+      "check_id": 2,
+      "description": "auditor-runner.yml server-side current_task.json update gated on PRE_ACTION_APPROVED present",
+      "commit": "cd1ab93d0761da8b98103b9d3291026eb7946fae",
+      "status": "PASSED"
+    },
+    {
+      "check_id": 3,
+      "description": "analyst-verifier-runner.yml exists with workflow_dispatch inputs and AUDITOR routing",
+      "commit": "43b41dc8735d211c6773c8a34307150cd1917d26",
+      "status": "PASSED"
+    },
+    {
+      "check_id": 4,
+      "description": "governance/ledger/ contains ACTION_COMPLETED entries for TASK-P3-0011 and TASK-P3-0012 with schema v162 and correct commit SHAs",
+      "status": "PASSED"
+    },
+    {
+      "check_id": 5,
+      "description": "no unresolved VERIFICATION_REQUIRED events remain for P3 tasks",
+      "status": "PASSED"
+    }
+  ],
+  "autonomous_loop_integrity": "SATISFIED",
+  "verification_status": "VERIFICATION_REQUIRED",
+  "requesting_actor": "ANALYST",
+  "target_actor": "AUDITOR",
+  "next_action": "AUDITOR to issue VERIFICATION_CONFIRMED or VERIFICATION_FAILED",
+  "completion_criteria": "Upon VERIFICATION_CONFIRMED, TASK-SMOKE-E2E-0001 is CLOSED and system advances to next roadmap phase"
+}
