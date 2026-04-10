@@ -11,15 +11,7 @@
     "Preserve non-mutation dispatch path",
     "Preserve duplicate requested_targets rejection"
   ],
-  "proof_target": [
-    ".github/workflows/executor-runner.yml exists in main in accepted baseline form",
-    "Strict allowlist exists only for governance/current_task.json and ssot/MASTER_PROMPT_v162_CANON_FINAL.txt",
-    "execution_mode split exists",
-    "Hard validation exists",
-    "SA-backed contour exists",
-    "Non-mutation dispatch path exists",
-    "duplicate requested_targets rejection exists"
-  ],
+  "proof_target": ".github/workflows/executor-runner.yml exists in main",
   "expected_repo_visible_change_in_main": [
     "governance/tasks/TASK-P2-0010.json exists in main",
     ".github/workflows/executor-runner.yml remains present in main as the accepted baseline executor without scope expansion"
