@@ -164,9 +164,9 @@ jobs:
           Path(".runtime/autonomy_report_path.txt").write_text(str(report_path), encoding="utf-8")
           Path(".runtime/autonomy_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-          event_type = "AUTONOMY_TEST_PASSED" if overall_status == "ALL_PASS" else "AUTONOMY_TEST_FAILED"
-          next_actor_role = "NONE" if overall_status == "ALL_PASS" else "AUDITOR"
-          next_expected_event = "NONE" if overall_status == "ALL_PASS" else "RESULT_ACCEPTED"
+          event_type = "AUTONOMY_TEST_PASSED" if overall_status == "ALL_PASS" else "ERROR_DETECTED"
+          next_actor_role = "NONE" if overall_status == "ALL_PASS" else "ANALYST"
+          next_expected_event = "NONE" if overall_status == "ALL_PASS" else "FIX_PROPOSED"
 
           ledger_event = {
               "schema_version": "v164",
@@ -177,7 +177,7 @@ jobs:
               "step_name": "AUTONOMY-TEST",
               "actor_role": "OPERATOR",
               "event_type": event_type,
-              "description": f"Autonomy test suite finished with status {overall_status}. Report: {report_path}",
+              "description": f"Autonomy test suite finished with status {overall_status}. Report: {report_path}. On failure this event is the canonical ERROR_DETECTED trigger for the remediation chain.",
               "status": overall_status,
               "next_actor_role": next_actor_role,
               "next_expected_event": next_expected_event,
@@ -215,7 +215,7 @@ jobs:
           echo "event_id=${EVENT_ID}" >> "$GITHUB_OUTPUT"
           echo "gcs_path=${GCS_PATH}" >> "$GITHUB_OUTPUT"
 
-      - name: Dispatch ledger-updated on failures
+      - name: Dispatch error-detected on failures
         if: steps.suite.outputs.overall_status == 'FAILURES_DETECTED'
         env:
           GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
@@ -225,9 +225,9 @@ jobs:
           EVENT_ID="${{ steps.gcs.outputs.event_id }}"
           gh api repos/${{ github.repository }}/dispatches \
             --method POST \
-            -f event_type=ledger-updated \
-            -f client_payload[next_actor_role]=AUDITOR \
-            -f client_payload[task_id]=TASK-TEST-RUNNER-0001 \
+            -f event_type=error-detected \
+            -f client_payload[next_actor_role]=ANALYST \
+            -f client_payload[task_id]=TASK-ERROR-CYCLE-0001 \
             -f client_payload[event_id]="$EVENT_ID"
 
       - name: Cleanup
