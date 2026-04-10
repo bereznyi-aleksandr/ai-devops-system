@@ -1,0 +1,16 @@
+{
+  "schema_version": "v164",
+  "event_id": "AUTONOMY-TEST-20260410T223101Z",
+  "parent_event_id": "",
+  "task_id": "TASK-TEST-RUNNER-0001",
+  "event_time": "2026-04-10T22:31:01Z",
+  "step_name": "AUTONOMY-TEST",
+  "actor_role": "OPERATOR",
+  "event_type": "AUTONOMY_TEST_PASSED",
+  "description": "Autonomy test suite finished with status ALL_PASS. Report: governance/test-reports/autonomy-test-20260410T223101Z.json. On failure this event is the canonical ERROR_DETECTED trigger for the remediation chain.",
+  "status": "ALL_PASS",
+  "next_actor_role": "NONE",
+  "next_expected_event": "NONE",
+  "routing_decision_basis": "AUTONOMY_TEST_SCHEDULED_HEALTH_CHECK",
+  "commit_sha": ""
+}
