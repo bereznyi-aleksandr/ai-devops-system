@@ -45,7 +45,8 @@ jobs:
       - name: Prepare analyst context
         id: context
         env:
-          TASK_ID: ${{ github.event.inputs.task_id }}
+          INPUT_TASK_ID: ${{ github.event.inputs.task_id }}
+          EVENT_NAME: ${{ github.event_name }}
         shell: bash
         run: |
           set -euo pipefail
@@ -54,11 +55,18 @@ jobs:
           import csv
           import json
           import os
+          from datetime import datetime, timezone
           from pathlib import Path
 
-          task_id = os.environ["TASK_ID"].strip()
-          if not task_id:
-              raise SystemExit("TASK_ID is required")
+          input_task_id = os.getenv("INPUT_TASK_ID", "").strip()
+          event_name = os.getenv("EVENT_NAME", "").strip()
+
+          if event_name == "workflow_dispatch":
+              task_id = input_task_id
+              if not task_id:
+                  raise SystemExit("TASK_ID is required for workflow_dispatch")
+          else:
+              task_id = f"TASK-AUTO-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
 
           ledger_path = Path("governance/exchange_ledger.csv")
           ssot_path = Path("ssot/MASTER_PROMPT_v164_CANON_FINAL.txt")
@@ -73,16 +81,30 @@ jobs:
           if not rows:
               raise SystemExit("exchange_ledger.csv is empty")
 
-          last_event = rows[-1]
-          ledger_tail = rows[-5:] if len(rows) >= 5 else rows
+          keep_fields = [
+              "event_id",
+              "parent_event_id",
+              "task_id",
+              "event_time",
+              "step_name",
+              "actor_role",
+              "event_type",
+              "status",
+              "next_actor_role",
+              "next_expected_event",
+          ]
+
+          last_event = {k: rows[-1].get(k, "") for k in keep_fields}
+          ledger_tail = [{k: r.get(k, "") for k in keep_fields} for r in rows[-3:]]
 
           ssot_text = ssot_path.read_text(encoding="utf-8")
           roadmap_anchor = "AUTONOMY ROADMAP"
           idx = ssot_text.find(roadmap_anchor)
-          roadmap_excerpt = ssot_text[idx:idx + 5000] if idx != -1 else ssot_text[:5000]
+          roadmap_excerpt = ssot_text[idx:idx + 1800] if idx != -1 else ssot_text[:1800]
 
           context = {
               "task_id": task_id,
+              "event_name": event_name,
               "repository": "bereznyi-aleksandr/ai-devops-system",
               "ssot_version": "MASTER_PROMPT_v164_CANON_FINAL",
               "last_event": last_event,
@@ -91,17 +113,22 @@ jobs:
           }
 
           Path(".tmp/analyst_context.json").write_text(
-              json.dumps(context, ensure_ascii=False, indent=2) + "\n",
+              json.dumps(context, ensure_ascii=False, separators=(",", ":")),
               encoding="utf-8"
           )
+          Path(".tmp/resolved_task_id.txt").write_text(task_id, encoding="utf-8")
+          print(f"RESOLVED_TASK_ID={task_id}")
           print("CONTEXT_READY=true")
           PY
+
+          echo "resolved_task_id=$(cat .tmp/resolved_task_id.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Run Claude API as Analyst
         id: analyst
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          TASK_ID: ${{ github.event.inputs.task_id }}
+          TASK_ID: ${{ steps.context.outputs.resolved_task_id }}
+          EVENT_NAME: ${{ github.event_name }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
         shell: bash
         run: |
@@ -111,26 +138,27 @@ jobs:
           import os
           import re
           import urllib.request
+          import urllib.error
           from pathlib import Path
 
           api_key = os.environ["ANTHROPIC_API_KEY"]
-          task_id = os.environ["TASK_ID"]
-          model = os.getenv("LLM_MODEL") or "claude-sonnet-4-6"
+          task_id = os.environ["TASK_ID"].strip()
+          event_name = os.environ["EVENT_NAME"].strip()
+          model = (os.getenv("LLM_MODEL") or "").strip() or "claude-3-7-sonnet-20250219"
           context = json.loads(Path(".tmp/analyst_context.json").read_text(encoding="utf-8"))
 
           system_prompt = (
               "You are the ANALYST / PLANNER in an autonomous multi-agent DevOps system.\n"
               "SSOT: MASTER_PROMPT_v164_CANON_FINAL\n"
               "Repository: bereznyi-aleksandr/ai-devops-system\n\n"
-              "Your role:\n"
-              "- Read SSOT and exchange ledger\n"
-              "- Determine the next roadmap-valid task\n"
-              "- Prepare one TASK_PROPOSED only\n"
+              "Goal:\n"
+              "- Determine exactly one next roadmap-valid task\n"
+              "- Return only one TASK_PROPOSED in v164 format\n"
               "- Do not execute code\n"
               "- Do not make audit decisions\n\n"
               "Return ONLY valid JSON with exactly two top-level keys: task_file and ledger_event.\n"
-              "task_file must contain: schema_version, task_id, step_name, actor_role, event_type, description, status, proof_target, next_actor_role, routing_decision_basis.\n"
-              "ledger_event must contain: schema_version, event_id, parent_event_id, task_id, event_time, step_name, actor_role, event_type, description, status, next_actor_role, next_expected_event, routing_decision_basis, commit_sha.\n"
+              "task_file fields: schema_version, task_id, step_name, actor_role, event_type, description, status, proof_target, next_actor_role, routing_decision_basis.\n"
+              "ledger_event fields: schema_version, event_id, parent_event_id, task_id, event_time, step_name, actor_role, event_type, description, status, next_actor_role, next_expected_event, routing_decision_basis, commit_sha.\n\n"
               "Hard rules:\n"
               "- schema_version must be v164 in both objects\n"
               "- task_id in both objects must equal the workflow input task_id exactly\n"
@@ -139,31 +167,47 @@ jobs:
               "- status must be PROPOSED\n"
               "- next_actor_role must be AUDITOR\n"
               "- next_expected_event must be PRE_ACTION_APPROVED\n"
-              "- proof_target MUST be in exact format: \"<path> exists in main\"\n"
-              "- proof_target MUST end with \" exists in main\"\n"
+              "- proof_target MUST be exactly in format: \"<path> exists in main\"\n"
               "- proof_target path MUST start with governance/ or .github/workflows/\n"
-              "- Do NOT add description or prose to proof_target\n"
-              "- WRONG: \"governance/file.py committed on main branch with details\"\n"
-              "- CORRECT: \"governance/file.py exists in main\"\n"
-              "- Output JSON only. No markdown. No prose outside JSON."
+              "- no extra prose in proof_target\n"
+              "- output JSON only"
           )
 
+          compact_context = json.dumps(context, ensure_ascii=False, separators=(",", ":"))
           user_message = (
-              f"Workflow input task_id: {task_id}\n\n"
-              f"Context:\n{json.dumps(context, ensure_ascii=False, indent=2)}\n\n"
+              f"task_id={task_id}\n"
+              f"event_name={event_name}\n"
+              f"context={compact_context}\n"
               "Prepare the next roadmap-valid TASK_PROPOSED in v164 format."
           )
 
           payload = {
               "model": model,
-              "max_tokens": 2500,
+              "max_tokens": 1800,
               "system": system_prompt,
               "messages": [{"role": "user", "content": user_message}]
           }
 
+          request_preview = {
+              "model": model,
+              "max_tokens": 1800,
+              "task_id": task_id,
+              "event_name": event_name,
+              "system_preview": system_prompt[:800],
+              "user_preview": user_message[:2000],
+          }
+          Path(".tmp/anthropic_request_preview.json").write_text(
+              json.dumps(request_preview, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8"
+          )
+
+          payload_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+          print(f"CLAUDE_PAYLOAD_BYTES={len(payload_bytes)}")
+          print(f"CLAUDE_MODEL={model}")
+
           req = urllib.request.Request(
               "https://api.anthropic.com/v1/messages",
-              data=json.dumps(payload).encode("utf-8"),
+              data=payload_bytes,
               headers={
                   "Content-Type": "application/json",
                   "x-api-key": api_key,
@@ -171,8 +215,15 @@ jobs:
               }
           )
 
-          with urllib.request.urlopen(req) as resp:
-              result = json.loads(resp.read())
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  result = json.loads(resp.read())
+          except urllib.error.HTTPError as e:
+              body = e.read().decode("utf-8", errors="replace")
+              Path(".tmp/anthropic_http_error.txt").write_text(body, encoding="utf-8")
+              print(f"ANTHROPIC_HTTP_STATUS={e.code}")
+              print(f"ANTHROPIC_HTTP_ERROR_BODY={body[:3000]}")
+              raise SystemExit(f"CLAUDE_API_HTTP_ERROR_{e.code}")
 
           raw = result["content"][0]["text"].strip()
           if not raw:
@@ -186,7 +237,7 @@ jobs:
           if not raw:
               raise SystemExit("EMPTY_LLM_OUTPUT: response empty after normalization")
 
-          print(f"LLM_OUTPUT_PREVIEW: {raw[:300]}")
+          print(f"LLM_OUTPUT_PREVIEW={raw[:300]}")
           Path(".tmp/analyst_raw_output.txt").write_text(raw, encoding="utf-8")
           print("ANALYST_OUTPUT_READY=true")
           PY
@@ -194,7 +245,7 @@ jobs:
       - name: Validate analyst output
         id: validate
         env:
-          TASK_ID: ${{ github.event.inputs.task_id }}
+          TASK_ID: ${{ steps.context.outputs.resolved_task_id }}
         shell: bash
         run: |
           set -euo pipefail
@@ -278,7 +329,7 @@ jobs:
         id: create_task
         env:
           GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
-          TASK_ID: ${{ github.event.inputs.task_id }}
+          TASK_ID: ${{ steps.context.outputs.resolved_task_id }}
         shell: bash
         run: |
           set -euo pipefail
@@ -302,7 +353,7 @@ jobs:
       - name: Verify task file exists in main
         env:
           GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
-          TASK_ID: ${{ github.event.inputs.task_id }}
+          TASK_ID: ${{ steps.context.outputs.resolved_task_id }}
         shell: bash
         run: |
           set -euo pipefail
@@ -322,7 +373,7 @@ jobs:
       - name: Dispatch ledger-updated
         env:
           GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
-          TASK_ID: ${{ github.event.inputs.task_id }}
+          TASK_ID: ${{ steps.context.outputs.resolved_task_id }}
           EVENT_ID: ${{ steps.gcs.outputs.event_id }}
         shell: bash
         run: |
