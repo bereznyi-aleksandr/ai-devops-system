@@ -7,6 +7,8 @@ on:
         description: 'Task ID for analyst to process'
         required: true
         type: string
+  schedule:
+    - cron: '*/30 * * * *'
 
 jobs:
   analyze:
