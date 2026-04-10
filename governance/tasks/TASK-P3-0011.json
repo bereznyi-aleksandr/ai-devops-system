@@ -9,7 +9,7 @@
   "event_type": "TASK_PROPOSED",
   "description": "Fix .github/workflows/auditor-runner.yml so that after PRE_ACTION_APPROVED the workflow reads the approved task payload from governance/tasks/<task_id>.json, forms governance/current_task.json, and updates governance/current_task.json through GitHub API inside the workflow.",
   "status": "PROPOSED",
-  "proof_target": ".github/workflows/auditor-runner.yml exists in main with a server-side step that updates governance/current_task.json only when decision == PRE_ACTION_APPROVED",
+  "proof_target": ".github/workflows/auditor-runner.yml exists in main",
   "next_actor_role": "AUDITOR",
   "next_expected_event": "PRE_ACTION_APPROVED",
   "routing_decision_basis": "BEM_346_TASK_1_AUDITOR_RUNNER_SELF_UPDATES_CURRENT_TASK",
