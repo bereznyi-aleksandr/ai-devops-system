@@ -1,0 +1,12 @@
+{
+  "schema_version": "v164",
+  "task_id": "TASK-ERROR-CYCLE-0001",
+  "step_name": "ERROR-CYCLE-CONTRACT",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "Introduce the autonomous error remediation chain contract: autonomy-test-runner emits ERROR_DETECTED on failures, analyst-runner wakes on error-detected and proposes FIX_PROPOSED, auditor-runner approves safe fixes, executor-runner applies allowlisted patches, and analyst-verifier-runner confirms proof in main.",
+  "status": "PROPOSED",
+  "proof_target": "governance/error-cycle/error-fix-contract.md exists in main",
+  "next_actor_role": "AUDITOR",
+  "routing_decision_basis": "AUTONOMOUS_ERROR_REMEDIATION_CHAIN_REQUIRED_AFTER_ALL_PASS_BASELINE"
+}
