@@ -6,5 +6,5 @@
   "event_type": "TASK_PROPOSED",
   "description": "Add push trigger to .github/workflows/executor-runner.yml on paths: governance/current_task.json. Make workflow_dispatch task_id optional. Read task_id from current_task.json for push-triggered runs. Validate status APPROVED or RETRY_REQUIRED before execution.",
   "status": "APPROVED",
-  "proof_target": "executor-runner.yml in main contains push trigger on governance/current_task.json"
+  "proof_target": ".github/workflows/executor-runner.yml exists in main"
 }
