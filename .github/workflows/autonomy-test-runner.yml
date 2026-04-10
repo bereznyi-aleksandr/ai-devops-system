@@ -1,0 +1,236 @@
+name: Autonomy Test Runner
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [autonomy-test]
+
+jobs:
+  autonomy_test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get GitHub PAT from Secret Manager
+        id: get_pat
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAT=$(gcloud secrets versions access latest \
+            --secret="GITHUB_TOKEN" \
+            --project="barber-483016" | tr -d '\r\n')
+          echo "::add-mask::$PAT"
+          echo "pat=$PAT" >> "$GITHUB_OUTPUT"
+
+      - name: Configure git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run autonomy test suite
+        id: suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .runtime governance/test-reports
+
+          python3 - <<'PY'
+          import csv
+          import json
+          import re
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          repo = Path(".")
+          failures = []
+          results = []
+
+          def record(test_id: str, status: str, details):
+              results.append({
+                  "test_id": test_id,
+                  "status": status,
+                  "details": details
+              })
+
+          workflow_paths = [
+              ".github/workflows/analyst-runner.yml",
+              ".github/workflows/auditor-runner.yml",
+              ".github/workflows/executor-runner.yml",
+              ".github/workflows/analyst-verifier-runner.yml",
+              ".github/workflows/analyst-task-writer.yml",
+              ".github/workflows/ledger-router.yml",
+          ]
+          missing = [p for p in workflow_paths if not (repo / p).exists()]
+          if missing:
+              failures.append({"test_id": "TEST-1", "missing": missing})
+              record("TEST-1", "FAIL", {"missing": missing})
+          else:
+              record("TEST-1", "PASS", {"count": len(workflow_paths)})
+
+          ledger = repo / "governance/exchange_ledger.csv"
+          if not ledger.exists():
+              failures.append({"test_id": "TEST-2", "reason": "ledger file missing"})
+              record("TEST-2", "FAIL", {"reason": "ledger file missing"})
+          else:
+              with ledger.open(encoding="utf-8", newline="") as f:
+                  rows = list(csv.reader(f))
+              if len(rows) < 2:
+                  failures.append({"test_id": "TEST-2", "reason": "ledger missing header or data rows"})
+                  record("TEST-2", "FAIL", {"reason": "ledger missing header or data rows"})
+              else:
+                  record("TEST-2", "PASS", {"rows": len(rows) - 1})
+
+          task_dir = repo / "governance/tasks"
+          proof_re = re.compile(r'^(governance/|\.github/workflows/).+ exists in main$')
+          bad_tasks = []
+          if task_dir.exists():
+              for task_file in sorted(task_dir.glob("*.json")):
+                  try:
+                      payload = json.loads(task_file.read_text(encoding="utf-8"))
+                  except Exception as exc:
+                      bad_tasks.append({"file": str(task_file), "reason": f"invalid json: {exc}"})
+                      continue
+                  proof_target = str(payload.get("proof_target", "")).strip()
+                  if not proof_re.fullmatch(proof_target):
+                      bad_tasks.append({"file": str(task_file), "proof_target": proof_target})
+          if bad_tasks:
+              failures.append({"test_id": "TEST-3", "bad_tasks": bad_tasks})
+              record("TEST-3", "FAIL", {"bad_tasks_count": len(bad_tasks), "bad_tasks": bad_tasks[:20]})
+          else:
+              record("TEST-3", "PASS", {"task_files_checked": len(list(task_dir.glob('*.json'))) if task_dir.exists() else 0})
+
+          current_task = repo / "governance/current_task.json"
+          if not current_task.exists():
+              failures.append({"test_id": "TEST-4", "reason": "current_task.json missing"})
+              record("TEST-4", "FAIL", {"reason": "current_task.json missing"})
+          else:
+              try:
+                  ct = json.loads(current_task.read_text(encoding="utf-8"))
+                  required = ["schema_version", "status", "task_id", "payload"]
+                  missing_fields = [f for f in required if f not in ct]
+                  if missing_fields:
+                      failures.append({"test_id": "TEST-4", "missing_fields": missing_fields})
+                      record("TEST-4", "FAIL", {"missing_fields": missing_fields})
+                  else:
+                      record("TEST-4", "PASS", {"task_id": ct.get("task_id", "")})
+              except Exception as exc:
+                  failures.append({"test_id": "TEST-4", "reason": f"invalid json: {exc}"})
+                  record("TEST-4", "FAIL", {"reason": f"invalid json: {exc}"})
+
+          test_artifacts = repo / "governance/test-artifacts"
+          proof_files = []
+          if test_artifacts.exists():
+              proof_files = [str(p) for p in sorted(test_artifacts.glob("*")) if p.is_file()]
+          if not proof_files:
+              failures.append({"test_id": "TEST-5", "reason": "no proof files in governance/test-artifacts/"})
+              record("TEST-5", "FAIL", {"reason": "no proof files in governance/test-artifacts/"})
+          else:
+              record("TEST-5", "PASS", {"proof_files": proof_files[:20]})
+
+          overall_status = "ALL_PASS" if not failures else "FAILURES_DETECTED"
+          now = datetime.now(timezone.utc)
+          ts = now.strftime("%Y%m%dT%H%M%SZ")
+          report = {
+              "report_id": f"AUTONOMY-TEST-{ts}",
+              "schema_version": "v164",
+              "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "overall_status": overall_status,
+              "tests": results,
+              "failures": failures
+          }
+
+          report_path = Path(f"governance/test-reports/autonomy-test-{ts}.json")
+          report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          Path(".runtime/autonomy_report_path.txt").write_text(str(report_path), encoding="utf-8")
+          Path(".runtime/autonomy_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          event_type = "AUTONOMY_TEST_PASSED" if overall_status == "ALL_PASS" else "AUTONOMY_TEST_FAILED"
+          next_actor_role = "NONE" if overall_status == "ALL_PASS" else "AUDITOR"
+          next_expected_event = "NONE" if overall_status == "ALL_PASS" else "RESULT_ACCEPTED"
+
+          ledger_event = {
+              "schema_version": "v164",
+              "event_id": f"AUTONOMY-TEST-{ts}",
+              "parent_event_id": "",
+              "task_id": "TASK-TEST-RUNNER-0001",
+              "event_time": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "step_name": "AUTONOMY-TEST",
+              "actor_role": "OPERATOR",
+              "event_type": event_type,
+              "description": f"Autonomy test suite finished with status {overall_status}. Report: {report_path}",
+              "status": overall_status,
+              "next_actor_role": next_actor_role,
+              "next_expected_event": next_expected_event,
+              "routing_decision_basis": "AUTONOMY_TEST_SCHEDULED_HEALTH_CHECK",
+              "commit_sha": ""
+          }
+          Path(".runtime/ledger_event.json").write_text(json.dumps(ledger_event, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+          REPORT_PATH="$(cat .runtime/autonomy_report_path.txt)"
+          echo "report_path=$REPORT_PATH" >> "$GITHUB_OUTPUT"
+          echo "overall_status=$(python3 -c "import json; from pathlib import Path; print(json.loads(Path('.runtime/autonomy_report.json').read_text())['overall_status'])")" >> "$GITHUB_OUTPUT"
+
+      - name: Commit autonomy test report
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_PATH="${{ steps.suite.outputs.report_path }}"
+          CONTENT_B64="$(base64 -w 0 "$REPORT_PATH")"
+          gh api --method PUT repos/${{ github.repository }}/contents/"$REPORT_PATH" \
+            -f message="Autonomy test: write report $(basename "$REPORT_PATH")" \
+            -f content="$CONTENT_B64" >/dev/null
+          gh api repos/${{ github.repository }}/contents/"$REPORT_PATH" --jq '.path,.sha' >/dev/null
+
+      - name: Write autonomy test event to GCS inbox
+        id: gcs
+        shell: bash
+        run: |
+          set -euo pipefail
+          EVENT_ID="$(python3 -c "import json; from pathlib import Path; print(json.loads(Path('.runtime/ledger_event.json').read_text())['event_id'])")"
+          GCS_PATH="governance/inbox/requests/${EVENT_ID}.json"
+          gcloud storage cp .runtime/ledger_event.json "gs://barber-agent-state/${GCS_PATH}" --project=barber-483016
+          echo "event_id=${EVENT_ID}" >> "$GITHUB_OUTPUT"
+          echo "gcs_path=${GCS_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch ledger-updated on failures
+        if: steps.suite.outputs.overall_status == 'FAILURES_DETECTED'
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          EVENT_ID="${{ steps.gcs.outputs.event_id }}"
+          gh api repos/${{ github.repository }}/dispatches \
+            --method POST \
+            -f event_type=ledger-updated \
+            -f client_payload[next_actor_role]=AUDITOR \
+            -f client_payload[task_id]=TASK-TEST-RUNNER-0001 \
+            -f client_payload[event_id]="$EVENT_ID"
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: rm -rf .runtime
