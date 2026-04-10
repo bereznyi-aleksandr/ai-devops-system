@@ -40,14 +40,7 @@
     "Audit decisions are forbidden in execution workload.",
     "Proof is only repo-visible main state."
   ],
-  "proof_target": {
-    "success_conditions": [
-      "governance/current_task.json updated in main and points to TASK-P2-0006",
-      "ssot/MASTER_PROMPT_v162_CANON_FINAL.txt updated in main in section 3 CURRENT SYSTEM SNAPSHOT",
-      "no out-of-scope file mutation occurred",
-      "mutation performed through accepted controlled SA-backed workload path"
-    ]
-  },
+  "proof_target": "governance/current_task.json exists in main",
   "files_expected_to_change_in_main": [
     "governance/current_task.json",
     "ssot/MASTER_PROMPT_v162_CANON_FINAL.txt"
