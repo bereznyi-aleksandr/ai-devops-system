@@ -7,8 +7,8 @@ on:
         description: 'Task ID for analyst to process'
         required: true
         type: string
-  schedule:
-    - cron: '0 */2 * * *'
+  repository_dispatch:
+    types: [ledger-updated, error-detected]
 
 jobs:
   analyze:
@@ -46,6 +46,7 @@ jobs:
         id: context
         env:
           INPUT_TASK_ID: ${{ github.event.inputs.task_id }}
+          DISPATCH_TASK_ID: ${{ github.event.client_payload.task_id }}
           EVENT_NAME: ${{ github.event_name }}
         shell: bash
         run: |
@@ -61,12 +62,18 @@ jobs:
           input_task_id = os.getenv("INPUT_TASK_ID", "").strip()
           event_name = os.getenv("EVENT_NAME", "").strip()
 
+          dispatch_task_id = os.getenv("DISPATCH_TASK_ID", "").strip()
+
           if event_name == "workflow_dispatch":
               task_id = input_task_id
               if not task_id:
                   raise SystemExit("TASK_ID is required for workflow_dispatch")
+          elif event_name == "repository_dispatch":
+              task_id = dispatch_task_id
+              if not task_id:
+                  raise SystemExit("DISPATCH task_id is required for repository_dispatch")
           else:
-              task_id = f"TASK-AUTO-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+              raise SystemExit(f"Unsupported event_name for analyst-runner: {event_name}")
 
           ledger_path = Path("governance/exchange_ledger.csv")
           ssot_path = Path("ssot/MASTER_PROMPT_v164_CANON_FINAL.txt")
