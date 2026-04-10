@@ -1,0 +1,17 @@
+{
+  "schema_version": "v164",
+  "event_id": "TASK-TEST-RUNNER-0001-PROPOSED-0001",
+  "parent_event_id": "TASK-SMOKE-E2E-0003-EXEC-0001",
+  "task_id": "TASK-TEST-RUNNER-0001",
+  "event_time": "2026-04-10T08:30:00Z",
+  "step_name": "P3.3",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "Create .github/workflows/autonomy-test-runner.yml as a scheduled autonomous health-check workflow. Run every 2 hours, support workflow_dispatch and repository_dispatch autonomy-test, execute five repository integrity tests, write a machine-readable report to governance/test-reports/, write AUTONOMY_TEST_PASSED or AUTONOMY_TEST_FAILED to ledger, and notify AUDITOR on failures.",
+  "status": "PROPOSED",
+  "proof_target": ".github/workflows/autonomy-test-runner.yml exists in main",
+  "next_actor_role": "AUDITOR",
+  "next_expected_event": "PRE_ACTION_APPROVED",
+  "routing_decision_basis": "AUTONOMY_TEST_RUNNER_REQUIRED_FOR_SCHEDULED_SELF_HEALTH_CHECKS",
+  "commit_sha": ""
+}
