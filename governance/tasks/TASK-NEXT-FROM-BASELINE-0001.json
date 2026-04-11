@@ -1,12 +1,12 @@
 {
   "schema_version": "v164",
   "task_id": "TASK-NEXT-FROM-BASELINE-0001",
-  "step_name": "CONSOLIDATED-ARCHITECTURE-v3-v4-v5",
+  "step_name": "CONSOLIDATED-ARCHITECTURE-v3+v4+v5",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Create consolidated architecture specification combining v3+v4+v5 governance board components with clear separation of immutable master prompt policy and mutable operational artifacts",
+  "description": "Design and implement consolidated architecture combining governance board patterns v3, v4, and v5 to establish unified multi-agent coordination framework with clear actor boundaries and decision authority chains",
   "status": "PROPOSED",
-  "proof_target": "governance/consolidated_architecture_v3_v4_v5.md exists in main",
+  "proof_target": "governance/consolidated_architecture_v345.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "Next roadmap step after ROADMAP-DISCIPLINE-ENFORCEMENT completion"
+  "routing_decision_basis": "Roadmap step 8 CONSOLIDATED ARCHITECTURE v3+v4+v5 follows completed step 7 ROADMAP-DISCIPLINE-ENFORCEMENT"
 }
