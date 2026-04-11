@@ -1,12 +1,12 @@
 {
   "schema_version": "v164",
   "task_id": "TASK-NEXT-FROM-BASELINE-0001",
-  "step_name": "LEDGER-ROUTER-LEDGER-WRITER-NEXT-ACTOR-GOVERNANCE-CONTRACT",
+  "step_name": "LEDGER-ROUTER-LEDGER-WRITER-CONTRACT",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Implement ledger router and writer governance contract for next actor routing decisions based on roadmap item 11",
+  "description": "Implement ledger routing system with writer path and next actor governance contract to enable automated task handoffs between roles",
   "status": "PROPOSED",
-  "proof_target": "governance/ledger_router_contract.md exists in main",
+  "proof_target": "governance/ledger-router-contract.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "roadmap_sequence_progression"
+  "routing_decision_basis": "roadmap_item_11_next_after_completed_item_10"
 }
