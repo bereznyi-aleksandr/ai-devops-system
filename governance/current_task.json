@@ -4,9 +4,9 @@
   "task_id": "TASK-NEXT-FROM-BASELINE-0001",
   "payload": {
     "step": "AUDIT-AUTHORITY-LOCK-DEV-EXECUTION-LOCK",
-    "description": "Implement dual-approval system requiring AUDITOR pre-action approval and post-action verification for all development execution tasks",
-    "proof_target": "governance/audit-authority-lock.md exists in main"
+    "description": "Implement dual-approval governance requiring AUDITOR pre-approval before any execution and AUDITOR post-validation after completion, establishing governance contracts that block unauthorized actions and enforce traceable approval chains",
+    "proof_target": "governance/audit_authority_lock.md exists in main"
   },
   "updated_by": "AUDITOR",
-  "updated_at": "2026-04-11T08:50:00Z"
+  "updated_at": "2026-04-11T09:10:00Z"
 }
