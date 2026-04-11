@@ -4,9 +4,9 @@
   "step_name": "UNIVERSAL-EXECUTOR-AUDITOR-EXCHANGE-LEDGER-LOOP",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Implement universal executor/auditor exchange ledger loop as the next roadmap step after audit authority lock completion",
+  "description": "Implement universal executor/auditor exchange ledger loop mechanism for traceable task execution flow",
   "status": "PROPOSED",
-  "proof_target": "governance/executor_auditor_exchange.md exists in main",
+  "proof_target": "governance/ledger-exchange-loop.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "Following roadmap sequence: step 9 (AUDIT AUTHORITY LOCK) completed, proceeding to step 10 (UNIVERSAL EXECUTOR/AUDITOR EXCHANGE LEDGER LOOP)"
+  "routing_decision_basis": "ROADMAP_ITEM_10_AFTER_COMPLETION_OF_ITEM_9"
 }
