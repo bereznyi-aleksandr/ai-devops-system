@@ -1,0 +1,195 @@
+name: Workflow Monitor
+
+on:
+  workflow_run:
+    workflows:
+      - "Executor Runner"
+      - "Auditor Runner"
+      - "Analyst Runner"
+      - "Analyst Verifier Runner"
+      - "Analyst Task Writer"
+    types: [completed]
+
+jobs:
+  monitor:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.name != 'Workflow Monitor' && github.event.workflow_run.name != 'Autonomy Test Runner' && github.event.workflow_run.name != 'Ledger Router' && github.event.workflow_run.name != 'Operator Notify' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get GitHub PAT from Secret Manager
+        id: get_pat
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAT=$(gcloud secrets versions access latest \
+            --secret="GITHUB_TOKEN" \
+            --project="barber-483016" | tr -d '\r\n')
+          echo "::add-mask::$PAT"
+          echo "pat=$PAT" >> "$GITHUB_OUTPUT"
+
+      - name: Cascade protection
+        id: guard
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/monitor-state .runtime
+          if gh api repos/${{ github.repository }}/contents/governance/monitor-state/last-error.txt >/dev/null 2>&1; then
+            gh api repos/${{ github.repository }}/contents/governance/monitor-state/last-error.txt --jq '.content' | tr -d '\n' | base64 -d > .runtime/last-error.txt
+          else
+            : > .runtime/last-error.txt
+          fi
+          python3 - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          p = Path('.runtime/last-error.txt')
+          raw = p.read_text(encoding='utf-8').strip() if p.exists() else ''
+          if not raw:
+              print('skip=false')
+              raise SystemExit(0)
+          try:
+              prev = datetime.fromisoformat(raw.replace('Z', '+00:00'))
+          except Exception:
+              print('skip=false')
+              raise SystemExit(0)
+          now = datetime.now(timezone.utc)
+          print('skip=true' if (now - prev).total_seconds() < 600 else 'skip=false')
+          PY
+          > .runtime/guard.out
+          cat .runtime/guard.out >> "$GITHUB_OUTPUT"
+
+      - name: Trigger autonomy test runner
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run autonomy-test-runner.yml \
+            --repo ${{ github.repository }} \
+            --ref main
+
+      - name: Prepare monitor event
+        if: steps.guard.outputs.skip != 'true'
+        id: prepare
+        env:
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .runtime
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          now = datetime.now(timezone.utc)
+          stamp = now.strftime('%Y%m%dT%H%M%SZ')
+          event = {
+            'schema_version': 'v164',
+            'event_id': f'ERROR-{stamp}',
+            'parent_event_id': '',
+            'task_id': f'TASK-ERROR-AUTO-{stamp}',
+            'event_time': now.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'step_name': 'WORKFLOW-MONITOR',
+            'actor_role': 'MONITOR',
+            'event_type': 'ERROR_DETECTED',
+            'description': f"Workflow {os.environ['WORKFLOW_NAME']} failed. Run: {os.environ['RUN_ID']}",
+            'status': 'ERROR',
+            'next_actor_role': 'ANALYST',
+            'next_expected_event': 'FIX_PROPOSED',
+            'routing_decision_basis': 'REACTIVE_MONITORING_AFTER_WORKFLOW_FAILURE',
+            'commit_sha': ''
+          }
+          Path('.runtime/ledger_event.json').write_text(json.dumps(event, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+          Path('.runtime/last-error.txt').write_text(now.strftime('%Y-%m-%dT%H:%M:%SZ')+'\n', encoding='utf-8')
+          print(f"event_id={event['event_id']}")
+          print(f"task_id={event['task_id']}")
+          PY
+          > .runtime/prepare.out
+          cat .runtime/prepare.out >> "$GITHUB_OUTPUT"
+
+      - name: Persist monitor-state
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONTENT_B64="$(base64 -w 0 .runtime/last-error.txt)"
+          EXISTING_SHA="$(gh api repos/${{ github.repository }}/contents/governance/monitor-state/last-error.txt --jq '.sha' 2>/dev/null || true)"
+          if [ -n "$EXISTING_SHA" ]; then
+            gh api --method PUT repos/${{ github.repository }}/contents/governance/monitor-state/last-error.txt \
+              -f message="Workflow monitor: update last error marker" \
+              -f content="$CONTENT_B64" \
+              -f sha="$EXISTING_SHA" >/dev/null
+          else
+            gh api --method PUT repos/${{ github.repository }}/contents/governance/monitor-state/last-error.txt \
+              -f message="Workflow monitor: create last error marker" \
+              -f content="$CONTENT_B64" >/dev/null
+          fi
+
+      - name: Write ERROR_DETECTED to GCS
+        if: steps.guard.outputs.skip != 'true'
+        id: gcs
+        shell: bash
+        run: |
+          set -euo pipefail
+          EVENT_ID="${{ steps.prepare.outputs.event_id }}"
+          GCS_PATH="governance/inbox/requests/${EVENT_ID}.json"
+          gcloud storage cp .runtime/ledger_event.json "gs://barber-agent-state/${GCS_PATH}" --project=barber-483016
+          echo "gcs_path=$GCS_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch ledger-request-ingress
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+          EVENT_ID: ${{ steps.prepare.outputs.event_id }}
+          TASK_ID: ${{ steps.prepare.outputs.task_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/${{ github.repository }}/dispatches \
+            --method POST \
+            -f event_type=ledger-request-ingress \
+            -f client_payload[event_id]="$EVENT_ID" \
+            -f client_payload[task_id]="$TASK_ID"
+
+      - name: Dispatch error-detected
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.get_pat.outputs.pat }}
+          EVENT_ID: ${{ steps.prepare.outputs.event_id }}
+          TASK_ID: ${{ steps.prepare.outputs.task_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/${{ github.repository }}/dispatches \
+            --method POST \
+            -f event_type=error-detected \
+            -f client_payload[next_actor_role]=ANALYST \
+            -f client_payload[event_id]="$EVENT_ID" \
+            -f client_payload[task_id]="$TASK_ID"
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: rm -rf .runtime
