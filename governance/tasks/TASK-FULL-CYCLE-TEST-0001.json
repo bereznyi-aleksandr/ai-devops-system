@@ -4,9 +4,9 @@
   "step_name": "ANALYST-EXECUTOR-AUDITOR-COORDINATION-LOOP",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Implement operational coordination loop between ANALYST, EXECUTOR, and AUDITOR roles through exchange file mechanism as defined in roadmap item 12",
+  "description": "Implement ANALYST / EXECUTOR / AUDITOR COORDINATION LOOP (#12) - Create operational coordination mechanism through exchange file system to enable structured handoff between analyst planning, executor implementation, and auditor verification phases with traceable state transitions",
   "status": "PROPOSED",
-  "proof_target": "governance/coordination_loop_exchange.json exists in main",
+  "proof_target": "governance/coordination_loop.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "roadmap_item_12_coordination_loop_implementation"
+  "routing_decision_basis": "Following roadmap sequence after LEDGER ROUTER + LEDGER WRITER + NEXT ACTOR GOVERNANCE CONTRACT (#11) completion, implementing next required coordination infrastructure"
 }
