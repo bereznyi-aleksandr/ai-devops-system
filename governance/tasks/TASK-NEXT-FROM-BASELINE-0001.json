@@ -4,9 +4,9 @@
   "step_name": "AUDIT-AUTHORITY-LOCK-DEV-EXECUTION-LOCK",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Implement dual-approval governance requiring AUDITOR pre-approval before any execution and AUDITOR post-validation after completion, establishing governance contracts that block unauthorized actions and enforce traceable approval chains",
+  "description": "Implement dual-approval system with audit authority lock before execution and development execution lock after completion, establishing mandatory AUDITOR pre-approval and post-completion verification gates",
   "status": "PROPOSED",
-  "proof_target": "governance/audit_authority_lock.md exists in main",
+  "proof_target": "governance/audit-authority-lock.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "Roadmap step 9 follows completed step 8 (CONSOLIDATED-ARCHITECTURE-v3-v4-v5), implementing dual-approval governance as next sequential requirement"
+  "routing_decision_basis": "ROADMAP step 9 follows completed steps 7-8, requires dual-approval governance implementation"
 }
