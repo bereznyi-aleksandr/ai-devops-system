@@ -4,9 +4,9 @@
   "step_name": "ANALYST-EXECUTOR-AUDITOR-COORDINATION-LOOP",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Implement operational coordination loop between ANALYST, EXECUTOR, and AUDITOR roles through exchange file mechanism as defined in roadmap item 12",
+  "description": "Create operational coordination exchange file structure for ANALYST/EXECUTOR/AUDITOR coordination loop as per roadmap item 12",
   "status": "PROPOSED",
-  "proof_target": "governance/coordination_loop_exchange.md exists in main",
+  "proof_target": "governance/coordination/exchange_file_structure.yaml exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "roadmap_item_12_next_in_sequence"
+  "routing_decision_basis": "ROADMAP_ITEM_12_COORDINATION_LOOP_REQUIRED"
 }
