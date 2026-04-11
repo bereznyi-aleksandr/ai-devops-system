@@ -1,0 +1,98 @@
+{
+  "schema_version": "v164",
+  "routing_rules": {
+    "TASK_PROPOSED": {
+      "current_actor": "ANALYST",
+      "next_actor": "AUDITOR",
+      "action_required": "VALIDATE_PROPOSAL",
+      "ledger_write": true,
+      "validation_criteria": [
+        "proof_target_exists",
+        "description_complete",
+        "next_actor_defined"
+      ]
+    },
+    "TASK_VALIDATED": {
+      "current_actor": "AUDITOR", 
+      "next_actor": "EXECUTOR",
+      "action_required": "EXECUTE_TASK",
+      "ledger_write": true,
+      "validation_criteria": [
+        "task_structure_valid",
+        "requirements_clear",
+        "execution_path_defined"
+      ]
+    },
+    "TASK_EXECUTED": {
+      "current_actor": "EXECUTOR",
+      "next_actor": "AUDITOR", 
+      "action_required": "AUDIT_COMPLETION",
+      "ledger_write": true,
+      "validation_criteria": [
+        "proof_target_delivered",
+        "execution_complete",
+        "output_quality_verified"
+      ]
+    },
+    "TASK_AUDITED": {
+      "current_actor": "AUDITOR",
+      "next_actor": "ANALYST",
+      "action_required": "ANALYZE_RESULTS",
+      "ledger_write": true,
+      "validation_criteria": [
+        "audit_passed",
+        "quality_confirmed",
+        "ready_for_next_cycle"
+      ]
+    },
+    "TASK_FAILED": {
+      "current_actor": "*",
+      "next_actor": "ANALYST",
+      "action_required": "REANALYZE_FAILURE",
+      "ledger_write": true,
+      "validation_criteria": [
+        "failure_reason_documented",
+        "corrective_action_defined"
+      ]
+    }
+  },
+  "actor_capabilities": {
+    "ANALYST": {
+      "can_propose": true,
+      "can_validate": false,
+      "can_execute": false,
+      "can_audit": false,
+      "ledger_write_events": ["TASK_PROPOSED", "TASK_ANALYZED"]
+    },
+    "AUDITOR": {
+      "can_propose": false,
+      "can_validate": true,
+      "can_execute": false,
+      "can_audit": true,
+      "ledger_write_events": ["TASK_VALIDATED", "TASK_AUDITED", "TASK_REJECTED"]
+    },
+    "EXECUTOR": {
+      "can_propose": false,
+      "can_validate": false,
+      "can_execute": true,
+      "can_audit": false,
+      "ledger_write_events": ["TASK_EXECUTED", "TASK_EXECUTION_FAILED"]
+    }
+  },
+  "coordination_loop": {
+    "standard_flow": ["ANALYST", "AUDITOR", "EXECUTOR", "AUDITOR"],
+    "failure_recovery": ["*", "ANALYST"],
+    "quality_gates": {
+      "proposal_gate": "AUDITOR_VALIDATION",
+      "execution_gate": "AUDITOR_PRE_EXECUTION_CHECK",
+      "completion_gate": "AUDITOR_FINAL_AUDIT"
+    }
+  },
+  "ledger_writer_config": {
+    "write_on_state_change": true,
+    "include_actor_transition": true,
+    "include_validation_results": true,
+    "include_execution_proof": true,
+    "retention_policy": "permanent"
+  }
+}
