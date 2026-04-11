@@ -4,9 +4,9 @@
   "step_name": "LEDGER-ROUTER-LEDGER-WRITER-NEXT-ACTOR-GOVERNANCE-CONTRACT",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Implement LEDGER ROUTER + LEDGER WRITER + NEXT ACTOR GOVERNANCE CONTRACT - roadmap step 11. Create governance contract that defines routing logic for ledger events, establishes ledger writer responsibilities, and enforces next actor selection rules based on event types and system state.",
+  "description": "Implement ledger routing system with writer path and next actor governance contract for traceable autonomous coordination",
   "status": "PROPOSED",
-  "proof_target": "governance/ledger_router_contract.md exists in main",
+  "proof_target": "governance/ledger-router-contract.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "Roadmap progression: steps 9-10 completed, proceeding to step 11 LEDGER ROUTER + LEDGER WRITER + NEXT ACTOR GOVERNANCE CONTRACT"
+  "routing_decision_basis": "ROADMAP_ITEM_11_NEXT_AFTER_COMPLETED_ITEM_10"
 }
