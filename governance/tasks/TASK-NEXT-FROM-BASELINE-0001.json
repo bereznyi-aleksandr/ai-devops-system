@@ -1,0 +1,12 @@
+{
+  "schema_version": "v164",
+  "task_id": "TASK-NEXT-FROM-BASELINE-0001",
+  "step_name": "GOVERNANCE-HARDENING",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "From the 2026-04-11 baseline, normalize governance/policy_director.py from v155 to v164 so the machine-readable governance decision layer matches the repo's current v164 operational contour. Scope is limited to version/contract normalization and must preserve current workflow topology.",
+  "status": "PROPOSED",
+  "proof_target": "governance/policy_director.py exists in main",
+  "next_actor_role": "AUDITOR",
+  "routing_decision_basis": "BASELINE_REPO_TRUTH_SHOWS_V164_OPERATIONAL_CONTOUR_BUT_POLICY_DIRECTOR_REMAINS_V155"
+}
