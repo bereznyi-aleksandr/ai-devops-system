@@ -1,12 +1,12 @@
 {
   "schema_version": "v164",
   "task_id": "TASK-NEXT-FROM-BASELINE-0001",
-  "step_name": "CONSOLIDATED-ARCHITECTURE-v3+v4+v5",
+  "step_name": "CONSOLIDATED-ARCHITECTURE-v3-v4-v5",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Create consolidated architecture document combining v3+v4+v5 specifications for Governance Board structure, role definitions, and interaction protocols as outlined in roadmap step 8",
+  "description": "Create consolidated architecture specification combining v3+v4+v5 governance patterns for unified Governance Board implementation",
   "status": "PROPOSED",
-  "proof_target": "governance/consolidated-architecture-v3-v4-v5.md exists in main",
+  "proof_target": "governance/consolidated_architecture_v3_v4_v5.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "ROADMAP-DISCIPLINE-ENFORCEMENT completed, next sequential step is CONSOLIDATED-ARCHITECTURE-v3+v4+v5 per autonomy roadmap"
+  "routing_decision_basis": "Next roadmap step after ROADMAP-DISCIPLINE-ENFORCEMENT completion"
 }
