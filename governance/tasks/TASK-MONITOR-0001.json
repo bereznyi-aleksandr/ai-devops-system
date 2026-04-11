@@ -1,0 +1,12 @@
+{
+  "schema_version": "v164",
+  "task_id": "TASK-MONITOR-0001",
+  "step_name": "P4.2",
+  "actor_role": "ANALYST",
+  "event_type": "TASK_PROPOSED",
+  "description": "Create .github/workflows/workflow-monitor.yml with workflow_run trigger. Monitors all key workflows. On failure: runs autonomy-test-runner for full diagnostics, writes ERROR_DETECTED to ledger, dispatches error-detected to wake analyst-runner immediately. Remove schedule from autonomy-test-runner — monitoring is now fully reactive.",
+  "status": "PROPOSED",
+  "proof_target": ".github/workflows/workflow-monitor.yml exists in main",
+  "next_actor_role": "AUDITOR",
+  "routing_decision_basis": "P4_2_REACTIVE_MONITORING_REPLACES_SCHEDULE"
+}
