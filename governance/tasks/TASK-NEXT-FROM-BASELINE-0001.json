@@ -4,9 +4,9 @@
   "step_name": "UNIVERSAL-EXECUTOR-AUDITOR-EXCHANGE-LEDGER-LOOP",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Implement Universal Executor/Auditor Exchange Ledger Loop as roadmap item 10. Create governance/ledger_exchange_protocol.md defining the traceable loop mechanism between executor and auditor roles through ledger-based communication.",
+  "description": "Implement universal executor/auditor exchange ledger loop as roadmap item 10. Create governance/ledger/exchange_protocol.md defining the traceable loop between executor and auditor roles through ledger events, establishing the foundation for autonomous role coordination.",
   "status": "PROPOSED",
-  "proof_target": "governance/ledger_exchange_protocol.md exists in main",
+  "proof_target": "governance/ledger/exchange_protocol.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "Roadmap sequence progression: completed items 7,8,9 require next item 10 UNIVERSAL EXECUTOR/AUDITOR EXCHANGE LEDGER LOOP"
+  "routing_decision_basis": "roadmap_sequence_progression"
 }
