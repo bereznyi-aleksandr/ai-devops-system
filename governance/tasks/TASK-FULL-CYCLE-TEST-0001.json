@@ -1,12 +1,12 @@
 {
   "schema_version": "v164",
   "task_id": "TASK-FULL-CYCLE-TEST-0001",
-  "step_name": "LEDGER-ROUTER-LEDGER-WRITER-NEXT-ACTOR-GOVERNANCE-CONTRACT",
+  "step_name": "ANALYST-EXECUTOR-AUDITOR-COORDINATION-LOOP",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Create ledger router and writer governance contract to implement routing, writer path, and next actor governance as specified in roadmap item 11",
+  "description": "Implement operational coordination loop through exchange file between ANALYST, EXECUTOR, and AUDITOR roles for autonomous task routing and execution tracking",
   "status": "PROPOSED",
-  "proof_target": "governance/ledger_router_contract.md exists in main",
+  "proof_target": "governance/coordination_loop_exchange.json exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "Roadmap progression: item 10 completed, implementing item 11 LEDGER ROUTER + LEDGER WRITER + NEXT ACTOR GOVERNANCE CONTRACT"
+  "routing_decision_basis": "Next roadmap item #12 ANALYST/EXECUTOR/AUDITOR COORDINATION LOOP required after completion of LEDGER ROUTER + LEDGER WRITER + NEXT ACTOR GOVERNANCE CONTRACT"
 }
