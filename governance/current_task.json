@@ -1,11 +1,11 @@
 {
   "schema_version": "v164",
   "status": "APPROVED",
-  "task_id": "TASK-FULL-CYCLE-TEST-0001",
+  "task_id": "TASK-NEXT-FROM-BASELINE-0001",
   "payload": {
     "step": "LEDGER-ROUTER-LEDGER-WRITER-NEXT-ACTOR-GOVERNANCE-CONTRACT",
-    "description": "Create ledger router and writer governance contract to establish routing, writer path, and next actor governance mechanisms as specified in roadmap item 11",
-    "proof_target": "governance/ledger-router-contract.md exists in main"
+    "description": "Implement LEDGER ROUTER + LEDGER WRITER + NEXT ACTOR GOVERNANCE CONTRACT as roadmap item 11. Create governance contract for routing decisions, ledger writer path enforcement, and next actor determination based on event types and system state.",
+    "proof_target": "governance/ledger_router_contract.md exists in main"
   },
   "updated_by": "AUDITOR",
   "updated_at": "2026-04-11T12:15:00Z"
