@@ -1,11 +1,9 @@
 name: Autonomy Test Runner
 
 on:
-  schedule:
-    - cron: '0 */2 * * *'
   workflow_dispatch:
   repository_dispatch:
-    types: [autonomy-test]
+    types: [run-tests]
 
 jobs:
   autonomy_test:
