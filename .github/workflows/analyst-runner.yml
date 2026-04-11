@@ -342,18 +342,44 @@ jobs:
           set -euo pipefail
           TASK_PATH="governance/tasks/${TASK_ID}.json"
           CONTENT_B64="$(base64 -w 0 .tmp/task_file.json)"
-          EXISTING_SHA="$(gh api repos/${{ github.repository }}/contents/${TASK_PATH} --jq '.sha' 2>/dev/null || true)"
 
-          if [ -n "$EXISTING_SHA" ]; then
-            gh api --method PUT repos/${{ github.repository }}/contents/${TASK_PATH} \
-              -f message="Analyst: update task file for ${TASK_ID}" \
-              -f content="$CONTENT_B64" \
-              -f sha="$EXISTING_SHA" >/dev/null
-          else
-            gh api --method PUT repos/${{ github.repository }}/contents/${TASK_PATH} \
-              -f message="Analyst: create task file for ${TASK_ID}" \
-              -f content="$CONTENT_B64" >/dev/null
-          fi
+          for attempt in 1 2 3; do
+            ERR_FILE=".tmp/task_file_write_err.txt"
+            rm -f "$ERR_FILE"
+            EXISTING_SHA="$(gh api repos/${{ github.repository }}/contents/${TASK_PATH} --jq '.sha' 2>/dev/null || true)"
+
+            if [ -n "$EXISTING_SHA" ]; then
+              if gh api --method PUT repos/${{ github.repository }}/contents/${TASK_PATH} \
+                -f message="Analyst: update task file for ${TASK_ID}" \
+                -f content="$CONTENT_B64" \
+                -f sha="$EXISTING_SHA" >/dev/null 2>"$ERR_FILE"; then
+                echo "TASK_FILE_WRITTEN: attempt=$attempt mode=update"
+                break
+              fi
+            else
+              if gh api --method PUT repos/${{ github.repository }}/contents/${TASK_PATH} \
+                -f message="Analyst: create task file for ${TASK_ID}" \
+                -f content="$CONTENT_B64" >/dev/null 2>"$ERR_FILE"; then
+                echo "TASK_FILE_WRITTEN: attempt=$attempt mode=create"
+                break
+              fi
+            fi
+
+            if grep -q "HTTP 409" "$ERR_FILE" 2>/dev/null; then
+              echo "SHA_CONFLICT: attempt=$attempt retrying"
+              sleep 5
+            else
+              echo "TASK_FILE_ERROR: attempt=$attempt" >&2
+              cat "$ERR_FILE" >&2 || true
+              exit 1
+            fi
+
+            if [ "$attempt" = "3" ]; then
+              echo "TASK_FILE_FAILED: max retries exceeded" >&2
+              cat "$ERR_FILE" >&2 || true
+              exit 1
+            fi
+          done
 
           echo "task_path=${TASK_PATH}" >> "$GITHUB_OUTPUT"
 
