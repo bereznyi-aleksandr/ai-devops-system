@@ -4,9 +4,9 @@
   "step_name": "CONSOLIDATED-ARCHITECTURE-v3+v4+v5",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Create consolidated architecture document combining v3, v4, and v5 governance board specifications with clear role definitions and interaction protocols",
+  "description": "Create consolidated architecture document combining v3+v4+v5 governance board specifications with clear role boundaries, decision authority, and execution flow paths",
   "status": "PROPOSED",
-  "proof_target": "governance/consolidated-architecture-v345.md exists in main",
+  "proof_target": "governance/consolidated_architecture_v345.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "roadmap_order_8_after_discipline_enforcement_completed"
+  "routing_decision_basis": "Roadmap step 8 follows completed step 7 ROADMAP-DISCIPLINE-ENFORCEMENT"
 }
