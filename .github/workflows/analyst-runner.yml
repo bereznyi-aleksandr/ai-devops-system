@@ -190,7 +190,7 @@ jobs:
 
           payload = {
               "model": model,
-              "max_tokens": 1800,
+              "max_tokens": 900,
               "system": system_prompt,
               "messages": [{"role": "user", "content": user_message}]
           }
@@ -230,7 +230,25 @@ jobs:
               Path(".tmp/anthropic_http_error.txt").write_text(body, encoding="utf-8")
               print(f"ANTHROPIC_HTTP_STATUS={e.code}")
               print(f"ANTHROPIC_HTTP_ERROR_BODY={body[:3000]}")
-              raise SystemExit(f"CLAUDE_API_HTTP_ERROR_{e.code}")
+              if e.code == 429:
+                  import time
+                  for wait_s in (20, 40, 80):
+                      print(f"RATE_LIMIT_HIT: sleeping {wait_s}s before retry")
+                      time.sleep(wait_s)
+                      try:
+                          with urllib.request.urlopen(req) as resp:
+                              result = json.loads(resp.read())
+                          break
+                      except urllib.error.HTTPError as retry_e:
+                          retry_body = retry_e.read().decode("utf-8", errors="replace")
+                          Path(".tmp/anthropic_http_error.txt").write_text(retry_body, encoding="utf-8")
+                          print(f"ANTHROPIC_HTTP_STATUS={retry_e.code}")
+                          if retry_e.code != 429:
+                              raise SystemExit(f"CLAUDE_API_HTTP_ERROR_{retry_e.code}")
+                  else:
+                      raise SystemExit("CLAUDE_API_HTTP_ERROR_429")
+              else:
+                  raise SystemExit(f"CLAUDE_API_HTTP_ERROR_{e.code}")
 
           raw = result["content"][0]["text"].strip()
           if not raw:
