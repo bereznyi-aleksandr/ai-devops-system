@@ -151,7 +151,7 @@ jobs:
           api_key = os.environ["ANTHROPIC_API_KEY"]
           task_id = os.environ["TASK_ID"].strip()
           event_name = os.environ["EVENT_NAME"].strip()
-          model = (os.getenv("LLM_MODEL") or "").strip() or "claude-3-7-sonnet-20250219"
+          model = (os.getenv("CLAUDE_MODEL") or os.getenv("LLM_MODEL") or "").strip() or "claude-sonnet-4-20250514"
           context = json.loads(Path(".tmp/analyst_context.json").read_text(encoding="utf-8"))
 
           system_prompt = (

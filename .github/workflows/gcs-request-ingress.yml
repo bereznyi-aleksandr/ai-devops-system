@@ -94,7 +94,13 @@ jobs:
       - name: Commit repo request file for downstream contour
         if: steps.gcs_request.outputs.has_request == 'true'
         run: |
-          git add governance/inbox/requests/*.json
+          shopt -s nullglob
+          files=(governance/inbox/requests/*.json)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No request files to commit"
+            exit 0
+          fi
+          git add "${files[@]}"
           staged=$(git diff --cached --name-only)
           test -n "$staged"
           git commit -m "Mirror GCS request into repo inbox"
