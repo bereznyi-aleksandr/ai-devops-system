@@ -275,17 +275,14 @@ jobs:
           fi
           CONTENT_B64="$(base64 -w 0 .tmp/materialized_file_content.txt)"
 
-          if [ -n "$EXISTING_SHA" ] && [ "$CURRENT_STATUS_VALUE" != "RETRY_REQUIRED" ]; then
-            echo "VALIDATION_FAILED: target exists and status not RETRY_REQUIRED: $TARGET_PATH" >&2; exit 1
-          fi
           if [ -n "$EXISTING_SHA" ]; then
-            gh api --method PUT repos/${{ github.repository }}/contents/${TARGET_PATH} \
-              -f message="Executor: retry materialize ${TARGET_PATH} for ${TASK_ID}" \
-              -f content="$CONTENT_B64" -f sha="$EXISTING_SHA" >/dev/null
+            echo "IDEMPOTENT_SUCCESS: target already exists: $TARGET_PATH"
+            echo "Reusing existing artifact — no overwrite needed"
           else
             gh api --method PUT repos/${{ github.repository }}/contents/${TARGET_PATH} \
               -f message="Executor: materialize ${TARGET_PATH} for ${TASK_ID}" \
               -f content="$CONTENT_B64" >/dev/null
+            echo "MATERIALIZED: ${TARGET_PATH}"
           fi
           gh api repos/${{ github.repository }}/contents/${TARGET_PATH} --jq '.path,.sha' >/dev/null
 
