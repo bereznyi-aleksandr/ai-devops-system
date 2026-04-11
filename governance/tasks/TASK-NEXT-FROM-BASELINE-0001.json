@@ -1,12 +1,12 @@
 {
   "schema_version": "v164",
   "task_id": "TASK-NEXT-FROM-BASELINE-0001",
-  "step_name": "CONSOLIDATED-ARCHITECTURE-v3-v4-v5",
+  "step_name": "AUDIT-AUTHORITY-LOCK-DEV-EXECUTION-LOCK",
   "actor_role": "ANALYST",
   "event_type": "TASK_PROPOSED",
-  "description": "Implement consolidated architecture combining v3+v4+v5 governance structures with unified Governance Board pattern for multi-agent coordination",
+  "description": "Implement dual-approval system requiring AUDITOR pre-approval and post-execution validation for all development actions, establishing governance authority separation between audit and execution roles",
   "status": "PROPOSED",
-  "proof_target": "governance/consolidated_architecture_v3_v4_v5.md exists in main",
+  "proof_target": "governance/audit_authority_lock.md exists in main",
   "next_actor_role": "AUDITOR",
-  "routing_decision_basis": "Roadmap step 8 follows completed step 7 ROADMAP-DISCIPLINE-ENFORCEMENT"
+  "routing_decision_basis": "roadmap_sequence_step_9"
 }
