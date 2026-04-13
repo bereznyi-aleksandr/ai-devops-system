@@ -1,0 +1,65 @@
+name: Role Router
+
+on:
+  workflow_dispatch:
+    inputs:
+      ledger_path:
+        description: 'Path to canonical ledger file'
+        required: false
+        default: 'governance/exchange_ledger_v3_6_rc2.csv'
+        type: string
+
+jobs:
+  route:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve next role from canonical ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          ledger_path = Path('${{ github.event.inputs.ledger_path }}')
+          if not ledger_path.exists():
+              raise SystemExit('LEDGER_FILE_MISSING')
+
+          with ledger_path.open('r', encoding='utf-8', newline='') as f:
+              rows = list(csv.DictReader(f))
+
+          if not rows:
+              route = {
+                  'status': 'EMPTY_LEDGER',
+                  'next_role': 'EXECUTOR',
+                  'next_action': 'PROPOSE_TASK',
+                  'reason': 'bootstrap route from empty canonical ledger'
+              }
+          else:
+              last = rows[-1]
+              route = {
+                  'status': 'ROUTE_READY',
+                  'event_id': last.get('event_id', ''),
+                  'task_id': last.get('task_id', ''),
+                  'next_role': last.get('next_role', ''),
+                  'next_action': last.get('next_action', ''),
+                  'state': last.get('state', ''),
+                  'reason': 'derived from last canonical ledger row'
+              }
+
+          out = Path('.runtime/role_route.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(route, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(route, ensure_ascii=False))
+          PY
+
+      - name: Guardrail
+        run: |
+          echo "Reads canonical ledger and resolves next role only."
+          echo "No semantic decisions and no GitHub write operations here."
