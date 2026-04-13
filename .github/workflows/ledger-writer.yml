@@ -1,0 +1,57 @@
+name: Ledger Writer
+
+on:
+  workflow_dispatch:
+    inputs:
+      payload_file:
+        description: 'Path to event payload JSON inside repository checkout'
+        required: true
+        type: string
+      ledger_path:
+        description: 'Path to canonical ledger file'
+        required: false
+        default: 'governance/exchange_ledger_v3_6_rc2.csv'
+        type: string
+
+jobs:
+  write_ledger:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Write canonical ledger row
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/append_ledger_row.py \
+            --payload-file "${{ github.event.inputs.payload_file }}" \
+            --ledger-path "${{ github.event.inputs.ledger_path }}"
+
+      - name: Commit ledger update
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${{ github.event.inputs.ledger_path }}"
+          if git diff --cached --quiet; then
+            echo "No ledger changes to commit"
+            exit 0
+          fi
+          git commit -m "System: append canonical ledger row"
+          git push origin HEAD:main
+
+      - name: Guardrail
+        run: |
+          echo "Writes only canonical v3.6-RC2 ledger rows."
+          echo "No semantic product decisions here."
