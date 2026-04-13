@@ -1,0 +1,67 @@
+name: Executor Notify
+
+on:
+  workflow_dispatch:
+    inputs:
+      ledger_path:
+        description: 'Path to canonical ledger file'
+        required: false
+        default: 'governance/exchange_ledger_v3_6_rc2.csv'
+        type: string
+
+jobs:
+  notify_executor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve executor activation payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          ledger_path = Path('${{ github.event.inputs.ledger_path }}')
+          if not ledger_path.exists():
+              raise SystemExit('LEDGER_FILE_MISSING')
+
+          with ledger_path.open('r', encoding='utf-8', newline='') as f:
+              rows = list(csv.DictReader(f))
+
+          if not rows:
+              raise SystemExit('LEDGER_EMPTY')
+
+          last = rows[-1]
+          if last.get('next_role', '').strip() != 'EXECUTOR':
+              raise SystemExit('NEXT_ROLE_IS_NOT_EXECUTOR')
+
+          payload = {
+              'status': 'EXECUTOR_ACTIVATION_READY',
+              'task_id': last.get('task_id', ''),
+              'parent_event_id': last.get('event_id', ''),
+              'state': last.get('state', ''),
+              'next_action': last.get('next_action', ''),
+              'protocol_version': last.get('protocol_version', ''),
+              'artifact_ref': last.get('artifact_ref', ''),
+              'proof_ref': last.get('proof_ref', ''),
+              'correlation_id': last.get('correlation_id', ''),
+              'idempotency_key': last.get('idempotency_key', ''),
+              'source': 'executor-notify.yml'
+          }
+
+          out = Path('.runtime/executor_activation.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+
+      - name: Guardrail
+        run: |
+          echo "Prepares executor activation payload from canonical ledger only."
+          echo "No GPT call and no GitHub mutation in this workflow yet."
