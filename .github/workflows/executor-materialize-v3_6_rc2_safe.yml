@@ -1,0 +1,130 @@
+name: Executor Materialize v3.6-RC2 Safe
+
+on:
+  workflow_dispatch:
+    inputs:
+      packet_path:
+        description: 'Path to executor packet JSON'
+        required: false
+        default: '.runtime/executor_packet_v3_6_rc2.json'
+        type: string
+
+jobs:
+  materialize_executor_artifact:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Materialize executor artifact skeleton
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          packet_path = Path('${{ github.event.inputs.packet_path }}')
+          if not packet_path.exists():
+              raise SystemExit('EXECUTOR_PACKET_MISSING')
+
+          packet = json.loads(packet_path.read_text(encoding='utf-8'))
+          task_id = packet.get('task_id', '').strip()
+          next_action = packet.get('next_action', '').strip()
+          parent_event_id = packet.get('current_event_ref', '').strip()
+          if not task_id:
+              raise SystemExit('EXECUTOR_PACKET_TASK_ID_MISSING')
+
+          ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+          if next_action == 'PROPOSE_TASK':
+              out_path = Path(f'governance/proposals/{task_id}.md')
+              lines = [
+                  f'task_id: {task_id}',
+                  'proposal_author: EXECUTOR',
+                  'proposal_profile: v3.6-RC2',
+                  f'parent_event_id: {parent_event_id}',
+                  f'ts_utc: {ts}',
+                  'task_type: ANALYSIS',
+                  'step_name: PROPOSE_TASK',
+                  f'title: Bootstrap proposal for {task_id}',
+                  'description: Placeholder executor proposal materialized by canonical contour.',
+                  'expected_outcome: Create first canonical task proposal artifact.',
+                  f'proof_target: governance/proposals/{task_id}.md',
+                  'constraints: Operate only inside canonical v3.6-RC2 contour.',
+                  'notes: GPT invocation not connected yet; this is a materialized skeleton.',
+              ]
+          elif next_action == 'WRITE_PLAN':
+              out_path = Path(f'governance/plans/{task_id}.md')
+              lines = [
+                  f'task_id: {task_id}',
+                  f'proposal_ref: governance/proposals/{task_id}.md',
+                  'plan_author: EXECUTOR',
+                  'plan_profile: v3.6-RC2',
+                  f'parent_event_id: {parent_event_id}',
+                  f'ts_utc: {ts}',
+                  'task_type: ANALYSIS',
+                  'approach: Placeholder implementation plan materialized by canonical contour.',
+                  'files_to_create: []',
+                  'files_to_modify: []',
+                  'files_to_delete: []',
+                  f'proof_target: governance/plans/{task_id}.md',
+                  'risk_notes: Minimal placeholder artifact only.',
+                  'rollback_plan: No rollback required for placeholder artifact.',
+                  'config_risk_class: NONE',
+              ]
+          else:
+              suffix = next_action if next_action else 'UNKNOWN'
+              out_path = Path(f'governance/runtime/executor_artifacts/{task_id}__{suffix}.md')
+              lines = [
+                  f'task_id: {task_id}',
+                  'artifact_author: EXECUTOR',
+                  'artifact_profile: v3.6-RC2',
+                  f'parent_event_id: {parent_event_id}',
+                  f'ts_utc: {ts}',
+                  f'next_action: {next_action}',
+                  'description: Placeholder executor artifact for unsupported action in current materializer.',
+                  'notes: Extend canonical materializer for this action.',
+              ]
+
+          body = '\n'.join(lines) + '\n'
+          out_path.parent.mkdir(parents=True, exist_ok=True)
+          out_path.write_text(body, encoding='utf-8')
+
+          manifest = {
+              'status': 'EXECUTOR_ARTIFACT_MATERIALIZED',
+              'task_id': task_id,
+              'next_action': next_action,
+              'artifact_path': str(out_path),
+              'parent_event_id': parent_event_id,
+              'ts_utc': ts,
+          }
+          manifest_path = Path('.runtime/executor_materialize_result.json')
+          manifest_path.parent.mkdir(parents=True, exist_ok=True)
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(manifest, ensure_ascii=False))
+          PY
+
+      - name: Commit executor artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/ .runtime/
+          if git diff --cached --quiet; then
+            echo "No executor artifact changes to commit"
+            exit 0
+          fi
+          git commit -m "Executor: materialize canonical artifact skeleton"
+          git push origin HEAD:main
+
+      - name: Guardrail
+        run: |
+          echo "Materializes executor artifact skeleton only."
+          echo "No GPT call and no semantic approval here."
