@@ -1,0 +1,68 @@
+name: Auditor Runner v3.6-RC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      ledger_path:
+        description: 'Path to canonical ledger file'
+        required: false
+        default: 'governance/exchange_ledger_v3_6_rc2.csv'
+        type: string
+
+jobs:
+  run_auditor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build auditor normalized packet from canonical ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          ledger_path = Path('${{ github.event.inputs.ledger_path }}')
+          if not ledger_path.exists():
+              raise SystemExit('LEDGER_FILE_MISSING')
+
+          with ledger_path.open('r', encoding='utf-8', newline='') as f:
+              rows = list(csv.DictReader(f))
+
+          if not rows:
+              raise SystemExit('LEDGER_EMPTY')
+
+          last = rows[-1]
+          if last.get('next_role', '').strip() != 'AUDITOR':
+              raise SystemExit('NEXT_ROLE_IS_NOT_AUDITOR')
+
+          packet = {
+              'role': 'AUDITOR',
+              'task_id': last.get('task_id', ''),
+              'current_event_ref': last.get('event_id', ''),
+              'current_state': last.get('state', ''),
+              'review_action': last.get('next_action', ''),
+              'protocol_version': last.get('protocol_version', ''),
+              'artifact_ref': last.get('artifact_ref', ''),
+              'proof_ref': last.get('proof_ref', ''),
+              'correlation_id': last.get('correlation_id', ''),
+              'idempotency_key': last.get('idempotency_key', ''),
+              'source': 'auditor-runner-v3_6_rc2.yml',
+              'status': 'AUDITOR_PACKET_READY'
+          }
+
+          out = Path('.runtime/auditor_packet_v3_6_rc2.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(packet, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(packet, ensure_ascii=False))
+          PY
+
+      - name: Guardrail
+        run: |
+          echo "Builds normalized auditor packet from canonical ledger only."
+          echo "GPT invocation will be connected in the next layer."
