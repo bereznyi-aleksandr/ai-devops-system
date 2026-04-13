@@ -1,0 +1,140 @@
+name: Auditor Ledger Return v3.6-RC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      result_path:
+        description: 'Path to auditor materialize result JSON'
+        required: false
+        default: '.runtime/auditor_materialize_result.json'
+        type: string
+      ledger_path:
+        description: 'Path to canonical ledger file'
+        required: false
+        default: 'governance/exchange_ledger_v3_6_rc2.csv'
+        type: string
+
+jobs:
+  auditor_ledger_return:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build auditor ledger payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          result_path = Path('${{ github.event.inputs.result_path }}')
+          if not result_path.exists():
+              raise SystemExit('AUDITOR_MATERIALIZE_RESULT_MISSING')
+
+          result = json.loads(result_path.read_text(encoding='utf-8'))
+          task_id = result.get('task_id', '').strip()
+          parent_event_id = result.get('parent_event_id', '').strip()
+          artifact_path = result.get('artifact_path', '').strip()
+          review_action = result.get('review_action', '').strip()
+          ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          event_id = f"AUDITOR-MATERIALIZED-{task_id}-{ts.replace(':','').replace('-','')}"
+
+          if review_action == 'REVIEW_TASK':
+              event_type = 'AUDIT_DECISION'
+              decision = 'APPROVE'
+              state = 'APPROVED'
+              next_role = 'EXECUTOR'
+              next_step = 'WRITE_PLAN'
+          elif review_action == 'REVIEW_PLAN':
+              event_type = 'PLAN_DECISION'
+              decision = 'APPROVE'
+              state = 'PLAN_APPROVED'
+              next_role = 'EXECUTOR'
+              next_step = 'IMPLEMENT_TASK'
+          elif review_action == 'VERIFY_RESULT':
+              event_type = 'VERIFICATION_CONFIRMED'
+              decision = 'CONFIRM'
+              state = 'VERIFIED'
+              next_role = 'SYSTEM'
+              next_step = 'CLOSE_TASK'
+          else:
+              event_type = 'CODE_REVIEW_DECISION'
+              decision = 'REVISE'
+              state = 'PLAN_APPROVED'
+              next_role = 'EXECUTOR'
+              next_step = 'IMPLEMENT_TASK'
+
+          payload = {
+              'event_id': event_id,
+              'parent_event_id': parent_event_id,
+              'task_id': task_id,
+              'ts_utc': ts,
+              'actor_role': 'AUDITOR',
+              'event_type': event_type,
+              'state': state,
+              'decision': decision,
+              'result': 'SUCCESS',
+              'summary': f'Auditor materialized canonical decision for {review_action or event_type}',
+              'artifact_ref': artifact_path,
+              'proof_ref': str(result_path),
+              'ci_ref': '',
+              'log_ref': '',
+              'error_class': '',
+              'error_details': '',
+              'next_role': next_role,
+              'next_action': next_step,
+              'protocol_version': 'v3.6-RC2',
+              'commit_sha': '',
+              'stall_class': '',
+              'infra_scope': 'CORE',
+              'causation_id': parent_event_id or event_id,
+              'correlation_id': f'CORR-{task_id}',
+              'idempotency_key': event_id,
+              'producer': 'AUDITOR_LEDGER_RETURN_WORKFLOW',
+              'producer_run_id': f'AUDITOR-RETURN-{task_id}'
+          }
+
+          out = Path('.runtime/auditor_ledger_payload_v3_6_rc2.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+
+      - name: Append canonical ledger row
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/append_ledger_row_v2.py \
+            --payload-file .runtime/auditor_ledger_payload_v3_6_rc2.json \
+            --ledger-path "${{ github.event.inputs.ledger_path }}"
+
+      - name: Commit ledger update
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${{ github.event.inputs.ledger_path }}" .runtime/
+          if git diff --cached --quiet; then
+            echo "No auditor ledger return changes to commit"
+            exit 0
+          fi
+          git commit -m "Auditor: return canonical decision to ledger"
+          git push origin HEAD:main
+
+      - name: Guardrail
+        run: |
+          echo "Returns auditor materialize result into canonical ledger only."
+          echo "No GPT call and no semantic approval beyond placeholder decision mapping here."
