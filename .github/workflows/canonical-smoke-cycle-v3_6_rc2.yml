@@ -1,0 +1,306 @@
+name: Canonical Smoke Cycle v3.6-RC2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke_cycle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Show canonical ledger before cycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== CANONICAL LEDGER BEFORE ==='
+          cat governance/exchange_ledger_v3_6_rc2.csv
+
+      - name: Build executor packet from canonical ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv, json
+          from pathlib import Path
+          ledger_path = Path('governance/exchange_ledger_v3_6_rc2.csv')
+          with ledger_path.open('r', encoding='utf-8', newline='') as f:
+              rows = list(csv.DictReader(f))
+          if not rows:
+              raise SystemExit('LEDGER_EMPTY')
+          last = rows[-1]
+          if last.get('next_role', '').strip() != 'EXECUTOR':
+              raise SystemExit('NEXT_ROLE_IS_NOT_EXECUTOR')
+          packet = {
+              'role': 'EXECUTOR',
+              'task_id': last.get('task_id', ''),
+              'current_event_ref': last.get('event_id', ''),
+              'current_state': last.get('state', ''),
+              'next_action': last.get('next_action', ''),
+              'protocol_version': last.get('protocol_version', ''),
+              'artifact_ref': last.get('artifact_ref', ''),
+              'proof_ref': last.get('proof_ref', ''),
+              'correlation_id': last.get('correlation_id', ''),
+              'idempotency_key': last.get('idempotency_key', ''),
+              'source': 'canonical-smoke-cycle-v3_6_rc2.yml',
+              'status': 'EXECUTOR_PACKET_READY'
+          }
+          out = Path('.runtime/executor_packet_v3_6_rc2.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(packet, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(packet, ensure_ascii=False))
+          PY
+
+      - name: Materialize executor proposal skeleton
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone
+          packet_path = Path('.runtime/executor_packet_v3_6_rc2.json')
+          packet = json.loads(packet_path.read_text(encoding='utf-8'))
+          task_id = packet.get('task_id', '').strip()
+          next_action = packet.get('next_action', '').strip()
+          parent_event_id = packet.get('current_event_ref', '').strip()
+          ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          out_path = Path(f'governance/proposals/{task_id}.md')
+          lines = [
+              f'task_id: {task_id}',
+              'proposal_author: EXECUTOR',
+              'proposal_profile: v3.6-RC2',
+              f'parent_event_id: {parent_event_id}',
+              f'ts_utc: {ts}',
+              'task_type: ANALYSIS',
+              'step_name: PROPOSE_TASK',
+              f'title: Bootstrap proposal for {task_id}',
+              'description: Placeholder executor proposal materialized by canonical smoke cycle.',
+              'expected_outcome: Create first canonical task proposal artifact.',
+              f'proof_target: governance/proposals/{task_id}.md',
+              'constraints: Operate only inside canonical v3.6-RC2 contour.',
+              'notes: GPT invocation not connected yet; this is a smoke-cycle skeleton.',
+          ]
+          out_path.parent.mkdir(parents=True, exist_ok=True)
+          out_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          manifest = {
+              'status': 'EXECUTOR_ARTIFACT_MATERIALIZED',
+              'task_id': task_id,
+              'next_action': next_action,
+              'artifact_path': str(out_path),
+              'parent_event_id': parent_event_id,
+              'ts_utc': ts,
+          }
+          Path('.runtime/executor_materialize_result.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(manifest, ensure_ascii=False))
+          PY
+
+      - name: Return executor event to canonical ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone
+          result = json.loads(Path('.runtime/executor_materialize_result.json').read_text(encoding='utf-8'))
+          task_id = result.get('task_id', '').strip()
+          parent_event_id = result.get('parent_event_id', '').strip()
+          artifact_path = result.get('artifact_path', '').strip()
+          ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          event_id = f"EXECUTOR-MATERIALIZED-{task_id}-{ts.replace(':','').replace('-','')}"
+          payload = {
+              'event_id': event_id,
+              'parent_event_id': parent_event_id,
+              'task_id': task_id,
+              'ts_utc': ts,
+              'actor_role': 'EXECUTOR',
+              'event_type': 'TASK_PROPOSED',
+              'state': 'AUDIT_PENDING',
+              'decision': '',
+              'result': 'SUCCESS',
+              'summary': 'Executor materialized canonical proposal in smoke cycle',
+              'artifact_ref': artifact_path,
+              'proof_ref': '.runtime/executor_materialize_result.json',
+              'ci_ref': '',
+              'log_ref': '',
+              'error_class': '',
+              'error_details': '',
+              'next_role': 'AUDITOR',
+              'next_action': 'REVIEW_TASK',
+              'protocol_version': 'v3.6-RC2',
+              'commit_sha': '',
+              'stall_class': '',
+              'infra_scope': 'CORE',
+              'causation_id': parent_event_id or event_id,
+              'correlation_id': f'CORR-{task_id}',
+              'idempotency_key': event_id,
+              'producer': 'CANONICAL_SMOKE_CYCLE',
+              'producer_run_id': f'SMOKE-EXECUTOR-{task_id}'
+          }
+          Path('.runtime/executor_ledger_payload_v3_6_rc2.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+          python3 governance/append_ledger_row_v2.py \
+            --payload-file .runtime/executor_ledger_payload_v3_6_rc2.json \
+            --ledger-path governance/exchange_ledger_v3_6_rc2.csv
+
+      - name: Build auditor packet from canonical ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv, json
+          from pathlib import Path
+          with Path('governance/exchange_ledger_v3_6_rc2.csv').open('r', encoding='utf-8', newline='') as f:
+              rows = list(csv.DictReader(f))
+          last = rows[-1]
+          if last.get('next_role', '').strip() != 'AUDITOR':
+              raise SystemExit('NEXT_ROLE_IS_NOT_AUDITOR')
+          packet = {
+              'role': 'AUDITOR',
+              'task_id': last.get('task_id', ''),
+              'current_event_ref': last.get('event_id', ''),
+              'current_state': last.get('state', ''),
+              'review_action': last.get('next_action', ''),
+              'protocol_version': last.get('protocol_version', ''),
+              'artifact_ref': last.get('artifact_ref', ''),
+              'proof_ref': last.get('proof_ref', ''),
+              'correlation_id': last.get('correlation_id', ''),
+              'idempotency_key': last.get('idempotency_key', ''),
+              'source': 'canonical-smoke-cycle-v3_6_rc2.yml',
+              'status': 'AUDITOR_PACKET_READY'
+          }
+          Path('.runtime/auditor_packet_v3_6_rc2.json').write_text(json.dumps(packet, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(packet, ensure_ascii=False))
+          PY
+
+      - name: Materialize auditor decision skeleton
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone
+          packet = json.loads(Path('.runtime/auditor_packet_v3_6_rc2.json').read_text(encoding='utf-8'))
+          task_id = packet.get('task_id', '').strip()
+          review_action = packet.get('review_action', '').strip()
+          parent_event_id = packet.get('current_event_ref', '').strip()
+          ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          decision_id = f"DECISION-{task_id}-{ts.replace(':', '').replace('-', '')}"
+          out_path = Path(f'governance/decisions/{decision_id}.md')
+          lines = [
+              f'decision_id: {decision_id}',
+              f'task_id: {task_id}',
+              f'parent_event_id: {parent_event_id}',
+              'decision_author: AUDITOR',
+              'decision_profile: v3.6-RC2',
+              f'ts_utc: {ts}',
+              'decision_type: PLACEHOLDER_DECISION',
+              'decision: APPROVE',
+              f'review_action: {review_action}',
+              f"reviewed_ref: {packet.get('artifact_ref', '')}",
+              'reviewed_commit_sha:',
+              'next_role_assigned: EXECUTOR',
+              'next_action_assigned: WRITE_PLAN',
+              'rationale: Placeholder auditor decision materialized by canonical smoke cycle.',
+              'conditions: GPT invocation not connected yet; smoke cycle approves first proposal.',
+              'flags: [placeholder]',
+          ]
+          out_path.parent.mkdir(parents=True, exist_ok=True)
+          out_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          manifest = {
+              'status': 'AUDITOR_DECISION_MATERIALIZED',
+              'task_id': task_id,
+              'review_action': review_action,
+              'artifact_path': str(out_path),
+              'parent_event_id': parent_event_id,
+              'ts_utc': ts,
+              'decision_id': decision_id,
+          }
+          Path('.runtime/auditor_materialize_result.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(manifest, ensure_ascii=False))
+          PY
+
+      - name: Return auditor decision to canonical ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone
+          result = json.loads(Path('.runtime/auditor_materialize_result.json').read_text(encoding='utf-8'))
+          task_id = result.get('task_id', '').strip()
+          parent_event_id = result.get('parent_event_id', '').strip()
+          artifact_path = result.get('artifact_path', '').strip()
+          ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          event_id = f"AUDITOR-MATERIALIZED-{task_id}-{ts.replace(':','').replace('-','')}"
+          payload = {
+              'event_id': event_id,
+              'parent_event_id': parent_event_id,
+              'task_id': task_id,
+              'ts_utc': ts,
+              'actor_role': 'AUDITOR',
+              'event_type': 'AUDIT_DECISION',
+              'state': 'APPROVED',
+              'decision': 'APPROVE',
+              'result': 'SUCCESS',
+              'summary': 'Auditor approved canonical proposal in smoke cycle',
+              'artifact_ref': artifact_path,
+              'proof_ref': '.runtime/auditor_materialize_result.json',
+              'ci_ref': '',
+              'log_ref': '',
+              'error_class': '',
+              'error_details': '',
+              'next_role': 'EXECUTOR',
+              'next_action': 'WRITE_PLAN',
+              'protocol_version': 'v3.6-RC2',
+              'commit_sha': '',
+              'stall_class': '',
+              'infra_scope': 'CORE',
+              'causation_id': parent_event_id or event_id,
+              'correlation_id': f'CORR-{task_id}',
+              'idempotency_key': event_id,
+              'producer': 'CANONICAL_SMOKE_CYCLE',
+              'producer_run_id': f'SMOKE-AUDITOR-{task_id}'
+          }
+          Path('.runtime/auditor_ledger_payload_v3_6_rc2.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+          python3 governance/append_ledger_row_v2.py \
+            --payload-file .runtime/auditor_ledger_payload_v3_6_rc2.json \
+            --ledger-path governance/exchange_ledger_v3_6_rc2.csv
+
+      - name: Commit smoke cycle results
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/ .runtime/
+          if git diff --cached --quiet; then
+            echo 'No smoke cycle changes to commit'
+            exit 0
+          fi
+          git commit -m "System: run canonical smoke cycle v3.6-RC2"
+          git push origin HEAD:main
+
+      - name: Show canonical ledger after cycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== CANONICAL LEDGER AFTER ==='
+          cat governance/exchange_ledger_v3_6_rc2.csv
