@@ -1,0 +1,161 @@
+name: Auditor Real Call v3.6-RC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      packet_path:
+        description: 'Path to auditor packet JSON'
+        required: false
+        default: '.runtime/auditor_packet_v3_6_rc2.json'
+        type: string
+
+jobs:
+  auditor_real_call:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      AUDITOR_API_URL: ${{ secrets.AUDITOR_API_URL }}
+      AUDITOR_API_KEY: ${{ secrets.AUDITOR_API_KEY }}
+      AUDITOR_MODEL: ${{ secrets.AUDITOR_MODEL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${AUDITOR_API_URL:-}" || (echo "Missing secret AUDITOR_API_URL" && exit 1)
+          test -n "${AUDITOR_API_KEY:-}" || (echo "Missing secret AUDITOR_API_KEY" && exit 1)
+          test -n "${AUDITOR_MODEL:-}" || (echo "Missing secret AUDITOR_MODEL" && exit 1)
+
+      - name: Build auditor request payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          packet_path = Path('${{ github.event.inputs.packet_path }}')
+          prompt_path = Path('governance/prompts/auditor_system_prompt_v3_6_rc2.txt')
+          if not packet_path.exists():
+              raise SystemExit('AUDITOR_PACKET_MISSING')
+          if not prompt_path.exists():
+              raise SystemExit('AUDITOR_SYSTEM_PROMPT_MISSING')
+
+          packet = json.loads(packet_path.read_text(encoding='utf-8'))
+          review_action = packet.get('review_action', '').strip()
+          if review_action != 'REVIEW_PLAN':
+              raise SystemExit(f'AUDITOR_REAL_CALL_EXPECTS_REVIEW_PLAN, got: {review_action}')
+
+          request_payload = {
+              'model': '${{ secrets.AUDITOR_MODEL }}',
+              'input': [
+                  {
+                      'role': 'system',
+                      'content': prompt_path.read_text(encoding='utf-8')
+                  },
+                  {
+                      'role': 'user',
+                      'content': json.dumps(packet, ensure_ascii=False, indent=2)
+                  }
+              ]
+          }
+
+          out = Path('.runtime/auditor_real_call_request.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(request_payload, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps({'status': 'AUDITOR_REAL_REQUEST_READY', 'path': str(out)}, ensure_ascii=False))
+          PY
+
+      - name: Call external auditor model
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sS -X POST "$AUDITOR_API_URL" \
+            -H "Authorization: Bearer $AUDITOR_API_KEY" \
+            -H "Content-Type: application/json" \
+            --data @.runtime/auditor_real_call_request.json \
+            > .runtime/auditor_real_call_response_raw.json
+          test -s .runtime/auditor_real_call_response_raw.json
+
+      - name: Normalize auditor response into canonical decision artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          packet = json.loads(Path('${{ github.event.inputs.packet_path }}').read_text(encoding='utf-8'))
+          raw = json.loads(Path('.runtime/auditor_real_call_response_raw.json').read_text(encoding='utf-8'))
+
+          candidate = None
+          if isinstance(raw, dict) and all(k in raw for k in ['task_id', 'decision_type', 'decision', 'title', 'summary', 'body_markdown']):
+              candidate = raw
+          elif isinstance(raw, dict):
+              if 'output_text' in raw and isinstance(raw['output_text'], str):
+                  candidate = json.loads(raw['output_text'])
+              elif 'content' in raw and isinstance(raw['content'], str):
+                  candidate = json.loads(raw['content'])
+              elif 'response' in raw and isinstance(raw['response'], str):
+                  candidate = json.loads(raw['response'])
+
+          if not isinstance(candidate, dict):
+              raise SystemExit('AUDITOR_RESPONSE_PARSE_FAILED')
+
+          task_id = packet.get('task_id', '').strip()
+          if candidate.get('task_id', '').strip() != task_id:
+              raise SystemExit('AUDITOR_RESPONSE_TASK_ID_MISMATCH')
+
+          ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          decision_id = f'DECISION-{task_id}-{ts.replace(":", "").replace("-", "")}'
+          out_path = Path(f'governance/decisions/{decision_id}.md')
+          out_path.parent.mkdir(parents=True, exist_ok=True)
+          out_path.write_text(candidate.get('body_markdown', '').rstrip() + '\n', encoding='utf-8')
+
+          manifest = {
+              'status': 'AUDITOR_REAL_DECISION_MATERIALIZED',
+              'task_id': task_id,
+              'review_action': 'REVIEW_PLAN',
+              'artifact_path': str(out_path),
+              'parent_event_id': packet.get('current_event_ref', ''),
+              'ts_utc': ts,
+              'summary': candidate.get('summary', ''),
+              'decision_type': candidate.get('decision_type', ''),
+              'decision': candidate.get('decision', ''),
+              'next_role_assigned': candidate.get('next_role_assigned', ''),
+              'next_action_assigned': candidate.get('next_action_assigned', ''),
+          }
+          Path('.runtime/auditor_materialize_result.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(manifest, ensure_ascii=False))
+          PY
+
+      - name: Commit real auditor artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/ .runtime/
+          if git diff --cached --quiet; then
+            echo "No auditor real-call changes to commit"
+            exit 0
+          fi
+          git commit -m "Auditor: real REVIEW_PLAN call in canonical contour"
+          git push origin HEAD:main
+
+      - name: Guardrail
+        run: |
+          echo "This workflow performs only auditor REVIEW_PLAN real-call integration."
+          echo "Ledger progression remains a separate canonical step."
