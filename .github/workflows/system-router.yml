@@ -1,0 +1,78 @@
+name: System Router
+
+on:
+  workflow_dispatch:
+    inputs:
+      ledger_path:
+        description: 'Path to canonical ledger file'
+        required: false
+        default: 'governance/exchange_ledger_v3_6_rc2.csv'
+        type: string
+
+jobs:
+  system_route:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve system route from canonical ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          ledger_path = Path('${{ github.event.inputs.ledger_path }}')
+          if not ledger_path.exists():
+              raise SystemExit('LEDGER_FILE_MISSING')
+
+          with ledger_path.open('r', encoding='utf-8', newline='') as f:
+              rows = list(csv.DictReader(f))
+
+          if not rows:
+              payload = {
+                  'status': 'SYSTEM_BOOTSTRAP_REQUIRED',
+                  'system_action': 'BOOTSTRAP_CANONICAL_CONTOUR',
+                  'reason': 'canonical ledger exists but contains no events'
+              }
+          else:
+              last = rows[-1]
+              next_role = last.get('next_role', '').strip()
+              next_action = last.get('next_action', '').strip()
+              state = last.get('state', '').strip()
+              task_id = last.get('task_id', '').strip()
+
+              if next_role in {'EXECUTOR', 'AUDITOR'}:
+                  system_action = 'ACTIVATE_ROLE'
+              elif next_role == 'SYSTEM':
+                  system_action = next_action or 'RUN_SYSTEM_STEP'
+              elif next_role == 'NONE':
+                  system_action = 'NO_FURTHER_ACTION'
+              else:
+                  system_action = 'ROUTE_BLOCKED'
+
+              payload = {
+                  'status': 'SYSTEM_ROUTE_READY',
+                  'task_id': task_id,
+                  'state': state,
+                  'next_role': next_role,
+                  'next_action': next_action,
+                  'system_action': system_action,
+                  'reason': 'derived from last canonical ledger row'
+              }
+
+          out = Path('.runtime/system_route.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+
+      - name: Guardrail
+        run: |
+          echo "Reads canonical ledger and resolves system route only."
+          echo "No GitHub mutations and no semantic product decisions here."
