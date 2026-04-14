@@ -1,0 +1,31 @@
+{
+  "protocol_version": "v3.7-RC1",
+  "runtime": "GitHub Codespaces",
+  "role": "AUDITOR",
+  "input_event_id": "BOOTSTRAP-V3_7-RC1-0001",
+  "parent_event_id": "BOOTSTRAP-V3_7-RC1-0001",
+  "task_id": "TASK-BOOTSTRAP-V3_7-0001",
+  "current_state": "AUDIT_PENDING",
+  "next_role": "AUDITOR",
+  "next_action": "REVIEW_TASK",
+  "decision_id": "AUDIT-TASK-BOOTSTRAP-V3_7-0001-0001",
+  "reviewed_ref": "governance/proposals/TASK-BOOTSTRAP-V3_7-0001.md",
+  "reviewed_commit_sha": "LOCAL",
+  "artifact_ref": "governance/proposals/TASK-BOOTSTRAP-V3_7-0001.md",
+  "proof_ref": "",
+  "ci_ref": "",
+  "log_ref": "",
+  "summary": "First live AUDITOR packet for bootstrap proposal review under v3.7-RC1 Codespaces runtime.",
+  "constraints": [
+    "Do not write governance/exchange_ledger.csv",
+    "Do not merge",
+    "Do not implement product changes",
+    "Write only one allowed decision artifact",
+    "Write auditor_materialize_result.json"
+  ],
+  "required_outputs": {
+    "artifact_type": "task_decision",
+    "artifact_path": "governance/decisions/AUDIT-TASK-BOOTSTRAP-V3_7-0001-0001.md",
+    "result_manifest_path": "governance/runtime/results/auditor_materialize_result.json"
+  }
+}
