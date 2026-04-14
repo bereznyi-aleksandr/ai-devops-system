@@ -1,0 +1,27 @@
+{
+  "protocol_version": "v3.7-RC1",
+  "runtime": "GitHub Codespaces",
+  "role": "EXECUTOR",
+  "input_event_id": "BOOTSTRAP-PLACEHOLDER",
+  "parent_event_id": "NONE",
+  "task_id": "TASK-PLACEHOLDER",
+  "current_state": "CLOSED",
+  "next_role": "EXECUTOR",
+  "next_action": "PROPOSE_TASK",
+  "artifact_ref": "",
+  "proof_ref": "",
+  "ci_ref": "",
+  "log_ref": "",
+  "summary": "Bootstrap packet for first EXECUTOR cycle.",
+  "constraints": [
+    "Do not write exchange_ledger.csv",
+    "Do not merge",
+    "Write only one allowed artifact",
+    "Write executor_materialize_result.json"
+  ],
+  "required_outputs": {
+    "artifact_type": "proposal",
+    "artifact_path": "governance/proposals/TASK-PLACEHOLDER.md",
+    "result_manifest_path": "governance/runtime/results/executor_materialize_result.json"
+  }
+}
