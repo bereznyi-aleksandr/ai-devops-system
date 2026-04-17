@@ -1,0 +1,32 @@
+name: autonomy-entrypoint
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+jobs:
+  run-entrypoint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Show context
+        run: |
+          echo "WORKFLOW=${GITHUB_WORKFLOW}"
+          echo "EVENT=${GITHUB_EVENT_NAME}"
+          echo "REF=${GITHUB_REF}"
+          echo "SHA=${GITHUB_SHA}"
+
+      - name: Run autonomy entrypoint
+        run: |
+          python3 governance/scripts/system_entrypoint_v1.py
+
