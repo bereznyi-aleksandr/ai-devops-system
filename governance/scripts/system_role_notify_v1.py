@@ -21,7 +21,7 @@ def read_json(path: Path) -> Dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def pick_target(items: List[Dict[str, object]]) -> Dict[str, object]:
+def pick_target(items: List[Dict[str, object]]) -> Dict[str, object] | None:
     for role, bucket in ROLE_BUCKET_ORDER:
         candidates = [x for x in items if str(x.get("status_bucket", "")).strip() == bucket]
         if not candidates:
