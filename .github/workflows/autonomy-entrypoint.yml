@@ -36,6 +36,8 @@ jobs:
           TASKS_DIR = ROOT / "governance" / "runtime" / "tasks"
           INDEX_PATH = TASKS_DIR / "index.json"
 
+          TASKS_DIR.mkdir(parents=True, exist_ok=True)
+
           def infer_status_bucket(data):
               current_state = str(data.get("current_state", "")).strip()
               next_role = str(data.get("next_role", "")).strip()
@@ -60,7 +62,6 @@ jobs:
                   return "BLOCKED"
               return "UNKNOWN"
 
-          items = []
           latest = {}
 
           for path in sorted(TASKS_DIR.glob("*.json")):
