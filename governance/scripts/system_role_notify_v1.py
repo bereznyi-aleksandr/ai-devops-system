@@ -36,7 +36,7 @@ def pick_target(items: List[Dict[str, object]]) -> Dict[str, object] | None:
         item = candidates[0]
         item["_notify_role"] = role
         return item
-    raise NotifyError("No notification target found in index")
+    return None
 
 
 def main() -> int:
