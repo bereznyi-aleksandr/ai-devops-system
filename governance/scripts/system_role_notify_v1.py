@@ -49,6 +49,14 @@ def main() -> int:
         raise NotifyError("Index items is not a list")
 
     target = pick_target(items)
+    if target is None:
+        print(json.dumps({
+            'system_role_notify_version': 'v1',
+            'result': 'NO_TARGET',
+            'index_path': str(INDEX_PATH.relative_to(ROOT)),
+            'notification_created': False
+        }, ensure_ascii=False, indent=2))
+        return 0
 
     role = str(target.get("_notify_role", "")).strip()
     task_id = str(target.get("task_id", "")).strip()
