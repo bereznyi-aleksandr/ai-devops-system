@@ -96,7 +96,7 @@ def main() -> int:
             raise OrchestratorV2Error("Index items is not a list")
 
         items = normalize_items(raw_items)
-        candidates = [item for item in items if not is_closed(item) and item.get('status_bucket', 'UNKNOWN') != 'UNKNOWN']
+        candidates = [item for item in items if not is_closed(item) and item.get('status_bucket', 'UNKNOWN') not in {'UNKNOWN', 'INVALID'}]
 
         if not candidates:
             report = {

@@ -144,3 +144,53 @@ jobs:
       - name: Run autonomy entrypoint
         run: |
           python3 governance/scripts/system_entrypoint_v1.py
+
+      - name: Verify P-01 domain state
+        run: |
+          python3 - <<'PY2'
+          import json
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          task_path = ROOT / 'governance' / 'runtime' / 'tasks' / 'TASK-GHA-E2E-001.json'
+
+          if not task_path.exists():
+              raise SystemExit('P01_DOMAIN_FAIL: task file not found')
+
+          data = json.loads(task_path.read_text(encoding='utf-8'))
+          events = data.get('events', [])
+          if not isinstance(events, list):
+              raise SystemExit('P01_DOMAIN_FAIL: events is not a list')
+
+          checks = {
+              'current_state': str(data.get('current_state', '')).strip(),
+              'last_event_type': str(data.get('last_event_type', '')).strip(),
+              'next_role': str(data.get('next_role', '')).strip(),
+              'next_action': str(data.get('next_action', '')).strip(),
+              'latest_result_manifest': str(data.get('latest_result_manifest', '')).strip(),
+              'events_count': len(events),
+          }
+
+          expected = {
+              'current_state': 'COMPLETED',
+              'last_event_type': 'AUDIT_APPROVED',
+              'next_role': 'SYSTEM',
+              'next_action': 'CLOSE_TASK',
+          }
+
+          for k, v in expected.items():
+              if checks[k] != v:
+                  raise SystemExit(f'P01_DOMAIN_FAIL: {k}={checks[k]!r}, expected {v!r}')
+
+          if not checks['latest_result_manifest']:
+              raise SystemExit('P01_DOMAIN_FAIL: latest_result_manifest is empty')
+
+          if checks['events_count'] < 1:
+              raise SystemExit('P01_DOMAIN_FAIL: events_count < 1')
+
+          print(json.dumps({
+              'p01_domain_verification': 'PASS',
+              'task_id': 'TASK-GHA-E2E-001',
+              'checks': checks,
+          }, ensure_ascii=False, indent=2))
+          PY2
