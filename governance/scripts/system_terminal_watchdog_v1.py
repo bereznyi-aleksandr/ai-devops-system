@@ -53,7 +53,7 @@ def main() -> int:
 
         if not task_id or not is_terminal or closed_by_system:
             continue
-        if current_state != 'COMPLETED_OPEN_TERMINAL':
+        if current_state != 'COMPLETED':
             continue
         if last_event_ts is None or last_event_ts > cutoff:
             continue
