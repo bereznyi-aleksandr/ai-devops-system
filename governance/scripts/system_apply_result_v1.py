@@ -183,6 +183,7 @@ def write_registry(task_id: str, registry: Dict[str, object]) -> Path:
         'error_details': str(registry.get('error_details', '')).strip(),
         'last_failure_ts': str(registry.get('last_failure_ts', '')).strip(),
         'last_failure_from_state': str(registry.get('last_failure_from_state', '')).strip(),
+        'stall_count': int(registry.get('stall_count', 0) or 0),
         'is_terminal': bool(registry.get('is_terminal', False)),
         'terminal_reason': str(registry.get('terminal_reason', '')).strip(),
         'closed_by_system': bool(registry.get('closed_by_system', False)),
