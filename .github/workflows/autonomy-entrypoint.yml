@@ -173,7 +173,7 @@ jobs:
 
           expected = {
               'current_state': 'COMPLETED',
-              'last_event_type': 'AUDIT_APPROVED',
+              'last_event_type': 'RESULT_VERIFIED',
               'next_role': 'SYSTEM',
               'next_action': 'CLOSE_TASK',
           }
