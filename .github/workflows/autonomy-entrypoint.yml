@@ -6,7 +6,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: '*/15 * * * *'
 
 jobs:
   run-entrypoint:
@@ -20,7 +20,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Show context
         run: |
@@ -30,22 +30,28 @@ jobs:
           echo "SHA=${GITHUB_SHA}"
 
       - name: Restore repo fixture for P-01 GHA E2E
-      run: |
-        mkdir -p governance/runtime/tasks governance/runtime/results governance/decisions
-        if [ -f governance/fixtures/gha_e2e/TASK-GHA-E2E-001.task.json ]; then
-          cp governance/fixtures/gha_e2e/TASK-GHA-E2E-001.task.json governance/runtime/tasks/TASK-GHA-E2E-001.json
-        fi
-        if [ -f governance/fixtures/gha_e2e/auditor_materialize_result.gha-e2e.json ]; then
-          cp governance/fixtures/gha_e2e/auditor_materialize_result.gha-e2e.json governance/runtime/results/auditor_materialize_result.gha-e2e.json
-        fi
-        if [ -f governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED_TASK-GHA-E2E-001.json ]; then
-          cp governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED_TASK-GHA-E2E-001.json governance/decisions/IMPLEMENTATION_COMPLETED_TASK-GHA-E2E-001.json
-        fi
-        if [ -f governance/fixtures/gha_e2e/AUDIT_TASK-GHA-E2E-001-AUTO-0001.json ]; then
-          cp governance/fixtures/gha_e2e/AUDIT_TASK-GHA-E2E-001-AUTO-0001.json governance/decisions/AUDIT_TASK-GHA-E2E-001-AUTO-0001.json
-        fi
+        run: |
+          mkdir -p governance/runtime/tasks
+          mkdir -p governance/runtime/results
+          mkdir -p governance/decisions
 
-    - name: Bootstrap runtime index
+          if [ -f governance/fixtures/gha_e2e/TASK-GHA-E2E-001.task.json ]; then
+            cp governance/fixtures/gha_e2e/TASK-GHA-E2E-001.task.json governance/runtime/tasks/TASK-GHA-E2E-001.json
+          fi
+
+          if [ -f governance/fixtures/gha_e2e/auditor_materialize_result.gha-e2e.json ]; then
+            cp governance/fixtures/gha_e2e/auditor_materialize_result.gha-e2e.json governance/runtime/results/auditor_materialize_result.gha-e2e.json
+          fi
+
+          if [ -f governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED_TASK-GHA-E2E-001.json ]; then
+            cp governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED_TASK-GHA-E2E-001.json governance/decisions/IMPLEMENTATION_COMPLETED_TASK-GHA-E2E-001.json
+          fi
+
+          if [ -f governance/fixtures/gha_e2e/AUDIT_TASK-GHA-E2E-001-AUTO-0001.json ]; then
+            cp governance/fixtures/gha_e2e/AUDIT_TASK-GHA-E2E-001-AUTO-0001.json governance/decisions/AUDIT_TASK-GHA-E2E-001-AUTO-0001.json
+          fi
+
+      - name: Bootstrap runtime index
         run: |
           python3 - <<'PY'
           import json
@@ -86,6 +92,7 @@ jobs:
           for path in sorted(TASKS_DIR.glob('*.json')):
               if path.name == 'index.json':
                   continue
+
               data = json.loads(path.read_text(encoding='utf-8'))
               task_id = str(data.get('task_id', '')).strip()
               if not task_id:
@@ -124,7 +131,7 @@ jobs:
           index_doc = {
               'system_task_index_version': 'v1',
               'result': 'SUCCESS',
-              'tasks_dir': str(TASKS_DIR.relative_to(ROOT)),
+              'task_dir': str(TASKS_DIR.relative_to(ROOT)),
               'index_path': str(INDEX_PATH.relative_to(ROOT)),
               'summary': summary,
               'items': items,
