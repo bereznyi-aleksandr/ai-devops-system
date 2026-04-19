@@ -19,12 +19,29 @@ def infer_status_bucket(item: dict) -> str:
     is_terminal = bool(item.get('is_terminal', False))
     closed_by_system = bool(item.get('closed_by_system', False))
 
+    valid_states = {
+        'TASK_PROPOSED',
+        'AUDIT_PENDING',
+        'APPROVED',
+        'PLAN_APPROVED',
+        'IMPLEMENTATION_PENDING',
+        'REVIEW_PENDING',
+        'VERIFY_PENDING',
+        'COMPLETED',
+        'BLOCKED',
+        'SUPERSEDED',
+    }
+
+    if current_state not in valid_states:
+        return 'UNKNOWN'
     if current_state == 'SUPERSEDED':
         return 'SUPERSEDED'
     if is_terminal and closed_by_system:
         return 'COMPLETED_CLOSED'
     if is_terminal:
         return 'COMPLETED_OPEN_TERMINAL'
+    if current_state == 'BLOCKED' or current_state.endswith('BLOCKED'):
+        return 'BLOCKED'
     if next_role == 'SYSTEM':
         return 'AWAITING_SYSTEM'
     if next_role == 'AUDITOR':
@@ -35,8 +52,6 @@ def infer_status_bucket(item: dict) -> str:
         return 'IN_PROGRESS'
     if current_state.endswith('APPROVED'):
         return 'APPROVED'
-    if current_state.endswith('BLOCKED') or current_state == 'BLOCKED':
-        return 'BLOCKED'
     return 'UNKNOWN'
 
 
