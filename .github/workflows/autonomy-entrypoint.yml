@@ -43,12 +43,12 @@ jobs:
             cp governance/fixtures/gha_e2e/auditor_materialize_result.gha-e2e.json governance/runtime/results/auditor_materialize_result.gha-e2e.json
           fi
 
-          if [ -f governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED_TASK-GHA-E2E-001.json ]; then
-            cp governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED_TASK-GHA-E2E-001.json governance/decisions/IMPLEMENTATION_COMPLETED_TASK-GHA-E2E-001.json
+          if [ -f governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED-TASK-GHA-E2E-001.json ]; then
+            cp governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED-TASK-GHA-E2E-001.json governance/decisions/IMPLEMENTATION_COMPLETED-TASK-GHA-E2E-001.json
           fi
 
-          if [ -f governance/fixtures/gha_e2e/AUDIT_TASK-GHA-E2E-001-AUTO-0001.json ]; then
-            cp governance/fixtures/gha_e2e/AUDIT_TASK-GHA-E2E-001-AUTO-0001.json governance/decisions/AUDIT_TASK-GHA-E2E-001-AUTO-0001.json
+          if [ -f governance/fixtures/gha_e2e/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json ]; then
+            cp governance/fixtures/gha_e2e/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json governance/decisions/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json
           fi
 
       - name: Bootstrap runtime index
