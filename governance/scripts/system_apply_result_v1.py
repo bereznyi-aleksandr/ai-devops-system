@@ -267,6 +267,35 @@ def apply_auditor_success(task_id: str, registry: Dict[str, object], result_path
     return registry
 
 
+def apply_system_success(task_id: str, registry: Dict[str, object], result_path: Path, result_data: Dict[str, object]) -> Dict[str, object]:
+    prev_event_id = str(registry.get('last_event_id', '')).strip()
+    ts_utc = str(result_data.get('ts_utc', '')).strip()
+    event_type = str(result_data.get('event_type', '')).strip() or 'SYSTEM_CLOSE_TIMEOUT'
+    new_event_id = f'{event_type}::{task_id}::AUTO-0001'
+    summary = str(result_data.get('summary', '')).strip() or 'System closed terminal task'
+
+    registry['current_state'] = 'COMPLETED_CLOSED'
+    registry['last_event_id'] = new_event_id
+    registry['last_parent_event_id'] = prev_event_id
+    registry['last_event_type'] = event_type
+    registry['last_actor_role'] = 'SYSTEM'
+    registry['last_event_ts'] = ts_utc
+    registry['last_summary'] = summary
+    registry['next_role'] = ''
+    registry['next_action'] = ''
+    registry['latest_result_role'] = 'SYSTEM'
+    registry['latest_result_manifest'] = str(result_path.relative_to(ROOT))
+    registry['latest_result_value'] = str(result_data.get('result', '')).strip().upper()
+    registry['latest_result_ts'] = ts_utc
+    registry['is_terminal'] = True
+    registry['closed_by_system'] = True
+    registry['terminal_reason'] = 'SYSTEM_CLOSE_TIMEOUT'
+    registry['error_class'] = ''
+    registry['error_details'] = ''
+
+    append_event(registry)
+    return registry
+
 def apply_failure_result(task_id: str, registry: Dict[str, object], result_path: Path, result_data: Dict[str, object], role: str, result_value: str) -> Dict[str, object]:
     prev_state = str(registry.get('current_state', '')).strip()
     prev_event_id = str(registry.get('last_event_id', '')).strip()
@@ -393,6 +422,8 @@ def main() -> int:
                 registry = apply_executor_success(task_id, registry, result_path, result_data)
             elif role == 'AUDITOR':
                 registry = apply_auditor_success(task_id, registry, result_path, result_data)
+            elif role == 'SYSTEM':
+                registry = apply_system_success(task_id, registry, result_path, result_data)
             else:
                 raise ApplyResultError(f'Unsupported role for apply_result_v1: {role!r}')
         elif result_value in {'FAILURE', 'BLOCKED'}:
