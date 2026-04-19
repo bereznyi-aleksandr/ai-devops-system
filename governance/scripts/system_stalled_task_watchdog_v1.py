@@ -7,14 +7,14 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-
 ROOT = Path.cwd()
 TASKS_DIR = ROOT / 'governance' / 'runtime' / 'tasks'
 FAILURE_WRITER = ROOT / 'governance' / 'scripts' / 'system_failure_result_writer_v1.py'
 APPLY_GUARDED = ROOT / 'governance' / 'scripts' / 'system_apply_result_guarded_v1.py'
 
-DEFAULT_HOURS = 24
-SLA_HOURS = {
+MAX_STALL_CYCLES = 3
+
+DEFAULT_HOURS = {
     'IMPLEMENT_TASK': 24,
     'WRITE_PLAN': 24,
     'REVIEW_PLAN': 24,
@@ -22,8 +22,8 @@ SLA_HOURS = {
     'REVIEW_CODE': 24,
     'VERIFY_RESULT': 24,
     'REVIEW_INVALID_TASK': 24,
+    '__default__': 24,
 }
-
 
 def parse_ts(value: str):
     value = (value or '').strip()
@@ -36,16 +36,14 @@ def parse_ts(value: str):
     except Exception:
         return None
 
-
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
 
-
 def main() -> int:
-    TASKS_DIR.mkdir(parents=True, exist_ok=True)
-
-    now = datetime.now(timezone.utc)
     updated = []
+    now = datetime.now(timezone.utc)
+
+    TASKS_DIR.mkdir(parents=True, exist_ok=True)
 
     for path in sorted(TASKS_DIR.glob('*.json')):
         if path.name == 'index.json':
@@ -64,7 +62,7 @@ def main() -> int:
         if next_action == 'REVIEW_STALL':
             continue
 
-        hours = SLA_HOURS.get(next_action, DEFAULT_HOURS)
+        hours = DEFAULT_HOURS.get(next_action, DEFAULT_HOURS['__default__'])
         cutoff = now - timedelta(hours=hours)
         if last_event_ts > cutoff:
             continue
@@ -79,13 +77,19 @@ def main() -> int:
         data['next_role'] = 'AUDITOR'
         data['next_action'] = 'REVIEW_STALL'
         data['error_class'] = 'TASK_STALLED'
-        data['error_details'] = f'SLA exceeded for next_action={next_action}'
+        data['error_details'] = f'Task exceeded SLA for next_action={next_action}'
         data['last_failure_ts'] = data['last_event_ts']
         data['last_failure_from_state'] = prev_state
+        data['stall_count'] = int(data.get('stall_count', 0) or 0) + 1
+
+        if data['stall_count'] >= MAX_STALL_CYCLES:
+            data['error_class'] = 'STALL_CYCLES_EXHAUSTED'
+            data['error_details'] = f'Max stall cycles exhausted: {data["stall_count"]}/{MAX_STALL_CYCLES}'
 
         events = data.get('events', [])
         if not isinstance(events, list):
             events = []
+
         events.append({
             'event_id': f'TASK_STALLED:{task_id}',
             'event_type': 'TASK_STALLED',
@@ -101,8 +105,8 @@ def main() -> int:
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
         role = next_role or 'EXECUTOR'
-        error_class = 'TASK_STALLED'
-        error_details = f'Task exceeded SLA for next_action={next_action}'
+        error_class = data.get('error_class', 'TASK_STALLED')
+        error_details = data.get('error_details', f'Task exceeded SLA for next_action={next_action}')
 
         failure_proc = subprocess.run(
             [
@@ -111,6 +115,7 @@ def main() -> int:
                 role,
                 task_id,
                 error_details,
+                error_class,
                 'BLOCKED',
             ],
             capture_output=True,
@@ -140,7 +145,6 @@ def main() -> int:
         'updated_tasks': updated,
     }, ensure_ascii=False, indent=2))
     return 0
-
 
 if __name__ == '__main__':
     raise SystemExit(main())

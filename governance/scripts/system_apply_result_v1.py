@@ -280,7 +280,8 @@ def apply_failure_result(task_id: str, registry: Dict[str, object], result_path:
     explicit_error = str(result_data.get('error_details', '')).strip()
     message = str(result_data.get('message', '')).strip()
     error_details = explicit_error or summary or message or f'{role} returned {result_value}'
-    error_class = f'{role}_{result_value}' if role else result_value
+    explicit_error_class = str(result_data.get('error_class', '')).strip()
+    error_class = explicit_error_class or (f'{role}_{result_value}' if role else result_value)
     artifact_ref = str(result_data.get('produced_artifact_path', '')).strip()
 
     registry['current_state'] = 'BLOCKED'
@@ -301,7 +302,11 @@ def apply_failure_result(task_id: str, registry: Dict[str, object], result_path:
     registry['is_terminal'] = False
     registry['terminal_reason'] = ''
     registry['error_class'] = error_class
+    if error_class == 'STALL_CYCLES_EXHAUSTED':
+        registry['stall_count'] = max(int(registry.get('stall_count', 0) or 0), 3)
     registry['error_details'] = error_details
+    if error_class == 'STALL_CYCLES_EXHAUSTED':
+        registry['stall_count'] = max(int(registry.get('stall_count', 0) or 0), 3)
     registry['last_failure_ts'] = ts_utc
     registry['last_failure_from_state'] = prev_state
 
