@@ -1,28 +1,44 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
 import json
-from datetime import datetime, timezone, timedelta
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
 
 ROOT = Path.cwd()
 TASKS_DIR = ROOT / 'governance' / 'runtime' / 'tasks'
+FAILURE_WRITER = ROOT / 'governance' / 'scripts' / 'system_failure_result_writer_v1.py'
+APPLY_GUARDED = ROOT / 'governance' / 'scripts' / 'system_apply_result_guarded_v1.py'
 
+DEFAULT_HOURS = 24
 SLA_HOURS = {
-    'REVIEW_CODE': 2,
-    'IMPLEMENT_TASK': 4,
+    'IMPLEMENT_TASK': 24,
+    'WRITE_PLAN': 24,
+    'REVIEW_PLAN': 24,
+    'REVIEW_TASK': 24,
+    'REVIEW_CODE': 24,
+    'VERIFY_RESULT': 24,
+    'REVIEW_INVALID_TASK': 24,
 }
-
-DEFAULT_HOURS = 4
 
 
 def parse_ts(value: str):
-    value = str(value or '').strip()
+    value = (value or '').strip()
     if not value:
         return None
-    if value.endswith('Z'):
-        value = value[:-1] + '+00:00'
     try:
+        if value.endswith('Z'):
+            value = value[:-1] + '+00:00'
         return datetime.fromisoformat(value)
-    except ValueError:
+    except Exception:
         return None
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
 
 
 def main() -> int:
@@ -36,6 +52,7 @@ def main() -> int:
             continue
 
         data = json.loads(path.read_text(encoding='utf-8'))
+
         task_id = str(data.get('task_id', '')).strip()
         next_action = str(data.get('next_action', '')).strip()
         next_role = str(data.get('next_role', '')).strip()
@@ -49,27 +66,28 @@ def main() -> int:
 
         hours = SLA_HOURS.get(next_action, DEFAULT_HOURS)
         cutoff = now - timedelta(hours=hours)
-
         if last_event_ts > cutoff:
             continue
+
+        prev_state = str(data.get('current_state', '')).strip()
 
         data['current_state'] = 'BLOCKED'
         data['last_event_type'] = 'TASK_STALLED'
         data['last_actor_role'] = 'SYSTEM'
-        data['last_event_ts'] = now.replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+        data['last_event_ts'] = utc_now()
         data['last_summary'] = f'Task exceeded SLA for next_action={next_action}'
         data['next_role'] = 'AUDITOR'
         data['next_action'] = 'REVIEW_STALL'
         data['error_class'] = 'TASK_STALLED'
         data['error_details'] = f'SLA exceeded for next_action={next_action}'
         data['last_failure_ts'] = data['last_event_ts']
-        data['last_failure_from_state'] = str(data.get('current_state', '')).strip()
+        data['last_failure_from_state'] = prev_state
 
         events = data.get('events', [])
         if not isinstance(events, list):
             events = []
         events.append({
-            'event_id': f"TASK_STALLED::{task_id}",
+            'event_id': f'TASK_STALLED:{task_id}',
             'event_type': 'TASK_STALLED',
             'actor_role': 'SYSTEM',
             'event_ts': data['last_event_ts'],
@@ -81,6 +99,38 @@ def main() -> int:
         data['events'] = events
 
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+        role = next_role or 'EXECUTOR'
+        error_class = 'TASK_STALLED'
+        error_details = f'Task exceeded SLA for next_action={next_action}'
+
+        failure_proc = subprocess.run(
+            [
+                sys.executable,
+                str(FAILURE_WRITER),
+                role,
+                task_id,
+                error_details,
+                'BLOCKED',
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if failure_proc.stdout:
+            print(failure_proc.stdout, end='')
+        if failure_proc.stderr:
+            print(failure_proc.stderr, end='', file=sys.stderr)
+
+        apply_proc = subprocess.run(
+            [sys.executable, str(APPLY_GUARDED)],
+            capture_output=True,
+            text=True,
+        )
+        if apply_proc.stdout:
+            print(apply_proc.stdout, end='')
+        if apply_proc.stderr:
+            print(apply_proc.stderr, end='', file=sys.stderr)
+
         updated.append(str(path.relative_to(ROOT)))
 
     print(json.dumps({
