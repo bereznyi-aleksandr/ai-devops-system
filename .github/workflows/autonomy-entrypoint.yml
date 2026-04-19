@@ -141,7 +141,11 @@ jobs:
           print(json.dumps(index_doc['summary'], ensure_ascii=False, indent=2))
           PY
 
-      - name: Run autonomy entrypoint
+      - name: Run autonomy entrypoint cycle 1
+        run: |
+          python3 governance/scripts/system_entrypoint_v1.py
+
+      - name: Run autonomy entrypoint cycle 2
         run: |
           python3 governance/scripts/system_entrypoint_v1.py
 
@@ -172,10 +176,10 @@ jobs:
           }
 
           expected = {
-              'current_state': 'COMPLETED',
-              'last_event_type': 'RESULT_VERIFIED',
-              'next_role': 'SYSTEM',
-              'next_action': 'CLOSE_TASK',
+              'current_state': 'COMPLETED_CLOSED',
+              'last_event_type': 'SYSTEM_CLOSE_TIMEOUT',
+              'next_role': '',
+              'next_action': '',
           }
 
           for k, v in expected.items():
@@ -185,8 +189,8 @@ jobs:
           if not checks['latest_result_manifest']:
               raise SystemExit('P01_DOMAIN_FAIL: latest_result_manifest is empty')
 
-          if checks['events_count'] < 1:
-              raise SystemExit('P01_DOMAIN_FAIL: events_count < 1')
+          if checks['events_count'] < 2:
+              raise SystemExit('P01_DOMAIN_FAIL: events_count < 2')
 
           print(json.dumps({
               'p01_domain_verification': 'PASS',
