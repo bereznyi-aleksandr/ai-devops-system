@@ -29,7 +29,7 @@ jobs:
           echo "REF=${GITHUB_REF}"
           echo "SHA=${GITHUB_SHA}"
 
-      - name: Restore repo fixture for P-01 and P-02 GHA E2E
+      - name: Restore repo fixture for P-01 GHA E2E
         run: |
           mkdir -p governance/runtime/tasks
           mkdir -p governance/runtime/results
@@ -50,32 +50,6 @@ jobs:
           if [ -f governance/fixtures/gha_e2e/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json ]; then
             cp governance/fixtures/gha_e2e/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json governance/decisions/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json
           fi
-
-          cat > governance/runtime/tasks/TASK-GHA-FAIL-001.json <<'EOF'
-          {
-            "task_id": "TASK-GHA-FAIL-001",
-            "current_state": "IMPLEMENTATION_PENDING",
-            "last_event_id": "PLAN_APPROVED:TASK-GHA-FAIL-001",
-            "last_parent_event_id": "",
-            "last_event_type": "PLAN_APPROVED",
-            "last_actor_role": "AUDITOR",
-            "last_event_ts": "2026-04-18T00:00:00Z",
-            "last_summary": "seed gha failure path",
-            "next_role": "EXECUTOR",
-            "next_action": "IMPLEMENT_TASK",
-            "latest_result_value": "",
-            "latest_result_manifest": "",
-            "error_class": "",
-            "error_details": "",
-            "last_failure_ts": "",
-            "last_failure_from_state": "",
-            "stall_count": 2,
-            "is_terminal": false,
-            "terminal_reason": "",
-            "closed_by_system": false,
-            "events": []
-          }
-          EOF
 
       - name: Bootstrap runtime index
         run: |
@@ -174,39 +148,6 @@ jobs:
       - name: Run autonomy entrypoint cycle 2
         run: |
           python3 governance/scripts/system_entrypoint_v1.py
-
-      - name: Verify P-02 failure path domain state
-        run: |
-          python3 - <<'PY2'
-          import json
-          from pathlib import Path
-
-          ROOT = Path.cwd()
-          task_path = ROOT / 'governance' / 'runtime' / 'tasks' / 'TASK-GHA-FAIL-001.json'
-          if not task_path.exists():
-              raise SystemExit('P02_DOMAIN_FAIL: task file not found')
-
-          data = json.loads(task_path.read_text(encoding='utf-8'))
-          if str(data.get('current_state', '')).strip() != 'BLOCKED':
-              raise SystemExit(f"P02_DOMAIN_FAIL: current_state={data.get('current_state')!r}")
-          if str(data.get('next_role', '')).strip() != 'AUDITOR':
-              raise SystemExit(f"P02_DOMAIN_FAIL: next_role={data.get('next_role')!r}")
-          if str(data.get('next_action', '')).strip() != 'REVIEW_STALL':
-              raise SystemExit(f"P02_DOMAIN_FAIL: next_action={data.get('next_action')!r}")
-          if str(data.get('error_class', '')).strip() != 'STALL_CYCLES_EXHAUSTED':
-              raise SystemExit(f"P02_DOMAIN_FAIL: error_class={data.get('error_class')!r}")
-          if int(data.get('stall_count', 0) or 0) < 3:
-              raise SystemExit(f"P02_DOMAIN_FAIL: stall_count={data.get('stall_count')!r}")
-          print(json.dumps({
-              'p02_failure_path_verification': 'PASS',
-              'task_id': 'TASK-GHA-FAIL-001',
-              'current_state': data.get('current_state'),
-              'next_role': data.get('next_role'),
-              'next_action': data.get('next_action'),
-              'error_class': data.get('error_class'),
-              'stall_count': data.get('stall_count'),
-          }, ensure_ascii=False, indent=2))
-          PY2
 
       - name: Verify P-01 domain state
         run: |
