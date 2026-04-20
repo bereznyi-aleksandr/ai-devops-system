@@ -1,0 +1,183 @@
+name: autonomy-failure-path
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-failure-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Restore repo fixture for P-02 failure path
+        run: |
+          mkdir -p governance/runtime/tasks
+          mkdir -p governance/runtime/results
+          mkdir -p governance/decisions
+
+          cat > governance/runtime/tasks/TASK-GHA-FAIL-001.json <<'EOF'
+          {
+            "task_id": "TASK-GHA-FAIL-001",
+            "current_state": "IMPLEMENTATION_PENDING",
+            "last_event_id": "PLAN_APPROVED:TASK-GHA-FAIL-001",
+            "last_parent_event_id": "",
+            "last_event_type": "PLAN_APPROVED",
+            "last_actor_role": "AUDITOR",
+            "last_event_ts": "2026-04-18T00:00:00Z",
+            "last_summary": "seed gha failure path",
+            "next_role": "EXECUTOR",
+            "next_action": "IMPLEMENT_TASK",
+            "latest_result_value": "",
+            "latest_result_manifest": "",
+            "error_class": "",
+            "error_details": "",
+            "last_failure_ts": "",
+            "last_failure_from_state": "",
+            "stall_count": 2,
+            "is_terminal": false,
+            "terminal_reason": "",
+            "closed_by_system": false,
+            "events": []
+          }
+          EOF
+
+      - name: Bootstrap runtime index
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          TASKS_DIR = ROOT / 'governance' / 'runtime' / 'tasks'
+          INDEX_PATH = TASKS_DIR / 'index.json'
+
+          TASKS_DIR.mkdir(parents=True, exist_ok=True)
+
+          def infer_status_bucket(data):
+              current_state = str(data.get('current_state', '')).strip()
+              next_role = str(data.get('next_role', '')).strip()
+              is_terminal = bool(data.get('is_terminal', False))
+              closed_by_system = bool(data.get('closed_by_system', False))
+
+              if is_terminal and closed_by_system:
+                  return 'COMPLETED_CLOSED'
+              if is_terminal:
+                  return 'COMPLETED_OPEN_TERMINAL'
+              if next_role == 'SYSTEM':
+                  return 'AWAITING_SYSTEM'
+              if next_role == 'AUDITOR':
+                  return 'AWAITING_AUDITOR'
+              if next_role == 'EXECUTOR':
+                  return 'AWAITING_EXECUTOR'
+              if current_state.endswith('PENDING'):
+                  return 'IN_PROGRESS'
+              if current_state.endswith('APPROVED'):
+                  return 'APPROVED'
+              if current_state.endswith('BLOCKED') or current_state == 'BLOCKED':
+                  return 'BLOCKED'
+              return 'UNKNOWN'
+
+          latest = {}
+          for path in sorted(TASKS_DIR.glob('*.json')):
+              if path.name == 'index.json':
+                  continue
+
+              data = json.loads(path.read_text(encoding='utf-8'))
+              task_id = str(data.get('task_id', '')).strip()
+              if not task_id:
+                  continue
+
+              item = {
+                  'task_id': task_id,
+                  'registry_path': str(path.relative_to(ROOT)),
+                  'current_state': str(data.get('current_state', '')).strip(),
+                  'last_event_type': str(data.get('last_event_type', '')).strip(),
+                  'next_role': str(data.get('next_role', '')).strip(),
+                  'next_action': str(data.get('next_action', '')).strip(),
+                  'is_terminal': bool(data.get('is_terminal', False)),
+                  'closed_by_system': bool(data.get('closed_by_system', False)),
+                  'last_event_ts': str(data.get('last_event_ts', '')).strip(),
+                  'status_bucket': infer_status_bucket(data),
+              }
+
+              prev = latest.get(task_id)
+              key = (item['last_event_ts'], item['task_id'])
+              if prev is None or key >= (prev['last_event_ts'], prev['task_id']):
+                  latest[task_id] = item
+
+          items = sorted(latest.values(), key=lambda x: (x['last_event_ts'], x['task_id']), reverse=True)
+          summary = {}
+          for item in items:
+              bucket = item['status_bucket']
+              summary[bucket] = summary.get(bucket, 0) + 1
+          summary['TOTAL'] = len(items)
+
+          index_doc = {
+              'system_task_index_version': 'v1',
+              'result': 'SUCCESS',
+              'task_dir': str(TASKS_DIR.relative_to(ROOT)),
+              'index_path': str(INDEX_PATH.relative_to(ROOT)),
+              'summary': summary,
+              'items': items,
+          }
+
+          INDEX_PATH.write_text(json.dumps(index_doc, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(index_doc['summary'], ensure_ascii=False, indent=2))
+          PY
+
+      - name: Run autonomy entrypoint
+        run: |
+          python3 governance/scripts/system_entrypoint_v1.py
+
+      - name: Verify P-02 failure path domain state
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          task_path = ROOT / 'governance' / 'runtime' / 'tasks' / 'TASK-GHA-FAIL-001.json'
+
+          if not task_path.exists():
+              raise SystemExit('P02_DOMAIN_FAIL: task file not found')
+
+          data = json.loads(task_path.read_text(encoding='utf-8'))
+          events = data.get('events', [])
+          if not isinstance(events, list):
+              raise SystemExit('P02_DOMAIN_FAIL: events is not a list')
+
+          if str(data.get('current_state', '')).strip() != 'BLOCKED':
+              raise SystemExit(f"P02_DOMAIN_FAIL: current_state={data.get('current_state')!r}")
+          if str(data.get('next_role', '')).strip() != 'AUDITOR':
+              raise SystemExit(f"P02_DOMAIN_FAIL: next_role={data.get('next_role')!r}")
+          if str(data.get('next_action', '')).strip() != 'REVIEW_STALL':
+              raise SystemExit(f"P02_DOMAIN_FAIL: next_action={data.get('next_action')!r}")
+          if str(data.get('error_class', '')).strip() != 'STALL_CYCLES_EXHAUSTED':
+              raise SystemExit(f"P02_DOMAIN_FAIL: error_class={data.get('error_class')!r}")
+          if int(data.get('stall_count', 0) or 0) < 3:
+              raise SystemExit(f"P02_DOMAIN_FAIL: stall_count={data.get('stall_count')!r}")
+          if len(events) < 1:
+              raise SystemExit('P02_DOMAIN_FAIL: events_count < 1')
+
+          print(json.dumps({
+              'p02_failure_path_verification': 'PASS',
+              'task_id': 'TASK-GHA-FAIL-001',
+              'current_state': data.get('current_state'),
+              'next_role': data.get('next_role'),
+              'next_action': data.get('next_action'),
+              'error_class': data.get('error_class'),
+              'stall_count': data.get('stall_count'),
+              'events_count': len(events),
+          }, ensure_ascii=False, indent=2))
+          PY
