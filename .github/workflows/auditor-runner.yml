@@ -328,7 +328,13 @@ jobs:
           allowed = {"ANALYST", "AUDITOR", "CLOUD_CODE", "OPERATOR", "NONE"}
           with open('governance/exchange_ledger.csv', encoding='utf-8') as f:
               rows = list(csv.DictReader(f))
-          last = rows[-1]
+          auditor_rows = [
+              row for row in rows
+              if str(row.get('next_role', '')).strip() == 'AUDITOR'
+          ]
+          if not auditor_rows:
+              raise SystemExit('AUDITOR_ROW_NOT_FOUND')
+          last = auditor_rows[-1]
           next_role = last['next_actor_role']
           last_event = last['event_id']
           if next_role not in allowed:

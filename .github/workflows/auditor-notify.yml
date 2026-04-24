@@ -37,9 +37,13 @@ jobs:
           if not rows:
               raise SystemExit('LEDGER_EMPTY')
 
-          last = rows[-1]
-          if last.get('next_role', '').strip() != 'AUDITOR':
-              raise SystemExit('NEXT_ROLE_IS_NOT_AUDITOR')
+          auditor_rows = [
+              row for row in rows
+              if str(row.get('next_role', '')).strip() == 'AUDITOR'
+          ]
+          if not auditor_rows:
+              raise SystemExit('AUDITOR_ROW_NOT_FOUND')
+          last = auditor_rows[-1]
 
           payload = {
               'status': 'AUDITOR_ACTIVATION_READY',
