@@ -321,8 +321,14 @@ def apply_failure_result(task_id: str, registry: Dict[str, object], result_path:
     registry['last_actor_role'] = role
     registry['last_event_ts'] = ts_utc
     registry['last_summary'] = error_details
-    registry['next_role'] = 'AUDITOR'
-    registry['next_action'] = 'REVIEW_STALL'
+    if error_class == 'TASK_STALLED':
+        registry['next_role'] = 'SYSTEM'
+        registry['next_action'] = 'CLOSE_TIMEOUT'
+        registry['status_bucket'] = 'AWAITING_SYSTEM'
+    else:
+        registry['next_role'] = 'AUDITOR'
+        registry['next_action'] = 'REVIEW_STALL'
+        registry['status_bucket'] = 'AWAITING_AUDITOR'
     registry['latest_artifact_ref'] = artifact_ref
     registry['latest_commit_sha'] = 'LOCAL'
     registry['latest_result_role'] = role

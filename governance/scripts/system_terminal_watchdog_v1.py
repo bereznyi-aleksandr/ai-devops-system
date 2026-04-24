@@ -51,11 +51,21 @@ def main() -> int:
         current_state = str(data.get('current_state', '')).strip()
         last_event_ts = parse_ts(str(data.get('last_event_ts', '')).strip())
 
-        if not task_id or not is_terminal or closed_by_system:
+        if not task_id or is_terminal or closed_by_system:
             continue
-        if current_state != 'COMPLETED':
+        should_close_timeout = (
+            current_state == 'BLOCKED'
+            and str(data.get('next_role', '')).strip().upper() == 'SYSTEM'
+            and str(data.get('next_action', '')).strip().upper() == 'CLOSE_TIMEOUT'
+        )
+        should_close_completed = (current_state == 'COMPLETED')
+        if not (should_close_timeout or should_close_completed):
             continue
-        if last_event_ts is None or last_event_ts > cutoff:
+        if should_close_timeout:
+            pass
+        elif last_event_ts is None or last_event_ts > cutoff:
+            continue
+        elif last_event_ts is None or last_event_ts > cutoff:
             continue
 
         out_path = RESULTS_DIR / f'system_close_result_{task_id}.json'

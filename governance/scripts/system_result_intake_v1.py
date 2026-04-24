@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import csv
 import json
+import uuid
+import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 ROOT = Path(__file__).resolve().parents[2]
-LEDGER = ROOT / "governance" / "exchange_ledger.csv"
+LEDGER = Path(os.environ.get("SYSTEM_LEDGER_PATH", str(ROOT / "governance" / "exchange_ledger.csv")))
 EXECUTOR_RESULT = ROOT / "governance" / "runtime" / "results" / "executor_materialize_result.json"
 AUDITOR_RESULT = ROOT / "governance" / "runtime" / "results" / "auditor_materialize_result.json"
 
@@ -56,24 +58,28 @@ def normalize_row(schema: str, row: Dict[str, str]) -> Dict[str, str]:
             "commit_sha": row.get("commit_sha", ""),
         }
     if schema == "27-col":
+        protocol_version = str(row.get("protocol_version", "")).strip()
+        if not protocol_version:
+            protocol_version = row.get("schema_version", "")
+        next_role = str(row.get("next_actor_role", row.get("next_role", ""))).strip().upper()
+        if next_role == "ANALYST":
+            next_role = "EXECUTOR"
         return {
-            "protocol_version": row.get("protocol_version", ""),
+            "protocol_version": protocol_version,
             "event_id": row.get("event_id", ""),
             "parent_event_id": row.get("parent_event_id", ""),
             "task_id": row.get("task_id", ""),
-            "ts_utc": row.get("ts_utc", ""),
+            "ts_utc": row.get("event_time", row.get("ts_utc", "")),
             "event_type": row.get("event_type", ""),
             "actor_role": row.get("actor_role", ""),
-            "summary": row.get("summary", ""),
-            "state": row.get("state", ""),
-            "next_role": row.get("next_role", ""),
-            "next_action": row.get("next_action", ""),
-            "artifact_ref": row.get("artifact_ref", ""),
+            "summary": row.get("description", row.get("summary", "")),
+            "state": row.get("status", row.get("state", "")),
+            "next_role": next_role,
+            "next_action": row.get("next_expected_event", row.get("next_action", "")),
+            "artifact_ref": row.get("routing_decision_basis", row.get("artifact_ref", "")),
             "commit_sha": row.get("commit_sha", ""),
         }
     raise IntakeError(f"Normalization for schema {schema} not implemented")
-
-
 def choose_latest_result() -> Tuple[str, Path, dict]:
     candidates = []
     for role, path in (("EXECUTOR", EXECUTOR_RESULT), ("AUDITOR", AUDITOR_RESULT)):
@@ -115,8 +121,8 @@ def build_append_plan(role: str, result_data: dict, ledger: dict) -> dict:
         event_type = f"{role}_{result or 'UNKNOWN'}"
         state = ledger.get("state", "")
 
-    event_id = f"{event_type}-{task_id}-AUTO-0001"
-
+    unique_suffix = uuid.uuid4().hex[:12]
+    event_id = f"{event_type}-{task_id}-AUTO-{unique_suffix}"
     row_14 = [
         ledger.get("protocol_version", ""),
         event_id,
