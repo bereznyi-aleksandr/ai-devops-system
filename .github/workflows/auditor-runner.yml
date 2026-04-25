@@ -165,7 +165,7 @@ jobs:
 
           set -euo pipefail
 
-          echo 'AUDITOR_CANONICAL_FALLBACK_V5'
+          echo 'AUDITOR_CANONICAL_FALLBACK_V6'
 
           mkdir -p .runtime runtime tmp /tmp
 
@@ -473,7 +473,7 @@ jobs:
 
           if missing:
 
-              raise SystemExit("AUDITOR_CANONICAL_FALLBACK_V5_STILL_MISSING=" + ",".join(missing))
+              raise SystemExit("AUDITOR_CANONICAL_FALLBACK_V6_STILL_MISSING=" + ",".join(missing))
 
       
 
@@ -503,7 +503,7 @@ jobs:
 
           print(json.dumps({
 
-              "AUDITOR_CANONICAL_FALLBACK_V5": "ok",
+              "AUDITOR_CANONICAL_FALLBACK_V6": "ok",
 
               "task_id": task_id,
 
