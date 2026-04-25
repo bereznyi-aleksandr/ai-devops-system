@@ -1,0 +1,14 @@
+BEM-272 secondary writer final classification
+created_at=2026-04-25T13:54:23Z
+branch=main
+head=fb43c6b9cbc6bf8de580563f01bb84d8eec95f45
+active_workflow_count=20
+primary_writer_hits=18
+secondary_append_writer_hits=12
+exchange_ledger_csv_hits=36
+direct_ledger_write_shell_hits=0
+primary_writer_workflows=.github/workflows/ledger-request-ingress.yml,.github/workflows/ledger-server-write.yml
+secondary_append_writer_workflows=.github/workflows/auditor-ledger-return-v3_6_rc2.yml,.github/workflows/canonical-smoke-cycle-v3_6_rc2.yml,.github/workflows/executor-ledger-return-v3_6_rc2.yml,.github/workflows/ledger-writer-v2.yml,.github/workflows/ledger-writer.yml
+exchange_ledger_csv_workflows=.github/workflows/auditor-ledger-return-v3_6_rc2.yml,.github/workflows/auditor-notify.yml,.github/workflows/auditor-runner-v3_6_rc2.yml,.github/workflows/canonical-smoke-cycle-v3_6_rc2.yml,.github/workflows/executor-ledger-return-v3_6_rc2.yml,.github/workflows/executor-notify.yml,.github/workflows/executor-runner-v3_6_rc2.yml,.github/workflows/ledger-protocol-validate.yml,.github/workflows/ledger-request-ingress.yml,.github/workflows/ledger-server-write.yml,.github/workflows/ledger-writer-v2.yml,.github/workflows/ledger-writer.yml
+direct_ledger_write_shell_workflows=
+next_phase=BEM273_REVIEW_SECONDARY_WRITER_REFS

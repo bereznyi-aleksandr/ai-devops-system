@@ -1,0 +1,481 @@
+{
+  "bem": "BEM-272",
+  "schema": "secondary-writer-final-classification-v1",
+  "created_at": "2026-04-25T13:54:23Z",
+  "head": "fb43c6b9cbc6bf8de580563f01bb84d8eec95f45",
+  "branch": "main",
+  "active_workflow_count": 20,
+  "summary": {
+    "primary_writer": 18,
+    "secondary_append_writer": 12,
+    "exchange_ledger_csv": 36,
+    "direct_ledger_write_shell": 0
+  },
+  "primary_writer_workflows": [
+    ".github/workflows/ledger-request-ingress.yml",
+    ".github/workflows/ledger-server-write.yml"
+  ],
+  "secondary_append_writer_workflows": [
+    ".github/workflows/auditor-ledger-return-v3_6_rc2.yml",
+    ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml",
+    ".github/workflows/executor-ledger-return-v3_6_rc2.yml",
+    ".github/workflows/ledger-writer-v2.yml",
+    ".github/workflows/ledger-writer.yml"
+  ],
+  "exchange_ledger_csv_workflows": [
+    ".github/workflows/auditor-ledger-return-v3_6_rc2.yml",
+    ".github/workflows/auditor-notify.yml",
+    ".github/workflows/auditor-runner-v3_6_rc2.yml",
+    ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml",
+    ".github/workflows/executor-ledger-return-v3_6_rc2.yml",
+    ".github/workflows/executor-notify.yml",
+    ".github/workflows/executor-runner-v3_6_rc2.yml",
+    ".github/workflows/ledger-protocol-validate.yml",
+    ".github/workflows/ledger-request-ingress.yml",
+    ".github/workflows/ledger-server-write.yml",
+    ".github/workflows/ledger-writer-v2.yml",
+    ".github/workflows/ledger-writer.yml"
+  ],
+  "direct_ledger_write_shell_workflows": [],
+  "records": [
+    {
+      "workflow": ".github/workflows/auditor-ledger-return-v3_6_rc2.yml",
+      "hits": {
+        "secondary_append_writer": [
+          {
+            "pattern": "governance/append_ledger_row_v2\\.py",
+            "line": 119,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          },
+          {
+            "pattern": "append_ledger_row_v2\\.py",
+            "line": 119,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          }
+        ],
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 14,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 14,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/auditor-notify.yml",
+      "hits": {
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 9,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 9,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/auditor-runner-v3_6_rc2.yml",
+      "hits": {
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 9,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 9,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml",
+      "hits": {
+        "secondary_append_writer": [
+          {
+            "pattern": "governance/append_ledger_row_v2\\.py",
+            "line": 155,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          },
+          {
+            "pattern": "governance/append_ledger_row_v2\\.py",
+            "line": 283,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          },
+          {
+            "pattern": "append_ledger_row_v2\\.py",
+            "line": 155,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          },
+          {
+            "pattern": "append_ledger_row_v2\\.py",
+            "line": 283,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          }
+        ],
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 28,
+            "text": "cat governance/exchange_ledger_v3_6_rc2.csv"
+          },
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 37,
+            "text": "ledger_path = Path('governance/exchange_ledger_v3_6_rc2.csv')"
+          },
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 157,
+            "text": "--ledger-path governance/exchange_ledger_v3_6_rc2.csv"
+          },
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 166,
+            "text": "with Path('governance/exchange_ledger_v3_6_rc2.csv').open('r', encoding='utf-8', newline='') as f:"
+          },
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 285,
+            "text": "--ledger-path governance/exchange_ledger_v3_6_rc2.csv"
+          },
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 306,
+            "text": "cat governance/exchange_ledger_v3_6_rc2.csv"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 28,
+            "text": "cat governance/exchange_ledger_v3_6_rc2.csv"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 37,
+            "text": "ledger_path = Path('governance/exchange_ledger_v3_6_rc2.csv')"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 157,
+            "text": "--ledger-path governance/exchange_ledger_v3_6_rc2.csv"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 166,
+            "text": "with Path('governance/exchange_ledger_v3_6_rc2.csv').open('r', encoding='utf-8', newline='') as f:"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 285,
+            "text": "--ledger-path governance/exchange_ledger_v3_6_rc2.csv"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 306,
+            "text": "cat governance/exchange_ledger_v3_6_rc2.csv"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/executor-ledger-return-v3_6_rc2.yml",
+      "hits": {
+        "secondary_append_writer": [
+          {
+            "pattern": "governance/append_ledger_row_v2\\.py",
+            "line": 110,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          },
+          {
+            "pattern": "append_ledger_row_v2\\.py",
+            "line": 110,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          }
+        ],
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 14,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 14,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/executor-notify.yml",
+      "hits": {
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 9,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 9,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/executor-runner-v3_6_rc2.yml",
+      "hits": {
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 9,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 9,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/ledger-protocol-validate.yml",
+      "hits": {
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 14,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 14,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/ledger-request-ingress.yml",
+      "hits": {
+        "primary_writer": [
+          {
+            "pattern": "governance/ledger_writer\\.py",
+            "line": 138,
+            "text": "test -f governance/ledger_writer.py"
+          },
+          {
+            "pattern": "governance/ledger_writer\\.py",
+            "line": 139,
+            "text": "python3 -m py_compile governance/ledger_writer.py"
+          },
+          {
+            "pattern": "governance/ledger_writer\\.py",
+            "line": 143,
+            "text": "python3 governance/ledger_writer.py \\"
+          },
+          {
+            "pattern": "governance/ledger_writer\\.py",
+            "line": 296,
+            "text": "test -f governance/ledger_writer.py"
+          },
+          {
+            "pattern": "governance/ledger_writer\\.py",
+            "line": 297,
+            "text": "python3 -m py_compile governance/ledger_writer.py"
+          },
+          {
+            "pattern": "governance/ledger_writer\\.py",
+            "line": 301,
+            "text": "python3 governance/ledger_writer.py \\"
+          },
+          {
+            "pattern": "ledger_writer\\.py",
+            "line": 138,
+            "text": "test -f governance/ledger_writer.py"
+          },
+          {
+            "pattern": "ledger_writer\\.py",
+            "line": 139,
+            "text": "python3 -m py_compile governance/ledger_writer.py"
+          },
+          {
+            "pattern": "ledger_writer\\.py",
+            "line": 143,
+            "text": "python3 governance/ledger_writer.py \\"
+          },
+          {
+            "pattern": "ledger_writer\\.py",
+            "line": 296,
+            "text": "test -f governance/ledger_writer.py"
+          },
+          {
+            "pattern": "ledger_writer\\.py",
+            "line": 297,
+            "text": "python3 -m py_compile governance/ledger_writer.py"
+          },
+          {
+            "pattern": "ledger_writer\\.py",
+            "line": 301,
+            "text": "python3 governance/ledger_writer.py \\"
+          }
+        ],
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 146,
+            "text": "--ledger-path governance/exchange_ledger.csv \\"
+          },
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 304,
+            "text": "--ledger-path governance/exchange_ledger.csv \\"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 146,
+            "text": "--ledger-path governance/exchange_ledger.csv \\"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 304,
+            "text": "--ledger-path governance/exchange_ledger.csv \\"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/ledger-server-write.yml",
+      "hits": {
+        "primary_writer": [
+          {
+            "pattern": "governance/ledger_writer\\.py",
+            "line": 44,
+            "text": "test -f governance/ledger_writer.py"
+          },
+          {
+            "pattern": "governance/ledger_writer\\.py",
+            "line": 45,
+            "text": "python3 -m py_compile governance/ledger_writer.py"
+          },
+          {
+            "pattern": "governance/ledger_writer\\.py",
+            "line": 148,
+            "text": "python3 governance/ledger_writer.py \\"
+          },
+          {
+            "pattern": "ledger_writer\\.py",
+            "line": 44,
+            "text": "test -f governance/ledger_writer.py"
+          },
+          {
+            "pattern": "ledger_writer\\.py",
+            "line": 45,
+            "text": "python3 -m py_compile governance/ledger_writer.py"
+          },
+          {
+            "pattern": "ledger_writer\\.py",
+            "line": 148,
+            "text": "python3 governance/ledger_writer.py \\"
+          }
+        ],
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 151,
+            "text": "--ledger-path governance/exchange_ledger.csv \\"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 151,
+            "text": "--ledger-path governance/exchange_ledger.csv \\"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/ledger-writer-v2.yml",
+      "hits": {
+        "secondary_append_writer": [
+          {
+            "pattern": "governance/append_ledger_row_v2\\.py",
+            "line": 36,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          },
+          {
+            "pattern": "append_ledger_row_v2\\.py",
+            "line": 36,
+            "text": "python3 governance/append_ledger_row_v2.py \\"
+          }
+        ],
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 13,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 13,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          }
+        ]
+      }
+    },
+    {
+      "workflow": ".github/workflows/ledger-writer.yml",
+      "hits": {
+        "secondary_append_writer": [
+          {
+            "pattern": "governance/append_ledger_row\\.py",
+            "line": 36,
+            "text": "python3 governance/append_ledger_row.py \\"
+          },
+          {
+            "pattern": "append_ledger_row\\.py",
+            "line": 36,
+            "text": "python3 governance/append_ledger_row.py \\"
+          }
+        ],
+        "exchange_ledger_csv": [
+          {
+            "pattern": "governance/exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 13,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          },
+          {
+            "pattern": "exchange_ledger[^ \\n\\\"']*\\.csv",
+            "line": 13,
+            "text": "default: 'governance/exchange_ledger_v3_6_rc2.csv'"
+          }
+        ]
+      }
+    }
+  ],
+  "decision": {
+    "secondary_writer_present": true,
+    "direct_shell_ledger_write_present": false,
+    "next_phase": "BEM273_REVIEW_SECONDARY_WRITER_REFS"
+  },
+  "safety": {
+    "actions_dispatched": false,
+    "ledger_mutated": false,
+    "workflow_yaml_edited": false,
+    "scan_only": true
+  }
+}
