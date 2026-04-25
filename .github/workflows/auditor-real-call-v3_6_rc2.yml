@@ -112,8 +112,18 @@ jobs:
                   candidate = json.loads(raw['response'])
 
           if not isinstance(candidate, dict):
-              raise SystemExit('AUDITOR_RESPONSE_PARSE_FAILED')
+              parsed = {
+                  'artifact_type': 'auditor_decision',
+                  'schema_version': 'fallback.v1',
+                  'source': 'auditor_real_call_parser_fallback',
+                  'task_id': str(packet.get('task_id', '')),
+                  'decision': 'NEEDS_REVIEW',
+                  'next_action': 'REVIEW_TASK',
+                  'summary': 'Deterministic fallback auditor decision: model response was not parseable as canonical JSON.',
+                  'raw_response_excerpt': str(locals().get('response_text', locals().get('response', locals().get('raw', ''))))[:4000],
+              }
 
+          candidate = parsed
           task_id = packet.get('task_id', '').strip()
           if candidate.get('task_id', '').strip() != task_id:
               raise SystemExit('AUDITOR_RESPONSE_TASK_ID_MISMATCH')

@@ -123,6 +123,7 @@ jobs:
                   'raw_response_excerpt': str(locals().get('response_text', locals().get('response', locals().get('raw', ''))))[:4000],
               }
 
+          candidate = parsed
           task_id = packet.get('task_id', '').strip()
           if candidate.get('task_id', '').strip() != task_id:
               raise SystemExit('EXECUTOR_RESPONSE_TASK_ID_MISMATCH')
