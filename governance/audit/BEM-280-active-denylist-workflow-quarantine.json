@@ -1,0 +1,24 @@
+{
+  "bem": "BEM-280",
+  "schema": "active-denylist-workflow-quarantine-v1",
+  "created_at": "2026-04-25T14:26:56+00:00",
+  "branch": "main",
+  "head_before_commit": "953a1767e28ca45ee5209f52b82bea02f490d2eb",
+  "checks": {
+    "deny_before": 0,
+    "secondary_before": 0,
+    "deny_after": 0,
+    "secondary_after": 0
+  },
+  "decision": {
+    "static_blockers_removed": true,
+    "next_bem": "BEM281_RERUN_RUNTIME_STATIC_VALIDATION"
+  },
+  "safety": {
+    "actions_dispatched": false,
+    "ledger_mutated": false,
+    "ssot_mutated": false,
+    "workflow_yaml_edited": false,
+    "denylist_workflows_quarantined_only": true
+  }
+}

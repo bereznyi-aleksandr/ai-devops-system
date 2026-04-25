@@ -1,0 +1,32 @@
+{
+  "bem": "BEM-279",
+  "schema": "runtime-static-validation-rerun-v1",
+  "created_at": "2026-04-25T14:25:22+00:00",
+  "branch": "main",
+  "head": "953a1767e28ca45ee5209f52b82bea02f490d2eb",
+  "remote_main": "953a1767e28ca45ee5209f52b82bea02f490d2eb",
+  "checks": {
+    "worktree_status_lines": 0,
+    "head_sync": true,
+    "denylist_active_lines": 3,
+    "secondary_refs_remaining": 3,
+    "yaml_bad": 0,
+    "py_syntax_bad": 0,
+    "v170_canon_present": true
+  },
+  "failures": {
+    "yaml_bad": [],
+    "py_bad": []
+  },
+  "decision": {
+    "runtime_static_validation_passed": false,
+    "next_bem": "BEM280_FIX_STATIC_VALIDATION_FAILURES"
+  },
+  "safety": {
+    "actions_dispatched": false,
+    "ledger_mutated": false,
+    "ssot_mutated": false,
+    "code_mutated": false,
+    "audit_artifact_only": true
+  }
+}
