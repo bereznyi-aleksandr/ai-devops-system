@@ -1,14 +1,14 @@
 {
-  "event_id": "EXECUTOR-MATERIALIZED-SYSTEM-BOOTSTRAP-V3_6_RC2-20260413T124004Z",
+  "event_id": "EXECUTOR-MATERIALIZED-SYSTEM-BOOTSTRAP-V3_6_RC2-20260425T040133Z",
   "parent_event_id": "SYSTEM-BOOTSTRAP-20260413T120000Z",
   "task_id": "SYSTEM-BOOTSTRAP-V3_6_RC2",
-  "ts_utc": "2026-04-13T12:40:04Z",
+  "ts_utc": "2026-04-25T04:01:33Z",
   "actor_role": "EXECUTOR",
   "event_type": "TASK_PROPOSED",
   "state": "AUDIT_PENDING",
   "decision": "",
   "result": "SUCCESS",
-  "summary": "Executor materialized canonical proposal in smoke cycle",
+  "summary": "Executor materialized canonical artifact for PROPOSE_TASK",
   "artifact_ref": "governance/proposals/SYSTEM-BOOTSTRAP-V3_6_RC2.md",
   "proof_ref": ".runtime/executor_materialize_result.json",
   "ci_ref": "",
@@ -23,7 +23,7 @@
   "infra_scope": "CORE",
   "causation_id": "SYSTEM-BOOTSTRAP-20260413T120000Z",
   "correlation_id": "CORR-SYSTEM-BOOTSTRAP-V3_6_RC2",
-  "idempotency_key": "EXECUTOR-MATERIALIZED-SYSTEM-BOOTSTRAP-V3_6_RC2-20260413T124004Z",
-  "producer": "CANONICAL_SMOKE_CYCLE",
-  "producer_run_id": "SMOKE-EXECUTOR-SYSTEM-BOOTSTRAP-V3_6_RC2"
+  "idempotency_key": "EXECUTOR-MATERIALIZED-SYSTEM-BOOTSTRAP-V3_6_RC2-20260425T040133Z",
+  "producer": "EXECUTOR_LEDGER_RETURN_WORKFLOW",
+  "producer_run_id": "EXECUTOR-RETURN-SYSTEM-BOOTSTRAP-V3_6_RC2"
 }
