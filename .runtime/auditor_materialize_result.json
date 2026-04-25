@@ -1,9 +1,13 @@
 {
-  "status": "AUDITOR_DECISION_MATERIALIZED",
+  "status": "AUDITOR_REAL_DECISION_MATERIALIZED",
   "task_id": "SYSTEM-BOOTSTRAP-V3_6_RC2",
-  "review_action": "REVIEW_TASK",
-  "artifact_path": "governance/decisions/DECISION-SYSTEM-BOOTSTRAP-V3_6_RC2-20260424T191351Z.md",
+  "review_action": "REVIEW_PLAN",
+  "artifact_path": "governance/decisions/DECISION-SYSTEM-BOOTSTRAP-V3_6_RC2-20260425T051128Z.md",
   "parent_event_id": "EXECUTOR-MATERIALIZED-SYSTEM-BOOTSTRAP-V3_6_RC2-20260413T124004Z",
-  "ts_utc": "2026-04-24T19:13:51Z",
-  "decision_id": "DECISION-SYSTEM-BOOTSTRAP-V3_6_RC2-20260424T191351Z"
+  "ts_utc": "2026-04-25T05:11:28Z",
+  "summary": "Deterministic fallback auditor decision: model response was not parseable as canonical JSON.",
+  "decision_type": "",
+  "decision": "NEEDS_REVIEW",
+  "next_role_assigned": "",
+  "next_action_assigned": ""
 }
