@@ -1,0 +1,27 @@
+{
+  "bem": "BEM-303",
+  "created_at": "2026-04-25T19:17:55Z",
+  "checks": {
+    "branch": "main",
+    "head_before": "fb0eb7b8d3fa357d830af752d41714ce8b567a6b",
+    "remote_before": "fb0eb7b8d3fa357d830af752d41714ce8b567a6b",
+    "status_before": 0,
+    "run_id": "24938227531",
+    "run_status": "completed",
+    "run_conclusion": "success",
+    "run_url": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/24938227531",
+    "task_file": "governance/tasks/TASK-GHA-FAILURE-001.json",
+    "task_id": "TASK-GHA-FAILURE-001",
+    "current_state": "BLOCKED",
+    "status_bucket": "REVIEW_STALL",
+    "next_role": "AUDITOR",
+    "next_action": "REVIEW_STALL",
+    "events_count": 3,
+    "failure_manifest": "governance/failures/TASK-GHA-FAILURE-001.failure.json",
+    "manifest_exists": true
+  },
+  "decision": {
+    "failure_path_gha_ok": true,
+    "next_bem": "BEM304_REGRESSION_PACK_10_TESTS"
+  }
+}
