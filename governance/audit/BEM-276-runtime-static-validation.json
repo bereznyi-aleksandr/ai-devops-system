@@ -1,0 +1,30 @@
+{
+  "bem": "BEM-276",
+  "schema": "runtime-static-validation-after-migration-v1",
+  "created_at": "2026-04-25T14:06:16Z",
+  "branch": "main",
+  "head": "242ce60c082ba588a234d76775df9f0d940402c9",
+  "source_report": "governance/audit/BEM-275-secondary-writer-migration-implementation.json",
+  "checks": {
+    "status_before_lines": 0,
+    "denylist_active_lines": 0,
+    "secondary_writer_ref_lines": 20,
+    "active_workflow_count": 20,
+    "yaml_bad_count": 0,
+    "python_file_count": 45,
+    "pycompile_bad_count": 0,
+    "ledger_writer_help_has_output": true,
+    "canonical_writer_call_lines": 15
+  },
+  "decision": {
+    "static_validation_passed": false,
+    "next_bem": "BEM277_FIX_STATIC_VALIDATION_FAILURES"
+  },
+  "safety": {
+    "actions_dispatched": false,
+    "ledger_mutated": false,
+    "workflow_yaml_edited": false,
+    "runtime_scripts_edited": false,
+    "audit_artifact_only": true
+  }
+}
