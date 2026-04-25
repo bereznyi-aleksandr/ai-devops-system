@@ -1,0 +1,17 @@
+BEM-271 completed v170 denylist workflow quarantine
+project=barber-483016
+branch=main
+head_before=fad10ebb66c1534f84a2ad12f2d2e4eadd3b937a
+remote_main_before=fad10ebb66c1534f84a2ad12f2d2e4eadd3b937a
+active_canon=ssot/MASTER_PROMPT_v170_CANON_FINAL.txt
+denylist_quarantined:
+- gcs-request-ingress.yml
+- ledger-router.yml
+- analyst-runner.yml
+- executor-real-call-v3_6_rc2.yml
+- auditor-real-call-v3_6_rc2.yml
+mutation_scope:
+- workflow files moved only
+- no workflow YAML content edits
+- no ledger mutation
+- no actions dispatch
