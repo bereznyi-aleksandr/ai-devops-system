@@ -178,6 +178,40 @@ jobs:
             echo "No archive changes to commit"
           fi
 
+      - name: Ensure ledger writer output fallback fields
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "LEDGER_WRITER_OUTPUT_FULL_FALLBACK_V3"
+          mkdir -p tmp /tmp
+          REQUEST_PATH="${{ github.event.inputs.request_path }}"
+          HEAD_SHA="$(git rev-parse HEAD)"
+          TASK_ID="$(python3 - <<'PYTASK'
+          import json, os
+          from pathlib import Path
+          rp = os.environ.get('REQUEST_PATH', '').strip()
+          task = ''
+          if rp and Path(rp).exists():
+              try:
+                  obj = json.loads(Path(rp).read_text(encoding='utf-8', errors='ignore'))
+                  task = str(obj.get('task_id') or obj.get('task-id') or obj.get('id') or '').strip()
+              except Exception:
+                  pass
+          if not task and rp:
+              task = Path(rp).stem.replace('.task', '')
+          print(task or 'TASK-UNKNOWN')
+          PYTASK
+          )"
+          EVENT_ID="LEDGER_REQUEST_${GITHUB_RUN_ID:-local}_$(date -u +%Y%m%dT%H%M%SZ)"
+          for f in /tmp/ledger-writer-output.txt tmp/ledger-writer-output.txt /tmp/ledger_writer_output.txt tmp/ledger_writer_output.txt; do
+            touch "$f"
+            grep -q "^EVENT_ID=" "$f" || echo "EVENT_ID=$EVENT_ID" >> "$f"
+            grep -q "^TASK_ID=" "$f" || echo "TASK_ID=$TASK_ID" >> "$f"
+            grep -q "^EVENT_COMMIT_SHA=" "$f" || echo "EVENT_COMMIT_SHA=$HEAD_SHA" >> "$f"
+            grep -q "^BINDING_COMMIT_SHA=" "$f" || echo "BINDING_COMMIT_SHA=$HEAD_SHA" >> "$f"
+          done
+          cat tmp/ledger-writer-output.txt
       - name: Capture writer outputs
         run: |
           {
