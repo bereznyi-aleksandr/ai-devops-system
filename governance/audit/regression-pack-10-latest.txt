@@ -1,0 +1,16 @@
+regression pack R-01...R-10
+created_at=2026-04-25T19:27:40+00:00
+total=10
+passed=10
+failed=0
+all_pass=true
+R-01=PASS | current task JSON is readable | task_id=TASK-GHA-FAILURE-001, current_state=BLOCKED
+R-02=PASS | CLOSE_TASK handler exists and compiles | governance/scripts/close_task_handler.py
+R-03=PASS | FAILURE PATH proof script exists and compiles | governance/scripts/failure_path_gha_proof.py
+R-04=PASS | dedicated E2E CLOSE_TASK workflow is present | .github/workflows/e2e-close-task-gha-proof.yml
+R-05=PASS | E2E CLOSE_TASK reached CLOSED through GitHub Actions | governance/audit/BEM-300-check-dedicated-e2e-close-task-gha-result.txt
+R-06=PASS | dedicated FAILURE PATH workflow is present | .github/workflows/failure-path-gha-proof.yml
+R-07=PASS | FAILURE PATH passed through GitHub Actions | governance/audit/BEM-303-check-failure-path-gha-result.txt
+R-08=PASS | FAILURE manifest exists and is watchdog-produced | governance/failures/TASK-GHA-FAILURE-001.failure.json
+R-09=PASS | FAILURE task is BLOCKED / REVIEW_STALL / AUDITOR | state=BLOCKED, bucket=REVIEW_STALL, next_role=AUDITOR, events=3
+R-10=PASS | full E2E cycle includes CLOSED terminal state | state=CLOSED, bucket=COMPLETED_CLOSED, terminal=True, closed_by_system=True, events=2

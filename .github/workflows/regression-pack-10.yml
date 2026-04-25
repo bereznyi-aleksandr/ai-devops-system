@@ -1,0 +1,35 @@
+name: Regression Pack 10
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regression-pack-10:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Run regression pack R-01...R-10
+        run: |
+          set -euo pipefail
+          python3 governance/scripts/regression_pack_10.py | tee /tmp/regression-pack-10.log
+
+      - name: Commit regression pack result
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/audit/regression-pack-10-latest.json governance/audit/regression-pack-10-latest.txt
+          if git diff --cached --quiet; then
+            echo "NO_REGRESSION_PACK_RESULT_CHANGES"
+          else
+            git commit -m "Capture regression pack 10 result"
+            git push origin main
+          fi
