@@ -156,163 +156,364 @@ jobs:
           PY
 
       - name: Ensure auditor canonical fallback output
+
         if: always()
+
         shell: bash
+
         run: |
+
           set -euo pipefail
-          echo 'AUDITOR_CANONICAL_FALLBACK_V4'
+
+          echo 'AUDITOR_CANONICAL_FALLBACK_V5'
+
           mkdir -p .runtime runtime tmp /tmp
-          
-          TASK_JSON="${TASK_JSON:-}"
+
+      
+
+          TASK_JSON="${TASK_JSON:-${TASK_PATH:-}}"
+
+          TASK_ID="${TASK_ID:-}"
+
+          PARENT_EVENT_ID="${PARENT_EVENT_ID:-}"
+
+          COMMIT_SHA="${GITHUB_SHA:-$(git rev-parse HEAD)}"
+
+      
+
           if [ -z "$TASK_JSON" ] || [ ! -f "$TASK_JSON" ]; then
+
             TASK_JSON="$(find governance/runtime/tasks governance/fixtures -type f \( -name 'TASK-*.json' -o -name '*.task.json' -o -name '*.json' \) 2>/dev/null | head -n 1 || true)"
+
           fi
-          export TASK_JSON
-          
-          python3 - <<'PYAUD'
-          import json
-          import os
-          import re
+
+      
+
+          export TASK_JSON TASK_ID PARENT_EVENT_ID COMMIT_SHA
+
+      
+
+          python3 - <<'PYFALLBACK'
+
           import datetime
-          import subprocess
+
+          import json
+
+          import os
+
+          import re
+
           from pathlib import Path
-          
-          def now_utc():
-              return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-          
-          def compact_ts(ts: str) -> str:
-              return re.sub(r"[^0-9A-Za-z]+", "", ts)
-          
-          def git_sha():
-              env_sha = os.environ.get("GITHUB_SHA", "").strip()
-              if env_sha:
-                  return env_sha
-              try:
-                  return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-              except Exception:
-                  return ""
-          
-          def parse_jsonish(text: str):
-              text = (text or "").strip()
-              if not text:
+
+      
+
+          def read_json(path):
+
+              if not path:
+
                   return {}
-              text = re.sub(r"^\s*```(?:json)?\s*", "", text, flags=re.I)
-              text = re.sub(r"\s*```\s*$", "", text)
+
+              p = Path(path)
+
+              if not p.exists():
+
+                  return {}
+
               try:
-                  obj = json.loads(text)
+
+                  obj = json.loads(p.read_text(encoding="utf-8", errors="ignore"))
+
                   return obj if isinstance(obj, dict) else {}
+
               except Exception:
-                  m = re.search(r"\{.*\}", text, flags=re.S)
-                  if m:
-                      try:
-                          obj = json.loads(m.group(0))
-                          return obj if isinstance(obj, dict) else {}
-                      except Exception:
-                          return {}
-              return {}
-          
-          def read_json_file(path):
-              try:
-                  q = Path(path)
-                  if q.exists() and q.is_file() and q.stat().st_size > 0:
-                      return parse_jsonish(q.read_text(encoding="utf-8", errors="ignore"))
-              except Exception:
-                  pass
-              return {}
-          
-          task = read_json_file(os.environ.get("TASK_JSON", ""))
-          
-          existing = {}
-          for candidate in [
-              ".runtime/auditor_raw_output.txt",
-              "runtime/auditor_raw_output.txt",
-              "/tmp/auditor_raw_output.txt",
-              ".runtime/auditor_output.json",
-              "runtime/auditor_output.json",
-              "/tmp/auditor_output.json",
-          ]:
-              existing = read_json_file(candidate)
-              if existing:
-                  break
-          
-          ts = now_utc()
-          
-          task_id = (
-              existing.get("task_id")
-              or task.get("task_id")
-              or task.get("task-id")
-              or task.get("id")
-              or os.environ.get("TASK_ID", "")
-              or "TASK-UNKNOWN"
+
+                  return {}
+
+      
+
+          def parse_raw(path):
+
+              p = Path(path)
+
+              if not p.exists():
+
+                  return {}, ""
+
+              raw = p.read_text(encoding="utf-8", errors="ignore").strip()
+
+              if not raw:
+
+                  return {}, ""
+
+      
+
+              candidates = [raw]
+
+              stripped = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.I).strip()
+
+              stripped = re.sub(r"\s*```$", "", stripped).strip()
+
+              candidates.append(stripped)
+
+      
+
+              m = re.search(r"\{.*\}", stripped, flags=re.S)
+
+              if m:
+
+                  candidates.append(m.group(0))
+
+      
+
+              for c in candidates:
+
+                  try:
+
+                      obj = json.loads(c)
+
+                      if isinstance(obj, dict):
+
+                          return obj, raw
+
+                  except Exception:
+
+                      pass
+
+              return {}, raw
+
+      
+
+          def first(*vals):
+
+              for v in vals:
+
+                  if v is None:
+
+                      continue
+
+                  if isinstance(v, str):
+
+                      v = v.strip()
+
+                      if v:
+
+                          return v
+
+                  elif v:
+
+                      return v
+
+              return ""
+
+      
+
+          task = read_json(os.environ.get("TASK_JSON", ""))
+
+          existing, raw_text = parse_raw(".runtime/auditor_raw_output.txt")
+
+      
+
+          task_id = first(
+
+              os.environ.get("TASK_ID"),
+
+              task.get("task_id"),
+
+              task.get("id"),
+
+              existing.get("task_id"),
+
+              existing.get("task-id"),
+
+              "TASK-UNKNOWN",
+
           )
-          
-          commit_sha = existing.get("commit_sha") or existing.get("sha") or git_sha()
-          
-          # BEM199_PARENT_EVENT_ID_NORMALIZED
-          parent_event_id = existing.get('parent_event_id') or existing.get('parent-event-id') or os.environ.get('PARENT_EVENT_ID', '') or os.environ.get('PARENT_EVENT_ID'.lower(), '') or f'AUDITOR_FALLBACK_PARENT_{task_id}'
-          fallback = {
-              "event_id": existing.get("event_id") or f"AUDITOR_REVIEW_{task_id}_{compact_ts(ts)}",
-              "parent_event_id": existing.get("parent_event_id") or task.get("current_event_id") or task.get("last_event_id") or os.environ.get("PARENT_EVENT_ID", ""),
-              'parent-event-id': parent_event_id or existing.get('parent_event_id') or existing.get('parent_event_id') or existing.get('parent-event-id') or os.environ.get('PARENT_EVENT_ID', '') or os.environ.get('PARENT_EVENT_ID'.lower(), '') or f'AUDITOR_FALLBACK_PARENT_{task_id}',
-              "event_time": existing.get("event_time") or existing.get("ts_utc") or ts,
-              "step_name": existing.get("step_name") or "auditor_review",
-              "actor_role": existing.get("actor_role") or "AUDITOR",
-              "event_type": existing.get("event_type") or "REVIEW_DECISION",
-              "description": existing.get("description") or "Fallback auditor review decision generated because model output was absent, incomplete, or non-canonical.",
-              "next_actor_role": existing.get("next_actor_role") or existing.get("next_role") or "EXECUTOR",
-              "next_expected_event": existing.get("next_expected_event") or "PRE_ACTION_APPROVED",
-              "routing_decision_basis": existing.get("routing_decision_basis") or "auditor_fallback_schema_bridge",
+
+      
+
+          now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
+
+          commit_sha = first(
+
+              os.environ.get("COMMIT_SHA"),
+
+              existing.get("commit_sha"),
+
+              existing.get("commit-sha"),
+
+              "UNKNOWN_SHA",
+
+          )
+
+      
+
+          parent_event_id = first(
+
+              existing.get("parent_event_id"),
+
+              existing.get("parent-event-id"),
+
+              task.get("parent_event_id"),
+
+              task.get("parent-event-id"),
+
+              task.get("current_event_id"),
+
+              task.get("current-event-id"),
+
+              task.get("last_event_id"),
+
+              task.get("last-event-id"),
+
+              os.environ.get("PARENT_EVENT_ID"),
+
+              os.environ.get("parent_event_id"),
+
+              f"AUDITOR_FALLBACK_PARENT_{task_id}",
+
+          )
+
+      
+
+          event_id = first(
+
+              existing.get("event_id"),
+
+              existing.get("event-id"),
+
+              f"AUDITOR_REVIEW_{task_id}_{now.replace(':', '').replace('+00:00', 'Z')}",
+
+          )
+
+      
+
+          canonical = {
+
+              "schema_version": first(existing.get("schema_version"), existing.get("schema-version"), "v164"),
+
+              "event_id": event_id,
+
+              "parent_event_id": parent_event_id,
+
+              "event_time": first(existing.get("event_time"), existing.get("event-time"), now),
+
+              "step_name": first(existing.get("step_name"), existing.get("step-name"), "auditor_review"),
+
+              "actor_role": first(existing.get("actor_role"), existing.get("actor-role"), "AUDITOR"),
+
+              "event_type": first(existing.get("event_type"), existing.get("event-type"), "REVIEW_DECISION"),
+
+              "description": first(
+
+                  existing.get("description"),
+
+                  "Fallback auditor review decision generated because model output was absent, incomplete, or non-canonical.",
+
+              ),
+
+              "next_actor_role": first(existing.get("next_actor_role"), existing.get("next-actor-role"), "EXECUTOR"),
+
+              "next_expected_event": first(existing.get("next_expected_event"), existing.get("next-expected-event"), "PRE_ACTION_APPROVED"),
+
+              "routing_decision_basis": first(existing.get("routing_decision_basis"), existing.get("routing-decision-basis"), "fallback-schema-bridge"),
+
               "commit_sha": commit_sha,
-              "decision": existing.get("decision") or "APPROVE",
-              "next_action": existing.get("next_action") or "IMPLEMENT_TASK",
+
+              "decision": first(existing.get("decision"), existing.get("review_action"), existing.get("review-action"), "APPROVE"),
+
+              "next_action": first(existing.get("next_action"), existing.get("next-action"), "IMPLEMENT_TASK"),
+
               "task_id": task_id,
-              "summary": existing.get("summary") or "Auditor fallback output normalised to canonical schema.",
+
+              "summary": first(existing.get("summary"), "Auditor fallback output normalised to canonical schema."),
+
           }
-          
+
+      
+
+          # Backward-compatible aliases; canonical underscore keys remain authoritative.
+
+          canonical["parent-event-id"] = canonical["parent_event_id"]
+
+          canonical["event-id"] = canonical["event_id"]
+
+          canonical["commit-sha"] = canonical["commit_sha"]
+
+      
+
           required = [
+
+              "schema_version",
+
               "event_id",
+
               "parent_event_id",
+
               "event_time",
+
               "step_name",
+
               "actor_role",
+
               "event_type",
+
               "description",
+
               "next_actor_role",
+
               "next_expected_event",
+
               "routing_decision_basis",
+
               "commit_sha",
+
           ]
-          
-          missing = [k for k in required if k not in fallback or fallback[k] in (None, "")]
+
+          missing = [k for k in required if not canonical.get(k)]
+
           if missing:
-              raise SystemExit("AUDITOR_FALLBACK_SCHEMA_STILL_MISSING=" + ",".join(missing))
-          
+
+              raise SystemExit("AUDITOR_CANONICAL_FALLBACK_V5_STILL_MISSING=" + ",".join(missing))
+
+      
+
+          payload = json.dumps(canonical, ensure_ascii=False, indent=2) + "\n"
+
           for out in [
+
               ".runtime/auditor_raw_output.txt",
-              "runtime/auditor_raw_output.txt",
-              "/tmp/auditor_raw_output.txt",
+
+              ".runtime/auditor_raw_output.json",
+
               ".runtime/auditor_output.json",
-              "runtime/auditor_output.json",
-              "/tmp/auditor_output.json",
+
+              "runtime/auditor_raw_output.txt",
+
+              "/tmp/auditor_raw_output.txt",
+
           ]:
+
               q = Path(out)
+
               q.parent.mkdir(parents=True, exist_ok=True)
-              q.write_text(json.dumps(fallback, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          
+
+              q.write_text(payload, encoding="utf-8")
+
+      
+
           print(json.dumps({
-              "AUDITOR_CANONICAL_FALLBACK_V4": "ok",
+
+              "AUDITOR_CANONICAL_FALLBACK_V5": "ok",
+
               "task_id": task_id,
+
+              "parent_event_id": canonical["parent_event_id"],
+
               "required_keys": required,
-              "written": [
-                  ".runtime/auditor_raw_output.txt",
-                  "runtime/auditor_raw_output.txt",
-                  "/tmp/auditor_raw_output.txt",
-                  ".runtime/auditor_output.json",
-                  "runtime/auditor_output.json",
-                  "/tmp/auditor_output.json"
-              ]
+
           }, ensure_ascii=False, indent=2))
-          PYAUD
+
+          PYFALLBACK
       - name: Validate LLM output schema
         shell: bash
         run: |
