@@ -1,0 +1,14 @@
+BEM-277 secondary writer runtime quarantine
+created_at=2026-04-25T14:09:02Z
+branch=main
+head_before_commit=bad2be2dc58eccf7f6239e73c3882d893e2d6a95
+secondary_all_before_lines=20
+secondary_workflows_before_lines=0
+secondary_all_after_lines=19
+secondary_workflows_after_lines=0
+yaml_bad_count=0
+pycompile_bad_count=0
+quarantined_file_count=2
+quarantined_files=governance/quarantine/BEM-277-secondary-writer-runtime/scripts/append_ledger_row.py.disabled,governance/quarantine/BEM-277-secondary-writer-runtime/scripts/append_ledger_row_v2.py.disabled
+static_blocker_removed=False
+next_bem=BEM278_REVIEW_REMAINING_STATIC_REFS
