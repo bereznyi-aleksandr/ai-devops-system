@@ -85,6 +85,47 @@ jobs:
           PY
 
       - name: Run Claude API as Auditor
+      # AUDITOR_RUNNER_LLM_FALLBACK_V1
+      - name: Ensure auditor fallback output
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/runtime/results governance/decisions
+          python3 - <<'PY'
+          import json, os, datetime
+          from pathlib import Path
+          task_id = os.environ.get('TASK_ID') or os.environ.get('task_id') or '${{ github.event.inputs.task_id }}' or 'UNKNOWN_TASK'
+          candidates = [
+            Path('/tmp/auditor_response.json'),
+            Path('/tmp/auditor_result.json'),
+            Path('governance/runtime/results/auditor_result.json'),
+            Path('governance/runtime/results/auditor-materialize-result.json'),
+          ]
+          ok = False
+          for p in candidates:
+            if p.exists() and p.stat().st_size > 2:
+              ok = True
+              break
+          if not ok:
+            ts = datetime.datetime.now(datetime.UTC).isoformat().replace('+00:00','Z')
+            payload = {
+              'artifact_type': 'auditor_decision',
+              'schema_version': 'fallback.v1',
+              'source': 'AUDITOR_RUNNER_LLM_FALLBACK_V1',
+              'task_id': task_id,
+              'decision': 'NEEDS_REVIEW',
+              'next_action': 'REVIEW_TASK',
+              'created_at': ts,
+              'summary': 'Deterministic fallback because external auditor model call did not produce canonical output.'
+            }
+            out = Path('/tmp/auditor_response.json')
+            out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+            Path('governance/runtime/results/auditor_result.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+            print('AUDITOR_RUNNER_LLM_FALLBACK_WRITTEN')
+          else:
+            print('AUDITOR_RUNNER_LLM_OUTPUT_PRESENT')
+          PY
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TASK_ID: ${{ github.event.inputs.task_id }}
