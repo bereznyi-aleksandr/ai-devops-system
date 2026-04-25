@@ -248,10 +248,12 @@ jobs:
           
           commit_sha = existing.get("commit_sha") or existing.get("sha") or git_sha()
           
+          # BEM199_PARENT_EVENT_ID_NORMALIZED
+          parent_event_id = existing.get('parent_event_id') or existing.get('parent-event-id') or os.environ.get('PARENT_EVENT_ID', '') or os.environ.get('PARENT_EVENT_ID'.lower(), '') or f'AUDITOR_FALLBACK_PARENT_{task_id}'
           fallback = {
               "event_id": existing.get("event_id") or f"AUDITOR_REVIEW_{task_id}_{compact_ts(ts)}",
               "parent_event_id": existing.get("parent_event_id") or task.get("current_event_id") or task.get("last_event_id") or os.environ.get("PARENT_EVENT_ID", ""),
-              'parent-event-id': existing.get('parent-event-id') or existing.get('parent_event_id') or parent_event_id,
+              'parent-event-id': parent_event_id or existing.get('parent_event_id') or existing.get('parent_event_id') or existing.get('parent-event-id') or os.environ.get('PARENT_EVENT_ID', '') or os.environ.get('PARENT_EVENT_ID'.lower(), '') or f'AUDITOR_FALLBACK_PARENT_{task_id}',
               "event_time": existing.get("event_time") or existing.get("ts_utc") or ts,
               "step_name": existing.get("step_name") or "auditor_review",
               "actor_role": existing.get("actor_role") or "AUDITOR",
