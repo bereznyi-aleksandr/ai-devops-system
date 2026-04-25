@@ -1,24 +1,27 @@
 {
   "task_id": "TASK-GHA-E2E-001",
   "title": "GitHub Actions E2E close task proof",
-  "current_state": "COMPLETED",
-  "status_bucket": "COMPLETED_PENDING_CLOSE",
-  "next_role": "SYSTEM",
-  "next_action": "CLOSE_TASK",
-  "is_terminal": false,
-  "closed_by_system": false,
+  "current_state": "CLOSED",
+  "status_bucket": "COMPLETED_CLOSED",
+  "next_role": null,
+  "next_action": null,
+  "is_terminal": true,
+  "closed_by_system": true,
   "events": [
     {
-      "event_id": "BEM293-SEED-001",
-      "created_at": "2026-04-25T17:47:43+00:00",
+      "event_id": "BEM294-SEED-001",
+      "created_at": "2026-04-25T18:07:00+00:00",
       "role": "SYSTEM",
       "action": "TASK_PROPOSED",
-      "result": "TASK_READY_FOR_CLOSE_TASK_GHA_PROOF"
+      "result": "READY_FOR_CLOSE_TASK_HANDLER_TEST"
+    },
+    {
+      "event_id": "CLOSE-TASK-002",
+      "created_at": "2026-04-25T18:07:00+00:00",
+      "role": "SYSTEM",
+      "action": "CLOSE_TASK",
+      "result": "TASK_CLOSED_BY_SYSTEM"
     }
   ],
-  "audit": {
-    "source": "BEM-293",
-    "auditor_requirement": "TASK_PROPOSED_TO_COMPLETED_TO_CLOSE_TASK_TO_CLOSED",
-    "requires_github_actions_close": true
-  }
+  "closed_at": "2026-04-25T18:07:00+00:00"
 }

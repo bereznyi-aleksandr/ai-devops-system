@@ -181,3 +181,6 @@ jobs:
               'events_count': len(events),
           }, ensure_ascii=False, indent=2))
           PY
+      - name: System close task handler
+        run: |
+          python3 governance/scripts/close_task_handler.py
