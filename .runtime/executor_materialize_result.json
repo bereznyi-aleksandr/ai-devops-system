@@ -1,8 +1,10 @@
 {
-  "status": "EXECUTOR_ARTIFACT_MATERIALIZED",
+  "status": "EXECUTOR_REAL_PLAN_MATERIALIZED",
   "task_id": "SYSTEM-BOOTSTRAP-V3_6_RC2",
-  "next_action": "PROPOSE_TASK",
-  "artifact_path": "governance/proposals/SYSTEM-BOOTSTRAP-V3_6_RC2.md",
+  "next_action": "WRITE_PLAN",
+  "artifact_path": "governance/plans/SYSTEM-BOOTSTRAP-V3_6_RC2.md",
   "parent_event_id": "SYSTEM-BOOTSTRAP-20260413T120000Z",
-  "ts_utc": "2026-04-24T19:22:16Z"
+  "ts_utc": "2026-04-25T04:48:45Z",
+  "summary": "Deterministic fallback executor plan: model response was not parseable as canonical JSON.",
+  "artifact_type": "executor_plan"
 }
