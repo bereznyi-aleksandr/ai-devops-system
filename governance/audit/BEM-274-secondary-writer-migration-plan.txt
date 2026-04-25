@@ -1,0 +1,12 @@
+BEM-274 secondary writer migration plan
+created_at=2026-04-25T14:00:58Z
+branch=main
+head=87b5159fb1150a8970035ec6bf3090bb88b64719
+decision_source=MIGRATION_PLAN_REQUIRED
+secondary_append_writer_workflows=5
+direct_shell_ledger_write_workflows=0
+migration_target_workflows=5
+secondary_append_writer_list=.github/workflows/auditor-ledger-return-v3_6_rc2.yml,.github/workflows/canonical-smoke-cycle-v3_6_rc2.yml,.github/workflows/executor-ledger-return-v3_6_rc2.yml,.github/workflows/ledger-writer-v2.yml,.github/workflows/ledger-writer.yml
+direct_shell_ledger_write_list=
+canonical_writer=governance/ledger_writer.py
+next_bem=BEM275_SECONDARY_WRITER_MIGRATION_IMPLEMENTATION
