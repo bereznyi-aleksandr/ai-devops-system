@@ -1,0 +1,72 @@
+{
+    "schema_version": "ledger-writer-authority-v1",
+    "created_at": "2026-04-25T12:43:13Z",
+    "mode": "governance_contract",
+    "decision": "primary ledger contract selected; secondary writers retained as active compatibility/return/smoke contours",
+    "primary": {
+        "ledger_csv": "governance/exchange-ledger-v3_6_rc2.csv",
+        "writer": "governance/ledger_writer.py",
+        "authority": "canonical primary append/update writer for ledger-server-write and ledger-request-ingress contours"
+    },
+    "secondary_active": [
+        {
+            "writer": "governance/append_ledger_row_v2.py",
+            "authority": "active compatibility writer for ledger-writer-v2, auditor-ledger-return, canonical-smoke contours"
+        },
+        {
+            "writer": "governance/append_ledger_row.py",
+            "authority": "active legacy-compatible append writer; do not remove without workflow ref migration"
+        },
+        {
+            "writer": "governance/ledger_writer_v2.py",
+            "authority": "secondary writer candidate; retain until direct refs and compatibility use are reviewed"
+        },
+        {
+            "ledger_csv": "governance/exchange_ledger.csv",
+            "authority": "secondary ledger CSV candidate; retain until refs and migration status are reviewed"
+        }
+    ],
+    "safety": {
+        "no_workflow_yaml_mutation": true,
+        "no_action_dispatch": true,
+        "no_secondary_deletion": true,
+        "commit_scope": "this JSON file only"
+    },
+    "observed_refs": {
+        "direct_writer_calls": [
+            ".github/workflows/ledger-writer-v2.yml:36:          python3 governance/append_ledger_row_v2.py \\",
+            ".github/workflows/executor-ledger-return-v3_6_rc2.yml:110:          python3 governance/append_ledger_row_v2.py \\",
+            ".github/workflows/ledger-server-write.yml:148:          python3 governance/ledger_writer.py \\",
+            ".github/workflows/ledger-request-ingress.yml:143:          python3 governance/ledger_writer.py \\",
+            ".github/workflows/ledger-request-ingress.yml:301:          python3 governance/ledger_writer.py \\",
+            ".github/workflows/ledger-writer.yml:36:          python3 governance/append_ledger_row.py \\",
+            ".github/workflows/auditor-ledger-return-v3_6_rc2.yml:119:          python3 governance/append_ledger_row_v2.py \\",
+            ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml:155:          python3 governance/append_ledger_row_v2.py \\",
+            ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml:283:          python3 governance/append_ledger_row_v2.py \\"
+        ],
+        "role_classification": [
+            ".github/workflows/request-file-create.yml:109:          echo \"Existing ledger-request-ingress remains the downstream processing contour.\"",
+            ".github/workflows/gcs-request-ingress.yml:121:          echo \"Existing ledger-request-ingress remains the downstream processing contour.\"",
+            ".github/workflows/ledger-writer-v2.yml:36:          python3 governance/append_ledger_row_v2.py \\",
+            ".github/workflows/executor-ledger-return-v3_6_rc2.yml:110:          python3 governance/append_ledger_row_v2.py \\",
+            ".github/workflows/ledger-server-write.yml:1:name: ledger-server-write",
+            ".github/workflows/ledger-server-write.yml:44:          test -f governance/ledger_writer.py",
+            ".github/workflows/ledger-server-write.yml:45:          python3 -m py_compile governance/ledger_writer.py",
+            ".github/workflows/ledger-server-write.yml:148:          python3 governance/ledger_writer.py \\",
+            ".github/workflows/ledger-request-ingress.yml:1:name: ledger-request-ingress",
+            ".github/workflows/ledger-request-ingress.yml:138:          test -f governance/ledger_writer.py",
+            ".github/workflows/ledger-request-ingress.yml:139:          python3 -m py_compile governance/ledger_writer.py",
+            ".github/workflows/ledger-request-ingress.yml:143:          python3 governance/ledger_writer.py \\",
+            ".github/workflows/ledger-request-ingress.yml:296:          test -f governance/ledger_writer.py",
+            ".github/workflows/ledger-request-ingress.yml:297:          python3 -m py_compile governance/ledger_writer.py",
+            ".github/workflows/ledger-request-ingress.yml:301:          python3 governance/ledger_writer.py \\",
+            ".github/workflows/auditor-ledger-return-v3_6_rc2.yml:119:          python3 governance/append_ledger_row_v2.py \\",
+            ".github/workflows/workflow-monitor.yml:161:      - name: Dispatch ledger-request-ingress",
+            ".github/workflows/workflow-monitor.yml:172:            -f event_type=ledger-request-ingress \\",
+            ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml:56:              'source': 'canonical-smoke-cycle-v3_6_rc2.yml',",
+            ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml:155:          python3 governance/append_ledger_row_v2.py \\",
+            ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml:182:              'source': 'canonical-smoke-cycle-v3_6_rc2.yml',",
+            ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml:283:          python3 governance/append_ledger_row_v2.py \\"
+        ]
+    }
+}
