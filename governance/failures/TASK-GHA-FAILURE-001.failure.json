@@ -1,0 +1,20 @@
+{
+  "manifest_id": "FAILURE-TASK-GHA-FAILURE-001",
+  "task_id": "TASK-GHA-FAILURE-001",
+  "created_at": "2026-04-25T18:57:56+00:00",
+  "producer": "stalled_watchdog",
+  "reason": "TERMINAL_TIMEOUT_EXCEEDED",
+  "failure_path": "GHA_FAILURE_PATH",
+  "evidence": {
+    "previous_state": "AWAITING_EXECUTOR",
+    "previous_next_role": "EXECUTOR",
+    "terminal_timeout_minutes": 15,
+    "stale_since": "2026-04-25T17:57:56+00:00"
+  },
+  "apply": {
+    "current_state": "BLOCKED",
+    "status_bucket": "REVIEW_STALL",
+    "next_role": "AUDITOR",
+    "next_action": "REVIEW_STALL"
+  }
+}
