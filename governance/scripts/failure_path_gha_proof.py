@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+from autonomy_constants import TERMINAL_TIMEOUT_MINUTES
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -25,7 +26,7 @@ task = {
     "next_action": "EXECUTE",
     "is_terminal": False,
     "closed_by_system": False,
-    "terminal_timeout_minutes": 15,
+    "terminal_timeout_minutes": TERMINAL_TIMEOUT_MINUTES,
     "created_at": STALE_TS,
     "updated_at": STALE_TS,
     "last_transition_at": STALE_TS,
@@ -60,7 +61,7 @@ failure_manifest = {
     "evidence": {
         "previous_state": "AWAITING_EXECUTOR",
         "previous_next_role": "EXECUTOR",
-        "terminal_timeout_minutes": 15,
+        "terminal_timeout_minutes": TERMINAL_TIMEOUT_MINUTES,
         "stale_since": STALE_TS
     },
     "apply": {
