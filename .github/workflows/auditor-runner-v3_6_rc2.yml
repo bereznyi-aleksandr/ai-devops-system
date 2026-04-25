@@ -56,7 +56,7 @@ jobs:
               'proof_ref': last.get('proof_ref', ''),
               'correlation_id': last.get('correlation_id', ''),
               'idempotency_key': last.get('idempotency_key', ''),
-              'source': 'auditor-runner-v3_6_rc2.yml',
+              'source': 'canonical-auditor-v3_6_rc2',
               'status': 'AUDITOR_PACKET_READY'
           }
 
