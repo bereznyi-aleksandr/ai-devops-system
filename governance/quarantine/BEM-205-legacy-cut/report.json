@@ -1,0 +1,74 @@
+{
+  "bem": "BEM-205",
+  "action": "legacy_workflow_quarantine",
+  "moved_count": 6,
+  "kept_count": 7,
+  "moved": [
+    {
+      "from": ".github/workflows/analyst-runner.yml",
+      "to": "governance/quarantine/BEM-205-legacy-cut/workflows/analyst-runner.yml.disabled",
+      "hits": [
+        "claude",
+        "anthropic",
+        "run claude api"
+      ],
+      "mode": "git-mv"
+    },
+    {
+      "from": ".github/workflows/auditor-runner.yml",
+      "to": "governance/quarantine/BEM-205-legacy-cut/workflows/auditor-runner.yml.disabled",
+      "hits": [
+        "claude",
+        "anthropic",
+        "auditor-runner",
+        "run claude api"
+      ],
+      "mode": "git-mv"
+    },
+    {
+      "from": ".github/workflows/autonomy-test-runner.yml",
+      "to": "governance/quarantine/BEM-205-legacy-cut/workflows/autonomy-test-runner.yml.disabled",
+      "hits": [
+        "auditor-runner"
+      ],
+      "mode": "git-mv"
+    },
+    {
+      "from": ".github/workflows/executor-runner.yml",
+      "to": "governance/quarantine/BEM-205-legacy-cut/workflows/executor-runner.yml.disabled",
+      "hits": [
+        "claude",
+        "anthropic",
+        "run claude api"
+      ],
+      "mode": "git-mv"
+    },
+    {
+      "from": ".github/workflows/ledger-router.yml",
+      "to": "governance/quarantine/BEM-205-legacy-cut/workflows/ledger-router.yml.disabled",
+      "hits": [
+        "auditor-runner"
+      ],
+      "mode": "git-mv"
+    },
+    {
+      "from": ".github/workflows/operator-notify.yml",
+      "to": "governance/quarantine/BEM-205-legacy-cut/workflows/operator-notify.yml.disabled",
+      "hits": [
+        "claude",
+        "anthropic",
+        "run claude api"
+      ],
+      "mode": "git-mv"
+    }
+  ],
+  "kept": [
+    ".github/workflows/analyst-task-writer.yml",
+    ".github/workflows/analyst-verifier-runner.yml",
+    ".github/workflows/gcs-request-ingress.yml",
+    ".github/workflows/ledger-request-ingress.yml",
+    ".github/workflows/ledger-server-write.yml",
+    ".github/workflows/request-file-create.yml",
+    ".github/workflows/workflow-monitor.yml"
+  ]
+}
