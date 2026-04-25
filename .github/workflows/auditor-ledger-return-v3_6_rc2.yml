@@ -116,7 +116,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 governance/append_ledger_row_v2.py \
+          python3 governance/ledger_writer.py \
             --payload-file .runtime/auditor_ledger_payload_v3_6_rc2.json \
             --ledger-path "${{ github.event.inputs.ledger_path }}"
 

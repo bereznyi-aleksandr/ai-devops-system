@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 governance/append_ledger_row_v2.py \
+          python3 governance/ledger_writer.py \
             --payload-file "${{ github.event.inputs.payload_file }}" \
             --ledger-path "${{ github.event.inputs.ledger_path }}"
 

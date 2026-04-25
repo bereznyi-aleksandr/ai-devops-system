@@ -1,0 +1,97 @@
+{
+  "bem": "BEM-275",
+  "schema": "secondary-writer-migration-implementation-v1",
+  "created_at": "2026-04-25T14:04:35Z",
+  "branch": "main",
+  "head_before_commit": "061e6c544462c706d795c04acc94d367e610b5fb",
+  "source_plan": "governance/audit/BEM-274-secondary-writer-migration-plan.json",
+  "canonical_writer": "governance/ledger_writer.py",
+  "writer_accepts_payload_file": true,
+  "target_count": 5,
+  "changed_workflows": [
+    ".github/workflows/auditor-ledger-return-v3_6_rc2.yml",
+    ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml",
+    ".github/workflows/executor-ledger-return-v3_6_rc2.yml",
+    ".github/workflows/ledger-writer-v2.yml",
+    ".github/workflows/ledger-writer.yml"
+  ],
+  "missing_workflows": [],
+  "before_hits": {
+    ".github/workflows/auditor-ledger-return-v3_6_rc2.yml": {
+      "append_ledger_row": 1,
+      "append_ledger_row_v2": 1,
+      "canonical_writer": 0,
+      "payload_file_flag": 1
+    },
+    ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml": {
+      "append_ledger_row": 2,
+      "append_ledger_row_v2": 2,
+      "canonical_writer": 0,
+      "payload_file_flag": 2
+    },
+    ".github/workflows/executor-ledger-return-v3_6_rc2.yml": {
+      "append_ledger_row": 1,
+      "append_ledger_row_v2": 1,
+      "canonical_writer": 0,
+      "payload_file_flag": 1
+    },
+    ".github/workflows/ledger-writer-v2.yml": {
+      "append_ledger_row": 1,
+      "append_ledger_row_v2": 1,
+      "canonical_writer": 0,
+      "payload_file_flag": 1
+    },
+    ".github/workflows/ledger-writer.yml": {
+      "append_ledger_row": 1,
+      "append_ledger_row_v2": 0,
+      "canonical_writer": 0,
+      "payload_file_flag": 1
+    }
+  },
+  "after_hits": {
+    ".github/workflows/auditor-ledger-return-v3_6_rc2.yml": {
+      "append_ledger_row": 0,
+      "append_ledger_row_v2": 0,
+      "canonical_writer": 1,
+      "payload_file_flag": 1
+    },
+    ".github/workflows/canonical-smoke-cycle-v3_6_rc2.yml": {
+      "append_ledger_row": 0,
+      "append_ledger_row_v2": 0,
+      "canonical_writer": 2,
+      "payload_file_flag": 2
+    },
+    ".github/workflows/executor-ledger-return-v3_6_rc2.yml": {
+      "append_ledger_row": 0,
+      "append_ledger_row_v2": 0,
+      "canonical_writer": 1,
+      "payload_file_flag": 1
+    },
+    ".github/workflows/ledger-writer-v2.yml": {
+      "append_ledger_row": 0,
+      "append_ledger_row_v2": 0,
+      "canonical_writer": 1,
+      "payload_file_flag": 1
+    },
+    ".github/workflows/ledger-writer.yml": {
+      "append_ledger_row": 0,
+      "append_ledger_row_v2": 0,
+      "canonical_writer": 1,
+      "payload_file_flag": 1
+    }
+  },
+  "remaining_forbidden": [],
+  "decision": {
+    "migration_applied": true,
+    "remaining_forbidden_count": 0,
+    "next_bem": "BEM276_RUNTIME_STATIC_VALIDATION"
+  },
+  "safety": {
+    "actions_dispatched": false,
+    "ledger_mutated": false,
+    "ssot_mutated": false,
+    "quarantine_mutated": false,
+    "runtime_scripts_edited": false,
+    "workflow_yaml_edited": true
+  }
+}

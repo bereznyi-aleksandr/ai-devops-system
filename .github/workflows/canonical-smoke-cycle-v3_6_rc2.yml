@@ -152,7 +152,7 @@ jobs:
           Path('.runtime/executor_ledger_payload_v3_6_rc2.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
           print(json.dumps(payload, ensure_ascii=False))
           PY
-          python3 governance/append_ledger_row_v2.py \
+          python3 governance/ledger_writer.py \
             --payload-file .runtime/executor_ledger_payload_v3_6_rc2.json \
             --ledger-path governance/exchange_ledger_v3_6_rc2.csv
 
@@ -280,7 +280,7 @@ jobs:
           Path('.runtime/auditor_ledger_payload_v3_6_rc2.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
           print(json.dumps(payload, ensure_ascii=False))
           PY
-          python3 governance/append_ledger_row_v2.py \
+          python3 governance/ledger_writer.py \
             --payload-file .runtime/auditor_ledger_payload_v3_6_rc2.json \
             --ledger-path governance/exchange_ledger_v3_6_rc2.csv
 
