@@ -1,0 +1,64 @@
+name: E2E Close Task GHA Proof
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  close-task-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Run CLOSE_TASK handler
+        run: |
+          set -euo pipefail
+          python3 governance/scripts/close_task_handler.py | tee /tmp/close-task-handler.log
+
+      - name: Verify CLOSED state
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          p = Path("governance/current_task.json")
+          d = json.loads(p.read_text(encoding="utf-8"))
+
+          events = d.get("events", [])
+          if not isinstance(events, list):
+              events = []
+
+          assert d.get("task_id") == "TASK-GHA-E2E-001", d.get("task_id")
+          assert d.get("current_state") == "CLOSED", d.get("current_state")
+          assert d.get("status_bucket") == "COMPLETED_CLOSED", d.get("status_bucket")
+          assert d.get("is_terminal") is True, d.get("is_terminal")
+          assert d.get("closed_by_system") is True, d.get("closed_by_system")
+          assert len(events) >= 2, len(events)
+
+          print("E2E_CLOSE_TASK_GHA_PROOF=PASS")
+          print("current_state=CLOSED")
+          print("status_bucket=COMPLETED_CLOSED")
+          print("is_terminal=true")
+          print("closed_by_system=true")
+          print(f"events_count={len(events)}")
+          PY
+
+      - name: Commit CLOSED task state
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/current_task.json governance/tasks/TASK-GHA-E2E-001.json
+          if git diff --cached --quiet; then
+            echo "NO_TASK_STATE_CHANGES_TO_COMMIT"
+          else
+            git commit -m "Close E2E task through GitHub Actions"
+            git push origin main
+          fi
