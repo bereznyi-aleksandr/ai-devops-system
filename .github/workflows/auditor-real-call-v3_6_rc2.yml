@@ -54,7 +54,7 @@ jobs:
 
           packet = json.loads(packet_path.read_text(encoding='utf-8'))
           review_action = packet.get('review_action', '').strip()
-          if review_action != 'REVIEW_PLAN':
+          if str(review_action or '').strip().upper() not in ('REVIEW_PLAN', 'REVIEW_TASK'):
               raise SystemExit(f'AUDITOR_REAL_CALL_EXPECTS_REVIEW_PLAN_OR_REVIEW_TASK, got: {review_action}')
 
           request_payload = {

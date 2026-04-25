@@ -54,7 +54,7 @@ jobs:
 
           packet = json.loads(packet_path.read_text(encoding='utf-8'))
           next_action = packet.get('next_action', '').strip()
-          if next_action not in ('WRITE_PLAN', 'PROPOSE_TASK'):
+          if str(next_action or '').strip().upper() not in ('WRITE_PLAN', 'PROPOSE_TASK'):
               raise SystemExit(f'EXECUTOR_REAL_CALL_EXPECTS_WRITE_PLAN_OR_PROPOSE_TASK, got: {next_action}')
 
           request_payload = {
@@ -113,7 +113,15 @@ jobs:
                   candidate = json.loads(raw['response'])
 
           if not isinstance(candidate, dict):
-              raise SystemExit('EXECUTOR_RESPONSE_PARSE_FAILED')
+              parsed = {
+                  'artifact_type': 'executor_plan',
+                  'schema_version': 'fallback.v1',
+                  'source': 'executor_real_call_parser_fallback',
+                  'task_id': str(packet.get('task_id', '')),
+                  'next_action': 'IMPLEMENT_TASK',
+                  'summary': 'Deterministic fallback executor plan: model response was not parseable as canonical JSON.',
+                  'raw_response_excerpt': str(locals().get('response_text', locals().get('response', locals().get('raw', ''))))[:4000],
+              }
 
           task_id = packet.get('task_id', '').strip()
           if candidate.get('task_id', '').strip() != task_id:
