@@ -104,7 +104,7 @@
 | I-02 | one active branch |
 | I-03 | CODE/CONFIG/DOCUMENT only via PR |
 | I-04 | append-only ledger |
-| I-05 | single writer: append_ledger_row.py |
+| I-05 | single writer: ledger_writer.py |
 | I-06 | previous+new row validation |
 | I-07 | legacy disabled |
 | I-08 | plan-before-code |
@@ -240,14 +240,14 @@
 | producer | Источник события |
 | producer_run_id | Идентификатор конкретного запуска |
 
-| append_ledger_row.py обязан отклонять | Значение |
+| ledger_writer.py обязан отклонять | Значение |
 |---|---|
 | duplicate event_id | Да |
 | duplicate idempotency_key for same logical action | Да |
 | запрещенный routing cycle | Да |
 | недопустимый источник события | Да |
 
-| append_ledger_row.py обязан делать | Значение |
+| ledger_writer.py обязан делать | Значение |
 |---|---|
 | читать SHA файла | Да |
 | валидировать схему строки | Да |

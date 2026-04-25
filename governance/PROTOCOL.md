@@ -115,7 +115,7 @@ I-01 one active task
 I-02 one active branch
 I-03 CODE/CONFIG/DOCUMENT only via PR
 I-04 append-only ledger
-I-05 single writer: append_ledger_row.py
+I-05 single writer: ledger_writer.py
 I-06 previous+new row validation
 I-07 legacy disabled
 I-08 plan-before-code
@@ -389,13 +389,13 @@ causation_id,correlation_id,idempotency_key,producer,producer_run_id
 - producer — источник, создавший событие
 - producer_run_id — идентификатор конкретного запуска процесса
 
-append_ledger_row.py обязан отклонять событие, если:
+ledger_writer.py обязан отклонять событие, если:
 - уже существует строка с тем же event_id
 - уже существует строка с тем же idempotency_key, если это то же смысловое действие
 - событие образует запрещённый цикл маршрутизации
 - источник события не соответствует допустимому системному контуру
 
-Также append_ledger_row.py обязан:
+Также ledger_writer.py обязан:
 - читать SHA файла
 - валидировать схему строки
 - валидировать переход
