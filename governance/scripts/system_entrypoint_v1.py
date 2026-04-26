@@ -9,6 +9,7 @@ INDEX_CONSISTENCY = ROOT / 'governance' / 'scripts' / 'system_index_consistency_
 SAFE_RUNNER = ROOT / 'governance' / 'scripts' / 'system_safe_runner_v1.py'
 INVALID_WATCHDOG = ROOT / 'governance' / 'scripts' / 'system_invalid_task_watchdog_v1.py'
 NOTIFY = ROOT / 'governance' / 'scripts' / 'system_role_notify_v1.py'
+ROLE_LAUNCHER = ROOT / 'governance' / 'scripts' / 'system_role_launcher_v2.py'
 WATCHDOG = ROOT / 'governance' / 'scripts' / 'system_terminal_watchdog_v1.py'
 STALLED_WATCHDOG = ROOT / 'governance' / 'scripts' / 'system_stalled_task_watchdog_v1.py'
 APPLY_GUARDED = ROOT / 'governance' / 'scripts' / 'system_apply_result_guarded_v1.py'
@@ -50,13 +51,14 @@ def main() -> int:
 
     if dry_run:
         print(json.dumps({
-            'system_entrypoint_version': 'v5',
+            'system_entrypoint_version': 'v6',
             'result': 'DRY_RUN',
             'steps': [
                 'INDEX CONSISTENCY BOOTSTRAP',
                 'SAFE RUNNER',
                 'INVALID TASK WATCHDOG',
                 'ROLE NOTIFY',
+                'ROLE LAUNCHER',
                 'TERMINAL WATCHDOG',
                 'STALLED TASK WATCHDOG',
                 'APPLY RESULT GUARDED',
@@ -67,7 +69,7 @@ def main() -> int:
 
     if not acquire_lock():
         print(json.dumps({
-            'system_entrypoint_version': 'v5',
+            'system_entrypoint_version': 'v6',
             'result': 'ALREADY_RUNNING',
             'lock_path': str(LOCK_PATH.relative_to(ROOT)),
         }, ensure_ascii=False, indent=2))
@@ -87,6 +89,10 @@ def main() -> int:
             return rc
 
         rc = run_step('ROLE NOTIFY', NOTIFY)
+        if rc != 0:
+            return rc
+
+        rc = run_step('ROLE LAUNCHER', ROLE_LAUNCHER)
         if rc != 0:
             return rc
 
