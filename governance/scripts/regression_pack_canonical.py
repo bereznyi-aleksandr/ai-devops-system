@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# BEM-340 functional regression pack marker: 2026-04-26T10:20Z
 from __future__ import annotations
 
 import json
@@ -34,16 +33,11 @@ def read_json(path: Path) -> Dict[str, object]:
 
 def run_py(work: Path, script_name: str, *args: str) -> subprocess.CompletedProcess[str]:
     script = work / "governance" / "scripts" / script_name
-    return subprocess.run(
-        [sys.executable, str(script), *args],
-        cwd=work,
-        text=True,
-        capture_output=True,
-    )
+    return subprocess.run([sys.executable, str(script), *args], cwd=work, text=True, capture_output=True)
 
 
 def make_workdir() -> tempfile.TemporaryDirectory[str]:
-    td = tempfile.TemporaryDirectory(prefix="bem340_regression_")
+    td = tempfile.TemporaryDirectory(prefix="bem341_regression_")
     work = Path(td.name)
     (work / "governance").mkdir(parents=True, exist_ok=True)
     shutil.copytree(SOURCE_SCRIPTS, work / "governance" / "scripts")
@@ -92,28 +86,34 @@ def rebuild_index(work: Path) -> None:
         raise AssertionError(f"index rebuild failed: stdout={proc.stdout} stderr={proc.stderr}")
 
 
-def latest_stdout_json(proc: subprocess.CompletedProcess[str]) -> Dict[str, object]:
-    text = proc.stdout.strip()
+def stdout_json(proc: subprocess.CompletedProcess[str]) -> Dict[str, object]:
+    text = (proc.stdout or "").strip()
     if not text:
         return {}
-    start = text.rfind("{\n")
-    if start < 0:
-        start = text.find("{")
-    if start < 0:
-        return {}
-    return json.loads(text[start:])
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        decoder = json.JSONDecoder()
+        best: Dict[str, object] = {}
+        for idx, ch in enumerate(text):
+            if ch != "{":
+                continue
+            try:
+                obj, _end = decoder.raw_decode(text[idx:])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict):
+                best = obj
+        return best
 
 
 def r01_duplicate_index_guard() -> None:
     with make_workdir() as td:
         work = Path(td)
-        idx = work / "governance" / "runtime" / "tasks" / "index.json"
-        write_json(idx, {"items": [{"task_id": "DUP"}, {"task_id": "DUP"}]})
+        write_json(work / "governance" / "runtime" / "tasks" / "index.json", {"items": [{"task_id": "DUP"}, {"task_id": "DUP"}]})
         proc = run_py(work, "system_task_index_guarded_v1.py")
-        if proc.returncode == 0:
-            raise AssertionError("duplicate index guard unexpectedly passed")
-        if "duplicate task_id entries detected" not in proc.stdout:
-            raise AssertionError(proc.stdout)
+        if proc.returncode == 0 or "duplicate task_id entries detected" not in proc.stdout:
+            raise AssertionError(f"duplicate guard failed: stdout={proc.stdout} stderr={proc.stderr}")
 
 
 def r02_stale_index_rebuild() -> None:
@@ -122,11 +122,11 @@ def r02_stale_index_rebuild() -> None:
         seed_task(work, "TASK-R02")
         write_json(work / "governance" / "runtime" / "tasks" / "index.json", {"items": []})
         proc = run_py(work, "system_index_consistency_check_v1.py")
-        data = latest_stdout_json(proc)
+        data = stdout_json(proc)
         idx = read_json(work / "governance" / "runtime" / "tasks" / "index.json")
         ids = [item.get("task_id") for item in idx.get("items", [])]
         if proc.returncode != 0 or data.get("result") != "REBUILT" or "TASK-R02" not in ids:
-            raise AssertionError(f"rebuild failed: {proc.stdout} {proc.stderr}")
+            raise AssertionError(f"rebuild failed: stdout={proc.stdout} stderr={proc.stderr}")
 
 
 def r03_guarded_no_result_manifest_not_found() -> None:
@@ -136,10 +136,8 @@ def r03_guarded_no_result_manifest_not_found() -> None:
         rebuild_index(work)
         (work / "governance" / "runtime" / "results").mkdir(parents=True, exist_ok=True)
         proc = run_py(work, "system_apply_result_guarded_v1.py")
-        if proc.returncode != 0:
-            raise AssertionError(f"guarded no-result should return 0: {proc.stdout} {proc.stderr}")
-        if "NO_RESULT" not in proc.stdout:
-            raise AssertionError(proc.stdout)
+        if proc.returncode != 0 or "NO_RESULT" not in proc.stdout:
+            raise AssertionError(f"guarded no-result failed: stdout={proc.stdout} stderr={proc.stderr}")
 
 
 def r04_apply_guarded_retest() -> None:
@@ -160,7 +158,7 @@ def r04_apply_guarded_retest() -> None:
         proc = run_py(work, "system_apply_result_guarded_v1.py")
         task = read_json(work / "governance" / "runtime" / "tasks" / "TASK-R04.json")
         if proc.returncode != 0 or task.get("current_state") != "PLAN_PENDING" or task.get("next_role") != "AUDITOR":
-            raise AssertionError(f"guarded apply failed: {proc.stdout} {proc.stderr} task={task}")
+            raise AssertionError(f"guarded apply failed: stdout={proc.stdout} stderr={proc.stderr} task={task}")
 
 
 def r05_failure_path_local() -> None:
@@ -172,9 +170,9 @@ def r05_failure_path_local() -> None:
         proc2 = run_py(work, "system_apply_result_guarded_v1.py")
         task = read_json(work / "governance" / "runtime" / "tasks" / "TASK-R05.json")
         if proc1.returncode != 0 or proc2.returncode != 0:
-            raise AssertionError(f"failure path commands failed: {proc1.stdout} {proc1.stderr} {proc2.stdout} {proc2.stderr}")
+            raise AssertionError(f"failure path command failed: {proc1.stdout} {proc1.stderr} {proc2.stdout} {proc2.stderr}")
         if task.get("current_state") != "BLOCKED" or task.get("next_role") != "AUDITOR" or task.get("next_action") != "REVIEW_STALL":
-            raise AssertionError(f"bad failure path state: {task}")
+            raise AssertionError(f"bad failure state: {task}")
 
 
 def r06_supersession_local() -> None:
@@ -196,7 +194,7 @@ def r06_supersession_local() -> None:
         proc = run_py(work, "system_apply_result_guarded_v1.py")
         old = read_json(work / "governance" / "runtime" / "tasks" / "TASK-R06-OLD.json")
         if proc.returncode != 0 or old.get("current_state") != "SUPERSEDED" or old.get("superseded_by_task_id") != "TASK-R06-NEW":
-            raise AssertionError(f"supersession failed: {proc.stdout} {proc.stderr} old={old}")
+            raise AssertionError(f"supersession failed: stdout={proc.stdout} stderr={proc.stderr} old={old}")
 
 
 def r07_tie_break_equal_ts_system_wins() -> None:
@@ -212,7 +210,7 @@ def r07_tie_break_equal_ts_system_wins() -> None:
         proc = run_py(work, "system_apply_result_guarded_v1.py")
         task = read_json(work / "governance" / "runtime" / "tasks" / "TASK-R07.json")
         if proc.returncode != 0 or task.get("current_state") != "COMPLETED_CLOSED" or task.get("last_actor_role") != "SYSTEM":
-            raise AssertionError(f"tie-break failed: {proc.stdout} {proc.stderr} task={task}")
+            raise AssertionError(f"tie-break failed: stdout={proc.stdout} stderr={proc.stderr} task={task}")
 
 
 def r08_max_stall_cycles_exhaustion() -> None:
@@ -223,7 +221,7 @@ def r08_max_stall_cycles_exhaustion() -> None:
         proc = run_py(work, "system_stalled_task_watchdog_v1.py")
         task = read_json(work / "governance" / "runtime" / "tasks" / "TASK-R08.json")
         if proc.returncode != 0:
-            raise AssertionError(f"watchdog failed: {proc.stdout} {proc.stderr}")
+            raise AssertionError(f"watchdog failed: stdout={proc.stdout} stderr={proc.stderr}")
         if task.get("current_state") != "BLOCKED" or task.get("error_class") != "STALL_CYCLES_EXHAUSTED" or int(task.get("stall_count", 0)) < 3:
             raise AssertionError(f"stall exhaustion failed: {task}")
 
@@ -233,12 +231,12 @@ def r09_notify_processed_roundtrip() -> None:
         work = Path(td)
         notify = work / "governance" / "runtime" / "notifications" / "executor" / "TASK-R09.notify.json"
         write_json(notify, {"role": "EXECUTOR", "task_id": "TASK-R09", "payload": "roundtrip"})
-        proc = run_py(work, "system_notify_mark_processed_v1.py", str(notify.relative_to(work)), "BEM-340")
+        proc = run_py(work, "system_notify_mark_processed_v1.py", str(notify.relative_to(work)), "BEM-341")
         processed = list((notify.parent / "processed").glob("TASK-R09.*.notify.json"))
         if proc.returncode != 0 or notify.exists() or len(processed) != 1:
-            raise AssertionError(f"notify roundtrip failed: {proc.stdout} {proc.stderr} processed={processed}")
+            raise AssertionError(f"notify roundtrip failed: stdout={proc.stdout} stderr={proc.stderr} processed={processed}")
         data = read_json(processed[0])
-        if data.get("processed_by") != "BEM-340" or data.get("task_id") != "TASK-R09":
+        if data.get("processed_by") != "BEM-341" or data.get("task_id") != "TASK-R09":
             raise AssertionError(f"processed payload invalid: {data}")
 
 
@@ -260,7 +258,7 @@ def r10_full_e2e_to_closed() -> None:
         proc = run_py(work, "close_task_handler.py")
         out = read_json(work / "governance" / "current_task.json")
         if proc.returncode != 0:
-            raise AssertionError(f"close handler failed: {proc.stdout} {proc.stderr}")
+            raise AssertionError(f"close handler failed: stdout={proc.stdout} stderr={proc.stderr}")
         if out.get("current_state") != "CLOSED" or out.get("status_bucket") != "COMPLETED_CLOSED" or out.get("is_terminal") is not True or out.get("closed_by_system") is not True:
             raise AssertionError(f"E2E close failed: {out}")
 
@@ -286,14 +284,7 @@ def run() -> Dict[str, object]:
         except Exception as exc:
             results.append({"id": rid, "name": name, "status": "FAIL", "error": str(exc)})
     passed = sum(1 for item in results if item["status"] == "PASS")
-    return {
-        "regression_pack": "canonical_functional",
-        "source_tz": "executor_tz_v1.md Section 12",
-        "result": "PASS" if passed == len(results) else "FAIL",
-        "passed": passed,
-        "total": len(results),
-        "tests": results,
-    }
+    return {"regression_pack": "canonical_functional", "source_tz": "executor_tz_v1.md Section 12", "result": "PASS" if passed == len(results) else "FAIL", "passed": passed, "total": len(results), "tests": results}
 
 
 if __name__ == "__main__":
