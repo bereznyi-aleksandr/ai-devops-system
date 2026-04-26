@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# BEM-346 retrigger marker 2026-04-26T13:12Z
 from __future__ import annotations
 
 import json
@@ -113,7 +114,7 @@ def verify() -> dict:
         raise SystemExit('domain check failed: latest_result_manifest empty')
     if checks['events_count'] < 2:
         raise SystemExit(f"domain check failed: events_count={checks['events_count']} < 2")
-    proof = {'bem': 'BEM-345', 'task_id': TASK_ID, 'result': 'SUCCESS', 'domain_verification': 'PASS', 'checks': checks}
+    proof = {'bem': 'BEM-346', 'task_id': TASK_ID, 'result': 'SUCCESS', 'domain_verification': 'PASS', 'checks': checks}
     write_json(PROOF_PATH, proof)
     return proof
 
