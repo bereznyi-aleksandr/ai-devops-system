@@ -1,4 +1,5 @@
 name: autonomy-entrypoint
+# BEM-344 E2E domain validation TASK-GHA-E2E-002
 
 on:
   workflow_dispatch:
@@ -29,117 +30,87 @@ jobs:
           echo "REF=${GITHUB_REF}"
           echo "SHA=${GITHUB_SHA}"
 
-      - name: Restore repo fixture for P-01 GHA E2E
+      - name: Seed TASK-GHA-E2E-002 runtime domain fixture
         run: |
-          mkdir -p governance/runtime/tasks
-          mkdir -p governance/runtime/results
-          mkdir -p governance/decisions
-
-          if [ -f governance/fixtures/gha_e2e/TASK-GHA-E2E-001.task.json ]; then
-            cp governance/fixtures/gha_e2e/TASK-GHA-E2E-001.task.json governance/runtime/tasks/TASK-GHA-E2E-001.json
-          fi
-
-          if [ -f governance/fixtures/gha_e2e/auditor_materialize_result.gha-e2e.json ]; then
-            cp governance/fixtures/gha_e2e/auditor_materialize_result.gha-e2e.json governance/runtime/results/auditor_materialize_result.gha-e2e.json
-          fi
-
-          if [ -f governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED-TASK-GHA-E2E-001.json ]; then
-            cp governance/fixtures/gha_e2e/IMPLEMENTATION_COMPLETED-TASK-GHA-E2E-001.json governance/decisions/IMPLEMENTATION_COMPLETED-TASK-GHA-E2E-001.json
-          fi
-
-          if [ -f governance/fixtures/gha_e2e/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json ]; then
-            cp governance/fixtures/gha_e2e/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json governance/decisions/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json
-          fi
-
-      - name: Bootstrap runtime index
-        run: |
+          set -euo pipefail
+          mkdir -p governance/runtime/tasks governance/runtime/results governance/decisions governance/audit
           python3 - <<'PY'
           import json
           from pathlib import Path
 
-          ROOT = Path.cwd()
-          TASKS_DIR = ROOT / 'governance' / 'runtime' / 'tasks'
-          INDEX_PATH = TASKS_DIR / 'index.json'
+          task_id = 'TASK-GHA-E2E-002'
+          root = Path.cwd()
 
-          TASKS_DIR.mkdir(parents=True, exist_ok=True)
-
-          def infer_status_bucket(data):
-              current_state = str(data.get('current_state', '')).strip()
-              next_role = str(data.get('next_role', '')).strip()
-              is_terminal = bool(data.get('is_terminal', False))
-              closed_by_system = bool(data.get('closed_by_system', False))
-
-              if is_terminal and closed_by_system:
-                  return 'COMPLETED_CLOSED'
-              if is_terminal:
-                  return 'COMPLETED_OPEN_TERMINAL'
-              if next_role == 'SYSTEM':
-                  return 'AWAITING_SYSTEM'
-              if next_role == 'AUDITOR':
-                  return 'AWAITING_AUDITOR'
-              if next_role == 'EXECUTOR':
-                  return 'AWAITING_EXECUTOR'
-              if current_state.endswith('PENDING'):
-                  return 'IN_PROGRESS'
-              if current_state.endswith('APPROVED'):
-                  return 'APPROVED'
-              if current_state.endswith('BLOCKED') or current_state == 'BLOCKED':
-                  return 'BLOCKED'
-              return 'UNKNOWN'
-
-          latest = {}
-
-          for path in sorted(TASKS_DIR.glob('*.json')):
-              if path.name == 'index.json':
-                  continue
-
-              data = json.loads(path.read_text(encoding='utf-8'))
-              task_id = str(data.get('task_id', '')).strip()
-              if not task_id:
-                  continue
-
-              item = {
-                  'task_id': task_id,
-                  'registry_path': str(path.relative_to(ROOT)),
-                  'current_state': str(data.get('current_state', '')).strip(),
-                  'last_event_type': str(data.get('last_event_type', '')).strip(),
-                  'next_role': str(data.get('next_role', '')).strip(),
-                  'next_action': str(data.get('next_action', '')).strip(),
-                  'is_terminal': bool(data.get('is_terminal', False)),
-                  'closed_by_system': bool(data.get('closed_by_system', False)),
-                  'last_event_ts': str(data.get('last_event_ts', '')).strip(),
-              }
-              item['status_bucket'] = infer_status_bucket(data)
-
-              prev = latest.get(task_id)
-              key = (item['last_event_ts'], item['task_id'])
-              if prev is None or key >= (prev['last_event_ts'], prev['task_id']):
-                  latest[task_id] = item
-
-          items = sorted(
-              latest.values(),
-              key=lambda x: (x['last_event_ts'], x['task_id']),
-              reverse=True,
-          )
-
-          summary = {}
-          for item in items:
-              bucket = item['status_bucket']
-              summary[bucket] = summary.get(bucket, 0) + 1
-          summary['TOTAL'] = len(items)
-
-          index_doc = {
-              'system_task_index_version': 'v1',
-              'result': 'SUCCESS',
-              'task_dir': str(TASKS_DIR.relative_to(ROOT)),
-              'index_path': str(INDEX_PATH.relative_to(ROOT)),
-              'summary': summary,
-              'items': items,
+          task = {
+              'task_id': task_id,
+              'current_state': 'REVIEW_PENDING',
+              'last_event_id': f'IMPLEMENTATION_COMPLETED:{task_id}',
+              'last_parent_event_id': '',
+              'last_event_type': 'IMPLEMENTATION_COMPLETED',
+              'last_actor_role': 'EXECUTOR',
+              'last_event_ts': '2026-04-26T00:00:00Z',
+              'last_summary': 'seed for gha domain e2e 002',
+              'next_role': 'AUDITOR',
+              'next_action': 'REVIEW_CODE',
+              'latest_result_value': '',
+              'latest_result_manifest': '',
+              'error_class': '',
+              'error_details': '',
+              'last_failure_ts': '',
+              'last_failure_from_state': '',
+              'is_terminal': False,
+              'closed_by_system': False,
+              'events': [],
           }
 
-          INDEX_PATH.write_text(json.dumps(index_doc, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          print(json.dumps(index_doc['summary'], ensure_ascii=False, indent=2))
+          result = {
+              'result_manifest_version': 'v1',
+              'task_id': task_id,
+              'role': 'AUDITOR',
+              'result': 'SUCCESS',
+              'ts_utc': '2026-04-26T00:00:01Z',
+              'summary': 'Auditor approved TASK-GHA-E2E-002 via GitHub Actions domain verification',
+              'reviewed_ref': f'governance/decisions/IMPLEMENTATION_COMPLETED-{task_id}.json',
+              'reviewed_commit_sha': 'LOCAL',
+              'produced_artifact_type': 'verification_decision',
+              'produced_artifact_path': f'governance/decisions/AUDIT-{task_id}-AUTO-0001.json',
+              'rationale': 'gha e2e 002',
+              'conditions': 'none',
+              'blocked_reason': '',
+              'touched_files': [
+                  f'governance/decisions/IMPLEMENTATION_COMPLETED-{task_id}.json',
+                  f'governance/decisions/AUDIT-{task_id}-AUTO-0001.json',
+              ],
+          }
+
+          impl_artifact = {
+              'artifact_type': 'implementation_result',
+              'task_id': task_id,
+              'created_at': '2026-04-26T00:00:00Z',
+              'summary': 'implementation completed artifact for gha e2e 002',
+          }
+
+          audit_artifact = {
+              'artifact_type': 'verification_decision',
+              'task_id': task_id,
+              'created_at': '2026-04-26T00:00:01Z',
+              'summary': 'auditor verification decision for gha e2e 002',
+          }
+
+          def write(path, data):
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          write(root / 'governance' / 'runtime' / 'tasks' / f'{task_id}.json', task)
+          write(root / 'governance' / 'runtime' / 'results' / 'auditor_materialize_result.gha-e2e-002.json', result)
+          write(root / 'governance' / 'decisions' / f'IMPLEMENTATION_COMPLETED-{task_id}.json', impl_artifact)
+          write(root / 'governance' / 'decisions' / f'AUDIT-{task_id}-AUTO-0001.json', audit_artifact)
+          print(f'SEEDED={task_id}')
           PY
+
+      - name: Bootstrap runtime index
+        run: |
+          python3 governance/scripts/system_index_consistency_check_v1.py
 
       - name: Run autonomy entrypoint cycle 1
         run: |
@@ -149,22 +120,25 @@ jobs:
         run: |
           python3 governance/scripts/system_entrypoint_v1.py
 
-      - name: Verify P-01 domain state
+      - name: Verify TASK-GHA-E2E-002 domain state
         run: |
-          python3 - <<'PY2'
+          set -euo pipefail
+          python3 - <<'PY'
           import json
           from pathlib import Path
 
           ROOT = Path.cwd()
-          task_path = ROOT / 'governance' / 'runtime' / 'tasks' / 'TASK-GHA-E2E-001.json'
+          task_id = 'TASK-GHA-E2E-002'
+          task_path = ROOT / 'governance' / 'runtime' / 'tasks' / f'{task_id}.json'
+          proof_path = ROOT / 'governance' / 'audit' / 'e2e-domain-verification-002-latest.json'
 
           if not task_path.exists():
-              raise SystemExit('P01_DOMAIN_FAIL: task file not found')
+              raise SystemExit('E2E_DOMAIN_FAIL: task file not found')
 
           data = json.loads(task_path.read_text(encoding='utf-8'))
           events = data.get('events', [])
           if not isinstance(events, list):
-              raise SystemExit('P01_DOMAIN_FAIL: events is not a list')
+              raise SystemExit('E2E_DOMAIN_FAIL: events is not a list')
 
           checks = {
               'current_state': str(data.get('current_state', '')).strip(),
@@ -182,19 +156,36 @@ jobs:
               'next_action': '',
           }
 
-          for k, v in expected.items():
-              if checks[k] != v:
-                  raise SystemExit(f'P01_DOMAIN_FAIL: {k}={checks[k]!r}, expected {v!r}')
+          for key, value in expected.items():
+              if checks[key] != value:
+                  raise SystemExit(f'E2E_DOMAIN_FAIL: {key}={checks[key]!r}, expected {value!r}')
 
           if not checks['latest_result_manifest']:
-              raise SystemExit('P01_DOMAIN_FAIL: latest_result_manifest is empty')
+              raise SystemExit('E2E_DOMAIN_FAIL: latest_result_manifest is empty')
 
           if checks['events_count'] < 2:
-              raise SystemExit('P01_DOMAIN_FAIL: events_count < 2')
+              raise SystemExit('E2E_DOMAIN_FAIL: events_count < 2')
 
-          print(json.dumps({
-              'p01_domain_verification': 'PASS',
-              'task_id': 'TASK-GHA-E2E-001',
+          proof = {
+              'bem': 'BEM-344',
+              'task_id': task_id,
+              'result': 'SUCCESS',
+              'domain_verification': 'PASS',
               'checks': checks,
-          }, ensure_ascii=False, indent=2))
-          PY2
+          }
+          proof_path.write_text(json.dumps(proof, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(proof, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Commit E2E domain verification proof
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/audit/e2e-domain-verification-002-latest.json
+          if git diff --cached --quiet; then
+            echo "NO_E2E_DOMAIN_PROOF_CHANGES"
+          else
+            git commit -m "Capture E2E domain verification 002 result"
+            git push origin main
+          fi
