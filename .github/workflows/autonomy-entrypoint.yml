@@ -1,5 +1,5 @@
 name: autonomy-entrypoint
-# BEM-344 E2E domain validation TASK-GHA-E2E-002
+# BEM-345 short E2E domain runner
 
 on:
   workflow_dispatch:
@@ -13,7 +13,6 @@ jobs:
   run-entrypoint:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,152 +29,10 @@ jobs:
           echo "REF=${GITHUB_REF}"
           echo "SHA=${GITHUB_SHA}"
 
-      - name: Seed TASK-GHA-E2E-002 runtime domain fixture
+      - name: Run E2E domain verification 002
         run: |
           set -euo pipefail
-          mkdir -p governance/runtime/tasks governance/runtime/results governance/decisions governance/audit
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          task_id = 'TASK-GHA-E2E-002'
-          root = Path.cwd()
-
-          task = {
-              'task_id': task_id,
-              'current_state': 'REVIEW_PENDING',
-              'last_event_id': f'IMPLEMENTATION_COMPLETED:{task_id}',
-              'last_parent_event_id': '',
-              'last_event_type': 'IMPLEMENTATION_COMPLETED',
-              'last_actor_role': 'EXECUTOR',
-              'last_event_ts': '2026-04-26T00:00:00Z',
-              'last_summary': 'seed for gha domain e2e 002',
-              'next_role': 'AUDITOR',
-              'next_action': 'REVIEW_CODE',
-              'latest_result_value': '',
-              'latest_result_manifest': '',
-              'error_class': '',
-              'error_details': '',
-              'last_failure_ts': '',
-              'last_failure_from_state': '',
-              'is_terminal': False,
-              'closed_by_system': False,
-              'events': [],
-          }
-
-          result = {
-              'result_manifest_version': 'v1',
-              'task_id': task_id,
-              'role': 'AUDITOR',
-              'result': 'SUCCESS',
-              'ts_utc': '2026-04-26T00:00:01Z',
-              'summary': 'Auditor approved TASK-GHA-E2E-002 via GitHub Actions domain verification',
-              'reviewed_ref': f'governance/decisions/IMPLEMENTATION_COMPLETED-{task_id}.json',
-              'reviewed_commit_sha': 'LOCAL',
-              'produced_artifact_type': 'verification_decision',
-              'produced_artifact_path': f'governance/decisions/AUDIT-{task_id}-AUTO-0001.json',
-              'rationale': 'gha e2e 002',
-              'conditions': 'none',
-              'blocked_reason': '',
-              'touched_files': [
-                  f'governance/decisions/IMPLEMENTATION_COMPLETED-{task_id}.json',
-                  f'governance/decisions/AUDIT-{task_id}-AUTO-0001.json',
-              ],
-          }
-
-          impl_artifact = {
-              'artifact_type': 'implementation_result',
-              'task_id': task_id,
-              'created_at': '2026-04-26T00:00:00Z',
-              'summary': 'implementation completed artifact for gha e2e 002',
-          }
-
-          audit_artifact = {
-              'artifact_type': 'verification_decision',
-              'task_id': task_id,
-              'created_at': '2026-04-26T00:00:01Z',
-              'summary': 'auditor verification decision for gha e2e 002',
-          }
-
-          def write(path, data):
-              path.parent.mkdir(parents=True, exist_ok=True)
-              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-
-          write(root / 'governance' / 'runtime' / 'tasks' / f'{task_id}.json', task)
-          write(root / 'governance' / 'runtime' / 'results' / 'auditor_materialize_result.gha-e2e-002.json', result)
-          write(root / 'governance' / 'decisions' / f'IMPLEMENTATION_COMPLETED-{task_id}.json', impl_artifact)
-          write(root / 'governance' / 'decisions' / f'AUDIT-{task_id}-AUTO-0001.json', audit_artifact)
-          print(f'SEEDED={task_id}')
-          PY
-
-      - name: Bootstrap runtime index
-        run: |
-          python3 governance/scripts/system_index_consistency_check_v1.py
-
-      - name: Run autonomy entrypoint cycle 1
-        run: |
-          python3 governance/scripts/system_entrypoint_v1.py
-
-      - name: Run autonomy entrypoint cycle 2
-        run: |
-          python3 governance/scripts/system_entrypoint_v1.py
-
-      - name: Verify TASK-GHA-E2E-002 domain state
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          ROOT = Path.cwd()
-          task_id = 'TASK-GHA-E2E-002'
-          task_path = ROOT / 'governance' / 'runtime' / 'tasks' / f'{task_id}.json'
-          proof_path = ROOT / 'governance' / 'audit' / 'e2e-domain-verification-002-latest.json'
-
-          if not task_path.exists():
-              raise SystemExit('E2E_DOMAIN_FAIL: task file not found')
-
-          data = json.loads(task_path.read_text(encoding='utf-8'))
-          events = data.get('events', [])
-          if not isinstance(events, list):
-              raise SystemExit('E2E_DOMAIN_FAIL: events is not a list')
-
-          checks = {
-              'current_state': str(data.get('current_state', '')).strip(),
-              'last_event_type': str(data.get('last_event_type', '')).strip(),
-              'next_role': str(data.get('next_role', '')).strip(),
-              'next_action': str(data.get('next_action', '')).strip(),
-              'latest_result_manifest': str(data.get('latest_result_manifest', '')).strip(),
-              'events_count': len(events),
-          }
-
-          expected = {
-              'current_state': 'COMPLETED_CLOSED',
-              'last_event_type': 'SYSTEM_CLOSE_TIMEOUT',
-              'next_role': '',
-              'next_action': '',
-          }
-
-          for key, value in expected.items():
-              if checks[key] != value:
-                  raise SystemExit(f'E2E_DOMAIN_FAIL: {key}={checks[key]!r}, expected {value!r}')
-
-          if not checks['latest_result_manifest']:
-              raise SystemExit('E2E_DOMAIN_FAIL: latest_result_manifest is empty')
-
-          if checks['events_count'] < 2:
-              raise SystemExit('E2E_DOMAIN_FAIL: events_count < 2')
-
-          proof = {
-              'bem': 'BEM-344',
-              'task_id': task_id,
-              'result': 'SUCCESS',
-              'domain_verification': 'PASS',
-              'checks': checks,
-          }
-          proof_path.write_text(json.dumps(proof, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          print(json.dumps(proof, ensure_ascii=False, indent=2))
-          PY
+          python3 governance/scripts/e2e_domain_verification_002.py
 
       - name: Commit E2E domain verification proof
         run: |
