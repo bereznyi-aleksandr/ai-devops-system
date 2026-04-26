@@ -1,5 +1,5 @@
 name: autonomy-entrypoint
-# BEM-353 trigger run 3 with run-specific E2E proof
+# BEM-355 scheduler: cron + concurrency guard
 
 on:
   workflow_dispatch:
@@ -15,10 +15,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: autonomy-cycle
+  cancel-in-progress: false
+
 jobs:
   run-entrypoint:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
