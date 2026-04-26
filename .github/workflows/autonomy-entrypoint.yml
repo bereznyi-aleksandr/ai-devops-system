@@ -44,7 +44,7 @@ jobs:
       - name: Run E2E domain verification 002
         run: |
           set -euo pipefail
-          python3 governance/scripts/e2e_domain_verification_002.py
+          python3 governance/scripts/system_entrypoint_v1.py
           mkdir -p governance/audit/e2e-domain-runs
           python3 - <<'PY'
           import json
