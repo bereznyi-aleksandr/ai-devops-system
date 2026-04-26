@@ -19,7 +19,7 @@ jobs:
       - name: Run FAILURE PATH proof
         run: |
           set -euo pipefail
-          python3 governance/archive/20260426/bem310/scripts/failure_path_gha_proof.py | tee /tmp/failure-path-gha-proof.log
+          python3 governance/scripts/failure_path_gha_proof.py | tee /tmp/failure-path-gha-proof.log
 
       - name: Verify FAILURE PATH result
         run: |

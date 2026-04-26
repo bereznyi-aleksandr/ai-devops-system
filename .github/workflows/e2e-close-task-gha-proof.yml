@@ -19,7 +19,7 @@ jobs:
       - name: Run CLOSE_TASK handler
         run: |
           set -euo pipefail
-          python3 governance/archive/20260426/bem310/scripts/close_task_handler.py | tee /tmp/close-task-handler.log
+          python3 governance/scripts/close_task_handler.py | tee /tmp/close-task-handler.log
 
       - name: Verify CLOSED state
         run: |
