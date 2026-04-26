@@ -1,47 +1,6 @@
 {
-  "task_id": "TASK-GHA-FAILURE-001",
-  "title": "GitHub Actions FAILURE PATH proof",
-  "current_state": "BLOCKED",
-  "status_bucket": "REVIEW_STALL",
-  "next_role": "AUDITOR",
-  "next_action": "REVIEW_STALL",
-  "is_terminal": false,
-  "closed_by_system": false,
-  "terminal_timeout_minutes": 15,
-  "created_at": "2026-04-25T17:57:56+00:00",
-  "updated_at": "2026-04-25T18:57:56+00:00",
-  "last_transition_at": "2026-04-25T17:57:56+00:00",
-  "events": [
-    {
-      "event_id": "BEM301-SEED-001",
-      "created_at": "2026-04-25T17:57:56+00:00",
-      "role": "SYSTEM",
-      "action": "TASK_PROPOSED",
-      "result": "AWAITING_EXECUTOR_STALE_FOR_FAILURE_PATH_GHA"
-    },
-    {
-      "event_id": "BEM301-FAILURE-002",
-      "created_at": "2026-04-25T18:57:56+00:00",
-      "role": "SYSTEM",
-      "action": "STALLED_WATCHDOG_FAILURE",
-      "result": "FAILURE_MANIFEST_CREATED",
-      "manifest_path": "governance/failures/TASK-GHA-FAILURE-001.failure.json"
-    },
-    {
-      "event_id": "BEM301-APPLY-003",
-      "created_at": "2026-04-25T18:57:56+00:00",
-      "role": "SYSTEM",
-      "action": "GUARDED_APPLY_FAILURE",
-      "result": "TASK_MOVED_TO_REVIEW_STALL"
-    }
-  ],
-  "audit": {
-    "source": "BEM-301",
-    "auditor_requirement": "R-05 FAILURE PATH through GitHub Actions",
-    "expected_final_state": "BLOCKED",
-    "expected_status_bucket": "REVIEW_STALL",
-    "expected_next_role": "AUDITOR"
-  },
-  "failure_manifest": "governance/failures/TASK-GHA-FAILURE-001.failure.json",
-  "failure_path_gha_verified": true
+  "current_state": "APPROVED",
+  "next_role": "EXECUTOR",
+  "next_action": "IMPLEMENT_TASK",
+  "events": []
 }
