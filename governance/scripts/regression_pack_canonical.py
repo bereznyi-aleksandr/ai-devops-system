@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# BEM-340 functional regression pack marker: 2026-04-26T10:20Z
 from __future__ import annotations
 
 import json
