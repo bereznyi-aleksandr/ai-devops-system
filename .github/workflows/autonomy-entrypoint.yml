@@ -1,5 +1,5 @@
 name: autonomy-entrypoint
-# BEM-355 scheduler: cron + concurrency guard
+# BEM-363 scheduler proof for real entrypoint path
 
 on:
   workflow_dispatch:
@@ -41,42 +41,42 @@ jobs:
           echo "RUN_ID=${GITHUB_RUN_ID}"
           echo "RUN_ATTEMPT=${GITHUB_RUN_ATTEMPT}"
 
-      - name: Run E2E domain verification 002
+      - name: Run autonomy entrypoint
         run: |
-          set -euo pipefail
+          set -uo pipefail
           python3 governance/scripts/system_entrypoint_v1.py
-          mkdir -p governance/audit/e2e-domain-runs
-          python3 - <<'PY'
+          entrypoint_exit_code=$?
+          mkdir -p governance/audit
+          ENTRYPOINT_EXIT_CODE="$entrypoint_exit_code" python3 - <<'PY'
+          import datetime
           import json
           import os
           from pathlib import Path
 
-          latest = Path('governance/audit/e2e-domain-verification-002-latest.json')
-          data = json.loads(latest.read_text(encoding='utf-8'))
-          data['github_run'] = {
-              'run_id': os.environ.get('GITHUB_RUN_ID', ''),
-              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT', ''),
-              'sha': os.environ.get('GITHUB_SHA', ''),
-              'workflow': os.environ.get('GITHUB_WORKFLOW', ''),
-              'event_name': os.environ.get('GITHUB_EVENT_NAME', ''),
+          proof = {
+              "event_name": os.environ.get("GITHUB_EVENT_NAME"),
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "sha": os.environ.get("GITHUB_SHA"),
+              "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+              "entrypoint_exit_code": int(os.environ.get("ENTRYPOINT_EXIT_CODE", "1")),
+              "entrypoint_script": "system_entrypoint_v1.py",
           }
-          latest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          run_id = data['github_run']['run_id'] or 'unknown'
-          attempt = data['github_run']['run_attempt'] or '0'
-          run_file = Path('governance/audit/e2e-domain-runs') / f'e2e-domain-verification-002-run-{run_id}-attempt-{attempt}.json'
-          run_file.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          print(run_file)
+          out = Path("governance/audit/autonomy-entrypoint-scheduler-latest.json")
+          out.write_text(json.dumps(proof, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print(json.dumps(proof, ensure_ascii=False, indent=2))
           PY
+          exit "$entrypoint_exit_code"
 
-      - name: Commit E2E domain verification proof
+      - name: Commit autonomy entrypoint scheduler proof
+        if: always()
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/audit/e2e-domain-verification-002-latest.json governance/audit/e2e-domain-runs/*.json
+          git add governance/audit/autonomy-entrypoint-scheduler-latest.json
           if git diff --cached --quiet; then
-            echo "NO_E2E_DOMAIN_PROOF_CHANGES"
+            echo "NO_AUTONOMY_ENTRYPOINT_SCHEDULER_PROOF_CHANGES"
           else
-            git commit -m "Capture E2E domain verification 002 result"
+            git commit -m "Capture autonomy entrypoint scheduler result"
             git push origin main
           fi
