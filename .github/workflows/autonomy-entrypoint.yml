@@ -1,5 +1,5 @@
 name: autonomy-entrypoint
-# BEM-350 workflow retrigger after compact SYSTEM-close runner
+# BEM-351 add write permissions for E2E proof commit
 
 on:
   workflow_dispatch:
@@ -8,6 +8,9 @@ on:
       - main
   schedule:
     - cron: '*/15 * * * *'
+
+permissions:
+  contents: write
 
 jobs:
   run-entrypoint:
