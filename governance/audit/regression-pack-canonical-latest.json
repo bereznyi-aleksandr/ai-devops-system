@@ -1,57 +1,58 @@
 {
-  "regression_pack": "canonical",
+  "regression_pack": "canonical_functional",
+  "source_tz": "executor_tz_v1.md Section 12",
   "result": "PASS",
   "passed": 10,
   "total": 10,
   "tests": [
     {
       "id": "R-01",
-      "name": "R-01 canonical scripts present",
+      "name": "Duplicate index guard",
       "status": "PASS"
     },
     {
       "id": "R-02",
-      "name": "R-02 obsolete scripts absent",
+      "name": "Stale index rebuild",
       "status": "PASS"
     },
     {
       "id": "R-03",
-      "name": "R-03 proof scripts present",
+      "name": "Guarded no-result MANIFEST_NOT_FOUND",
       "status": "PASS"
     },
     {
       "id": "R-04",
-      "name": "R-04 router single 27-col schema",
+      "name": "Apply guarded retest",
       "status": "PASS"
     },
     {
       "id": "R-05",
-      "name": "R-05 single active PROTOCOL.md",
+      "name": "FAILURE path local",
       "status": "PASS"
     },
     {
       "id": "R-06",
-      "name": "R-06 v3.7 prompts absent",
+      "name": "Supersession local",
       "status": "PASS"
     },
     {
       "id": "R-07",
-      "name": "R-07 v3.6-RC2 prompts present",
+      "name": "Tie-break equal ts SYSTEM>AUDITOR>EXECUTOR",
       "status": "PASS"
     },
     {
       "id": "R-08",
-      "name": "R-08 current_task clean",
+      "name": "Max stall cycles exhaustion stall_count=3",
       "status": "PASS"
     },
     {
       "id": "R-09",
-      "name": "R-09 active workflows clean",
+      "name": "Notify processed roundtrip",
       "status": "PASS"
     },
     {
       "id": "R-10",
-      "name": "R-10 core scripts compile",
+      "name": "Full E2E до CLOSED",
       "status": "PASS"
     }
   ]
