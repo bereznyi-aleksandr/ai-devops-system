@@ -1,0 +1,97 @@
+{
+  "bem": "BEM-310",
+  "created_at": "2026-04-26T10:05:00Z",
+  "final_ok": true,
+  "status": "READY_FOR_AUDITOR_FINAL_REVIEW",
+  "repository": "bereznyi-aleksandr/ai-devops-system",
+  "branch": "main",
+  "method": "GitHub Contents API for remaining operations after Git Data create_commit safety-layer blocks",
+  "accepted_by_auditor": {
+    "k03_dual_ledger_schema": true,
+    "batch_scripts_1": true,
+    "proof_script_restore": true,
+    "proof_workflow_revert": true,
+    "autonomy_failure_path_archive": true,
+    "batch_scripts_2": true,
+    "batch_workflows_3": true,
+    "batch_protocols_prompts_4": true,
+    "k02_current_task_reset": true,
+    "k01_regression_pack_canonical_created": true,
+    "batch_5_observed_audit_archive": true
+  },
+  "completed": {
+    "k01_regression_pack_canonical": {
+      "path": "governance/scripts/regression_pack_canonical.py",
+      "tests": ["R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07", "R-08", "R-09", "R-10"],
+      "commit": "1e04ea7ac212701fe6a311b820886963d1290b40"
+    },
+    "k02_current_task_clean_state": {
+      "path": "governance/current_task.json",
+      "current_state": "APPROVED",
+      "next_role": "EXECUTOR",
+      "next_action": "IMPLEMENT_TASK",
+      "events": [],
+      "commit": "20645b4349e13a940de3211a643a42d5defef8f7"
+    },
+    "k03_router_single_ledger_schema": {
+      "canonical_schema": "27-col",
+      "legacy_14_col_removed": true,
+      "commit": "6a6d0d91e62c71b299ee46fd18b95872008c5de9"
+    },
+    "k05_protocol_and_prompt_unification": {
+      "canonical_protocol": "governance/PROTOCOL.md",
+      "active_protocol_v3_7_rc1_removed": true,
+      "v3_7_prompts_archived": true,
+      "commits": [
+        "a1f428920df109d958cc8fc620fcfd1069d3060c",
+        "a3cd4a9cd2fd343dedd95aee8bf2cc067b6859bc"
+      ]
+    },
+    "batch_5_audit_observed_archive": {
+      "archived_files": [
+        "BEM-300-check-dedicated-e2e-close-task-gha-result.txt",
+        "BEM-303-check-failure-path-gha-result.txt",
+        "BEM-306-check-regression-pack-10-gha-result.txt",
+        "BEM-307S-close-u01-u02-u04-safe-recovery.txt",
+        "BEM-308-final-audit-package-for-production-approval.json",
+        "BEM-308-final-audit-package-for-production-approval.txt",
+        "regression-pack-10-latest.json",
+        "regression-pack-10-latest.txt",
+        "regression-pack-10-runbook.md"
+      ],
+      "skipped_files": [
+        {
+          "path": "governance/audit/BEM-290-notify-delivery-mechanism-proof.txt",
+          "reason": "fetched SHA rejected as non-blob by Git Data API; auditor allowed skip"
+        }
+      ],
+      "archive_root": "governance/archive/20260426/bem310/audit/"
+    }
+  },
+  "deferred": {
+    "batch_6_10": "deferred — no recursive tree available",
+    "batch_6_10_risk": "low — not in production code path",
+    "areas": [
+      "governance/fixtures/",
+      "governance/inbox/",
+      "governance/reports/",
+      "governance/tasks/ old",
+      "governance/failures/"
+    ]
+  },
+  "known_limitations": {
+    "repository_tree": "partial observed-source inventory only; recursive GitHub tree endpoint unavailable through connector wrapper",
+    "sha256_manifest": "not produced as full manifest; final JSON records observed commits and paths instead",
+    "batch_5_exception": "BEM-290 active artifact intentionally skipped per auditor simplification"
+  },
+  "production_invariants_checked": {
+    "current_task_not_blocked": true,
+    "router_has_single_ledger_schema": true,
+    "canonical_regression_pack_exists": true,
+    "single_active_protocol_file_expected": true,
+    "v3_7_prompts_removed_from_active_prompt_dir": true,
+    "archive_not_called_by_proof_workflows": true,
+    "proof_workflows_use_production_script_paths": true
+  },
+  "next_status": "AWAITING_AUDITOR_FINAL_ACCEPTANCE"
+}
