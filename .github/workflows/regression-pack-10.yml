@@ -16,20 +16,43 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Run regression pack R-01...R-10
+      - name: Run canonical regression pack R-01...R-10
         run: |
           set -euo pipefail
-          python3 governance/scripts/regression_pack_10.py | tee /tmp/regression-pack-10.log
+          mkdir -p governance/audit
+          python3 governance/scripts/regression_pack_canonical.py | tee governance/audit/regression-pack-canonical-latest.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
 
-      - name: Commit regression pack result
+          src = Path('governance/audit/regression-pack-canonical-latest.json')
+          dst = Path('governance/audit/regression-pack-canonical-latest.txt')
+          data = json.loads(src.read_text(encoding='utf-8'))
+          lines = [
+              'canonical regression pack R-01...R-10',
+              f"result={data.get('result')}",
+              f"total={data.get('total')}",
+              f"passed={data.get('passed')}",
+              f"failed={data.get('total', 0) - data.get('passed', 0)}",
+          ]
+          for item in data.get('tests', []):
+              line = f"{item.get('id')}={item.get('status')} | {item.get('name')}"
+              if item.get('error'):
+                  line += f" | {item.get('error')}"
+              lines.append(line)
+          dst.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          print(dst.read_text(encoding='utf-8'))
+          PY
+
+      - name: Commit canonical regression pack result
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/audit/regression-pack-10-latest.json governance/audit/regression-pack-10-latest.txt
+          git add governance/audit/regression-pack-canonical-latest.json governance/audit/regression-pack-canonical-latest.txt
           if git diff --cached --quiet; then
-            echo "NO_REGRESSION_PACK_RESULT_CHANGES"
+            echo "NO_CANONICAL_REGRESSION_PACK_RESULT_CHANGES"
           else
-            git commit -m "Capture regression pack 10 result"
+            git commit -m "Capture canonical regression pack result"
             git push origin main
           fi
