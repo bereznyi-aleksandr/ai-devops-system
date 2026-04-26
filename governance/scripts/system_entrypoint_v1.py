@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path.cwd()
 LOCK_PATH = ROOT / 'governance' / 'runtime' / '.entrypoint.lock'
+INDEX_CONSISTENCY = ROOT / 'governance' / 'scripts' / 'system_index_consistency_check_v1.py'
 SAFE_RUNNER = ROOT / 'governance' / 'scripts' / 'system_safe_runner_v1.py'
 INVALID_WATCHDOG = ROOT / 'governance' / 'scripts' / 'system_invalid_task_watchdog_v1.py'
 NOTIFY = ROOT / 'governance' / 'scripts' / 'system_role_notify_v1.py'
@@ -52,6 +53,7 @@ def main() -> int:
             'system_entrypoint_version': 'v5',
             'result': 'DRY_RUN',
             'steps': [
+                'INDEX CONSISTENCY BOOTSTRAP',
                 'SAFE RUNNER',
                 'INVALID TASK WATCHDOG',
                 'ROLE NOTIFY',
@@ -72,6 +74,10 @@ def main() -> int:
         return 0
 
     try:
+        rc = run_step('INDEX CONSISTENCY BOOTSTRAP', INDEX_CONSISTENCY)
+        if rc != 0:
+            return rc
+
         rc = run_step('SAFE RUNNER', SAFE_RUNNER)
         if rc != 0:
             return rc
