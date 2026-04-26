@@ -2,6 +2,15 @@ name: Regression Pack 10
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/regression-pack-10.yml'
+      - 'governance/scripts/regression_pack_canonical.py'
+      - 'governance/current_task.json'
+      - 'governance/PROTOCOL.md'
+      - 'governance/scripts/**'
 
 permissions:
   contents: write
