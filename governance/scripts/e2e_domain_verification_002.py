@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# BEM-370 force autonomy-entrypoint retrigger after ROLE LAUNCHER patch
 from __future__ import annotations
 
 import json
