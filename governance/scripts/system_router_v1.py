@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -13,6 +14,37 @@ PROTOCOL = ROOT / "governance" / "PROTOCOL.md"
 EXECUTOR_PACKET = ROOT / "governance" / "runtime" / "packets" / "executor_packet_current.json"
 AUDITOR_PACKET = ROOT / "governance" / "runtime" / "packets" / "auditor_packet_current.json"
 
+CANONICAL_LEDGER_SCHEMA = "27-col"
+CANONICAL_LEDGER_HEADER = [
+    "event_id",
+    "parent_event_id",
+    "task_id",
+    "ts_utc",
+    "actor_role",
+    "event_type",
+    "state",
+    "decision",
+    "result",
+    "summary",
+    "artifact_ref",
+    "proof_ref",
+    "ci_ref",
+    "log_ref",
+    "error_class",
+    "error_details",
+    "next_role",
+    "next_action",
+    "protocol_version",
+    "commit_sha",
+    "stall_class",
+    "infra_scope",
+    "causation_id",
+    "correlation_id",
+    "idempotency_key",
+    "producer",
+    "producer_run_id",
+]
+
 
 class RouterError(RuntimeError):
     pass
@@ -20,20 +52,24 @@ class RouterError(RuntimeError):
 
 def read_protocol_version() -> str:
     text = PROTOCOL.read_text(encoding="utf-8")
-    marker = "## Версия:"
     for line in text.splitlines():
-        if line.startswith(marker):
-            return line.split(":", 1)[1].strip().split()[0]
+        stripped = line.strip().lstrip("#").strip()
+        if stripped.startswith("Версия:"):
+            value = stripped.split(":", 1)[1].strip()
+            match = re.search(r"v\d+\.\d+(?:-[A-Z0-9]+)?", value)
+            if match:
+                return match.group(0)
+            return value.split()[0]
     raise RouterError("Could not determine protocol version from governance/PROTOCOL.md")
 
 
 def detect_ledger_schema(header: List[str]) -> str:
-    header_joined = ",".join(header)
-    if "event_id,parent_event_id,task_id" in header_joined:
-        return "27-col"
-    if len(header) >= 14 and header[0] == "protocol_version":
-        return "14-col"
-    raise RouterError("Unsupported ledger schema")
+    if header == CANONICAL_LEDGER_HEADER:
+        return CANONICAL_LEDGER_SCHEMA
+    raise RouterError(
+        "Unsupported ledger schema: expected canonical 27-col header; "
+        f"found {len(header)} columns: {','.join(header)}"
+    )
 
 
 def read_last_row() -> Tuple[str, Dict[str, str]]:
@@ -57,23 +93,26 @@ def read_last_row() -> Tuple[str, Dict[str, str]]:
 
 
 def normalize_row(schema: str, row: Dict[str, str]) -> Dict[str, str]:
-    if schema == "14-col":
-        return {
-            "protocol_version": row.get("protocol_version", ""),
-            "event_id": row.get("event_id", ""),
-            "parent_event_id": row.get("parent_event_id", ""),
-            "task_id": row.get("task_id", ""),
-            "ts_utc": row.get("ts_utc", ""),
-            "event_type": row.get("event_type", ""),
-            "actor_role": row.get("actor_role", ""),
-            "summary": row.get("summary", ""),
-            "state": row.get("state", ""),
-            "next_role": row.get("next_role", ""),
-            "next_action": row.get("next_action", ""),
-            "artifact_ref": row.get("artifact_ref", ""),
-            "commit_sha": row.get("commit_sha", ""),
-        }
-    raise RouterError(f"Normalization for schema {schema} not implemented")
+    if schema != CANONICAL_LEDGER_SCHEMA:
+        raise RouterError(f"Unsupported ledger schema: {schema}")
+    return {
+        "protocol_version": row.get("protocol_version", ""),
+        "event_id": row.get("event_id", ""),
+        "parent_event_id": row.get("parent_event_id", ""),
+        "task_id": row.get("task_id", ""),
+        "ts_utc": row.get("ts_utc", ""),
+        "event_type": row.get("event_type", ""),
+        "actor_role": row.get("actor_role", ""),
+        "summary": row.get("summary", ""),
+        "state": row.get("state", ""),
+        "next_role": row.get("next_role", ""),
+        "next_action": row.get("next_action", ""),
+        "artifact_ref": row.get("artifact_ref", ""),
+        "proof_ref": row.get("proof_ref", ""),
+        "ci_ref": row.get("ci_ref", ""),
+        "log_ref": row.get("log_ref", ""),
+        "commit_sha": row.get("commit_sha", ""),
+    }
 
 
 def packet_plan(n: Dict[str, str]) -> Dict[str, object]:
@@ -99,17 +138,17 @@ def packet_plan(n: Dict[str, str]) -> Dict[str, object]:
                 "next_role": "EXECUTOR",
                 "next_action": next_action,
                 "artifact_ref": artifact_ref,
-                "proof_ref": "",
-                "ci_ref": "",
-                "log_ref": "",
+                "proof_ref": n.get("proof_ref", ""),
+                "ci_ref": n.get("ci_ref", ""),
+                "log_ref": n.get("log_ref", ""),
                 "summary": f"SYSTEM router generated EXECUTOR packet for {task_id} / {next_action}.",
                 "constraints": [
                     "Do not write governance/exchange_ledger.csv",
                     "Do not merge",
                     "Write only one allowed artifact",
-                    "Write executor_materialize_result.json"
-                ]
-            }
+                    "Write executor_materialize_result.json",
+                ],
+            },
         }
 
     if next_role == "AUDITOR":
@@ -129,20 +168,20 @@ def packet_plan(n: Dict[str, str]) -> Dict[str, object]:
                 "next_action": next_action,
                 "decision_id": decision_id,
                 "reviewed_ref": artifact_ref,
-                "reviewed_commit_sha": "LOCAL",
+                "reviewed_commit_sha": n.get("commit_sha", ""),
                 "artifact_ref": artifact_ref,
-                "proof_ref": "",
-                "ci_ref": "",
-                "log_ref": "",
+                "proof_ref": n.get("proof_ref", ""),
+                "ci_ref": n.get("ci_ref", ""),
+                "log_ref": n.get("log_ref", ""),
                 "summary": f"SYSTEM router generated AUDITOR packet for {task_id} / {next_action}.",
                 "constraints": [
                     "Do not write governance/exchange_ledger.csv",
                     "Do not merge",
                     "Do not implement product changes",
                     "Write only one allowed decision artifact",
-                    "Write auditor_materialize_result.json"
-                ]
-            }
+                    "Write auditor_materialize_result.json",
+                ],
+            },
         }
 
     raise RouterError(f"Unsupported next_role: {next_role}")
@@ -177,11 +216,18 @@ def main() -> int:
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0
     except Exception as e:
-        print(json.dumps({
-            "system_router_version": "v1",
-            "result": "BLOCKED",
-            "error": str(e),
-        }, ensure_ascii=False, indent=2), file=sys.stderr)
+        print(
+            json.dumps(
+                {
+                    "system_router_version": "v1",
+                    "result": "BLOCKED",
+                    "error": str(e),
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
         return 1
 
 
