@@ -1,0 +1,58 @@
+{
+  "regression_pack": "canonical",
+  "result": "PASS",
+  "passed": 10,
+  "total": 10,
+  "tests": [
+    {
+      "id": "R-01",
+      "name": "R-01 canonical scripts present",
+      "status": "PASS"
+    },
+    {
+      "id": "R-02",
+      "name": "R-02 obsolete scripts absent",
+      "status": "PASS"
+    },
+    {
+      "id": "R-03",
+      "name": "R-03 proof scripts present",
+      "status": "PASS"
+    },
+    {
+      "id": "R-04",
+      "name": "R-04 router single 27-col schema",
+      "status": "PASS"
+    },
+    {
+      "id": "R-05",
+      "name": "R-05 single active PROTOCOL.md",
+      "status": "PASS"
+    },
+    {
+      "id": "R-06",
+      "name": "R-06 v3.7 prompts absent",
+      "status": "PASS"
+    },
+    {
+      "id": "R-07",
+      "name": "R-07 v3.6-RC2 prompts present",
+      "status": "PASS"
+    },
+    {
+      "id": "R-08",
+      "name": "R-08 current_task clean",
+      "status": "PASS"
+    },
+    {
+      "id": "R-09",
+      "name": "R-09 active workflows clean",
+      "status": "PASS"
+    },
+    {
+      "id": "R-10",
+      "name": "R-10 core scripts compile",
+      "status": "PASS"
+    }
+  ]
+}
