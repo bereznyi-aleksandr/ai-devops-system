@@ -1,5 +1,5 @@
 name: autonomy-entrypoint
-# BEM-363 scheduler proof for real entrypoint path
+# BEM-374 install Codex CLI for real role execution
 
 on:
   workflow_dispatch:
@@ -9,11 +9,18 @@ on:
     paths:
       - '.github/workflows/autonomy-entrypoint.yml'
       - 'governance/scripts/e2e_domain_verification_002.py'
+      - 'governance/scripts/system_entrypoint_v1.py'
+      - 'governance/scripts/system_role_launcher_v2.py'
+      - 'governance/scripts/run_executor_codex_v2.sh'
+      - 'governance/runtime/tasks/**'
   schedule:
     - cron: '*/15 * * * *'
 
 permissions:
   contents: write
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 concurrency:
   group: autonomy-cycle
@@ -31,6 +38,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Setup Node.js for Codex CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Codex CLI
+        run: npm install -g @openai/codex
+
+      - name: Verify Codex CLI
+        run: codex --version
 
       - name: Show context
         run: |

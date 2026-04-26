@@ -37,6 +37,19 @@ write_failure() {
   python3 "$FAILURE_WRITER" EXECUTOR "$TASK_ID" "$details" || true
 }
 
+if ! command -v codex >/dev/null 2>&1; then
+  cat > "$RESULT_FILE" <<'JSON'
+{
+  "result": "FAILURE",
+  "error_class": "CODEX_CLI_NOT_FOUND",
+  "error_details": "codex command not found in PATH"
+}
+JSON
+  write_failure "CODEX_CLI_NOT_FOUND: codex command not found in PATH"
+  echo "CODEX_CLI_NOT_FOUND: codex command not found in PATH" >&2
+  exit 1
+fi
+
 cat > /tmp/executor_codex_input.txt <<'EOF'
 You are running inside GitHub Codespaces as EXECUTOR.
 
