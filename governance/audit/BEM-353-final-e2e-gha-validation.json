@@ -1,0 +1,73 @@
+{
+  "bem": "BEM-353",
+  "created_at": "2026-04-26T14:05:00Z",
+  "repository": "bereznyi-aleksandr/ai-devops-system",
+  "branch": "main",
+  "status": "READY_FOR_AUDITOR_REVIEW",
+  "final_ok": true,
+  "objective": "Prove three consecutive GitHub Actions E2E domain verification successes for TASK-GHA-E2E-002.",
+  "scope": {
+    "workflow": ".github/workflows/autonomy-entrypoint.yml",
+    "runner": "governance/scripts/e2e_domain_verification_002.py",
+    "task_id": "TASK-GHA-E2E-002",
+    "proof_latest": "governance/audit/e2e-domain-verification-002-latest.json",
+    "proof_runs_dir": "governance/audit/e2e-domain-runs/"
+  },
+  "domain_verification_contract": {
+    "current_state": "COMPLETED_CLOSED",
+    "last_event_type": "SYSTEM_CLOSE_TIMEOUT",
+    "next_role": "",
+    "next_action": "",
+    "latest_result_manifest": "governance/runtime/results/system_close_result_TASK-GHA-E2E-002.json",
+    "events_count_min": 3
+  },
+  "consecutive_successes": [
+    {
+      "ordinal": 1,
+      "proof_commit": "c35b9113e71ba4cc4e8b46fc201be0ae1defbafb",
+      "proof_model": "legacy latest-only proof",
+      "result": "SUCCESS",
+      "domain_verification": "PASS",
+      "proof_path": "governance/audit/e2e-domain-verification-002-latest.json",
+      "notes": "First observed successful E2E GHA domain proof before run-specific proof model was added."
+    },
+    {
+      "ordinal": 2,
+      "proof_commit": "066255cc08bf5b5e78cf435b1f2a44603591ed8c",
+      "proof_model": "run-specific proof",
+      "run_id": "24958262873",
+      "run_attempt": "1",
+      "trigger_sha": "f79cd5cebb7cd6db1d61e7203458dd0a5fe7be68",
+      "workflow": "autonomy-entrypoint",
+      "event_name": "push",
+      "result": "SUCCESS",
+      "domain_verification": "PASS",
+      "proof_path": "governance/audit/e2e-domain-runs/e2e-domain-verification-002-run-24958262873-attempt-1.json"
+    },
+    {
+      "ordinal": 3,
+      "proof_commit": "f250ef5680ad22d58c2b0b2a47a76c4f203f0632",
+      "proof_model": "run-specific proof",
+      "run_id": "24958450122",
+      "run_attempt": "1",
+      "trigger_sha": "0433f5d02fb7f44d76f82dda7bc36dd742106ebf",
+      "workflow": "autonomy-entrypoint",
+      "event_name": "push",
+      "result": "SUCCESS",
+      "domain_verification": "PASS",
+      "proof_path": "governance/audit/e2e-domain-runs/e2e-domain-verification-002-run-24958450122-attempt-1.json"
+    }
+  ],
+  "summary": {
+    "consecutive_success_total": 3,
+    "all_results_success": true,
+    "all_domain_verification_pass": true,
+    "run_specific_proof_model_active": true,
+    "push_loop_bounded_by_paths": true
+  },
+  "remaining_non_blocking_items": {
+    "batch_6_10_deferred": "Still deferred until full tree is available.",
+    "sha256_manifest": "Still deferred until full clone/tree is available."
+  },
+  "next_status": "AWAITING_AUDITOR_ACCEPTANCE"
+}
