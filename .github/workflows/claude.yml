@@ -11,60 +11,91 @@ on:
     types: [submitted]
 
 jobs:
-  route:
+  executor:
     if: |
-      (github.event_name == 'issue_comment' && (
-        contains(github.event.comment.body, '@executor') ||
-        contains(github.event.comment.body, '@analyst') ||
-        contains(github.event.comment.body, '@auditor') ||
-        contains(github.event.comment.body, '@claude')
-      )) ||
-      (github.event_name == 'issues' && (
-        contains(github.event.issue.body, '@executor') ||
-        contains(github.event.issue.body, '@analyst') ||
-        contains(github.event.issue.body, '@auditor') ||
-        contains(github.event.issue.body, '@claude') ||
-        contains(github.event.issue.title, '@claude')
-      ))
-
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@executor')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@executor'))
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
       pull-requests: write
       issues: write
       id-token: write
       actions: read
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Detect role and select prompt
-        id: role
-        run: |
-          BODY="${{ github.event.comment.body }}${{ github.event.issue.body }}"
-
-          if echo "$BODY" | grep -q '@executor'; then
-            echo "prompt=governance/prompts/executor_prompt.md" >> $GITHUB_OUTPUT
-            echo "role=EXECUTOR" >> $GITHUB_OUTPUT
-          elif echo "$BODY" | grep -q '@analyst'; then
-            echo "prompt=governance/prompts/analyst_prompt.md" >> $GITHUB_OUTPUT
-            echo "role=ANALYST" >> $GITHUB_OUTPUT
-          elif echo "$BODY" | grep -q '@auditor'; then
-            echo "prompt=governance/prompts/auditor_prompt.md" >> $GITHUB_OUTPUT
-            echo "role=AUDITOR" >> $GITHUB_OUTPUT
-          else
-            echo "prompt=" >> $GITHUB_OUTPUT
-            echo "role=CLAUDE" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run Claude Code as detected role
+      - name: Run as EXECUTOR
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt_file: ${{ steps.role.outputs.prompt }}
-          claude_args: |
-            --max-turns 15
+          claude_args: --max-turns 15
+
+  analyst:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@analyst')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@analyst'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Run as ANALYST
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: --max-turns 10
+
+  auditor:
+    if: |
+      github.event_name == 'issue_comment' && contains(github.event.comment.body, '@auditor')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Run as AUDITOR
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: --max-turns 10
+
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: --max-turns 10
