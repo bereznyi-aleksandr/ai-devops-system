@@ -4,7 +4,7 @@ on:
   issue_comment:
     types: [created]
   issues:
-    types: [opened, edited]
+    types: [opened, assigned]
 
 jobs:
   executor:
@@ -16,13 +16,13 @@ jobs:
 
     permissions:
       contents: write
-      issues: write
       pull-requests: write
+      issues: write
       id-token: write
       actions: read
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -32,4 +32,5 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt_file: governance/prompts/executor_prompt.md
-          claude_args: --max-turns 15
+          claude_args: |
+            --max-turns 15
