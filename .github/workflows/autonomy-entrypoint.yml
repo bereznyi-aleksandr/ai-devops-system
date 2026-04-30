@@ -1,82 +1,19 @@
 name: autonomy-entrypoint
-# BEM-363 scheduler proof for real entrypoint path
+# DISABLED: старый автономный контур отключён 2026-04-29
+# Заменён новой архитектурой: АУДИТОР + Claude Code через Issues
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/autonomy-entrypoint.yml'
-      - 'governance/scripts/e2e_domain_verification_002.py'
-  schedule:
-    - cron: '*/15 * * * *'
-
-permissions:
-  contents: write
-
-concurrency:
-  group: autonomy-cycle
-  cancel-in-progress: false
+    inputs:
+      reason:
+        description: 'Причина ручного запуска'
+        required: false
 
 jobs:
-  run-entrypoint:
+  disabled:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Show context
+      - name: Workflow disabled
         run: |
-          echo "WORKFLOW=${GITHUB_WORKFLOW}"
-          echo "EVENT=${GITHUB_EVENT_NAME}"
-          echo "REF=${GITHUB_REF}"
-          echo "SHA=${GITHUB_SHA}"
-          echo "RUN_ID=${GITHUB_RUN_ID}"
-          echo "RUN_ATTEMPT=${GITHUB_RUN_ATTEMPT}"
-
-      - name: Run autonomy entrypoint
-        run: |
-          set -uo pipefail
-          python3 governance/scripts/system_entrypoint_v1.py
-          entrypoint_exit_code=$?
-          mkdir -p governance/audit
-          ENTRYPOINT_EXIT_CODE="$entrypoint_exit_code" python3 - <<'PY'
-          import datetime
-          import json
-          import os
-          from pathlib import Path
-
-          proof = {
-              "event_name": os.environ.get("GITHUB_EVENT_NAME"),
-              "run_id": os.environ.get("GITHUB_RUN_ID"),
-              "sha": os.environ.get("GITHUB_SHA"),
-              "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
-              "entrypoint_exit_code": int(os.environ.get("ENTRYPOINT_EXIT_CODE", "1")),
-              "entrypoint_script": "system_entrypoint_v1.py",
-          }
-          out = Path("governance/audit/autonomy-entrypoint-scheduler-latest.json")
-          out.write_text(json.dumps(proof, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          print(json.dumps(proof, ensure_ascii=False, indent=2))
-          PY
-          exit "$entrypoint_exit_code"
-
-      - name: Commit autonomy entrypoint scheduler proof
-        if: always()
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/audit/autonomy-entrypoint-scheduler-latest.json
-          if git diff --cached --quiet; then
-            echo "NO_AUTONOMY_ENTRYPOINT_SCHEDULER_PROOF_CHANGES"
-          else
-            git commit -m "Capture autonomy entrypoint scheduler result"
-            git push origin main
-          fi
+          echo "DISABLED: старый автономный контур отключён."
+          echo "Используй новую схему: АУДИТОР создаёт issue с @claude."
