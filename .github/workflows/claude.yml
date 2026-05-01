@@ -1,4 +1,4 @@
-name: Claude Code Router
+name: Claude Code — AI DevOps System
 
 on:
   issue_comment:
@@ -11,28 +11,6 @@ on:
     types: [submitted]
 
 jobs:
-  executor:
-    if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@executor')) ||
-      (github.event_name == 'issues' && contains(github.event.issue.body, '@executor'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-      id-token: write
-      actions: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-      - name: Run as EXECUTOR
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          claude_args: --max-turns 15
-
   analyst:
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@analyst')) ||
@@ -45,7 +23,7 @@ jobs:
       id-token: write
       actions: read
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -53,7 +31,33 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          prompt_file: governance/prompts/analyst_prompt.md
           claude_args: --max-turns 10
+
+  executor:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@executor')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@executor'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Run as EXECUTOR
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          prompt_file: governance/prompts/executor_prompt.md
+          claude_args: --max-turns 15
 
   auditor:
     if: |
@@ -66,7 +70,7 @@ jobs:
       id-token: write
       actions: read
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -74,11 +78,13 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          prompt_file: governance/prompts/auditor_prompt.md
           claude_args: --max-turns 10
 
   claude:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && !contains(github.event.comment.body, '@analyst') && !contains(github.event.comment.body, '@executor') && !contains(github.event.comment.body, '@auditor')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
@@ -90,7 +96,7 @@ jobs:
       id-token: write
       actions: read
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -98,4 +104,5 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           claude_args: --max-turns 10
