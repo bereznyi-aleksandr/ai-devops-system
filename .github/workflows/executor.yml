@@ -10,7 +10,7 @@ jobs:
   executor:
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@executor')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@executor') || contains(github.event.issue.title, '@executor')))
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@executor'))
 
     runs-on: ubuntu-latest
 
@@ -27,19 +27,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Read executor prompt
-        id: prompt
-        run: |
-          PROMPT=$(cat governance/prompts/executor_prompt.md)
-          echo "content<<EOF" >> $GITHUB_OUTPUT
-          echo "$PROMPT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Run as EXECUTOR
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          claude_args: |
-            --max-turns 15
-            --append-system-prompt "${{ steps.prompt.outputs.content }}"
+          prompt_file: governance/prompts/executor_prompt.md
+          claude_args: --max-turns 15
