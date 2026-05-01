@@ -32,6 +32,5 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          claude_args: |
-            --max-turns 10
-            --append-system-prompt "$(cat governance/prompts/analyst_prompt.md)"
+          prompt_file: governance/prompts/analyst_prompt.md
+          claude_args: --max-turns 10
