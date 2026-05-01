@@ -1,29 +1,9 @@
-name: Diagnose issue_comment
-
+# DISABLED — BEM-055
+name: DISABLED
 on:
-  issue_comment:
-    types: [created]
-
+  workflow_dispatch:
 jobs:
-  diagnose:
-    if: |
-      contains(github.event.comment.body, '@claude') ||
-      contains(github.event.comment.body, '@analyst') ||
-      contains(github.event.comment.body, '@executor') ||
-      contains(github.event.comment.body, '@auditor')
+  disabled:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      issues: write
-
     steps:
-      - name: Print event identity (safe)
-        env:
-          GH_EVENT_PATH: ${{ github.event_path }}
-        run: |
-          echo "event_name=${{ github.event_name }}"
-          echo "actor=${{ github.actor }}"
-          echo "sender=${{ github.event.sender.login }}"
-          echo "author_association=${{ github.event.comment.author_association }}"
-          echo "issue_number=${{ github.event.issue.number }}"
-          echo "comment_body_safe=$(jq -r '.comment.body' "$GITHUB_EVENT_PATH" | head -c 200)"
+      - run: echo "DISABLED"
