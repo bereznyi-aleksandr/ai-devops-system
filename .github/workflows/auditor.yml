@@ -24,10 +24,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run Auditor (Claude Code)
+      - name: Run as AUDITOR
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt_file: governance/prompts/auditor_prompt.md
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           claude_args: |
             --max-turns 10
+            --append-system-prompt "$(cat governance/prompts/auditor_prompt.md)"
