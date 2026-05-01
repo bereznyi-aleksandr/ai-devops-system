@@ -1,0 +1,22 @@
+name: Executor Diagnostic
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  diagnostic:
+    if: contains(github.event.comment.body, '@executor')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Comment diagnostic result
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+        run: |
+          gh issue comment "$ISSUE_URL" --body "EXECUTOR_DIAGNOSTIC_TRIGGERED — workflow executor-diagnostic.yml сработал"
