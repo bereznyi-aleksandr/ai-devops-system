@@ -3,34 +3,47 @@ name: Executor
 on:
   issue_comment:
     types: [created]
-  issues:
-    types: [opened, assigned]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
 
 jobs:
   executor:
-    if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@executor')) ||
-      (github.event_name == 'issues' && contains(github.event.issue.body, '@executor'))
-
+    if: contains(github.event.comment.body, '@executor')
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-      id-token: write
-      actions: read
+    concurrency:
+      group: executor-${{ github.event.issue.number }}
+      cancel-in-progress: false
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+
+      - name: Load executor prompt
+        id: role_prompt
+        shell: bash
+        run: |
+          {
+            echo 'text<<EOF'
+            cat governance/prompts/executor_prompt.md
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Run as EXECUTOR
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          prompt_file: governance/prompts/executor_prompt.md
-          claude_args: --max-turns 15
+          trigger_phrase: "@executor"
+          prompt: |
+            ${{ steps.role_prompt.outputs.text }}
+
+            Входящий комментарий:
+            ${{ github.event.comment.body }}
+
+            Работай строго как ИСПОЛНИТЕЛЬ. Выполни задачу. Опубликуй отчёт в текущем issue. В конце вызови @auditor.
+          claude_args: "--max-turns 15"
