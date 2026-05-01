@@ -1,0 +1,130 @@
+name: Codex Local ISA
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  codex-local:
+    name: Codex Local ISA
+    if: >
+      github.event.issue.number == 31 &&
+      (contains(github.event.comment.body, '@gpt_analyst') ||
+       contains(github.event.comment.body, '@gpt_auditor') ||
+       contains(github.event.comment.body, '@gpt_executor'))
+    runs-on: [self-hosted, codex-local]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify local Codex CLI
+        shell: bash
+        run: |
+          set -e
+          export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
+          echo "node=$(command -v node || true)"
+          echo "codex=$(command -v codex || true)"
+          node -v
+          codex --version
+
+      - name: Build role prompt
+        shell: bash
+        run: |
+          set -e
+          BODY_FILE="$RUNNER_TEMP/issue_comment_body.txt"
+          PROMPT_FILE="$RUNNER_TEMP/codex_prompt.txt"
+          cat > "$BODY_FILE" <<'BODY'
+          ${{ github.event.comment.body }}
+          BODY
+
+          ROLE="UNKNOWN"
+          if grep -q '@gpt_analyst' "$BODY_FILE"; then ROLE="GPT_ANALYST"; fi
+          if grep -q '@gpt_auditor' "$BODY_FILE"; then ROLE="GPT_AUDITOR"; fi
+          if grep -q '@gpt_executor' "$BODY_FILE"; then ROLE="GPT_EXECUTOR"; fi
+
+          cat > "$PROMPT_FILE" <<PROMPT
+          BEM-092 | CODEX_LOCAL_ISA | $ROLE
+
+          You are running locally inside the ai-devops-system repository on a self-hosted runner.
+
+          ROLE: $ROLE
+          MODE: follow the role request from the GitHub issue comment.
+
+          Read before acting:
+          - governance/MASTER_PLAN.md
+          - governance/EXCHANGE.md
+          - governance/exchange.jsonl
+
+          User issue comment:
+          -----
+          $(cat "$BODY_FILE")
+          -----
+
+          Global constraints:
+          - Do not use Codex Cloud.
+          - Do not use @codex.
+          - Do not expand scope.
+          - Do not edit secrets, billing, permissions, production deploy, or archive.
+          - For GPT_ANALYST: read and plan only; do not edit files.
+          - For GPT_AUDITOR: review only; do not edit files.
+          - For GPT_EXECUTOR: execute only an explicitly approved scope from GPT_AUDITOR.
+          - Do not commit or push unless the issue comment explicitly says OWNER_APPROVED_COMMIT.
+
+          Output a BEM report with this table:
+          | Completed action | Next planned action | Short comment |
+          |---|---|---|
+          PROMPT
+
+          echo "ROLE=$ROLE" >> "$GITHUB_ENV"
+          echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
+
+      - name: Run local Codex CLI
+        shell: bash
+        run: |
+          set -e
+          export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
+          OUTPUT_FILE="$RUNNER_TEMP/codex_output.md"
+          codex "$(cat "$PROMPT_FILE")" | tee "$OUTPUT_FILE"
+          echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
+
+      - name: Post Codex report to issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -e
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.request
+
+          repo = os.environ["REPO"]
+          issue = os.environ["ISSUE_NUMBER"]
+          token = os.environ["GH_TOKEN"]
+          output_path = pathlib.Path(os.environ["OUTPUT_FILE"])
+          output = output_path.read_text(encoding="utf-8", errors="replace")
+          body = "BEM-092 | CODEX_LOCAL_ISA | RUN RESULT\n\n" + output[-60000:]
+          data = json.dumps({"body": body}).encode("utf-8")
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{repo}/issues/{issue}/comments",
+              data=data,
+              headers={
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req) as resp:
+              print(resp.status)
+          PY
