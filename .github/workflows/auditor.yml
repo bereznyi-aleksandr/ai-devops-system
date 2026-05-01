@@ -7,7 +7,7 @@ on:
 jobs:
   auditor:
     if: |
-      contains(github.event.comment.body, '@auditor')
+      github.event_name == 'issue_comment' && contains(github.event.comment.body, '@auditor')
 
     runs-on: ubuntu-latest
 
@@ -29,6 +29,5 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          claude_args: |
-            --max-turns 10
-            --append-system-prompt "$(cat governance/prompts/auditor_prompt.md)"
+          prompt_file: governance/prompts/auditor_prompt.md
+          claude_args: --max-turns 10
