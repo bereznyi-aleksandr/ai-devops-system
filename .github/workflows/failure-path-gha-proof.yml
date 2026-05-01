@@ -1,65 +1,9 @@
-name: Failure Path GHA Proof
-
+# DISABLED — BEM-055
+name: DISABLED
 on:
   workflow_dispatch:
-
-permissions:
-  contents: write
-
 jobs:
-  failure-path-proof:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Run FAILURE PATH proof
-        run: |
-          set -euo pipefail
-          python3 governance/scripts/failure_path_gha_proof.py | tee /tmp/failure-path-gha-proof.log
-
-      - name: Verify FAILURE PATH result
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          task = json.loads(Path("governance/tasks/TASK-GHA-FAILURE-001.json").read_text(encoding="utf-8"))
-          manifest = Path("governance/failures/TASK-GHA-FAILURE-001.failure.json")
-
-          events = task.get("events", [])
-          if not isinstance(events, list):
-              events = []
-
-          assert manifest.exists(), "failure manifest missing"
-          assert task.get("current_state") == "BLOCKED", task.get("current_state")
-          assert task.get("status_bucket") == "REVIEW_STALL", task.get("status_bucket")
-          assert task.get("next_role") == "AUDITOR", task.get("next_role")
-          assert len(events) >= 3, len(events)
-
-          print("FAILURE_PATH_GHA_PROOF=PASS")
-          print("stalled_watchdog=triggered")
-          print("failure_manifest_created=true")
-          print("guarded_apply=applied")
-          print("task_current_state=BLOCKED")
-          print("task_status_bucket=REVIEW_STALL")
-          print("task_next_role=AUDITOR")
-          print(f"events_count={len(events)}")
-          PY
-
-      - name: Commit FAILURE PATH proof
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/current_task.json governance/tasks/TASK-GHA-FAILURE-001.json governance/failures/TASK-GHA-FAILURE-001.failure.json
-          if git diff --cached --quiet; then
-            echo "NO_FAILURE_PATH_CHANGES_TO_COMMIT"
-          else
-            git commit -m "Capture FAILURE PATH proof through GitHub Actions"
-            git push origin main
-          fi
+      - run: echo "DISABLED"
