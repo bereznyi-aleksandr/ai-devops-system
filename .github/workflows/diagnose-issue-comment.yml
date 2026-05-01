@@ -1,0 +1,22 @@
+name: Diagnose issue_comment
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Print event identity
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "actor=${{ github.actor }}"
+          echo "sender=${{ github.event.sender.login }}"
+          echo "author_association=${{ github.event.comment.author_association }}"
+          echo "comment_body=${{ github.event.comment.body }}"
+          echo "issue_number=${{ github.event.issue.number }}"
