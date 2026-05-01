@@ -13,6 +13,8 @@ jobs:
     name: Codex Local ISA
     if: >
       github.event.issue.number == 31 &&
+      github.actor == 'bereznyi-aleksandr' &&
+      github.event.comment.author_association == 'OWNER' &&
       (contains(github.event.comment.body, '@gpt_analyst') ||
        contains(github.event.comment.body, '@gpt_auditor') ||
        contains(github.event.comment.body, '@gpt_executor'))
@@ -49,7 +51,7 @@ jobs:
           if grep -q '@gpt_executor' "$BODY_FILE"; then ROLE="GPT_EXECUTOR"; fi
 
           cat > "$PROMPT_FILE" <<PROMPT
-          BEM-092 | CODEX_LOCAL_ISA | $ROLE
+          BEM-096 | CODEX_LOCAL_ISA | $ROLE
 
           You are running locally inside the ai-devops-system repository on a self-hosted runner.
 
@@ -112,7 +114,7 @@ jobs:
           token = os.environ["GH_TOKEN"]
           output_path = pathlib.Path(os.environ["OUTPUT_FILE"])
           output = output_path.read_text(encoding="utf-8", errors="replace")
-          body = "BEM-092 | CODEX_LOCAL_ISA | RUN RESULT\n\n" + output[-60000:]
+          body = "BEM-096 | CODEX_LOCAL_ISA | RUN RESULT\n\n" + output[-60000:]
           data = json.dumps({"body": body}).encode("utf-8")
           req = urllib.request.Request(
               f"https://api.github.com/repos/{repo}/issues/{issue}/comments",
