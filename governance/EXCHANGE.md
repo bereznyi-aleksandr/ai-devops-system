@@ -7,15 +7,15 @@
 |---|---|
 | repository | bereznyi-aleksandr/ai-devops-system |
 | main_issue | #31 |
-| active_contour | claude |
-| fallback_contour | gpt_codex |
+| active_contour | gpt_codex_local |
+| fallback_contour | gpt_codex_local |
 | fallback_enabled | true |
-| fallback_reason | null |
+| fallback_reason | Claude Code usage limit reached; owner approved local Codex CLI fallback |
 | owner_approval_required | true |
 | current_phase | repository cleanup and base structure |
-| current_stage | clean state layer replacement with legacy archive |
+| current_stage | local Codex fallback active |
 | last_known_blocker | Claude Code usage limit was observed |
-| next_action | continue cleanup via @analyst |
+| next_action | GPT curator and local Codex flow prepare next minimal safe step |
 | owner_action_required | false |
 | curator_schedule | hourly |
 | curator_interval_minutes | 60 |
