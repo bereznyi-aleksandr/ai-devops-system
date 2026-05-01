@@ -1,75 +1,9 @@
-name: Ledger Protocol Validate
-
+# DISABLED — BEM-055
+name: DISABLED
 on:
   workflow_dispatch:
-    inputs:
-      protocol_path:
-        description: 'Path to protocol document'
-        required: false
-        default: 'governance/PROTOCOL.md'
-        type: string
-      ledger_path:
-        description: 'Path to canonical ledger'
-        required: false
-        default: 'governance/exchange_ledger_v3_6_rc2.csv'
-        type: string
-
 jobs:
-  validate:
+  disabled:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Validate protocol and ledger bootstrap
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import csv
-          from pathlib import Path
-
-          protocol_path = Path('${{ github.event.inputs.protocol_path }}')
-          ledger_path = Path('${{ github.event.inputs.ledger_path }}')
-
-          required_markers = [
-              'Версия: v3.6-RC2',
-              'РАЗДЕЛ 10. ФОРМАТ ГЛАВНОГО РЕЕСТРА',
-              'РАЗДЕЛ 21. ALLOWED WORKFLOW SET / LEGACY DENYLIST',
-              'РАЗДЕЛ 31. ХОЛОДНЫЙ СТАРТ',
-              'РАЗДЕЛ 41. ГРАНИЦЫ ОТВЕТСТВЕННОСТИ GPT-РОЛИ',
-          ]
-
-          expected_header = [
-              'event_id','parent_event_id','task_id','ts_utc','actor_role','event_type','state','decision','result','summary',
-              'artifact_ref','proof_ref','ci_ref','log_ref','error_class','error_details','next_role','next_action',
-              'protocol_version','commit_sha','stall_class','infra_scope','causation_id','correlation_id','idempotency_key',
-              'producer','producer_run_id'
-          ]
-
-          if not protocol_path.exists():
-              raise SystemExit('PROTOCOL_DOC_MISSING')
-          body = protocol_path.read_text(encoding='utf-8')
-          for marker in required_markers:
-              if marker not in body:
-                  raise SystemExit(f'PROTOCOL_STRUCTURE_CORRUPTED: missing marker {marker}')
-          if len(body) < 25000:
-              raise SystemExit('PROTOCOL_TOO_SMALL')
-
-          if not ledger_path.exists():
-              raise SystemExit('LEDGER_FILE_MISSING')
-          with ledger_path.open('r', encoding='utf-8', newline='') as f:
-              reader = csv.reader(f)
-              header = next(reader, None)
-          if header != expected_header:
-              raise SystemExit('LEDGER_HEADER_MISMATCH')
-
-          print('LEDGER_PROTOCOL_VALIDATE=PASSED')
-          PY
-
-      - name: Guardrail
-        run: |
-          echo "Validates protocol and canonical ledger bootstrap only."
-          echo "No routing or state progression here."
+      - run: echo "DISABLED"
