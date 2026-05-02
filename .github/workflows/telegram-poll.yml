@@ -1,0 +1,132 @@
+name: Telegram Poll
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Poll Telegram and process messages
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          python3 - <<'EOF'
+          import os, json, urllib.request, urllib.parse
+          from datetime import datetime, timezone, timedelta
+
+          TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+          CHAT_ID = int(os.environ["TELEGRAM_CHAT_ID"])
+
+          def tg_get(method, params=None):
+              url = f"https://api.telegram.org/bot{TOKEN}/{method}"
+              if params:
+                  url += "?" + urllib.parse.urlencode(params)
+              return json.loads(urllib.request.urlopen(url).read())
+
+          def tg_send(text):
+              data = urllib.parse.urlencode({
+                  "chat_id": CHAT_ID,
+                  "text": text,
+                  "parse_mode": "Markdown"
+              }).encode()
+              urllib.request.urlopen(
+                  urllib.request.Request(
+                      f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+                      data=data
+                  )
+              )
+
+          # Читать offset
+          offset_file = "governance/telegram_offset.txt"
+          try:
+              with open(offset_file) as f:
+                  offset = int(f.read().strip())
+          except:
+              offset = 0
+
+          # Получить новые сообщения
+          result = tg_get("getUpdates", {"offset": offset, "timeout": 5})
+          updates = result.get("result", [])
+
+          now_ua = (datetime.now(timezone.utc) + timedelta(hours=3)).strftime("%H:%M UA")
+
+          for update in updates:
+              offset = update["update_id"] + 1
+              msg = update.get("message", {})
+              if msg.get("chat", {}).get("id") != CHAT_ID:
+                  continue
+
+              text = (msg.get("text") or "").strip()
+              if not text:
+                  continue
+
+              # Записать входящее сообщение в ISA
+              inbox_entry = json.dumps({
+                  "timestamp": datetime.now(timezone.utc).isoformat(),
+                  "source": "telegram",
+                  "target": "curator",
+                  "message_id": update["update_id"],
+                  "text": text,
+                  "status": "pending"
+              }, ensure_ascii=False)
+
+              with open("governance/telegram_inbox.jsonl", "a") as f:
+                  f.write(inbox_entry + "\n")
+
+              tg_send(f"📨 *{now_ua}* | Получено: _{text}_\nКуратор готовит ответ...")
+
+          # Читать outbox — готовые ответы куратора
+          try:
+              with open("governance/telegram_outbox.jsonl") as f:
+                  entries = [json.loads(l) for l in f if l.strip()]
+          except:
+              entries = []
+
+          pending = [e for e in entries if e.get("status") == "ready_to_send"]
+          sent_ids = []
+
+          for entry in pending:
+              tg_send(entry.get("text", ""))
+              entry["status"] = "sent"
+              sent_ids.append(entry.get("message_id"))
+
+          if sent_ids:
+              with open("governance/telegram_outbox.jsonl", "w") as f:
+                  for e in entries:
+                      f.write(json.dumps(e, ensure_ascii=False) + "\n")
+
+          # Сохранить offset
+          with open(offset_file, "w") as f:
+              f.write(str(offset))
+
+          print(f"Poll done. Updates: {len(updates)}, Pending sent: {len(sent_ids)}")
+          EOF
+
+      - name: Commit state
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "telegram-poll@ai-devops-system"
+          git config user.name "Telegram Poll"
+          git pull --rebase origin main
+          git add governance/telegram_inbox.jsonl governance/telegram_outbox.jsonl governance/telegram_offset.txt || true
+          git diff --cached --quiet || git commit -m "TELEGRAM POLL: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
