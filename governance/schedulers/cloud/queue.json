@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "scheduler": "cloud_scheduler",
+  "curator": "cloud_curator",
+  "tasks": [
+    {
+      "id": "TASK-E2-002-CLOUD",
+      "title": "create cloud scheduler queue",
+      "status": "pending",
+      "role": "curator",
+      "contour": "claude_cloud_code",
+      "created_by": "BEM-184",
+      "requires_owner_approval": false
+    }
+  ]
+}
