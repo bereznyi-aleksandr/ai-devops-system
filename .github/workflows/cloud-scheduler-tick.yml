@@ -1,0 +1,51 @@
+name: Cloud Scheduler Tick
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 * * * *'  # каждый час в :30 (сдвинут от GPT на 30 минут)
+
+jobs:
+  cloud-tick:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Cloud Scheduler Tick
+        run: |
+          cd governance
+          python3 cloud_scheduler_tick.py
+
+      - name: Commit state changes
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "cloud-scheduler@ai-devops-system"
+          git config user.name "Cloud Scheduler"
+          git add governance/schedulers/cloud/
+          git add governance/exchange.jsonl
+          git diff --cached --quiet || git commit -m "CLOUD SCHEDULER TICK: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
+
+      - name: Report to issue
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          STATE=$(cat governance/schedulers/cloud/state.json)
+          LAST_TICK=$(echo "$STATE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('last_tick','unknown'))")
+          gh issue comment 31 \
+            --repo bereznyi-aleksandr/ai-devops-system \
+            --body "CLOUD SCHEDULER TICK | $LAST_TICK | Tick completed. Check governance/schedulers/cloud/reports/ for details."
