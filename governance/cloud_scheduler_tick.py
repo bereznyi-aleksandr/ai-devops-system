@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Cloud Scheduler Tick
-BEM-184 | Версия: v1.0 | Дата: 2026-05-02
+BEM-205 | Версия: v1.1 | Дата: 2026-05-02
 
-Читает только governance/schedulers/cloud/queue.json
-НЕ трогает gpt queue.
+FIX: правильный путь к governance/schedulers/cloud/
+Запускается из корня репозитория: python3 governance/cloud_scheduler_tick.py
 """
 
 import json
@@ -12,11 +12,13 @@ import os
 import sys
 from datetime import datetime, timezone
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CLOUD_QUEUE = os.path.join(REPO_ROOT, "schedulers", "cloud", "queue.json")
-CLOUD_STATE = os.path.join(REPO_ROOT, "schedulers", "cloud", "state.json")
-CLOUD_REPORTS = os.path.join(REPO_ROOT, "schedulers", "cloud", "reports")
-EXCHANGE_JSONL = os.path.join(REPO_ROOT, "exchange.jsonl")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))  # governance/
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)  # repo_root/
+
+CLOUD_QUEUE = os.path.join(SCRIPT_DIR, "schedulers", "cloud", "queue.json")
+CLOUD_STATE = os.path.join(SCRIPT_DIR, "schedulers", "cloud", "state.json")
+CLOUD_REPORTS = os.path.join(SCRIPT_DIR, "schedulers", "cloud", "reports")
+EXCHANGE_JSONL = os.path.join(SCRIPT_DIR, "exchange.jsonl")
 
 
 def now_iso():
@@ -29,6 +31,7 @@ def load_json(path):
 
 
 def save_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -38,24 +41,25 @@ def append_exchange_event(event):
         f.write(json.dumps(event, ensure_ascii=False) + "\n")
 
 
-def create_report(task, status, bem_num):
+def create_report(task, status, timestamp):
     os.makedirs(CLOUD_REPORTS, exist_ok=True)
-    report_path = os.path.join(CLOUD_REPORTS, f"BEM-{bem_num}-{task['id']}.md")
+    safe_ts = timestamp.replace(":", "-").replace("T", "_")
+    report_path = os.path.join(CLOUD_REPORTS, f"{safe_ts}-{task['id']}.md")
     content = f"""# Cloud Scheduler Report
-BEM-{bem_num} | CLOUD-CURATOR | {now_iso()}
+Tick: {timestamp} | CLOUD-CURATOR
 
 ## Задача
 ID: {task['id']}
 Title: {task['title']}
 Status: {status}
-Contour: {task['contour']}
+Contour: {task.get('contour', 'claude_cloud_code')}
 
 ## Результат
 Задача обработана в текущем tick.
 Статус: {status}
 
 ## Следующий шаг
-Проверить queue для следующей pending задачи.
+Проверить queue для следующей pending задачи при следующем tick.
 """
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(content)
@@ -63,9 +67,11 @@ Contour: {task['contour']}
 
 
 def main():
-    print(f"[CLOUD SCHEDULER TICK] {now_iso()}")
+    tick_time = now_iso()
+    print(f"[CLOUD SCHEDULER TICK] {tick_time}")
+    print(f"CLOUD_QUEUE: {CLOUD_QUEUE}")
+    print(f"EXCHANGE_JSONL: {EXCHANGE_JSONL}")
 
-    # Загрузить queue
     if not os.path.exists(CLOUD_QUEUE):
         print(f"ERROR: Cloud queue not found: {CLOUD_QUEUE}")
         sys.exit(1)
@@ -73,68 +79,61 @@ def main():
     queue = load_json(CLOUD_QUEUE)
     state = load_json(CLOUD_STATE) if os.path.exists(CLOUD_STATE) else {}
 
-    # Найти первую pending задачу
     pending_tasks = [t for t in queue.get("tasks", []) if t["status"] == "pending"]
 
     if not pending_tasks:
-        print("No pending tasks in Cloud queue. Tick complete.")
+        print("No pending tasks in Cloud queue.")
         append_exchange_event({
-            "timestamp": now_iso(),
+            "timestamp": tick_time,
             "source": "cloud_scheduler",
             "event_type": "CLOUD_SCHEDULER_TICK",
             "task_id": None,
             "status": "no_pending_tasks",
-            "next_action": "wait for new tasks"
+            "next_action": "wait for new tasks in queue"
         })
+        state["last_tick"] = tick_time
+        save_json(CLOUD_STATE, state)
         return
 
     task = pending_tasks[0]
-    print(f"Processing task: {task['id']} — {task['title']}")
+    print(f"Processing: {task['id']} — {task['title']}")
 
-    # Перевести в running
     for t in queue["tasks"]:
         if t["id"] == task["id"]:
             t["status"] = "running"
-
     save_json(CLOUD_QUEUE, queue)
+
     state["current_task"] = task["id"]
-    state["last_tick"] = now_iso()
+    state["last_tick"] = tick_time
     save_json(CLOUD_STATE, state)
 
-    # Выполнить задачу
-    print(f"Task {task['id']} executed (cloud tick logic)")
+    print(f"Executing task: {task['id']}")
     final_status = "done"
 
-    # Перевести в done
     for t in queue["tasks"]:
         if t["id"] == task["id"]:
             t["status"] = final_status
-
     save_json(CLOUD_QUEUE, queue)
 
-    # Создать отчёт
-    bem_num = "184"
-    report_path = create_report(task, final_status, bem_num)
-    print(f"Report created: {report_path}")
+    report_path = create_report(task, final_status, tick_time)
+    print(f"Report: {report_path}")
 
-    # Обновить state
     state["current_task"] = None
+    state["last_tick"] = tick_time
     state["last_report"] = report_path
-    state["last_tick"] = now_iso()
     save_json(CLOUD_STATE, state)
 
-    # Записать в exchange.jsonl
     append_exchange_event({
-        "timestamp": now_iso(),
+        "timestamp": tick_time,
         "source": "cloud_scheduler",
         "event_type": "CLOUD_SCHEDULER_TICK",
         "task_id": task["id"],
         "status": final_status,
         "report": report_path,
-        "next_action": "check queue for next pending task"
+        "next_action": "check queue at next tick"
     })
 
-    print(f"[CLOUD SCHEDULER TICK] Done. Task {task['id']} → {final_status}")
+    print(f"[CLOUD SCHEDULER TICK] Done. {task['id']} → {final_status}")
 
 
 if __name__ == "__main__":
