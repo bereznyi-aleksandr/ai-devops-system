@@ -29,6 +29,9 @@
 | @auditor | claude | auditor.yml |
 | @executor | claude | executor.yml |
 | @claude | claude | claude.yml |
+| @gpt_analyst | gpt_codex_local | codex-local.yml |
+| @gpt_auditor | gpt_codex_local | codex-local.yml |
+| @gpt_executor | gpt_codex_local | codex-local.yml |
 | @codex ROLE=GPT_ANALYST | gpt_codex | manual / gpt |
 | @codex ROLE=GPT_AUDITOR | gpt_codex | manual / gpt |
 | @codex ROLE=GPT_EXECUTOR | gpt_codex | manual / gpt |
