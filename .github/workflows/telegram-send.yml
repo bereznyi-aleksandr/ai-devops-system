@@ -1,90 +1,10 @@
-name: Telegram Send
-
+# DISABLED — лишний workflow
+# GPT пишет в Telegram напрямую через API без workflows
+name: DISABLED
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
-
-permissions:
-  contents: read
-
 jobs:
-  send:
+  disabled:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Send curator report to Telegram
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python3 - <<'PY'
-          import json
-          import os
-          import urllib.parse
-          import urllib.request
-          from datetime import datetime, timezone, timedelta
-
-          def read_file(path, default=""):
-              try:
-                  with open(path, "r", encoding="utf-8") as f:
-                      return f.read()
-              except Exception:
-                  return default
-
-          now_ua = (datetime.now(timezone.utc) + timedelta(hours=3)).strftime("%H:%M UA %d.%m")
-
-          exchange_text = read_file("governance/exchange.jsonl")
-          events = []
-          for line in exchange_text.splitlines():
-              try:
-                  events.append(json.loads(line))
-              except Exception:
-                  pass
-
-          if events:
-              recent = events[-5:]
-              last_events = "\n".join([
-                  "- " + str(e.get("event_type", "?")) + " [" + str(e.get("source", "?")) + "]"
-                  for e in recent
-              ])
-          else:
-              last_events = "нет данных"
-
-          master_plan = read_file("governance/MASTER_PLAN.md")
-          stage = "E3" if "E3" in master_plan else "неизвестно"
-
-          msg = "\n".join([
-              "📊 КУРАТОР | " + now_ua,
-              "",
-              "Этап: " + stage,
-              "Дорожная карта: 3/4",
-              "",
-              "Последние события:",
-              last_events,
-              "",
-              "Следующий отчёт через 5 минут."
-          ])
-
-          token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-          chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
-
-          if not token:
-              raise SystemExit("TELEGRAM_BOT_TOKEN is empty")
-          if not chat_id:
-              raise SystemExit("TELEGRAM_CHAT_ID is empty")
-
-          data = urllib.parse.urlencode({
-              "chat_id": chat_id,
-              "text": msg
-          }).encode("utf-8")
-
-          url = "https://api.telegram.org/bot" + token + "/sendMessage"
-          req = urllib.request.Request(url, data=data, method="POST")
-
-          with urllib.request.urlopen(req, timeout=30) as response:
-              print(response.read().decode("utf-8"))
-          PY
+      - run: echo "DISABLED — GPT пишет в Telegram напрямую"
