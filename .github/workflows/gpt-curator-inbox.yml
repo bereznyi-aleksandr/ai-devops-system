@@ -1,0 +1,45 @@
+name: GPT Curator Inbox Processor
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/curator_inbox/gpt_tasks.jsonl'
+  schedule:
+    - cron: '*/5 * * * *'
+
+jobs:
+  process-inbox:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Process GPT Curator Inbox
+        run: |
+          python3 governance/process_gpt_curator_inbox.py
+
+      - name: Commit results
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "gpt-curator-inbox@ai-devops-system"
+          git config user.name "GPT Curator Inbox"
+          git pull --rebase origin main
+          git add governance/curator_inbox/
+          git add governance/exchange.jsonl
+          git diff --cached --quiet || git commit -m "GPT CURATOR INBOX: processed task $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
+      # НЕТ issue comment — не засоряем почту оператора
+      # Статус фиксируется только в exchange.jsonl и processed/
