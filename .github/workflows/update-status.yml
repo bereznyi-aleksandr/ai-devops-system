@@ -1,11 +1,12 @@
-# DISABLED — BEM-281
-# update-status.yml отключён — сломан YAML синтаксис
-# Заменён telegram-send.yml
-name: DISABLED
+name: Update Status Report
+
 on:
   workflow_dispatch:
+
 jobs:
   disabled:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "DISABLED"
+      - name: Disabled
+        run: |
+          echo "BEM-288: update-status.yml disabled because it generated invalid YAML errors."
