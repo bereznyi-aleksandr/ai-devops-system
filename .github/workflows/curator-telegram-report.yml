@@ -1,0 +1,102 @@
+name: Curator Telegram Report
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # каждый час
+  workflow_dispatch:
+
+jobs:
+  curator-report:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      issues: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate curator report
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          python3 - <<'EOF'
+          import subprocess
+          import json
+          import os
+          from datetime import datetime, timezone, timedelta
+
+          def run(cmd):
+              return subprocess.check_output(cmd, shell=True, text=True).strip()
+
+          now_ua = (datetime.now(timezone.utc) + timedelta(hours=3)).strftime("%H:%M UA %d.%m")
+
+          # Читать exchange.jsonl
+          try:
+              with open("governance/exchange.jsonl") as f:
+                  events = [json.loads(l) for l in f if l.strip()]
+              recent = events[-10:]
+              last_events = "\n".join([f"• {e.get('event_type','?')} [{e.get('source','?')}]" for e in recent[-5:]])
+          except:
+              last_events = "нет данных"
+
+          # Читать MASTER_PLAN
+          try:
+              with open("governance/MASTER_PLAN.md") as f:
+                  plan = f.read()
+              current_stage = "E3" if "E3" in plan else "неизвестно"
+          except:
+              current_stage = "неизвестно"
+
+          # Читать schedulers state
+          gpt_last = "нет данных"
+          cloud_last = "нет данных"
+          try:
+              with open("governance/schedulers/gpt/state.json") as f:
+                  gpt_state = json.load(f)
+              gpt_last = gpt_state.get("last_tick", "нет данных")
+          except:
+              pass
+          try:
+              with open("governance/schedulers/cloud/state.json") as f:
+                  cloud_state = json.load(f)
+              cloud_last = cloud_state.get("last_tick", "нет данных")
+          except:
+              pass
+
+          report = f"""📊 *КУРАТОР | {now_ua}*
+
+🗺 Этап: {current_stage} | Дорожная карта: 2/4
+
+📋 *Последние события:*
+{last_events}
+
+⚙️ *Schedulers:*
+• GPT: {gpt_last[:16] if gpt_last != "нет данных" else "⚠️ нет данных"}
+• Cloud: {cloud_last[:16] if cloud_last != "нет данных" else "⚠️ нет данных"}
+
+➡️ Следующий отчёт через 1 час"""
+
+          with open("/tmp/report.txt", "w") as f:
+              f.write(report)
+          print(report)
+          EOF
+
+      - name: Send to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          REPORT=$(cat /tmp/report.txt)
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d parse_mode="Markdown" \
+            --data-urlencode "text=${REPORT}"
