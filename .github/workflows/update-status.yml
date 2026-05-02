@@ -1,0 +1,134 @@
+name: Update Status Report
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  update-status:
+    if: github.event.issue.number == 31
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Update STATUS.md
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_USER: ${{ github.event.comment.user.login }}
+          COMMENT_TIME: ${{ github.event.comment.created_at }}
+        run: |
+          python3 - <<'EOF'
+          import os
+          import json
+          from datetime import datetime, timezone, timedelta
+
+          body = os.environ.get("COMMENT_BODY", "")
+          user = os.environ.get("COMMENT_USER", "")
+          time_utc = os.environ.get("COMMENT_TIME", "")
+
+          # Определить роль по содержимому
+          if "@analyst" in body:
+              role = "АНАЛИТИК"
+              icon = "🔍"
+          elif "@auditor" in body:
+              role = "АУДИТОР"
+              icon = "✅"
+          elif "@executor" in body:
+              role = "ИСПОЛНИТЕЛЬ"
+              icon = "⚙️"
+          elif "APPROVED" in body:
+              role = "АУДИТОР"
+              icon = "✅"
+          elif "BLOCKED" in body:
+              role = "АУДИТОР"
+              icon = "🚫"
+          elif "BEM-" in body:
+              role = "СИСТЕМА"
+              icon = "📋"
+          else:
+              role = user
+              icon = "💬"
+
+          # Время UA (UTC+3)
+          try:
+              dt_utc = datetime.fromisoformat(time_utc.replace("Z", "+00:00"))
+              dt_ua = dt_utc + timedelta(hours=3)
+              time_ua = dt_ua.strftime("%Y-%m-%d %H:%M UA")
+          except:
+              time_ua = time_utc
+
+          # Краткое содержимое (первые 100 символов)
+          short = body.strip().replace("\n", " ")[:100]
+          if len(body.strip()) > 100:
+              short += "..."
+
+          # Прочитать текущий STATUS.md
+          status_path = "governance/STATUS.md"
+          try:
+              with open(status_path, "r", encoding="utf-8") as f:
+                  content = f.read()
+          except FileNotFoundError:
+              content = ""
+
+          # Найти таблицу событий
+          table_marker = "## ПОСЛЕДНИЕ СОБЫТИЯ\n"
+          header = "| Время | Роль | Событие |\n|---|---|---|\n"
+
+          new_row = f"| {time_ua} | {icon} {role} | {short} |\n"
+
+          if table_marker in content:
+              # Добавить строку после заголовка таблицы
+              parts = content.split(header)
+              if len(parts) == 2:
+                  rows = parts[1].split("\n")
+                  # Оставить только последние 20 строк
+                  rows = [r for r in rows if r.startswith("|")][:19]
+                  new_table = header + new_row + "\n".join(rows)
+                  content = parts[0] + new_table
+          else:
+              # Создать новый STATUS.md
+              content = f"""# STATUS — AI DevOps System
+Репозиторий: bereznyi-aleksandr/ai-devops-system
+Issue: #31
+
+## ТЕКУЩЕЕ СОСТОЯНИЕ
+Этап: E3 — Первый автономный цикл
+Активная задача: @analyst → @auditor → @executor
+
+## ПОСЛЕДНИЕ СОБЫТИЯ
+{header}{new_row}
+"""
+
+          # Обновить время последнего обновления
+          now_ua = (datetime.now(timezone.utc) + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M UA")
+          if "Обновлено:" in content:
+              lines = content.split("\n")
+              lines = [f"Обновлено: {now_ua}" if l.startswith("Обновлено:") else l for l in lines]
+              content = "\n".join(lines)
+          else:
+              content = f"Обновлено: {now_ua}\n\n" + content
+
+          with open(status_path, "w", encoding="utf-8") as f:
+              f.write(content)
+
+          print(f"STATUS.md updated: {time_ua} | {role} | {short[:50]}")
+          EOF
+
+      - name: Commit STATUS.md
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "status-reporter@ai-devops-system"
+          git config user.name "Status Reporter"
+          git pull --rebase origin main
+          git add governance/STATUS.md
+          git diff --cached --quiet || git commit -m "STATUS: updated from issue #31 comment"
+          git push
