@@ -1,0 +1,107 @@
+name: Telegram Webhook
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Message from Telegram'
+        required: true
+        type: string
+      chat_id:
+        description: 'Telegram chat_id'
+        required: true
+        type: string
+
+jobs:
+  handle:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Process command and reply
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ inputs.chat_id }}
+          USER_MESSAGE: ${{ inputs.message }}
+        run: |
+          python3 - <<'EOF'
+          import os
+          import json
+          import urllib.request
+          import urllib.parse
+          import subprocess
+          from datetime import datetime, timezone, timedelta
+
+          msg = os.environ["USER_MESSAGE"].lower().strip()
+          token = os.environ["TELEGRAM_BOT_TOKEN"]
+          chat_id = os.environ["TELEGRAM_CHAT_ID"]
+          now_ua = (datetime.now(timezone.utc) + timedelta(hours=3)).strftime("%H:%M UA")
+
+          def send(text):
+              data = urllib.parse.urlencode({
+                  "chat_id": chat_id,
+                  "text": text,
+                  "parse_mode": "Markdown"
+              }).encode()
+              req = urllib.request.Request(
+                  f"https://api.telegram.org/bot{token}/sendMessage",
+                  data=data
+              )
+              urllib.request.urlopen(req)
+
+          def run_gh(cmd):
+              return subprocess.check_output(cmd, shell=True, text=True).strip()
+
+          # Читать состояние
+          try:
+              with open("governance/exchange.jsonl") as f:
+                  events = [json.loads(l) for l in f if l.strip()]
+              last_events = events[-5:]
+          except:
+              last_events = []
+
+          # Обработка команд
+          if any(w in msg for w in ["статус", "status", "что", "как"]):
+              try:
+                  with open("governance/MASTER_PLAN.md") as f:
+                      plan = f.read()
+                  stage = "E3" if "E3" in plan else "?"
+              except:
+                  stage = "?"
+
+              ev = "\n".join([f"• {e.get('event_type','?')}" for e in last_events[-3:]]) or "нет событий"
+              reply = f"📊 *КУРАТОР | {now_ua}*\n\nЭтап: {stage}\n\nПоследние события:\n{ev}"
+              send(reply)
+
+          elif any(w in msg for w in ["аналитик", "анализ", "analyst", "запусти"]):
+              run_gh('gh issue comment 31 --repo bereznyi-aleksandr/ai-devops-system --body "@analyst Прочитай MASTER_PLAN.md и EXCHANGE.md. Предложи следующий шаг E3. Завершись: @auditor REVIEW"')
+              send(f"✅ *{now_ua}* | @analyst запущен. Жди отчёта в Telegram.")
+
+          elif any(w in msg for w in ["стоп", "stop", "пауза"]):
+              send(f"⏸ *{now_ua}* | Получена команда СТОП. Автономная работа приостановлена.")
+
+          elif any(w in msg for w in ["помощь", "help", "команды"]):
+              send("""*Доступные команды:*
+
+📊 *статус* — текущее состояние системы
+🔍 *запусти аналитика* — запустить @analyst
+⏸ *стоп* — пауза автономной работы
+❓ *помощь* — список команд""")
+
+          else:
+              send(f"💬 *{now_ua}* | Получено: _{msg}_\n\nНе распознал команду. Напиши *помощь* для списка команд.")
+          EOF
