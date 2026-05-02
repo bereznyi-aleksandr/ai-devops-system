@@ -6,11 +6,22 @@
     {
       "id": "TASK-E2-002-CLOUD",
       "title": "create cloud scheduler queue",
-      "status": "pending",
+      "status": "done",
       "role": "curator",
       "contour": "claude_cloud_code",
       "created_by": "BEM-184",
+      "completed_by": "BEM-190-proof",
       "requires_owner_approval": false
+    },
+    {
+      "id": "TASK-E2-004-CLOUD",
+      "title": "autonomous continuation loop — trigger @analyst cycle",
+      "status": "pending",
+      "role": "curator",
+      "contour": "claude_cloud_code",
+      "created_by": "BEM-190",
+      "requires_owner_approval": false,
+      "description": "Read MASTER_PLAN.md, EXCHANGE.md, exchange.jsonl. Check if @analyst cycle needs triggering. If ISA is idle for more than 1 hour — propose next action via issue comment."
     }
   ]
 }
