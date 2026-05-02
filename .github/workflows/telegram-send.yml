@@ -1,9 +1,9 @@
 name: Telegram Send
 
 on:
-  push:
-    paths:
-      - 'governance/telegram_trigger.txt'
+  schedule:
+    - cron: '*/5 * * * *'  # каждые 5 минут
+  workflow_dispatch:       # ручной запуск
 
 jobs:
   send:
@@ -12,18 +12,58 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Read message
-        id: msg
-        run: |
-          MSG=$(cat governance/telegram_trigger.txt)
-          echo "text=$MSG" >> $GITHUB_OUTPUT
-
       - name: Send to Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -d chat_id="${TELEGRAM_CHAT_ID}" \
-            -d parse_mode="Markdown" \
-            --data-urlencode "text=$(cat governance/telegram_trigger.txt)"
+          python3 - <<'EOF'
+          import json
+          import os
+          import subprocess
+          from datetime import datetime, timezone, timedelta
+
+          now_ua = (datetime.now(timezone.utc) + timedelta(hours=3)).strftime("%H:%M UA %d.%m")
+
+          # Читать последние события
+          try:
+              with open("governance/exchange.jsonl") as f:
+                  events = [json.loads(l) for l in f if l.strip()]
+              recent = events[-3:]
+              last = "\n".join([f"• {e.get('event_type','?')}" for e in recent])
+          except:
+              last = "нет данных"
+
+          # Читать текущий этап
+          try:
+              with open("governance/MASTER_PLAN.md") as f:
+                  plan = f.read()
+              stage = "E3" if "E3" in plan else "?"
+          except:
+              stage = "?"
+
+          msg = f"""📊 *КУРАТОР | {now_ua}*
+
+🗺 Этап: {stage} | Дорожная карта: 2/4
+
+📋 Последние события:
+{last}
+
+_Следующий отчёт через 5 мин_"""
+
+          token = os.environ["TELEGRAM_BOT_TOKEN"]
+          chat_id = os.environ["TELEGRAM_CHAT_ID"]
+
+          import urllib.request, urllib.parse
+          data = urllib.parse.urlencode({
+              "chat_id": chat_id,
+              "text": msg,
+              "parse_mode": "Markdown"
+          }).encode()
+          req = urllib.request.Request(
+              f"https://api.telegram.org/bot{token}/sendMessage",
+              data=data
+          )
+          resp = urllib.request.urlopen(req)
+          print(resp.read().decode())
+          EOF
