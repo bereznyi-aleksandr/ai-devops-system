@@ -11,13 +11,13 @@
 | fallback_contour | gpt_codex_local |
 | fallback_enabled | true |
 | fallback_reason | Claude Code usage limit reached; owner approved local Codex CLI fallback |
-| owner_approval_required | true |
+| owner_approval_required | major_changes_only |
 | current_phase | repository cleanup and base structure |
 | current_stage | local Codex fallback active |
 | last_known_blocker | Claude Code usage limit was observed |
-| next_action | GPT curator and local Codex flow prepare next minimal safe step |
+| next_action | GPT local Codex flow continues autonomous minimal safe repository cleanup |
 | owner_action_required | false |
-| curator_schedule | hourly |
+| curator_schedule | hourly plus one-shot checks when pending ISA result exists |
 | curator_interval_minutes | 60 |
 | last_hourly_curator_check | 2026-05-01T18:00:00Z |
 
@@ -40,6 +40,8 @@
 
 | Время | Источник | Событие |
 |---|---|---|
+| 2026-05-02T07:03:00Z | assistant | AUTONOMY_POLICY_SYNCED |
+| 2026-05-02T06:47:00Z | codex-local | ROUTING_TABLE_UPDATED |
 | 2026-05-01T18:00:00Z | gpt-curator | STATE_LAYER_INITIALIZED |
 | 2026-05-01T17:42:00Z | auditor-chat | executor.yml исправлен — trigger_phrase + prompt |
 | 2026-05-01T17:42:00Z | auditor-chat | auditor.yml исправлен |
@@ -47,12 +49,12 @@
 
 ## Следующий ожидаемый переход
 
-@analyst → АНАЛИТИК предлагает шаг → @auditor REVIEW → @executor EXECUTE
+@gpt_analyst → GPT_ANALYST предлагает шаг → @gpt_auditor REVIEW → @gpt_executor EXECUTE
 
 ## Safety rules
 
-1. Fallback включается только по owner approval
-2. GPT_EXECUTOR создаёт только draft PR — merge только владелец
-3. Переключение контура фиксируется в exchange.jsonl
-4. Куратор работает 1 раз в час
-5. Куратор не может выполнять действия без owner approval
+1. Routine state-layer sync does not require owner approval.
+2. Owner approval is required only for architecture changes, permissions, secrets, billing, production deploy, auto-merge, destructive actions, or runner install/reinstall.
+3. During fallback, use only @gpt_analyst / @gpt_auditor / @gpt_executor for the active ISA cycle.
+4. Do not mix Claude and local Codex role triggers inside one cycle.
+5. GPT_EXECUTOR performs only the current approved role scope and does not expand scope.
