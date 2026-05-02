@@ -1,0 +1,29 @@
+name: Telegram Send
+
+on:
+  push:
+    paths:
+      - 'governance/telegram_trigger.txt'
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read message
+        id: msg
+        run: |
+          MSG=$(cat governance/telegram_trigger.txt)
+          echo "text=$MSG" >> $GITHUB_OUTPUT
+
+      - name: Send to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d parse_mode="Markdown" \
+            --data-urlencode "text=$(cat governance/telegram_trigger.txt)"
