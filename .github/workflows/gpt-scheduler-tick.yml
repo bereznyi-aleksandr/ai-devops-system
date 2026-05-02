@@ -3,7 +3,7 @@ name: GPT Scheduler Tick
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'  # каждый час
+    - cron: '*/10 * * * *'  # каждые 10 минут
 
 jobs:
   gpt-tick:
@@ -26,8 +26,7 @@ jobs:
 
       - name: Run GPT Scheduler Tick
         run: |
-          cd governance
-          python3 gpt_scheduler_tick.py
+          python3 governance/gpt_scheduler_tick.py
 
       - name: Commit state changes
         env:
@@ -35,6 +34,7 @@ jobs:
         run: |
           git config user.email "gpt-scheduler@ai-devops-system"
           git config user.name "GPT Scheduler"
+          git pull --rebase origin main
           git add governance/schedulers/gpt/
           git add governance/exchange.jsonl
           git diff --cached --quiet || git commit -m "GPT SCHEDULER TICK: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -44,8 +44,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: |
-          STATE=$(cat governance/schedulers/gpt/state.json)
-          LAST_TICK=$(echo "$STATE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('last_tick','unknown'))")
+          LAST_TICK=$(python3 -c "import json; d=json.load(open('governance/schedulers/gpt/state.json')); print(d.get('last_tick','unknown'))")
+          LAST_REPORT=$(python3 -c "import json; d=json.load(open('governance/schedulers/gpt/state.json')); print(d.get('last_report','none'))")
           gh issue comment 31 \
             --repo bereznyi-aleksandr/ai-devops-system \
-            --body "GPT SCHEDULER TICK | $LAST_TICK | Tick completed. Check governance/schedulers/gpt/reports/ for details."
+            --body "GPT SCHEDULER TICK | ${LAST_TICK} | Report: ${LAST_REPORT}"
