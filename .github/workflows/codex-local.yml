@@ -51,7 +51,7 @@ jobs:
           if grep -q '@gpt_executor' "$BODY_FILE"; then ROLE="GPT_EXECUTOR"; fi
 
           cat > "$PROMPT_FILE" <<PROMPT
-          BEM-109 | CODEX_LOCAL_ISA | $ROLE
+          BEM-118 | CODEX_LOCAL_ISA | $ROLE
 
           You are running locally inside the ai-devops-system repository on a self-hosted runner.
 
@@ -89,13 +89,22 @@ jobs:
       - name: Run local Codex CLI
         shell: bash
         run: |
-          set -e
+          set +e
           export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
           OUTPUT_FILE="$RUNNER_TEMP/codex_output.md"
-          codex exec "$(cat "$PROMPT_FILE")" | tee "$OUTPUT_FILE"
+          {
+            echo "BEM-118 | CODEX_LOCAL_ISA | RAW_OUTPUT"
+            echo
+            codex exec "$(cat "$PROMPT_FILE")"
+            CODEX_EXIT=$?
+            echo
+            echo "CODEX_EXIT_CODE=$CODEX_EXIT"
+          } 2>&1 | tee "$OUTPUT_FILE"
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
+          exit 0
 
       - name: Post Codex report to issue
+        if: always()
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -112,9 +121,12 @@ jobs:
           repo = os.environ["REPO"]
           issue = os.environ["ISSUE_NUMBER"]
           token = os.environ["GH_TOKEN"]
-          output_path = pathlib.Path(os.environ["OUTPUT_FILE"])
-          output = output_path.read_text(encoding="utf-8", errors="replace")
-          body = "BEM-109 | CODEX_LOCAL_ISA | RUN RESULT\n\n" + output[-60000:]
+          output_path = pathlib.Path(os.environ.get("OUTPUT_FILE", ""))
+          if output_path.exists():
+              output = output_path.read_text(encoding="utf-8", errors="replace")
+          else:
+              output = "OUTPUT_FILE was not created. Check earlier workflow steps."
+          body = "BEM-118 | CODEX_LOCAL_ISA | RUN RESULT\n\n" + output[-60000:]
           data = json.dumps({"body": body}).encode("utf-8")
           req = urllib.request.Request(
               f"https://api.github.com/repos/{repo}/issues/{issue}/comments",
