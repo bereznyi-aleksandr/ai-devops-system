@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "scheduler": "gpt_scheduler",
+  "curator": "gpt_curator",
+  "tasks": [
+    {
+      "id": "TASK-E2-002-GPT",
+      "title": "create gpt scheduler queue",
+      "status": "pending",
+      "role": "curator",
+      "contour": "gpt_codex_local",
+      "created_by": "BEM-184",
+      "requires_owner_approval": false
+    }
+  ]
+}
