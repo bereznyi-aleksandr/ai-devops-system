@@ -3,7 +3,7 @@ name: Cloud Scheduler Tick
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 * * * *'  # каждый час в :30 (сдвинут от GPT на 30 минут)
+    - cron: '5-59/10 * * * *'  # каждые 10 минут начиная с :05 (сдвиг от GPT)
 
 jobs:
   cloud-tick:
@@ -26,8 +26,7 @@ jobs:
 
       - name: Run Cloud Scheduler Tick
         run: |
-          cd governance
-          python3 cloud_scheduler_tick.py
+          python3 governance/cloud_scheduler_tick.py
 
       - name: Commit state changes
         env:
@@ -35,6 +34,7 @@ jobs:
         run: |
           git config user.email "cloud-scheduler@ai-devops-system"
           git config user.name "Cloud Scheduler"
+          git pull --rebase origin main
           git add governance/schedulers/cloud/
           git add governance/exchange.jsonl
           git diff --cached --quiet || git commit -m "CLOUD SCHEDULER TICK: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -44,8 +44,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: |
-          STATE=$(cat governance/schedulers/cloud/state.json)
-          LAST_TICK=$(echo "$STATE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('last_tick','unknown'))")
+          LAST_TICK=$(python3 -c "import json; d=json.load(open('governance/schedulers/cloud/state.json')); print(d.get('last_tick','unknown'))")
+          LAST_REPORT=$(python3 -c "import json; d=json.load(open('governance/schedulers/cloud/state.json')); print(d.get('last_report','none'))")
           gh issue comment 31 \
             --repo bereznyi-aleksandr/ai-devops-system \
-            --body "CLOUD SCHEDULER TICK | $LAST_TICK | Tick completed. Check governance/schedulers/cloud/reports/ for details."
+            --body "CLOUD SCHEDULER TICK | ${LAST_TICK} | Report: ${LAST_REPORT}"
