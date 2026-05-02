@@ -51,7 +51,7 @@ jobs:
           if grep -q '@gpt_executor' "$BODY_FILE"; then ROLE="GPT_EXECUTOR"; fi
 
           cat > "$PROMPT_FILE" <<PROMPT
-          BEM-096 | CODEX_LOCAL_ISA | $ROLE
+          BEM-109 | CODEX_LOCAL_ISA | $ROLE
 
           You are running locally inside the ai-devops-system repository on a self-hosted runner.
 
@@ -92,7 +92,7 @@ jobs:
           set -e
           export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
           OUTPUT_FILE="$RUNNER_TEMP/codex_output.md"
-          codex "$(cat "$PROMPT_FILE")" | tee "$OUTPUT_FILE"
+          codex exec "$(cat "$PROMPT_FILE")" | tee "$OUTPUT_FILE"
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
 
       - name: Post Codex report to issue
@@ -114,7 +114,7 @@ jobs:
           token = os.environ["GH_TOKEN"]
           output_path = pathlib.Path(os.environ["OUTPUT_FILE"])
           output = output_path.read_text(encoding="utf-8", errors="replace")
-          body = "BEM-096 | CODEX_LOCAL_ISA | RUN RESULT\n\n" + output[-60000:]
+          body = "BEM-109 | CODEX_LOCAL_ISA | RUN RESULT\n\n" + output[-60000:]
           data = json.dumps({"body": body}).encode("utf-8")
           req = urllib.request.Request(
               f"https://api.github.com/repos/{repo}/issues/{issue}/comments",
