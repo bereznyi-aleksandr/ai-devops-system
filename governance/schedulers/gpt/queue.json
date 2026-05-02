@@ -6,11 +6,22 @@
     {
       "id": "TASK-E2-002-GPT",
       "title": "create gpt scheduler queue",
-      "status": "pending",
+      "status": "done",
       "role": "curator",
       "contour": "gpt_codex_local",
       "created_by": "BEM-184",
+      "completed_by": "BEM-190-proof",
       "requires_owner_approval": false
+    },
+    {
+      "id": "TASK-E2-004-GPT",
+      "title": "autonomous continuation loop — monitor ISA state",
+      "status": "pending",
+      "role": "curator",
+      "contour": "gpt_codex_local",
+      "created_by": "BEM-190",
+      "requires_owner_approval": false,
+      "description": "Read MASTER_PLAN.md, EXCHANGE.md, exchange.jsonl. Check if @analyst cycle is progressing. Report status. If blocked — propose action."
     }
   ]
 }
