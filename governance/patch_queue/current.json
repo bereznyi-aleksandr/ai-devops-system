@@ -1,39 +1,15 @@
 {
-  "task_id": "c05_hosted_roles_trace_gate",
-  "title": "Restrict hosted GPT roles to curator-issued route comments",
+  "task_id": "c07_curator_to_role_route",
+  "title": "Make hosted curator emit curator-to-role route comments",
   "mode": "apply_and_commit",
   "owner_approved_commit": true,
-  "commit_message": "C-05: gate hosted GPT roles by curator trace",
+  "commit_message": "C-07: route curator decisions to role router",
   "files": [
     {
-      "path": ".github/workflows/gpt-hosted-roles.yml",
+      "path": ".github/workflows/curator-hosted-gpt.yml",
       "operation": "replace",
-      "old": "      github.event.issue.number == 31 &&\n      github.actor != 'github-actions[bot]' &&\n      github.event.comment.user.type != 'Bot' &&\n      (contains(github.event.comment.body, '@gpt_executor') ||\n       contains(github.event.comment.body, '@gpt_analyst') ||\n       contains(github.event.comment.body, '@gpt_auditor') ||\n       contains(github.event.comment.body, '@gpt_curator'))",
-      "new": "      github.event.issue.number == 31 &&\n      github.actor != 'github-actions[bot]' &&\n      github.event.comment.user.type != 'Bot' &&\n      contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE_EXECUTION') &&\n      contains(github.event.comment.body, 'TRACE_ID:') &&\n      (contains(github.event.comment.body, '@gpt_executor') ||\n       contains(github.event.comment.body, '@gpt_analyst') ||\n       contains(github.event.comment.body, '@gpt_auditor') ||\n       contains(github.event.comment.body, '@gpt_curator'))"
-    },
-    {
-      "path": ".github/workflows/gpt-hosted-roles.yml",
-      "operation": "replace",
-      "old": "          else:\n              role = 'GPT_UNKNOWN'\n\n          def read(path, limit=20000):",
-      "new": "          else:\n              role = 'GPT_UNKNOWN'\n\n          trace_id = 'missing'\n          import re\n          m = re.search(r'TRACE_ID:\\s*([A-Za-z0-9_\\-]+)', body)\n          if m:\n              trace_id = m.group(1)\n\n          def read(path, limit=20000):"
-    },
-    {
-      "path": ".github/workflows/gpt-hosted-roles.yml",
-      "operation": "replace",
-      "old": "          parts.append(f'You are {role} for ai-devops-system.')\n          parts.append('')\n          parts.append('Architecture:')",
-      "new": "          parts.append(f'You are {role} for ai-devops-system.')\n          parts.append(f'TRACE_ID={trace_id}')\n          parts.append('')\n          parts.append('Architecture:')"
-    },
-    {
-      "path": ".github/workflows/gpt-hosted-roles.yml",
-      "operation": "replace",
-      "old": "              f.write(f'ROLE={role}\\n')\n          PY",
-      "new": "              f.write(f'ROLE={role}\\n')\n              f.write(f'TRACE_ID={trace_id}\\n')\n          PY"
-    },
-    {
-      "path": ".github/workflows/gpt-hosted-roles.yml",
-      "operation": "replace",
-      "old": "          print(f'MODEL={model}')\n\n          if not api_key:",
-      "new": "          print(f'MODEL={model}')\n          print(f'TRACE_ID={os.environ.get(\"TRACE_ID\", \"missing\")}')\n\n          if not api_key:"
+      "old": "\n      - name: Post hosted GPT curator report",
+      "new": "\n      - name: Route requested role\n        if: always()\n        shell: bash\n        env:\n          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\n          REPO: ${{ github.repository }}\n          ISSUE_NUMBER: ${{ github.event.issue.number }}\n        run: |\n          set -e\n          python3 - <<'PY'\n          import json, os, urllib.request\n          from pathlib import Path\n          p = Path('governance/state/curator_last_decision.json')\n          if not p.exists():\n              print('No curator_last_decision.json')\n              raise SystemExit(0)\n          d = json.loads(p.read_text(encoding='utf-8'))\n          role = d.get('requested_role')\n          if not role or role == 'none':\n              print('No requested role; skip role route')\n              raise SystemExit(0)\n          trace = d.get('trace_id', 'missing')\n          task = (d.get('task') or '').strip()[:4000]\n          body = '\\n'.join([\n              'TYPE: CURATOR_TO_ROLE',\n              f'TRACE_ID: {trace}',\n              f'ROLE: {role}',\n              '',\n              'TASK:',\n              task\n          ])\n          data = json.dumps({'body': body}).encode('utf-8')\n          req = urllib.request.Request(\n              f\"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments\",\n              data=data,\n              headers={\n                  'Authorization': f\"Bearer {os.environ['GH_TOKEN']}\",\n                  'Accept': 'application/vnd.github+json',\n                  'Content-Type': 'application/json',\n                  'User-Agent': 'ai-devops-curator-route'\n              },\n              method='POST'\n          )\n          with urllib.request.urlopen(req) as resp:\n              print(resp.status)\n          PY\n\n      - name: Post hosted GPT curator report"
     }
   ],
   "checks": [
