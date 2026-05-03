@@ -1,0 +1,231 @@
+name: GPT Hosted Roles
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  hosted-gpt-role:
+    name: Hosted GPT Role
+    if: |
+      github.event.issue.number == 31 &&
+      github.actor != 'github-actions[bot]' &&
+      github.event.comment.user.type != 'Bot' &&
+      (contains(github.event.comment.body, '@gpt_executor') ||
+       contains(github.event.comment.body, '@gpt_analyst') ||
+       contains(github.event.comment.body, '@gpt_auditor') ||
+       contains(github.event.comment.body, '@gpt_curator'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Build hosted role prompt
+        shell: bash
+        env:
+          COMMENT_BODY_JSON: ${{ toJson(github.event.comment.body) }}
+        run: |
+          set -e
+          PROMPT_FILE="$RUNNER_TEMP/hosted_gpt_role_prompt.txt"
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path('.')
+          body = json.loads(os.environ['COMMENT_BODY_JSON'])
+
+          if '@gpt_executor' in body:
+              role = 'GPT_EXECUTOR'
+          elif '@gpt_analyst' in body:
+              role = 'GPT_ANALYST'
+          elif '@gpt_auditor' in body:
+              role = 'GPT_AUDITOR'
+          elif '@gpt_curator' in body:
+              role = 'GPT_CURATOR'
+          else:
+              role = 'GPT_UNKNOWN'
+
+          def read(path, limit=20000):
+              p = root / path
+              if not p.exists():
+                  return f'[missing: {path}]'
+              return p.read_text(encoding='utf-8', errors='replace')[:limit]
+
+          parts = []
+          parts.append(f'BEM-GPT-HOSTED-ROLE | {role}')
+          parts.append('')
+          parts.append(f'You are {role} for ai-devops-system.')
+          parts.append('')
+          parts.append('Architecture:')
+          parts.append('- This workflow is a hosted GPT fallback for role comments.')
+          parts.append('- It exists because codex-local self-hosted path is not producing role reports reliably.')
+          parts.append('- Do not call Claude.')
+          parts.append('- Do not use anthropics/claude-code-action.')
+          parts.append('- Do not change files in this hosted fallback workflow.')
+          parts.append('- Do not claim that files were changed.')
+          parts.append('- Do not commit. OWNER_APPROVED_COMMIT is required for any commit, and this hosted fallback is read/report only.')
+          parts.append('- Never reveal secrets. Never print env vars or token values.')
+          parts.append('- Never include literal at-sign mentions of roles in the final report; write role names without at-sign.')
+          parts.append('')
+          parts.append('Incoming issue comment:')
+          parts.append('-----')
+          parts.append(body)
+          parts.append('-----')
+          parts.append('')
+          parts.append('Repository context:')
+          parts.append('')
+          parts.append('--- governance/state/routing.json ---')
+          parts.append(read('governance/state/routing.json'))
+          parts.append('')
+          parts.append('--- governance/MASTER_PLAN.md ---')
+          parts.append(read('governance/MASTER_PLAN.md'))
+          parts.append('')
+          parts.append('--- governance/exchange.jsonl tail ---')
+          parts.append(read('governance/exchange.jsonl')[-20000:])
+          parts.append('')
+          parts.append('Required output:')
+          parts.append(f'- Start with: BEM-GPT-{role.replace("GPT_", "")} | HOSTED ROLE REPORT')
+          parts.append('- Compact Russian BEM report.')
+          parts.append('- Include checklist with confirmations requested in the incoming comment.')
+          parts.append('- For GPT_EXECUTOR read-only diagnostics: explicitly confirm no file changes and no commit.')
+          parts.append('- Include a short next action.')
+
+          Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_role_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
+              f.write(f'ROLE={role}\n')
+          PY
+
+          echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
+
+      - name: Run hosted GPT role
+        shell: bash
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+        run: |
+          set +e
+          OUTPUT_FILE="$RUNNER_TEMP/hosted_gpt_role_output.md"
+          python3 - <<'PY' > "$OUTPUT_FILE" 2>&1
+          import json
+          import os
+          import pathlib
+          import urllib.error
+          import urllib.request
+
+          prompt_path = pathlib.Path(os.environ['PROMPT_FILE'])
+          prompt = prompt_path.read_text(encoding='utf-8', errors='replace')
+          api_key = os.environ.get('OPENAI_API_KEY', '')
+          model = os.environ.get('OPENAI_MODEL') or 'gpt-4o-mini'
+          role = os.environ.get('ROLE', 'GPT_UNKNOWN')
+
+          print(f'BEM-GPT-HOSTED-ROLE | {role} | RAW_OUTPUT')
+          print(f'MODEL={model}')
+
+          if not api_key:
+              print('HOSTED_GPT_STATUS=OPENAI_API_KEY_MISSING')
+              print('Hosted GPT role could not call OpenAI API because secrets.OPENAI_API_KEY is empty or unavailable.')
+              raise SystemExit(0)
+
+          payload = {
+              'model': model,
+              'input': [
+                  {
+                      'role': 'system',
+                      'content': 'You are a hosted GPT role runner. Return a compact Russian BEM report. Do not reveal secrets. Do not include literal at-sign mentions.'
+                  },
+                  {
+                      'role': 'user',
+                      'content': prompt
+                  }
+              ],
+              'max_output_tokens': 1600
+          }
+
+          req = urllib.request.Request(
+              'https://api.openai.com/v1/responses',
+              data=json.dumps(payload).encode('utf-8'),
+              headers={
+                  'Authorization': f'Bearer {api_key}',
+                  'Content-Type': 'application/json'
+              },
+              method='POST'
+          )
+
+          try:
+              with urllib.request.urlopen(req, timeout=120) as resp:
+                  data = json.loads(resp.read().decode('utf-8'))
+          except urllib.error.HTTPError as e:
+              err = e.read().decode('utf-8', errors='replace')[:4000]
+              print(f'HOSTED_GPT_STATUS=OPENAI_API_HTTP_ERROR_{e.code}')
+              print(err)
+              raise SystemExit(0)
+          except Exception as e:
+              print('HOSTED_GPT_STATUS=OPENAI_API_CALL_FAILED')
+              print(str(e))
+              raise SystemExit(0)
+
+          text = data.get('output_text')
+          if not text:
+              parts = []
+              for item in data.get('output', []):
+                  for content in item.get('content', []):
+                      if content.get('type') in ('output_text', 'text'):
+                          parts.append(content.get('text', ''))
+              text = '\n'.join(parts).strip()
+
+          print('HOSTED_GPT_STATUS=OK')
+          print(text or '[empty OpenAI response text]')
+          PY
+          echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Post hosted GPT role report
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -e
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.request
+
+          output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
+          output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else 'OUTPUT_FILE was not created.'
+          output = output.replace('@curator', 'curator')
+          output = output.replace('@gpt_executor', 'GPT_EXECUTOR')
+          output = output.replace('@gpt_analyst', 'GPT_ANALYST')
+          output = output.replace('@gpt_auditor', 'GPT_AUDITOR')
+          output = output.replace('@gpt_curator', 'GPT_CURATOR')
+          role = os.environ.get('ROLE', 'GPT_UNKNOWN')
+          body = f'BEM-GPT-HOSTED-ROLE | RUN RESULT | {role}\n\n' + output[-60000:] + '\n\nANTI_RECURSION: bot/report comments are ignored by hosted role workflows.'
+          data = json.dumps({'body': body}).encode('utf-8')
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments",
+              data=data,
+              headers={
+                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                  'Accept': 'application/vnd.github+json',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-devops-hosted-gpt-roles'
+              },
+              method='POST'
+          )
+          with urllib.request.urlopen(req) as resp:
+              print(resp.status)
+          PY
