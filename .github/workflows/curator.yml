@@ -48,6 +48,30 @@ jobs:
               runnerLines.push(`| self-hosted runner inventory | ❌ | ${error.message} |`);
             }
 
+            await new Promise(resolve => setTimeout(resolve, 15000));
+
+            let jobLines = [];
+            try {
+              const jobs = await github.rest.actions.listJobsForWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId,
+                per_page: 100
+              });
+              const list = jobs.data.jobs || [];
+              if (list.length === 0) {
+                jobLines.push('| workflow jobs | ❌ | no jobs visible for current run |');
+              } else {
+                for (const j of list) {
+                  const labels = (j.labels || []).join(', ');
+                  const conclusion = j.conclusion || 'none';
+                  jobLines.push(`| job:${j.name} | ${j.status}/${conclusion} | labels: ${labels}; runner: ${j.runner_name || 'none'}; url: ${j.html_url} |`);
+                }
+              }
+            } catch (error) {
+              jobLines.push(`| workflow jobs inventory | ❌ | ${error.message} |`);
+            }
+
             const body = [
               'BEM-GATEWAY-DIAG | CURATOR | RUN RESULT',
               '',
@@ -58,17 +82,19 @@ jobs:
               '✅ Claude was not called',
               `⏳ GPT Curator job depends on self-hosted runner availability: ${runnerSummary}`,
               '',
+              `Workflow run: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
               '| Node | Status | Comment |',
               '|---|---:|---|',
               '| GitHub event | ✅ | issue_comment received |',
               '| Gateway fallback | ✅ | ubuntu-latest path works |',
               ...runnerLines,
-              '| GPT backend | ⏳ | check separate GPT Curator job |',
+              ...jobLines,
+              '| GPT backend | ⏳ | check GPT Curator job line above |',
               '',
               'DIAGNOSIS RULE:',
-              '- If runner inventory shows no online runner, GPT job cannot start.',
-              '- If runner inventory is still inaccessible with AI_SYSTEM_GITHUB_PAT, token lacks runner-read scope; use Actions job state/logs as source of truth.',
-              '- If runner is online but BEM-GPT-CURATOR is absent, Codex CLI/path/post-report is the next suspect.',
+              '- If GPT Curator job is queued and runner is none, no matching online self-hosted runner is available.',
+              '- If GPT Curator job is in_progress/completed and BEM-GPT-CURATOR is absent, inspect job logs: Codex CLI/path/post-report is the suspect.',
               '- If BEM-GPT-CURATOR appears, GPT curator backend works.'
             ].join('\n');
 
