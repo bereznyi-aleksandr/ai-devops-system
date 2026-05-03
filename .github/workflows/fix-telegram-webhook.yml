@@ -1,25 +1,9 @@
-name: Fix Telegram Webhook
-
+# DISABLED
+name: DISABLED
 on:
-  schedule:
-    - cron: '*/1 * * * *'
   workflow_dispatch:
-
 jobs:
-  fix:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - name: Delete webhook
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        run: |
-          echo "Deleting webhook..."
-          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/deleteWebhook?drop_pending_updates=false"
-          echo ""
-          echo "Done."
-
-      - name: Disable this workflow after first run
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-        run: |
-          gh workflow disable fix-telegram-webhook.yml --repo bereznyi-aleksandr/ai-devops-system || true
+      - run: echo "DISABLED — webhook уже удалён вручную"
