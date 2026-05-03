@@ -59,7 +59,7 @@ jobs:
           m = re.search(r'TASK_FILE:\s*(\S+)', body)
           if m:
               task = m.group(1).strip()
-          m = re.search(r'MODE:\s*(dry_run|apply|apply_and_commit|report_only)', body)
+          m = re.search(r'MODE:\s*(apply_and_commit|dry_run|report_only|apply)\b', body)
           if m:
               mode = m.group(1).strip()
           print(f'TASK_FILE={task}')
