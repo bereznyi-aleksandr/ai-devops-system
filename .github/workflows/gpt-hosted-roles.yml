@@ -16,6 +16,8 @@ jobs:
       github.event.issue.number == 31 &&
       github.actor != 'github-actions[bot]' &&
       github.event.comment.user.type != 'Bot' &&
+      contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE_EXECUTION') &&
+      contains(github.event.comment.body, 'TRACE_ID:') &&
       (contains(github.event.comment.body, '@gpt_executor') ||
        contains(github.event.comment.body, '@gpt_analyst') ||
        contains(github.event.comment.body, '@gpt_auditor') ||
@@ -56,6 +58,12 @@ jobs:
           else:
               role = 'GPT_UNKNOWN'
 
+          trace_id = 'missing'
+          import re
+          m = re.search(r'TRACE_ID:\s*([A-Za-z0-9_\-]+)', body)
+          if m:
+              trace_id = m.group(1)
+
           def read(path, limit=20000):
               p = root / path
               if not p.exists():
@@ -66,6 +74,7 @@ jobs:
           parts.append(f'BEM-GPT-HOSTED-ROLE | {role}')
           parts.append('')
           parts.append(f'You are {role} for ai-devops-system.')
+          parts.append(f'TRACE_ID={trace_id}')
           parts.append('')
           parts.append('Architecture:')
           parts.append('- This workflow is a hosted GPT fallback for role comments.')
@@ -104,6 +113,7 @@ jobs:
           Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_role_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
               f.write(f'ROLE={role}\n')
+              f.write(f'TRACE_ID={trace_id}\n')
           PY
 
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
@@ -131,6 +141,7 @@ jobs:
 
           print(f'BEM-GPT-HOSTED-ROLE | {role} | RAW_OUTPUT')
           print(f'MODEL={model}')
+          print(f'TRACE_ID={os.environ.get("TRACE_ID", "missing")}')
 
           if not api_key:
               print('HOSTED_GPT_STATUS=OPENAI_API_KEY_MISSING')
