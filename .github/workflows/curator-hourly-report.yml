@@ -18,79 +18,78 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Generate curator report
+      - name: Generate and queue curator report
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: |
-          python3 - <<'EOF'
-          import json, os, subprocess
+          python3 - <<'PYEOF'
+          import json, os
           from datetime import datetime, timezone, timedelta
 
           now_utc = datetime.now(timezone.utc)
           now_ua = now_utc + timedelta(hours=3)
           time_ua = now_ua.strftime("%H:%M UA %d.%m")
           time_utc_str = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+          event_id = "evt_hourly_" + now_utc.strftime("%Y%m%d_%H%M%S")
 
-          # Читать состояние системы
+          # Читать system_state
+          phase = "E3"
+          phase_title = "Отладка и стабилизация"
           try:
               with open("governance/state/system_state.json") as f:
-                  sys_state = json.load(f)
-              phase = sys_state.get("current_phase", "?")
-              phase_title = sys_state.get("phase_title", "")
-          except:
-              phase = "?"
-              phase_title = ""
+                  s = json.load(f)
+              phase = s.get("current_phase", phase)
+              phase_title = s.get("phase_title", phase_title)
+          except Exception:
+              pass
 
           # Читать routing
+          analyst_p = auditor_p = executor_p = "?"
           try:
               with open("governance/state/routing.json") as f:
-                  routing = json.load(f)
-              roles = routing.get("roles", {})
-              analyst_provider = roles.get("analyst", {}).get("active", "?")
-              auditor_provider = roles.get("auditor", {}).get("active", "?")
-              executor_provider = roles.get("executor", {}).get("active", "?")
-          except:
-              analyst_provider = auditor_provider = executor_provider = "?"
+                  r = json.load(f)
+              roles = r.get("roles", {})
+              analyst_p = roles.get("analyst", {}).get("active", "?")
+              auditor_p = roles.get("auditor", {}).get("active", "?")
+              executor_p = roles.get("executor", {}).get("active", "?")
+          except Exception:
+              pass
 
-          # Читать последние события
+          # Читать exchange.jsonl
+          events_text = "нет данных"
+          progress = "нет активности за час"
           try:
               with open("governance/exchange.jsonl") as f:
                   events = [json.loads(l) for l in f if l.strip()]
-              recent = events[-5:]
-              events_text = "\n".join([
-                  f"• {e.get('type','?')} [{e.get('timestamp','')[:16]}]"
-                  for e in recent
-              ])
-          except:
-              events_text = "нет данных"
+              if events:
+                  recent = events[-5:]
+                  lines = ["- " + e.get("type", "?") + " [" + e.get("timestamp", "")[:16] + "]" for e in recent]
+                  events_text = "\n".join(lines)
+              one_hour_ago = (now_utc - timedelta(hours=1)).isoformat()
+              recent_hour = [e for e in events if e.get("timestamp", "") > one_hour_ago]
+              progress = "есть активность" if recent_hour else "нет активности за час"
+          except Exception:
+              pass
 
-          # Проверить прогресс за последний час
-          one_hour_ago = now_utc - timedelta(hours=1)
-          recent_events = [e for e in (events if 'events' in dir() else [])
-                          if e.get("timestamp", "") > one_hour_ago.isoformat()]
-          progress = "✅ есть" if recent_events else "⚠️ нет активности"
+          report_lines = [
+              "KURATOR | " + time_ua,
+              "",
+              "Etap: " + phase + " | " + phase_title,
+              "",
+              "Roli:",
+              "- Analitik: " + analyst_p,
+              "- Auditor: " + auditor_p,
+              "- Ispolnitel: " + executor_p,
+              "",
+              "Poslednie sobytiya:",
+              events_text,
+              "",
+              "Progress za chas: " + progress,
+              "",
+              "Sleduyuschiy otchet cherez 1 chas"
+          ]
+          report = "\n".join(report_lines)
 
-          report = f"""📊 *КУРАТОР | {time_ua}*
-
-🗺 Этап: {phase} | {phase_title}
-
-⚙️ *Конфигурация ролей:*
-• Аналитик: *{analyst_provider}*
-• Аудитор: *{auditor_provider}*
-• Исполнитель: *{executor_provider}*
-
-📋 *Последние события:*
-{events_text}
-
-📈 Прогресс за час: {progress}
-
-_Следующий отчёт через 1 час_"""
-
-          with open("/tmp/curator_report.txt", "w") as f:
-              f.write(report)
-
-          # Записать в outbox
-          event_id = f"evt_hourly_{now_utc.strftime('%Y%m%d_%H%M%S')}"
           outbox_entry = {
               "event_id": event_id,
               "timestamp": time_utc_str,
@@ -100,22 +99,24 @@ _Следующий отчёт через 1 час_"""
               "text": report,
               "status": "ready_to_send"
           }
+
           with open("governance/telegram_outbox.jsonl", "a") as f:
               f.write(json.dumps(outbox_entry, ensure_ascii=False) + "\n")
 
-          # Записать в exchange
-          with open("governance/exchange.jsonl", "a") as f:
-              f.write(json.dumps({
-                  "event_id": event_id,
-                  "timestamp": time_utc_str,
-                  "type": "SYSTEM_HEALTH",
-                  "source": "curator_hourly_report",
-                  "status": "report_queued",
-                  "phase": phase
-              }, ensure_ascii=False) + "\n")
+          exchange_entry = {
+              "event_id": event_id,
+              "timestamp": time_utc_str,
+              "type": "SYSTEM_HEALTH",
+              "source": "curator_hourly_report",
+              "status": "report_queued",
+              "phase": phase
+          }
 
-          print(f"Report queued: {event_id}")
-          EOF
+          with open("governance/exchange.jsonl", "a") as f:
+              f.write(json.dumps(exchange_entry, ensure_ascii=False) + "\n")
+
+          print("Report queued: " + event_id)
+          PYEOF
 
       - name: Commit
         env:
