@@ -108,9 +108,25 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: |
+          set -e
           git config user.email "telegram-outbox@ai-devops-system"
           git config user.name "Telegram Outbox"
-          git pull --rebase origin main
+
+          git pull --rebase --autostash origin main
+
           git add governance/telegram_outbox.jsonl governance/exchange.jsonl
-          git diff --cached --quiet || git commit -m "TELEGRAM OUTBOX: dispatched $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git push
+          if git diff --cached --quiet; then
+            echo "No telegram outbox changes"
+            exit 0
+          fi
+
+          git commit -m "TELEGRAM OUTBOX: dispatched $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin main && git push && exit 0
+            echo "Push attempt $i failed; retrying after rebase"
+            sleep $((i * 2))
+          done
+
+          echo "Failed to push telegram outbox state after retries"
+          exit 1

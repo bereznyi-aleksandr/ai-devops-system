@@ -13,6 +13,8 @@ STATE_PATH = ROOT / "governance/state/role_cycle_state.json"
 EVENT_LOG = ROOT / "governance/events/role_orchestrator.jsonl"
 ROUTING_PATH = ROOT / "governance/state/routing.json"
 PROVIDER_STATUS_PATH = ROOT / "governance/state/provider_status.json"
+PROVIDER_ADAPTERS_PATH = ROOT / "governance/policies/provider_adapters.json"
+PROVIDER_ADAPTER_LOG = ROOT / "governance/events/provider_adapter.jsonl"
 
 ROLE_WORKFLOW = "gpt-hosted-roles.yml"
 MAIN_ISSUE = "31"
@@ -39,6 +41,78 @@ def append_event(entry):
     entry["timestamp"] = entry.get("timestamp") or now_iso()
     with EVENT_LOG.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def append_provider_adapter_event(entry):
+    PROVIDER_ADAPTER_LOG.parent.mkdir(parents=True, exist_ok=True)
+    entry["timestamp"] = entry.get("timestamp") or now_iso()
+    with PROVIDER_ADAPTER_LOG.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def load_provider_adapters():
+    return load_json(PROVIDER_ADAPTERS_PATH, {
+        "default_provider": "gpt",
+        "adapters": {
+            "gpt": {
+                "enabled": True,
+                "mode": "workflow_dispatch",
+                "workflow": "gpt-hosted-roles.yml",
+                "supports_roles": ["analyst", "auditor", "executor", "curator"]
+            }
+        }
+    })
+
+
+def adapter_for_provider(provider, role):
+    policy = load_provider_adapters()
+    adapter = policy.get("adapters", {}).get(provider)
+    if not adapter:
+        return None, "adapter_missing"
+    if not adapter.get("enabled", False):
+        return adapter, "adapter_disabled"
+    supports = adapter.get("supports_roles", [])
+    if supports and role not in supports:
+        return adapter, "adapter_does_not_support_role"
+    if adapter.get("mode") != "workflow_dispatch":
+        return adapter, "adapter_not_workflow_dispatch"
+    return adapter, None
+
+
+def role_reserve_provider(role):
+    routing = load_json(ROUTING_PATH, {})
+    policy = load_provider_adapters()
+    role_cfg = routing.get("roles", {}).get(role, {})
+    return role_cfg.get("reserve") or policy.get("default_provider", "gpt")
+
+
+def resolve_provider_and_adapter(role):
+    provider, adapter = resolve_provider_and_adapter(role)
+    adapter, reason = adapter_for_provider(provider, role)
+
+    if reason:
+        original_provider = provider
+        provider = role_reserve_provider(role)
+        adapter, second_reason = adapter_for_provider(provider, role)
+        append_provider_adapter_event({
+            "event": "PROVIDER_ADAPTER_FALLBACK",
+            "role": role,
+            "from_provider": original_provider,
+            "to_provider": provider,
+            "reason": reason,
+            "second_reason": second_reason
+        })
+        if second_reason:
+            raise RuntimeError(f"No usable provider adapter for role={role}; provider={provider}; reason={second_reason}")
+
+    append_provider_adapter_event({
+        "event": "PROVIDER_ADAPTER_SELECTED",
+        "role": role,
+        "provider": provider,
+        "workflow": adapter.get("workflow"),
+        "mode": adapter.get("mode")
+    })
+    return provider, adapter
 
 
 def github_api(method, url, payload=None):
@@ -117,7 +191,7 @@ def start_cycle(task_type, task, trace_id=None, cycle_id=None):
     trace_id = trace_id or ("fsm_" + uuid.uuid4().hex[:16])
 
     role, index = next_role_for_cycle(sequence, -1)
-    provider = select_provider(role)
+    provider, adapter = resolve_provider_and_adapter(role)
 
     cycles = state.setdefault("cycles", {})
     cycles[cycle_id] = {
@@ -137,7 +211,7 @@ def start_cycle(task_type, task, trace_id=None, cycle_id=None):
     state["status"] = "cycle_started"
     write_json(STATE_PATH, state)
 
-    dispatch_role(cycle_id, trace_id, task_type, role, provider, task)
+    dispatch_role(cycle_id, trace_id, task_type, role, provider, task, adapter)
     append_event({
         "event": "ROLE_CYCLE_STARTED",
         "cycle_id": cycle_id,
@@ -202,7 +276,7 @@ def advance_cycle(cycle_id, role, status, note=""):
         )
         return None, None
 
-    provider = select_provider(next_role)
+    provider, adapter = resolve_provider_and_adapter(next_role)
     cycle["current_index"] = next_index
     cycle["current_role"] = next_role
     cycle["status"] = "role_dispatched"
@@ -215,7 +289,8 @@ def advance_cycle(cycle_id, role, status, note=""):
         cycle.get("task_type"),
         next_role,
         provider,
-        cycle.get("task", "")
+        cycle.get("task", ""),
+        adapter
     )
     append_event({
         "event": "ROLE_DISPATCHED",
@@ -227,7 +302,7 @@ def advance_cycle(cycle_id, role, status, note=""):
     return next_role, provider
 
 
-def dispatch_role(cycle_id, trace_id, task_type, role, provider, task):
+def dispatch_role(cycle_id, trace_id, task_type, role, provider, task, adapter=None):
     if role == "curator_summary":
         post_issue_comment(
             "BEM-ROLE-ORCHESTRATOR | CURATOR SUMMARY STEP\n\n"
@@ -238,7 +313,14 @@ def dispatch_role(cycle_id, trace_id, task_type, role, provider, task):
         )
         return
 
-    dispatch_workflow(ROLE_WORKFLOW, {
+    adapter = adapter or adapter_for_provider(provider, role)[0]
+    workflow = adapter.get("workflow") if adapter else ROLE_WORKFLOW
+    mode = adapter.get("mode") if adapter else "workflow_dispatch"
+
+    if mode != "workflow_dispatch":
+        raise RuntimeError(f"Provider adapter for {provider} does not support workflow_dispatch")
+
+    dispatch_workflow(workflow, {
         "role": role,
         "provider": provider,
         "trace_id": trace_id,

@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "purpose": "Map logical providers to concrete execution adapters. Role FSM chooses role; routing chooses provider; provider adapter chooses workflow.",
+  "default_provider": "gpt",
+  "adapters": {
+    "gpt": {
+      "enabled": true,
+      "mode": "workflow_dispatch",
+      "workflow": "gpt-hosted-roles.yml",
+      "runner": "github-hosted",
+      "supports_roles": ["analyst", "auditor", "executor", "curator"]
+    },
+    "gpt_hosted_fallback": {
+      "enabled": true,
+      "mode": "workflow_dispatch",
+      "workflow": "gpt-hosted-roles.yml",
+      "runner": "github-hosted",
+      "supports_roles": ["analyst", "auditor", "executor", "curator"]
+    },
+    "codex": {
+      "enabled": true,
+      "mode": "workflow_dispatch",
+      "workflow": "codex-local.yml",
+      "runner": "self-hosted:codex-local",
+      "supports_roles": ["analyst", "auditor", "executor", "curator"],
+      "requires": ["self-hosted runner", "local Codex CLI"]
+    },
+    "isa_patch_runner": {
+      "enabled": true,
+      "mode": "workflow_dispatch",
+      "workflow": "isa-patch-runner.yml",
+      "runner": "github-hosted",
+      "supports_roles": ["executor"],
+      "notes": "Patch runner is not a conversational role adapter. Use only for approved patch tasks."
+    },
+    "claude": {
+      "enabled": false,
+      "mode": "legacy_issue_comment",
+      "workflow": "claude.yml",
+      "runner": "github-hosted",
+      "supports_roles": ["analyst", "auditor", "executor", "curator"],
+      "disabled_reason": "Claude is disabled for internal FSM while limits are active. Use reserve provider."
+    }
+  },
+  "fallback_rules": {
+    "adapter_missing": "use_role_reserve_or_default_provider",
+    "adapter_disabled": "use_role_reserve_or_default_provider",
+    "adapter_does_not_support_role": "use_role_reserve_or_default_provider",
+    "provider_limited": "use_role_reserve_or_default_provider"
+  }
+}

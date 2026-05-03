@@ -59,7 +59,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
       - name: Run role orchestrator
@@ -90,9 +90,25 @@ jobs:
           set -e
           git config user.email "role-orchestrator@ai-devops-system"
           git config user.name "Role Orchestrator"
-          git add governance/state/role_cycle_state.json governance/events/role_orchestrator.jsonl || true
-          git diff --cached --quiet || git commit -m "ROLE ORCHESTRATOR: state update"
-          git push
+
+          git pull --rebase --autostash origin main
+
+          git add governance/state/role_cycle_state.json governance/events/role_orchestrator.jsonl governance/events/provider_adapter.jsonl || true
+          if git diff --cached --quiet; then
+            echo "No role orchestrator state changes"
+            exit 0
+          fi
+
+          git commit -m "ROLE ORCHESTRATOR: state update"
+
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin main && git push && exit 0
+            echo "Push attempt $i failed; retrying after rebase"
+            sleep $((i * 2))
+          done
+
+          echo "Failed to push role orchestrator state after retries"
+          exit 1
 
       - name: Post role orchestrator report
         if: always()
