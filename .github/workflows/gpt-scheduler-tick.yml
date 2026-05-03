@@ -3,14 +3,14 @@ name: GPT Scheduler Tick
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/10 * * * *'
-
-permissions:
-  contents: write
+    - cron: '*/5 * * * *'
 
 jobs:
   gpt-tick:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -35,6 +35,7 @@ jobs:
 
       - name: Commit state changes
         run: |
-          git add governance/schedulers/gpt/ governance/exchange.jsonl
+          git add governance/schedulers/gpt/
+          git add governance/exchange.jsonl
           git diff --cached --quiet || git commit -m "GPT SCHEDULER TICK: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git push
