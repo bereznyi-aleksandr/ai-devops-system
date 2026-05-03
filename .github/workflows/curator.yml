@@ -32,7 +32,7 @@ jobs:
               '✅ @curator trigger matched issue #31',
               '✅ ubuntu-latest fallback job executed',
               '✅ Claude was not called',
-              '⏳ GPT Curator job depends on self-hosted runner label: codex-local',
+              '⏳ GPT Curator job depends on an available self-hosted runner',
               '',
               '| Node | Status | Comment |',
               '|---|---:|---|',
@@ -41,7 +41,7 @@ jobs:
               '| GPT backend | ⏳ | check separate GPT Curator job |',
               '',
               'DIAGNOSIS RULE:',
-              '- If this report appears but BEM-GPT-CURATOR does not, the blocker is self-hosted runner / codex-local / Codex CLI.',
+              '- If this report appears but BEM-GPT-CURATOR does not, the blocker is self-hosted runner / Codex CLI.',
               '- If this report does not appear, the blocker is workflow trigger / permissions / issue event.'
             ].join('\n');
 
@@ -57,7 +57,7 @@ jobs:
     if: |
       github.event.issue.number == 31 &&
       contains(github.event.comment.body, '@curator')
-    runs-on: [self-hosted, codex-local]
+    runs-on: self-hosted
     timeout-minutes: 30
 
     concurrency:
