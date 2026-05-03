@@ -4,13 +4,13 @@ import fnmatch
 import json
 import os
 import subprocess
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path.cwd()
 POLICY_PATH = ROOT / 'governance/policies/patch_runner_allowlist.json'
 EVENT_LOG = ROOT / 'governance/events/patch_runner.jsonl'
+SUPPORTED_OPS = ('create_or_update', 'delete', 'replace')
 
 
 def now_iso():
@@ -48,15 +48,18 @@ def validate_task(task, policy):
     errors = []
     files = task.get('files', [])
     if not isinstance(files, list):
-        errors.append('files must be list')
-        return errors
+        return ['files must be list']
     for item in files:
         path = item.get('path', '')
         ok, reason = path_allowed(path, policy)
         if not ok:
             errors.append(f'{path}: {reason}')
-        if item.get('operation') not in ('create_or_update', 'delete'):
-            errors.append(f'{path}: unsupported operation')
+        op = item.get('operation')
+        if op not in SUPPORTED_OPS:
+            errors.append(f'{path}: unsupported operation {op}')
+        if op == 'replace':
+            if 'old' not in item or 'new' not in item:
+                errors.append(f'{path}: replace requires old and new')
     return errors
 
 
@@ -68,6 +71,15 @@ def apply_files(task):
         if op == 'delete':
             if dest.exists():
                 dest.unlink()
+            continue
+        if op == 'replace':
+            text = dest.read_text(encoding='utf-8', errors='replace')
+            old = item['old']
+            new = item['new']
+            count = int(item.get('count', 1))
+            if old not in text:
+                raise RuntimeError(f'replace target not found: {rel}')
+            dest.write_text(text.replace(old, new, count), encoding='utf-8')
             continue
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(item.get('content', ''), encoding='utf-8')
@@ -105,8 +117,7 @@ def main():
     task = load_json(args.task_file)
     policy = load_json(POLICY_PATH)
     errors = validate_task(task, policy)
-    event = {'event': 'PATCH_RUNNER_START', 'task_id': task.get('task_id'), 'mode': args.mode, 'errors': errors}
-    append_event(event)
+    append_event({'event': 'PATCH_RUNNER_START', 'task_id': task.get('task_id'), 'mode': args.mode, 'errors': errors})
 
     print('BEM-ISA-PATCH-RUNNER | START')
     print('TASK_ID=' + str(task.get('task_id')))
@@ -125,7 +136,14 @@ def main():
         append_event({'event': 'PATCH_RUNNER_DRY_RUN_OK', 'task_id': task.get('task_id')})
         return 0
 
-    apply_files(task)
+    try:
+        apply_files(task)
+    except Exception as exc:
+        print('APPLY=FAILED')
+        print('ERROR=' + str(exc))
+        append_event({'event': 'PATCH_RUNNER_APPLY_FAILED', 'task_id': task.get('task_id'), 'error': str(exc)})
+        return 5
+
     checks_ok, check_results = run_checks(task)
     append_event({'event': 'PATCH_RUNNER_CHECKS', 'task_id': task.get('task_id'), 'ok': checks_ok, 'checks': check_results})
     if not checks_ok:
