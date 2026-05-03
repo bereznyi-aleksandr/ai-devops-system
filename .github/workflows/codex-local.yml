@@ -89,6 +89,7 @@ jobs:
           PROMPT
 
           echo "ROLE=$ROLE" >> "$GITHUB_ENV"
+          echo "BODY_FILE=$BODY_FILE" >> "$GITHUB_ENV"
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
 
       - name: Run local Codex CLI
@@ -107,6 +108,30 @@ jobs:
           } 2>&1 | tee "$OUTPUT_FILE"
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
           exit 0
+
+      - name: Commit approved changes
+        if: always()
+        shell: bash
+        run: |
+          set -e
+          if [ "$ROLE" != "GPT_EXECUTOR" ] && [ "$ROLE" != "GPT_CURATOR" ]; then
+            echo "No commit for role $ROLE"
+            exit 0
+          fi
+          if ! grep -q 'OWNER_APPROVED_COMMIT' "$BODY_FILE"; then
+            echo "No commit: OWNER_APPROVED_COMMIT is absent"
+            exit 0
+          fi
+          git config user.email "gpt-executor@ai-devops-system"
+          git config user.name "GPT Executor"
+          git pull --rebase origin main
+          git add .
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "GPT EXECUTOR: apply approved changes"
+          git push
 
       - name: Post Codex report to issue
         if: always()
