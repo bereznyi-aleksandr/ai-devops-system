@@ -26,20 +26,19 @@ jobs:
 
       - name: Build hosted curator prompt
         shell: bash
+        env:
+          COMMENT_BODY_JSON: ${{ toJson(github.event.comment.body) }}
         run: |
           set -e
-          BODY_FILE="$RUNNER_TEMP/curator_comment_body.txt"
           PROMPT_FILE="$RUNNER_TEMP/hosted_gpt_curator_prompt.txt"
-          cat > "$BODY_FILE" <<'BODY'
-          ${{ github.event.comment.body }}
-          BODY
 
           python3 - <<'PY'
-          from pathlib import Path
+          import json
           import os
+          from pathlib import Path
 
           root = Path('.')
-          body = Path(os.environ['RUNNER_TEMP'], 'curator_comment_body.txt').read_text(encoding='utf-8', errors='replace')
+          body = json.loads(os.environ['COMMENT_BODY_JSON'])
 
           def read(path, limit=20000):
               p = root / path
@@ -47,45 +46,46 @@ jobs:
                   return f'[missing: {path}]'
               return p.read_text(encoding='utf-8', errors='replace')[:limit]
 
-          prompt = f'''BEM-GPT-CURATOR | HOSTED_GPT_CURATOR
+          parts = []
+          parts.append('BEM-GPT-CURATOR | HOSTED_GPT_CURATOR')
+          parts.append('')
+          parts.append('You are GPT_CURATOR for ai-devops-system.')
+          parts.append('')
+          parts.append('Architecture:')
+          parts.append('- Operator entrypoint remains Telegram -> Deno -> issue #31 -> @curator.')
+          parts.append('- This hosted fallback exists because the self-hosted runner path is currently not producing BEM-GPT-CURATOR.')
+          parts.append('- Do not call Claude.')
+          parts.append('- Do not use anthropics/claude-code-action.')
+          parts.append('- Do not change files in this hosted diagnostic workflow.')
+          parts.append('- Route execution to @gpt_executor, analysis to @gpt_analyst, audit to @gpt_auditor only in your report.')
+          parts.append('')
+          parts.append('Incoming issue comment:')
+          parts.append('-----')
+          parts.append(body)
+          parts.append('-----')
+          parts.append('')
+          parts.append('Repository context:')
+          parts.append('')
+          parts.append('--- governance/MASTER_PLAN.md ---')
+          parts.append(read('governance/MASTER_PLAN.md'))
+          parts.append('')
+          parts.append('--- governance/state/routing.json ---')
+          parts.append(read('governance/state/routing.json'))
+          parts.append('')
+          parts.append('--- governance/state/system_state.json ---')
+          parts.append(read('governance/state/system_state.json'))
+          parts.append('')
+          parts.append('--- governance/exchange.jsonl tail ---')
+          parts.append(read('governance/exchange.jsonl')[-20000:])
+          parts.append('')
+          parts.append('Required output:')
+          parts.append('- Compact BEM report in Russian.')
+          parts.append('- State whether hosted GPT curator ran.')
+          parts.append('- State whether self-hosted runner remains the blocker for codex-local path.')
+          parts.append('- State next technical action.')
+          parts.append('- Do not claim that files were changed.')
 
-You are GPT_CURATOR for ai-devops-system.
-
-Architecture:
-- Operator entrypoint remains Telegram -> Deno -> issue #31 -> @curator.
-- This hosted fallback exists because the self-hosted runner path is currently not producing BEM-GPT-CURATOR.
-- Do not call Claude.
-- Do not use anthropics/claude-code-action.
-- Do not change files in this hosted diagnostic workflow.
-- Route execution to @gpt_executor, analysis to @gpt_analyst, audit to @gpt_auditor only in your report.
-
-Incoming issue comment:
------
-{body}
------
-
-Repository context:
-
---- governance/MASTER_PLAN.md ---
-{read('governance/MASTER_PLAN.md')}
-
---- governance/state/routing.json ---
-{read('governance/state/routing.json')}
-
---- governance/state/system_state.json ---
-{read('governance/state/system_state.json')}
-
---- governance/exchange.jsonl tail ---
-{read('governance/exchange.jsonl')[-20000:]}
-
-Required output:
-- Compact BEM report in Russian.
-- State whether hosted GPT curator ran.
-- State whether self-hosted runner remains the blocker for codex-local path.
-- State next technical action.
-- Do not claim that files were changed.
-'''
-          Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_curator_prompt.txt').write_text(prompt, encoding='utf-8')
+          Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_curator_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
           PY
 
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
@@ -121,10 +121,16 @@ Required output:
           payload = {
               'model': model,
               'input': [
-                  {'role': 'system', 'content': 'You are GPT_CURATOR. Return a compact Russian BEM report. Do not reveal secrets.'},
-                  {'role': 'user', 'content': prompt},
+                  {
+                      'role': 'system',
+                      'content': 'You are GPT_CURATOR. Return a compact Russian BEM report. Do not reveal secrets.'
+                  },
+                  {
+                      'role': 'user',
+                      'content': prompt
+                  }
               ],
-              'max_output_tokens': 1400,
+              'max_output_tokens': 1400
           }
 
           req = urllib.request.Request(
@@ -132,9 +138,9 @@ Required output:
               data=json.dumps(payload).encode('utf-8'),
               headers={
                   'Authorization': f'Bearer {api_key}',
-                  'Content-Type': 'application/json',
+                  'Content-Type': 'application/json'
               },
-              method='POST',
+              method='POST'
           )
 
           try:
@@ -191,9 +197,9 @@ Required output:
                   'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
                   'Accept': 'application/vnd.github+json',
                   'Content-Type': 'application/json',
-                  'User-Agent': 'ai-devops-hosted-gpt-curator',
+                  'User-Agent': 'ai-devops-hosted-gpt-curator'
               },
-              method='POST',
+              method='POST'
           )
           with urllib.request.urlopen(req) as resp:
               print(resp.status)
