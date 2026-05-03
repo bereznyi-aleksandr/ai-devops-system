@@ -1,0 +1,42 @@
+name: Curator
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  curator:
+    if: |
+      github.event.issue.number == 31 &&
+      contains(github.event.comment.body, '@curator')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    concurrency:
+      group: curator-${{ github.event.issue.number }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Curator (Claude Code)
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          trigger_phrase: "@curator"
+          prompt: |
+            Прочитай governance/prompts/curator_prompt.md и выполни инструкции.
+
+            Входящий комментарий:
+            ${{ github.event.comment.body }}
+
+            Работай строго как КУРАТОР. Читай routing.json для маршрутизации.
+            Записывай события в exchange.jsonl.
+            Ответы оператору записывай в telegram_outbox.jsonl.
+          claude_args: "--max-turns 15"
