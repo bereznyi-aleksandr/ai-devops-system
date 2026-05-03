@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "updated_at": "2026-05-03T11:05:00Z",
+  "updated_by": "claude-auditor",
+  "roles": {
+    "analyst": {
+      "active": "gpt",
+      "primary": "gpt",
+      "reserve": "claude"
+    },
+    "auditor": {
+      "active": "claude",
+      "primary": "claude",
+      "reserve": "gpt"
+    },
+    "executor": {
+      "active": "claude",
+      "primary": "claude",
+      "reserve": "gpt"
+    }
+  },
+  "policy": {
+    "switch_after_failures": 2,
+    "switch_back_after_successful_probe": true,
+    "failure_types_that_trigger_switch": ["provider_limit", "api_error"],
+    "failure_types_that_do_not_trigger_switch": ["max_turns", "config_error", "permission_error", "timeout"]
+  }
+}
