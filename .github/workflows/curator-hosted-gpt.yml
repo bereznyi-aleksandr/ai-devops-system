@@ -14,7 +14,11 @@ jobs:
     name: Hosted GPT Curator
     if: |
       github.event.issue.number == 31 &&
-      contains(github.event.comment.body, '@curator')
+      contains(github.event.comment.body, '@curator') &&
+      !contains(github.event.comment.body, 'BEM-GATEWAY-DIAG') &&
+      !contains(github.event.comment.body, 'BEM-GPT-CURATOR') &&
+      !contains(github.event.comment.body, 'RUN RESULT') &&
+      !contains(github.event.comment.body, 'HOSTED FALLBACK')
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -52,12 +56,12 @@ jobs:
           parts.append('You are GPT_CURATOR for ai-devops-system.')
           parts.append('')
           parts.append('Architecture:')
-          parts.append('- Operator entrypoint remains Telegram -> Deno -> issue #31 -> @curator.')
+          parts.append('- Operator entrypoint remains Telegram -> Deno -> issue #31 -> curator.')
           parts.append('- This hosted fallback exists because the self-hosted runner path is currently not producing BEM-GPT-CURATOR.')
           parts.append('- Do not call Claude.')
           parts.append('- Do not use anthropics/claude-code-action.')
           parts.append('- Do not change files in this hosted diagnostic workflow.')
-          parts.append('- Route execution to @gpt_executor, analysis to @gpt_analyst, audit to @gpt_auditor only in your report.')
+          parts.append('- Route execution to GPT_EXECUTOR, analysis to GPT_ANALYST, audit to GPT_AUDITOR only in your report.')
           parts.append('')
           parts.append('Incoming issue comment:')
           parts.append('-----')
@@ -188,7 +192,7 @@ jobs:
 
           output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
           output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else 'OUTPUT_FILE was not created.'
-          body = 'BEM-GPT-CURATOR | RUN RESULT | HOSTED FALLBACK\n\n' + output[-60000:]
+          body = 'BEM-GPT-CURATOR | RUN RESULT | HOSTED FALLBACK\n\n' + output[-60000:] + '\n\nANTI_RECURSION: report comments are ignored by curator workflows.'
           data = json.dumps({'body': body}).encode('utf-8')
           req = urllib.request.Request(
               f"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments",
