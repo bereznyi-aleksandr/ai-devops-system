@@ -29,6 +29,13 @@ def append_jsonl(path, obj):
         f.write(json.dumps(obj, ensure_ascii=False) + '\n')
 
 
+def write_env(name, value):
+    env_path = __import__('os').environ.get('GITHUB_ENV')
+    if env_path:
+        with open(env_path, 'a', encoding='utf-8') as f:
+            f.write(f'{name}={value}\n')
+
+
 def extract_provider_error(text):
     lower = text.lower()
     for marker in ('provider_error:', 'simulate_provider_error:', 'claude_error:', 'cloud_error:'):
@@ -43,7 +50,16 @@ def extract_provider_error(text):
 
 def infer_role(text):
     m = re.search(r'ROLE:\s*(analyst|auditor|executor)', text, flags=re.I)
-    return m.group(1).lower() if m else None
+    if m:
+        return m.group(1).lower()
+    lower = text.lower()
+    if 'исполнитель' in lower or 'executor' in lower:
+        return 'executor'
+    if 'аналитик' in lower or 'analyst' in lower:
+        return 'analyst'
+    if 'аудитор' in lower or 'auditor' in lower:
+        return 'auditor'
+    return None
 
 
 def infer_task(text):
@@ -65,6 +81,8 @@ def main():
         next_action = 'RUN_' + str(backend).upper()
     else:
         next_action = 'DEGRADED_REPORT_ONLY'
+    requested_role = infer_role(comment)
+    task = infer_task(comment)
     decision = {
         'version': 1,
         'timestamp': now_iso(),
@@ -72,18 +90,24 @@ def main():
         'active_backend': backend,
         'routing_reason': reason,
         'next_action': next_action,
-        'requested_role': infer_role(comment),
-        'task': infer_task(comment),
+        'requested_role': requested_role,
+        'task': task,
         'error_detected': bool(error_text)
     }
     LAST_DECISION.parent.mkdir(parents=True, exist_ok=True)
     LAST_DECISION.write_text(json.dumps(decision, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-    append_jsonl(EXCHANGE, {'event_id': trace_id, 'timestamp': decision['timestamp'], 'type': 'CURATOR_ROUTING_DECISION', 'source': 'curator_entrypoint', 'backend': backend, 'reason': reason})
+    append_jsonl(EXCHANGE, {'event_id': trace_id, 'timestamp': decision['timestamp'], 'type': 'CURATOR_ROUTING_DECISION', 'source': 'curator_entrypoint', 'backend': backend, 'reason': reason, 'requested_role': requested_role})
+    write_env('CURATOR_TRACE_ID', trace_id)
+    write_env('ACTIVE_BACKEND', backend or 'none')
+    write_env('NEXT_ACTION', next_action)
+    write_env('REQUESTED_ROLE', requested_role or 'none')
+    write_env('ROUTING_REASON', reason.replace('\n', ' ')[:1000])
     print('BEM-CURATOR-ENTRYPOINT | ROUTING DECISION')
     print('TRACE_ID=' + trace_id)
     print('ACTIVE_BACKEND=' + str(backend or 'none'))
     print('ROUTING_REASON=' + reason.replace('\n', ' ')[:1000])
     print('NEXT_ACTION=' + next_action)
+    print('REQUESTED_ROLE=' + str(requested_role or 'none'))
     print('ERROR_DETECTED=' + str(bool(error_text)).lower())
     return 0 if backend else 2
 
