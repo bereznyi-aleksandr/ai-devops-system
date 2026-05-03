@@ -1,0 +1,91 @@
+name: Role Router
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      role:
+        description: 'Logical role: analyst | auditor | executor'
+        required: true
+        type: string
+      task:
+        description: 'Task description'
+        required: false
+        type: string
+
+jobs:
+  route:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Read routing and dispatch
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          INPUT_ROLE: ${{ inputs.role }}
+          INPUT_TASK: ${{ inputs.task }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          python3 - <<'EOF'
+          import os, json, re, urllib.request, urllib.parse
+
+          GH_TOKEN = os.environ["GH_TOKEN"]
+          REPO = "bereznyi-aleksandr/ai-devops-system"
+          ISSUE = 31
+
+          # Читать routing.json
+          with open("governance/state/routing.json") as f:
+              routing = json.load(f)
+
+          roles_map = routing["roles"]
+
+          # Определить роль
+          input_role = os.environ.get("INPUT_ROLE", "").strip()
+          comment = os.environ.get("COMMENT_BODY", "")
+
+          if not input_role:
+              m = re.search(r'ROLE:\s*(analyst|auditor|executor)', comment)
+              input_role = m.group(1) if m else "analyst"
+
+          task = os.environ.get("INPUT_TASK", "").strip()
+          if not task:
+              m = re.search(r'TASK:\s*(.+)', comment)
+              task = m.group(1).strip() if m else "Прочитай MASTER_PLAN.md. Предложи следующий шаг E3. Завершись: @auditor REVIEW"
+
+          # Определить триггер из routing
+          role_config = roles_map.get(input_role, {})
+          provider = role_config.get("active", "claude")
+
+          triggers = {
+              "analyst": {"claude": "@analyst", "gpt": "@codex ROLE=GPT_ANALYST"},
+              "auditor": {"claude": "@auditor", "gpt": "@codex ROLE=GPT_AUDITOR"},
+              "executor": {"claude": "@executor", "gpt": "@codex ROLE=GPT_EXECUTOR"},
+          }
+          trigger = triggers.get(input_role, {}).get(provider, f"@{input_role}")
+
+          comment_body = f"{trigger} {task}".strip()
+          print(f"Routing: {input_role} → {provider} → {trigger}")
+          print(f"Comment: {comment_body[:100]}")
+
+          # Написать комментарий в issue #31
+          data = json.dumps({"body": comment_body}).encode()
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{REPO}/issues/{ISSUE}/comments",
+              data=data,
+              headers={"Authorization": f"Bearer {GH_TOKEN}",
+                       "Accept": "application/vnd.github+json",
+                       "Content-Type": "application/json"})
+          resp = urllib.request.urlopen(req)
+          print(f"Comment posted: {resp.status}")
+          EOF
