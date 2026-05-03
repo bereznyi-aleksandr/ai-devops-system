@@ -24,6 +24,30 @@ jobs:
         with:
           github-token: ${{ github.token }}
           script: |
+            let runnerLines = [];
+            let runnerSummary = 'unknown';
+            try {
+              const runners = await github.rest.actions.listSelfHostedRunnersForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              });
+              const list = runners.data.runners || [];
+              runnerSummary = `${list.length} self-hosted runner(s) visible`;
+              if (list.length === 0) {
+                runnerLines.push('| self-hosted runners | ❌ | none visible to github.token |');
+              } else {
+                for (const r of list) {
+                  const labels = (r.labels || []).map(l => l.name).join(', ');
+                  const status = r.status === 'online' ? '✅ online' : `❌ ${r.status}`;
+                  runnerLines.push(`| runner:${r.name} | ${status} | labels: ${labels}; busy: ${r.busy} |`);
+                }
+              }
+            } catch (error) {
+              runnerSummary = `runner inventory failed: ${error.message}`;
+              runnerLines.push(`| self-hosted runner inventory | ❌ | ${error.message} |`);
+            }
+
             const body = [
               'BEM-GATEWAY-DIAG | CURATOR | RUN RESULT',
               '',
@@ -32,17 +56,19 @@ jobs:
               '✅ @curator trigger matched issue #31',
               '✅ ubuntu-latest fallback job executed',
               '✅ Claude was not called',
-              '⏳ GPT Curator job depends on an available self-hosted runner',
+              `⏳ GPT Curator job depends on self-hosted runner availability: ${runnerSummary}`,
               '',
               '| Node | Status | Comment |',
               '|---|---:|---|',
               '| GitHub event | ✅ | issue_comment received |',
               '| Gateway fallback | ✅ | ubuntu-latest path works |',
+              ...runnerLines,
               '| GPT backend | ⏳ | check separate GPT Curator job |',
               '',
               'DIAGNOSIS RULE:',
-              '- If this report appears but BEM-GPT-CURATOR does not, the blocker is self-hosted runner / Codex CLI.',
-              '- If this report does not appear, the blocker is workflow trigger / permissions / issue event.'
+              '- If runner inventory shows no online runner, GPT job cannot start.',
+              '- If runner is online but BEM-GPT-CURATOR is absent, Codex CLI/path/post-report is the next suspect.',
+              '- If BEM-GPT-CURATOR appears, GPT curator backend works.'
             ].join('\n');
 
             await github.rest.issues.createComment({
