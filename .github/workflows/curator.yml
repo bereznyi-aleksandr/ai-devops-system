@@ -14,7 +14,11 @@ jobs:
     name: Curator Gateway Diagnostic
     if: |
       github.event.issue.number == 31 &&
-      contains(github.event.comment.body, '@curator')
+      contains(github.event.comment.body, '@curator') &&
+      !contains(github.event.comment.body, 'BEM-GATEWAY-DIAG') &&
+      !contains(github.event.comment.body, 'BEM-GPT-CURATOR') &&
+      !contains(github.event.comment.body, 'RUN RESULT') &&
+      !contains(github.event.comment.body, 'HOSTED FALLBACK')
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -77,7 +81,7 @@ jobs:
               '',
               'Checklist:',
               '✅ issue_comment event reached curator.yml',
-              '✅ @curator trigger matched issue #31',
+              '✅ curator trigger matched issue #31',
               '✅ ubuntu-latest fallback job executed',
               '✅ Claude was not called',
               `⏳ GPT Curator job depends on self-hosted runner availability: ${runnerSummary}`,
@@ -95,7 +99,9 @@ jobs:
               'DIAGNOSIS RULE:',
               '- If GPT Curator job is queued and runner is none, no matching online self-hosted runner is available.',
               '- If GPT Curator job is in_progress/completed and BEM-GPT-CURATOR is absent, inspect job logs: Codex CLI/path/post-report is the suspect.',
-              '- If BEM-GPT-CURATOR appears, GPT curator backend works.'
+              '- If BEM-GPT-CURATOR appears, GPT curator backend works.',
+              '',
+              'ANTI_RECURSION: report comments are ignored by curator workflows.'
             ].join('\n');
 
             await github.rest.issues.createComment({
@@ -109,7 +115,11 @@ jobs:
     name: GPT Curator
     if: |
       github.event.issue.number == 31 &&
-      contains(github.event.comment.body, '@curator')
+      contains(github.event.comment.body, '@curator') &&
+      !contains(github.event.comment.body, 'BEM-GATEWAY-DIAG') &&
+      !contains(github.event.comment.body, 'BEM-GPT-CURATOR') &&
+      !contains(github.event.comment.body, 'RUN RESULT') &&
+      !contains(github.event.comment.body, 'HOSTED FALLBACK')
     runs-on: self-hosted
     timeout-minutes: 30
 
@@ -150,11 +160,11 @@ jobs:
           You are GPT_CURATOR for ai-devops-system.
 
           Architecture:
-          - Operator entrypoint remains Telegram -> Deno -> issue #31 -> @curator.
+          - Operator entrypoint remains Telegram -> Deno -> issue #31 -> curator.
           - Curator backend is GPT/Codex local runner.
           - Do not call Claude.
           - Do not use anthropics/claude-code-action.
-          - Route execution to @gpt_executor, analysis to @gpt_analyst, audit to @gpt_auditor.
+          - Route execution to GPT_EXECUTOR, analysis to GPT_ANALYST, audit to GPT_AUDITOR.
 
           Read before acting:
           - governance/prompts/curator_prompt.md
