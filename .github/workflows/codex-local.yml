@@ -14,7 +14,8 @@ jobs:
     name: Codex Local ISA
     if: >
       github.event.issue.number == 31 &&
-      (contains(github.event.comment.body, '@gpt_analyst') ||
+      (contains(github.event.comment.body, '@gpt_curator') ||
+       contains(github.event.comment.body, '@gpt_analyst') ||
        contains(github.event.comment.body, '@gpt_auditor') ||
        contains(github.event.comment.body, '@gpt_executor'))
     runs-on: [self-hosted, codex-local]
@@ -45,6 +46,7 @@ jobs:
           BODY
 
           ROLE="UNKNOWN"
+          if grep -q '@gpt_curator' "$BODY_FILE"; then ROLE="GPT_CURATOR"; fi
           if grep -q '@gpt_analyst' "$BODY_FILE"; then ROLE="GPT_ANALYST"; fi
           if grep -q '@gpt_auditor' "$BODY_FILE"; then ROLE="GPT_AUDITOR"; fi
           if grep -q '@gpt_executor' "$BODY_FILE"; then ROLE="GPT_EXECUTOR"; fi
@@ -75,6 +77,7 @@ jobs:
           - For GPT_ANALYST: read and plan only; do not edit files.
           - For GPT_AUDITOR: review only; do not edit files.
           - For GPT_EXECUTOR: execute only an explicitly approved scope from GPT_AUDITOR.
+          - For GPT_CURATOR: process curator/routing state only; do not call Claude; keep @curator as operator entrypoint.
           - Do not commit or push unless the issue comment explicitly says OWNER_APPROVED_COMMIT.
 
           Output a BEM report with this table:
