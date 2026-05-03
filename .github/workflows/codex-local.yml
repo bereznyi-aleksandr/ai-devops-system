@@ -24,6 +24,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
       - name: Verify local Codex CLI
         shell: bash
