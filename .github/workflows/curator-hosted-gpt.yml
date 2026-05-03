@@ -94,6 +94,7 @@ jobs:
           parts.append('- State whether self-hosted runner remains the blocker for codex-local path.')
           parts.append('- State next technical action.')
           parts.append('- Do not claim that files were changed.')
+          parts.append('- Never include a literal at-sign mention of curator in the final report; write curator without at-sign.')
 
           Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_curator_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
           PY
@@ -133,7 +134,7 @@ jobs:
               'input': [
                   {
                       'role': 'system',
-                      'content': 'You are GPT_CURATOR. Return a compact Russian BEM report. Do not reveal secrets.'
+                      'content': 'You are GPT_CURATOR. Return a compact Russian BEM report. Do not reveal secrets. Do not include literal at-sign mentions.'
                   },
                   {
                       'role': 'user',
@@ -198,6 +199,10 @@ jobs:
 
           output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
           output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else 'OUTPUT_FILE was not created.'
+          output = output.replace('@curator', 'curator')
+          output = output.replace('@gpt_executor', 'GPT_EXECUTOR')
+          output = output.replace('@gpt_analyst', 'GPT_ANALYST')
+          output = output.replace('@gpt_auditor', 'GPT_AUDITOR')
           body = 'BEM-GPT-CURATOR | RUN RESULT | HOSTED FALLBACK\n\n' + output[-60000:] + '\n\nANTI_RECURSION: report comments are ignored by curator workflows.'
           data = json.dumps({'body': body}).encode('utf-8')
           req = urllib.request.Request(
