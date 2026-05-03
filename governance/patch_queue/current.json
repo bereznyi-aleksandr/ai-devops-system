@@ -1,11 +1,44 @@
 {
-  "task_id": "c01_dry_run_probe",
-  "title": "ISA Patch Runner dry-run probe",
-  "mode": "dry_run",
-  "owner_approved_commit": false,
-  "commit_message": "ISA PATCH: dry-run probe",
-  "files": [],
+  "task_id": "c05_hosted_roles_trace_gate",
+  "title": "Restrict hosted GPT roles to curator-issued route comments",
+  "mode": "apply_and_commit",
+  "owner_approved_commit": true,
+  "commit_message": "C-05: gate hosted GPT roles by curator trace",
+  "files": [
+    {
+      "path": ".github/workflows/gpt-hosted-roles.yml",
+      "operation": "replace",
+      "old": "      github.event.issue.number == 31 &&\n      github.actor != 'github-actions[bot]' &&\n      github.event.comment.user.type != 'Bot' &&\n      (contains(github.event.comment.body, '@gpt_executor') ||\n       contains(github.event.comment.body, '@gpt_analyst') ||\n       contains(github.event.comment.body, '@gpt_auditor') ||\n       contains(github.event.comment.body, '@gpt_curator'))",
+      "new": "      github.event.issue.number == 31 &&\n      github.actor != 'github-actions[bot]' &&\n      github.event.comment.user.type != 'Bot' &&\n      contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE_EXECUTION') &&\n      contains(github.event.comment.body, 'TRACE_ID:') &&\n      (contains(github.event.comment.body, '@gpt_executor') ||\n       contains(github.event.comment.body, '@gpt_analyst') ||\n       contains(github.event.comment.body, '@gpt_auditor') ||\n       contains(github.event.comment.body, '@gpt_curator'))"
+    },
+    {
+      "path": ".github/workflows/gpt-hosted-roles.yml",
+      "operation": "replace",
+      "old": "          else:\n              role = 'GPT_UNKNOWN'\n\n          def read(path, limit=20000):",
+      "new": "          else:\n              role = 'GPT_UNKNOWN'\n\n          trace_id = 'missing'\n          import re\n          m = re.search(r'TRACE_ID:\\s*([A-Za-z0-9_\\-]+)', body)\n          if m:\n              trace_id = m.group(1)\n\n          def read(path, limit=20000):"
+    },
+    {
+      "path": ".github/workflows/gpt-hosted-roles.yml",
+      "operation": "replace",
+      "old": "          parts.append(f'You are {role} for ai-devops-system.')\n          parts.append('')\n          parts.append('Architecture:')",
+      "new": "          parts.append(f'You are {role} for ai-devops-system.')\n          parts.append(f'TRACE_ID={trace_id}')\n          parts.append('')\n          parts.append('Architecture:')"
+    },
+    {
+      "path": ".github/workflows/gpt-hosted-roles.yml",
+      "operation": "replace",
+      "old": "              f.write(f'ROLE={role}\\n')\n          PY",
+      "new": "              f.write(f'ROLE={role}\\n')\n              f.write(f'TRACE_ID={trace_id}\\n')\n          PY"
+    },
+    {
+      "path": ".github/workflows/gpt-hosted-roles.yml",
+      "operation": "replace",
+      "old": "          print(f'MODEL={model}')\n\n          if not api_key:",
+      "new": "          print(f'MODEL={model}')\n          print(f'TRACE_ID={os.environ.get(\"TRACE_ID\", \"missing\")}')\n\n          if not api_key:"
+    }
+  ],
   "checks": [
-    "python3 -m py_compile scripts/isa_patch_runner.py"
+    "python3 -m py_compile scripts/isa_patch_runner.py",
+    "python3 -m py_compile scripts/curator_entrypoint.py",
+    "python3 -m py_compile scripts/curator_router.py"
   ]
 }
