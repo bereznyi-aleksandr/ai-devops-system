@@ -1,0 +1,129 @@
+name: Curator Hourly Report
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Generate curator report
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          python3 - <<'EOF'
+          import json, os, subprocess
+          from datetime import datetime, timezone, timedelta
+
+          now_utc = datetime.now(timezone.utc)
+          now_ua = now_utc + timedelta(hours=3)
+          time_ua = now_ua.strftime("%H:%M UA %d.%m")
+          time_utc_str = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          # Читать состояние системы
+          try:
+              with open("governance/state/system_state.json") as f:
+                  sys_state = json.load(f)
+              phase = sys_state.get("current_phase", "?")
+              phase_title = sys_state.get("phase_title", "")
+          except:
+              phase = "?"
+              phase_title = ""
+
+          # Читать routing
+          try:
+              with open("governance/state/routing.json") as f:
+                  routing = json.load(f)
+              roles = routing.get("roles", {})
+              analyst_provider = roles.get("analyst", {}).get("active", "?")
+              auditor_provider = roles.get("auditor", {}).get("active", "?")
+              executor_provider = roles.get("executor", {}).get("active", "?")
+          except:
+              analyst_provider = auditor_provider = executor_provider = "?"
+
+          # Читать последние события
+          try:
+              with open("governance/exchange.jsonl") as f:
+                  events = [json.loads(l) for l in f if l.strip()]
+              recent = events[-5:]
+              events_text = "\n".join([
+                  f"• {e.get('type','?')} [{e.get('timestamp','')[:16]}]"
+                  for e in recent
+              ])
+          except:
+              events_text = "нет данных"
+
+          # Проверить прогресс за последний час
+          one_hour_ago = now_utc - timedelta(hours=1)
+          recent_events = [e for e in (events if 'events' in dir() else [])
+                          if e.get("timestamp", "") > one_hour_ago.isoformat()]
+          progress = "✅ есть" if recent_events else "⚠️ нет активности"
+
+          report = f"""📊 *КУРАТОР | {time_ua}*
+
+🗺 Этап: {phase} | {phase_title}
+
+⚙️ *Конфигурация ролей:*
+• Аналитик: *{analyst_provider}*
+• Аудитор: *{auditor_provider}*
+• Исполнитель: *{executor_provider}*
+
+📋 *Последние события:*
+{events_text}
+
+📈 Прогресс за час: {progress}
+
+_Следующий отчёт через 1 час_"""
+
+          with open("/tmp/curator_report.txt", "w") as f:
+              f.write(report)
+
+          # Записать в outbox
+          event_id = f"evt_hourly_{now_utc.strftime('%Y%m%d_%H%M%S')}"
+          outbox_entry = {
+              "event_id": event_id,
+              "timestamp": time_utc_str,
+              "target": "operator",
+              "channel": "telegram",
+              "chat_id": "601442777",
+              "text": report,
+              "status": "ready_to_send"
+          }
+          with open("governance/telegram_outbox.jsonl", "a") as f:
+              f.write(json.dumps(outbox_entry, ensure_ascii=False) + "\n")
+
+          # Записать в exchange
+          with open("governance/exchange.jsonl", "a") as f:
+              f.write(json.dumps({
+                  "event_id": event_id,
+                  "timestamp": time_utc_str,
+                  "type": "SYSTEM_HEALTH",
+                  "source": "curator_hourly_report",
+                  "status": "report_queued",
+                  "phase": phase
+              }, ensure_ascii=False) + "\n")
+
+          print(f"Report queued: {event_id}")
+          EOF
+
+      - name: Commit
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "curator-report@ai-devops-system"
+          git config user.name "Curator Report"
+          git pull --rebase origin main
+          git add governance/telegram_outbox.jsonl governance/exchange.jsonl
+          git diff --cached --quiet || git commit -m "CURATOR HOURLY REPORT: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
