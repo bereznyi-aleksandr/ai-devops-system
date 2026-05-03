@@ -10,6 +10,48 @@ permissions:
   actions: read
 
 jobs:
+  gateway-diagnostic:
+    name: Curator Gateway Diagnostic
+    if: |
+      github.event.issue.number == 31 &&
+      contains(github.event.comment.body, '@curator')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Post gateway diagnostic report
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const body = [
+              'BEM-GATEWAY-DIAG | CURATOR | RUN RESULT',
+              '',
+              'Checklist:',
+              '✅ issue_comment event reached curator.yml',
+              '✅ @curator trigger matched issue #31',
+              '✅ ubuntu-latest fallback job executed',
+              '✅ Claude was not called',
+              '⏳ GPT Curator job depends on self-hosted runner label: codex-local',
+              '',
+              '| Node | Status | Comment |',
+              '|---|---:|---|',
+              '| GitHub event | ✅ | issue_comment received |',
+              '| Gateway fallback | ✅ | ubuntu-latest path works |',
+              '| GPT backend | ⏳ | check separate GPT Curator job |',
+              '',
+              'DIAGNOSIS RULE:',
+              '- If this report appears but BEM-GPT-CURATOR does not, the blocker is self-hosted runner / codex-local / Codex CLI.',
+              '- If this report does not appear, the blocker is workflow trigger / permissions / issue event.'
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
   curator:
     name: GPT Curator
     if: |
