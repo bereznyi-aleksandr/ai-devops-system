@@ -13,16 +13,31 @@ on:
         description: 'Task description'
         required: false
         type: string
+      error_text:
+        description: 'Error text from last run (for failover classification)'
+        required: false
+        type: string
+      success:
+        description: 'Last run was successful'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   route:
     if: |
       github.event_name == 'workflow_dispatch' ||
-      (github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE'))
+      (github.event.issue.number == 31 &&
+       contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE') &&
+       github.event.comment.user.type != 'Bot')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       issues: write
+
+    concurrency:
+      group: role-router
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
@@ -30,62 +45,84 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Read routing and dispatch
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run curator router and dispatch role
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           INPUT_ROLE: ${{ inputs.role }}
           INPUT_TASK: ${{ inputs.task }}
+          INPUT_ERROR: ${{ inputs.error_text }}
+          INPUT_SUCCESS: ${{ inputs.success }}
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          python3 - <<'EOF'
-          import os, json, re, urllib.request
+          python3 - <<'PYEOF'
+          import os, json, re, sys
+          sys.path.insert(0, "scripts")
+          from curator_router import route_role
 
           GH_TOKEN = os.environ["GH_TOKEN"]
           REPO = "bereznyi-aleksandr/ai-devops-system"
           ISSUE = 31
 
-          with open("governance/state/routing.json") as f:
-              routing = json.load(f)
-
-          roles_map = routing["roles"]
+          # Определить параметры
           input_role = os.environ.get("INPUT_ROLE", "").strip()
+          input_task = os.environ.get("INPUT_TASK", "").strip()
+          error_text = os.environ.get("INPUT_ERROR", "").strip()
+          success = os.environ.get("INPUT_SUCCESS", "false").lower() == "true"
           comment = os.environ.get("COMMENT_BODY", "")
 
+          # Из комментария CURATOR_TO_ROLE
           if not input_role:
               m = re.search(r'ROLE:\s*(analyst|auditor|executor)', comment)
               input_role = m.group(1) if m else "analyst"
+          if not input_task:
+              m = re.search(r'TASK:\s*(.+?)(?:\n|$)', comment)
+              input_task = m.group(1).strip() if m else "Прочитай MASTER_PLAN.md. Предложи следующий шаг E3."
 
-          task = os.environ.get("INPUT_TASK", "").strip()
-          if not task:
-              m = re.search(r'TASK:\s*(.+)', comment)
-              task = m.group(1).strip() if m else "Прочитай MASTER_PLAN.md. Предложи следующий шаг E3. Завершись: @auditor REVIEW"
+          # Получить активный провайдер и триггер через роутер
+          result = route_role(input_role, error_text, success)
+          trigger = result["trigger"]
+          provider = result["provider"]
+          switched = result["switched"]
 
-          role_config = roles_map.get(input_role, {})
-          provider = role_config.get("active", "claude")
+          print(f"Role: {input_role} | Provider: {provider} | Trigger: {trigger} | Switched: {switched}")
 
-          triggers = {
-              "analyst": {"claude": "@analyst", "gpt": "@gpt_analyst"},
-              "auditor": {"claude": "@auditor", "gpt": "@gpt_auditor"},
-              "executor": {"claude": "@executor", "gpt": "@gpt_executor"},
-          }
-          trigger = triggers.get(input_role, {}).get(provider, f"@{input_role}")
+          # Формируем комментарий
+          if input_role == "analyst":
+              comment_body = f"{trigger} Прочитай MASTER_PLAN.md и governance/state/system_state.json. {input_task}\n\nЗавершись: @auditor REVIEW"
+          elif input_role == "auditor":
+              comment_body = f"{trigger} Проверь последний отчёт аналитика. {input_task}\n\nЕсли APPROVED: @executor EXECUTE. Если BLOCKED: @gpt_analyst REVISION." if provider == "gpt" else f"{trigger} Проверь последний отчёт аналитика. {input_task}\n\nЕсли APPROVED: @executor EXECUTE. Если BLOCKED: @analyst REVISION."
+          elif input_role == "executor":
+              comment_body = f"{trigger} Выполни одобренный шаг. {input_task}\n\nЗавершись: @auditor VERIFY"
+          else:
+              comment_body = f"{trigger} {input_task}"
 
-          comment_body = f"{trigger} {task}".strip()
-          print(f"Routing: {input_role} -> {provider} -> {trigger}")
-          print(f"Comment: {comment_body[:100]}")
-
+          import urllib.request
           data = json.dumps({"body": comment_body}).encode()
           req = urllib.request.Request(
               f"https://api.github.com/repos/{REPO}/issues/{ISSUE}/comments",
               data=data,
-              headers={
-                  "Authorization": f"Bearer {GH_TOKEN}",
-                  "Accept": "application/vnd.github+json",
-                  "Content-Type": "application/json",
-                  "User-Agent": "ai-devops-role-router"
-              },
-              method="POST"
-          )
+              headers={"Authorization": f"Bearer {GH_TOKEN}",
+                       "Accept": "application/vnd.github+json",
+                       "Content-Type": "application/json"})
           resp = urllib.request.urlopen(req)
           print(f"Comment posted: {resp.status}")
-          EOF
+
+          if switched:
+              print(f"PROVIDER SWITCHED: {input_role} moved to {provider}")
+          PYEOF
+
+      - name: Commit routing state
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "role-router@ai-devops-system"
+          git config user.name "Role Router"
+          git pull --rebase origin main
+          git add governance/state/ governance/events/ governance/exchange.jsonl || true
+          git diff --cached --quiet || git commit -m "ROLE ROUTER: routing decision $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
