@@ -32,3 +32,4 @@
 {"timestamp": "2026-05-03T04:06:07Z", "source": "cloud_scheduler", "event_type": "CLOUD_SCHEDULER_TICK", "task_id": null, "status": "no_pending_tasks", "next_action": "wait for new tasks in queue"}
 {"timestamp": "2026-05-03T04:50:11Z", "source": "gpt_scheduler", "event_type": "GPT_SCHEDULER_TICK", "task_id": null, "status": "no_pending_tasks", "next_action": "wait for new tasks in queue"}
 {"timestamp": "2026-05-03T04:51:13Z", "source": "gpt_curator_inbox", "event_type": "GPT_CURATOR_INBOX_TICK", "status": "no_pending_tasks", "next_action": "wait for new tasks from GPT curator"}
+{"event_id": "cur_1d8580bd928f4960", "timestamp": "2026-05-03T18:01:32Z", "type": "CURATOR_ROUTING_DECISION", "source": "curator_entrypoint", "backend": "gpt_hosted_fallback", "reason": "primary claude is limited, switching to reserve gpt", "requested_role": "executor"}

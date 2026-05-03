@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "timestamp": "2026-05-03T18:01:32Z",
+  "trace_id": "cur_1d8580bd928f4960",
+  "active_backend": "gpt_hosted_fallback",
+  "routing_reason": "primary claude is limited, switching to reserve gpt",
+  "next_action": "RUN_HOSTED_GPT_CURATOR",
+  "requested_role": "executor",
+  "task": "AUTONOMY_PROVIDER_LIMIT_AND_ROUTE_PROOF\nROLE: executor\n\nSIMULATE_PROVIDER_ERROR: You've hit your limit - resets at 08:00\n\nЗадача для проверки автономности: через curator entrypoint классифицировать provider_limit, переключить curator на GPT hosted fallback, создать route-comment для executor через TRACE_ID. Исполнителю только read/report, ничего не менять.",
+  "error_detected": true
+}

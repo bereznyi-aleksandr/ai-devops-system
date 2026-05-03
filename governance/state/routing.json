@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "updated_at": "2026-05-03T16:34:00Z",
+  "updated_at": "2026-05-03T18:01:32Z",
   "updated_by": "claude-auditor",
   "roles": {
     "curator": {
-      "active": "claude",
+      "active": "gpt_hosted_fallback",
       "primary": "claude",
       "reserve": "gpt_hosted_fallback"
     },
@@ -45,7 +45,15 @@
   "policy": {
     "switch_after_failures": 2,
     "switch_back_after_successful_probe": true,
-    "failure_types_that_trigger_switch": ["provider_limit", "api_error"],
-    "failure_types_that_do_not_trigger_switch": ["max_turns", "config_error", "permission_error", "timeout"]
+    "failure_types_that_trigger_switch": [
+      "provider_limit",
+      "api_error"
+    ],
+    "failure_types_that_do_not_trigger_switch": [
+      "max_turns",
+      "config_error",
+      "permission_error",
+      "timeout"
+    ]
   }
 }
