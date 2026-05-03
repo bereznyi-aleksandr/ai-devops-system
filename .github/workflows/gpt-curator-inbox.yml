@@ -1,40 +1,9 @@
-name: GPT Curator Inbox Processor
-
+# DISABLED
+name: DISABLED
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
-
-permissions:
-  contents: write
-
 jobs:
-  process-inbox:
+  disabled:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Sync latest main
-        run: |
-          git config user.email "gpt-curator-inbox@ai-devops-system"
-          git config user.name "GPT Curator Inbox"
-          git pull --rebase origin main
-
-      - name: Process GPT Curator Inbox
-        run: |
-          python3 governance/process_gpt_curator_inbox.py
-
-      - name: Commit results
-        run: |
-          git add governance/curator_inbox/ governance/exchange.jsonl
-          git diff --cached --quiet || git commit -m "GPT CURATOR INBOX: processed task $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git push
+      - run: echo "DISABLED"
