@@ -14,8 +14,6 @@ jobs:
     name: Hosted GPT Role
     if: |
       github.event.issue.number == 31 &&
-      github.actor != 'github-actions[bot]' &&
-      github.event.comment.user.type != 'Bot' &&
       contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE_EXECUTION') &&
       contains(github.event.comment.body, 'TRACE_ID:') &&
       (contains(github.event.comment.body, '@gpt_executor') ||

@@ -124,7 +124,6 @@ jobs:
         run: |
           git config user.email "curator-report@ai-devops-system"
           git config user.name "Curator Report"
-          git pull --rebase origin main
           git add governance/telegram_outbox.jsonl governance/exchange.jsonl
           git diff --cached --quiet || git commit -m "CURATOR HOURLY REPORT: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git push

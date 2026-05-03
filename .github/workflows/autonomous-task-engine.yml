@@ -1,0 +1,84 @@
+name: Autonomous Task Engine
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'plan | proof_patch | proof_cycle'
+        required: true
+        default: 'plan'
+        type: string
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: write
+  issues: write
+  actions: read
+
+jobs:
+  autonomy-engine:
+    name: Autonomous Task Engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Resolve mode
+        shell: bash
+        run: |
+          MODE="${{ inputs.mode }}"
+          if [ -z "$MODE" ]; then MODE="plan"; fi
+          echo "AUTONOMY_MODE=$MODE" >> "$GITHUB_ENV"
+
+      - name: Run autonomy engine
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          MAIN_ISSUE: '31'
+        run: |
+          set +e
+          python3 scripts/autonomous_task_engine.py --mode "$AUTONOMY_MODE"
+          echo "ENGINE_EXIT=$?" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Commit autonomy state
+        shell: bash
+        run: |
+          set -e
+          git config user.email "autonomy-engine@ai-devops-system"
+          git config user.name "Autonomy Engine"
+          git add governance/state/autonomy_state.json governance/events/autonomy_engine.jsonl governance/patch_queue/current.json governance/events/patch_runner.jsonl || true
+          git diff --cached --quiet || git commit -m "AUTONOMY ENGINE: state update"
+          git push
+
+      - name: Post autonomy report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          script: |
+            const body = [
+              'BEM-AUTONOMY-ENGINE | RUN RESULT',
+              '',
+              `Mode: ${process.env.AUTONOMY_MODE || 'unknown'}`,
+              `Exit: ${process.env.ENGINE_EXIT || 'unknown'}`,
+              '',
+              'Checklist:',
+              '- autonomy engine workflow executed',
+              '- state/event log commit attempted',
+              '- report posted repo-side'
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 31,
+              body
+            });

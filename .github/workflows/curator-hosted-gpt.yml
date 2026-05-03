@@ -14,9 +14,8 @@ jobs:
     name: Hosted GPT Curator
     if: |
       github.event.issue.number == 31 &&
-      github.actor != 'github-actions[bot]' &&
-      github.event.comment.user.type != 'Bot' &&
-      contains(github.event.comment.body, '@curator')
+      contains(github.event.comment.body, '@curator') &&
+      !contains(github.event.comment.body, 'BEM-GPT-CURATOR | RUN RESULT')
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
