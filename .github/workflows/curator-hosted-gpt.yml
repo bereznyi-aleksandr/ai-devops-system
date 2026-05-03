@@ -160,6 +160,53 @@ jobs:
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
           exit 0
 
+      - name: Route requested role
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -e
+          python3 - <<'PY'
+          import json, os, urllib.request
+          from pathlib import Path
+          p = Path('governance/state/curator_last_decision.json')
+          if not p.exists():
+              print('No curator_last_decision.json')
+              raise SystemExit(0)
+          d = json.loads(p.read_text(encoding='utf-8'))
+          role = d.get('requested_role')
+          if not role or role == 'none':
+              print('No requested role; skip role route')
+              raise SystemExit(0)
+          trace = d.get('trace_id', 'missing')
+          task = (d.get('task') or '').strip()[:4000]
+          body = '\n'.join([
+              'TYPE: CURATOR_TO_ROLE',
+              f'TRACE_ID: {trace}',
+              f'ROLE: {role}',
+              '',
+              'TASK:',
+              task
+          ])
+          data = json.dumps({'body': body}).encode('utf-8')
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments",
+              data=data,
+              headers={
+                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                  'Accept': 'application/vnd.github+json',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-devops-curator-route'
+              },
+              method='POST'
+          )
+          with urllib.request.urlopen(req) as resp:
+              print(resp.status)
+          PY
+
       - name: Post hosted GPT curator report
         if: always()
         shell: bash
