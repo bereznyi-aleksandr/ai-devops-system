@@ -1,0 +1,116 @@
+name: Telegram Outbox Dispatch
+
+on:
+  push:
+    paths:
+      - 'governance/telegram_outbox.jsonl'
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    concurrency:
+      group: telegram-outbox
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Send ready messages to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          python3 - <<'EOF'
+          import os, json, urllib.request, urllib.parse
+          from datetime import datetime, timezone
+
+          TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+          CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
+          OUTBOX = "governance/telegram_outbox.jsonl"
+          EXCHANGE = "governance/exchange.jsonl"
+
+          def tg_send(text, chat_id):
+              data = urllib.parse.urlencode({
+                  "chat_id": chat_id, "text": text, "parse_mode": "Markdown"
+              }).encode()
+              try:
+                  resp = urllib.request.urlopen(urllib.request.Request(
+                      f"https://api.telegram.org/bot{TOKEN}/sendMessage", data=data))
+                  result = json.loads(resp.read())
+                  return result.get("result", {}).get("message_id")
+              except Exception as e:
+                  print(f"Telegram error: {e}")
+                  return None
+
+          def append_exchange(event):
+              with open(EXCHANGE, "a") as f:
+                  f.write(json.dumps(event, ensure_ascii=False) + "\n")
+
+          # Читать outbox
+          try:
+              with open(OUTBOX) as f:
+                  messages = [json.loads(l) for l in f if l.strip()]
+          except:
+              messages = []
+
+          ready = [m for m in messages if m.get("status") == "ready_to_send"]
+          if not ready:
+              print("No ready messages in outbox")
+              exit(0)
+
+          now = datetime.now(timezone.utc).isoformat()
+
+          for msg in ready:
+              text = msg.get("text", "")
+              chat_id = msg.get("chat_id", CHAT_ID)
+              event_id = msg.get("event_id", "unknown")
+
+              tg_msg_id = tg_send(text, chat_id)
+
+              if tg_msg_id:
+                  msg["status"] = "sent"
+                  msg["sent_at"] = now
+                  msg["telegram_message_id"] = tg_msg_id
+                  append_exchange({
+                      "event_id": f"evt_delivery_{event_id}",
+                      "timestamp": now,
+                      "type": "DELIVERY_STATUS",
+                      "status": "sent",
+                      "channel": "telegram",
+                      "target": "operator",
+                      "ref_event_id": event_id,
+                      "telegram_message_id": tg_msg_id
+                  })
+                  print(f"Sent: {event_id}")
+              else:
+                  msg["status"] = "failed"
+                  msg["failed_at"] = now
+
+          # Сохранить обновлённый outbox
+          with open(OUTBOX, "w") as f:
+              for m in messages:
+                  f.write(json.dumps(m, ensure_ascii=False) + "\n")
+
+          print(f"Processed {len(ready)} messages")
+          EOF
+
+      - name: Commit
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "telegram-outbox@ai-devops-system"
+          git config user.name "Telegram Outbox"
+          git pull --rebase origin main
+          git add governance/telegram_outbox.jsonl governance/exchange.jsonl
+          git diff --cached --quiet || git commit -m "TELEGRAM OUTBOX: dispatched $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
