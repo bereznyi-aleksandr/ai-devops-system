@@ -1,60 +1,63 @@
 # EXCHANGE — AI DevOps System ISA State
-Версия: v1.0 | Дата: 2026-05-01
+Версия: v2.0 | Дата: 2026-05-03
 
-## Текущее состояние
+---
+
+## ROUTING TABLE — ТЕКУЩАЯ КОНФИГУРАЦИЯ РОЛЕЙ
+
+| Роль | Реализация | Триггер |
+|---|---|---|
+| ANALYST | claude | @analyst |
+| AUDITOR | claude | @auditor |
+| EXECUTOR | claude | @executor |
+
+Допустимые реализации: `claude` / `gpt`
+
+Переключение из Telegram:
+- `аналитик gpt` → ANALYST = gpt → триггер @codex ROLE=GPT_ANALYST
+- `аналитик claude` → ANALYST = claude → триггер @analyst
+- `аудитор gpt` → AUDITOR = gpt → триггер @codex ROLE=GPT_AUDITOR
+- `аудитор claude` → AUDITOR = claude → триггер @auditor
+- `исполнитель gpt` → EXECUTOR = gpt → триггер @codex ROLE=GPT_EXECUTOR
+- `исполнитель claude` → EXECUTOR = claude → триггер @executor
+
+---
+
+## ТЕКУЩЕЕ СОСТОЯНИЕ
 
 | Параметр | Значение |
 |---|---|
 | repository | bereznyi-aleksandr/ai-devops-system |
 | main_issue | #31 |
-| active_contour | gpt_codex_local |
-| fallback_contour | gpt_codex_local |
-| fallback_enabled | true |
-| fallback_reason | Claude Code usage limit reached; owner approved local Codex CLI fallback |
-| owner_approval_required | major_changes_only |
-| current_phase | repository cleanup and base structure |
-| current_stage | local Codex fallback active |
-| last_known_blocker | Claude Code usage limit was observed |
-| next_action | GPT local Codex flow continues autonomous minimal safe repository cleanup |
-| owner_action_required | false |
-| curator_schedule | hourly plus one-shot checks when pending ISA result exists |
-| curator_interval_minutes | 60 |
-| last_hourly_curator_check | 2026-05-01T18:00:00Z |
+| current_phase | E3 — первый автономный цикл |
+| active_contour | mixed (настраивается per role) |
 
-## Routing table
+---
 
-| Trigger | Contour | Workflow |
-|---|---|---|
-| @analyst | claude | analyst.yml |
-| @auditor | claude | auditor.yml |
-| @executor | claude | executor.yml |
-| @claude | claude | claude.yml |
-| @gpt_analyst | gpt_codex_local | codex-local.yml |
-| @gpt_auditor | gpt_codex_local | codex-local.yml |
-| @gpt_executor | gpt_codex_local | codex-local.yml |
-| @codex ROLE=GPT_ANALYST | gpt_codex | manual / gpt |
-| @codex ROLE=GPT_AUDITOR | gpt_codex | manual / gpt |
-| @codex ROLE=GPT_EXECUTOR | gpt_codex | manual / gpt |
+## ЦЕПОЧКА ВЫПОЛНЕНИЯ
 
-## Последние события
+```
+ANALYST (claude/gpt) → анализирует → передаёт AUDITOR
+AUDITOR (claude/gpt) → проверяет → APPROVED → передаёт EXECUTOR
+EXECUTOR (claude/gpt) → выполняет → AUDITOR VERIFY
+```
 
-| Время | Источник | Событие |
-|---|---|---|
-| 2026-05-02T07:03:00Z | assistant | AUTONOMY_POLICY_SYNCED |
-| 2026-05-02T06:47:00Z | codex-local | ROUTING_TABLE_UPDATED |
-| 2026-05-01T18:00:00Z | gpt-curator | STATE_LAYER_INITIALIZED |
-| 2026-05-01T17:42:00Z | auditor-chat | executor.yml исправлен — trigger_phrase + prompt |
-| 2026-05-01T17:42:00Z | auditor-chat | auditor.yml исправлен |
-| 2026-05-01T17:42:00Z | auditor-chat | analyst.yml исправлен |
+---
 
-## Следующий ожидаемый переход
+## ПРИМЕРЫ КОМБИНАЦИЙ
 
-@gpt_analyst → GPT_ANALYST предлагает шаг → @gpt_auditor REVIEW → @gpt_executor EXECUTE
+| Конфигурация | Когда использовать |
+|---|---|
+| Claude + Claude + Claude | Штатный режим |
+| GPT + Claude + Claude | Claude Code на лимите для анализа |
+| Claude + Claude + GPT | Claude Code на лимите для исполнения |
+| GPT + GPT + GPT | Claude Code полностью недоступен |
 
-## Safety rules
+---
 
-1. Routine state-layer sync does not require owner approval.
-2. Owner approval is required only for architecture changes, permissions, secrets, billing, production deploy, auto-merge, destructive actions, or runner install/reinstall.
-3. During fallback, use only @gpt_analyst / @gpt_auditor / @gpt_executor for the active ISA cycle.
-4. Do not mix Claude and local Codex role triggers inside one cycle.
-5. GPT_EXECUTOR performs only the current approved role scope and does not expand scope.
+## ПОСЛЕДНИЕ СОБЫТИЯ
+| Дата | Событие |
+|---|---|
+| 2026-05-03 | Система перезапущена — куратор удалён из схемы |
+| 2026-05-03 | Telegram gateway создан |
+| 2026-05-03 | Routing table инициализирована — все роли на claude |
