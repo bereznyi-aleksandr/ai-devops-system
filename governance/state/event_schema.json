@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "event_types": {
+    "OPERATOR_TO_CURATOR": {
+      "description": "Сообщение оператора из Telegram",
+      "required_fields": ["event_id", "timestamp", "type", "from", "to", "source", "dedupe_key", "status", "body"],
+      "from": "telegram",
+      "to": "curator"
+    },
+    "EXTERNAL_AUDIT_NOTE": {
+      "description": "Сообщение от GPT/Claude внешнего аудитора",
+      "from": "external_auditor",
+      "to": "curator"
+    },
+    "CURATOR_TO_OPERATOR": {
+      "description": "Ответ или отчёт оператору",
+      "from": "curator",
+      "to": "operator"
+    },
+    "CURATOR_TO_ROLE": {
+      "description": "Задача для analyst/auditor/executor",
+      "from": "curator",
+      "to": "role"
+    },
+    "ROLE_RESULT": {
+      "description": "Результат работы роли",
+      "required_fields": ["event_id", "role", "provider", "status", "failure_type", "summary", "next_recommended_role"],
+      "failure_types": ["provider_limit", "max_turns", "api_error", "config_error", "permission_error", "timeout", "unknown"]
+    },
+    "ROUTING_UPDATE": {
+      "description": "Переключение Claude/GPT по роли",
+      "required_fields": ["role", "from_provider", "to_provider", "reason", "updated_by"]
+    },
+    "LIMIT_EVENT": {
+      "description": "Событие лимита или недоступности провайдера"
+    },
+    "ERROR_EVENT": {
+      "description": "Ошибка workflow, API, runner, config"
+    },
+    "SYSTEM_HEALTH": {
+      "description": "Периодический статус системы"
+    },
+    "DELIVERY_STATUS": {
+      "description": "Статус доставки сообщения оператору в Telegram",
+      "statuses": ["sent", "failed", "pending"]
+    }
+  },
+  "dedupe_key_formats": {
+    "telegram": "telegram:<chat_id>:<message_id>",
+    "github_issue_comment": "github_issue_comment:<comment_id>",
+    "role_result": "role_result:<run_id>:<role>:<attempt>",
+    "telegram_outbound": "telegram_outbox:<event_id>"
+  }
+}
