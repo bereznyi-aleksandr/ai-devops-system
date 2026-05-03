@@ -13,6 +13,8 @@ on:
         required: true
         default: 'dry_run'
         type: string
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
@@ -21,6 +23,12 @@ permissions:
 jobs:
   run-patch:
     name: ISA Patch Runner
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.number == 31 &&
+       github.actor != 'github-actions[bot]' &&
+       github.event.comment.user.type != 'Bot' &&
+       contains(github.event.comment.body, 'TYPE: ISA_PATCH_RUNNER'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -31,13 +39,45 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
+      - name: Resolve runner inputs
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TASK_FILE: ${{ inputs.task_file }}
+          INPUT_MODE: ${{ inputs.mode }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          set -e
+          TASK_FILE="${INPUT_TASK_FILE:-governance/patch_queue/current.json}"
+          MODE="${INPUT_MODE:-dry_run}"
+          if [ "$EVENT_NAME" = "issue_comment" ]; then
+            python3 - <<'PY' > "$RUNNER_TEMP/patch_inputs.env"
+          import os, re
+          body = os.environ.get('COMMENT_BODY', '')
+          task = 'governance/patch_queue/current.json'
+          mode = 'dry_run'
+          m = re.search(r'TASK_FILE:\s*(\S+)', body)
+          if m:
+              task = m.group(1).strip()
+          m = re.search(r'MODE:\s*(dry_run|apply|apply_and_commit|report_only)', body)
+          if m:
+              mode = m.group(1).strip()
+          print(f'TASK_FILE={task}')
+          print(f'MODE={mode}')
+          PY
+            . "$RUNNER_TEMP/patch_inputs.env"
+          fi
+          echo "TASK_FILE=$TASK_FILE" >> "$GITHUB_ENV"
+          echo "PATCH_MODE=$MODE" >> "$GITHUB_ENV"
+          echo "Resolved TASK_FILE=$TASK_FILE MODE=$MODE"
+
       - name: Run patch task
         shell: bash
         run: |
           set +e
           python3 scripts/isa_patch_runner.py \
-            --task-file "${{ inputs.task_file }}" \
-            --mode "${{ inputs.mode }}"
+            --task-file "$TASK_FILE" \
+            --mode "$PATCH_MODE"
           echo "RUNNER_EXIT=$?" >> "$GITHUB_ENV"
           exit 0
 
@@ -60,8 +100,8 @@ jobs:
             const body = [
               'BEM-ISA-PATCH-RUNNER | RUN RESULT',
               '',
-              `Task file: ${{ inputs.task_file }}`,
-              `Mode: ${{ inputs.mode }}`,
+              `Task file: ${process.env.TASK_FILE || 'unknown'}`,
+              `Mode: ${process.env.PATCH_MODE || 'unknown'}`,
               `Exit: ${process.env.RUNNER_EXIT || 'unknown'}`,
               '',
               'Checklist:',
