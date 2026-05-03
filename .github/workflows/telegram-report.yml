@@ -1,80 +1,9 @@
-name: Telegram Report on Progress
-
+# DISABLED — E3-CLEANUP Этап 0B — 2026-05-03
+name: DISABLED
 on:
-  issue_comment:
-    types: [created]
-
+  workflow_dispatch:
 jobs:
-  notify:
-    if: |
-      github.event.issue.number == 31 &&
-      (
-        contains(github.event.comment.body, '@auditor') ||
-        contains(github.event.comment.body, 'APPROVED') ||
-        contains(github.event.comment.body, 'ВЫПОЛНЕНО') ||
-        contains(github.event.comment.body, 'EXECUTOR') ||
-        contains(github.event.comment.body, 'BEM-')
-      )
+  disabled:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Send Telegram report
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          COMMENT_BODY: ${{ github.event.comment.body }}
-          COMMENT_USER: ${{ github.event.comment.user.login }}
-        run: |
-          python3 - <<'EOF'
-          import os
-          import urllib.request
-          import urllib.parse
-          import json
-          from datetime import datetime, timezone, timedelta
-
-          body = os.environ.get("COMMENT_BODY", "")
-          user = os.environ.get("COMMENT_USER", "")
-          token = os.environ["TELEGRAM_BOT_TOKEN"]
-          chat_id = os.environ["TELEGRAM_CHAT_ID"]
-
-          now_ua = (datetime.now(timezone.utc) + timedelta(hours=3)).strftime("%H:%M UA %d.%m")
-
-          # Определить роль
-          if "@analyst" in body or "АНАЛИТИК" in body:
-              role = "🔍 АНАЛИТИК"
-          elif "@auditor" in body or "АУДИТОР" in body or "APPROVED" in body:
-              role = "✅ АУДИТОР"
-          elif "@executor" in body or "ИСПОЛНИТЕЛЬ" in body:
-              role = "⚙️ ИСПОЛНИТЕЛЬ"
-          else:
-              role = "📋 СИСТЕМА"
-
-          # Краткое содержание (первые 200 символов)
-          short = body.strip().replace("\n", " ")[:200]
-          if len(body.strip()) > 200:
-              short += "..."
-
-          msg = f"""🔔 *Прогресс | {now_ua}*
-
-{role} написал в issue #31
-
-_{short}_
-
-[Открыть issue](https://github.com/bereznyi-aleksandr/ai-devops-system/issues/31)"""
-
-          data = urllib.parse.urlencode({
-              "chat_id": chat_id,
-              "text": msg,
-              "parse_mode": "Markdown"
-          }).encode()
-
-          req = urllib.request.Request(
-              f"https://api.telegram.org/bot{token}/sendMessage",
-              data=data
-          )
-          resp = urllib.request.urlopen(req)
-          print(resp.read().decode())
-          EOF
+      - run: echo "DISABLED"
