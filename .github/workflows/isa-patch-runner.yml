@@ -1,0 +1,79 @@
+name: ISA Patch Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_file:
+        description: 'Path to patch task JSON'
+        required: true
+        default: 'governance/patch_queue/current.json'
+        type: string
+      mode:
+        description: 'dry_run | apply | apply_and_commit | report_only'
+        required: true
+        default: 'dry_run'
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+tasks:
+
+jobs:
+  run-patch:
+    name: ISA Patch Runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Run patch task
+        shell: bash
+        run: |
+          set +e
+          python3 scripts/isa_patch_runner.py \
+            --task-file "${{ inputs.task_file }}" \
+            --mode "${{ inputs.mode }}"
+          echo "RUNNER_EXIT=$?" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Commit runner event log
+        shell: bash
+        run: |
+          set -e
+          git config user.email "isa-patch-runner@ai-devops-system"
+          git config user.name "ISA Patch Runner"
+          git add governance/events/patch_runner.jsonl || true
+          git diff --cached --quiet || git commit -m "ISA PATCH RUNNER: append event log"
+          git push
+
+      - name: Post report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          script: |
+            const body = [
+              'BEM-ISA-PATCH-RUNNER | RUN RESULT',
+              '',
+              `Task file: ${{ inputs.task_file }}`,
+              `Mode: ${{ inputs.mode }}`,
+              `Exit: ${process.env.RUNNER_EXIT || 'unknown'}`,
+              '',
+              'Checklist:',
+              '- runner workflow executed',
+              '- validation/check result is in Actions log',
+              '- event log append attempted'
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 31,
+              body
+            });
