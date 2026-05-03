@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "allowed_paths": [
+    "scripts/",
+    "governance/state/",
+    "governance/events/",
+    "governance/policies/",
+    "governance/patch_queue/",
+    ".github/workflows/curator-hosted-gpt.yml",
+    ".github/workflows/role-router.yml",
+    ".github/workflows/gpt-hosted-roles.yml",
+    ".github/workflows/curator-hourly-report.yml"
+  ],
+  "blocked_paths": [
+    ".env",
+    "secrets",
+    "billing",
+    ".github/workflows/claude.yml",
+    ".github/dependabot.yml"
+  ],
+  "require_owner_approved_commit_for": [
+    ".github/workflows/"
+  ]
+}
