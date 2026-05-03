@@ -1,0 +1,11 @@
+{
+  "task_id": "c01_dry_run_probe",
+  "title": "ISA Patch Runner dry-run probe",
+  "mode": "dry_run",
+  "owner_approved_commit": false,
+  "commit_message": "ISA PATCH: dry-run probe",
+  "files": [],
+  "checks": [
+    "python3 -m py_compile scripts/isa_patch_runner.py"
+  ]
+}
