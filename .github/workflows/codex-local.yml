@@ -14,8 +14,6 @@ jobs:
     name: Codex Local ISA
     if: >
       github.event.issue.number == 31 &&
-      github.actor == 'bereznyi-aleksandr' &&
-      github.event.comment.author_association == 'OWNER' &&
       (contains(github.event.comment.body, '@gpt_analyst') ||
        contains(github.event.comment.body, '@gpt_auditor') ||
        contains(github.event.comment.body, '@gpt_executor'))
