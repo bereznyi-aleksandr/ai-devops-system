@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "autonomy_level": "bounded",
+  "max_steps_per_run": 1,
+  "max_empty_checks_before_blocker": 2,
+  "allowed_auto_actions": [
+    "read_state",
+    "append_event_log",
+    "create_patch_task",
+    "run_patch_runner_dry_run",
+    "run_patch_runner_apply_and_commit_for_allowlisted_paths",
+    "post_repo_side_issue_comment",
+    "run_curator_route_proof"
+  ],
+  "blocked_auto_actions": [
+    "modify_secrets",
+    "modify_billing",
+    "change_repository_permissions",
+    "merge_pull_request",
+    "delete_repository",
+    "print_tokens",
+    "change_claude_workflow_without_explicit_policy"
+  ],
+  "allowed_paths_policy": "governance/policies/patch_runner_allowlist.json",
+  "main_issue": 31,
+  "default_cycle": "E3_FULL"
+}
