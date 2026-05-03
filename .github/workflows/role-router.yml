@@ -13,6 +13,10 @@ on:
         description: 'Task description'
         required: false
         type: string
+      trace_id:
+        description: 'Curator trace id for workflow_dispatch proof runs'
+        required: false
+        type: string
 
 jobs:
   route:
@@ -20,10 +24,12 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.issue.number == 31 &&
        contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE') &&
+       contains(github.event.comment.body, 'TRACE_ID:') &&
+       github.actor != 'github-actions[bot]' &&
        github.event.comment.user.type != 'Bot')
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       issues: write
 
     concurrency:
@@ -41,58 +47,69 @@ jobs:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           INPUT_ROLE: ${{ inputs.role }}
           INPUT_TASK: ${{ inputs.task }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           python3 - <<'PYEOF'
-          import os, json, re, urllib.request, urllib.parse
+          import os, json, re, urllib.request
 
-          GH_TOKEN = os.environ["GH_TOKEN"]
-          REPO = "bereznyi-aleksandr/ai-devops-system"
+          GH_TOKEN = os.environ['GH_TOKEN']
+          REPO = 'bereznyi-aleksandr/ai-devops-system'
           ISSUE = 31
 
-          # Читать routing.json
-          with open("governance/state/routing.json") as f:
+          with open('governance/state/routing.json', encoding='utf-8') as f:
               routing = json.load(f)
 
-          roles_map = routing["roles"]
-          trigger_map = routing.get("trigger_map", {})
+          roles_map = routing.get('roles', {})
+          trigger_map = routing.get('trigger_map', {})
 
-          # Определить роль
-          input_role = os.environ.get("INPUT_ROLE", "").strip()
-          comment = os.environ.get("COMMENT_BODY", "")
+          comment = os.environ.get('COMMENT_BODY', '')
+          input_role = os.environ.get('INPUT_ROLE', '').strip()
+          task = os.environ.get('INPUT_TASK', '').strip()
+          trace_id = os.environ.get('INPUT_TRACE_ID', '').strip()
 
           if not input_role:
-              m = re.search(r'ROLE:\s*(analyst|auditor|executor)', comment)
-              input_role = m.group(1) if m else "analyst"
+              m = re.search(r'ROLE:\s*(analyst|auditor|executor)', comment, re.I)
+              input_role = m.group(1).lower() if m else 'analyst'
 
-          task = os.environ.get("INPUT_TASK", "").strip()
+          if not trace_id:
+              m = re.search(r'TRACE_ID:\s*([A-Za-z0-9_\-]+)', comment)
+              trace_id = m.group(1) if m else 'manual_dispatch'
+
           if not task:
-              m = re.search(r'TASK:\s*(.+)', comment)
-              task = m.group(1).strip() if m else "Прочитай MASTER_PLAN.md. Предложи следующий шаг E3."
+              m = re.search(r'TASK:\s*(.+)', comment, re.I | re.S)
+              task = m.group(1).strip() if m else 'Прочитай MASTER_PLAN.md. Предложи следующий шаг E3.'
 
-          # Определить провайдер и триггер из routing
           role_config = roles_map.get(input_role, {})
-          provider = role_config.get("active", "claude")
-
-          # Получить триггер из trigger_map
+          provider = role_config.get('active', 'claude')
           role_triggers = trigger_map.get(input_role, {})
-          trigger = role_triggers.get(provider, f"@{input_role}")
+          trigger = role_triggers.get(provider, f'@{input_role}')
 
-          comment_body = f"{trigger} {task}".strip()
-          print(f"Routing: {input_role} → provider={provider} → trigger={trigger}")
-          print(f"Task: {task[:80]}")
+          route_comment = '\n'.join([
+              'TYPE: CURATOR_TO_ROLE_EXECUTION',
+              f'TRACE_ID: {trace_id}',
+              f'ROLE: {input_role}',
+              f'PROVIDER: {provider}',
+              '',
+              f'{trigger}',
+              '',
+              'TASK:',
+              task[:4000]
+          ])
 
-          # Написать комментарий в issue #31
-          data = json.dumps({"body": comment_body}).encode()
+          print(f'Routing: {input_role} -> provider={provider} -> trigger={trigger} trace={trace_id}')
+          data = json.dumps({'body': route_comment}).encode('utf-8')
           req = urllib.request.Request(
-              f"https://api.github.com/repos/{REPO}/issues/{ISSUE}/comments",
+              f'https://api.github.com/repos/{REPO}/issues/{ISSUE}/comments',
               data=data,
               headers={
-                  "Authorization": f"Bearer {GH_TOKEN}",
-                  "Accept": "application/vnd.github+json",
-                  "Content-Type": "application/json"
-              })
-          resp = urllib.request.urlopen(req)
-          result = json.loads(resp.read())
-          print(f"Comment posted: #{result.get('id')} → {trigger}")
+                  'Authorization': f'Bearer {GH_TOKEN}',
+                  'Accept': 'application/vnd.github+json',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-devops-role-router'
+              },
+              method='POST')
+          with urllib.request.urlopen(req) as resp:
+              result = json.loads(resp.read().decode('utf-8'))
+          print(f"Comment posted: #{result.get('id')} -> {trigger}")
           PYEOF
