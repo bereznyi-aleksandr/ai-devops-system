@@ -1,0 +1,79 @@
+name: Curator Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  curator:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Curator (Claude Code)
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          prompt: |
+            Ты КУРАТОР системы AI DevOps System.
+            Репозиторий: bereznyi-aleksandr/ai-devops-system
+            Issue: #31
+
+            Выполни следующие шаги:
+
+            1. Прочитай governance/MASTER_PLAN.md
+            2. Прочитай последние 10 строк governance/exchange.jsonl
+            3. Прочитай последние комментарии в issue #31
+            4. Прочитай governance/telegram_inbox.jsonl — есть ли вопросы от оператора
+
+            5. Сформируй аналитический отчёт:
+               - Текущий этап и прогресс
+               - Что произошло за последние 5 минут
+               - Есть ли блокеры
+               - Следующий шаг
+
+            6. Если есть вопрос в telegram_inbox.jsonl со status=pending:
+               - Прочитай вопрос
+               - Сформулируй ответ
+               - Добавь в governance/telegram_outbox.jsonl:
+                 {"timestamp":"<ISO>","source":"curator","target":"telegram","text":"<ответ>","status":"ready_to_send"}
+
+            7. Если в issue #31 нет прогресса (нет новых комментариев от ролей за последние 10 минут):
+               - Напиши комментарий в issue #31:
+                 @analyst Этап E3. Прочитай MASTER_PLAN.md и EXCHANGE.md. Предложи следующий шаг. Завершись: @auditor REVIEW
+
+            8. Отправь отчёт в Telegram:
+               curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                 -d chat_id="${TELEGRAM_CHAT_ID}" \
+                 -d parse_mode="Markdown" \
+                 --data-urlencode "text=<отчёт по канону>"
+
+            Канон отчёта:
+            BEM-XXX | КУРАТОР | дата UTC | время UA
+
+            Этап: E3 1/4 — 25%
+            Дорожная карта: 3/4 — 75%
+
+            Чек-лист:
+            ✅/❌ ...
+
+            | Тип | Задача | Комментарий |
+            |---|---|---|
+            | Выполнено | ... | ... |
+            | Следующая задача | ... | ... |
+
+            БЛОКЕРЫ: ...
+            ДЕЙСТВИЕ ВЫПОЛНЕНО: ...
+            СЛЕДУЮЩИЙ ОТЧЁТ UA: HH:MM (+5 мин)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
