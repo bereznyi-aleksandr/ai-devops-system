@@ -4,39 +4,150 @@ on:
   issue_comment:
     types: [created]
 
+permissions:
+  contents: write
+  issues: write
+  actions: read
+
 jobs:
   curator:
+    name: GPT Curator
     if: |
       github.event.issue.number == 31 &&
       contains(github.event.comment.body, '@curator')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
+    runs-on: [self-hosted, codex-local]
+    timeout-minutes: 30
 
     concurrency:
       group: curator-${{ github.event.issue.number }}
       cancel-in-progress: false
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
-      - name: Run Curator (Claude Code)
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          trigger_phrase: "@curator"
-          prompt: |
-            Прочитай governance/prompts/curator_prompt.md и выполни инструкции.
+      - name: Verify local Codex CLI
+        shell: bash
+        run: |
+          set -e
+          export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
+          echo "node=$(command -v node || true)"
+          echo "codex=$(command -v codex || true)"
+          node -v
+          codex --version
 
-            Входящий комментарий:
-            ${{ github.event.comment.body }}
+      - name: Build curator prompt
+        shell: bash
+        run: |
+          set -e
+          BODY_FILE="$RUNNER_TEMP/curator_comment_body.txt"
+          PROMPT_FILE="$RUNNER_TEMP/gpt_curator_prompt.txt"
+          cat > "$BODY_FILE" <<'BODY'
+          ${{ github.event.comment.body }}
+          BODY
 
-            Работай строго как КУРАТОР. Читай routing.json для маршрутизации.
-            Записывай события в exchange.jsonl.
-            Ответы оператору записывай в telegram_outbox.jsonl.
-          claude_args: "--max-turns 15"
+          cat > "$PROMPT_FILE" <<PROMPT
+          BEM-GPT-CURATOR | GPT_CURATOR
+
+          You are GPT_CURATOR for ai-devops-system.
+
+          Architecture:
+          - Operator entrypoint remains Telegram -> Deno -> issue #31 -> @curator.
+          - Curator backend is GPT/Codex local runner.
+          - Do not call Claude.
+          - Do not use anthropics/claude-code-action.
+          - Route execution to @gpt_executor, analysis to @gpt_analyst, audit to @gpt_auditor.
+
+          Read before acting:
+          - governance/prompts/curator_prompt.md
+          - governance/MASTER_PLAN.md
+          - governance/state/routing.json
+          - governance/state/system_state.json
+          - governance/exchange.jsonl
+          - governance/telegram_outbox.jsonl
+          - governance/processed_events.jsonl
+
+          Incoming comment:
+          -----
+          $(cat "$BODY_FILE")
+          -----
+
+          Allowed file changes:
+          - governance/exchange.jsonl
+          - governance/telegram_outbox.jsonl
+          - governance/processed_events.jsonl
+          - governance/state/routing.json
+
+          Required behavior:
+          - Determine operator intent.
+          - Update state/routing if needed so curator.active=gpt.
+          - Append state events where applicable.
+          - Write operator-facing report to telegram_outbox.jsonl where applicable.
+          - Publish a compact BEM report.
+          PROMPT
+
+          echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
+
+      - name: Run GPT Curator
+        shell: bash
+        run: |
+          set +e
+          export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
+          OUTPUT_FILE="$RUNNER_TEMP/gpt_curator_output.md"
+          {
+            echo "BEM-GPT-CURATOR | RAW_OUTPUT"
+            echo
+            codex exec "$(cat "$PROMPT_FILE")"
+            CODEX_EXIT=$?
+            echo
+            echo "CODEX_EXIT_CODE=$CODEX_EXIT"
+          } 2>&1 | tee "$OUTPUT_FILE"
+          echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Commit curator state changes
+        shell: bash
+        run: |
+          set -e
+          git config user.email "gpt-curator@ai-devops-system"
+          git config user.name "GPT Curator"
+          git pull --rebase origin main
+          git add governance/exchange.jsonl governance/telegram_outbox.jsonl governance/processed_events.jsonl governance/state/routing.json || true
+          git diff --cached --quiet || git commit -m "GPT CURATOR: process operator event"
+          git push
+
+      - name: Post GPT curator report to issue
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -e
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.request
+
+          output_path = pathlib.Path(os.environ.get("OUTPUT_FILE", ""))
+          output = output_path.read_text(encoding="utf-8", errors="replace") if output_path.exists() else "OUTPUT_FILE was not created."
+          body = "BEM-GPT-CURATOR | RUN RESULT\n\n" + output[-60000:]
+          data = json.dumps({"body": body}).encode("utf-8")
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments",
+              data=data,
+              headers={
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json"
+              },
+              method="POST"
+          )
+          with urllib.request.urlopen(req) as resp:
+              print(resp.status)
+          PY
