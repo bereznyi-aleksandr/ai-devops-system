@@ -3,3 +3,5 @@
 {"event": "PATCH_RUNNER_DRY_RUN_OK", "task_id": "c01_dry_run_probe", "timestamp": "2026-05-03T17:23:35Z"}
 {"event": "PATCH_RUNNER_START", "task_id": "c05_hosted_roles_trace_gate", "mode": "dry_run", "errors": [], "timestamp": "2026-05-03T17:41:59Z"}
 {"event": "PATCH_RUNNER_DRY_RUN_OK", "task_id": "c05_hosted_roles_trace_gate", "timestamp": "2026-05-03T17:41:59Z"}
+{"event": "PATCH_RUNNER_START", "task_id": "c05_hosted_roles_trace_gate", "mode": "apply", "errors": [], "timestamp": "2026-05-03T17:43:47Z"}
+{"event": "PATCH_RUNNER_CHECKS", "task_id": "c05_hosted_roles_trace_gate", "ok": true, "checks": [{"cmd": "python3 -m py_compile scripts/isa_patch_runner.py", "returncode": 0, "stdout": "", "stderr": ""}, {"cmd": "python3 -m py_compile scripts/curator_entrypoint.py", "returncode": 0, "stdout": "", "stderr": ""}, {"cmd": "python3 -m py_compile scripts/curator_router.py", "returncode": 0, "stdout": "", "stderr": ""}], "timestamp": "2026-05-03T17:43:47Z"}
