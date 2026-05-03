@@ -1,5 +1,4 @@
-# DISABLED — лишний workflow
-# GPT пишет в Telegram напрямую через API без workflows
+# DISABLED — E3-CLEANUP Этап 0B — 2026-05-03
 name: DISABLED
 on:
   workflow_dispatch:
@@ -7,4 +6,4 @@ jobs:
   disabled:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "DISABLED — GPT пишет в Telegram напрямую"
+      - run: echo "DISABLED"
