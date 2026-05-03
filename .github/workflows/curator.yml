@@ -22,7 +22,7 @@ jobs:
       - name: Post gateway diagnostic report
         uses: actions/github-script@v7
         with:
-          github-token: ${{ github.token }}
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           script: |
             let runnerLines = [];
             let runnerSummary = 'unknown';
@@ -35,7 +35,7 @@ jobs:
               const list = runners.data.runners || [];
               runnerSummary = `${list.length} self-hosted runner(s) visible`;
               if (list.length === 0) {
-                runnerLines.push('| self-hosted runners | ❌ | none visible to github.token |');
+                runnerLines.push('| self-hosted runners | ❌ | none visible to AI_SYSTEM_GITHUB_PAT |');
               } else {
                 for (const r of list) {
                   const labels = (r.labels || []).map(l => l.name).join(', ');
@@ -44,7 +44,7 @@ jobs:
                 }
               }
             } catch (error) {
-              runnerSummary = `runner inventory failed: ${error.message}`;
+              runnerSummary = `runner inventory failed with AI_SYSTEM_GITHUB_PAT: ${error.message}`;
               runnerLines.push(`| self-hosted runner inventory | ❌ | ${error.message} |`);
             }
 
@@ -67,6 +67,7 @@ jobs:
               '',
               'DIAGNOSIS RULE:',
               '- If runner inventory shows no online runner, GPT job cannot start.',
+              '- If runner inventory is still inaccessible with AI_SYSTEM_GITHUB_PAT, token lacks runner-read scope; use Actions job state/logs as source of truth.',
               '- If runner is online but BEM-GPT-CURATOR is absent, Codex CLI/path/post-report is the next suspect.',
               '- If BEM-GPT-CURATOR appears, GPT curator backend works.'
             ].join('\n');
@@ -191,7 +192,7 @@ jobs:
         if: always()
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           REPO: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
@@ -212,7 +213,8 @@ jobs:
               headers={
                   "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
                   "Accept": "application/vnd.github+json",
-                  "Content-Type": "application/json"
+                  "Content-Type": "application/json",
+                  "User-Agent": "ai-devops-gpt-curator"
               },
               method="POST"
           )
