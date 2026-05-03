@@ -16,15 +16,7 @@ jobs:
       github.event.issue.number == 31 &&
       github.actor != 'github-actions[bot]' &&
       github.event.comment.user.type != 'Bot' &&
-      contains(github.event.comment.body, '@curator') &&
-      !contains(github.event.comment.body, 'BEM-GATEWAY-DIAG') &&
-      !contains(github.event.comment.body, 'BEM-GPT-CURATOR') &&
-      !contains(github.event.comment.body, 'RUN RESULT') &&
-      !contains(github.event.comment.body, 'HOSTED FALLBACK') &&
-      !contains(github.event.comment.body, 'HOSTED_GPT_STATUS') &&
-      !contains(github.event.comment.body, 'ANTI_RECURSION') &&
-      !contains(github.event.comment.body, 'Workflow run:') &&
-      !contains(github.event.comment.body, 'DIAGNOSIS RULE')
+      contains(github.event.comment.body, '@curator')
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -123,15 +115,7 @@ jobs:
       github.event.issue.number == 31 &&
       github.actor != 'github-actions[bot]' &&
       github.event.comment.user.type != 'Bot' &&
-      contains(github.event.comment.body, '@curator') &&
-      !contains(github.event.comment.body, 'BEM-GATEWAY-DIAG') &&
-      !contains(github.event.comment.body, 'BEM-GPT-CURATOR') &&
-      !contains(github.event.comment.body, 'RUN RESULT') &&
-      !contains(github.event.comment.body, 'HOSTED FALLBACK') &&
-      !contains(github.event.comment.body, 'HOSTED_GPT_STATUS') &&
-      !contains(github.event.comment.body, 'ANTI_RECURSION') &&
-      !contains(github.event.comment.body, 'Workflow run:') &&
-      !contains(github.event.comment.body, 'DIAGNOSIS RULE')
+      contains(github.event.comment.body, '@curator')
     runs-on: self-hosted
     timeout-minutes: 30
 
