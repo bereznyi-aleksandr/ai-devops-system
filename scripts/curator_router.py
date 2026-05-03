@@ -1,80 +1,49 @@
 #!/usr/bin/env python3
 """
-curator_router.py — детерминированный роутер куратора
-CURATOR_PROVIDER_FAILOVER_V1 | Phase 1
-Дата: 2026-05-03
+Curator Router — CURATOR_PROVIDER_FAILOVER_V1
+Версия: v1.0 | Дата: 2026-05-03
+
+Детерминированный роутер куратора.
+Читает routing.json и provider_status.json.
+Классифицирует ошибки провайдеров.
+Выбирает активный backend.
 """
 
 import json
 import os
 import sys
-from datetime import datetime, timezone, timedelta
-
-GOVERNANCE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "governance")
-ROUTING_JSON = os.path.join(GOVERNANCE, "state", "routing.json")
-PROVIDER_STATUS = os.path.join(GOVERNANCE, "state", "provider_status.json")
-ROUTING_DECISIONS = os.path.join(GOVERNANCE, "events", "routing_decisions.jsonl")
-PROVIDER_FAILURES = os.path.join(GOVERNANCE, "events", "provider_failures.jsonl")
-EXCHANGE = os.path.join(GOVERNANCE, "exchange.jsonl")
+from datetime import datetime, timezone
 
 
-# === КЛАССИФИКАТОР ОШИБОК ===
+ROUTING_FILE = "governance/state/routing.json"
+PROVIDER_STATUS_FILE = "governance/state/provider_status.json"
+PROVIDER_FAILURES_FILE = "governance/events/provider_failures.jsonl"
+ROUTING_DECISIONS_FILE = "governance/events/routing_decisions.jsonl"
 
-FAILURE_PATTERNS = {
-    "provider_limit": [
-        "you've hit your limit",
-        "rate limit",
-        "resets at",
-        "quota exceeded",
-        "too many requests",
-        "429",
-        "usage limit",
-        "reached the maximum",
-    ],
-    "api_error": [
-        "500", "502", "503", "504",
-        "internal server error",
-        "service unavailable",
-        "bad gateway",
-        "api error",
-    ],
-    "config_error": [
-        "missing secret",
-        "invalid workflow",
-        "yaml syntax",
-        "not found",
-        "no such file",
-        "permission denied",
-        "invalid token",
-    ],
-    "permission_error": [
-        "403",
-        "forbidden",
-        "insufficient permissions",
-        "requires admin",
-    ],
-    "timeout": [
-        "timeout",
-        "timed out",
-        "deadline exceeded",
-        "runner offline",
-    ],
-    "max_turns": [
-        "reached maximum number of turns",
-        "max turns",
-        "max-turns",
-    ],
-}
+# Классификация ошибок
+PROVIDER_LIMIT_PATTERNS = [
+    "you've hit your limit",
+    "resets at",
+    "http 429",
+    "rate limit",
+    "usage limit",
+    "quota exceeded",
+]
 
+API_ERROR_PATTERNS = [
+    "http 5",
+    "internal server error",
+    "service unavailable",
+    "bad gateway",
+]
 
-def classify_error(error_text: str) -> str:
-    """Классифицирует ошибку провайдера по тексту."""
-    text = error_text.lower()
-    for failure_type, patterns in FAILURE_PATTERNS.items():
-        for pattern in patterns:
-            if pattern in text:
-                return failure_type
-    return "unknown"
+CONFIG_ERROR_PATTERNS = [
+    "missing secret",
+    "invalid workflow",
+    "yaml syntax",
+    "not found",
+    "permission denied",
+]
 
 
 def now_iso():
@@ -82,199 +51,249 @@ def now_iso():
 
 
 def load_json(path):
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path) as f:
         return json.load(f)
 
 
 def save_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    with open(path, "w") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
 def append_jsonl(path, entry):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
+    with open(path, "a") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
-# === ОСНОВНАЯ ЛОГИКА РОУТЕРА ===
+def classify_error(error_text):
+    """Классифицирует тип ошибки провайдера."""
+    text = (error_text or "").lower()
 
-def record_failure(provider: str, failure_type: str, error_excerpt: str = ""):
+    for pattern in PROVIDER_LIMIT_PATTERNS:
+        if pattern in text:
+            return "provider_limit"
+
+    for pattern in API_ERROR_PATTERNS:
+        if pattern in text:
+            return "api_error"
+
+    for pattern in CONFIG_ERROR_PATTERNS:
+        if pattern in text:
+            return "config_error"
+
+    if "timeout" in text:
+        return "timeout"
+
+    if "permission" in text or "forbidden" in text:
+        return "permission_error"
+
+    return "unknown"
+
+
+def should_switch(failure_type, failure_count, switch_after):
+    """Определяет нужно ли переключить провайдера."""
+    # provider_limit — переключаем немедленно
+    if failure_type == "provider_limit":
+        return True
+    # api_error — переключаем после N ошибок подряд
+    if failure_type == "api_error" and failure_count >= switch_after:
+        return True
+    # config_error, permission_error, timeout — не переключаем, это ремонтная ошибка
+    return False
+
+
+def record_failure(provider, failure_type, error_excerpt, provider_status, routing):
     """Записывает ошибку провайдера и обновляет статус."""
     ts = now_iso()
-    status = load_json(PROVIDER_STATUS)
-    p = status["providers"][provider]
+    providers = provider_status.get("providers", {})
+    p = providers.get(provider, {})
 
     p["last_failure_at"] = ts
     p["last_failure_type"] = failure_type
+    p["last_error_excerpt"] = error_excerpt[:200] if error_excerpt else None
     p["failure_count"] = p.get("failure_count", 0) + 1
-    if error_excerpt:
-        p["last_error_excerpt"] = error_excerpt[:200]
 
-    if failure_type in ("provider_limit", "api_error"):
-        p["status"] = "limited" if failure_type == "provider_limit" else "error"
-        if failure_type == "provider_limit":
-            cooldown = (datetime.now(timezone.utc) + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-            p["cooldown_until"] = cooldown
-    elif failure_type in ("config_error", "permission_error"):
-        p["status"] = "config_error"
-    elif failure_type == "timeout":
-        p["status"] = "timeout"
+    switch_after = routing.get("policy", {}).get("switch_after_failures", 2)
+    current_failure_count = p["failure_count"]
 
-    status["updated_at"] = ts
-    save_json(PROVIDER_STATUS, status)
+    if should_switch(failure_type, current_failure_count, switch_after):
+        p["status"] = "limited"
+    else:
+        p["status"] = "error"
 
-    append_jsonl(PROVIDER_FAILURES, {
+    providers[provider] = p
+    provider_status["providers"] = providers
+    provider_status["updated_at"] = ts
+
+    append_jsonl(PROVIDER_FAILURES_FILE, {
         "timestamp": ts,
         "provider": provider,
         "failure_type": failure_type,
-        "failure_count": p["failure_count"],
-        "error_excerpt": error_excerpt[:200] if error_excerpt else ""
+        "failure_count": current_failure_count,
+        "error_excerpt": error_excerpt[:200] if error_excerpt else None
     })
 
-    print(f"[ROUTER] Failure recorded: {provider} → {failure_type} (count={p['failure_count']})")
-    return p["failure_count"]
+    return p["status"], current_failure_count
 
 
-def record_success(provider: str):
+def record_success(provider, provider_status):
     """Записывает успех провайдера."""
     ts = now_iso()
-    status = load_json(PROVIDER_STATUS)
-    p = status["providers"][provider]
+    providers = provider_status.get("providers", {})
+    p = providers.get(provider, {})
     p["status"] = "ok"
     p["last_success_at"] = ts
     p["failure_count"] = 0
-    p["cooldown_until"] = None
-    p["last_error_excerpt"] = None
-    status["updated_at"] = ts
-    save_json(PROVIDER_STATUS, status)
-    print(f"[ROUTER] Success recorded: {provider}")
+    p["last_failure_type"] = None
+    providers[provider] = p
+    provider_status["providers"] = providers
+    provider_status["updated_at"] = ts
 
 
-def should_switch(provider: str) -> bool:
-    """Определяет нужно ли переключиться с данного провайдера."""
-    try:
-        routing = load_json(ROUTING_JSON)
-        policy = routing.get("policy", {})
-        switch_after = policy.get("switch_after_failures", 2)
-        trigger_types = policy.get("failure_types_that_trigger_switch", ["provider_limit", "api_error"])
+def decide_backend(routing, provider_status):
+    """
+    Главная функция: выбирает активный backend для куратора.
+    Возвращает: (backend_name, reason)
+    """
+    roles = routing.get("roles", {})
+    curator_config = roles.get("curator", {})
+    current_active = curator_config.get("active", "claude")
+    primary = curator_config.get("primary", "claude")
+    reserve = curator_config.get("reserve", "gpt_hosted_fallback")
+    policy = routing.get("policy", {})
+    switch_after = policy.get("switch_after_failures", 2)
 
-        status = load_json(PROVIDER_STATUS)
-        p = status["providers"].get(provider, {})
-        failure_count = p.get("failure_count", 0)
-        last_failure_type = p.get("last_failure_type", "unknown")
+    providers = provider_status.get("providers", {})
 
-        if last_failure_type in trigger_types and failure_count >= switch_after:
-            return True
+    # Проверить статус текущего активного провайдера
+    # Нормализуем имя провайдера для provider_status
+    primary_key = "claude" if "claude" in primary else "gpt"
+    reserve_key = "gpt" if "gpt" in reserve else "claude"
 
-        if p.get("status") == "limited":
-            cooldown = p.get("cooldown_until")
-            if cooldown and now_iso() < cooldown:
-                return True
+    primary_status = providers.get(primary_key, {}).get("status", "unknown")
+    primary_failures = providers.get(primary_key, {}).get("failure_count", 0)
+    primary_failure_type = providers.get(primary_key, {}).get("last_failure_type")
 
-        return False
-    except Exception as e:
-        print(f"[ROUTER] should_switch error: {e}")
-        return False
+    # Если primary OK или неизвестен — использовать primary
+    if primary_status in ("ok", "unknown"):
+        return primary, f"primary provider {primary_key} is {primary_status}"
+
+    # Если primary ограничен — переключить на reserve
+    if primary_status == "limited" or (
+        primary_status == "error" and primary_failures >= switch_after
+        and should_switch(primary_failure_type, primary_failures, switch_after)
+    ):
+        reserve_status = providers.get(reserve_key, {}).get("status", "unknown")
+        if reserve_status not in ("limited", "error"):
+            return reserve, f"primary {primary_key} is {primary_status}, switching to reserve {reserve_key}"
+        else:
+            return None, f"degraded mode: both {primary_key} and {reserve_key} are unavailable"
+
+    return primary, f"using primary {primary_key} (status: {primary_status})"
 
 
-def switch_provider(role: str, from_provider: str, to_provider: str, reason: str):
-    """Переключает активного провайдера для роли."""
+def make_routing_decision(backend, reason, routing, provider_status):
+    """Записывает решение о маршрутизации."""
     ts = now_iso()
-    routing = load_json(ROUTING_JSON)
-
-    if role in routing["roles"]:
-        routing["roles"][role]["active"] = to_provider
-    routing["updated_at"] = ts
-
-    save_json(ROUTING_JSON, routing)
-
     decision = {
         "timestamp": ts,
-        "event_type": "ROUTING_UPDATE",
-        "role": role,
-        "from_provider": from_provider,
-        "to_provider": to_provider,
+        "backend": backend,
         "reason": reason,
-        "updated_by": "curator_router"
+        "routing_snapshot": {
+            "curator_active": routing.get("roles", {}).get("curator", {}).get("active"),
+        },
+        "provider_snapshot": {
+            k: v.get("status") for k, v in provider_status.get("providers", {}).items()
+        }
     }
-    append_jsonl(ROUTING_DECISIONS, decision)
-    append_jsonl(EXCHANGE, {**decision, "event_id": f"evt_routing_{ts.replace(':', '').replace('-', '')}"})
-
-    print(f"[ROUTER] Switched {role}: {from_provider} → {to_provider} ({reason})")
+    append_jsonl(ROUTING_DECISIONS_FILE, decision)
+    return decision
 
 
-def get_active_provider(role: str) -> str:
-    """Возвращает активного провайдера для роли."""
-    try:
-        routing = load_json(ROUTING_JSON)
-        return routing["roles"].get(role, {}).get("active", "claude")
-    except Exception:
-        return "claude"
+def update_routing_active(routing, role, new_active):
+    """Обновляет активный провайдер для роли в routing.json."""
+    roles = routing.get("roles", {})
+    if role in roles:
+        roles[role]["active"] = new_active
+        routing["roles"] = roles
+        routing["updated_at"] = now_iso()
 
 
-def get_reserve_provider(role: str) -> str:
-    """Возвращает резервного провайдера для роли."""
-    try:
-        routing = load_json(ROUTING_JSON)
-        return routing["roles"].get(role, {}).get("reserve", "gpt")
-    except Exception:
-        return "gpt"
-
-
-def route_role(role: str, error_text: str = "", success: bool = False) -> dict:
+def route(role="curator", error_text=None, success=False):
     """
-    Главная функция роутера.
-    Принимает роль и результат последнего запуска.
-    Возвращает: {'provider': str, 'trigger': str, 'switched': bool}
+    Основная точка входа роутера.
+
+    role: логическая роль (curator, analyst, auditor, executor)
+    error_text: текст ошибки если был failure
+    success: True если предыдущий запуск был успешным
     """
-    trigger_map = {
-        "analyst": {"claude": "@analyst", "gpt": "@gpt_analyst"},
-        "auditor": {"claude": "@auditor", "gpt": "@gpt_auditor"},
-        "executor": {"claude": "@executor", "gpt": "@gpt_executor"},
-        "curator": {"claude": "@curator", "gpt": "@curator"},
-    }
+    # Загрузить состояние
+    try:
+        routing = load_json(ROUTING_FILE)
+    except FileNotFoundError:
+        print(f"ERROR: {ROUTING_FILE} not found")
+        sys.exit(1)
 
-    active = get_active_provider(role)
-    switched = False
+    try:
+        provider_status = load_json(PROVIDER_STATUS_FILE)
+    except FileNotFoundError:
+        provider_status = {"version": 1, "updated_at": now_iso(), "providers": {}}
 
+    # Получить текущий активный провайдер для роли
+    roles = routing.get("roles", {})
+    role_config = roles.get(role, {})
+    current_active = role_config.get("active", "claude")
+
+    # Нормализовать имя провайдера
+    provider_key = "claude" if "claude" in current_active else "gpt"
+
+    # Обработать success/failure
     if success:
-        record_success(active)
+        record_success(provider_key, provider_status)
+        print(f"SUCCESS recorded for {provider_key}")
     elif error_text:
         failure_type = classify_error(error_text)
-        count = record_failure(active, failure_type, error_text)
+        status, count = record_failure(
+            provider_key, failure_type, error_text, provider_status, routing
+        )
+        print(f"FAILURE recorded: {provider_key} → {failure_type} (count={count}, status={status})")
 
-        if failure_type not in ("config_error", "permission_error", "timeout", "max_turns"):
-            if should_switch(active):
-                reserve = get_reserve_provider(role)
-                switch_provider(role, active, reserve, f"{failure_type} after {count} failures")
-                active = reserve
-                switched = True
+        # Проверить нужно ли переключить
+        if should_switch(failure_type, count, routing.get("policy", {}).get("switch_after_failures", 2)):
+            # Определить reserve
+            reserve = role_config.get("reserve", "gpt_hosted_fallback")
+            old_active = current_active
+            update_routing_active(routing, role, reserve)
+            print(f"SWITCHING {role}: {old_active} → {reserve}")
 
-    trigger = trigger_map.get(role, {}).get(active, f"@{role}")
+    # Принять решение о backend
+    backend, reason = decide_backend(routing, provider_status)
+    decision = make_routing_decision(backend, reason, routing, provider_status)
 
-    append_jsonl(ROUTING_DECISIONS, {
-        "timestamp": now_iso(),
-        "event_type": "ROUTING_DECISION",
-        "role": role,
-        "active_provider": active,
-        "trigger": trigger,
-        "switched": switched,
-        "reason": "success" if success else (classify_error(error_text) if error_text else "no_error_info")
-    })
+    # Сохранить обновлённое состояние
+    save_json(PROVIDER_STATUS_FILE, provider_status)
+    save_json(ROUTING_FILE, routing)
 
-    return {"provider": active, "trigger": trigger, "switched": switched}
+    print(f"ROUTE DECISION: backend={backend}, reason={reason}")
+    return backend, reason
 
 
 if __name__ == "__main__":
-    # CLI: python curator_router.py <role> [--error "текст ошибки"] [--success]
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("role", help="analyst | auditor | executor | curator")
-    parser.add_argument("--error", default="", help="Error text from last run")
-    parser.add_argument("--success", action="store_true", help="Last run was successful")
+    parser.add_argument("--role", default="curator")
+    parser.add_argument("--error", default=None, help="Error text from failed run")
+    parser.add_argument("--success", action="store_true")
     args = parser.parse_args()
 
-    result = route_role(args.role, args.error, args.success)
-    print(f"ROUTE_RESULT: provider={result['provider']} trigger={result['trigger']} switched={result['switched']}")
+    backend, reason = route(
+        role=args.role,
+        error_text=args.error,
+        success=args.success
+    )
+    print(f"\nFINAL: use backend={backend}")
+    if backend is None:
+        print("DEGRADED MODE: no available backend")
+        sys.exit(2)
