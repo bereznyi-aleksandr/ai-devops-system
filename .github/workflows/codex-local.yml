@@ -5,8 +5,9 @@ on:
     types: [created]
 
 permissions:
-  contents: read
+  contents: write
   issues: write
+  actions: read
 
 jobs:
   codex-local:
