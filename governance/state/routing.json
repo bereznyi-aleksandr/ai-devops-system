@@ -1,28 +1,36 @@
 {
-  "version": 1,
-  "updated_at": "2026-05-03T11:05:00Z",
-  "updated_by": "claude-auditor",
+  "version": 2,
+  "updated_at": "2026-05-03T15:50:00Z",
+  "updated_by": "gpt-external-auditor",
   "roles": {
+    "curator": {
+      "active": "gpt",
+      "primary": "gpt_hosted_fallback",
+      "reserve": "gpt_codex_local"
+    },
     "analyst": {
       "active": "gpt",
       "primary": "gpt",
       "reserve": "claude"
     },
     "auditor": {
-      "active": "claude",
-      "primary": "claude",
-      "reserve": "gpt"
+      "active": "gpt",
+      "primary": "gpt",
+      "reserve": "claude"
     },
     "executor": {
-      "active": "claude",
-      "primary": "claude",
-      "reserve": "gpt"
+      "active": "gpt",
+      "primary": "gpt",
+      "reserve": "claude"
     }
   },
   "policy": {
     "switch_after_failures": 2,
     "switch_back_after_successful_probe": true,
     "failure_types_that_trigger_switch": ["provider_limit", "api_error"],
-    "failure_types_that_do_not_trigger_switch": ["max_turns", "config_error", "permission_error", "timeout"]
+    "failure_types_that_do_not_trigger_switch": ["max_turns", "config_error", "permission_error", "timeout"],
+    "curator_entrypoint": "telegram_deno_issue_31_curator",
+    "curator_backend": "gpt_hosted_fallback",
+    "self_hosted_codex_status": "diagnostic_blocked_or_pending"
   }
 }
