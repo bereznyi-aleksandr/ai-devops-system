@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "updated_at": "2026-05-03T15:50:00Z",
-  "updated_by": "gpt-external-auditor",
+  "updated_at": "2026-05-03T16:34:00Z",
+  "updated_by": "claude-auditor",
   "roles": {
     "curator": {
-      "active": "gpt",
-      "primary": "gpt_hosted_fallback",
-      "reserve": "gpt_codex_local"
+      "active": "claude",
+      "primary": "claude",
+      "reserve": "gpt_hosted_fallback"
     },
     "analyst": {
       "active": "gpt",
@@ -14,23 +14,38 @@
       "reserve": "claude"
     },
     "auditor": {
-      "active": "gpt",
-      "primary": "gpt",
-      "reserve": "claude"
+      "active": "claude",
+      "primary": "claude",
+      "reserve": "gpt"
     },
     "executor": {
-      "active": "gpt",
-      "primary": "gpt",
-      "reserve": "claude"
+      "active": "claude",
+      "primary": "claude",
+      "reserve": "gpt"
+    }
+  },
+  "trigger_map": {
+    "analyst": {
+      "claude": "@analyst",
+      "gpt": "@gpt_analyst"
+    },
+    "auditor": {
+      "claude": "@auditor",
+      "gpt": "@gpt_auditor"
+    },
+    "executor": {
+      "claude": "@executor",
+      "gpt": "@gpt_executor"
+    },
+    "curator": {
+      "claude": "@curator",
+      "gpt_hosted_fallback": "@curator"
     }
   },
   "policy": {
     "switch_after_failures": 2,
     "switch_back_after_successful_probe": true,
     "failure_types_that_trigger_switch": ["provider_limit", "api_error"],
-    "failure_types_that_do_not_trigger_switch": ["max_turns", "config_error", "permission_error", "timeout"],
-    "curator_entrypoint": "telegram_deno_issue_31_curator",
-    "curator_backend": "gpt_hosted_fallback",
-    "self_hosted_codex_status": "diagnostic_blocked_or_pending"
+    "failure_types_that_do_not_trigger_switch": ["max_turns", "config_error", "permission_error", "timeout"]
   }
 }
