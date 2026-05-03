@@ -1,25 +1,56 @@
 name: GPT Hosted Roles
 
 on:
+  workflow_dispatch:
+    inputs:
+      role:
+        description: 'analyst | auditor | executor | curator'
+        required: true
+        type: string
+      provider:
+        description: 'gpt | claude | codex'
+        required: false
+        default: 'gpt'
+        type: string
+      trace_id:
+        description: 'Trace id'
+        required: true
+        type: string
+      cycle_id:
+        description: 'Role cycle id'
+        required: false
+        default: ''
+        type: string
+      task_type:
+        description: 'Task type'
+        required: false
+        default: 'default_development'
+        type: string
+      task:
+        description: 'Task body'
+        required: false
+        default: ''
+        type: string
   issue_comment:
     types: [created]
 
 permissions:
   contents: read
   issues: write
-  actions: read
+  actions: write
 
 jobs:
   hosted-gpt-role:
     name: Hosted GPT Role
     if: |
-      github.event.issue.number == 31 &&
-      contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE_EXECUTION') &&
-      contains(github.event.comment.body, 'TRACE_ID:') &&
-      (contains(github.event.comment.body, '@gpt_executor') ||
-       contains(github.event.comment.body, '@gpt_analyst') ||
-       contains(github.event.comment.body, '@gpt_auditor') ||
-       contains(github.event.comment.body, '@gpt_curator'))
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.number == 31 &&
+       contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE_EXECUTION') &&
+       contains(github.event.comment.body, 'TRACE_ID:') &&
+       (contains(github.event.comment.body, '@gpt_executor') ||
+        contains(github.event.comment.body, '@gpt_analyst') ||
+        contains(github.event.comment.body, '@gpt_auditor') ||
+        contains(github.event.comment.body, '@gpt_curator')))
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -32,35 +63,54 @@ jobs:
       - name: Build hosted role prompt
         shell: bash
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ROLE: ${{ inputs.role }}
+          INPUT_PROVIDER: ${{ inputs.provider }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID: ${{ inputs.cycle_id }}
+          INPUT_TASK_TYPE: ${{ inputs.task_type }}
+          INPUT_TASK: ${{ inputs.task }}
           COMMENT_BODY_JSON: ${{ toJson(github.event.comment.body) }}
         run: |
           set -e
           PROMPT_FILE="$RUNNER_TEMP/hosted_gpt_role_prompt.txt"
 
           python3 - <<'PY'
-          import json
-          import os
+          import json, os, re
           from pathlib import Path
 
           root = Path('.')
-          body = json.loads(os.environ['COMMENT_BODY_JSON'])
+          event_name = os.environ.get('EVENT_NAME', '')
 
-          if '@gpt_executor' in body:
-              role = 'GPT_EXECUTOR'
-          elif '@gpt_analyst' in body:
-              role = 'GPT_ANALYST'
-          elif '@gpt_auditor' in body:
-              role = 'GPT_AUDITOR'
-          elif '@gpt_curator' in body:
-              role = 'GPT_CURATOR'
+          if event_name == 'workflow_dispatch':
+              role_raw = os.environ.get('INPUT_ROLE', 'analyst').lower()
+              role = 'GPT_' + role_raw.upper()
+              trace_id = os.environ.get('INPUT_TRACE_ID', 'missing')
+              cycle_id = os.environ.get('INPUT_CYCLE_ID', '')
+              task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
+              task = os.environ.get('INPUT_TASK', '')
+              provider = os.environ.get('INPUT_PROVIDER', 'gpt')
+              body = f'WORKFLOW_DISPATCH ROLE={role_raw} PROVIDER={provider} TRACE_ID={trace_id} CYCLE_ID={cycle_id}\n\nTASK:\n{task}'
           else:
-              role = 'GPT_UNKNOWN'
-
-          trace_id = 'missing'
-          import re
-          m = re.search(r'TRACE_ID:\s*([A-Za-z0-9_\-]+)', body)
-          if m:
-              trace_id = m.group(1)
+              body = json.loads(os.environ.get('COMMENT_BODY_JSON') or '""')
+              if '@gpt_executor' in body:
+                  role = 'GPT_EXECUTOR'
+              elif '@gpt_analyst' in body:
+                  role = 'GPT_ANALYST'
+              elif '@gpt_auditor' in body:
+                  role = 'GPT_AUDITOR'
+              elif '@gpt_curator' in body:
+                  role = 'GPT_CURATOR'
+              else:
+                  role = 'GPT_UNKNOWN'
+              trace_id = 'missing'
+              m = re.search(r'TRACE_ID:\s*([A-Za-z0-9_\-]+)', body)
+              if m:
+                  trace_id = m.group(1)
+              cycle_id = ''
+              task_type = 'legacy_issue_comment'
+              task = body
+              provider = 'gpt'
 
           def read(path, limit=20000):
               p = root / path
@@ -68,50 +118,52 @@ jobs:
                   return f'[missing: {path}]'
               return p.read_text(encoding='utf-8', errors='replace')[:limit]
 
-          parts = []
-          parts.append(f'BEM-GPT-HOSTED-ROLE | {role}')
-          parts.append('')
-          parts.append(f'You are {role} for ai-devops-system.')
-          parts.append(f'TRACE_ID={trace_id}')
-          parts.append('')
-          parts.append('Architecture:')
-          parts.append('- This workflow is a hosted GPT fallback for role comments.')
-          parts.append('- It exists because codex-local self-hosted path is not producing role reports reliably.')
-          parts.append('- Do not call Claude.')
-          parts.append('- Do not use anthropics/claude-code-action.')
-          parts.append('- Do not change files in this hosted fallback workflow.')
-          parts.append('- Do not claim that files were changed.')
-          parts.append('- Do not commit. OWNER_APPROVED_COMMIT is required for any commit, and this hosted fallback is read/report only.')
-          parts.append('- Never reveal secrets. Never print env vars or token values.')
-          parts.append('- Never include literal at-sign mentions of roles in the final report; write role names without at-sign.')
-          parts.append('')
-          parts.append('Incoming issue comment:')
-          parts.append('-----')
-          parts.append(body)
-          parts.append('-----')
-          parts.append('')
-          parts.append('Repository context:')
-          parts.append('')
-          parts.append('--- governance/state/routing.json ---')
-          parts.append(read('governance/state/routing.json'))
-          parts.append('')
-          parts.append('--- governance/MASTER_PLAN.md ---')
-          parts.append(read('governance/MASTER_PLAN.md'))
-          parts.append('')
-          parts.append('--- governance/exchange.jsonl tail ---')
-          parts.append(read('governance/exchange.jsonl')[-20000:])
-          parts.append('')
-          parts.append('Required output:')
-          parts.append(f'- Start with: BEM-GPT-{role.replace("GPT_", "")} | HOSTED ROLE REPORT')
-          parts.append('- Compact Russian BEM report.')
-          parts.append('- Include checklist with confirmations requested in the incoming comment.')
-          parts.append('- For GPT_EXECUTOR read-only diagnostics: explicitly confirm no file changes and no commit.')
-          parts.append('- Include a short next action.')
+          parts = [
+              f'BEM-GPT-HOSTED-ROLE | {role}',
+              '',
+              f'You are {role} for ai-devops-system.',
+              f'TRACE_ID={trace_id}',
+              f'CYCLE_ID={cycle_id}',
+              f'TASK_TYPE={task_type}',
+              '',
+              'Architecture:',
+              '- This is algorithmic role FSM execution.',
+              '- It replaces internal ISA/comment chaining because that path was too complex and unreliable.',
+              '- External ISA/comment remains entrypoint/audit trail only.',
+              '- Do not call Claude.',
+              '- Do not change files.',
+              '- Do not commit.',
+              '- Never reveal secrets.',
+              '- Never include literal at-sign role mentions in final report.',
+              '',
+              'Incoming task:',
+              '-----',
+              body,
+              '-----',
+              '',
+              '--- governance/policies/role_sequence.json ---',
+              read('governance/policies/role_sequence.json'),
+              '',
+              '--- governance/state/role_cycle_state.json ---',
+              read('governance/state/role_cycle_state.json'),
+              '',
+              '--- governance/MASTER_PLAN.md ---',
+              read('governance/MASTER_PLAN.md'),
+              '',
+              'Required output:',
+              f'- Start with: BEM-GPT-{role.replace("GPT_", "")} | HOSTED ROLE REPORT',
+              '- Compact Russian BEM report.',
+              '- Include checklist.',
+              '- Confirm no file changes and no commit.',
+              '- Include next action.'
+          ]
 
           Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_role_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
               f.write(f'ROLE={role}\n')
               f.write(f'TRACE_ID={trace_id}\n')
+              f.write(f'CYCLE_ID={cycle_id}\n')
+              f.write(f'TASK_TYPE={task_type}\n')
           PY
 
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
@@ -125,14 +177,9 @@ jobs:
           set +e
           OUTPUT_FILE="$RUNNER_TEMP/hosted_gpt_role_output.md"
           python3 - <<'PY' > "$OUTPUT_FILE" 2>&1
-          import json
-          import os
-          import pathlib
-          import urllib.error
-          import urllib.request
+          import json, os, pathlib, urllib.error, urllib.request
 
-          prompt_path = pathlib.Path(os.environ['PROMPT_FILE'])
-          prompt = prompt_path.read_text(encoding='utf-8', errors='replace')
+          prompt = pathlib.Path(os.environ['PROMPT_FILE']).read_text(encoding='utf-8', errors='replace')
           api_key = os.environ.get('OPENAI_API_KEY', '')
           model = os.environ.get('OPENAI_MODEL') or 'gpt-4o-mini'
           role = os.environ.get('ROLE', 'GPT_UNKNOWN')
@@ -140,23 +187,17 @@ jobs:
           print(f'BEM-GPT-HOSTED-ROLE | {role} | RAW_OUTPUT')
           print(f'MODEL={model}')
           print(f'TRACE_ID={os.environ.get("TRACE_ID", "missing")}')
+          print(f'CYCLE_ID={os.environ.get("CYCLE_ID", "")}')
 
           if not api_key:
               print('HOSTED_GPT_STATUS=OPENAI_API_KEY_MISSING')
-              print('Hosted GPT role could not call OpenAI API because secrets.OPENAI_API_KEY is empty or unavailable.')
               raise SystemExit(0)
 
           payload = {
               'model': model,
               'input': [
-                  {
-                      'role': 'system',
-                      'content': 'You are a hosted GPT role runner. Return a compact Russian BEM report. Do not reveal secrets. Do not include literal at-sign mentions.'
-                  },
-                  {
-                      'role': 'user',
-                      'content': prompt
-                  }
+                  {'role': 'system', 'content': 'You are a hosted GPT role runner. Return compact Russian BEM report. Do not reveal secrets. Do not include literal at-sign mentions.'},
+                  {'role': 'user', 'content': prompt}
               ],
               'max_output_tokens': 1600
           }
@@ -164,10 +205,7 @@ jobs:
           req = urllib.request.Request(
               'https://api.openai.com/v1/responses',
               data=json.dumps(payload).encode('utf-8'),
-              headers={
-                  'Authorization': f'Bearer {api_key}',
-                  'Content-Type': 'application/json'
-              },
+              headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
               method='POST'
           )
 
@@ -175,23 +213,22 @@ jobs:
               with urllib.request.urlopen(req, timeout=120) as resp:
                   data = json.loads(resp.read().decode('utf-8'))
           except urllib.error.HTTPError as e:
-              err = e.read().decode('utf-8', errors='replace')[:4000]
               print(f'HOSTED_GPT_STATUS=OPENAI_API_HTTP_ERROR_{e.code}')
-              print(err)
+              print(e.read().decode('utf-8', errors='replace')[:4000])
               raise SystemExit(0)
           except Exception as e:
               print('HOSTED_GPT_STATUS=OPENAI_API_CALL_FAILED')
               print(str(e))
               raise SystemExit(0)
 
-          text = data.get('output_text')
+          text = data.get('output_text') or ''
           if not text:
-              parts = []
+              buf = []
               for item in data.get('output', []):
                   for content in item.get('content', []):
                       if content.get('type') in ('output_text', 'text'):
-                          parts.append(content.get('text', ''))
-              text = '\n'.join(parts).strip()
+                          buf.append(content.get('text', ''))
+              text = '\n'.join(buf).strip()
 
           print('HOSTED_GPT_STATUS=OK')
           print(text or '[empty OpenAI response text]')
@@ -205,27 +242,70 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           REPO: ${{ github.repository }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_NUMBER: '31'
         run: |
           set -e
           python3 - <<'PY'
-          import json
-          import os
-          import pathlib
-          import urllib.request
+          import json, os, pathlib, urllib.request
 
           output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
           output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else 'OUTPUT_FILE was not created.'
-          output = output.replace('@curator', 'curator')
-          output = output.replace('@gpt_executor', 'GPT_EXECUTOR')
-          output = output.replace('@gpt_analyst', 'GPT_ANALYST')
-          output = output.replace('@gpt_auditor', 'GPT_AUDITOR')
-          output = output.replace('@gpt_curator', 'GPT_CURATOR')
+          for a, b in [('@curator','curator'),('@gpt_executor','GPT_EXECUTOR'),('@gpt_analyst','GPT_ANALYST'),('@gpt_auditor','GPT_AUDITOR'),('@gpt_curator','GPT_CURATOR')]:
+              output = output.replace(a, b)
           role = os.environ.get('ROLE', 'GPT_UNKNOWN')
-          body = f'BEM-GPT-HOSTED-ROLE | RUN RESULT | {role}\n\n' + output[-60000:] + '\n\nANTI_RECURSION: bot/report comments are ignored by hosted role workflows.'
+          body = f'BEM-GPT-HOSTED-ROLE | RUN RESULT | {role}\n\n' + output[-60000:] + '\n\nANTI_RECURSION: report comments are audit trail only; internal FSM uses workflow_dispatch.'
           data = json.dumps({'body': body}).encode('utf-8')
           req = urllib.request.Request(
               f"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments",
+              data=data,
+              headers={
+                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                  'Accept': 'application/vnd.github+json',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-devops-hosted-gpt-roles'
+              },
+              method='POST'
+          )
+          with urllib.request.urlopen(req) as resp:
+              print(resp.status)
+          PY
+
+      - name: Advance role orchestrator
+        if: always() && github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+          CYCLE_ID: ${{ env.CYCLE_ID }}
+          ROLE: ${{ env.ROLE }}
+          TRACE_ID: ${{ env.TRACE_ID }}
+        run: |
+          set -e
+          python3 - <<'PY'
+          import json, os, urllib.request
+
+          cycle_id = os.environ.get('CYCLE_ID', '')
+          if not cycle_id:
+              print('No cycle_id; skip orchestrator advance')
+              raise SystemExit(0)
+
+          role = os.environ.get('ROLE', 'GPT_UNKNOWN').replace('GPT_', '').lower()
+          data = json.dumps({
+              'ref': 'main',
+              'inputs': {
+                  'mode': 'advance',
+                  'task_type': 'default_development',
+                  'task': '',
+                  'trace_id': os.environ.get('TRACE_ID', ''),
+                  'cycle_id': cycle_id,
+                  'role': role,
+                  'status': 'ROLE_DONE',
+                  'note': 'Hosted GPT role completed and posted report.'
+              }
+          }).encode('utf-8')
+
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/role-orchestrator.yml/dispatches",
               data=data,
               headers={
                   'Authorization': f"Bearer {os.environ['GH_TOKEN']}",

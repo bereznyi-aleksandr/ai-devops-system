@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "purpose": "Replace over-complex internal ISA/comment chaining with deterministic role FSM. ISA/comment remains external entrypoint and audit trail, but not the internal workflow bus.",
+  "default_task_type": "default_development",
+  "task_types": {
+    "default_development": [
+      "analyst",
+      "auditor",
+      "executor",
+      "auditor",
+      "curator_summary"
+    ],
+    "hotfix": [
+      "executor",
+      "auditor",
+      "curator_summary"
+    ],
+    "audit_only": [
+      "auditor",
+      "curator_summary"
+    ],
+    "architecture_change": [
+      "analyst",
+      "auditor",
+      "executor",
+      "auditor",
+      "curator_summary"
+    ]
+  },
+  "fallback_rules": {
+    "on_provider_limit": "switch_provider_keep_role",
+    "on_role_blocked": "escalate_to_curator",
+    "on_audit_rejected": "return_to_executor",
+    "on_safety_block": "prepare_bootstrap_pack"
+  },
+  "provider_layer": {
+    "source": "governance/state/routing.json + governance/state/provider_status.json",
+    "rule": "role sequence decides who is next; provider router decides who performs that role"
+  }
+}

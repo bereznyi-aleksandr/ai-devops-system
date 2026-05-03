@@ -66,6 +66,29 @@ def post_issue_comment(body):
         return json.loads(resp.read().decode('utf-8')).get('id')
 
 
+def dispatch_workflow(workflow_file, inputs):
+    token = os.environ.get('AI_SYSTEM_GITHUB_PAT') or os.environ.get('GH_TOKEN')
+    repo = os.environ.get('GITHUB_REPOSITORY', 'bereznyi-aleksandr/ai-devops-system')
+    if not token:
+        print('NO_GH_TOKEN_SKIP_WORKFLOW_DISPATCH')
+        return None
+    payload = {'ref': os.environ.get('GITHUB_REF_NAME', 'main'), 'inputs': inputs}
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(
+        f'https://api.github.com/repos/{repo}/actions/workflows/{workflow_file}/dispatches',
+        data=data,
+        headers={
+            'Authorization': f'Bearer {token}',
+            'Accept': 'application/vnd.github+json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'ai-devops-autonomous-task-engine'
+        },
+        method='POST'
+    )
+    with urllib.request.urlopen(req) as resp:
+        return {'status': resp.status}
+
+
 def build_e3_full_cycle_comment(trace_id):
     return '\n'.join([
         '@curator',
@@ -140,14 +163,34 @@ def main():
         return 0 if result['returncode'] == 0 else result['returncode']
 
     if args.mode == 'proof_cycle':
-        comment = build_e3_full_cycle_comment(trace_id)
-        comment_id = post_issue_comment(comment)
-        append_event({'event': 'AUTONOMY_ENGINE_PROOF_CYCLE_COMMENT_POSTED', 'task_id': task_id, 'trace_id': trace_id, 'comment_id': comment_id})
-        state.update({'updated_at': now_iso(), 'status': 'proof_cycle_started', 'current_step': 'C-10', 'last_task_id': task_id, 'last_trace_id': trace_id, 'blocker': None})
+        cycle_id = 'cyc_' + uuid.uuid4().hex[:16]
+        task = '\\n'.join([
+            'E3_FULL_AUTONOMOUS_CYCLE_ANALYST_PROOF',
+            'CYCLE: E3_FULL',
+            f'TRACE_ID: {trace_id}',
+            '',
+            'Прочитать governance/MASTER_PLAN.md и активный state layer.',
+            'Выполнить роль ANALYST в первом полном автономном цикле.',
+            'Ничего не менять. Только read/report.',
+            'Дальше последовательность ролей ведёт role_orchestrator FSM, не ISA/comment chaining.'
+        ])
+        dispatch_result = dispatch_workflow('role-orchestrator.yml', {
+            'mode': 'start',
+            'task_type': 'default_development',
+            'task': task[:4000],
+            'trace_id': trace_id,
+            'cycle_id': cycle_id,
+            'role': '',
+            'status': 'ROLE_DONE',
+            'note': ''
+        })
+        append_event({'event': 'AUTONOMY_ENGINE_PROOF_CYCLE_DISPATCHED', 'task_id': task_id, 'trace_id': trace_id, 'cycle_id': cycle_id, 'dispatch_result': dispatch_result})
+        state.update({'updated_at': now_iso(), 'status': 'proof_cycle_dispatched_to_role_orchestrator', 'current_step': 'C-10', 'last_task_id': task_id, 'last_trace_id': trace_id, 'blocker': None})
         write_json(STATE, state)
-        print('BEM-AUTONOMY-ENGINE | PROOF_CYCLE_STARTED')
+        print('BEM-AUTONOMY-ENGINE | PROOF_CYCLE_DISPATCHED')
         print('TRACE_ID=' + trace_id)
-        print('COMMENT_ID=' + str(comment_id))
+        print('CYCLE_ID=' + cycle_id)
+        print('DISPATCH_RESULT=' + str(dispatch_result))
         return 0
 
     return 2

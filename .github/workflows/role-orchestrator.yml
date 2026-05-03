@@ -1,0 +1,119 @@
+name: Role Orchestrator
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'start | advance'
+        required: true
+        default: 'start'
+        type: string
+      task_type:
+        description: 'default_development | hotfix | audit_only | architecture_change'
+        required: false
+        default: 'default_development'
+        type: string
+      task:
+        description: 'Task body'
+        required: false
+        default: ''
+        type: string
+      trace_id:
+        description: 'Trace id'
+        required: false
+        default: ''
+        type: string
+      cycle_id:
+        description: 'Cycle id'
+        required: false
+        default: ''
+        type: string
+      role:
+        description: 'Current role for advance'
+        required: false
+        default: ''
+        type: string
+      status:
+        description: 'ROLE_DONE | APPROVED | BLOCKED | REJECTED'
+        required: false
+        default: 'ROLE_DONE'
+        type: string
+      note:
+        description: 'Result note'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  orchestrate:
+    name: Role Orchestrator
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Run role orchestrator
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: main
+          MAIN_ISSUE: '31'
+        run: |
+          set +e
+          python3 scripts/role_orchestrator.py \
+            --mode "${{ inputs.mode }}" \
+            --task-type "${{ inputs.task_type }}" \
+            --task "${{ inputs.task }}" \
+            --trace-id "${{ inputs.trace_id }}" \
+            --cycle-id "${{ inputs.cycle_id }}" \
+            --role "${{ inputs.role }}" \
+            --status "${{ inputs.status }}" \
+            --note "${{ inputs.note }}"
+          echo "ORCHESTRATOR_EXIT=$?" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Commit role orchestration state
+        shell: bash
+        run: |
+          set -e
+          git config user.email "role-orchestrator@ai-devops-system"
+          git config user.name "Role Orchestrator"
+          git add governance/state/role_cycle_state.json governance/events/role_orchestrator.jsonl || true
+          git diff --cached --quiet || git commit -m "ROLE ORCHESTRATOR: state update"
+          git push
+
+      - name: Post role orchestrator report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          script: |
+            const body = [
+              'BEM-ROLE-ORCHESTRATOR | RUN RESULT',
+              '',
+              `Mode: ${{ inputs.mode }}`,
+              `Exit: ${process.env.ORCHESTRATOR_EXIT || 'unknown'}`,
+              '',
+              'Checklist:',
+              '- role orchestrator workflow executed',
+              '- state/event log commit attempted',
+              '- internal transport uses workflow_dispatch, not issue_comment chaining'
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 31,
+              body
+            });
