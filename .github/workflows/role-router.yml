@@ -38,19 +38,16 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           python3 - <<'EOF'
-          import os, json, re, urllib.request, urllib.parse
+          import os, json, re, urllib.request
 
           GH_TOKEN = os.environ["GH_TOKEN"]
           REPO = "bereznyi-aleksandr/ai-devops-system"
           ISSUE = 31
 
-          # Читать routing.json
           with open("governance/state/routing.json") as f:
               routing = json.load(f)
 
           roles_map = routing["roles"]
-
-          # Определить роль
           input_role = os.environ.get("INPUT_ROLE", "").strip()
           comment = os.environ.get("COMMENT_BODY", "")
 
@@ -63,29 +60,32 @@ jobs:
               m = re.search(r'TASK:\s*(.+)', comment)
               task = m.group(1).strip() if m else "Прочитай MASTER_PLAN.md. Предложи следующий шаг E3. Завершись: @auditor REVIEW"
 
-          # Определить триггер из routing
           role_config = roles_map.get(input_role, {})
           provider = role_config.get("active", "claude")
 
           triggers = {
-              "analyst": {"claude": "@analyst", "gpt": "@codex ROLE=GPT_ANALYST"},
-              "auditor": {"claude": "@auditor", "gpt": "@codex ROLE=GPT_AUDITOR"},
-              "executor": {"claude": "@executor", "gpt": "@codex ROLE=GPT_EXECUTOR"},
+              "analyst": {"claude": "@analyst", "gpt": "@gpt_analyst"},
+              "auditor": {"claude": "@auditor", "gpt": "@gpt_auditor"},
+              "executor": {"claude": "@executor", "gpt": "@gpt_executor"},
           }
           trigger = triggers.get(input_role, {}).get(provider, f"@{input_role}")
 
           comment_body = f"{trigger} {task}".strip()
-          print(f"Routing: {input_role} → {provider} → {trigger}")
+          print(f"Routing: {input_role} -> {provider} -> {trigger}")
           print(f"Comment: {comment_body[:100]}")
 
-          # Написать комментарий в issue #31
           data = json.dumps({"body": comment_body}).encode()
           req = urllib.request.Request(
               f"https://api.github.com/repos/{REPO}/issues/{ISSUE}/comments",
               data=data,
-              headers={"Authorization": f"Bearer {GH_TOKEN}",
-                       "Accept": "application/vnd.github+json",
-                       "Content-Type": "application/json"})
+              headers={
+                  "Authorization": f"Bearer {GH_TOKEN}",
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json",
+                  "User-Agent": "ai-devops-role-router"
+              },
+              method="POST"
+          )
           resp = urllib.request.urlopen(req)
           print(f"Comment posted: {resp.status}")
           EOF
