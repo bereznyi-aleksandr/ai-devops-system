@@ -1,12 +1,9 @@
-name: Curator Telegram Report
-
+# DISABLED
+name: DISABLED
 on:
   workflow_dispatch:
-
 jobs:
   disabled:
     runs-on: ubuntu-latest
     steps:
-      - name: Disabled
-        run: |
-          echo "BEM-288: use telegram-send.yml for 5-minute Telegram reports."
+      - run: echo "DISABLED"
