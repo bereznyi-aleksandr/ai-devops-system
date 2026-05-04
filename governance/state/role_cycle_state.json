@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-05-04T03:42:59Z",
+  "updated_at": "2026-05-04T04:16:00Z",
   "cycles": {
     "cyc_test_20260504T031100Z": {
       "cycle_id": "cyc_test_20260504T031100Z",
@@ -15,9 +15,11 @@
       ],
       "current_index": 3,
       "current_role": "auditor",
-      "status": "role_dispatched",
+      "status": "abandoned_stale_test",
       "task": "E3 FSM test after resolver fix: проверить автономный цикл ролей через role-orchestrator.",
-      "updated_at": "2026-05-04T03:12:15Z"
+      "updated_at": "2026-05-04T04:16:00Z",
+      "abandoned_at": "2026-05-04T04:16:00Z",
+      "abandoned_reason": "Superseded by successful completed cycle cyc_terminal_fix_20260504T034140Z. Kept only as historical test artifact."
     },
     "cyc_terminal_fix_20260504T034140Z": {
       "cycle_id": "cyc_terminal_fix_20260504T034140Z",
