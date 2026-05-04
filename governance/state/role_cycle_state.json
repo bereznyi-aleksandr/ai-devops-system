@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-05-04T04:27:01Z",
+  "updated_at": "2026-05-04T09:44:08Z",
   "cycles": {
     "cyc_test_20260504T031100Z": {
       "cycle_id": "cyc_test_20260504T031100Z",
@@ -54,9 +54,26 @@
       "status": "completed",
       "task": "E4-001 control test: проверить stale controls и отсутствие регресса FSM.",
       "updated_at": "2026-05-04T04:27:01Z"
+    },
+    "cyc_roadmap_20260504T094352Z": {
+      "cycle_id": "cyc_roadmap_20260504T094352Z",
+      "trace_id": "roadmap_e4_e6_autonomy_proof",
+      "task_type": "architecture_change",
+      "sequence": [
+        "analyst",
+        "auditor",
+        "executor",
+        "auditor",
+        "curator_summary"
+      ],
+      "current_index": 0,
+      "current_role": "analyst",
+      "status": "role_dispatched",
+      "task": "curator\n\nTYPE: CURATOR_ROADMAP_EXECUTION\nTRACE_ID: roadmap_e4_e6_autonomy_proof\nTASK_TYPE: architecture_change\n\nЗАДАЧА:\nЗапустить автономное выполнение E4–E6 через Role Orchestrator.\n\nE4-002: anti-loop / step limit\nE4-003: emergency stop\nE4-004: FSM Telegram report\nE5-001: failover integration\nE5-002: recovery probe\nE5-003: role entrypoint guard\nE6: production autonomy proof",
+      "updated_at": "2026-05-04T09:44:08Z"
     }
   },
-  "last_cycle_id": "cyc_e4_001_test_20260504T042544Z",
-  "last_trace_id": "e4_001_test_20260504T042544Z",
-  "status": "cycle_completed"
+  "last_cycle_id": "cyc_roadmap_20260504T094352Z",
+  "last_trace_id": "roadmap_e4_e6_autonomy_proof",
+  "status": "cycle_started"
 }
