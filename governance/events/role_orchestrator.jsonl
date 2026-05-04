@@ -41,3 +41,7 @@
 {"event": "ROLE_ORCHESTRATOR_START", "mode": "advance", "timestamp": "2026-05-04T04:26:46Z"}
 {"event": "ROLE_RESULT_RECEIVED", "cycle_id": "cyc_e4_001_test_20260504T042544Z", "trace_id": "e4_001_test_20260504T042544Z", "role": "executor", "status": "ROLE_DONE", "note": "Hosted GPT role completed and posted report.", "timestamp": "2026-05-04T04:26:46Z"}
 {"event": "ROLE_DISPATCHED", "cycle_id": "cyc_e4_001_test_20260504T042544Z", "trace_id": "e4_001_test_20260504T042544Z", "role": "auditor", "provider": "gpt", "timestamp": "2026-05-04T04:26:47Z"}
+{"event": "ROLE_ORCHESTRATOR_START", "mode": "advance", "timestamp": "2026-05-04T04:27:01Z"}
+{"event": "ROLE_RESULT_RECEIVED", "cycle_id": "cyc_e4_001_test_20260504T042544Z", "trace_id": "e4_001_test_20260504T042544Z", "role": "auditor", "status": "ROLE_DONE", "note": "Hosted GPT role completed and posted report.", "timestamp": "2026-05-04T04:27:01Z"}
+{"event": "ROLE_CYCLE_TERMINAL_REPORT", "cycle_id": "cyc_e4_001_test_20260504T042544Z", "trace_id": "e4_001_test_20260504T042544Z", "role": "curator_summary", "timestamp": "2026-05-04T04:27:01Z"}
+{"event": "ROLE_CYCLE_COMPLETED", "cycle_id": "cyc_e4_001_test_20260504T042544Z", "trace_id": "e4_001_test_20260504T042544Z", "timestamp": "2026-05-04T04:27:01Z"}
