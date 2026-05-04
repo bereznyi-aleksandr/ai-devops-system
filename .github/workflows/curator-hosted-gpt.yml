@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
   issues: write
-  actions: read
+  actions: write
 
 jobs:
   hosted-gpt-curator:
@@ -15,7 +15,9 @@ jobs:
     if: |
       github.event.issue.number == 31 &&
       contains(github.event.comment.body, '@curator') &&
-      !contains(github.event.comment.body, 'BEM-GPT-CURATOR | RUN RESULT')
+      !contains(github.event.comment.body, 'BEM-GPT-CURATOR | RUN RESULT') &&
+      !contains(github.event.comment.body, 'BEM-ROLE-ORCHESTRATOR | RUN RESULT') &&
+      github.event.comment.user.type != 'Bot'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -60,16 +62,70 @@ jobs:
           git diff --cached --quiet || git commit -m "CURATOR ROUTER: persist routing decision"
           git push
 
+      - name: Dispatch Role Orchestrator (architecture_change / roadmap)
+        if: env.NEXT_ACTION == 'START_ROLE_ORCHESTRATOR'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          python3 - <<'PY'
+          import json, os, uuid, urllib.request
+          from pathlib import Path
+
+          p = Path('governance/state/curator_last_decision.json')
+          if not p.exists():
+              print('No curator_last_decision.json — cannot dispatch')
+              raise SystemExit(1)
+
+          d = json.loads(p.read_text(encoding='utf-8'))
+          trace_id = d.get('trace_id') or ('cur_' + uuid.uuid4().hex[:12])
+          task_type = d.get('task_type', 'architecture_change')
+          task = (d.get('task') or '').strip()[:4000]
+          cycle_id = 'cyc_roadmap_' + __import__('datetime').datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+
+          payload = {
+              'ref': 'main',
+              'inputs': {
+                  'mode': 'start',
+                  'task_type': task_type,
+                  'task': task,
+                  'trace_id': trace_id,
+                  'cycle_id': cycle_id
+              }
+          }
+
+          data = json.dumps(payload).encode('utf-8')
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/role-orchestrator.yml/dispatches",
+              data=data,
+              headers={
+                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                  'Accept': 'application/vnd.github+json',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-devops-curator-dispatch'
+              },
+              method='POST'
+          )
+          with urllib.request.urlopen(req) as resp:
+              print(f'Dispatched role-orchestrator.yml: HTTP {resp.status}')
+              print(f'cycle_id={cycle_id}')
+              print(f'trace_id={trace_id}')
+              print(f'task_type={task_type}')
+          PY
+
       - name: Build hosted curator prompt
+        if: env.NEXT_ACTION != 'START_ROLE_ORCHESTRATOR'
         shell: bash
         run: |
           set -e
           PROMPT_FILE="$RUNNER_TEMP/hosted_gpt_curator_prompt.txt"
           python3 - <<'PY'
           from pathlib import Path
-          import json
+          import json, os
           root = Path('.')
-          comment = Path(__import__('os').environ['COMMENT_FILE']).read_text(encoding='utf-8', errors='replace')
+          comment = Path(os.environ['COMMENT_FILE']).read_text(encoding='utf-8', errors='replace')
           decision_path = root / 'governance/state/curator_last_decision.json'
           decision = decision_path.read_text(encoding='utf-8', errors='replace') if decision_path.exists() else '{}'
           def read(path, limit=20000):
@@ -80,7 +136,7 @@ jobs:
               '',
               'You are GPT_CURATOR for ai-devops-system.',
               'Operator entrypoint remains Telegram/Deno/Issue #31/curator.',
-              'Do not call Claude. Do not reveal secrets. Do not include literal at-sign mentions.',
+              'Do not call Claude. Do not reveal secrets.',
               '',
               'Curator routing decision:',
               decision,
@@ -101,11 +157,12 @@ jobs:
               '',
               'Required output: compact Russian BEM report with ACTIVE_BACKEND, ROUTING_REASON, TRACE_ID, NEXT_ACTION.'
           ]
-          Path(__import__('os').environ['RUNNER_TEMP'], 'hosted_gpt_curator_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
+          Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_curator_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
           PY
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
 
       - name: Run hosted GPT curator
+        if: env.NEXT_ACTION != 'START_ROLE_ORCHESTRATOR'
         shell: bash
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -160,7 +217,10 @@ jobs:
           exit 0
 
       - name: Route requested role
-        if: always()
+        if: |
+          env.NEXT_ACTION != 'START_ROLE_ORCHESTRATOR' &&
+          env.REQUESTED_ROLE != 'none' &&
+          env.REQUESTED_ROLE != ''
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
@@ -177,8 +237,9 @@ jobs:
               raise SystemExit(0)
           d = json.loads(p.read_text(encoding='utf-8'))
           role = d.get('requested_role')
-          if not role or role == 'none':
-              print('No requested role; skip role route')
+          next_action = d.get('next_action', '')
+          if not role or role == 'none' or next_action == 'START_ROLE_ORCHESTRATOR':
+              print(f'Skip role route: role={role}, next_action={next_action}')
               raise SystemExit(0)
           trace = d.get('trace_id', 'missing')
           task = (d.get('task') or '').strip()[:4000]
@@ -217,13 +278,23 @@ jobs:
           set -e
           python3 - <<'PY'
           import json, os, pathlib, urllib.request
-          output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
-          output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else 'OUTPUT_FILE was not created.'
-          for a, b in [('@curator','curator'),('@gpt_executor','GPT_EXECUTOR'),('@gpt_analyst','GPT_ANALYST'),('@gpt_auditor','GPT_AUDITOR')]:
-              output = output.replace(a, b)
+          next_action = os.environ.get('NEXT_ACTION', '')
+          if next_action == 'START_ROLE_ORCHESTRATOR':
+              trace_id = os.environ.get('CURATOR_TRACE_ID', 'unknown')
+              output = f'CURATOR_ROADMAP_EXECUTION → START_ROLE_ORCHESTRATOR dispatched.\nTRACE_ID={trace_id}\nRole Orchestrator запущен. Цикл начнётся с analyst.'
+          else:
+              output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
+              output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else 'OUTPUT_FILE was not created.'
+              for a, b in [('@curator','curator'),('@gpt_executor','GPT_EXECUTOR'),('@gpt_analyst','GPT_ANALYST'),('@gpt_auditor','GPT_AUDITOR')]:
+                  output = output.replace(a, b)
           body = 'BEM-GPT-CURATOR | RUN RESULT | HOSTED FALLBACK\n\n' + output[-60000:] + '\n\nANTI_RECURSION: report comments are ignored by curator workflows.'
           data = json.dumps({'body': body}).encode('utf-8')
-          req = urllib.request.Request(f"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments", data=data, headers={'Authorization': f"Bearer {os.environ['GH_TOKEN']}", 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'ai-devops-hosted-gpt-curator'}, method='POST')
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments",
+              data=data,
+              headers={'Authorization': f"Bearer {os.environ['GH_TOKEN']}", 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'ai-devops-hosted-gpt-curator'},
+              method='POST'
+          )
           with urllib.request.urlopen(req) as resp:
               print(resp.status)
           PY
