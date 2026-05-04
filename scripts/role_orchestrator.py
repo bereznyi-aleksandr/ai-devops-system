@@ -18,6 +18,7 @@ PROVIDER_ADAPTER_LOG = ROOT / "governance/events/provider_adapter.jsonl"
 
 ROLE_WORKFLOW = "gpt-hosted-roles.yml"
 MAIN_ISSUE = "31"
+TERMINAL_REPORT_ROLES = {"curator_summary"}
 
 
 def now_iso():
@@ -223,6 +224,39 @@ def start_cycle(task_type, task, trace_id=None, cycle_id=None):
     return cycle_id, trace_id, role, provider
 
 
+def finish_cycle_with_terminal_report(state, cycle, cycle_id, next_index, terminal_role):
+    cycle["current_index"] = next_index
+    cycle["current_role"] = terminal_role
+    cycle["status"] = "completed"
+    cycle["updated_at"] = now_iso()
+    state["updated_at"] = now_iso()
+    state["status"] = "cycle_completed"
+    write_json(STATE_PATH, state)
+
+    append_event({
+        "event": "ROLE_CYCLE_TERMINAL_REPORT",
+        "cycle_id": cycle_id,
+        "trace_id": cycle.get("trace_id"),
+        "role": terminal_role
+    })
+
+    post_issue_comment(
+        "BEM-ROLE-ORCHESTRATOR | CURATOR SUMMARY\n\n"
+        f"Cycle: {cycle_id}\n"
+        f"Trace: {cycle.get('trace_id')}\n"
+        f"Task type: {cycle.get('task_type')}\n"
+        "Status: completed\n"
+        "Summary: role FSM completed analyst -> auditor -> executor -> auditor."
+    )
+
+    append_event({
+        "event": "ROLE_CYCLE_COMPLETED",
+        "cycle_id": cycle_id,
+        "trace_id": cycle.get("trace_id")
+    })
+    return None, None
+
+
 def advance_cycle(cycle_id, role, status, note=""):
     state = load_json(STATE_PATH, {"version": 1, "cycles": {}})
     cycles = state.setdefault("cycles", {})
@@ -261,6 +295,8 @@ def advance_cycle(cycle_id, role, status, note=""):
         cycle["current_index"] = next_index
         cycle["current_role"] = None
         cycle["updated_at"] = now_iso()
+        state["updated_at"] = now_iso()
+        state["status"] = "cycle_completed"
         write_json(STATE_PATH, state)
         append_event({
             "event": "ROLE_CYCLE_COMPLETED",
@@ -276,11 +312,15 @@ def advance_cycle(cycle_id, role, status, note=""):
         )
         return None, None
 
+    if next_role in TERMINAL_REPORT_ROLES:
+        return finish_cycle_with_terminal_report(state, cycle, cycle_id, next_index, next_role)
+
     provider, adapter = resolve_provider_and_adapter(next_role)
     cycle["current_index"] = next_index
     cycle["current_role"] = next_role
     cycle["status"] = "role_dispatched"
     cycle["updated_at"] = now_iso()
+    state["updated_at"] = now_iso()
     write_json(STATE_PATH, state)
 
     dispatch_role(
@@ -303,16 +343,6 @@ def advance_cycle(cycle_id, role, status, note=""):
 
 
 def dispatch_role(cycle_id, trace_id, task_type, role, provider, task, adapter=None):
-    if role == "curator_summary":
-        post_issue_comment(
-            "BEM-ROLE-ORCHESTRATOR | CURATOR SUMMARY STEP\n\n"
-            f"Cycle: {cycle_id}\n"
-            f"Trace: {trace_id}\n"
-            f"Task type: {task_type}\n"
-            "Next: curator summary/report only."
-        )
-        return
-
     adapter = adapter or adapter_for_provider(provider, role)[0]
     workflow = adapter.get("workflow") if adapter else ROLE_WORKFLOW
     mode = adapter.get("mode") if adapter else "workflow_dispatch"
