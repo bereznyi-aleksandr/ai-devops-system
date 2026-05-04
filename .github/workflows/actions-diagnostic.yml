@@ -57,6 +57,7 @@ jobs:
           RUNS_JSON="$RUNNER_TEMP/actions_diag/runs.json"
           JOBS_JSON="$RUNNER_TEMP/actions_diag/jobs.json"
           REPORT="$RUNNER_TEMP/actions_diag/report.md"
+          export RUNS_JSON JOBS_JSON REPORT WORKFLOW TRACE_ID
 
           gh run list --repo "$REPO" --workflow "$WORKFLOW" --limit 10 --json databaseId,displayTitle,status,conclusion,event,createdAt,updatedAt,headSha,url > "$RUNS_JSON"
 
