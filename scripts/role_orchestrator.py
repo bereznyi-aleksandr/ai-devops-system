@@ -86,8 +86,21 @@ def role_reserve_provider(role):
     return role_cfg.get("reserve") or policy.get("default_provider", "gpt")
 
 
+def select_provider(role):
+    routing = load_json(ROUTING_PATH, {})
+    provider_status = load_json(PROVIDER_STATUS_PATH, {"providers": {}})
+    role_cfg = routing.get("roles", {}).get(role, {})
+    provider = role_cfg.get("active", "claude")
+    provider_state = provider_status.get("providers", {}).get(provider, {})
+
+    if provider == "claude" and provider_state.get("status") in ("limited", "error"):
+        provider = role_cfg.get("reserve", "gpt") or "gpt"
+
+    return provider
+
+
 def resolve_provider_and_adapter(role):
-    provider, adapter = resolve_provider_and_adapter(role)
+    provider = select_provider(role)
     adapter, reason = adapter_for_provider(provider, role)
 
     if reason:
@@ -156,19 +169,6 @@ def dispatch_workflow(workflow_file, inputs):
             "inputs": inputs
         }
     )
-
-
-def select_provider(role):
-    routing = load_json(ROUTING_PATH, {})
-    provider_status = load_json(PROVIDER_STATUS_PATH, {"providers": {}})
-    role_cfg = routing.get("roles", {}).get(role, {})
-    provider = role_cfg.get("active", "claude")
-    provider_state = provider_status.get("providers", {}).get(provider, {})
-
-    if provider == "claude" and provider_state.get("status") in ("limited", "error"):
-        provider = role_cfg.get("reserve", "gpt") or "gpt"
-
-    return provider
 
 
 def next_role_for_cycle(sequence, current_index):
