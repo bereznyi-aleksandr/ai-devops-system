@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-05-03T18:01:32Z",
+  "updated_at": "2026-05-04T20:40:49Z",
   "providers": {
     "claude": {
       "status": "limited",
@@ -19,6 +19,17 @@
       "failure_count": 0,
       "cooldown_until": null,
       "last_error_excerpt": null
+    },
+    "gpt_codex": {
+      "status": "error",
+      "updated_at": "2026-05-04T20:40:49Z",
+      "last_failure_at": "2026-05-04T20:40:49Z",
+      "last_failure_type": "runner_unavailable",
+      "last_error_excerpt": "Role dispatch exceeded max_cycle_age_minutes=30; provider=gpt_codex requires a self-hosted runner and did not return a result.",
+      "failure_count": 1,
+      "last_role": "auditor",
+      "last_cycle_id": "cyc_roadmap_20260504T182235Z",
+      "last_trace_id": "proof_gpt_codex_failover_20260504"
     }
   }
 }
