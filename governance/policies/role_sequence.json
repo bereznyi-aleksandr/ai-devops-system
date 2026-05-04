@@ -27,6 +27,21 @@
       "curator_summary"
     ]
   },
+  "cycle_controls": {
+    "max_cycle_age_minutes": 30,
+    "active_statuses": [
+      "cycle_started",
+      "role_dispatched"
+    ],
+    "terminal_statuses": [
+      "completed",
+      "blocked",
+      "abandoned_stale_test",
+      "stale_timeout"
+    ],
+    "stale_action": "mark_stale_timeout",
+    "monitoring_rule": "Ignore terminal cycles. Mark active cycles stale_timeout when updated_at is older than max_cycle_age_minutes."
+  },
   "fallback_rules": {
     "on_provider_limit": "switch_provider_keep_role",
     "on_role_blocked": "escalate_to_curator",
