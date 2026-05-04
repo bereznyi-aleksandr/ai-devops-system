@@ -62,3 +62,6 @@
 {"event": "ROLE_CYCLE_COMPLETED", "cycle_id": "cyc_roadmap_20260504T094352Z", "trace_id": "roadmap_e4_e6_autonomy_proof", "timestamp": "2026-05-04T09:45:28Z"}
 {"event": "ROLE_ORCHESTRATOR_START", "mode": "start", "timestamp": "2026-05-04T18:22:51Z"}
 {"event": "ROLE_CYCLE_STARTED", "cycle_id": "cyc_roadmap_20260504T182235Z", "trace_id": "proof_gpt_codex_failover_20260504", "task_type": "architecture_change", "role": "analyst", "provider": "gpt", "timestamp": "2026-05-04T18:22:52Z"}
+{"event": "ROLE_ORCHESTRATOR_START", "mode": "advance", "timestamp": "2026-05-04T18:23:16Z"}
+{"event": "ROLE_RESULT_RECEIVED", "cycle_id": "cyc_roadmap_20260504T182235Z", "trace_id": "proof_gpt_codex_failover_20260504", "role": "analyst", "status": "ROLE_DONE", "note": "Hosted GPT role completed and posted report.", "timestamp": "2026-05-04T18:23:16Z"}
+{"event": "ROLE_DISPATCHED", "cycle_id": "cyc_roadmap_20260504T182235Z", "trace_id": "proof_gpt_codex_failover_20260504", "role": "auditor", "provider": "gpt_codex", "timestamp": "2026-05-04T18:23:18Z"}
