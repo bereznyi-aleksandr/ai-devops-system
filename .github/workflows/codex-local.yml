@@ -86,9 +86,14 @@ jobs:
           set -e
           BODY_FILE="$RUNNER_TEMP/role_task_body.txt"
           PROMPT_FILE="$RUNNER_TEMP/codex_prompt.txt"
+          echo "BODY_FILE=$BODY_FILE" >> "$GITHUB_ENV"
+          echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
+          export BODY_FILE PROMPT_FILE
 
           python3 - <<'PY'
-          import json, os, re
+          import json
+          import os
+          import re
           from pathlib import Path
 
           event_name = os.environ.get('EVENT_NAME', '')
@@ -99,15 +104,18 @@ jobs:
               cycle_id = os.environ.get('INPUT_CYCLE_ID', '')
               task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
               task = os.environ.get('INPUT_TASK', '')
-              body = (
-                  f'TYPE: INTERNAL_ROLE_ORCHESTRATOR_DISPATCH\n'
-                  f'PROVIDER: {provider}\n'
-                  f'ROLE: {role_raw}\n'
-                  f'TRACE_ID: {trace_id}\n'
-                  f'CYCLE_ID: {cycle_id}\n'
-                  f'TASK_TYPE: {task_type}\n\n'
-                  f'TASK:\n{task}\n'
-              )
+              body_lines = [
+                  'TYPE: INTERNAL_ROLE_ORCHESTRATOR_DISPATCH',
+                  f'PROVIDER: {provider}',
+                  f'ROLE: {role_raw}',
+                  f'TRACE_ID: {trace_id}',
+                  f'CYCLE_ID: {cycle_id}',
+                  f'TASK_TYPE: {task_type}',
+                  '',
+                  'TASK:',
+                  task,
+              ]
+              body = '\n'.join(body_lines)
           else:
               body = json.loads(os.environ.get('COMMENT_BODY_JSON') or '""')
               provider = 'gpt_codex'
@@ -133,62 +141,63 @@ jobs:
           role = 'GPT_' + role_raw.upper()
           Path(os.environ['BODY_FILE']).write_text(body, encoding='utf-8')
 
-          prompt = f'''BEM-CODEX-LOCAL | {role}
+          parts = [
+              f'BEM-CODEX-LOCAL | {role}',
+              '',
+              'You are running locally inside the ai-devops-system repository on a self-hosted Codex runner.',
+              '',
+              f'ROLE: {role}',
+              f'PROVIDER: {provider}',
+              f'TRACE_ID: {trace_id}',
+              f'CYCLE_ID: {cycle_id}',
+              f'TASK_TYPE: {task_type}',
+              '',
+              'Core architecture:',
+              '- Curator is the external entrypoint and classifier.',
+              '- Role Orchestrator owns role order and cycle state.',
+              '- Analyst plans.',
+              '- Auditor checks and approves/rejects.',
+              '- Executor implements approved changes.',
+              '- Auditor verifies implementation.',
+              '- Curator summary closes the cycle.',
+              '',
+              'Current role rules:',
+              '- GPT_ANALYST: analyse and plan. Do not edit files. Do not commit.',
+              '- GPT_AUDITOR: inspect plan/diff/state/logs. Do not edit files. Do not commit.',
+              '- GPT_EXECUTOR: implement the approved scope. You may edit repository files, run checks, commit, and push from this repo-side environment.',
+              '- GPT_CURATOR: update curator/routing state only when explicitly requested. Do not call Claude.',
+              '',
+              'Safety boundaries:',
+              '- Do not edit secrets, billing, repository permissions, production deploy credentials, or archive artifacts.',
+              '- Do not print tokens or secrets.',
+              '- Do not expand scope beyond the task and current roadmap item.',
+              '- Keep commits focused and small.',
+              '- Prefer deterministic code and repository state over chat-style discussion.',
+              '',
+              'Read before acting:',
+              '- governance/policies/role_sequence.json',
+              '- governance/state/routing.json',
+              '- governance/state/provider_status.json',
+              '- governance/state/role_cycle_state.json',
+              '- governance/MASTER_PLAN.md, if present',
+              '',
+              'Incoming task:',
+              '-----',
+              body,
+              '-----',
+              '',
+              'Required output:',
+              f'BEM-CODEX-LOCAL | {role} | RESULT',
+              '',
+              'Include:',
+              '- checklist;',
+              '- files changed;',
+              '- checks run;',
+              '- commit SHA if committed;',
+              '- blocker only if objective.',
+          ]
 
-You are running locally inside the ai-devops-system repository on a self-hosted Codex runner.
-
-ROLE: {role}
-PROVIDER: {provider}
-TRACE_ID: {trace_id}
-CYCLE_ID: {cycle_id}
-TASK_TYPE: {task_type}
-
-Core architecture:
-- Curator is the external entrypoint and classifier.
-- Role Orchestrator owns role order and cycle state.
-- Analyst plans.
-- Auditor checks and approves/rejects.
-- Executor implements approved changes.
-- Auditor verifies implementation.
-- Curator summary closes the cycle.
-
-Current role rules:
-- GPT_ANALYST: analyse and plan. Do not edit files. Do not commit.
-- GPT_AUDITOR: inspect plan/diff/state/logs. Do not edit files. Do not commit.
-- GPT_EXECUTOR: implement the approved scope. You may edit repository files, run checks, commit, and push from this repo-side environment.
-- GPT_CURATOR: update curator/routing state only when explicitly requested. Do not call Claude.
-
-Safety boundaries:
-- Do not edit secrets, billing, repository permissions, production deploy credentials, or archive artifacts.
-- Do not print tokens or secrets.
-- Do not expand scope beyond the task and current roadmap item.
-- Keep commits focused and small.
-- Prefer deterministic code and repository state over chat-style discussion.
-
-Read before acting:
-- governance/policies/role_sequence.json
-- governance/state/routing.json
-- governance/state/provider_status.json
-- governance/state/role_cycle_state.json
-- governance/MASTER_PLAN.md, if present
-
-Incoming task:
------
-{body}
------
-
-Required output:
-BEM-CODEX-LOCAL | {role} | RESULT
-
-Include:
-- checklist;
-- files changed;
-- checks run;
-- commit SHA if committed;
-- blocker only if objective.
-'''
-
-          Path(os.environ['PROMPT_FILE']).write_text(prompt, encoding='utf-8')
+          Path(os.environ['PROMPT_FILE']).write_text('\n'.join(parts), encoding='utf-8')
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
               f.write(f'ROLE={role}\n')
               f.write(f'ROLE_RAW={role_raw}\n')
@@ -198,15 +207,13 @@ Include:
               f.write(f'TASK_TYPE={task_type}\n')
           PY
 
-          echo "BODY_FILE=$BODY_FILE" >> "$GITHUB_ENV"
-          echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
-
       - name: Run local Codex CLI
         shell: bash
         run: |
           set +e
           export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
           OUTPUT_FILE="$RUNNER_TEMP/codex_output.md"
+          EXIT_FILE="$RUNNER_TEMP/codex_exit_code.txt"
           {
             echo "BEM-CODEX-LOCAL | RAW_OUTPUT"
             echo "ROLE=$ROLE"
@@ -215,11 +222,13 @@ Include:
             echo
             codex exec "$(cat "$PROMPT_FILE")"
             CODEX_EXIT=$?
+            echo "$CODEX_EXIT" > "$EXIT_FILE"
             echo
             echo "CODEX_EXIT_CODE=$CODEX_EXIT"
           } 2>&1 | tee "$OUTPUT_FILE"
+          CODEX_EXIT="$(cat "$EXIT_FILE" 2>/dev/null || echo 0)"
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
-          echo "CODEX_EXIT_CODE=${CODEX_EXIT:-0}" >> "$GITHUB_ENV"
+          echo "CODEX_EXIT_CODE=$CODEX_EXIT" >> "$GITHUB_ENV"
           exit 0
 
       - name: Commit approved changes
@@ -246,13 +255,16 @@ Include:
         if: always()
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           REPO: ${{ github.repository }}
           ISSUE_NUMBER: '31'
         run: |
           set -e
           python3 - <<'PY'
-          import json, os, pathlib, urllib.request
+          import json
+          import os
+          import pathlib
+          import urllib.request
 
           repo = os.environ['REPO']
           issue = os.environ.get('ISSUE_NUMBER') or '31'
@@ -299,8 +311,11 @@ Include:
           if [ "${CODEX_EXIT_CODE:-0}" != "0" ]; then
             STATUS="BLOCKED"
           fi
+          export STATUS
           python3 - <<'PY'
-          import json, os, urllib.request
+          import json
+          import os
+          import urllib.request
 
           data = json.dumps({
               'ref': 'main',
