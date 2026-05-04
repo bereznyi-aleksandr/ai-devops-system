@@ -21,6 +21,7 @@ MAIN_ISSUE = "31"
 TERMINAL_REPORT_ROLES = {"curator_summary"}
 DEFAULT_ACTIVE_STATUSES = {"cycle_started", "role_dispatched"}
 DEFAULT_TERMINAL_STATUSES = {"completed", "blocked", "abandoned_stale_test", "stale_timeout"}
+RUNNER_BACKED_PROVIDERS = {"gpt_codex", "codex"}
 
 
 def now_iso():
@@ -76,11 +77,51 @@ def load_provider_adapters():
     })
 
 
-def mark_stale_cycles(state, seq_policy):
+def update_provider_status(provider, status, failure_type=None, reason=None, role=None, cycle_id=None, trace_id=None):
+    if not provider:
+        return
+    now_text = now_iso()
+    state = load_json(PROVIDER_STATUS_PATH, {"version": 1, "providers": {}})
+    state.setdefault("providers", {})
+    item = state["providers"].setdefault(provider, {})
+    item["status"] = status
+    item["updated_at"] = now_text
+    if status in ("error", "limited"):
+        item["last_failure_at"] = now_text
+        item["last_failure_type"] = failure_type or status
+        item["last_error_excerpt"] = reason or ""
+        item["failure_count"] = int(item.get("failure_count") or 0) + 1
+    if role:
+        item["last_role"] = role
+    if cycle_id:
+        item["last_cycle_id"] = cycle_id
+    if trace_id:
+        item["last_trace_id"] = trace_id
+    state["updated_at"] = now_text
+    write_json(PROVIDER_STATUS_PATH, state)
+
+
+def post_blocker_report(cycle_id, cycle, role, provider, reason, failure_type):
+    post_issue_comment(
+        "BEM-ROLE-ORCHESTRATOR | BLOCKED\n\n"
+        f"Cycle: {cycle_id}\n"
+        f"Trace: {cycle.get('trace_id')}\n"
+        f"Task type: {cycle.get('task_type')}\n"
+        f"Role: {role}\n"
+        f"Provider: {provider}\n"
+        f"Failure type: {failure_type}\n"
+        f"Status: blocked\n"
+        f"Reason: {reason}\n\n"
+        "Next action: restore the self-hosted runner or change routing reserve provider."
+    )
+
+
+def mark_stale_cycles(state, seq_policy, post_reports=False):
     controls = seq_policy.get("cycle_controls", {})
     max_age_minutes = int(controls.get("max_cycle_age_minutes", 30))
     active_statuses = set(controls.get("active_statuses") or DEFAULT_ACTIVE_STATUSES)
     terminal_statuses = set(controls.get("terminal_statuses") or DEFAULT_TERMINAL_STATUSES)
+    runner_backed = set(controls.get("runner_backed_providers") or RUNNER_BACKED_PROVIDERS)
     now_dt = datetime.now(timezone.utc)
     now_text = now_iso()
     changed = False
@@ -102,26 +143,70 @@ def mark_stale_cycles(state, seq_policy):
             continue
 
         previous_status = status
+        current_role = cycle.get("current_role")
+        provider = cycle.get("current_provider") or select_provider(current_role) if current_role else None
+        is_runner_timeout = previous_status == "role_dispatched" and provider in runner_backed
+
         cycle["previous_status"] = previous_status
-        cycle["status"] = "stale_timeout"
-        cycle["stale_at"] = now_text
-        cycle["stale_reason"] = f"Active cycle exceeded max_cycle_age_minutes={max_age_minutes}"
         cycle["updated_at"] = now_text
-        append_event({
-            "event": "ROLE_CYCLE_STALE_TIMEOUT",
-            "cycle_id": cycle_id,
-            "trace_id": cycle.get("trace_id"),
-            "previous_status": previous_status,
-            "max_cycle_age_minutes": max_age_minutes,
-            "age_minutes": round(age_minutes, 2)
-        })
+
+        if is_runner_timeout:
+            failure_type = "runner_unavailable"
+            reason = (
+                f"Role dispatch exceeded max_cycle_age_minutes={max_age_minutes}; "
+                f"provider={provider} requires a self-hosted runner and did not return a result."
+            )
+            cycle["status"] = "blocked"
+            cycle["blocked_at"] = now_text
+            cycle["blocker"] = {
+                "role": current_role,
+                "provider": provider,
+                "failure_type": failure_type,
+                "reason": reason,
+                "age_minutes": round(age_minutes, 2)
+            }
+            update_provider_status(
+                provider,
+                "error",
+                failure_type=failure_type,
+                reason=reason,
+                role=current_role,
+                cycle_id=cycle_id,
+                trace_id=cycle.get("trace_id")
+            )
+            append_event({
+                "event": "ROLE_PROVIDER_RUNNER_UNAVAILABLE",
+                "cycle_id": cycle_id,
+                "trace_id": cycle.get("trace_id"),
+                "role": current_role,
+                "provider": provider,
+                "previous_status": previous_status,
+                "max_cycle_age_minutes": max_age_minutes,
+                "age_minutes": round(age_minutes, 2)
+            })
+            if post_reports:
+                post_blocker_report(cycle_id, cycle, current_role, provider, reason, failure_type)
+        else:
+            cycle["status"] = "stale_timeout"
+            cycle["stale_at"] = now_text
+            cycle["stale_reason"] = f"Active cycle exceeded max_cycle_age_minutes={max_age_minutes}"
+            append_event({
+                "event": "ROLE_CYCLE_STALE_TIMEOUT",
+                "cycle_id": cycle_id,
+                "trace_id": cycle.get("trace_id"),
+                "previous_status": previous_status,
+                "max_cycle_age_minutes": max_age_minutes,
+                "age_minutes": round(age_minutes, 2)
+            })
         changed = True
 
     if changed:
         state["updated_at"] = now_text
         last_cycle_id = state.get("last_cycle_id")
-        if last_cycle_id and cycles.get(last_cycle_id, {}).get("status") == "stale_timeout":
-            state["status"] = "stale_timeout"
+        if last_cycle_id:
+            last_status = cycles.get(last_cycle_id, {}).get("status")
+            if last_status in {"stale_timeout", "blocked"}:
+                state["status"] = last_status
         write_json(STATE_PATH, state)
 
     return state
@@ -266,6 +351,7 @@ def start_cycle(task_type, task, trace_id=None, cycle_id=None):
         "sequence": sequence,
         "current_index": index,
         "current_role": role,
+        "current_provider": provider,
         "status": "role_dispatched",
         "task": task,
         "updated_at": now_iso()
@@ -291,6 +377,7 @@ def start_cycle(task_type, task, trace_id=None, cycle_id=None):
 def finish_cycle_with_terminal_report(state, cycle, cycle_id, next_index, terminal_role):
     cycle["current_index"] = next_index
     cycle["current_role"] = terminal_role
+    cycle["current_provider"] = None
     cycle["status"] = "completed"
     cycle["updated_at"] = now_iso()
     state["updated_at"] = now_iso()
@@ -331,6 +418,8 @@ def advance_cycle(cycle_id, role, status, note=""):
         raise RuntimeError(f"Unknown cycle_id: {cycle_id}")
     if cycle.get("status") == "stale_timeout":
         raise RuntimeError(f"Cycle is stale_timeout and cannot advance: {cycle_id}")
+    if cycle.get("status") == "blocked":
+        raise RuntimeError(f"Cycle is blocked and cannot advance: {cycle_id}")
 
     append_event({
         "event": "ROLE_RESULT_RECEIVED",
@@ -362,6 +451,7 @@ def advance_cycle(cycle_id, role, status, note=""):
         cycle["status"] = "completed"
         cycle["current_index"] = next_index
         cycle["current_role"] = None
+        cycle["current_provider"] = None
         cycle["updated_at"] = now_iso()
         state["updated_at"] = now_iso()
         state["status"] = "cycle_completed"
@@ -386,6 +476,7 @@ def advance_cycle(cycle_id, role, status, note=""):
     provider, adapter = resolve_provider_and_adapter(next_role)
     cycle["current_index"] = next_index
     cycle["current_role"] = next_role
+    cycle["current_provider"] = provider
     cycle["status"] = "role_dispatched"
     cycle["updated_at"] = now_iso()
     state["updated_at"] = now_iso()
@@ -410,6 +501,22 @@ def advance_cycle(cycle_id, role, status, note=""):
     return next_role, provider
 
 
+def watchdog_cycles():
+    seq_policy = load_json(SEQUENCE_PATH, {})
+    state = load_json(STATE_PATH, {"version": 1, "cycles": {}})
+    before = json.dumps(state, sort_keys=True, ensure_ascii=False)
+    state = mark_stale_cycles(state, seq_policy, post_reports=True)
+    after = json.dumps(state, sort_keys=True, ensure_ascii=False)
+    changed = before != after
+    append_event({
+        "event": "ROLE_WATCHDOG_COMPLETED",
+        "changed": changed,
+        "last_cycle_id": state.get("last_cycle_id"),
+        "status": state.get("status")
+    })
+    return changed, state.get("last_cycle_id"), state.get("status")
+
+
 def dispatch_role(cycle_id, trace_id, task_type, role, provider, task, adapter=None):
     adapter = adapter or adapter_for_provider(provider, role)[0]
     workflow = adapter.get("workflow") if adapter else ROLE_WORKFLOW
@@ -430,7 +537,7 @@ def dispatch_role(cycle_id, trace_id, task_type, role, provider, task, adapter=N
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["start", "advance"], required=True)
+    parser.add_argument("--mode", choices=["start", "advance", "watchdog"], required=True)
     parser.add_argument("--task-type", default="default_development")
     parser.add_argument("--task", default="")
     parser.add_argument("--trace-id", default="")
@@ -454,6 +561,14 @@ def main():
         print("TRACE_ID=" + trace_id)
         print("ROLE=" + role)
         print("PROVIDER=" + provider)
+        return 0
+
+    if args.mode == "watchdog":
+        changed, cycle_id, status = watchdog_cycles()
+        print("BEM-ROLE-ORCHESTRATOR | WATCHDOG")
+        print("CHANGED=" + str(changed).lower())
+        print("LAST_CYCLE_ID=" + str(cycle_id or "none"))
+        print("STATUS=" + str(status or "unknown"))
         return 0
 
     next_role, provider = advance_cycle(
