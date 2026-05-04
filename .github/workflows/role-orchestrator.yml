@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'start | advance'
+        description: 'start | advance | watchdog'
         required: true
         default: 'start'
         type: string
@@ -43,6 +43,8 @@ on:
         required: false
         default: ''
         type: string
+  schedule:
+    - cron: '*/15 * * * *'
 
 permissions:
   contents: write
@@ -70,18 +72,36 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF_NAME: main
           MAIN_ISSUE: '31'
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_TASK_TYPE: ${{ inputs.task_type }}
+          INPUT_TASK: ${{ inputs.task }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID: ${{ inputs.cycle_id }}
+          INPUT_ROLE: ${{ inputs.role }}
+          INPUT_STATUS: ${{ inputs.status }}
+          INPUT_NOTE: ${{ inputs.note }}
         run: |
           set +e
+          MODE="${INPUT_MODE:-watchdog}"
+          TASK_TYPE="${INPUT_TASK_TYPE:-default_development}"
+          TASK="${INPUT_TASK:-}"
+          TRACE_ID="${INPUT_TRACE_ID:-}"
+          CYCLE_ID="${INPUT_CYCLE_ID:-}"
+          ROLE="${INPUT_ROLE:-}"
+          STATUS="${INPUT_STATUS:-ROLE_DONE}"
+          NOTE="${INPUT_NOTE:-}"
+
           python3 scripts/role_orchestrator.py \
-            --mode "${{ inputs.mode }}" \
-            --task-type "${{ inputs.task_type }}" \
-            --task "${{ inputs.task }}" \
-            --trace-id "${{ inputs.trace_id }}" \
-            --cycle-id "${{ inputs.cycle_id }}" \
-            --role "${{ inputs.role }}" \
-            --status "${{ inputs.status }}" \
-            --note "${{ inputs.note }}"
+            --mode "$MODE" \
+            --task-type "$TASK_TYPE" \
+            --task "$TASK" \
+            --trace-id "$TRACE_ID" \
+            --cycle-id "$CYCLE_ID" \
+            --role "$ROLE" \
+            --status "$STATUS" \
+            --note "$NOTE"
           echo "ORCHESTRATOR_EXIT=$?" >> "$GITHUB_ENV"
+          echo "ORCHESTRATOR_MODE=$MODE" >> "$GITHUB_ENV"
           exit 0
 
       - name: Commit role orchestration state
@@ -93,7 +113,7 @@ jobs:
 
           git pull --rebase --autostash origin main
 
-          git add governance/state/role_cycle_state.json governance/events/role_orchestrator.jsonl governance/events/provider_adapter.jsonl || true
+          git add governance/state/role_cycle_state.json governance/state/provider_status.json governance/events/role_orchestrator.jsonl governance/events/provider_adapter.jsonl || true
           if git diff --cached --quiet; then
             echo "No role orchestrator state changes"
             exit 0
@@ -119,13 +139,14 @@ jobs:
             const body = [
               'BEM-ROLE-ORCHESTRATOR | RUN RESULT',
               '',
-              `Mode: ${{ inputs.mode }}`,
+              `Mode: ${process.env.ORCHESTRATOR_MODE || '${{ inputs.mode }}' || 'watchdog'}`,
               `Exit: ${process.env.ORCHESTRATOR_EXIT || 'unknown'}`,
               '',
               'Checklist:',
               '- role orchestrator workflow executed',
               '- state/event log commit attempted',
-              '- internal transport uses workflow_dispatch, not issue_comment chaining'
+              '- internal transport uses workflow_dispatch, not issue_comment chaining',
+              '- watchdog marks stale runner-backed dispatch as blocked'
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
