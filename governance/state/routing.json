@@ -1,7 +1,7 @@
 {
-  "version": 2,
-  "updated_at": "2026-05-03T18:01:32Z",
-  "updated_by": "claude-auditor",
+  "version": 3,
+  "updated_at": "2026-05-04T18:12:00Z",
+  "updated_by": "chatgpt-project-lead",
   "roles": {
     "curator": {
       "active": "gpt_hosted_fallback",
@@ -11,17 +11,17 @@
     "analyst": {
       "active": "gpt",
       "primary": "gpt",
-      "reserve": "claude"
+      "reserve": "gpt"
     },
     "auditor": {
       "active": "claude",
       "primary": "claude",
-      "reserve": "gpt"
+      "reserve": "gpt_codex"
     },
     "executor": {
       "active": "claude",
       "primary": "claude",
-      "reserve": "gpt"
+      "reserve": "gpt_codex"
     }
   },
   "trigger_map": {
@@ -31,11 +31,13 @@
     },
     "auditor": {
       "claude": "@auditor",
-      "gpt": "@gpt_auditor"
+      "gpt": "@gpt_auditor",
+      "gpt_codex": "@gpt_auditor"
     },
     "executor": {
       "claude": "@executor",
-      "gpt": "@gpt_executor"
+      "gpt": "@gpt_executor",
+      "gpt_codex": "@gpt_executor"
     },
     "curator": {
       "claude": "@curator",
