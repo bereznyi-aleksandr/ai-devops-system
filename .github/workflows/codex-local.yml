@@ -1,23 +1,56 @@
 name: Codex Local ISA
 
 on:
+  workflow_dispatch:
+    inputs:
+      role:
+        description: 'analyst | auditor | executor | curator'
+        required: true
+        type: string
+      provider:
+        description: 'codex | gpt_codex'
+        required: false
+        default: 'gpt_codex'
+        type: string
+      trace_id:
+        description: 'Trace id'
+        required: true
+        type: string
+      cycle_id:
+        description: 'Role cycle id'
+        required: false
+        default: ''
+        type: string
+      task_type:
+        description: 'Task type'
+        required: false
+        default: 'default_development'
+        type: string
+      task:
+        description: 'Task body'
+        required: false
+        default: ''
+        type: string
   issue_comment:
     types: [created]
 
 permissions:
   contents: write
   issues: write
-  actions: read
+  actions: write
 
 jobs:
   codex-local:
     name: Codex Local ISA
     if: >
-      github.event.issue.number == 31 &&
-      (contains(github.event.comment.body, '@gpt_curator') ||
-       contains(github.event.comment.body, '@gpt_analyst') ||
-       contains(github.event.comment.body, '@gpt_auditor') ||
-       contains(github.event.comment.body, '@gpt_executor'))
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.number == 31 &&
+       contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE_EXECUTION') &&
+       contains(github.event.comment.body, 'TRACE_ID:') &&
+       (contains(github.event.comment.body, '@gpt_curator') ||
+        contains(github.event.comment.body, '@gpt_analyst') ||
+        contains(github.event.comment.body, '@gpt_auditor') ||
+        contains(github.event.comment.body, '@gpt_executor')))
     runs-on: [self-hosted, codex-local]
     timeout-minutes: 30
 
@@ -40,55 +73,131 @@ jobs:
 
       - name: Build role prompt
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ROLE: ${{ inputs.role }}
+          INPUT_PROVIDER: ${{ inputs.provider }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID: ${{ inputs.cycle_id }}
+          INPUT_TASK_TYPE: ${{ inputs.task_type }}
+          INPUT_TASK: ${{ inputs.task }}
+          COMMENT_BODY_JSON: ${{ toJson(github.event.comment.body) }}
         run: |
           set -e
-          BODY_FILE="$RUNNER_TEMP/issue_comment_body.txt"
+          BODY_FILE="$RUNNER_TEMP/role_task_body.txt"
           PROMPT_FILE="$RUNNER_TEMP/codex_prompt.txt"
-          cat > "$BODY_FILE" <<'BODY'
-          ${{ github.event.comment.body }}
-          BODY
 
-          ROLE="UNKNOWN"
-          if grep -q '@gpt_curator' "$BODY_FILE"; then ROLE="GPT_CURATOR"; fi
-          if grep -q '@gpt_analyst' "$BODY_FILE"; then ROLE="GPT_ANALYST"; fi
-          if grep -q '@gpt_auditor' "$BODY_FILE"; then ROLE="GPT_AUDITOR"; fi
-          if grep -q '@gpt_executor' "$BODY_FILE"; then ROLE="GPT_EXECUTOR"; fi
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
 
-          cat > "$PROMPT_FILE" <<PROMPT
-          BEM-118 | CODEX_LOCAL_ISA | $ROLE
+          event_name = os.environ.get('EVENT_NAME', '')
+          if event_name == 'workflow_dispatch':
+              role_raw = os.environ.get('INPUT_ROLE', 'executor').lower().strip()
+              provider = os.environ.get('INPUT_PROVIDER', 'gpt_codex')
+              trace_id = os.environ.get('INPUT_TRACE_ID', 'missing')
+              cycle_id = os.environ.get('INPUT_CYCLE_ID', '')
+              task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
+              task = os.environ.get('INPUT_TASK', '')
+              body = (
+                  f'TYPE: INTERNAL_ROLE_ORCHESTRATOR_DISPATCH\n'
+                  f'PROVIDER: {provider}\n'
+                  f'ROLE: {role_raw}\n'
+                  f'TRACE_ID: {trace_id}\n'
+                  f'CYCLE_ID: {cycle_id}\n'
+                  f'TASK_TYPE: {task_type}\n\n'
+                  f'TASK:\n{task}\n'
+              )
+          else:
+              body = json.loads(os.environ.get('COMMENT_BODY_JSON') or '""')
+              provider = 'gpt_codex'
+              trace_id = 'missing'
+              cycle_id = ''
+              task_type = 'legacy_issue_comment'
+              role_raw = 'unknown'
+              if '@gpt_curator' in body:
+                  role_raw = 'curator'
+              if '@gpt_analyst' in body:
+                  role_raw = 'analyst'
+              if '@gpt_auditor' in body:
+                  role_raw = 'auditor'
+              if '@gpt_executor' in body:
+                  role_raw = 'executor'
+              m = re.search(r'TRACE_ID:\s*([A-Za-z0-9_\-]+)', body)
+              if m:
+                  trace_id = m.group(1)
+              m = re.search(r'CYCLE_ID:\s*([A-Za-z0-9_\-]+)', body)
+              if m:
+                  cycle_id = m.group(1)
 
-          You are running locally inside the ai-devops-system repository on a self-hosted runner.
+          role = 'GPT_' + role_raw.upper()
+          Path(os.environ['BODY_FILE']).write_text(body, encoding='utf-8')
 
-          ROLE: $ROLE
-          MODE: follow the role request from the GitHub issue comment.
+          prompt = f'''BEM-CODEX-LOCAL | {role}
 
-          Read before acting:
-          - governance/MASTER_PLAN.md
-          - governance/EXCHANGE.md
-          - governance/exchange.jsonl
+You are running locally inside the ai-devops-system repository on a self-hosted Codex runner.
 
-          User issue comment:
-          -----
-          $(cat "$BODY_FILE")
-          -----
+ROLE: {role}
+PROVIDER: {provider}
+TRACE_ID: {trace_id}
+CYCLE_ID: {cycle_id}
+TASK_TYPE: {task_type}
 
-          Global constraints:
-          - Do not use Codex Cloud.
-          - Do not use @codex.
-          - Do not expand scope.
-          - Do not edit secrets, billing, permissions, production deploy, or archive.
-          - For GPT_ANALYST: read and plan only; do not edit files.
-          - For GPT_AUDITOR: review only; do not edit files.
-          - For GPT_EXECUTOR: execute only an explicitly approved scope from GPT_AUDITOR.
-          - For GPT_CURATOR: process curator/routing state only; do not call Claude; keep @curator as operator entrypoint.
-          - Do not commit or push unless the issue comment explicitly says OWNER_APPROVED_COMMIT.
+Core architecture:
+- Curator is the external entrypoint and classifier.
+- Role Orchestrator owns role order and cycle state.
+- Analyst plans.
+- Auditor checks and approves/rejects.
+- Executor implements approved changes.
+- Auditor verifies implementation.
+- Curator summary closes the cycle.
 
-          Output a BEM report with this table:
-          | Completed action | Next planned action | Short comment |
-          |---|---|---|
-          PROMPT
+Current role rules:
+- GPT_ANALYST: analyse and plan. Do not edit files. Do not commit.
+- GPT_AUDITOR: inspect plan/diff/state/logs. Do not edit files. Do not commit.
+- GPT_EXECUTOR: implement the approved scope. You may edit repository files, run checks, commit, and push from this repo-side environment.
+- GPT_CURATOR: update curator/routing state only when explicitly requested. Do not call Claude.
 
-          echo "ROLE=$ROLE" >> "$GITHUB_ENV"
+Safety boundaries:
+- Do not edit secrets, billing, repository permissions, production deploy credentials, or archive artifacts.
+- Do not print tokens or secrets.
+- Do not expand scope beyond the task and current roadmap item.
+- Keep commits focused and small.
+- Prefer deterministic code and repository state over chat-style discussion.
+
+Read before acting:
+- governance/policies/role_sequence.json
+- governance/state/routing.json
+- governance/state/provider_status.json
+- governance/state/role_cycle_state.json
+- governance/MASTER_PLAN.md, if present
+
+Incoming task:
+-----
+{body}
+-----
+
+Required output:
+BEM-CODEX-LOCAL | {role} | RESULT
+
+Include:
+- checklist;
+- files changed;
+- checks run;
+- commit SHA if committed;
+- blocker only if objective.
+'''
+
+          Path(os.environ['PROMPT_FILE']).write_text(prompt, encoding='utf-8')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
+              f.write(f'ROLE={role}\n')
+              f.write(f'ROLE_RAW={role_raw}\n')
+              f.write(f'PROVIDER={provider}\n')
+              f.write(f'TRACE_ID={trace_id}\n')
+              f.write(f'CYCLE_ID={cycle_id}\n')
+              f.write(f'TASK_TYPE={task_type}\n')
+          PY
+
           echo "BODY_FILE=$BODY_FILE" >> "$GITHUB_ENV"
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
 
@@ -99,7 +208,10 @@ jobs:
           export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
           OUTPUT_FILE="$RUNNER_TEMP/codex_output.md"
           {
-            echo "BEM-118 | CODEX_LOCAL_ISA | RAW_OUTPUT"
+            echo "BEM-CODEX-LOCAL | RAW_OUTPUT"
+            echo "ROLE=$ROLE"
+            echo "TRACE_ID=$TRACE_ID"
+            echo "CYCLE_ID=$CYCLE_ID"
             echo
             codex exec "$(cat "$PROMPT_FILE")"
             CODEX_EXIT=$?
@@ -107,6 +219,7 @@ jobs:
             echo "CODEX_EXIT_CODE=$CODEX_EXIT"
           } 2>&1 | tee "$OUTPUT_FILE"
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
+          echo "CODEX_EXIT_CODE=${CODEX_EXIT:-0}" >> "$GITHUB_ENV"
           exit 0
 
       - name: Commit approved changes
@@ -118,56 +231,101 @@ jobs:
             echo "No commit for role $ROLE"
             exit 0
           fi
-          if ! grep -q 'OWNER_APPROVED_COMMIT' "$BODY_FILE"; then
-            echo "No commit: OWNER_APPROVED_COMMIT is absent"
-            exit 0
-          fi
-          git config user.email "gpt-executor@ai-devops-system"
-          git config user.name "GPT Executor"
+          git config user.email "gpt-codex@ai-devops-system"
+          git config user.name "GPT Codex"
           git pull --rebase origin main
           git add .
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "GPT EXECUTOR: apply approved changes"
+          git commit -m "GPT CODEX: ${TASK_TYPE} ${TRACE_ID}"
           git push
 
       - name: Post Codex report to issue
         if: always()
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           REPO: ${{ github.repository }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_NUMBER: '31'
         run: |
           set -e
           python3 - <<'PY'
-          import json
-          import os
-          import pathlib
-          import urllib.request
+          import json, os, pathlib, urllib.request
 
-          repo = os.environ["REPO"]
-          issue = os.environ["ISSUE_NUMBER"]
-          token = os.environ["GH_TOKEN"]
-          output_path = pathlib.Path(os.environ.get("OUTPUT_FILE", ""))
-          if output_path.exists():
-              output = output_path.read_text(encoding="utf-8", errors="replace")
-          else:
-              output = "OUTPUT_FILE was not created. Check earlier workflow steps."
-          body = "BEM-118 | CODEX_LOCAL_ISA | RUN RESULT\n\n" + output[-60000:]
-          data = json.dumps({"body": body}).encode("utf-8")
+          repo = os.environ['REPO']
+          issue = os.environ.get('ISSUE_NUMBER') or '31'
+          token = os.environ['GH_TOKEN']
+          output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
+          output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else 'OUTPUT_FILE was not created. Check earlier workflow steps.'
+          body = (
+              f"BEM-CODEX-LOCAL | RUN RESULT | {os.environ.get('ROLE','UNKNOWN')}\n\n"
+              f"TRACE_ID={os.environ.get('TRACE_ID','')}\n"
+              f"CYCLE_ID={os.environ.get('CYCLE_ID','')}\n"
+              f"PROVIDER={os.environ.get('PROVIDER','')}\n\n"
+              + output[-60000:]
+          )
+          data = json.dumps({'body': body}).encode('utf-8')
           req = urllib.request.Request(
-              f"https://api.github.com/repos/{repo}/issues/{issue}/comments",
+              f'https://api.github.com/repos/{repo}/issues/{issue}/comments',
               data=data,
               headers={
-                  "Authorization": f"Bearer {token}",
-                  "Accept": "application/vnd.github+json",
-                  "X-GitHub-Api-Version": "2022-11-28",
-                  "Content-Type": "application/json",
+                  'Authorization': f'Bearer {token}',
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-devops-codex-local'
               },
-              method="POST",
+              method='POST',
+          )
+          with urllib.request.urlopen(req) as resp:
+              print(resp.status)
+          PY
+
+      - name: Advance role orchestrator
+        if: always() && github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          if [ -z "${CYCLE_ID:-}" ]; then
+            echo "No cycle_id; skip orchestrator advance"
+            exit 0
+          fi
+          STATUS="ROLE_DONE"
+          if [ "${CODEX_EXIT_CODE:-0}" != "0" ]; then
+            STATUS="BLOCKED"
+          fi
+          python3 - <<'PY'
+          import json, os, urllib.request
+
+          data = json.dumps({
+              'ref': 'main',
+              'inputs': {
+                  'mode': 'advance',
+                  'task_type': os.environ.get('TASK_TYPE', 'default_development'),
+                  'task': '',
+                  'trace_id': os.environ.get('TRACE_ID', ''),
+                  'cycle_id': os.environ.get('CYCLE_ID', ''),
+                  'role': os.environ.get('ROLE_RAW', '').lower(),
+                  'status': os.environ.get('STATUS', 'ROLE_DONE'),
+                  'note': f"Codex Local role completed with exit={os.environ.get('CODEX_EXIT_CODE','0')} provider={os.environ.get('PROVIDER','')}"
+              }
+          }).encode('utf-8')
+
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/role-orchestrator.yml/dispatches",
+              data=data,
+              headers={
+                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                  'Accept': 'application/vnd.github+json',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-devops-codex-local'
+              },
+              method='POST'
           )
           with urllib.request.urlopen(req) as resp:
               print(resp.status)
