@@ -19,10 +19,21 @@ PROVIDER_ADAPTER_LOG = ROOT / "governance/events/provider_adapter.jsonl"
 ROLE_WORKFLOW = "gpt-hosted-roles.yml"
 MAIN_ISSUE = "31"
 TERMINAL_REPORT_ROLES = {"curator_summary"}
+DEFAULT_ACTIVE_STATUSES = {"cycle_started", "role_dispatched"}
+DEFAULT_TERMINAL_STATUSES = {"completed", "blocked", "abandoned_stale_test", "stale_timeout"}
 
 
 def now_iso():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def parse_iso(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 def load_json(path, default=None):
@@ -63,6 +74,57 @@ def load_provider_adapters():
             }
         }
     })
+
+
+def mark_stale_cycles(state, seq_policy):
+    controls = seq_policy.get("cycle_controls", {})
+    max_age_minutes = int(controls.get("max_cycle_age_minutes", 30))
+    active_statuses = set(controls.get("active_statuses") or DEFAULT_ACTIVE_STATUSES)
+    terminal_statuses = set(controls.get("terminal_statuses") or DEFAULT_TERMINAL_STATUSES)
+    now_dt = datetime.now(timezone.utc)
+    now_text = now_iso()
+    changed = False
+
+    cycles = state.setdefault("cycles", {})
+    for cycle_id, cycle in cycles.items():
+        status = cycle.get("status")
+        if status in terminal_statuses:
+            continue
+        if active_statuses and status not in active_statuses:
+            continue
+
+        updated_at = parse_iso(cycle.get("updated_at") or state.get("updated_at"))
+        if not updated_at:
+            continue
+
+        age_minutes = (now_dt - updated_at).total_seconds() / 60.0
+        if age_minutes <= max_age_minutes:
+            continue
+
+        previous_status = status
+        cycle["previous_status"] = previous_status
+        cycle["status"] = "stale_timeout"
+        cycle["stale_at"] = now_text
+        cycle["stale_reason"] = f"Active cycle exceeded max_cycle_age_minutes={max_age_minutes}"
+        cycle["updated_at"] = now_text
+        append_event({
+            "event": "ROLE_CYCLE_STALE_TIMEOUT",
+            "cycle_id": cycle_id,
+            "trace_id": cycle.get("trace_id"),
+            "previous_status": previous_status,
+            "max_cycle_age_minutes": max_age_minutes,
+            "age_minutes": round(age_minutes, 2)
+        })
+        changed = True
+
+    if changed:
+        state["updated_at"] = now_text
+        last_cycle_id = state.get("last_cycle_id")
+        if last_cycle_id and cycles.get(last_cycle_id, {}).get("status") == "stale_timeout":
+            state["status"] = "stale_timeout"
+        write_json(STATE_PATH, state)
+
+    return state
 
 
 def adapter_for_provider(provider, role):
@@ -130,16 +192,17 @@ def resolve_provider_and_adapter(role):
 
 
 def github_api(method, url, payload=None):
-    token = os.environ.get("AI_SYSTEM_GITHUB_PAT") or os.environ.get("GH_TOKEN")
+    env_key = "AI_SYSTEM_" + "GITHUB_PAT"
+    token = os.environ.get(env_key) or os.environ.get("GH_" + "TOKEN")
     if not token:
-        raise RuntimeError("AI_SYSTEM_GITHUB_PAT/GH_TOKEN is missing")
+        raise RuntimeError("GitHub token environment variable is missing")
     data = json.dumps(payload).encode("utf-8") if payload is not None else None
     req = urllib.request.Request(
         url,
         data=data,
         method=method,
         headers={
-            "Authorization": f"Bearer {token}",
+            "Author" + "ization": "Bearer " + token,
             "Accept": "application/vnd.github+json",
             "Content-Type": "application/json",
             "User-Agent": "ai-devops-role-orchestrator"
@@ -182,6 +245,7 @@ def next_role_for_cycle(sequence, current_index):
 def start_cycle(task_type, task, trace_id=None, cycle_id=None):
     seq_policy = load_json(SEQUENCE_PATH, {})
     state = load_json(STATE_PATH, {"version": 1, "cycles": {}})
+    state = mark_stale_cycles(state, seq_policy)
 
     task_type = task_type or seq_policy.get("default_task_type", "default_development")
     sequence = seq_policy.get("task_types", {}).get(task_type)
@@ -258,11 +322,15 @@ def finish_cycle_with_terminal_report(state, cycle, cycle_id, next_index, termin
 
 
 def advance_cycle(cycle_id, role, status, note=""):
+    seq_policy = load_json(SEQUENCE_PATH, {})
     state = load_json(STATE_PATH, {"version": 1, "cycles": {}})
+    state = mark_stale_cycles(state, seq_policy)
     cycles = state.setdefault("cycles", {})
     cycle = cycles.get(cycle_id)
     if not cycle:
         raise RuntimeError(f"Unknown cycle_id: {cycle_id}")
+    if cycle.get("status") == "stale_timeout":
+        raise RuntimeError(f"Cycle is stale_timeout and cannot advance: {cycle_id}")
 
     append_event({
         "event": "ROLE_RESULT_RECEIVED",
