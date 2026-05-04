@@ -10,3 +10,6 @@
 {"event": "ROLE_ORCHESTRATOR_START", "mode": "advance", "timestamp": "2026-05-04T03:11:54Z"}
 {"event": "ROLE_RESULT_RECEIVED", "cycle_id": "cyc_test_20260504T031100Z", "trace_id": "fsm_test_20260504T031100Z", "role": "auditor", "status": "ROLE_DONE", "note": "Hosted GPT role completed and posted report.", "timestamp": "2026-05-04T03:11:54Z"}
 {"event": "ROLE_DISPATCHED", "cycle_id": "cyc_test_20260504T031100Z", "trace_id": "fsm_test_20260504T031100Z", "role": "executor", "provider": "gpt", "timestamp": "2026-05-04T03:11:55Z"}
+{"event": "ROLE_ORCHESTRATOR_START", "mode": "advance", "timestamp": "2026-05-04T03:12:15Z"}
+{"event": "ROLE_RESULT_RECEIVED", "cycle_id": "cyc_test_20260504T031100Z", "trace_id": "fsm_test_20260504T031100Z", "role": "executor", "status": "ROLE_DONE", "note": "Hosted GPT role completed and posted report.", "timestamp": "2026-05-04T03:12:15Z"}
+{"event": "ROLE_DISPATCHED", "cycle_id": "cyc_test_20260504T031100Z", "trace_id": "fsm_test_20260504T031100Z", "role": "auditor", "provider": "gpt", "timestamp": "2026-05-04T03:12:16Z"}
