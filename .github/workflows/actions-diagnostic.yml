@@ -1,0 +1,137 @@
+name: Actions Diagnostic
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      workflow:
+        description: 'Workflow file to inspect'
+        required: false
+        default: 'codex-local.yml'
+        type: string
+      trace_id:
+        description: 'Trace id filter'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  diagnose-actions:
+    name: Diagnose Actions
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: ACTIONS_DIAGNOSTIC'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Collect workflow runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_WORKFLOW: ${{ inputs.workflow }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+          WORKFLOW="${INPUT_WORKFLOW:-codex-local.yml}"
+          TRACE_ID="${INPUT_TRACE_ID:-}"
+          if [ "$EVENT_NAME" = "issue_comment" ]; then
+            if printf '%s' "$COMMENT_BODY" | grep -q 'WORKFLOW:'; then
+              WORKFLOW="$(printf '%s' "$COMMENT_BODY" | sed -n 's/^WORKFLOW:[[:space:]]*//p' | head -1)"
+            fi
+            if printf '%s' "$COMMENT_BODY" | grep -q 'TRACE_ID:'; then
+              TRACE_ID="$(printf '%s' "$COMMENT_BODY" | sed -n 's/^TRACE_ID:[[:space:]]*//p' | head -1)"
+            fi
+          fi
+
+          mkdir -p "$RUNNER_TEMP/actions_diag"
+          RUNS_JSON="$RUNNER_TEMP/actions_diag/runs.json"
+          JOBS_JSON="$RUNNER_TEMP/actions_diag/jobs.json"
+          REPORT="$RUNNER_TEMP/actions_diag/report.md"
+
+          gh run list --repo "$REPO" --workflow "$WORKFLOW" --limit 10 --json databaseId,displayTitle,status,conclusion,event,createdAt,updatedAt,headSha,url > "$RUNS_JSON"
+
+          RUN_ID="$(python3 - <<'PY'
+          import json, os
+          runs = json.load(open(os.environ['RUNS_JSON']))
+          print(runs[0]['databaseId'] if runs else '')
+          PY
+          )"
+
+          if [ -n "$RUN_ID" ]; then
+            gh run view "$RUN_ID" --repo "$REPO" --json databaseId,status,conclusion,url,jobs > "$JOBS_JSON" || echo '{}' > "$JOBS_JSON"
+          else
+            echo '{}' > "$JOBS_JSON"
+          fi
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          runs_path = Path(os.environ['RUNS_JSON'])
+          jobs_path = Path(os.environ['JOBS_JSON'])
+          report_path = Path(os.environ['REPORT'])
+          workflow = os.environ.get('WORKFLOW', 'codex-local.yml')
+          trace_id = os.environ.get('TRACE_ID', '')
+
+          runs = json.loads(runs_path.read_text()) if runs_path.exists() else []
+          jobs = json.loads(jobs_path.read_text()) if jobs_path.exists() else {}
+
+          lines = []
+          lines.append('BEM-ACTIONS-DIAGNOSTIC | RUN REPORT')
+          lines.append('')
+          lines.append(f'Workflow: {workflow}')
+          lines.append(f'Trace filter: {trace_id or "not_set"}')
+          lines.append('')
+          lines.append('ЧЕК-ЛИСТ:')
+          lines.append('[✅] GitHub Actions API queried from repo-side workflow')
+          lines.append('[✅] Latest workflow runs collected')
+          lines.append('[✅] Latest run jobs collected when available')
+          lines.append('[❌] This diagnostic does not change source code')
+          lines.append('')
+          lines.append('| Run ID | Status | Conclusion | Event | Created | Updated | URL |')
+          lines.append('|---|---|---|---|---|---|---|')
+          if not runs:
+              lines.append('| none | none | none | none | none | none | none |')
+          for run in runs:
+              lines.append('| {databaseId} | {status} | {conclusion} | {event} | {createdAt} | {updatedAt} | {url} |'.format(
+                  databaseId=run.get('databaseId',''),
+                  status=run.get('status',''),
+                  conclusion=run.get('conclusion',''),
+                  event=run.get('event',''),
+                  createdAt=run.get('createdAt',''),
+                  updatedAt=run.get('updatedAt',''),
+                  url=run.get('url',''),
+              ))
+          lines.append('')
+          lines.append('Latest run jobs:')
+          lines.append('')
+          lines.append('| Job | Status | Conclusion | Runner | URL |')
+          lines.append('|---|---|---|---|---|')
+          for job in jobs.get('jobs', []) or []:
+              labels = ','.join(job.get('labels') or [])
+              runner = job.get('runnerName') or labels or 'unknown'
+              lines.append('| {name} | {status} | {conclusion} | {runner} | {url} |'.format(
+                  name=job.get('name',''),
+                  status=job.get('status',''),
+                  conclusion=job.get('conclusion',''),
+                  runner=runner,
+                  url=job.get('url',''),
+              ))
+          if not jobs.get('jobs'):
+              lines.append('| none | none | none | none | none |')
+
+          report_path.write_text('\n'.join(lines), encoding='utf-8')
+          PY
+
+          gh issue comment 31 --repo "$REPO" --body-file "$REPORT"
