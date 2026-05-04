@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "purpose": "Map logical providers to concrete execution adapters. Role FSM chooses role; routing chooses provider; provider adapter chooses workflow.",
+  "version": 2,
+  "purpose": "Map logical providers to concrete execution adapters. Role FSM chooses role; routing chooses provider; provider adapter chooses workflow. GPT hosted is report/analysis; GPT Codex is the write-capable reserve coding contour.",
   "default_provider": "gpt",
   "adapters": {
     "gpt": {
@@ -8,29 +8,93 @@
       "mode": "workflow_dispatch",
       "workflow": "gpt-hosted-roles.yml",
       "runner": "github-hosted",
-      "supports_roles": ["analyst", "auditor", "executor", "curator"]
+      "supports_roles": [
+        "analyst",
+        "auditor",
+        "executor",
+        "curator"
+      ],
+      "capabilities": {
+        "read_repo": true,
+        "write_repo": false,
+        "commit": false
+      },
+      "notes": "Hosted GPT role runner is primarily for analyst/report roles. Write-capable reserve execution must use gpt_codex."
     },
     "gpt_hosted_fallback": {
       "enabled": true,
       "mode": "workflow_dispatch",
       "workflow": "gpt-hosted-roles.yml",
       "runner": "github-hosted",
-      "supports_roles": ["analyst", "auditor", "executor", "curator"]
+      "supports_roles": [
+        "analyst",
+        "auditor",
+        "executor",
+        "curator"
+      ],
+      "capabilities": {
+        "read_repo": true,
+        "write_repo": false,
+        "commit": false
+      },
+      "notes": "Hosted GPT fallback for curator/analysis/reporting. Not the write-capable GPT Codex contour."
+    },
+    "gpt_codex": {
+      "enabled": true,
+      "mode": "workflow_dispatch",
+      "workflow": "codex-local.yml",
+      "runner": "self-hosted:codex-local",
+      "supports_roles": [
+        "auditor",
+        "executor"
+      ],
+      "capabilities": {
+        "read_repo": true,
+        "write_repo": true,
+        "commit": true
+      },
+      "requires": [
+        "self-hosted runner",
+        "local Codex CLI",
+        "AI_SYSTEM_GITHUB_PAT"
+      ],
+      "notes": "Write-capable GPT Codex reserve contour for auditor/executor when Claude/Cloud Codex is limited."
     },
     "codex": {
       "enabled": true,
       "mode": "workflow_dispatch",
       "workflow": "codex-local.yml",
       "runner": "self-hosted:codex-local",
-      "supports_roles": ["analyst", "auditor", "executor", "curator"],
-      "requires": ["self-hosted runner", "local Codex CLI"]
+      "supports_roles": [
+        "analyst",
+        "auditor",
+        "executor",
+        "curator"
+      ],
+      "capabilities": {
+        "read_repo": true,
+        "write_repo": true,
+        "commit": true
+      },
+      "requires": [
+        "self-hosted runner",
+        "local Codex CLI",
+        "AI_SYSTEM_GITHUB_PAT"
+      ]
     },
     "isa_patch_runner": {
       "enabled": true,
       "mode": "workflow_dispatch",
       "workflow": "isa-patch-runner.yml",
       "runner": "github-hosted",
-      "supports_roles": ["executor"],
+      "supports_roles": [
+        "executor"
+      ],
+      "capabilities": {
+        "read_repo": true,
+        "write_repo": true,
+        "commit": true
+      },
       "notes": "Patch runner is not a conversational role adapter. Use only for approved patch tasks."
     },
     "claude": {
@@ -38,8 +102,18 @@
       "mode": "legacy_issue_comment",
       "workflow": "claude.yml",
       "runner": "github-hosted",
-      "supports_roles": ["analyst", "auditor", "executor", "curator"],
-      "disabled_reason": "Claude is disabled for internal FSM while limits are active. Use reserve provider."
+      "supports_roles": [
+        "analyst",
+        "auditor",
+        "executor",
+        "curator"
+      ],
+      "capabilities": {
+        "read_repo": true,
+        "write_repo": true,
+        "commit": true
+      },
+      "disabled_reason": "Claude is disabled for internal FSM while limits are active. Use role reserve provider."
     }
   },
   "fallback_rules": {
