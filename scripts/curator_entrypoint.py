@@ -48,7 +48,38 @@ def extract_provider_error(text):
     return None
 
 
+def is_roadmap_execution(text):
+    """Определяет является ли входящее сообщение запросом на выполнение дорожной карты."""
+    lower = text.lower()
+    roadmap_markers = (
+        'type: curator_roadmap_execution',
+        'task_type: architecture_change',
+        'task_type:architecture_change',
+        'curator_roadmap_execution',
+    )
+    return any(m in lower for m in roadmap_markers)
+
+
+def infer_task_type(text):
+    """Определяет тип задачи из входящего сообщения."""
+    m = re.search(r'TASK_TYPE:\s*(\S+)', text, flags=re.I)
+    if m:
+        return m.group(1).strip().lower()
+    if is_roadmap_execution(text):
+        return 'architecture_change'
+    return 'default_development'
+
+
+def infer_trace_id(text):
+    """Извлекает TRACE_ID из входящего сообщения."""
+    m = re.search(r'TRACE_ID:\s*(\S+)', text, flags=re.I)
+    return m.group(1).strip() if m else None
+
+
 def infer_role(text):
+    # Если это roadmap execution — роль не назначается
+    if is_roadmap_execution(text):
+        return None
     m = re.search(r'ROLE:\s*(analyst|auditor|executor)', text, flags=re.I)
     if m:
         return m.group(1).lower()
@@ -70,23 +101,36 @@ def infer_task(text):
 def main():
     comment_file = sys.argv[1]
     comment = read_text(comment_file)
-    trace_id = 'cur_' + uuid.uuid4().hex[:16]
+    trace_id = infer_trace_id(comment) or ('cur_' + uuid.uuid4().hex[:16])
+    task_type = infer_task_type(comment)
     error_text = extract_provider_error(comment)
     backend, reason = curator_router.route(role='curator', error_text=error_text, success=False)
-    if backend == 'gpt_hosted_fallback':
+
+    # Определить next_action
+    if task_type == 'architecture_change' or is_roadmap_execution(comment):
+        # Roadmap execution → запустить Role Orchestrator
+        next_action = 'START_ROLE_ORCHESTRATOR'
+        requested_role = None
+    elif backend == 'gpt_hosted_fallback':
         next_action = 'RUN_HOSTED_GPT_CURATOR'
+        requested_role = infer_role(comment)
     elif backend == 'claude':
         next_action = 'ROUTE_TO_CLAUDE_CURATOR'
+        requested_role = infer_role(comment)
     elif backend:
         next_action = 'RUN_' + str(backend).upper()
+        requested_role = infer_role(comment)
     else:
         next_action = 'DEGRADED_REPORT_ONLY'
-    requested_role = infer_role(comment)
+        requested_role = None
+
     task = infer_task(comment)
+
     decision = {
         'version': 1,
         'timestamp': now_iso(),
         'trace_id': trace_id,
+        'task_type': task_type,
         'active_backend': backend,
         'routing_reason': reason,
         'next_action': next_action,
@@ -96,14 +140,27 @@ def main():
     }
     LAST_DECISION.parent.mkdir(parents=True, exist_ok=True)
     LAST_DECISION.write_text(json.dumps(decision, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-    append_jsonl(EXCHANGE, {'event_id': trace_id, 'timestamp': decision['timestamp'], 'type': 'CURATOR_ROUTING_DECISION', 'source': 'curator_entrypoint', 'backend': backend, 'reason': reason, 'requested_role': requested_role})
+    append_jsonl(EXCHANGE, {
+        'event_id': trace_id,
+        'timestamp': decision['timestamp'],
+        'type': 'CURATOR_ROUTING_DECISION',
+        'source': 'curator_entrypoint',
+        'backend': backend,
+        'reason': reason,
+        'task_type': task_type,
+        'next_action': next_action,
+        'requested_role': requested_role
+    })
     write_env('CURATOR_TRACE_ID', trace_id)
     write_env('ACTIVE_BACKEND', backend or 'none')
     write_env('NEXT_ACTION', next_action)
+    write_env('TASK_TYPE', task_type)
     write_env('REQUESTED_ROLE', requested_role or 'none')
     write_env('ROUTING_REASON', reason.replace('\n', ' ')[:1000])
+
     print('BEM-CURATOR-ENTRYPOINT | ROUTING DECISION')
     print('TRACE_ID=' + trace_id)
+    print('TASK_TYPE=' + task_type)
     print('ACTIVE_BACKEND=' + str(backend or 'none'))
     print('ROUTING_REASON=' + reason.replace('\n', ' ')[:1000])
     print('NEXT_ACTION=' + next_action)
