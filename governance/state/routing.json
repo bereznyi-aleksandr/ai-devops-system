@@ -1,6 +1,6 @@
 {
-  "version": 5,
-  "updated_at": "2026-05-05T03:10:00Z",
+  "version": 6,
+  "updated_at": "2026-05-05T03:20:00Z",
   "updated_by": "chatgpt-project-lead",
   "roles": {
     "curator": {
@@ -15,8 +15,9 @@
     "analyst": {
       "active": "gpt",
       "primary": "gpt",
-      "reserve": "gpt_codex",
+      "reserve": "claude",
       "fallback_chain": [
+        "claude",
         "gpt_codex",
         "codex"
       ]
@@ -80,6 +81,6 @@
       "timeout"
     ],
     "runner_unavailable_policy": "skip_unhealthy_provider_and_continue_fallback_chain",
-    "analyst_policy": "primary_gpt_but_not_hard_pinned"
+    "analyst_policy": "primary_gpt_then_cloud_then_codex"
   }
 }
