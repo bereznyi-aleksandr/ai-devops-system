@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "name": "PROVIDER_FAILOVER_POLICY",
+  "purpose": "Select a healthy provider for each role using deterministic fallback chains and recovery probes.",
+  "roles": {
+    "analyst": {
+      "primary": "gpt",
+      "fallback_chain": ["gpt", "claude"]
+    },
+    "auditor": {
+      "primary": "claude",
+      "fallback_chain": ["claude", "gpt"]
+    },
+    "executor": {
+      "primary": "claude",
+      "fallback_chain": ["claude", "gpt"]
+    },
+    "curator": {
+      "primary": "gpt",
+      "fallback_chain": ["gpt", "claude"]
+    }
+  },
+  "unhealthy_statuses": ["limited", "error", "runner_unavailable", "disabled", "stale_timeout"],
+  "healthy_statuses": ["ok", "healthy", "available", "recovered"],
+  "default_provider_status": "ok",
+  "rules": [
+    "Prefer role primary provider when healthy.",
+    "Skip providers with unhealthy status.",
+    "Use fallback_chain order deterministically.",
+    "If every provider is unhealthy, return BLOCKED with reason no_healthy_provider.",
+    "Analyst primary is GPT but may fall back to Claude.",
+    "Auditor and executor primary is Claude but may fall back to GPT."
+  ]
+}
