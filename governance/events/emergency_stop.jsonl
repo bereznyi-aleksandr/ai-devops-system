@@ -1,1 +1,3 @@
 {"event":"EMERGENCY_STOP_POLICY_CREATED","trace_id":"e4_003_emergency_stop_20260505","status":"prepared"}
+{"event": "EMERGENCY_STOP_ENABLED", "trace_id": "proof_e4_003_orchestrator_block_20260505", "actor": "shell-proof", "reason": "proof emergency stop blocks role orchestrator", "scope": "role_orchestrator", "timestamp": "2026-05-05T04:50:42Z"}
+{"event": "EMERGENCY_STOP_DISABLED", "trace_id": "proof_e4_003_orchestrator_unblock_20260505", "actor": "shell-proof", "reason": "proof complete; unblock orchestrator", "previous_reason": "proof emergency stop blocks role orchestrator", "scope": "role_orchestrator", "timestamp": "2026-05-05T04:50:42Z"}
