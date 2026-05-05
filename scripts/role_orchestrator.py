@@ -22,6 +22,7 @@ TERMINAL_REPORT_ROLES = {"curator_summary"}
 DEFAULT_ACTIVE_STATUSES = {"cycle_started", "role_dispatched"}
 DEFAULT_TERMINAL_STATUSES = {"completed", "blocked", "abandoned_stale_test", "stale_timeout"}
 RUNNER_BACKED_PROVIDERS = {"gpt_codex", "codex"}
+UNHEALTHY_FAILURE_TYPES = {"provider_limit", "api_error", "runner_unavailable"}
 
 
 def now_iso():
@@ -234,17 +235,69 @@ def role_reserve_provider(role):
     return role_cfg.get("reserve") or policy.get("default_provider", "gpt")
 
 
+def provider_is_unhealthy(provider, provider_status):
+    item = provider_status.get("providers", {}).get(provider, {})
+    status = item.get("status")
+    failure_type = item.get("last_failure_type")
+    return status in ("limited", "error") and (failure_type in UNHEALTHY_FAILURE_TYPES or status == "limited")
+
+
 def select_provider(role):
     routing = load_json(ROUTING_PATH, {})
     provider_status = load_json(PROVIDER_STATUS_PATH, {"providers": {}})
+    adapters_policy = load_provider_adapters()
+    default_provider = adapters_policy.get("default_provider", "gpt")
     role_cfg = routing.get("roles", {}).get(role, {})
-    provider = role_cfg.get("active", "claude")
-    provider_state = provider_status.get("providers", {}).get(provider, {})
 
-    if provider == "claude" and provider_state.get("status") in ("limited", "error"):
-        provider = role_cfg.get("reserve", "gpt") or "gpt"
+    active = role_cfg.get("active") or role_cfg.get("primary") or default_provider
+    primary = role_cfg.get("primary")
+    reserve = role_cfg.get("reserve")
+    fallback_chain = role_cfg.get("fallback_chain") or []
 
-    return provider
+    candidates = []
+
+    def add(candidate):
+        if candidate and candidate not in candidates:
+            candidates.append(candidate)
+
+    add(active)
+    add(primary)
+    add(reserve)
+    for item in fallback_chain:
+        add(item)
+    add(default_provider)
+    add("gpt")
+
+    for candidate in list(candidates):
+        adapter, adapter_reason = adapter_for_provider(candidate, role)
+        if adapter_reason:
+            append_provider_adapter_event({
+                "event": "PROVIDER_SKIPPED",
+                "role": role,
+                "provider": candidate,
+                "reason": adapter_reason
+            })
+            continue
+        if provider_is_unhealthy(candidate, provider_status):
+            item = provider_status.get("providers", {}).get(candidate, {})
+            append_provider_adapter_event({
+                "event": "PROVIDER_SKIPPED",
+                "role": role,
+                "provider": candidate,
+                "reason": "provider_unhealthy",
+                "status": item.get("status"),
+                "failure_type": item.get("last_failure_type")
+            })
+            continue
+        return candidate
+
+    append_provider_adapter_event({
+        "event": "PROVIDER_SELECTION_DEGRADED",
+        "role": role,
+        "candidates": candidates,
+        "reason": "no_healthy_candidate; falling back to first candidate"
+    })
+    return candidates[0] if candidates else default_provider
 
 
 def resolve_provider_and_adapter(role):
