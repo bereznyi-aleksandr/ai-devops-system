@@ -25,3 +25,6 @@
 {"event": "PROVIDER_SKIPPED", "role": "executor", "provider": "claude", "reason": "adapter_disabled", "timestamp": "2026-05-05T02:51:48Z"}
 {"event": "PROVIDER_SKIPPED", "role": "executor", "provider": "gpt_codex", "reason": "provider_unhealthy", "status": "error", "failure_type": "runner_unavailable", "timestamp": "2026-05-05T02:51:48Z"}
 {"event": "PROVIDER_ADAPTER_SELECTED", "role": "executor", "provider": "gpt", "workflow": "gpt-hosted-roles.yml", "mode": "workflow_dispatch", "timestamp": "2026-05-05T02:51:48Z"}
+{"event": "PROVIDER_SKIPPED", "role": "auditor", "provider": "claude", "reason": "adapter_disabled", "timestamp": "2026-05-05T02:52:09Z"}
+{"event": "PROVIDER_SKIPPED", "role": "auditor", "provider": "gpt_codex", "reason": "provider_unhealthy", "status": "error", "failure_type": "runner_unavailable", "timestamp": "2026-05-05T02:52:09Z"}
+{"event": "PROVIDER_ADAPTER_SELECTED", "role": "auditor", "provider": "gpt", "workflow": "gpt-hosted-roles.yml", "mode": "workflow_dispatch", "timestamp": "2026-05-05T02:52:09Z"}
