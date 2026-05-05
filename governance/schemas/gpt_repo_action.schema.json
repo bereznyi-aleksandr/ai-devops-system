@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "required_fields": [
+    "version",
+    "trace_id",
+    "source",
+    "operation",
+    "files",
+    "commit_message"
+  ],
+  "allowed_source": "external_gpt_chat",
+  "allowed_operations": [
+    "create_file",
+    "update_file",
+    "append_file"
+  ]
+}

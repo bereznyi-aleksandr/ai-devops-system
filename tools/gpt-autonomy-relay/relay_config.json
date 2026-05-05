@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "repo_root": ".",
+  "auto_apply": false,
+  "require_trace_id": true,
+  "require_source": "external_gpt_chat",
+  "default_checks": [
+    "python3 -m compileall scripts tools/gpt-autonomy-relay"
+  ]
+}

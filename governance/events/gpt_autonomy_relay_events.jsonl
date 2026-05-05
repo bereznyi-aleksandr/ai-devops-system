@@ -1,1 +1,6 @@
 {"event":"GPT_AUTONOMY_RELAY_PROOF","trace_id":"proof_gpt_autonomy_relay_minimal_20260505","status":"manual_safe_commit_path_after_conflict_reset"}
+{"timestamp": "2026-05-05T04:37:21Z", "trace_id": "proof_gpt_autonomy_relay_dryrun_20260505", "source": "external_gpt_chat", "operation": "append_file", "dry_run": true, "files": ["governance/events/gpt_autonomy_relay_events.jsonl"], "event": "GPT_RELAY_ACTION_ACCEPTED"}
+{"timestamp": "2026-05-05T04:37:21Z", "trace_id": "proof_gpt_autonomy_relay_dryrun_20260505", "source": "external_gpt_chat", "operation": "append_file", "dry_run": true, "files": ["governance/events/gpt_autonomy_relay_events.jsonl"], "event": "GPT_RELAY_DRY_RUN_OK"}
+{"timestamp": "2026-05-05T04:39:03Z", "trace_id": "proof_gpt_autonomy_relay_dryrun_20260505", "source": "external_gpt_chat", "operation": "append_file", "dry_run": false, "files": ["governance/events/gpt_autonomy_relay_events.jsonl"], "event": "GPT_RELAY_ACTION_ACCEPTED"}
+{"event":"GPT_AUTONOMY_RELAY_DRYRUN_PROOF","trace_id":"proof_gpt_autonomy_relay_dryrun_20260505","status":"dryrun_checked"}
+{"timestamp": "2026-05-05T04:39:03Z", "trace_id": "proof_gpt_autonomy_relay_dryrun_20260505", "source": "external_gpt_chat", "operation": "append_file", "dry_run": false, "files": ["governance/events/gpt_autonomy_relay_events.jsonl"], "event": "GPT_RELAY_APPLIED"}

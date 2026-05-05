@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "name": "GPT_AUTONOMY_RELAY_POLICY",
+  "direct_connector_write": "disabled",
+  "relay_transport": "enabled",
+  "allowed_without_operator_confirmation": true,
+  "allowed_operations": [
+    "create_file",
+    "update_file",
+    "append_file"
+  ],
+  "allowed_paths": [
+    "governance/",
+    "scripts/",
+    ".github/workflows/",
+    "tools/gpt-autonomy-relay/"
+  ],
+  "denied_paths": [
+    ".git/",
+    ".env",
+    "secrets",
+    "credentials",
+    "private_key",
+    "id_rsa",
+    "billing",
+    "permissions"
+  ],
+  "max_files_per_action": 10,
+  "max_file_size_bytes": 200000
+}
