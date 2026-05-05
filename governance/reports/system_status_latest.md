@@ -3,7 +3,7 @@
 ```text
 Trace: system_status_report
 Mode: schedule
-Time: 2026-05-05T08:27:36Z
+Time: 2026-05-05T14:23:38Z
 
 ЧЕК-ЛИСТ:
 [✅] emergency_stop.enabled = false
@@ -11,7 +11,7 @@ Time: 2026-05-05T08:27:36Z
 [✅] last_cycle_id = cyc_roadmap_20260505T025103Z
 [✅] providers_checked = 3
 [✅] relay_events_seen = 5
-[✅] report_generated_at = 2026-05-05T08:27:36Z
+[✅] report_generated_at = 2026-05-05T14:23:38Z
 ```
 
 | Subsystem | Status | Detail |
@@ -34,39 +34,35 @@ Time: 2026-05-05T08:27:36Z
 ```json
 [
   {
-    "event": "ROLE_ORCHESTRATOR_START",
-    "mode": "start",
-    "timestamp": "2026-05-05T04:50:42Z"
-  },
-  {
-    "event": "ROLE_ORCHESTRATOR_EMERGENCY_STOP_BLOCKED",
-    "mode": "start",
-    "trace_id": "proof_e4_003_orchestrator_block_20260505",
-    "cycle_id": "",
-    "reason": "proof emergency stop blocks role orchestrator",
-    "emergency_stop_updated_at": "2026-05-05T04:50:42Z",
-    "emergency_stop_updated_by": "shell-proof",
-    "timestamp": "2026-05-05T04:50:42Z"
-  },
-  {
-    "event": "ROLE_ORCHESTRATOR_EMERGENCY_STOP_REPORT_FAILED",
-    "mode": "start",
-    "trace_id": "proof_e4_003_orchestrator_block_20260505",
-    "cycle_id": "",
-    "error": "GitHub token environment variable is missing",
-    "timestamp": "2026-05-05T04:50:42Z"
+    "event": "ROLE_WATCHDOG_COMPLETED",
+    "changed": false,
+    "last_cycle_id": "cyc_roadmap_20260505T025103Z",
+    "status": "cycle_completed",
+    "timestamp": "2026-05-05T10:58:38Z"
   },
   {
     "event": "ROLE_ORCHESTRATOR_START",
     "mode": "watchdog",
-    "timestamp": "2026-05-05T07:04:13Z"
+    "timestamp": "2026-05-05T12:04:43Z"
   },
   {
     "event": "ROLE_WATCHDOG_COMPLETED",
     "changed": false,
     "last_cycle_id": "cyc_roadmap_20260505T025103Z",
     "status": "cycle_completed",
-    "timestamp": "2026-05-05T07:04:13Z"
+    "timestamp": "2026-05-05T12:04:43Z"
+  },
+  {
+    "event": "ROLE_ORCHESTRATOR_START",
+    "mode": "watchdog",
+    "timestamp": "2026-05-05T14:23:03Z"
+  },
+  {
+    "event": "ROLE_WATCHDOG_COMPLETED",
+    "changed": false,
+    "last_cycle_id": "cyc_roadmap_20260505T025103Z",
+    "status": "cycle_completed",
+    "timestamp": "2026-05-05T14:23:03Z"
   }
 ]
 ```
