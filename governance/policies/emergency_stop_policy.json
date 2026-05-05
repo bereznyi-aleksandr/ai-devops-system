@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "name": "EMERGENCY_STOP_POLICY",
+  "purpose": "Provide a deterministic emergency stop for role orchestrator and autonomous repo-side execution.",
+  "default_enabled": false,
+  "stop_scope": [
+    "role_orchestrator",
+    "provider_dispatch",
+    "autonomous_execution"
+  ],
+  "allowed_commands": [
+    "enable",
+    "disable",
+    "check"
+  ],
+  "activation_channels": [
+    "workflow_dispatch",
+    "issue_comment_TYPE_EMERGENCY_STOP"
+  ],
+  "issue_number": 31,
+  "rules": {
+    "when_enabled": [
+      "block role_orchestrator start",
+      "block role_orchestrator advance",
+      "block role_orchestrator watchdog dispatch side effects",
+      "write emergency_stop event",
+      "post BEM emergency report"
+    ],
+    "when_disabled": [
+      "allow normal routing",
+      "preserve audit trail"
+    ]
+  }
+}

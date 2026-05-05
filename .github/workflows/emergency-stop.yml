@@ -1,0 +1,117 @@
+name: Emergency Stop
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'enable | disable | check'
+        required: true
+        default: 'check'
+        type: string
+      trace_id:
+        description: 'Trace id'
+        required: false
+        default: 'manual_emergency_stop'
+        type: string
+      reason:
+        description: 'Reason'
+        required: false
+        default: ''
+        type: string
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  emergency-stop:
+    name: Emergency Stop
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: EMERGENCY_STOP'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Resolve command
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_REASON: ${{ inputs.reason }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+          MODE="${INPUT_MODE:-check}"
+          TRACE_ID="${INPUT_TRACE_ID:-manual_emergency_stop}"
+          REASON="${INPUT_REASON:-}"
+
+          if [ "${EVENT_NAME:-}" = "issue_comment" ]; then
+            MODE="$(printf '%s' "$COMMENT_BODY" | sed -n 's/^MODE:[[:space:]]*//p' | head -1)"
+            TRACE_ID="$(printf '%s' "$COMMENT_BODY" | sed -n 's/^TRACE_ID:[[:space:]]*//p' | head -1)"
+            REASON="$(printf '%s' "$COMMENT_BODY" | sed -n 's/^REASON:[[:space:]]*//p' | head -1)"
+            MODE="${MODE:-check}"
+            TRACE_ID="${TRACE_ID:-issue_emergency_stop}"
+          fi
+
+          echo "MODE=$MODE" >> "$GITHUB_ENV"
+          echo "TRACE_ID=$TRACE_ID" >> "$GITHUB_ENV"
+          echo "REASON=$REASON" >> "$GITHUB_ENV"
+
+      - name: Apply emergency stop command
+        shell: bash
+        run: |
+          set +e
+          python3 scripts/emergency_stop_guard.py             --mode "$MODE"             --trace-id "$TRACE_ID"             --reason "$REASON"             --scope "global"             --actor "emergency-stop-workflow"
+          echo "EMERGENCY_EXIT=$?" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Commit emergency stop state
+        shell: bash
+        run: |
+          set -e
+          git config user.email "emergency-stop@ai-devops-system"
+          git config user.name "Emergency Stop"
+          git pull --rebase --autostash origin main
+          git add governance/state/emergency_stop.json governance/events/emergency_stop.jsonl governance/policies/emergency_stop_policy.json scripts/emergency_stop_guard.py .github/workflows/emergency-stop.yml || true
+          if git diff --cached --quiet; then
+            echo "No emergency stop changes"
+            exit 0
+          fi
+          git commit -m "E4-003: emergency stop state update"
+          git push
+
+      - name: Post emergency stop report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          script: |
+            const body = [
+              'BEM-EMERGENCY-STOP | RUN RESULT',
+              '',
+              `Mode: ${process.env.MODE || 'unknown'}`,
+              `Trace: ${process.env.TRACE_ID || 'unknown'}`,
+              `Exit: ${process.env.EMERGENCY_EXIT || 'unknown'}`,
+              `Reason: ${process.env.REASON || 'not_set'}`,
+              '',
+              'Checklist:',
+              '- emergency stop workflow executed',
+              '- emergency state/event commit attempted',
+              '- role/orchestrator integration is next E4-003 step'
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 31,
+              body
+            });
