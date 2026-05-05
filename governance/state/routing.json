@@ -1,27 +1,42 @@
 {
-  "version": 3,
-  "updated_at": "2026-05-04T18:12:00Z",
+  "version": 4,
+  "updated_at": "2026-05-05T03:00:00Z",
   "updated_by": "chatgpt-project-lead",
   "roles": {
     "curator": {
       "active": "gpt_hosted_fallback",
       "primary": "claude",
-      "reserve": "gpt_hosted_fallback"
+      "reserve": "gpt_hosted_fallback",
+      "fallback_chain": [
+        "gpt_hosted_fallback",
+        "gpt"
+      ]
     },
     "analyst": {
       "active": "gpt",
       "primary": "gpt",
-      "reserve": "gpt"
+      "reserve": "gpt",
+      "fallback_chain": [
+        "gpt"
+      ]
     },
     "auditor": {
       "active": "claude",
       "primary": "claude",
-      "reserve": "gpt_codex"
+      "reserve": "gpt_codex",
+      "fallback_chain": [
+        "gpt_codex",
+        "gpt"
+      ]
     },
     "executor": {
       "active": "claude",
       "primary": "claude",
-      "reserve": "gpt_codex"
+      "reserve": "gpt_codex",
+      "fallback_chain": [
+        "gpt_codex",
+        "gpt"
+      ]
     }
   },
   "trigger_map": {
@@ -49,13 +64,15 @@
     "switch_back_after_successful_probe": true,
     "failure_types_that_trigger_switch": [
       "provider_limit",
-      "api_error"
+      "api_error",
+      "runner_unavailable"
     ],
     "failure_types_that_do_not_trigger_switch": [
       "max_turns",
       "config_error",
       "permission_error",
       "timeout"
-    ]
+    ],
+    "runner_unavailable_policy": "skip_unhealthy_provider_and_continue_fallback_chain"
   }
 }
