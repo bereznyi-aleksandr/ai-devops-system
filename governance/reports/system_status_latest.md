@@ -1,9 +1,9 @@
 ## BEM-SYSTEM-STATUS | RUN RESULT
 
 ```text
-Trace: proof_e4_004_system_status_report_20260505
-Mode: shell-proof
-Time: 2026-05-05T04:55:42Z
+Trace: system_status_report
+Mode: schedule
+Time: 2026-05-05T08:27:36Z
 
 ЧЕК-ЛИСТ:
 [✅] emergency_stop.enabled = false
@@ -11,7 +11,7 @@ Time: 2026-05-05T04:55:42Z
 [✅] last_cycle_id = cyc_roadmap_20260505T025103Z
 [✅] providers_checked = 3
 [✅] relay_events_seen = 5
-[✅] report_generated_at = 2026-05-05T04:55:42Z
+[✅] report_generated_at = 2026-05-05T08:27:36Z
 ```
 
 | Subsystem | Status | Detail |
@@ -35,18 +35,6 @@ Time: 2026-05-05T04:55:42Z
 [
   {
     "event": "ROLE_ORCHESTRATOR_START",
-    "mode": "watchdog",
-    "timestamp": "2026-05-05T04:37:06Z"
-  },
-  {
-    "event": "ROLE_WATCHDOG_COMPLETED",
-    "changed": false,
-    "last_cycle_id": "cyc_roadmap_20260505T025103Z",
-    "status": "cycle_completed",
-    "timestamp": "2026-05-05T04:37:06Z"
-  },
-  {
-    "event": "ROLE_ORCHESTRATOR_START",
     "mode": "start",
     "timestamp": "2026-05-05T04:50:42Z"
   },
@@ -67,6 +55,18 @@ Time: 2026-05-05T04:55:42Z
     "cycle_id": "",
     "error": "GitHub token environment variable is missing",
     "timestamp": "2026-05-05T04:50:42Z"
+  },
+  {
+    "event": "ROLE_ORCHESTRATOR_START",
+    "mode": "watchdog",
+    "timestamp": "2026-05-05T07:04:13Z"
+  },
+  {
+    "event": "ROLE_WATCHDOG_COMPLETED",
+    "changed": false,
+    "last_cycle_id": "cyc_roadmap_20260505T025103Z",
+    "status": "cycle_completed",
+    "timestamp": "2026-05-05T07:04:13Z"
   }
 ]
 ```
