@@ -1,6 +1,36 @@
 name: Claude Code
 
 on:
+  workflow_dispatch:
+    inputs:
+      role:
+        description: 'analyst | auditor | executor | curator'
+        required: true
+        type: string
+      provider:
+        description: 'claude'
+        required: false
+        default: 'claude'
+        type: string
+      trace_id:
+        description: 'Trace id'
+        required: true
+        type: string
+      cycle_id:
+        description: 'Role cycle id'
+        required: false
+        default: ''
+        type: string
+      task_type:
+        description: 'Task type'
+        required: false
+        default: 'default_development'
+        type: string
+      task:
+        description: 'Task body'
+        required: false
+        default: ''
+        type: string
   issue_comment:
     types: [created]
   issues:
@@ -10,32 +40,185 @@ on:
   pull_request_review:
     types: [submitted]
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: write
+
 jobs:
   claude:
     if: |
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && !contains(github.event.comment.body, '@analyst') && !contains(github.event.comment.body, '@auditor') && !contains(github.event.comment.body, '@executor')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
 
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-      id-token: write
-      actions: read
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
-      - name: Run Claude Code
+      - name: Build Claude role prompt
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          INPUT_ROLE: ${{ inputs.role }}
+          INPUT_PROVIDER: ${{ inputs.provider }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID: ${{ inputs.cycle_id }}
+          INPUT_TASK_TYPE: ${{ inputs.task_type }}
+          INPUT_TASK: ${{ inputs.task }}
+        run: |
+          set -euo pipefail
+          PROMPT_FILE="$RUNNER_TEMP/claude_role_prompt.txt"
+          export PROMPT_FILE
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          role = os.environ.get('INPUT_ROLE', 'analyst').lower().strip()
+          trace_id = os.environ.get('INPUT_TRACE_ID', '')
+          cycle_id = os.environ.get('INPUT_CYCLE_ID', '')
+          task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
+          task = os.environ.get('INPUT_TASK', '')
+
+          parts = [
+              f'BEM-CLAUDE-ROLE | {role.upper()}',
+              '',
+              'You are running inside the repo-side Cloud/Claude Code role adapter for ai-devops-system.',
+              f'ROLE: {role}',
+              'PROVIDER: claude',
+              f'TRACE_ID: {trace_id}',
+              f'CYCLE_ID: {cycle_id}',
+              f'TASK_TYPE: {task_type}',
+              '',
+              'Architecture:',
+              '- Curator is the external entrypoint and classifier.',
+              '- Role Orchestrator owns role order and cycle state.',
+              '- Analyst plans.',
+              '- Auditor checks and approves/rejects.',
+              '- Executor implements approved changes.',
+              '- Curator summary closes the cycle.',
+              '',
+              'Role rules:',
+              '- analyst: analyse and plan. Do not commit unless explicitly instructed by the roadmap item.',
+              '- auditor: inspect plan/diff/state/logs. Do not commit unless explicitly acting as repair auditor.',
+              '- executor: implement approved scope, run checks, commit, and report commit SHA.',
+              '- curator: update curator/routing state only when explicitly requested.',
+              '',
+              'Safety boundaries:',
+              '- Do not edit secrets, billing, repository permissions, production deploy credentials, or archive artifacts.',
+              '- Do not print tokens or secrets.',
+              '- Do not expand scope beyond the task and current roadmap item.',
+              '- Keep commits focused and small.',
+              '',
+              'Read before acting:',
+              '- governance/policies/role_sequence.json',
+              '- governance/state/routing.json',
+              '- governance/state/provider_status.json',
+              '- governance/state/role_cycle_state.json',
+              '',
+              'Incoming task:',
+              '-----',
+              task,
+              '-----',
+              '',
+              'Required output:',
+              f'BEM-CLAUDE-ROLE | {role.upper()} | RESULT',
+              '',
+              'Include checklist, files changed, checks run, commit SHA if committed, and objective blocker only if present.',
+          ]
+          Path(os.environ['PROMPT_FILE']).write_text('\n'.join(parts), encoding='utf-8')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
+              f.write(f'PROMPT_FILE={os.environ["PROMPT_FILE"]}\n')
+              f.write(f'ROLE_RAW={role}\n')
+              f.write(f'TRACE_ID={trace_id}\n')
+              f.write(f'CYCLE_ID={cycle_id}\n')
+              f.write(f'TASK_TYPE={task_type}\n')
+          PY
+
+      - name: Run Claude Code role
+        id: claude_role
+        if: github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          prompt: ${{ env.PROMPT_FILE && format('{0}', env.PROMPT_FILE) }}
+          claude_args: --max-turns 10
+
+      - name: Run Claude Code legacy
+        id: claude_legacy
+        if: github.event_name != 'workflow_dispatch'
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           claude_args: --max-turns 10
+
+      - name: Advance role orchestrator
+        if: always() && github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+          ROLE_RAW: ${{ env.ROLE_RAW }}
+          TRACE_ID: ${{ env.TRACE_ID }}
+          CYCLE_ID: ${{ env.CYCLE_ID }}
+          TASK_TYPE: ${{ env.TASK_TYPE }}
+          CLAUDE_OUTCOME: ${{ steps.claude_role.outcome }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CYCLE_ID:-}" ]; then
+            echo "No cycle_id; skip orchestrator advance"
+            exit 0
+          fi
+          STATUS="ROLE_DONE"
+          NOTE="Claude role completed."
+          if [ "${CLAUDE_OUTCOME:-success}" != "success" ]; then
+            STATUS="BLOCKED"
+            NOTE="Claude role failed or was cancelled; outcome=${CLAUDE_OUTCOME:-unknown}"
+          fi
+          export STATUS NOTE
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          data = json.dumps({
+              'ref': 'main',
+              'inputs': {
+                  'mode': 'advance',
+                  'task_type': os.environ.get('TASK_TYPE', 'default_development'),
+                  'task': '',
+                  'trace_id': os.environ.get('TRACE_ID', ''),
+                  'cycle_id': os.environ.get('CYCLE_ID', ''),
+                  'role': os.environ.get('ROLE_RAW', '').lower(),
+                  'status': os.environ.get('STATUS', 'ROLE_DONE'),
+                  'note': os.environ.get('NOTE', 'Claude role completed.')
+              }
+          }).encode('utf-8')
+
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/role-orchestrator.yml/dispatches",
+              data=data,
+              headers={
+                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                  'Accept': 'application/vnd.github+json',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-devops-claude-role-adapter'
+              },
+              method='POST'
+          )
+          with urllib.request.urlopen(req) as resp:
+              print(resp.status)
+          PY
