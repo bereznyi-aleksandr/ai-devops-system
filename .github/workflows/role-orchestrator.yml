@@ -43,6 +43,8 @@ on:
         required: false
         default: ''
         type: string
+  issue_comment:
+    types: [created]
   schedule:
     - cron: '*/15 * * * *'
 
@@ -54,6 +56,9 @@ permissions:
 jobs:
   orchestrate:
     name: Role Orchestrator
+    if: >
+      github.event_name != 'issue_comment' ||
+      (github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: ROLE_ORCHESTRATOR_WATCHDOG'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -72,6 +77,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF_NAME: main
           MAIN_ISSUE: '31'
+          EVENT_NAME: ${{ github.event_name }}
           INPUT_MODE: ${{ inputs.mode }}
           INPUT_TASK_TYPE: ${{ inputs.task_type }}
           INPUT_TASK: ${{ inputs.task }}
@@ -83,6 +89,9 @@ jobs:
         run: |
           set +e
           MODE="${INPUT_MODE:-watchdog}"
+          if [ "${EVENT_NAME:-}" = "issue_comment" ]; then
+            MODE="watchdog"
+          fi
           TASK_TYPE="${INPUT_TASK_TYPE:-default_development}"
           TASK="${INPUT_TASK:-}"
           TRACE_ID="${INPUT_TRACE_ID:-}"
