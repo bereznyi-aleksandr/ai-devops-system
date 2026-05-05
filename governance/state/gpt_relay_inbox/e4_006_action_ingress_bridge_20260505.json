@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "trace_id": "e4_006_action_ingress_bridge_20260505",
+  "source": "external_gpt_chat",
+  "operation": "update_file",
+  "files": [
+    {
+      "path": "tools/gpt-autonomy-relay/ingress_bridge.py",
+      "action": "update_file",
+      "content": "#!/usr/bin/env python3\nimport argparse\nimport json\nimport re\nimport time\nfrom datetime import datetime, timezone\nfrom pathlib import Path\n\nROOT = Path.cwd()\nPASTEBOX = ROOT / \"governance/state/gpt_relay_pastebox.txt\"\nINBOX = ROOT / \"governance/state/gpt_relay_inbox\"\nHISTORY = ROOT / \"governance/state/gpt_relay_pastebox_history\"\nEVENTS = ROOT / \"governance/events/gpt_relay_ingress_bridge.jsonl\"\n\ndef now():\n    return datetime.now(timezone.utc).strftime(\"%Y-%m-%dT%H:%M:%SZ\")\n\ndef event(obj):\n    EVENTS.parent.mkdir(parents=True, exist_ok=True)\n    obj[\"timestamp\"] = obj.get(\"timestamp\") or now()\n    with EVENTS.open(\"a\", encoding=\"utf-8\") as f:\n        f.write(json.dumps(obj, ensure_ascii=False) + \"\\n\")\n\ndef extract_json(text):\n    text = text.strip()\n    m = re.search(r\"```(?:GPT_REPO_ACTION_V1|json)?\\s*(\\{.*?\\})\\s*```\", text, re.S)\n    if m:\n        text = m.group(1)\n    else:\n        start = text.find(\"{\")\n        end = text.rfind(\"}\")\n        if start >= 0 and end > start:\n            text = text[start:end + 1]\n    return json.loads(text)\n\ndef ingest_once():\n    PASTEBOX.parent.mkdir(parents=True, exist_ok=True)\n    INBOX.mkdir(parents=True, exist_ok=True)\n    HISTORY.mkdir(parents=True, exist_ok=True)\n    if not PASTEBOX.exists():\n        PASTEBOX.write_text(\"\", encoding=\"utf-8\")\n        print(\"BEM-GPT-INGRESS | PASTEBOX_CREATED\")\n        return 0\n\n    raw = PASTEBOX.read_text(encoding=\"utf-8\").strip()\n    if not raw:\n        print(\"BEM-GPT-INGRESS | NO_INPUT\")\n        return 0\n\n    try:\n        action = extract_json(raw)\n    except Exception as exc:\n        event({\"event\": \"GPT_INGRESS_PARSE_FAILED\", \"error\": str(exc)[:1000]})\n        print(\"BEM-GPT-INGRESS | PARSE_FAILED\")\n        print(str(exc))\n        return 1\n\n    trace = action.get(\"trace_id\") or (\"ingress_\" + now().replace(\":\", \"\").replace(\"-\", \"\"))\n    action[\"trace_id\"] = trace\n    target = INBOX / (trace + \".json\")\n    target.write_text(json.dumps(action, indent=2, ensure_ascii=False) + \"\\n\", encoding=\"utf-8\")\n\n    hist = HISTORY / (trace + \".txt\")\n    hist.write_text(raw + \"\\n\", encoding=\"utf-8\")\n    PASTEBOX.write_text(\"\", encoding=\"utf-8\")\n\n    event({\"event\": \"GPT_INGRESS_ACTION_PLACED\", \"trace_id\": trace, \"target\": str(target)})\n    print(\"BEM-GPT-INGRESS | ACTION_PLACED\")\n    print(\"TRACE_ID=\" + trace)\n    print(\"TARGET=\" + str(target))\n    return 0\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"--once\", action=\"store_true\")\n    ap.add_argument(\"--loop\", action=\"store_true\")\n    ap.add_argument(\"--interval\", type=int, default=5)\n    args = ap.parse_args()\n    if not args.once and not args.loop:\n        raise SystemExit(\"use --once or --loop\")\n\n    while True:\n        rc = ingest_once()\n        if args.once:\n            return rc\n        time.sleep(args.interval)\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n"
+    },
+    {
+      "path": "tools/gpt-autonomy-relay/INGRESS_BRIDGE.md",
+      "action": "update_file",
+      "content": "# GPT Action Ingress Bridge\n\n`ingress_bridge.py` moves a pasted `GPT_REPO_ACTION_V1` JSON block into the relay inbox.\n\nFlow:\n\n1. Paste raw JSON or fenced `GPT_REPO_ACTION_V1` block into:\n   `governance/state/gpt_relay_pastebox.txt`\n2. Run:\n   `python3 tools/gpt-autonomy-relay/ingress_bridge.py --once`\n3. The bridge writes:\n   `governance/state/gpt_relay_inbox/<trace_id>.json`\n4. `relay_watch.py --loop` processes it automatically.\n"
+    },
+    {
+      "path": "governance/events/gpt_relay_ingress_bridge.jsonl",
+      "action": "append_file",
+      "content": "{\"event\":\"GPT_INGRESS_BRIDGE_CREATED\",\"trace_id\":\"e4_006_action_ingress_bridge_20260505\",\"status\":\"prepared\"}"
+    },
+    {
+      "path": "governance/state/gpt_relay_pastebox.txt",
+      "action": "update_file",
+      "content": ""
+    }
+  ],
+  "commit_message": "E4-006: add GPT action ingress bridge"
+}
