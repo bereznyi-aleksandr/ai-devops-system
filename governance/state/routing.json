@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "updated_at": "2026-05-05T03:00:00Z",
+  "version": 5,
+  "updated_at": "2026-05-05T03:10:00Z",
   "updated_by": "chatgpt-project-lead",
   "roles": {
     "curator": {
@@ -15,9 +15,10 @@
     "analyst": {
       "active": "gpt",
       "primary": "gpt",
-      "reserve": "gpt",
+      "reserve": "gpt_codex",
       "fallback_chain": [
-        "gpt"
+        "gpt_codex",
+        "codex"
       ]
     },
     "auditor": {
@@ -42,21 +43,26 @@
   "trigger_map": {
     "analyst": {
       "claude": "@analyst",
-      "gpt": "@gpt_analyst"
+      "gpt": "@gpt_analyst",
+      "gpt_codex": "@gpt_analyst",
+      "codex": "@gpt_analyst"
     },
     "auditor": {
       "claude": "@auditor",
       "gpt": "@gpt_auditor",
-      "gpt_codex": "@gpt_auditor"
+      "gpt_codex": "@gpt_auditor",
+      "codex": "@gpt_auditor"
     },
     "executor": {
       "claude": "@executor",
       "gpt": "@gpt_executor",
-      "gpt_codex": "@gpt_executor"
+      "gpt_codex": "@gpt_executor",
+      "codex": "@gpt_executor"
     },
     "curator": {
       "claude": "@curator",
-      "gpt_hosted_fallback": "@curator"
+      "gpt_hosted_fallback": "@curator",
+      "gpt": "@curator"
     }
   },
   "policy": {
@@ -73,6 +79,7 @@
       "permission_error",
       "timeout"
     ],
-    "runner_unavailable_policy": "skip_unhealthy_provider_and_continue_fallback_chain"
+    "runner_unavailable_policy": "skip_unhealthy_provider_and_continue_fallback_chain",
+    "analyst_policy": "primary_gpt_but_not_hard_pinned"
   }
 }
