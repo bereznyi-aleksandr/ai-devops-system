@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-05-05T02:51:10Z",
+  "updated_at": "2026-05-05T02:51:23Z",
   "cycles": {
     "cyc_test_20260504T031100Z": {
       "cycle_id": "cyc_test_20260504T031100Z",
@@ -109,12 +109,12 @@
         "auditor",
         "curator_summary"
       ],
-      "current_index": 0,
-      "current_role": "analyst",
+      "current_index": 1,
+      "current_role": "auditor",
       "current_provider": "gpt",
       "status": "role_dispatched",
       "task": "curator\n\nTYPE: CURATOR_ROADMAP_EXECUTION\nTRACE_ID: proof_e4_002_step_limit_20260505\nTASK_TYPE: architecture_change\n\nЗАДАЧА:\nВыполнить proof-run E4-002 anti-loop / step limit.\n\nПроверить:\n1. role_sequence.json содержит max_role_steps_per_cycle=8 и terminal status step_limit_exceeded.\n2. role_orchestrator.py считает role_dispatch и role_result в step_count.\n3. При штатном architecture_change цикле лимит не ломает FSM.\n4. При превышении max_role_steps_per_cycle цикл переводится в step_limit_exceeded.\n5. Записывается ROLE_CYCLE_STEP_LIMIT_EXCEEDED.\n6. Публикуется BEM step-limit blocker report.\n\nНе ждать оператора. После proof-run дать BEM-отчёт с cycle_id, trace_id, commit SHA, files changed, checks.",
-      "step_count": 1,
+      "step_count": 3,
       "step_history": [
         {
           "step": 1,
@@ -122,9 +122,23 @@
           "role": "analyst",
           "provider": "gpt",
           "timestamp": "2026-05-05T02:51:10Z"
+        },
+        {
+          "step": 2,
+          "type": "role_result",
+          "role": "analyst",
+          "provider": "gpt",
+          "timestamp": "2026-05-05T02:51:23Z"
+        },
+        {
+          "step": 3,
+          "type": "role_dispatch",
+          "role": "auditor",
+          "provider": "gpt",
+          "timestamp": "2026-05-05T02:51:23Z"
         }
       ],
-      "updated_at": "2026-05-05T02:51:10Z"
+      "updated_at": "2026-05-05T02:51:23Z"
     }
   },
   "last_cycle_id": "cyc_roadmap_20260505T025103Z",
