@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "purpose": "Map logical providers to concrete execution adapters. Role FSM chooses role; routing chooses provider; provider adapter chooses workflow. GPT hosted is report/analysis; GPT Codex is the write-capable reserve coding contour.",
+  "version": 3,
+  "purpose": "Map logical providers to concrete execution adapters. Role FSM chooses role; routing chooses provider; provider adapter chooses workflow. GPT hosted is the default analyst/report contour; GPT Codex is the write-capable reserve coding contour and can also serve analyst in fallback mode.",
   "default_provider": "gpt",
   "adapters": {
     "gpt": {
@@ -19,7 +19,7 @@
         "write_repo": false,
         "commit": false
       },
-      "notes": "Hosted GPT role runner is primarily for analyst/report roles. Write-capable reserve execution must use gpt_codex."
+      "notes": "Hosted GPT role runner is the primary analyst/report contour. If it becomes unhealthy, analyst can fail over through the role fallback chain."
     },
     "gpt_hosted_fallback": {
       "enabled": true,
@@ -45,6 +45,7 @@
       "workflow": "codex-local.yml",
       "runner": "self-hosted:codex-local",
       "supports_roles": [
+        "analyst",
         "auditor",
         "executor"
       ],
@@ -58,7 +59,7 @@
         "local Codex CLI",
         "AI_SYSTEM_GITHUB_PAT"
       ],
-      "notes": "Write-capable GPT Codex reserve contour for auditor/executor when Claude/Cloud Codex is limited."
+      "notes": "Write-capable GPT Codex reserve contour. For analyst it works as read/plan fallback; for auditor/executor it can participate in the coding contour."
     },
     "codex": {
       "enabled": true,
@@ -120,6 +121,7 @@
     "adapter_missing": "use_role_reserve_or_default_provider",
     "adapter_disabled": "use_role_reserve_or_default_provider",
     "adapter_does_not_support_role": "use_role_reserve_or_default_provider",
-    "provider_limited": "use_role_reserve_or_default_provider"
+    "provider_limited": "use_role_reserve_or_default_provider",
+    "provider_unhealthy": "skip_provider_and_continue_fallback_chain"
   }
 }
