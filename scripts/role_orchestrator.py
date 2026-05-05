@@ -15,6 +15,7 @@ ROUTING_PATH = ROOT / "governance/state/routing.json"
 PROVIDER_STATUS_PATH = ROOT / "governance/state/provider_status.json"
 PROVIDER_ADAPTERS_PATH = ROOT / "governance/policies/provider_adapters.json"
 PROVIDER_ADAPTER_LOG = ROOT / "governance/events/provider_adapter.jsonl"
+EMERGENCY_STOP_PATH = ROOT / "governance/state/emergency_stop.json"
 
 ROLE_WORKFLOW = "gpt-hosted-roles.yml"
 MAIN_ISSUE = "31"
@@ -62,6 +63,51 @@ def append_provider_adapter_event(entry):
     entry["timestamp"] = entry.get("timestamp") or now_iso()
     with PROVIDER_ADAPTER_LOG.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+
+def emergency_stop_blocked(mode, trace_id="", cycle_id=""):
+    state = load_json(EMERGENCY_STOP_PATH, {"enabled": False})
+    if not state.get("enabled"):
+        return False
+
+    reason = state.get("reason") or "emergency stop enabled"
+    event = {
+        "event": "ROLE_ORCHESTRATOR_EMERGENCY_STOP_BLOCKED",
+        "mode": mode,
+        "trace_id": trace_id or state.get("trace_id"),
+        "cycle_id": cycle_id,
+        "reason": reason,
+        "emergency_stop_updated_at": state.get("updated_at"),
+        "emergency_stop_updated_by": state.get("updated_by")
+    }
+    append_event(event)
+
+    print("BEM-ROLE-ORCHESTRATOR | EMERGENCY_STOP_BLOCKED")
+    print("MODE=" + str(mode))
+    print("TRACE_ID=" + str(event.get("trace_id") or ""))
+    print("CYCLE_ID=" + str(cycle_id or ""))
+    print("REASON=" + str(reason))
+
+    try:
+        post_issue_comment(
+            "BEM-ROLE-ORCHESTRATOR | EMERGENCY STOP BLOCKED\n\n"
+            f"Mode: {mode}\n"
+            f"Trace: {event.get('trace_id')}\n"
+            f"Cycle: {cycle_id or 'none'}\n"
+            f"Reason: {reason}\n\n"
+            "Status: no role dispatch was performed."
+        )
+    except Exception as exc:
+        append_event({
+            "event": "ROLE_ORCHESTRATOR_EMERGENCY_STOP_REPORT_FAILED",
+            "mode": mode,
+            "trace_id": event.get("trace_id"),
+            "cycle_id": cycle_id,
+            "error": str(exc)[:500]
+        })
+
+    return True
 
 
 def load_provider_adapters():
@@ -551,6 +597,8 @@ def main():
     parser.add_argument("--note", default="")
     args = parser.parse_args()
     append_event({"event": "ROLE_ORCHESTRATOR_START", "mode": args.mode})
+    if emergency_stop_blocked(args.mode, args.trace_id, args.cycle_id):
+        return 42
     if args.mode == "start":
         cycle_id, trace_id, role, provider = start_cycle(args.task_type, args.task, args.trace_id or None, args.cycle_id or None)
         print("BEM-ROLE-ORCHESTRATOR | STARTED")
