@@ -4,6 +4,7 @@ import fnmatch
 import json
 import os
 import subprocess
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -95,6 +96,39 @@ def run_checks(task):
     return True, results
 
 
+def run_git(cmd, check=True):
+    proc = subprocess.run(cmd, shell=True, cwd=ROOT, text=True, capture_output=True)
+    if check and proc.returncode != 0:
+        raise RuntimeError(
+            f'git command failed rc={proc.returncode}: {cmd}\n'
+            f'STDOUT:\n{proc.stdout[-2000:]}\nSTDERR:\n{proc.stderr[-2000:]}'
+        )
+    return proc
+
+
+def git_push_with_recovery(max_attempts=3):
+    for attempt in range(1, max_attempts + 1):
+        print(f'BEM-ISA-PATCH-RUNNER | PUSH_ATTEMPT_{attempt}')
+        append_event({'event': 'PATCH_RUNNER_PUSH_ATTEMPT', 'attempt': attempt})
+        run_git('git pull --rebase --autostash origin main')
+        proc = run_git('git push origin HEAD:main', check=False)
+        if proc.returncode == 0:
+            append_event({'event': 'PATCH_RUNNER_PUSH_OK', 'attempt': attempt})
+            print('BEM-ISA-PATCH-RUNNER | PUSH_OK')
+            return 'pushed'
+        append_event({
+            'event': 'PATCH_RUNNER_PUSH_RETRY',
+            'attempt': attempt,
+            'returncode': proc.returncode,
+            'stdout': proc.stdout[-2000:],
+            'stderr': proc.stderr[-2000:]
+        })
+        time.sleep(2)
+    append_event({'event': 'PATCH_RUNNER_PUSH_FAILED_AFTER_RETRY', 'attempts': max_attempts})
+    print('BEM-ISA-PATCH-RUNNER | PUSH_FAILED_AFTER_RETRY')
+    raise RuntimeError('git push failed after retry')
+
+
 def git_commit(message):
     subprocess.run('git status --short', shell=True, cwd=ROOT, check=False)
     subprocess.run('git add .', shell=True, cwd=ROOT, check=True)
@@ -104,8 +138,7 @@ def git_commit(message):
     subprocess.run('git config user.email isa-patch-runner@ai-devops-system', shell=True, cwd=ROOT, check=True)
     subprocess.run('git config user.name ISA Patch Runner', shell=True, cwd=ROOT, check=True)
     subprocess.run(['git', 'commit', '-m', message], cwd=ROOT, check=True)
-    subprocess.run(['git', 'push'], cwd=ROOT, check=True)
-    return 'committed'
+    return git_push_with_recovery()
 
 
 def main():
