@@ -1,31 +1,24 @@
 {
   "version": 1,
-  "updated_at": "2026-05-04T20:40:49Z",
+  "updated_at": "2026-05-06T05:20:00Z",
   "providers": {
     "claude": {
-      "status": "limited",
-      "last_success_at": null,
-      "last_failure_at": "2026-05-03T18:01:32Z",
-      "last_failure_type": "provider_limit",
-      "failure_count": 1,
-      "cooldown_until": null,
-      "last_error_excerpt": "You've hit your limit - resets at 08:00\n\nЗадача для проверки автономности: через curator entrypoint классифицировать provider_limit, переключить curator на GPT hosted fallback, создать route-comment д"
+      "status": "ok",
+      "reason": "E5-001 proof setup",
+      "updated_at": "2026-05-06T05:20:00Z",
+      "trace_id": "e5_001_proof_setup_claude_ok"
     },
     "gpt": {
-      "status": "unknown",
-      "last_success_at": null,
-      "last_failure_at": null,
-      "last_failure_type": null,
-      "failure_count": 0,
-      "cooldown_until": null,
-      "last_error_excerpt": null
+      "status": "ok",
+      "reason": "E5-001 proof setup",
+      "updated_at": "2026-05-06T05:20:00Z",
+      "trace_id": "e5_001_proof_setup_gpt_ok"
     },
     "gpt_codex": {
       "status": "error",
       "updated_at": "2026-05-04T20:40:49Z",
       "last_failure_at": "2026-05-04T20:40:49Z",
       "last_failure_type": "runner_unavailable",
-      "last_error_excerpt": "Role dispatch exceeded max_cycle_age_minutes=30; provider=gpt_codex requires a self-hosted runner and did not return a result.",
       "failure_count": 1,
       "last_role": "auditor",
       "last_cycle_id": "cyc_roadmap_20260504T182235Z",
