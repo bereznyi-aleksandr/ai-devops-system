@@ -26,8 +26,6 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event.issue.number == 31 &&
-       github.actor != 'github-actions[bot]' &&
-       github.event.comment.user.type != 'Bot' &&
        contains(github.event.comment.body, 'TYPE: ISA_PATCH_RUNNER'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -132,7 +130,8 @@ jobs:
               '- validation/check result is in Actions log',
               '- event log append attempted',
               '- pull --rebase --autostash before workflow push enforced',
-              '- workflow push retry enabled'
+              '- workflow push retry enabled',
+              '- system trigger condition accepted'
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
