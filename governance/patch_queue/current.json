@@ -1,17 +1,1 @@
-{
-  "task_id": "auto_heartbeat_proof",
-  "title": "auto_heartbeat_proof",
-  "mode": "apply_and_commit",
-  "owner_approved_commit": true,
-  "commit_message": "AUTONOMY: auto_heartbeat_proof",
-  "files": [
-    {
-      "path": "governance/events/autonomous_roadmap_executor_proof.jsonl",
-      "operation": "create_or_update",
-      "content": "{\"event\": \"AUTONOMOUS_ROADMAP_EXECUTOR_PROOF\", \"task_id\": \"AUTO_HEARTBEAT_PROOF\", \"timestamp\": \"2026-05-06T17:19:43Z\"}\n"
-    }
-  ],
-  "checks": [
-    "python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py"
-  ]
-}
+{"task_id":"bm_233_self_runner_loop_fix","title":"BM-233: Fix autonomous self-runner loop","mode":"apply_and_commit","owner_approved_commit":true,"commit_message":"BM-233: fix autonomous self-runner loop","files":[{"path":"scripts/isa_patch_runner.py","operation":"replace","old":"        proc = subprocess.run(cmd, shell=True, cwd=ROOT, text=True, capture_output=True)\n","new":"        env = os.environ.copy()\n        env['ISA_PATCH_RUNNER_ACTIVE'] = '1'\n        proc = subprocess.run(cmd, shell=True, cwd=ROOT, text=True, capture_output=True, env=env)\n","count":1},{"path":"scripts/autonomous_task_engine.py","operation":"replace","old":"def _select_next(state):\n","new":"def _proof_event_exists(task_id):\n    path = ROOT / 'governance/events/autonomous_roadmap_executor_proof.jsonl'\n    if not path.exists():\n        return False\n    return str(task_id) in path.read_text(encoding='utf-8', errors='replace')\n\ndef _sync_roadmap_results(state):\n    changed = False\n    for task in state.get('tasks', []):\n        if task.get('task_id') == 'AUTO_HEARTBEAT_PROOF' and task.get('status') in ('pending', 'prepared', 'running', 'waiting_runner', 'retry'):\n            if _proof_event_exists(task.get('task_id')):\n                task['status'] = 'completed'\n                task['completed_at'] = now_iso()\n                state['blocker'] = None\n                changed = True\n    return changed\n\ndef _select_next(state):\n","count":1},{"path":"scripts/autonomous_task_engine.py","operation":"replace","old":"    state = _roadmap_load()\n    task = _select_next(state)\n","new":"    state = _roadmap_load()\n    if _sync_roadmap_results(state):\n        _roadmap_save(state)\n    task = _select_next(state)\n","count":1},{"path":"scripts/autonomous_task_engine.py","operation":"replace","old":"    if dry_run:\n        print('BEM-AUTONOMY-ENGINE | PATCH_TASK_PREPARED')\n        return 0\n    task['status'] = 'running'\n","new":"    if dry_run:\n        print('BEM-AUTONOMY-ENGINE | PATCH_TASK_PREPARED')\n        return 0\n    if os.environ.get('ISA_PATCH_RUNNER_ACTIVE') == '1':\n        task['status'] = 'waiting_runner'\n        task['dispatch_required_at'] = now_iso()\n        _roadmap_save(state)\n        append_event({'event': 'AUTONOMY_ENGINE_DISPATCH_REQUIRED', 'trace_id': trace_id, 'task_id': task.get('task_id')})\n        print('BEM-AUTONOMY-ENGINE | DISPATCH_REQUIRED')\n        return 0\n    task['status'] = 'running'\n","count":1}],"checks":["python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py","python3 scripts/autonomous_task_engine.py --mode run_until_blocked","python3 -c \"import json; s=json.load(open('governance/state/roadmap_state.json')); assert any(t.get('task_id')=='AUTO_HEARTBEAT_PROOF' and t.get('status')=='completed' for t in s.get('tasks', []))\""]}
