@@ -36,7 +36,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
       - name: Resolve runner inputs
@@ -84,12 +84,34 @@ jobs:
       - name: Commit runner event log
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           git config user.email "isa-patch-runner@ai-devops-system"
           git config user.name "ISA Patch Runner"
           git add governance/events/patch_runner.jsonl || true
-          git diff --cached --quiet || git commit -m "ISA PATCH RUNNER: append event log"
-          git push
+          if git diff --cached --quiet; then
+            echo "RUNNER_LOG_PUSH_STATUS=no_changes" >> "$GITHUB_ENV"
+            echo "BEM-ISA-PATCH-RUNNER | EVENT_LOG_NO_CHANGES"
+            exit 0
+          fi
+          git commit -m "ISA PATCH RUNNER: append event log"
+          push_ok=false
+          for attempt in 1 2 3; do
+            echo "BEM-ISA-PATCH-RUNNER | WORKFLOW_PUSH_ATTEMPT_$attempt"
+            git pull --rebase --autostash origin main
+            if git push origin HEAD:main; then
+              push_ok=true
+              break
+            fi
+            echo "BEM-ISA-PATCH-RUNNER | WORKFLOW_PUSH_RETRY_$attempt"
+            sleep 2
+          done
+          if [ "$push_ok" != "true" ]; then
+            echo "RUNNER_LOG_PUSH_STATUS=failed" >> "$GITHUB_ENV"
+            echo "BEM-ISA-PATCH-RUNNER | WORKFLOW_PUSH_FAILED_AFTER_RETRY"
+            exit 1
+          fi
+          echo "RUNNER_LOG_PUSH_STATUS=ok" >> "$GITHUB_ENV"
+          echo "BEM-ISA-PATCH-RUNNER | WORKFLOW_PUSH_OK"
 
       - name: Post report
         if: always()
@@ -103,11 +125,14 @@ jobs:
               `Task file: ${process.env.TASK_FILE || 'unknown'}`,
               `Mode: ${process.env.PATCH_MODE || 'unknown'}`,
               `Exit: ${process.env.RUNNER_EXIT || 'unknown'}`,
+              `Event log push: ${process.env.RUNNER_LOG_PUSH_STATUS || 'unknown'}`,
               '',
               'Checklist:',
               '- runner workflow executed',
               '- validation/check result is in Actions log',
-              '- event log append attempted'
+              '- event log append attempted',
+              '- pull --rebase --autostash before workflow push enforced',
+              '- workflow push retry enabled'
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
