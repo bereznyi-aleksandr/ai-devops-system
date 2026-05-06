@@ -151,6 +151,23 @@ def _roadmap_save(state):
     state['updated_at'] = now_iso()
     write_json(_roadmap_path(), state)
 
+def _proof_event_exists(task_id):
+    path = ROOT / 'governance/events/autonomous_roadmap_executor_proof.jsonl'
+    if not path.exists():
+        return False
+    return str(task_id) in path.read_text(encoding='utf-8', errors='replace')
+
+def _sync_roadmap_results(state):
+    changed = False
+    for task in state.get('tasks', []):
+        if task.get('task_id') == 'AUTO_HEARTBEAT_PROOF' and task.get('status') in ('pending', 'prepared', 'running', 'waiting_runner', 'retry'):
+            if _proof_event_exists(task.get('task_id')):
+                task['status'] = 'completed'
+                task['completed_at'] = now_iso()
+                state['blocker'] = None
+                changed = True
+    return changed
+
 def _select_next(state):
     for task in state.get('tasks', []):
         if task.get('status') in ('pending', 'prepared', 'retry'):
@@ -175,6 +192,8 @@ def _build_patch(task):
 
 def execute_next(dry_run=False):
     state = _roadmap_load()
+    if _sync_roadmap_results(state):
+        _roadmap_save(state)
     task = _select_next(state)
     trace_id = 'eng_' + uuid.uuid4().hex[:16]
     if not task:
@@ -186,6 +205,13 @@ def execute_next(dry_run=False):
     append_event({'event': 'AUTONOMY_ENGINE_TASK_SELECTED', 'trace_id': trace_id, 'task_id': task.get('task_id'), 'dry_run': dry_run})
     if dry_run:
         print('BEM-AUTONOMY-ENGINE | PATCH_TASK_PREPARED')
+        return 0
+    if os.environ.get('ISA_PATCH_RUNNER_ACTIVE') == '1':
+        task['status'] = 'waiting_runner'
+        task['dispatch_required_at'] = now_iso()
+        _roadmap_save(state)
+        append_event({'event': 'AUTONOMY_ENGINE_DISPATCH_REQUIRED', 'trace_id': trace_id, 'task_id': task.get('task_id')})
+        print('BEM-AUTONOMY-ENGINE | DISPATCH_REQUIRED')
         return 0
     task['status'] = 'running'
     _roadmap_save(state)

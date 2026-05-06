@@ -89,7 +89,9 @@ def apply_files(task):
 def run_checks(task):
     results = []
     for cmd in task.get('checks', []):
-        proc = subprocess.run(cmd, shell=True, cwd=ROOT, text=True, capture_output=True)
+        env = os.environ.copy()
+        env['ISA_PATCH_RUNNER_ACTIVE'] = '1'
+        proc = subprocess.run(cmd, shell=True, cwd=ROOT, text=True, capture_output=True, env=env)
         results.append({'cmd': cmd, 'returncode': proc.returncode, 'stdout': proc.stdout[-4000:], 'stderr': proc.stderr[-4000:]})
         if proc.returncode != 0:
             return False, results
