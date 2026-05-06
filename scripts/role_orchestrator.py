@@ -4,6 +4,12 @@ import json
 import os
 import urllib.request
 import uuid
+
+try:
+    import provider_failover as provider_failover_layer
+except Exception:
+    provider_failover_layer = None
+
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -64,6 +70,45 @@ def append_provider_adapter_event(entry):
     with PROVIDER_ADAPTER_LOG.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
+
+def provider_failover_candidate(role, trace_id="", task_type="role_orchestrator"):
+    if provider_failover_layer is None:
+        append_provider_adapter_event({
+            "event": "PROVIDER_FAILOVER_LAYER_UNAVAILABLE",
+            "role": role,
+            "reason": "import_failed_or_disabled"
+        })
+        return None
+    try:
+        result = provider_failover_layer.select_provider(
+            role,
+            trace_id=trace_id,
+            task_type=task_type
+        )
+    except Exception as exc:
+        append_provider_adapter_event({
+            "event": "PROVIDER_FAILOVER_LAYER_ERROR",
+            "role": role,
+            "error": str(exc)[:500]
+        })
+        return None
+    if result.get("status") == "ok" and result.get("provider"):
+        append_provider_adapter_event({
+            "event": "PROVIDER_FAILOVER_CANDIDATE",
+            "role": role,
+            "provider": result.get("provider"),
+            "fallback_used": result.get("fallback_used"),
+            "trace_id": result.get("trace_id"),
+            "task_type": result.get("task_type")
+        })
+        return result.get("provider")
+    append_provider_adapter_event({
+        "event": "PROVIDER_FAILOVER_NO_CANDIDATE",
+        "role": role,
+        "status": result.get("status"),
+        "reason": result.get("reason")
+    })
+    return None
 
 
 def emergency_stop_blocked(mode, trace_id="", cycle_id=""):
@@ -370,6 +415,7 @@ def select_provider(role):
         if candidate and candidate not in candidates:
             candidates.append(candidate)
 
+    add(provider_failover_candidate(role))
     add(role_cfg.get("active") or role_cfg.get("primary") or default_provider)
     add(role_cfg.get("primary"))
     add(role_cfg.get("reserve"))
