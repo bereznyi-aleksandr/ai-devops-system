@@ -15,3 +15,5 @@
 {"event": "PATCH_RUNNER_DRY_RUN_OK", "task_id": "c07_curator_to_role_route", "timestamp": "2026-05-06T04:36:25Z"}
 {"event": "PATCH_RUNNER_START", "task_id": "e5_001_provider_failover_role_orchestrator_integration", "mode": "apply_and_commit", "errors": [], "timestamp": "2026-05-06T04:56:36Z"}
 {"event": "PATCH_RUNNER_CHECKS", "task_id": "e5_001_provider_failover_role_orchestrator_integration", "ok": true, "checks": [{"cmd": "python3 -m py_compile scripts/provider_failover.py", "returncode": 0, "stdout": "", "stderr": ""}, {"cmd": "python3 -m py_compile scripts/role_orchestrator.py", "returncode": 0, "stdout": "", "stderr": ""}, {"cmd": "python3 -m py_compile scripts/isa_patch_runner.py", "returncode": 0, "stdout": "", "stderr": ""}], "timestamp": "2026-05-06T04:56:36Z"}
+{"event": "PATCH_RUNNER_START", "task_id": "e5_001_provider_failover_role_orchestrator_integration", "mode": "apply_and_commit", "errors": [], "timestamp": "2026-05-06T05:08:03Z"}
+{"event": "PATCH_RUNNER_APPLY_FAILED", "task_id": "e5_001_provider_failover_role_orchestrator_integration", "error": "replace target not found: scripts/role_orchestrator.py", "timestamp": "2026-05-06T05:08:03Z"}
