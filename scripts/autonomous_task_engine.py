@@ -129,9 +129,90 @@ def build_noop_patch_task(task_id):
     }
 
 
+def _roadmap_path():
+    return ROOT / 'governance/state/roadmap_state.json'
+
+def _roadmap_default():
+    return {'version': 1, 'updated_at': now_iso(), 'tasks': [
+        {'task_id': 'A1_A8_AUTONOMOUS_ROADMAP_EXECUTOR', 'status': 'completed'},
+        {'task_id': 'E5_001_PROVIDER_FAILOVER', 'status': 'completed'},
+        {'task_id': 'AUTO_HEARTBEAT_PROOF', 'status': 'pending', 'runner_mode': 'apply_and_commit'}
+    ], 'blocker': None}
+
+def _roadmap_load():
+    p = _roadmap_path()
+    if not p.exists() or not p.read_text(encoding='utf-8', errors='replace').strip():
+        state = _roadmap_default()
+        write_json(p, state)
+        return state
+    return load_json(p, _roadmap_default())
+
+def _roadmap_save(state):
+    state['updated_at'] = now_iso()
+    write_json(_roadmap_path(), state)
+
+def _select_next(state):
+    for task in state.get('tasks', []):
+        if task.get('status') in ('pending', 'prepared', 'retry'):
+            return task
+    return None
+
+def _build_patch(task):
+    tid = task.get('task_id', 'auto_task').lower()
+    return task.get('patch_task') or {
+        'task_id': tid,
+        'title': task.get('title', tid),
+        'mode': task.get('runner_mode', 'apply_and_commit'),
+        'owner_approved_commit': True,
+        'commit_message': 'AUTONOMY: ' + tid,
+        'files': [{
+            'path': 'governance/events/autonomous_roadmap_executor_proof.jsonl',
+            'operation': 'create_or_update',
+            'content': json.dumps({'event': 'AUTONOMOUS_ROADMAP_EXECUTOR_PROOF', 'task_id': task.get('task_id'), 'timestamp': now_iso()}, ensure_ascii=False) + '\n'
+        }],
+        'checks': ['python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py']
+    }
+
+def execute_next(dry_run=False):
+    state = _roadmap_load()
+    task = _select_next(state)
+    trace_id = 'eng_' + uuid.uuid4().hex[:16]
+    if not task:
+        append_event({'event': 'AUTONOMY_ENGINE_NO_PENDING_TASK', 'trace_id': trace_id})
+        print('BEM-AUTONOMY-ENGINE | NO_PENDING_TASK')
+        return 0
+    patch = _build_patch(task)
+    write_json(PATCH_TASK, patch)
+    append_event({'event': 'AUTONOMY_ENGINE_TASK_SELECTED', 'trace_id': trace_id, 'task_id': task.get('task_id'), 'dry_run': dry_run})
+    if dry_run:
+        print('BEM-AUTONOMY-ENGINE | PATCH_TASK_PREPARED')
+        return 0
+    task['status'] = 'running'
+    _roadmap_save(state)
+    result = run('python3 scripts/isa_patch_runner.py --task-file governance/patch_queue/current.json --mode ' + patch.get('mode', 'apply_and_commit'))
+    append_event({'event': 'AUTONOMY_ENGINE_RUNNER_RESULT', 'trace_id': trace_id, 'task_id': task.get('task_id'), 'result': result})
+    task['status'] = 'completed' if result['returncode'] == 0 else 'blocked'
+    if result['returncode'] != 0:
+        state['blocker'] = {'task_id': task.get('task_id'), 'kind': 'runner_failed', 'timestamp': now_iso()}
+    else:
+        state['blocker'] = None
+    _roadmap_save(state)
+    print('BEM-AUTONOMY-ENGINE | ' + ('TASK_COMPLETED' if result['returncode'] == 0 else 'TASK_BLOCKED'))
+    return result['returncode']
+
+def run_until_blocked():
+    max_steps = int(load_json(POLICY, {}).get('max_steps_per_run', 3))
+    for _ in range(max_steps):
+        rc = execute_next(False)
+        if rc != 0 or not _select_next(_roadmap_load()):
+            return rc
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', default='plan', choices=['plan', 'proof_patch', 'proof_cycle'])
+    parser.add_argument('--mode', default='plan', choices=['plan', 'proof_patch', 'proof_cycle', 'execute_next', 'run_until_blocked'])
+    parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
 
     policy = load_json(POLICY, {})
@@ -161,6 +242,12 @@ def main():
         print('BEM-AUTONOMY-ENGINE | PROOF_PATCH_DONE')
         print(json.dumps(result, ensure_ascii=False))
         return 0 if result['returncode'] == 0 else result['returncode']
+
+    if args.mode == 'execute_next':
+        return execute_next(dry_run=args.dry_run)
+
+    if args.mode == 'run_until_blocked':
+        return run_until_blocked()
 
     if args.mode == 'proof_cycle':
         cycle_id = 'cyc_' + uuid.uuid4().hex[:16]
