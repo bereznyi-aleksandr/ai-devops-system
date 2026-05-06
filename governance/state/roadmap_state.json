@@ -1,6 +1,8 @@
 {
-  "version": 1,
-  "updated_at": "2026-05-06T17:23:18Z",
+  "version": 2,
+  "updated_at": "2026-05-06T17:30:00Z",
+  "mode": "production_autonomous_development_loop",
+  "cursor": "PROD_INTERNAL_CONTOUR_BASELINE_STATE",
   "tasks": [
     {
       "task_id": "A1_A8_AUTONOMOUS_ROADMAP_EXECUTOR",
@@ -13,8 +15,42 @@
     {
       "task_id": "AUTO_HEARTBEAT_PROOF",
       "status": "completed",
-      "runner_mode": "apply_and_commit",
       "completed_at": "2026-05-06T17:23:18Z"
+    },
+    {
+      "task_id": "PROD_INTERNAL_CONTOUR_BASELINE_STATE",
+      "title": "Create production internal contour baseline state",
+      "status": "pending",
+      "runner_mode": "apply_and_commit",
+      "template": "create_json_state",
+      "target_path": "governance/state/internal_contour_status.json",
+      "commit_message": "PROD-001: create internal contour baseline state",
+      "content": {
+        "version": 1,
+        "status": "production_autonomy_started",
+        "owner_goal": "Autonomous development of the internal contour without per-step operator confirmations",
+        "active_route": "roadmap_state -> autonomous_task_engine run_until_blocked -> patch_queue -> ISA Patch Runner -> state completed/blocker",
+        "created_by": "BM-237/238/239 production autonomy launch",
+        "next_expected_result": "first real development commit through autonomous route"
+      },
+      "checks": [
+        "python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py",
+        "python3 -m json.tool governance/state/internal_contour_status.json >/tmp/internal_contour_status_json_check.txt"
+      ]
+    },
+    {
+      "task_id": "PROD_AUTONOMY_EVENT_STREAM",
+      "title": "Create autonomous development event stream",
+      "status": "pending",
+      "runner_mode": "apply_and_commit",
+      "template": "append_event",
+      "target_path": "governance/events/autonomous_development.jsonl",
+      "commit_message": "PROD-002: initialize autonomous development event stream",
+      "content": {
+        "event": "AUTONOMOUS_DEVELOPMENT_STARTED",
+        "route": "roadmap_state -> run_until_blocked -> patch_queue -> ISA Patch Runner",
+        "status": "started"
+      }
     }
   ],
   "blocker": null

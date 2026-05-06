@@ -1,20 +1,30 @@
 {
-  "version": 2,
-  "autonomy_level": "roadmap_executor_bounded",
+  "version": 3,
+  "autonomy_level": "production_roadmap_executor_bounded",
   "max_steps_per_run": 5,
   "allowed_auto_actions": [
+    "read_state",
+    "append_event_log",
     "select_next_roadmap_task",
+    "generate_patch_task_from_template_registry",
     "generate_patch_task_from_roadmap",
+    "create_patch_task",
     "run_patch_runner_apply_and_commit_for_allowlisted_paths",
+    "read_patch_runner_result",
+    "sync_roadmap_completed_or_blocked",
     "run_until_blocked"
   ],
   "blocked_auto_actions": [
     "modify_secrets",
     "modify_billing",
     "change_repository_permissions",
+    "merge_pull_request",
     "delete_repository",
-    "print_tokens"
+    "print_tokens",
+    "direct_chatgpt_connector_write_as_standard_route",
+    "change_claude_workflow_without_explicit_policy"
   ],
   "allowed_paths_policy": "governance/policies/patch_runner_allowlist.json",
-  "main_issue": 31
+  "main_issue": 31,
+  "default_cycle": "PRODUCTION_AUTONOMY"
 }

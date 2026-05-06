@@ -176,7 +176,45 @@ def _select_next(state):
 
 def _build_patch(task):
     tid = task.get('task_id', 'auto_task').lower()
-    return task.get('patch_task') or {
+    if task.get('patch_task'):
+        return task['patch_task']
+    template = task.get('template')
+    if template == 'create_json_state':
+        target_path = task.get('target_path') or ('governance/state/' + tid + '.json')
+        payload = task.get('content') or {'task_id': task.get('task_id'), 'status': 'materialized', 'timestamp': now_iso()}
+        return {
+            'task_id': tid,
+            'title': task.get('title', tid),
+            'mode': task.get('runner_mode', 'apply_and_commit'),
+            'owner_approved_commit': True,
+            'commit_message': task.get('commit_message') or ('AUTONOMY: ' + tid),
+            'files': [{
+                'path': target_path,
+                'operation': 'create_or_update',
+                'content': json.dumps(payload, indent=2, ensure_ascii=False) + '\n'
+            }],
+            'checks': task.get('checks') or [
+                'python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py',
+                'python3 -m json.tool ' + target_path + ' >/tmp/autonomy_template_json_check.txt'
+            ]
+        }
+    if template == 'append_event':
+        target_path = task.get('target_path') or 'governance/events/autonomous_development.jsonl'
+        payload = task.get('content') or {'event': tid.upper(), 'timestamp': now_iso()}
+        return {
+            'task_id': tid,
+            'title': task.get('title', tid),
+            'mode': task.get('runner_mode', 'apply_and_commit'),
+            'owner_approved_commit': True,
+            'commit_message': task.get('commit_message') or ('AUTONOMY: ' + tid),
+            'files': [{
+                'path': target_path,
+                'operation': 'create_or_update',
+                'content': json.dumps(payload, ensure_ascii=False) + '\n'
+            }],
+            'checks': task.get('checks') or ['python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py']
+        }
+    return {
         'task_id': tid,
         'title': task.get('title', tid),
         'mode': task.get('runner_mode', 'apply_and_commit'),
