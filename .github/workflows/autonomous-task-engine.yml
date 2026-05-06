@@ -26,7 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
       - name: Resolve mode
@@ -52,12 +52,43 @@ jobs:
       - name: Commit autonomy state
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           git config user.email "autonomy-engine@ai-devops-system"
           git config user.name "Autonomy Engine"
-          git add governance/state/autonomy_state.json governance/events/autonomy_engine.jsonl governance/patch_queue/current.json governance/events/patch_runner.jsonl || true
-          git diff --cached --quiet || git commit -m "AUTONOMY ENGINE: state update"
-          git push
+
+          git add governance/state/autonomy_state.json \
+                  governance/events/autonomy_engine.jsonl \
+                  governance/patch_queue/current.json \
+                  governance/events/patch_runner.jsonl || true
+
+          if git diff --cached --quiet; then
+            echo "BEM-AUTONOMY-ENGINE | NO_STATE_CHANGES"
+            echo "AUTONOMY_PUSH_STATUS=no_changes" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          git commit -m "AUTONOMY ENGINE: state update"
+
+          push_ok=false
+          for attempt in 1 2 3; do
+            echo "BEM-AUTONOMY-ENGINE | PUSH_ATTEMPT_$attempt"
+            git pull --rebase --autostash origin main
+            if git push origin HEAD:main; then
+              push_ok=true
+              break
+            fi
+            echo "BEM-AUTONOMY-ENGINE | PUSH_RETRY_$attempt"
+            sleep 2
+          done
+
+          if [ "$push_ok" != "true" ]; then
+            echo "BEM-AUTONOMY-ENGINE | PUSH_FAILED_AFTER_RETRY"
+            echo "AUTONOMY_PUSH_STATUS=failed" >> "$GITHUB_ENV"
+            exit 1
+          fi
+
+          echo "BEM-AUTONOMY-ENGINE | PUSH_OK"
+          echo "AUTONOMY_PUSH_STATUS=ok" >> "$GITHUB_ENV"
 
       - name: Post autonomy report
         if: always()
@@ -70,10 +101,13 @@ jobs:
               '',
               `Mode: ${process.env.AUTONOMY_MODE || 'unknown'}`,
               `Exit: ${process.env.ENGINE_EXIT || 'unknown'}`,
+              `Push: ${process.env.AUTONOMY_PUSH_STATUS || 'unknown'}`,
               '',
               'Checklist:',
               '- autonomy engine workflow executed',
               '- state/event log commit attempted',
+              '- pull --rebase --autostash before push enforced',
+              '- push retry enabled',
               '- report posted repo-side'
             ].join('\n');
             await github.rest.issues.createComment({
