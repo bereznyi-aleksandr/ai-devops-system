@@ -1,20 +1,32 @@
 {
-  "task_id": "c07_curator_to_role_route",
-  "title": "Make hosted curator emit curator-to-role route comments",
+  "task_id": "e5_001_provider_failover_role_orchestrator_integration",
+  "title": "Integrate provider_failover.py with role_orchestrator provider selection",
   "mode": "apply_and_commit",
   "owner_approved_commit": true,
-  "commit_message": "C-07: route curator decisions to role router",
+  "commit_message": "E5-001: integrate provider failover with role orchestrator",
   "files": [
     {
-      "path": ".github/workflows/curator-hosted-gpt.yml",
+      "path": "scripts/role_orchestrator.py",
       "operation": "replace",
-      "old": "\n      - name: Post hosted GPT curator report",
-      "new": "\n      - name: Route requested role\n        if: always()\n        shell: bash\n        env:\n          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\n          REPO: ${{ github.repository }}\n          ISSUE_NUMBER: ${{ github.event.issue.number }}\n        run: |\n          set -e\n          python3 - <<'PY'\n          import json, os, urllib.request\n          from pathlib import Path\n          p = Path('governance/state/curator_last_decision.json')\n          if not p.exists():\n              print('No curator_last_decision.json')\n              raise SystemExit(0)\n          d = json.loads(p.read_text(encoding='utf-8'))\n          role = d.get('requested_role')\n          if not role or role == 'none':\n              print('No requested role; skip role route')\n              raise SystemExit(0)\n          trace = d.get('trace_id', 'missing')\n          task = (d.get('task') or '').strip()[:4000]\n          body = '\\n'.join([\n              'TYPE: CURATOR_TO_ROLE',\n              f'TRACE_ID: {trace}',\n              f'ROLE: {role}',\n              '',\n              'TASK:',\n              task\n          ])\n          data = json.dumps({'body': body}).encode('utf-8')\n          req = urllib.request.Request(\n              f\"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments\",\n              data=data,\n              headers={\n                  'Authorization': f\"Bearer {os.environ['GH_TOKEN']}\",\n                  'Accept': 'application/vnd.github+json',\n                  'Content-Type': 'application/json',\n                  'User-Agent': 'ai-devops-curator-route'\n              },\n              method='POST'\n          )\n          with urllib.request.urlopen(req) as resp:\n              print(resp.status)\n          PY\n\n      - name: Post hosted GPT curator report"
+      "old": "import urllib.request\nimport uuid\nfrom datetime import datetime, timezone",
+      "new": "import urllib.request\nimport uuid\n\ntry:\n    import provider_failover as provider_failover_layer\nexcept Exception:\n    provider_failover_layer = None\n\nfrom datetime import datetime, timezone"
+    },
+    {
+      "path": "scripts/role_orchestrator.py",
+      "operation": "replace",
+      "old": "def append_provider_adapter_event(entry):\n    PROVIDER_ADAPTER_LOG.parent.mkdir(parents=True, exist_ok=True)\n    entry[\"timestamp\"] = entry.get(\"timestamp\") or now_iso()\n    with PROVIDER_ADAPTER_LOG.open(\"a\", encoding=\"utf-8\") as f:\n        f.write(json.dumps(entry, ensure_ascii=False) + \"\\n\")\n\n\n\ndef emergency_stop_blocked",
+      "new": "def append_provider_adapter_event(entry):\n    PROVIDER_ADAPTER_LOG.parent.mkdir(parents=True, exist_ok=True)\n    entry[\"timestamp\"] = entry.get(\"timestamp\") or now_iso()\n    with PROVIDER_ADAPTER_LOG.open(\"a\", encoding=\"utf-8\") as f:\n        f.write(json.dumps(entry, ensure_ascii=False) + \"\\n\")\n\n\ndef provider_failover_candidate(role, trace_id=\"\", task_type=\"role_orchestrator\"):\n    if provider_failover_layer is None:\n        append_provider_adapter_event({\n            \"event\": \"PROVIDER_FAILOVER_LAYER_UNAVAILABLE\",\n            \"role\": role,\n            \"reason\": \"import_failed_or_disabled\"\n        })\n        return None\n    try:\n        result = provider_failover_layer.select_provider(\n            role,\n            trace_id=trace_id,\n            task_type=task_type\n        )\n    except Exception as exc:\n        append_provider_adapter_event({\n            \"event\": \"PROVIDER_FAILOVER_LAYER_ERROR\",\n            \"role\": role,\n            \"error\": str(exc)[:500]\n        })\n        return None\n    if result.get(\"status\") == \"ok\" and result.get(\"provider\"):\n        append_provider_adapter_event({\n            \"event\": \"PROVIDER_FAILOVER_CANDIDATE\",\n            \"role\": role,\n            \"provider\": result.get(\"provider\"),\n            \"fallback_used\": result.get(\"fallback_used\"),\n            \"trace_id\": result.get(\"trace_id\"),\n            \"task_type\": result.get(\"task_type\")\n        })\n        return result.get(\"provider\")\n    append_provider_adapter_event({\n        \"event\": \"PROVIDER_FAILOVER_NO_CANDIDATE\",\n        \"role\": role,\n        \"status\": result.get(\"status\"),\n        \"reason\": result.get(\"reason\")\n    })\n    return None\n\n\ndef emergency_stop_blocked"
+    },
+    {
+      "path": "scripts/role_orchestrator.py",
+      "operation": "replace",
+      "old": "    def add(candidate):\n        if candidate and candidate not in candidates:\n            candidates.append(candidate)\n\n    add(role_cfg.get(\"active\") or role_cfg.get(\"primary\") or default_provider)",
+      "new": "    def add(candidate):\n        if candidate and candidate not in candidates:\n            candidates.append(candidate)\n\n    add(provider_failover_candidate(role))\n    add(role_cfg.get(\"active\") or role_cfg.get(\"primary\") or default_provider)"
     }
   ],
   "checks": [
-    "python3 -m py_compile scripts/isa_patch_runner.py",
-    "python3 -m py_compile scripts/curator_entrypoint.py",
-    "python3 -m py_compile scripts/curator_router.py"
+    "python3 -m py_compile scripts/provider_failover.py",
+    "python3 -m py_compile scripts/role_orchestrator.py",
+    "python3 -m py_compile scripts/isa_patch_runner.py"
   ]
 }
