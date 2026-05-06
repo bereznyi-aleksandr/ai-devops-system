@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-05-06T17:30:00Z",
+  "updated_at": "2026-05-06T18:08:20Z",
   "mode": "production_autonomous_development_loop",
   "cursor": "PROD_INTERNAL_CONTOUR_BASELINE_STATE",
   "tasks": [
@@ -20,7 +20,7 @@
     {
       "task_id": "PROD_INTERNAL_CONTOUR_BASELINE_STATE",
       "title": "Create production internal contour baseline state",
-      "status": "pending",
+      "status": "completed",
       "runner_mode": "apply_and_commit",
       "template": "create_json_state",
       "target_path": "governance/state/internal_contour_status.json",
@@ -36,12 +36,13 @@
       "checks": [
         "python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py",
         "python3 -m json.tool governance/state/internal_contour_status.json >/tmp/internal_contour_status_json_check.txt"
-      ]
+      ],
+      "completed_at": "2026-05-06T18:08:20Z"
     },
     {
       "task_id": "PROD_AUTONOMY_EVENT_STREAM",
       "title": "Create autonomous development event stream",
-      "status": "pending",
+      "status": "waiting_runner",
       "runner_mode": "apply_and_commit",
       "template": "append_event",
       "target_path": "governance/events/autonomous_development.jsonl",
@@ -50,7 +51,8 @@
         "event": "AUTONOMOUS_DEVELOPMENT_STARTED",
         "route": "roadmap_state -> run_until_blocked -> patch_queue -> ISA Patch Runner",
         "status": "started"
-      }
+      },
+      "dispatch_required_at": "2026-05-06T18:08:20Z"
     }
   ],
   "blocker": null

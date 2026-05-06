@@ -157,15 +157,28 @@ def _proof_event_exists(task_id):
         return False
     return str(task_id) in path.read_text(encoding='utf-8', errors='replace')
 
+def _task_materialized(task):
+    target = task.get('target_path')
+    if target and (ROOT / target).exists():
+        if task.get('template') == 'create_json_state':
+            return True
+        if task.get('template') == 'append_event':
+            text = (ROOT / target).read_text(encoding='utf-8', errors='replace')
+            content = task.get('content') or {}
+            marker = content.get('event') or task.get('task_id')
+            return str(marker) in text
+    if task.get('task_id') == 'AUTO_HEARTBEAT_PROOF':
+        return _proof_event_exists(task.get('task_id'))
+    return False
+
 def _sync_roadmap_results(state):
     changed = False
     for task in state.get('tasks', []):
-        if task.get('task_id') == 'AUTO_HEARTBEAT_PROOF' and task.get('status') in ('pending', 'prepared', 'running', 'waiting_runner', 'retry'):
-            if _proof_event_exists(task.get('task_id')):
-                task['status'] = 'completed'
-                task['completed_at'] = now_iso()
-                state['blocker'] = None
-                changed = True
+        if task.get('status') in ('pending', 'prepared', 'running', 'waiting_runner', 'retry') and _task_materialized(task):
+            task['status'] = 'completed'
+            task['completed_at'] = now_iso()
+            state['blocker'] = None
+            changed = True
     return changed
 
 def _select_next(state):

@@ -1,1 +1,17 @@
-{"task_id":"bm_240_generic_roadmap_result_sync","title":"BM-240: Generic roadmap result sync for production tasks","mode":"apply_and_commit","owner_approved_commit":true,"commit_message":"BM-240: add generic roadmap result sync","files":[{"path":"scripts/autonomous_task_engine.py","operation":"replace","old":"def _sync_roadmap_results(state):\n    changed = False\n    for task in state.get('tasks', []):\n        if task.get('task_id') == 'AUTO_HEARTBEAT_PROOF' and task.get('status') in ('pending', 'prepared', 'running', 'waiting_runner', 'retry'):\n            if _proof_event_exists(task.get('task_id')):\n                task['status'] = 'completed'\n                task['completed_at'] = now_iso()\n                state['blocker'] = None\n                changed = True\n    return changed\n","new":"def _task_materialized(task):\n    target = task.get('target_path')\n    if target and (ROOT / target).exists():\n        if task.get('template') == 'create_json_state':\n            return True\n        if task.get('template') == 'append_event':\n            text = (ROOT / target).read_text(encoding='utf-8', errors='replace')\n            content = task.get('content') or {}\n            marker = content.get('event') or task.get('task_id')\n            return str(marker) in text\n    if task.get('task_id') == 'AUTO_HEARTBEAT_PROOF':\n        return _proof_event_exists(task.get('task_id'))\n    return False\n\ndef _sync_roadmap_results(state):\n    changed = False\n    for task in state.get('tasks', []):\n        if task.get('status') in ('pending', 'prepared', 'running', 'waiting_runner', 'retry') and _task_materialized(task):\n            task['status'] = 'completed'\n            task['completed_at'] = now_iso()\n            state['blocker'] = None\n            changed = True\n    return changed\n","count":1}],"checks":["python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py","python3 scripts/autonomous_task_engine.py --mode run_until_blocked","python3 -c \"import json; s=json.load(open('governance/state/roadmap_state.json')); assert any(t.get('task_id')=='PROD_INTERNAL_CONTOUR_BASELINE_STATE' and t.get('status')=='completed' for t in s.get('tasks', []))\""]}
+{
+  "task_id": "prod_autonomy_event_stream",
+  "title": "Create autonomous development event stream",
+  "mode": "apply_and_commit",
+  "owner_approved_commit": true,
+  "commit_message": "PROD-002: initialize autonomous development event stream",
+  "files": [
+    {
+      "path": "governance/events/autonomous_development.jsonl",
+      "operation": "create_or_update",
+      "content": "{\"event\": \"AUTONOMOUS_DEVELOPMENT_STARTED\", \"route\": \"roadmap_state -> run_until_blocked -> patch_queue -> ISA Patch Runner\", \"status\": \"started\"}\n"
+    }
+  ],
+  "checks": [
+    "python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py"
+  ]
+}
