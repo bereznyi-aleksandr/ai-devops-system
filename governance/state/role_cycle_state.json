@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-05-05T02:52:29Z",
+  "updated_at": "2026-05-07T06:24:14Z",
   "cycles": {
     "cyc_test_20260504T031100Z": {
       "cycle_id": "cyc_test_20260504T031100Z",
@@ -174,9 +174,37 @@
         }
       ],
       "updated_at": "2026-05-05T02:52:29Z"
+    },
+    "cyc_roadmap_20260507T062404Z": {
+      "cycle_id": "cyc_roadmap_20260507T062404Z",
+      "trace_id": "proof_gpt_reserve_fallback",
+      "task_type": "architecture_change",
+      "sequence": [
+        "analyst",
+        "auditor",
+        "executor",
+        "auditor",
+        "curator_summary"
+      ],
+      "current_index": 0,
+      "current_role": "analyst",
+      "current_provider": "gpt",
+      "status": "role_dispatched",
+      "task": "curator\n\nTYPE: CURATOR_ROADMAP_EXECUTION\nTRACE_ID: proof_gpt_reserve_fallback\nTASK_TYPE: architecture_change\n\nЗАДАЧА:\nProof-run GPT reserve fallback.\nClaude.status = limited (принудительно для теста).\nAuditor и executor должны пойти через GPT reserve.\nExecutor должен внести тестовое изменение и сделать commit.\n\nОжидаемый маршрут:\nanalyst (gpt) → auditor (gpt reserve) → executor (gpt reserve) → auditor verify → curator_summary",
+      "step_count": 1,
+      "step_history": [
+        {
+          "step": 1,
+          "type": "role_dispatch",
+          "role": "analyst",
+          "provider": "gpt",
+          "timestamp": "2026-05-07T06:24:14Z"
+        }
+      ],
+      "updated_at": "2026-05-07T06:24:14Z"
     }
   },
-  "last_cycle_id": "cyc_roadmap_20260505T025103Z",
-  "last_trace_id": "proof_e4_002_step_limit_20260505",
-  "status": "cycle_completed"
+  "last_cycle_id": "cyc_roadmap_20260507T062404Z",
+  "last_trace_id": "proof_gpt_reserve_fallback",
+  "status": "cycle_started"
 }
