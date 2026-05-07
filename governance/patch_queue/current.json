@@ -1,14 +1,14 @@
 {
-  "task_id": "prod_autonomy_event_stream",
-  "title": "Create autonomous development event stream",
+  "task_id": "int_001_inventory_repo_state",
+  "title": "Inventory current repo state — list active files and workflows",
   "mode": "apply_and_commit",
   "owner_approved_commit": true,
-  "commit_message": "PROD-002: initialize autonomous development event stream",
+  "commit_message": "INT-001: repo state inventory",
   "files": [
     {
-      "path": "governance/events/autonomous_development.jsonl",
+      "path": "governance/state/repo_inventory.json",
       "operation": "create_or_update",
-      "content": "{\"event\": \"AUTONOMOUS_DEVELOPMENT_STARTED\", \"route\": \"roadmap_state -> run_until_blocked -> patch_queue -> ISA Patch Runner\", \"status\": \"started\"}\n"
+      "content": "{\n  \"version\": 1,\n  \"created_at\": \"2026-05-07T05:10:00Z\",\n  \"description\": \"Repository inventory created by autonomous task engine\",\n  \"active_workflows\": [\n    \"analyst.yml\", \"auditor.yml\", \"executor.yml\", \"curator.yml\",\n    \"curator-hosted-gpt.yml\", \"role-orchestrator.yml\",\n    \"gpt-hosted-roles.yml\", \"role-router.yml\",\n    \"telegram-outbox-dispatch.yml\", \"curator-hourly-report.yml\",\n    \"isa-patch-runner.yml\", \"autonomous-task-engine.yml\"\n  ],\n  \"active_state_files\": [\n    \"governance/state/routing.json\",\n    \"governance/state/system_state.json\",\n    \"governance/state/provider_status.json\",\n    \"governance/state/role_cycle_state.json\",\n    \"governance/state/roadmap_state.json\",\n    \"governance/state/internal_contour_status.json\"\n  ]\n}\n"
     }
   ],
   "checks": [
