@@ -35,7 +35,7 @@ on:
     types: [created]
 
 permissions:
-  contents: read
+  contents: write
   issues: write
   actions: write
 
@@ -52,13 +52,14 @@ jobs:
         contains(github.event.comment.body, '@gpt_auditor') ||
         contains(github.event.comment.body, '@gpt_curator')))
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
       - name: Build hosted role prompt
         shell: bash
@@ -112,31 +113,65 @@ jobs:
               task = body
               provider = 'gpt'
 
+          role_raw = role.replace('GPT_', '').lower()
+
           def read(path, limit=20000):
               p = root / path
               if not p.exists():
                   return f'[missing: {path}]'
               return p.read_text(encoding='utf-8', errors='replace')[:limit]
 
+          # Role-aware правила
+          if role_raw == 'analyst':
+              role_rules = [
+                  'You are GPT_ANALYST — planning and analysis role.',
+                  'Your job: read repository state, analyse task, propose concrete next step.',
+                  'Do NOT change files. Do NOT commit.',
+                  'Output: BEM report with proposed plan for auditor review.',
+              ]
+          elif role_raw == 'auditor':
+              role_rules = [
+                  'You are GPT_AUDITOR — independent verification role.',
+                  'Your job: read analyst report and repository state, verify correctness and safety.',
+                  'Do NOT change files. Do NOT commit.',
+                  'Output: BEM report with VERDICT: APPROVED or BLOCKED and reason.',
+              ]
+          elif role_raw == 'executor':
+              role_rules = [
+                  'You are GPT_EXECUTOR — implementation role.',
+                  'Your job: execute the approved task. You MAY change files and commit.',
+                  'Rules for execution:',
+                  '  - Only make changes within approved scope from auditor.',
+                  '  - Do NOT change secrets, billing, permissions, production deploy.',
+                  '  - Do NOT auto-merge.',
+                  '  - Write clear commit message with BEM trace_id.',
+                  '  - Output list of changed files in BEM report.',
+                  'You have git commit rights in this workflow.',
+              ]
+          else:
+              role_rules = [
+                  f'You are {role} — general role.',
+                  'Read state, analyse, report.',
+              ]
+
           parts = [
               f'BEM-GPT-HOSTED-ROLE | {role}',
               '',
-              f'You are {role} for ai-devops-system.',
               f'TRACE_ID={trace_id}',
               f'CYCLE_ID={cycle_id}',
               f'TASK_TYPE={task_type}',
               '',
-              'Architecture:',
+              '=== ROLE RULES ===',
+          ] + role_rules + [
+              '',
+              '=== ARCHITECTURE ===',
               '- This is algorithmic role FSM execution.',
-              '- It replaces internal ISA/comment chaining because that path was too complex and unreliable.',
-              '- External ISA/comment remains entrypoint/audit trail only.',
+              '- External ISA/comment is entrypoint/audit trail only.',
               '- Do not call Claude.',
-              '- Do not change files.',
-              '- Do not commit.',
               '- Never reveal secrets.',
               '- Never include literal at-sign role mentions in final report.',
               '',
-              'Incoming task:',
+              '=== INCOMING TASK ===',
               '-----',
               body,
               '-----',
@@ -150,17 +185,22 @@ jobs:
               '--- governance/MASTER_PLAN.md ---',
               read('governance/MASTER_PLAN.md'),
               '',
-              'Required output:',
-              f'- Start with: BEM-GPT-{role.replace("GPT_", "")} | HOSTED ROLE REPORT',
-              '- Compact Russian BEM report.',
-              '- Include checklist.',
-              '- Confirm no file changes and no commit.',
-              '- Include next action.'
+              '--- governance/state/routing.json ---',
+              read('governance/state/routing.json'),
+              '',
+              '=== REQUIRED OUTPUT ===',
+              f'Start with: BEM-GPT-{role_raw.upper()} | HOSTED ROLE REPORT',
+              'Compact Russian BEM report.',
+              'Include checklist.',
+              'Include VERDICT if auditor.',
+              'Include list of changed files if executor.',
+              'Include next action.',
           ]
 
           Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_role_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
               f.write(f'ROLE={role}\n')
+              f.write(f'ROLE_RAW={role_raw}\n')
               f.write(f'TRACE_ID={trace_id}\n')
               f.write(f'CYCLE_ID={cycle_id}\n')
               f.write(f'TASK_TYPE={task_type}\n')
@@ -199,7 +239,7 @@ jobs:
                   {'role': 'system', 'content': 'You are a hosted GPT role runner. Return compact Russian BEM report. Do not reveal secrets. Do not include literal at-sign mentions.'},
                   {'role': 'user', 'content': prompt}
               ],
-              'max_output_tokens': 1600
+              'max_output_tokens': 2000
           }
 
           req = urllib.request.Request(
@@ -235,6 +275,28 @@ jobs:
           PY
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
           exit 0
+
+      - name: Executor git commit (executor role only)
+        if: env.ROLE_RAW == 'executor'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "gpt-executor@ai-devops-system"
+          git config user.name "GPT Executor"
+          git pull --rebase --autostash origin main || true
+          # Зафиксировать любые изменения которые GPT executor записал в файлы
+          git add -A || true
+          if git diff --cached --quiet; then
+            echo "No file changes by GPT executor"
+          else
+            git commit -m "GPT_EXECUTOR: trace_id=${{ env.TRACE_ID }} cycle_id=${{ env.CYCLE_ID }}"
+            for i in 1 2 3; do
+              git push && break
+              sleep $((i * 2))
+              git pull --rebase --autostash origin main
+            done
+          fi
 
       - name: Post hosted GPT role report
         if: always()
@@ -276,9 +338,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           REPO: ${{ github.repository }}
-          CYCLE_ID: ${{ env.CYCLE_ID }}
-          ROLE: ${{ env.ROLE }}
-          TRACE_ID: ${{ env.TRACE_ID }}
         run: |
           set -e
           python3 - <<'PY'
@@ -294,7 +353,7 @@ jobs:
               'ref': 'main',
               'inputs': {
                   'mode': 'advance',
-                  'task_type': 'default_development',
+                  'task_type': os.environ.get('TASK_TYPE', 'default_development'),
                   'task': '',
                   'trace_id': os.environ.get('TRACE_ID', ''),
                   'cycle_id': cycle_id,
