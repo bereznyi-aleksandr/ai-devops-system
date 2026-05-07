@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "updated_at": "2026-05-07T05:05:00Z",
+  "updated_at": "2026-05-07T17:50:00Z",
   "providers": {
     "claude": {
-      "status": "limited",
-      "reason": "PROOF-RUN: simulate claude provider_limit for GPT reserve fallback test",
-      "updated_at": "2026-05-07T05:05:00Z",
-      "last_failure_type": "provider_limit",
-      "failure_count": 2,
-      "trace_id": "proof_gpt_reserve_fallback"
+      "status": "ok",
+      "reason": "E5-004: Claude readiness restored after proof-run. Proof was simulation only.",
+      "updated_at": "2026-05-07T17:50:00Z",
+      "last_failure_type": null,
+      "failure_count": 0,
+      "trace_id": "e5_004_claude_restore"
     },
     "gpt": {
       "status": "ok",
@@ -17,8 +17,9 @@
       "trace_id": "proof_gpt_reserve_fallback"
     },
     "gpt_codex": {
-      "status": "error",
-      "updated_at": "2026-05-04T20:40:49Z",
+      "status": "disabled_until_runner_ready",
+      "reason": "E5-006: runner_unavailable — disabled until runner is restored",
+      "updated_at": "2026-05-07T17:50:00Z",
       "last_failure_at": "2026-05-04T20:40:49Z",
       "last_failure_type": "runner_unavailable",
       "failure_count": 1
