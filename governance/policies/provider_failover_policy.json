@@ -1,6 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "name": "PROVIDER_FAILOVER_POLICY",
+  "updated_at": "2026-05-07T17:54:00Z",
   "purpose": "Select a healthy provider for each role using deterministic fallback chains and recovery probes.",
   "roles": {
     "analyst": {
@@ -20,15 +21,34 @@
       "fallback_chain": ["gpt", "claude"]
     }
   },
-  "unhealthy_statuses": ["limited", "error", "runner_unavailable", "disabled", "stale_timeout"],
+  "unhealthy_statuses": [
+    "limited",
+    "error",
+    "runner_unavailable",
+    "disabled",
+    "disabled_until_runner_ready",
+    "cooldown",
+    "stale_timeout"
+  ],
   "healthy_statuses": ["ok", "healthy", "available", "recovered"],
   "default_provider_status": "ok",
+  "switch_after_failures": 2,
+  "failure_types_that_trigger_switch": ["provider_limit", "api_error"],
+  "failure_types_that_do_not_trigger_switch": [
+    "max_turns", "config_error", "permission_error", "timeout"
+  ],
   "rules": [
     "Prefer role primary provider when healthy.",
     "Skip providers with unhealthy status.",
     "Use fallback_chain order deterministically.",
-    "If every provider is unhealthy, return BLOCKED with reason no_healthy_provider.",
+    "If every provider is unhealthy, return BLOCKED with reason no_healthy_provider — never silent fail.",
     "Analyst primary is GPT but may fall back to Claude.",
-    "Auditor and executor primary is Claude but may fall back to GPT."
-  ]
+    "Auditor and executor primary is Claude but may fall back to GPT.",
+    "gpt_codex is disabled_until_runner_ready — never select it while in this status.",
+    "Log inspected providers and fallback_used=true/false in event log.",
+    "Run provider_probe.py before selection when probe_before_dispatch=true.",
+    "provider_limit and api_error trigger switch; max_turns and config_error do not."
+  ],
+  "probe_before_dispatch": true,
+  "log_selection_events": true
 }
