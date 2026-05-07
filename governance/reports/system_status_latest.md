@@ -3,21 +3,21 @@
 ```text
 Trace: system_status_report
 Mode: schedule
-Time: 2026-05-07T04:04:33Z
+Time: 2026-05-07T08:47:41Z
 
 ЧЕК-ЛИСТ:
 [✅] emergency_stop.enabled = false
 [✅] role_state.status = cycle_completed
-[✅] last_cycle_id = cyc_roadmap_20260505T025103Z
+[✅] last_cycle_id = cyc_roadmap_20260507T062404Z
 [✅] providers_checked = 3
 [✅] relay_events_seen = 5
-[✅] report_generated_at = 2026-05-07T04:04:33Z
+[✅] report_generated_at = 2026-05-07T08:47:41Z
 ```
 
 | Subsystem | Status | Detail |
 |---|---|---|
 | Emergency stop | ✅ clear | proof complete; unblock orchestrator |
-| Role FSM | ✅ cycle_completed | last_cycle=cyc_roadmap_20260505T025103Z |
+| Role FSM | ✅ cycle_completed | last_cycle=cyc_roadmap_20260507T062404Z |
 | Last role | ✅ completed | role=curator_summary provider=- |
 | Relay | ✅ present | recent_events=5 |
 
@@ -25,44 +25,47 @@ Time: 2026-05-07T04:04:33Z
 
 | Provider | Status | Last failure | Last role |
 |---|---|---|---|
-| claude | ✅ ok | - | - |
+| claude | ❌ limited | provider_limit | - |
 | gpt | ✅ ok | - | - |
-| gpt_codex | ❌ error | runner_unavailable | auditor |
+| gpt_codex | ❌ error | runner_unavailable | - |
 
 ### Recent role events
 
 ```json
 [
   {
-    "event": "ROLE_WATCHDOG_COMPLETED",
-    "changed": false,
-    "last_cycle_id": "cyc_roadmap_20260505T025103Z",
-    "status": "cycle_completed",
-    "timestamp": "2026-05-06T23:05:22Z"
+    "event": "ROLE_RESULT_RECEIVED",
+    "cycle_id": "cyc_roadmap_20260507T062404Z",
+    "trace_id": "proof_gpt_reserve_fallback",
+    "role": "auditor",
+    "status": "ROLE_DONE",
+    "note": "Hosted GPT role completed and posted report.",
+    "timestamp": "2026-05-07T06:25:46Z"
+  },
+  {
+    "event": "ROLE_CYCLE_TERMINAL_REPORT",
+    "cycle_id": "cyc_roadmap_20260507T062404Z",
+    "trace_id": "proof_gpt_reserve_fallback",
+    "role": "curator_summary",
+    "timestamp": "2026-05-07T06:25:46Z"
+  },
+  {
+    "event": "ROLE_CYCLE_COMPLETED",
+    "cycle_id": "cyc_roadmap_20260507T062404Z",
+    "trace_id": "proof_gpt_reserve_fallback",
+    "timestamp": "2026-05-07T06:25:47Z"
   },
   {
     "event": "ROLE_ORCHESTRATOR_START",
     "mode": "watchdog",
-    "timestamp": "2026-05-07T00:02:40Z"
+    "timestamp": "2026-05-07T06:51:19Z"
   },
   {
     "event": "ROLE_WATCHDOG_COMPLETED",
     "changed": false,
-    "last_cycle_id": "cyc_roadmap_20260505T025103Z",
+    "last_cycle_id": "cyc_roadmap_20260507T062404Z",
     "status": "cycle_completed",
-    "timestamp": "2026-05-07T00:02:40Z"
-  },
-  {
-    "event": "ROLE_ORCHESTRATOR_START",
-    "mode": "watchdog",
-    "timestamp": "2026-05-07T04:02:43Z"
-  },
-  {
-    "event": "ROLE_WATCHDOG_COMPLETED",
-    "changed": false,
-    "last_cycle_id": "cyc_roadmap_20260505T025103Z",
-    "status": "cycle_completed",
-    "timestamp": "2026-05-07T04:02:43Z"
+    "timestamp": "2026-05-07T06:51:19Z"
   }
 ]
 ```
@@ -72,13 +75,21 @@ Time: 2026-05-07T04:04:33Z
 ```json
 [
   {
-    "event": "PROVIDER_SKIPPED",
+    "event": "PROVIDER_ADAPTER_SELECTED",
+    "role": "auditor",
+    "provider": "gpt",
+    "workflow": "gpt-hosted-roles.yml",
+    "mode": "workflow_dispatch",
+    "timestamp": "2026-05-07T06:24:39Z"
+  },
+  {
+    "event": "PROVIDER_FAILOVER_CANDIDATE",
     "role": "executor",
-    "provider": "gpt_codex",
-    "reason": "provider_unhealthy",
-    "status": "error",
-    "failure_type": "runner_unavailable",
-    "timestamp": "2026-05-05T02:51:48Z"
+    "provider": "gpt",
+    "fallback_used": true,
+    "trace_id": "",
+    "task_type": "role_orchestrator",
+    "timestamp": "2026-05-07T06:24:58Z"
   },
   {
     "event": "PROVIDER_ADAPTER_SELECTED",
@@ -86,23 +97,16 @@ Time: 2026-05-07T04:04:33Z
     "provider": "gpt",
     "workflow": "gpt-hosted-roles.yml",
     "mode": "workflow_dispatch",
-    "timestamp": "2026-05-05T02:51:48Z"
+    "timestamp": "2026-05-07T06:24:58Z"
   },
   {
-    "event": "PROVIDER_SKIPPED",
+    "event": "PROVIDER_FAILOVER_CANDIDATE",
     "role": "auditor",
-    "provider": "claude",
-    "reason": "adapter_disabled",
-    "timestamp": "2026-05-05T02:52:09Z"
-  },
-  {
-    "event": "PROVIDER_SKIPPED",
-    "role": "auditor",
-    "provider": "gpt_codex",
-    "reason": "provider_unhealthy",
-    "status": "error",
-    "failure_type": "runner_unavailable",
-    "timestamp": "2026-05-05T02:52:09Z"
+    "provider": "gpt",
+    "fallback_used": true,
+    "trace_id": "",
+    "task_type": "role_orchestrator",
+    "timestamp": "2026-05-07T06:25:22Z"
   },
   {
     "event": "PROVIDER_ADAPTER_SELECTED",
@@ -110,7 +114,7 @@ Time: 2026-05-07T04:04:33Z
     "provider": "gpt",
     "workflow": "gpt-hosted-roles.yml",
     "mode": "workflow_dispatch",
-    "timestamp": "2026-05-05T02:52:09Z"
+    "timestamp": "2026-05-07T06:25:22Z"
   }
 ]
 ```
