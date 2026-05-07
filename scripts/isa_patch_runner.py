@@ -137,8 +137,9 @@ def git_commit(message):
     diff = subprocess.run('git diff --cached --quiet', shell=True, cwd=ROOT)
     if diff.returncode == 0:
         return 'no_changes'
-    subprocess.run('git config user.email isa-patch-runner@ai-devops-system', shell=True, cwd=ROOT, check=True)
-    subprocess.run('git config user.name ISA Patch Runner', shell=True, cwd=ROOT, check=True)
+    # FIX: кавычки вокруг значений user.email и user.name
+    subprocess.run(['git', 'config', 'user.email', 'isa-patch-runner@ai-devops-system'], cwd=ROOT, check=True)
+    subprocess.run(['git', 'config', 'user.name', 'ISA Patch Runner'], cwd=ROOT, check=True)
     subprocess.run(['git', 'commit', '-m', message], cwd=ROOT, check=True)
     return git_push_with_recovery()
 
@@ -168,7 +169,7 @@ def main():
     if args.mode in ('dry_run', 'report_only'):
         print('VALIDATION=OK')
         print('DRY_RUN=OK')
-        append_event({'event': 'PATCH_RUNNER_DRY_RUN_OK', 'task_id': task.get('task_id')})
+        append_event({'event': 'PATCH_RUNNER_DRY_RUN_OK', 'task_id': task.get('task_id')}))
         return 0
 
     try:
