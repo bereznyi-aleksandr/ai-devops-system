@@ -1,47 +1,87 @@
 {
   "version": 2,
-  "updated_at": "2026-05-07T05:08:30Z",
+  "updated_at": "2026-05-07T17:55:00Z",
   "mode": "production_autonomous_development_loop",
-  "cursor": "INT_005_AUTONOMOUS_REPAIR_GENERATOR",
+  "cursor": "E5_002_PROVIDER_PROBE",
   "tasks": [
     {"task_id": "A1_A8_AUTONOMOUS_ROADMAP_EXECUTOR", "status": "completed"},
     {"task_id": "E5_001_PROVIDER_FAILOVER", "status": "completed"},
     {"task_id": "AUTO_HEARTBEAT_PROOF", "status": "completed", "completed_at": "2026-05-06T17:23:18Z"},
+    {"task_id": "PROD_INTERNAL_CONTOUR_BASELINE_STATE", "status": "completed", "completed_at": "2026-05-06T18:08:20Z"},
+    {"task_id": "PROD_AUTONOMY_EVENT_STREAM", "status": "completed", "completed_at": "2026-05-07T05:06:30Z"},
+    {"task_id": "INT_001_INVENTORY_REPO_STATE", "status": "completed", "completed_at": "2026-05-07T05:08:00Z"},
+    {"task_id": "INT_002_STABILIZE_ROLE_ORCHESTRATOR", "status": "completed", "completed_at": "2026-05-07T05:08:06Z"},
+    {"task_id": "INT_003_PROVIDER_FAILOVER_TELEMETRY", "status": "completed", "completed_at": "2026-05-07T05:08:12Z"},
+    {"task_id": "INT_004_PRODUCTION_STATUS_REPORT", "status": "completed", "completed_at": "2026-05-07T05:08:18Z"},
+    {"task_id": "INT_005_AUTONOMOUS_REPAIR_GENERATOR", "status": "completed", "completed_at": "2026-05-07T05:08:26Z"},
     {
-      "task_id": "PROD_INTERNAL_CONTOUR_BASELINE_STATE",
+      "task_id": "E5_002_PROVIDER_PROBE",
+      "title": "Provider live limit probe script",
       "status": "completed",
-      "completed_at": "2026-05-06T18:08:20Z"
+      "completed_at": "2026-05-07T17:53:54Z",
+      "note": "scripts/provider_probe.py created"
     },
     {
-      "task_id": "PROD_AUTONOMY_EVENT_STREAM",
+      "task_id": "E5_003_SWITCH_MATRIX",
+      "title": "Provider switch matrix hardening",
       "status": "completed",
-      "completed_at": "2026-05-07T05:06:30Z",
-      "sync_note": "BM-CLOUD-001: artifact confirmed present"
+      "completed_at": "2026-05-07T17:54:20Z",
+      "note": "provider_failover_policy.json v2"
     },
     {
-      "task_id": "INT_001_INVENTORY_REPO_STATE",
+      "task_id": "E5_004_CLAUDE_RESTORE",
+      "title": "Claude readiness restore after proof-limited",
       "status": "completed",
-      "completed_at": "2026-05-07T05:08:00Z"
+      "completed_at": "2026-05-07T17:53:21Z",
+      "note": "claude.status=ok restored"
     },
     {
-      "task_id": "INT_002_STABILIZE_ROLE_ORCHESTRATOR",
+      "task_id": "E4_003_EMERGENCY_STOP",
+      "title": "Emergency stop mechanism",
       "status": "completed",
-      "completed_at": "2026-05-07T05:08:06Z"
+      "completed_at": "2026-05-07T17:54:29Z",
+      "note": "governance/state/emergency_stop.json created"
     },
     {
-      "task_id": "INT_003_PROVIDER_FAILOVER_TELEMETRY",
+      "task_id": "E4_004_FSM_TELEGRAM_REPORT",
+      "title": "FSM Telegram report mapper",
       "status": "completed",
-      "completed_at": "2026-05-07T05:08:12Z"
+      "completed_at": "2026-05-07T17:55:04Z",
+      "note": "scripts/fsm_telegram_reporter.py created"
     },
     {
-      "task_id": "INT_004_PRODUCTION_STATUS_REPORT",
+      "task_id": "E5_006_GPT_CODEX_DISABLE",
+      "title": "GPT Codex disable until runner ready",
       "status": "completed",
-      "completed_at": "2026-05-07T05:08:18Z"
+      "completed_at": "2026-05-07T17:53:21Z",
+      "note": "gpt_codex.status=disabled_until_runner_ready"
     },
     {
-      "task_id": "INT_005_AUTONOMOUS_REPAIR_GENERATOR",
-      "status": "completed",
-      "completed_at": "2026-05-07T05:08:26Z"
+      "task_id": "E6_001_PRODUCTION_STATUS_AUTOMATION",
+      "title": "Add E6 production status to outbox automation",
+      "status": "pending",
+      "template": "append_event",
+      "target_path": "governance/events/autonomous_development.jsonl",
+      "commit_message": "E6-001: production status automation event",
+      "content": {
+        "event": "PRODUCTION_STATUS_AUTOMATION_INITIALIZED",
+        "source": "autonomous_task_engine",
+        "components": ["fsm_telegram_reporter", "provider_probe", "emergency_stop"],
+        "status": "active"
+      }
+    },
+    {
+      "task_id": "E6_002_END_TO_END_PROOF",
+      "title": "Full end-to-end production proof",
+      "status": "pending",
+      "template": "create_json_state",
+      "target_path": "governance/state/e6_proof_result.json",
+      "commit_message": "E6-002: end-to-end proof result",
+      "content": {
+        "version": 1,
+        "status": "pending",
+        "description": "E6 end-to-end proof: provider_probe + FSM cycle + executor commit + Telegram report"
+      }
     }
   ],
   "blocker": null
