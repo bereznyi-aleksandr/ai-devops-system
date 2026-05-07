@@ -1,130 +1,47 @@
 {
   "version": 2,
-  "updated_at": "2026-05-07T05:06:30Z",
+  "updated_at": "2026-05-07T05:08:30Z",
   "mode": "production_autonomous_development_loop",
-  "cursor": "PROD_AUTONOMY_EVENT_STREAM",
+  "cursor": "INT_005_AUTONOMOUS_REPAIR_GENERATOR",
   "tasks": [
-    {
-      "task_id": "A1_A8_AUTONOMOUS_ROADMAP_EXECUTOR",
-      "status": "completed"
-    },
-    {
-      "task_id": "E5_001_PROVIDER_FAILOVER",
-      "status": "completed"
-    },
-    {
-      "task_id": "AUTO_HEARTBEAT_PROOF",
-      "status": "completed",
-      "completed_at": "2026-05-06T17:23:18Z"
-    },
+    {"task_id": "A1_A8_AUTONOMOUS_ROADMAP_EXECUTOR", "status": "completed"},
+    {"task_id": "E5_001_PROVIDER_FAILOVER", "status": "completed"},
+    {"task_id": "AUTO_HEARTBEAT_PROOF", "status": "completed", "completed_at": "2026-05-06T17:23:18Z"},
     {
       "task_id": "PROD_INTERNAL_CONTOUR_BASELINE_STATE",
-      "title": "Create production internal contour baseline state",
       "status": "completed",
-      "runner_mode": "apply_and_commit",
-      "template": "create_json_state",
-      "target_path": "governance/state/internal_contour_status.json",
-      "commit_message": "PROD-001: create internal contour baseline state",
       "completed_at": "2026-05-06T18:08:20Z"
     },
     {
       "task_id": "PROD_AUTONOMY_EVENT_STREAM",
-      "title": "Create autonomous development event stream",
       "status": "completed",
-      "runner_mode": "apply_and_commit",
-      "template": "append_event",
-      "target_path": "governance/events/autonomous_development.jsonl",
-      "commit_message": "PROD-002: initialize autonomous development event stream",
-      "content": {
-        "event": "AUTONOMOUS_DEVELOPMENT_STARTED",
-        "route": "roadmap_state -> run_until_blocked -> patch_queue -> ISA Patch Runner",
-        "status": "started"
-      },
       "completed_at": "2026-05-07T05:06:30Z",
-      "sync_note": "BM-CLOUD-001: artifact governance/events/autonomous_development.jsonl confirmed present"
+      "sync_note": "BM-CLOUD-001: artifact confirmed present"
     },
     {
       "task_id": "INT_001_INVENTORY_REPO_STATE",
-      "title": "Inventory current repo state — list active files and workflows",
-      "status": "pending",
-      "template": "create_json_state",
-      "target_path": "governance/state/repo_inventory.json",
-      "commit_message": "INT-001: repo state inventory",
-      "content": {
-        "version": 1,
-        "description": "Repository inventory created by autonomous task engine",
-        "active_workflows": [
-          "analyst.yml", "auditor.yml", "executor.yml", "curator.yml",
-          "curator-hosted-gpt.yml", "role-orchestrator.yml",
-          "gpt-hosted-roles.yml", "role-router.yml",
-          "telegram-outbox-dispatch.yml", "curator-hourly-report.yml",
-          "isa-patch-runner.yml", "autonomous-task-engine.yml"
-        ],
-        "active_state_files": [
-          "governance/state/routing.json",
-          "governance/state/system_state.json",
-          "governance/state/provider_status.json",
-          "governance/state/role_cycle_state.json",
-          "governance/state/roadmap_state.json",
-          "governance/state/internal_contour_status.json"
-        ]
-      }
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:00Z"
     },
     {
       "task_id": "INT_002_STABILIZE_ROLE_ORCHESTRATOR",
-      "title": "Add role_orchestrator health check to system_state",
-      "status": "pending",
-      "template": "create_json_state",
-      "target_path": "governance/state/orchestrator_health.json",
-      "commit_message": "INT-002: role orchestrator health state",
-      "content": {
-        "version": 1,
-        "status": "healthy",
-        "notes": "Initialized by autonomous task engine INT-002"
-      }
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:06Z"
     },
     {
       "task_id": "INT_003_PROVIDER_FAILOVER_TELEMETRY",
-      "title": "Add provider failover telemetry event",
-      "status": "pending",
-      "template": "append_event",
-      "target_path": "governance/events/autonomous_development.jsonl",
-      "commit_message": "INT-003: provider failover telemetry event",
-      "content": {
-        "event": "PROVIDER_FAILOVER_TELEMETRY_INITIALIZED",
-        "source": "autonomous_task_engine",
-        "description": "Provider failover telemetry tracking activated"
-      }
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:12Z"
     },
     {
       "task_id": "INT_004_PRODUCTION_STATUS_REPORT",
-      "title": "Create production status report state",
-      "status": "pending",
-      "template": "create_json_state",
-      "target_path": "governance/state/production_status_report.json",
-      "commit_message": "INT-004: production status report",
-      "content": {
-        "version": 1,
-        "generator": "autonomous_task_engine",
-        "phase": "E3-E6",
-        "summary": "Production autonomy loop active. E3 FSM complete. E4-E6 in progress.",
-        "next_action": "Continue autonomous roadmap execution"
-      }
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:18Z"
     },
     {
       "task_id": "INT_005_AUTONOMOUS_REPAIR_GENERATOR",
-      "title": "Create autonomous repair task generator state",
-      "status": "pending",
-      "template": "create_json_state",
-      "target_path": "governance/state/repair_generator_state.json",
-      "commit_message": "INT-005: autonomous repair generator initialized",
-      "content": {
-        "version": 1,
-        "enabled": true,
-        "strategy": "On blocker: generate minimal repair patch, run through ISA Patch Runner, retry task",
-        "max_repair_attempts": 3,
-        "last_repair": null
-      }
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:26Z"
     }
   ],
   "blocker": null
