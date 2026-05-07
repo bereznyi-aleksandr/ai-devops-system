@@ -1,1 +1,2 @@
 {"event": "AUTONOMOUS_DEVELOPMENT_STARTED", "route": "roadmap_state -> run_until_blocked -> patch_queue -> ISA Patch Runner", "status": "started"}
+{"event": "PRODUCTION_STATUS_AUTOMATION_INITIALIZED", "source": "autonomous_task_engine", "components": ["fsm_telegram_reporter", "provider_probe", "emergency_stop"], "status": "active"}

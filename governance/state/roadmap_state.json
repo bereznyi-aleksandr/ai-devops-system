@@ -1,19 +1,57 @@
 {
   "version": 2,
-  "updated_at": "2026-05-07T17:55:00Z",
+  "updated_at": "2026-05-07T17:57:43Z",
   "mode": "production_autonomous_development_loop",
   "cursor": "E5_002_PROVIDER_PROBE",
   "tasks": [
-    {"task_id": "A1_A8_AUTONOMOUS_ROADMAP_EXECUTOR", "status": "completed"},
-    {"task_id": "E5_001_PROVIDER_FAILOVER", "status": "completed"},
-    {"task_id": "AUTO_HEARTBEAT_PROOF", "status": "completed", "completed_at": "2026-05-06T17:23:18Z"},
-    {"task_id": "PROD_INTERNAL_CONTOUR_BASELINE_STATE", "status": "completed", "completed_at": "2026-05-06T18:08:20Z"},
-    {"task_id": "PROD_AUTONOMY_EVENT_STREAM", "status": "completed", "completed_at": "2026-05-07T05:06:30Z"},
-    {"task_id": "INT_001_INVENTORY_REPO_STATE", "status": "completed", "completed_at": "2026-05-07T05:08:00Z"},
-    {"task_id": "INT_002_STABILIZE_ROLE_ORCHESTRATOR", "status": "completed", "completed_at": "2026-05-07T05:08:06Z"},
-    {"task_id": "INT_003_PROVIDER_FAILOVER_TELEMETRY", "status": "completed", "completed_at": "2026-05-07T05:08:12Z"},
-    {"task_id": "INT_004_PRODUCTION_STATUS_REPORT", "status": "completed", "completed_at": "2026-05-07T05:08:18Z"},
-    {"task_id": "INT_005_AUTONOMOUS_REPAIR_GENERATOR", "status": "completed", "completed_at": "2026-05-07T05:08:26Z"},
+    {
+      "task_id": "A1_A8_AUTONOMOUS_ROADMAP_EXECUTOR",
+      "status": "completed"
+    },
+    {
+      "task_id": "E5_001_PROVIDER_FAILOVER",
+      "status": "completed"
+    },
+    {
+      "task_id": "AUTO_HEARTBEAT_PROOF",
+      "status": "completed",
+      "completed_at": "2026-05-06T17:23:18Z"
+    },
+    {
+      "task_id": "PROD_INTERNAL_CONTOUR_BASELINE_STATE",
+      "status": "completed",
+      "completed_at": "2026-05-06T18:08:20Z"
+    },
+    {
+      "task_id": "PROD_AUTONOMY_EVENT_STREAM",
+      "status": "completed",
+      "completed_at": "2026-05-07T05:06:30Z"
+    },
+    {
+      "task_id": "INT_001_INVENTORY_REPO_STATE",
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:00Z"
+    },
+    {
+      "task_id": "INT_002_STABILIZE_ROLE_ORCHESTRATOR",
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:06Z"
+    },
+    {
+      "task_id": "INT_003_PROVIDER_FAILOVER_TELEMETRY",
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:12Z"
+    },
+    {
+      "task_id": "INT_004_PRODUCTION_STATUS_REPORT",
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:18Z"
+    },
+    {
+      "task_id": "INT_005_AUTONOMOUS_REPAIR_GENERATOR",
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:26Z"
+    },
     {
       "task_id": "E5_002_PROVIDER_PROBE",
       "title": "Provider live limit probe script",
@@ -59,14 +97,18 @@
     {
       "task_id": "E6_001_PRODUCTION_STATUS_AUTOMATION",
       "title": "Add E6 production status to outbox automation",
-      "status": "pending",
+      "status": "blocked",
       "template": "append_event",
       "target_path": "governance/events/autonomous_development.jsonl",
       "commit_message": "E6-001: production status automation event",
       "content": {
         "event": "PRODUCTION_STATUS_AUTOMATION_INITIALIZED",
         "source": "autonomous_task_engine",
-        "components": ["fsm_telegram_reporter", "provider_probe", "emergency_stop"],
+        "components": [
+          "fsm_telegram_reporter",
+          "provider_probe",
+          "emergency_stop"
+        ],
         "status": "active"
       }
     },
@@ -84,5 +126,10 @@
       }
     }
   ],
-  "blocker": null
+  "blocker": {
+    "task_id": "E6_001_PRODUCTION_STATUS_AUTOMATION",
+    "kind": "runner_failed",
+    "timestamp": "2026-05-07T17:57:43Z",
+    "stderr": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/scripts/isa_patch_runner.py\", line 141, in git_commit\n    subprocess.run('git config user.name ISA Patch Runner', shell=True, cwd=ROOT, check=True)\n  File \"/usr/lib/python3.12/subprocess.py\", line 571, in run\n    raise CalledProcessError(retcode, process.args,\nsubprocess.CalledProcessError: Command 'git config user.name ISA Patch Runner' returned non-zero exit status 129.\n"
+  }
 }
