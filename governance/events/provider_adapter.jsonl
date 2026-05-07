@@ -30,3 +30,5 @@
 {"event": "PROVIDER_ADAPTER_SELECTED", "role": "auditor", "provider": "gpt", "workflow": "gpt-hosted-roles.yml", "mode": "workflow_dispatch", "timestamp": "2026-05-05T02:52:09Z"}
 {"event": "PROVIDER_FAILOVER_CANDIDATE", "role": "analyst", "provider": "gpt", "fallback_used": false, "trace_id": "", "task_type": "role_orchestrator", "timestamp": "2026-05-07T06:24:14Z"}
 {"event": "PROVIDER_ADAPTER_SELECTED", "role": "analyst", "provider": "gpt", "workflow": "gpt-hosted-roles.yml", "mode": "workflow_dispatch", "timestamp": "2026-05-07T06:24:14Z"}
+{"event": "PROVIDER_FAILOVER_CANDIDATE", "role": "auditor", "provider": "gpt", "fallback_used": true, "trace_id": "", "task_type": "role_orchestrator", "timestamp": "2026-05-07T06:24:39Z"}
+{"event": "PROVIDER_ADAPTER_SELECTED", "role": "auditor", "provider": "gpt", "workflow": "gpt-hosted-roles.yml", "mode": "workflow_dispatch", "timestamp": "2026-05-07T06:24:39Z"}
