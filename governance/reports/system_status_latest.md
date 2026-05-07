@@ -3,7 +3,7 @@
 ```text
 Trace: system_status_report
 Mode: schedule
-Time: 2026-05-07T08:47:41Z
+Time: 2026-05-07T14:49:38Z
 
 ЧЕК-ЛИСТ:
 [✅] emergency_stop.enabled = false
@@ -11,7 +11,7 @@ Time: 2026-05-07T08:47:41Z
 [✅] last_cycle_id = cyc_roadmap_20260507T062404Z
 [✅] providers_checked = 3
 [✅] relay_events_seen = 5
-[✅] report_generated_at = 2026-05-07T08:47:41Z
+[✅] report_generated_at = 2026-05-07T14:49:38Z
 ```
 
 | Subsystem | Status | Detail |
@@ -34,38 +34,35 @@ Time: 2026-05-07T08:47:41Z
 ```json
 [
   {
-    "event": "ROLE_RESULT_RECEIVED",
-    "cycle_id": "cyc_roadmap_20260507T062404Z",
-    "trace_id": "proof_gpt_reserve_fallback",
-    "role": "auditor",
-    "status": "ROLE_DONE",
-    "note": "Hosted GPT role completed and posted report.",
-    "timestamp": "2026-05-07T06:25:46Z"
-  },
-  {
-    "event": "ROLE_CYCLE_TERMINAL_REPORT",
-    "cycle_id": "cyc_roadmap_20260507T062404Z",
-    "trace_id": "proof_gpt_reserve_fallback",
-    "role": "curator_summary",
-    "timestamp": "2026-05-07T06:25:46Z"
-  },
-  {
-    "event": "ROLE_CYCLE_COMPLETED",
-    "cycle_id": "cyc_roadmap_20260507T062404Z",
-    "trace_id": "proof_gpt_reserve_fallback",
-    "timestamp": "2026-05-07T06:25:47Z"
+    "event": "ROLE_WATCHDOG_COMPLETED",
+    "changed": false,
+    "last_cycle_id": "cyc_roadmap_20260507T062404Z",
+    "status": "cycle_completed",
+    "timestamp": "2026-05-07T09:27:22Z"
   },
   {
     "event": "ROLE_ORCHESTRATOR_START",
     "mode": "watchdog",
-    "timestamp": "2026-05-07T06:51:19Z"
+    "timestamp": "2026-05-07T11:26:15Z"
   },
   {
     "event": "ROLE_WATCHDOG_COMPLETED",
     "changed": false,
     "last_cycle_id": "cyc_roadmap_20260507T062404Z",
     "status": "cycle_completed",
-    "timestamp": "2026-05-07T06:51:19Z"
+    "timestamp": "2026-05-07T11:26:15Z"
+  },
+  {
+    "event": "ROLE_ORCHESTRATOR_START",
+    "mode": "watchdog",
+    "timestamp": "2026-05-07T13:14:36Z"
+  },
+  {
+    "event": "ROLE_WATCHDOG_COMPLETED",
+    "changed": false,
+    "last_cycle_id": "cyc_roadmap_20260507T062404Z",
+    "status": "cycle_completed",
+    "timestamp": "2026-05-07T13:14:36Z"
   }
 ]
 ```
