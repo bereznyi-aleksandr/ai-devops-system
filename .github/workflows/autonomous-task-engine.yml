@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'plan | proof_patch | proof_cycle'
-        required: true
-        default: 'plan'
+        description: 'production_loop | run_until_blocked | execute_next | plan | proof_patch | proof_cycle'
+        required: false
+        default: 'production_loop'
+        type: string
+      add_internal_tasks:
+        description: 'Add INT-001..INT-005 tasks to roadmap (true/false)'
+        required: false
+        default: 'false'
         type: string
   schedule:
     - cron: '17 * * * *'
@@ -20,7 +25,7 @@ jobs:
   autonomy-engine:
     name: Autonomous Task Engine
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -33,8 +38,10 @@ jobs:
         shell: bash
         run: |
           MODE="${{ inputs.mode }}"
-          if [ -z "$MODE" ]; then MODE="plan"; fi
+          if [ -z "$MODE" ]; then MODE="production_loop"; fi
           echo "AUTONOMY_MODE=$MODE" >> "$GITHUB_ENV"
+          ADD_TASKS="${{ inputs.add_internal_tasks }}"
+          echo "ADD_INTERNAL_TASKS=$ADD_TASKS" >> "$GITHUB_ENV"
 
       - name: Run autonomy engine
         shell: bash
@@ -42,10 +49,15 @@ jobs:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: main
           MAIN_ISSUE: '31'
         run: |
           set +e
-          python3 scripts/autonomous_task_engine.py --mode "$AUTONOMY_MODE"
+          EXTRA_ARGS=""
+          if [ "$ADD_INTERNAL_TASKS" = "true" ]; then
+            EXTRA_ARGS="--add-internal-tasks"
+          fi
+          python3 scripts/autonomous_task_engine.py --mode "$AUTONOMY_MODE" $EXTRA_ARGS
           echo "ENGINE_EXIT=$?" >> "$GITHUB_ENV"
           exit 0
 
@@ -56,10 +68,21 @@ jobs:
           git config user.email "autonomy-engine@ai-devops-system"
           git config user.name "Autonomy Engine"
 
-          git add governance/state/autonomy_state.json \
-                  governance/events/autonomy_engine.jsonl \
-                  governance/patch_queue/current.json \
-                  governance/events/patch_runner.jsonl || true
+          git add \
+            governance/state/autonomy_state.json \
+            governance/state/roadmap_state.json \
+            governance/state/internal_contour_status.json \
+            governance/state/repo_inventory.json \
+            governance/state/orchestrator_health.json \
+            governance/state/production_status_report.json \
+            governance/state/repair_generator_state.json \
+            governance/events/autonomy_engine.jsonl \
+            governance/events/autonomous_development.jsonl \
+            governance/events/autonomous_roadmap_executor_proof.jsonl \
+            governance/events/patch_runner.jsonl \
+            governance/patch_queue/current.json \
+            governance/patch_queue/generated/ \
+            2>/dev/null || true
 
           if git diff --cached --quiet; then
             echo "BEM-AUTONOMY-ENGINE | NO_STATE_CHANGES"
@@ -67,7 +90,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "AUTONOMY ENGINE: state update"
+          git commit -m "AUTONOMY ENGINE: state update (mode=$AUTONOMY_MODE)"
 
           push_ok=false
           for attempt in 1 2 3; do
@@ -77,12 +100,11 @@ jobs:
               push_ok=true
               break
             fi
-            echo "BEM-AUTONOMY-ENGINE | PUSH_RETRY_$attempt"
-            sleep 2
+            sleep $((attempt * 2))
           done
 
           if [ "$push_ok" != "true" ]; then
-            echo "BEM-AUTONOMY-ENGINE | PUSH_FAILED_AFTER_RETRY"
+            echo "BEM-AUTONOMY-ENGINE | PUSH_FAILED"
             echo "AUTONOMY_PUSH_STATUS=failed" >> "$GITHUB_ENV"
             exit 1
           fi
@@ -103,12 +125,12 @@ jobs:
               `Exit: ${process.env.ENGINE_EXIT || 'unknown'}`,
               `Push: ${process.env.AUTONOMY_PUSH_STATUS || 'unknown'}`,
               '',
-              'Checklist:',
-              '- autonomy engine workflow executed',
-              '- state/event log commit attempted',
-              '- pull --rebase --autostash before push enforced',
-              '- push retry enabled',
-              '- report posted repo-side'
+              'BM-CLOUD-001 hardened:',
+              '- production_loop mode active',
+              '- sync includes waiting_runner status',
+              '- dispatch layer for stale tasks',
+              '- generated/ patch files for stale recovery',
+              '- INT-001..INT-005 available via --add-internal-tasks'
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
