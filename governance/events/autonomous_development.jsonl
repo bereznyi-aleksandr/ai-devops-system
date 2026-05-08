@@ -1,2 +1,5 @@
 {"event": "AUTONOMOUS_DEVELOPMENT_STARTED", "route": "roadmap_state -> run_until_blocked -> patch_queue -> ISA Patch Runner", "status": "started"}
 {"event": "PRODUCTION_STATUS_AUTOMATION_INITIALIZED", "source": "autonomous_task_engine", "components": ["fsm_telegram_reporter", "provider_probe", "emergency_stop"], "status": "active"}
+{"event": "E5_005_GPT_RESERVE_PROOF_CLOSED", "timestamp": "2026-05-08T10:02:02Z", "status": "completed_with_existing_proof_evidence"}
+{"event": "E6_002_END_TO_END_PROOF_CLOSED", "timestamp": "2026-05-08T10:02:02Z", "status": "completed_with_caveats"}
+{"event": "ISA_PATCH_RUNNER_SYNTAX_FIXED", "timestamp": "2026-05-08T10:02:02Z", "status": "completed"}

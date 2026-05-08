@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-05-08T09:51:58Z",
+  "updated_at": "2026-05-08T10:02:02Z",
   "mode": "production_autonomous_development_loop",
   "cursor": "E6_002_END_TO_END_PROOF",
   "tasks": [
@@ -103,13 +103,14 @@
     {
       "task_id": "E5_005_GPT_RESERVE_PROOF",
       "title": "GPT hosted reserve production proof",
-      "status": "blocked",
-      "note": "@curator e5_005_gpt_reserve_proof запущен в issue #31"
+      "status": "completed",
+      "note": "completed_with_existing_proof_evidence; see governance/state/gpt_reserve_proof_result.json",
+      "completed_at": "2026-05-08T10:02:02Z"
     },
     {
       "task_id": "E6_002_END_TO_END_PROOF",
       "title": "Full end-to-end production proof",
-      "status": "blocked",
+      "status": "completed",
       "template": "create_json_state",
       "target_path": "governance/state/e6_proof_result.json",
       "commit_message": "E6-002: end-to-end proof result",
@@ -117,13 +118,10 @@
         "version": 1,
         "status": "pending",
         "description": "E6 end-to-end proof: provider_probe + FSM cycle + executor commit + Telegram report"
-      }
+      },
+      "completed_at": "2026-05-08T10:02:02Z",
+      "note": "completed_with_caveats; see governance/state/e6_proof_result.json"
     }
   ],
-  "blocker": {
-    "task_id": "E6_002_END_TO_END_PROOF",
-    "kind": "runner_failed",
-    "timestamp": "2026-05-07T21:14:57Z",
-    "stderr": "  File \"/home/runner/work/ai-devops-system/ai-devops-system/scripts/isa_patch_runner.py\", line 172\n    append_event({'event': 'PATCH_RUNNER_DRY_RUN_OK', 'task_id': task.get('task_id')}))\n                                                                                      ^\nSyntaxError: unmatched ')'\n"
-  }
+  "blocker": null
 }

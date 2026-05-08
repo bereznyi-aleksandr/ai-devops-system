@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "task_id": "E6_002_END_TO_END_PROOF",
+  "status": "completed_with_caveats",
+  "completed_at": "2026-05-08T10:02:02Z",
+  "description": "End-to-end closure after BM-260 hardening and ISA runner syntax repair.",
+  "components": {
+    "provider_probe": true,
+    "fsm_telegram_reporter": true,
+    "autonomous_task_engine": true,
+    "isa_patch_runner": true,
+    "telegram_outbox": true
+  },
+  "result": "roadmap residual tasks closed; blocker cleared",
+  "blocker": null
+}

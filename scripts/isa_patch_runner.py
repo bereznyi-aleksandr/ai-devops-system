@@ -169,7 +169,7 @@ def main():
     if args.mode in ('dry_run', 'report_only'):
         print('VALIDATION=OK')
         print('DRY_RUN=OK')
-        append_event({'event': 'PATCH_RUNNER_DRY_RUN_OK', 'task_id': task.get('task_id')}))
+        append_event({'event': 'PATCH_RUNNER_DRY_RUN_OK', 'task_id': task.get('task_id')})
         return 0
 
     try:

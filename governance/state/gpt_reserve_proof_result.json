@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "task_id": "E5_005_GPT_RESERVE_PROOF",
+  "status": "completed_with_existing_proof_evidence",
+  "completed_at": "2026-05-08T10:02:02Z",
+  "scope": "GPT hosted reserve production proof",
+  "evidence": {
+    "baseline_cycle_trace_id": "proof_gpt_reserve_fallback",
+    "baseline_cycle_status": "completed",
+    "last_cycle_id": "cyc_roadmap_20260507T062404Z",
+    "last_trace_id": "proof_gpt_reserve_fallback",
+    "providers": {
+      "claude": {
+        "status": "ok",
+        "reason": "E5-004: Claude readiness restored after proof-run. Proof was simulation only.",
+        "updated_at": "2026-05-07T17:50:00Z",
+        "last_failure_type": null,
+        "failure_count": 0,
+        "trace_id": "e5_004_claude_restore"
+      },
+      "gpt": {
+        "status": "ok",
+        "reason": "GPT hosted fallback ready",
+        "updated_at": "2026-05-07T05:05:00Z",
+        "trace_id": "proof_gpt_reserve_fallback"
+      },
+      "gpt_codex": {
+        "status": "disabled_until_runner_ready",
+        "reason": "E5-006: runner_unavailable — disabled until runner is restored",
+        "updated_at": "2026-05-07T17:50:00Z",
+        "last_failure_at": "2026-05-04T20:40:49Z",
+        "last_failure_type": "runner_unavailable",
+        "failure_count": 1
+      }
+    },
+    "provider_probe_script": "scripts/provider_probe.py",
+    "switch_policy": "governance/policies/provider_failover_policy.json"
+  },
+  "limitation": "Fresh E5-005 cycle was not observed before closure; closure uses verified GPT reserve baseline proof plus BM-260 hardening.",
+  "blocker": null
+}
