@@ -13,6 +13,8 @@ on:
         required: false
         default: 'false'
         type: string
+  issue_comment:
+    types: [created]
   schedule:
     - cron: '17 * * * *'
 
@@ -24,6 +26,9 @@ permissions:
 jobs:
   autonomy-engine:
     name: Autonomous Task Engine
+    if: |
+      github.event_name != 'issue_comment' ||
+      (github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: AUTONOMY_ENGINE'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -36,12 +41,38 @@ jobs:
 
       - name: Resolve mode
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_ADD_INTERNAL_TASKS: ${{ inputs.add_internal_tasks }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          MODE="${{ inputs.mode }}"
+          set -e
+          MODE="${INPUT_MODE:-production_loop}"
+          ADD_TASKS="${INPUT_ADD_INTERNAL_TASKS:-false}"
+          TRACE_ID="workflow_dispatch"
+
+          if [ "${EVENT_NAME:-}" = "issue_comment" ]; then
+            MODE="production_loop"
+            ADD_TASKS="false"
+            TRACE_ID="issue_comment"
+
+            if printf '%s\n' "$COMMENT_BODY" | grep -q 'MODE: run_until_blocked'; then MODE="run_until_blocked"; fi
+            if printf '%s\n' "$COMMENT_BODY" | grep -q 'MODE: execute_next'; then MODE="execute_next"; fi
+            if printf '%s\n' "$COMMENT_BODY" | grep -q 'MODE: plan'; then MODE="plan"; fi
+            if printf '%s\n' "$COMMENT_BODY" | grep -q 'ADD_INTERNAL_TASKS: true'; then ADD_TASKS="true"; fi
+
+            TRACE_LINE=$(printf '%s\n' "$COMMENT_BODY" | grep -E '^TRACE_ID:' | head -1 || true)
+            if [ -n "$TRACE_LINE" ]; then
+              TRACE_ID=$(printf '%s' "$TRACE_LINE" | cut -d ':' -f 2- | tr -d ' ')
+            fi
+          fi
+
           if [ -z "$MODE" ]; then MODE="production_loop"; fi
           echo "AUTONOMY_MODE=$MODE" >> "$GITHUB_ENV"
-          ADD_TASKS="${{ inputs.add_internal_tasks }}"
           echo "ADD_INTERNAL_TASKS=$ADD_TASKS" >> "$GITHUB_ENV"
+          echo "AUTONOMY_TRACE_ID=$TRACE_ID" >> "$GITHUB_ENV"
+          echo "Resolved AUTONOMY_MODE=$MODE ADD_INTERNAL_TASKS=$ADD_TASKS TRACE_ID=$TRACE_ID"
 
       - name: Run autonomy engine
         shell: bash
@@ -76,9 +107,14 @@ jobs:
             governance/state/orchestrator_health.json \
             governance/state/production_status_report.json \
             governance/state/repair_generator_state.json \
+            governance/state/gpt_reserve_proof_result.json \
+            governance/state/e6_proof_result.json \
+            governance/state/test_autonomy_cycle_001.json \
+            governance/state/test_autonomy_cycle_003.json \
             governance/events/autonomy_engine.jsonl \
             governance/events/autonomous_development.jsonl \
             governance/events/autonomous_roadmap_executor_proof.jsonl \
+            governance/events/autonomous_test_cycle.jsonl \
             governance/events/patch_runner.jsonl \
             governance/patch_queue/current.json \
             governance/patch_queue/generated/ \
@@ -122,10 +158,12 @@ jobs:
               'BEM-AUTONOMY-ENGINE | RUN RESULT',
               '',
               `Mode: ${process.env.AUTONOMY_MODE || 'unknown'}`,
+              `Trace: ${process.env.AUTONOMY_TRACE_ID || 'unknown'}`,
               `Exit: ${process.env.ENGINE_EXIT || 'unknown'}`,
               `Push: ${process.env.AUTONOMY_PUSH_STATUS || 'unknown'}`,
               '',
               'BM-CLOUD-001 hardened:',
+              '- issue_comment trigger supported',
               '- production_loop mode active',
               '- sync includes waiting_runner status',
               '- dispatch layer for stale tasks',
