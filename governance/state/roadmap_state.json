@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-05-08T10:08:49Z",
+  "updated_at": "2026-05-08T10:08:51Z",
   "mode": "production_autonomous_development_loop",
   "cursor": "TEST_003_AUTONOMY_JSON_STATE",
   "tasks": [
@@ -140,7 +140,7 @@
     {
       "task_id": "TEST_002_AUTONOMY_EVENT_APPEND",
       "title": "Test autonomy event append",
-      "status": "running",
+      "status": "completed",
       "template": "append_event",
       "target_path": "governance/events/autonomous_test_cycle.jsonl",
       "commit_message": "TEST-002: autonomy event append proof",
@@ -148,12 +148,13 @@
         "event": "TEST_002_AUTONOMY_EVENT_APPEND",
         "status": "created_by_autonomous_engine",
         "timestamp": "2026-05-08T10:08:30Z"
-      }
+      },
+      "completed_at": "2026-05-08T10:08:51Z"
     },
     {
       "task_id": "TEST_003_AUTONOMY_JSON_STATE",
       "title": "Test second autonomy JSON state creation",
-      "status": "pending",
+      "status": "running",
       "template": "create_json_state",
       "target_path": "governance/state/test_autonomy_cycle_003.json",
       "commit_message": "TEST-003: autonomy JSON state proof",

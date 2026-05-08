@@ -48,3 +48,8 @@
 {"event": "PATCH_RUNNER_COMMIT", "task_id": "test_001_autonomy_json_state", "status": "pushed", "timestamp": "2026-05-08T10:08:49Z"}
 {"event": "PATCH_RUNNER_START", "task_id": "test_002_autonomy_event_append", "mode": "apply_and_commit", "errors": [], "timestamp": "2026-05-08T10:08:49Z"}
 {"event": "PATCH_RUNNER_CHECKS", "task_id": "test_002_autonomy_event_append", "ok": true, "checks": [{"cmd": "python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py", "returncode": 0, "stdout": "", "stderr": ""}], "timestamp": "2026-05-08T10:08:49Z"}
+{"event": "PATCH_RUNNER_PUSH_ATTEMPT", "attempt": 1, "timestamp": "2026-05-08T10:08:49Z"}
+{"event": "PATCH_RUNNER_PUSH_OK", "attempt": 1, "timestamp": "2026-05-08T10:08:51Z"}
+{"event": "PATCH_RUNNER_COMMIT", "task_id": "test_002_autonomy_event_append", "status": "pushed", "timestamp": "2026-05-08T10:08:51Z"}
+{"event": "PATCH_RUNNER_START", "task_id": "test_003_autonomy_json_state", "mode": "apply_and_commit", "errors": [], "timestamp": "2026-05-08T10:08:51Z"}
+{"event": "PATCH_RUNNER_CHECKS", "task_id": "test_003_autonomy_json_state", "ok": true, "checks": [{"cmd": "python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py", "returncode": 0, "stdout": "", "stderr": ""}, {"cmd": "python3 -m json.tool governance/state/test_autonomy_cycle_003.json >/tmp/json_check.txt", "returncode": 0, "stdout": "", "stderr": ""}], "timestamp": "2026-05-08T10:08:51Z"}
