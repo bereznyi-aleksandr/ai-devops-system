@@ -3,7 +3,7 @@
 ```text
 Trace: system_status_report
 Mode: schedule
-Time: 2026-05-07T14:49:38Z
+Time: 2026-05-08T03:52:57Z
 
 ЧЕК-ЛИСТ:
 [✅] emergency_stop.enabled = false
@@ -11,12 +11,12 @@ Time: 2026-05-07T14:49:38Z
 [✅] last_cycle_id = cyc_roadmap_20260507T062404Z
 [✅] providers_checked = 3
 [✅] relay_events_seen = 5
-[✅] report_generated_at = 2026-05-07T14:49:38Z
+[✅] report_generated_at = 2026-05-08T03:52:57Z
 ```
 
 | Subsystem | Status | Detail |
 |---|---|---|
-| Emergency stop | ✅ clear | proof complete; unblock orchestrator |
+| Emergency stop | ✅ clear | - |
 | Role FSM | ✅ cycle_completed | last_cycle=cyc_roadmap_20260507T062404Z |
 | Last role | ✅ completed | role=curator_summary provider=- |
 | Relay | ✅ present | recent_events=5 |
@@ -25,9 +25,9 @@ Time: 2026-05-07T14:49:38Z
 
 | Provider | Status | Last failure | Last role |
 |---|---|---|---|
-| claude | ❌ limited | provider_limit | - |
+| claude | ✅ ok | - | - |
 | gpt | ✅ ok | - | - |
-| gpt_codex | ❌ error | runner_unavailable | - |
+| gpt_codex | ⚠️ disabled_until_runner_ready | runner_unavailable | - |
 
 ### Recent role events
 
@@ -38,31 +38,31 @@ Time: 2026-05-07T14:49:38Z
     "changed": false,
     "last_cycle_id": "cyc_roadmap_20260507T062404Z",
     "status": "cycle_completed",
-    "timestamp": "2026-05-07T09:27:22Z"
+    "timestamp": "2026-05-07T22:42:10Z"
   },
   {
     "event": "ROLE_ORCHESTRATOR_START",
     "mode": "watchdog",
-    "timestamp": "2026-05-07T11:26:15Z"
+    "timestamp": "2026-05-07T23:35:10Z"
   },
   {
     "event": "ROLE_WATCHDOG_COMPLETED",
     "changed": false,
     "last_cycle_id": "cyc_roadmap_20260507T062404Z",
     "status": "cycle_completed",
-    "timestamp": "2026-05-07T11:26:15Z"
+    "timestamp": "2026-05-07T23:35:10Z"
   },
   {
     "event": "ROLE_ORCHESTRATOR_START",
     "mode": "watchdog",
-    "timestamp": "2026-05-07T13:14:36Z"
+    "timestamp": "2026-05-08T01:24:01Z"
   },
   {
     "event": "ROLE_WATCHDOG_COMPLETED",
     "changed": false,
     "last_cycle_id": "cyc_roadmap_20260507T062404Z",
     "status": "cycle_completed",
-    "timestamp": "2026-05-07T13:14:36Z"
+    "timestamp": "2026-05-08T01:24:01Z"
   }
 ]
 ```
