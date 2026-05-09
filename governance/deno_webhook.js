@@ -1,18 +1,32 @@
 // Deno Deploy Webhook — AI DevOps System
-// Версия: v4.0 | BM-333
+// Версия: v4.1 | BM-343
+// CORS добавлен для поддержки ChatGPT Actions preflight
 //
 // ENDPOINTS:
 // GET  /                           — health check
 // POST /                           — Telegram webhook
-// POST /autonomy                   — GPT autonomy trigger (JSON body)
-// GET  /autonomy-trigger           — GPT autonomy trigger (query params)
+// POST /autonomy                   — GPT trigger (JSON body)
+// GET  /autonomy-trigger           — GPT trigger (query params)
 // GET  /autonomy-backlog-trigger   — GPT backlog + trigger (query params, tasks_b64)
-// POST /autonomy-backlog           — GPT backlog + trigger (JSON body, long payloads)
+// POST /autonomy-backlog           — GPT backlog + trigger (JSON body) ← ChatGPT Action calls this
 
 const GITHUB_REPO = Deno.env.get("GITHUB_REPO") || "bereznyi-aleksandr/ai-devops-system";
 const GITHUB_ISSUE = 31;
 const ALLOWED_CHAT_ID = Deno.env.get("ALLOWED_CHAT_ID") || "601442777";
 const GITHUB_API = "https://api.github.com";
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, x-gpt-secret, Authorization",
+};
+
+function corsJson(body, status = 200) {
+  return new Response(JSON.stringify(body, null, 2), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+  });
+}
 
 // ─── GitHub API helpers ────────────────────────────────────────────────────
 
@@ -32,8 +46,7 @@ async function ghRequest(pat, method, path, body) {
 
 async function postGitHubComment(pat, body) {
   const resp = await ghRequest(pat, "POST",
-    `/repos/${GITHUB_REPO}/issues/${GITHUB_ISSUE}/comments`,
-    { body });
+    `/repos/${GITHUB_REPO}/issues/${GITHUB_ISSUE}/comments`, { body });
   return resp.status;
 }
 
@@ -48,8 +61,7 @@ async function getFileContents(pat, filePath) {
   const resp = await ghRequest(pat, "GET",
     `/repos/${GITHUB_REPO}/contents/${filePath}`, null);
   if (resp.status === 404) return null;
-  const data = await resp.json();
-  return data;
+  return await resp.json();
 }
 
 async function updateFileContents(pat, filePath, content, message, sha) {
@@ -72,33 +84,28 @@ async function sendTelegram(token, chatId, text) {
 // ─── Backlog logic ─────────────────────────────────────────────────────────
 
 function decodeTasksB64(b64) {
-  // Поддержка base64url (заменяем - → + и _ → /)
   const standard = b64.replace(/-/g, "+").replace(/_/g, "/");
   const padded = standard + "=".repeat((4 - standard.length % 4) % 4);
-  const decoded = atob(padded);
-  return JSON.parse(decodeURIComponent(escape(decoded)));
+  return JSON.parse(decodeURIComponent(escape(atob(padded))));
 }
 
 async function processBacklog(pat, tasks, traceId, mode) {
-  // 1. Читать текущий roadmap_state.json
   const fileData = await getFileContents(pat, "governance/state/roadmap_state.json");
   let roadmap = { version: 1, tasks: [], blocker: null };
   let sha = undefined;
 
-  if (fileData && fileData.content) {
+  if (fileData?.content) {
     const raw = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ""))));
     roadmap = JSON.parse(raw);
     sha = fileData.sha;
   }
 
-  // 2. Добавить/обновить задачи
   const existingIds = new Map(roadmap.tasks.map((t) => [t.task_id, t]));
   const addedIds = [];
 
   for (const task of tasks) {
     const existing = existingIds.get(task.task_id);
     if (existing) {
-      // Обновить только если не completed
       if (existing.status !== "completed") {
         Object.assign(existing, task);
         addedIds.push(task.task_id);
@@ -113,33 +120,23 @@ async function processBacklog(pat, tasks, traceId, mode) {
   roadmap.cursor = tasks[tasks.length - 1]?.task_id || roadmap.cursor;
   roadmap.blocker = null;
 
-  // 3. Записать roadmap_state.json через GitHub Contents API
   const content = JSON.stringify(roadmap, null, 2) + "\n";
   const commitStatus = await updateFileContents(
-    pat,
-    "governance/state/roadmap_state.json",
-    content,
-    `BM-333: enqueue autonomy backlog ${traceId}`,
-    sha
+    pat, "governance/state/roadmap_state.json", content,
+    `BM-343: enqueue autonomy backlog ${traceId}`, sha
   );
 
-  // 4. Запустить repository_dispatch
   const dispatchStatus = await triggerRepositoryDispatch(pat, "autonomy-engine", {
-    mode: mode,
-    trace_id: traceId,
-    add_internal_tasks: false,
-    source: "gpt_backlog_trigger",
-    backlog_tasks: addedIds,
+    mode, trace_id: traceId, add_internal_tasks: false,
+    source: "gpt_backlog_trigger", backlog_tasks: addedIds,
     timestamp: new Date().toISOString()
   });
 
   return { commitStatus, dispatchStatus, addedIds };
 }
 
-// ─── Token check ───────────────────────────────────────────────────────────
-
 function checkGptToken(gptSecret, provided) {
-  if (!gptSecret) return true; // no secret configured — allow all
+  if (!gptSecret) return true;
   return provided === gptSecret;
 }
 
@@ -154,33 +151,36 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const method = req.method;
 
+  // CORS preflight — нужен для ChatGPT Actions
+  if (method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
   // ─── HEALTH CHECK ────────────────────────────────────────────────────────
   if (method === "GET" && url.pathname === "/") {
-    return new Response(JSON.stringify({
+    return corsJson({
       ok: true,
       service: "ai-devops-telegram-curator-webhook",
       repo: GITHUB_REPO,
       issue: GITHUB_ISSUE,
-      version: "4.0",
+      version: "4.1",
       endpoints: {
         "GET  /": "health check",
         "POST /": "Telegram webhook",
         "POST /autonomy": "GPT trigger (JSON body)",
         "GET  /autonomy-trigger": "GPT trigger (query params)",
         "GET  /autonomy-backlog-trigger": "GPT backlog + trigger (query params, tasks_b64)",
-        "POST /autonomy-backlog": "GPT backlog + trigger (JSON body)"
+        "POST /autonomy-backlog": "GPT backlog + trigger (JSON body) ← ChatGPT Action"
       }
-    }, null, 2), { headers: { "Content-Type": "application/json" } });
+    });
   }
 
   // ─── GET /autonomy-trigger ───────────────────────────────────────────────
   if (method === "GET" && url.pathname === "/autonomy-trigger") {
     const queryToken = url.searchParams.get("token");
-    if (!checkGptToken(gptSecret, queryToken)) {
-      return new Response(JSON.stringify({ ok: false, error: "Forbidden" }), {
-        status: 403, headers: { "Content-Type": "application/json" }
-      });
-    }
+    if (!checkGptToken(gptSecret, queryToken))
+      return corsJson({ ok: false, error: "Forbidden" }, 403);
+
     const mode = url.searchParams.get("mode") || "production_loop";
     const traceId = url.searchParams.get("trace_id") || ("gpt_get_" + Date.now());
     const addInternalTasks = url.searchParams.get("add_internal_tasks") === "true";
@@ -189,30 +189,23 @@ Deno.serve(async (req) => {
       source: "gpt_get_autonomy_trigger", timestamp: new Date().toISOString()
     });
     const ok = dispatchStatus === 204;
-    return new Response(JSON.stringify({
-      ok, event_type: "autonomy-engine", mode, trace_id: traceId,
+    return corsJson({ ok, event_type: "autonomy-engine", mode, trace_id: traceId,
       dispatch_status: dispatchStatus,
       message: ok ? "repository_dispatch triggered" : "dispatch failed"
-    }, null, 2), { status: ok ? 200 : 500, headers: { "Content-Type": "application/json" } });
+    }, ok ? 200 : 500);
   }
 
   // ─── GET /autonomy-backlog-trigger ───────────────────────────────────────
   if (method === "GET" && url.pathname === "/autonomy-backlog-trigger") {
     const queryToken = url.searchParams.get("token");
-    if (!checkGptToken(gptSecret, queryToken)) {
-      return new Response(JSON.stringify({ ok: false, error: "Forbidden" }), {
-        status: 403, headers: { "Content-Type": "application/json" }
-      });
-    }
+    if (!checkGptToken(gptSecret, queryToken))
+      return corsJson({ ok: false, error: "Forbidden" }, 403);
+
     const mode = url.searchParams.get("mode") || "production_loop";
     const traceId = url.searchParams.get("trace_id") || ("gpt_backlog_" + Date.now());
     const tasksB64 = url.searchParams.get("tasks_b64");
-
-    if (!tasksB64) {
-      return new Response(JSON.stringify({ ok: false, error: "tasks_b64 is required" }), {
-        status: 400, headers: { "Content-Type": "application/json" }
-      });
-    }
+    if (!tasksB64)
+      return corsJson({ ok: false, error: "tasks_b64 is required" }, 400);
 
     let tasks;
     try {
@@ -220,74 +213,50 @@ Deno.serve(async (req) => {
       tasks = decoded.tasks;
       if (!Array.isArray(tasks) || tasks.length === 0) throw new Error("tasks must be non-empty array");
     } catch (e) {
-      return new Response(JSON.stringify({ ok: false, error: "Invalid tasks_b64: " + e.message }), {
-        status: 400, headers: { "Content-Type": "application/json" }
-      });
+      return corsJson({ ok: false, error: "Invalid tasks_b64: " + e.message }, 400);
     }
 
     const { commitStatus, dispatchStatus, addedIds } = await processBacklog(pat, tasks, traceId, mode);
     const ok = (commitStatus === 200 || commitStatus === 201) && dispatchStatus === 204;
-    return new Response(JSON.stringify({
-      ok, trace_id: traceId, mode,
-      roadmap_commit_status: commitStatus,
-      dispatch_status: dispatchStatus,
-      tasks_added: addedIds,
-      tasks_count: addedIds.length,
+    return corsJson({ ok, trace_id: traceId, mode, roadmap_commit_status: commitStatus,
+      dispatch_status: dispatchStatus, tasks_added: addedIds, tasks_count: addedIds.length,
       message: ok ? "Backlog queued and engine triggered" : "Partial failure"
-    }, null, 2), { status: ok ? 200 : 500, headers: { "Content-Type": "application/json" } });
+    }, ok ? 200 : 500);
   }
 
-  // ─── POST /autonomy-backlog ──────────────────────────────────────────────
+  // ─── POST /autonomy-backlog ← ChatGPT Action calls this ─────────────────
   if (method === "POST" && url.pathname === "/autonomy-backlog") {
-    if (gptSecret) {
-      const authHeader = req.headers.get("x-gpt-secret") || req.headers.get("authorization");
-      if (!authHeader || !authHeader.includes(gptSecret)) {
-        return new Response(JSON.stringify({ ok: false, error: "Forbidden" }), {
-          status: 403, headers: { "Content-Type": "application/json" }
-        });
-      }
-    }
+    const authHeader = req.headers.get("x-gpt-secret") || req.headers.get("authorization") || "";
+    if (!checkGptToken(gptSecret, authHeader.replace("Bearer ", "")))
+      return corsJson({ ok: false, error: "Forbidden" }, 403);
+
     let body;
-    try { body = await req.json(); } catch {
-      return new Response(JSON.stringify({ ok: false, error: "Invalid JSON" }), {
-        status: 400, headers: { "Content-Type": "application/json" }
-      });
-    }
+    try { body = await req.json(); }
+    catch { return corsJson({ ok: false, error: "Invalid JSON" }, 400); }
+
     const mode = body.mode || "production_loop";
     const traceId = body.trace_id || ("gpt_backlog_post_" + Date.now());
     const tasks = body.tasks;
-    if (!Array.isArray(tasks) || tasks.length === 0) {
-      return new Response(JSON.stringify({ ok: false, error: "tasks must be non-empty array" }), {
-        status: 400, headers: { "Content-Type": "application/json" }
-      });
-    }
+    if (!Array.isArray(tasks) || tasks.length === 0)
+      return corsJson({ ok: false, error: "tasks must be non-empty array" }, 400);
+
     const { commitStatus, dispatchStatus, addedIds } = await processBacklog(pat, tasks, traceId, mode);
     const ok = (commitStatus === 200 || commitStatus === 201) && dispatchStatus === 204;
-    return new Response(JSON.stringify({
-      ok, trace_id: traceId, mode,
-      roadmap_commit_status: commitStatus,
-      dispatch_status: dispatchStatus,
-      tasks_added: addedIds,
-      tasks_count: addedIds.length
-    }, null, 2), { status: ok ? 200 : 500, headers: { "Content-Type": "application/json" } });
+    return corsJson({ ok, trace_id: traceId, mode, roadmap_commit_status: commitStatus,
+      dispatch_status: dispatchStatus, tasks_added: addedIds, tasks_count: addedIds.length
+    }, ok ? 200 : 500);
   }
 
   // ─── POST /autonomy ──────────────────────────────────────────────────────
   if (method === "POST" && url.pathname === "/autonomy") {
-    if (gptSecret) {
-      const authHeader = req.headers.get("x-gpt-secret") || req.headers.get("authorization");
-      if (!authHeader || !authHeader.includes(gptSecret)) {
-        return new Response(JSON.stringify({ ok: false, error: "Forbidden" }), {
-          status: 403, headers: { "Content-Type": "application/json" }
-        });
-      }
-    }
+    const authHeader = req.headers.get("x-gpt-secret") || req.headers.get("authorization") || "";
+    if (!checkGptToken(gptSecret, authHeader.replace("Bearer ", "")))
+      return corsJson({ ok: false, error: "Forbidden" }, 403);
+
     let body;
-    try { body = await req.json(); } catch {
-      return new Response(JSON.stringify({ ok: false, error: "Invalid JSON" }), {
-        status: 400, headers: { "Content-Type": "application/json" }
-      });
-    }
+    try { body = await req.json(); }
+    catch { return corsJson({ ok: false, error: "Invalid JSON" }, 400); }
+
     const mode = body.mode || "production_loop";
     const traceId = body.trace_id || ("gpt_post_" + Date.now());
     const dispatchStatus = await triggerRepositoryDispatch(pat, "autonomy-engine", {
@@ -295,9 +264,7 @@ Deno.serve(async (req) => {
       source: "gpt_post_autonomy", timestamp: new Date().toISOString()
     });
     const ok = dispatchStatus === 204;
-    return new Response(JSON.stringify({
-      ok, mode, trace_id: traceId, dispatch_status: dispatchStatus
-    }, null, 2), { status: ok ? 200 : 500, headers: { "Content-Type": "application/json" } });
+    return corsJson({ ok, mode, trace_id: traceId, dispatch_status: dispatchStatus }, ok ? 200 : 500);
   }
 
   // ─── POST / — TELEGRAM WEBHOOK ───────────────────────────────────────────
@@ -315,7 +282,6 @@ Deno.serve(async (req) => {
     const chatId = String(message.chat?.id);
     const messageId = String(message.message_id);
     const text = (message.text || "").trim();
-
     if (chatId !== ALLOWED_CHAT_ID) return new Response("Forbidden", { status: 403 });
 
     const now = new Date().toLocaleTimeString("uk-UA", {
@@ -333,9 +299,7 @@ Deno.serve(async (req) => {
     return new Response("OK");
   }
 
-  return new Response(JSON.stringify({
-    ok: false, error: "Not Found",
+  return corsJson({ ok: false, error: "Not Found",
     endpoints: ["GET /", "POST /", "POST /autonomy", "GET /autonomy-trigger",
-      "GET /autonomy-backlog-trigger", "POST /autonomy-backlog"]
-  }), { status: 404, headers: { "Content-Type": "application/json" } });
+      "GET /autonomy-backlog-trigger", "POST /autonomy-backlog"] }, 404);
 });
