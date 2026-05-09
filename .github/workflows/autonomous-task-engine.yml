@@ -13,6 +13,8 @@ on:
         required: false
         default: 'false'
         type: string
+  repository_dispatch:
+    types: [autonomy-engine, ledger-updated]
   issue_comment:
     types: [created]
   schedule:
@@ -27,8 +29,10 @@ jobs:
   autonomy-engine:
     name: Autonomous Task Engine
     if: |
-      github.event_name != 'issue_comment' ||
-      (github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: AUTONOMY_ENGINE'))
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'repository_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'issue_comment' && github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: AUTONOMY_ENGINE'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -46,11 +50,25 @@ jobs:
           INPUT_MODE: ${{ inputs.mode }}
           INPUT_ADD_INTERNAL_TASKS: ${{ inputs.add_internal_tasks }}
           COMMENT_BODY: ${{ github.event.comment.body }}
+          DISPATCH_PAYLOAD: ${{ toJson(github.event.client_payload) }}
         run: |
           set -e
           MODE="${INPUT_MODE:-production_loop}"
           ADD_TASKS="${INPUT_ADD_INTERNAL_TASKS:-false}"
           TRACE_ID="workflow_dispatch"
+
+          if [ "${EVENT_NAME:-}" = "repository_dispatch" ]; then
+            # GPT triggered via Deno webhook → repository_dispatch
+            MODE=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('mode','production_loop'))" 2>/dev/null || echo "production_loop")
+            TRACE_ID=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('trace_id','repo_dispatch'))" 2>/dev/null || echo "repo_dispatch")
+            ADD_TASKS=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print('true' if d.get('add_internal_tasks') else 'false')" 2>/dev/null || echo "false")
+            echo "REPOSITORY_DISPATCH triggered: mode=$MODE trace_id=$TRACE_ID"
+          fi
+
+          if [ "${EVENT_NAME:-}" = "schedule" ]; then
+            MODE="production_loop"
+            TRACE_ID="cron_scheduled"
+          fi
 
           if [ "${EVENT_NAME:-}" = "issue_comment" ]; then
             MODE="production_loop"
@@ -100,24 +118,9 @@ jobs:
           git config user.name "Autonomy Engine"
 
           git add \
-            governance/state/autonomy_state.json \
-            governance/state/roadmap_state.json \
-            governance/state/internal_contour_status.json \
-            governance/state/repo_inventory.json \
-            governance/state/orchestrator_health.json \
-            governance/state/production_status_report.json \
-            governance/state/repair_generator_state.json \
-            governance/state/gpt_reserve_proof_result.json \
-            governance/state/e6_proof_result.json \
-            governance/state/test_autonomy_cycle_001.json \
-            governance/state/test_autonomy_cycle_003.json \
-            governance/events/autonomy_engine.jsonl \
-            governance/events/autonomous_development.jsonl \
-            governance/events/autonomous_roadmap_executor_proof.jsonl \
-            governance/events/autonomous_test_cycle.jsonl \
-            governance/events/patch_runner.jsonl \
-            governance/patch_queue/current.json \
-            governance/patch_queue/generated/ \
+            governance/state/ \
+            governance/events/ \
+            governance/patch_queue/ \
             2>/dev/null || true
 
           if git diff --cached --quiet; then
@@ -126,7 +129,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "AUTONOMY ENGINE: state update (mode=$AUTONOMY_MODE)"
+          git commit -m "AUTONOMY ENGINE: state update (mode=$AUTONOMY_MODE trace=$AUTONOMY_TRACE_ID)"
 
           push_ok=false
           for attempt in 1 2 3; do
@@ -159,16 +162,9 @@ jobs:
               '',
               `Mode: ${process.env.AUTONOMY_MODE || 'unknown'}`,
               `Trace: ${process.env.AUTONOMY_TRACE_ID || 'unknown'}`,
+              `Trigger: ${context.eventName}`,
               `Exit: ${process.env.ENGINE_EXIT || 'unknown'}`,
               `Push: ${process.env.AUTONOMY_PUSH_STATUS || 'unknown'}`,
-              '',
-              'BM-CLOUD-001 hardened:',
-              '- issue_comment trigger supported',
-              '- production_loop mode active',
-              '- sync includes waiting_runner status',
-              '- dispatch layer for stale tasks',
-              '- generated/ patch files for stale recovery',
-              '- INT-001..INT-005 available via --add-internal-tasks'
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
