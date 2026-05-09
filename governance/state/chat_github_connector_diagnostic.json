@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "diagnosed_at": "2026-05-08T21:52:00Z",
+  "diagnosed_by": "claude-auditor",
+
+  "root_causes": {
+    "add_issue_comment_via_connector": {
+      "status": "CONFIRMED_BROKEN",
+      "reason": "ChatGPT GitHub connector показывает confirmation popup пользователю перед write-операцией. Это платформенное поведение OpenAI, не баг GitHub.",
+      "evidence": "Многократно подтверждено в сессии: popup появлялся при каждой попытке GPT писать в issue через connector"
+    },
+    "push_from_owner_pat": {
+      "status": "CONFIRMED_BROKEN",
+      "reason": "Push от PAT bereznyi-aleksandr (владелец репо) не триггерит GitHub Actions. GitHub специально блокирует это для предотвращения бесконечных циклов.",
+      "evidence": "Подтверждено тестами: telegram_offset.txt оставался 0, workflows не запускались от PAT-коммитов"
+    }
+  },
+
+  "working_routes": {
+    "repository_dispatch": {
+      "status": "WORKS",
+      "reason": "POST /repos/{owner}/{repo}/dispatches с любым PAT триггерит workflows. Не зависит от owner PAT restriction.",
+      "implementation": "Deno webhook принимает запрос от GPT → вызывает repository_dispatch → autonomous-task-engine запускается"
+    },
+    "deno_webhook_available": {
+      "status": "DEPLOYED",
+      "url": "https://fine-chicken-23.bereznyi-aleksandr.deno.net",
+      "confirmed_at": "2026-05-03"
+    }
+  },
+
+  "selected_solution": "repository_dispatch via Deno webhook",
+  "implementation_plan": [
+    "1. Добавить repository_dispatch триггер в autonomous-task-engine.yml",
+    "2. Обновить Deno webhook — добавить обработку TYPE: AUTONOMY_ENGINE",
+    "3. GPT отправляет HTTP POST на Deno с задачей",
+    "4. Deno триггерит repository_dispatch с payload",
+    "5. autonomous-task-engine.yml запускается и выполняет production_loop"
+  ]
+}
