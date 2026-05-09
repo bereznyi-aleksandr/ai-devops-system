@@ -1,36 +1,31 @@
 {
-  "version": 2,
-  "updated_at": "2026-05-09T03:42:00Z",
+  "version": 3,
+  "updated_at": "2026-05-09T05:37:00Z",
   "status": "ready_pending_deno_deploy",
-  "chat_to_github_write": {
-    "add_issue_comment_connector": "BROKEN - requires user confirmation popup (platform behavior)",
-    "push_from_owner_pat": "BROKEN - GitHub blocks owner PAT from triggering workflows",
-    "repository_dispatch": "WORKS - triggers GitHub Actions without popup",
-    "deno_get_autonomy_trigger": "WORKS after Deno deploy v3.1"
-  },
-  "selected_trigger_route": "GET /autonomy-trigger via Deno webhook → repository_dispatch",
+  "can_gpt_trigger_engine": true,
+  "can_gpt_enqueue_tasks": true,
+  "selected_trigger_route": "Deno repository_dispatch",
+  "selected_task_creation_route": "Deno updates roadmap_state.json via GitHub Contents API",
+  "backlog_gateway": "GET /autonomy-backlog-trigger via Deno",
   "deno_webhook_url": "https://fine-chicken-23.bereznyi-aleksandr.deno.net",
   "gpt_get_trigger_url_template": "https://fine-chicken-23.bereznyi-aleksandr.deno.net/autonomy-trigger?token=<GPT_WEBHOOK_SECRET>&mode=production_loop&trace_id=<trace_id>",
-  "how_gpt_triggers_engine": {
-    "method": "GET — no curl, no POST, no JSON body needed",
-    "step_1": "GPT opens URL: GET /autonomy-trigger?token=SECRET&mode=production_loop&trace_id=gpt_001",
-    "step_2": "Deno verifies token, calls POST /repos/.../dispatches with event_type=autonomy-engine",
-    "step_3": "GitHub triggers autonomous-task-engine.yml via repository_dispatch",
-    "step_4": "Engine runs production_loop and commits results",
-    "step_5": "Engine posts BEM-report to issue #31"
+  "gpt_backlog_url_template": "https://fine-chicken-23.bereznyi-aleksandr.deno.net/autonomy-backlog-trigger?token=<GPT_WEBHOOK_SECRET>&mode=production_loop&trace_id=<trace_id>&tasks_b64=<base64url_tasks_json>",
+  "smoke_test_tasks": {
+    "task_1": "TEST_CHAIN_001_JSON_STATE → governance/state/test_full_chain_001.json",
+    "task_2": "TEST_CHAIN_002_EVENT_APPEND → governance/events/full_chain_autonomy_test.jsonl",
+    "task_3": "TEST_CHAIN_003_JSON_STATE → governance/state/test_full_chain_003.json",
+    "trace_id": "bem_333_full_backlog_chain"
   },
-  "endpoints": {
-    "GET /": "health check",
-    "POST /": "Telegram webhook",
-    "POST /autonomy": "GPT trigger with JSON body",
-    "GET /autonomy-trigger": "GPT trigger with query params — NO curl needed"
+  "chat_to_github_write": {
+    "add_issue_comment_connector": "BROKEN - confirmation popup",
+    "push_from_owner_pat": "BROKEN - GitHub security",
+    "repository_dispatch": "WORKS",
+    "deno_get_autonomy_trigger": "WORKS after Deno deploy v4.0",
+    "deno_get_backlog_trigger": "WORKS after Deno deploy v4.0"
   },
-  "last_e2e_trace_id": "pending",
-  "last_e2e_result": "pending",
   "blocker": {
     "type": "deno_deploy_code_update_required",
-    "description": "Deno Playground нужно обновить до v3.1 кода из governance/deno_webhook.js",
-    "action": "Открыть deno.com/deploy → проект → вставить код из governance/deno_webhook.js → Save and Deploy",
-    "after_deploy": "GPT может открыть URL и engine запустится автономно без Shell"
+    "description": "Deno Playground нужно обновить до v4.0 из governance/deno_webhook.js",
+    "action": "deno.com/deploy → проект → Edit code → вставить → Save and Deploy"
   }
 }
