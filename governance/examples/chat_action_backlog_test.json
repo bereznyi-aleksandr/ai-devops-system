@@ -1,0 +1,60 @@
+{
+  "description": "Тестовый payload для ChatGPT Action: enqueueAutonomyBacklog",
+  "endpoint": "POST /autonomy-backlog",
+  "headers": {
+    "x-gpt-secret": "<GPT_WEBHOOK_SECRET>",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "mode": "production_loop",
+    "trace_id": "bem_343_chat_action_test",
+    "tasks": [
+      {
+        "task_id": "TEST_CHAIN_001_JSON_STATE",
+        "title": "Full chain test: create JSON proof file",
+        "status": "pending",
+        "template": "create_json_state",
+        "target_path": "governance/state/test_full_chain_001.json",
+        "commit_message": "TEST-CHAIN-001: create JSON proof file",
+        "content": {
+          "version": 1,
+          "test_id": "TEST_CHAIN_001_JSON_STATE",
+          "status": "created_by_autonomous_engine",
+          "trace": "bem_343_chat_action_test"
+        }
+      },
+      {
+        "task_id": "TEST_CHAIN_002_EVENT_APPEND",
+        "title": "Full chain test: append event",
+        "status": "pending",
+        "template": "append_event",
+        "target_path": "governance/events/full_chain_autonomy_test.jsonl",
+        "commit_message": "TEST-CHAIN-002: append autonomy test event",
+        "content": {
+          "event": "FULL_CHAIN_AUTONOMY_TEST",
+          "trace": "bem_343_chat_action_test",
+          "status": "ok"
+        }
+      },
+      {
+        "task_id": "TEST_CHAIN_003_JSON_STATE",
+        "title": "Full chain test: create second JSON proof file",
+        "status": "pending",
+        "template": "create_json_state",
+        "target_path": "governance/state/test_full_chain_003.json",
+        "commit_message": "TEST-CHAIN-003: create second JSON proof file",
+        "content": {
+          "version": 1,
+          "test_id": "TEST_CHAIN_003_JSON_STATE",
+          "status": "created_by_autonomous_engine",
+          "trace": "bem_343_chat_action_test"
+        }
+      }
+    ]
+  },
+  "expected_response": {
+    "ok": true,
+    "tasks_count": 3,
+    "dispatch_status": 204
+  }
+}
