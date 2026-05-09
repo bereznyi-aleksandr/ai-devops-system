@@ -1,31 +1,36 @@
 {
-  "version": 1,
-  "updated_at": "2026-05-09T03:35:00Z",
-  "status": "ready",
+  "version": 2,
+  "updated_at": "2026-05-09T03:42:00Z",
+  "status": "ready_pending_deno_deploy",
   "chat_to_github_write": {
     "add_issue_comment_connector": "BROKEN - requires user confirmation popup (platform behavior)",
     "push_from_owner_pat": "BROKEN - GitHub blocks owner PAT from triggering workflows",
     "repository_dispatch": "WORKS - triggers GitHub Actions without popup",
-    "deno_webhook_autonomy": "WORKS - POST /autonomy → repository_dispatch → autonomous-task-engine"
+    "deno_get_autonomy_trigger": "WORKS after Deno deploy v3.1"
   },
-  "selected_trigger_route": "repository_dispatch via Deno webhook /autonomy endpoint",
+  "selected_trigger_route": "GET /autonomy-trigger via Deno webhook → repository_dispatch",
   "deno_webhook_url": "https://fine-chicken-23.bereznyi-aleksandr.deno.net",
-  "autonomy_endpoint": "https://fine-chicken-23.bereznyi-aleksandr.deno.net/autonomy",
+  "gpt_get_trigger_url_template": "https://fine-chicken-23.bereznyi-aleksandr.deno.net/autonomy-trigger?token=<GPT_WEBHOOK_SECRET>&mode=production_loop&trace_id=<trace_id>",
   "how_gpt_triggers_engine": {
-    "step_1": "GPT calls POST https://fine-chicken-23.bereznyi-aleksandr.deno.net/autonomy",
-    "step_2": "Deno calls POST https://api.github.com/repos/.../dispatches with event_type=autonomy-engine",
+    "method": "GET — no curl, no POST, no JSON body needed",
+    "step_1": "GPT opens URL: GET /autonomy-trigger?token=SECRET&mode=production_loop&trace_id=gpt_001",
+    "step_2": "Deno verifies token, calls POST /repos/.../dispatches with event_type=autonomy-engine",
     "step_3": "GitHub triggers autonomous-task-engine.yml via repository_dispatch",
     "step_4": "Engine runs production_loop and commits results",
     "step_5": "Engine posts BEM-report to issue #31"
   },
-  "gpt_curl_example": "curl -X POST https://fine-chicken-23.bereznyi-aleksandr.deno.net/autonomy -H 'Content-Type: application/json' -d '{\"mode\": \"production_loop\", \"trace_id\": \"gpt_manual_001\"}'",
-  "requires_deno_update": true,
-  "deno_update_note": "Обновить код в Deno Playground: скопировать governance/deno_webhook.js v3.0 и задеплоить",
+  "endpoints": {
+    "GET /": "health check",
+    "POST /": "Telegram webhook",
+    "POST /autonomy": "GPT trigger with JSON body",
+    "GET /autonomy-trigger": "GPT trigger with query params — NO curl needed"
+  },
   "last_e2e_trace_id": "pending",
   "last_e2e_result": "pending",
   "blocker": {
     "type": "deno_deploy_code_update_required",
-    "description": "Deno Playground нужно обновить до v3.0 кода из governance/deno_webhook.js",
-    "action": "Открыть deno.com/deploy → проект → вставить новый код → Deploy"
+    "description": "Deno Playground нужно обновить до v3.1 кода из governance/deno_webhook.js",
+    "action": "Открыть deno.com/deploy → проект → вставить код из governance/deno_webhook.js → Save and Deploy",
+    "after_deploy": "GPT может открыть URL и engine запустится автономно без Shell"
   }
 }
