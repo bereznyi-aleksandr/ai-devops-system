@@ -207,3 +207,6 @@
 {"event": "AUTONOMY_ENGINE_START", "task_id": "aut_20260509_072557", "trace_id": "eng_f91dbe178cfd43a0", "mode": "production_loop", "timestamp": "2026-05-09T07:25:57Z"}
 {"event": "AUTONOMY_ENGINE_PRODUCTION_LOOP_START", "trace_id": "prod_4ba047ea36004197", "timestamp": "2026-05-09T07:25:57Z"}
 {"event": "AUTONOMY_ENGINE_TASK_SELECTED", "trace_id": "eng_5fef6da2db0b46ae", "task_id": "TEST_CHAIN_001_JSON_STATE", "dry_run": false, "timestamp": "2026-05-09T07:25:57Z"}
+{"event": "AUTONOMY_ENGINE_RUNNER_RESULT", "trace_id": "eng_5fef6da2db0b46ae", "task_id": "TEST_CHAIN_001_JSON_STATE", "returncode": 0, "timestamp": "2026-05-09T07:25:58Z"}
+{"event": "AUTONOMY_ENGINE_TASK_COMPLETED", "trace_id": "eng_5fef6da2db0b46ae", "task_id": "TEST_CHAIN_001_JSON_STATE", "timestamp": "2026-05-09T07:25:58Z"}
+{"event": "AUTONOMY_ENGINE_TASK_SELECTED", "trace_id": "eng_38c20ea6f64b4b45", "task_id": "TEST_CHAIN_002_EVENT_APPEND", "dry_run": false, "timestamp": "2026-05-09T07:25:58Z"}

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-05-09T07:25:57Z",
+  "updated_at": "2026-05-09T07:25:58Z",
   "mode": "production_autonomous_development_loop",
   "cursor": "TEST_CHAIN_003_JSON_STATE",
   "tasks": [
@@ -169,7 +169,7 @@
     {
       "task_id": "TEST_CHAIN_001_JSON_STATE",
       "title": "Full chain test 1: create JSON proof",
-      "status": "running",
+      "status": "completed",
       "template": "create_json_state",
       "target_path": "governance/state/test_full_chain_001.json",
       "commit_message": "TEST-CHAIN-001: create JSON proof",
@@ -179,12 +179,13 @@
         "status": "created_by_autonomous_engine",
         "trace": "bem_338_full_chain",
         "created_at": "2026-05-09T07:25:48.333Z"
-      }
+      },
+      "completed_at": "2026-05-09T07:25:58Z"
     },
     {
       "task_id": "TEST_CHAIN_002_EVENT_APPEND",
       "title": "Full chain test 2: append event",
-      "status": "pending",
+      "status": "running",
       "template": "append_event",
       "target_path": "governance/events/full_chain_autonomy_test.jsonl",
       "commit_message": "TEST-CHAIN-002: append event proof",
