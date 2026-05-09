@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-05-09T07:25:48.599Z",
+  "updated_at": "2026-05-09T07:25:57Z",
   "mode": "production_autonomous_development_loop",
   "cursor": "TEST_CHAIN_003_JSON_STATE",
   "tasks": [
@@ -169,7 +169,7 @@
     {
       "task_id": "TEST_CHAIN_001_JSON_STATE",
       "title": "Full chain test 1: create JSON proof",
-      "status": "pending",
+      "status": "running",
       "template": "create_json_state",
       "target_path": "governance/state/test_full_chain_001.json",
       "commit_message": "TEST-CHAIN-001: create JSON proof",
