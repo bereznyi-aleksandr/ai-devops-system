@@ -1,0 +1,154 @@
+openapi: 3.1.0
+info:
+  title: AI DevOps Autonomy Gateway
+  description: Deno webhook gateway for GPT to trigger autonomous task engine and enqueue roadmap tasks
+  version: "4.0"
+servers:
+  - url: https://fine-chicken-23.bereznyi-aleksandr.deno.net
+security:
+  - GptSecret: []
+paths:
+  /autonomy:
+    post:
+      operationId: triggerAutonomyEngine
+      summary: Trigger Autonomous Task Engine
+      description: Triggers GitHub repository_dispatch which starts autonomous-task-engine.yml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  default: production_loop
+                  enum: [production_loop, run_until_blocked, execute_next, plan]
+                trace_id:
+                  type: string
+                  description: Unique trace identifier for this run
+              required: []
+            example:
+              mode: production_loop
+              trace_id: gpt_action_001
+      responses:
+        "200":
+          description: Engine triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TriggerResponse"
+        "403":
+          description: Invalid or missing secret
+        "500":
+          description: GitHub dispatch failed
+  /autonomy-backlog:
+    post:
+      operationId: enqueueAutonomyBacklog
+      summary: Enqueue tasks and trigger engine
+      description: Adds tasks to roadmap_state.json via GitHub Contents API then triggers engine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  default: production_loop
+                trace_id:
+                  type: string
+                tasks:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/RoadmapTask"
+                  minItems: 1
+              required: [tasks]
+            example:
+              mode: production_loop
+              trace_id: gpt_backlog_001
+              tasks:
+                - task_id: TEST_CHAIN_001_JSON_STATE
+                  title: "Full chain test: create JSON proof file"
+                  status: pending
+                  template: create_json_state
+                  target_path: governance/state/test_full_chain_001.json
+                  commit_message: "TEST-CHAIN-001: create JSON proof file"
+                  content:
+                    version: 1
+                    status: created_by_autonomous_engine
+      responses:
+        "200":
+          description: Tasks enqueued and engine triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BacklogResponse"
+        "400":
+          description: Invalid tasks payload
+        "403":
+          description: Invalid or missing secret
+        "500":
+          description: GitHub API or dispatch failed
+components:
+  securitySchemes:
+    GptSecret:
+      type: apiKey
+      in: header
+      name: x-gpt-secret
+  schemas:
+    RoadmapTask:
+      type: object
+      required: [task_id, title]
+      properties:
+        task_id:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+          default: pending
+        template:
+          type: string
+          enum: [create_json_state, append_event, create_or_update]
+        target_path:
+          type: string
+        commit_message:
+          type: string
+        content:
+          type: object
+    TriggerResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        event_type:
+          type: string
+        mode:
+          type: string
+        trace_id:
+          type: string
+        dispatch_status:
+          type: integer
+        message:
+          type: string
+    BacklogResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        trace_id:
+          type: string
+        mode:
+          type: string
+        roadmap_commit_status:
+          type: integer
+        dispatch_status:
+          type: integer
+        tasks_added:
+          type: array
+          items:
+            type: string
+        tasks_count:
+          type: integer
