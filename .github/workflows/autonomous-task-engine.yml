@@ -25,6 +25,11 @@ permissions:
   issues: write
   actions: write
 
+# BM-326: serialize runs — не допускать параллельной записи state-файлов
+concurrency:
+  group: autonomy-engine-main
+  cancel-in-progress: false
+
 jobs:
   autonomy-engine:
     name: Autonomous Task Engine
@@ -58,7 +63,6 @@ jobs:
           TRACE_ID="workflow_dispatch"
 
           if [ "${EVENT_NAME:-}" = "repository_dispatch" ]; then
-            # GPT triggered via Deno webhook → repository_dispatch
             MODE=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('mode','production_loop'))" 2>/dev/null || echo "production_loop")
             TRACE_ID=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('trace_id','repo_dispatch'))" 2>/dev/null || echo "repo_dispatch")
             ADD_TASKS=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print('true' if d.get('add_internal_tasks') else 'false')" 2>/dev/null || echo "false")
@@ -131,15 +135,26 @@ jobs:
 
           git commit -m "AUTONOMY ENGINE: state update (mode=$AUTONOMY_MODE trace=$AUTONOMY_TRACE_ID)"
 
+          # BM-326: retry с reset при rebase conflict
           push_ok=false
           for attempt in 1 2 3; do
             echo "BEM-AUTONOMY-ENGINE | PUSH_ATTEMPT_$attempt"
-            git pull --rebase --autostash origin main
-            if git push origin HEAD:main; then
-              push_ok=true
-              break
+            if git pull --rebase --autostash origin main; then
+              if git push origin HEAD:main; then
+                push_ok=true
+                break
+              fi
+            else
+              echo "BEM-AUTONOMY-ENGINE | REBASE_CONFLICT — resetting to origin/main"
+              git rebase --abort 2>/dev/null || true
+              git fetch origin main
+              git reset --hard origin/main
+              # Повторно применить изменения движка
+              python3 scripts/autonomous_task_engine.py --mode "$AUTONOMY_MODE" || true
+              git add governance/state/ governance/events/ governance/patch_queue/ 2>/dev/null || true
+              git diff --cached --quiet || git commit -m "AUTONOMY ENGINE: state retry after conflict (mode=$AUTONOMY_MODE trace=$AUTONOMY_TRACE_ID)"
             fi
-            sleep $((attempt * 2))
+            sleep $((attempt * 3))
           done
 
           if [ "$push_ok" != "true" ]; then
