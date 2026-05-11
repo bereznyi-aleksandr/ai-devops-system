@@ -3,7 +3,7 @@
 ```text
 Trace: system_status_report
 Mode: schedule
-Time: 2026-05-11T04:35:32Z
+Time: 2026-05-11T09:59:26Z
 
 ЧЕК-ЛИСТ:
 [✅] emergency_stop.enabled = false
@@ -11,7 +11,7 @@ Time: 2026-05-11T04:35:32Z
 [✅] last_cycle_id = cyc_roadmap_20260507T062404Z
 [✅] providers_checked = 3
 [✅] relay_events_seen = 5
-[✅] report_generated_at = 2026-05-11T04:35:32Z
+[✅] report_generated_at = 2026-05-11T09:59:26Z
 ```
 
 | Subsystem | Status | Detail |
@@ -38,18 +38,6 @@ Time: 2026-05-11T04:35:32Z
     "changed": false,
     "last_cycle_id": "cyc_roadmap_20260507T062404Z",
     "status": "cycle_completed",
-    "timestamp": "2026-05-10T23:06:59Z"
-  },
-  {
-    "event": "ROLE_ORCHESTRATOR_START",
-    "mode": "watchdog",
-    "timestamp": "2026-05-11T00:07:05Z"
-  },
-  {
-    "event": "ROLE_WATCHDOG_COMPLETED",
-    "changed": false,
-    "last_cycle_id": "cyc_roadmap_20260507T062404Z",
-    "status": "cycle_completed",
     "timestamp": "2026-05-11T00:07:05Z"
   },
   {
@@ -63,6 +51,18 @@ Time: 2026-05-11T04:35:32Z
     "last_cycle_id": "cyc_roadmap_20260507T062404Z",
     "status": "cycle_completed",
     "timestamp": "2026-05-11T04:34:12Z"
+  },
+  {
+    "event": "ROLE_ORCHESTRATOR_START",
+    "mode": "watchdog",
+    "timestamp": "2026-05-11T08:04:59Z"
+  },
+  {
+    "event": "ROLE_WATCHDOG_COMPLETED",
+    "changed": false,
+    "last_cycle_id": "cyc_roadmap_20260507T062404Z",
+    "status": "cycle_completed",
+    "timestamp": "2026-05-11T08:04:59Z"
   }
 ]
 ```
