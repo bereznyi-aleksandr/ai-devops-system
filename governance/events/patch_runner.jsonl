@@ -83,3 +83,6 @@
 {"event": "PATCH_RUNNER_COMMIT", "task_id": "tc_ic_repo_20260511_002_event", "status": "pushed", "timestamp": "2026-05-11T18:19:31Z"}
 {"event": "PATCH_RUNNER_START", "task_id": "tc_ic_repo_20260511_003_json", "mode": "apply_and_commit", "errors": [], "timestamp": "2026-05-11T18:19:31Z"}
 {"event": "PATCH_RUNNER_CHECKS", "task_id": "tc_ic_repo_20260511_003_json", "ok": true, "checks": [{"cmd": "python3 -m py_compile scripts/autonomous_task_engine.py scripts/isa_patch_runner.py", "returncode": 0, "stdout": "", "stderr": ""}, {"cmd": "python3 -m json.tool governance/state/test_ic_a_ic_repo_20260511_003.json >/tmp/json_check.txt", "returncode": 0, "stdout": "", "stderr": ""}], "timestamp": "2026-05-11T18:19:31Z"}
+{"event": "PATCH_RUNNER_PUSH_ATTEMPT", "attempt": 1, "timestamp": "2026-05-11T18:19:31Z"}
+{"event": "PATCH_RUNNER_PUSH_OK", "attempt": 1, "timestamp": "2026-05-11T18:19:33Z"}
+{"event": "PATCH_RUNNER_COMMIT", "task_id": "tc_ic_repo_20260511_003_json", "status": "pushed", "timestamp": "2026-05-11T18:19:33Z"}
