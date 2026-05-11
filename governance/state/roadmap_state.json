@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-05-11T18:19:28Z",
+  "updated_at": "2026-05-11T18:19:30Z",
   "mode": "production_autonomous_development_loop",
   "cursor": "TC_ic_repo_20260511_003_JSON",
   "tasks": [
@@ -135,7 +135,7 @@
     {
       "task_id": "TC_ic_repo_20260511_001_JSON",
       "title": "IC-A proof: create JSON state [ic_repo_20260511]",
-      "status": "running",
+      "status": "completed",
       "template": "create_json_state",
       "target_path": "governance/state/test_ic_a_ic_repo_20260511_001.json",
       "commit_message": "IC-A-001: JSON state proof [ic_repo_20260511]",
@@ -144,12 +144,13 @@
         "test_id": "TC_ic_repo_20260511_001_JSON",
         "trace": "ic_repo_20260511",
         "status": "created_by_autonomous_engine"
-      }
+      },
+      "completed_at": "2026-05-11T18:19:30Z"
     },
     {
       "task_id": "TC_ic_repo_20260511_002_EVENT",
       "title": "IC-A proof: append event [ic_repo_20260511]",
-      "status": "pending",
+      "status": "running",
       "template": "append_event",
       "target_path": "governance/events/full_chain_autonomy_test.jsonl",
       "commit_message": "IC-A-002: event append proof [ic_repo_20260511]",
