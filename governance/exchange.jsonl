@@ -158,3 +158,4 @@
 {"event_id": "evt_hourly_20260511_102859", "timestamp": "2026-05-11T10:28:59Z", "type": "SYSTEM_HEALTH", "source": "curator_hourly_report", "status": "report_queued", "phase": "E3"}
 {"event_id": "evt_hourly_20260511_133811", "timestamp": "2026-05-11T13:38:11Z", "type": "SYSTEM_HEALTH", "source": "curator_hourly_report", "status": "report_queued", "phase": "E3"}
 {"event_id": "evt_hourly_20260511_162447", "timestamp": "2026-05-11T16:24:47Z", "type": "SYSTEM_HEALTH", "source": "curator_hourly_report", "status": "report_queued", "phase": "E3"}
+{"event_id": "ic_b_full_contour_20260511", "timestamp": "2026-05-11T18:31:18Z", "type": "CURATOR_ROUTING_DECISION", "source": "curator_entrypoint", "backend": "claude", "reason": "primary provider claude is ok", "task_type": "internal_contour_proof", "next_action": "START_ROLE_ORCHESTRATOR", "requested_role": null}

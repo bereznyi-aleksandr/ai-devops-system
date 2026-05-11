@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "timestamp": "2026-05-07T06:24:03Z",
-  "trace_id": "proof_gpt_reserve_fallback",
-  "task_type": "architecture_change",
-  "active_backend": "gpt_hosted_fallback",
-  "routing_reason": "primary claude is limited, switching to reserve gpt",
+  "timestamp": "2026-05-11T18:31:18Z",
+  "trace_id": "ic_b_full_contour_20260511",
+  "task_type": "internal_contour_proof",
+  "active_backend": "claude",
+  "routing_reason": "primary provider claude is ok",
   "next_action": "START_ROLE_ORCHESTRATOR",
   "requested_role": null,
-  "task": "curator\n\nTYPE: CURATOR_ROADMAP_EXECUTION\nTRACE_ID: proof_gpt_reserve_fallback\nTASK_TYPE: architecture_change\n\nЗАДАЧА:\nProof-run GPT reserve fallback.\nClaude.status = limited (принудительно для теста).\nAuditor и executor должны пойти через GPT reserve.\nExecutor должен внести тестовое изменение и сделать commit.\n\nОжидаемый маршрут:\nanalyst (gpt) → auditor (gpt reserve) → executor (gpt reserve) → auditor verify → curator_summary",
+  "task": "curator\n\nTYPE: CURATOR_ROADMAP_EXECUTION\nTRACE_ID: ic_b_full_contour_20260511\nTASK_TYPE: internal_contour_proof\n\nЗАДАЧА IC-B: FULL INTERNAL CONTOUR PROOF\n\nЗапусти Role Orchestrator для полного цикла внутреннего контура.\n\nЦикл: analyst → auditor → executor → auditor → curator_summary\n\nExecutor должен создать harmless proof:\n1. governance/state/ic_b_full_contour_20260511.json\n2. Добавить событие в governance/events/ic_b_full_contour.jsonl\n\nНе обходить куратора. Curator → Role Orchestrator → роли → summary.",
   "error_detected": false
 }
