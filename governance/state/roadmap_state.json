@@ -1,217 +1,75 @@
 {
   "version": 2,
-  "updated_at": "2026-05-11T18:04:20Z",
+  "updated_at": "2026-05-11T18:19:00Z",
   "mode": "production_autonomous_development_loop",
-  "cursor": "TEST_CHAIN_003_JSON_STATE",
+  "cursor": "TC_ic_repo_20260511_003_JSON",
   "tasks": [
+    {"task_id": "A1_A8_AUTONOMOUS_ROADMAP_EXECUTOR", "status": "completed"},
+    {"task_id": "E5_001_PROVIDER_FAILOVER", "status": "completed"},
+    {"task_id": "AUTO_HEARTBEAT_PROOF", "status": "completed", "completed_at": "2026-05-06T17:23:18Z"},
+    {"task_id": "PROD_INTERNAL_CONTOUR_BASELINE_STATE", "status": "completed", "completed_at": "2026-05-06T18:08:20Z"},
+    {"task_id": "PROD_AUTONOMY_EVENT_STREAM", "status": "completed", "completed_at": "2026-05-07T05:06:30Z"},
+    {"task_id": "INT_001_INVENTORY_REPO_STATE", "status": "completed", "completed_at": "2026-05-07T05:08:00Z"},
+    {"task_id": "INT_002_STABILIZE_ROLE_ORCHESTRATOR", "status": "completed", "completed_at": "2026-05-07T05:08:06Z"},
+    {"task_id": "INT_003_PROVIDER_FAILOVER_TELEMETRY", "status": "completed", "completed_at": "2026-05-07T05:08:12Z"},
+    {"task_id": "INT_004_PRODUCTION_STATUS_REPORT", "status": "completed", "completed_at": "2026-05-07T05:08:18Z"},
+    {"task_id": "INT_005_AUTONOMOUS_REPAIR_GENERATOR", "status": "completed", "completed_at": "2026-05-07T05:08:26Z"},
+    {"task_id": "E5_002_PROVIDER_PROBE", "status": "completed", "completed_at": "2026-05-07T17:53:54Z"},
+    {"task_id": "E5_003_SWITCH_MATRIX", "status": "completed", "completed_at": "2026-05-07T17:54:20Z"},
+    {"task_id": "E5_004_CLAUDE_RESTORE", "status": "completed", "completed_at": "2026-05-07T17:53:21Z"},
+    {"task_id": "E4_003_EMERGENCY_STOP", "status": "completed", "completed_at": "2026-05-07T17:54:29Z"},
+    {"task_id": "E4_004_FSM_TELEGRAM_REPORT", "status": "completed", "completed_at": "2026-05-07T17:55:04Z"},
+    {"task_id": "E5_006_GPT_CODEX_DISABLE", "status": "completed", "completed_at": "2026-05-07T17:53:21Z"},
+    {"task_id": "E6_001_PRODUCTION_STATUS_AUTOMATION", "status": "completed", "completed_at": "2026-05-07T17:59:00Z"},
+    {"task_id": "ISA_PATCH_RUNNER_GIT_FIX", "status": "completed", "completed_at": "2026-05-07T17:58:46Z"},
+    {"task_id": "E5_005_GPT_RESERVE_PROOF", "status": "completed", "completed_at": "2026-05-08T10:02:02Z"},
+    {"task_id": "E6_002_END_TO_END_PROOF", "status": "completed", "completed_at": "2026-05-08T10:02:02Z"},
+    {"task_id": "TEST_001_AUTONOMY_JSON_STATE", "status": "completed", "completed_at": "2026-05-08T10:08:49Z"},
+    {"task_id": "TEST_002_AUTONOMY_EVENT_APPEND", "status": "completed", "completed_at": "2026-05-08T10:08:51Z"},
+    {"task_id": "TEST_003_AUTONOMY_JSON_STATE", "status": "completed", "completed_at": "2026-05-08T10:08:53Z"},
+    {"task_id": "TEST_CHAIN_001_JSON_STATE", "status": "completed", "completed_at": "2026-05-09T07:25:58Z"},
+    {"task_id": "TEST_CHAIN_002_EVENT_APPEND", "status": "completed", "completed_at": "2026-05-09T07:25:59Z"},
+    {"task_id": "TEST_CHAIN_003_JSON_STATE", "status": "completed", "completed_at": "2026-05-09T07:26:01Z"},
     {
-      "task_id": "A1_A8_AUTONOMOUS_ROADMAP_EXECUTOR",
-      "status": "completed"
-    },
-    {
-      "task_id": "E5_001_PROVIDER_FAILOVER",
-      "status": "completed"
-    },
-    {
-      "task_id": "AUTO_HEARTBEAT_PROOF",
-      "status": "completed",
-      "completed_at": "2026-05-06T17:23:18Z"
-    },
-    {
-      "task_id": "PROD_INTERNAL_CONTOUR_BASELINE_STATE",
-      "status": "completed",
-      "completed_at": "2026-05-06T18:08:20Z"
-    },
-    {
-      "task_id": "PROD_AUTONOMY_EVENT_STREAM",
-      "status": "completed",
-      "completed_at": "2026-05-07T05:06:30Z"
-    },
-    {
-      "task_id": "INT_001_INVENTORY_REPO_STATE",
-      "status": "completed",
-      "completed_at": "2026-05-07T05:08:00Z"
-    },
-    {
-      "task_id": "INT_002_STABILIZE_ROLE_ORCHESTRATOR",
-      "status": "completed",
-      "completed_at": "2026-05-07T05:08:06Z"
-    },
-    {
-      "task_id": "INT_003_PROVIDER_FAILOVER_TELEMETRY",
-      "status": "completed",
-      "completed_at": "2026-05-07T05:08:12Z"
-    },
-    {
-      "task_id": "INT_004_PRODUCTION_STATUS_REPORT",
-      "status": "completed",
-      "completed_at": "2026-05-07T05:08:18Z"
-    },
-    {
-      "task_id": "INT_005_AUTONOMOUS_REPAIR_GENERATOR",
-      "status": "completed",
-      "completed_at": "2026-05-07T05:08:26Z"
-    },
-    {
-      "task_id": "E5_002_PROVIDER_PROBE",
-      "status": "completed",
-      "completed_at": "2026-05-07T17:53:54Z",
-      "note": "scripts/provider_probe.py"
-    },
-    {
-      "task_id": "E5_003_SWITCH_MATRIX",
-      "status": "completed",
-      "completed_at": "2026-05-07T17:54:20Z",
-      "note": "provider_failover_policy.json v2"
-    },
-    {
-      "task_id": "E5_004_CLAUDE_RESTORE",
-      "status": "completed",
-      "completed_at": "2026-05-07T17:53:21Z",
-      "note": "claude.status=ok"
-    },
-    {
-      "task_id": "E4_003_EMERGENCY_STOP",
-      "status": "completed",
-      "completed_at": "2026-05-07T17:54:29Z",
-      "note": "emergency_stop.json"
-    },
-    {
-      "task_id": "E4_004_FSM_TELEGRAM_REPORT",
-      "status": "completed",
-      "completed_at": "2026-05-07T17:55:04Z",
-      "note": "fsm_telegram_reporter.py"
-    },
-    {
-      "task_id": "E5_006_GPT_CODEX_DISABLE",
-      "status": "completed",
-      "completed_at": "2026-05-07T17:53:21Z",
-      "note": "gpt_codex=disabled_until_runner_ready"
-    },
-    {
-      "task_id": "E6_001_PRODUCTION_STATUS_AUTOMATION",
-      "status": "completed",
-      "completed_at": "2026-05-07T17:59:00Z",
-      "note": "PRODUCTION_STATUS_AUTOMATION_INITIALIZED already in autonomous_development.jsonl"
-    },
-    {
-      "task_id": "ISA_PATCH_RUNNER_GIT_FIX",
-      "status": "completed",
-      "completed_at": "2026-05-07T17:58:46Z",
-      "note": "FIX: git config user.name через list args, убран exit 129"
-    },
-    {
-      "task_id": "E5_005_GPT_RESERVE_PROOF",
-      "title": "GPT hosted reserve production proof",
-      "status": "completed",
-      "note": "completed_with_existing_proof_evidence; see governance/state/gpt_reserve_proof_result.json",
-      "completed_at": "2026-05-08T10:02:02Z"
-    },
-    {
-      "task_id": "E6_002_END_TO_END_PROOF",
-      "title": "Full end-to-end production proof",
-      "status": "completed",
+      "task_id": "TC_ic_repo_20260511_001_JSON",
+      "title": "IC-A proof: create JSON state [ic_repo_20260511]",
+      "status": "pending",
       "template": "create_json_state",
-      "target_path": "governance/state/e6_proof_result.json",
-      "commit_message": "E6-002: end-to-end proof result",
+      "target_path": "governance/state/test_ic_a_ic_repo_20260511_001.json",
+      "commit_message": "IC-A-001: JSON state proof [ic_repo_20260511]",
       "content": {
         "version": 1,
-        "status": "pending",
-        "description": "E6 end-to-end proof: provider_probe + FSM cycle + executor commit + Telegram report"
-      },
-      "completed_at": "2026-05-08T10:02:02Z",
-      "note": "completed_with_caveats; see governance/state/e6_proof_result.json"
+        "test_id": "TC_ic_repo_20260511_001_JSON",
+        "trace": "ic_repo_20260511",
+        "status": "created_by_autonomous_engine"
+      }
     },
     {
-      "task_id": "TEST_001_AUTONOMY_JSON_STATE",
-      "title": "Test autonomy JSON state creation",
-      "status": "completed",
-      "template": "create_json_state",
-      "target_path": "governance/state/test_autonomy_cycle_001.json",
-      "commit_message": "TEST-001: autonomy JSON state proof",
-      "content": {
-        "version": 1,
-        "test_id": "TEST_001_AUTONOMY_JSON_STATE",
-        "status": "created_by_autonomous_engine",
-        "created_at": "2026-05-08T10:08:30Z"
-      },
-      "completed_at": "2026-05-08T10:08:49Z"
-    },
-    {
-      "task_id": "TEST_002_AUTONOMY_EVENT_APPEND",
-      "title": "Test autonomy event append",
-      "status": "completed",
-      "template": "append_event",
-      "target_path": "governance/events/autonomous_test_cycle.jsonl",
-      "commit_message": "TEST-002: autonomy event append proof",
-      "content": {
-        "event": "TEST_002_AUTONOMY_EVENT_APPEND",
-        "status": "created_by_autonomous_engine",
-        "timestamp": "2026-05-08T10:08:30Z"
-      },
-      "completed_at": "2026-05-08T10:08:51Z"
-    },
-    {
-      "task_id": "TEST_003_AUTONOMY_JSON_STATE",
-      "title": "Test second autonomy JSON state creation",
-      "status": "completed",
-      "template": "create_json_state",
-      "target_path": "governance/state/test_autonomy_cycle_003.json",
-      "commit_message": "TEST-003: autonomy JSON state proof",
-      "content": {
-        "version": 1,
-        "test_id": "TEST_003_AUTONOMY_JSON_STATE",
-        "status": "created_by_autonomous_engine",
-        "created_at": "2026-05-08T10:08:30Z"
-      },
-      "completed_at": "2026-05-08T10:08:53Z"
-    },
-    {
-      "task_id": "TEST_CHAIN_001_JSON_STATE",
-      "title": "Full chain test 1: create JSON proof",
-      "status": "completed",
-      "template": "create_json_state",
-      "target_path": "governance/state/test_full_chain_001.json",
-      "commit_message": "TEST-CHAIN-001: create JSON proof",
-      "content": {
-        "version": 1,
-        "test_id": "TEST_CHAIN_001_JSON_STATE",
-        "status": "created_by_autonomous_engine",
-        "trace": "bem_338_full_chain",
-        "created_at": "2026-05-09T07:25:48.333Z"
-      },
-      "completed_at": "2026-05-09T07:25:58Z"
-    },
-    {
-      "task_id": "TEST_CHAIN_002_EVENT_APPEND",
-      "title": "Full chain test 2: append event",
-      "status": "completed",
+      "task_id": "TC_ic_repo_20260511_002_EVENT",
+      "title": "IC-A proof: append event [ic_repo_20260511]",
+      "status": "pending",
       "template": "append_event",
       "target_path": "governance/events/full_chain_autonomy_test.jsonl",
-      "commit_message": "TEST-CHAIN-002: append event proof",
+      "commit_message": "IC-A-002: event append proof [ic_repo_20260511]",
       "content": {
-        "event": "TEST_CHAIN_002_EVENT_APPEND",
-        "status": "created_by_autonomous_engine",
-        "trace": "bem_338_full_chain",
-        "timestamp": "2026-05-09T07:25:48.333Z"
-      },
-      "completed_at": "2026-05-09T07:25:59Z"
+        "event": "IC_A_AUTONOMY_PROOF",
+        "trace": "ic_repo_20260511",
+        "status": "created_by_autonomous_engine"
+      }
     },
     {
-      "task_id": "TEST_CHAIN_003_JSON_STATE",
-      "title": "Full chain test 3: create second JSON proof",
-      "status": "completed",
+      "task_id": "TC_ic_repo_20260511_003_JSON",
+      "title": "IC-A proof: create second JSON state [ic_repo_20260511]",
+      "status": "pending",
       "template": "create_json_state",
-      "target_path": "governance/state/test_full_chain_003.json",
-      "commit_message": "TEST-CHAIN-003: create second JSON proof",
+      "target_path": "governance/state/test_ic_a_ic_repo_20260511_003.json",
+      "commit_message": "IC-A-003: second JSON state proof [ic_repo_20260511]",
       "content": {
         "version": 1,
-        "test_id": "TEST_CHAIN_003_JSON_STATE",
-        "status": "created_by_autonomous_engine",
-        "trace": "bem_338_full_chain",
-        "created_at": "2026-05-09T07:25:48.333Z"
-      },
-      "completed_at": "2026-05-09T07:26:01Z"
+        "test_id": "TC_ic_repo_20260511_003_JSON",
+        "trace": "ic_repo_20260511",
+        "status": "created_by_autonomous_engine"
+      }
     }
   ],
   "blocker": null
