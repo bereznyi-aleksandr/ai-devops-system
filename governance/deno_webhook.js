@@ -1,14 +1,14 @@
 // Deno Deploy Webhook — AI DevOps System
-// Версия: v4.1 | BM-343
-// CORS добавлен для поддержки ChatGPT Actions preflight
+// Версия: v4.2 | BM-354
+// Изменения: preset=full_chain генерирует уникальные task_id через trace_id
 //
 // ENDPOINTS:
-// GET  /                           — health check
+// GET  /                           — health check (github_pat_present, gpt_webhook_secret_present)
 // POST /                           — Telegram webhook
 // POST /autonomy                   — GPT trigger (JSON body)
 // GET  /autonomy-trigger           — GPT trigger (query params)
-// GET  /autonomy-backlog-trigger   — GPT backlog + trigger (query params, tasks_b64)
-// POST /autonomy-backlog           — GPT backlog + trigger (JSON body) ← ChatGPT Action calls this
+// GET  /autonomy-backlog-trigger   — GPT backlog + trigger (?preset=full_chain или tasks_b64)
+// POST /autonomy-backlog           — GPT backlog + trigger (JSON body)
 
 const GITHUB_REPO = Deno.env.get("GITHUB_REPO") || "bereznyi-aleksandr/ai-devops-system";
 const GITHUB_ISSUE = 31;
@@ -26,6 +26,56 @@ function corsJson(body, status = 200) {
     status,
     headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
   });
+}
+
+// ─── Preset: full_chain с уникальными task_id через trace_id ──────────────
+
+function buildFullChainPreset(traceId) {
+  // BM-354: task_id уникальны через trace_id — исключает конфликт с completed задачами
+  const safeTrace = traceId.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 24);
+  return [
+    {
+      task_id: `TC_${safeTrace}_001_JSON`,
+      title: `IC-A proof: create JSON state [${safeTrace}]`,
+      status: "pending",
+      template: "create_json_state",
+      target_path: `governance/state/test_ic_a_${safeTrace}_001.json`,
+      commit_message: `IC-A-001: JSON state proof [${safeTrace}]`,
+      content: {
+        version: 1,
+        test_id: `TC_${safeTrace}_001_JSON`,
+        trace: traceId,
+        status: "created_by_autonomous_engine"
+      }
+    },
+    {
+      task_id: `TC_${safeTrace}_002_EVENT`,
+      title: `IC-A proof: append event [${safeTrace}]`,
+      status: "pending",
+      template: "append_event",
+      target_path: "governance/events/full_chain_autonomy_test.jsonl",
+      commit_message: `IC-A-002: event append proof [${safeTrace}]`,
+      content: {
+        event: "IC_A_AUTONOMY_PROOF",
+        trace: traceId,
+        status: "created_by_autonomous_engine"
+      }
+    },
+    {
+      task_id: `TC_${safeTrace}_003_JSON`,
+      title: `IC-A proof: create second JSON state [${safeTrace}]`,
+      status: "pending",
+      template: "create_json_state",
+      target_path: `governance/state/test_ic_a_${safeTrace}_003.json`,
+      commit_message: `IC-A-003: second JSON state proof [${safeTrace}]`,
+      content: {
+        version: 1,
+        test_id: `TC_${safeTrace}_003_JSON`,
+        trace: traceId,
+        status: "created_by_autonomous_engine"
+      }
+    }
+  ];
 }
 
 // ─── GitHub API helpers ────────────────────────────────────────────────────
@@ -110,6 +160,7 @@ async function processBacklog(pat, tasks, traceId, mode) {
         Object.assign(existing, task);
         addedIds.push(task.task_id);
       }
+      // skip completed — не перезаписывать
     } else {
       roadmap.tasks.push({ ...task, status: task.status || "pending" });
       addedIds.push(task.task_id);
@@ -123,12 +174,12 @@ async function processBacklog(pat, tasks, traceId, mode) {
   const content = JSON.stringify(roadmap, null, 2) + "\n";
   const commitStatus = await updateFileContents(
     pat, "governance/state/roadmap_state.json", content,
-    `BM-343: enqueue autonomy backlog ${traceId}`, sha
+    `IC-A: enqueue backlog trace=${traceId}`, sha
   );
 
   const dispatchStatus = await triggerRepositoryDispatch(pat, "autonomy-engine", {
     mode, trace_id: traceId, add_internal_tasks: false,
-    source: "gpt_backlog_trigger", backlog_tasks: addedIds,
+    source: "deno_backlog_gateway", backlog_tasks: addedIds,
     timestamp: new Date().toISOString()
   });
 
@@ -151,7 +202,6 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const method = req.method;
 
-  // CORS preflight — нужен для ChatGPT Actions
   if (method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
@@ -163,14 +213,16 @@ Deno.serve(async (req) => {
       service: "ai-devops-telegram-curator-webhook",
       repo: GITHUB_REPO,
       issue: GITHUB_ISSUE,
-      version: "4.1",
+      version: "4.2",
+      github_pat_present: !!pat,
+      gpt_webhook_secret_present: !!gptSecret,
       endpoints: {
         "GET  /": "health check",
         "POST /": "Telegram webhook",
-        "POST /autonomy": "GPT trigger (JSON body)",
-        "GET  /autonomy-trigger": "GPT trigger (query params)",
-        "GET  /autonomy-backlog-trigger": "GPT backlog + trigger (query params, tasks_b64)",
-        "POST /autonomy-backlog": "GPT backlog + trigger (JSON body) ← ChatGPT Action"
+        "POST /autonomy": "trigger engine (JSON body)",
+        "GET  /autonomy-trigger": "trigger engine (query params)",
+        "GET  /autonomy-backlog-trigger": "backlog + trigger (?preset=full_chain или tasks_b64)",
+        "POST /autonomy-backlog": "backlog + trigger (JSON body)"
       }
     });
   }
@@ -182,14 +234,15 @@ Deno.serve(async (req) => {
       return corsJson({ ok: false, error: "Forbidden" }, 403);
 
     const mode = url.searchParams.get("mode") || "production_loop";
-    const traceId = url.searchParams.get("trace_id") || ("gpt_get_" + Date.now());
+    const traceId = url.searchParams.get("trace_id") || ("auto_" + Date.now());
     const addInternalTasks = url.searchParams.get("add_internal_tasks") === "true";
     const dispatchStatus = await triggerRepositoryDispatch(pat, "autonomy-engine", {
       mode, trace_id: traceId, add_internal_tasks: addInternalTasks,
-      source: "gpt_get_autonomy_trigger", timestamp: new Date().toISOString()
+      source: "deno_get_trigger", timestamp: new Date().toISOString()
     });
     const ok = dispatchStatus === 204;
-    return corsJson({ ok, event_type: "autonomy-engine", mode, trace_id: traceId,
+    return corsJson({
+      ok, event_type: "autonomy-engine", mode, trace_id: traceId,
       dispatch_status: dispatchStatus,
       message: ok ? "repository_dispatch triggered" : "dispatch failed"
     }, ok ? 200 : 500);
@@ -202,29 +255,42 @@ Deno.serve(async (req) => {
       return corsJson({ ok: false, error: "Forbidden" }, 403);
 
     const mode = url.searchParams.get("mode") || "production_loop";
-    const traceId = url.searchParams.get("trace_id") || ("gpt_backlog_" + Date.now());
-    const tasksB64 = url.searchParams.get("tasks_b64");
-    if (!tasksB64)
-      return corsJson({ ok: false, error: "tasks_b64 is required" }, 400);
+    const traceId = url.searchParams.get("trace_id") || ("bl_" + Date.now());
+    const preset = url.searchParams.get("preset");
 
     let tasks;
-    try {
-      const decoded = decodeTasksB64(tasksB64);
-      tasks = decoded.tasks;
-      if (!Array.isArray(tasks) || tasks.length === 0) throw new Error("tasks must be non-empty array");
-    } catch (e) {
-      return corsJson({ ok: false, error: "Invalid tasks_b64: " + e.message }, 400);
+
+    if (preset === "full_chain") {
+      // BM-354: уникальные task_id через trace_id
+      tasks = buildFullChainPreset(traceId);
+    } else {
+      const tasksB64 = url.searchParams.get("tasks_b64");
+      if (!tasksB64)
+        return corsJson({ ok: false, error: "preset=full_chain or tasks_b64 is required" }, 400);
+      try {
+        const decoded = decodeTasksB64(tasksB64);
+        tasks = decoded.tasks;
+        if (!Array.isArray(tasks) || tasks.length === 0)
+          throw new Error("tasks must be non-empty array");
+      } catch (e) {
+        return corsJson({ ok: false, error: "Invalid tasks_b64: " + e.message }, 400);
+      }
     }
 
     const { commitStatus, dispatchStatus, addedIds } = await processBacklog(pat, tasks, traceId, mode);
     const ok = (commitStatus === 200 || commitStatus === 201) && dispatchStatus === 204;
-    return corsJson({ ok, trace_id: traceId, mode, roadmap_commit_status: commitStatus,
-      dispatch_status: dispatchStatus, tasks_added: addedIds, tasks_count: addedIds.length,
+    return corsJson({
+      ok, trace_id: traceId, mode, preset: preset || "custom",
+      roadmap_commit_status: commitStatus,
+      dispatch_status: dispatchStatus,
+      tasks_added: addedIds,
+      tasks_count: addedIds.length,
+      stage: "dispatch",
       message: ok ? "Backlog queued and engine triggered" : "Partial failure"
     }, ok ? 200 : 500);
   }
 
-  // ─── POST /autonomy-backlog ← ChatGPT Action calls this ─────────────────
+  // ─── POST /autonomy-backlog ──────────────────────────────────────────────
   if (method === "POST" && url.pathname === "/autonomy-backlog") {
     const authHeader = req.headers.get("x-gpt-secret") || req.headers.get("authorization") || "";
     if (!checkGptToken(gptSecret, authHeader.replace("Bearer ", "")))
@@ -235,15 +301,27 @@ Deno.serve(async (req) => {
     catch { return corsJson({ ok: false, error: "Invalid JSON" }, 400); }
 
     const mode = body.mode || "production_loop";
-    const traceId = body.trace_id || ("gpt_backlog_post_" + Date.now());
-    const tasks = body.tasks;
-    if (!Array.isArray(tasks) || tasks.length === 0)
-      return corsJson({ ok: false, error: "tasks must be non-empty array" }, 400);
+    const traceId = body.trace_id || ("bl_post_" + Date.now());
+    const preset = body.preset;
+
+    let tasks;
+    if (preset === "full_chain") {
+      tasks = buildFullChainPreset(traceId);
+    } else {
+      tasks = body.tasks;
+      if (!Array.isArray(tasks) || tasks.length === 0)
+        return corsJson({ ok: false, error: "tasks must be non-empty array or use preset=full_chain" }, 400);
+    }
 
     const { commitStatus, dispatchStatus, addedIds } = await processBacklog(pat, tasks, traceId, mode);
     const ok = (commitStatus === 200 || commitStatus === 201) && dispatchStatus === 204;
-    return corsJson({ ok, trace_id: traceId, mode, roadmap_commit_status: commitStatus,
-      dispatch_status: dispatchStatus, tasks_added: addedIds, tasks_count: addedIds.length
+    return corsJson({
+      ok, trace_id: traceId, mode, preset: preset || "custom",
+      roadmap_commit_status: commitStatus,
+      dispatch_status: dispatchStatus,
+      tasks_added: addedIds,
+      tasks_count: addedIds.length,
+      stage: "dispatch"
     }, ok ? 200 : 500);
   }
 
@@ -258,10 +336,10 @@ Deno.serve(async (req) => {
     catch { return corsJson({ ok: false, error: "Invalid JSON" }, 400); }
 
     const mode = body.mode || "production_loop";
-    const traceId = body.trace_id || ("gpt_post_" + Date.now());
+    const traceId = body.trace_id || ("post_" + Date.now());
     const dispatchStatus = await triggerRepositoryDispatch(pat, "autonomy-engine", {
       mode, trace_id: traceId, add_internal_tasks: body.add_internal_tasks || false,
-      source: "gpt_post_autonomy", timestamp: new Date().toISOString()
+      source: "deno_post_autonomy", timestamp: new Date().toISOString()
     });
     const ok = dispatchStatus === 204;
     return corsJson({ ok, mode, trace_id: traceId, dispatch_status: dispatchStatus }, ok ? 200 : 500);
@@ -299,7 +377,9 @@ Deno.serve(async (req) => {
     return new Response("OK");
   }
 
-  return corsJson({ ok: false, error: "Not Found",
+  return corsJson({
+    ok: false, error: "Not Found",
     endpoints: ["GET /", "POST /", "POST /autonomy", "GET /autonomy-trigger",
-      "GET /autonomy-backlog-trigger", "POST /autonomy-backlog"] }, 404);
+      "GET /autonomy-backlog-trigger", "POST /autonomy-backlog"]
+  }, 404);
 });
