@@ -1,0 +1,20 @@
+{
+  "task_id": "bem369_add_internal_contour_proof_sequence",
+  "title": "Add internal_contour_proof task type to role FSM sequence",
+  "mode": "apply_and_commit",
+  "owner_approved_commit": true,
+  "commit_message": "BEM-369: add internal_contour_proof role sequence",
+  "files": [
+    {
+      "path": "governance/policies/role_sequence.json",
+      "operation": "replace",
+      "old": "    \"architecture_change\": [\n      \"analyst\",\n      \"auditor\",\n      \"executor\",\n      \"auditor\",\n      \"curator_summary\"\n    ]\n  },",
+      "new": "    \"architecture_change\": [\n      \"analyst\",\n      \"auditor\",\n      \"executor\",\n      \"auditor\",\n      \"curator_summary\"\n    ],\n    \"internal_contour_proof\": [\n      \"analyst\",\n      \"auditor\",\n      \"executor\",\n      \"auditor\",\n      \"curator_summary\"\n    ]\n  },",
+      "count": 1
+    }
+  ],
+  "checks": [
+    "python3 -m json.tool governance/policies/role_sequence.json >/tmp/role_sequence_check.json",
+    "python3 -m py_compile scripts/role_orchestrator.py"
+  ]
+}
