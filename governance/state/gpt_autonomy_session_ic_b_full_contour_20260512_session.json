@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "preset": "fix_internal_contour",
+  "trace_id": "ic_b_full_contour_20260512_session",
+  "cycle_id": "cyc_ic_b_full_contour_20260512_session",
+  "status": "started",
+  "route": [
+    "Deno",
+    "Role Orchestrator",
+    "Analyst",
+    "Auditor",
+    "Executor",
+    "Auditor",
+    "Curator Summary"
+  ],
+  "task_type": "internal_contour_proof",
+  "created_at": "2026-05-12T16:48:26.931Z",
+  "expected_files": [
+    "governance/state/ic_b_full_contour_20260512_session.json",
+    "governance/events/ic_b_full_contour.jsonl"
+  ]
+}
