@@ -88,3 +88,6 @@
 {"event": "PATCH_RUNNER_COMMIT", "task_id": "tc_ic_repo_20260511_003_json", "status": "pushed", "timestamp": "2026-05-11T18:19:33Z"}
 {"event": "PATCH_RUNNER_START", "task_id": "gpt_self_write_001", "mode": "apply_and_commit", "errors": [], "timestamp": "2026-05-12T15:02:16Z"}
 {"event": "PATCH_RUNNER_CHECKS", "task_id": "gpt_self_write_001", "ok": true, "checks": [{"cmd": "python3 -m json.tool governance/state/gpt_self_autonomy_probe.json >/tmp/gpt_self_autonomy_probe_check.json", "returncode": 0, "stdout": "", "stderr": ""}], "timestamp": "2026-05-12T15:02:16Z"}
+{"event": "PATCH_RUNNER_PUSH_ATTEMPT", "attempt": 1, "timestamp": "2026-05-12T15:02:16Z"}
+{"event": "PATCH_RUNNER_PUSH_OK", "attempt": 1, "timestamp": "2026-05-12T15:02:18Z"}
+{"event": "PATCH_RUNNER_COMMIT", "task_id": "gpt_self_write_001", "status": "pushed", "timestamp": "2026-05-12T15:02:18Z"}
