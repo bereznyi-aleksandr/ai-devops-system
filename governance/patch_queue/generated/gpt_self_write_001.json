@@ -1,0 +1,17 @@
+{
+  "task_id": "gpt_self_write_001",
+  "title": "GPT self autonomy write probe",
+  "mode": "apply_and_commit",
+  "owner_approved_commit": true,
+  "commit_message": "GPT SELF AUTONOMY: write probe",
+  "files": [
+    {
+      "path": "governance/state/gpt_self_autonomy_probe.json",
+      "operation": "create_or_update",
+      "content": "{\n  \"test_id\": \"gpt_self_write_001\",\n  \"status\": \"created_via_gpt_deno_patch_bridge\",\n  \"route\": \"GPT -> Deno -> patch_queue -> ISA Patch Runner -> commit\"\n}\n"
+    }
+  ],
+  "checks": [
+    "python3 -m json.tool governance/state/gpt_self_autonomy_probe.json >/tmp/gpt_self_autonomy_probe_check.json"
+  ]
+}
