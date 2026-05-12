@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "timestamp": "2026-05-11T18:50:04Z",
-  "trace_id": "ic_b_full_contour_20260511",
-  "task_type": "internal_contour_proof",
+  "timestamp": "2026-05-12T15:08:13Z",
+  "trace_id": "ic_b_full_contour_20260512\\nTASK_TYPE:",
+  "task_type": "internal_contour_proof\\n\\nзадача:\\nпроверить",
   "active_backend": "claude",
   "routing_reason": "primary provider claude is ok",
-  "next_action": "START_ROLE_ORCHESTRATOR",
-  "requested_role": null,
-  "task": "curator\n\nTYPE: CURATOR_ROADMAP_EXECUTION\nTRACE_ID: ic_b_full_contour_20260511\nTASK_TYPE: internal_contour_proof\n\nЗАДАЧА:\nIC-B Full Internal Contour Proof.\n\nСоздать harmless proof:\n1. governance/state/ic_b_full_contour_20260511.json\n2. governance/events/ic_b_full_contour.jsonl (добавить событие)\n\nМаршрут обязателен:\nCurator → Role Orchestrator → analyst → auditor → executor → auditor → curator_summary\n\nExecutor создаёт файлы и делает commit.\nAuditor проверяет diff и фиксирует APPROVED.\nCurator Summary закрывает цикл и публикует BEM-IC-B отчёт.",
+  "next_action": "ROUTE_TO_CLAUDE_CURATOR",
+  "requested_role": "executor",
+  "task": "curator\n\nTYPE: OPERATOR_TO_CURATOR\nSOURCE: telegram\nDEDUP_KEY: telegram:601442777:66\n\n```json\n{\n  \"chat_id\": \"601442777\",\n  \"message_id\": \"66\",\n  \"text\": \"IC-B повторный тест.\\n\\nTRACE_ID: ic_b_full_contour_20260512\\nTASK_TYPE: internal_contour_proof\\n\\nЗадача:\\nпроверить полный внутренний контур через Curator.\\n\\nОжидаемый маршрут:\\nCurator\\n→ Role Orchestrator\\n→ Analyst\\n→ Auditor\\n→ Executor\\n→ Auditor\\n→ Curator Summary\\n\\nHarmless proof:\\nсоздать governance/state/ic_b_full_contour_20260512.json\\nи добавить событие в governance/events/ic_b_full_contour.jsonl.\\n\\nОжидаемый итог:\\nrole_cycle_state.status = completed\\nblocker = null\"\n}\n```",
   "error_detected": false
 }
