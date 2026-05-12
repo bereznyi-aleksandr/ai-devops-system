@@ -3,22 +3,22 @@
 ```text
 Trace: system_status_report
 Mode: schedule
-Time: 2026-05-12T14:49:02Z
+Time: 2026-05-12T20:07:02Z
 
 ЧЕК-ЛИСТ:
 [✅] emergency_stop.enabled = false
-[✅] role_state.status = cycle_completed
-[✅] last_cycle_id = cyc_roadmap_20260507T062404Z
+[✅] role_state.status = blocked
+[✅] last_cycle_id = cyc_ic_b_full_contour_20260512_session
 [✅] providers_checked = 3
 [✅] relay_events_seen = 5
-[✅] report_generated_at = 2026-05-12T14:49:02Z
+[✅] report_generated_at = 2026-05-12T20:07:02Z
 ```
 
 | Subsystem | Status | Detail |
 |---|---|---|
 | Emergency stop | ✅ clear | - |
-| Role FSM | ✅ cycle_completed | last_cycle=cyc_roadmap_20260507T062404Z |
-| Last role | ✅ completed | role=curator_summary provider=- |
+| Role FSM | ❌ blocked | last_cycle=cyc_ic_b_full_contour_20260512_session |
+| Last role | ❌ blocked | role=auditor provider=gpt_codex |
 | Relay | ✅ present | recent_events=5 |
 
 ### Providers
@@ -27,42 +27,46 @@ Time: 2026-05-12T14:49:02Z
 |---|---|---|---|
 | claude | ✅ ok | - | - |
 | gpt | ✅ ok | - | - |
-| gpt_codex | ⚠️ disabled_until_runner_ready | runner_unavailable | - |
+| gpt_codex | ❌ error | runner_unavailable | auditor |
 
 ### Recent role events
 
 ```json
 [
   {
+    "event": "ROLE_ORCHESTRATOR_START",
+    "mode": "watchdog",
+    "timestamp": "2026-05-12T17:54:15Z"
+  },
+  {
+    "event": "ROLE_PROVIDER_RUNNER_UNAVAILABLE",
+    "cycle_id": "cyc_ic_b_full_contour_20260512_session",
+    "trace_id": "ic_b_full_contour_20260512_session",
+    "role": "auditor",
+    "provider": "gpt_codex",
+    "previous_status": "role_dispatched",
+    "max_cycle_age_minutes": 30,
+    "age_minutes": 65.27,
+    "timestamp": "2026-05-12T17:54:15Z"
+  },
+  {
     "event": "ROLE_WATCHDOG_COMPLETED",
-    "changed": false,
-    "last_cycle_id": "cyc_roadmap_20260507T062404Z",
-    "status": "cycle_completed",
-    "timestamp": "2026-05-12T08:29:16Z"
+    "changed": true,
+    "last_cycle_id": "cyc_ic_b_full_contour_20260512_session",
+    "status": "blocked",
+    "timestamp": "2026-05-12T17:54:15Z"
   },
   {
     "event": "ROLE_ORCHESTRATOR_START",
     "mode": "watchdog",
-    "timestamp": "2026-05-12T10:59:08Z"
+    "timestamp": "2026-05-12T19:30:08Z"
   },
   {
     "event": "ROLE_WATCHDOG_COMPLETED",
     "changed": false,
-    "last_cycle_id": "cyc_roadmap_20260507T062404Z",
-    "status": "cycle_completed",
-    "timestamp": "2026-05-12T10:59:08Z"
-  },
-  {
-    "event": "ROLE_ORCHESTRATOR_START",
-    "mode": "watchdog",
-    "timestamp": "2026-05-12T13:05:44Z"
-  },
-  {
-    "event": "ROLE_WATCHDOG_COMPLETED",
-    "changed": false,
-    "last_cycle_id": "cyc_roadmap_20260507T062404Z",
-    "status": "cycle_completed",
-    "timestamp": "2026-05-12T13:05:44Z"
+    "last_cycle_id": "cyc_ic_b_full_contour_20260512_session",
+    "status": "blocked",
+    "timestamp": "2026-05-12T19:30:08Z"
   }
 ]
 ```
@@ -72,46 +76,45 @@ Time: 2026-05-12T14:49:02Z
 ```json
 [
   {
-    "event": "PROVIDER_ADAPTER_SELECTED",
-    "role": "auditor",
-    "provider": "gpt",
-    "workflow": "gpt-hosted-roles.yml",
-    "mode": "workflow_dispatch",
-    "timestamp": "2026-05-07T06:24:39Z"
-  },
-  {
     "event": "PROVIDER_FAILOVER_CANDIDATE",
-    "role": "executor",
+    "role": "analyst",
     "provider": "gpt",
-    "fallback_used": true,
+    "fallback_used": false,
     "trace_id": "",
     "task_type": "role_orchestrator",
-    "timestamp": "2026-05-07T06:24:58Z"
+    "timestamp": "2026-05-12T16:48:38Z"
   },
   {
     "event": "PROVIDER_ADAPTER_SELECTED",
-    "role": "executor",
+    "role": "analyst",
     "provider": "gpt",
     "workflow": "gpt-hosted-roles.yml",
     "mode": "workflow_dispatch",
-    "timestamp": "2026-05-07T06:24:58Z"
+    "timestamp": "2026-05-12T16:48:38Z"
   },
   {
     "event": "PROVIDER_FAILOVER_CANDIDATE",
     "role": "auditor",
-    "provider": "gpt",
-    "fallback_used": true,
+    "provider": "claude",
+    "fallback_used": false,
     "trace_id": "",
     "task_type": "role_orchestrator",
-    "timestamp": "2026-05-07T06:25:22Z"
+    "timestamp": "2026-05-12T16:48:59Z"
+  },
+  {
+    "event": "PROVIDER_SKIPPED",
+    "role": "auditor",
+    "provider": "claude",
+    "reason": "adapter_disabled",
+    "timestamp": "2026-05-12T16:48:59Z"
   },
   {
     "event": "PROVIDER_ADAPTER_SELECTED",
     "role": "auditor",
-    "provider": "gpt",
-    "workflow": "gpt-hosted-roles.yml",
+    "provider": "gpt_codex",
+    "workflow": "codex-local.yml",
     "mode": "workflow_dispatch",
-    "timestamp": "2026-05-07T06:25:22Z"
+    "timestamp": "2026-05-12T16:48:59Z"
   }
 ]
 ```
