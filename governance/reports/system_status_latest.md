@@ -3,7 +3,7 @@
 ```text
 Trace: system_status_report
 Mode: schedule
-Time: 2026-05-13T09:19:05Z
+Time: 2026-05-13T15:13:54Z
 
 ЧЕК-ЛИСТ:
 [✅] emergency_stop.enabled = false
@@ -11,7 +11,7 @@ Time: 2026-05-13T09:19:05Z
 [✅] last_cycle_id = cyc_ic_b_full_contour_20260512_session
 [✅] providers_checked = 3
 [✅] relay_events_seen = 5
-[✅] report_generated_at = 2026-05-13T09:19:05Z
+[✅] report_generated_at = 2026-05-13T15:13:54Z
 ```
 
 | Subsystem | Status | Detail |
@@ -38,31 +38,31 @@ Time: 2026-05-13T09:19:05Z
     "changed": false,
     "last_cycle_id": "cyc_ic_b_full_contour_20260512_session",
     "status": "blocked",
-    "timestamp": "2026-05-13T01:27:07Z"
+    "timestamp": "2026-05-13T08:11:08Z"
   },
   {
     "event": "ROLE_ORCHESTRATOR_START",
     "mode": "watchdog",
-    "timestamp": "2026-05-13T05:07:46Z"
+    "timestamp": "2026-05-13T10:42:35Z"
   },
   {
     "event": "ROLE_WATCHDOG_COMPLETED",
     "changed": false,
     "last_cycle_id": "cyc_ic_b_full_contour_20260512_session",
     "status": "blocked",
-    "timestamp": "2026-05-13T05:07:46Z"
+    "timestamp": "2026-05-13T10:42:35Z"
   },
   {
     "event": "ROLE_ORCHESTRATOR_START",
     "mode": "watchdog",
-    "timestamp": "2026-05-13T08:11:08Z"
+    "timestamp": "2026-05-13T12:32:46Z"
   },
   {
     "event": "ROLE_WATCHDOG_COMPLETED",
     "changed": false,
     "last_cycle_id": "cyc_ic_b_full_contour_20260512_session",
     "status": "blocked",
-    "timestamp": "2026-05-13T08:11:08Z"
+    "timestamp": "2026-05-13T12:32:46Z"
   }
 ]
 ```
