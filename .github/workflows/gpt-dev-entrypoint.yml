@@ -1,0 +1,185 @@
+name: GPT Dev Entrypoint (issue_comment)
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  parse-and-launch:
+    name: Parse @gpt-dev command and launch session
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >
+      github.event.issue.number == 31 &&
+      contains(github.event.comment.body, '@gpt-dev run')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Parse and validate command
+        id: parse
+        shell: bash
+        run: |
+          BODY='${{ github.event.comment.body }}'
+          PRESET=$(echo "$BODY" | grep -oP 'preset=\K[a-zA-Z0-9_]+' | head -1 || echo "")
+          TRACE_ID=$(echo "$BODY" | grep -oP 'trace_id=\K[a-zA-Z0-9_]+' | head -1 || echo "")
+          MODE=$(echo "$BODY" | grep -oP 'mode=\K[a-zA-Z0-9_]+' | head -1 || echo "step")
+
+          VALID_PRESETS="developer_runner_selftest fix_internal_contour"
+          VALID=true
+          PARSE_ERROR=""
+
+          if [ -z "$PRESET" ]; then
+            VALID=false
+            PARSE_ERROR="missing preset"
+          elif ! echo "$VALID_PRESETS" | grep -qw "$PRESET"; then
+            VALID=false
+            PARSE_ERROR="invalid_preset: $PRESET"
+          fi
+
+          if [ -z "$TRACE_ID" ]; then
+            TRACE_ID="auto_$(date -u +%Y%m%dT%H%M%SZ)"
+          fi
+
+          echo "VALID=$VALID"           >> "$GITHUB_ENV"
+          echo "PARSE_ERROR=$PARSE_ERROR" >> "$GITHUB_ENV"
+          echo "ENTRYPOINT_PRESET=$PRESET"  >> "$GITHUB_ENV"
+          echo "ENTRYPOINT_TRACE=$TRACE_ID" >> "$GITHUB_ENV"
+          echo "ENTRYPOINT_MODE=$MODE"      >> "$GITHUB_ENV"
+          echo "preset=$PRESET trace=$TRACE_ID mode=$MODE valid=$VALID"
+
+      - name: Permissions check
+        if: env.VALID == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "VALID=false"                             >> "$GITHUB_ENV"
+            echo "PARSE_ERROR=missing_AI_SYSTEM_GITHUB_PAT" >> "$GITHUB_ENV"
+            echo "PERM_BLOCKED=true"                       >> "$GITHUB_ENV"
+          else
+            echo "PERM_BLOCKED=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Duplicate-run guard + init session
+        if: env.VALID == 'true'
+        shell: bash
+        env:
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 scripts/gpt_dev_runner.py \
+            --mode init \
+            --trace-id "$ENTRYPOINT_TRACE" \
+            --preset  "$ENTRYPOINT_PRESET"
+          echo "INIT_EXIT=$?" >> "$GITHUB_ENV"
+
+      - name: Commit init state
+        if: env.VALID == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "gpt-dev-entrypoint@ai-devops-system"
+          git config user.name  "GPT Dev Entrypoint"
+          git pull --rebase --autostash origin main || true
+          git add \
+            governance/state/gpt_dev_session.json \
+            governance/state/gpt_dev_lock.json \
+            governance/events/gpt_dev_runner.jsonl \
+            2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No state changes"
+          else
+            git commit -m "GPT-DEV-ENTRYPOINT: init trace=$ENTRYPOINT_TRACE preset=$ENTRYPOINT_PRESET"
+            git push || (git pull --rebase origin main && git push)
+          fi
+
+      - name: Dispatch first step (only after successful init commit)
+        if: env.VALID == 'true' && env.INIT_EXIT == '0'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/$REPO/dispatches" \
+            -d "{\"event_type\":\"gpt-dev-runner\",\"client_payload\":{\"mode\":\"step\",\"trace_id\":\"$ENTRYPOINT_TRACE\",\"source\":\"entrypoint_first_step\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}")
+          echo "DISPATCH_HTTP=$HTTP" >> "$GITHUB_ENV"
+          if [ "$HTTP" = "204" ]; then
+            echo "First step dispatched OK"
+          else
+            echo "Dispatch HTTP=$HTTP — may need retry"
+          fi
+
+      - name: Post BEM report to issue #31
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          script: |
+            const valid     = process.env.VALID;
+            const parseErr  = process.env.PARSE_ERROR  || '';
+            const preset    = process.env.ENTRYPOINT_PRESET || 'unknown';
+            const trace     = process.env.ENTRYPOINT_TRACE  || 'unknown';
+            const initExit  = process.env.INIT_EXIT;
+            const dispHttp  = process.env.DISPATCH_HTTP || '—';
+            const permBlk   = process.env.PERM_BLOCKED  || 'false';
+            const now       = new Date().toISOString().slice(0,10);
+
+            let status, nextAction;
+            if (valid !== 'true') {
+              status     = 'BLOCKED';
+              nextAction = `blocker: ${parseErr || 'validation_failed'}`;
+            } else if (initExit !== '0') {
+              status     = 'BLOCKED';
+              nextAction = `init_failed (exit=${initExit})`;
+            } else {
+              status     = 'LAUNCHED';
+              nextAction = `step 1 dispatched (HTTP ${dispHttp})`;
+            }
+
+            const pct = status === 'LAUNCHED' ? '10%' : '0%';
+
+            const body = [
+              `BEM-402 | GPT DEV ENTRYPOINT | ${now} | ${pct}`,
+              '',
+              '**Чек-лист:**',
+              valid === 'true'                     ? '✅ Команда распознана'         : `❌ Команда не распознана: ${parseErr}`,
+              (valid === 'true' && permBlk !== 'true') ? '✅ Permissions OK'         : '❌ Permissions BLOCKED',
+              initExit === '0'                     ? '✅ Init выполнен'              : '⚠️ Init не выполнен или пропущен',
+              initExit === '0'                     ? `✅ First step dispatched (HTTP ${dispHttp})` : '❌ First step не запущен',
+              '',
+              '| Тип | Содержание | Статус |',
+              '|---|---|---|',
+              `| Факт | preset | ${preset} |`,
+              `| Факт | trace_id | ${trace} |`,
+              `| Факт | init exit | ${initExit ?? '—'} |`,
+              `| Следующее действие | ${nextAction} | NEXT |`,
+              '',
+              '```',
+              `STATUS: ${status}`,
+              `NEXT: ${nextAction}`,
+              '```',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: 31,
+              body,
+            });
