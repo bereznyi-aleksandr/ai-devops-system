@@ -1,47 +1,14 @@
 {
   "version": 1,
-  "session_id": "gds_387eb702142b",
-  "trace_id": "bem463_selftest",
-  "status": "queued",
-  "cursor": 0,
-  "queue": [
-    {
-      "type": "read_state",
-      "target": "governance/state/system_state.json"
-    },
-    {
-      "type": "read_state",
-      "target": "governance/state/routing.json"
-    },
-    {
-      "type": "verify_file",
-      "target": "governance/INTERNAL_CONTOUR_REFERENCE.md"
-    },
-    {
-      "type": "enqueue_patch_task",
-      "task": {
-        "task_id": "gpt_dev_selftest_bem463_selftest",
-        "title": "GPT Dev Runner selftest patch",
-        "mode": "apply_and_commit",
-        "owner_approved_commit": true,
-        "commit_message": "BEM-402: GPT dev runner selftest [bem463_selftest]",
-        "files": [
-          {
-            "path": "governance/state/gpt_dev_runner_selftest_bem463_selftest.json",
-            "operation": "create_or_update",
-            "content": "{\n  \"version\": 1,\n  \"trace\": \"bem463_selftest\",\n  \"status\": \"selftest_passed\",\n  \"created_by\": \"gpt_dev_runner\"\n}\n"
-          }
-        ]
-      }
-    },
-    {
-      "type": "write_report"
-    }
-  ],
+  "session_id": null,
+  "trace_id": null,
+  "status": "idle",
+  "cursor": null,
+  "queue": [],
   "current_step": null,
   "attempts": 0,
   "step_attempts": 0,
   "last_report": null,
   "blocker": null,
-  "updated_at": "2026-05-14T19:10:39Z"
+  "updated_at": null
 }
