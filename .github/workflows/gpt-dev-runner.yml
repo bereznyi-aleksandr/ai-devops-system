@@ -1,0 +1,170 @@
+name: GPT Developer Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'step | init | status'
+        required: false
+        default: 'step'
+        type: string
+      trace_id:
+        description: 'Trace ID (for init mode)'
+        required: false
+        type: string
+      preset:
+        description: 'Preset (for init mode): developer_runner_selftest | fix_internal_contour'
+        required: false
+        type: string
+  repository_dispatch:
+    types: [gpt-dev-runner]
+
+# Anti-hang: один запуск = один шаг, timeout 5 минут
+concurrency:
+  group: gpt-dev-runner-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  dev-runner:
+    name: GPT Developer Runner — one atomic step
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Resolve mode
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_PRESET: ${{ inputs.preset }}
+          DISPATCH_PAYLOAD: ${{ toJson(github.event.client_payload) }}
+        run: |
+          MODE="${INPUT_MODE:-step}"
+          TRACE_ID="${INPUT_TRACE_ID:-}"
+          PRESET="${INPUT_PRESET:-}"
+
+          if [ "${EVENT_NAME}" = "repository_dispatch" ]; then
+            MODE=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('mode','step'))" 2>/dev/null || echo "step")
+            TRACE_ID=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('trace_id',''))" 2>/dev/null || echo "")
+            PRESET=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('preset',''))" 2>/dev/null || echo "")
+          fi
+
+          echo "DEV_RUNNER_MODE=$MODE" >> "$GITHUB_ENV"
+          echo "DEV_RUNNER_TRACE_ID=$TRACE_ID" >> "$GITHUB_ENV"
+          echo "DEV_RUNNER_PRESET=$PRESET" >> "$GITHUB_ENV"
+          echo "mode=$MODE trace=$TRACE_ID preset=$PRESET"
+
+      - name: Run one atomic step
+        shell: bash
+        env:
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set +e
+
+          if [ "$DEV_RUNNER_MODE" = "init" ]; then
+            ARGS="--mode init"
+            [ -n "$DEV_RUNNER_TRACE_ID" ] && ARGS="$ARGS --trace-id $DEV_RUNNER_TRACE_ID"
+            [ -n "$DEV_RUNNER_PRESET" ] && ARGS="$ARGS --preset $DEV_RUNNER_PRESET"
+          elif [ "$DEV_RUNNER_MODE" = "status" ]; then
+            ARGS="--mode status"
+          else
+            ARGS="--mode step"
+          fi
+
+          python3 scripts/gpt_dev_runner.py $ARGS
+          echo "DEV_RUNNER_EXIT=$?" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Commit state
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          git config user.email "gpt-dev-runner@ai-devops-system"
+          git config user.name "GPT Dev Runner"
+          git pull --rebase --autostash origin main || true
+          git add \
+            governance/state/gpt_dev_session.json \
+            governance/events/gpt_dev_runner.jsonl \
+            governance/exchange.jsonl \
+            governance/patch_queue/generated/ \
+            governance/state/gpt_dev_runner_selftest_*.json \
+            2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No state changes"
+          else
+            git commit -m "GPT-DEV-RUNNER: step (mode=$DEV_RUNNER_MODE trace=$DEV_RUNNER_TRACE_ID)"
+            git push || (git pull --rebase origin main && git push)
+          fi
+
+      - name: Dispatch next step if not done
+        if: env.DEV_RUNNER_EXIT == '0' && env.DEV_RUNNER_MODE == 'step'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Проверить статус сессии
+          STATUS=$(python3 -c "
+          import json, pathlib
+          s = json.loads(pathlib.Path('governance/state/gpt_dev_session.json').read_text())
+          print(s.get('status','idle'))
+          " 2>/dev/null || echo "unknown")
+
+          echo "Session status after step: $STATUS"
+
+          if [ "$STATUS" = "queued" ]; then
+            # Авто-продолжение: dispatch следующего шага
+            curl -s -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/json" \
+              "https://api.github.com/repos/$REPO/dispatches" \
+              -d "{\"event_type\":\"gpt-dev-runner\",\"client_payload\":{\"mode\":\"step\",\"source\":\"auto_continue\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}"
+            echo "Dispatched next step"
+          else
+            echo "Session $STATUS — no auto-continue"
+          fi
+
+      - name: Post report to issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          script: |
+            const fs = require('fs');
+            let session = {};
+            try {
+              session = JSON.parse(fs.readFileSync('governance/state/gpt_dev_session.json', 'utf8'));
+            } catch(e) {}
+            const body = [
+              'BEM-GPT-DEV-RUNNER | STEP RESULT',
+              '',
+              `Mode: ${process.env.DEV_RUNNER_MODE || 'step'}`,
+              `Session: ${session.session_id || 'none'}`,
+              `Trace: ${session.trace_id || 'none'}`,
+              `Status: ${session.status || 'unknown'}`,
+              `Cursor: ${session.cursor}/${(session.queue||[]).length}`,
+              `Last: ${session.last_report || 'none'}`,
+              session.blocker ? `Blocker: ${session.blocker}` : null,
+            ].filter(Boolean).join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 31,
+              body
+            });
