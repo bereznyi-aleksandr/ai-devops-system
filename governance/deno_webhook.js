@@ -1,9 +1,8 @@
 // Deno Deploy Webhook — AI DevOps System
-// Версия: v4.8 | BEM-457
+// Версия: v4.8 | BEM-458
 // Изменения:
-//   - BEM-457: /gpt-safe-run PRIMARY = issue_comment → gpt-dev-entrypoint.yml
-//   - workflow_dispatch прямо на gpt-dev-runner.yml не использовался надёжно
-//   - issue_comment → gpt-dev-entrypoint.yml доказанно создавал session
+//   - BEM-458: исправлен регресс — pat читается из AI_SYSTEM_GITHUB_PAT (не GITHUB_PAT)
+//   - health: pat_present, ai_system_github_pat_present, pat_source
 //
 // ENDPOINTS:
 // GET  /                           — health check
@@ -232,7 +231,7 @@ async function processBacklog(pat, tasks, traceId, mode) {
   return { commitStatus, dispatchStatus, addedIds };
 }
 
-// ─── GPT Dev Session (Deno fallback — BEM-402 contract) ────────────────────
+// ─── GPT Dev Session (Deno fallback) ───────────────────────────────────────
 
 async function initDevSessionSafe(pat, traceId, preset) {
   const dispatchStatus = await triggerRepositoryDispatch(pat, "gpt-dev-runner", {
@@ -256,12 +255,11 @@ async function initDevSessionSafe(pat, traceId, preset) {
   };
 }
 
-// ─── /gpt-safe-run handler (BEM-457: issue_comment entrypoint PRIMARY) ───────
+// ─── /gpt-safe-run handler (BEM-457: issue_comment entrypoint) ──────────────
 
 async function handleSafeRun(pat, url) {
   const now = Date.now();
 
-  // 1. Validate preset
   const preset   = (url.searchParams.get("preset")   || "").trim();
   const traceRaw = (url.searchParams.get("trace_id") || "").trim();
 
@@ -274,85 +272,55 @@ async function handleSafeRun(pat, url) {
     }, 400);
   }
 
-  // Special: preset=status → return session status only
   if (preset === "status") {
     const session = await getDevSession(pat);
     const lock    = await getLock(pat);
     return corsJson({ ok: true, session: session?.data || null, lock });
   }
 
-  // 2. Validate trace_id
   const traceId = traceRaw || `safe_${Date.now()}`;
   if (traceRaw && !SAFE_TRACE_RE.test(traceRaw)) {
-    return corsJson({
-      ok:    false,
-      error: "invalid_trace_id",
-      detail: "trace_id must match [a-zA-Z0-9_]{1,60}"
-    }, 400);
+    return corsJson({ ok: false, error: "invalid_trace_id", detail: "trace_id must match [a-zA-Z0-9_]{1,60}" }, 400);
   }
 
-  // 3. Emergency stop
   const stopReason = await checkEmergencyStop(pat);
   if (stopReason) {
-    return corsJson({
-      ok:     false,
-      error:  "emergency_stop",
-      reason: stopReason,
-      detail: "System emergency stop is active. Set emergency_stop.json enabled=false to resume."
-    }, 503);
+    return corsJson({ ok: false, error: "emergency_stop", reason: stopReason,
+      detail: "System emergency stop is active." }, 503);
   }
 
-  // 4. Active session check (duplicate-run guard)
   const session = await getDevSession(pat);
   if (session?.data) {
     const s = session.data;
     if (s.trace_id === traceId && s.status === "completed") {
-      return corsJson({
-        ok:       true,
-        already:  "completed",
-        trace_id: traceId,
-        session:  s,
-        message:  "Session already completed. Use a different trace_id to start a new run."
-      });
+      return corsJson({ ok: true, already: "completed", trace_id: traceId, session: s,
+        message: "Session already completed. Use a different trace_id." });
     }
     if (s.status === "queued" || s.status === "running") {
-      return corsJson({
-        ok:      false,
-        error:   "session_active",
-        detail:  `Active session exists: trace=${s.trace_id} status=${s.status}. Use /gpt-safe-status to monitor.`,
+      return corsJson({ ok: false, error: "session_active",
+        detail: `Active session: trace=${s.trace_id} status=${s.status}. Use /gpt-safe-status.`,
         session: { trace_id: s.trace_id, status: s.status, cursor: s.cursor, updated_at: s.updated_at }
       }, 429);
     }
   }
 
-  // 5. In-memory rate limit
   const elapsed = now - lastSafeRunAt;
   if (lastSafeRunAt > 0 && elapsed < RATE_LIMIT_MS) {
     const waitSec = Math.ceil((RATE_LIMIT_MS - elapsed) / 1000);
-    return corsJson({
-      ok:                  false,
-      error:               "rate_limited",
-      detail:              `Please wait ${waitSec}s before next safe-run.`,
-      retry_after_seconds: waitSec
-    }, 429);
+    return corsJson({ ok: false, error: "rate_limited",
+      detail: `Please wait ${waitSec}s before next safe-run.`, retry_after_seconds: waitSec }, 429);
   }
 
-  // 6. PRIMARY TRIGGER: post issue comment → gpt-dev-entrypoint.yml (BEM-457)
-  // workflow_dispatch → gpt-dev-runner.yml давал 204 но не стартовал init.
-  // issue_comment → gpt-dev-entrypoint.yml доказанно создавал session (bem451_selftest).
+  // PRIMARY: post issue comment → gpt-dev-entrypoint.yml (BEM-457)
   const commentBody = `GPT_DEV_RUN preset=${preset} trace_id=${traceId}\n\nsource=deno_gpt_safe_run\nbem=BEM-457`;
   const commentStatus = await postGitHubComment(pat, commentBody);
 
   if (commentStatus !== 201) {
-    return corsJson({
-      ok:             false,
-      error:          "comment_failed",
+    return corsJson({ ok: false, error: "comment_failed",
       comment_status: commentStatus,
-      detail:         `GitHub issue comment returned HTTP ${commentStatus}`
-    }, 500);
+      detail: `GitHub issue comment returned HTTP ${commentStatus}` }, 500);
   }
 
-  // Update rate limit
   lastSafeRunAt    = now;
   lastSafeRunTrace = traceId;
 
@@ -363,7 +331,7 @@ async function handleSafeRun(pat, url) {
     trigger_method: "issue_comment_entrypoint",
     comment_status: commentStatus,
     source:         "deno_gpt_safe_run_v48",
-    message:        "Comment posted to issue #31. gpt-dev-entrypoint.yml will pick it up and run init. Monitor via /gpt-safe-status.",
+    message:        "Comment posted to issue #31. gpt-dev-entrypoint.yml will pick it up and run init.",
     monitor_url:    `/gpt-safe-status?trace_id=${traceId}`
   });
 }
@@ -372,7 +340,6 @@ async function handleSafeRun(pat, url) {
 
 async function handleSafeStatus(pat, url) {
   const traceId = (url.searchParams.get("trace_id") || "").trim();
-
   const session   = await getDevSession(pat);
   const lock      = await getLock(pat);
   const lastEvent = await getLastEvent(pat);
@@ -385,19 +352,11 @@ async function handleSafeStatus(pat, url) {
   }
 
   return corsJson({
-    ok:           true,
-    session:      s,
-    lock,
-    last_event:   lastEvent,
-    proof_exists: proofExists,
-    blocker:      s?.blocker || null,
+    ok: true, session: s, lock, last_event: lastEvent,
+    proof_exists: proofExists, blocker: s?.blocker || null,
     status_summary: s ? {
-      trace_id:   s.trace_id,
-      status:     s.status,
-      cursor:     s.cursor,
-      queue_len:  (s.queue || []).length,
-      updated_at: s.updated_at,
-      blocker:    s.blocker
+      trace_id: s.trace_id, status: s.status, cursor: s.cursor,
+      queue_len: (s.queue || []).length, updated_at: s.updated_at, blocker: s.blocker
     } : null
   });
 }
@@ -405,7 +364,8 @@ async function handleSafeStatus(pat, url) {
 // ─── Main handler ───────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
-  const pat            = Deno.env.get("GITHUB_PAT");
+  // BEM-458: canonical secret name = AI_SYSTEM_GITHUB_PAT (not GITHUB_PAT)
+  const pat            = Deno.env.get("AI_SYSTEM_GITHUB_PAT");
   const token          = Deno.env.get("TELEGRAM_BOT_TOKEN");
   const telegramSecret = Deno.env.get("TELEGRAM_WEBHOOK_SECRET");
   const gptSecret      = Deno.env.get("GPT_WEBHOOK_SECRET");
@@ -415,12 +375,16 @@ Deno.serve(async (req) => {
 
   if (method === "OPTIONS") return new Response(null, { status: 204, headers: CORS_HEADERS });
 
-  // ─── HEALTH CHECK ──────────────────────────────────────────────────────────
   if (method === "GET" && url.pathname === "/") {
     return corsJson({
       ok: true, service: "ai-devops-telegram-curator-webhook",
       repo: GITHUB_REPO, issue: GITHUB_ISSUE, version: "4.8",
-      github_pat_present: !!pat, gpt_webhook_secret_present: !!gptSecret,
+      // BEM-458: все три поля для диагностики
+      pat_present:                !!pat,
+      pat_source:                 "AI_SYSTEM_GITHUB_PAT",
+      ai_system_github_pat_present: !!pat,
+      github_pat_present:         !!pat,
+      gpt_webhook_secret_present: !!gptSecret,
       endpoints: {
         "GET  /":                         "health check",
         "POST /":                         "Telegram webhook",
@@ -430,7 +394,7 @@ Deno.serve(async (req) => {
         "POST /autonomy-backlog":         "backlog + trigger (token required)",
         "GET  /gpt-dev-session":          "GPT dev session status (token required)",
         "POST /gpt-dev-session":          "init GPT dev session — Deno fallback (token required)",
-        "GET  /gpt-safe-run":             "PRIMARY: issue comment -> gpt-dev-entrypoint.yml (no token, allowlist-only)",
+        "GET  /gpt-safe-run":             "PRIMARY: issue comment -> gpt-dev-entrypoint.yml (no token)",
         "GET  /gpt-safe-status":          "session status — no token, read-only"
       },
       safe_run_presets: [...SAFE_RUN_PRESETS],
@@ -439,19 +403,16 @@ Deno.serve(async (req) => {
     });
   }
 
-  // ─── GET /gpt-safe-run — PRIMARY (BEM-457: issue_comment) ─────────────────
   if (method === "GET" && url.pathname === "/gpt-safe-run") {
-    if (!pat) return corsJson({ ok: false, error: "server_not_configured" }, 503);
+    if (!pat) return corsJson({ ok: false, error: "server_not_configured", detail: "AI_SYSTEM_GITHUB_PAT not set" }, 503);
     return await handleSafeRun(pat, url);
   }
 
-  // ─── GET /gpt-safe-status ──────────────────────────────────────────────────
   if (method === "GET" && url.pathname === "/gpt-safe-status") {
     if (!pat) return corsJson({ ok: false, error: "server_not_configured" }, 503);
     return await handleSafeStatus(pat, url);
   }
 
-  // ─── GET /gpt-dev-session ──────────────────────────────────────────────────
   if (method === "GET" && url.pathname === "/gpt-dev-session") {
     const queryToken = url.searchParams.get("token");
     if (!checkGptToken(gptSecret, queryToken)) return corsJson({ ok: false, error: "Forbidden" }, 403);
@@ -460,7 +421,6 @@ Deno.serve(async (req) => {
     return corsJson({ ok: true, session: session.data });
   }
 
-  // ─── POST /gpt-dev-session — Deno fallback ─────────────────────────────────
   if (method === "POST" && url.pathname === "/gpt-dev-session") {
     const authHeader = req.headers.get("x-gpt-secret") || req.headers.get("authorization") || "";
     if (!checkGptToken(gptSecret, authHeader.replace("Bearer ", "")))
@@ -469,14 +429,11 @@ Deno.serve(async (req) => {
     try { body = await req.json(); } catch { return corsJson({ ok: false, error: "Invalid JSON" }, 400); }
     const traceId = body.trace_id || ("gds_" + Date.now());
     const preset  = body.preset || "developer_runner_selftest";
-    if (!SAFE_RUN_PRESETS.has(preset)) {
-      return corsJson({ ok: false, error: "invalid_preset", preset_received: preset }, 400);
-    }
+    if (!SAFE_RUN_PRESETS.has(preset)) return corsJson({ ok: false, error: "invalid_preset", preset_received: preset }, 400);
     const result = await initDevSessionSafe(pat, traceId, preset);
     return corsJson(result, result.ok ? 200 : 500);
   }
 
-  // ─── GET /autonomy-trigger ─────────────────────────────────────────────────
   if (method === "GET" && url.pathname === "/autonomy-trigger") {
     const queryToken = url.searchParams.get("token");
     if (!checkGptToken(gptSecret, queryToken)) return corsJson({ ok: false, error: "Forbidden" }, 403);
@@ -491,7 +448,6 @@ Deno.serve(async (req) => {
     return corsJson({ ok, event_type: "autonomy-engine", mode, trace_id: traceId, dispatch_status: dispatchStatus }, ok ? 200 : 500);
   }
 
-  // ─── GET /autonomy-backlog-trigger ─────────────────────────────────────────
   if (method === "GET" && url.pathname === "/autonomy-backlog-trigger") {
     const queryToken = url.searchParams.get("token");
     if (!checkGptToken(gptSecret, queryToken)) return corsJson({ ok: false, error: "Forbidden" }, 403);
@@ -509,10 +465,11 @@ Deno.serve(async (req) => {
     }
     const { commitStatus, dispatchStatus, addedIds } = await processBacklog(pat, tasks, traceId, mode);
     const ok = (commitStatus === 200 || commitStatus === 201) && dispatchStatus === 204;
-    return corsJson({ ok, trace_id: traceId, mode, preset: preset || "custom", roadmap_commit_status: commitStatus, dispatch_status: dispatchStatus, tasks_added: addedIds, tasks_count: addedIds.length }, ok ? 200 : 500);
+    return corsJson({ ok, trace_id: traceId, mode, preset: preset || "custom",
+      roadmap_commit_status: commitStatus, dispatch_status: dispatchStatus,
+      tasks_added: addedIds, tasks_count: addedIds.length }, ok ? 200 : 500);
   }
 
-  // ─── POST /autonomy-backlog ────────────────────────────────────────────────
   if (method === "POST" && url.pathname === "/autonomy-backlog") {
     const authHeader = req.headers.get("x-gpt-secret") || req.headers.get("authorization") || "";
     if (!checkGptToken(gptSecret, authHeader.replace("Bearer ", ""))) return corsJson({ ok: false, error: "Forbidden" }, 403);
@@ -525,10 +482,10 @@ Deno.serve(async (req) => {
     else { tasks = body.tasks; if (!Array.isArray(tasks) || !tasks.length) return corsJson({ ok: false, error: "tasks required or use preset=full_chain" }, 400); }
     const { commitStatus, dispatchStatus, addedIds } = await processBacklog(pat, tasks, traceId, mode);
     const ok = (commitStatus === 200 || commitStatus === 201) && dispatchStatus === 204;
-    return corsJson({ ok, trace_id: traceId, mode, roadmap_commit_status: commitStatus, dispatch_status: dispatchStatus, tasks_added: addedIds, tasks_count: addedIds.length }, ok ? 200 : 500);
+    return corsJson({ ok, trace_id: traceId, mode, roadmap_commit_status: commitStatus,
+      dispatch_status: dispatchStatus, tasks_added: addedIds, tasks_count: addedIds.length }, ok ? 200 : 500);
   }
 
-  // ─── POST /autonomy ────────────────────────────────────────────────────────
   if (method === "POST" && url.pathname === "/autonomy") {
     const authHeader = req.headers.get("x-gpt-secret") || req.headers.get("authorization") || "";
     if (!checkGptToken(gptSecret, authHeader.replace("Bearer ", ""))) return corsJson({ ok: false, error: "Forbidden" }, 403);
@@ -543,7 +500,6 @@ Deno.serve(async (req) => {
     return corsJson({ ok, mode, trace_id: traceId, dispatch_status: dispatchStatus }, ok ? 200 : 500);
   }
 
-  // ─── POST / — TELEGRAM WEBHOOK ────────────────────────────────────────────
   if (method === "POST" && url.pathname === "/") {
     if (telegramSecret) {
       const secretHeader = req.headers.get("x-telegram-bot-api-secret-token");
