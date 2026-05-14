@@ -1,6 +1,6 @@
 # INTERNAL AUTONOMY CONTOUR — REFERENCE
 
-Версия: v2.6 | Дата: 2026-05-14
+Версия: v2.7 | Дата: 2026-05-14
 Репозиторий: bereznyi-aleksandr/ai-devops-system
 Основная ISA: issue #31
 
@@ -10,31 +10,47 @@
 
 | Версия | Дата | Изменения |
 |---|---|---|
-| v2.6 | 2026-05-14 | BEM-409: Deno Safe Entrypoint — GET /gpt-safe-run PRIMARY без token, allowlist-only; GET /gpt-safe-status; BEM-402 race condition fix в initDevSession; rate limit; reference update |
-| v2.5 | 2026-05-14 | BEM-406: ChatGPT-compatible entrypoint — safe command GPT_DEV_RUN без @mention |
-| v2.4 | 2026-05-14 | BEM-402: GPT Full Autonomy Closure — lock/retry/watchdog/report guarantee |
+| v2.7 | 2026-05-14 | BEM-420: /gpt-safe-run primary trigger = workflow_dispatch; repository_dispatch не primary для GPT Runner; deno v4.5; Reference update |
+| v2.6 | 2026-05-14 | BEM-409: Deno Safe Entrypoint PRIMARY без token, /gpt-safe-status, rate limit |
+| v2.5 | 2026-05-14 | BEM-406: ChatGPT-compatible GPT_DEV_RUN без @mention |
+| v2.4 | 2026-05-14 | BEM-402: GPT Full Autonomy Closure — lock/retry/watchdog |
 | v2.3 | 2026-05-13 | BEM-395: GPT Developer Runner, anti-hang contract |
 
 ---
 
-## 1. АРХИТЕКТУРА ВХОДОВ (ПРИОРИТЕТ)
+## 1. ВХОДЫ (ПРИОРИТЕТ)
 
-| Приоритет | Канал | Синтаксис | Кто | Примечание |
-|---|---|---|---|---|
-| **PRIMARY** | **Deno Safe Entrypoint** | `GET /gpt-safe-run?preset=X&trace_id=Y` | **ChatGPT (open URL)** | Без token, allowlist-only, надёжный |
-| backup | Issue comment (safe) | `GPT_DEV_RUN preset=X trace_id=Y` | ChatGPT (comment tool) | Может не материализоваться |
-| backup | Issue comment (legacy) | `@gpt-dev run preset=X trace_id=Y` | Оператор / Claude | Работает через GitHub PAT MCP |
-| backup | Deno fallback (POST) | `POST /gpt-dev-session` | Любой (token required) | Требует GPT_WEBHOOK_SECRET |
-| backup | workflow_dispatch | GitHub UI / API | Оператор | Ручной запуск |
-
-**Почему Deno Safe Entrypoint PRIMARY:**
-- ChatGPT может открыть URL в браузере без ограничений на @mention и write-tool
-- Не требует token — публичный endpoint защищён allowlist preset + rate limit + active session check + emergency stop
-- Никакого произвольного кода / patch через публичный URL невозможно
+| Приоритет | Канал | Синтаксис | Кто |
+|---|---|---|---|
+| **PRIMARY** | **Deno Safe Entrypoint** | `GET /gpt-safe-run?preset=X&trace_id=Y` | **ChatGPT (open URL)** |
+| backup | Issue comment (safe) | `GPT_DEV_RUN preset=X trace_id=Y` | ChatGPT (comment tool, ненадёжен) |
+| backup | Issue comment (legacy) | `@gpt-dev run preset=X trace_id=Y` | Оператор / Claude PAT MCP |
+| backup | Deno fallback POST | `POST /gpt-dev-session` (token required) | Любой |
+| backup | workflow_dispatch | GitHub UI / API | Оператор |
 
 ---
 
-## 2. DENO SAFE ENTRYPOINT (BEM-409)
+## 2. DENO SAFE ENTRYPOINT v4.5 (BEM-420)
+
+### Primary trigger: workflow_dispatch
+
+Начиная с v4.5, `/gpt-safe-run` использует **workflow_dispatch** (не repository_dispatch) для запуска `gpt-dev-runner.yml`.
+
+**Почему workflow_dispatch:**
+- repository_dispatch запускает workflow только если есть `on: repository_dispatch` триггер — может быть ненадёжен при пустом state
+- workflow_dispatch напрямую адресует файл `gpt-dev-runner.yml` с явными `inputs`
+- При workflow_dispatch runner получает `inputs.mode`, `inputs.preset`, `inputs.trace_id` без парсинга `client_payload`
+
+### Изменения в deno_webhook.js v4.5
+
+| Что | Было | Стало |
+|---|---|---|
+| Primary trigger | `triggerRepositoryDispatch(...)` | `triggerWorkflowDispatch(pat, "gpt-dev-runner.yml", "main", {mode, preset, trace_id})` |
+| Ответ поле | `dispatch_status` | `workflow_dispatch_status` |
+| Ответ поле | `source: "deno_gpt_safe_run"` | `source: "deno_gpt_safe_run_v45"` |
+| Ответ поле | — | `trigger_method: "workflow_dispatch"` |
+| Health version | `"4.4"` | `"4.5"` |
+| repository_dispatch | primary | helper (autonomy-engine, Deno fallback) |
 
 ### Endpoint
 
@@ -42,22 +58,32 @@
 GET /gpt-safe-run?preset=<preset>&trace_id=<trace>
 ```
 
-**Без token.** Доступен публично.
+**Без token.** Allowlist presets: `developer_runner_selftest`, `fix_internal_contour`, `status`.
 
-### Allowlist presets
+### Успешный ответ v4.5
 
-| Preset | Описание |
-|---|---|
-| `developer_runner_selftest` | Полный self-test: read state → verify → enqueue patch → write report |
-| `fix_internal_contour` | Запустить production autonomy loop |
-| `status` | Вернуть текущий статус сессии (не запускает runner) |
+```json
+{
+  "ok": true,
+  "trace_id": "bem420_selftest",
+  "preset": "developer_runner_selftest",
+  "trigger_method": "workflow_dispatch",
+  "workflow_dispatch_status": 204,
+  "source": "deno_gpt_safe_run_v45",
+  "monitor_url": "/gpt-safe-status?trace_id=bem420_selftest"
+}
+```
 
-**Запрещено через /gpt-safe-run:**
-- произвольный код
-- произвольный patch
-- произвольные workflow names
-- произвольный JSON body
-- произвольный preset вне allowlist
+### Ошибка dispatch
+
+```json
+{
+  "ok": false,
+  "error": "workflow_dispatch_failed",
+  "workflow_dispatch_status": <HTTP code>,
+  "detail": "GitHub workflow_dispatch returned HTTP <code>"
+}
+```
 
 ### Security controls
 
@@ -65,23 +91,10 @@ GET /gpt-safe-run?preset=<preset>&trace_id=<trace>
 |---|---|
 | Allowlist preset | `SAFE_RUN_PRESETS = { developer_runner_selftest, fix_internal_contour, status }` |
 | trace_id validation | regex `[a-zA-Z0-9_]{1,60}` |
-| Emergency stop | читает `governance/state/emergency_stop.json` перед dispatch |
-| Active session check | если status=queued/running → 429 rate limited |
-| In-memory rate limit | не чаще 1 раза в 60 секунд (сбрасывается при cold start) |
-| Dispatch init only | НЕ диспатчит step одновременно |
-
-### Init → first step handoff
-
-```
-GET /gpt-safe-run?preset=developer_runner_selftest&trace_id=bem409_selftest
-  → Deno: dispatch repository_dispatch gpt-dev-runner mode=init
-  → gpt-dev-runner.yml: init_session → commit gpt_dev_session.json
-  → gpt-dev-runner.yml: ТОЛЬКО после commit → dispatch mode=step (first step)
-  → gpt-dev-runner.yml: execute_one_step → BEM report → auto-continue
-  → ... → completed / blocked
-```
-
-**ЗАПРЕЩЕНО: Deno никогда не диспатчит init и step одновременно.**
+| Emergency stop | читает `emergency_stop.json` перед dispatch |
+| Active session check | queued/running → 429 |
+| In-memory rate limit | 1 раз в 60 сек |
+| Произвольный код/patch | АБСОЛЮТНО ЗАПРЕЩЕНО |
 
 ### Status endpoint
 
@@ -89,57 +102,36 @@ GET /gpt-safe-run?preset=developer_runner_selftest&trace_id=bem409_selftest
 GET /gpt-safe-status?trace_id=<trace>
 ```
 
-Без token. Возвращает:
-- `session` — текущий `gpt_dev_session.json`
-- `lock` — `gpt_dev_lock.json`
-- `last_event` — последняя запись из `gpt_dev_runner.jsonl`
-- `proof_exists` — существует ли `gpt_dev_runner_selftest_<trace>.json`
-- `blocker` — текущий blocker если есть
-
-### Пример полного цикла для ChatGPT
-
-```
-1. Open URL:
-   https://fine-chicken-23.bereznyi-aleksandr.deno.net/gpt-safe-run?preset=developer_runner_selftest&trace_id=bem409_selftest
-
-2. Response: {"ok": true, "dispatch_status": 204, ...}
-
-3. Monitor:
-   https://fine-chicken-23.bereznyi-aleksandr.deno.net/gpt-safe-status?trace_id=bem409_selftest
-
-4. PASS when status_summary.status = "completed"
-```
-
-### Negative tests
-
-| Тест | URL | Ожидаемый ответ |
-|---|---|---|
-| Invalid preset | `/gpt-safe-run?preset=bad_preset` | 400 `{ ok: false, error: "invalid_preset" }` |
-| Active session | `/gpt-safe-run?preset=X` (когда session running) | 429 `{ ok: false, error: "session_active" }` |
-| Emergency stop | `/gpt-safe-run?preset=X` (когда emergency_stop enabled) | 503 `{ ok: false, error: "emergency_stop" }` |
-| Rate limited | Два запроса подряд < 60s | 429 `{ ok: false, error: "rate_limited" }` |
-| Already completed | Same trace_id, status=completed | 200 `{ ok: true, already: "completed" }` |
+Возвращает: `session`, `lock`, `last_event`, `proof_exists`, `blocker`.
 
 ---
 
-## 3. РЕЗЕРВНЫЕ ВХОДЫ
+## 3. SELF-TEST ACCEPTANCE (BEM-420)
 
-### Issue comment — safe format (ChatGPT tool)
-```
-GPT_DEV_RUN preset=developer_runner_selftest trace_id=bem406_selftest
-```
-*(Может не материализоваться через ChatGPT GitHub comment tool — использовать Deno Safe Entrypoint)*
+### Команды оператора после деплоя v4.5:
 
-### Issue comment — legacy (оператор / Claude PAT MCP)
+**1. Проверить health:**
 ```
-@gpt-dev run preset=developer_runner_selftest trace_id=bem402_selftest
+GET https://fine-chicken-23.bereznyi-aleksandr.deno.net/
+Ожидаемо: version = "4.5"
 ```
 
-### Deno fallback POST (token required)
+**2. Запустить self-test:**
 ```
-POST /gpt-dev-session
-x-gpt-secret: <GPT_WEBHOOK_SECRET>
-{"trace_id": "dev_001", "preset": "developer_runner_selftest"}
+GET https://fine-chicken-23.bereznyi-aleksandr.deno.net/gpt-safe-run?preset=developer_runner_selftest&trace_id=bem420_selftest
+Ожидаемо: {"ok": true, "trigger_method": "workflow_dispatch", "workflow_dispatch_status": 204}
+```
+
+**3. Мониторинг:**
+```
+GET https://fine-chicken-23.bereznyi-aleksandr.deno.net/gpt-safe-status?trace_id=bem420_selftest
+PASS: status_summary.status = "completed", proof_exists = true
+```
+
+**4. Negative test:**
+```
+GET /gpt-safe-run?preset=bad_preset&trace_id=bem420_bad
+Ожидаемо: {"ok": false, "error": "invalid_preset"}
 ```
 
 ---
@@ -149,12 +141,11 @@ x-gpt-secret: <GPT_WEBHOOK_SECRET>
 | Правило | Статус |
 |---|---|
 | Один шаг = один atomic step | ОБЯЗАТЕЛЬНО |
-| После каждого шага — BEM report в issue #31 | ОБЯЗАТЕЛЬНО |
-| При ошибке → blocker в state + BEM report | ОБЯЗАТЕЛЬНО |
-| init и step не запускаются одновременно | ОБЯЗАТЕЛЬНО |
-| step не запускается до commit init state | ОБЯЗАТЕЛЬНО |
-| Long-running внутри одного GPT turn | ЗАПРЕЩЕНО |
-| Silent hang без blocker | ЗАПРЕЩЕНО |
+| После шага — BEM report в issue #31 | ОБЯЗАТЕЛЬНО |
+| Ошибка → blocker, не silent wait | ОБЯЗАТЕЛЬНО |
+| init и step одновременно | ЗАПРЕЩЕНО |
+| step до commit init | ЗАПРЕЩЕНО |
+| Silent hang | ЗАПРЕЩЕНО |
 | Secrets в файлы репозитория | АБСОЛЮТНЫЙ ЗАПРЕТ |
 | Произвольный код/patch через /gpt-safe-run | АБСОЛЮТНЫЙ ЗАПРЕТ |
 
@@ -162,156 +153,66 @@ x-gpt-secret: <GPT_WEBHOOK_SECRET>
 
 ## 5. GPT DEVELOPER RUNNER
 
-### State файл сессии
-
-```
-governance/state/gpt_dev_session.json
-  session_id:    gds_<hex12>
-  trace_id:      <от инициатора>
-  status:        idle / queued / running / completed / blocked
-  cursor:        N
-  queue:         [{type, ...}, ...]
-  current_step:  <type>
-  attempts:      N (всего шагов)
-  step_attempts: N (попыток текущего шага)
-  last_report:   <строка>
-  blocker:       null | {reason, stage, error_excerpt, attempt}
-  updated_at:    ISO timestamp
-```
-
-### State lock
-
-```
-governance/state/gpt_dev_lock.json
-  locked:     true/false
-  session_id: gds_<hex>
-  trace_id:   <trace>
-  locked_at:  ISO timestamp
-  expires_at: ISO timestamp (+10 минут)
-  owner:      gpt_dev_runner
-```
-
-### Retry policy
-
-| Параметр | Значение |
-|---|---|
-| max_attempts_per_step | 3 |
-| Transient: retry | 5xx, timeout, connection, push conflict |
-| Non-transient: block | invalid preset, missing permissions, emergency_stop, unknown step |
-
 ### Presets
 
 | Preset | Шаги |
 |---|---|
 | `developer_runner_selftest` | read system_state → read routing → verify reference → enqueue patch → write report |
-| `fix_internal_contour` | read role_cycle → read roadmap → read provider → verify emergency_stop → dispatch autonomy-engine → write report |
+| `fix_internal_contour` | read role_cycle → read roadmap → read provider_status → verify emergency_stop → dispatch autonomy-engine → write report |
+
+### State files
+
+| Файл | Назначение |
+|---|---|
+| `governance/state/gpt_dev_session.json` | Сессия (status, cursor, queue, blocker) |
+| `governance/state/gpt_dev_lock.json` | Lock (locked, session_id, expires_at) |
+| `governance/state/emergency_stop.json` | Аварийная остановка |
+| `governance/events/gpt_dev_runner.jsonl` | BEM reports (append-only) |
+| `governance/state/gpt_dev_runner_selftest_<trace>.json` | Proof file |
 
 ---
 
-## 6. SELF-TEST ACCEPTANCE (BEM-409)
+## 6. DENO WEBHOOK v4.5 — ENDPOINTS
 
-### Команда (PRIMARY — ChatGPT открывает URL):
+**URL:** `https://fine-chicken-23.bereznyi-aleksandr.deno.net`
 
-```
-GET /gpt-safe-run?preset=developer_runner_selftest&trace_id=bem409_selftest
-```
-
-### Мониторинг:
-
-```
-GET /gpt-safe-status?trace_id=bem409_selftest
-```
-
-### PASS если:
-
-- Response: `{"ok": true, "dispatch_status": 204}`
-- `governance/state/gpt_dev_session.json`:
-  - `status = completed`
-  - `trace_id = bem409_selftest`
-  - `blocker = null`
-  - cursor == queue.length
-- Создан: `governance/state/gpt_dev_runner_selftest_bem409_selftest.json`
-- Обновлён: `governance/events/gpt_dev_runner.jsonl`
-- Issue #31 содержит BEM-GPT-DEV-RUNNER reports после каждого шага
-- `/gpt-safe-status?trace_id=bem409_selftest` возвращает `proof_exists: true`
+| Endpoint | Метод | Token | Trigger | Назначение |
+|---|---|---|---|---|
+| `/gpt-safe-run` | GET | ❌ | **workflow_dispatch** | PRIMARY GPT entrypoint |
+| `/gpt-safe-status` | GET | ❌ | — | Read-only мониторинг |
+| `/gpt-dev-session` | GET | ✅ | — | Статус сессии (legacy) |
+| `/gpt-dev-session` | POST | ✅ | repository_dispatch | Deno fallback init |
+| `/autonomy-trigger` | GET | ✅ | repository_dispatch | autonomy-engine |
+| `/autonomy-backlog-trigger` | GET | ✅ | repository_dispatch | Backlog + engine |
+| `/autonomy-backlog` | POST | ✅ | repository_dispatch | Backlog + engine |
+| `/autonomy` | POST | ✅ | repository_dispatch | Engine direct |
+| `/` | GET | ❌ | — | Health check (version: 4.5) |
+| `/` | POST | — | — | Telegram webhook |
 
 ---
 
-## 7. STATE LAYER
-
-| Файл | Назначение | Кто пишет |
-|---|---|---|
-| `governance/state/gpt_dev_session.json` | Сессия runner | gpt_dev_runner.py |
-| `governance/state/gpt_dev_lock.json` | State lock | gpt_dev_runner.py |
-| `governance/state/gpt_safe_run_rate_limit.json` | Rate limit metadata (BEM-409) | справочный файл |
-| `governance/state/emergency_stop.json` | Аварийная остановка | вручную |
-| `governance/state/routing.json` | Активный провайдер | curator_router.py |
-| `governance/state/roadmap_state.json` | Дорожная карта | Deno / autonomous_task_engine |
-| `governance/events/gpt_dev_runner.jsonl` | BEM reports runner | gpt_dev_runner.py |
-| `governance/exchange.jsonl` | Append-only журнал | все компоненты |
-
----
-
-## 8. WORKFLOWS
+## 7. WORKFLOWS
 
 | Workflow | Триггер | Назначение |
 |---|---|---|
-| `curator-hosted-gpt.yml` | issue_comment `@curator` | Внутренний контур |
+| `gpt-dev-runner.yml` | **workflow_dispatch** (primary) + repository_dispatch + issue_comment | GPT Runner — 1 atomic step |
 | `gpt-dev-entrypoint.yml` | issue_comment `@gpt-dev run` OR `GPT_DEV_RUN` | Issue comment gate |
-| `gpt-dev-runner.yml` | repository_dispatch `gpt-dev-runner` | Atomic step runner |
-| `role-orchestrator.yml` | workflow_dispatch | FSM цикл ролей |
+| `curator-hosted-gpt.yml` | issue_comment `@curator` | Внутренний контур |
 | `autonomous-task-engine.yml` | repository_dispatch / schedule | Production loop |
 | `isa-patch-runner.yml` | ISA_PATCH_RUNNER | Патч-задачи |
 
 ---
 
-## 9. DENO WEBHOOK v4.4
+## 8. QUICK REFERENCE
 
-**URL:** `https://fine-chicken-23.bereznyi-aleksandr.deno.net`
-
-| Endpoint | Метод | Token | Назначение |
-|---|---|---|---|
-| `/gpt-safe-run` | GET | ❌ | **PRIMARY GPT ENTRYPOINT** — allowlist-only |
-| `/gpt-safe-status` | GET | ❌ | Read-only статус сессии |
-| `/gpt-dev-session` | GET | ✅ | Статус сессии (legacy) |
-| `/gpt-dev-session` | POST | ✅ | Deno fallback init (fixed race) |
-| `/autonomy-trigger` | GET | ✅ | Trigger engine |
-| `/autonomy-backlog-trigger` | GET | ✅ | Backlog + trigger |
-| `/autonomy-backlog` | POST | ✅ | Backlog + trigger |
-| `/autonomy` | POST | ✅ | Trigger engine |
-| `/` | GET | ❌ | Health check |
-| `/` | POST | — | Telegram webhook |
-
----
-
-## 10. ПОЛИТИКИ БЕЗОПАСНОСТИ
-
-| Правило | Статус |
-|---|---|
-| Произвольный код/patch через /gpt-safe-run | АБСОЛЮТНЫЙ ЗАПРЕТ |
-| Хардкод секретов | АБСОЛЮТНЫЙ ЗАПРЕТ |
-| Long-running разработка внутри одного GPT turn | ЗАПРЕЩЕНО |
-| Silent hang без blocker | ЗАПРЕЩЕНО |
-| init и step одновременно | ЗАПРЕЩЕНО |
-| Emergency stop enabled=true | Блокирует всё |
-
----
-
-## 11. QUICK REFERENCE
-
-### ChatGPT → PRIMARY (открыть URL):
+### ChatGPT PRIMARY (открыть URL):
 ```
-https://fine-chicken-23.bereznyi-aleksandr.deno.net/gpt-safe-run?preset=developer_runner_selftest&trace_id=bem409_selftest
+https://fine-chicken-23.bereznyi-aleksandr.deno.net/gpt-safe-run?preset=developer_runner_selftest&trace_id=bem420_selftest
 ```
 
 ### Мониторинг:
 ```
-https://fine-chicken-23.bereznyi-aleksandr.deno.net/gpt-safe-status?trace_id=bem409_selftest
-```
-
-### ChatGPT → backup (comment в issue #31):
-```
-GPT_DEV_RUN preset=developer_runner_selftest trace_id=bem409_selftest
+https://fine-chicken-23.bereznyi-aleksandr.deno.net/gpt-safe-status?trace_id=bem420_selftest
 ```
 
 ### Аварийная остановка:
@@ -321,5 +222,5 @@ governance/state/emergency_stop.json: {"enabled": true, "reason": "..."}
 
 ---
 
-*Версия: v2.6 | 2026-05-14 | внешний аудитор*
-*BEM-409: Deno Safe Entrypoint PRIMARY — GET /gpt-safe-run без token, allowlist-only, race condition fix*
+*Версия: v2.7 | 2026-05-14 | внешний аудитор*
+*BEM-420: workflow_dispatch primary, deno v4.5, deploy + self-test выполняет оператор*
