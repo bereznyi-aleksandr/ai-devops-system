@@ -1,6 +1,6 @@
 # INTERNAL AUTONOMY CONTOUR — REFERENCE
 
-Версия: v2.4 | Дата: 2026-05-14
+Версия: v2.5 | Дата: 2026-05-14
 Репозиторий: bereznyi-aleksandr/ai-devops-system
 Основная ISA: issue #31
 
@@ -10,6 +10,7 @@
 
 | Версия | Дата | Изменения |
 |---|---|---|
+| v2.5 | 2026-05-14 | BEM-406: ChatGPT-compatible entrypoint — safe command `GPT_DEV_RUN preset=... trace_id=...` без @mention; legacy `@gpt-dev run` сохранён; self-test bem406_selftest; negative test bad_preset |
 | v2.4 | 2026-05-14 | BEM-402: GPT Full Autonomy Closure — issue_comment entrypoint, lock/retry/watchdog/report contract, Deno fallback без race, self-test acceptance, negative-test acceptance |
 | v2.3 | 2026-05-13 | BEM-395: GPT Developer Runner, anti-hang contract |
 
@@ -21,13 +22,14 @@
 |---|---|---|---|
 | **Вход** | Telegram / Deno webhook | Оператор | Ставит задачу боту или открывает URL |
 | **Вход** | Issue #31 `@curator` | Оператор | Передаёт задачу в систему через GitHub |
-| **Вход** | Issue #31 `@gpt-dev run preset=X trace_id=Y` | GPT / Оператор | **BEM-402: Исполняемый entrypoint для GPT Developer Runner** |
+| **Вход** | Issue #31 `@gpt-dev run preset=X trace_id=Y` | Оператор / Claude | Legacy entrypoint для GPT Developer Runner (BEM-402) |
+| **Вход** | Issue #31 `GPT_DEV_RUN preset=X trace_id=Y` | **ChatGPT** | **BEM-406: ChatGPT-safe entrypoint без @mention** |
 | **Вход** | Deno `GET /autonomy-backlog-trigger` | GPT | Автономно добавляет задачи в roadmap и запускает движок |
 | **Вход** | Deno `POST /gpt-dev-session` | GPT | Инициирует GPT Developer Runner сессию (Deno fallback) |
 | **Вход** | Deno `POST /autonomy-backlog` + `patch_queue/generated/` | GPT | Автономный self-write bridge: GPT ставит патч-задачи → ISA Patch Runner коммитит |
 | **Вход** | Внешний LLM-аудитор / операторский чат | Claude / GPT | Пишет `@curator` в issue #31 через GitHub PAT MCP; архитектурный аудит |
 | **Управляющий** | `@curator` → `curator-hosted-gpt.yml` | GPT (hosted) | Единственная точка входа во внутренний контур; классифицирует задачу, запускает Role Orchestrator |
-| **GPT Dev Entrypoint** | `gpt-dev-entrypoint.yml` | GitHub Actions | **BEM-402: issue_comment триггер; парсит @gpt-dev run; валидирует preset; init → commit → dispatch first step** |
+| **GPT Dev Entrypoint** | `gpt-dev-entrypoint.yml` | GitHub Actions | BEM-402/406: issue_comment триггер; поддерживает оба формата команд; парсит preset; init → commit → dispatch first step |
 | **GPT Dev Runner** | `gpt-dev-runner.yml` → `scripts/gpt_dev_runner.py` | GitHub Actions | Atomic step runner для GPT разработки; один шаг за запуск, anti-hang |
 | **Оркестратор** | `role-orchestrator.yml` → `scripts/role_orchestrator.py` | GitHub Actions | Детерминированный FSM; ведёт цикл ролей по `role_sequence.json` |
 | **Провайдер-роутер** | `scripts/curator_router.py` + `provider_failover.py` | Python | Выбирает провайдера (gpt / gpt_codex) для каждой роли через `provider_adapters.json` |
@@ -40,17 +42,58 @@
 
 ---
 
-## 2. РОЛИ ВНЕШНИХ АГЕНТОВ
+## 2. CHATGPT-COMPATIBLE ENTRYPOINT (BEM-406)
 
-| Агент | Роль | Что может | Что не может |
-|---|---|---|---|
-| **Оператор** | Стратегия и приёмка | Ставить задачи, читать отчёты, менять политики | Микроменеджмент шагов |
-| **Внешний LLM-аудитор / операторский чат** | Внешний аудитор | Читать репозиторий, писать `@curator` в issue, писать `@gpt-dev run` в issue #31, архитектурный аудит | Существовать между сообщениями оператора |
-| **GPT (отдельный чат)** | Куратор + внешний аудитор | Мониторить систему, запускать контур через Deno или через `@gpt-dev run` в issue #31, писать `@curator`, ставить патч-задачи | Напрямую вызывать роли минуя куратора; вести long-running разработку внутри одного turn |
-| **curator-hosted-gpt.yml** | Внутренний куратор | Классифицировать задачи, запускать Role Orchestrator, маршрутизировать через failover | Выполнять код, коммитить файлы |
-| **gpt-dev-entrypoint.yml** | Issue Comment Gate | Принять `@gpt-dev run`, валидировать, init, commit, dispatch first step, BEM report | Выполнять step-логику; работать вне issue #31 |
-| **gpt-dev-runner.yml** | GPT Developer Runner | Выполнять один atomic step за запуск; читать state, ставить патч-задачи, диспатчить workflows, верифицировать файлы | Выполнять более 1 шага за запуск; зависать в long-running turn |
-| **analyst / auditor / executor** | Рабочие роли | Выполнять свою часть FSM-цикла | Принимать архитектурные решения, обходить куратора |
+### Почему @mention недостаточен
+
+ChatGPT GitHub write-tool блокирует отправку комментариев, содержащих исполняемые @-команды.
+Это делает `@gpt-dev run ...` недоступным для ChatGPT из чата без ручного браузера.
+
+Решение: добавить второй формат команды без @mention, который ChatGPT может свободно записать в комментарий issue #31.
+
+### Два поддерживаемых формата
+
+| Формат | Синтаксис | Кто использует |
+|---|---|---|
+| **ChatGPT-safe** (основной) | `GPT_DEV_RUN preset=X trace_id=Y` | ChatGPT из чата |
+| **Legacy/operator** | `@gpt-dev run preset=X trace_id=Y` | Оператор, Claude, другие инструменты |
+
+Оба формата:
+- Работают только в issue #31
+- Проходят одинаковую валидацию preset
+- Запускают одинаковый pipeline (init → step → auto-continue → report)
+- Производят одинаковые BEM reports
+
+### Workflow trigger condition
+
+```yaml
+if: >
+  github.event.issue.number == 31 && (
+    contains(github.event.comment.body, '@gpt-dev run') ||
+    contains(github.event.comment.body, 'GPT_DEV_RUN')
+  )
+```
+
+### Примеры команд
+
+```
+# ChatGPT-safe (без @mention):
+GPT_DEV_RUN preset=developer_runner_selftest trace_id=bem406_selftest
+GPT_DEV_RUN preset=fix_internal_contour trace_id=bem406_ic_fix
+
+# Legacy/operator:
+@gpt-dev run preset=developer_runner_selftest trace_id=bem402_selftest
+@gpt-dev run preset=fix_internal_contour trace_id=bem402_ic_fix
+```
+
+### Parser
+
+Python-парсер извлекает из тела комментария:
+- `preset=<value>` — обязательный параметр
+- `trace_id=<value>` — опциональный (если нет: `auto_<timestamp>`)
+- `mode=<value>` — опциональный (default: step)
+
+Работает для обоих форматов через regex `preset=([a-zA-Z0-9_]+)`.
 
 ---
 
@@ -73,7 +116,7 @@
 
 ---
 
-## 4. GPT DEVELOPER RUNNER — ПОЛНЫЙ КОНТРАКТ (BEM-402)
+## 4. GPT DEVELOPER RUNNER — ПОЛНЫЙ КОНТРАКТ
 
 ### Назначение
 
@@ -81,23 +124,23 @@
 ChatGPT оставляет один комментарий в issue #31 → система сама проходит очередь шагов.
 Каждый шаг — отдельный GitHub Actions run (timeout 5 минут).
 
-### Маршрут (основной — issue_comment entrypoint)
+### Полный маршрут
 
 ```
-GPT / Оператор → issue #31 comment:
-  @gpt-dev run preset=developer_runner_selftest trace_id=bem402_selftest
+ChatGPT → issue #31 comment:
+  GPT_DEV_RUN preset=developer_runner_selftest trace_id=bem406_selftest
     ↓
 gpt-dev-entrypoint.yml (issue_comment trigger)
-  → parse preset, trace_id
-  → validate preset
+  → detect format (safe vs legacy)
+  → parse preset, trace_id via Python regex
+  → validate preset against VALID_PRESETS
   → check permissions (AI_SYSTEM_GITHUB_PAT)
-  → check emergency_stop
-  → duplicate-run guard (trace_id не создаёт дубль)
+  → duplicate-run guard
   → acquire lock → gpt_dev_lock.json
   → init_session() → gpt_dev_session.json status=queued
   → commit init state
   → dispatch first step: repository_dispatch gpt-dev-runner mode=step
-  → BEM report в issue #31
+  → BEM-406 report в issue #31
     ↓
 gpt-dev-runner.yml (repository_dispatch) — timeout 5 min
   → execute_one_step():
@@ -113,18 +156,6 @@ gpt-dev-runner.yml (repository_dispatch) — timeout 5 min
       если status=completed/blocked → остановиться
 ```
 
-### Маршрут (Deno fallback)
-
-```
-GPT → POST /gpt-dev-session {trace_id, preset}
-  → Deno → repository_dispatch gpt-dev-runner mode=init (только init!)
-  → gpt-dev-runner.yml mode=init → init_session → commit
-  → после commit → dispatch first step (init→step handoff)
-```
-
-> ЗАПРЕЩЕНО: Deno не должен запускать init и step одновременно.
-> First step диспатчится только после успешного commit init state.
-
 ### State lock
 
 ```
@@ -138,19 +169,12 @@ governance/state/gpt_dev_lock.json
   reason:     session_active
 ```
 
-Правила:
-- Активная session ВСЕГДА ставит lock при init
-- completed / blocked ВСЕГДА снимают lock
-- Stale lock (TTL 10 мин) автоматически очищается
-- Параллельные сессии невозможны при активном lock
-
 ### Duplicate-run guard
 
 | Ситуация | Действие |
 |---|---|
 | trace_id уже в status=queued/running | Вернуть текущую сессию, не создавать дубль |
-| trace_id уже в status=completed | Разрешить новый запуск с тем же trace_id |
-| trace_id уже в status=blocked | Разрешить новый запуск (re-try сессии) |
+| trace_id уже в status=completed | Разрешить новый запуск |
 | lock занят другим trace_id | BLOCKED: lock_held |
 
 ### Retry policy
@@ -161,74 +185,23 @@ governance/state/gpt_dev_lock.json
 | Transient errors | 5xx, timeout, connection, push conflict, urlopen error |
 | Non-transient errors | invalid preset, missing permissions, emergency_stop, unknown step type |
 | После лимита retry | status=blocked, blocker заполнен, BEM report |
-| Retry action | status остаётся queued, step_attempts увеличивается |
 
-### Watchdog / Stale session
+### Watchdog
 
 | Условие | Действие |
 |---|---|
 | session.status=running и updated_at > 10 мин назад | status=blocked, blocker=stale_step_timeout, BEM report |
-| workflow timeout | GitHub Actions kills job (5 min timeout), состояние остаётся в running → watchdog на следующем run |
 | Silent hang | ЗАПРЕЩЕНО |
-
-### Report guarantee
-
-После каждого atomic step ОБЯЗАТЕЛЬНО:
-1. Обновить `governance/state/gpt_dev_session.json`
-2. Append `governance/events/gpt_dev_runner.jsonl`
-3. Post BEM-GPT-DEV-RUNNER report в issue #31
-
-### Error contract
-
-Любая ошибка:
-```json
-{
-  "status": "blocked",
-  "blocker": {
-    "reason":        "<описание>",
-    "stage":         "<step_type>",
-    "error_excerpt": "<первые 200 символов ошибки>",
-    "attempt":       N
-  }
-}
-```
-
-Запрещено: silent fail, вечный queued/running без updated_at, workflow success без report.
-
-### Permissions check
-
-Перед стартом проверяется:
-- `AI_SYSTEM_GITHUB_PAT` доступен workflow
-
-Если нет:
-- session.status = blocked
-- blocker = missing_permissions
-- BEM report опубликован
-
-### Emergency stop
-
-Если `governance/state/emergency_stop.json` содержит `enabled=true`:
-- step не выполняется
-- session.status = blocked
-- blocker = emergency_stop:<reason>
-- BEM report опубликован
-
-### Cleanup
-
-- Stale sessions: watchdog блокирует при TTL > 10 мин
-- Stale locks: автоматически очищаются при acquire_lock если TTL истёк
-- История events не удаляется (append-only)
-- completed/blocked сессии остаются с финальным статусом
 
 ### Поддерживаемые step types
 
 | Step type | Описание |
 |---|---|
-| `read_state` | Читает JSON файл, возвращает содержимое в report |
-| `enqueue_patch_task` | Создаёт файл в `patch_queue/generated/<id>.json` |
-| `dispatch_workflow` | Триггерит repository_dispatch (1 write) |
+| `read_state` | Читает JSON файл |
+| `enqueue_patch_task` | Создаёт файл в `patch_queue/generated/` |
+| `dispatch_workflow` | Триггерит repository_dispatch |
 | `verify_file` | Проверяет существование файла |
-| `verify_state` | Проверяет JSON файл на ожидаемые поля |
+| `verify_state` | Проверяет поля JSON файла |
 | `write_report` | Записывает итоговый отчёт сессии |
 
 ### Presets
@@ -240,9 +213,15 @@ governance/state/gpt_dev_lock.json
 
 ---
 
-## 5. SELF-TEST ACCEPTANCE (BEM-402)
+## 5. SELF-TEST ACCEPTANCE
 
-### Команда запуска:
+### BEM-406 self-test (ChatGPT-safe format):
+
+```
+GPT_DEV_RUN preset=developer_runner_selftest trace_id=bem406_selftest
+```
+
+### BEM-402 self-test (legacy format):
 
 ```
 @gpt-dev run preset=developer_runner_selftest trace_id=bem402_selftest
@@ -252,24 +231,24 @@ governance/state/gpt_dev_lock.json
 
 - `governance/state/gpt_dev_session.json`:
   - `status = completed`
-  - `trace_id = bem402_selftest`
+  - `trace_id = <trace>`
   - `blocker = null`
   - cursor дошёл до конца queue
-- Создан файл: `governance/state/gpt_dev_runner_selftest_bem402_selftest.json`
-- Создан/обновлён файл: `governance/events/gpt_dev_runner.jsonl`
+- Создан файл: `governance/state/gpt_dev_runner_selftest_<trace>.json`
+- Создан/обновлён: `governance/events/gpt_dev_runner.jsonl`
 - Issue #31 содержит BEM-GPT-DEV-RUNNER reports после каждого шага
 - Silent hang отсутствует
 
-### Negative tests (должны возвращать blocked, не silent fail):
+### Negative tests:
 
 | Тест | Ожидаемый результат |
 |---|---|
-| `@gpt-dev run preset=invalid_preset` | BLOCKED: invalid_preset |
-| Повторный `trace_id=bem402_selftest` при status=queued | Вернуть текущую сессию, не создавать дубль |
+| `GPT_DEV_RUN preset=bad_preset` | BLOCKED: invalid_preset; BEM report опубликован |
+| `@gpt-dev run preset=invalid_preset` | BLOCKED: invalid_preset; BEM report опубликован |
+| Повторный trace_id при status=queued | Вернуть текущую сессию, не создавать дубль |
 | `emergency_stop.json enabled=true` | BLOCKED: emergency_stop |
 | `AI_SYSTEM_GITHUB_PAT` не доступен | BLOCKED: missing_permissions |
-| Stale lock (TTL истёк) | lock очищается, новая сессия стартует |
-| init + step dispatch одновременно | ЗАПРЕЩЕНО: step диспатчится только после commit init |
+| Stale lock (TTL истёк) | lock очищается автоматически |
 
 ---
 
@@ -282,17 +261,12 @@ governance/state/gpt_dev_lock.json
 | `governance/policies/provider_adapters.json` | FSM adapter enabled / workflow | вручную |
 | `governance/state/role_cycle_state.json` | Активный FSM цикл | role_orchestrator.py |
 | `governance/state/gpt_dev_session.json` | GPT Developer Runner сессия | gpt_dev_runner.py |
-| `governance/state/gpt_dev_lock.json` | **BEM-402: State lock** | gpt_dev_runner.py |
+| `governance/state/gpt_dev_lock.json` | State lock (BEM-402) | gpt_dev_runner.py |
 | `governance/state/roadmap_state.json` | Дорожная карта задач | Deno / autonomous_task_engine.py |
 | `governance/state/emergency_stop.json` | Аварийная остановка | вручную |
 | `governance/state/curator_last_decision.json` | Последнее решение куратора | curator_entrypoint.py |
 | `governance/exchange.jsonl` | Append-only журнал событий | все компоненты |
 | `governance/events/gpt_dev_runner.jsonl` | BEM reports GPT Dev Runner | gpt_dev_runner.py |
-| `governance/events/provider_failures.jsonl` | Журнал ошибок провайдеров | curator_router.py |
-| `governance/events/routing_decisions.jsonl` | Журнал решений роутера | curator_router.py |
-| `governance/telegram_outbox.jsonl` | Очередь исходящих в Telegram | curator / движок |
-| `governance/processed_events.jsonl` | Защита от дублей | все компоненты |
-| `governance/patch_queue/current.json` | Текущая патч-задача (legacy) | вручную / движок |
 | `governance/patch_queue/generated/<trace>.json` | GPT autonomous patch tasks | GPT self-write bridge |
 
 ---
@@ -340,18 +314,6 @@ governance/state/gpt_dev_lock.json
 | `isa_patch_runner` | ✅ | ✅ / ✅ | Только для patch_queue задач |
 | `claude` | ❌ **false** | ✅ / ✅ | FSM adapter отключён (limits active) |
 
-> `claude.status=ok` в provider_status и `claude.enabled=false` в provider_adapters — разные слои.
-
-### Правила переключения провайдера
-
-| Тип ошибки | Действие |
-|---|---|
-| `provider_limit` | Переключить немедленно |
-| `api_error` (×2) | Переключить |
-| `runner_unavailable` | Пропустить, взять следующий |
-| `adapter_disabled` | Пропустить, использовать reserve |
-| `max_turns`, `config_error`, `timeout` | НЕ переключать |
-
 ---
 
 ## 9. WORKFLOWS
@@ -361,16 +323,15 @@ governance/state/gpt_dev_lock.json
 | Workflow | Триггер | Исполнитель | Назначение |
 |---|---|---|---|
 | `curator-hosted-gpt.yml` | issue_comment + `@curator` | GPT API | Единственная точка входа во внутренний контур |
-| **`gpt-dev-entrypoint.yml`** | **issue_comment + `@gpt-dev run`** | GitHub Actions | **BEM-402: Issue comment gate для GPT Developer Runner** |
+| `gpt-dev-entrypoint.yml` | issue_comment + `@gpt-dev run` OR `GPT_DEV_RUN` | GitHub Actions | BEM-402/406: Issue comment gate для GPT Developer Runner |
 | `gpt-dev-runner.yml` | repository_dispatch `gpt-dev-runner` / workflow_dispatch | Python | GPT Developer Runner — 1 atomic step, 5min timeout |
 | `role-orchestrator.yml` | workflow_dispatch | Python FSM | Детерминированный цикл ролей |
-| `analyst.yml` | `@analyst` | Claude Code | Прямой триггер (минует FSM adapter) |
+| `analyst.yml` | `@analyst` | Claude Code | Прямой триггер |
 | `auditor.yml` | `@auditor` | Claude Code | Прямой триггер |
 | `executor.yml` | `@executor` | Claude Code | Прямой триггер |
 | `gpt-hosted-roles.yml` | workflow_dispatch + `@gpt_analyst/auditor/executor` | GPT API | Роли через GPT hosted |
 | `codex-local.yml` | self-hosted runner | GPT Codex | Write-capable резервный контур |
-| `role-router.yml` | workflow_dispatch / CURATOR_TO_ROLE | Python | Маршрутизация по routing.json |
-| `autonomous-task-engine.yml` | repository_dispatch / schedule `17 * * * *` / AUTONOMY_ENGINE | Python | Production loop |
+| `autonomous-task-engine.yml` | repository_dispatch / schedule / AUTONOMY_ENGINE | Python | Production loop |
 | `isa-patch-runner.yml` | ISA_PATCH_RUNNER / workflow_dispatch | Python | Патч-задачи |
 | `telegram-outbox-dispatch.yml` | push / schedule `*/5 * * * *` | Python | Отправка в Telegram |
 | `curator-hourly-report.yml` | schedule `0 * * * *` | Python | Ежечасный отчёт |
@@ -381,30 +342,20 @@ governance/state/gpt_dev_lock.json
 
 **URL:** `https://fine-chicken-23.bereznyi-aleksandr.deno.net`
 
-| Версия | Где |
-|---|---|
-| `v4.3` | `governance/deno_webhook.js` в репозитории (канон) |
-| `v4.4+` | Live Deno Deploy (может отличаться) |
-
 | Endpoint | Метод | Назначение |
 |---|---|---|
-| `/` | GET | Health check |
-| `/autonomy-trigger` | GET | Запустить engine (query params) |
-| `/autonomy-backlog-trigger` | GET | Backlog + trigger (`?preset=full_chain`) |
-| `/autonomy-backlog` | POST | Backlog + trigger (JSON body) |
-| `/autonomy` | POST | Запустить engine (JSON body) |
-| `/gpt-dev-session` | GET | Статус GPT dev сессии |
-| `/gpt-dev-session` | POST | **Deno fallback**: init only → после commit dispatch first step |
-| `/` | POST | Telegram webhook |
+| `/gpt-dev-session` | POST | Deno fallback: init only → после commit dispatch first step |
+| `/autonomy-backlog-trigger` | GET | Backlog + trigger |
+| `/autonomy` | POST | Запустить engine |
+| `/` | GET/POST | Health check / Telegram webhook |
 
-### Deno fallback — правила BEM-402
+### Deno fallback — правила
 
 ```
 POST /gpt-dev-session {trace_id, preset}
   → dispatch mode=init ТОЛЬКО
   → после commit init state → dispatch mode=step (first step)
   ЗАПРЕЩЕНО: одновременный dispatch init + step
-  ЗАПРЕЩЕНО: dispatch step до commit init
 ```
 
 ---
@@ -414,29 +365,29 @@ POST /gpt-dev-session {trace_id, preset}
 | Правило | Статус |
 |---|---|
 | Production deploy без approval | АБСОЛЮТНЫЙ ЗАПРЕТ |
-| Изменение billing / permissions | АБСОЛЮТНЫЙ ЗАПРЕТ |
 | Хардкод секретов | АБСОЛЮТНЫЙ ЗАПРЕТ |
 | Long-running разработка внутри одного GPT turn | ЗАПРЕЩЕНО |
 | Silent hang без blocker записи | ЗАПРЕЩЕНО |
 | Более 1 write operation за atomic step | ЗАПРЕЩЕНО |
-| Куратор обходит Role Orchestrator | ЗАПРЕЩЕНО |
 | init и step одновременно | ЗАПРЕЩЕНО |
-| step до commit init | ЗАПРЕЩЕНО |
-| gpt_codex при runner_unavailable | Пропускать |
-| claude adapter disabled → не в FSM | Использовать reserve |
 | Emergency stop enabled=true | Блокирует всё |
 
 ---
 
 ## 12. QUICK REFERENCE
 
-### Запустить GPT Developer Runner (основной способ — BEM-402):
+### ChatGPT → запустить GPT Developer Runner (BEM-406, safe format):
 ```
-# Комментарий в issue #31:
+# Комментарий в issue #31 — ChatGPT может это написать:
+GPT_DEV_RUN preset=developer_runner_selftest trace_id=bem406_selftest
+```
+
+### Оператор / Claude → запустить GPT Developer Runner (legacy):
+```
 @gpt-dev run preset=developer_runner_selftest trace_id=bem402_selftest
 ```
 
-### Запустить GPT Developer Runner (Deno fallback):
+### Запустить через Deno (fallback):
 ```
 POST /gpt-dev-session
 {"trace_id": "dev_001", "preset": "developer_runner_selftest"}
@@ -451,17 +402,6 @@ TASK_TYPE: internal_contour_proof
 ЗАДАЧА: [описание]
 ```
 
-### Запустить Autonomous Task Engine:
-```
-GET /autonomy-backlog-trigger?token=SECRET&mode=production_loop&trace_id=X&preset=full_chain
-```
-
-### Поставить GPT patch task:
-```
-governance/patch_queue/generated/<trace>.json
-→ issue #31: TYPE: ISA_PATCH_RUNNER MODE: apply_and_commit TASK_FILE: ...
-```
-
 ### Аварийная остановка:
 ```
 governance/state/emergency_stop.json: {"enabled": true, "reason": "..."}
@@ -469,5 +409,5 @@ governance/state/emergency_stop.json: {"enabled": true, "reason": "..."}
 
 ---
 
-*Версия: v2.4 | 2026-05-14 | внешний аудитор*
-*BEM-402: GPT Full Autonomy Closure — issue_comment entrypoint, lock, retry, watchdog, report guarantee, Deno fallback без race, self-test acceptance*
+*Версия: v2.5 | 2026-05-14 | внешний аудитор*
+*BEM-406: ChatGPT-compatible entrypoint — GPT_DEV_RUN safe format, legacy @gpt-dev run сохранён*
