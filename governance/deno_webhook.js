@@ -1,10 +1,9 @@
 // Deno Deploy Webhook — AI DevOps System
-// Версия: v4.5 | BEM-420
+// Версия: v4.8 | BEM-457
 // Изменения:
-//   - BEM-420: /gpt-safe-run primary trigger = workflow_dispatch (не repository_dispatch)
-//   - Добавлен helper triggerWorkflowDispatch
-//   - Ответ /gpt-safe-run: trigger_method=workflow_dispatch, workflow_dispatch_status
-//   - repository_dispatch остаётся как helper для других endpoints
+//   - BEM-457: /gpt-safe-run PRIMARY = issue_comment → gpt-dev-entrypoint.yml
+//   - workflow_dispatch прямо на gpt-dev-runner.yml не использовался надёжно
+//   - issue_comment → gpt-dev-entrypoint.yml доказанно создавал session
 //
 // ENDPOINTS:
 // GET  /                           — health check
@@ -15,7 +14,7 @@
 // POST /autonomy-backlog           — backlog + trigger (token required)
 // GET  /gpt-dev-session            — статус dev сессии (token required)
 // POST /gpt-dev-session            — инициировать dev сессию (token required, Deno fallback)
-// GET  /gpt-safe-run               — PUBLIC PRIMARY: workflow_dispatch → gpt-dev-runner.yml (no token)
+// GET  /gpt-safe-run               — PUBLIC PRIMARY: issue comment → gpt-dev-entrypoint.yml (no token)
 // GET  /gpt-safe-status            — PUBLIC: статус текущей сессии (read-only)
 
 const GITHUB_REPO   = Deno.env.get("GITHUB_REPO")    || "bereznyi-aleksandr/ai-devops-system";
@@ -23,12 +22,10 @@ const GITHUB_ISSUE  = 31;
 const ALLOWED_CHAT_ID = Deno.env.get("ALLOWED_CHAT_ID") || "601442777";
 const GITHUB_API    = "https://api.github.com";
 
-// Allowlist для публичного /gpt-safe-run
 const SAFE_RUN_PRESETS = new Set(["developer_runner_selftest", "fix_internal_contour", "status"]);
 const SAFE_TRACE_RE    = /^[a-zA-Z0-9_]{1,60}$/;
-const RATE_LIMIT_MS    = 60_000; // 60 секунд между запусками (in-memory)
+const RATE_LIMIT_MS    = 60_000;
 
-// In-memory rate limiter
 let lastSafeRunAt    = 0;
 let lastSafeRunTrace = null;
 
@@ -72,7 +69,6 @@ async function postGitHubComment(pat, body) {
   return resp.status;
 }
 
-// repository_dispatch — helper, используется для autonomy-engine и Deno fallback
 async function triggerRepositoryDispatch(pat, eventType, payload) {
   const resp = await ghRequest(pat, "POST",
     `/repos/${GITHUB_REPO}/dispatches`,
@@ -80,11 +76,9 @@ async function triggerRepositoryDispatch(pat, eventType, payload) {
   return resp.status;
 }
 
-// workflow_dispatch — PRIMARY trigger для /gpt-safe-run (BEM-420)
 async function triggerWorkflowDispatch(pat, workflowFile, ref, inputs) {
   const resp = await ghRequest(
-    pat,
-    "POST",
+    pat, "POST",
     `/repos/${GITHUB_REPO}/actions/workflows/${workflowFile}/dispatches`,
     { ref, inputs }
   );
@@ -241,7 +235,6 @@ async function processBacklog(pat, tasks, traceId, mode) {
 // ─── GPT Dev Session (Deno fallback — BEM-402 contract) ────────────────────
 
 async function initDevSessionSafe(pat, traceId, preset) {
-  // BEM-402: dispatch ТОЛЬКО init. First step — только после commit init state внутри workflow.
   const dispatchStatus = await triggerRepositoryDispatch(pat, "gpt-dev-runner", {
     mode:      "init",
     trace_id:  traceId,
@@ -263,7 +256,7 @@ async function initDevSessionSafe(pat, traceId, preset) {
   };
 }
 
-// ─── /gpt-safe-run handler (BEM-420: workflow_dispatch PRIMARY) ─────────────
+// ─── /gpt-safe-run handler (BEM-457: issue_comment entrypoint PRIMARY) ───────
 
 async function handleSafeRun(pat, url) {
   const now = Date.now();
@@ -344,24 +337,18 @@ async function handleSafeRun(pat, url) {
     }, 429);
   }
 
-  // 6. PRIMARY TRIGGER: workflow_dispatch → gpt-dev-runner.yml (BEM-420)
-  const wdStatus = await triggerWorkflowDispatch(
-    pat,
-    "gpt-dev-runner.yml",
-    "main",
-    {
-      mode:     "init",
-      preset,
-      trace_id: traceId
-    }
-  );
+  // 6. PRIMARY TRIGGER: post issue comment → gpt-dev-entrypoint.yml (BEM-457)
+  // workflow_dispatch → gpt-dev-runner.yml давал 204 но не стартовал init.
+  // issue_comment → gpt-dev-entrypoint.yml доказанно создавал session (bem451_selftest).
+  const commentBody = `GPT_DEV_RUN preset=${preset} trace_id=${traceId}\n\nsource=deno_gpt_safe_run\nbem=BEM-457`;
+  const commentStatus = await postGitHubComment(pat, commentBody);
 
-  if (wdStatus !== 204) {
+  if (commentStatus !== 201) {
     return corsJson({
-      ok:                      false,
-      error:                   "workflow_dispatch_failed",
-      workflow_dispatch_status: wdStatus,
-      detail:                  `GitHub workflow_dispatch returned HTTP ${wdStatus}`
+      ok:             false,
+      error:          "comment_failed",
+      comment_status: commentStatus,
+      detail:         `GitHub issue comment returned HTTP ${commentStatus}`
     }, 500);
   }
 
@@ -370,14 +357,14 @@ async function handleSafeRun(pat, url) {
   lastSafeRunTrace = traceId;
 
   return corsJson({
-    ok:                      true,
-    trace_id:                traceId,
+    ok:             true,
+    trace_id:       traceId,
     preset,
-    trigger_method:          "workflow_dispatch",
-    workflow_dispatch_status: wdStatus,
-    source:                  "deno_gpt_safe_run_v45",
-    message:                 "Workflow dispatched. Init will run, then first step auto-starts after commit. Monitor via /gpt-safe-status.",
-    monitor_url:             `/gpt-safe-status?trace_id=${traceId}`
+    trigger_method: "issue_comment_entrypoint",
+    comment_status: commentStatus,
+    source:         "deno_gpt_safe_run_v48",
+    message:        "Comment posted to issue #31. gpt-dev-entrypoint.yml will pick it up and run init. Monitor via /gpt-safe-status.",
+    monitor_url:    `/gpt-safe-status?trace_id=${traceId}`
   });
 }
 
@@ -432,7 +419,7 @@ Deno.serve(async (req) => {
   if (method === "GET" && url.pathname === "/") {
     return corsJson({
       ok: true, service: "ai-devops-telegram-curator-webhook",
-      repo: GITHUB_REPO, issue: GITHUB_ISSUE, version: "4.5",
+      repo: GITHUB_REPO, issue: GITHUB_ISSUE, version: "4.8",
       github_pat_present: !!pat, gpt_webhook_secret_present: !!gptSecret,
       endpoints: {
         "GET  /":                         "health check",
@@ -443,16 +430,16 @@ Deno.serve(async (req) => {
         "POST /autonomy-backlog":         "backlog + trigger (token required)",
         "GET  /gpt-dev-session":          "GPT dev session status (token required)",
         "POST /gpt-dev-session":          "init GPT dev session — Deno fallback (token required)",
-        "GET  /gpt-safe-run":             "PRIMARY: workflow_dispatch → gpt-dev-runner.yml (no token, allowlist-only)",
+        "GET  /gpt-safe-run":             "PRIMARY: issue comment -> gpt-dev-entrypoint.yml (no token, allowlist-only)",
         "GET  /gpt-safe-status":          "session status — no token, read-only"
       },
       safe_run_presets: [...SAFE_RUN_PRESETS],
       rate_limit_seconds: RATE_LIMIT_MS / 1000,
-      primary_trigger: "workflow_dispatch"
+      primary_trigger: "issue_comment_entrypoint"
     });
   }
 
-  // ─── GET /gpt-safe-run — PRIMARY (BEM-420: workflow_dispatch) ─────────────
+  // ─── GET /gpt-safe-run — PRIMARY (BEM-457: issue_comment) ─────────────────
   if (method === "GET" && url.pathname === "/gpt-safe-run") {
     if (!pat) return corsJson({ ok: false, error: "server_not_configured" }, 503);
     return await handleSafeRun(pat, url);
