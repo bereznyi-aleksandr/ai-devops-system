@@ -41,6 +41,17 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
+      # BEM-466: sync to latest main BEFORE runner writes state files
+      # Prevents rebase conflict in "Commit state" step
+      - name: Sync latest main before runner
+        shell: bash
+        run: |
+          git config user.email "gpt-dev-runner@ai-devops-system"
+          git config user.name  "GPT Dev Runner"
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+
       - name: Resolve mode
         shell: bash
         env:
@@ -89,14 +100,12 @@ jobs:
           echo "DEV_RUNNER_EXIT=$EXIT" >> "$GITHUB_ENV"
           exit 0
 
+      # BEM-466: no git pull/rebase here — already synced before runner
       - name: Commit state
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
         run: |
-          git config user.email "gpt-dev-runner@ai-devops-system"
-          git config user.name  "GPT Dev Runner"
-          git pull --rebase --autostash origin main || true
           git add \
             governance/state/gpt_dev_session.json \
             governance/state/gpt_dev_lock.json \
@@ -109,10 +118,9 @@ jobs:
             echo "No state changes to commit"
           else
             git commit -m "GPT-DEV-RUNNER: mode=$DEV_RUNNER_MODE trace=$DEV_RUNNER_TRACE_ID"
-            git push || (git pull --rebase origin main && git push)
+            git push
           fi
 
-      # BEM-454: step name fixed — no colon-space in unquoted YAML scalar
       - name: Dispatch first step after init via workflow_dispatch
         if: env.DEV_RUNNER_EXIT == '0' && env.DEV_RUNNER_MODE == 'init'
         shell: bash
@@ -140,7 +148,6 @@ jobs:
             echo "Session $STATUS — skipping first step dispatch"
           fi
 
-      # BEM-454: step name fixed — no colon-space in unquoted YAML scalar
       - name: Dispatch next step via workflow_dispatch if queued
         if: env.DEV_RUNNER_EXIT == '0' && env.DEV_RUNNER_MODE == 'step'
         shell: bash
