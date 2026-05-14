@@ -45,10 +45,10 @@ jobs:
       - name: Resolve mode
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_MODE: ${{ inputs.mode }}
-          INPUT_TRACE_ID: ${{ inputs.trace_id }}
-          INPUT_PRESET: ${{ inputs.preset }}
+          EVENT_NAME:       ${{ github.event_name }}
+          INPUT_MODE:       ${{ inputs.mode }}
+          INPUT_TRACE_ID:   ${{ inputs.trace_id }}
+          INPUT_PRESET:     ${{ inputs.preset }}
           DISPATCH_PAYLOAD: ${{ toJson(github.event.client_payload) }}
         run: |
           MODE="${INPUT_MODE:-step}"
@@ -56,29 +56,29 @@ jobs:
           PRESET="${INPUT_PRESET:-}"
 
           if [ "${EVENT_NAME}" = "repository_dispatch" ]; then
-            MODE=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('mode','step'))" 2>/dev/null || echo "step")
-            TRACE_ID=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('trace_id',''))" 2>/dev/null || echo "")
-            PRESET=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('preset',''))" 2>/dev/null || echo "")
+            MODE=$(echo "$DISPATCH_PAYLOAD"     | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('mode','step'))"     2>/dev/null || echo "step")
+            TRACE_ID=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('trace_id',''))"     2>/dev/null || echo "")
+            PRESET=$(echo "$DISPATCH_PAYLOAD"   | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('preset',''))"      2>/dev/null || echo "")
           fi
 
-          echo "DEV_RUNNER_MODE=$MODE" >> "$GITHUB_ENV"
+          echo "DEV_RUNNER_MODE=$MODE"         >> "$GITHUB_ENV"
           echo "DEV_RUNNER_TRACE_ID=$TRACE_ID" >> "$GITHUB_ENV"
-          echo "DEV_RUNNER_PRESET=$PRESET" >> "$GITHUB_ENV"
+          echo "DEV_RUNNER_PRESET=$PRESET"      >> "$GITHUB_ENV"
           echo "mode=$MODE trace=$TRACE_ID preset=$PRESET"
 
       - name: Run one atomic step
         shell: bash
         env:
           AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN:             ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_REPOSITORY:    ${{ github.repository }}
         run: |
           set +e
 
           if [ "$DEV_RUNNER_MODE" = "init" ]; then
             ARGS="--mode init"
             [ -n "$DEV_RUNNER_TRACE_ID" ] && ARGS="$ARGS --trace-id $DEV_RUNNER_TRACE_ID"
-            [ -n "$DEV_RUNNER_PRESET" ] && ARGS="$ARGS --preset $DEV_RUNNER_PRESET"
+            [ -n "$DEV_RUNNER_PRESET"   ] && ARGS="$ARGS --preset $DEV_RUNNER_PRESET"
           elif [ "$DEV_RUNNER_MODE" = "status" ]; then
             ARGS="--mode status"
           else
@@ -86,7 +86,8 @@ jobs:
           fi
 
           python3 scripts/gpt_dev_runner.py $ARGS
-          echo "DEV_RUNNER_EXIT=$?" >> "$GITHUB_ENV"
+          EXIT=$?
+          echo "DEV_RUNNER_EXIT=$EXIT" >> "$GITHUB_ENV"
           exit 0
 
       - name: Commit state
@@ -95,10 +96,11 @@ jobs:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: |
           git config user.email "gpt-dev-runner@ai-devops-system"
-          git config user.name "GPT Dev Runner"
+          git config user.name  "GPT Dev Runner"
           git pull --rebase --autostash origin main || true
           git add \
             governance/state/gpt_dev_session.json \
+            governance/state/gpt_dev_lock.json \
             governance/events/gpt_dev_runner.jsonl \
             governance/exchange.jsonl \
             governance/patch_queue/generated/ \
@@ -111,14 +113,41 @@ jobs:
             git push || (git pull --rebase origin main && git push)
           fi
 
-      - name: Dispatch next step if not done
+      - name: Dispatch first step after init (init→step handoff)
+        if: env.DEV_RUNNER_EXIT == '0' && env.DEV_RUNNER_MODE == 'init'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO:     ${{ github.repository }}
+        run: |
+          # After init commit, dispatch first step to close init→step gap
+          STATUS=$(python3 -c "
+          import json, pathlib
+          s = json.loads(pathlib.Path('governance/state/gpt_dev_session.json').read_text())
+          print(s.get('status','idle'))
+          " 2>/dev/null || echo "unknown")
+
+          echo "Session status after init: $STATUS"
+
+          if [ "$STATUS" = "queued" ]; then
+            curl -s -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/json" \
+              "https://api.github.com/repos/$REPO/dispatches" \
+              -d "{\"event_type\":\"gpt-dev-runner\",\"client_payload\":{\"mode\":\"step\",\"trace_id\":\"$DEV_RUNNER_TRACE_ID\",\"source\":\"init_handoff\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}"
+            echo "First step dispatched after init"
+          else
+            echo "Session $STATUS — no first step dispatch"
+          fi
+
+      - name: Dispatch next step if not done (auto-continue)
         if: env.DEV_RUNNER_EXIT == '0' && env.DEV_RUNNER_MODE == 'step'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          REPO: ${{ github.repository }}
+          REPO:     ${{ github.repository }}
         run: |
-          # Проверить статус сессии
           STATUS=$(python3 -c "
           import json, pathlib
           s = json.loads(pathlib.Path('governance/state/gpt_dev_session.json').read_text())
@@ -128,7 +157,6 @@ jobs:
           echo "Session status after step: $STATUS"
 
           if [ "$STATUS" = "queued" ]; then
-            # Авто-продолжение: dispatch следующего шага
             curl -s -X POST \
               -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \
@@ -140,7 +168,7 @@ jobs:
             echo "Session $STATUS — no auto-continue"
           fi
 
-      - name: Post report to issue
+      - name: Post BEM report to issue #31
         if: always()
         uses: actions/github-script@v7
         with:
@@ -151,20 +179,37 @@ jobs:
             try {
               session = JSON.parse(fs.readFileSync('governance/state/gpt_dev_session.json', 'utf8'));
             } catch(e) {}
+            const now = new Date().toISOString().slice(0,10);
+            const queue  = session.queue || [];
+            const cursor = session.cursor ?? '?';
+            const pct    = queue.length > 0 ? Math.round((cursor / queue.length) * 100) + '%' : '?%';
+
             const body = [
-              'BEM-GPT-DEV-RUNNER | STEP RESULT',
+              `BEM-GPT-DEV-RUNNER | STEP RESULT | ${now} | ${pct}`,
               '',
-              `Mode: ${process.env.DEV_RUNNER_MODE || 'step'}`,
-              `Session: ${session.session_id || 'none'}`,
-              `Trace: ${session.trace_id || 'none'}`,
-              `Status: ${session.status || 'unknown'}`,
-              `Cursor: ${session.cursor}/${(session.queue||[]).length}`,
-              `Last: ${session.last_report || 'none'}`,
-              session.blocker ? `Blocker: ${session.blocker}` : null,
+              '**Чек-лист:**',
+              `${session.status === 'completed' ? '✅' : session.status === 'blocked' ? '❌' : '⚠️'} Status: ${session.status || 'unknown'}`,
+              session.blocker ? `❌ Blocker: ${JSON.stringify(session.blocker)}` : '✅ No blocker',
+              '',
+              '| Тип | Содержание | Статус |',
+              '|---|---|---|',
+              `| Факт | Mode | ${process.env.DEV_RUNNER_MODE || 'step'} |`,
+              `| Факт | Session | ${session.session_id || 'none'} |`,
+              `| Факт | Trace | ${session.trace_id || 'none'} |`,
+              `| Факт | Cursor | ${cursor}/${queue.length} |`,
+              `| Факт | Last report | ${session.last_report || 'none'} |`,
+              session.blocker ? `| Следующее действие | Resolve blocker | BLOCKED |`
+                              : `| Следующее действие | Auto-continue next step | NEXT |`,
+              '',
+              '```',
+              `STATUS: ${session.status || 'unknown'}`,
+              `NEXT: ${session.status === 'queued' ? 'auto-continue dispatched' : session.status}`,
+              '```',
             ].filter(Boolean).join('\n');
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
-              repo: context.repo.repo,
+              repo:  context.repo.repo,
               issue_number: 31,
               body
             });
