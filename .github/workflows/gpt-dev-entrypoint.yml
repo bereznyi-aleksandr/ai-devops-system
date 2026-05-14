@@ -1,5 +1,9 @@
 name: GPT Dev Entrypoint (issue_comment)
 
+# Поддерживает два формата команд (BEM-406):
+#   Legacy/operator:  @gpt-dev run preset=X trace_id=Y
+#   ChatGPT-safe:     GPT_DEV_RUN preset=X trace_id=Y
+
 on:
   issue_comment:
     types: [created]
@@ -11,12 +15,14 @@ permissions:
 
 jobs:
   parse-and-launch:
-    name: Parse @gpt-dev command and launch session
+    name: Parse gpt-dev command and launch session
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: >
-      github.event.issue.number == 31 &&
-      contains(github.event.comment.body, '@gpt-dev run')
+      github.event.issue.number == 31 && (
+        contains(github.event.comment.body, '@gpt-dev run') ||
+        contains(github.event.comment.body, 'GPT_DEV_RUN')
+      )
 
     steps:
       - name: Checkout
@@ -29,33 +35,51 @@ jobs:
         id: parse
         shell: bash
         run: |
-          BODY='${{ github.event.comment.body }}'
-          PRESET=$(echo "$BODY" | grep -oP 'preset=\K[a-zA-Z0-9_]+' | head -1 || echo "")
-          TRACE_ID=$(echo "$BODY" | grep -oP 'trace_id=\K[a-zA-Z0-9_]+' | head -1 || echo "")
-          MODE=$(echo "$BODY" | grep -oP 'mode=\K[a-zA-Z0-9_]+' | head -1 || echo "step")
+          # Используем Python для надёжного парсинга — избегаем shell-injection
+          python3 - <<'PYEOF'
+          import os, re, sys
 
-          VALID_PRESETS="developer_runner_selftest fix_internal_contour"
-          VALID=true
-          PARSE_ERROR=""
+          body = """${{ github.event.comment.body }}"""
 
-          if [ -z "$PRESET" ]; then
-            VALID=false
-            PARSE_ERROR="missing preset"
-          elif ! echo "$VALID_PRESETS" | grep -qw "$PRESET"; then
-            VALID=false
-            PARSE_ERROR="invalid_preset: $PRESET"
-          fi
+          # Определяем формат (legacy @gpt-dev run или ChatGPT-safe GPT_DEV_RUN)
+          if '@gpt-dev run' in body:
+              fmt = 'legacy'
+          elif 'GPT_DEV_RUN' in body:
+              fmt = 'safe'
+          else:
+              fmt = 'unknown'
 
-          if [ -z "$TRACE_ID" ]; then
-            TRACE_ID="auto_$(date -u +%Y%m%dT%H%M%SZ)"
-          fi
+          # Извлекаем параметры (работает для обоих форматов)
+          preset   = (re.search(r'preset=([a-zA-Z0-9_]+)',   body) or [None, ''])[1]
+          trace_id = (re.search(r'trace_id=([a-zA-Z0-9_]+)', body) or [None, ''])[1]
+          mode     = (re.search(r'mode=([a-zA-Z0-9_]+)',     body) or [None, 'step'])[1]
 
-          echo "VALID=$VALID"           >> "$GITHUB_ENV"
-          echo "PARSE_ERROR=$PARSE_ERROR" >> "$GITHUB_ENV"
-          echo "ENTRYPOINT_PRESET=$PRESET"  >> "$GITHUB_ENV"
-          echo "ENTRYPOINT_TRACE=$TRACE_ID" >> "$GITHUB_ENV"
-          echo "ENTRYPOINT_MODE=$MODE"      >> "$GITHUB_ENV"
-          echo "preset=$PRESET trace=$TRACE_ID mode=$MODE valid=$VALID"
+          VALID_PRESETS = {'developer_runner_selftest', 'fix_internal_contour'}
+
+          valid = True
+          parse_error = ''
+
+          if not preset:
+              valid = False
+              parse_error = 'missing_preset'
+          elif preset not in VALID_PRESETS:
+              valid = False
+              parse_error = f'invalid_preset: {preset}'
+
+          if not trace_id:
+              import datetime
+              trace_id = 'auto_' + datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write(f'VALID={str(valid).lower()}\n')
+              f.write(f'PARSE_ERROR={parse_error}\n')
+              f.write(f'ENTRYPOINT_PRESET={preset}\n')
+              f.write(f'ENTRYPOINT_TRACE={trace_id}\n')
+              f.write(f'ENTRYPOINT_MODE={mode}\n')
+              f.write(f'ENTRYPOINT_FORMAT={fmt}\n')
+
+          print(f'format={fmt} preset={preset} trace={trace_id} mode={mode} valid={valid}')
+          PYEOF
 
       - name: Permissions check
         if: env.VALID == 'true'
@@ -64,9 +88,9 @@ jobs:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "VALID=false"                             >> "$GITHUB_ENV"
+            echo "VALID=false"                              >> "$GITHUB_ENV"
             echo "PARSE_ERROR=missing_AI_SYSTEM_GITHUB_PAT" >> "$GITHUB_ENV"
-            echo "PERM_BLOCKED=true"                       >> "$GITHUB_ENV"
+            echo "PERM_BLOCKED=true"                        >> "$GITHUB_ENV"
           else
             echo "PERM_BLOCKED=false" >> "$GITHUB_ENV"
           fi
@@ -76,13 +100,13 @@ jobs:
         shell: bash
         env:
           AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN:             ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_REPOSITORY:    ${{ github.repository }}
         run: |
           python3 scripts/gpt_dev_runner.py \
             --mode init \
             --trace-id "$ENTRYPOINT_TRACE" \
-            --preset  "$ENTRYPOINT_PRESET"
+            --preset   "$ENTRYPOINT_PRESET"
           echo "INIT_EXIT=$?" >> "$GITHUB_ENV"
 
       - name: Commit init state
@@ -102,7 +126,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No state changes"
           else
-            git commit -m "GPT-DEV-ENTRYPOINT: init trace=$ENTRYPOINT_TRACE preset=$ENTRYPOINT_PRESET"
+            git commit -m "GPT-DEV-ENTRYPOINT: init trace=$ENTRYPOINT_TRACE preset=$ENTRYPOINT_PRESET fmt=$ENTRYPOINT_FORMAT"
             git push || (git pull --rebase origin main && git push)
           fi
 
@@ -111,19 +135,19 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          REPO: ${{ github.repository }}
+          REPO:     ${{ github.repository }}
         run: |
           HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             -H "Content-Type: application/json" \
             "https://api.github.com/repos/$REPO/dispatches" \
-            -d "{\"event_type\":\"gpt-dev-runner\",\"client_payload\":{\"mode\":\"step\",\"trace_id\":\"$ENTRYPOINT_TRACE\",\"source\":\"entrypoint_first_step\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}")
+            -d "{\"event_type\":\"gpt-dev-runner\",\"client_payload\":{\"mode\":\"step\",\"trace_id\":\"$ENTRYPOINT_TRACE\",\"source\":\"entrypoint_first_step\",\"format\":\"$ENTRYPOINT_FORMAT\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}")
           echo "DISPATCH_HTTP=$HTTP" >> "$GITHUB_ENV"
           if [ "$HTTP" = "204" ]; then
             echo "First step dispatched OK"
           else
-            echo "Dispatch HTTP=$HTTP — may need retry"
+            echo "Dispatch HTTP=$HTTP"
           fi
 
       - name: Post BEM report to issue #31
@@ -132,14 +156,15 @@ jobs:
         with:
           github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           script: |
-            const valid     = process.env.VALID;
-            const parseErr  = process.env.PARSE_ERROR  || '';
-            const preset    = process.env.ENTRYPOINT_PRESET || 'unknown';
-            const trace     = process.env.ENTRYPOINT_TRACE  || 'unknown';
-            const initExit  = process.env.INIT_EXIT;
-            const dispHttp  = process.env.DISPATCH_HTTP || '—';
-            const permBlk   = process.env.PERM_BLOCKED  || 'false';
-            const now       = new Date().toISOString().slice(0,10);
+            const valid    = process.env.VALID;
+            const parseErr = process.env.PARSE_ERROR  || '';
+            const preset   = process.env.ENTRYPOINT_PRESET  || 'unknown';
+            const trace    = process.env.ENTRYPOINT_TRACE   || 'unknown';
+            const fmt      = process.env.ENTRYPOINT_FORMAT  || 'unknown';
+            const initExit = process.env.INIT_EXIT;
+            const dispHttp = process.env.DISPATCH_HTTP || '—';
+            const permBlk  = process.env.PERM_BLOCKED  || 'false';
+            const now      = new Date().toISOString().slice(0,10);
 
             let status, nextAction;
             if (valid !== 'true') {
@@ -156,16 +181,17 @@ jobs:
             const pct = status === 'LAUNCHED' ? '10%' : '0%';
 
             const body = [
-              `BEM-402 | GPT DEV ENTRYPOINT | ${now} | ${pct}`,
+              `BEM-406 | GPT DEV ENTRYPOINT | ${now} | ${pct}`,
               '',
               '**Чек-лист:**',
-              valid === 'true'                     ? '✅ Команда распознана'         : `❌ Команда не распознана: ${parseErr}`,
-              (valid === 'true' && permBlk !== 'true') ? '✅ Permissions OK'         : '❌ Permissions BLOCKED',
-              initExit === '0'                     ? '✅ Init выполнен'              : '⚠️ Init не выполнен или пропущен',
-              initExit === '0'                     ? `✅ First step dispatched (HTTP ${dispHttp})` : '❌ First step не запущен',
+              valid === 'true'                        ? `✅ Команда распознана (format: ${fmt})` : `❌ Команда не распознана: ${parseErr}`,
+              (valid === 'true' && permBlk !== 'true') ? '✅ Permissions OK'                    : '❌ Permissions BLOCKED',
+              initExit === '0'                        ? '✅ Init выполнен'                      : '⚠️ Init не выполнен',
+              initExit === '0'                        ? `✅ First step dispatched (HTTP ${dispHttp})` : '❌ First step не запущен',
               '',
               '| Тип | Содержание | Статус |',
               '|---|---|---|',
+              `| Факт | format | ${fmt} |`,
               `| Факт | preset | ${preset} |`,
               `| Факт | trace_id | ${trace} |`,
               `| Факт | init exit | ${initExit ?? '—'} |`,
