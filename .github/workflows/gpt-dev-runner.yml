@@ -13,13 +13,12 @@ on:
         required: false
         type: string
       preset:
-        description: 'Preset (for init mode): developer_runner_selftest | fix_internal_contour'
+        description: 'Preset: developer_runner_selftest | fix_internal_contour'
         required: false
         type: string
   repository_dispatch:
     types: [gpt-dev-runner]
 
-# Anti-hang: один запуск = один шаг, timeout 5 минут
 concurrency:
   group: gpt-dev-runner-main
   cancel-in-progress: false
@@ -40,7 +39,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          # BEM-452: fallback to github.token if AI_SYSTEM_GITHUB_PAT not set
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
       - name: Resolve mode
         shell: bash
@@ -56,21 +56,22 @@ jobs:
           PRESET="${INPUT_PRESET:-}"
 
           if [ "${EVENT_NAME}" = "repository_dispatch" ]; then
-            MODE=$(echo "$DISPATCH_PAYLOAD"     | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('mode','step'))"     2>/dev/null || echo "step")
-            TRACE_ID=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('trace_id',''))"     2>/dev/null || echo "")
-            PRESET=$(echo "$DISPATCH_PAYLOAD"   | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('preset',''))"      2>/dev/null || echo "")
+            MODE=$(echo "$DISPATCH_PAYLOAD"     | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('mode','step'))"  2>/dev/null || echo "step")
+            TRACE_ID=$(echo "$DISPATCH_PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('trace_id',''))" 2>/dev/null || echo "")
+            PRESET=$(echo "$DISPATCH_PAYLOAD"   | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('preset',''))"   2>/dev/null || echo "")
           fi
 
           echo "DEV_RUNNER_MODE=$MODE"         >> "$GITHUB_ENV"
           echo "DEV_RUNNER_TRACE_ID=$TRACE_ID" >> "$GITHUB_ENV"
-          echo "DEV_RUNNER_PRESET=$PRESET"      >> "$GITHUB_ENV"
+          echo "DEV_RUNNER_PRESET=$PRESET"     >> "$GITHUB_ENV"
           echo "mode=$MODE trace=$TRACE_ID preset=$PRESET"
 
       - name: Run one atomic step
         shell: bash
         env:
-          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          GH_TOKEN:             ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          # BEM-452: fallback to github.token
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GH_TOKEN:             ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           GITHUB_REPOSITORY:    ${{ github.repository }}
         run: |
           set +e
@@ -93,7 +94,8 @@ jobs:
       - name: Commit state
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          # BEM-452: fallback to github.token
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
         run: |
           git config user.email "gpt-dev-runner@ai-devops-system"
           git config user.name  "GPT Dev Runner"
@@ -107,20 +109,19 @@ jobs:
             governance/state/gpt_dev_runner_selftest_*.json \
             2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "No state changes"
+            echo "No state changes to commit"
           else
-            git commit -m "GPT-DEV-RUNNER: step (mode=$DEV_RUNNER_MODE trace=$DEV_RUNNER_TRACE_ID)"
+            git commit -m "GPT-DEV-RUNNER: mode=$DEV_RUNNER_MODE trace=$DEV_RUNNER_TRACE_ID"
             git push || (git pull --rebase origin main && git push)
           fi
 
-      - name: Dispatch first step after init (init→step handoff)
+      - name: Dispatch first step after init (BEM-452: workflow_dispatch)
         if: env.DEV_RUNNER_EXIT == '0' && env.DEV_RUNNER_MODE == 'init'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           REPO:     ${{ github.repository }}
         run: |
-          # After init commit, dispatch first step to close init→step gap
           STATUS=$(python3 -c "
           import json, pathlib
           s = json.loads(pathlib.Path('governance/state/gpt_dev_session.json').read_text())
@@ -130,22 +131,23 @@ jobs:
           echo "Session status after init: $STATUS"
 
           if [ "$STATUS" = "queued" ]; then
-            curl -s -X POST \
+            # BEM-452: workflow_dispatch (не repository_dispatch) для согласованности с Deno v4.5
+            HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
               -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -H "Content-Type: application/json" \
-              "https://api.github.com/repos/$REPO/dispatches" \
-              -d "{\"event_type\":\"gpt-dev-runner\",\"client_payload\":{\"mode\":\"step\",\"trace_id\":\"$DEV_RUNNER_TRACE_ID\",\"source\":\"init_handoff\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}"
-            echo "First step dispatched after init"
+              "https://api.github.com/repos/$REPO/actions/workflows/gpt-dev-runner.yml/dispatches" \
+              -d "{\"ref\":\"main\",\"inputs\":{\"mode\":\"step\",\"trace_id\":\"$DEV_RUNNER_TRACE_ID\"}}")
+            echo "First step workflow_dispatch HTTP=$HTTP"
           else
-            echo "Session $STATUS — no first step dispatch"
+            echo "Session $STATUS — skipping first step dispatch"
           fi
 
-      - name: Dispatch next step if not done (auto-continue)
+      - name: Dispatch next step if queued (BEM-452: workflow_dispatch)
         if: env.DEV_RUNNER_EXIT == '0' && env.DEV_RUNNER_MODE == 'step'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           REPO:     ${{ github.repository }}
         run: |
           STATUS=$(python3 -c "
@@ -157,29 +159,31 @@ jobs:
           echo "Session status after step: $STATUS"
 
           if [ "$STATUS" = "queued" ]; then
-            curl -s -X POST \
+            # BEM-452: workflow_dispatch для auto-continue
+            HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
               -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -H "Content-Type: application/json" \
-              "https://api.github.com/repos/$REPO/dispatches" \
-              -d "{\"event_type\":\"gpt-dev-runner\",\"client_payload\":{\"mode\":\"step\",\"source\":\"auto_continue\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}"
-            echo "Dispatched next step"
+              "https://api.github.com/repos/$REPO/actions/workflows/gpt-dev-runner.yml/dispatches" \
+              -d "{\"ref\":\"main\",\"inputs\":{\"mode\":\"step\",\"trace_id\":\"$DEV_RUNNER_TRACE_ID\"}}")
+            echo "Auto-continue workflow_dispatch HTTP=$HTTP"
           else
-            echo "Session $STATUS — no auto-continue"
+            echo "Session $STATUS — auto-continue not needed"
           fi
 
       - name: Post BEM report to issue #31
         if: always()
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          # BEM-452: fallback to github.token
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           script: |
             const fs = require('fs');
             let session = {};
             try {
               session = JSON.parse(fs.readFileSync('governance/state/gpt_dev_session.json', 'utf8'));
             } catch(e) {}
-            const now = new Date().toISOString().slice(0,10);
+            const now    = new Date().toISOString().slice(0,10);
             const queue  = session.queue || [];
             const cursor = session.cursor ?? '?';
             const pct    = queue.length > 0 ? Math.round((cursor / queue.length) * 100) + '%' : '?%';
@@ -198,12 +202,13 @@ jobs:
               `| Факт | Trace | ${session.trace_id || 'none'} |`,
               `| Факт | Cursor | ${cursor}/${queue.length} |`,
               `| Факт | Last report | ${session.last_report || 'none'} |`,
-              session.blocker ? `| Следующее действие | Resolve blocker | BLOCKED |`
-                              : `| Следующее действие | Auto-continue next step | NEXT |`,
+              session.blocker
+                ? '| Следующее действие | Resolve blocker | BLOCKED |'
+                : '| Следующее действие | Auto-continue next step | NEXT |',
               '',
               '```',
               `STATUS: ${session.status || 'unknown'}`,
-              `NEXT: ${session.status === 'queued' ? 'auto-continue dispatched' : session.status}`,
+              `NEXT: ${session.status === 'queued' ? 'workflow_dispatch step dispatched' : session.status}`,
               '```',
             ].filter(Boolean).join('\n');
 
