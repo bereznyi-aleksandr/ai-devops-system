@@ -1,7 +1,8 @@
 name: Provider Adapter
 
 # BEM-477: real Claude execution via claude.yml dispatch (Option B)
-# Results written to governance/transport/ + governance/reports/
+# BEM-488: YAML-safe rewrite — no f-string multiline, no nested python3 -c in $()
+# Results: governance/transport/ + governance/reports/
 # NO issue comments (BEM-476)
 
 on:
@@ -79,9 +80,9 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          now   = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
           trace = os.environ['INPUT_TRACE_ID']
-          cycle = os.environ.get('INPUT_CYCLE_ID') or f'cycle_{trace}'
+          cycle = os.environ.get('INPUT_CYCLE_ID') or ('cycle_' + trace)
 
           req = {
               'trace_id':   trace,
@@ -96,41 +97,72 @@ jobs:
           Path('governance/transport').mkdir(parents=True, exist_ok=True)
           with open('governance/transport/requests.jsonl', 'a') as f:
               f.write(json.dumps(req, ensure_ascii=False) + '\n')
-          print(f"Request written: trace={trace} role={req['role']} provider={req['provider']}")
+          print('Request written: trace=' + trace + ' role=' + req['role'])
           PYEOF
 
-      # BEM-477: dispatch claude.yml for real Claude execution
+      # BEM-488: use Python urllib instead of nested python3 -c inside $() inside curl
       - name: Dispatch claude.yml for real Claude execution
         if: inputs.provider == 'claude'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          REPO:     ${{ github.repository }}
+          GH_TOKEN:        ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPO:            ${{ github.repository }}
+          INPUT_ROLE:      ${{ inputs.role }}
+          INPUT_TRACE_ID:  ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID:  ${{ inputs.cycle_id }}
+          INPUT_TASK_TYPE: ${{ inputs.task_type }}
+          INPUT_TASK:      ${{ inputs.task }}
         run: |
-          HTTP=$(curl -s -o /tmp/dispatch_resp.json -w "%{http_code}" -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/json" \
-            "https://api.github.com/repos/$REPO/actions/workflows/claude.yml/dispatches" \
-            -d "$(python3 -c "
-          import json, sys
-          print(json.dumps({
-            'ref': 'main',
-            'inputs': {
-              'role':      '${{ inputs.role }}',
-              'provider':  'claude',
-              'trace_id':  '${{ inputs.trace_id }}',
-              'cycle_id':  '${{ inputs.cycle_id }}',
-              'task_type': '${{ inputs.task_type }}',
-              'task':      $(python3 -c \"import json,sys; print(json.dumps('${{ inputs.task }}'))\" 2>/dev/null || echo '\"\"')
-            }
-          }))
-          ")")
-          echo "DISPATCH_HTTP=$HTTP" >> "$GITHUB_ENV"
-          echo "claude.yml dispatch HTTP=$HTTP"
-          cat /tmp/dispatch_resp.json || true
+          python3 - <<'PYEOF'
+          import json, os, urllib.request
 
-      # Write "dispatched" result immediately; claude.yml will overwrite with real result
+          token     = os.environ['GH_TOKEN']
+          repo      = os.environ['REPO']
+          role      = os.environ.get('INPUT_ROLE', 'analyst')
+          trace     = os.environ.get('INPUT_TRACE_ID', '')
+          cycle     = os.environ.get('INPUT_CYCLE_ID', '')
+          task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
+          task      = os.environ.get('INPUT_TASK', '')
+
+          payload = json.dumps({
+              'ref': 'main',
+              'inputs': {
+                  'role':      role,
+                  'provider':  'claude',
+                  'trace_id':  trace,
+                  'cycle_id':  cycle,
+                  'task_type': task_type,
+                  'task':      task
+              }
+          }).encode('utf-8')
+
+          req = urllib.request.Request(
+              'https://api.github.com/repos/' + repo + '/actions/workflows/claude.yml/dispatches',
+              data=payload,
+              headers={
+                  'Authorization': 'Bearer ' + token,
+                  'Accept': 'application/vnd.github+json',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'provider-adapter'
+              },
+              method='POST'
+          )
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  http_status = resp.status
+          except urllib.error.HTTPError as e:
+              http_status = e.code
+          except Exception as e:
+              http_status = 0
+              print('Dispatch error: ' + str(e))
+
+          print('claude.yml dispatch HTTP=' + str(http_status))
+
+          # Write DISPATCH_HTTP to env file
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write('DISPATCH_HTTP=' + str(http_status) + '\n')
+          PYEOF
+
       - name: Write dispatch result to transport
         shell: bash
         env:
@@ -145,56 +177,58 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          now      = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
           trace    = os.environ['INPUT_TRACE_ID']
-          cycle    = os.environ.get('INPUT_CYCLE_ID') or f'cycle_{trace}'
+          cycle    = os.environ.get('INPUT_CYCLE_ID') or ('cycle_' + trace)
           role     = os.environ['INPUT_ROLE']
           provider = os.environ['INPUT_PROVIDER']
           dispatch_http = os.environ.get('DISPATCH_HTTP', '?')
 
-          # Status: dispatched_to_claude if HTTP 204, else failed
           if dispatch_http == '204':
-              status = 'dispatched_to_claude'
+              status  = 'dispatched_to_claude'
               blocker = None
           else:
-              status = 'dispatch_failed'
-              blocker = f'claude.yml dispatch returned HTTP {dispatch_http}'
+              status  = 'dispatch_failed'
+              blocker = 'claude.yml dispatch returned HTTP ' + dispatch_http
 
-          report_path = f'governance/reports/{trace}.md'
+          report_path = 'governance/reports/' + trace + '.md'
           Path('governance/reports').mkdir(parents=True, exist_ok=True)
-          Path(report_path).write_text(f"""# Provider Adapter — {trace}
 
-| Field | Value |
-|---|---|
-| Trace | {trace} |
-| Role | {role} |
-| Provider | {provider} |
-| Dispatch status | {status} |
-| Dispatch HTTP | {dispatch_http} |
-| Updated at | {now} |
-
-Status: **{status}**
-{'Blocker: ' + blocker if blocker else 'No blocker at dispatch stage. claude.yml running asynchronously.'}
-
-Real result will be appended to `governance/transport/results.jsonl` by claude.yml after execution.
-""")
+          # BEM-488: safe string join instead of f-string multiline
+          lines = [
+              '# Provider Adapter - ' + trace,
+              '',
+              '| Field | Value |',
+              '|---|---|',
+              '| Trace | ' + trace + ' |',
+              '| Role | ' + role + ' |',
+              '| Provider | ' + provider + ' |',
+              '| Dispatch status | ' + status + ' |',
+              '| Dispatch HTTP | ' + dispatch_http + ' |',
+              '| Updated at | ' + now + ' |',
+              '',
+              'Status: ' + status,
+              ('Blocker: ' + blocker) if blocker else 'No blocker at dispatch stage.',
+              '',
+              'Real result appended to governance/transport/results.jsonl by claude.yml.',
+          ]
+          Path(report_path).write_text('\n'.join(lines) + '\n')
 
           result = {
-              'trace_id':    trace,
-              'cycle_id':    cycle,
-              'role':        role,
-              'provider':    provider,
-              'status':      status,
+              'trace_id':     trace,
+              'cycle_id':     cycle,
+              'role':         role,
+              'provider':     provider,
+              'status':       status,
               'changed_files': [],
-              'commit_sha':  None,
-              'blocker':     blocker,
-              'report_path': report_path,
+              'commit_sha':   None,
+              'blocker':      blocker,
+              'report_path':  report_path,
               'completed_at': now
           }
           with open('governance/transport/results.jsonl', 'a') as f:
               f.write(json.dumps(result, ensure_ascii=False) + '\n')
 
-          # Update provider_status
           ps_path = Path('governance/state/provider_status.json')
           try:
               ps = json.loads(ps_path.read_text())
@@ -204,7 +238,7 @@ Real result will be appended to `governance/transport/results.jsonl` by claude.y
           ps['updated_at'] = now
           ps_path.write_text(json.dumps(ps, indent=2) + '\n')
 
-          print(f"Dispatch result written: status={status} report={report_path}")
+          print('Dispatch result written: status=' + status)
           PYEOF
 
       - name: Update role_cycle_state
@@ -222,7 +256,7 @@ Real result will be appended to `governance/transport/results.jsonl` by claude.y
           now   = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
           role  = os.environ.get('INPUT_ROLE', 'analyst')
           trace = os.environ.get('INPUT_TRACE_ID', 'unknown')
-          cycle = os.environ.get('INPUT_CYCLE_ID') or f'cycle_{trace}'
+          cycle = os.environ.get('INPUT_CYCLE_ID') or ('cycle_' + trace)
 
           rcs_path = Path('governance/state/role_cycle_state.json')
           try:
@@ -243,7 +277,7 @@ Real result will be appended to `governance/transport/results.jsonl` by claude.y
               'updated_at':      now
           })
           rcs_path.write_text(json.dumps(rcs, indent=2) + '\n')
-          print(f"role_cycle_state updated: role={role} completed={completed}")
+          print('role_cycle_state updated: role=' + role)
           PYEOF
 
       - name: Commit state
@@ -259,26 +293,46 @@ Real result will be appended to `governance/transport/results.jsonl` by claude.y
           if git diff --cached --quiet; then
             echo "No changes"
           else
-            git commit -m "PROVIDER-ADAPTER: role=${{ inputs.role }} trace=${{ inputs.trace_id }} dispatch_http=$DISPATCH_HTTP"
+            git commit -m "PROVIDER-ADAPTER: role=${{ inputs.role }} trace=${{ inputs.trace_id }}"
             git push
           fi
 
-      # BEM-476: job summary ONLY — NO createComment to issue #31
+      # BEM-488: Python-based summary instead of heredoc (avoids YAML/bash heredoc issues)
       - name: Report to job summary
         if: always()
         shell: bash
+        env:
+          INPUT_ROLE:      ${{ inputs.role }}
+          INPUT_PROVIDER:  ${{ inputs.provider }}
+          INPUT_TRACE_ID:  ${{ inputs.trace_id }}
+          INPUT_TASK_TYPE: ${{ inputs.task_type }}
         run: |
-          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
-          ## Provider Adapter — ${{ inputs.role }} | ${{ inputs.provider }}
+          python3 - <<'PYEOF'
+          import os
 
-          | Field | Value |
-          |---|---|
-          | Trace | ${{ inputs.trace_id }} |
-          | Role | ${{ inputs.role }} |
-          | Provider | ${{ inputs.provider }} |
-          | Task type | ${{ inputs.task_type }} |
-          | claude.yml dispatch HTTP | ${DISPATCH_HTTP:--} |
-          | Report | governance/reports/${{ inputs.trace_id }}.md |
+          role      = os.environ.get('INPUT_ROLE', '?')
+          provider  = os.environ.get('INPUT_PROVIDER', '?')
+          trace     = os.environ.get('INPUT_TRACE_ID', '?')
+          task_type = os.environ.get('INPUT_TASK_TYPE', '?')
+          dispatch  = os.environ.get('DISPATCH_HTTP', '-')
 
-          **No issue comments written (BEM-476/477)**
-          EOF
+          lines = [
+              '## Provider Adapter - ' + role + ' | ' + provider,
+              '',
+              '| Field | Value |',
+              '|---|---|',
+              '| Trace | ' + trace + ' |',
+              '| Role | ' + role + ' |',
+              '| Provider | ' + provider + ' |',
+              '| Task type | ' + task_type + ' |',
+              '| claude.yml dispatch HTTP | ' + dispatch + ' |',
+              '| Report | governance/reports/' + trace + '.md |',
+              '',
+              '**No issue comments written (BEM-476/477)**',
+              '',
+          ]
+
+          summary_path = os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/summary.md')
+          with open(summary_path, 'a') as f:
+              f.write('\n'.join(lines))
+          PYEOF
