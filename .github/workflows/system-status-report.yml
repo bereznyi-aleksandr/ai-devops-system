@@ -1,5 +1,8 @@
 name: System Status Report
 
+# BEM-476: removed schedule, issue_comment triggers — workflow_dispatch ONLY
+# BEM-476: removed createComment to issue #31 — report goes to job summary + file
+
 on:
   workflow_dispatch:
     inputs:
@@ -8,10 +11,6 @@ on:
         required: false
         default: 'manual_system_status_report'
         type: string
-  issue_comment:
-    types: [created]
-  schedule:
-    - cron: '17 */6 * * *'
 
 permissions:
   contents: write
@@ -20,9 +19,6 @@ permissions:
 jobs:
   system-status-report:
     name: System Status Report
-    if: >
-      github.event_name != 'issue_comment' ||
-      (github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: SYSTEM_STATUS_REPORT'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -31,63 +27,60 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Sync latest main
+        shell: bash
+        run: |
+          git config user.email "system-status@ai-devops-system"
+          git config user.name  "System Status Report"
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
 
       - name: Resolve trace
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
           INPUT_TRACE_ID: ${{ inputs.trace_id }}
-          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          set -euo pipefail
           TRACE_ID="${INPUT_TRACE_ID:-system_status_report}"
-          if [ "${EVENT_NAME:-}" = "issue_comment" ]; then
-            TRACE_ID="$(printf '%s' "$COMMENT_BODY" | sed -n 's/^TRACE_ID:[[:space:]]*//p' | head -1)"
-            TRACE_ID="${TRACE_ID:-issue_system_status_report}"
-          fi
           echo "TRACE_ID=$TRACE_ID" >> "$GITHUB_ENV"
 
       - name: Generate report
         shell: bash
         run: |
-          set -euo pipefail
+          set +e
           python3 scripts/system_status_report.py \
-            --mode "${{ github.event_name }}" \
+            --mode "workflow_dispatch" \
             --trace-id "$TRACE_ID" \
             --write | tee /tmp/system_status_report.md
+          echo "REPORT_EXIT=$?" >> "$GITHUB_ENV"
 
       - name: Commit report
         shell: bash
         run: |
-          set -e
-          git config user.email "system-status@ai-devops-system"
-          git config user.name "System Status Report"
-          git pull --rebase --autostash origin main
-          git add governance/reports/system_status_latest.md governance/events/system_status_reports.jsonl
+          git add \
+            governance/reports/system_status_latest.md \
+            governance/events/system_status_reports.jsonl \
+            2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No system status changes"
-            exit 0
+          else
+            git commit -m "SYSTEM-STATUS: report $TRACE_ID"
+            git push
           fi
-          git commit -m "E4-004: system status report update"
-          git push
 
-      - name: Post report to issue
+      # BEM-476: report to job summary ONLY — NO createComment to issue #31
+      - name: Report to job summary
         if: always()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          script: |
-            const fs = require('fs');
-            let body = 'BEM-SYSTEM-STATUS | REPORT MISSING';
-            try {
-              body = fs.readFileSync('governance/reports/system_status_latest.md', 'utf8');
-            } catch (e) {
-              body = `BEM-SYSTEM-STATUS | REPORT ERROR\n\n${e.message}`;
-            }
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: 31,
-              body
-            });
+        shell: bash
+        run: |
+          echo "## System Status Report — $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f /tmp/system_status_report.md ]; then
+            cat /tmp/system_status_report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Report file not generated (exit=$REPORT_EXIT)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**No issue comments written (BEM-476)**" >> "$GITHUB_STEP_SUMMARY"
