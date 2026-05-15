@@ -1,8 +1,8 @@
+# BEM-476: schedule disabled — workflow_dispatch only
+# Was: cron '0 * * * *' — now manual only to stop Actions spam
 name: Curator Hourly Report
 
 on:
-  schedule:
-    - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
 
       - name: Generate and queue curator report
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
         run: |
           python3 - <<'PYEOF'
           import json, os
@@ -32,9 +32,8 @@ jobs:
           time_utc_str = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
           event_id = "evt_hourly_" + now_utc.strftime("%Y%m%d_%H%M%S")
 
-          # Читать system_state
           phase = "E3"
-          phase_title = "Отладка и стабилизация"
+          phase_title = "Otladka i stabilizatsiya"
           try:
               with open("governance/state/system_state.json") as f:
                   s = json.load(f)
@@ -43,7 +42,6 @@ jobs:
           except Exception:
               pass
 
-          # Читать routing
           analyst_p = auditor_p = executor_p = "?"
           try:
               with open("governance/state/routing.json") as f:
@@ -55,9 +53,8 @@ jobs:
           except Exception:
               pass
 
-          # Читать exchange.jsonl
-          events_text = "нет данных"
-          progress = "нет активности за час"
+          events_text = "net dannykh"
+          progress = "net aktivnosti za chas"
           try:
               with open("governance/exchange.jsonl") as f:
                   events = [json.loads(l) for l in f if l.strip()]
@@ -67,7 +64,7 @@ jobs:
                   events_text = "\n".join(lines)
               one_hour_ago = (now_utc - timedelta(hours=1)).isoformat()
               recent_hour = [e for e in events if e.get("timestamp", "") > one_hour_ago]
-              progress = "есть активность" if recent_hour else "нет активности за час"
+              progress = "est aktivnost" if recent_hour else "net aktivnosti za chas"
           except Exception:
               pass
 
@@ -84,9 +81,7 @@ jobs:
               "Poslednie sobytiya:",
               events_text,
               "",
-              "Progress za chas: " + progress,
-              "",
-              "Sleduyuschiy otchet cherez 1 chas"
+              "Progress za chas: " + progress
           ]
           report = "\n".join(report_lines)
 
@@ -120,10 +115,11 @@ jobs:
 
       - name: Commit
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
         run: |
           git config user.email "curator-report@ai-devops-system"
           git config user.name "Curator Report"
+          git pull --rebase --autostash origin main || true
           git add governance/telegram_outbox.jsonl governance/exchange.jsonl
           git diff --cached --quiet || git commit -m "CURATOR HOURLY REPORT: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git push
+          git push || true
