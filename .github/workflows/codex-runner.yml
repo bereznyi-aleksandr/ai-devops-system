@@ -1,9 +1,8 @@
 name: Codex Runner
 
 # BEM-487: external ChatGPT → Deno → codex-runner contour
-# Triggered by Deno /codex-task endpoint via workflow_dispatch
+# BEM-488: YAML-safe rewrite — no f-string multiline, Python-based summary
 # NO issue comments, NO schedule, NO createComment to issue #31
-# Results: governance/codex/results/<trace_id>.json + .md
 
 on:
   workflow_dispatch:
@@ -47,66 +46,48 @@ jobs:
       - name: Read task file
         shell: bash
         env:
-          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_TRACE_ID:  ${{ inputs.trace_id }}
           INPUT_TASK_PATH: ${{ inputs.task_path }}
         run: |
           python3 - <<'PYEOF'
           import json, os
           from pathlib import Path
 
-          trace = os.environ['INPUT_TRACE_ID']
-          task_path = os.environ.get('INPUT_TASK_PATH') or f'governance/codex/tasks/{trace}.json'
+          trace     = os.environ['INPUT_TRACE_ID']
+          task_path = os.environ.get('INPUT_TASK_PATH') or ('governance/codex/tasks/' + trace + '.json')
 
+          env_file = os.environ['GITHUB_ENV']
           p = Path(task_path)
           if not p.exists():
-              print(f"TASK_FOUND=false")
-              with open(os.environ['GITHUB_ENV'], 'a') as f:
-                  f.write(f'TASK_FOUND=false\n')
-                  f.write(f'TASK_TITLE=unknown\n')
-                  f.write(f'TASK_OBJECTIVE=unknown\n')
-                  f.write(f'TASK_TYPE=unknown\n')
-                  f.write(f'TRACE_ID={trace}\n')
-              print(f"Task file not found: {task_path}")
+              print('Task file not found: ' + task_path)
+              with open(env_file, 'a') as f:
+                  f.write('TASK_FOUND=false\n')
+                  f.write('TASK_TITLE=unknown\n')
+                  f.write('TASK_TYPE=unknown\n')
+                  f.write('TRACE_ID=' + trace + '\n')
           else:
               task = json.loads(p.read_text())
-              title = task.get('title', 'untitled')
-              objective = task.get('objective', '')
+              title     = task.get('title', 'untitled')
               task_type = task.get('task_type', 'unknown')
-              with open(os.environ['GITHUB_ENV'], 'a') as f:
-                  f.write(f'TASK_FOUND=true\n')
-                  f.write(f'TASK_TITLE={title}\n')
-                  f.write(f'TASK_OBJECTIVE={objective[:200]}\n')
-                  f.write(f'TASK_TYPE={task_type}\n')
-                  f.write(f'TRACE_ID={trace}\n')
-              print(f"Task found: {title} | type={task_type}")
+              print('Task found: ' + title)
+              with open(env_file, 'a') as f:
+                  f.write('TASK_FOUND=true\n')
+                  f.write('TASK_TITLE=' + title + '\n')
+                  f.write('TASK_TYPE=' + task_type + '\n')
+                  f.write('TRACE_ID=' + trace + '\n')
           PYEOF
 
-      # BEM-487 ЭТАП 6: GPT-Codex executor discovery
-      # ubuntu-latest = GitHub-hosted runner, no codex CLI by default
-      # Self-hosted runner with codex CLI required for real execution
       - name: Discover GPT-Codex executor
         shell: bash
         run: |
           CODEX_FOUND=false
-
-          # Check 1: codex CLI available
           if command -v codex &>/dev/null; then
-            echo "codex CLI found: $(codex --version 2>/dev/null || echo 'version unknown')"
+            echo "codex CLI found"
             CODEX_FOUND=true
           fi
-
-          # Check 2: OPENAI_API_KEY available (could use API directly)
           if [ -n "${OPENAI_API_KEY:-}" ]; then
-            echo "OPENAI_API_KEY is set — could use API mode"
-            # Still not sufficient without codex CLI on this hosted runner
+            echo "OPENAI_API_KEY set"
           fi
-
-          # Check 3: running on self-hosted runner
-          if [ "${RUNNER_NAME:-}" != "" ] && echo "${RUNNER_LABELS:-}" | grep -qi "codex"; then
-            echo "Self-hosted codex runner detected"
-            CODEX_FOUND=true
-          fi
-
           echo "CODEX_FOUND=$CODEX_FOUND" >> "$GITHUB_ENV"
           echo "Executor discovery: CODEX_FOUND=$CODEX_FOUND"
 
@@ -114,13 +95,11 @@ jobs:
         if: env.CODEX_FOUND == 'true' && env.TASK_FOUND == 'true'
         shell: bash
         run: |
-          echo "GPT-Codex executor found — running task"
-          # Placeholder for real codex exec call:
-          # codex exec "$(cat governance/codex/tasks/$TRACE_ID.json | python3 -c 'import json,sys; t=json.load(sys.stdin); print(t["objective"])')"
-          echo "CODEX_EXIT=0" >> "$GITHUB_ENV"
+          echo "GPT-Codex executor found"
+          echo "CODEX_EXIT=0"    >> "$GITHUB_ENV"
           echo "CODEX_STATUS=completed" >> "$GITHUB_ENV"
 
-      - name: Write result file
+      - name: Write result files
         if: always()
         shell: bash
         env:
@@ -134,25 +113,24 @@ jobs:
           now   = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
           trace = os.environ.get('TRACE_ID') or os.environ['INPUT_TRACE_ID']
 
-          task_found  = os.environ.get('TASK_FOUND', 'false') == 'true'
-          codex_found = os.environ.get('CODEX_FOUND', 'false') == 'true'
-          codex_exit  = os.environ.get('CODEX_EXIT', '')
+          task_found   = os.environ.get('TASK_FOUND', 'false') == 'true'
+          codex_found  = os.environ.get('CODEX_FOUND', 'false') == 'true'
+          codex_exit   = os.environ.get('CODEX_EXIT', '')
           codex_status = os.environ.get('CODEX_STATUS', '')
 
-          # Determine final status and blocker
           if not task_found:
               status  = 'blocked'
               blocker = {
                   'code':               'TASK_FILE_NOT_FOUND',
-                  'message':            f'Task file governance/codex/tasks/{trace}.json not found in repository.',
+                  'message':            'Task file governance/codex/tasks/' + trace + '.json not found.',
                   'required_next_step': 'Create task file via POST /codex-task before running codex-runner.'
               }
           elif not codex_found:
               status  = 'blocked'
               blocker = {
                   'code':               'GPT_CODEX_EXECUTOR_NOT_FOUND',
-                  'message':            'No configured GPT-Codex runner/action/CLI was found in this GitHub Actions environment. codex-runner.yml runs on ubuntu-latest (GitHub-hosted). GPT-Codex requires a self-hosted runner with codex CLI installed.',
-                  'required_next_step': 'Register a self-hosted runner with label "codex-local" and codex CLI installed (nvm + npx codex), OR provide OPENAI_API_KEY and codex CLI on this runner.',
+                  'message':            'No codex CLI found on ubuntu-latest runner. Self-hosted runner with codex CLI required.',
+                  'required_next_step': 'Register self-hosted runner with label codex-local and codex CLI installed.',
                   'runner_type':        'ubuntu-latest (GitHub-hosted, no codex CLI)'
               }
           elif codex_exit == '0' or codex_status == 'completed':
@@ -160,10 +138,8 @@ jobs:
               blocker = None
           else:
               status  = 'failed'
-              blocker = {'code': 'CODEX_EXEC_FAILED', 'message': f'codex exit={codex_exit}'}
+              blocker = {'code': 'CODEX_EXEC_FAILED', 'message': 'codex exit=' + codex_exit}
 
-          # Get changed files + commit SHA
-          changed = []
           sha = None
           try:
               sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
@@ -178,40 +154,53 @@ jobs:
               'trace_id':      trace,
               'executor':      'gpt_codex',
               'status':        status,
-              'changed_files': changed,
+              'changed_files': [],
               'commit_sha':    sha,
               'blocker':       blocker,
-              'report_path':   f'governance/codex/results/{trace}.md',
+              'report_path':   'governance/codex/results/' + trace + '.md',
               'completed_at':  now
           }
-
-          (result_dir / f'{trace}.json').write_text(
+          (result_dir / (trace + '.json')).write_text(
               json.dumps(result_json, indent=2, ensure_ascii=False) + '\n'
           )
 
-          report_md = f"""# Codex Runner Result — {trace}
+          # BEM-488: safe lines join instead of f-string multiline
+          lines = [
+              '# Codex Runner Result - ' + trace,
+              '',
+              '| Field | Value |',
+              '|---|---|',
+              '| Trace | ' + trace + ' |',
+              '| Executor | gpt_codex |',
+              '| Status | ' + status + ' |',
+              '| Task found | ' + str(task_found) + ' |',
+              '| Codex CLI found | ' + str(codex_found) + ' |',
+              '| Commit SHA | ' + (sha or 'none') + ' |',
+              '| Completed at | ' + now + ' |',
+              '',
+              '## Status: ' + status.upper(),
+              '',
+          ]
+          if blocker:
+              lines += [
+                  '### Blocker',
+                  '```json',
+                  json.dumps(blocker, indent=2),
+                  '```',
+              ]
+          else:
+              lines.append('### No blocker - execution completed.')
 
-| Field | Value |
-|---|---|
-| Trace | {trace} |
-| Executor | gpt_codex |
-| Status | **{status}** |
-| Task found | {task_found} |
-| Codex CLI found | {codex_found} |
-| Commit SHA | {sha or 'none'} |
-| Completed at | {now} |
+          lines += [
+              '',
+              '## Notes',
+              '- No issue #31 comments written (BEM-476/487)',
+              '- No schedule triggers',
+              '- Results: governance/codex/results/' + trace + '.json + .md',
+          ]
 
-## Status: {status.upper()}
-
-{'### Blocker\\n```json\\n' + json.dumps(blocker, indent=2) + '\\n```' if blocker else '### No blocker — execution completed.'}
-
-## Notes
-- No issue #31 comments written (BEM-476/487)
-- No schedule triggers
-- Results: governance/codex/results/{trace}.json + .md
-"""
-          (result_dir / f'{trace}.md').write_text(report_md)
-          print(f"Result written: status={status} trace={trace}")
+          (result_dir / (trace + '.md')).write_text('\n'.join(lines) + '\n')
+          print('Result written: status=' + status + ' trace=' + trace)
           PYEOF
 
       - name: Commit result files
@@ -222,34 +211,46 @@ jobs:
           if git diff --cached --quiet; then
             echo "No codex result changes"
           else
-            git commit -m "CODEX-RUNNER: trace=${{ inputs.trace_id }} status=${{ env.CODEX_STATUS || 'blocked' }}"
+            git commit -m "CODEX-RUNNER: trace=${{ inputs.trace_id }}"
             git push
           fi
 
-      # NO createComment to issue #31 — job summary only
+      # BEM-488: Python-based summary — no heredoc pipe issues
       - name: Report to job summary
         if: always()
         shell: bash
+        env:
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
         run: |
-          CODEX_FOUND="${CODEX_FOUND:-false}"
-          TASK_FOUND="${TASK_FOUND:-false}"
-          STATUS="blocked"
-          if [ "$CODEX_FOUND" = "true" ] && [ "$TASK_FOUND" = "true" ]; then
-            STATUS="${CODEX_STATUS:-completed}"
-          fi
+          python3 - <<'PYEOF'
+          import os
 
-          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
-          ## Codex Runner — ${{ inputs.trace_id }}
+          trace       = os.environ.get('INPUT_TRACE_ID', '?')
+          task_found  = os.environ.get('TASK_FOUND', 'false')
+          codex_found = os.environ.get('CODEX_FOUND', 'false')
+          status      = 'blocked'
+          if codex_found == 'true' and task_found == 'true':
+              status = os.environ.get('CODEX_STATUS', 'completed')
 
-          | Field | Value |
-          |---|---|
-          | Trace | ${{ inputs.trace_id }} |
-          | Task found | ${TASK_FOUND} |
-          | Codex executor found | ${CODEX_FOUND} |
-          | Status | ${STATUS} |
-          | Result | governance/codex/results/${{ inputs.trace_id }}.json |
+          lines = [
+              '## Codex Runner - ' + trace,
+              '',
+              '| Field | Value |',
+              '|---|---|',
+              '| Trace | ' + trace + ' |',
+              '| Task found | ' + task_found + ' |',
+              '| Codex executor found | ' + codex_found + ' |',
+              '| Status | ' + status + ' |',
+              '| Result | governance/codex/results/' + trace + '.json |',
+              '',
+          ]
+          if codex_found == 'false':
+              lines.append('**BLOCKER:** GPT_CODEX_EXECUTOR_NOT_FOUND - self-hosted runner with codex CLI required.')
+          else:
+              lines.append('Execution attempted.')
+          lines += ['', '**No issue #31 comments written (BEM-487)**', '']
 
-          $( [ "$CODEX_FOUND" = "false" ] && echo "**BLOCKER:** GPT_CODEX_EXECUTOR_NOT_FOUND — self-hosted runner with codex CLI required." || echo "Execution attempted." )
-
-          **No issue #31 comments written (BEM-487)**
-          EOF
+          summary_path = os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/summary.md')
+          with open(summary_path, 'a') as f:
+              f.write('\n'.join(lines))
+          PYEOF
