@@ -1,5 +1,9 @@
 name: Claude Code
 
+# BEM-477: added "Write final result to transport" step
+# Results written to governance/transport/results.jsonl + governance/reports/
+# NO createComment sink (issue #31 is full)
+
 on:
   workflow_dispatch:
     inputs:
@@ -70,12 +74,12 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         shell: bash
         env:
-          INPUT_ROLE: ${{ inputs.role }}
-          INPUT_PROVIDER: ${{ inputs.provider }}
-          INPUT_TRACE_ID: ${{ inputs.trace_id }}
-          INPUT_CYCLE_ID: ${{ inputs.cycle_id }}
+          INPUT_ROLE:      ${{ inputs.role }}
+          INPUT_PROVIDER:  ${{ inputs.provider }}
+          INPUT_TRACE_ID:  ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID:  ${{ inputs.cycle_id }}
           INPUT_TASK_TYPE: ${{ inputs.task_type }}
-          INPUT_TASK: ${{ inputs.task }}
+          INPUT_TASK:      ${{ inputs.task }}
         run: |
           set -euo pipefail
           PROMPT_FILE="$RUNNER_TEMP/claude_role_prompt.txt"
@@ -84,11 +88,11 @@ jobs:
           import os
           from pathlib import Path
 
-          role = os.environ.get('INPUT_ROLE', 'analyst').lower().strip()
-          trace_id = os.environ.get('INPUT_TRACE_ID', '')
-          cycle_id = os.environ.get('INPUT_CYCLE_ID', '')
+          role      = os.environ.get('INPUT_ROLE', 'analyst').lower().strip()
+          trace_id  = os.environ.get('INPUT_TRACE_ID', '')
+          cycle_id  = os.environ.get('INPUT_CYCLE_ID', '')
           task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
-          task = os.environ.get('INPUT_TASK', '')
+          task      = os.environ.get('INPUT_TASK', '')
 
           parts = [
               f'BEM-CLAUDE-ROLE | {role.upper()}',
@@ -119,6 +123,8 @@ jobs:
               '- Do not print tokens or secrets.',
               '- Do not expand scope beyond the task and current roadmap item.',
               '- Keep commits focused and small.',
+              '- Do NOT write comments to issue #31 (it is locked at 2500 comment limit).',
+              '- Write reports ONLY to governance/reports/<trace_id>.md and governance/transport/results.jsonl.',
               '',
               'Read before acting:',
               '- governance/policies/role_sequence.json',
@@ -135,6 +141,9 @@ jobs:
               f'BEM-CLAUDE-ROLE | {role.upper()} | RESULT',
               '',
               'Include checklist, files changed, checks run, commit SHA if committed, and objective blocker only if present.',
+              '',
+              'Write your report to:',
+              f'governance/reports/{trace_id}.md',
           ]
           Path(os.environ['PROMPT_FILE']).write_text('\n'.join(parts), encoding='utf-8')
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
@@ -165,16 +174,127 @@ jobs:
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           claude_args: --max-turns 10
 
+      # BEM-477: write final result to file-based transport
+      - name: Write final result to transport
+        if: always() && github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          ROLE_RAW:       ${{ env.ROLE_RAW }}
+          TRACE_ID:       ${{ env.TRACE_ID }}
+          CYCLE_ID:       ${{ env.CYCLE_ID }}
+          CLAUDE_OUTCOME: ${{ steps.claude_role.outcome }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          now      = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          role     = os.environ.get('ROLE_RAW', 'analyst')
+          trace    = os.environ.get('TRACE_ID', 'unknown')
+          cycle    = os.environ.get('CYCLE_ID') or f'cycle_{trace}'
+          outcome  = os.environ.get('CLAUDE_OUTCOME', 'unknown')
+
+          status  = 'completed' if outcome == 'success' else ('failed' if outcome == 'failure' else outcome)
+          blocker = None if outcome == 'success' else f'claude_role outcome={outcome}'
+
+          # Collect changed files since last commit (best-effort)
+          try:
+              changed = subprocess.check_output(
+                  ['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], text=True
+              ).strip().split('\n')
+              changed = [f for f in changed if f]
+          except Exception:
+              changed = []
+
+          # Collect latest commit SHA
+          try:
+              sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          except Exception:
+              sha = None
+
+          report_path = f'governance/reports/{trace}.md'
+          Path('governance/reports').mkdir(parents=True, exist_ok=True)
+
+          # Write/update report file
+          report_text = f"""# Claude Role Result — {trace}
+
+| Field | Value |
+|---|---|
+| Trace | {trace} |
+| Role | {role} |
+| Provider | claude |
+| Outcome | {outcome} |
+| Status | {status} |
+| Commit SHA | {sha or 'none'} |
+| Completed at | {now} |
+| Changed files | {', '.join(changed) or 'none'} |
+
+{'**Blocker:** ' + blocker if blocker else '**No blocker.**'}
+
+Report written by claude.yml (BEM-477). No issue comments.
+"""
+          Path(report_path).write_text(report_text)
+
+          # Append result to transport
+          result = {
+              'trace_id':     trace,
+              'cycle_id':     cycle,
+              'role':         role,
+              'provider':     'claude',
+              'status':       status,
+              'changed_files': changed,
+              'commit_sha':   sha,
+              'blocker':      blocker,
+              'report_path':  report_path,
+              'completed_at': now
+          }
+          Path('governance/transport').mkdir(parents=True, exist_ok=True)
+          with open('governance/transport/results.jsonl', 'a') as f:
+              f.write(json.dumps(result, ensure_ascii=False) + '\n')
+
+          # Update provider_status
+          ps_path = Path('governance/state/provider_status.json')
+          try:
+              ps = json.loads(ps_path.read_text())
+          except Exception:
+              ps = {}
+          ps['claude'] = {'status': status, 'last_used': now, 'last_trace': trace, 'last_outcome': outcome}
+          ps['updated_at'] = now
+          ps_path.write_text(json.dumps(ps, indent=2) + '\n')
+
+          print(f"Transport result written: status={status} trace={trace} sha={sha}")
+          PYEOF
+
+      - name: Commit transport and report
+        if: always() && github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          git config user.email "claude-role-adapter@ai-devops-system"
+          git config user.name  "Claude Role Adapter"
+          git pull --rebase --autostash origin main || true
+          git add \
+            governance/transport/results.jsonl \
+            governance/state/provider_status.json \
+            governance/reports/ \
+            2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No transport changes"
+          else
+            git commit -m "CLAUDE-ROLE: role=$ROLE_RAW trace=$TRACE_ID outcome=${{ steps.claude_role.outcome }}"
+            git push || (git pull --rebase origin main && git push)
+          fi
+
       - name: Advance role orchestrator
         if: always() && github.event_name == 'workflow_dispatch'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          REPO: ${{ github.repository }}
-          ROLE_RAW: ${{ env.ROLE_RAW }}
-          TRACE_ID: ${{ env.TRACE_ID }}
-          CYCLE_ID: ${{ env.CYCLE_ID }}
-          TASK_TYPE: ${{ env.TASK_TYPE }}
+          GH_TOKEN:       ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO:           ${{ github.repository }}
+          ROLE_RAW:       ${{ env.ROLE_RAW }}
+          TRACE_ID:       ${{ env.TRACE_ID }}
+          CYCLE_ID:       ${{ env.CYCLE_ID }}
+          TASK_TYPE:      ${{ env.TASK_TYPE }}
           CLAUDE_OUTCOME: ${{ steps.claude_role.outcome }}
         run: |
           set -euo pipefail
@@ -190,21 +310,19 @@ jobs:
           fi
           export STATUS NOTE
           python3 - <<'PY'
-          import json
-          import os
-          import urllib.request
+          import json, os, urllib.request
 
           data = json.dumps({
               'ref': 'main',
               'inputs': {
-                  'mode': 'advance',
+                  'mode':      'advance',
                   'task_type': os.environ.get('TASK_TYPE', 'default_development'),
-                  'task': '',
-                  'trace_id': os.environ.get('TRACE_ID', ''),
-                  'cycle_id': os.environ.get('CYCLE_ID', ''),
-                  'role': os.environ.get('ROLE_RAW', '').lower(),
-                  'status': os.environ.get('STATUS', 'ROLE_DONE'),
-                  'note': os.environ.get('NOTE', 'Claude role completed.')
+                  'task':      '',
+                  'trace_id':  os.environ.get('TRACE_ID', ''),
+                  'cycle_id':  os.environ.get('CYCLE_ID', ''),
+                  'role':      os.environ.get('ROLE_RAW', '').lower(),
+                  'status':    os.environ.get('STATUS', 'ROLE_DONE'),
+                  'note':      os.environ.get('NOTE', 'Claude role completed.')
               }
           }).encode('utf-8')
 
@@ -213,12 +331,34 @@ jobs:
               data=data,
               headers={
                   'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
-                  'Accept': 'application/vnd.github+json',
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'ai-devops-claude-role-adapter'
+                  'Accept':        'application/vnd.github+json',
+                  'Content-Type':  'application/json',
+                  'User-Agent':    'ai-devops-claude-role-adapter'
               },
               method='POST'
           )
-          with urllib.request.urlopen(req) as resp:
-              print(resp.status)
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  print(f"orchestrator advance dispatched: HTTP {resp.status}")
+          except Exception as e:
+              print(f"orchestrator advance failed: {e}")
           PY
+
+      # BEM-477: job summary report — NO createComment to issue #31
+      - name: Report to job summary
+        if: always() && github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          OUTCOME="${{ steps.claude_role.outcome }}"
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Claude Role — ${{ inputs.role }} | ${OUTCOME:-unknown}
+
+          | Field | Value |
+          |---|---|
+          | Trace | ${{ inputs.trace_id }} |
+          | Role | ${{ inputs.role }} |
+          | Outcome | ${OUTCOME:-unknown} |
+          | Report | governance/reports/${{ inputs.trace_id }}.md |
+
+          **No issue comments written (BEM-476/477)**
+          EOF
