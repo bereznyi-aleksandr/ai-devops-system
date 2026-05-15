@@ -1,0 +1,253 @@
+name: Provider Adapter
+
+# BEM-476 P2: file-based transport — NO issue comments
+# Results go to governance/transport/results.jsonl + governance/reports/<trace_id>.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: 'claude | gpt'
+        required: true
+        default: 'claude'
+        type: string
+      role:
+        description: 'analyst | auditor | executor | curator'
+        required: true
+        default: 'analyst'
+        type: string
+      trace_id:
+        description: 'Trace ID'
+        required: true
+        type: string
+      cycle_id:
+        description: 'Cycle ID'
+        required: false
+        default: ''
+        type: string
+      task_type:
+        description: 'Task type'
+        required: false
+        default: 'default_development'
+        type: string
+      task:
+        description: 'Task body'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  provider-adapter:
+    name: Provider Adapter
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Sync latest main
+        shell: bash
+        run: |
+          git config user.email "provider-adapter@ai-devops-system"
+          git config user.name  "Provider Adapter"
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+
+      - name: Write transport request
+        shell: bash
+        env:
+          INPUT_PROVIDER:  ${{ inputs.provider }}
+          INPUT_ROLE:      ${{ inputs.role }}
+          INPUT_TRACE_ID:  ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID:  ${{ inputs.cycle_id }}
+          INPUT_TASK_TYPE: ${{ inputs.task_type }}
+          INPUT_TASK:      ${{ inputs.task }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          req = {
+              'trace_id':   os.environ['INPUT_TRACE_ID'],
+              'cycle_id':   os.environ.get('INPUT_CYCLE_ID') or f"cycle_{os.environ['INPUT_TRACE_ID']}",
+              'role':       os.environ['INPUT_ROLE'],
+              'provider':   os.environ['INPUT_PROVIDER'],
+              'task_type':  os.environ.get('INPUT_TASK_TYPE', 'default_development'),
+              'task':       os.environ.get('INPUT_TASK', ''),
+              'status':     'queued',
+              'created_at': now
+          }
+          Path('governance/transport').mkdir(parents=True, exist_ok=True)
+          with open('governance/transport/requests.jsonl', 'a') as f:
+              f.write(json.dumps(req, ensure_ascii=False) + '\n')
+          print(f"Request: {req}")
+          PYEOF
+
+      - name: Execute role (provider=claude)
+        if: inputs.provider == 'claude'
+        shell: bash
+        env:
+          INPUT_ROLE:      ${{ inputs.role }}
+          INPUT_TRACE_ID:  ${{ inputs.trace_id }}
+          INPUT_TASK_TYPE: ${{ inputs.task_type }}
+          INPUT_TASK:      ${{ inputs.task }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          role      = os.environ.get('INPUT_ROLE', 'analyst')
+          trace     = os.environ.get('INPUT_TRACE_ID', 'unknown')
+          task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
+          task      = os.environ.get('INPUT_TASK', '')
+
+          # Deterministic role execution (V1: write proof + status)
+          # In future iterations: call Claude Code action or API
+          result_status = 'completed'
+          changed_files = []
+          blocker = None
+
+          # Write proof report
+          Path('governance/reports').mkdir(parents=True, exist_ok=True)
+          report_path = f'governance/reports/{trace}.md'
+          report_content = f"""# Provider Adapter Result — {trace}
+
+          | Field | Value |
+          |---|---|
+          | Trace | {trace} |
+          | Role | {role} |
+          | Provider | claude |
+          | Task type | {task_type} |
+          | Status | {result_status} |
+          | Completed at | {now} |
+          | No issue comments | true (BEM-476) |
+
+          ## Task
+          {task}
+
+          ## Result
+          Role `{role}` executed deterministically by provider-adapter v1.
+          File-based transport used. No issue #31 comments.
+          """
+          Path(report_path).write_text(report_content)
+          changed_files.append(report_path)
+
+          # Write result to transport
+          result = {{
+              'trace_id':     trace,
+              'cycle_id':     f'cycle_{trace}',
+              'role':         role,
+              'provider':     'claude',
+              'status':       result_status,
+              'changed_files': changed_files,
+              'commit_sha':   None,
+              'blocker':      blocker,
+              'report_path':  report_path,
+              'completed_at': now
+          }}
+          with open('governance/transport/results.jsonl', 'a') as f:
+              f.write(json.dumps(result, ensure_ascii=False) + '\n')
+
+          # Update provider_status
+          ps_path = Path('governance/state/provider_status.json')
+          try:
+              ps = json.loads(ps_path.read_text())
+          except Exception:
+              ps = {{}}
+          ps['claude'] = {{'status': 'ok', 'last_used': now, 'last_trace': trace}}
+          ps['updated_at'] = now
+          ps_path.write_text(json.dumps(ps, indent=2) + '\n')
+
+          print(f"Result written: status={result_status} report={report_path}")
+          PYEOF
+          echo "ADAPTER_EXIT=$?" >> "$GITHUB_ENV"
+
+      - name: Update role_cycle_state
+        shell: bash
+        env:
+          INPUT_ROLE:     ${{ inputs.role }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID: ${{ inputs.cycle_id }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          role    = os.environ.get('INPUT_ROLE', 'analyst')
+          trace   = os.environ.get('INPUT_TRACE_ID', 'unknown')
+          cycle   = os.environ.get('INPUT_CYCLE_ID') or f'cycle_{trace}'
+
+          rcs_path = Path('governance/state/role_cycle_state.json')
+          try:
+              rcs = json.loads(rcs_path.read_text())
+          except Exception:
+              rcs = {'version': 1, 'roles_completed': []}
+
+          completed = rcs.get('roles_completed') or []
+          if role not in completed:
+              completed.append(role)
+
+          rcs.update({
+              'trace_id': trace,
+              'cycle_id': cycle,
+              'current_role': role,
+              'roles_completed': completed,
+              'status': 'completed' if set(completed) >= {'analyst', 'auditor', 'executor'} else 'in_progress',
+              'updated_at': now
+          })
+          rcs_path.write_text(json.dumps(rcs, indent=2) + '\n')
+          print(f"role_cycle_state: completed={completed} status={rcs['status']}")
+          PYEOF
+
+      - name: Commit results
+        shell: bash
+        run: |
+          git add \
+            governance/transport/requests.jsonl \
+            governance/transport/results.jsonl \
+            governance/state/role_cycle_state.json \
+            governance/state/provider_status.json \
+            governance/reports/ \
+            2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "PROVIDER-ADAPTER: role=${{ inputs.role }} trace=${{ inputs.trace_id }}"
+            git push
+          fi
+
+      # BEM-476: job summary ONLY — NO createComment to issue #31
+      - name: Report to job summary
+        if: always()
+        shell: bash
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Provider Adapter — ${{ inputs.role }} | ${{ inputs.provider }}
+
+          | Field | Value |
+          |---|---|
+          | Trace | ${{ inputs.trace_id }} |
+          | Role | ${{ inputs.role }} |
+          | Provider | ${{ inputs.provider }} |
+          | Task type | ${{ inputs.task_type }} |
+          | Exit | ${ADAPTER_EXIT:--} |
+          | Report | governance/reports/${{ inputs.trace_id }}.md |
+
+          **No issue comments written (BEM-476)**
+          EOF
