@@ -1,7 +1,8 @@
 name: Provider Adapter
 
-# BEM-476 P2: file-based transport — NO issue comments
-# Results go to governance/transport/results.jsonl + governance/reports/<trace_id>.md
+# BEM-477: real Claude execution via claude.yml dispatch (Option B)
+# Results written to governance/transport/ + governance/reports/
+# NO issue comments (BEM-476)
 
 on:
   workflow_dispatch:
@@ -45,7 +46,7 @@ jobs:
   provider-adapter:
     name: Provider Adapter
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
 
     steps:
       - name: Checkout
@@ -79,9 +80,12 @@ jobs:
           from pathlib import Path
 
           now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          trace = os.environ['INPUT_TRACE_ID']
+          cycle = os.environ.get('INPUT_CYCLE_ID') or f'cycle_{trace}'
+
           req = {
-              'trace_id':   os.environ['INPUT_TRACE_ID'],
-              'cycle_id':   os.environ.get('INPUT_CYCLE_ID') or f"cycle_{os.environ['INPUT_TRACE_ID']}",
+              'trace_id':   trace,
+              'cycle_id':   cycle,
               'role':       os.environ['INPUT_ROLE'],
               'provider':   os.environ['INPUT_PROVIDER'],
               'task_type':  os.environ.get('INPUT_TASK_TYPE', 'default_development'),
@@ -92,17 +96,49 @@ jobs:
           Path('governance/transport').mkdir(parents=True, exist_ok=True)
           with open('governance/transport/requests.jsonl', 'a') as f:
               f.write(json.dumps(req, ensure_ascii=False) + '\n')
-          print(f"Request: {req}")
+          print(f"Request written: trace={trace} role={req['role']} provider={req['provider']}")
           PYEOF
 
-      - name: Execute role (provider=claude)
+      # BEM-477: dispatch claude.yml for real Claude execution
+      - name: Dispatch claude.yml for real Claude execution
         if: inputs.provider == 'claude'
         shell: bash
         env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPO:     ${{ github.repository }}
+        run: |
+          HTTP=$(curl -s -o /tmp/dispatch_resp.json -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/$REPO/actions/workflows/claude.yml/dispatches" \
+            -d "$(python3 -c "
+          import json, sys
+          print(json.dumps({
+            'ref': 'main',
+            'inputs': {
+              'role':      '${{ inputs.role }}',
+              'provider':  'claude',
+              'trace_id':  '${{ inputs.trace_id }}',
+              'cycle_id':  '${{ inputs.cycle_id }}',
+              'task_type': '${{ inputs.task_type }}',
+              'task':      $(python3 -c \"import json,sys; print(json.dumps('${{ inputs.task }}'))\" 2>/dev/null || echo '\"\"')
+            }
+          }))
+          ")")
+          echo "DISPATCH_HTTP=$HTTP" >> "$GITHUB_ENV"
+          echo "claude.yml dispatch HTTP=$HTTP"
+          cat /tmp/dispatch_resp.json || true
+
+      # Write "dispatched" result immediately; claude.yml will overwrite with real result
+      - name: Write dispatch result to transport
+        shell: bash
+        env:
+          INPUT_PROVIDER:  ${{ inputs.provider }}
           INPUT_ROLE:      ${{ inputs.role }}
           INPUT_TRACE_ID:  ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID:  ${{ inputs.cycle_id }}
           INPUT_TASK_TYPE: ${{ inputs.task_type }}
-          INPUT_TASK:      ${{ inputs.task }}
         run: |
           python3 - <<'PYEOF'
           import json, os
@@ -110,55 +146,51 @@ jobs:
           from pathlib import Path
 
           now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-          role      = os.environ.get('INPUT_ROLE', 'analyst')
-          trace     = os.environ.get('INPUT_TRACE_ID', 'unknown')
-          task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
-          task      = os.environ.get('INPUT_TASK', '')
+          trace    = os.environ['INPUT_TRACE_ID']
+          cycle    = os.environ.get('INPUT_CYCLE_ID') or f'cycle_{trace}'
+          role     = os.environ['INPUT_ROLE']
+          provider = os.environ['INPUT_PROVIDER']
+          dispatch_http = os.environ.get('DISPATCH_HTTP', '?')
 
-          # Deterministic role execution (V1: write proof + status)
-          # In future iterations: call Claude Code action or API
-          result_status = 'completed'
-          changed_files = []
-          blocker = None
+          # Status: dispatched_to_claude if HTTP 204, else failed
+          if dispatch_http == '204':
+              status = 'dispatched_to_claude'
+              blocker = None
+          else:
+              status = 'dispatch_failed'
+              blocker = f'claude.yml dispatch returned HTTP {dispatch_http}'
 
-          # Write proof report
-          Path('governance/reports').mkdir(parents=True, exist_ok=True)
           report_path = f'governance/reports/{trace}.md'
-          report_content = f"""# Provider Adapter Result — {trace}
+          Path('governance/reports').mkdir(parents=True, exist_ok=True)
+          Path(report_path).write_text(f"""# Provider Adapter — {trace}
 
-          | Field | Value |
-          |---|---|
-          | Trace | {trace} |
-          | Role | {role} |
-          | Provider | claude |
-          | Task type | {task_type} |
-          | Status | {result_status} |
-          | Completed at | {now} |
-          | No issue comments | true (BEM-476) |
+| Field | Value |
+|---|---|
+| Trace | {trace} |
+| Role | {role} |
+| Provider | {provider} |
+| Dispatch status | {status} |
+| Dispatch HTTP | {dispatch_http} |
+| Updated at | {now} |
 
-          ## Task
-          {task}
+Status: **{status}**
+{'Blocker: ' + blocker if blocker else 'No blocker at dispatch stage. claude.yml running asynchronously.'}
 
-          ## Result
-          Role `{role}` executed deterministically by provider-adapter v1.
-          File-based transport used. No issue #31 comments.
-          """
-          Path(report_path).write_text(report_content)
-          changed_files.append(report_path)
+Real result will be appended to `governance/transport/results.jsonl` by claude.yml after execution.
+""")
 
-          # Write result to transport
-          result = {{
-              'trace_id':     trace,
-              'cycle_id':     f'cycle_{trace}',
-              'role':         role,
-              'provider':     'claude',
-              'status':       result_status,
-              'changed_files': changed_files,
-              'commit_sha':   None,
-              'blocker':      blocker,
-              'report_path':  report_path,
+          result = {
+              'trace_id':    trace,
+              'cycle_id':    cycle,
+              'role':        role,
+              'provider':    provider,
+              'status':      status,
+              'changed_files': [],
+              'commit_sha':  None,
+              'blocker':     blocker,
+              'report_path': report_path,
               'completed_at': now
-          }}
+          }
           with open('governance/transport/results.jsonl', 'a') as f:
               f.write(json.dumps(result, ensure_ascii=False) + '\n')
 
@@ -167,14 +199,13 @@ jobs:
           try:
               ps = json.loads(ps_path.read_text())
           except Exception:
-              ps = {{}}
-          ps['claude'] = {{'status': 'ok', 'last_used': now, 'last_trace': trace}}
+              ps = {}
+          ps[provider] = {'status': 'dispatched', 'last_used': now, 'last_trace': trace}
           ps['updated_at'] = now
           ps_path.write_text(json.dumps(ps, indent=2) + '\n')
 
-          print(f"Result written: status={result_status} report={report_path}")
+          print(f"Dispatch result written: status={status} report={report_path}")
           PYEOF
-          echo "ADAPTER_EXIT=$?" >> "$GITHUB_ENV"
 
       - name: Update role_cycle_state
         shell: bash
@@ -188,10 +219,10 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-          role    = os.environ.get('INPUT_ROLE', 'analyst')
-          trace   = os.environ.get('INPUT_TRACE_ID', 'unknown')
-          cycle   = os.environ.get('INPUT_CYCLE_ID') or f'cycle_{trace}'
+          now   = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          role  = os.environ.get('INPUT_ROLE', 'analyst')
+          trace = os.environ.get('INPUT_TRACE_ID', 'unknown')
+          cycle = os.environ.get('INPUT_CYCLE_ID') or f'cycle_{trace}'
 
           rcs_path = Path('governance/state/role_cycle_state.json')
           try:
@@ -204,18 +235,18 @@ jobs:
               completed.append(role)
 
           rcs.update({
-              'trace_id': trace,
-              'cycle_id': cycle,
-              'current_role': role,
+              'trace_id':        trace,
+              'cycle_id':        cycle,
+              'current_role':    role,
               'roles_completed': completed,
-              'status': 'completed' if set(completed) >= {'analyst', 'auditor', 'executor'} else 'in_progress',
-              'updated_at': now
+              'status':          'in_progress',
+              'updated_at':      now
           })
           rcs_path.write_text(json.dumps(rcs, indent=2) + '\n')
-          print(f"role_cycle_state: completed={completed} status={rcs['status']}")
+          print(f"role_cycle_state updated: role={role} completed={completed}")
           PYEOF
 
-      - name: Commit results
+      - name: Commit state
         shell: bash
         run: |
           git add \
@@ -228,7 +259,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes"
           else
-            git commit -m "PROVIDER-ADAPTER: role=${{ inputs.role }} trace=${{ inputs.trace_id }}"
+            git commit -m "PROVIDER-ADAPTER: role=${{ inputs.role }} trace=${{ inputs.trace_id }} dispatch_http=$DISPATCH_HTTP"
             git push
           fi
 
@@ -246,8 +277,8 @@ jobs:
           | Role | ${{ inputs.role }} |
           | Provider | ${{ inputs.provider }} |
           | Task type | ${{ inputs.task_type }} |
-          | Exit | ${ADAPTER_EXIT:--} |
+          | claude.yml dispatch HTTP | ${DISPATCH_HTTP:--} |
           | Report | governance/reports/${{ inputs.trace_id }}.md |
 
-          **No issue comments written (BEM-476)**
+          **No issue comments written (BEM-476/477)**
           EOF
