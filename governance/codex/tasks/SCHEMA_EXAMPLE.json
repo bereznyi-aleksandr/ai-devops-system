@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "EXAMPLE_TRACE",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "selftest",
+  "title": "Example task title",
+  "objective": "Describe what needs to be done",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md":   "governance/codex/results/EXAMPLE_TRACE.md",
+    "result_json": "governance/codex/results/EXAMPLE_TRACE.json"
+  },
+  "created_at": "2026-01-01T00:00:00Z"
+}
