@@ -17,4 +17,6 @@ jobs:
     name: Disabled by BEM-473
     runs-on: ubuntu-latest
     steps:
-      - run: echo 'BEM-473: Autonomous Task Engine is temporarily disabled to stop failure storm.'
+      - name: Print disabled message
+        run: |
+          echo "BEM-473: Autonomous Task Engine is temporarily disabled to stop failure storm."
