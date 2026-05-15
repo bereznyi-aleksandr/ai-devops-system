@@ -1,8 +1,9 @@
 name: GPT Dev Entrypoint (issue_comment)
 
-# Поддерживает два формата команд (BEM-406):
-#   Legacy/operator:  @gpt-dev run preset=X trace_id=Y
-#   ChatGPT-safe:     GPT_DEV_RUN preset=X trace_id=Y
+# BEM-476: report step replaced — NO createComment to issue #31
+# Supports two command formats:
+#   Legacy/operator: @gpt-dev run preset=X trace_id=Y
+#   ChatGPT-safe:    GPT_DEV_RUN preset=X trace_id=Y
 
 on:
   issue_comment:
@@ -127,7 +128,6 @@ jobs:
             git push || (git pull --rebase origin main && git push)
           fi
 
-      # BEM-464: workflow_dispatch (не repository_dispatch) для первого step
       - name: Dispatch first step via workflow_dispatch
         if: env.VALID == 'true' && env.INIT_EXIT == '0'
         shell: bash
@@ -142,68 +142,42 @@ jobs:
             "https://api.github.com/repos/$REPO/actions/workflows/gpt-dev-runner.yml/dispatches" \
             -d "{\"ref\":\"main\",\"inputs\":{\"mode\":\"step\",\"trace_id\":\"$ENTRYPOINT_TRACE\"}}")
           echo "DISPATCH_HTTP=$HTTP" >> "$GITHUB_ENV"
-          if [ "$HTTP" = "204" ]; then
-            echo "First step workflow_dispatch OK"
-          else
-            echo "First step dispatch HTTP=$HTTP"
+          echo "First step workflow_dispatch HTTP=$HTTP"
+
+      # BEM-476: job summary ONLY — NO createComment to issue #31
+      - name: Report to job summary
+        if: always()
+        shell: bash
+        run: |
+          VALID="${VALID:-false}"
+          PARSE_ERR="${PARSE_ERROR:-}"
+          PRESET="${ENTRYPOINT_PRESET:-unknown}"
+          TRACE="${ENTRYPOINT_TRACE:-unknown}"
+          FMT="${ENTRYPOINT_FORMAT:-unknown}"
+          INIT_EXIT="${INIT_EXIT:--}"
+          DISP_HTTP="${DISPATCH_HTTP:--}"
+
+          STATUS="LAUNCHED"
+          NEXT="step 1 dispatched ($DISP_HTTP)"
+          if [ "$VALID" != "true" ]; then
+            STATUS="BLOCKED"
+            NEXT="blocker: ${PARSE_ERR:-validation_failed}"
+          elif [ "$INIT_EXIT" != "0" ]; then
+            STATUS="BLOCKED"
+            NEXT="init_failed (exit=$INIT_EXIT)"
           fi
 
-      - name: Post BEM report to issue #31
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          script: |
-            const valid    = process.env.VALID;
-            const parseErr = process.env.PARSE_ERROR  || '';
-            const preset   = process.env.ENTRYPOINT_PRESET  || 'unknown';
-            const trace    = process.env.ENTRYPOINT_TRACE   || 'unknown';
-            const fmt      = process.env.ENTRYPOINT_FORMAT  || 'unknown';
-            const initExit = process.env.INIT_EXIT;
-            const dispHttp = process.env.DISPATCH_HTTP || '—';
-            const permBlk  = process.env.PERM_BLOCKED  || 'false';
-            const now      = new Date().toISOString().slice(0,10);
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## GPT Dev Entrypoint — $STATUS
 
-            let status, nextAction;
-            if (valid !== 'true') {
-              status     = 'BLOCKED';
-              nextAction = `blocker: ${parseErr || 'validation_failed'}`;
-            } else if (initExit !== '0') {
-              status     = 'BLOCKED';
-              nextAction = `init_failed (exit=${initExit})`;
-            } else {
-              status     = 'LAUNCHED';
-              nextAction = `step 1 workflow_dispatch (HTTP ${dispHttp})`;
-            }
+          | Field | Value |
+          |---|---|
+          | Format | $FMT |
+          | Preset | $PRESET |
+          | Trace | $TRACE |
+          | Init exit | $INIT_EXIT |
+          | Dispatch HTTP | $DISP_HTTP |
+          | Next | $NEXT |
 
-            const pct = status === 'LAUNCHED' ? '10%' : '0%';
-
-            const body = [
-              `BEM-464 | GPT DEV ENTRYPOINT | ${now} | ${pct}`,
-              '',
-              '**Чек-лист:**',
-              valid === 'true' ? `✅ Команда распознана (format: ${fmt})` : `❌ Команда не распознана: ${parseErr}`,
-              (valid === 'true' && permBlk !== 'true') ? '✅ Permissions OK' : '❌ Permissions BLOCKED',
-              initExit === '0' ? '✅ Init выполнен' : '⚠️ Init не выполнен',
-              initExit === '0' ? `✅ First step workflow_dispatch (HTTP ${dispHttp})` : '❌ First step не запущен',
-              '',
-              '| Тип | Содержание | Статус |',
-              '|---|---|---|',
-              `| Факт | format | ${fmt} |`,
-              `| Факт | preset | ${preset} |`,
-              `| Факт | trace_id | ${trace} |`,
-              `| Факт | init exit | ${initExit ?? '—'} |`,
-              `| Следующее действие | ${nextAction} | NEXT |`,
-              '',
-              '```',
-              `STATUS: ${status}`,
-              `NEXT: ${nextAction}`,
-              '```',
-            ].join('\n');
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo:  context.repo.repo,
-              issue_number: 31,
-              body,
-            });
+          **No issue comments written (BEM-476)**
+          EOF
