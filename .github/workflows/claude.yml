@@ -1,8 +1,8 @@
 name: Claude Code
 
-# BEM-477: added "Write final result to transport" step
-# Results written to governance/transport/results.jsonl + governance/reports/
-# NO createComment sink (issue #31 is full)
+# BEM-477: added transport result write + file report
+# BEM-488: YAML-safe rewrite — no f-string multiline, Python-based summary
+# NO createComment to issue #31 (locked at 2500 comments)
 
 on:
   workflow_dispatch:
@@ -95,14 +95,14 @@ jobs:
           task      = os.environ.get('INPUT_TASK', '')
 
           parts = [
-              f'BEM-CLAUDE-ROLE | {role.upper()}',
+              'BEM-CLAUDE-ROLE | ' + role.upper(),
               '',
               'You are running inside the repo-side Cloud/Claude Code role adapter for ai-devops-system.',
-              f'ROLE: {role}',
+              'ROLE: ' + role,
               'PROVIDER: claude',
-              f'TRACE_ID: {trace_id}',
-              f'CYCLE_ID: {cycle_id}',
-              f'TASK_TYPE: {task_type}',
+              'TRACE_ID: ' + trace_id,
+              'CYCLE_ID: ' + cycle_id,
+              'TASK_TYPE: ' + task_type,
               '',
               'Architecture:',
               '- Curator is the external entrypoint and classifier.',
@@ -113,18 +113,18 @@ jobs:
               '- Curator summary closes the cycle.',
               '',
               'Role rules:',
-              '- analyst: analyse and plan. Do not commit unless explicitly instructed by the roadmap item.',
-              '- auditor: inspect plan/diff/state/logs. Do not commit unless explicitly acting as repair auditor.',
-              '- executor: implement approved scope, run checks, commit, and report commit SHA.',
+              '- analyst: analyse and plan. Do not commit unless explicitly instructed.',
+              '- auditor: inspect plan/diff/state/logs. Do not commit unless repair auditor.',
+              '- executor: implement approved scope, run checks, commit, report commit SHA.',
               '- curator: update curator/routing state only when explicitly requested.',
               '',
               'Safety boundaries:',
-              '- Do not edit secrets, billing, repository permissions, production deploy credentials, or archive artifacts.',
+              '- Do not edit secrets, billing, repository permissions, production deploy credentials.',
               '- Do not print tokens or secrets.',
               '- Do not expand scope beyond the task and current roadmap item.',
               '- Keep commits focused and small.',
-              '- Do NOT write comments to issue #31 (it is locked at 2500 comment limit).',
-              '- Write reports ONLY to governance/reports/<trace_id>.md and governance/transport/results.jsonl.',
+              '- Do NOT write comments to issue #31 (locked at 2500 comment limit).',
+              '- Write reports ONLY to governance/reports/' + trace_id + '.md and governance/transport/results.jsonl.',
               '',
               'Read before acting:',
               '- governance/policies/role_sequence.json',
@@ -138,20 +138,20 @@ jobs:
               '-----',
               '',
               'Required output:',
-              f'BEM-CLAUDE-ROLE | {role.upper()} | RESULT',
+              'BEM-CLAUDE-ROLE | ' + role.upper() + ' | RESULT',
               '',
-              'Include checklist, files changed, checks run, commit SHA if committed, and objective blocker only if present.',
+              'Include checklist, files changed, checks run, commit SHA if committed, blocker only if present.',
               '',
               'Write your report to:',
-              f'governance/reports/{trace_id}.md',
+              'governance/reports/' + trace_id + '.md',
           ]
           Path(os.environ['PROMPT_FILE']).write_text('\n'.join(parts), encoding='utf-8')
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
-              f.write(f'PROMPT_FILE={os.environ["PROMPT_FILE"]}\n')
-              f.write(f'ROLE_RAW={role}\n')
-              f.write(f'TRACE_ID={trace_id}\n')
-              f.write(f'CYCLE_ID={cycle_id}\n')
-              f.write(f'TASK_TYPE={task_type}\n')
+              f.write('PROMPT_FILE=' + os.environ['PROMPT_FILE'] + '\n')
+              f.write('ROLE_RAW=' + role + '\n')
+              f.write('TRACE_ID=' + trace_id + '\n')
+              f.write('CYCLE_ID=' + cycle_id + '\n')
+              f.write('TASK_TYPE=' + task_type + '\n')
           PY
 
       - name: Run Claude Code role
@@ -174,7 +174,7 @@ jobs:
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           claude_args: --max-turns 10
 
-      # BEM-477: write final result to file-based transport
+      # BEM-488: YAML-safe — Python lines join instead of f-string multiline
       - name: Write final result to transport
         if: always() && github.event_name == 'workflow_dispatch'
         shell: bash
@@ -189,54 +189,55 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          now      = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-          role     = os.environ.get('ROLE_RAW', 'analyst')
-          trace    = os.environ.get('TRACE_ID', 'unknown')
-          cycle    = os.environ.get('CYCLE_ID') or f'cycle_{trace}'
-          outcome  = os.environ.get('CLAUDE_OUTCOME', 'unknown')
+          now     = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          role    = os.environ.get('ROLE_RAW', 'analyst')
+          trace   = os.environ.get('TRACE_ID', 'unknown')
+          cycle   = os.environ.get('CYCLE_ID') or ('cycle_' + trace)
+          outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')
 
           status  = 'completed' if outcome == 'success' else ('failed' if outcome == 'failure' else outcome)
-          blocker = None if outcome == 'success' else f'claude_role outcome={outcome}'
+          blocker = None if outcome == 'success' else ('claude_role outcome=' + outcome)
 
-          # Collect changed files since last commit (best-effort)
+          changed = []
           try:
               changed = subprocess.check_output(
                   ['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], text=True
               ).strip().split('\n')
               changed = [f for f in changed if f]
           except Exception:
-              changed = []
+              pass
 
-          # Collect latest commit SHA
+          sha = None
           try:
               sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
           except Exception:
-              sha = None
+              pass
 
-          report_path = f'governance/reports/{trace}.md'
+          report_path = 'governance/reports/' + trace + '.md'
           Path('governance/reports').mkdir(parents=True, exist_ok=True)
 
-          # Write/update report file
-          report_text = f"""# Claude Role Result — {trace}
+          # BEM-488: safe lines join instead of f-string multiline
+          lines = [
+              '# Claude Role Result - ' + trace,
+              '',
+              '| Field | Value |',
+              '|---|---|',
+              '| Trace | ' + trace + ' |',
+              '| Role | ' + role + ' |',
+              '| Provider | claude |',
+              '| Outcome | ' + outcome + ' |',
+              '| Status | ' + status + ' |',
+              '| Commit SHA | ' + (sha or 'none') + ' |',
+              '| Completed at | ' + now + ' |',
+              '| Changed files | ' + (', '.join(changed) or 'none') + ' |',
+              '',
+              ('**Blocker:** ' + blocker) if blocker else '**No blocker.**',
+              '',
+              'Report written by claude.yml (BEM-477/488). No issue comments.',
+          ]
+          Path(report_path).write_text('\n'.join(lines) + '\n')
 
-| Field | Value |
-|---|---|
-| Trace | {trace} |
-| Role | {role} |
-| Provider | claude |
-| Outcome | {outcome} |
-| Status | {status} |
-| Commit SHA | {sha or 'none'} |
-| Completed at | {now} |
-| Changed files | {', '.join(changed) or 'none'} |
-
-{'**Blocker:** ' + blocker if blocker else '**No blocker.**'}
-
-Report written by claude.yml (BEM-477). No issue comments.
-"""
-          Path(report_path).write_text(report_text)
-
-          # Append result to transport
+          Path('governance/transport').mkdir(parents=True, exist_ok=True)
           result = {
               'trace_id':     trace,
               'cycle_id':     cycle,
@@ -249,11 +250,9 @@ Report written by claude.yml (BEM-477). No issue comments.
               'report_path':  report_path,
               'completed_at': now
           }
-          Path('governance/transport').mkdir(parents=True, exist_ok=True)
           with open('governance/transport/results.jsonl', 'a') as f:
               f.write(json.dumps(result, ensure_ascii=False) + '\n')
 
-          # Update provider_status
           ps_path = Path('governance/state/provider_status.json')
           try:
               ps = json.loads(ps_path.read_text())
@@ -263,7 +262,7 @@ Report written by claude.yml (BEM-477). No issue comments.
           ps['updated_at'] = now
           ps_path.write_text(json.dumps(ps, indent=2) + '\n')
 
-          print(f"Transport result written: status={status} trace={trace} sha={sha}")
+          print('Transport result written: status=' + status + ' trace=' + trace)
           PYEOF
 
       - name: Commit transport and report
@@ -281,7 +280,7 @@ Report written by claude.yml (BEM-477). No issue comments.
           if git diff --cached --quiet; then
             echo "No transport changes"
           else
-            git commit -m "CLAUDE-ROLE: role=$ROLE_RAW trace=$TRACE_ID outcome=${{ steps.claude_role.outcome }}"
+            git commit -m "CLAUDE-ROLE: role=$ROLE_RAW trace=$TRACE_ID"
             git push || (git pull --rebase origin main && git push)
           fi
 
@@ -306,7 +305,7 @@ Report written by claude.yml (BEM-477). No issue comments.
           NOTE="Claude role completed."
           if [ "${CLAUDE_OUTCOME:-success}" != "success" ]; then
             STATUS="BLOCKED"
-            NOTE="Claude role failed or was cancelled; outcome=${CLAUDE_OUTCOME:-unknown}"
+            NOTE="Claude role failed; outcome=${CLAUDE_OUTCOME:-unknown}"
           fi
           export STATUS NOTE
           python3 - <<'PY'
@@ -327,10 +326,10 @@ Report written by claude.yml (BEM-477). No issue comments.
           }).encode('utf-8')
 
           req = urllib.request.Request(
-              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/role-orchestrator.yml/dispatches",
+              'https://api.github.com/repos/' + os.environ['REPO'] + '/actions/workflows/role-orchestrator.yml/dispatches',
               data=data,
               headers={
-                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
+                  'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
                   'Accept':        'application/vnd.github+json',
                   'Content-Type':  'application/json',
                   'User-Agent':    'ai-devops-claude-role-adapter'
@@ -339,26 +338,42 @@ Report written by claude.yml (BEM-477). No issue comments.
           )
           try:
               with urllib.request.urlopen(req) as resp:
-                  print(f"orchestrator advance dispatched: HTTP {resp.status}")
+                  print('orchestrator advance dispatched: HTTP ' + str(resp.status))
           except Exception as e:
-              print(f"orchestrator advance failed: {e}")
+              print('orchestrator advance failed: ' + str(e))
           PY
 
-      # BEM-477: job summary report — NO createComment to issue #31
+      # BEM-488: Python-based summary — no heredoc, no f-string
       - name: Report to job summary
         if: always() && github.event_name == 'workflow_dispatch'
         shell: bash
+        env:
+          INPUT_ROLE:     ${{ inputs.role }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          CLAUDE_OUTCOME: ${{ steps.claude_role.outcome }}
         run: |
-          OUTCOME="${{ steps.claude_role.outcome }}"
-          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
-          ## Claude Role — ${{ inputs.role }} | ${OUTCOME:-unknown}
+          python3 - <<'PYEOF'
+          import os
 
-          | Field | Value |
-          |---|---|
-          | Trace | ${{ inputs.trace_id }} |
-          | Role | ${{ inputs.role }} |
-          | Outcome | ${OUTCOME:-unknown} |
-          | Report | governance/reports/${{ inputs.trace_id }}.md |
+          role    = os.environ.get('INPUT_ROLE', '?')
+          trace   = os.environ.get('INPUT_TRACE_ID', '?')
+          outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')
 
-          **No issue comments written (BEM-476/477)**
-          EOF
+          lines = [
+              '## Claude Role - ' + role + ' | ' + outcome,
+              '',
+              '| Field | Value |',
+              '|---|---|',
+              '| Trace | ' + trace + ' |',
+              '| Role | ' + role + ' |',
+              '| Outcome | ' + outcome + ' |',
+              '| Report | governance/reports/' + trace + '.md |',
+              '',
+              '**No issue comments written (BEM-476/477/488)**',
+              '',
+          ]
+
+          summary_path = os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/summary.md')
+          with open(summary_path, 'a') as f:
+              f.write('\n'.join(lines))
+          PYEOF
