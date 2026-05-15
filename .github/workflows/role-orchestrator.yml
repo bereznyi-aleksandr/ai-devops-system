@@ -1,5 +1,8 @@
 name: Role Orchestrator
 
+# BEM-476: removed schedule, issue_comment triggers — workflow_dispatch ONLY
+# BEM-476: removed createComment to issue #31 — reports go to job summary + file
+
 on:
   workflow_dispatch:
     inputs:
@@ -43,10 +46,6 @@ on:
         required: false
         default: ''
         type: string
-  issue_comment:
-    types: [created]
-  schedule:
-    - cron: '*/15 * * * *'
 
 permissions:
   contents: write
@@ -56,9 +55,6 @@ permissions:
 jobs:
   orchestrate:
     name: Role Orchestrator
-    if: >
-      github.event_name != 'issue_comment' ||
-      (github.event.issue.number == 31 && contains(github.event.comment.body, 'TYPE: ROLE_ORCHESTRATOR_WATCHDOG'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -67,31 +63,37 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Sync latest main
+        shell: bash
+        run: |
+          git config user.email "role-orchestrator@ai-devops-system"
+          git config user.name  "Role Orchestrator"
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
 
       - name: Run role orchestrator
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF_NAME: main
-          MAIN_ISSUE: '31'
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_MODE: ${{ inputs.mode }}
-          INPUT_TASK_TYPE: ${{ inputs.task_type }}
-          INPUT_TASK: ${{ inputs.task }}
-          INPUT_TRACE_ID: ${{ inputs.trace_id }}
-          INPUT_CYCLE_ID: ${{ inputs.cycle_id }}
-          INPUT_ROLE: ${{ inputs.role }}
-          INPUT_STATUS: ${{ inputs.status }}
-          INPUT_NOTE: ${{ inputs.note }}
+          GH_TOKEN:             ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GITHUB_REPOSITORY:    ${{ github.repository }}
+          GITHUB_REF_NAME:      main
+          MAIN_ISSUE:           '31'
+          EVENT_NAME:           ${{ github.event_name }}
+          INPUT_MODE:           ${{ inputs.mode }}
+          INPUT_TASK_TYPE:      ${{ inputs.task_type }}
+          INPUT_TASK:           ${{ inputs.task }}
+          INPUT_TRACE_ID:       ${{ inputs.trace_id }}
+          INPUT_CYCLE_ID:       ${{ inputs.cycle_id }}
+          INPUT_ROLE:           ${{ inputs.role }}
+          INPUT_STATUS:         ${{ inputs.status }}
+          INPUT_NOTE:           ${{ inputs.note }}
         run: |
           set +e
-          MODE="${INPUT_MODE:-watchdog}"
-          if [ "${EVENT_NAME:-}" = "issue_comment" ]; then
-            MODE="watchdog"
-          fi
+          MODE="${INPUT_MODE:-start}"
           TASK_TYPE="${INPUT_TASK_TYPE:-default_development}"
           TASK="${INPUT_TASK:-}"
           TRACE_ID="${INPUT_TRACE_ID:-}"
@@ -101,65 +103,85 @@ jobs:
           NOTE="${INPUT_NOTE:-}"
 
           python3 scripts/role_orchestrator.py \
-            --mode "$MODE" \
+            --mode      "$MODE"      \
             --task-type "$TASK_TYPE" \
-            --task "$TASK" \
-            --trace-id "$TRACE_ID" \
-            --cycle-id "$CYCLE_ID" \
-            --role "$ROLE" \
-            --status "$STATUS" \
-            --note "$NOTE"
+            --task      "$TASK"      \
+            --trace-id  "$TRACE_ID"  \
+            --cycle-id  "$CYCLE_ID"  \
+            --role      "$ROLE"      \
+            --status    "$STATUS"    \
+            --note      "$NOTE"
           echo "ORCHESTRATOR_EXIT=$?" >> "$GITHUB_ENV"
-          echo "ORCHESTRATOR_MODE=$MODE" >> "$GITHUB_ENV"
+          echo "ORCHESTRATOR_MODE=$MODE"      >> "$GITHUB_ENV"
+          echo "ORCHESTRATOR_TRACE=$TRACE_ID" >> "$GITHUB_ENV"
           exit 0
 
-      - name: Commit role orchestration state
+      - name: Write transport request (file-based, BEM-476)
+        if: inputs.mode == 'start'
+        shell: bash
+        env:
+          INPUT_TASK_TYPE: ${{ inputs.task_type }}
+          INPUT_TASK:      ${{ inputs.task }}
+          INPUT_TRACE_ID:  ${{ inputs.trace_id }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          trace = os.environ.get('INPUT_TRACE_ID') or f"trace_{now.replace(':','').replace('-','')}"
+          task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
+          task = os.environ.get('INPUT_TASK', '')
+
+          req = {
+              'trace_id':   trace,
+              'cycle_id':   f"cycle_{trace}",
+              'role':       'analyst',
+              'provider':   'claude',
+              'task_type':  task_type,
+              'task':       task,
+              'status':     'queued',
+              'created_at': now
+          }
+
+          Path('governance/transport').mkdir(parents=True, exist_ok=True)
+          with open('governance/transport/requests.jsonl', 'a') as f:
+              f.write(json.dumps(req, ensure_ascii=False) + '\n')
+          print(f"Request written: trace={trace}")
+          PYEOF
+
+      - name: Commit state
         shell: bash
         run: |
-          set -e
-          git config user.email "role-orchestrator@ai-devops-system"
-          git config user.name "Role Orchestrator"
-
-          git pull --rebase --autostash origin main
-
-          git add governance/state/role_cycle_state.json governance/state/provider_status.json governance/events/role_orchestrator.jsonl governance/events/provider_adapter.jsonl || true
+          git add \
+            governance/state/role_cycle_state.json \
+            governance/state/provider_status.json \
+            governance/events/role_orchestrator.jsonl \
+            governance/events/provider_adapter.jsonl \
+            governance/transport/requests.jsonl \
+            2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "No role orchestrator state changes"
-            exit 0
+            echo "No state changes"
+          else
+            git commit -m "ROLE-ORCHESTRATOR: mode=$ORCHESTRATOR_MODE trace=$ORCHESTRATOR_TRACE"
+            git push
           fi
 
-          git commit -m "ROLE ORCHESTRATOR: state update"
-
-          for i in 1 2 3; do
-            git pull --rebase --autostash origin main && git push && exit 0
-            echo "Push attempt $i failed; retrying after rebase"
-            sleep $((i * 2))
-          done
-
-          echo "Failed to push role orchestrator state after retries"
-          exit 1
-
-      - name: Post role orchestrator report
+      # BEM-476: report to job summary only — NO createComment to issue #31
+      - name: Report to job summary
         if: always()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          script: |
-            const body = [
-              'BEM-ROLE-ORCHESTRATOR | RUN RESULT',
-              '',
-              `Mode: ${process.env.ORCHESTRATOR_MODE || '${{ inputs.mode }}' || 'watchdog'}`,
-              `Exit: ${process.env.ORCHESTRATOR_EXIT || 'unknown'}`,
-              '',
-              'Checklist:',
-              '- role orchestrator workflow executed',
-              '- state/event log commit attempted',
-              '- internal transport uses workflow_dispatch, not issue_comment chaining',
-              '- watchdog marks stale runner-backed dispatch as blocked'
-            ].join('\n');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: 31,
-              body
-            });
+        shell: bash
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Role Orchestrator — $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          | Field | Value |
+          |---|---|
+          | Mode | $ORCHESTRATOR_MODE |
+          | Exit | $ORCHESTRATOR_EXIT |
+          | Trace | $ORCHESTRATOR_TRACE |
+          | Transport | file-based (governance/transport/) |
+
+          **No issue comments written (BEM-476)**
+          EOF
