@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem522_workflow_diag",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "Diagnose codex-runner workflow state",
+  "objective": "Inspect .github/workflows/codex-runner.yml and create governance/codex/proofs/bem522_workflow_diag.txt with: current runs-on value, whether OPENAI_API_KEY is passed to Execute task, whether codex exec is used, whether Python executor remains, and whether workflow_dispatch is the only trigger. Commit the proof file. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem522_workflow_diag.md",
+    "result_json": "governance/codex/results/bem522_workflow_diag.json"
+  },
+  "created_at": "2026-05-16T19:08:27.929Z"
+}
