@@ -1,0 +1,5 @@
+Codex Runner executed
+trace_id: bem522_fix_runner
+task_type: code_patch
+executed_at: 2026-05-16T19:04:02Z
+objective: Update .github/workflows/codex-runner.yml. Keep workflow_dispatch only. Keep runs-on [self-hosted, codex-local]. Add OPENAI_API_KEY env from secrets to Execute task step. Replace Python executor with codex exec "$TASK_OBJECTIVE". Preserve reading governance/codex/tasks/<trace_id>.json into TASK_OBJECTIVE and TRACE_ID. Preserve committing changes, pushing, and writing governance/codex/results/<trace_id>.json. No issue comments.
