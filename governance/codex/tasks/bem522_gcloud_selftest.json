@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem522_gcloud_selftest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "selftest",
+  "title": "Google Cloud Codex CLI self-test",
+  "objective": "Create file governance/codex/proofs/bem522_gcloud_selftest.txt with content 'Google Cloud VM + Codex CLI + GitHub Runner test 2026-05-16'. Commit it. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem522_gcloud_selftest.md",
+    "result_json": "governance/codex/results/bem522_gcloud_selftest.json"
+  },
+  "created_at": "2026-05-16T19:05:59.619Z"
+}
