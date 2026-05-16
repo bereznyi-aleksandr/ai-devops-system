@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem522_fix_runner",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Update codex-runner for Codex CLI",
+  "objective": "Update .github/workflows/codex-runner.yml. Keep workflow_dispatch only. Keep runs-on [self-hosted, codex-local]. Add OPENAI_API_KEY env from secrets to Execute task step. Replace Python executor with codex exec \"$TASK_OBJECTIVE\". Preserve reading governance/codex/tasks/<trace_id>.json into TASK_OBJECTIVE and TRACE_ID. Preserve committing changes, pushing, and writing governance/codex/results/<trace_id>.json. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem522_fix_runner.md",
+    "result_json": "governance/codex/results/bem522_fix_runner.json"
+  },
+  "created_at": "2026-05-16T19:03:54.291Z"
+}
