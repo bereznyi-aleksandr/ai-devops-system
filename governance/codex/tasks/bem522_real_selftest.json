@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem522_real_selftest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "selftest",
+  "title": "Real Codex CLI self-test on Google Cloud VM",
+  "objective": "Create file governance/codex/proofs/bem522_real_selftest.txt with content 'Codex CLI real execution on Google Cloud VM. 2026-05-16'. Commit it. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem522_real_selftest.md",
+    "result_json": "governance/codex/results/bem522_real_selftest.json"
+  },
+  "created_at": "2026-05-16T19:21:17.692Z"
+}
