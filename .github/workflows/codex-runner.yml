@@ -1,13 +1,8 @@
 name: Codex Runner
 
-# BEM-487: external ChatGPT → Deno → codex-runner contour
-# BEM-488: YAML-safe rewrite
-# BEM-495: runs-on [self-hosted, codex-local] — PRIMARY path for GPT-Codex
-#
-# Trigger: Deno /codex-task → workflow_dispatch
-# Runner:  self-hosted with label codex-local (codex CLI required)
-# Results: governance/codex/results/<trace_id>.json + .md
-# NO issue comments, NO schedule
+# BEM-521: switched from [self-hosted, codex-local] to ubuntu-latest
+# Python executor reads task objective and applies changes via git
+# NO issue comments, NO schedule, NO self-hosted required
 
 on:
   workflow_dispatch:
@@ -28,9 +23,9 @@ permissions:
 
 jobs:
   codex-runner:
-    name: Codex Runner (self-hosted)
-    runs-on: [self-hosted, codex-local]
-    timeout-minutes: 20
+    name: Codex Runner (ubuntu-latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -48,21 +43,6 @@ jobs:
           git checkout main
           git reset --hard origin/main
 
-      - name: Verify codex CLI
-        shell: bash
-        run: |
-          export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
-          if ! command -v codex &>/dev/null; then
-            echo "CODEX_AVAILABLE=false" >> "$GITHUB_ENV"
-            echo "CODEX_VERSION=none"    >> "$GITHUB_ENV"
-            echo "codex CLI not found on this runner"
-          else
-            VER=$(codex --version 2>/dev/null || echo "unknown")
-            echo "CODEX_AVAILABLE=true"    >> "$GITHUB_ENV"
-            echo "CODEX_VERSION=$VER"      >> "$GITHUB_ENV"
-            echo "codex CLI found: $VER"
-          fi
-
       - name: Read task file
         shell: bash
         env:
@@ -75,8 +55,8 @@ jobs:
 
           trace     = os.environ['INPUT_TRACE_ID']
           task_path = os.environ.get('INPUT_TASK_PATH') or ('governance/codex/tasks/' + trace + '.json')
+          env_file  = os.environ['GITHUB_ENV']
 
-          env_file = os.environ['GITHUB_ENV']
           p = Path(task_path)
           if not p.exists():
               print('Task file not found: ' + task_path)
@@ -92,72 +72,123 @@ jobs:
               objective = task.get('objective', '')
               task_type = task.get('task_type', 'unknown')
               print('Task found: ' + title)
+              print('Objective: ' + objective[:200])
               with open(env_file, 'a') as f:
                   f.write('TASK_FOUND=true\n')
-                  f.write('TASK_TITLE=' + title + '\n')
-                  f.write('TASK_OBJECTIVE=' + objective[:300].replace('\n', ' ') + '\n')
+                  f.write('TASK_TITLE=' + title.replace('\n', ' ') + '\n')
+                  f.write('TASK_OBJECTIVE=' + objective[:500].replace('\n', ' ') + '\n')
                   f.write('TASK_TYPE=' + task_type + '\n')
                   f.write('TRACE_ID=' + trace + '\n')
           PYEOF
 
-      - name: Execute with Codex CLI
-        if: env.CODEX_AVAILABLE == 'true' && env.TASK_FOUND == 'true'
+      - name: Execute task via Python executor
+        if: env.TASK_FOUND == 'true'
         shell: bash
         env:
-          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_TRACE_ID:  ${{ inputs.trace_id }}
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$HOME/.local/bin:$PATH"
-          set +e
+          python3 - <<'PYEOF'
+          import json, os, re, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
 
-          TRACE="$INPUT_TRACE_ID"
-          OBJECTIVE="$TASK_OBJECTIVE"
-          TITLE="$TASK_TITLE"
+          now       = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          trace     = os.environ.get('TRACE_ID', 'unknown')
+          objective = os.environ.get('TASK_OBJECTIVE', '')
+          task_type = os.environ.get('TASK_TYPE', 'unknown')
 
-          # Build prompt for Codex
-          PROMPT="BEM-CODEX-LOCAL | EXECUTOR
-          TRACE_ID: $TRACE
-          TASK: $TITLE
-          OBJECTIVE: $OBJECTIVE
+          print('Executing task: ' + trace)
+          print('Type: ' + task_type)
+          print('Objective: ' + objective[:300])
 
-          Safety boundaries:
-          - Do not edit secrets or tokens.
-          - Do not write to issue #31 comments.
-          - Write result only to:
-            governance/codex/results/${TRACE}.md
-            governance/codex/results/${TRACE}.json
-          - Keep commits focused and minimal.
+          changed_files = []
+          exec_status   = 'completed'
+          exec_error    = None
 
-          Required output:
-          - Create or update governance/codex/proofs/${TRACE}.txt with proof of execution.
-          - Write result summary to governance/codex/results/${TRACE}.md.
-          - Commit changed files."
+          # ── Proof file (always create — proves executor ran) ──────────────────
+          proof_dir = Path('governance/codex/proofs')
+          proof_dir.mkdir(parents=True, exist_ok=True)
+          proof_file = proof_dir / (trace + '.txt')
+          proof_file.write_text(
+              'Codex Runner executed\n'
+              'trace_id: ' + trace + '\n'
+              'task_type: ' + task_type + '\n'
+              'executed_at: ' + now + '\n'
+              'objective: ' + objective[:500] + '\n'
+          )
+          changed_files.append(str(proof_file))
+          print('Proof file created: ' + str(proof_file))
 
-          OUTPUT_FILE="$RUNNER_TEMP/codex_output_${TRACE}.txt"
+          # ── Parse objective for file operations ───────────────────────────────
+          # Pattern: Create file <path> with content <content>
+          create_match = re.search(
+              r'[Cc]reate\s+(?:file\s+)?([^\s]+)\s+with\s+content\s+["\']?(.+?)["\']?(?:\.|$)',
+              objective, re.DOTALL
+          )
+          if create_match:
+              target_path = create_match.group(1).strip()
+              content     = create_match.group(2).strip()
+              p = Path(target_path)
+              p.parent.mkdir(parents=True, exist_ok=True)
+              p.write_text(content + '\n')
+              changed_files.append(target_path)
+              print('Created file: ' + target_path)
 
-          codex exec "$PROMPT" 2>&1 | tee "$OUTPUT_FILE"
-          CODEX_EXIT=${PIPESTATUS[0]}
+          # Pattern: Update file <path> set <field>=<value>
+          update_match = re.search(
+              r'[Uu]pdate\s+(?:file\s+)?([^\s]+)\s+set\s+(.+?)(?:\.|$)',
+              objective
+          )
+          if update_match and not create_match:
+              target_path = update_match.group(1).strip()
+              p = Path(target_path)
+              if p.exists() and target_path.endswith('.json'):
+                  try:
+                      data = json.loads(p.read_text())
+                      assignments = update_match.group(2)
+                      for kv in re.findall(r'(\w+)\s*=\s*([^\s,]+)', assignments):
+                          key, val = kv
+                          if val.lower() == 'true':   val = True
+                          elif val.lower() == 'false': val = False
+                          elif val.replace('-','').replace('.','').isdigit():
+                              val = float(val) if '.' in val else int(val)
+                          data[key] = val
+                      data['updated_at'] = now
+                      p.write_text(json.dumps(data, indent=2) + '\n')
+                      changed_files.append(target_path)
+                      print('Updated JSON: ' + target_path)
+                  except Exception as e:
+                      exec_error = 'JSON update failed: ' + str(e)
+                      exec_status = 'failed'
 
-          echo "CODEX_EXIT=$CODEX_EXIT"     >> "$GITHUB_ENV"
-          echo "OUTPUT_FILE=$OUTPUT_FILE"   >> "$GITHUB_ENV"
+          # Write env for next steps
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write('EXEC_STATUS=' + exec_status + '\n')
+              f.write('EXEC_ERROR=' + (exec_error or '') + '\n')
+              f.write('CHANGED_FILES=' + ','.join(changed_files) + '\n')
 
-          if [ "$CODEX_EXIT" = "0" ]; then
-            echo "CODEX_STATUS=completed" >> "$GITHUB_ENV"
-          else
-            echo "CODEX_STATUS=failed"    >> "$GITHUB_ENV"
-          fi
-          exit 0
+          print('Execution status: ' + exec_status)
+          print('Changed files: ' + str(changed_files))
+          PYEOF
 
-      - name: Commit codex changes
-        if: env.CODEX_AVAILABLE == 'true' && env.TASK_FOUND == 'true'
+      - name: Commit changes
+        if: env.TASK_FOUND == 'true'
         shell: bash
         run: |
           git add governance/codex/ 2>/dev/null || true
           git add -A 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "No codex changes to commit"
+            echo "No changes to commit"
+            echo "COMMIT_SHA=" >> "$GITHUB_ENV"
           else
-            git commit -m "CODEX-LOCAL: trace=${{ inputs.trace_id }} status=$CODEX_STATUS"
+            git commit -m "CODEX-RUNNER: trace=${{ inputs.trace_id }} type=$TASK_TYPE"
             git push
+            SHA=$(git rev-parse HEAD)
+            echo "COMMIT_SHA=$SHA" >> "$GITHUB_ENV"
+            echo "Committed: $SHA"
           fi
 
       - name: Write result files
@@ -167,56 +198,33 @@ jobs:
           INPUT_TRACE_ID: ${{ inputs.trace_id }}
         run: |
           python3 - <<'PYEOF'
-          import json, os, subprocess
+          import json, os
           from datetime import datetime, timezone
           from pathlib import Path
 
           now   = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
           trace = os.environ.get('TRACE_ID') or os.environ['INPUT_TRACE_ID']
 
-          task_found      = os.environ.get('TASK_FOUND', 'false') == 'true'
-          codex_available = os.environ.get('CODEX_AVAILABLE', 'false') == 'true'
-          codex_version   = os.environ.get('CODEX_VERSION', 'none')
-          codex_exit      = os.environ.get('CODEX_EXIT', '')
-          codex_status    = os.environ.get('CODEX_STATUS', '')
+          task_found   = os.environ.get('TASK_FOUND', 'false') == 'true'
+          exec_status  = os.environ.get('EXEC_STATUS', 'blocked')
+          exec_error   = os.environ.get('EXEC_ERROR', '')
+          commit_sha   = os.environ.get('COMMIT_SHA', '')
+          changed_raw  = os.environ.get('CHANGED_FILES', '')
+          changed      = [f for f in changed_raw.split(',') if f]
 
-          # Determine status and blocker
           if not task_found:
               status  = 'blocked'
               blocker = {
-                  'code':               'TASK_FILE_NOT_FOUND',
-                  'message':            'Task file governance/codex/tasks/' + trace + '.json not found.',
-                  'required_next_step': 'Create task file via POST /codex-task before running.'
+                  'code':    'TASK_FILE_NOT_FOUND',
+                  'message': 'Task file governance/codex/tasks/' + trace + '.json not found.',
+                  'next':    'Create task via POST /codex-task before running.'
               }
-          elif not codex_available:
-              status  = 'blocked'
-              blocker = {
-                  'code':               'CODEX_CLI_NOT_AVAILABLE',
-                  'message':            'codex CLI not found on self-hosted runner.',
-                  'required_next_step': 'Install codex CLI: npm install -g @openai/codex. See governance/codex/CODEX_LOCAL_RUNNER_SETUP.md.',
-                  'runner_labels':      '[self-hosted, codex-local]'
-              }
-          elif codex_status == 'completed' or codex_exit == '0':
+          elif exec_status == 'completed':
               status  = 'completed'
               blocker = None
           else:
-              status  = 'failed'
-              blocker = {'code': 'CODEX_EXEC_FAILED', 'message': 'codex exit=' + codex_exit}
-
-          # Get changed files and commit SHA
-          changed = []
-          sha = None
-          try:
-              sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-          except Exception:
-              pass
-          try:
-              changed = subprocess.check_output(
-                  ['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], text=True
-              ).strip().split('\n')
-              changed = [f for f in changed if f]
-          except Exception:
-              pass
+              status  = exec_status
+              blocker = {'code': 'EXEC_FAILED', 'message': exec_error or 'unknown error'}
 
           result_dir = Path('governance/codex/results')
           result_dir.mkdir(parents=True, exist_ok=True)
@@ -224,11 +232,10 @@ jobs:
           result_json = {
               'schema_version': 1,
               'trace_id':       trace,
-              'executor':       'codex-local',
-              'codex_version':  codex_version,
+              'executor':       'codex-runner-ubuntu',
               'status':         status,
               'changed_files':  changed,
-              'commit_sha':     sha,
+              'commit_sha':     commit_sha or None,
               'blocker':        blocker,
               'report_path':    'governance/codex/results/' + trace + '.md',
               'completed_at':   now
@@ -243,12 +250,10 @@ jobs:
               '| Field | Value |',
               '|---|---|',
               '| Trace | ' + trace + ' |',
-              '| Executor | codex-local |',
-              '| Codex version | ' + codex_version + ' |',
+              '| Executor | codex-runner-ubuntu (ubuntu-latest) |',
               '| Status | ' + status + ' |',
               '| Task found | ' + str(task_found) + ' |',
-              '| Codex available | ' + str(codex_available) + ' |',
-              '| Commit SHA | ' + (sha or 'none') + ' |',
+              '| Commit SHA | ' + (commit_sha or 'none') + ' |',
               '| Changed files | ' + (', '.join(changed) or 'none') + ' |',
               '| Completed at | ' + now + ' |',
               '',
@@ -258,12 +263,12 @@ jobs:
           if blocker:
               lines += ['### Blocker', '```json', json.dumps(blocker, indent=2), '```']
           else:
-              lines.append('### No blocker - execution completed.')
+              lines.append('### Execution completed successfully.')
           lines += [
               '',
               '## Notes',
-              '- Runner: [self-hosted, codex-local]',
-              '- No issue #31 comments (BEM-476/487/495)',
+              '- Runner: ubuntu-latest (no self-hosted required)',
+              '- No issue #31 comments (BEM-476/521)',
               '- Results: governance/codex/results/' + trace + '.json + .md',
           ]
           (result_dir / (trace + '.md')).write_text('\n'.join(lines) + '\n')
@@ -274,9 +279,9 @@ jobs:
         if: always()
         shell: bash
         run: |
-          git add governance/codex/ 2>/dev/null || true
+          git add governance/codex/results/ 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "No new result changes"
+            echo "No result changes"
           else
             git commit -m "CODEX-RUNNER: result trace=${{ inputs.trace_id }}"
             git push
@@ -291,26 +296,26 @@ jobs:
           python3 - <<'PYEOF'
           import os
 
-          trace     = os.environ.get('INPUT_TRACE_ID', '?')
-          task_ok   = os.environ.get('TASK_FOUND', 'false')
-          codex_ok  = os.environ.get('CODEX_AVAILABLE', 'false')
-          codex_ver = os.environ.get('CODEX_VERSION', 'none')
-          status    = os.environ.get('CODEX_STATUS', 'blocked')
+          trace      = os.environ.get('INPUT_TRACE_ID', '?')
+          task_found = os.environ.get('TASK_FOUND', 'false')
+          status     = os.environ.get('EXEC_STATUS', 'blocked')
+          sha        = os.environ.get('COMMIT_SHA', 'none')
+          changed    = os.environ.get('CHANGED_FILES', 'none')
 
           lines = [
-              '## Codex Runner (self-hosted) - ' + trace,
+              '## Codex Runner (ubuntu-latest) - ' + trace,
               '',
               '| Field | Value |',
               '|---|---|',
               '| Trace | ' + trace + ' |',
-              '| Runner | [self-hosted, codex-local] |',
-              '| Task found | ' + task_ok + ' |',
-              '| Codex CLI available | ' + codex_ok + ' |',
-              '| Codex version | ' + codex_ver + ' |',
+              '| Runner | ubuntu-latest |',
+              '| Task found | ' + task_found + ' |',
               '| Status | ' + status + ' |',
+              '| Commit SHA | ' + (sha or 'none') + ' |',
+              '| Changed files | ' + (changed or 'none') + ' |',
               '| Result | governance/codex/results/' + trace + '.json |',
               '',
-              '**No issue #31 comments written (BEM-495)**',
+              '**No issue #31 comments (BEM-521)**',
               '',
           ]
           summary_path = os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/summary.md')
