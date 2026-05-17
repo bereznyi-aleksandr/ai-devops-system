@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem548_2_fix_role_orchestrator_yaml_v2",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Fixed invalid role-orchestrator.yml by moving Python logic to scripts/role_orchestrator_decide.py",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/role_orchestrator_decide.py",
+    ".github/workflows/role-orchestrator.yml",
+    "governance/transport/results.jsonl",
+    "governance/state/role_cycle_state.json",
+    "governance/reports/bem548_2_fix_role_orchestrator_yaml.md",
+    "governance/codex/proofs/bem548_2_fix_role_orchestrator_yaml.txt",
+    "governance/codex/proofs/bem548_2_fix_role_orchestrator_yaml_v2.txt"
+  ],
+  "commit_sha": "3f71cbf19fbd47bad876d33f1d3509f1c95c8e1e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem548_2_fix_role_orchestrator_yaml_v2.md",
+  "completed_at": "2026-05-17T11:58:35Z"
+}
