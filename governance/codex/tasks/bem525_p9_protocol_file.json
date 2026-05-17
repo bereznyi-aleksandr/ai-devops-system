@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem525_p9_protocol_file",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Create P9 handoff protocol",
+  "objective": "Create file governance/protocols/HANDOFF_PROTOCOL_CLAUDE_GPT.md with content 'BEM-525 P9 Handoff Protocol Claude↔GPT. Purpose: formal handoff between Claude and GPT without issue #31, without schedule triggers, without paid OpenAI API. Roles: Claude performs complex direct patches and recovery when Python executor is insufficient. GPT performs autonomous Deno tasks, status checks, repo reads, and reports only completed blocks or exact blockers. Handoff payload: BEM id, phase, completed commits, changed files, blocker or blocker=null, one next autonomous block, prohibitions: no issue comments, no schedule, no paid API. Reporting rule: GPT must not send operator intermediate dispatch or queued reports; final report only for phase closure, roadmap closure, completed block with SHA, or exact blocker. Executor policy: free ubuntu-latest Python executor. Codex CLI disabled. OPENAI_API_KEY not required. 2026-05-17.' No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem525_p9_protocol_file.md",
+    "result_json": "governance/codex/results/bem525_p9_protocol_file.json"
+  },
+  "created_at": "2026-05-17T08:22:06.895Z"
+}
