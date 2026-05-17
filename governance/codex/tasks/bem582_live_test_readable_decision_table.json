@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem582_live_test_readable_decision_table",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-582 live decision table test",
+  "objective": "Create file governance/operator_decision_queue/bem582_decision_format_live_test.json with content {\"schema_version\":\"operator_decision_queue.v1\",\"decision_id\":\"bem582_decision_format_live_test\",\"bem\":\"BEM-582\",\"title\":\"OPERATOR DECISION REQUIRED\",\"stage\":{\"done\":1,\"total\":1},\"roadmap\":{\"done\":1,\"total\":1},\"checklist\":[\"✅ Claude/GPT discussion channel separated from Telegram\",\"✅ Routine mailbox Telegram disabled\",\"✅ Structured decision package prepared\",\"⚠️ Operator must approve the decision-message format\"],\"question\":\"Какой формат Telegram-сообщения использовать для решений оператора?\",\"options\":[{\"id\":\"1\",\"title\":\"Короткая таблица\",\"difference\":\"Варианты сравниваются в компактной таблице, детали ниже\",\"rationale\":\"На телефоне видно вопрос и сравнение без длинных смешанных строк\",\"impact\":\"Используем этот формат для всех operator decision сообщений\"},{\"id\":\"2\",\"title\":\"Вертикальный список\",\"difference\":\"Каждый вариант идёт отдельным блоком без таблицы\",\"rationale\":\"Проще технически, но хуже сравнивать варианты между собой\",\"impact\":\"Оставляем текущий менее удобный формат\"},{\"id\":\"3\",\"title\":\"Доработать формат\",\"difference\":\"Claude и GPT готовят новый макет перед внедрением\",\"rationale\":\"Нужно выбрать, если текущая таблица всё ещё неудобна\",\"impact\":\"Решение возвращается во внешний аудит на доработку\"}],\"recommendation\":{\"option_id\":\"1\",\"rationale\":\"Рекомендуем короткую таблицу: она сохраняет канон, показывает вопрос, варианты, отличия и обоснование в одном сообщении.\"},\"reply_format\":\"Напиши 1, 2, 3 или свой вариант текстом.\",\"handoff_to\":\"curator\"}. Create file governance/reports/bem582_live_test_readable_decision_table.md with content # BEM-582 | Live Test Readable Decision Table | PASS\\n\\nДата: 2026-05-17 | 22:03 (UTC+3)\\n\\nStructured decision package created. Operator Decision Dispatcher should send Telegram message in readable comparison table format.\\n\\nBlocker: null\\n. Append to governance/transport/results.jsonl: {\"record_type\":\"bem582_live_test_readable_decision_table\",\"cycle_id\":\"bem582-live-test-readable-decision-table\",\"source\":\"gpt\",\"status\":\"queued_for_operator_decision_dispatcher\",\"queue_file\":\"governance/operator_decision_queue/bem582_decision_format_live_test.json\",\"blocker\":null,\"created_at\":\"2026-05-17 | 22:03 (UTC+3)\"}. Create file governance/codex/proofs/bem582_live_test_readable_decision_table.txt with content BEM-582 PASS: structured decision package queued for live Telegram table-format test. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem582_live_test_readable_decision_table.md",
+    "result_json": "governance/codex/results/bem582_live_test_readable_decision_table.json"
+  },
+  "created_at": "2026-05-17T19:17:48.696Z"
+}
