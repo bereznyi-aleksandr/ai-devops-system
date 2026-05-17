@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 13:41 (UTC+3)",
+  "updated_at": "2026-05-17 | 13:43 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -158,5 +158,13 @@
     "provider_ready": true,
     "bridge_ready": true,
     "status": "PASS"
+  },
+  "bem538_dispatch_bridge_contract": {
+    "codex_contents_write": true,
+    "codex_actions_write": false,
+    "role_dispatch_ready": true,
+    "provider_dispatch_ready": true,
+    "bridge_mode": "needs_codex_runner_actions_write_permission",
+    "blocker": "WORKFLOW_DISPATCH_BRIDGE_NEEDS_ACTIONS_WRITE"
   }
 }
