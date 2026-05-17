@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 20:57 (UTC+3)",
+  "updated_at": "2026-05-17 | 20:58 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -327,6 +327,12 @@
     "blocker": null
   },
   "bem568_claude_token_smoke_yaml_fix": {
+    "status": "completed",
+    "workflow": ".github/workflows/claude-token-smoke.yml",
+    "script": "scripts/claude_token_smoke.py",
+    "blocker": null
+  },
+  "bem568_fix_claude_token_smoke_yaml": {
     "status": "completed",
     "workflow": ".github/workflows/claude-token-smoke.yml",
     "script": "scripts/claude_token_smoke.py",

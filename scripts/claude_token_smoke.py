@@ -3,25 +3,35 @@ import json
 import os
 from pathlib import Path
 
-reports = Path("governance/reports")
-transport = Path("governance/transport")
-reports.mkdir(parents=True, exist_ok=True)
-transport.mkdir(parents=True, exist_ok=True)
+token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "")
+status = "secret_present" if token else "secret_missing"
+blocker = None if token else {"code": "CLAUDE_CODE_OAUTH_TOKEN_MISSING"}
 
-present = bool(os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"))
-status = "secret_present" if present else "secret_missing"
-blocker = None if present else {"code": "CLAUDE_CODE_OAUTH_TOKEN_MISSING"}
+Path("governance/reports").mkdir(parents=True, exist_ok=True)
+Path("governance/transport").mkdir(parents=True, exist_ok=True)
 
-report = reports / "bem568_claude_token_secret_smoke.md"
+report = Path("governance/reports/bem568_claude_token_secret_smoke.md")
 report.write_text(
-    f"# BEM-568 | Claude Token Secret Smoke | {status}\n\n"
-    "Дата: workflow_runtime\n\n"
-    "## Result\n"
-    f"CLAUDE_CODE_OAUTH_TOKEN presence check: {status}\n\n"
-    "## Security\n"
-    "Token value was not printed.\n\n"
-    "## Blocker\n"
-    f"{json.dumps(blocker, ensure_ascii=False) if blocker else 'null'}\n",
+    "# BEM-568 | Claude Token Secret Smoke | " + status + "
+
+"
+    "Дата: workflow_runtime
+
+"
+    "## Result
+"
+    "CLAUDE_CODE_OAUTH_TOKEN presence check: " + status + "
+
+"
+    "## Security
+"
+    "Token value was not printed.
+
+"
+    "## Blocker
+"
+    + ("null" if blocker is None else json.dumps(blocker, ensure_ascii=False)) + "
+",
     encoding="utf-8",
 )
 
@@ -35,7 +45,7 @@ rec = {
     "blocker": blocker,
     "created_at": "workflow_runtime",
 }
-with (transport / "results.jsonl").open("a", encoding="utf-8") as f:
-    f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-
-print(status)
+with Path("governance/transport/results.jsonl").open("a", encoding="utf-8") as f:
+    f.write(json.dumps(rec, ensure_ascii=False) + "
+")
+print("CLAUDE_CODE_OAUTH_TOKEN presence check:", status)
