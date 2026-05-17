@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem533_1_telegram_intake_activation",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-533.1 Telegram intake activation",
+  "objective": "Run script:\n\"\"\"\ncontract = Path('governance/protocols/CURATOR_INTAKE_CONTRACT.md')\nsamples_dir = Path('governance/transport/samples')\nsamples_dir.mkdir(parents=True, exist_ok=True)\nreport = Path('governance/reports/bem533_1_telegram_intake_activation.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nproof = Path('governance/codex/proofs/bem533_1_telegram_intake_activation.txt')\nproof.parent.mkdir(parents=True, exist_ok=True)\n\ntext = contract.read_text(errors='ignore') if contract.exists() else '# Curator Intake Contract\\n'\ntext = text.replace('Active sources in BEM-531: GPT and Claude. Telegram is reserved/deferred.', 'Active sources: GPT, Claude and Telegram synthetic/webhook branch. Live Telegram API/token handling remains out of file scope and secrets must never be stored in repo files.')\ntext = text.replace('\"source\": \"gpt|claude|telegram_deferred\"', '\"source\": \"gpt|claude|telegram\"')\ntext = text.replace('## Telegram policy\\nTelegram branch is part of the broader architecture but deferred out of BEM-531 execution scope. Records may reserve `source=telegram_deferred`, but no Telegram E2E is required in BEM-531.', '## Telegram policy\\nTelegram branch is active for synthetic/file-based curator intake in BEM-533. Live Telegram token/API integration is not required and secrets must not be written to files. Telegram records use `source=telegram` and `source_ref=telegram-webhook-synthetic` for tests.')\nif '## BEM-533 Telegram activation' not in text:\n    text += '\\n\\n## BEM-533 Telegram activation\\nTelegram synthetic/webhook branch is now included in curator intake schema. The branch enters through curator and then follows the same internal role cycle.\\n'\ncontract.write_text(text)\n\ntelegram_active = {\n  'record_type': 'curator_intake',\n  'cycle_id': 'bem533-sample-telegram-active',\n  'source': 'telegram',\n  'source_ref': 'telegram-webhook-synthetic',\n  'request_title': 'Synthetic Telegram curator intake',\n  'request_body': 'User request from Telegram webhook normalized by curator',\n  'priority': 'normal',\n  'curator_status': 'ASSIGNED',\n  'next_role': 'executor',\n  'blocker': None,\n  'created_at': '2026-05-17 | 12:56 (UTC+3)'\n}\nsample_path = samples_dir / 'curator_intake_telegram_active_sample.json'\nsample_path.write_text(json.dumps(telegram_active, indent=2, ensure_ascii=False) + '\\n')\n\nreport.write_text('# BEM-533.1 | Telegram Intake Schema Activation | PASS\\n\\nДата: 2026-05-17 | 12:56 (UTC+3)\\n\\n## Выполнено\\n- CURATOR_INTAKE_CONTRACT обновлён: Telegram synthetic/webhook branch активирован в schema.\\n- Создан active Telegram sample record.\\n- Live token/API не используется; secrets не пишутся в файлы.\\n\\n## Files\\n- governance/protocols/CURATOR_INTAKE_CONTRACT.md\\n- governance/transport/samples/curator_intake_telegram_active_sample.json\\n\\n## Blocker\\nnull\\n')\nproof.write_text('BEM-533.1 PASS: Telegram curator intake activated synthetically without secrets/live API.\\n')\nchanged_files.extend([str(contract), str(sample_path), str(report), str(proof)])\nops_applied.append('BEM-533.1 activated Telegram synthetic curator intake schema')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem533_1_telegram_intake_activation.md",
+    "result_json": "governance/codex/results/bem533_1_telegram_intake_activation.json"
+  },
+  "created_at": "2026-05-17T09:56:16.343Z"
+}
