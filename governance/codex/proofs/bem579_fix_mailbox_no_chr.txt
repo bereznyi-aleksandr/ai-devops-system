@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem579_fix_mailbox_no_chr
+task_type: code_patch
+executed_at: 2026-05-17T18:43:11Z
+ops_applied: Fixed mailbox dispatcher SyntaxError without executor chr() and kept routine Telegram disabled, custom_script
+changed_files: scripts/mailbox_pick_notification.py, scripts/mailbox_record_delivery.py, .github/workflows/mailbox-dispatcher.yml, governance/reports/bem579_fix_mailbox_no_chr.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem579_fix_mailbox_no_chr.txt
+errors: none

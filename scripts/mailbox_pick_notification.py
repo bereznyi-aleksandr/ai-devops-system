@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 
+NL = "\n"
 MAILBOX_DIRS = [Path("governance/audit_mailbox/claude_to_gpt"), Path("governance/audit_mailbox/gpt_to_claude")]
 STATE_PATH = Path("governance/state/mailbox_dispatcher_state.json")
 TMP_DIR = Path("governance/tmp")
@@ -19,14 +20,16 @@ def load_state():
 state = load_state()
 processed = set(state.get("processed_files", []))
 candidates = []
-for d in MAILBOX_DIRS:
-    if d.exists():
-        candidates.extend(sorted([p for p in d.glob("*.md") if p.is_file()], key=lambda p: str(p)))
+for folder in MAILBOX_DIRS:
+    if folder.exists():
+        for item in sorted(folder.glob("*.md"), key=lambda p: str(p)):
+            if item.is_file():
+                candidates.append(item)
 
 picked = None
-for path in candidates:
-    if str(path) not in processed:
-        picked = path
+for item in candidates:
+    if str(item) not in processed:
+        picked = item
         break
 
 TMP_DIR.mkdir(parents=True, exist_ok=True)
@@ -36,6 +39,5 @@ else:
     pick = {"picked": True, "notify_operator": False, "message": "", "mailbox_file": str(picked), "reason": "routine_mailbox_no_telegram_use_decision_queue"}
 
 MSG_PATH.write_text("", encoding="utf-8")
-PICK_PATH.write_text(json.dumps(pick, ensure_ascii=False, indent=2) + "
-", encoding="utf-8")
+PICK_PATH.write_text(json.dumps(pick, ensure_ascii=False, indent=2) + NL, encoding="utf-8")
 print(json.dumps(pick, ensure_ascii=False))

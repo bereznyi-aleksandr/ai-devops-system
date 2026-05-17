@@ -25,34 +25,19 @@ jobs:
           fetch-depth: 0
 
       - name: Syntax check mailbox scripts
-        run: |
-          python3 -m py_compile scripts/mailbox_pick_notification.py scripts/mailbox_record_delivery.py
+        run: python3 -m py_compile scripts/mailbox_pick_notification.py scripts/mailbox_record_delivery.py
 
-      - name: Pick mailbox notification
+      - name: Pick mailbox message
         run: python3 scripts/mailbox_pick_notification.py
 
-      - name: Send mailbox notification directly to Telegram
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          if [ ! -s governance/tmp/mailbox_message.txt ]; then
-            echo "not_required" > governance/tmp/mailbox_telegram_status.txt
-          elif [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "not_sent_missing_secret" > governance/tmp/mailbox_telegram_status.txt
-          else
-            HTTP_CODE=$(curl -sS -o governance/tmp/mailbox_telegram_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text@governance/tmp/mailbox_message.txt" --data-urlencode "disable_web_page_preview=true" || echo "000")
-            if [ "$HTTP_CODE" = "200" ]; then echo "sent" > governance/tmp/mailbox_telegram_status.txt; else echo "not_sent_http_${HTTP_CODE}" > governance/tmp/mailbox_telegram_status.txt; fi
-          fi
-
-      - name: Record mailbox delivery
+      - name: Record mailbox route
         run: python3 scripts/mailbox_record_delivery.py
 
-      - name: Commit dispatcher result
+      - name: Commit mailbox route result
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/state/mailbox_dispatcher_state.json governance/telegram_outbox.jsonl governance/transport/results.jsonl governance/reports/bem569_mailbox_dispatcher_direct_telegram_result.md
-          git commit -m "BEM-569 mailbox dispatcher direct Telegram result" || echo "No changes"
+          git add governance/state/mailbox_dispatcher_state.json governance/transport/results.jsonl governance/reports/mailbox_dispatcher_result.md
+          git commit -m "BEM-579 mailbox route result" || echo "No changes"
           git pull --rebase origin main || git rebase --abort || true
           git push || (git pull --rebase origin main && git push)
