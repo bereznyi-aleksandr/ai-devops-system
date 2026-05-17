@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 18:26 (UTC+3)",
+  "updated_at": "2026-05-17 | 19:00 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -267,6 +267,16 @@
     "status": "completed",
     "claude_report": "governance/reports/bem559_claude_consolidated_autonomy_and_multiagent_vision.md",
     "recommendation": "BEM-560 system writer and runtime registry hardening",
+    "blocker": null
+  },
+  "bem560_telegram_stage_progress_canon": {
+    "status": "completed",
+    "protocol": "governance/protocols/TELEGRAM_CANON_REPORT_FORMAT.md",
+    "formatter": "scripts/telegram_canon_formatter.py",
+    "required_header": [
+      "Этап: X/Y (Z%)",
+      "Дорожная карта: X/Y (Z%)"
+    ],
     "blocker": null
   }
 }
