@@ -74,7 +74,7 @@ def get_section(text, names):
             out.append(line.strip())
     return "\n".join(out).strip()
 
-def one_line(text, limit=450):
+def one_line(text, limit=500):
     value = " ".join([x.strip() for x in text.splitlines() if x.strip()])
     return value[:limit]
 
@@ -90,8 +90,8 @@ def extract_options(text):
             opts.append(s[:180])
     if len(opts) < 2:
         opts = [
-            "Подтвердить согласованное решение",
-            "Вернуть Claude↔GPT на доработку",
+            "Подтвердить согласованное решение Claude↔GPT",
+            "Вернуть вопрос Claude↔GPT на доработку",
             "Свой вариант оператора",
         ]
     elif len(opts) == 2:
@@ -105,12 +105,18 @@ def extract_payload(path):
         question = title_from_markdown(path)
     recommendation = get_section(text, ["рекомендация", "recommendation", "позиция gpt", "решение claude", "итог"])
     if not recommendation:
-        recommendation = "Если вопрос непонятен или вариантов недостаточно — выбрать вариант 2: вернуть Claude↔GPT на доработку."
-    return {
-        "question": one_line(question),
-        "options": extract_options(text),
-        "recommendation": one_line(recommendation),
-    }
+        recommendation = "Рекомендуется выбрать 1, если согласованное решение понятно; выбрать 2, если вопрос или варианты недостаточно ясны."
+    return {"question": one_line(question), "options": extract_options(text), "recommendation": one_line(recommendation)}
+
+def option_reason(index, option):
+    low = option.lower()
+    if "подтверд" in low or "approve" in low or "согласован" in low:
+        return "позволяет передать уже согласованный пакет куратору и продолжить внутренний контур."
+    if "доработ" in low or "вернуть" in low or "reject" in low:
+        return "используется, если вопрос, варианты или обоснование недостаточно ясны для решения."
+    if "свой" in low:
+        return "оператор может задать другое решение, если предложенные варианты неполные."
+    return "вариант предложен в decision package и может быть выбран оператором."
 
 def build_operator_message(path):
     sender, recipient = infer_sender_recipient(path)
@@ -122,13 +128,24 @@ def build_operator_message(path):
         "Этап: 1/1 (100%)",
         "Дорожная карта: 1/1 (100%)",
         "",
+        "Чек-лист:",
+        "✅ Claude/GPT обсуждение зафиксировано",
+        "✅ Decision package найден",
+        "✅ Варианты решения подготовлены",
+        "⚠️ Требуется решение оператора",
+        "",
         "Вопрос:",
         payload["question"],
         "",
-        "Варианты решения:",
-        "1) " + opts[0],
-        "2) " + opts[1],
-        "3) " + opts[2],
+        "Таблица решений:",
+        "1) Вариант: " + opts[0],
+        "   Обоснование: " + option_reason(1, opts[0]),
+        "",
+        "2) Вариант: " + opts[1],
+        "   Обоснование: " + option_reason(2, opts[1]),
+        "",
+        "3) Вариант: " + opts[2],
+        "   Обоснование: " + option_reason(3, opts[2]),
         "",
         "Рекомендация аудиторов:",
         payload["recommendation"],
@@ -139,7 +156,7 @@ def build_operator_message(path):
         "Файл: " + compact_path(path),
         "",
         "Как ответить:",
-        "Напиши: 1, 2, 3 или свой вариант текстом.",
+        "Напиши: 1, 2, 3, да/подтверждаю или свой вариант текстом.",
         "",
         "Что будет после решения:",
         "Пакет решения передаётся куратору, затем во внутренний контур.",
