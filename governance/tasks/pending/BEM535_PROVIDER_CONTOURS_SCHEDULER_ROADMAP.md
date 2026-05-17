@@ -1,17 +1,17 @@
-# BEM-535 | Provider Contours + GPT Scheduler Telegram Reporting Roadmap
+# BEM-535 | Provider Contours + external cron -> Deno -> workflow_dispatch Telegram Reporting Roadmap
 
 Дата: 2026-05-17 | 13:02 (UTC+3)
 
 ## Цель
-Доработать внутренний контур с учётом основного и резервного provider-contours, контроля лимитов, переключения Claude -> GPT reserve, обязательной роли analyst на GPT Codex и hourly Telegram canonical reporting через внутренний GPT Scheduler.
+Доработать внутренний контур с учётом основного и резервного provider-contours, контроля лимитов, переключения Claude -> GPT reserve, обязательной роли analyst на GPT Codex и hourly Telegram canonical reporting через внутренний external cron -> Deno -> workflow_dispatch.
 
 ## Архитектурные уточнения
 - Curator: GPT Codex / GPT control layer.
 - Analyst: GPT Codex.
 - Primary provider contour: Claude.
 - Reserve provider contour: GPT.
-- Provider switching criterion: Claude unavailable, limit_exceeded, quota_exceeded, timeout, provider_failed.
-- Telegram hourly reporting: через внутренний GPT Scheduler, не через GitHub Actions schedule trigger.
+- Provider switching criterion: claude.yml outcome=failure/cancelled or transport result status=failed/timeout/cancelled; provider-adapter then selects GPT reserve.
+- Telegram hourly reporting: через внутренний external cron -> Deno -> workflow_dispatch, не через GitHub Actions schedule trigger.
 - GitHub schedule triggers остаются запрещены.
 - Telegram live token/secrets не хранятся в репозитории.
 
@@ -19,7 +19,7 @@
 - BEM-531 закрыт: internal role-based contour PASS.
 - BEM-533 закрыт: Telegram branch active_synthetic_verified.
 - Main/reserve provider failover E2E ещё не доказан.
-- Hourly canonical Telegram report через GPT Scheduler ещё не доказан.
+- Hourly canonical Telegram report через external cron -> Deno -> workflow_dispatch ещё не доказан.
 
 ## Этапы BEM-535
 
@@ -39,8 +39,8 @@ PASS: adapter audit/patch, no secrets, no paid API default, no schedule.
 Провести два synthetic теста: primary Claude available -> Claude selected; Claude limit_exceeded -> GPT reserve selected.
 PASS: transport records, provider state, report, blocker=null.
 
-### BEM-535.5 — GPT Scheduler hourly Telegram report contract
-Формализовать hourly canonical report через внутренний GPT Scheduler: payload по канону, periodicity=1h, destination=Telegram bot, no GitHub schedule.
+### BEM-535.5 — External cron -> Deno -> workflow_dispatch Telegram hourly report contract
+Формализовать hourly canonical report через внутренний external cron -> Deno -> workflow_dispatch: payload по канону, periodicity=1h, destination=Telegram bot, no GitHub schedule.
 PASS: protocol, sample hourly report payload, scheduler state fields.
 
 ### BEM-535.6 — Telegram hourly reporting synthetic test
@@ -56,7 +56,15 @@ PASS: done-marker, PASS report, status update.
 - Claude primary / GPT reserve failover synthetic E2E PASS;
 - Curator and Analyst roles explicitly mapped to GPT Codex;
 - Telegram hourly canonical report contract exists;
-- GPT Scheduler path documented;
+- external cron -> Deno -> workflow_dispatch path documented;
 - no GitHub schedule triggers;
 - no secrets in files;
 - blocker=null.
+
+
+## Claude review corrections applied
+- Claude cannot self-report ChatGPT UI limits through GitHub Actions.
+- Real detection mechanism: claude.yml outcome=failure/cancelled OR transport result status=failed/timeout/cancelled.
+- Provider adapter reads failed Claude result and routes to GPT reserve.
+- Hourly Telegram reporting uses external cron -> Deno endpoint -> workflow_dispatch curator-hourly-report.yml.
+- GitHub Actions schedule triggers remain prohibited.
