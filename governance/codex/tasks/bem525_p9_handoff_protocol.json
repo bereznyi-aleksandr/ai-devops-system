@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem525_p9_handoff_protocol",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "default_development",
+  "title": "Create P9 handoff protocol",
+  "objective": "Create file governance/protocols/HANDOFF_PROTOCOL_CLAUDE_GPT.md with content '# BEM-525 | P9 Handoff Protocol Claude ↔ GPT\n\nDate: 2026-05-17 | 11:25 (UTC+3)\n\n## Purpose\nFormalize Claude ↔ GPT handoff without issue #31 comments, schedule triggers, or paid OpenAI API.\n\n## Roles\nClaude handles direct patches, architecture changes, complex governance cleanup, and recovery when Python executor cannot perform a file operation.\nGPT handles autonomous Deno write-channel execution, status checks, proof/result verification, and final operator reports only when a block is completed or a precise blocker exists.\n\n## Channels\nGPT write channel: Deno createCodexTask only.\nGPT status channel: getCodexStatus only.\nReports: governance/codex/results, governance/reports, governance/transport/results.jsonl.\nIssue #31 comments are forbidden.\nSchedule triggers are forbidden.\nPaid OpenAI API and Codex CLI are forbidden in the active executor architecture.\n\n## Handoff payload\nEach handoff must include: BEM id, phase, completed commits, changed files, blocker or blocker=null, one next autonomous block, and explicit constraints: no issue comments, no schedule, no paid API.\n\n## Operator-facing report rule\nGPT does not report dispatch or queued as a completed block. GPT reports only completed commit SHA, stage closure, roadmap closure, or exact blocker.\n\n## Executor policy\nActive executor is free Python executor on ubuntu-latest. Claude direct patch is used for operations outside executor capability.\n\n## PASS criteria\nProtocol file exists, done marker exists, PASS report exists, no issue comments, no schedule triggers, no paid OpenAI API.' Also create file governance/tasks/done/P9_HANDOFF_PROTOCOL.md with content 'P9 Handoff Protocol completed. Protocol: governance/protocols/HANDOFF_PROTOCOL_CLAUDE_GPT.md. No issue comments. No schedule triggers. No paid OpenAI API.' Also create file governance/reports/bem525_p9_handoff_protocol.md with content 'BEM-525 P9 PASS. Handoff Protocol Claude GPT created. Evidence: governance/protocols/HANDOFF_PROTOCOL_CLAUDE_GPT.md and governance/tasks/done/P9_HANDOFF_PROTOCOL.md. Blocker null.' No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem525_p9_handoff_protocol.md",
+    "result_json": "governance/codex/results/bem525_p9_handoff_protocol.json"
+  },
+  "created_at": "2026-05-17T08:21:28.185Z"
+}
