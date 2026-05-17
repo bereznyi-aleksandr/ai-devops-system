@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem550_1_2_ux_telegram_batch
+task_type: code_patch
+executed_at: 2026-05-17T12:20:10Z
+ops_applied: BEM-550.1-2 completed: operator UX stabilization and Telegram progress queue normalization, custom_script
+changed_files: governance/protocols/OPERATOR_UX_STABILITY_V2.md, governance/protocols/TELEGRAM_PROGRESS_QUEUE_POLICY.md, scripts/operator_progress_append.py, scripts/telegram_outbox_pick.py, governance/state/operator_progress_feed.jsonl, governance/state/operator_progress_current.json, governance/telegram_outbox.jsonl, governance/transport/results.jsonl, governance/state/contour_status.json, governance/reports/bem550_1_2_ux_telegram_batch.md, governance/codex/proofs/bem550_1_2_ux_telegram_batch.txt
+errors: none

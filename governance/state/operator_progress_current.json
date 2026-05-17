@@ -1,16 +1,8 @@
 {
   "schema_version": "operator_progress.v1",
-  "updated_at": "2026-05-17 | 15:12 (UTC+3)",
-  "current_bem": "BEM-549",
-  "current_task": "Operator progress feed",
+  "updated_at": "2026-05-17 | 15:17 (UTC+3)",
+  "current_bem": "BEM-550.1-2",
+  "current_task": "Operator UX + Telegram queue normalization",
   "status": "completed",
-  "visible_channels": [
-    "ChatGPT short final reports",
-    "governance/state/operator_progress_feed.jsonl",
-    "governance/state/operator_progress_current.json",
-    "Telegram outbox"
-  ],
-  "chatgpt_ui_blocker": "mobile app agent tracking screen is client-side; cannot be disabled from repo",
-  "operator_instruction": "Use Telegram/progress feed for live progress when ChatGPT UI switches to agent screen.",
   "blocker": null
 }

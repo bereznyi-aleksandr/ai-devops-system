@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 15:12 (UTC+3)",
+  "updated_at": "2026-05-17 | 15:17 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -111,5 +111,26 @@
     "current": "governance/state/operator_progress_current.json",
     "telegram_outbox": true,
     "chatgpt_ui_limitation": "client-side tracking screen cannot be disabled by repository code"
+  },
+  "bem550": {
+    "status": "in_progress",
+    "stages_total": 10,
+    "stages_completed": 2,
+    "completed": [
+      "BEM-550.1",
+      "BEM-550.2"
+    ],
+    "next": "BEM-550.3 Runtime curator intake"
+  },
+  "operator_ux_stability": {
+    "status": "ACTIVE",
+    "batch_first": true,
+    "short_chat_progress": true,
+    "progress_feed": "governance/state/operator_progress_feed.jsonl"
+  },
+  "telegram_queue_policy": {
+    "status": "ACTIVE",
+    "policy": "governance/protocols/TELEGRAM_PROGRESS_QUEUE_POLICY.md",
+    "picker": "scripts/telegram_outbox_pick.py"
   }
 }
