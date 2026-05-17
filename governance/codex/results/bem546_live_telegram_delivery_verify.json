@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem546_live_telegram_delivery_verify",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-546 verified live Telegram delivery state and queued verification message",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/telegram_outbox.jsonl",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/reports/bem546_live_telegram_delivery_verification.md",
+    "governance/codex/proofs/bem546_live_telegram_delivery_verify.txt",
+    "governance/codex/proofs/bem546_live_telegram_delivery_verify.txt"
+  ],
+  "commit_sha": "d3023270ea1a6af4b5bf661cf70866077cc19c4c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem546_live_telegram_delivery_verify.md",
+  "completed_at": "2026-05-17T11:36:04Z"
+}
