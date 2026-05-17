@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem548_3_provider_probe_integration",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-548.3 provider probe integration completed",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/PROVIDER_ADAPTER_PROBE_INTEGRATION.md",
+    ".github/workflows/provider-adapter.yml",
+    "governance/transport/results.jsonl",
+    "governance/state/provider_contour_state.json",
+    "governance/reports/bem548_3_provider_probe_integration.md",
+    "governance/codex/proofs/bem548_3_provider_probe_integration.txt",
+    "governance/codex/proofs/bem548_3_provider_probe_integration.txt"
+  ],
+  "commit_sha": "2b5bd2567788bb6092bac756cdfd884768956ed8",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem548_3_provider_probe_integration.md",
+  "completed_at": "2026-05-17T11:55:16Z"
+}
