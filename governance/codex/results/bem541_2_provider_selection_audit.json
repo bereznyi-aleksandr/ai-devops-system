@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem541_2_provider_selection_audit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-541.2 provider selection audit record created",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/internal_contour/tests/bem541/provider_selection_audit.json",
+    "governance/transport/results.jsonl",
+    "governance/state/provider_contour_state.json",
+    "governance/reports/bem541_2_provider_selection_audit.md",
+    "governance/codex/proofs/bem541_2_provider_selection_audit.txt",
+    "governance/codex/proofs/bem541_2_provider_selection_audit.txt"
+  ],
+  "commit_sha": "4636585aeffef45652adecc12228174cb4c4492f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem541_2_provider_selection_audit.md",
+  "completed_at": "2026-05-17T11:19:45Z"
+}
