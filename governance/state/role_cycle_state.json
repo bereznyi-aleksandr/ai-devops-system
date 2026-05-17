@@ -1,6 +1,6 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 14:28 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:52 (UTC+3)",
   "cycle_id": "bem541-corrected-full-system-retest",
   "source": {
     "type": "gpt",
@@ -250,6 +250,15 @@
       "trace_id",
       "updated_at",
       "version"
+    ]
+  },
+  "curator_intake_schema_v2": {
+    "status": "PASS",
+    "schema": "governance/protocols/CURATOR_INTAKE_SCHEMA_V2.md",
+    "validation_samples": [
+      "governance/internal_contour/tests/bem548/curator_intake_valid.json",
+      "governance/internal_contour/tests/bem548/curator_intake_invalid.json",
+      "governance/internal_contour/tests/bem548/curator_intake_duplicate.json"
     ]
   }
 }

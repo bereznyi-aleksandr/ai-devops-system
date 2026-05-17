@@ -1,0 +1,24 @@
+{
+  "task": {
+    "trace_id": "",
+    "source": "bad_source",
+    "task_type": "unknown",
+    "title": "",
+    "objective": "",
+    "created_at": "2026-05-17 | 14:52 (UTC+3)",
+    "blocker": null
+  },
+  "validation": {
+    "accepted": false,
+    "blocker": {
+      "code": "CURATOR_INTAKE_SCHEMA_INVALID",
+      "errors": [
+        "missing_trace_id",
+        "missing_title",
+        "missing_objective",
+        "invalid_source",
+        "invalid_task_type"
+      ]
+    }
+  }
+}
