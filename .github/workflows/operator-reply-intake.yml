@@ -35,23 +35,7 @@ jobs:
             echo "not_sent_missing_secret" > governance/tmp/operator_reply_status.txt
             echo '{"ok":false,"result":[]}' > governance/tmp/operator_reply_updates.json
           else
-            OFFSET_FILE="governance/state/operator_reply_intake_state.json"
-            OFFSET=""
-            if [ -f "$OFFSET_FILE" ]; then
-              LAST=$(python3 - <<'PY'
-import json
-from pathlib import Path
-p=Path('governance/state/operator_reply_intake_state.json')
-try:
-    data=json.loads(p.read_text())
-    print(int(data.get('last_update_id',0))+1)
-except Exception:
-    print('')
-PY
-)
-              if [ -n "$LAST" ] && [ "$LAST" != "1" ]; then OFFSET="?offset=${LAST}"; fi
-            fi
-            HTTP_CODE=$(curl -sS -o governance/tmp/operator_reply_updates.json -w "%{http_code}" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates${OFFSET}" || echo "000")
+            HTTP_CODE=$(curl -sS -o governance/tmp/operator_reply_updates.json -w "%{http_code}" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates" || echo "000")
             echo "$HTTP_CODE" > governance/tmp/operator_reply_status.txt
           fi
 
@@ -63,6 +47,6 @@ PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/operator_reply_intake_state.json governance/operator_decisions governance/tasks/pending governance/transport/results.jsonl governance/reports/operator_reply_intake_result.md
-          git commit -m "BEM-587 operator reply intake result" || echo "No changes"
+          git commit -m "BEM-591 operator reply intake result" || echo "No changes"
           git pull --rebase origin main || git rebase --abort || true
           git push || (git pull --rebase origin main && git push)

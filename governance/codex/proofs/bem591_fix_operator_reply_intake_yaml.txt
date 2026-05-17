@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem591_fix_operator_reply_intake_yaml
+task_type: code_patch
+executed_at: 2026-05-17T19:35:04Z
+ops_applied: Fixed operator-reply-intake.yml invalid YAML by removing inline Python heredoc and updating trigger marker, custom_script
+changed_files: governance/protocols/OPERATOR_REPLY_INTAKE_WORKFLOW_SAFE_YAML.md, .github/workflows/operator-reply-intake.yml, governance/triggers/operator_reply_intake.trigger, governance/reports/bem591_fix_operator_reply_intake_yaml.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem591_fix_operator_reply_intake_yaml.txt
+errors: none
