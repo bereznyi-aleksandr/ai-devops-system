@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem541_4_telegram_delivery_synthetic_v2",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem541_4_telegram_delivery_synthetic_v2.txt"
+  ],
+  "commit_sha": "47fed4b1399124a61b25b8650e11668cc38e3a99",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'ord' is not defined"
+  },
+  "report_path": "governance/codex/results/bem541_4_telegram_delivery_synthetic_v2.md",
+  "completed_at": "2026-05-17T11:21:21Z"
+}
