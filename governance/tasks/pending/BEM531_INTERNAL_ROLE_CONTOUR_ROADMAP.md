@@ -1,0 +1,45 @@
+# BEM-531 | Internal Role Contour Improvement Roadmap
+
+Дата: 2026-05-17 | 12:35 (UTC+3)
+
+## Объект
+Внутренний контур разработки: analyst -> auditor -> executor -> GitHub Actions -> file transport -> role state. Это не внешний GPT autonomy contour.
+
+## Цель
+Довести внутренний мультиагентный контур до проверяемого E2E состояния, где роли создают артефакты, передают их через файловый транспорт, executor применяет изменения, auditor подтверждает, state обновляется.
+
+## Дорожная карта доработок
+
+### BEM-531.1 — Role state schema audit and normalization
+Проверить и нормализовать governance/state/role_cycle_state.json: active_role, cycle_id, current_task, handoff pointers, status history, blocker, timestamps.
+PASS: schema report, normalized state, backward-compatible fields.
+
+### BEM-531.2 — File transport contract
+Формализовать inbox/outbox/result файлы для ролей и стандартизировать JSONL schema.
+PASS: transport protocol + sample records + validator proof.
+
+### BEM-531.3 — Role orchestrator workflow audit
+Проверить role-orchestrator.yml: triggers, inputs, state read/write, no schedule, no issue #31, routing analyst/auditor/executor.
+PASS: audit report + patch if required.
+
+### BEM-531.4 — Provider adapter workflow audit
+Проверить provider-adapter.yml: provider routing, file transport write, failure handling, no paid API by default, no secrets leakage.
+PASS: audit report + patch if required.
+
+### BEM-531.5 — Synthetic role cycle E2E
+Создать тестовую задачу: analyst analysis -> auditor review -> executor file patch -> auditor final PASS -> transport result.
+PASS: all role artifacts exist, role_cycle_state updated, result record appended, blocker=null.
+
+### BEM-531.6 — Internal contour dashboard
+Создать governance/internal_contour/status.md: роли, последний cycle, last result, blockers, next role.
+PASS: dashboard generated from state/transport files.
+
+## Приоритет
+1. BEM-531.1 state schema.
+2. BEM-531.2 file transport contract.
+3. BEM-531.3/531.4 workflows.
+4. BEM-531.5 synthetic E2E.
+5. BEM-531.6 dashboard.
+
+## Ограничения
+No issue #31 comments. No schedule triggers. No secrets in files. No paid OpenAI API. Use Deno + Python executor v3 Run script.
