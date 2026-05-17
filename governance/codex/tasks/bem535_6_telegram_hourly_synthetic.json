@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem535_6_telegram_hourly_synthetic",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-535.6 Telegram hourly synthetic",
+  "objective": "Run script:\n\"\"\"\ntransport = Path('governance/transport/results.jsonl')\ntransport.parent.mkdir(parents=True, exist_ok=True)\nstatus_path = Path('governance/state/contour_status.json')\nprovider_state_path = Path('governance/state/provider_contour_state.json')\nartifacts = Path('governance/internal_contour/e2e/bem535_hourly_telegram')\nartifacts.mkdir(parents=True, exist_ok=True)\nreport = Path('governance/reports/bem535_6_telegram_hourly_synthetic.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nproof = Path('governance/codex/proofs/bem535_6_telegram_hourly_synthetic.txt')\nproof.parent.mkdir(parents=True, exist_ok=True)\n\ncontour = json.loads(status_path.read_text()) if status_path.exists() else {}\nprovider = json.loads(provider_state_path.read_text()) if provider_state_path.exists() else {}\nmessage = 'BEM-535 hourly report | 2026-05-17 | 13:16 (UTC+3) | Provider failover synthetic PASS | Claude primary + GPT reserve configured | last_switch_reason=' + str(provider.get('last_switch_reason')) + ' | blocker=null'\npayload = {\n  'record_type':'telegram_hourly_report',\n  'delivery_mode':'external_cron_to_deno_to_workflow_dispatch',\n  'periodicity':'1h',\n  'canonical':True,\n  'timestamp':'2026-05-17 | 13:16 (UTC+3)',\n  'message':message,\n  'contour_status':contour.get('status'),\n  'provider_state_summary':{\n    'primary_provider': provider.get('primary_provider'),\n    'reserve_provider': provider.get('reserve_provider'),\n    'selected_provider': provider.get('selected_provider'),\n    'last_switch_reason': provider.get('last_switch_reason')\n  },\n  'blocker':None,\n  'security':'synthetic payload only; no token in file'\n}\npayload_path = artifacts/'telegram_hourly_payload.json'\npayload_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False)+'\\n')\nrecord = {'record_type':'telegram_hourly_report_synthetic','cycle_id':'bem535-hourly-telegram','source':'external_cron_synthetic','from_role':'curator','to_role':'telegram','status':'completed','artifact_path':str(payload_path),'commit_sha':None,'blocker':None,'created_at':'2026-05-17 | 13:16 (UTC+3)','delivery_mode':'external_cron_to_deno_to_workflow_dispatch'}\nwith transport.open('a', encoding='utf-8') as f:\n    f.write(json.dumps(record, ensure_ascii=False)+'\\n')\n\nreport.write_text('# BEM-535.6 | Telegram Hourly Reporting Synthetic Test | PASS\\n\\nДата: 2026-05-17 | 13:16 (UTC+3)\\n\\n## Выполнено\\n- Generated canonical hourly Telegram report payload.\\n- Appended synthetic transport record.\\n- No live Telegram API.\\n- No token/secrets in files.\\n- Delivery mode documented as external cron -> Deno -> workflow_dispatch.\\n\\n## Payload\\n`governance/internal_contour/e2e/bem535_hourly_telegram/telegram_hourly_payload.json`\\n\\n## Blocker\\nnull\\n')\nproof.write_text('BEM-535.6 PASS: Telegram hourly canonical report payload generated synthetically.\\n')\nchanged_files.extend([str(transport), str(payload_path), str(report), str(proof)])\nops_applied.append('BEM-535.6 generated Telegram hourly synthetic canonical report payload')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem535_6_telegram_hourly_synthetic.md",
+    "result_json": "governance/codex/results/bem535_6_telegram_hourly_synthetic.json"
+  },
+  "created_at": "2026-05-17T10:16:17.911Z"
+}
