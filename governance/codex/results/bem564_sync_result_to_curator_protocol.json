@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem564_sync_result_to_curator_protocol",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Fixed Claude-GPT sync protocol: agreed external decision hands off to Curator before internal contour",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/EXTERNAL_AUDIT_TO_INTERNAL_CURATOR_HANDOFF.md",
+    "governance/protocols/CLAUDE_GPT_SYNC_PROTOCOL.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/reports/bem564_sync_result_to_curator_protocol.md",
+    "governance/codex/proofs/bem564_sync_result_to_curator_protocol.txt",
+    "governance/codex/proofs/bem564_sync_result_to_curator_protocol.txt"
+  ],
+  "commit_sha": "5e22bb7b849d5555340bedaae5d2641374f2f4ea",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem564_sync_result_to_curator_protocol.md",
+  "completed_at": "2026-05-17T17:42:18Z"
+}
