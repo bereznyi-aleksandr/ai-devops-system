@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem574_actionable_operator_decision_fix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Fixed actionable Telegram operator decision body with question/options/recommendation/reply instructions",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/OPERATOR_DECISION_TELEGRAM_ACTIONABLE_FORMAT.md",
+    "scripts/mailbox_pick_notification.py",
+    "governance/reports/bem574_actionable_operator_decision_fix.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem574_actionable_operator_decision_fix.txt",
+    "governance/codex/proofs/bem574_actionable_operator_decision_fix.txt"
+  ],
+  "commit_sha": "463384baa7f4be5e91eca799a1f621cb80f221bb",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem574_actionable_operator_decision_fix.md",
+  "completed_at": "2026-05-17T18:32:43Z"
+}
