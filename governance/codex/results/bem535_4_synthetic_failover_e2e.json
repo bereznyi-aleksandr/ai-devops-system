@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem535_4_synthetic_failover_e2e",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-535.4 completed synthetic provider failover E2E",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/transport/results.jsonl",
+    "governance/state/provider_contour_state.json",
+    "governance/reports/bem535_4_synthetic_failover_e2e.md",
+    "governance/codex/proofs/bem535_4_synthetic_failover_e2e.txt",
+    "governance/internal_contour/e2e/bem535_failover/claude_timeout_gpt_reserve.json",
+    "governance/internal_contour/e2e/bem535_failover/claude_failed_gpt_reserve.json",
+    "governance/internal_contour/e2e/bem535_failover/primary_ok.json",
+    "governance/codex/proofs/bem535_4_synthetic_failover_e2e.txt"
+  ],
+  "commit_sha": "c97be7431f4d50a4e77193df86a95570a470ab46",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem535_4_synthetic_failover_e2e.md",
+  "completed_at": "2026-05-17T10:15:33Z"
+}
