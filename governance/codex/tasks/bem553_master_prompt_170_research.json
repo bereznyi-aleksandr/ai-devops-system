@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem553_master_prompt_170_research",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-553 master prompt 170 research",
+  "objective": "Find the latest master prompt 170 in the repository, inspect its content, compare it with current implemented autonomous development system state after BEM-550/BEM-552, and write analysis report to governance/reports/bem553_master_prompt_170_analysis.md. Include: files found, whether repository-control-first or direct multiagent implementation should be next, gaps between old master prompt scheme and current architecture, suggested updated work scheme, suggested updated multiagent scheme, and exact recommendation about same chat vs new branch/new chat. Also write proof. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem553_master_prompt_170_research.md",
+    "result_json": "governance/codex/results/bem553_master_prompt_170_research.json"
+  },
+  "created_at": "2026-05-17T13:32:42.580Z"
+}
