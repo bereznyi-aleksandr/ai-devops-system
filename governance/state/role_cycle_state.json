@@ -1,17 +1,17 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 13:35 (UTC+3)",
-  "cycle_id": "bem536-internal-contour-autotest",
+  "updated_at": "2026-05-17 | 13:36 (UTC+3)",
+  "cycle_id": "bem537-transport-consumer-test",
   "source": {
     "type": "gpt",
     "id": "BEM-536"
   },
-  "curator_status": "CLOSED",
-  "active_role": "curator",
-  "next_role": null,
+  "curator_status": "ASSIGNED",
+  "active_role": "consumer",
+  "next_role": "analyst",
   "current_task": {
-    "id": "BEM-536",
-    "title": "Internal contour full development cycle autotest",
+    "id": "BEM-537.1",
+    "title": "Transport consumer input and contract",
     "status": "completed"
   },
   "handoff": {
@@ -97,6 +97,11 @@
     {
       "at": "2026-05-17 | 13:35 (UTC+3)",
       "event": "BEM-536 Task 3 completed: final audit and curator closure",
+      "status": "PASS"
+    },
+    {
+      "at": "2026-05-17 | 13:36 (UTC+3)",
+      "event": "BEM-537 Task 1 input record appended",
       "status": "PASS"
     }
   ],
