@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:17 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:19 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -9,7 +9,7 @@
   "current_cycle": "bem531-full-e2e",
   "active_role": "curator",
   "next_role": null,
-  "last_result": "BEM-542 real orchestrator practical test PASS",
+  "last_result": "BEM-543 corrected curator/orchestrator sequence PASS",
   "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
   "blocker": null,
   "external_sources_scope": [
@@ -228,5 +228,20 @@
     ],
     "provider_probe_before_reserve": true,
     "boundary": "practical file-transport orchestrator logic via codex-runner; not independent always-on agents"
+  },
+  "last_corrected_curator_orchestrator_test": {
+    "id": "BEM-543",
+    "status": "PASS",
+    "full_sequence": [
+      "external_gpt",
+      "curator",
+      "role_orchestrator",
+      "analyst",
+      "auditor",
+      "executor",
+      "auditor_final",
+      "curator_closure"
+    ],
+    "blocker": null
   }
 }

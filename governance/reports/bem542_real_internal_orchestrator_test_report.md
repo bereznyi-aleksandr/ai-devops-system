@@ -48,3 +48,7 @@
 
 ## 6. Blocker
 null
+
+
+## Erratum BEM-543
+BEM-542 summary omitted the explicit initial curator assignment. Correct full sequence is: external GPT -> curator intake -> curator assignment -> role-orchestrator -> analyst -> auditor -> executor -> auditor_final -> curator closure. See `governance/reports/bem543_corrected_curator_orchestrator_test_report.md`.

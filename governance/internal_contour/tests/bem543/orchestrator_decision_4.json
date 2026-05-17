@@ -1,0 +1,15 @@
+{
+  "record_type": "role_orchestrator_decision",
+  "cycle_id": "bem543-corrected-curator-orchestrator-test",
+  "source": "internal_orchestrator",
+  "from_role": "role_orchestrator",
+  "to_role": "auditor_final",
+  "status": "completed",
+  "decision": "route_to_auditor_final",
+  "reason": "execution_completed_requires_final_audit",
+  "input_record_type": "execution",
+  "artifact_path": "governance/internal_contour/tests/bem543/orchestrator_decision_4.json",
+  "commit_sha": null,
+  "blocker": null,
+  "created_at": "2026-05-17 | 14:19 (UTC+3)"
+}

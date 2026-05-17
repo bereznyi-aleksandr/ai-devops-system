@@ -1,7 +1,7 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 14:17 (UTC+3)",
-  "cycle_id": "bem542-practical-e2e",
+  "updated_at": "2026-05-17 | 14:19 (UTC+3)",
+  "cycle_id": "bem543-corrected-curator-orchestrator-test",
   "source": {
     "type": "gpt",
     "id": "BEM-540"
@@ -10,8 +10,8 @@
   "active_role": "curator",
   "next_role": null,
   "current_task": {
-    "id": "BEM-542",
-    "title": "Real internal orchestrator practical test",
+    "id": "BEM-543",
+    "title": "Corrected curator -> orchestrator -> analyst test",
     "status": "completed"
   },
   "handoff": {
@@ -191,6 +191,21 @@
       "event": "BEM-542 final report",
       "status": "PASS",
       "actual_sequence": [
+        "analyst",
+        "auditor",
+        "executor",
+        "auditor_final",
+        "curator_closure"
+      ]
+    },
+    {
+      "at": "2026-05-17 | 14:19 (UTC+3)",
+      "event": "BEM-543 corrected full sequence with explicit curator assignment",
+      "status": "PASS",
+      "sequence": [
+        "external_gpt",
+        "curator",
+        "role_orchestrator",
         "analyst",
         "auditor",
         "executor",
