@@ -51,6 +51,7 @@
 
 | Этап | Наименование | Описание | Обоснование |
 |---|---|---|---|
+| 1 | BEM-531.00 Repository archive cleanup preflight | Проанализировать весь репозиторий и заархивировать устаревшие файлы/записи внешнего и внутреннего контуров без нарушения Deno, GitHub Actions, Python executor v3, curator, role state, file transport, orchestrator и provider adapter | Обязательная первая задача перед доработкой внутреннего контура: в активной зоне репозитория не должно быть мусора; всё переносится в governance/archive с manifest, без безвозвратного удаления |
 | 1 | BEM-531.00 Repository archive cleanup preflight | Full repo inventory and archive cleanup plan/execution with manifest; no active external/internal contour breakage | Must remove stale artifacts before building role contour; added per operator instruction, SHA dbcb908d7ce03352ffd5a3e83d92a32b73fa90ad |
 | 2 | BEM-531.01 Unified curator intake architecture | Curator intake schema for GPT, Claude and Telegram; triage; normalized source fields; next-role assignment | Curator is the single entry point for all external branches |
 | 3 | BEM-531.1 Role state schema audit and normalization | Normalize role_cycle_state.json: cycle_id, source, active_role, curator_status, current_task, handoff, history, blocker, timestamps | State is the source of truth for the internal cycle |
@@ -80,3 +81,8 @@
 
 ## Blocker
 null for this report. Internal contour E2E PASS is pending BEM-531 execution.
+
+
+## Cleanup-first update
+
+Обновление: первым пунктом roadmap добавлена обязательная архивация мусора репозитория перед доработкой внутреннего контура.
