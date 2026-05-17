@@ -1,0 +1,17 @@
+{
+  "record_type": "telegram_hourly_report",
+  "delivery_mode": "external_cron_to_deno_to_workflow_dispatch",
+  "periodicity": "1h",
+  "canonical": true,
+  "timestamp": "2026-05-17 | 13:16 (UTC+3)",
+  "message": "BEM-535 hourly report | 2026-05-17 | 13:16 (UTC+3) | Provider failover synthetic PASS | Claude primary + GPT reserve configured | last_switch_reason=claude_timeout | blocker=null",
+  "contour_status": "PASS",
+  "provider_state_summary": {
+    "primary_provider": "claude",
+    "reserve_provider": "gpt",
+    "selected_provider": "gpt",
+    "last_switch_reason": "claude_timeout"
+  },
+  "blocker": null,
+  "security": "synthetic payload only; no token in file"
+}
