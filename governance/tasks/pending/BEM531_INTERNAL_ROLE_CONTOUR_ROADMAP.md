@@ -3,12 +3,17 @@
 Дата: 2026-05-17 | 12:35 (UTC+3)
 
 ## Объект
-Внутренний контур разработки: curator -> analyst -> auditor -> executor -> GitHub Actions -> file transport -> role state. Это не внешний GPT autonomy contour.
+Внутренний контур разработки: external inputs GPT/Claude/Telegram -> curator -> analyst -> auditor -> executor -> GitHub Actions -> file transport -> role state. Это не внешний GPT autonomy contour.
 
 ## Цель
 Довести внутренний мультиагентный контур до проверяемого E2E состояния, где curator принимает/маршрутизирует вход, роли создают артефакты, передают их через файловый транспорт, executor применяет изменения, auditor подтверждает, state обновляется.
 
 ## Дорожная карта доработок
+
+### BEM-531.00 — Unified curator intake architecture
+Цель: зафиксировать единую точку входа внутреннего контура: GPT external auditor, Claude external auditor и Telegram bot/webhook входят через curator. Curator делает intake, triage, normalizes request, пишет role_cycle_state и направляет в analyst/auditor/executor.
+PASS: architecture report, curator intake schema, transport sample for all three external branches.
+
 
 ### BEM-531.0 — Curator role contract
 Цель: формализовать роль curator как входной диспетчер внутреннего контура: intake, triage, назначение analyst/auditor/executor, контроль handoff и закрытие цикла.
