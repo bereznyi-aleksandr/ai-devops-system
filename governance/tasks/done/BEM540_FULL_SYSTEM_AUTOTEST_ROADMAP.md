@@ -25,3 +25,17 @@ PASS: provider state updated, telegram_outbox.jsonl appended, no secrets.
 ### Task 4 — Final system audit and closure
 Собрать доказательства всех подсистем, обновить contour_status, закрыть roadmap.
 PASS: final report, done-marker, blocker=null.
+
+
+---
+
+## Result
+BEM-540 PASS. Full system autotest completed.
+
+Evidence:
+- Task 1 system preflight: 5a17ca55247e2794413019a10dd36948f48e28cf
+- Task 2 curator internal cycle: 1deca41de9ac6d8ec2e0cbfbbbdd294b97d480a5
+- Task 3 provider+telegram: 73ee42d1ea911f4368e576db9db9302f2e5ee864
+- Task 4 final audit: final commit
+
+Blocker: null

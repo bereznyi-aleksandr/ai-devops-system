@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:01 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:06 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -9,7 +9,7 @@
   "current_cycle": "bem531-full-e2e",
   "active_role": "curator",
   "next_role": null,
-  "last_result": "BEM-537 transport consumer orchestration PASS",
+  "last_result": "BEM-540 full system autotest PASS",
   "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
   "blocker": null,
   "external_sources_scope": [
@@ -181,5 +181,26 @@
   "bem538_status": "closed_wrong_direction",
   "bem539_status": "not_implemented_wrong_direction",
   "architecture_rule": "external contour writes only to curator; curator owns internal workflow orchestration",
-  "curator_intake_contract": "governance/internal_contour/curator_intake_contract.md"
+  "curator_intake_contract": "governance/internal_contour/curator_intake_contract.md",
+  "last_full_system_autotest": {
+    "id": "BEM-540",
+    "status": "PASS",
+    "cycle_id": "bem540-full-system-autotest",
+    "task1_sha": "5a17ca55247e2794413019a10dd36948f48e28cf",
+    "task2_sha": "1deca41de9ac6d8ec2e0cbfbbbdd294b97d480a5",
+    "task3_sha": "73ee42d1ea911f4368e576db9db9302f2e5ee864",
+    "task4_sha": "this_commit",
+    "transport_records": [
+      "curator_intake",
+      "analysis",
+      "audit",
+      "execution",
+      "audit",
+      "final_result",
+      "provider_failover_system_test",
+      "telegram_outbox_system_test"
+    ],
+    "provider_selected": "gpt",
+    "telegram_outbox": "governance/telegram_outbox.jsonl"
+  }
 }
