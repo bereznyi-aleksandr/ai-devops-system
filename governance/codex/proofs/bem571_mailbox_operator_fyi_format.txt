@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem571_mailbox_operator_fyi_format
+task_type: code_patch
+executed_at: 2026-05-17T18:24:07Z
+ops_applied: Changed mailbox Telegram notifications to operator FYI format; recipient action separated from operator action, custom_script
+changed_files: governance/protocols/MAILBOX_TELEGRAM_OPERATOR_FYI_FORMAT.md, scripts/mailbox_pick_notification.py, governance/reports/bem571_mailbox_operator_fyi_format.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem571_mailbox_operator_fyi_format.txt
+errors: none

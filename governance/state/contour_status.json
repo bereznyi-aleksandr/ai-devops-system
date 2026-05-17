@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 21:26 (UTC+3)",
+  "updated_at": "2026-05-17 | 21:29 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -384,6 +384,12 @@
     "status": "completed",
     "script": "scripts/mailbox_pick_notification.py",
     "format": "mobile_sections_no_tables",
+    "blocker": null
+  },
+  "bem571_mailbox_operator_fyi_format": {
+    "status": "completed",
+    "script": "scripts/mailbox_pick_notification.py",
+    "telegram_role": "operator_fyi_not_relay",
     "blocker": null
   }
 }

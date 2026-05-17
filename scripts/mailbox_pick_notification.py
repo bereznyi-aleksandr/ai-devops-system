@@ -42,20 +42,33 @@ def compact_path(path):
         return text
     return text[:42] + "…" + text[-42:]
 
+def operator_action_for(recipient):
+    if recipient == "GPT" or recipient == "Claude":
+        return "Не требуется. Это уведомление о синхронизации Claude↔GPT."
+    return "Проверить mailbox routing."
+
+def recipient_action_for(recipient):
+    if recipient == "GPT":
+        return "GPT должен прочитать файл и ответить через mailbox."
+    if recipient == "Claude":
+        return "Claude должен прочитать файл и ответить через mailbox."
+    return "Адресат должен обработать файл mailbox."
+
 def build_message(path):
     sender, recipient = infer_sender_recipient(path)
     title = title_from_markdown(path)
     short_path = compact_path(path)
     lines = [
-        "BEM-MAILBOX | AUDIT MAILBOX | workflow_runtime",
+        "BEM-MAILBOX | УВЕДОМЛЕНИЕ ОПЕРАТОРУ | workflow_runtime",
         "",
         "Этап: 1/1 (100%)",
         "Дорожная карта: 1/1 (100%)",
         "",
         "Чек-лист:",
         "✅ Новое сообщение mailbox обнаружено",
-        "✅ Отправитель определён",
-        "✅ Получатель определён",
+        f"✅ Адресат: {recipient}",
+        "✅ Записано в repo mailbox",
+        "✅ Действие оператора не требуется",
         "",
         "Сообщение:",
         f"От: {sender}",
@@ -63,11 +76,14 @@ def build_message(path):
         f"Тема: {title}",
         f"Файл: {short_path}",
         "",
-        "Действие:",
-        "Прочитать файл в repo и ответить через mailbox.",
+        f"Действие {recipient}:",
+        recipient_action_for(recipient),
+        "",
+        "Действие оператора:",
+        operator_action_for(recipient),
         "",
         "Причина:",
-        "Асинхронная синхронизация Claude↔GPT без оператора-relay.",
+        "Telegram здесь только уведомляет оператора, а не передаёт задачу вручную.",
     ]
     return "\n".join(lines)
 
