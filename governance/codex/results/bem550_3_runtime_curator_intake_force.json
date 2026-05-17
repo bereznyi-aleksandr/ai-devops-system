@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_3_runtime_curator_intake_force",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-550.3 runtime curator intake explicitly implemented",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/CURATOR_RUNTIME_INTAKE.md",
+    "scripts/curator_runtime_intake.py",
+    ".github/workflows/curator-intake.yml",
+    "governance/transport/results.jsonl",
+    "governance/reports/bem550_3_runtime_curator_intake.md",
+    "governance/codex/proofs/bem550_3_runtime_curator_intake_force.txt",
+    "governance/codex/proofs/bem550_3_runtime_curator_intake_force.txt"
+  ],
+  "commit_sha": "df619c8642e319917c8ae30cef752e16245c1541",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem550_3_runtime_curator_intake_force.md",
+  "completed_at": "2026-05-17T12:27:59Z"
+}
