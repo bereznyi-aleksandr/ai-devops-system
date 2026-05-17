@@ -1,17 +1,17 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 12:52 (UTC+3)",
-  "cycle_id": "bem531-full-e2e",
+  "updated_at": "2026-05-17 | 12:57 (UTC+3)",
+  "cycle_id": "bem533-telegram-synthetic-e2e",
   "source": {
-    "type": "synthetic_e2e",
-    "id": "BEM-531.4"
+    "type": "telegram",
+    "mode": "synthetic_webhook"
   },
   "curator_status": "CLOSED",
   "active_role": "curator",
   "next_role": null,
   "current_task": {
-    "id": "BEM-531",
-    "title": "Internal Role Contour Roadmap",
+    "id": "BEM-533.3",
+    "title": "Telegram synthetic E2E",
     "status": "completed"
   },
   "handoff": {
@@ -73,6 +73,11 @@
       "event": "BEM-531 roadmap completed",
       "status": "PASS",
       "contour_status": "governance/state/contour_status.json"
+    },
+    {
+      "at": "2026-05-17 | 12:57 (UTC+3)",
+      "event": "BEM-533.3 Telegram synthetic E2E PASS",
+      "cycle_id": "bem533-telegram-synthetic-e2e"
     }
   ],
   "legacy": {
