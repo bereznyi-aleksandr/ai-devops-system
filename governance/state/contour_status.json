@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 21:44 (UTC+3)",
+  "updated_at": "2026-05-17 | 21:48 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -415,5 +415,12 @@
     "status": "completed",
     "format": "canon_header_checklist_vertical_decision_table_rationale",
     "blocker": null
+  },
+  "bem576_inline_buttons_protocol": {
+    "status": "architecture_ready",
+    "protocol": "governance/protocols/TELEGRAM_INLINE_OPERATOR_DECISION_BUTTONS.md",
+    "requires": "telegram_callback_handler",
+    "fallback": "text_reply_1_2_3",
+    "blocker": "CALLBACK_HANDLER_NOT_IMPLEMENTED"
   }
 }
