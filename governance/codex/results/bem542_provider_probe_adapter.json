@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem542_provider_probe_adapter",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-542.3 provider probe before reserve completed",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/internal_contour/tests/bem542/provider_selection_active.json",
+    "governance/internal_contour/tests/bem542/provider_selection_failed.json",
+    "governance/transport/results.jsonl",
+    "governance/state/provider_contour_state.json",
+    "governance/state/role_cycle_state.json",
+    "governance/reports/bem542_3_provider_probe_adapter.md",
+    "governance/codex/proofs/bem542_3_provider_probe_adapter.txt",
+    "governance/codex/proofs/bem542_provider_probe_adapter.txt"
+  ],
+  "commit_sha": "4bca6604959bd6055ec6668007834d78c54b249a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem542_provider_probe_adapter.md",
+  "completed_at": "2026-05-17T11:08:38Z"
+}
