@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 22:40 (UTC+3)",
+  "updated_at": "2026-05-17 | 22:43 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -516,6 +516,16 @@
     "status": "completed",
     "workflow": ".github/workflows/operator-reply-intake.yml",
     "issue": "removed_inline_python_heredoc",
+    "blocker": null
+  },
+  "bem592_operator_reply_intake_postfix_check": {
+    "status": "decision_file_present",
+    "decision_files": [
+      "governance/operator_decisions/bem584_decision_format_live_test.json"
+    ],
+    "handoff_files": [
+      "governance/tasks/pending/operator_decision_bem584_decision_format_live_test.md"
+    ],
     "blocker": null
   }
 }
