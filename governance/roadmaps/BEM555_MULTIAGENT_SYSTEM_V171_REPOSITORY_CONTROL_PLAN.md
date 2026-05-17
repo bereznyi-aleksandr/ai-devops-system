@@ -99,3 +99,21 @@
 | Role model | Remove active Analyst terminology | Formalize Analyst as mandatory GPT/Codex role |
 | Deliberation pipeline | EXECUTOR planning -> AUDITOR | Analyst -> AUDITOR -> decision |
 | First product slice | Executor planning artifact | Analyst plan artifact + Auditor decision artifact |
+
+
+---
+
+# BEM-558 CORRECTION | Curator Is Active GPT/Codex Role
+
+Дата: 2026-05-17 | 18:09 (UTC+3)
+
+| Роль | Provider | Статус | Назначение |
+|---|---|---|---|
+| Curator | GPT/Codex | ACTIVE MANDATORY | Принимает внешнюю задачу, формирует/передаёт её во внутренний контур, закрывает цикл |
+| Analyst | GPT/Codex | ACTIVE MANDATORY | Анализирует задачу, готовит варианты, план, критерии |
+| Auditor | Claude/GPT reserve | ACTIVE | Проверяет план/результат, пишет решение |
+| Executor | Claude/GPT/provider | ACTIVE | Выполняет approved implementation |
+| System/State Writer | Workflow/script | ACTIVE | Валидирует и пишет machine state |
+
+## Impact
+Curator and Analyst are both GPT/Codex roles. Future architecture must not collapse them into SYSTEM or EXECUTOR.

@@ -134,3 +134,17 @@
 | Analyst runtime | GPT/Codex | Analyst is always GPT/Codex |
 | Auditor/Executor | May be Claude | These roles are separate from Analyst |
 | Claude audit ask updated | Audit the Analyst-GPT <-> Auditor-Claude interaction, not whether Analyst should exist | Operator decision is final for this project |
+
+
+---
+
+# BEM-558 CORRECTION | Curator Is GPT/Codex
+
+Дата: 2026-05-17 | 18:09 (UTC+3)
+
+| Наименование | Описание | Обоснование |
+|---|---|---|
+| Curator provider | GPT/Codex | Operator correction |
+| Analyst provider | GPT/Codex | BEM-557 |
+| Auditor/Executor providers | Claude/GPT/provider by adapter | Separate from GPT/Codex planning/control roles |
+| Audit ask updated | Claude should audit Curator-GPT + Analyst-GPT + Auditor-Claude interaction | This is now the active project role model |

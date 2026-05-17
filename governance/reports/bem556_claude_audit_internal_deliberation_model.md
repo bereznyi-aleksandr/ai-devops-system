@@ -61,3 +61,18 @@
 | Исправление | Analyst является обязательной активной ролью внутреннего контура | Оператор подтвердил: аналитик всегда GPT/Codex |
 | Новая схема deliberation | Operator/GPT -> Curator -> Analyst(GPT/Codex) -> Auditor(Claude/GPT) -> System/Curator -> Executor -> Final audit -> Closure | Это снимает с оператора роль передаточного звена и сохраняет внутренний контур |
 | Вопрос к Claude | Проверить не наличие Analyst, а корректность взаимодействия Analyst-GPT с Auditor-Claude и Executor | Analyst больше не обсуждается как removable |
+
+
+---
+
+# BEM-558 CORRECTION | Curator Role Is GPT/Codex
+
+Дата: 2026-05-17 | 18:09 (UTC+3)
+
+| Наименование | Описание | Обоснование |
+|---|---|---|
+| Curator | Активная роль GPT/Codex | Оператор уточнил: куратор тоже GPT/Codex |
+| Analyst | Активная роль GPT/Codex | BEM-557 |
+| Auditor | Claude preferred / GPT reserve | Проверяет Analyst plan and Executor result |
+| Executor | Claude/GPT/provider | Исполняет после решения |
+| Updated deliberation | Curator(GPT/Codex) -> Analyst(GPT/Codex) -> Auditor(Claude/GPT) -> Curator/System -> Executor -> Final audit -> Curator closure | Отдельная board не нужна |
