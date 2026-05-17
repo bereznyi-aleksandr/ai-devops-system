@@ -1,6 +1,6 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 14:53 (UTC+3)",
+  "updated_at": "2026-05-17 | 15:00 (UTC+3)",
   "cycle_id": "bem541-corrected-full-system-retest",
   "source": {
     "type": "gpt",
@@ -276,6 +276,20 @@
       "final_to_curator": true,
       "writes_transport": true,
       "writes_state": true,
+      "no_issue_31": true
+    }
+  },
+  "role_orchestrator_yaml_fix": {
+    "status": "PASS",
+    "workflow": ".github/workflows/role-orchestrator.yml",
+    "script": "scripts/role_orchestrator_decide.py",
+    "checks": {
+      "workflow_exists": true,
+      "script_exists": true,
+      "workflow_dispatch": true,
+      "no_schedule": true,
+      "calls_script": true,
+      "no_inline_heredoc": true,
       "no_issue_31": true
     }
   }
