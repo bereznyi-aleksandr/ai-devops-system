@@ -1,0 +1,13 @@
+# Codex Runner v3 Result - bem538_wrong_direction_reconcile_bem531_01
+
+| Field | Value |
+|---|---|
+| Trace | bem538_wrong_direction_reconcile_bem531_01 |
+| Executor | Python v3 (ubuntu-latest) |
+| Status | completed |
+| Operations | closed BEM-538 wrong direction,  blocked BEM-539,  restored curator intake as sole external entry point, custom_script |
+| Commit SHA | c99e722a2433a424f8a3cb089674be2f880b6ed4 |
+| Changed files | governance/tasks/done/BEM538_CLOSED_WRONG_DIRECTION.md, governance/tasks/done/BEM539_NOT_IMPLEMENTED_WRONG_DIRECTION.md, governance/internal_contour/curator_intake_contract.md, governance/state/contour_status.json, governance/state/role_cycle_state.json, governance/transport/results.jsonl, governance/reports/bem538_wrong_direction_reconciliation_report.md, governance/codex/proofs/bem538_wrong_direction_reconcile_bem531_01.txt, governance/codex/proofs/bem538_wrong_direction_reconcile_bem531_01.txt |
+| Completed | 2026-05-17T10:51:24Z |
+
+### Completed successfully.
