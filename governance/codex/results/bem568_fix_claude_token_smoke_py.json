@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem568_fix_claude_token_smoke_py",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem568_fix_claude_token_smoke_py.txt"
+  ],
+  "commit_sha": "026b4a2f5acca34955ee523e644668046a6e3489",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'compile' is not defined"
+  },
+  "report_path": "governance/codex/results/bem568_fix_claude_token_smoke_py.md",
+  "completed_at": "2026-05-17T18:02:20Z"
+}
