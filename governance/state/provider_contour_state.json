@@ -1,6 +1,6 @@
 {
   "schema_version": "provider-contour-state.v1",
-  "updated_at": "2026-05-17 | 15:03 (UTC+3)",
+  "updated_at": "2026-05-17 | 15:36 (UTC+3)",
   "primary_provider": "claude",
   "reserve_provider": "gpt",
   "curator": {
@@ -244,5 +244,25 @@
     "cycle_id": "bem548-5a-synthetic-regression",
     "selected_provider": "claude",
     "reserve_used": false
+  },
+  "bem550_5_provider_adapter_live_test": {
+    "status": "PASS",
+    "checks": [
+      {
+        "signal": "active",
+        "selected_provider": "claude",
+        "reserve_used": false
+      },
+      {
+        "signal": "failed",
+        "selected_provider": "gpt",
+        "reserve_used": true
+      },
+      {
+        "signal": "unknown",
+        "selected_provider": "claude",
+        "reserve_used": false
+      }
+    ]
   }
 }
