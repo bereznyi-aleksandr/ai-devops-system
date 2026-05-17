@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem544_live_telegram_sender_impl_v4",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-544 v4 implemented Telegram sender using workflow shell command",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/telegram_outbox_pick.py",
+    "scripts/telegram_delivery_record.py",
+    ".github/workflows/telegram-outbox-sender.yml",
+    "governance/protocols/TELEGRAM_LIVE_SETUP_OPERATOR_ACTIONS.md",
+    "governance/telegram_outbox.jsonl",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/reports/bem544_live_telegram_sender_implementation.md",
+    "governance/codex/proofs/bem544_live_telegram_sender_impl_v4.txt",
+    "governance/codex/proofs/bem544_live_telegram_sender_impl_v4.txt"
+  ],
+  "commit_sha": "0db8711a909174c6627b2a30a1901aa3d8a26efb",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem544_live_telegram_sender_impl_v4.md",
+  "completed_at": "2026-05-17T11:30:28Z"
+}
