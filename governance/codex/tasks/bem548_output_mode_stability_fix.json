@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem548_output_mode_stability_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-548 output mode stability fix",
+  "objective": "Run script:\n\"\"\"\nreports = Path('governance/reports')\nreports.mkdir(parents=True, exist_ok=True)\nproofs = Path('governance/codex/proofs')\nproofs.mkdir(parents=True, exist_ok=True)\nprotocols = Path('governance/protocols')\nprotocols.mkdir(parents=True, exist_ok=True)\ntransport = Path('governance/transport/results.jsonl')\ntransport.parent.mkdir(parents=True, exist_ok=True)\nstate_path = Path('governance/state/contour_status.json')\n\nprotocol = protocols / 'OPERATOR_VISIBLE_PROGRESS_MODE.md'\nprotocol.write_text('# BEM-548 | Operator Visible Progress Mode\\n\\nДата: 2026-05-17 | 15:08 (UTC+3)\\n\\n## Причина\\nОператор сообщил, что ChatGPT UI стал показывать неудобный экран/обрывы вместо нормального процесса разработки.\\n\\n## Новое правило ответа\\n1. В чат выводить только короткий progress: `YYYY-MM-DD HH:MM (UTC+3) ▶/✅/❌ действие`.\\n2. Не выводить raw JSON/tool payload как основной ответ.\\n3. Не давать длинные промежуточные отчёты.\\n4. Полный канонический отчёт — только когда закрыт этап/блок или найден blocker.\\n5. Если ChatGPT UI уходит в экран профиля/отслеживания — продолжать repo execution и вернуть краткий статус после проверки.\\n\\n## Граница ответственности\\nАгент не может исправить мобильный UI ChatGPT. Агент может снизить нагрузку на чат: короткие сообщения, меньше промежуточного текста, отчёт только по факту результата.\\n')\n\nrecord = {'record_type':'operator_visible_progress_mode','cycle_id':'bem548-output-mode-stability-fix','source':'gpt','status':'completed','rule':'short progress only; no raw tool/json; final report only after stage/blocker','artifact_path':'governance/protocols/OPERATOR_VISIBLE_PROGRESS_MODE.md','commit_sha':None,'blocker':None,'created_at':'2026-05-17 | 15:08 (UTC+3)'}\nwith transport.open('a', encoding='utf-8') as f:\n    f.write(json.dumps(record, ensure_ascii=False)+'\\n')\n\nstate = {}\nif state_path.exists():\n    try:\n        state = json.loads(state_path.read_text(errors='ignore'))\n    except Exception:\n        state = {}\nstate['updated_at'] = '2026-05-17 | 15:08 (UTC+3)'\nstate['operator_visible_progress_mode'] = {'status':'ACTIVE','protocol':'governance/protocols/OPERATOR_VISIBLE_PROGRESS_MODE.md','rule':'short progress only; full report after stage/blocker'}\nstate['blocker'] = None\nstate_path.write_text(json.dumps(state, indent=2, ensure_ascii=False)+'\\n')\n\nreport = reports / 'bem548_output_mode_stability_fix.md'\nreport.write_text('# BEM-548 | Output Mode Stability Fix | PASS\\n\\nДата: 2026-05-17 | 15:08 (UTC+3)\\n\\n## Исправление процесса\\nВведён операторский режим видимого прогресса: короткие строки процесса, без raw JSON/tool payload, отчёт только по закрытию этапа или blocker.\\n\\n## Граница\\nМобильный UI ChatGPT агент не контролирует. Исправление касается режима ответов и объёма сообщений.\\n\\n## Blocker\\nnull\\n')\nproof = proofs / 'bem548_output_mode_stability_fix.txt'\nproof.write_text('BEM-548 output mode stability fix PASS: operator-visible progress mode activated.\\n')\nchanged_files.extend([str(protocol), str(transport), str(state_path), str(report), str(proof)])\nops_applied.append('Activated operator-visible progress mode to reduce chat/UI instability')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem548_output_mode_stability_fix.md",
+    "result_json": "governance/codex/results/bem548_output_mode_stability_fix.json"
+  },
+  "created_at": "2026-05-17T12:05:47.493Z"
+}
