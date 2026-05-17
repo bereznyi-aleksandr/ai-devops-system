@@ -1,17 +1,17 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 14:22 (UTC+3)",
-  "cycle_id": "bem541-provider-probe-before-reserve",
+  "updated_at": "2026-05-17 | 14:28 (UTC+3)",
+  "cycle_id": "bem541-corrected-full-system-retest",
   "source": {
     "type": "gpt",
     "id": "BEM-540"
   },
   "curator_status": "CLOSED",
-  "active_role": "provider_adapter",
-  "next_role": "curator",
+  "active_role": "curator",
+  "next_role": null,
   "current_task": {
-    "id": "BEM-541.1",
-    "title": "Provider live probe before reserve",
+    "id": "BEM-541.5",
+    "title": "Corrected full system retest",
     "status": "completed"
   },
   "handoff": {
@@ -219,6 +219,20 @@
       "status": "PASS",
       "selected_provider": "claude",
       "reserve_used": false
+    },
+    {
+      "at": "2026-05-17 | 14:28 (UTC+3)",
+      "event": "BEM-541.5 corrected full system retest",
+      "status": "PASS",
+      "sequence": [
+        "analyst",
+        "auditor",
+        "executor",
+        "auditor_final",
+        "curator_closure"
+      ],
+      "provider": "claude",
+      "telegram_delivery": "sent_synthetic"
     }
   ],
   "legacy": {

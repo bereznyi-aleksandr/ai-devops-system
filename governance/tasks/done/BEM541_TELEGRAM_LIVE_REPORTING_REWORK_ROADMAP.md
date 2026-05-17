@@ -26,3 +26,18 @@ PASS: telegram_outbox read, delivery result appended to transport, state updated
 ### BEM-541.5 — Corrected full system retest
 Повторить системный тест: provider probe first, curator cycle, provider decision, Telegram delivery result.
 PASS: no forced GPT reserve when Claude active; explicit provider decision records; Telegram delivery result exists.
+
+
+---
+
+## Result
+BEM-541 PASS. Provider probe before reserve and Telegram delivery synthetic proof completed.
+
+Evidence:
+- BEM-541.1 provider probe: 61fd6f88d355ebea3555388624bfd4bb512e7ade
+- BEM-541.2 provider audit: 4636585aeffef45652adecc12228174cb4c4492f
+- BEM-541.3 Telegram sender contract: 3fca43fc951b9f8bab8f711c83d55d4797926e5a
+- BEM-541.4 Telegram delivery synthetic: 1601c023c42b789a7cdcd6b67b3ec2f73dc483d7
+- BEM-541.5 corrected retest: final commit
+
+Blocker: null

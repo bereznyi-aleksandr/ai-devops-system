@@ -1,6 +1,6 @@
 {
   "schema_version": "provider-contour-state.v1",
-  "updated_at": "2026-05-17 | 14:23 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:28 (UTC+3)",
   "primary_provider": "claude",
   "reserve_provider": "gpt",
   "curator": {
@@ -216,5 +216,11 @@
     "created_at": "2026-05-17 | 14:23 (UTC+3)"
   },
   "silent_switch_allowed": false,
-  "audit_required_for_provider_selection": true
+  "audit_required_for_provider_selection": true,
+  "last_corrected_retest": {
+    "cycle_id": "bem541-corrected-full-system-retest",
+    "selected_provider": "claude",
+    "reserve_used": false,
+    "reason": "no_valid_failure_evidence_for_reserve"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:27 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:28 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -9,7 +9,7 @@
   "current_cycle": "bem531-full-e2e",
   "active_role": "curator",
   "next_role": null,
-  "last_result": "BEM-543 corrected curator/orchestrator sequence PASS",
+  "last_result": "BEM-541 corrected full system retest PASS",
   "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
   "blocker": null,
   "external_sources_scope": [
@@ -248,5 +248,27 @@
     "status": "sent_synthetic",
     "outbox_line": 143,
     "delivery_result": "governance/internal_contour/tests/bem541/telegram_delivery_synthetic_result.json"
+  },
+  "last_corrected_full_system_retest": {
+    "id": "BEM-541.5",
+    "status": "PASS",
+    "provider_probe_before_reserve": true,
+    "selected_provider": "claude",
+    "reserve_used": false,
+    "orchestrator_sequence": [
+      "analyst",
+      "auditor",
+      "executor",
+      "auditor_final",
+      "curator_closure"
+    ],
+    "telegram_delivery": "sent_synthetic",
+    "task_shas": {
+      "541.1": "61fd6f88d355ebea3555388624bfd4bb512e7ade",
+      "541.2": "4636585aeffef45652adecc12228174cb4c4492f",
+      "541.3": "3fca43fc951b9f8bab8f711c83d55d4797926e5a",
+      "541.4": "1601c023c42b789a7cdcd6b67b3ec2f73dc483d7",
+      "541.5": "this_commit"
+    }
   }
 }
