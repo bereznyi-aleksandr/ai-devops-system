@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 15:06 (UTC+3)",
+  "updated_at": "2026-05-17 | 15:08 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -481,5 +481,10 @@
     "repo_sent_records_count": 0,
     "delivery_records_count": 5,
     "blocker": null
+  },
+  "operator_visible_progress_mode": {
+    "status": "ACTIVE",
+    "protocol": "governance/protocols/OPERATOR_VISIBLE_PROGRESS_MODE.md",
+    "rule": "short progress only; full report after stage/blocker"
   }
 }
