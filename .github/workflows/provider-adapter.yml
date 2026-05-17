@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       provider:
-        description: file-python-v3
+        description: claude or gpt
         required: true
         type: string
       role:
@@ -16,7 +16,7 @@ on:
         required: true
         type: string
       status:
-        description: completed or failed
+        description: completed, failed, cancelled, timeout, missing_result_after_ttl
         required: true
         type: string
 
@@ -25,11 +25,11 @@ permissions:
 
 jobs:
   adapt:
-    name: Provider Adapter file transport
+    name: Provider Adapter with Claude primary -> GPT reserve failover
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Append provider adapter result
+      - name: Append provider adapter result and failover decision
         shell: bash
         run: |
           python3 - <<'PY'
@@ -39,14 +39,24 @@ jobs:
           provider = '${{ inputs.provider }}'
           role = '${{ inputs.role }}'
           status = '${{ inputs.status }}'
-          path = Path('governance/transport/results.jsonl')
-          path.parent.mkdir(parents=True, exist_ok=True)
-          blocker = None if status == 'completed' else {'code': 'PROVIDER_FAILED', 'message': 'provider adapter reported failed'}
+          reserve_signals = ['failed', 'cancelled', 'timeout', 'missing_result_after_ttl']
+          selected_provider = provider
+          failover_applied = False
+          switch_reason = None
+          if provider == 'claude' and status in reserve_signals:
+              selected_provider = 'gpt'
+              failover_applied = True
+              switch_reason = 'claude_' + status
+          blocker = None if status == 'completed' else {'code': 'PROVIDER_' + status.upper(), 'message': 'provider adapter observed ' + status}
           record = {
             'record_type': 'provider_adapter_result',
             'cycle_id': cycle_id,
             'source': 'internal',
             'provider': provider,
+            'selected_provider': selected_provider,
+            'reserve_provider': 'gpt',
+            'failover_applied': failover_applied,
+            'switch_reason': switch_reason,
             'from_role': role,
             'to_role': 'curator',
             'status': status,
@@ -55,14 +65,29 @@ jobs:
             'blocker': blocker,
             'created_at': 'workflow_runtime'
           }
+          path = Path('governance/transport/results.jsonl')
+          path.parent.mkdir(parents=True, exist_ok=True)
           with path.open('a', encoding='utf-8') as f:
-            f.write(json.dumps(record, ensure_ascii=False) + '\n')
+              f.write(json.dumps(record, ensure_ascii=False) + '\n')
+          state_path = Path('governance/state/provider_contour_state.json')
+          state = json.loads(state_path.read_text()) if state_path.exists() else {}
+          state['updated_at'] = 'workflow_runtime'
+          state['last_provider'] = provider
+          state['selected_provider'] = selected_provider
+          state['last_status'] = status
+          state['last_switch_reason'] = switch_reason
+          hist = state.get('switch_history', [])
+          if failover_applied:
+              hist.append({'cycle_id': cycle_id, 'from': 'claude', 'to': 'gpt', 'reason': switch_reason, 'at': 'workflow_runtime'})
+          state['switch_history'] = hist
+          state['blocker'] = None
+          state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + '\n')
           PY
       - name: Commit provider adapter result
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/transport/results.jsonl
-          git commit -m "Provider adapter result ${{ inputs.cycle_id }}" || echo "No changes"
+          git add governance/transport/results.jsonl governance/state/provider_contour_state.json
+          git commit -m "Provider adapter failover result ${{ inputs.cycle_id }}" || echo "No changes"
           git push

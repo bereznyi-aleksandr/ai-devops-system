@@ -1,0 +1,68 @@
+name: Provider Adapter
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycle_id:
+        description: Internal role cycle id
+        required: true
+        type: string
+      provider:
+        description: file-python-v3
+        required: true
+        type: string
+      role:
+        description: analyst, auditor, executor, curator
+        required: true
+        type: string
+      status:
+        description: completed or failed
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  adapt:
+    name: Provider Adapter file transport
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Append provider adapter result
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cycle_id = '${{ inputs.cycle_id }}'
+          provider = '${{ inputs.provider }}'
+          role = '${{ inputs.role }}'
+          status = '${{ inputs.status }}'
+          path = Path('governance/transport/results.jsonl')
+          path.parent.mkdir(parents=True, exist_ok=True)
+          blocker = None if status == 'completed' else {'code': 'PROVIDER_FAILED', 'message': 'provider adapter reported failed'}
+          record = {
+            'record_type': 'provider_adapter_result',
+            'cycle_id': cycle_id,
+            'source': 'internal',
+            'provider': provider,
+            'from_role': role,
+            'to_role': 'curator',
+            'status': status,
+            'artifact_path': 'governance/transport/results.jsonl',
+            'commit_sha': None,
+            'blocker': blocker,
+            'created_at': 'workflow_runtime'
+          }
+          with path.open('a', encoding='utf-8') as f:
+            f.write(json.dumps(record, ensure_ascii=False) + '\n')
+          PY
+      - name: Commit provider adapter result
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/transport/results.jsonl
+          git commit -m "Provider adapter result ${{ inputs.cycle_id }}" || echo "No changes"
+          git push
