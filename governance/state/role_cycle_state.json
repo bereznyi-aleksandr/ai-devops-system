@@ -1,17 +1,17 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 14:04 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:05 (UTC+3)",
   "cycle_id": "bem540-full-system-autotest",
   "source": {
     "type": "gpt",
     "id": "BEM-540"
   },
-  "curator_status": "ASSIGNED",
+  "curator_status": "CLOSED",
   "active_role": "curator",
-  "next_role": "analyst",
+  "next_role": null,
   "current_task": {
-    "id": "BEM-540.1",
-    "title": "System preflight + test roadmap",
+    "id": "BEM-540.2",
+    "title": "Curator-driven internal development cycle",
     "status": "completed"
   },
   "handoff": {
@@ -123,6 +123,11 @@
     {
       "at": "2026-05-17 | 14:04 (UTC+3)",
       "event": "BEM-540 Task 1 system preflight and curator intake",
+      "status": "PASS"
+    },
+    {
+      "at": "2026-05-17 | 14:05 (UTC+3)",
+      "event": "BEM-540 Task 2 curator-driven internal cycle completed",
       "status": "PASS"
     }
   ],
