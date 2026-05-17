@@ -1,0 +1,155 @@
+name: Mailbox Dispatcher
+
+# BEM-566: срабатывает на push в audit_mailbox/
+# Определяет получателя и шлёт Telegram уведомление
+# NO issue comments, NO schedule
+
+on:
+  push:
+    paths:
+      - 'governance/audit_mailbox/**'
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    name: Mailbox Dispatcher
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect new mailbox files and notify
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, subprocess
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+
+          now_utc = datetime.now(timezone.utc)
+          now_kyiv = now_utc + timedelta(hours=3)
+          time_str = now_kyiv.strftime("%Y-%m-%d | %H:%M (UTC+3)")
+
+          # Найти новые файлы в mailbox из последнего коммита
+          try:
+              changed = subprocess.check_output(
+                  ['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'],
+                  text=True
+              ).strip().split('\n')
+          except Exception:
+              changed = []
+
+          mailbox_files = [
+              f for f in changed
+              if f.startswith('governance/audit_mailbox/') and f.endswith('.md')
+          ]
+
+          if not mailbox_files:
+              print("No new mailbox files detected")
+              exit(0)
+
+          messages = []
+
+          for file_path in mailbox_files:
+              p = Path(file_path)
+              # Определяем направление по папке
+              if 'claude_to_gpt' in file_path:
+                  recipient = 'GPT'
+                  sender    = 'Claude'
+                  emoji     = '🤖→💬'
+              elif 'gpt_to_claude' in file_path:
+                  recipient = 'Claude'
+                  sender    = 'GPT'
+                  emoji     = '💬→🤖'
+              else:
+                  recipient = 'Unknown'
+                  sender    = 'Unknown'
+                  emoji     = '📨'
+
+              # Читаем первые строки файла для контекста
+              preview = ''
+              try:
+                  lines = p.read_text(encoding='utf-8').split('\n')
+                  # Берём заголовок (первая строка)
+                  title = lines[0].replace('#', '').strip() if lines else file_path
+                  preview = title[:80]
+              except Exception:
+                  preview = p.name
+
+              msg = (
+                  f"{emoji} AUDIT MAILBOX | {time_str}\n"
+                  f"\n"
+                  f"От: {sender}\n"
+                  f"Кому: {recipient}\n"
+                  f"Файл: {file_path}\n"
+                  f"Тема: {preview}\n"
+                  f"\n"
+                  f"Прочитай файл через MCP и ответь в mailbox."
+              )
+              messages.append({
+                  'recipient': recipient,
+                  'sender':    sender,
+                  'file':      file_path,
+                  'text':      msg
+              })
+
+          # Пишем в telegram_outbox
+          outbox_path = Path('governance/telegram_outbox.jsonl')
+          now_iso = now_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+          for i, m in enumerate(messages):
+              entry = {
+                  'event_id':  'mailbox_dispatch_' + now_utc.strftime('%Y%m%d_%H%M%S') + '_' + str(i),
+                  'timestamp': now_iso,
+                  'target':    'operator',
+                  'channel':   'telegram',
+                  'chat_id':   '601442777',
+                  'text':      m['text'],
+                  'status':    'ready_to_send',
+                  'meta': {
+                      'type':      'mailbox_notification',
+                      'sender':    m['sender'],
+                      'recipient': m['recipient'],
+                      'file':      m['file']
+                  }
+              }
+              with outbox_path.open('a') as f:
+                  f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+              print(f"Queued notification: {m['sender']} → {m['recipient']}: {m['file']}")
+
+          print(f"Total notifications queued: {len(messages)}")
+          PYEOF
+
+      - name: Commit outbox update
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+        run: |
+          git config user.email "mailbox-dispatcher@ai-devops-system"
+          git config user.name  "Mailbox Dispatcher"
+          git pull --rebase --autostash origin main || true
+          git add governance/telegram_outbox.jsonl 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No outbox changes"
+          else
+            git commit -m "MAILBOX-DISPATCHER: notification queued for new mailbox message"
+            git push || (git pull --rebase origin main && git push)
+          fi
+
+      - name: Job summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## Mailbox Dispatcher" >> "$GITHUB_STEP_SUMMARY"
+          echo "Triggered by push to audit_mailbox/" >> "$GITHUB_STEP_SUMMARY"
+          echo "Notifications queued to telegram_outbox.jsonl" >> "$GITHUB_STEP_SUMMARY"
+          echo "**No issue #31 comments**" >> "$GITHUB_STEP_SUMMARY"
