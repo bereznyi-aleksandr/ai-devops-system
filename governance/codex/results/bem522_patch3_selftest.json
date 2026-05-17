@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem522_patch3_selftest",
+  "executor": "codex-cli",
+  "runner": "self-hosted codex-local",
+  "status": "failed",
+  "changed_files": [],
+  "commit_sha": null,
+  "blocker": {
+    "code": "CODEX_EXEC_FAILED",
+    "message": "codex exit=1",
+    "stderr_tail": "econnecting... 3/5\nERROR: Reconnecting... 4/5\nERROR: Reconnecting... 5/5\nERROR: unexpected status 401 Unauthorized: Missing bearer or basic authentication in header, url: https://api.openai.com/v1/responses, cf-ray: 9fcff4418bca7a5f-ORD, request id: req_0e870f800943442b8afd16139cba14dc\nERROR: unexpected status 401 Unauthorized: Missing bearer or basic authentication in header, url: https://api.openai.com/v1/responses, cf-ray: 9fcff4418bca7a5f-ORD, request id: req_0e870f800943442b8afd16139cba14dc"
+  },
+  "report_path": "governance/codex/results/bem522_patch3_selftest.md",
+  "completed_at": "2026-05-17T04:42:12Z"
+}
