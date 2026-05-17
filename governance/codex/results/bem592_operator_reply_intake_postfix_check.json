@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem592_operator_reply_intake_postfix_check",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Checked operator reply intake status after safe YAML fix",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/bem592_operator_reply_intake_postfix_check.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem592_operator_reply_intake_postfix_check.txt",
+    "governance/codex/proofs/bem592_operator_reply_intake_postfix_check.txt"
+  ],
+  "commit_sha": "41fd40e91c55c600583b06b2a0f42ef869cfbca9",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem592_operator_reply_intake_postfix_check.md",
+  "completed_at": "2026-05-17T19:35:41Z"
+}
