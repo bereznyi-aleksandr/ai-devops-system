@@ -23,7 +23,7 @@ def title_from_markdown(path):
     try:
         for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
             if line.startswith("# "):
-                return line[2:].strip()[:120]
+                return line[2:].strip()[:96]
     except Exception:
         pass
     return path.name
@@ -36,9 +36,16 @@ def infer_sender_recipient(path):
         return "GPT", "Claude"
     return "unknown", "unknown"
 
+def compact_path(path):
+    text = str(path)
+    if len(text) <= 90:
+        return text
+    return text[:42] + "…" + text[-42:]
+
 def build_message(path):
     sender, recipient = infer_sender_recipient(path)
     title = title_from_markdown(path)
+    short_path = compact_path(path)
     lines = [
         "BEM-MAILBOX | AUDIT MAILBOX | workflow_runtime",
         "",
@@ -49,14 +56,18 @@ def build_message(path):
         "✅ Новое сообщение mailbox обнаружено",
         "✅ Отправитель определён",
         "✅ Получатель определён",
-        "✅ Требуется прочитать файл и ответить через mailbox",
         "",
-        "Наименование | Описание | Обоснование",
-        f"От | {sender} | Путь файла: {path}",
-        f"Кому | {recipient} | Определено по директории mailbox",
-        f"Тема | {title} | Первый заголовок markdown",
-        f"Файл | {path} | Repo-visible artifact",
-        "Следующее действие | Прочитать файл и ответить в mailbox | Асинхронная синхронизация без оператора-relay",
+        "Сообщение:",
+        f"От: {sender}",
+        f"Кому: {recipient}",
+        f"Тема: {title}",
+        f"Файл: {short_path}",
+        "",
+        "Действие:",
+        "Прочитать файл в repo и ответить через mailbox.",
+        "",
+        "Причина:",
+        "Асинхронная синхронизация Claude↔GPT без оператора-relay.",
     ]
     return "\n".join(lines)
 

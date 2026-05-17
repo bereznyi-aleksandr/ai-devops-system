@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem570_telegram_mobile_friendly_mailbox
+task_type: code_patch
+executed_at: 2026-05-17T18:22:11Z
+ops_applied: Converted mailbox Telegram notifications to mobile-readable non-table format, custom_script
+changed_files: governance/protocols/TELEGRAM_MOBILE_READABLE_FORMAT.md, scripts/mailbox_pick_notification.py, .github/workflows/mailbox-dispatcher.yml, governance/reports/bem570_telegram_mobile_friendly_mailbox.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem570_telegram_mobile_friendly_mailbox.txt
+errors: none
