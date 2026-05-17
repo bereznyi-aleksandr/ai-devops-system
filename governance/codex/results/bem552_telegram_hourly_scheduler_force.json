@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem552_telegram_hourly_scheduler_force",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-552 forced hourly Telegram scheduler repair completed",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/curator_hourly_report.py",
+    ".github/workflows/curator-hourly-report.yml",
+    "governance/telegram_outbox.jsonl",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/reports/bem552_telegram_hourly_scheduler_fix.md",
+    "governance/codex/proofs/bem552_telegram_hourly_scheduler_force.txt",
+    "governance/codex/proofs/bem552_telegram_hourly_scheduler_force.txt"
+  ],
+  "commit_sha": "92650dabbe23e2586b004b235b0c3d028d061178",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem552_telegram_hourly_scheduler_force.md",
+  "completed_at": "2026-05-17T13:08:13Z"
+}
