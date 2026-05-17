@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_8_failure_handling_recovery",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-550.8 failure handling and recovery policy completed",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/FAILURE_HANDLING_RECOVERY.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/reports/bem550_8_failure_handling_recovery.md",
+    "governance/codex/proofs/bem550_8_failure_handling_recovery.txt",
+    "governance/codex/proofs/bem550_8_failure_handling_recovery.txt"
+  ],
+  "commit_sha": "a29464574802f32ddd79f2eb5c968b2e298e21db",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem550_8_failure_handling_recovery.md",
+  "completed_at": "2026-05-17T12:33:29Z"
+}
