@@ -1,17 +1,17 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 12:50 (UTC+3)",
-  "cycle_id": null,
+  "updated_at": "2026-05-17 | 12:51 (UTC+3)",
+  "cycle_id": "bem531-full-e2e",
   "source": {
-    "type": "roadmap",
-    "id": "BEM-531"
+    "type": "synthetic_e2e",
+    "id": "BEM-531.4"
   },
-  "curator_status": "TRIAGED",
+  "curator_status": "CLOSED",
   "active_role": "curator",
-  "next_role": "analyst",
+  "next_role": null,
   "current_task": {
-    "id": "BEM-531.1",
-    "title": "Role state + agent lifecycle",
+    "id": "BEM-531.4",
+    "title": "Synthetic E2E two-level test",
     "status": "completed"
   },
   "handoff": {
@@ -61,6 +61,12 @@
       "at": "2026-05-17 | 12:50 (UTC+3)",
       "event": "BEM-531.1 normalized role_cycle_state and added agent lifecycle",
       "status": "PASS"
+    },
+    {
+      "at": "2026-05-17 | 12:51 (UTC+3)",
+      "event": "BEM-531.4 minimal and full E2E PASS",
+      "minimal_cycle": "bem531-minimal-e2e",
+      "full_cycle": "bem531-full-e2e"
     }
   ],
   "legacy": {
