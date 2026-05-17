@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem591_fix_operator_reply_intake_yaml",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Fixed operator-reply-intake.yml invalid YAML by removing inline Python heredoc and updating trigger marker",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/OPERATOR_REPLY_INTAKE_WORKFLOW_SAFE_YAML.md",
+    ".github/workflows/operator-reply-intake.yml",
+    "governance/triggers/operator_reply_intake.trigger",
+    "governance/reports/bem591_fix_operator_reply_intake_yaml.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem591_fix_operator_reply_intake_yaml.txt",
+    "governance/codex/proofs/bem591_fix_operator_reply_intake_yaml.txt"
+  ],
+  "commit_sha": "548a9886faffcf0f2585d0bc1c8cf31f84a4737f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem591_fix_operator_reply_intake_yaml.md",
+  "completed_at": "2026-05-17T19:35:05Z"
+}
