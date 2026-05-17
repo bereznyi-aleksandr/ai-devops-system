@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem552_telegram_hourly_scheduler_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-552 Telegram hourly scheduler fix",
+  "objective": "Diagnose and fix missing hourly Telegram reports. Inspect .github/workflows/curator-hourly-report.yml, scripts/telegram_outbox_pick.py, scripts/telegram_delivery_record.py, governance/telegram_outbox.jsonl, governance/transport/results.jsonl. Ensure curator-hourly-report.yml has allowed hourly schedule cron '0 * * * *', workflow_dispatch, valid YAML, Telegram sender steps using TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID, picker and recorder calls, no issue #31. If workflow cannot guarantee immediate user-visible progress, add a ready_to_send BEM-552 Telegram status message and record exact diagnosis. Write governance/reports/bem552_telegram_hourly_scheduler_fix.md and proof. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem552_telegram_hourly_scheduler_fix.md",
+    "result_json": "governance/codex/results/bem552_telegram_hourly_scheduler_fix.json"
+  },
+  "created_at": "2026-05-17T13:07:06.441Z"
+}
