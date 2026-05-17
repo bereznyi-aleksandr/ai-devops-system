@@ -47,3 +47,11 @@ Failure records must include `retry_allowed`, `next_action`, `escalation_target`
 - No schedule triggers.
 - No secrets in files.
 - No paid OpenAI API.
+
+
+## BEM-533 Telegram records
+Telegram synthetic/webhook branch uses the same transport contract with `source=telegram`. Required Telegram-specific record types:
+- telegram_intake
+- telegram_ack
+- telegram_failure
+No Telegram token or secret may be stored in any record.

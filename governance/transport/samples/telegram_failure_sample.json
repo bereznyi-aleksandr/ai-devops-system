@@ -1,0 +1,19 @@
+{
+  "record_type": "telegram_failure",
+  "cycle_id": "bem533-telegram-sample",
+  "source": "telegram",
+  "from_role": "curator",
+  "to_role": "curator",
+  "status": "failed",
+  "artifact_path": "governance/transport/samples/telegram_failure_sample.json",
+  "commit_sha": null,
+  "blocker": {
+    "code": "TELEGRAM_PAYLOAD_INVALID",
+    "message": "synthetic invalid payload"
+  },
+  "retry_allowed": false,
+  "next_action": "ask_curator_to_reject_or_request_clarification",
+  "escalation_target": "curator",
+  "failure_reason": "invalid_payload",
+  "created_at": "2026-05-17 | 12:57 (UTC+3)"
+}
