@@ -1,0 +1,57 @@
+name: Operator Decision Dispatcher
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/operator_decision_queue/**'
+      - 'scripts/operator_decision_pick.py'
+      - 'scripts/operator_decision_record_dispatch.py'
+      - '.github/workflows/operator-decision-dispatcher.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: operator-decision-dispatcher
+  cancel-in-progress: false
+
+jobs:
+  dispatch-operator-decision:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Syntax check decision scripts
+        run: python3 -m py_compile scripts/operator_decision_pick.py scripts/operator_decision_record_dispatch.py
+
+      - name: Pick structured decision package
+        run: python3 scripts/operator_decision_pick.py
+
+      - name: Send operator decision to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ ! -s governance/tmp/operator_decision_message.txt ]; then
+            echo "not_required" > governance/tmp/operator_decision_telegram_status.txt
+          elif [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "not_sent_missing_secret" > governance/tmp/operator_decision_telegram_status.txt
+          else
+            HTTP_CODE=$(curl -sS -o governance/tmp/operator_decision_telegram_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text@governance/tmp/operator_decision_message.txt" --data-urlencode "disable_web_page_preview=true" || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then echo "sent" > governance/tmp/operator_decision_telegram_status.txt; else echo "not_sent_http_${HTTP_CODE}" > governance/tmp/operator_decision_telegram_status.txt; fi
+          fi
+
+      - name: Record dispatch
+        run: python3 scripts/operator_decision_record_dispatch.py
+
+      - name: Commit dispatch result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/state/operator_decision_dispatcher_state.json governance/transport/results.jsonl governance/reports/operator_decision_dispatch_result.md
+          git commit -m "BEM-577 operator decision dispatch result" || echo "No changes"
+          git pull --rebase origin main || git rebase --abort || true
+          git push || (git pull --rebase origin main && git push)

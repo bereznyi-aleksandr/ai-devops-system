@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 21:48 (UTC+3)",
+  "updated_at": "2026-05-17 | 21:52 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -422,5 +422,12 @@
     "requires": "telegram_callback_handler",
     "fallback": "text_reply_1_2_3",
     "blocker": "CALLBACK_HANDLER_NOT_IMPLEMENTED"
+  },
+  "bem577_structured_operator_decision_queue": {
+    "status": "completed",
+    "routine_mailbox_operator_telegram": "disabled",
+    "operator_decisions_require": "governance/operator_decision_queue/*.json",
+    "workflow": ".github/workflows/operator-decision-dispatcher.yml",
+    "blocker": null
   }
 }

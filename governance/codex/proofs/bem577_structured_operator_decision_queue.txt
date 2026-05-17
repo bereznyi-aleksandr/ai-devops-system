@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem577_structured_operator_decision_queue
+task_type: code_patch
+executed_at: 2026-05-17T18:40:24Z
+ops_applied: Introduced structured operator decision queue and disabled operator decision Telegram from routine mailbox, custom_script
+changed_files: governance/protocols/STRUCTURED_OPERATOR_DECISION_QUEUE.md, scripts/mailbox_pick_notification.py, scripts/operator_decision_pick.py, scripts/operator_decision_record_dispatch.py, .github/workflows/operator-decision-dispatcher.yml, governance/reports/bem577_structured_operator_decision_queue.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem577_structured_operator_decision_queue.txt
+errors: none
