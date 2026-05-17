@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem548_5b_live_regression_stale_queue_fix_v2",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-548.5b live Telegram regression recorded and stale queue fixed",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/telegram_outbox_pick.py",
+    "governance/telegram_outbox.jsonl",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/reports/bem548_5b_live_regression_telegram.md",
+    "governance/codex/proofs/bem548_5b_live_regression_stale_queue_fix.txt",
+    "governance/codex/proofs/bem548_5b_live_regression_stale_queue_fix_v2.txt"
+  ],
+  "commit_sha": "080069abab9ced9ae4c9f18b753314a95a845673",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem548_5b_live_regression_stale_queue_fix_v2.md",
+  "completed_at": "2026-05-17T12:03:21Z"
+}
