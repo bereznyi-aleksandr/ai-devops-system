@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_9_monitoring_alerting",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-550.9 monitoring alerting",
+  "objective": "Run script:\n\"\"\"\nprotocols=Path('governance/protocols'); protocols.mkdir(parents=True,exist_ok=True)\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\noutbox=Path('governance/telegram_outbox.jsonl'); outbox.parent.mkdir(parents=True,exist_ok=True)\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\npolicy=protocols/'MONITORING_ALERTING_POLICY.md'\npolicy.write_text('# BEM-550.9 | Monitoring and Alerting\\n\\nДата: 2026-05-17 | 15:41 (UTC+3)\\n\\n## Alerts\\nSend Telegram/file alert for invalid workflow, provider reserve switch, delivery failure, stale queue, blocker not null.\\n\\n## Rule\\nNever issue #31. Alerts go to transport/results.jsonl and telegram_outbox.jsonl.\\n')\nalert={'record_type':'telegram_hourly_report','cycle_id':'bem550-9-monitoring-alerting','delivery_mode':'operator_progress_feed','canonical':True,'status':'ready_to_send','message':'BEM-550.9 | Monitoring and alerting policy ready | blocker=null','created_at':'2026-05-17 | 15:41 (UTC+3)','blocker':None,'priority':'operator_progress'}\nwith outbox.open('a',encoding='utf-8') as f: f.write(json.dumps(alert,ensure_ascii=False)+'\\n')\nrecord={'record_type':'monitoring_alerting_policy','cycle_id':'bem550-9-monitoring-alerting','source':'gpt','status':'completed','artifact_path':str(policy),'commit_sha':None,'blocker':None,'created_at':'2026-05-17 | 15:41 (UTC+3)'}\nwith transport.open('a',encoding='utf-8') as f: f.write(json.dumps(record,ensure_ascii=False)+'\\n')\ncs={}\nif contour.exists():\n    try: cs=json.loads(contour.read_text(errors='ignore'))\n    except Exception: cs={}\ncs['bem550_9_monitoring_alerting']={'status':'PASS','policy':str(policy),'telegram_alert_queued':True,'blocker':None}; cs['updated_at']='2026-05-17 | 15:41 (UTC+3)'; cs['blocker']=None\ncontour.write_text(json.dumps(cs,indent=2,ensure_ascii=False)+'\\n')\nreport=reports/'bem550_9_monitoring_alerting.md'\nreport.write_text('# BEM-550.9 | Monitoring and Alerting | PASS\\n\\nДата: 2026-05-17 | 15:41 (UTC+3)\\n\\n## Result\\nMonitoring/alerting policy created and Telegram alert queued.\\n\\n## Blocker\\nnull\\n')\nproof=proofs/'bem550_9_monitoring_alerting.txt'\nproof.write_text('BEM-550.9 PASS: monitoring and alerting policy created.\\n')\nchanged_files.extend([str(policy),str(outbox),str(transport),str(contour),str(report),str(proof)])\nops_applied.append('BEM-550.9 monitoring and alerting policy completed')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem550_9_monitoring_alerting.md",
+    "result_json": "governance/codex/results/bem550_9_monitoring_alerting.json"
+  },
+  "created_at": "2026-05-17T12:33:47.359Z"
+}
