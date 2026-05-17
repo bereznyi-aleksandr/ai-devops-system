@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem531_1_role_state_lifecycle",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-531.1 normalized role state and added agent lifecycle",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/role_cycle_state.json",
+    "governance/protocols/ROLE_STATE_SCHEMA.md",
+    "governance/reports/bem531_1_role_state_lifecycle_report.md",
+    "governance/codex/proofs/bem531_1_role_state_lifecycle.txt",
+    "governance/codex/proofs/bem531_1_role_state_lifecycle.txt"
+  ],
+  "commit_sha": "5d26e973ed67f61dca308db081d745e044d431f5",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem531_1_role_state_lifecycle.md",
+  "completed_at": "2026-05-17T09:50:09Z"
+}
