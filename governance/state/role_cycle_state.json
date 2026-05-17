@@ -6,12 +6,12 @@
     "type": "gpt",
     "id": "BEM-536"
   },
-  "curator_status": "ASSIGNED",
-  "active_role": "analyst",
+  "curator_status": "WAITING_ROLE",
+  "active_role": "executor",
   "next_role": "auditor",
   "current_task": {
-    "id": "BEM-536.1",
-    "title": "Curator intake + Analyst plan",
+    "id": "BEM-536.2",
+    "title": "Auditor approval + Executor patch",
     "status": "completed"
   },
   "handoff": {
@@ -87,6 +87,11 @@
     {
       "at": "2026-05-17 | 13:34 (UTC+3)",
       "event": "BEM-536 Task 1 completed: curator intake and analyst plan",
+      "status": "PASS"
+    },
+    {
+      "at": "2026-05-17 | 13:34 (UTC+3)",
+      "event": "BEM-536 Task 2 completed: auditor approval and executor patch",
       "status": "PASS"
     }
   ],
