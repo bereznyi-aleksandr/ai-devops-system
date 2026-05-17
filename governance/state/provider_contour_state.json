@@ -1,6 +1,6 @@
 {
   "schema_version": "provider-contour-state.v1",
-  "updated_at": "2026-05-17 | 13:15 (UTC+3)",
+  "updated_at": "2026-05-17 | 13:16 (UTC+3)",
   "primary_provider": "claude",
   "reserve_provider": "gpt",
   "curator": {
@@ -91,5 +91,8 @@
     "primary_ok": true,
     "claude_failed_to_gpt": true,
     "claude_timeout_to_gpt": true
-  }
+  },
+  "status": "PASS",
+  "failover_verified": true,
+  "hourly_telegram_reporting_verified": "synthetic_external_cron_to_deno_to_workflow_dispatch"
 }

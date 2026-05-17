@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 12:58 (UTC+3)",
+  "updated_at": "2026-05-17 | 13:16 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -9,8 +9,8 @@
   "current_cycle": "bem531-full-e2e",
   "active_role": "curator",
   "next_role": null,
-  "last_result": "Telegram synthetic curator E2E PASS",
-  "last_commit": "ee7ed5c6a6c50d7d5a7582226535e0caa0941201",
+  "last_result": "BEM-535 provider failover and Telegram hourly reporting synthetic PASS",
+  "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
   "blocker": null,
   "external_sources_scope": [
     "gpt",
@@ -89,6 +89,41 @@
       {
         "stage": "BEM-533.3",
         "sha": "ee7ed5c6a6c50d7d5a7582226535e0caa0941201"
+      }
+    ]
+  },
+  "provider_failover": "verified_synthetic",
+  "telegram_hourly_report": "synthetic_verified_external_cron_deno_workflow_dispatch",
+  "external_scheduler_policy": "external_cron_to_deno_to_workflow_dispatch; no_github_schedule",
+  "provider_state_path": "governance/state/provider_contour_state.json",
+  "bem535": {
+    "status": "PASS",
+    "stages_completed": 7,
+    "stages_total": 7,
+    "evidence": [
+      {
+        "stage": "BEM-535.1",
+        "sha": "f1ca30827a7c0c9a2366eeb2d305db26afd5eb63"
+      },
+      {
+        "stage": "BEM-535.2",
+        "sha": "babcc559ad9a8bbc9f65e24abad1a7b9bdb6e155"
+      },
+      {
+        "stage": "BEM-535.3",
+        "sha": "364f8d2295677778efca5f9ad9d37e56f6e32d2b"
+      },
+      {
+        "stage": "BEM-535.4",
+        "sha": "c97be7431f4d50a4e77193df86a95570a470ab46"
+      },
+      {
+        "stage": "BEM-535.5",
+        "sha": "1210f0bd094b2688ac9dca747c52201030da6fca"
+      },
+      {
+        "stage": "BEM-535.6",
+        "sha": "9d73b9f3b88ea571c207d74d37b0a23a38972e84"
       }
     ]
   }

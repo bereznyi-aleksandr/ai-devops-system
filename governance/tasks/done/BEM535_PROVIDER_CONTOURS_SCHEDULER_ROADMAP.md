@@ -68,3 +68,20 @@ PASS: done-marker, PASS report, status update.
 - Provider adapter reads failed Claude result and routes to GPT reserve.
 - Hourly Telegram reporting uses external cron -> Deno endpoint -> workflow_dispatch curator-hourly-report.yml.
 - GitHub Actions schedule triggers remain prohibited.
+
+
+---
+
+## Result
+BEM-535 PASS. Provider failover and Telegram hourly reporting architecture verified synthetically.
+
+Evidence:
+- BEM-535.1 architecture contract: f1ca30827a7c0c9a2366eeb2d305db26afd5eb63
+- BEM-535.2 provider limit state: babcc559ad9a8bbc9f65e24abad1a7b9bdb6e155
+- BEM-535.3 provider-adapter failover: 364f8d2295677778efca5f9ad9d37e56f6e32d2b
+- BEM-535.4 synthetic failover E2E: c97be7431f4d50a4e77193df86a95570a470ab46
+- BEM-535.5 hourly Telegram contract: 1210f0bd094b2688ac9dca747c52201030da6fca
+- BEM-535.6 hourly Telegram synthetic payload: 9d73b9f3b88ea571c207d74d37b0a23a38972e84
+- BEM-535.7 final status: final commit
+
+Blocker: null
