@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem583_operator_decision_live_status",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Inspected operator decision dispatcher live status and recorded blocker/status",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/bem583_operator_decision_live_status.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem583_operator_decision_live_status.txt",
+    "governance/codex/proofs/bem583_operator_decision_live_status.txt"
+  ],
+  "commit_sha": "8cf84b63ef9b11936332bb73cbf153681fce7b50",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem583_operator_decision_live_status.md",
+  "completed_at": "2026-05-17T19:20:22Z"
+}
