@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:36 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:38 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -12,8 +12,19 @@
   "last_result": "BEM-541 corrected full system retest PASS",
   "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
   "blocker": {
-    "code": "RUNTIME_SECRETS_REQUIRED_FOR_LIVE_SEND",
-    "message": "Add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to GitHub Actions Secrets; do not store in files."
+    "code": "TELEGRAM_HOURLY_WIRING_FAILED",
+    "checks": {
+      "curator_hourly_exists": true,
+      "sender_workflow_exists": true,
+      "hourly_has_schedule": true,
+      "hourly_has_cron": true,
+      "hourly_has_continue_on_error": true,
+      "hourly_uses_token_secret": true,
+      "hourly_uses_chat_secret": true,
+      "hourly_calls_picker": true,
+      "hourly_calls_recorder": true,
+      "no_issue_31": false
+    }
   },
   "external_sources_scope": [
     "gpt",
@@ -275,12 +286,39 @@
     }
   },
   "telegram_live_sender": {
-    "workflow": ".github/workflows/telegram-outbox-sender.yml",
-    "required_runtime_secrets": [
-      "TELEGRAM_BOT_TOKEN",
-      "TELEGRAM_CHAT_ID"
+    "operator_screenshot": "secrets_present_TELEGRAM_BOT_TOKEN_TELEGRAM_CHAT_ID",
+    "hourly_workflow": ".github/workflows/curator-hourly-report.yml",
+    "sender_scripts": [
+      "scripts/telegram_outbox_pick.py",
+      "scripts/telegram_delivery_record.py"
     ],
-    "status": "repo_side_ready_waiting_runtime_secrets",
-    "blocker": "RUNTIME_SECRETS_REQUIRED_FOR_LIVE_SEND"
+    "status": "wiring_blocked",
+    "checks": {
+      "curator_hourly_exists": true,
+      "sender_workflow_exists": true,
+      "hourly_has_schedule": true,
+      "hourly_has_cron": true,
+      "hourly_has_continue_on_error": true,
+      "hourly_uses_token_secret": true,
+      "hourly_uses_chat_secret": true,
+      "hourly_calls_picker": true,
+      "hourly_calls_recorder": true,
+      "no_issue_31": false
+    },
+    "blocker": {
+      "code": "TELEGRAM_HOURLY_WIRING_FAILED",
+      "checks": {
+        "curator_hourly_exists": true,
+        "sender_workflow_exists": true,
+        "hourly_has_schedule": true,
+        "hourly_has_cron": true,
+        "hourly_has_continue_on_error": true,
+        "hourly_uses_token_secret": true,
+        "hourly_uses_chat_secret": true,
+        "hourly_calls_picker": true,
+        "hourly_calls_recorder": true,
+        "no_issue_31": false
+      }
+    }
   }
 }
