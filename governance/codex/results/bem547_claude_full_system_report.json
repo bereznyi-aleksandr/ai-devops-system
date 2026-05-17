@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem547_claude_full_system_report",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-547 full system report for Claude and BEM-548 roadmap prepared",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/bem547_full_system_report_for_claude.md",
+    "governance/tasks/pending/BEM548_NEXT_DEVELOPMENT_ROADMAP_FOR_APPROVAL.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem547_full_system_report_for_claude.txt",
+    "governance/codex/proofs/bem547_claude_full_system_report.txt"
+  ],
+  "commit_sha": "5f2f6ffdf5d3080d8702c943ab20203d0f556a4e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem547_claude_full_system_report.md",
+  "completed_at": "2026-05-17T11:47:05Z"
+}
