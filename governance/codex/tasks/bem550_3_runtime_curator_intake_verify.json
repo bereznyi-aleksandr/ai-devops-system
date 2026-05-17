@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_3_runtime_curator_intake_verify",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "Verify BEM-550.3 files",
+  "objective": "Verify BEM-550.3 required artifacts exist and report exact status. Check governance/protocols/CURATOR_RUNTIME_INTAKE.md, scripts/curator_runtime_intake.py, .github/workflows/curator-intake.yml, governance/reports/bem550_3_runtime_curator_intake.md, governance/state/role_cycle_state.json, governance/transport/results.jsonl. Write diagnosis report to governance/reports/bem550_3_runtime_curator_intake_verify.md and proof. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem550_3_runtime_curator_intake_verify.md",
+    "result_json": "governance/codex/results/bem550_3_runtime_curator_intake_verify.json"
+  },
+  "created_at": "2026-05-17T12:26:59.792Z"
+}
