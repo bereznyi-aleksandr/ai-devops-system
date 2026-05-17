@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem545_wire_live_telegram_hourly_sender",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-545 wired live Telegram sender to approved hourly workflow using existing secrets names",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/curator-hourly-report.yml",
+    "governance/state/contour_status.json",
+    "governance/transport/results.jsonl",
+    "governance/reports/bem545_live_telegram_hourly_sender_wiring.md",
+    "governance/codex/proofs/bem545_wire_live_telegram_hourly_sender.txt",
+    "governance/codex/proofs/bem545_wire_live_telegram_hourly_sender.txt"
+  ],
+  "commit_sha": "a9c8429641fe37e56a0a62b2842f7b68932895c1",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem545_wire_live_telegram_hourly_sender.md",
+  "completed_at": "2026-05-17T11:34:08Z"
+}
