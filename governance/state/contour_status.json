@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 13:40 (UTC+3)",
+  "updated_at": "2026-05-17 | 13:41 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -152,5 +152,11 @@
     "task2_sha": "686330d494bbac62cdb74b31f92c7e65246184c0",
     "task3_sha": "this_commit"
   },
-  "transport_consumer": "synthetic_verified"
+  "transport_consumer": "synthetic_verified",
+  "bem538_runtime_dispatch_readiness": {
+    "role_ready": true,
+    "provider_ready": true,
+    "bridge_ready": true,
+    "status": "PASS"
+  }
 }
