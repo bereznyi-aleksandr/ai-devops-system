@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem562_telegram_operator_decision_gate",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Added Telegram operator decision gate for Claude-GPT synchronization outcomes",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/TELEGRAM_OPERATOR_DECISION_GATE.md",
+    "governance/telegram_outbox.jsonl",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/reports/bem562_telegram_operator_decision_gate.md",
+    "governance/codex/proofs/bem562_telegram_operator_decision_gate.txt",
+    "governance/codex/proofs/bem562_telegram_operator_decision_gate.txt"
+  ],
+  "commit_sha": "77b8287c365779cf865dc4ea8a6ce706ebef903b",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem562_telegram_operator_decision_gate.md",
+  "completed_at": "2026-05-17T17:11:45Z"
+}
