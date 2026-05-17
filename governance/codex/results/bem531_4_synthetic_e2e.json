@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem531_4_synthetic_e2e",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-531.4 completed minimal and full synthetic role-cycle E2E",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/transport/results.jsonl",
+    "governance/state/role_cycle_state.json",
+    "governance/reports/bem531_4_synthetic_e2e_report.md",
+    "governance/codex/proofs/bem531_4_synthetic_e2e.txt",
+    "governance/internal_contour/e2e/bem531_4/full_curator_intake.json",
+    "governance/internal_contour/e2e/bem531_4/full_auditor_final.md",
+    "governance/internal_contour/e2e/bem531_4/full_executor_patch.md",
+    "governance/internal_contour/e2e/bem531_4/full_auditor_review.md",
+    "governance/internal_contour/e2e/bem531_4/full_analyst_analysis.md",
+    "governance/internal_contour/e2e/bem531_4/minimal_intake.json",
+    "governance/internal_contour/e2e/bem531_4/full_curator_closure.md",
+    "governance/internal_contour/e2e/bem531_4/minimal_executor_result.md",
+    "governance/codex/proofs/bem531_4_synthetic_e2e.txt"
+  ],
+  "commit_sha": "9005e6c1bf5e87a0c77df2734f23806902419269",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem531_4_synthetic_e2e.md",
+  "completed_at": "2026-05-17T09:51:41Z"
+}
