@@ -134,3 +134,17 @@ BEM-<N> | CLAUDE-GPT SYNC RESULT | YYYY-MM-DD | HH:MM (UTC+3)
 | Correction | После согласования Claude-GPT или подтверждения оператором решение передаётся Curator, не Analyst напрямую | Curator — единая точка входа внутреннего контура |
 | Internal route | Curator -> Role-orchestrator -> Analyst -> Auditor -> Executor -> Final audit -> Curator closure | Внутренний контур сам назначает следующие роли |
 | Boundary | Внешний аудит только согласует; внутренний контур выполняет | Не смешивать контуры |
+
+
+---
+
+# BEM-565 CORRECTION | External and Internal Auditors Are Peers
+
+Дата: 2026-05-17 | 20:02 (UTC+3)
+
+| Наименование | Описание | Обоснование |
+|---|---|---|
+| Correction | Внешний аудитор не “согласует сверху”; внешний и внутренний аудиторы равноправно обсуждают и приходят к решению | Решение оператора |
+| Final authority | Старший только оператор | Оператор принимает стратегическое финальное решение |
+| Handoff | Совместное решение аудиторов или решение оператора передаётся куратору | Curator — единая точка входа |
+| Route | Curator -> Role-orchestrator -> internal contour | Внутренний контур сам исполняет через свои роли |

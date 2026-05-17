@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 20:00 (UTC+3)",
+  "updated_at": "2026-05-17 | 20:02 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -299,6 +299,12 @@
     "status": "completed",
     "protocol": "governance/protocols/EXTERNAL_AUDIT_TO_INTERNAL_CURATOR_HANDOFF.md",
     "rule": "approved_external_decision_must_go_to_curator_first",
+    "blocker": null
+  },
+  "bem565_peer_auditors_to_curator": {
+    "status": "completed",
+    "protocol": "governance/protocols/PEER_AUDITORS_DECISION_TO_CURATOR.md",
+    "rule": "external_and_internal_auditors_are_peers_operator_is_final_authority",
     "blocker": null
   }
 }
