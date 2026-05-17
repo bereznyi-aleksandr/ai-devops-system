@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem541_4_telegram_delivery_synthetic_v3",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-541.4 Telegram delivery synthetic E2E completed after sandbox-safe pseudo-hash fix",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/telegram_outbox.jsonl",
+    "governance/internal_contour/tests/bem541/telegram_delivery_synthetic_result.json",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/reports/bem541_4_telegram_delivery_synthetic_e2e.md",
+    "governance/codex/proofs/bem541_4_telegram_delivery_synthetic_e2e.txt",
+    "governance/codex/proofs/bem541_4_telegram_delivery_synthetic_v3.txt"
+  ],
+  "commit_sha": "1601c023c42b789a7cdcd6b67b3ec2f73dc483d7",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem541_4_telegram_delivery_synthetic_v3.md",
+  "completed_at": "2026-05-17T11:21:53Z"
+}
