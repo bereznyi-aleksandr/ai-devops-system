@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_4_role_orchestrator_live_test",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-550.4 role orchestrator live test",
+  "objective": "Implement and verify BEM-550.4 Role-orchestrator live workflow test. Create a test cycle in governance/transport/results.jsonl with curator_intake and curator_assignment, dispatch or simulate workflow-compatible execution of scripts/role_orchestrator_decide.py using CYCLE_ID=bem550-4-live-test, verify role_orchestrator_decision routes to analyst, update role_cycle_state.json, write governance/reports/bem550_4_role_orchestrator_live_test.md and proof. No schedule, no issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem550_4_role_orchestrator_live_test.md",
+    "result_json": "governance/codex/results/bem550_4_role_orchestrator_live_test.json"
+  },
+  "created_at": "2026-05-17T12:29:35.876Z"
+}
