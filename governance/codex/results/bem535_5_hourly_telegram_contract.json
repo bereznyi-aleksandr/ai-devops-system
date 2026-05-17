@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem535_5_hourly_telegram_contract",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-535.5 created Telegram hourly report contract with external cron -> Deno -> workflow_dispatch",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/TELEGRAM_HOURLY_REPORT_CONTRACT.md",
+    "governance/transport/samples/telegram_hourly_report_payload_sample.json",
+    "governance/reports/bem535_5_hourly_telegram_contract.md",
+    "governance/codex/proofs/bem535_5_hourly_telegram_contract.txt",
+    "governance/codex/proofs/bem535_5_hourly_telegram_contract.txt"
+  ],
+  "commit_sha": "1210f0bd094b2688ac9dca747c52201030da6fca",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem535_5_hourly_telegram_contract.md",
+  "completed_at": "2026-05-17T10:16:01Z"
+}
