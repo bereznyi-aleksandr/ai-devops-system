@@ -1,0 +1,16 @@
+{
+  "record_type": "provider_selection_decision_test",
+  "cycle_id": "bem541-provider-probe-before-reserve",
+  "source": "synthetic_matrix_check",
+  "provider": "claude",
+  "probe_signal": "failed",
+  "selected_provider": "gpt",
+  "reserve_used": true,
+  "decision": "select_gpt_reserve",
+  "reason": "claude_failed",
+  "status": "completed",
+  "artifact_path": "governance/internal_contour/tests/bem541/provider_selection_test_failed.json",
+  "commit_sha": null,
+  "blocker": null,
+  "created_at": "2026-05-17 | 14:22 (UTC+3)"
+}
