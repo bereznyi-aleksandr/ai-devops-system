@@ -1,0 +1,19 @@
+{
+  "record_type": "executor_failed",
+  "cycle_id": "bem531-sample-cycle",
+  "source": "internal",
+  "from_role": "executor",
+  "to_role": "curator",
+  "status": "failed",
+  "artifact_path": "governance/transport/samples/failure_executor_sample.json",
+  "commit_sha": null,
+  "blocker": {
+    "code": "EXECUTOR_FAILED",
+    "message": "executor returned failed status"
+  },
+  "retry_allowed": false,
+  "next_action": "diagnose_blocker",
+  "escalation_target": "curator",
+  "failure_reason": "executor_failed",
+  "created_at": "2026-05-17 | 12:50 (UTC+3)"
+}
