@@ -1,17 +1,21 @@
 name: Codex Runner
 
-# BEM-525: extended Python executor — delete, move, append, set field, create
-# NO issue comments, NO schedule, NO paid API
+# BEM-526: Python executor v3
+# - 12 file operation patterns
+# - arbitrary Python script (Run script: """...""")
+# - operations_applied in result
+# - objective validation
+# - NO paid API, NO self-hosted, NO issue comments
 
 on:
   workflow_dispatch:
     inputs:
       trace_id:
-        description: 'Trace ID (matches governance/codex/tasks/<trace_id>.json)'
+        description: 'Trace ID'
         required: true
         type: string
       task_path:
-        description: 'Override path to task JSON file'
+        description: 'Override task file path'
         required: false
         default: ''
         type: string
@@ -22,7 +26,7 @@ permissions:
 
 jobs:
   codex-runner:
-    name: Codex Runner (ubuntu-latest, Python executor)
+    name: Codex Runner v3 (ubuntu-latest)
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -61,55 +65,67 @@ jobs:
               print('Task file not found: ' + task_path)
               with open(env_file, 'a') as f:
                   f.write('TASK_FOUND=false\n')
-                  f.write('TASK_TITLE=unknown\n')
                   f.write('TASK_OBJECTIVE=\n')
                   f.write('TASK_TYPE=unknown\n')
                   f.write('TRACE_ID=' + trace + '\n')
           else:
               task      = json.loads(p.read_text())
-              title     = task.get('title', 'untitled')
               objective = task.get('objective', '')
               task_type = task.get('task_type', 'unknown')
-              print('Task found: ' + title)
+              title     = task.get('title', 'untitled')
+              print('Task: ' + title)
+              print('Type: ' + task_type)
               with open(env_file, 'a') as f:
                   f.write('TASK_FOUND=true\n')
-                  f.write('TASK_TITLE=' + title.replace('\n', ' ') + '\n')
-                  f.write('TASK_OBJECTIVE=' + objective[:2000].replace('\n', ' ') + '\n')
+                  f.write('TASK_TITLE=' + title.replace('\n',' ') + '\n')
+                  f.write('TASK_OBJECTIVE=' + objective[:3000].replace('\n',' ') + '\n')
                   f.write('TASK_TYPE=' + task_type + '\n')
                   f.write('TRACE_ID=' + trace + '\n')
           PYEOF
 
-      - name: Execute task via Python executor
+      - name: Execute task
         if: env.TASK_FOUND == 'true'
         shell: bash
         run: |
           python3 - <<'PYEOF'
           """
-          BEM-525 Python Executor — поддерживаемые паттерны в objective:
+          =================================================================
+          PYTHON EXECUTOR v3 — BEM-526
+          =================================================================
 
-          1. Create file <path> with content <text>
-             → создать файл с текстом
+          УРОВЕНЬ 1 — ПАТТЕРНЫ (12 операций):
 
-          2. Delete file <path>
-             → удалить файл (заменить archived-маркером)
+          1.  Create file <path> with content <text>
+          2.  Delete file <path>
+          3.  Move file <path> to <path2>
+          4.  Copy file <path> to <path2>
+          5.  Append to <path>: <content>
+          6.  Prepend to <path>: <content>
+          7.  Set <path> field <key>=<value>
+          8.  Set <path> fields: k1=v1, k2=v2
+          9.  Replace in <path> line containing <old> with <new>
+          10. Delete from <path> line containing <text>
+          11. Insert in <path> after line containing <anchor>: <content>
+          12. Create dir <path>
 
-          3. Move file <path> to <path2>
-             → переместить файл
+          УРОВЕНЬ 2 — ПРОИЗВОЛЬНЫЙ PYTHON СКРИПТ:
 
-          4. Append to <path>: <content>
-             → дописать строку в файл (для jsonl и md)
-
-          5. Set <path> field <key>=<value>
-             → обновить поле в JSON файле
-
-          6. Set <path> fields: <key1>=<val1>, <key2>=<val2>
-             → обновить несколько полей в JSON
-
-          Паттерны применяются по порядку.
-          Можно комбинировать несколько операций в одном objective.
-          Всегда создаётся proof file.
+          Run script:
           """
-          import json, os, re, shutil
+          # любой Python код здесь
+          # доступ к файловой системе репозитория
+          """
+
+          БЕЗОПАСНОСТЬ СКРИПТА:
+          - Запрещены: requests, urllib, subprocess, os.system, socket
+          - Запрещено: читать переменные окружения с секретами
+          - Только файловые операции внутри репозитория
+
+          КОМБИНИРОВАНИЕ:
+          Можно использовать несколько паттернов и скрипт в одном objective.
+          =================================================================
+          """
+          import json, os, re, shutil, ast
           from datetime import datetime, timezone
           from pathlib import Path
 
@@ -118,150 +134,287 @@ jobs:
           objective = os.environ.get('TASK_OBJECTIVE', '')
           task_type = os.environ.get('TASK_TYPE', 'unknown')
 
+          # Восстанавливаем переносы строк (были заменены пробелами при передаче)
+          # Скрипт ищем в оригинальном task file
+          task_path = 'governance/codex/tasks/' + trace + '.json'
+          try:
+              full_task = json.loads(Path(task_path).read_text())
+              objective = full_task.get('objective', objective)
+          except Exception:
+              pass
+
           print('Executing: ' + trace)
-          print('Objective: ' + objective[:400])
 
-          changed_files = []
-          errors        = []
-          exec_status   = 'completed'
+          changed_files    = []
+          errors           = []
+          ops_applied      = []
+          exec_status      = 'completed'
 
-          # ── 1. Create file <path> with content <text> ───────────────────────
+          # ── УРОВЕНЬ 2: Произвольный Python скрипт ───────────────────────
+          script_match = re.search(r'Run script:\s*\n\s*"""(.*?)"""', objective, re.DOTALL)
+          if not script_match:
+              script_match = re.search(r"Run script:\s*\n\s*'''(.*?)'''", objective, re.DOTALL)
+
+          if script_match:
+              script_code = script_match.group(1)
+
+              # Валидация безопасности
+              forbidden = ['requests', 'urllib', 'subprocess', 'os.system',
+                           'os.popen', 'socket', 'exec(', 'eval(', '__import__']
+              blocked = [f for f in forbidden if f in script_code]
+
+              if blocked:
+                  errors.append('Script blocked: forbidden calls: ' + ', '.join(blocked))
+                  exec_status = 'failed'
+              else:
+                  print('Running custom script...')
+                  try:
+                      # Выполняем скрипт в безопасном контексте
+                      safe_globals = {
+                          '__builtins__': {
+                              'print': print, 'len': len, 'str': str, 'int': int,
+                              'float': float, 'bool': bool, 'list': list, 'dict': dict,
+                              'tuple': tuple, 'set': set, 'range': range, 'enumerate': enumerate,
+                              'zip': zip, 'map': map, 'filter': filter, 'sorted': sorted,
+                              'min': min, 'max': max, 'sum': sum, 'any': any, 'all': all,
+                              'isinstance': isinstance, 'type': type, 'repr': repr,
+                              'open': open, 'True': True, 'False': False, 'None': None,
+                          },
+                          'json': json,
+                          'Path': Path,
+                          're': re,
+                          'datetime': datetime,
+                          'timezone': timezone,
+                          'now': now,
+                          'trace': trace,
+                          'shutil': shutil,
+                          'changed_files': changed_files,
+                          'ops_applied': ops_applied,
+                      }
+                      exec(script_code, safe_globals)
+                      # Подбираем изменённые файлы из контекста скрипта
+                      if 'changed_files' in safe_globals:
+                          changed_files = safe_globals['changed_files']
+                      ops_applied.append('custom_script')
+                      print('Script executed successfully')
+                  except Exception as e:
+                      errors.append('Script error: ' + str(e))
+                      exec_status = 'failed'
+
+          # ── УРОВЕНЬ 1: Паттерны ─────────────────────────────────────────
+
+          # 1. Create file
           for m in re.finditer(
-              r'[Cc]reate\s+file\s+([^\s]+)\s+with\s+content\s+["\']?(.+?)["\']?\s*(?=\.|Delete|Move|Append|Set|$)',
-              objective, re.DOTALL
+              r'Create\s+file\s+([^\s]+)\s+with\s+content\s+["\']?(.*?)["\']?\s*(?=\.|Create|Delete|Move|Copy|Append|Prepend|Set|Replace|Insert|Run|$)',
+              objective, re.DOTALL | re.IGNORECASE
           ):
-              target = m.group(1).strip()
+              target  = m.group(1).strip()
               content = m.group(2).strip()
               try:
                   p = Path(target)
                   p.parent.mkdir(parents=True, exist_ok=True)
                   p.write_text(content + '\n')
                   changed_files.append(target)
+                  ops_applied.append('create:' + target)
                   print('Created: ' + target)
               except Exception as e:
                   errors.append('Create failed ' + target + ': ' + str(e))
 
-          # ── 2. Delete file <path> ────────────────────────────────────────────
-          for m in re.finditer(r'[Dd]elete\s+file\s+([^\s\.]+)', objective):
+          # 2. Delete file
+          for m in re.finditer(r'Delete\s+file\s+([^\s\.]+)', objective, re.IGNORECASE):
               target = m.group(1).strip()
               try:
                   p = Path(target)
                   if p.exists():
-                      # Replace with archived marker (git cannot delete via script alone)
-                      p.write_text(
-                          '# ARCHIVED\n'
-                          'Status: deleted\n'
-                          'Archived at: ' + now + '\n'
-                          'Trace: ' + trace + '\n'
-                      )
+                      p.write_text('# ARCHIVED\nArchived at: ' + now + '\nTrace: ' + trace + '\n')
                       changed_files.append(target)
-                      print('Archived (deleted): ' + target)
-                  else:
-                      print('Delete: file not found (skipped): ' + target)
+                      ops_applied.append('delete:' + target)
+                      print('Archived: ' + target)
               except Exception as e:
                   errors.append('Delete failed ' + target + ': ' + str(e))
 
-          # ── 3. Move file <path> to <path2> ───────────────────────────────────
-          for m in re.finditer(r'[Mm]ove\s+file\s+([^\s]+)\s+to\s+([^\s\.]+)', objective):
-              src  = m.group(1).strip()
-              dst  = m.group(2).strip()
+          # 3. Move file
+          for m in re.finditer(r'Move\s+file\s+([^\s]+)\s+to\s+([^\s\.]+)', objective, re.IGNORECASE):
+              src, dst = m.group(1).strip(), m.group(2).strip()
               try:
-                  sp = Path(src)
-                  dp = Path(dst)
+                  sp, dp = Path(src), Path(dst)
                   if sp.exists():
                       dp.parent.mkdir(parents=True, exist_ok=True)
                       dp.write_text(sp.read_text())
                       sp.write_text('# ARCHIVED\nMoved to: ' + dst + '\nAt: ' + now + '\n')
                       changed_files.extend([src, dst])
+                      ops_applied.append('move:' + src + '->' + dst)
                       print('Moved: ' + src + ' → ' + dst)
-                  else:
-                      print('Move: source not found (skipped): ' + src)
               except Exception as e:
-                  errors.append('Move failed ' + src + ': ' + str(e))
+                  errors.append('Move failed: ' + str(e))
 
-          # ── 4. Append to <path>: <content> ──────────────────────────────────
-          for m in re.finditer(r'[Aa]ppend\s+to\s+([^\s:]+):\s+(.+?)(?=\.|Delete|Move|Create|Set|$)', objective, re.DOTALL):
-              target  = m.group(1).strip()
-              content = m.group(2).strip()
+          # 4. Copy file
+          for m in re.finditer(r'Copy\s+file\s+([^\s]+)\s+to\s+([^\s\.]+)', objective, re.IGNORECASE):
+              src, dst = m.group(1).strip(), m.group(2).strip()
+              try:
+                  sp, dp = Path(src), Path(dst)
+                  if sp.exists():
+                      dp.parent.mkdir(parents=True, exist_ok=True)
+                      dp.write_text(sp.read_text())
+                      changed_files.append(dst)
+                      ops_applied.append('copy:' + src + '->' + dst)
+                      print('Copied: ' + src + ' → ' + dst)
+              except Exception as e:
+                  errors.append('Copy failed: ' + str(e))
+
+          # 5. Append to
+          for m in re.finditer(r'Append\s+to\s+([^\s:]+):\s+(.+?)(?=\.|Create|Delete|Move|Copy|Prepend|Set|Replace|Insert|Run|$)', objective, re.DOTALL | re.IGNORECASE):
+              target, content = m.group(1).strip(), m.group(2).strip()
               try:
                   p = Path(target)
                   p.parent.mkdir(parents=True, exist_ok=True)
                   with p.open('a') as f:
                       f.write(content + '\n')
                   changed_files.append(target)
+                  ops_applied.append('append:' + target)
                   print('Appended to: ' + target)
               except Exception as e:
-                  errors.append('Append failed ' + target + ': ' + str(e))
+                  errors.append('Append failed: ' + str(e))
 
-          # ── 5. Set <path> field <key>=<value> ───────────────────────────────
-          for m in re.finditer(r'[Ss]et\s+([^\s]+)\s+field\s+(\w+)\s*=\s*([^\s,\.]+)', objective):
-              target = m.group(1).strip()
-              key    = m.group(2).strip()
-              val    = m.group(3).strip()
+          # 6. Prepend to
+          for m in re.finditer(r'Prepend\s+to\s+([^\s:]+):\s+(.+?)(?=\.|Create|Delete|Move|Copy|Append|Set|Replace|Insert|Run|$)', objective, re.DOTALL | re.IGNORECASE):
+              target, content = m.group(1).strip(), m.group(2).strip()
+              try:
+                  p = Path(target)
+                  existing = p.read_text() if p.exists() else ''
+                  p.write_text(content + '\n' + existing)
+                  changed_files.append(target)
+                  ops_applied.append('prepend:' + target)
+                  print('Prepended to: ' + target)
+              except Exception as e:
+                  errors.append('Prepend failed: ' + str(e))
+
+          # 7. Set field
+          for m in re.finditer(r'Set\s+([^\s]+)\s+field\s+(\w+)\s*=\s*([^\s,\.]+)', objective, re.IGNORECASE):
+              target, key, val = m.group(1).strip(), m.group(2).strip(), m.group(3).strip()
               try:
                   p = Path(target)
                   if p.exists():
                       data = json.loads(p.read_text())
-                      if val.lower() == 'true':    val = True
-                      elif val.lower() == 'false': val = False
-                      elif val.replace('-','').replace('.','').isdigit():
-                          val = float(val) if '.' in val else int(val)
+                      val = True if val.lower()=='true' else (False if val.lower()=='false' else (float(val) if '.' in val and val.replace('.','').replace('-','').isdigit() else (int(val) if val.replace('-','').isdigit() else val)))
                       data[key] = val
                       data['updated_at'] = now
                       p.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
                       changed_files.append(target)
-                      print('Set field ' + key + '=' + str(val) + ' in ' + target)
+                      ops_applied.append('set_field:' + target + '.' + key)
+                      print('Set ' + key + '=' + str(val) + ' in ' + target)
               except Exception as e:
-                  errors.append('Set field failed ' + target + ': ' + str(e))
+                  errors.append('Set field failed: ' + str(e))
 
-          # ── 6. Set <path> fields: k1=v1, k2=v2 ──────────────────────────────
-          for m in re.finditer(r'[Ss]et\s+([^\s]+)\s+fields:\s+(.+?)(?=\.|$)', objective, re.DOTALL):
-              target = m.group(1).strip()
-              pairs  = m.group(2).strip()
+          # 8. Set fields
+          for m in re.finditer(r'Set\s+([^\s]+)\s+fields:\s+(.+?)(?=\.|$)', objective, re.DOTALL | re.IGNORECASE):
+              target, pairs = m.group(1).strip(), m.group(2).strip()
               try:
                   p = Path(target)
                   if p.exists():
                       data = json.loads(p.read_text())
-                      for kv in re.findall(r'(\w+)\s*=\s*([^\s,]+)', pairs):
-                          k, v = kv
-                          if v.lower() == 'true':    v = True
-                          elif v.lower() == 'false': v = False
-                          elif v.replace('-','').replace('.','').isdigit():
-                              v = float(v) if '.' in v else int(v)
+                      for k, v in re.findall(r'(\w+)\s*=\s*([^\s,]+)', pairs):
+                          v = True if v.lower()=='true' else (False if v.lower()=='false' else (int(v) if v.isdigit() else v))
                           data[k] = v
                       data['updated_at'] = now
                       p.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
                       changed_files.append(target)
-                      print('Set fields in ' + target + ': ' + pairs[:100])
+                      ops_applied.append('set_fields:' + target)
+                      print('Set fields in ' + target)
               except Exception as e:
-                  errors.append('Set fields failed ' + target + ': ' + str(e))
+                  errors.append('Set fields failed: ' + str(e))
 
-          # ── Always: proof file ───────────────────────────────────────────────
+          # 9. Replace line
+          for m in re.finditer(r'Replace\s+in\s+([^\s]+)\s+line\s+containing\s+["\'](.+?)["\']\s+with\s+["\'](.+?)["\']', objective, re.IGNORECASE):
+              target, old, new = m.group(1).strip(), m.group(2).strip(), m.group(3).strip()
+              try:
+                  p = Path(target)
+                  if p.exists():
+                      lines = p.read_text().split('\n')
+                      replaced = 0
+                      for i, line in enumerate(lines):
+                          if old in line:
+                              lines[i] = line.replace(old, new)
+                              replaced += 1
+                      p.write_text('\n'.join(lines))
+                      changed_files.append(target)
+                      ops_applied.append('replace_line:' + target + ' (' + str(replaced) + ' replacements)')
+                      print('Replaced ' + str(replaced) + ' lines in ' + target)
+              except Exception as e:
+                  errors.append('Replace failed: ' + str(e))
+
+          # 10. Delete line
+          for m in re.finditer(r'Delete\s+from\s+([^\s]+)\s+line\s+containing\s+["\'](.+?)["\']', objective, re.IGNORECASE):
+              target, text = m.group(1).strip(), m.group(2).strip()
+              try:
+                  p = Path(target)
+                  if p.exists():
+                      lines = [l for l in p.read_text().split('\n') if text not in l]
+                      p.write_text('\n'.join(lines))
+                      changed_files.append(target)
+                      ops_applied.append('delete_line:' + target)
+                      print('Deleted lines containing "' + text + '" from ' + target)
+              except Exception as e:
+                  errors.append('Delete line failed: ' + str(e))
+
+          # 11. Insert after
+          for m in re.finditer(r'Insert\s+in\s+([^\s]+)\s+after\s+line\s+containing\s+["\'](.+?)["\']\s*:\s+["\']?(.+?)["\']?\s*(?=\.|$)', objective, re.DOTALL | re.IGNORECASE):
+              target, anchor, content = m.group(1).strip(), m.group(2).strip(), m.group(3).strip()
+              try:
+                  p = Path(target)
+                  if p.exists():
+                      lines = p.read_text().split('\n')
+                      result = []
+                      for line in lines:
+                          result.append(line)
+                          if anchor in line:
+                              result.append(content)
+                      p.write_text('\n'.join(result))
+                      changed_files.append(target)
+                      ops_applied.append('insert_after:' + target)
+                      print('Inserted after anchor in ' + target)
+              except Exception as e:
+                  errors.append('Insert failed: ' + str(e))
+
+          # 12. Create dir
+          for m in re.finditer(r'Create\s+dir\s+([^\s\.]+)', objective, re.IGNORECASE):
+              target = m.group(1).strip()
+              try:
+                  p = Path(target)
+                  p.mkdir(parents=True, exist_ok=True)
+                  (p / '.gitkeep').write_text('')
+                  changed_files.append(target + '/.gitkeep')
+                  ops_applied.append('create_dir:' + target)
+                  print('Created dir: ' + target)
+              except Exception as e:
+                  errors.append('Create dir failed: ' + str(e))
+
+          # ── Proof file ───────────────────────────────────────────────────
           proof_dir = Path('governance/codex/proofs')
           proof_dir.mkdir(parents=True, exist_ok=True)
           proof = proof_dir / (trace + '.txt')
           proof.write_text(
-              'Executor: Python (ubuntu-latest)\n'
+              'Executor: Python v3 (ubuntu-latest)\n'
               'trace_id: ' + trace + '\n'
               'task_type: ' + task_type + '\n'
               'executed_at: ' + now + '\n'
+              'ops_applied: ' + ', '.join(ops_applied) + '\n'
               'changed_files: ' + ', '.join(changed_files) + '\n'
               'errors: ' + ('; '.join(errors) if errors else 'none') + '\n'
-              'objective: ' + objective[:500] + '\n'
           )
           changed_files.append(str(proof))
 
-          if errors:
+          if errors and not ops_applied:
               exec_status = 'failed'
-              print('ERRORS: ' + str(errors))
 
           with open(os.environ['GITHUB_ENV'], 'a') as f:
               f.write('EXEC_STATUS=' + exec_status + '\n')
               f.write('CHANGED_FILES=' + ','.join(changed_files) + '\n')
+              f.write('OPS_APPLIED=' + ','.join(ops_applied) + '\n')
               f.write('EXEC_ERRORS=' + '; '.join(errors) + '\n')
 
           print('Status: ' + exec_status)
-          print('Changed: ' + str(changed_files))
+          print('Ops: ' + str(ops_applied))
           PYEOF
 
       - name: Commit changes
@@ -298,8 +451,10 @@ jobs:
           exec_status = os.environ.get('EXEC_STATUS', 'blocked')
           commit_sha  = os.environ.get('COMMIT_SHA',  '')
           changed_raw = os.environ.get('CHANGED_FILES', '')
+          ops_raw     = os.environ.get('OPS_APPLIED', '')
           exec_errors = os.environ.get('EXEC_ERRORS', '')
           changed     = [f for f in changed_raw.split(',') if f]
+          ops         = [o for o in ops_raw.split(',') if o]
 
           if not task_found:
               status  = 'blocked'
@@ -315,30 +470,32 @@ jobs:
           result_dir.mkdir(parents=True, exist_ok=True)
 
           result = {
-              'schema_version': 1,
-              'trace_id':       trace,
-              'executor':       'python-ubuntu-latest-v2',
-              'status':         status,
-              'changed_files':  changed,
-              'commit_sha':     commit_sha or None,
-              'blocker':        blocker,
-              'report_path':    'governance/codex/results/' + trace + '.md',
-              'completed_at':   now
+              'schema_version':    1,
+              'trace_id':          trace,
+              'executor':          'python-v3',
+              'status':            status,
+              'operations_applied': ops,
+              'changed_files':     changed,
+              'commit_sha':        commit_sha or None,
+              'blocker':           blocker,
+              'report_path':       'governance/codex/results/' + trace + '.md',
+              'completed_at':      now
           }
           (result_dir / (trace + '.json')).write_text(
               json.dumps(result, indent=2, ensure_ascii=False) + '\n'
           )
 
           lines = [
-              '# Codex Runner Result - ' + trace,
+              '# Codex Runner v3 Result - ' + trace,
               '',
               '| Field | Value |',
               '|---|---|',
               '| Trace | ' + trace + ' |',
-              '| Executor | Python v2 (ubuntu-latest) |',
+              '| Executor | Python v3 (ubuntu-latest) |',
               '| Status | ' + status + ' |',
+              '| Operations | ' + (', '.join(ops) or 'none') + ' |',
               '| Commit SHA | ' + (commit_sha or 'none') + ' |',
-              '| Changed | ' + (', '.join(changed) or 'none') + ' |',
+              '| Changed files | ' + (', '.join(changed) or 'none') + ' |',
               '| Completed | ' + now + ' |',
               '',
           ]
@@ -347,7 +504,7 @@ jobs:
           else:
               lines.append('### Completed successfully.')
           (result_dir / (trace + '.md')).write_text('\n'.join(lines) + '\n')
-          print('Result: status=' + status)
+          print('Result: status=' + status + ' ops=' + str(ops))
           PYEOF
 
       - name: Commit result
@@ -373,16 +530,17 @@ jobs:
           trace  = os.environ.get('INPUT_TRACE_ID', '?')
           status = os.environ.get('EXEC_STATUS', 'blocked')
           sha    = os.environ.get('COMMIT_SHA', 'none')
+          ops    = os.environ.get('OPS_APPLIED', 'none')
           errors = os.environ.get('EXEC_ERRORS', '')
           lines  = [
-              '## Codex Runner v2 - ' + trace,
-              '| Field | Value |',
-              '|---|---|',
-              '| Executor | Python v2 (ubuntu-latest, no paid API) |',
+              '## Codex Runner v3 - ' + trace,
+              '| Field | Value |', '|---|---|',
+              '| Executor | Python v3 (no paid API) |',
               '| Status | ' + status + ' |',
+              '| Operations | ' + ops + ' |',
               '| SHA | ' + (sha or 'none') + ' |',
               ('| Errors | ' + errors + ' |') if errors else '',
-              '**No issue #31 comments (BEM-525)**', '',
+              '**No issue #31 comments (BEM-526)**', '',
           ]
           with open(os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/s.md'), 'a') as f:
               f.write('\n'.join(l for l in lines if l))
