@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem538_runtime_dispatch_final",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-538 finalized with exact blocker for missing workflow-level dispatch bridge",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/tasks/pending/BEM538_RUNTIME_WORKFLOW_DISPATCH_BRIDGE.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/tasks/done/BEM538_RUNTIME_WORKFLOW_DISPATCH_BRIDGE.md",
+    "governance/reports/bem538_runtime_dispatch_bridge_final.md",
+    "governance/codex/proofs/bem538_runtime_dispatch_bridge_final.txt",
+    "governance/internal_contour/tests/bem538/runtime_dispatch_bridge_blocker.json",
+    "governance/codex/proofs/bem538_runtime_dispatch_final.txt"
+  ],
+  "commit_sha": "8dbd1e36bcb808127599e7a93ce64a3b2fdec272",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem538_runtime_dispatch_final.md",
+  "completed_at": "2026-05-17T10:44:30Z"
+}
