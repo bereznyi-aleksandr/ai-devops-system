@@ -4,10 +4,10 @@
 
 ## Result
 Picked: True
-Mailbox file: governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md
-Notify operator: True
-Reason: operator_decision_required
-Telegram status: sent
+Mailbox file: governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md
+Notify operator: False
+Reason: routine_mailbox_no_telegram
+Telegram status: not_required
 
 ## Blocker
 null
