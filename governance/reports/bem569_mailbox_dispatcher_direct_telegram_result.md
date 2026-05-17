@@ -4,7 +4,7 @@
 
 ## Result
 Picked: True
-Mailbox file: governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md
+Mailbox file: governance/audit_mailbox/claude_to_gpt/bem566_claude_response.md
 Direct send status: sent
 
 ## Blocker
