@@ -1,15 +1,83 @@
 {
-  "version": 1,
+  "schema_version": "role-cycle-state.v1",
+  "updated_at": "2026-05-17 | 12:50 (UTC+3)",
   "cycle_id": null,
-  "trace_id": null,
-  "task_type": null,
-  "task": null,
-  "status": "idle",
-  "current_role": null,
-  "roles_sequence": [],
-  "roles_completed": [],
-  "current_step": 0,
+  "source": {
+    "type": "roadmap",
+    "id": "BEM-531"
+  },
+  "curator_status": "TRIAGED",
+  "active_role": "curator",
+  "next_role": "analyst",
+  "current_task": {
+    "id": "BEM-531.1",
+    "title": "Role state + agent lifecycle",
+    "status": "completed"
+  },
+  "handoff": {
+    "from": "curator",
+    "to": "analyst",
+    "artifact": "governance/protocols/ROLE_STATE_SCHEMA.md",
+    "status": "ready"
+  },
   "blocker": null,
-  "started_at": null,
-  "updated_at": null
+  "agents": {
+    "curator": {
+      "role": "curator",
+      "lifecycle": "ACTIVE",
+      "provider": "file-based",
+      "last_seen": "2026-05-17 | 12:50 (UTC+3)"
+    },
+    "analyst": {
+      "role": "analyst",
+      "lifecycle": "ACTIVE",
+      "provider": "file-based",
+      "last_seen": "2026-05-17 | 12:50 (UTC+3)"
+    },
+    "auditor": {
+      "role": "auditor",
+      "lifecycle": "ACTIVE",
+      "provider": "file-based",
+      "last_seen": "2026-05-17 | 12:50 (UTC+3)"
+    },
+    "executor": {
+      "role": "executor",
+      "lifecycle": "ACTIVE",
+      "provider": "file-based",
+      "last_seen": "2026-05-17 | 12:50 (UTC+3)"
+    }
+  },
+  "agent_lifecycle": {
+    "allowed": [
+      "CANDIDATE",
+      "ACTIVE",
+      "RETIRED"
+    ],
+    "default": "CANDIDATE",
+    "active_required_for_execution": true
+  },
+  "history": [
+    {
+      "at": "2026-05-17 | 12:50 (UTC+3)",
+      "event": "BEM-531.1 normalized role_cycle_state and added agent lifecycle",
+      "status": "PASS"
+    }
+  ],
+  "legacy": {
+    "previous_keys": [
+      "blocker",
+      "current_role",
+      "current_step",
+      "cycle_id",
+      "roles_completed",
+      "roles_sequence",
+      "started_at",
+      "status",
+      "task",
+      "task_type",
+      "trace_id",
+      "updated_at",
+      "version"
+    ]
+  }
 }
