@@ -120,3 +120,17 @@
 | Необходимая правка перед мультиагентом | Repository-control layer по v171: runtime registry, MASTER_PLAN, role locks, active workflow set | MASTER_PROMPT v171 требует это как active canon |
 | Рекомендуемый следующий блок | BEM-555 Multiagent System Repository Control Plan | Без него реализация агента будет неуправляемой |
 | Следующее действие | Claude audit: подтвердить миграцию к v171 active model или дать правки | Внешний аудит нужен после восстановления Claude |
+
+
+---
+
+# BEM-557 CORRECTION | Analyst Role Must Remain Active
+
+Дата: 2026-05-17 | 18:01 (UTC+3)
+
+| Наименование | Описание | Обоснование |
+|---|---|---|
+| Correction | Analyst is not removed | Operator explicitly confirmed Analyst is mandatory |
+| Analyst runtime | GPT/Codex | Analyst is always GPT/Codex |
+| Auditor/Executor | May be Claude | These roles are separate from Analyst |
+| Claude audit ask updated | Audit the Analyst-GPT <-> Auditor-Claude interaction, not whether Analyst should exist | Operator decision is final for this project |

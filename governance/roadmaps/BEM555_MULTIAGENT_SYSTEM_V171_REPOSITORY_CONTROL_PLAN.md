@@ -76,3 +76,26 @@
 | Рекомендация | Начать BEM-555, не product implementation | v171 требует repository-control и runtime registry |
 | Основной фокус | Привести репозиторий к v171 active canon | После этого мультиагент можно строить controlled slices |
 | Следующее действие | BEM-555.1 v171 inventory | Самый безопасный первый шаг |
+
+
+---
+
+# BEM-557 CORRECTION | Analyst Is Active Role
+
+Дата: 2026-05-17 | 18:01 (UTC+3)
+
+| Наименование | Описание | Обоснование |
+|---|---|---|
+| Analyst role | Восстановлен как активная роль | Оператор подтвердил обязательность Analyst |
+| Analyst provider | GPT/Codex only | Аналитик — отдельный GPT/Codex, не Claude |
+| Auditor provider | Claude preferred, GPT reserve possible | Аудитор может быть Claude |
+| Executor provider | Claude/GPT/other provider by adapter | Исполнитель выбирается отдельно от Analyst |
+| v171 conflict | Пункт v171 `no analyst role` считается историческим/черновым и не применяется к новой схеме | Оператор указал использовать master prompts как черновики |
+
+## Updated BEM-555 roadmap impact
+
+| Этап | Было | Стало |
+|---|---|---|
+| Role model | Remove active Analyst terminology | Formalize Analyst as mandatory GPT/Codex role |
+| Deliberation pipeline | EXECUTOR planning -> AUDITOR | Analyst -> AUDITOR -> decision |
+| First product slice | Executor planning artifact | Analyst plan artifact + Auditor decision artifact |

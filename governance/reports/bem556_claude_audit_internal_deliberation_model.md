@@ -47,3 +47,17 @@
 | Решение | Не создавать отдельную доску | Лишняя сложность и ручной relay |
 | Использовать | Внутренний контур: curator -> EXECUTOR planning -> AUDITOR/Claude -> SYSTEM -> execution | Масштабируемее и управляемее |
 | Следующий шаг | После аудита Claude создать BEM-557 roadmap | Нужно закрепить deliberation pipeline в файлах |
+
+
+---
+
+# BEM-557 CORRECTION | Analyst Role Restored
+
+Дата: 2026-05-17 | 18:01 (UTC+3)
+
+| Наименование | Описание | Обоснование |
+|---|---|---|
+| Ошибка предыдущей версии | GPT предложил не делать Analyst активной ролью | Это противоречит явному решению оператора |
+| Исправление | Analyst является обязательной активной ролью внутреннего контура | Оператор подтвердил: аналитик всегда GPT/Codex |
+| Новая схема deliberation | Operator/GPT -> Curator -> Analyst(GPT/Codex) -> Auditor(Claude/GPT) -> System/Curator -> Executor -> Final audit -> Closure | Это снимает с оператора роль передаточного звена и сохраняет внутренний контур |
+| Вопрос к Claude | Проверить не наличие Analyst, а корректность взаимодействия Analyst-GPT с Auditor-Claude и Executor | Analyst больше не обсуждается как removable |
