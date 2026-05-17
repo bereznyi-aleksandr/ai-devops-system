@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:06 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:09 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -11,7 +11,10 @@
   "next_role": null,
   "last_result": "BEM-540 full system autotest PASS",
   "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
-  "blocker": null,
+  "blocker": {
+    "code": "PROVIDER_PROBE_AND_TELEGRAM_DELIVERY_NOT_PROVEN",
+    "message": "BEM-540 passed synthetic scope, but provider live probe and Telegram sender/delivery need BEM-541."
+  },
   "external_sources_scope": [
     "gpt",
     "claude",
@@ -202,5 +205,13 @@
     ],
     "provider_selected": "gpt",
     "telegram_outbox": "governance/telegram_outbox.jsonl"
+  },
+  "bem540_postmortem": {
+    "status": "SYNTHETIC_PASS_WITH_PROVIDER_TELEGRAM_GAPS",
+    "provider_probe_missing": true,
+    "forced_synthetic_reserve_selection": true,
+    "transport_records_count": 9,
+    "telegram_outbox_records_count": 1,
+    "next_roadmap": "BEM541_TELEGRAM_LIVE_REPORTING_REWORK_ROADMAP.md"
   }
 }
