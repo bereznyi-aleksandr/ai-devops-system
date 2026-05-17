@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem528_test2_runscript_multifile",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Autonomy Run script multi-file test",
+  "objective": "Run script:\n\"\"\"\nbase = Path('governance/codex/proofs')\nbase.mkdir(parents=True, exist_ok=True)\nproof = base / 'bem528_test2_runscript_multifile.txt'\njson_file = base / 'bem528_test2_runscript_multifile.json'\nreport = Path('governance/reports/bem528_test2_runscript_multifile.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\n\npayload = {\n  'bem': 'BEM-528',\n  'test': 2,\n  'name': 'Run script multi-file JSON test',\n  'status': 'PASS',\n  'executor': 'ubuntu-latest Python v3',\n  'paid_api': False,\n  'issue_comments': False,\n  'schedule_triggers': False,\n  'timestamp_utc3': '2026-05-17 | 12:11 (UTC+3)'\n}\njson_file.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\\n')\nproof.write_text('BEM-528 Test 2 PASS: Run script wrote proof, JSON and report in one autonomous job.\\n')\nreport.write_text('# BEM-528 | Test 2 Run script multi-file | PASS\\n\\nRun script created multiple files and JSON payload.\\n\\nFiles:\\n- governance/codex/proofs/bem528_test2_runscript_multifile.txt\\n- governance/codex/proofs/bem528_test2_runscript_multifile.json\\n\\nBlocker: null\\n')\nchanged_files.extend([str(proof), str(json_file), str(report)])\nops_applied.append('Run script wrote proof, JSON and report files')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem528_test2_runscript_multifile.md",
+    "result_json": "governance/codex/results/bem528_test2_runscript_multifile.json"
+  },
+  "created_at": "2026-05-17T08:37:24.166Z"
+}
