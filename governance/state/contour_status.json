@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 22:06 (UTC+3)",
+  "updated_at": "2026-05-17 | 22:09 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -456,6 +456,11 @@
     "status": "not_sent",
     "queue_file_exists": true,
     "dispatch_state_exists": true,
+    "blocker": null
+  },
+  "bem584_fix_decision_renderer_no_newline_literal": {
+    "status": "completed",
+    "queue_file": "governance/operator_decision_queue/bem584_decision_format_live_test.json",
     "blocker": null
   }
 }

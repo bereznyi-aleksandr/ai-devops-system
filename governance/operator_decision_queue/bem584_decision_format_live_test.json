@@ -1,0 +1,50 @@
+{
+  "schema_version": "operator_decision_queue.v1",
+  "decision_id": "bem584_decision_format_live_test",
+  "bem": "BEM-584",
+  "title": "OPERATOR DECISION REQUIRED",
+  "stage": {
+    "done": 1,
+    "total": 1
+  },
+  "roadmap": {
+    "done": 1,
+    "total": 1
+  },
+  "checklist": [
+    "✅ Routine mailbox Telegram disabled",
+    "✅ Structured decision package prepared",
+    "✅ Readable table renderer fixed",
+    "⚠️ Operator must approve decision-message format"
+  ],
+  "question": "Какой формат Telegram-сообщения использовать для решений оператора?",
+  "options": [
+    {
+      "id": "1",
+      "title": "Короткая таблица",
+      "difference": "Компактное сравнение вариантов",
+      "rationale": "Видно вопрос и сравнение без длинной каши",
+      "impact": "Используем формат для operator decisions"
+    },
+    {
+      "id": "2",
+      "title": "Вертикальный список",
+      "difference": "Каждый вариант отдельным блоком",
+      "rationale": "Проще, но хуже сравнивать варианты",
+      "impact": "Оставляем менее удобный формат"
+    },
+    {
+      "id": "3",
+      "title": "Доработать",
+      "difference": "Новый макет до внедрения",
+      "rationale": "Если таблица всё ещё неудобна",
+      "impact": "Возврат Claude/GPT на доработку"
+    }
+  ],
+  "recommendation": {
+    "option_id": "1",
+    "rationale": "Рекомендуем короткую таблицу: она сохраняет канон, вопрос, варианты, отличия и обоснование в одном сообщении."
+  },
+  "reply_format": "Напиши 1, 2, 3 или свой вариант текстом.",
+  "handoff_to": "curator"
+}
