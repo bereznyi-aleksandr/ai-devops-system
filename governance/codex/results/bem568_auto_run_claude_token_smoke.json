@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem568_auto_run_claude_token_smoke",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Enabled automatic safe Claude token smoke via limited push trigger without printing token",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/claude-token-smoke.yml",
+    "scripts/claude_token_smoke.py",
+    "governance/reports/bem568_auto_run_claude_token_smoke.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem568_auto_run_claude_token_smoke.txt",
+    "governance/codex/proofs/bem568_auto_run_claude_token_smoke.txt"
+  ],
+  "commit_sha": "110931f66621adf0c30118c1356ae4955bde8419",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem568_auto_run_claude_token_smoke.md",
+  "completed_at": "2026-05-17T18:00:42Z"
+}
