@@ -1,6 +1,6 @@
 {
   "schema_version": "provider-contour-state.v1",
-  "updated_at": "2026-05-17 | 14:28 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:55 (UTC+3)",
   "primary_provider": "claude",
   "reserve_provider": "gpt",
   "curator": {
@@ -222,5 +222,22 @@
     "selected_provider": "claude",
     "reserve_used": false,
     "reason": "no_valid_failure_evidence_for_reserve"
+  },
+  "provider_adapter_probe_integration": {
+    "status": "PASS",
+    "workflow": ".github/workflows/provider-adapter.yml",
+    "checks": {
+      "workflow_exists": true,
+      "workflow_dispatch": true,
+      "no_schedule": true,
+      "writes_probe": true,
+      "writes_decision": true,
+      "writes_audit": true,
+      "unknown_selects_primary": true,
+      "failure_selects_gpt": true,
+      "writes_transport": true,
+      "writes_state": true,
+      "no_issue_31": true
+    }
   }
 }

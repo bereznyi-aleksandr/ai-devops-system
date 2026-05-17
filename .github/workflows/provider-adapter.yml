@@ -8,16 +8,18 @@ on:
         required: true
         type: string
       provider:
-        description: claude or gpt
+        description: Primary provider
         required: true
+        default: claude
         type: string
       role:
-        description: analyst, auditor, executor, curator
+        description: Role requesting provider
         required: true
         type: string
       status:
-        description: completed, failed, cancelled, timeout, missing_result_after_ttl
+        description: completed, failed, cancelled, timeout, missing_result_after_ttl, unknown
         required: true
+        default: unknown
         type: string
 
 permissions:
@@ -25,69 +27,61 @@ permissions:
 
 jobs:
   adapt:
-    name: Provider Adapter with Claude primary -> GPT reserve failover
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Append provider adapter result and failover decision
+      - name: Probe and select provider
         shell: bash
         run: |
-          python3 - <<'PY'
+          python3 - <<PY
           import json
           from pathlib import Path
-          cycle_id = '${{ inputs.cycle_id }}'
-          provider = '${{ inputs.provider }}'
-          role = '${{ inputs.role }}'
-          status = '${{ inputs.status }}'
-          reserve_signals = ['failed', 'cancelled', 'timeout', 'missing_result_after_ttl']
-          selected_provider = provider
-          failover_applied = False
-          switch_reason = None
-          if provider == 'claude' and status in reserve_signals:
-              selected_provider = 'gpt'
-              failover_applied = True
-              switch_reason = 'claude_' + status
-          blocker = None if status == 'completed' else {'code': 'PROVIDER_' + status.upper(), 'message': 'provider adapter observed ' + status}
-          record = {
-            'record_type': 'provider_adapter_result',
-            'cycle_id': cycle_id,
-            'source': 'internal',
-            'provider': provider,
-            'selected_provider': selected_provider,
-            'reserve_provider': 'gpt',
-            'failover_applied': failover_applied,
-            'switch_reason': switch_reason,
-            'from_role': role,
-            'to_role': 'curator',
-            'status': status,
-            'artifact_path': 'governance/transport/results.jsonl',
-            'commit_sha': None,
-            'blocker': blocker,
-            'created_at': 'workflow_runtime'
-          }
-          path = Path('governance/transport/results.jsonl')
-          path.parent.mkdir(parents=True, exist_ok=True)
-          with path.open('a', encoding='utf-8') as f:
-              f.write(json.dumps(record, ensure_ascii=False) + '\n')
-          state_path = Path('governance/state/provider_contour_state.json')
-          state = json.loads(state_path.read_text()) if state_path.exists() else {}
-          state['updated_at'] = 'workflow_runtime'
-          state['last_provider'] = provider
-          state['selected_provider'] = selected_provider
-          state['last_status'] = status
-          state['last_switch_reason'] = switch_reason
-          hist = state.get('switch_history', [])
-          if failover_applied:
-              hist.append({'cycle_id': cycle_id, 'from': 'claude', 'to': 'gpt', 'reason': switch_reason, 'at': 'workflow_runtime'})
-          state['switch_history'] = hist
-          state['blocker'] = None
-          state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + '\n')
+          cycle_id = "${{ inputs.cycle_id }}"
+          provider = "${{ inputs.provider }}"
+          role = "${{ inputs.role }}"
+          signal = "${{ inputs.status }}"
+          transport = Path("governance/transport/results.jsonl")
+          state_path = Path("governance/state/provider_contour_state.json")
+          if signal in ["completed", "active"]:
+              selected = provider
+              reserve_used = False
+              reason = "primary_provider_available"
+          elif signal in ["failed", "cancelled", "timeout", "missing_result_after_ttl"]:
+              selected = "gpt" if provider == "claude" else provider
+              reserve_used = provider == "claude"
+              reason = provider + "_" + signal
+          else:
+              selected = provider
+              reserve_used = False
+              reason = "no_valid_failure_evidence_for_reserve"
+          probe = {"record_type":"provider_probe_result","cycle_id":cycle_id,"source":"provider-adapter.yml","provider":provider,"role":role,"probe_signal":signal,"status":"completed","artifact_path":"governance/transport/results.jsonl","commit_sha":None,"blocker":None,"created_at":"workflow_runtime"}
+          decision = {"record_type":"provider_selection_decision","cycle_id":cycle_id,"source":"provider-adapter.yml","from_role":"provider_adapter","to_role":role,"primary_provider":provider,"reserve_provider":"gpt","probe_signal":signal,"selected_provider":selected,"reserve_used":reserve_used,"decision":"select_" + selected,"reason":reason,"status":"completed","artifact_path":"governance/transport/results.jsonl","commit_sha":None,"blocker":None,"created_at":"workflow_runtime"}
+          audit = {"record_type":"provider_selection_audit","cycle_id":cycle_id,"source":"provider-adapter.yml","from_role":"auditor","to_role":"curator","status":"completed","decision":"PROVIDER_SELECTION_AUDITED","selected_provider":selected,"reserve_used":reserve_used,"reason":reason,"artifact_path":"governance/transport/results.jsonl","commit_sha":None,"blocker":None,"created_at":"workflow_runtime"}
+          transport.parent.mkdir(parents=True, exist_ok=True)
+          with transport.open("a", encoding="utf-8") as f:
+              f.write(json.dumps(probe, ensure_ascii=False) + "\n")
+              f.write(json.dumps(decision, ensure_ascii=False) + "\n")
+              f.write(json.dumps(audit, ensure_ascii=False) + "\n")
+          state = {}
+          if state_path.exists():
+              try:
+                  state = json.loads(state_path.read_text(encoding="utf-8"))
+              except Exception:
+                  state = {}
+          state["last_provider_probe"] = probe
+          state["last_provider_selection"] = decision
+          state["last_provider_selection_audit"] = audit
+          state["selected_provider"] = selected
+          state["reserve_used"] = reserve_used
+          state["last_switch_reason"] = reason if reserve_used else None
+          state["blocker"] = None
+          state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
           PY
-      - name: Commit provider adapter result
+      - name: Commit provider decision
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/transport/results.jsonl governance/state/provider_contour_state.json
-          git commit -m "Provider adapter failover result ${{ inputs.cycle_id }}" || echo "No changes"
+          git commit -m "Provider adapter probe decision ${{ inputs.cycle_id }}" || echo "No changes"
           git push
