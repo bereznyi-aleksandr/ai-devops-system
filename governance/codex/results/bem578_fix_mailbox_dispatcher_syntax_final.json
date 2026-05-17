@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem578_fix_mailbox_dispatcher_syntax_final",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem578_fix_mailbox_dispatcher_syntax_final.txt"
+  ],
+  "commit_sha": "d72cc75e4ddf9f719ea3845c0ac53ba333a52e4f",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'chr' is not defined"
+  },
+  "report_path": "governance/codex/results/bem578_fix_mailbox_dispatcher_syntax_final.md",
+  "completed_at": "2026-05-17T18:42:13Z"
+}
