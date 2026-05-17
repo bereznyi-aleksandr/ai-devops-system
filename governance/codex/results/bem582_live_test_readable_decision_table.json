@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem582_live_test_readable_decision_table",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/operator_decision_queue/bem582_decision_format_live_test.json",
+    "create:governance/reports/bem582_live_test_readable_decision_table.md",
+    "create:governance/codex/proofs/bem582_live_test_readable_decision_table.txt",
+    "append:governance/transport/results.jsonl"
+  ],
+  "changed_files": [
+    "governance/operator_decision_queue/bem582_decision_format_live_test.json",
+    "governance/reports/bem582_live_test_readable_decision_table.md",
+    "governance/codex/proofs/bem582_live_test_readable_decision_table.txt",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem582_live_test_readable_decision_table.txt"
+  ],
+  "commit_sha": "aa83c8969847b113eb58afab3de831eb48f1e013",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem582_live_test_readable_decision_table.md",
+  "completed_at": "2026-05-17T19:18:00Z"
+}
