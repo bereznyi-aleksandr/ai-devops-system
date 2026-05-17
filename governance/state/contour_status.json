@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 16:12 (UTC+3)",
+  "updated_at": "2026-05-17 | 16:11 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -192,9 +192,38 @@
   },
   "bem553_master_prompt_170_analysis": {
     "status": "completed",
-    "found_count": 13,
     "report": "governance/reports/bem553_master_prompt_170_analysis.md",
-    "recommendation": "repository_first_then_agent_implementation",
-    "next": "BEM-554"
+    "candidate_files": [
+      "governance/MASTER_PLAN.md",
+      "governance/reports/bem553_master_prompt_170_analysis.md",
+      "governance/prompts/curator_prompt.md",
+      "governance/prompts/analyst_prompt.md",
+      "governance/prompts/executor_prompt.md",
+      "governance/prompts/gpt_executor_prompt.md",
+      "governance/prompts/auditor_prompt.md",
+      "governance/prompts/gpt_auditor_prompt.md",
+      "governance/prompts/gpt_analyst_prompt.md",
+      "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/MASTER_PROMPT.md",
+      "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/smoke-20260409T170911Z.log",
+      "governance/archive/legacy-2026-05-01/full-repo-cleanup/ssot/MASTER_PROMPT_v164_CANON_FINAL.txt",
+      "governance/archive/legacy-2026-05-01/full-repo-cleanup/ssot/MASTER_PROMPT_v170_CANON_FINAL.txt",
+      "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/contracts/active-canon-v170-workflow-policy.json",
+      "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/prompts/executor_codex_system_prompt_v3_7.txt",
+      "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/prompts/auditor_codex_system_prompt_v3_7.txt",
+      "governance/codex/tasks/bem553_master_prompt_170_report_force.json",
+      "governance/codex/tasks/bem553_master_prompt_170_research.json",
+      "governance/codex/tasks/bem553_master_prompt_170_readable_report.json",
+      "governance/codex/tasks/bem553_master_prompt_170_analysis.json",
+      "governance/codex/proofs/bem553_master_prompt_170_report_force.txt",
+      "governance/codex/proofs/bem553_master_prompt_170_research.txt",
+      "governance/codex/proofs/bem553_master_prompt_170_analysis.txt",
+      "governance/codex/results/bem553_master_prompt_170_research.md",
+      "governance/codex/results/bem553_master_prompt_170_report_force.json",
+      "governance/codex/results/bem553_master_prompt_170_research.json",
+      "governance/codex/results/bem553_master_prompt_170_analysis.md",
+      "governance/codex/results/bem553_master_prompt_170_report_force.md",
+      "governance/codex/results/bem553_master_prompt_170_analysis.json"
+    ],
+    "recommendation": "repository-control-first"
   }
 }
