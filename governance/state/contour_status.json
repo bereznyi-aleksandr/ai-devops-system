@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 15:03 (UTC+3)",
+  "updated_at": "2026-05-17 | 15:06 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -472,6 +472,14 @@
     ],
     "provider": "claude",
     "telegram": "sent_synthetic",
+    "blocker": null
+  },
+  "bem548_5b_live_regression": {
+    "status": "LIVE_OBSERVED_BY_OPERATOR_STALE_QUEUE_FIXED",
+    "operator_observed_live_delivery": true,
+    "stale_queue_fixed": true,
+    "repo_sent_records_count": 0,
+    "delivery_records_count": 5,
     "blocker": null
   }
 }

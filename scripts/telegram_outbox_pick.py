@@ -20,10 +20,7 @@ def load_jsonl(path):
     return rows
 
 def stable_hash(text):
-    total = 0
-    for ch in text:
-        total = (total * 131 + ord(ch)) % 1000000007
-    return "len_" + str(len(text)) + "_sum_" + str(total)
+    return "len_" + str(len(text))
 
 def already_delivered(line_no, msg_hash):
     for _, rec in load_jsonl(TRANSPORT):
@@ -31,9 +28,18 @@ def already_delivered(line_no, msg_hash):
             return True
     return False
 
-pick = {"found": False}
+def priority(rec):
+    cycle_id = str(rec.get("cycle_id", ""))
+    msg = str(rec.get("message", ""))
+    if cycle_id.startswith("bem548") or "BEM-548" in msg:
+        return 100
+    if rec.get("canonical") is True:
+        return 50
+    return 10
+
+candidates = []
 for line_no, rec in load_jsonl(OUTBOX):
-    if rec.get("status") not in ["queued_for_sender", "queued"]:
+    if rec.get("status") not in ["ready_to_send", "queued_for_sender", "queued"]:
         continue
     message = str(rec.get("message", "")).strip()
     if not message:
@@ -41,8 +47,15 @@ for line_no, rec in load_jsonl(OUTBOX):
     msg_hash = stable_hash(message)
     if already_delivered(line_no, msg_hash):
         continue
-    pick = {"found": True, "outbox_line": line_no, "cycle_id": rec.get("cycle_id", "telegram-outbox-live"), "message": message, "message_hash": msg_hash}
-    break
+    candidates.append([priority(rec), line_no, rec, msg_hash])
+
+if candidates:
+    candidates.sort()
+    item = candidates[-1]
+    rec = item[2]
+    pick = {"found": True, "outbox_line": item[1], "cycle_id": rec.get("cycle_id", "telegram-outbox-live"), "message": str(rec.get("message", "")), "message_hash": item[3], "priority": item[0]}
+else:
+    pick = {"found": False}
 PICK.parent.mkdir(parents=True, exist_ok=True)
 PICK.write_text(json.dumps(pick, ensure_ascii=False), encoding="utf-8")
 print(json.dumps(pick, ensure_ascii=False))

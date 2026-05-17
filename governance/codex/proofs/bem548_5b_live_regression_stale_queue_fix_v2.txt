@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem548_5b_live_regression_stale_queue_fix_v2
+task_type: code_patch
+executed_at: 2026-05-17T12:03:20Z
+ops_applied: BEM-548.5b live Telegram regression recorded and stale queue fixed, custom_script
+changed_files: scripts/telegram_outbox_pick.py, governance/telegram_outbox.jsonl, governance/transport/results.jsonl, governance/state/contour_status.json, governance/reports/bem548_5b_live_regression_telegram.md, governance/codex/proofs/bem548_5b_live_regression_stale_queue_fix.txt
+errors: none
