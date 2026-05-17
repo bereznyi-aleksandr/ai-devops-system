@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_3_runtime_curator_intake_v2",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-550.3 runtime curator intake",
+  "objective": "Implement BEM-550.3 Runtime curator intake. Create governance/protocols/CURATOR_RUNTIME_INTAKE.md, scripts/curator_runtime_intake.py, .github/workflows/curator-intake.yml, report and proof. Requirements: external sources gpt/claude/telegram enter only through curator; validate trace_id, source, task_type, title, objective; reject duplicate trace_id; write curator_intake_validation and curator_assignment to governance/transport/results.jsonl; update governance/state/role_cycle_state.json; workflow_dispatch only, no schedule, no issue comments, no secrets. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem550_3_runtime_curator_intake_v2.md",
+    "result_json": "governance/codex/results/bem550_3_runtime_curator_intake_v2.json"
+  },
+  "created_at": "2026-05-17T12:26:25.009Z"
+}
