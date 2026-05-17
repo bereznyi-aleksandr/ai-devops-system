@@ -2,12 +2,15 @@
   "last_run": {
     "record_type": "operator_decision_dispatch",
     "cycle_id": "bem581-fix-operator-decision-recorder-syntax",
-    "queue_file": null,
+    "queue_file": "governance/operator_decision_queue/bem582_decision_format_live_test.json",
     "decision_id": null,
     "send": false,
-    "reason": "no_new_decision_package",
+    "reason": "invalid_decision_package:missing_decision_id_or_question",
     "telegram_status": "not_sent",
     "created_at": "workflow_runtime",
     "blocker": null
-  }
+  },
+  "processed_items": [
+    "governance/operator_decision_queue/bem582_decision_format_live_test.json"
+  ]
 }
