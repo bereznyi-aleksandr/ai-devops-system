@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:09 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:17 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -9,12 +9,9 @@
   "current_cycle": "bem531-full-e2e",
   "active_role": "curator",
   "next_role": null,
-  "last_result": "BEM-540 full system autotest PASS",
+  "last_result": "BEM-542 real orchestrator practical test PASS",
   "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
-  "blocker": {
-    "code": "PROVIDER_PROBE_AND_TELEGRAM_DELIVERY_NOT_PROVEN",
-    "message": "BEM-540 passed synthetic scope, but provider live probe and Telegram sender/delivery need BEM-541."
-  },
+  "blocker": null,
   "external_sources_scope": [
     "gpt",
     "claude",
@@ -213,5 +210,23 @@
     "transport_records_count": 9,
     "telegram_outbox_records_count": 1,
     "next_roadmap": "BEM541_TELEGRAM_LIVE_REPORTING_REWORK_ROADMAP.md"
+  },
+  "last_real_orchestrator_test": {
+    "id": "BEM-542",
+    "status": "PASS",
+    "task1_sha": "336d136a1b20c9d7483beb9727231a762f0f45c6",
+    "task2_sha": "58428e01057c57eda7833358c79c5a7003f59c20",
+    "task3_sha": "4bca6604959bd6055ec6668007834d78c54b249a",
+    "task4_sha": "dfa3e9add81b1712ad290f3913d0e6379be984c6",
+    "task5_sha": "this_commit",
+    "orchestrator_sequence": [
+      "analyst",
+      "auditor",
+      "executor",
+      "auditor_final",
+      "curator_closure"
+    ],
+    "provider_probe_before_reserve": true,
+    "boundary": "practical file-transport orchestrator logic via codex-runner; not independent always-on agents"
   }
 }

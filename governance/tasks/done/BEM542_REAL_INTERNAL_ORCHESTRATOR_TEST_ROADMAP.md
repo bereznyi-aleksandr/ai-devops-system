@@ -31,3 +31,20 @@ PASS: transport/state/report show role decisions created by orchestrator logic.
 
 ### BEM-542.5 — Final system report
 Сформировать honest PASS/BLOCKER: что реально работает, что остаётся runtime-limited.
+
+
+---
+
+## Result
+BEM-542 PASS. Practical orchestrator decision model verified.
+
+Evidence:
+- BEM-542.1 preflight: 336d136a1b20c9d7483beb9727231a762f0f45c6
+- BEM-542.2 orchestrator decision harness: 58428e01057c57eda7833358c79c5a7003f59c20
+- BEM-542.3 provider probe: 4bca6604959bd6055ec6668007834d78c54b249a
+- BEM-542.4 practical orchestrator E2E: dfa3e9add81b1712ad290f3913d0e6379be984c6
+- BEM-542.5 final report: final commit
+
+Boundary: tested practical orchestrator logic through file transport and codex-runner execution, not independent always-on live agents.
+
+Blocker: null
