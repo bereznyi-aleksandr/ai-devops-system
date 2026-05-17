@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem531_01_curator_intake",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-531.01 curator intake contract and samples created",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/CURATOR_INTAKE_CONTRACT.md",
+    "governance/transport/samples/curator_intake_gpt_sample.json",
+    "governance/transport/samples/curator_intake_claude_sample.json",
+    "governance/transport/samples/curator_intake_telegram_deferred_sample.json",
+    "governance/reports/bem531_01_curator_intake_report.md",
+    "governance/codex/proofs/bem531_01_curator_intake.txt",
+    "governance/codex/proofs/bem531_01_curator_intake.txt"
+  ],
+  "commit_sha": "b26ddc22d7f20e507aec67484735a7f2fc7cca0c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem531_01_curator_intake.md",
+  "completed_at": "2026-05-17T09:49:31Z"
+}
