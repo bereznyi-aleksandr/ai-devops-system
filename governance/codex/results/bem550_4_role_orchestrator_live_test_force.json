@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_4_role_orchestrator_live_test_force",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem550_4_role_orchestrator_live_test_force.txt"
+  ],
+  "commit_sha": "26ab126e05907d9723e6974b818f04f58f00dcd9",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: forbidden calls: subprocess"
+  },
+  "report_path": "governance/codex/results/bem550_4_role_orchestrator_live_test_force.md",
+  "completed_at": "2026-05-17T12:30:20Z"
+}
