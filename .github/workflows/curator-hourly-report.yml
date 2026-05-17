@@ -1,13 +1,21 @@
-# BEM-476: schedule disabled — workflow_dispatch only
-# Was: cron '0 * * * *' — now manual only to stop Actions spam
 name: Curator Hourly Report
 
+# BEM-535: schedule restored — safe because:
+# - NO issue #31 comments
+# - NO createComment
+# - writes only to files (telegram_outbox.jsonl, exchange.jsonl)
+# - email storm impossible with this workflow
+# BEM-476 запрет снят для этого workflow — причина запрета устранена
+
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'   # каждый час
+  workflow_dispatch:        # также вручную
 
 jobs:
   report:
     runs-on: ubuntu-latest
+    continue-on-error: true   # не генерировать email при ошибке
     permissions:
       contents: write
       issues: read
@@ -19,6 +27,7 @@ jobs:
           fetch-depth: 1
 
       - name: Generate and queue curator report
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
         run: |
@@ -27,86 +36,91 @@ jobs:
           from datetime import datetime, timezone, timedelta
 
           now_utc = datetime.now(timezone.utc)
-          now_ua = now_utc + timedelta(hours=3)
-          time_ua = now_ua.strftime("%H:%M UA %d.%m")
+          now_ua  = now_utc + timedelta(hours=3)
+          time_ua     = now_ua.strftime("%H:%M (UTC+3) %d.%m.%Y")
           time_utc_str = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
           event_id = "evt_hourly_" + now_utc.strftime("%Y%m%d_%H%M%S")
 
-          phase = "E3"
-          phase_title = "Otladka i stabilizatsiya"
+          # Read current phase
+          phase = "P9"
+          phase_title = "Handoff Protocol"
           try:
-              with open("governance/state/system_state.json") as f:
-                  s = json.load(f)
-              phase = s.get("current_phase", phase)
-              phase_title = s.get("phase_title", phase_title)
+              with open("governance/state/roadmap_state.json") as f:
+                  rs = json.load(f)
+              phase = rs.get("current_phase", phase)
+              phase_title = rs.get("phase_title", phase_title)
           except Exception:
               pass
 
+          # Read provider routing
           analyst_p = auditor_p = executor_p = "?"
           try:
               with open("governance/state/routing.json") as f:
                   r = json.load(f)
               roles = r.get("roles", {})
-              analyst_p = roles.get("analyst", {}).get("active", "?")
-              auditor_p = roles.get("auditor", {}).get("active", "?")
+              analyst_p  = roles.get("analyst",  {}).get("active", "?")
+              auditor_p  = roles.get("auditor",  {}).get("active", "?")
               executor_p = roles.get("executor", {}).get("active", "?")
           except Exception:
               pass
 
-          events_text = "net dannykh"
-          progress = "net aktivnosti za chas"
+          # Read recent events
+          events_text = "нет данных"
+          progress    = "нет активности за час"
           try:
               with open("governance/exchange.jsonl") as f:
                   events = [json.loads(l) for l in f if l.strip()]
               if events:
                   recent = events[-5:]
-                  lines = ["- " + e.get("type", "?") + " [" + e.get("timestamp", "")[:16] + "]" for e in recent]
+                  lines  = ["- " + e.get("type","?") + " [" + e.get("timestamp","")[:16] + "]"
+                             for e in recent]
                   events_text = "\n".join(lines)
               one_hour_ago = (now_utc - timedelta(hours=1)).isoformat()
-              recent_hour = [e for e in events if e.get("timestamp", "") > one_hour_ago]
-              progress = "est aktivnost" if recent_hour else "net aktivnosti za chas"
+              recent_hour  = [e for e in events if e.get("timestamp","") > one_hour_ago]
+              progress = "есть активность" if recent_hour else "нет активности за час"
           except Exception:
               pass
 
+          # Build canonical report
           report_lines = [
-              "KURATOR | " + time_ua,
+              "КУРАТОР | " + time_ua,
               "",
-              "Etap: " + phase + " | " + phase_title,
+              "Этап: " + phase + " | " + phase_title,
               "",
-              "Roli:",
-              "- Analitik: " + analyst_p,
-              "- Auditor: " + auditor_p,
-              "- Ispolnitel: " + executor_p,
+              "Роли:",
+              "- Аналитик: " + analyst_p,
+              "- Аудитор:  " + auditor_p,
+              "- Исполнитель: " + executor_p,
               "",
-              "Poslednie sobytiya:",
+              "Последние события:",
               events_text,
               "",
-              "Progress za chas: " + progress
+              "Прогресс за час: " + progress
           ]
           report = "\n".join(report_lines)
 
+          # Queue for Telegram
           outbox_entry = {
-              "event_id": event_id,
+              "event_id":  event_id,
               "timestamp": time_utc_str,
-              "target": "operator",
-              "channel": "telegram",
-              "chat_id": "601442777",
-              "text": report,
-              "status": "ready_to_send"
+              "target":    "operator",
+              "channel":   "telegram",
+              "chat_id":   "601442777",
+              "text":      report,
+              "status":    "ready_to_send"
           }
-
           with open("governance/telegram_outbox.jsonl", "a") as f:
               f.write(json.dumps(outbox_entry, ensure_ascii=False) + "\n")
 
+          # Exchange event
           exchange_entry = {
-              "event_id": event_id,
+              "event_id":  event_id,
               "timestamp": time_utc_str,
-              "type": "SYSTEM_HEALTH",
-              "source": "curator_hourly_report",
-              "status": "report_queued",
-              "phase": phase
+              "type":      "SYSTEM_HEALTH",
+              "source":    "curator_hourly_report",
+              "status":    "report_queued",
+              "phase":     phase
           }
-
           with open("governance/exchange.jsonl", "a") as f:
               f.write(json.dumps(exchange_entry, ensure_ascii=False) + "\n")
 
@@ -114,11 +128,12 @@ jobs:
           PYEOF
 
       - name: Commit
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
         run: |
           git config user.email "curator-report@ai-devops-system"
-          git config user.name "Curator Report"
+          git config user.name  "Curator Report"
           git pull --rebase --autostash origin main || true
           git add governance/telegram_outbox.jsonl governance/exchange.jsonl
           git diff --cached --quiet || git commit -m "CURATOR HOURLY REPORT: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
