@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem541_4_telegram_delivery_synthetic",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem541_4_telegram_delivery_synthetic.txt"
+  ],
+  "commit_sha": "973613069cdbc37da62b03a6d31b9482b9237545",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'abs' is not defined"
+  },
+  "report_path": "governance/codex/results/bem541_4_telegram_delivery_synthetic.md",
+  "completed_at": "2026-05-17T11:20:50Z"
+}
