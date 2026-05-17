@@ -3,12 +3,17 @@
 Дата: 2026-05-17 | 12:35 (UTC+3)
 
 ## Объект
-Внутренний контур разработки: analyst -> auditor -> executor -> GitHub Actions -> file transport -> role state. Это не внешний GPT autonomy contour.
+Внутренний контур разработки: curator -> analyst -> auditor -> executor -> GitHub Actions -> file transport -> role state. Это не внешний GPT autonomy contour.
 
 ## Цель
-Довести внутренний мультиагентный контур до проверяемого E2E состояния, где роли создают артефакты, передают их через файловый транспорт, executor применяет изменения, auditor подтверждает, state обновляется.
+Довести внутренний мультиагентный контур до проверяемого E2E состояния, где curator принимает/маршрутизирует вход, роли создают артефакты, передают их через файловый транспорт, executor применяет изменения, auditor подтверждает, state обновляется.
 
 ## Дорожная карта доработок
+
+### BEM-531.0 — Curator role contract
+Цель: формализовать роль curator как входной диспетчер внутреннего контура: intake, triage, назначение analyst/auditor/executor, контроль handoff и закрытие цикла.
+PASS: curator fields added to role_cycle_state schema, transport contract and synthetic E2E.
+
 
 ### BEM-531.1 — Role state schema audit and normalization
 Проверить и нормализовать governance/state/role_cycle_state.json: active_role, cycle_id, current_task, handoff pointers, status history, blocker, timestamps.
@@ -19,7 +24,7 @@ PASS: schema report, normalized state, backward-compatible fields.
 PASS: transport protocol + sample records + validator proof.
 
 ### BEM-531.3 — Role orchestrator workflow audit
-Проверить role-orchestrator.yml: triggers, inputs, state read/write, no schedule, no issue #31, routing analyst/auditor/executor.
+Проверить role-orchestrator.yml: triggers, inputs, state read/write, no schedule, no issue #31, routing curator/analyst/auditor/executor.
 PASS: audit report + patch if required.
 
 ### BEM-531.4 — Provider adapter workflow audit
@@ -27,7 +32,7 @@ PASS: audit report + patch if required.
 PASS: audit report + patch if required.
 
 ### BEM-531.5 — Synthetic role cycle E2E
-Создать тестовую задачу: analyst analysis -> auditor review -> executor file patch -> auditor final PASS -> transport result.
+Создать тестовую задачу: curator intake -> analyst analysis -> auditor review -> executor file patch -> auditor final PASS -> curator closure -> transport result.
 PASS: all role artifacts exist, role_cycle_state updated, result record appended, blocker=null.
 
 ### BEM-531.6 — Internal contour dashboard
