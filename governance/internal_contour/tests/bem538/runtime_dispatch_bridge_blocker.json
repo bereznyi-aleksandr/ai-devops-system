@@ -1,0 +1,19 @@
+{
+  "record_type": "runtime_dispatch_bridge_result",
+  "cycle_id": "bem538-runtime-dispatch-bridge",
+  "source": "internal",
+  "from_role": "curator",
+  "to_role": "operator_or_next_implementation",
+  "status": "blocked",
+  "artifact_path": "governance/reports/bem538_runtime_dispatch_bridge_final.md",
+  "commit_sha": null,
+  "blocker": {
+    "code": "WORKFLOW_DISPATCH_BRIDGE_MISSING",
+    "message": "Current autonomous GPT channel dispatches codex-runner only; no verified bridge to dispatch role-orchestrator/provider-adapter runtime workflows. Required: Deno endpoint for arbitrary workflow_dispatch or codex-runner actions:write dispatcher implementation."
+  },
+  "created_at": "2026-05-17 | 13:44 (UTC+3)",
+  "role_ready": true,
+  "provider_ready": true,
+  "actions_write": false,
+  "bridge_mode": "needs_codex_runner_actions_write_permission"
+}
