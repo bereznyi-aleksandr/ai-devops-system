@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_7_repository_cleanup_manifest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-550.7 cleanup/archive manifest completed",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/archive/bem550_cleanup/cleanup_manifest.json",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/reports/bem550_7_repository_cleanup_manifest.md",
+    "governance/codex/proofs/bem550_7_repository_cleanup_manifest.txt",
+    "governance/codex/proofs/bem550_7_repository_cleanup_manifest.txt"
+  ],
+  "commit_sha": "6d52666193f6890e8e39bd88c5d14800e711982c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem550_7_repository_cleanup_manifest.md",
+  "completed_at": "2026-05-17T12:33:01Z"
+}
