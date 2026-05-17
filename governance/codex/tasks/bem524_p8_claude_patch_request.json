@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem524_p8_claude_patch_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Create P8 Claude patch request",
+  "objective": "Create file governance/tasks/pending/BEM524_P8_CLAUDE_DIRECT_PATCH_REQUIRED.md with content 'BEM-524 P8 closure blocker. Functional P8 checks completed, but governance cleanup is not closed. Evidence: task definition cb20730ac5f2a629842e2fa5f91d2f2b3cb344f8, baseline proof 7bf96746d827042f041df3e5f41797eb2eaf186c, role diagnostic e8651edb1387ebe89af240aeee6687d24c4cc580, E2E baseline 43b440dfabe9e054c345631228902cea51225778, done marker 9f7daabaa7be688fb03cfb504ec7f23b5c14fb50. Blocker: current Python executor does not execute Run script and cannot delete governance/tasks/pending/P8_FULL_ROLE_CYCLE_E2E.md or update governance/state/roadmap_state.json. Required Claude direct patch: delete governance/tasks/pending/P8_FULL_ROLE_CYCLE_E2E.md, ensure governance/tasks/done/P8_FULL_ROLE_CYCLE_E2E.md exists, create governance/reports/bem524_p8_pass_report.md, update governance/state/roadmap_state.json: P8 completed, P9 current, blocker null. No issue comments. No schedule triggers. No paid OpenAI API.' No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem524_p8_claude_patch_request.md",
+    "result_json": "governance/codex/results/bem524_p8_claude_patch_request.json"
+  },
+  "created_at": "2026-05-17T08:18:57.703Z"
+}
