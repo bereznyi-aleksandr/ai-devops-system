@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem568_fix_claude_token_smoke_yaml
+task_type: code_patch
+executed_at: 2026-05-17T17:56:58Z
+ops_applied: Fixed invalid Claude token smoke workflow YAML by moving logic to standalone script, custom_script
+changed_files: scripts/claude_token_smoke.py, .github/workflows/claude-token-smoke.yml, governance/reports/bem568_fix_claude_token_smoke_yaml.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem568_fix_claude_token_smoke_yaml.txt
+errors: none
