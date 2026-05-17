@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem526_p10_close",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Close P10 production stability",
+  "objective": "Run script:\n\"\"\"\ndone = Path('governance/tasks/done/P10_PRODUCTION_STABILITY.md')\ndone.parent.mkdir(parents=True, exist_ok=True)\ndone.write_text('# P10 Production Stability — DONE\\n\\nBEM-526 completed.\\n\\nEvidence:\\n- Baseline audit: b60a98d0a65db9a80f45763388b5e482d204e57e\\n- Recovery runbook: 5d7dcf68aa8bd40ffdac75e228cda8104ef92846\\n- Runbook file: governance/protocols/PRODUCTION_STABILITY_RUNBOOK.md\\n- Report files: governance/reports/bem526_p10_baseline_audit.md, governance/reports/bem526_p10_recovery_rules.md\\n\\nPolicy:\\n- Executor: free ubuntu-latest Python v3\\n- No paid OpenAI API\\n- No Codex CLI\\n- No issue comments\\n- No schedule triggers\\n\\nBlocker: null\\n')\n\nreport = Path('governance/reports/bem526_p10_pass_report.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nreport.write_text('# BEM-526 | P10 Production Stability | PASS\\n\\nДата: 2026-05-17 | 11:56 (UTC+3)\\n\\n## Выполнено\\n- Проведён baseline audit production-контура.\\n- Создан production stability runbook.\\n- Зафиксирован recovery contract для queued/completed/failed/result-missing.\\n- Подтверждён executor v3 Run script без paid OpenAI API.\\n- Roadmap переведён на P11 Monitoring + Alerts.\\n\\n## Доказательства\\n- b60a98d0a65db9a80f45763388b5e482d204e57e\\n- 5d7dcf68aa8bd40ffdac75e228cda8104ef92846\\n- governance/tasks/done/P10_PRODUCTION_STABILITY.md\\n- governance/protocols/PRODUCTION_STABILITY_RUNBOOK.md\\n\\n## Blocker\\nnull\\n')\n\nstate_path = Path('governance/state/roadmap_state.json')\ndata = json.loads(state_path.read_text())\ndata['updated_at'] = now\ndata['cursor'] = 'BEM-526_P10_PRODUCTION_STABILITY_CLOSED'\ndata['current_phase'] = 'P11'\ndata['phase_title'] = 'Monitoring + Alerts'\ndata['blocker'] = None\npc = data.get('phases_completed', [])\nif 'P10' not in pc:\n    pc.append('P10')\ndata['phases_completed'] = pc\nremaining = [x for x in data.get('phases_remaining', []) if x != 'P10']\nif 'P11' not in remaining and 'P11' not in pc:\n    remaining.insert(0, 'P11')\nclean = []\nfor x in remaining:\n    if x not in clean and x not in pc:\n        clean.append(x)\ndata['phases_remaining'] = clean\n\ntasks = data.get('tasks', [])\nfound_p10 = False\nfound_p11 = False\nfor task in tasks:\n    if task.get('task_id') in ['P10_PRODUCTION_STABILITY', 'P10']:\n        task['task_id'] = 'P10_PRODUCTION_STABILITY'\n        task['status'] = 'completed'\n        task['completed_at'] = now\n        task['evidence'] = ['b60a98d0a65db9a80f45763388b5e482d204e57e', '5d7dcf68aa8bd40ffdac75e228cda8104ef92846']\n        found_p10 = True\n    if task.get('task_id') in ['P11_MONITORING_ALERTS', 'P11']:\n        task['task_id'] = 'P11_MONITORING_ALERTS'\n        task['status'] = 'pending'\n        found_p11 = True\nif not found_p10:\n    tasks.append({'task_id':'P10_PRODUCTION_STABILITY','status':'completed','completed_at':now,'evidence':['b60a98d0a65db9a80f45763388b5e482d204e57e','5d7dcf68aa8bd40ffdac75e228cda8104ef92846']})\nif not found_p11:\n    tasks.append({'task_id':'P11_MONITORING_ALERTS','status':'pending','note':'Next phase after P10 closure'})\ndata['tasks'] = tasks\nstate_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\\n')\n\nchanged_files.extend([str(done), str(report), str(state_path)])\nops_applied.append('closed P10 and advanced roadmap to P11')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem526_p10_close.md",
+    "result_json": "governance/codex/results/bem526_p10_close.json"
+  },
+  "created_at": "2026-05-17T08:30:39.448Z"
+}
