@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 22:32 (UTC+3)",
+  "updated_at": "2026-05-17 | 22:34 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,10 +103,7 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": {
-    "code": "OPERATOR_REPLY_INTAKE_RESULT_NOT_FOUND",
-    "message": "No operator reply intake last_run found yet. Workflow may still be running or failed before commit."
-  },
+  "blocker": null,
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -495,5 +492,14 @@
       "code": "OPERATOR_REPLY_INTAKE_RESULT_NOT_FOUND",
       "message": "No operator reply intake last_run found yet. Workflow may still be running or failed before commit."
     }
-  }
+  },
+  "bem589_record_operator_choice_from_chat": {
+    "status": "completed",
+    "decision_file": "governance/operator_decisions/bem584_decision_format_live_test.json",
+    "handoff_file": "governance/tasks/pending/operator_decision_bem584_decision_format_live_test.md",
+    "operator_choice": "1",
+    "selected_option": "Короткая таблица",
+    "blocker": null
+  },
+  "operator_decision_format": "short_readable_comparison_table"
 }
