@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem531_2_transport_failure",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-531.2 file transport contract and failure handling samples created",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/FILE_TRANSPORT_CONTRACT.md",
+    "governance/transport/samples/transport_validator_proof.txt",
+    "governance/reports/bem531_2_transport_failure_report.md",
+    "governance/codex/proofs/bem531_2_transport_failure.txt",
+    "governance/transport/samples/intake_sample.json",
+    "governance/transport/samples/handoff_sample.json",
+    "governance/transport/samples/role_timeout_sample.json",
+    "governance/transport/samples/executor_failed_sample.json",
+    "governance/codex/proofs/bem531_2_transport_failure.txt"
+  ],
+  "commit_sha": "b464c7f5c5f5a05b354218c6194263e7d46a41b9",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem531_2_transport_failure.md",
+  "completed_at": "2026-05-17T09:50:38Z"
+}
