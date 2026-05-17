@@ -1,0 +1,18 @@
+{
+  "record_type": "provider_selection_decision",
+  "cycle_id": "bem542-real-orchestrator-test",
+  "source": "internal_provider_adapter",
+  "from_role": "provider_adapter",
+  "to_role": "curator",
+  "provider_probe_signal": "active",
+  "primary_provider": "claude",
+  "reserve_provider": "gpt",
+  "selected_provider": "claude",
+  "reserve_used": false,
+  "reason": "claude_primary_available",
+  "status": "completed",
+  "artifact_path": "governance/internal_contour/tests/bem542/provider_selection_active.json",
+  "commit_sha": null,
+  "blocker": null,
+  "created_at": "2026-05-17 | 14:15 (UTC+3)"
+}

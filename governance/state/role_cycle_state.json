@@ -1,17 +1,17 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 14:13 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:15 (UTC+3)",
   "cycle_id": "bem542-real-orchestrator-test",
   "source": {
     "type": "gpt",
     "id": "BEM-540"
   },
   "curator_status": "ASSIGNED",
-  "active_role": "role_orchestrator",
+  "active_role": "provider_adapter",
   "next_role": "analyst",
   "current_task": {
-    "id": "BEM-542.2",
-    "title": "Real orchestrator decision harness",
+    "id": "BEM-542.3",
+    "title": "Provider probe before reserve",
     "status": "completed"
   },
   "handoff": {
@@ -146,6 +146,13 @@
       "status": "completed",
       "next_role": "analyst",
       "reason": "development_requires_analysis"
+    },
+    {
+      "at": "2026-05-17 | 14:15 (UTC+3)",
+      "event": "BEM-542.3 provider probe decisions",
+      "status": "PASS",
+      "claude_active_selected": "claude",
+      "claude_failed_selected": "gpt"
     }
   ],
   "legacy": {

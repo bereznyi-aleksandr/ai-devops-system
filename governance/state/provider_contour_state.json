@@ -1,6 +1,6 @@
 {
   "schema_version": "provider-contour-state.v1",
-  "updated_at": "2026-05-17 | 14:05 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:15 (UTC+3)",
   "primary_provider": "claude",
   "reserve_provider": "gpt",
   "curator": {
@@ -66,7 +66,7 @@
       "reserve_used": true
     }
   ],
-  "last_switch_reason": "claude_failed",
+  "last_switch_reason": null,
   "switch_history": [
     {
       "cycle_id": "bem535-claude-failed",
@@ -93,7 +93,7 @@
   ],
   "blocker": null,
   "last_provider": "claude",
-  "selected_provider": "gpt",
+  "selected_provider": "claude",
   "last_status": "failed",
   "synthetic_e2e": {
     "primary_ok": true,
@@ -104,5 +104,42 @@
   "failover_verified": true,
   "hourly_telegram_reporting_verified": "synthetic_external_cron_to_deno_to_workflow_dispatch",
   "limit_detection_mechanism": "claude_yml_outcome_failure_cancelled_or_transport_failed_cancelled_timeout",
-  "reserve_switch_rule": "claude failed/cancelled/timeout -> gpt reserve"
+  "reserve_switch_rule": "claude failed/cancelled/timeout -> gpt reserve",
+  "last_probe_policy": "probe_primary_claude_before_reserve",
+  "last_active_probe_result": {
+    "record_type": "provider_selection_decision",
+    "cycle_id": "bem542-real-orchestrator-test",
+    "source": "internal_provider_adapter",
+    "from_role": "provider_adapter",
+    "to_role": "curator",
+    "provider_probe_signal": "active",
+    "primary_provider": "claude",
+    "reserve_provider": "gpt",
+    "selected_provider": "claude",
+    "reserve_used": false,
+    "reason": "claude_primary_available",
+    "status": "completed",
+    "artifact_path": "governance/internal_contour/tests/bem542/provider_selection_active.json",
+    "commit_sha": null,
+    "blocker": null,
+    "created_at": "2026-05-17 | 14:15 (UTC+3)"
+  },
+  "last_failure_probe_result": {
+    "record_type": "provider_selection_decision",
+    "cycle_id": "bem542-real-orchestrator-test",
+    "source": "internal_provider_adapter",
+    "from_role": "provider_adapter",
+    "to_role": "curator",
+    "provider_probe_signal": "failed",
+    "primary_provider": "claude",
+    "reserve_provider": "gpt",
+    "selected_provider": "gpt",
+    "reserve_used": true,
+    "reason": "claude_failed",
+    "status": "completed",
+    "artifact_path": "governance/internal_contour/tests/bem542/provider_selection_failed.json",
+    "commit_sha": null,
+    "blocker": null,
+    "created_at": "2026-05-17 | 14:15 (UTC+3)"
+  }
 }
