@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 19:00 (UTC+3)",
+  "updated_at": "2026-05-17 | 19:22 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -277,6 +277,13 @@
       "Этап: X/Y (Z%)",
       "Дорожная карта: X/Y (Z%)"
     ],
+    "blocker": null
+  },
+  "bem562_telegram_operator_decision_gate": {
+    "status": "completed",
+    "protocol": "governance/protocols/TELEGRAM_OPERATOR_DECISION_GATE.md",
+    "telegram_message_queued": true,
+    "operator_decision_required_for": "strategic_claude_gpt_agreements",
     "blocker": null
   }
 }
