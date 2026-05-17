@@ -1,6 +1,6 @@
 {
   "schema_version": "provider-contour-state.v1",
-  "updated_at": "2026-05-17 | 14:55 (UTC+3)",
+  "updated_at": "2026-05-17 | 15:03 (UTC+3)",
   "primary_provider": "claude",
   "reserve_provider": "gpt",
   "curator": {
@@ -239,5 +239,10 @@
       "writes_state": true,
       "no_issue_31": true
     }
+  },
+  "last_synthetic_regression": {
+    "cycle_id": "bem548-5a-synthetic-regression",
+    "selected_provider": "claude",
+    "reserve_used": false
   }
 }

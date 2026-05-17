@@ -1,0 +1,19 @@
+{
+  "record_type": "provider_selection_decision",
+  "cycle_id": "bem548-5a-synthetic-regression",
+  "source": "provider_adapter",
+  "from_role": "provider_adapter",
+  "to_role": "curator",
+  "primary_provider": "claude",
+  "reserve_provider": "gpt",
+  "probe_signal": "unknown_no_failure_evidence",
+  "selected_provider": "claude",
+  "reserve_used": false,
+  "decision": "select_claude_primary_with_probe_required",
+  "reason": "no_valid_failure_evidence_for_reserve",
+  "status": "completed",
+  "artifact_path": "governance/internal_contour/tests/bem548_5a/provider_selection.json",
+  "commit_sha": null,
+  "blocker": null,
+  "created_at": "2026-05-17 | 15:03 (UTC+3)"
+}
