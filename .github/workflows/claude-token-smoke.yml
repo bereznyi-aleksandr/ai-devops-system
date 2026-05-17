@@ -10,11 +10,17 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: claude-token-smoke
+  cancel-in-progress: false
+
 jobs:
   check-secret:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Check secret presence and write report
         env:
@@ -27,4 +33,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/reports/bem568_claude_token_secret_smoke.md governance/transport/results.jsonl
           git commit -m "BEM-568 Claude token smoke result" || echo "No changes"
-          git push
+          git pull --rebase origin main || git rebase --abort || true
+          git push || (git pull --rebase origin main && git push)
