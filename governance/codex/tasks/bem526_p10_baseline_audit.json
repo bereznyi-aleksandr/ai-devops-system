@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem526_p10_baseline_audit",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "P10 production stability baseline audit",
+  "objective": "Run script:\n\"\"\"\nfrom pathlib import Path\nimport json\nfrom datetime import datetime\n\nreport = Path('governance/reports/bem526_p10_baseline_audit.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nproof = Path('governance/codex/proofs/bem526_p10_baseline_audit.txt')\nproof.parent.mkdir(parents=True, exist_ok=True)\n\nworkflow_dir = Path('.github/workflows')\nworkflow_files = sorted(workflow_dir.glob('*.yml')) + sorted(workflow_dir.glob('*.yaml'))\nworkflow_summary = []\nschedule_hits = []\nfor wf in workflow_files:\n    text = wf.read_text(errors='ignore')\n    has_schedule = 'schedule:' in text\n    has_dispatch = 'workflow_dispatch:' in text or 'workflow_dispatch' in text\n    workflow_summary.append(f'- {wf}: workflow_dispatch={has_dispatch}, schedule={has_schedule}')\n    if has_schedule:\n        schedule_hits.append(str(wf))\n\ncodex = Path('.github/workflows/codex-runner.yml')\ncodex_text = codex.read_text(errors='ignore') if codex.exists() else ''\nchecks = {\n    'codex_runner_exists': codex.exists(),\n    'codex_runner_ubuntu_latest': 'runs-on: ubuntu-latest' in codex_text,\n    'codex_runner_python_executor': 'Python executor' in codex_text or 'python3' in codex_text,\n    'codex_runner_no_codex_cli': 'codex exec' not in codex_text,\n    'codex_runner_no_openai_api_key': 'OPENAI_API_KEY' not in codex_text,\n    'no_schedule_triggers': len(schedule_hits) == 0,\n}\n\nstate_path = Path('governance/state/roadmap_state.json')\nstate = json.loads(state_path.read_text()) if state_path.exists() else {}\ncurrent_phase = state.get('current_phase')\nphase_title = state.get('phase_title')\nblocker = state.get('blocker')\n\nstatus = 'PASS' if all(checks.values()) and current_phase == 'P10' and blocker is None else 'BLOCKER'\n\nreport.write_text(f'''# BEM-526 | P10 Production Stability Baseline Audit | {status}\n\nДата: 2026-05-17 | 11:45 (UTC+3)\n\n## Проверки\n- current_phase: {current_phase}\n- phase_title: {phase_title}\n- blocker: {blocker}\n- codex_runner_exists: {checks['codex_runner_exists']}\n- codex_runner_ubuntu_latest: {checks['codex_runner_ubuntu_latest']}\n- codex_runner_python_executor: {checks['codex_runner_python_executor']}\n- codex_runner_no_codex_cli: {checks['codex_runner_no_codex_cli']}\n- codex_runner_no_openai_api_key: {checks['codex_runner_no_openai_api_key']}\n- no_schedule_triggers: {checks['no_schedule_triggers']}\n\n## Workflows\n{chr(10).join(workflow_summary)}\n\n## Schedule hits\n{schedule_hits}\n\n## Итог\nP10 baseline audit status: {status}.\nExecutor policy: free ubuntu-latest Python executor, no paid OpenAI API.\nNo issue comments. No schedule triggers.\n''')\n\nproof.write_text(f'BEM-526 P10 baseline audit {status}. current_phase={current_phase}. no_schedule_triggers={checks[\"no_schedule_triggers\"]}. codex_runner_ubuntu_latest={checks[\"codex_runner_ubuntu_latest\"]}. python_executor={checks[\"codex_runner_python_executor\"]}. no_paid_api={checks[\"codex_runner_no_openai_api_key\"]}.\\n')\n\nchanged_files.extend([str(report), str(proof)])\nops_applied.append(f'P10 production stability baseline audit completed with status {status}')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem526_p10_baseline_audit.md",
+    "result_json": "governance/codex/results/bem526_p10_baseline_audit.json"
+  },
+  "created_at": "2026-05-17T08:28:28.008Z"
+}
