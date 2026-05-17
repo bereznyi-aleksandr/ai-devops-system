@@ -1,0 +1,44 @@
+name: Curator Intake
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        required: true
+        type: string
+      source:
+        required: true
+        default: gpt
+        type: string
+      task_type:
+        required: true
+        default: development
+        type: string
+      title:
+        required: true
+        type: string
+      objective:
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  intake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runtime curator intake
+        env:
+          TRACE_ID: ${{ inputs.trace_id }}
+          SOURCE: ${{ inputs.source }}
+          TASK_TYPE: ${{ inputs.task_type }}
+          TITLE: ${{ inputs.title }}
+          OBJECTIVE: ${{ inputs.objective }}
+          BEM_TIMESTAMP: workflow_runtime
+        run: python3 scripts/curator_runtime_intake.py
+      - name: Commit intake result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/transport/results.jsonl governance/state/role_cycle_state.json
+          git commit -m "Curator intake ${{ inputs.trace_id }}" || echo "No changes"
+          git push
