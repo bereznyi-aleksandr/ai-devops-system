@@ -1,11 +1,13 @@
-# BEM-569 | Mailbox Dispatcher Direct Telegram Result
+# BEM-573 | Mailbox Dispatcher Decision-only Telegram Result
 
 Дата: workflow_runtime
 
 ## Result
 Picked: True
-Mailbox file: governance/audit_mailbox/gpt_to_claude/bem563_claude_gpt_sync_protocol_request.md
-Direct send status: sent
+Mailbox file: governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md
+Notify operator: True
+Reason: operator_decision_required
+Telegram status: sent
 
 ## Blocker
 null

@@ -7,8 +7,13 @@
   ],
   "last_run": {
     "picked": true,
-    "mailbox_file": "governance/audit_mailbox/gpt_to_claude/bem563_claude_gpt_sync_protocol_request.md",
-    "status": "sent",
+    "mailbox_file": "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
+    "notify_operator": true,
+    "reason": "operator_decision_required",
+    "telegram_status": "sent",
     "blocker": null
-  }
+  },
+  "processed_files": [
+    "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md"
+  ]
 }
