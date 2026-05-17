@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 
+NL = "\n"
 QUEUE_DIR = Path("governance/operator_decision_queue")
 STATE_PATH = Path("governance/state/operator_decision_dispatcher_state.json")
 TMP_DIR = Path("governance/tmp")
@@ -34,6 +35,44 @@ def validate(pkg):
             return False, "option_missing_required_fields"
     return True, None
 
+def short(text, limit):
+    value = " ".join(str(text or "").split())
+    if len(value) <= limit:
+        return value
+    return value[:max(0, limit - 1)].rstrip() + "…"
+
+def pad(text, width):
+    text = short(text, width)
+    return text + " " * max(0, width - len(text))
+
+def make_table(options):
+    # Narrow fixed-width table for Telegram mobile.
+    rows = []
+    rows.append("┌────┬──────────────┬──────────────────────┐")
+    rows.append("│ №  │ Вариант      │ Отличие / обоснование │")
+    rows.append("├────┼──────────────┼──────────────────────┤")
+    for opt in options[:4]:
+        oid = pad(opt.get("id", "?"), 2)
+        title = pad(opt.get("title", ""), 12)
+        diff = short(opt.get("difference", ""), 10)
+        rat = short(opt.get("rationale", ""), 10)
+        combo = pad(diff + "; " + rat, 20)
+        rows.append("│ " + oid + " │ " + title + " │ " + combo + " │")
+    rows.append("└────┴──────────────┴──────────────────────┘")
+    return NL.join(rows)
+
+def make_details(options):
+    parts = []
+    for opt in options[:4]:
+        oid = str(opt.get("id", "?"))
+        parts.append(oid + ") " + str(opt.get("title", "")))
+        parts.append("   Отличие: " + short(opt.get("difference", ""), 160))
+        parts.append("   Обоснование: " + short(opt.get("rationale", ""), 180))
+        if opt.get("impact"):
+            parts.append("   Последствие: " + short(opt.get("impact", ""), 160))
+        parts.append("")
+    return NL.join(parts).strip()
+
 def build_message(pkg):
     stage = pkg.get("stage") or {"done": 1, "total": 1}
     roadmap = pkg.get("roadmap") or {"done": 1, "total": 1}
@@ -41,33 +80,25 @@ def build_message(pkg):
     rd = roadmap.get("done", 1); rt = roadmap.get("total", 1)
     bem = pkg.get("bem", "BEM-MAILBOX")
     title = pkg.get("title", "OPERATOR DECISION REQUIRED")
-    lines = [f"{bem} | {title} | workflow_runtime", "", f"Этап: {sd}/{st} ({pct(sd, st)}%)", f"Дорожная карта: {rd}/{rt} ({pct(rd, rt)}%)", "", "Чек-лист:"]
+    opts = pkg.get("options") or []
+    lines = [
+        f"{bem} | {title} | workflow_runtime",
+        "",
+        f"Этап: {sd}/{st} ({pct(sd, st)}%)",
+        f"Дорожная карта: {rd}/{rt} ({pct(rd, rt)}%)",
+        "",
+        "Чек-лист:",
+    ]
     checklist = pkg.get("checklist") or ["Claude/GPT обсуждение завершено", "Decision package подготовлен", "Требуется решение оператора"]
     for item in checklist[:6]:
         item = str(item).strip()
         lines.append(item if item.startswith(("✅", "⚠️", "❌")) else "✅ " + item)
-    lines.extend(["", "Вопрос:", str(pkg.get("question", "")).strip(), "", "Таблица решений:"])
-    for opt in (pkg.get("options") or [])[:4]:
-        oid = str(opt.get("id", "?"))
-        lines.append(f"{oid}) Вариант: {opt.get('title', '')}")
-        lines.append(f"   Отличие: {opt.get('difference', '')}")
-        lines.append(f"   Обоснование: {opt.get('rationale', '')}")
-        if opt.get("impact"):
-            lines.append(f"   Последствие: {opt.get('impact')}")
-        lines.append("")
+    lines.extend(["", "Вопрос:", str(pkg.get("question", "")).strip(), "", "Таблица сравнения:", make_table(opts), "", "Детали по вариантам:", make_details(opts)])
     rec = pkg.get("recommendation") or {}
     if rec:
-        lines.append("Рекомендация аудиторов:")
-        lines.append("Вариант " + str(rec.get("option_id", "?")) + ": " + str(rec.get("rationale", "")))
-        lines.append("")
-    lines.append("Как ответить:")
-    lines.append(pkg.get("reply_format", "Напиши 1, 2, 3 или свой вариант текстом."))
-    lines.append("")
-    lines.append("Что будет после решения:")
-    lines.append("Пакет решения передаётся куратору, затем во внутренний контур.")
-    return "
-".join(lines).strip() + "
-"
+        lines.extend(["", "Рекомендация аудиторов:", "Вариант " + str(rec.get("option_id", "?")) + ": " + str(rec.get("rationale", ""))])
+    lines.extend(["", "Как ответить:", pkg.get("reply_format", "Напиши 1, 2, 3 или свой вариант текстом."), "", "Что будет после решения:", "Пакет решения передаётся куратору, затем во внутренний контур."])
+    return NL.join(lines).strip() + NL
 
 state = load_json(STATE_PATH, {})
 processed = set(state.get("processed_items", []))
@@ -94,6 +125,5 @@ else:
     else:
         pick = {"picked": True, "send": False, "queue_file": str(picked_path), "reason": "invalid_decision_package:" + str(reason)}
         MSG_PATH.write_text("", encoding="utf-8")
-PICK_PATH.write_text(json.dumps(pick, ensure_ascii=False, indent=2) + "
-", encoding="utf-8")
+PICK_PATH.write_text(json.dumps(pick, ensure_ascii=False, indent=2) + NL, encoding="utf-8")
 print(json.dumps({"picked": pick.get("picked"), "send": pick.get("send"), "reason": pick.get("reason"), "queue_file": pick.get("queue_file")}, ensure_ascii=False))

@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 21:56 (UTC+3)",
+  "updated_at": "2026-05-17 | 21:59 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -434,6 +434,16 @@
     "status": "completed",
     "mailbox_telegram": "disabled",
     "newline_strategy": "generated_scripts_internal_NL",
+    "blocker": null
+  },
+  "bem580_operator_decision_readable_table": {
+    "status": "completed",
+    "format": "mobile_readable_comparison_table_plus_details",
+    "columns": [
+      "№",
+      "Вариант",
+      "Отличие / обоснование"
+    ],
     "blocker": null
   }
 }
