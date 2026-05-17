@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem526_p10_recovery_rules",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P10 production recovery rules",
+  "objective": "Run script:\n\"\"\"\nrunbook = Path('governance/protocols/PRODUCTION_STABILITY_RUNBOOK.md')\nrunbook.parent.mkdir(parents=True, exist_ok=True)\nrunbook.write_text('# BEM-526 | Production Stability Runbook\\n\\nДата: 2026-05-17 | 11:52 (UTC+3)\\n\\n## Назначение\\nПравила восстановления production-контура ai-devops-system без issue #31, без schedule triggers и без платного OpenAI API.\\n\\n## Активная архитектура\\n- Executor: GitHub-hosted ubuntu-latest.\\n- Runtime: Python executor v3.\\n- Write channel: Deno createCodexTask.\\n- Status channel: Deno getCodexStatus.\\n- Paid OpenAI API: disabled.\\n- Codex CLI: disabled.\\n\\n## Контракт реакции на сбои\\n1. queued: ждать и повторить status check ограниченно, не выдавать оператору промежуточный отчёт.\\n2. completed + commit_sha: блок закрыт.\\n3. failed + blocker: читать blocker, исправлять одним автономным блоком.\\n4. result missing после ожидания: проверить GitHub Actions/runner состояние через доступный канал, без issue comments.\\n5. Python executor ограничение: использовать Run script с доступными globals Path/json/now/changed_files/ops_applied и без import.\\n6. Невыполнимое через executor: фиксировать blocker и direct-patch request, но не заявлять PASS.\\n\\n## Запреты\\n- No issue #31 comments.\\n- No schedule triggers.\\n- No secrets in files.\\n- No paid OpenAI API.\\n- No Codex CLI until separate approval.\\n\\n## PASS для P10\\n- baseline audit exists.\\n- recovery runbook exists.\\n- executor Run script verified.\\n- roadmap can advance to P11.\\n')\n\nproof = Path('governance/codex/proofs/bem526_p10_recovery_rules.txt')\nproof.parent.mkdir(parents=True, exist_ok=True)\nproof.write_text('BEM-526 P10 recovery rules created. Production stability runbook exists. Executor=ubuntu-latest Python v3. No paid API. No issue comments. No schedule triggers.\\n')\n\nreport = Path('governance/reports/bem526_p10_recovery_rules.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nreport.write_text('# BEM-526 | P10 Recovery Rules | PASS\\n\\nДата: 2026-05-17 | 11:52 (UTC+3)\\n\\n## Выполнено\\n- Создан production stability runbook.\\n- Зафиксирована активная бесплатная архитектура.\\n- Зафиксирован контракт реакции на queued/completed/failed/result-missing.\\n- Зафиксированы запреты: no issue #31, no schedule, no secrets, no paid API.\\n\\n## Доказательства\\n- governance/protocols/PRODUCTION_STABILITY_RUNBOOK.md\\n- governance/codex/proofs/bem526_p10_recovery_rules.txt\\n\\n## Blocker\\nnull\\n')\n\nchanged_files.extend([str(runbook), str(proof), str(report)])\nops_applied.append('created P10 production stability recovery runbook')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem526_p10_recovery_rules.md",
+    "result_json": "governance/codex/results/bem526_p10_recovery_rules.json"
+  },
+  "created_at": "2026-05-17T08:30:12.509Z"
+}
