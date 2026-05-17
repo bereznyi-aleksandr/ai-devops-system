@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem535_2_provider_limit_state
+task_type: code_patch
+executed_at: 2026-05-17T10:14:36Z
+ops_applied: BEM-535.2 created provider_contour_state and decision matrix, custom_script
+changed_files: governance/state/provider_contour_state.json, governance/reports/bem535_2_provider_limit_state.md, governance/codex/proofs/bem535_2_provider_limit_state.txt, governance/transport/samples/provider_decision_completed.json, governance/transport/samples/provider_decision_failed.json, governance/transport/samples/provider_decision_cancelled.json, governance/transport/samples/provider_decision_timeout.json, governance/transport/samples/provider_decision_missing_result_after_ttl.json
+errors: none

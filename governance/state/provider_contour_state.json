@@ -1,0 +1,72 @@
+{
+  "schema_version": "provider-contour-state.v1",
+  "updated_at": "2026-05-17 | 13:14 (UTC+3)",
+  "primary_provider": "claude",
+  "reserve_provider": "gpt",
+  "curator": {
+    "role": "curator",
+    "provider": "gpt_codex",
+    "status": "ACTIVE"
+  },
+  "analyst": {
+    "role": "analyst",
+    "provider": "gpt_codex",
+    "status": "ACTIVE"
+  },
+  "providers": {
+    "claude": {
+      "contour": "primary",
+      "status": "UNKNOWN",
+      "limit_state": "UNKNOWN",
+      "last_outcome": null,
+      "failure_signals": [
+        "failure",
+        "cancelled",
+        "timeout",
+        "missing_result_after_ttl",
+        "transport_failed"
+      ]
+    },
+    "gpt": {
+      "contour": "reserve",
+      "status": "ACTIVE",
+      "limit_state": "AVAILABLE",
+      "last_outcome": null,
+      "failure_signals": [
+        "failure",
+        "cancelled",
+        "timeout"
+      ]
+    }
+  },
+  "decision_matrix": [
+    {
+      "claude_signal": "completed",
+      "decision": "use_claude_primary",
+      "reserve_used": false
+    },
+    {
+      "claude_signal": "failed",
+      "decision": "switch_to_gpt_reserve",
+      "reserve_used": true
+    },
+    {
+      "claude_signal": "cancelled",
+      "decision": "switch_to_gpt_reserve",
+      "reserve_used": true
+    },
+    {
+      "claude_signal": "timeout",
+      "decision": "switch_to_gpt_reserve",
+      "reserve_used": true
+    },
+    {
+      "claude_signal": "missing_result_after_ttl",
+      "decision": "switch_to_gpt_reserve",
+      "reserve_used": true
+    }
+  ],
+  "last_switch_reason": null,
+  "switch_history": [],
+  "blocker": null
+}
