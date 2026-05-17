@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_4_role_orchestrator_live_test_force",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-550.4 force role orchestrator test",
+  "objective": "Run script:\n\"\"\"\nimport os, json, subprocess\nfrom pathlib import Path\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\nstate=Path('governance/state/role_cycle_state.json'); state.parent.mkdir(parents=True,exist_ok=True)\ncycle='bem550-4-live-test-force'\ndef append(rec):\n    with transport.open('a',encoding='utf-8') as f: f.write(json.dumps(rec,ensure_ascii=False)+'\\n')\nappend({'record_type':'curator_intake','cycle_id':cycle,'trace_id':'bem550_4_live_test_force','source':'gpt','task_type':'development','title':'BEM-550.4 live test','objective':'route to analyst','status':'completed','commit_sha':None,'blocker':None,'created_at':'2026-05-17 | 15:33 (UTC+3)'})\nappend({'record_type':'curator_assignment','cycle_id':cycle,'source':'curator','from_role':'curator','to_role':'role_orchestrator','status':'completed','decision':'submit_to_orchestrator','reason':'test','commit_sha':None,'blocker':None,'created_at':'2026-05-17 | 15:33 (UTC+3)'})\nos.environ['CYCLE_ID']=cycle\nscript=Path('scripts/role_orchestrator_decide.py')\nif script.exists():\n    subprocess.run(['python3',str(script)],check=True)\nrows=[]\nfor line in transport.read_text(errors='ignore').splitlines():\n    if line.strip():\n        try: rows.append(json.loads(line))\n        except Exception: pass\nmatches=[r for r in rows if r.get('cycle_id')==cycle and r.get('record_type')=='role_orchestrator_decision']\nlast=matches[-1] if matches else {}\nok=last.get('to_role')=='analyst' and last.get('status')=='completed'\nblocker=None if ok else {'code':'ROLE_ORCHESTRATOR_LIVE_TEST_FAILED','last':last}\nreport=reports/'bem550_4_role_orchestrator_live_test.md'\nreport.write_text('# BEM-550.4 | Role-Orchestrator Live Workflow Test | '+('PASS' if ok else 'BLOCKER')+'\\n\\nДата: 2026-05-17 | 15:33 (UTC+3)\\n\\n## Result\\nrole_orchestrator_decision routed curator_assignment development task to analyst.\\n\\n## Last decision\\n```json\\n'+json.dumps(last,indent=2,ensure_ascii=False)+'\\n```\\n\\n## Blocker\\n'+('null' if ok else json.dumps(blocker,ensure_ascii=False))+'\\n')\nproof=proofs/'bem550_4_role_orchestrator_live_test_force.txt'\nproof.write_text('BEM-550.4 '+('PASS' if ok else 'BLOCKER')+': to_role='+str(last.get('to_role'))+'\\n')\nchanged_files.extend([str(transport),str(state),str(report),str(proof)])\nops_applied.append('BEM-550.4 role-orchestrator live test explicit artifacts created')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem550_4_role_orchestrator_live_test_force.md",
+    "result_json": "governance/codex/results/bem550_4_role_orchestrator_live_test_force.json"
+  },
+  "created_at": "2026-05-17T12:30:11.694Z"
+}
