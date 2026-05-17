@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem568_trigger_claude_token_smoke_now",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Triggered Claude Token Smoke via marker commit to scripts/claude_token_smoke.py",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/claude_token_smoke.py",
+    "governance/reports/bem568_trigger_claude_token_smoke_now.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem568_trigger_claude_token_smoke_now.txt",
+    "governance/codex/proofs/bem568_trigger_claude_token_smoke_now.txt"
+  ],
+  "commit_sha": "292e2c4a537385f5482a092a45176f9a4ce3edaf",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem568_trigger_claude_token_smoke_now.md",
+  "completed_at": "2026-05-17T18:07:06Z"
+}
