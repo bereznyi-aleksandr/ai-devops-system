@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 import json
 from pathlib import Path
-MAILBOX_DIRS = [Path("governance/audit_mailbox/claude_to_gpt"), Path("governance/audit_mailbox/gpt_to_claude")]
+
+MAILBOX_DIRS = [
+    Path("governance/audit_mailbox/claude_to_gpt"),
+    Path("governance/audit_mailbox/gpt_to_claude"),
+]
 STATE_PATH = Path("governance/state/mailbox_dispatcher_state.json")
 TMP_DIR = Path("governance/tmp")
 PICK_PATH = TMP_DIR / "mailbox_pick.json"
@@ -54,8 +58,7 @@ def build_message(path):
         f"Файл | {path} | Repo-visible artifact",
         "Следующее действие | Прочитать файл и ответить в mailbox | Асинхронная синхронизация без оператора-relay",
     ]
-    return "
-".join(lines)
+    return "\n".join(lines)
 
 state = load_state()
 seen = set(state.get("sent_files", []))
@@ -76,6 +79,5 @@ else:
     message = build_message(picked)
     pick = {"picked": True, "message": message, "mailbox_file": str(picked)}
     MSG_PATH.write_text(message, encoding="utf-8")
-PICK_PATH.write_text(json.dumps(pick, ensure_ascii=False, indent=2) + "
-", encoding="utf-8")
+PICK_PATH.write_text(json.dumps(pick, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(json.dumps({"picked": pick["picked"], "mailbox_file": pick["mailbox_file"]}, ensure_ascii=False))

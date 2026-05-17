@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 from pathlib import Path
+
 STATE_PATH = Path("governance/state/mailbox_dispatcher_state.json")
 PICK_PATH = Path("governance/tmp/mailbox_pick.json")
 STATUS_PATH = Path("governance/tmp/mailbox_telegram_status.txt")
@@ -19,8 +20,7 @@ def load_json(path, default):
 def append_jsonl(path, record):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(record, ensure_ascii=False) + "
-")
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 state = load_json(STATE_PATH, {})
 pick = load_json(PICK_PATH, {"picked": False, "message": "", "mailbox_file": None})
@@ -50,10 +50,21 @@ if pick.get("picked"):
         state["sent_files"] = sorted(seen)
 state["last_run"] = {"picked": pick.get("picked"), "mailbox_file": pick.get("mailbox_file"), "status": status, "blocker": blocker}
 STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-STATE_PATH.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "
-", encoding="utf-8")
+STATE_PATH.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-lines = ["# BEM-569 | Mailbox Dispatcher Direct Telegram Result", "", "Дата: workflow_runtime", "", "## Result", "Picked: " + str(pick.get("picked")), "Mailbox file: " + str(pick.get("mailbox_file")), "Direct send status: " + status, "", "## Blocker", "null" if blocker is None else json.dumps(blocker, ensure_ascii=False), ""]
-REPORT_PATH.write_text("
-".join(lines), encoding="utf-8")
+lines = [
+    "# BEM-569 | Mailbox Dispatcher Direct Telegram Result",
+    "",
+    "Дата: workflow_runtime",
+    "",
+    "## Result",
+    "Picked: " + str(pick.get("picked")),
+    "Mailbox file: " + str(pick.get("mailbox_file")),
+    "Direct send status: " + status,
+    "",
+    "## Blocker",
+    "null" if blocker is None else json.dumps(blocker, ensure_ascii=False),
+    "",
+]
+REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
 print(json.dumps(state["last_run"], ensure_ascii=False))

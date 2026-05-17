@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 21:20 (UTC+3)",
+  "updated_at": "2026-05-17 | 21:23 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -372,6 +372,12 @@
     "workflow": ".github/workflows/mailbox-dispatcher.yml",
     "direct_telegram_via_workflow_curl": true,
     "python_network_calls": false,
+    "blocker": null
+  },
+  "bem569_fix_mailbox_picker_syntax": {
+    "status": "completed",
+    "workflow": ".github/workflows/mailbox-dispatcher.yml",
+    "syntax_check": "workflow_py_compile",
     "blocker": null
   }
 }

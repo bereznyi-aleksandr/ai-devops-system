@@ -24,6 +24,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Syntax check mailbox scripts
+        run: |
+          python3 -m py_compile scripts/mailbox_pick_notification.py scripts/mailbox_record_delivery.py
+
       - name: Pick mailbox notification
         run: python3 scripts/mailbox_pick_notification.py
 
