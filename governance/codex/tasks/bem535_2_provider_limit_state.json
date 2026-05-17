@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem535_2_provider_limit_state",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-535.2 provider limit state",
+  "objective": "Run script:\n\"\"\"\nstate_path = Path('governance/state/provider_contour_state.json')\nreport = Path('governance/reports/bem535_2_provider_limit_state.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nproof = Path('governance/codex/proofs/bem535_2_provider_limit_state.txt')\nproof.parent.mkdir(parents=True, exist_ok=True)\nsamples = Path('governance/transport/samples')\nsamples.mkdir(parents=True, exist_ok=True)\n\nstate = {\n  'schema_version': 'provider-contour-state.v1',\n  'updated_at': '2026-05-17 | 13:14 (UTC+3)',\n  'primary_provider': 'claude',\n  'reserve_provider': 'gpt',\n  'curator': {'role':'curator','provider':'gpt_codex','status':'ACTIVE'},\n  'analyst': {'role':'analyst','provider':'gpt_codex','status':'ACTIVE'},\n  'providers': {\n    'claude': {\n      'contour':'primary',\n      'status':'UNKNOWN',\n      'limit_state':'UNKNOWN',\n      'last_outcome': None,\n      'failure_signals':['failure','cancelled','timeout','missing_result_after_ttl','transport_failed']\n    },\n    'gpt': {\n      'contour':'reserve',\n      'status':'ACTIVE',\n      'limit_state':'AVAILABLE',\n      'last_outcome': None,\n      'failure_signals':['failure','cancelled','timeout']\n    }\n  },\n  'decision_matrix': [\n    {'claude_signal':'completed','decision':'use_claude_primary','reserve_used':False},\n    {'claude_signal':'failed','decision':'switch_to_gpt_reserve','reserve_used':True},\n    {'claude_signal':'cancelled','decision':'switch_to_gpt_reserve','reserve_used':True},\n    {'claude_signal':'timeout','decision':'switch_to_gpt_reserve','reserve_used':True},\n    {'claude_signal':'missing_result_after_ttl','decision':'switch_to_gpt_reserve','reserve_used':True}\n  ],\n  'last_switch_reason': None,\n  'switch_history': [],\n  'blocker': None\n}\nstate_path.write_text(json.dumps(state, indent=2, ensure_ascii=False)+'\\n')\n\nfor signal in ['completed','failed','cancelled','timeout','missing_result_after_ttl']:\n    decision = 'use_claude_primary' if signal == 'completed' else 'switch_to_gpt_reserve'\n    rec = {'record_type':'provider_decision_sample','provider':'claude','signal':signal,'decision':decision,'reserve_provider':'gpt','created_at':'2026-05-17 | 13:14 (UTC+3)','blocker':None}\n    (samples/('provider_decision_'+signal+'.json')).write_text(json.dumps(rec, indent=2, ensure_ascii=False)+'\\n')\n\nreport.write_text('# BEM-535.2 | Provider Limit State + Decision Matrix | PASS\\n\\nДата: 2026-05-17 | 13:14 (UTC+3)\\n\\n## Выполнено\\n- Created provider_contour_state.json.\\n- Primary Claude and reserve GPT defined.\\n- Curator and Analyst mapped to GPT Codex.\\n- Decision matrix added for completed/failed/cancelled/timeout/missing_result_after_ttl.\\n- Sample provider decision records created.\\n\\n## Blocker\\nnull\\n')\nproof.write_text('BEM-535.2 PASS: provider_contour_state.json and decision matrix created.\\n')\nchanged_files.extend([str(state_path), str(report), str(proof)])\nfor signal in ['completed','failed','cancelled','timeout','missing_result_after_ttl']:\n    changed_files.append(str(samples/('provider_decision_'+signal+'.json')))\nops_applied.append('BEM-535.2 created provider_contour_state and decision matrix')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem535_2_provider_limit_state.md",
+    "result_json": "governance/codex/results/bem535_2_provider_limit_state.json"
+  },
+  "created_at": "2026-05-17T10:14:28.831Z"
+}
