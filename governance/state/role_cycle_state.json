@@ -1,17 +1,17 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 14:15 (UTC+3)",
-  "cycle_id": "bem542-real-orchestrator-test",
+  "updated_at": "2026-05-17 | 14:16 (UTC+3)",
+  "cycle_id": "bem542-practical-e2e",
   "source": {
     "type": "gpt",
     "id": "BEM-540"
   },
-  "curator_status": "ASSIGNED",
-  "active_role": "provider_adapter",
-  "next_role": "analyst",
+  "curator_status": "CLOSED",
+  "active_role": "curator",
+  "next_role": null,
   "current_task": {
-    "id": "BEM-542.3",
-    "title": "Provider probe before reserve",
+    "id": "BEM-542.4",
+    "title": "Practical orchestrator E2E",
     "status": "completed"
   },
   "handoff": {
@@ -153,6 +153,38 @@
       "status": "PASS",
       "claude_active_selected": "claude",
       "claude_failed_selected": "gpt"
+    },
+    {
+      "at": "2026-05-17 | 14:16 (UTC+3)",
+      "event": "BEM-542.4 practical orchestrator E2E",
+      "status": "PASS",
+      "steps": [
+        {
+          "step": 1,
+          "decision": "analyst",
+          "reason": "development_requires_analysis"
+        },
+        {
+          "step": 2,
+          "decision": "auditor",
+          "reason": "analysis_completed"
+        },
+        {
+          "step": 3,
+          "decision": "executor",
+          "reason": "audit_pass_to_executor"
+        },
+        {
+          "step": 4,
+          "decision": "auditor_final",
+          "reason": "execution_requires_final_audit"
+        },
+        {
+          "step": 5,
+          "decision": "curator_closure",
+          "reason": "final_audit_pass"
+        }
+      ]
     }
   ],
   "legacy": {

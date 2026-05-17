@@ -1,0 +1,15 @@
+{
+  "record_type": "role_orchestrator_decision",
+  "cycle_id": "bem542-practical-e2e",
+  "source": "internal_orchestrator",
+  "from_role": "role_orchestrator",
+  "to_role": "auditor_final",
+  "status": "completed",
+  "decision": "route_to_auditor_final",
+  "reason": "execution_requires_final_audit",
+  "input_record_type": "execution",
+  "artifact_path": "governance/internal_contour/tests/bem542/practical_orchestrator_decision_4.json",
+  "commit_sha": null,
+  "blocker": null,
+  "created_at": "2026-05-17 | 14:16 (UTC+3)"
+}
