@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 20:14 (UTC+3)",
+  "updated_at": "2026-05-17 | 20:56 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -318,6 +318,12 @@
     "report": "governance/reports/bem567_latest_claude_request.md",
     "source_file": "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
     "requested_count": 1,
+    "blocker": null
+  },
+  "bem568_claude_token_smoke_workflow": {
+    "status": "workflow_ready",
+    "workflow": ".github/workflows/claude-token-smoke.yml",
+    "manual_or_api_dispatch_required": true,
     "blocker": null
   }
 }

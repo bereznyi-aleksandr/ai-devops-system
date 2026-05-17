@@ -1,0 +1,54 @@
+name: Claude Token Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-secret:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check CLAUDE_CODE_OAUTH_TOKEN presence only
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          mkdir -p governance/reports governance/transport
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            STATUS="secret_present"
+            BLOCKER="null"
+          else
+            STATUS="secret_missing"
+            BLOCKER='{"code":"CLAUDE_CODE_OAUTH_TOKEN_MISSING"}'
+          fi
+          cat > governance/reports/bem568_claude_token_secret_smoke.md <<EOF
+# BEM-568 | Claude Token Secret Smoke | ${STATUS}
+
+Дата: workflow_runtime
+
+## Result
+CLAUDE_CODE_OAUTH_TOKEN presence check: ${STATUS}
+
+## Security
+Token value was not printed.
+
+## Blocker
+${BLOCKER}
+EOF
+          python3 - <<PY
+          import json
+          from pathlib import Path
+          rec={"record_type":"claude_token_secret_smoke","cycle_id":"bem568-claude-token-secret-smoke","source":"github-actions","status":"${STATUS}","artifact_path":"governance/reports/bem568_claude_token_secret_smoke.md","commit_sha":None,"blocker":None if "${STATUS}" == "secret_present" else {"code":"CLAUDE_CODE_OAUTH_TOKEN_MISSING"},"created_at":"workflow_runtime"}
+          p=Path("governance/transport/results.jsonl"); p.parent.mkdir(parents=True,exist_ok=True)
+          with p.open("a",encoding="utf-8") as f: f.write(json.dumps(rec,ensure_ascii=False)+"
+")
+          PY
+      - name: Commit smoke result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/reports/bem568_claude_token_secret_smoke.md governance/transport/results.jsonl
+          git commit -m "BEM-568 Claude token smoke result" || echo "No changes"
+          git push
