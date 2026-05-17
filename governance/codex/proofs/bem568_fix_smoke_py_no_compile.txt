@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem568_fix_smoke_py_no_compile
+task_type: code_patch
+executed_at: 2026-05-17T18:02:52Z
+ops_applied: Removed unsupported compile() and rewrote Claude token smoke script safely, custom_script
+changed_files: scripts/claude_token_smoke.py, governance/reports/bem568_fix_smoke_py_no_compile.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem568_fix_smoke_py_no_compile.txt
+errors: none
