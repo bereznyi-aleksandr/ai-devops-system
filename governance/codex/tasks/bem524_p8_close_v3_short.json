@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem524_p8_close_v3_short",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Close P8 governance state",
+  "objective": "Run script: \"\"\"\nfrom pathlib import Path\nimport json\np=Path('governance/tasks/pending/P8_FULL_ROLE_CYCLE_E2E.md')\nd=Path('governance/tasks/done/P8_FULL_ROLE_CYCLE_E2E.md')\nd.parent.mkdir(parents=True,exist_ok=True)\ntext=p.read_text() if p.exists() else d.read_text()\nd.write_text(text+'\\n\\nP8 closed by BEM-524. Evidence SHA: cb20730a, 7bf96746, e8651edb, 43b440df, 9f7daaba. No issue comments. No schedule. No paid API.\\n')\nif p.exists(): p.unlink()\nr=Path('governance/reports/bem524_p8_pass_report.md')\nr.parent.mkdir(parents=True,exist_ok=True)\nr.write_text('# BEM-524 | P8 PASS\\n\\nP8 Full Role Cycle E2E closed. Evidence: cb20730a, 7bf96746, e8651edb, 43b440df, 9f7daaba. Blocker: null.\\n')\ns=Path('governance/state/roadmap_state.json')\ndata=json.loads(s.read_text())\ndata['updated_at']='2026-05-17T05:45:00Z'; data['current_phase']='P9'; data['phase_title']='Handoff Protocol Claude↔GPT'; data['blocker']=None\npc=data.get('phases_completed',[])\nif 'P8' not in pc: pc.append('P8')\ndata['phases_completed']=pc\ndata['phases_remaining']=[x for x in data.get('phases_remaining',[]) if x!='P8']\nif 'P9' not in data['phases_remaining'] and 'P9' not in pc: data['phases_remaining'].insert(0,'P9')\ns.write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\\n')\nchanged_files += [str(d),str(r),str(s)]\nops_applied += ['closed P8, removed pending, wrote report, advanced roadmap to P9']\n\"\"\" No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem524_p8_close_v3_short.md",
+    "result_json": "governance/codex/results/bem524_p8_close_v3_short.json"
+  },
+  "created_at": "2026-05-17T08:17:19.423Z"
+}
