@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem541_1_provider_probe_before_reserve",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-541.1 provider probe before reserve enforced and recorded",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/PROVIDER_PROBE_BEFORE_RESERVE.md",
+    "governance/internal_contour/tests/bem541/provider_probe_actual.json",
+    "governance/internal_contour/tests/bem541/provider_selection_actual.json",
+    "governance/internal_contour/tests/bem541/provider_selection_test_active.json",
+    "governance/internal_contour/tests/bem541/provider_selection_test_failed.json",
+    "governance/transport/results.jsonl",
+    "governance/state/provider_contour_state.json",
+    "governance/state/role_cycle_state.json",
+    "governance/reports/bem541_1_provider_probe_before_reserve.md",
+    "governance/codex/proofs/bem541_1_provider_probe_before_reserve.txt",
+    "governance/codex/proofs/bem541_1_provider_probe_before_reserve.txt"
+  ],
+  "commit_sha": "61fd6f88d355ebea3555388624bfd4bb512e7ade",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem541_1_provider_probe_before_reserve.md",
+  "completed_at": "2026-05-17T11:19:13Z"
+}
