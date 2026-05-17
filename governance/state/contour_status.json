@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:38 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:41 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -12,18 +12,20 @@
   "last_result": "BEM-541 corrected full system retest PASS",
   "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
   "blocker": {
-    "code": "TELEGRAM_HOURLY_WIRING_FAILED",
+    "code": "TELEGRAM_WIRING_INCOMPLETE",
     "checks": {
       "curator_hourly_exists": true,
-      "sender_workflow_exists": true,
-      "hourly_has_schedule": true,
-      "hourly_has_cron": true,
-      "hourly_has_continue_on_error": true,
-      "hourly_uses_token_secret": true,
-      "hourly_uses_chat_secret": true,
-      "hourly_calls_picker": true,
-      "hourly_calls_recorder": true,
-      "no_issue_31": false
+      "curator_hourly_schedule": true,
+      "curator_hourly_cron_hourly": true,
+      "curator_hourly_uses_token_secret": true,
+      "curator_hourly_uses_chat_secret": true,
+      "curator_hourly_calls_picker": true,
+      "curator_hourly_calls_recorder": true,
+      "curator_hourly_no_issue_31": false,
+      "standalone_sender_exists": true,
+      "standalone_sender_dispatch": true,
+      "standalone_sender_uses_token_secret": true,
+      "standalone_sender_uses_chat_secret": true
     }
   },
   "external_sources_scope": [
@@ -318,6 +320,46 @@
         "hourly_calls_picker": true,
         "hourly_calls_recorder": true,
         "no_issue_31": false
+      }
+    }
+  },
+  "telegram_live_delivery_verification": {
+    "status": "WIRING_BLOCKER",
+    "repo_wiring_ok": false,
+    "sent_records_count": 0,
+    "failed_records_count": 1,
+    "delivery_records_count": 4,
+    "ready_records_count": 2,
+    "workflow_checks": {
+      "curator_hourly_exists": true,
+      "curator_hourly_schedule": true,
+      "curator_hourly_cron_hourly": true,
+      "curator_hourly_uses_token_secret": true,
+      "curator_hourly_uses_chat_secret": true,
+      "curator_hourly_calls_picker": true,
+      "curator_hourly_calls_recorder": true,
+      "curator_hourly_no_issue_31": false,
+      "standalone_sender_exists": true,
+      "standalone_sender_dispatch": true,
+      "standalone_sender_uses_token_secret": true,
+      "standalone_sender_uses_chat_secret": true
+    },
+    "queued_verification_cycle": "bem546-live-delivery-verification",
+    "blocker": {
+      "code": "TELEGRAM_WIRING_INCOMPLETE",
+      "checks": {
+        "curator_hourly_exists": true,
+        "curator_hourly_schedule": true,
+        "curator_hourly_cron_hourly": true,
+        "curator_hourly_uses_token_secret": true,
+        "curator_hourly_uses_chat_secret": true,
+        "curator_hourly_calls_picker": true,
+        "curator_hourly_calls_recorder": true,
+        "curator_hourly_no_issue_31": false,
+        "standalone_sender_exists": true,
+        "standalone_sender_dispatch": true,
+        "standalone_sender_uses_token_secret": true,
+        "standalone_sender_uses_chat_secret": true
       }
     }
   }
