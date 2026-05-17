@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem529_chain_roadmap_create",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Create chained test roadmap",
+  "objective": "Run script:\n\"\"\"\nroadmap = Path('governance/tasks/pending/BEM529_CHAINED_AUTONOMY_TEST.md')\nroadmap.parent.mkdir(parents=True, exist_ok=True)\nroadmap.write_text('# BEM-529 | Chained Autonomous Test Roadmap\\n\\nДата: 2026-05-17 | 12:20 (UTC+3)\\n\\n## Цель\\nПроверить автономный корпус GPT с последовательной подстановкой следующей задачи после завершения предыдущей, без участия оператора.\\n\\n## Цепочка из 3 задач\\n1. Chain step 1: создать стартовый proof и manifest.\\n2. Chain step 2: прочитать manifest step 1, создать JSON state и report.\\n3. Chain step 3: собрать итоговый audit report, закрыть roadmap в done, подтвердить PASS.\\n\\n## Правило цепочки\\nСледующий шаг запускается только после status=completed и commit_sha предыдущего шага.\\n\\n## PASS criteria\\n- Все 3 шага completed.\\n- Каждый шаг имеет commit SHA.\\n- Итоговый отчёт существует.\\n- blocker=null.\\n- No issue #31 comments.\\n- No schedule triggers.\\n- No paid OpenAI API.\\n')\nmanifest = Path('governance/codex/proofs/bem529_chain_manifest.json')\nmanifest.parent.mkdir(parents=True, exist_ok=True)\nmanifest.write_text(json.dumps({'bem':'BEM-529','mode':'chained autonomy test','steps':['step1','step2','step3'],'status':'roadmap_created','operator_participation':False}, indent=2, ensure_ascii=False) + '\\n')\nchanged_files.extend([str(roadmap), str(manifest)])\nops_applied.append('created BEM-529 chained autonomy test roadmap')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem529_chain_roadmap_create.md",
+    "result_json": "governance/codex/results/bem529_chain_roadmap_create.json"
+  },
+  "created_at": "2026-05-17T08:39:53.836Z"
+}
