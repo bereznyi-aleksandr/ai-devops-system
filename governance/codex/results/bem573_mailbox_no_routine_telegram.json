@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem573_mailbox_no_routine_telegram",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Disabled routine Telegram notifications for mailbox; Telegram only for operator decision required markers",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/MAILBOX_TELEGRAM_DECISION_ONLY_POLICY.md",
+    "scripts/mailbox_pick_notification.py",
+    "scripts/mailbox_record_delivery.py",
+    ".github/workflows/mailbox-dispatcher.yml",
+    "governance/reports/bem573_mailbox_no_routine_telegram.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem573_mailbox_no_routine_telegram.txt",
+    "governance/codex/proofs/bem573_mailbox_no_routine_telegram.txt"
+  ],
+  "commit_sha": "98e490cdf1eb69878709529fd195c331ed8bf528",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem573_mailbox_no_routine_telegram.md",
+  "completed_at": "2026-05-17T18:28:30Z"
+}
