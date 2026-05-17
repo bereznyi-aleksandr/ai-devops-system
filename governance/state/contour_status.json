@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 21:08 (UTC+3)",
+  "updated_at": "2026-05-17 | 21:11 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -359,6 +359,12 @@
       "pull_rebase_before_push",
       "push_retry"
     ],
+    "blocker": null
+  },
+  "bem568_trigger_claude_token_smoke_now": {
+    "status": "trigger_commit_prepared",
+    "trigger_path": "scripts/claude_token_smoke.py",
+    "expected_workflow": "Claude Token Smoke",
     "blocker": null
   }
 }

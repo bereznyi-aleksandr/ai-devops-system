@@ -44,3 +44,4 @@ with (transport_dir / "results.jsonl").open("a", encoding="utf-8") as f:
     f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 print("CLAUDE_CODE_OAUTH_TOKEN presence check:", STATUS)
+# BEM-568 manual-equivalent trigger at 2026-05-17 | 21:11 (UTC+3)
