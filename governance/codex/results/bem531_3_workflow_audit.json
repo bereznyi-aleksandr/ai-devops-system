@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem531_3_workflow_audit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-531.3 audited and normalized role-orchestrator/provider-adapter workflows",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/archive/bem531_3_workflow_audit_20260517/.github/workflows/role-orchestrator.yml",
+    "governance/archive/bem531_3_workflow_audit_20260517/.github/workflows/provider-adapter.yml",
+    ".github/workflows/role-orchestrator.yml",
+    ".github/workflows/provider-adapter.yml",
+    "governance/reports/bem531_3_workflow_audit_report.md",
+    "governance/codex/proofs/bem531_3_workflow_audit.txt",
+    "governance/codex/proofs/bem531_3_workflow_audit.txt"
+  ],
+  "commit_sha": "82ced4dbdc37890c97ee4522aae77b525cb8b184",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem531_3_workflow_audit.md",
+  "completed_at": "2026-05-17T09:51:11Z"
+}
