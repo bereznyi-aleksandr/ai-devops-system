@@ -1,0 +1,16 @@
+{
+  "record_type": "role_orchestrator_decision",
+  "cycle_id": "bem542-real-orchestrator-test",
+  "source": "internal_orchestrator",
+  "from_role": "curator",
+  "to_role": "analyst",
+  "status": "completed",
+  "decision": "route_to_analyst",
+  "reason": "development_requires_analysis",
+  "input_record_type": "curator_intake",
+  "input_task_type": "development",
+  "artifact_path": "governance/internal_contour/tests/bem542/orchestrator_decision_1.json",
+  "commit_sha": null,
+  "blocker": null,
+  "created_at": "2026-05-17 | 14:13 (UTC+3)"
+}
