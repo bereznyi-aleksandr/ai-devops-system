@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem586_operator_reply_intake_poller",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Implemented operator reply intake poller: Telegram getUpdates -> operator_decisions JSON -> curator handoff",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/OPERATOR_REPLY_INTAKE_POLLER.md",
+    "scripts/operator_reply_intake.py",
+    ".github/workflows/operator-reply-intake.yml",
+    "governance/reports/bem586_operator_reply_intake_poller.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem586_operator_reply_intake_poller.txt",
+    "governance/codex/proofs/bem586_operator_reply_intake_poller.txt"
+  ],
+  "commit_sha": "88f4491b18eb1d6303e6e8b861c3c9bbfa2f1f8f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem586_operator_reply_intake_poller.md",
+  "completed_at": "2026-05-17T19:28:28Z"
+}
