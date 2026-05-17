@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem568_auto_run_claude_token_smoke
+task_type: code_patch
+executed_at: 2026-05-17T18:00:41Z
+ops_applied: Enabled automatic safe Claude token smoke via limited push trigger without printing token, custom_script
+changed_files: .github/workflows/claude-token-smoke.yml, scripts/claude_token_smoke.py, governance/reports/bem568_auto_run_claude_token_smoke.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem568_auto_run_claude_token_smoke.txt
+errors: none

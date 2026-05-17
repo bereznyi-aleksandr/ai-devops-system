@@ -49,3 +49,5 @@ with Path("governance/transport/results.jsonl").open("a", encoding="utf-8") as f
     f.write(json.dumps(rec, ensure_ascii=False) + "
 ")
 print("CLAUDE_CODE_OAUTH_TOKEN presence check:", status)
+
+# BEM-568 auto-run marker: push trigger enabled for safe secret presence smoke.

@@ -2,6 +2,10 @@ name: Claude Token Smoke
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/claude-token-smoke.yml'
+      - 'scripts/claude_token_smoke.py'
 
 permissions:
   contents: write
