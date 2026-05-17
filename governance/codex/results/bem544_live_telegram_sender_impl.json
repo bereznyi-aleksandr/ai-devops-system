@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem544_live_telegram_sender_impl",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem544_live_telegram_sender_impl.txt"
+  ],
+  "commit_sha": "3ed9196f4b23fed038280ad54bcd74db61c5d81b",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: unterminated triple-quoted string literal (detected at line 22) (<string>, line 22)"
+  },
+  "report_path": "governance/codex/results/bem544_live_telegram_sender_impl.md",
+  "completed_at": "2026-05-17T11:27:34Z"
+}
