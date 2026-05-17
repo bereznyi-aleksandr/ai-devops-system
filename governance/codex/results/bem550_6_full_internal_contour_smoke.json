@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem550_6_full_internal_contour_smoke",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-550.6 full internal contour smoke completed",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/transport/results.jsonl",
+    "governance/telegram_outbox.jsonl",
+    "governance/state/role_cycle_state.json",
+    "governance/state/contour_status.json",
+    "governance/reports/bem550_6_full_internal_contour_smoke.md",
+    "governance/codex/proofs/bem550_6_full_internal_contour_smoke.txt",
+    "governance/codex/proofs/bem550_6_full_internal_contour_smoke.txt"
+  ],
+  "commit_sha": "b7fac0f99104d71c56072b072ce9a491ea6fdc3d",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem550_6_full_internal_contour_smoke.md",
+  "completed_at": "2026-05-17T12:32:34Z"
+}
