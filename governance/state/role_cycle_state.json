@@ -1,6 +1,6 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 14:52 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:53 (UTC+3)",
   "cycle_id": "bem541-corrected-full-system-retest",
   "source": {
     "type": "gpt",
@@ -260,5 +260,23 @@
       "governance/internal_contour/tests/bem548/curator_intake_invalid.json",
       "governance/internal_contour/tests/bem548/curator_intake_duplicate.json"
     ]
+  },
+  "role_orchestrator_workflow_parity": {
+    "status": "PASS",
+    "workflow": ".github/workflows/role-orchestrator.yml",
+    "checks": {
+      "workflow_exists": true,
+      "workflow_dispatch": true,
+      "no_schedule": true,
+      "curator_assignment_rule": true,
+      "development_to_analyst": true,
+      "analysis_to_auditor": true,
+      "audit_to_executor": true,
+      "execution_to_final": true,
+      "final_to_curator": true,
+      "writes_transport": true,
+      "writes_state": true,
+      "no_issue_31": true
+    }
   }
 }
