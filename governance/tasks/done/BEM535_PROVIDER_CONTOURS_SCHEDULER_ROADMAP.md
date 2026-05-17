@@ -85,3 +85,11 @@ Evidence:
 - BEM-535.7 final status: final commit
 
 Blocker: null
+
+
+## Claude v1.9 reconciliation
+- External auditor Claude approved BEM-535 with corrections.
+- BEM-535.5 is DONE via curator-hourly-report.yml schedule cron `0 * * * *`, commit reported by Claude: d63916a5.
+- Schedule policy is now: prohibited except curator-hourly-report.yml.
+- Limit detection: claude.yml outcome=failure/cancelled or transport failed/cancelled/timeout.
+- Provider failover: Claude failed/cancelled/timeout -> GPT reserve.

@@ -1,6 +1,6 @@
 {
   "schema_version": "provider-contour-state.v1",
-  "updated_at": "2026-05-17 | 13:16 (UTC+3)",
+  "updated_at": "2026-05-17 | 13:31 (UTC+3)",
   "primary_provider": "claude",
   "reserve_provider": "gpt",
   "curator": {
@@ -94,5 +94,7 @@
   },
   "status": "PASS",
   "failover_verified": true,
-  "hourly_telegram_reporting_verified": "synthetic_external_cron_to_deno_to_workflow_dispatch"
+  "hourly_telegram_reporting_verified": "synthetic_external_cron_to_deno_to_workflow_dispatch",
+  "limit_detection_mechanism": "claude_yml_outcome_failure_cancelled_or_transport_failed_cancelled_timeout",
+  "reserve_switch_rule": "claude failed/cancelled/timeout -> gpt reserve"
 }

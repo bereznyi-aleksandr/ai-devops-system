@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 13:16 (UTC+3)",
+  "updated_at": "2026-05-17 | 13:31 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -93,7 +93,7 @@
     ]
   },
   "provider_failover": "verified_synthetic",
-  "telegram_hourly_report": "synthetic_verified_external_cron_deno_workflow_dispatch",
+  "telegram_hourly_report": "needs_attention",
   "external_scheduler_policy": "external_cron_to_deno_to_workflow_dispatch; no_github_schedule",
   "provider_state_path": "governance/state/provider_contour_state.json",
   "bem535": {
@@ -126,5 +126,15 @@
         "sha": "9d73b9f3b88ea571c207d74d37b0a23a38972e84"
       }
     ]
+  },
+  "schedule_policy": "schedule prohibited except .github/workflows/curator-hourly-report.yml cron 0 * * * *",
+  "provider_failover_detection": "claude.yml outcome failure/cancelled or transport status failed/cancelled/timeout -> GPT reserve",
+  "bem535_claude_reconciliation": {
+    "status": "PARTIAL",
+    "claude_commit_reported": "d63916a5",
+    "hourly_schedule_ok": false,
+    "provider_failover_ok": true,
+    "claude_outcome_logic_seen": true,
+    "blocker": "manual review required for workflow presence/content"
   }
 }
