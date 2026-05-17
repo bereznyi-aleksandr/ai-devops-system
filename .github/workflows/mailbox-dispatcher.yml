@@ -37,7 +37,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           if [ ! -s governance/tmp/mailbox_message.txt ]; then
-            echo "no_message" > governance/tmp/mailbox_telegram_status.txt
+            echo "not_required" > governance/tmp/mailbox_telegram_status.txt
           elif [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
             echo "not_sent_missing_secret" > governance/tmp/mailbox_telegram_status.txt
           else

@@ -23,44 +23,57 @@ def append_jsonl(path, record):
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 state = load_json(STATE_PATH, {})
-pick = load_json(PICK_PATH, {"picked": False, "message": "", "mailbox_file": None})
+pick = load_json(PICK_PATH, {"picked": False, "notify_operator": False, "message": "", "mailbox_file": None, "reason": "missing_pick"})
 status = STATUS_PATH.read_text(encoding="utf-8", errors="ignore").strip() if STATUS_PATH.exists() else "not_sent_no_status"
-blocker = None if status == "sent" or not pick.get("picked") else {"code": "MAILBOX_TELEGRAM_SEND_NOT_SENT", "status": status}
+notify = bool(pick.get("notify_operator"))
+blocker = None if (not notify or status == "sent") else {"code": "MAILBOX_TELEGRAM_SEND_NOT_SENT", "status": status}
+
 if pick.get("picked"):
-    rec = {
-        "record_type": "telegram_mailbox_notification",
-        "cycle_id": "bem569-mailbox-dispatcher-direct-telegram",
-        "delivery_mode": "mailbox-dispatcher-direct",
-        "canonical": True,
-        "status": "sent" if status == "sent" else "ready_to_send",
-        "direct_send_status": status,
-        "message": pick.get("message", ""),
+    processed = set(state.get("processed_files", []))
+    processed.add(pick.get("mailbox_file"))
+    state["processed_files"] = sorted(processed)
+    if notify:
+        rec = {
+            "record_type": "telegram_mailbox_operator_decision",
+            "cycle_id": "bem573-mailbox-decision-only-telegram",
+            "delivery_mode": "mailbox-dispatcher-direct",
+            "canonical": True,
+            "status": "sent" if status == "sent" else "ready_to_send",
+            "direct_send_status": status,
+            "message": pick.get("message", ""),
+            "mailbox_file": pick.get("mailbox_file"),
+            "created_at": "workflow_runtime",
+            "blocker": blocker,
+            "priority": "operator_decision",
+        }
+        append_jsonl(OUTBOX_PATH, rec)
+    tr = {
+        "record_type": "mailbox_dispatcher_route",
+        "cycle_id": "bem573-mailbox-decision-only-telegram",
         "mailbox_file": pick.get("mailbox_file"),
-        "created_at": "workflow_runtime",
+        "notify_operator": notify,
+        "reason": pick.get("reason"),
+        "telegram_status": status if notify else "not_required",
         "blocker": blocker,
-        "priority": "mailbox_notification",
+        "created_at": "workflow_runtime",
     }
-    append_jsonl(OUTBOX_PATH, rec)
-    tr = dict(rec)
-    tr["record_type"] = "mailbox_direct_telegram_dispatch"
     append_jsonl(TRANSPORT_PATH, tr)
-    if status == "sent":
-        seen = set(state.get("sent_files", []))
-        seen.add(pick.get("mailbox_file"))
-        state["sent_files"] = sorted(seen)
-state["last_run"] = {"picked": pick.get("picked"), "mailbox_file": pick.get("mailbox_file"), "status": status, "blocker": blocker}
+
+state["last_run"] = {"picked": pick.get("picked"), "mailbox_file": pick.get("mailbox_file"), "notify_operator": notify, "reason": pick.get("reason"), "telegram_status": status if notify else "not_required", "blocker": blocker}
 STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
 STATE_PATH.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
 lines = [
-    "# BEM-569 | Mailbox Dispatcher Direct Telegram Result",
+    "# BEM-573 | Mailbox Dispatcher Decision-only Telegram Result",
     "",
     "Дата: workflow_runtime",
     "",
     "## Result",
     "Picked: " + str(pick.get("picked")),
     "Mailbox file: " + str(pick.get("mailbox_file")),
-    "Direct send status: " + status,
+    "Notify operator: " + str(notify),
+    "Reason: " + str(pick.get("reason")),
+    "Telegram status: " + (status if notify else "not_required"),
     "",
     "## Blocker",
     "null" if blocker is None else json.dumps(blocker, ensure_ascii=False),
