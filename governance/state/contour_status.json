@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 13:31 (UTC+3)",
+  "updated_at": "2026-05-17 | 13:35 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -9,7 +9,7 @@
   "current_cycle": "bem531-full-e2e",
   "active_role": "curator",
   "next_role": null,
-  "last_result": "BEM-535 provider failover and Telegram hourly reporting synthetic PASS",
+  "last_result": "BEM-536 internal contour full development cycle autotest PASS",
   "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
   "blocker": null,
   "external_sources_scope": [
@@ -136,5 +136,13 @@
     "provider_failover_ok": true,
     "claude_outcome_logic_seen": true,
     "blocker": "manual review required for workflow presence/content"
+  },
+  "last_internal_contour_autotest": {
+    "id": "BEM-536",
+    "status": "PASS",
+    "cycle_id": "bem536-internal-contour-autotest",
+    "task1_sha": "f8f98110ac12be71d0286532160ebabfd46e31ad",
+    "task2_sha": "701fc5a790a90b887298def56e9356cf38690234",
+    "task3_sha": "this_commit"
   }
 }
