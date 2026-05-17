@@ -1,6 +1,6 @@
 name: Codex Runner
 
-# BEM-522: switched to [self-hosted, codex-local] + Codex CLI
+# BEM-522 patch #2: codex login + --sandbox workspace-write + stderr capture
 # NO issue comments, NO schedule
 
 on:
@@ -80,6 +80,7 @@ jobs:
                   f.write('TRACE_ID=' + trace + '\n')
           PYEOF
 
+      # BEM-522 patch #2: login + --sandbox workspace-write + stderr capture
       - name: Execute task via Codex CLI
         if: env.TASK_FOUND == 'true'
         shell: bash
@@ -89,13 +90,29 @@ jobs:
           export PATH="$HOME/.nvm/versions/node/v20.19.2/bin:$HOME/.local/bin:$PATH"
           set +e
 
+          STDOUT_FILE="$RUNNER_TEMP/codex_stdout.txt"
+          STDERR_FILE="$RUNNER_TEMP/codex_stderr.txt"
+
           echo "Codex CLI version: $(codex --version 2>/dev/null || echo 'not found')"
           echo "Objective: $TASK_OBJECTIVE"
 
-          codex exec "$TASK_OBJECTIVE"
+          # Authenticate Codex CLI for CI environment
+          codex login --api-key "$OPENAI_API_KEY" 2>>"$STDERR_FILE"
+
+          # Execute with write sandbox enabled
+          codex exec --sandbox workspace-write "$TASK_OBJECTIVE" \
+            1>"$STDOUT_FILE" 2>>"$STDERR_FILE"
           CODEX_EXIT=$?
 
-          echo "CODEX_EXIT=$CODEX_EXIT" >> "$GITHUB_ENV"
+          echo "--- stdout ---"
+          cat "$STDOUT_FILE" || true
+          echo "--- stderr ---"
+          cat "$STDERR_FILE" || true
+
+          echo "CODEX_EXIT=$CODEX_EXIT"       >> "$GITHUB_ENV"
+          echo "STDOUT_FILE=$STDOUT_FILE"     >> "$GITHUB_ENV"
+          echo "STDERR_FILE=$STDERR_FILE"     >> "$GITHUB_ENV"
+
           if [ "$CODEX_EXIT" = "0" ]; then
             echo "EXEC_STATUS=completed" >> "$GITHUB_ENV"
           else
@@ -137,6 +154,16 @@ jobs:
           exec_status = os.environ.get('EXEC_STATUS', 'blocked')
           codex_exit  = os.environ.get('CODEX_EXIT',  '')
           commit_sha  = os.environ.get('COMMIT_SHA',  '')
+          stderr_file = os.environ.get('STDERR_FILE', '')
+
+          # Read stderr for blocker detail
+          stderr_tail = ''
+          if stderr_file:
+              try:
+                  lines = Path(stderr_file).read_text(errors='replace').strip().split('\n')
+                  stderr_tail = '\n'.join(lines[-10:])
+              except Exception:
+                  pass
 
           changed = []
           try:
@@ -159,7 +186,11 @@ jobs:
               blocker = None
           else:
               status  = exec_status
-              blocker = {'code': 'CODEX_EXEC_FAILED', 'message': 'codex exit=' + codex_exit}
+              blocker = {
+                  'code':         'CODEX_EXEC_FAILED',
+                  'message':      'codex exit=' + codex_exit,
+                  'stderr_tail':  stderr_tail[-500:] if stderr_tail else 'no stderr captured'
+              }
 
           result_dir = Path('governance/codex/results')
           result_dir.mkdir(parents=True, exist_ok=True)
@@ -197,18 +228,24 @@ jobs:
               '',
           ]
           if blocker:
-              lines += ['### Blocker', '```json', json.dumps(blocker, indent=2), '```']
+              lines += [
+                  '### Blocker',
+                  '```json',
+                  json.dumps(blocker, indent=2),
+                  '```',
+              ]
           else:
               lines.append('### Codex CLI executed successfully.')
           lines += [
               '',
               '## Notes',
               '- Runner: [self-hosted, codex-local] on Google Cloud VM',
-              '- Executor: Codex CLI (not Python stub)',
+              '- Auth: codex login --api-key',
+              '- Sandbox: --sandbox workspace-write',
               '- No issue #31 comments (BEM-476/522)',
           ]
           (result_dir / (trace + '.md')).write_text('\n'.join(lines) + '\n')
-          print('Result written: status=' + status)
+          print('Result written: status=' + status + ' blocker=' + str(blocker))
           PYEOF
 
       - name: Commit result files
@@ -246,6 +283,8 @@ jobs:
               '| Trace | ' + trace + ' |',
               '| Runner | [self-hosted, codex-local] |',
               '| Executor | Codex CLI |',
+              '| Auth | codex login --api-key |',
+              '| Sandbox | --sandbox workspace-write |',
               '| Task found | ' + task_found + ' |',
               '| Status | ' + status + ' |',
               '| Codex exit | ' + exit_c + ' |',
