@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:19 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:27 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -243,5 +243,10 @@
       "curator_closure"
     ],
     "blocker": null
+  },
+  "telegram_delivery_synthetic": {
+    "status": "sent_synthetic",
+    "outbox_line": 143,
+    "delivery_result": "governance/internal_contour/tests/bem541/telegram_delivery_synthetic_result.json"
   }
 }
