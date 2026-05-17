@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem525_p9_done_marker",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Create P9 done marker",
+  "objective": "Create file governance/tasks/done/P9_HANDOFF_PROTOCOL.md with content 'BEM-525 P9 Handoff Protocol Claude↔GPT completed. Protocol file: governance/protocols/HANDOFF_PROTOCOL_CLAUDE_GPT.md. Protocol commit: bba7597988862a114c7348243bcf833323317262. Executor: free ubuntu-latest Python executor. Codex CLI disabled. OPENAI_API_KEY not required. No issue comments. No schedule triggers. No paid OpenAI API. 2026-05-17.' No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem525_p9_done_marker.md",
+    "result_json": "governance/codex/results/bem525_p9_done_marker.json"
+  },
+  "created_at": "2026-05-17T08:22:23.562Z"
+}
