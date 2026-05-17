@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 15:42 (UTC+3)",
+  "updated_at": "2026-05-17 | 16:05 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -169,6 +169,25 @@
     "status": "PASS",
     "policy": "governance/protocols/MONITORING_ALERTING_POLICY.md",
     "telegram_alert_queued": true,
+    "blocker": null
+  },
+  "bem552_hourly_scheduler": {
+    "status": "PASS",
+    "workflow": ".github/workflows/curator-hourly-report.yml",
+    "generator": "scripts/curator_hourly_report.py",
+    "checks": {
+      "workflow_exists": true,
+      "has_schedule": true,
+      "has_cron": true,
+      "has_dispatch": true,
+      "uses_token": true,
+      "uses_chat": true,
+      "calls_generator": true,
+      "calls_picker": true,
+      "calls_recorder": true,
+      "no_issue31": true
+    },
+    "next_expected": "next GitHub hourly cron or manual workflow_dispatch",
     "blocker": null
   }
 }

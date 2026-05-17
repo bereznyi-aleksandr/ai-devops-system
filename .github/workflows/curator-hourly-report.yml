@@ -1,154 +1,29 @@
 name: Curator Hourly Report
 
-# BEM-535: schedule restored — safe because:
-# - NO issue #31 comments
-# - NO createComment
-# - writes only to files (telegram_outbox.jsonl, exchange.jsonl)
-# - email storm impossible with this workflow
-# BEM-476 запрет снят для этого workflow — причина запрета устранена
-
 on:
   schedule:
-    - cron: '0 * * * *'   # каждый час
-  workflow_dispatch:        # также вручную
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   report:
     runs-on: ubuntu-latest
-    continue-on-error: true   # не генерировать email при ошибке
-    permissions:
-      contents: write
-      issues: read
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Generate and queue curator report
+      - uses: actions/checkout@v4
+      - name: Generate curator hourly report
         continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-        run: |
-          python3 - <<'PYEOF'
-          import json, os
-          from datetime import datetime, timezone, timedelta
-
-          now_utc = datetime.now(timezone.utc)
-          now_ua  = now_utc + timedelta(hours=3)
-          time_ua     = now_ua.strftime("%H:%M (UTC+3) %d.%m.%Y")
-          time_utc_str = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
-          event_id = "evt_hourly_" + now_utc.strftime("%Y%m%d_%H%M%S")
-
-          # Read current phase
-          phase = "P9"
-          phase_title = "Handoff Protocol"
-          try:
-              with open("governance/state/roadmap_state.json") as f:
-                  rs = json.load(f)
-              phase = rs.get("current_phase", phase)
-              phase_title = rs.get("phase_title", phase_title)
-          except Exception:
-              pass
-
-          # Read provider routing
-          analyst_p = auditor_p = executor_p = "?"
-          try:
-              with open("governance/state/routing.json") as f:
-                  r = json.load(f)
-              roles = r.get("roles", {})
-              analyst_p  = roles.get("analyst",  {}).get("active", "?")
-              auditor_p  = roles.get("auditor",  {}).get("active", "?")
-              executor_p = roles.get("executor", {}).get("active", "?")
-          except Exception:
-              pass
-
-          # Read recent events
-          events_text = "нет данных"
-          progress    = "нет активности за час"
-          try:
-              with open("governance/exchange.jsonl") as f:
-                  events = [json.loads(l) for l in f if l.strip()]
-              if events:
-                  recent = events[-5:]
-                  lines  = ["- " + e.get("type","?") + " [" + e.get("timestamp","")[:16] + "]"
-                             for e in recent]
-                  events_text = "\n".join(lines)
-              one_hour_ago = (now_utc - timedelta(hours=1)).isoformat()
-              recent_hour  = [e for e in events if e.get("timestamp","") > one_hour_ago]
-              progress = "есть активность" if recent_hour else "нет активности за час"
-          except Exception:
-              pass
-
-          # Build canonical report
-          report_lines = [
-              "КУРАТОР | " + time_ua,
-              "",
-              "Этап: " + phase + " | " + phase_title,
-              "",
-              "Роли:",
-              "- Аналитик: " + analyst_p,
-              "- Аудитор:  " + auditor_p,
-              "- Исполнитель: " + executor_p,
-              "",
-              "Последние события:",
-              events_text,
-              "",
-              "Прогресс за час: " + progress
-          ]
-          report = "\n".join(report_lines)
-
-          # Queue for Telegram
-          outbox_entry = {
-              "event_id":  event_id,
-              "timestamp": time_utc_str,
-              "target":    "operator",
-              "channel":   "telegram",
-              "chat_id":   "601442777",
-              "text":      report,
-              "status":    "ready_to_send"
-          }
-          with open("governance/telegram_outbox.jsonl", "a") as f:
-              f.write(json.dumps(outbox_entry, ensure_ascii=False) + "\n")
-
-          # Exchange event
-          exchange_entry = {
-              "event_id":  event_id,
-              "timestamp": time_utc_str,
-              "type":      "SYSTEM_HEALTH",
-              "source":    "curator_hourly_report",
-              "status":    "report_queued",
-              "phase":     phase
-          }
-          with open("governance/exchange.jsonl", "a") as f:
-              f.write(json.dumps(exchange_entry, ensure_ascii=False) + "\n")
-
-          print("Report queued: " + event_id)
-          PYEOF
-
-      - name: Commit
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-        run: |
-          git config user.email "curator-report@ai-devops-system"
-          git config user.name  "Curator Report"
-          git pull --rebase --autostash origin main || true
-          git add governance/telegram_outbox.jsonl governance/exchange.jsonl
-          git diff --cached --quiet || git commit -m "CURATOR HOURLY REPORT: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git push || true
-
+        run: python3 scripts/curator_hourly_report.py
       - name: Pick queued Telegram message
         continue-on-error: true
         run: python3 scripts/telegram_outbox_pick.py
-
       - name: Send queued Telegram message
         continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TELEGRAM_DRY_RUN: "false"
         run: |
           python3 - <<PY
           import json
@@ -163,8 +38,14 @@ jobs:
             HTTP_CODE=$(curl -sS -o governance/tmp/telegram_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" --data-urlencode "disable_web_page_preview=true" || echo "000")
             if [ "${HTTP_CODE}" = "200" ]; then echo "sent" > governance/tmp/telegram_status.txt; else echo "telegram_http_${HTTP_CODE}" > governance/tmp/telegram_status.txt; fi
           fi
-
       - name: Record Telegram delivery result
         continue-on-error: true
         run: python3 scripts/telegram_delivery_record.py
-
+      - name: Commit hourly report result
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/telegram_outbox.jsonl governance/transport/results.jsonl governance/state/contour_status.json
+          git commit -m "Curator hourly Telegram report" || echo "No changes"
+          git push
