@@ -6,12 +6,12 @@
     "type": "gpt",
     "id": "BEM-540"
   },
-  "curator_status": "CLOSED",
+  "curator_status": "REPORTING",
   "active_role": "curator",
-  "next_role": null,
+  "next_role": "final_audit",
   "current_task": {
-    "id": "BEM-540.2",
-    "title": "Curator-driven internal development cycle",
+    "id": "BEM-540.3",
+    "title": "Provider failover + Telegram outbox synthetic system check",
     "status": "completed"
   },
   "handoff": {
@@ -128,6 +128,11 @@
     {
       "at": "2026-05-17 | 14:05 (UTC+3)",
       "event": "BEM-540 Task 2 curator-driven internal cycle completed",
+      "status": "PASS"
+    },
+    {
+      "at": "2026-05-17 | 14:05 (UTC+3)",
+      "event": "BEM-540 Task 3 provider failover and telegram outbox synthetic check",
       "status": "PASS"
     }
   ],

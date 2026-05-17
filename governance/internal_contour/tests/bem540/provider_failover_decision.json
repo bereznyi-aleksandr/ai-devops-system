@@ -1,0 +1,16 @@
+{
+  "record_type": "provider_failover_system_test",
+  "cycle_id": "bem540-full-system-autotest",
+  "source": "internal",
+  "provider": "claude",
+  "signal": "failed",
+  "decision": "switch_to_gpt_reserve",
+  "selected_provider": "gpt",
+  "reserve_used": true,
+  "switch_reason": "claude_failed",
+  "status": "completed",
+  "artifact_path": "governance/internal_contour/tests/bem540/provider_failover_decision.json",
+  "commit_sha": null,
+  "blocker": null,
+  "created_at": "2026-05-17 | 14:05 (UTC+3)"
+}
