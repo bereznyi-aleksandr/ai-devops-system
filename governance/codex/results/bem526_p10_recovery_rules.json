@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem526_p10_recovery_rules",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "created P10 production stability recovery runbook",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/PRODUCTION_STABILITY_RUNBOOK.md",
+    "governance/codex/proofs/bem526_p10_recovery_rules.txt",
+    "governance/reports/bem526_p10_recovery_rules.md",
+    "governance/codex/proofs/bem526_p10_recovery_rules.txt"
+  ],
+  "commit_sha": "5d7dcf68aa8bd40ffdac75e228cda8104ef92846",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem526_p10_recovery_rules.md",
+  "completed_at": "2026-05-17T08:30:22Z"
+}
