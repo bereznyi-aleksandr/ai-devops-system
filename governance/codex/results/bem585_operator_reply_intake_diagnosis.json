@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem585_operator_reply_intake_diagnosis",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Diagnosed missing/forbidden operator reply intake after Telegram HTTP 403",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/OPERATOR_REPLY_INTAKE_POLICY.md",
+    "governance/reports/bem585_operator_reply_intake_diagnosis.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem585_operator_reply_intake_diagnosis.txt",
+    "governance/codex/proofs/bem585_operator_reply_intake_diagnosis.txt"
+  ],
+  "commit_sha": "85df4e042766ad556e1e546feba20fccadd903c3",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem585_operator_reply_intake_diagnosis.md",
+  "completed_at": "2026-05-17T19:25:00Z"
+}
