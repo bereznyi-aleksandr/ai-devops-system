@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 21:11 (UTC+3)",
+  "updated_at": "2026-05-17 | 21:20 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -365,6 +365,13 @@
     "status": "trigger_commit_prepared",
     "trigger_path": "scripts/claude_token_smoke.py",
     "expected_workflow": "Claude Token Smoke",
+    "blocker": null
+  },
+  "bem569_mailbox_dispatcher_no_import_fix": {
+    "status": "completed",
+    "workflow": ".github/workflows/mailbox-dispatcher.yml",
+    "direct_telegram_via_workflow_curl": true,
+    "python_network_calls": false,
     "blocker": null
   }
 }
