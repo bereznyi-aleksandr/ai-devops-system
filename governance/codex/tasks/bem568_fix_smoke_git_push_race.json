@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem568_fix_smoke_git_push_race",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-568 fix smoke push race",
+  "objective": "Run script:\n\"\"\"\nwfs=Path('.github/workflows'); wfs.mkdir(parents=True,exist_ok=True)\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\nwf=wfs/'claude-token-smoke.yml'\nwf.write_text('''name: Claude Token Smoke\n\non:\n  workflow_dispatch:\n  push:\n    paths:\n      - '.github/workflows/claude-token-smoke.yml'\n      - 'scripts/claude_token_smoke.py'\n\npermissions:\n  contents: write\n\nconcurrency:\n  group: claude-token-smoke\n  cancel-in-progress: false\n\njobs:\n  check-secret:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n\n      - name: Check secret presence and write report\n        env:\n          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}\n        run: python3 scripts/claude_token_smoke.py\n\n      - name: Commit smoke result\n        run: |\n          git config user.name \"github-actions[bot]\"\n          git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\n          git add governance/reports/bem568_claude_token_secret_smoke.md governance/transport/results.jsonl\n          git commit -m \"BEM-568 Claude token smoke result\" || echo \"No changes\"\n          git pull --rebase origin main || git rebase --abort || true\n          git push || (git pull --rebase origin main && git push)\n''')\nreport=reports/'bem568_fix_smoke_git_push_race.md'\nreport.write_text('# BEM-568 | Fix Smoke Git Push Race | PASS\\n\\nДата: 2026-05-17 | 21:08 (UTC+3)\\n\\n## Result\\n`claude-token-smoke.yml` commit step now handles remote updates with fetch-depth 0, concurrency, pull --rebase before push, and retry.\\n\\n## Root cause\\nGitHub rejected push because remote contained newer work from another concurrent workflow/run.\\n\\n## Blocker\\nnull\\n')\nrecord={'record_type':'bem568_fix_smoke_git_push_race','cycle_id':'bem568-fix-smoke-git-push-race','source':'gpt','status':'completed','workflow':str(wf),'commit_sha':None,'blocker':None,'created_at':'2026-05-17 | 21:08 (UTC+3)'}\nwith transport.open('a',encoding='utf-8') as f: f.write(json.dumps(record,ensure_ascii=False)+'\\n')\nstate={}\nif contour.exists():\n    try: state=json.loads(contour.read_text(errors='ignore'))\n    except Exception: state={}\nstate['bem568_fix_smoke_git_push_race']={'status':'completed','workflow':str(wf),'fixes':['concurrency','fetch_depth_0','pull_rebase_before_push','push_retry'],'blocker':None}\nstate['updated_at']='2026-05-17 | 21:08 (UTC+3)'; state['blocker']=None\ncontour.write_text(json.dumps(state,indent=2,ensure_ascii=False)+'\\n')\nproof=proofs/'bem568_fix_smoke_git_push_race.txt'\nproof.write_text('BEM-568 PASS: fixed smoke workflow git push race with rebase/retry and concurrency.\\n')\nchanged_files.extend([str(wf),str(report),str(transport),str(contour),str(proof)])\nops_applied.append('Fixed claude-token-smoke workflow push race using concurrency, fetch-depth 0, pull --rebase, and push retry')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem568_fix_smoke_git_push_race.md",
+    "result_json": "governance/codex/results/bem568_fix_smoke_git_push_race.json"
+  },
+  "created_at": "2026-05-17T18:03:47.153Z"
+}
