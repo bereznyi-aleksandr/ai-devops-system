@@ -1,0 +1,59 @@
+name: Telegram Outbox Sender
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Synthetic delivery_result without Telegram API call
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+
+jobs:
+  send:
+    name: Send Telegram outbox
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pick queued message
+        continue-on-error: true
+        run: python3 scripts/telegram_outbox_pick.py
+      - name: Send or dry-run
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          python3 - <<PY
+          import json
+          from pathlib import Path
+          pick = json.loads(Path("governance/tmp/telegram_pick.json").read_text())
+          Path("governance/tmp/message.txt").write_text(pick.get("message", ""), encoding="utf-8")
+          PY
+          if [ "${TELEGRAM_DRY_RUN}" = "true" ]; then
+            echo "sent_synthetic" > governance/tmp/telegram_status.txt
+          elif [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "missing_runtime_secret" > governance/tmp/telegram_status.txt
+          else
+            MSG=$(cat governance/tmp/message.txt)
+            HTTP_CODE=$(curl -sS -o governance/tmp/telegram_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" --data-urlencode "disable_web_page_preview=true" || echo "000")
+            if [ "${HTTP_CODE}" = "200" ]; then echo "sent" > governance/tmp/telegram_status.txt; else echo "telegram_http_${HTTP_CODE}" > governance/tmp/telegram_status.txt; fi
+          fi
+      - name: Record delivery result
+        continue-on-error: true
+        run: python3 scripts/telegram_delivery_record.py
+      - name: Commit delivery results
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/transport/results.jsonl governance/state/contour_status.json
+          git commit -m "Telegram outbox delivery result" || echo "No changes"
+          git push

@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:28 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:36 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -11,7 +11,10 @@
   "next_role": null,
   "last_result": "BEM-541 corrected full system retest PASS",
   "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
-  "blocker": null,
+  "blocker": {
+    "code": "RUNTIME_SECRETS_REQUIRED_FOR_LIVE_SEND",
+    "message": "Add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to GitHub Actions Secrets; do not store in files."
+  },
   "external_sources_scope": [
     "gpt",
     "claude",
@@ -270,5 +273,14 @@
       "541.4": "1601c023c42b789a7cdcd6b67b3ec2f73dc483d7",
       "541.5": "this_commit"
     }
+  },
+  "telegram_live_sender": {
+    "workflow": ".github/workflows/telegram-outbox-sender.yml",
+    "required_runtime_secrets": [
+      "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_CHAT_ID"
+    ],
+    "status": "repo_side_ready_waiting_runtime_secrets",
+    "blocker": "RUNTIME_SECRETS_REQUIRED_FOR_LIVE_SEND"
   }
 }
