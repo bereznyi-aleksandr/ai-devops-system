@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 14:44 (UTC+3)",
+  "updated_at": "2026-05-17 | 14:46 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -371,5 +371,11 @@
     "telegram_delivery_total_records": 4,
     "next_recommended_stage": "BEM-548 live Telegram delivery confirmation",
     "blocker": null
+  },
+  "last_external_audit_report": {
+    "id": "BEM-547",
+    "status": "prepared",
+    "report": "governance/reports/bem547_full_system_report_for_claude.md",
+    "next_roadmap": "governance/tasks/pending/BEM548_NEXT_DEVELOPMENT_ROADMAP_FOR_APPROVAL.md"
   }
 }
