@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem533_1_telegram_intake_activation",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-533.1 activated Telegram synthetic curator intake schema",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/CURATOR_INTAKE_CONTRACT.md",
+    "governance/transport/samples/curator_intake_telegram_active_sample.json",
+    "governance/reports/bem533_1_telegram_intake_activation.md",
+    "governance/codex/proofs/bem533_1_telegram_intake_activation.txt",
+    "governance/codex/proofs/bem533_1_telegram_intake_activation.txt"
+  ],
+  "commit_sha": "cbfb076669d4ec7aa32cd8df53fbeccb4b67b00a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem533_1_telegram_intake_activation.md",
+  "completed_at": "2026-05-17T09:56:26Z"
+}
