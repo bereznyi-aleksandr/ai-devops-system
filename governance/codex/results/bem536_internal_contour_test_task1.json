@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem536_internal_contour_test_task1",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-536 Task 1: curator intake and analyst plan completed",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/tasks/pending/BEM536_INTERNAL_CONTOUR_AUTOTEST_ROADMAP.md",
+    "governance/internal_contour/tests/bem536/curator_intake.json",
+    "governance/internal_contour/tests/bem536/analyst_plan.md",
+    "governance/transport/results.jsonl",
+    "governance/state/role_cycle_state.json",
+    "governance/reports/bem536_task1_curator_analyst_plan.md",
+    "governance/codex/proofs/bem536_task1_curator_analyst_plan.txt",
+    "governance/codex/proofs/bem536_internal_contour_test_task1.txt"
+  ],
+  "commit_sha": "f8f98110ac12be71d0286532160ebabfd46e31ad",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem536_internal_contour_test_task1.md",
+  "completed_at": "2026-05-17T10:34:01Z"
+}
