@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem581_fix_operator_decision_recorder_syntax",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Fixed operator_decision_record_dispatch.py SyntaxError with internal NL variable and py_compile workflow gate",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/operator_decision_record_dispatch.py",
+    ".github/workflows/operator-decision-dispatcher.yml",
+    "governance/reports/bem581_fix_operator_decision_recorder_syntax.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem581_fix_operator_decision_recorder_syntax.txt",
+    "governance/codex/proofs/bem581_fix_operator_decision_recorder_syntax.txt"
+  ],
+  "commit_sha": "320ea78515b5d4cacb0cca981d7c2bb2c663b47c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem581_fix_operator_decision_recorder_syntax.md",
+  "completed_at": "2026-05-17T19:01:49Z"
+}
