@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 22:09 (UTC+3)",
+  "updated_at": "2026-05-17 | 22:24 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,10 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "OPERATOR_REPLY_INTAKE_NOT_IMPLEMENTED_OR_FORBIDDEN",
+    "message": "Telegram text reply produced HTTP 403; inbound operator decision persistence is not implemented/proven."
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -462,5 +465,13 @@
     "status": "completed",
     "queue_file": "governance/operator_decision_queue/bem584_decision_format_live_test.json",
     "blocker": null
+  },
+  "bem585_operator_reply_intake_diagnosis": {
+    "status": "blocked",
+    "blocker": {
+      "code": "OPERATOR_REPLY_INTAKE_NOT_IMPLEMENTED_OR_FORBIDDEN",
+      "message": "Telegram text reply produced HTTP 403; inbound operator decision persistence is not implemented/proven."
+    },
+    "next": "implement_operator_reply_intake_poller_or_webhook"
   }
 }
