@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem525_p9_close_runscript",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Close P9 roadmap with Run script",
+  "objective": "Run script:\n\"\"\"\np = Path('governance/state/roadmap_state.json')\ndata = json.loads(p.read_text())\ndata['updated_at'] = now\ndata['cursor'] = 'BEM-525_P9_HANDOFF_PROTOCOL_CLOSED'\ndata['current_phase'] = 'P10'\ndata['phase_title'] = 'Production Stability'\ndata['blocker'] = None\npc = data.get('phases_completed', [])\nif 'P9' not in pc:\n    pc.append('P9')\ndata['phases_completed'] = pc\nremaining = [x for x in data.get('phases_remaining', []) if x != 'P9']\nif 'P10' not in remaining and 'P10' not in pc:\n    remaining.insert(0, 'P10')\nclean = []\nfor x in remaining:\n    if x not in clean and x not in pc:\n        clean.append(x)\ndata['phases_remaining'] = clean\nfor task in data.get('tasks', []):\n    if task.get('task_id') in ['P9_HANDOFF_PROTOCOL','P9_HANDOFF_PROTOCOL_CLAUDE_GPT']:\n        task['task_id'] = 'P9_HANDOFF_PROTOCOL'\n        task['status'] = 'completed'\n        task['completed_at'] = now\n    if task.get('task_id') == 'P10_PRODUCTION_STABILITY':\n        task['status'] = 'pending'\np.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\\n')\nchanged_files.append('governance/state/roadmap_state.json')\nops_applied.append('closed P9 and advanced roadmap to P10')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem525_p9_close_runscript.md",
+    "result_json": "governance/codex/results/bem525_p9_close_runscript.json"
+  },
+  "created_at": "2026-05-17T08:26:00.956Z"
+}
