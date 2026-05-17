@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem551_production_readiness_autotest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-551 production readiness autotest",
+  "objective": "Run production readiness autotest for autonomous development system. Check: curator-intake.yml exists and workflow_dispatch only; role-orchestrator.yml valid structure and script exists; provider-adapter.yml has provider_probe_result/provider_selection_decision/provider_selection_audit and no schedule; telegram picker/recorder/workflows exist and stale queue policy exists; contour_status.json says BEM-550 completed 10/10; transport contains BEM-550.3 through BEM-550.10 records; no workflow uses issue #31; no forbidden schedule except curator-hourly-report.yml. Write governance/reports/bem551_production_readiness_autotest.md and proof with verdict READY_CONTROLLED_REAL_TASKS or BLOCKER. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem551_production_readiness_autotest.md",
+    "result_json": "governance/codex/results/bem551_production_readiness_autotest.json"
+  },
+  "created_at": "2026-05-17T13:01:48.926Z"
+}
