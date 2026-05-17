@@ -1,14 +1,14 @@
 {
   "schema_version": "role-cycle-state.v1",
   "updated_at": "2026-05-17 | 15:03 (UTC+3)",
-  "cycle_id": "bem550-4-live-test-v4",
+  "cycle_id": "bem550-6-full-internal-contour-smoke",
   "source": {
     "type": "gpt",
     "id": "BEM-540"
   },
   "curator_status": "CLOSED",
-  "active_role": "role_orchestrator",
-  "next_role": "analyst",
+  "active_role": "curator",
+  "next_role": null,
   "current_task": {
     "id": "BEM-548.5a",
     "title": "Synthetic regression",
@@ -307,5 +307,6 @@
     "commit_sha": null,
     "blocker": null,
     "created_at": "2026-05-17 | 15:35 (UTC+3)"
-  }
+  },
+  "bem550_6_full_smoke": "PASS"
 }

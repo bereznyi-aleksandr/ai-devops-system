@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 15:17 (UTC+3)",
+  "updated_at": "2026-05-17 | 15:38 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -132,5 +132,28 @@
     "status": "ACTIVE",
     "policy": "governance/protocols/TELEGRAM_PROGRESS_QUEUE_POLICY.md",
     "picker": "scripts/telegram_outbox_pick.py"
+  },
+  "bem550_6_full_internal_contour_smoke": {
+    "status": "PASS",
+    "sequence": [
+      "curator_intake",
+      "curator_assignment",
+      "provider_probe_result",
+      "provider_selection_decision",
+      "provider_selection_audit",
+      "role_orchestrator_decision:analyst",
+      "analysis",
+      "role_orchestrator_decision:auditor",
+      "audit:PASS_TO_EXECUTOR",
+      "role_orchestrator_decision:executor",
+      "execution",
+      "role_orchestrator_decision:auditor_final",
+      "audit:FINAL_PASS",
+      "role_orchestrator_decision:curator_closure",
+      "final_result",
+      "telegram_delivery_result:sent_synthetic"
+    ],
+    "telegram": "sent_synthetic",
+    "blocker": null
   }
 }
