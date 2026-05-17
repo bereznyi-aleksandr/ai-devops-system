@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem528_test1_transport_smoke",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "selftest",
+  "title": "Autonomy transport smoke test",
+  "objective": "Create file governance/codex/proofs/bem528_test1_transport_smoke.txt with content 'BEM-528 Test 1 PASS: Deno -> GitHub Actions -> Python executor -> commit -> status completed. 2026-05-17. No issue comments. No schedule. No paid API.' No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem528_test1_transport_smoke.md",
+    "result_json": "governance/codex/results/bem528_test1_transport_smoke.json"
+  },
+  "created_at": "2026-05-17T08:37:02.985Z"
+}
