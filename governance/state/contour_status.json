@@ -1,6 +1,6 @@
 {
   "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 12:52 (UTC+3)",
+  "updated_at": "2026-05-17 | 12:58 (UTC+3)",
   "contour": "internal_role_based_development",
   "status": "PASS",
   "roadmap": "BEM-531",
@@ -9,14 +9,15 @@
   "current_cycle": "bem531-full-e2e",
   "active_role": "curator",
   "next_role": null,
-  "last_result": "synthetic minimal and full E2E PASS",
-  "last_commit": "9005e6c1bf5e87a0c77df2734f23806902419269",
+  "last_result": "Telegram synthetic curator E2E PASS",
+  "last_commit": "ee7ed5c6a6c50d7d5a7582226535e0caa0941201",
   "blocker": null,
   "external_sources_scope": [
     "gpt",
-    "claude"
+    "claude",
+    "telegram"
   ],
-  "telegram_scope": "deferred_after_bem531",
+  "telegram_scope": "active_synthetic_verified",
   "stage_evidence": [
     {
       "stage": "BEM-531.00",
@@ -67,5 +68,28 @@
     "secrets_in_files": false,
     "paid_openai_api": false,
     "codex_cli": false
+  },
+  "bem533": {
+    "status": "PASS",
+    "stages_completed": 5,
+    "stages_total": 5,
+    "evidence": [
+      {
+        "stage": "BEM-533.0",
+        "sha": "49f1ed1c050fed1a7ee721dab449688196ebb68f"
+      },
+      {
+        "stage": "BEM-533.1",
+        "sha": "cbfb076669d4ec7aa32cd8df53fbeccb4b67b00a"
+      },
+      {
+        "stage": "BEM-533.2",
+        "sha": "0ec509506fb488e72246529dc6dc480510821ef9"
+      },
+      {
+        "stage": "BEM-533.3",
+        "sha": "ee7ed5c6a6c50d7d5a7582226535e0caa0941201"
+      }
+    ]
   }
 }

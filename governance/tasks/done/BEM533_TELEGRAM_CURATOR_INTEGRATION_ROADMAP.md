@@ -37,3 +37,19 @@ PASS: status updated, roadmap done, blocker=null.
 - No schedule triggers.
 - No paid OpenAI API.
 - Synthetic tests only unless operator explicitly provides live Telegram test instruction.
+
+
+---
+
+## Result
+BEM-533 PASS. Telegram branch activated for synthetic curator intake and E2E verified.
+
+Evidence:
+- BEM-533.0 preflight: 49f1ed1c050fed1a7ee721dab449688196ebb68f
+- BEM-533.1 intake activation: cbfb076669d4ec7aa32cd8df53fbeccb4b67b00a
+- BEM-533.2 transport samples: 0ec509506fb488e72246529dc6dc480510821ef9
+- BEM-533.3 synthetic E2E: ee7ed5c6a6c50d7d5a7582226535e0caa0941201
+- BEM-533.4 status close: final commit
+
+Security: no live Telegram API, no Telegram token, no secrets in files.
+Blocker: null
