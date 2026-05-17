@@ -25,7 +25,7 @@ def read_text(path):
 def title_from_markdown(path):
     for line in read_text(path).splitlines():
         if line.startswith("# "):
-            return line[2:].strip()[:96]
+            return line[2:].strip()[:120]
     return path.name
 
 def infer_sender_recipient(path):
@@ -42,6 +42,8 @@ def compact_path(path):
 
 def requires_operator_decision(path):
     text = read_text(path).lower()
+    if "requires operator decision: no" in text or "требует решения оператора: нет" in text:
+        return False
     markers = [
         "requires operator decision: yes",
         "требует решения оператора: да",
@@ -50,33 +52,96 @@ def requires_operator_decision(path):
         "disagreement_requires_operator",
         "архитектурное разногласие",
     ]
-    return any(marker in text for marker in markers)
+    return any(m in text for m in markers)
+
+def get_section(text, names):
+    lines = text.splitlines()
+    start = None
+    for i, line in enumerate(lines):
+        low = line.strip().lower()
+        if low.startswith("## "):
+            header = low[3:].strip()
+            if any(header.startswith(name) for name in names):
+                start = i + 1
+                break
+    if start is None:
+        return ""
+    out = []
+    for line in lines[start:]:
+        if line.strip().startswith("## "):
+            break
+        if line.strip():
+            out.append(line.strip())
+    return "\n".join(out).strip()
+
+def one_line(text, limit=450):
+    value = " ".join([x.strip() for x in text.splitlines() if x.strip()])
+    return value[:limit]
+
+def extract_options(text):
+    raw = get_section(text, ["варианты", "options", "decision options", "варианты решения"])
+    opts = []
+    for line in raw.splitlines():
+        s = line.strip()
+        if not s or s.startswith("|") or s.startswith("---"):
+            continue
+        s = s.lstrip("- ").strip()
+        if s:
+            opts.append(s[:180])
+    if len(opts) < 2:
+        opts = [
+            "Подтвердить согласованное решение",
+            "Вернуть Claude↔GPT на доработку",
+            "Свой вариант оператора",
+        ]
+    elif len(opts) == 2:
+        opts.append("Свой вариант / доработать")
+    return opts[:3]
+
+def extract_payload(path):
+    text = read_text(path)
+    question = get_section(text, ["вопрос", "question", "ключевой вопрос", "что решаем"])
+    if not question:
+        question = title_from_markdown(path)
+    recommendation = get_section(text, ["рекомендация", "recommendation", "позиция gpt", "решение claude", "итог"])
+    if not recommendation:
+        recommendation = "Если вопрос непонятен или вариантов недостаточно — выбрать вариант 2: вернуть Claude↔GPT на доработку."
+    return {
+        "question": one_line(question),
+        "options": extract_options(text),
+        "recommendation": one_line(recommendation),
+    }
 
 def build_operator_message(path):
     sender, recipient = infer_sender_recipient(path)
-    title = title_from_markdown(path)
-    short_path = compact_path(path)
+    payload = extract_payload(path)
+    opts = payload["options"]
     lines = [
         "BEM-MAILBOX | OPERATOR DECISION REQUIRED | workflow_runtime",
         "",
         "Этап: 1/1 (100%)",
         "Дорожная карта: 1/1 (100%)",
         "",
-        "Чек-лист:",
-        "✅ Claude↔GPT обсуждение зафиксировано",
-        "✅ Требуется решение оператора",
-        "✅ Решение будет передано куратору",
-        "",
         "Вопрос:",
-        f"От: {sender}",
-        f"Кому: {recipient}",
-        f"Тема: {title}",
-        f"Файл: {short_path}",
+        payload["question"],
         "",
-        "Действие оператора:",
-        "Принять финальное решение по согласованному/спорному вопросу.",
+        "Варианты решения:",
+        "1) " + opts[0],
+        "2) " + opts[1],
+        "3) " + opts[2],
         "",
-        "После решения:",
+        "Рекомендация аудиторов:",
+        payload["recommendation"],
+        "",
+        "Источник:",
+        "От: " + sender,
+        "Кому: " + recipient,
+        "Файл: " + compact_path(path),
+        "",
+        "Как ответить:",
+        "Напиши: 1, 2, 3 или свой вариант текстом.",
+        "",
+        "Что будет после решения:",
         "Пакет решения передаётся куратору, затем во внутренний контур.",
     ]
     return "\n".join(lines)
