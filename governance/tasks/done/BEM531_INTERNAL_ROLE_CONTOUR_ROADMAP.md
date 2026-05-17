@@ -155,3 +155,20 @@ PASS:
 - minimal and full E2E completed;
 - contour_status.json exists;
 - blocker=null.
+
+
+---
+
+## Result
+BEM-531 PASS. Internal role-based contour roadmap completed.
+
+Evidence:
+- BEM-531.00 cleanup: fed8d7d0854a3055959e287638422dfc4eeae597
+- BEM-531.01 curator intake: b26ddc22d7f20e507aec67484735a7f2fc7cca0c
+- BEM-531.1 role state lifecycle: 5d26e973ed67f61dca308db081d745e044d431f5
+- BEM-531.2 transport failure contract: b464c7f5c5f5a05b354218c6194263e7d46a41b9
+- BEM-531.3 workflow audit: 82ced4dbdc37890c97ee4522aae77b525cb8b184
+- BEM-531.4 synthetic E2E: 9005e6c1bf5e87a0c77df2734f23806902419269
+- BEM-531.5 contour status: final commit
+
+Blocker: null

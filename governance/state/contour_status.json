@@ -1,0 +1,71 @@
+{
+  "schema_version": "contour-status.v1",
+  "updated_at": "2026-05-17 | 12:52 (UTC+3)",
+  "contour": "internal_role_based_development",
+  "status": "PASS",
+  "roadmap": "BEM-531",
+  "stages_completed": 7,
+  "stages_total": 7,
+  "current_cycle": "bem531-full-e2e",
+  "active_role": "curator",
+  "next_role": null,
+  "last_result": "synthetic minimal and full E2E PASS",
+  "last_commit": "9005e6c1bf5e87a0c77df2734f23806902419269",
+  "blocker": null,
+  "external_sources_scope": [
+    "gpt",
+    "claude"
+  ],
+  "telegram_scope": "deferred_after_bem531",
+  "stage_evidence": [
+    {
+      "stage": "BEM-531.00",
+      "name": "Cleanup preflight",
+      "sha": "fed8d7d0854a3055959e287638422dfc4eeae597"
+    },
+    {
+      "stage": "BEM-531.01",
+      "name": "Curator intake",
+      "sha": "b26ddc22d7f20e507aec67484735a7f2fc7cca0c"
+    },
+    {
+      "stage": "BEM-531.1",
+      "name": "Role state + agent lifecycle",
+      "sha": "5d26e973ed67f61dca308db081d745e044d431f5"
+    },
+    {
+      "stage": "BEM-531.2",
+      "name": "Transport contract + failure handling",
+      "sha": "b464c7f5c5f5a05b354218c6194263e7d46a41b9"
+    },
+    {
+      "stage": "BEM-531.3",
+      "name": "Workflow audit",
+      "sha": "82ced4dbdc37890c97ee4522aae77b525cb8b184"
+    },
+    {
+      "stage": "BEM-531.4",
+      "name": "Synthetic E2E two-level",
+      "sha": "9005e6c1bf5e87a0c77df2734f23806902419269"
+    }
+  ],
+  "last_transport_record": {
+    "record_type": "final_result",
+    "cycle_id": "bem531-full-e2e",
+    "source": "internal",
+    "from_role": "curator",
+    "to_role": "curator",
+    "status": "completed",
+    "artifact_path": "governance/internal_contour/e2e/bem531_4/full_curator_closure.md",
+    "commit_sha": null,
+    "blocker": null,
+    "created_at": "2026-05-17 | 12:51 (UTC+3)"
+  },
+  "policy": {
+    "issue_31_comments": false,
+    "schedule_triggers": false,
+    "secrets_in_files": false,
+    "paid_openai_api": false,
+    "codex_cli": false
+  }
+}
