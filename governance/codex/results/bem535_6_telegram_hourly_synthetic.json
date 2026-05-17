@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem535_6_telegram_hourly_synthetic",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-535.6 generated Telegram hourly synthetic canonical report payload",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/transport/results.jsonl",
+    "governance/internal_contour/e2e/bem535_hourly_telegram/telegram_hourly_payload.json",
+    "governance/reports/bem535_6_telegram_hourly_synthetic.md",
+    "governance/codex/proofs/bem535_6_telegram_hourly_synthetic.txt",
+    "governance/codex/proofs/bem535_6_telegram_hourly_synthetic.txt"
+  ],
+  "commit_sha": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem535_6_telegram_hourly_synthetic.md",
+  "completed_at": "2026-05-17T10:16:28Z"
+}
