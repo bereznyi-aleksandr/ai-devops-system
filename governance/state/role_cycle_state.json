@@ -1,17 +1,17 @@
 {
   "schema_version": "role-cycle-state.v1",
-  "updated_at": "2026-05-17 | 13:39 (UTC+3)",
+  "updated_at": "2026-05-17 | 13:40 (UTC+3)",
   "cycle_id": "bem537-transport-consumer-test",
   "source": {
     "type": "gpt",
     "id": "BEM-536"
   },
-  "curator_status": "ASSIGNED",
-  "active_role": "transport_consumer",
-  "next_role": "analyst",
+  "curator_status": "CLOSED",
+  "active_role": "curator",
+  "next_role": null,
   "current_task": {
-    "id": "BEM-537.2",
-    "title": "Transport consumer decision",
+    "id": "BEM-537",
+    "title": "Live-like transport orchestration test",
     "status": "completed"
   },
   "handoff": {
@@ -109,6 +109,11 @@
       "event": "BEM-537 Task 2 consumer decision",
       "status": "completed",
       "next_role": "analyst"
+    },
+    {
+      "at": "2026-05-17 | 13:40 (UTC+3)",
+      "event": "BEM-537 Task 3 adapter reaction and closure",
+      "status": "PASS"
     }
   ],
   "legacy": {
