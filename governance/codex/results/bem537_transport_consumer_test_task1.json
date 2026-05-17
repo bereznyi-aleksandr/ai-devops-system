@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem537_transport_consumer_test_task1",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-537 Task 1 created transport consumer contract and input record",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/tasks/pending/BEM537_LIVE_TRANSPORT_ORCHESTRATION_TEST.md",
+    "governance/protocols/TRANSPORT_CONSUMER_CONTRACT.md",
+    "governance/internal_contour/tests/bem537/input_request.json",
+    "governance/transport/results.jsonl",
+    "governance/state/role_cycle_state.json",
+    "governance/reports/bem537_task1_transport_consumer_contract.md",
+    "governance/codex/proofs/bem537_task1_transport_consumer_contract.txt",
+    "governance/codex/proofs/bem537_transport_consumer_test_task1.txt"
+  ],
+  "commit_sha": "a26dbe242fa7cbe341e338f477878d695c2dd953",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem537_transport_consumer_test_task1.md",
+  "completed_at": "2026-05-17T10:39:32Z"
+}
