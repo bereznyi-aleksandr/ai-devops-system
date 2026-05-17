@@ -1,490 +1,107 @@
 {
-  "schema_version": "contour-status.v1",
-  "updated_at": "2026-05-17 | 15:08 (UTC+3)",
-  "contour": "internal_role_based_development",
-  "status": "PASS",
-  "roadmap": "BEM-531",
-  "stages_completed": 7,
-  "stages_total": 7,
-  "current_cycle": "bem531-full-e2e",
-  "active_role": "curator",
-  "next_role": null,
-  "last_result": "BEM-541 corrected full system retest PASS",
-  "last_commit": "9d73b9f3b88ea571c207d74d37b0a23a38972e84",
-  "blocker": null,
-  "external_sources_scope": [
-    "gpt",
-    "claude",
-    "telegram"
-  ],
-  "telegram_scope": "active_synthetic_verified",
-  "stage_evidence": [
-    {
-      "stage": "BEM-531.00",
-      "name": "Cleanup preflight",
-      "sha": "fed8d7d0854a3055959e287638422dfc4eeae597"
-    },
-    {
-      "stage": "BEM-531.01",
-      "name": "Curator intake",
-      "sha": "b26ddc22d7f20e507aec67484735a7f2fc7cca0c"
-    },
-    {
-      "stage": "BEM-531.1",
-      "name": "Role state + agent lifecycle",
-      "sha": "5d26e973ed67f61dca308db081d745e044d431f5"
-    },
-    {
-      "stage": "BEM-531.2",
-      "name": "Transport contract + failure handling",
-      "sha": "b464c7f5c5f5a05b354218c6194263e7d46a41b9"
-    },
-    {
-      "stage": "BEM-531.3",
-      "name": "Workflow audit",
-      "sha": "82ced4dbdc37890c97ee4522aae77b525cb8b184"
-    },
-    {
-      "stage": "BEM-531.4",
-      "name": "Synthetic E2E two-level",
-      "sha": "9005e6c1bf5e87a0c77df2734f23806902419269"
-    }
-  ],
-  "last_transport_record": {
-    "record_type": "final_result",
-    "cycle_id": "bem531-full-e2e",
-    "source": "internal",
-    "from_role": "curator",
-    "to_role": "curator",
+  "schema_version": "contour_status.v2",
+  "updated_at": "2026-05-17 | 15:10 (UTC+3)",
+  "roadmap": {
+    "id": "BEM-548",
+    "title": "Next Development Roadmap approved by Claude",
     "status": "completed",
-    "artifact_path": "governance/internal_contour/e2e/bem531_4/full_curator_closure.md",
-    "commit_sha": null,
-    "blocker": null,
-    "created_at": "2026-05-17 | 12:51 (UTC+3)"
-  },
-  "policy": {
-    "issue_31_comments": false,
-    "schedule_triggers": false,
-    "secrets_in_files": false,
-    "paid_openai_api": false,
-    "codex_cli": false
-  },
-  "bem533": {
-    "status": "PASS",
-    "stages_completed": 5,
-    "stages_total": 5,
-    "evidence": [
-      {
-        "stage": "BEM-533.0",
-        "sha": "49f1ed1c050fed1a7ee721dab449688196ebb68f"
-      },
-      {
-        "stage": "BEM-533.1",
-        "sha": "cbfb076669d4ec7aa32cd8df53fbeccb4b67b00a"
-      },
-      {
-        "stage": "BEM-533.2",
-        "sha": "0ec509506fb488e72246529dc6dc480510821ef9"
-      },
-      {
-        "stage": "BEM-533.3",
-        "sha": "ee7ed5c6a6c50d7d5a7582226535e0caa0941201"
-      }
-    ]
-  },
-  "provider_failover": "verified_synthetic",
-  "telegram_hourly_report": "needs_attention",
-  "external_scheduler_policy": "external_cron_to_deno_to_workflow_dispatch; no_github_schedule",
-  "provider_state_path": "governance/state/provider_contour_state.json",
-  "bem535": {
-    "status": "PASS",
-    "stages_completed": 7,
     "stages_total": 7,
-    "evidence": [
-      {
-        "stage": "BEM-535.1",
-        "sha": "f1ca30827a7c0c9a2366eeb2d305db26afd5eb63"
-      },
-      {
-        "stage": "BEM-535.2",
-        "sha": "babcc559ad9a8bbc9f65e24abad1a7b9bdb6e155"
-      },
-      {
-        "stage": "BEM-535.3",
-        "sha": "364f8d2295677778efca5f9ad9d37e56f6e32d2b"
-      },
-      {
-        "stage": "BEM-535.4",
-        "sha": "c97be7431f4d50a4e77193df86a95570a470ab46"
-      },
-      {
-        "stage": "BEM-535.5",
-        "sha": "1210f0bd094b2688ac9dca747c52201030da6fca"
-      },
-      {
-        "stage": "BEM-535.6",
-        "sha": "9d73b9f3b88ea571c207d74d37b0a23a38972e84"
-      }
-    ]
-  },
-  "schedule_policy": "schedule prohibited except .github/workflows/curator-hourly-report.yml cron 0 * * * *",
-  "provider_failover_detection": "claude.yml outcome failure/cancelled or transport status failed/cancelled/timeout -> GPT reserve",
-  "bem535_claude_reconciliation": {
-    "status": "PARTIAL",
-    "claude_commit_reported": "d63916a5",
-    "hourly_schedule_ok": false,
-    "provider_failover_ok": true,
-    "claude_outcome_logic_seen": true,
-    "blocker": "manual review required for workflow presence/content"
-  },
-  "last_internal_contour_autotest": {
-    "id": "BEM-536",
-    "status": "PASS",
-    "cycle_id": "bem536-internal-contour-autotest",
-    "task1_sha": "f8f98110ac12be71d0286532160ebabfd46e31ad",
-    "task2_sha": "701fc5a790a90b887298def56e9356cf38690234",
-    "task3_sha": "this_commit"
-  },
-  "last_transport_consumer_test": {
-    "id": "BEM-537",
-    "status": "PASS",
-    "task1_sha": "a26dbe242fa7cbe341e338f477878d695c2dd953",
-    "task2_sha": "686330d494bbac62cdb74b31f92c7e65246184c0",
-    "task3_sha": "this_commit"
-  },
-  "transport_consumer": "synthetic_verified",
-  "bem538_runtime_dispatch_readiness": {
-    "role_ready": true,
-    "provider_ready": true,
-    "bridge_ready": true,
-    "status": "PASS"
-  },
-  "bem538_dispatch_bridge_contract": {
-    "codex_contents_write": true,
-    "codex_actions_write": false,
-    "role_dispatch_ready": true,
-    "provider_dispatch_ready": true,
-    "bridge_mode": "needs_codex_runner_actions_write_permission",
-    "blocker": "WORKFLOW_DISPATCH_BRIDGE_NEEDS_ACTIONS_WRITE"
-  },
-  "bem538_runtime_dispatch_test": {
-    "status": "BLOCKER",
-    "role_ready": true,
-    "provider_ready": true,
-    "actions_write": false,
-    "bridge_mode": "needs_codex_runner_actions_write_permission",
-    "blocker": {
-      "code": "WORKFLOW_DISPATCH_BRIDGE_MISSING",
-      "message": "Current autonomous GPT channel dispatches codex-runner only; no verified bridge to dispatch role-orchestrator/provider-adapter runtime workflows. Required: Deno endpoint for arbitrary workflow_dispatch or codex-runner actions:write dispatcher implementation."
+    "stages_completed": 7,
+    "progress_percent": 100,
+    "stages": {
+      "BEM-548.0": "completed",
+      "BEM-548.1": "completed",
+      "BEM-548.2": "completed_with_yaml_fix",
+      "BEM-548.3": "completed",
+      "BEM-548.4": "completed_technical_outbox_ready",
+      "BEM-548.5a": "completed_synthetic_regression",
+      "BEM-548.5b": "completed_live_observed_stale_queue_fixed",
+      "BEM-548.6": "completed_dashboard_v2"
     }
   },
-  "bem538_status": "closed_wrong_direction",
-  "bem539_status": "not_implemented_wrong_direction",
-  "architecture_rule": "external contour writes only to curator; curator owns internal workflow orchestration",
-  "curator_intake_contract": "governance/internal_contour/curator_intake_contract.md",
-  "last_full_system_autotest": {
-    "id": "BEM-540",
-    "status": "PASS",
-    "cycle_id": "bem540-full-system-autotest",
-    "task1_sha": "5a17ca55247e2794413019a10dd36948f48e28cf",
-    "task2_sha": "1deca41de9ac6d8ec2e0cbfbbbdd294b97d480a5",
-    "task3_sha": "73ee42d1ea911f4368e576db9db9302f2e5ee864",
-    "task4_sha": "this_commit",
-    "transport_records": [
-      "curator_intake",
-      "analysis",
-      "audit",
-      "execution",
-      "audit",
-      "final_result",
-      "provider_failover_system_test",
-      "telegram_outbox_system_test"
-    ],
-    "provider_selected": "gpt",
-    "telegram_outbox": "governance/telegram_outbox.jsonl"
+  "external_contour": {
+    "gpt": "active",
+    "claude": "external_auditor_approved_bem548_with_edits",
+    "telegram": "live_delivery_observed_by_operator_screenshot"
   },
-  "bem540_postmortem": {
-    "status": "SYNTHETIC_PASS_WITH_PROVIDER_TELEGRAM_GAPS",
-    "provider_probe_missing": true,
-    "forced_synthetic_reserve_selection": true,
-    "transport_records_count": 9,
-    "telegram_outbox_records_count": 1,
-    "next_roadmap": "BEM541_TELEGRAM_LIVE_REPORTING_REWORK_ROADMAP.md"
+  "internal_contour": {
+    "curator": "entrypoint_only",
+    "role_orchestrator": "workflow_yaml_fixed_and_script_backed",
+    "roles_sequence": "curator -> role_orchestrator -> analyst -> auditor -> executor -> auditor_final -> curator_closure",
+    "role_state_status": "CLOSED"
   },
-  "last_real_orchestrator_test": {
-    "id": "BEM-542",
-    "status": "PASS",
-    "task1_sha": "336d136a1b20c9d7483beb9727231a762f0f45c6",
-    "task2_sha": "58428e01057c57eda7833358c79c5a7003f59c20",
-    "task3_sha": "4bca6604959bd6055ec6668007834d78c54b249a",
-    "task4_sha": "dfa3e9add81b1712ad290f3913d0e6379be984c6",
-    "task5_sha": "this_commit",
-    "orchestrator_sequence": [
-      "analyst",
-      "auditor",
-      "executor",
-      "auditor_final",
-      "curator_closure"
-    ],
-    "provider_probe_before_reserve": true,
-    "boundary": "practical file-transport orchestrator logic via codex-runner; not independent always-on agents"
-  },
-  "last_corrected_curator_orchestrator_test": {
-    "id": "BEM-543",
-    "status": "PASS",
-    "full_sequence": [
-      "external_gpt",
-      "curator",
-      "role_orchestrator",
-      "analyst",
-      "auditor",
-      "executor",
-      "auditor_final",
-      "curator_closure"
-    ],
-    "blocker": null
-  },
-  "telegram_delivery_synthetic": {
-    "status": "sent_synthetic",
-    "outbox_line": 143,
-    "delivery_result": "governance/internal_contour/tests/bem541/telegram_delivery_synthetic_result.json"
-  },
-  "last_corrected_full_system_retest": {
-    "id": "BEM-541.5",
-    "status": "PASS",
-    "provider_probe_before_reserve": true,
+  "provider_contour": {
+    "primary": "claude",
+    "reserve": "gpt",
+    "probe_before_reserve_required": true,
     "selected_provider": "claude",
     "reserve_used": false,
-    "orchestrator_sequence": [
-      "analyst",
-      "auditor",
-      "executor",
-      "auditor_final",
-      "curator_closure"
-    ],
-    "telegram_delivery": "sent_synthetic",
-    "task_shas": {
-      "541.1": "61fd6f88d355ebea3555388624bfd4bb512e7ade",
-      "541.2": "4636585aeffef45652adecc12228174cb4c4492f",
-      "541.3": "3fca43fc951b9f8bab8f711c83d55d4797926e5a",
-      "541.4": "1601c023c42b789a7cdcd6b67b3ec2f73dc483d7",
-      "541.5": "this_commit"
-    }
-  },
-  "telegram_live_sender": {
-    "operator_screenshot": "secrets_present_TELEGRAM_BOT_TOKEN_TELEGRAM_CHAT_ID",
-    "hourly_workflow": ".github/workflows/curator-hourly-report.yml",
-    "sender_scripts": [
-      "scripts/telegram_outbox_pick.py",
-      "scripts/telegram_delivery_record.py"
-    ],
-    "status": "wiring_blocked",
-    "checks": {
-      "curator_hourly_exists": true,
-      "sender_workflow_exists": true,
-      "hourly_has_schedule": true,
-      "hourly_has_cron": true,
-      "hourly_has_continue_on_error": true,
-      "hourly_uses_token_secret": true,
-      "hourly_uses_chat_secret": true,
-      "hourly_calls_picker": true,
-      "hourly_calls_recorder": true,
-      "no_issue_31": false
-    },
-    "blocker": {
-      "code": "TELEGRAM_HOURLY_WIRING_FAILED",
-      "checks": {
-        "curator_hourly_exists": true,
-        "sender_workflow_exists": true,
-        "hourly_has_schedule": true,
-        "hourly_has_cron": true,
-        "hourly_has_continue_on_error": true,
-        "hourly_uses_token_secret": true,
-        "hourly_uses_chat_secret": true,
-        "hourly_calls_picker": true,
-        "hourly_calls_recorder": true,
-        "no_issue_31": false
-      }
-    }
-  },
-  "telegram_live_delivery_verification": {
-    "status": "WIRING_BLOCKER",
-    "repo_wiring_ok": false,
-    "sent_records_count": 0,
-    "failed_records_count": 1,
-    "delivery_records_count": 4,
-    "ready_records_count": 2,
-    "workflow_checks": {
-      "curator_hourly_exists": true,
-      "curator_hourly_schedule": true,
-      "curator_hourly_cron_hourly": true,
-      "curator_hourly_uses_token_secret": true,
-      "curator_hourly_uses_chat_secret": true,
-      "curator_hourly_calls_picker": true,
-      "curator_hourly_calls_recorder": true,
-      "curator_hourly_no_issue_31": false,
-      "standalone_sender_exists": true,
-      "standalone_sender_dispatch": true,
-      "standalone_sender_uses_token_secret": true,
-      "standalone_sender_uses_chat_secret": true
-    },
-    "queued_verification_cycle": "bem546-live-delivery-verification",
-    "blocker": {
-      "code": "TELEGRAM_WIRING_INCOMPLETE",
-      "checks": {
-        "curator_hourly_exists": true,
-        "curator_hourly_schedule": true,
-        "curator_hourly_cron_hourly": true,
-        "curator_hourly_uses_token_secret": true,
-        "curator_hourly_uses_chat_secret": true,
-        "curator_hourly_calls_picker": true,
-        "curator_hourly_calls_recorder": true,
-        "curator_hourly_no_issue_31": false,
-        "standalone_sender_exists": true,
-        "standalone_sender_dispatch": true,
-        "standalone_sender_uses_token_secret": true,
-        "standalone_sender_uses_chat_secret": true
-      }
-    }
-  },
-  "bem547_external_audit_report": {
-    "report": "governance/reports/bem547_claude_external_audit_system_state_report.md",
-    "roadmap_for_claude": "governance/tasks/pending/BEM547_NEXT_DEVELOPMENT_CONTOURS_ROADMAP_FOR_CLAUDE.md",
-    "status": "READY_FOR_CLAUDE_REVIEW",
-    "telegram_delivery_sent_records": 0,
-    "telegram_delivery_total_records": 4,
-    "next_recommended_stage": "BEM-548 live Telegram delivery confirmation",
     "blocker": null
   },
-  "last_external_audit_report": {
-    "id": "BEM-547",
-    "status": "prepared",
-    "report": "governance/reports/bem547_full_system_report_for_claude.md",
-    "next_roadmap": "governance/tasks/pending/BEM548_NEXT_DEVELOPMENT_ROADMAP_FOR_APPROVAL.md"
+  "telegram": {
+    "workflow": ".github/workflows/curator-hourly-report.yml",
+    "picker": "scripts/telegram_outbox_pick.py",
+    "delivery_records_count": 5,
+    "sent_records_count": 0,
+    "operator_live_observed": true,
+    "stale_queue_fixed": true
   },
-  "bem548": {
-    "status": "APPROVED_BY_CLAUDE_WITH_EDITS",
-    "stages_total": 7,
-    "stages": [
-      "548.1",
-      "548.2",
-      "548.3",
-      "548.4",
-      "548.5a",
-      "548.5b",
-      "548.6"
-    ],
-    "telegram_outbox_ready": true,
-    "outbox_matches": [
-      {
-        "line": 140,
-        "cycle_id": "bem540-full-system-autotest",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 141,
-        "cycle_id": "bem541-telegram-delivery-synthetic-e2e",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 142,
-        "cycle_id": "bem541-telegram-delivery-synthetic-e2e",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 143,
-        "cycle_id": "bem541-telegram-delivery-synthetic-e2e",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 144,
-        "cycle_id": "bem541-corrected-full-system-retest",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 145,
-        "cycle_id": "bem544-live-telegram-sender",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 146,
-        "cycle_id": "bem546-live-delivery-verification",
-        "status": "queued_for_sender"
-      }
+  "blockers": [],
+  "evidence": {
+    "BEM-548.0": "29cc45baf496df18cb668480b5260789eb290915",
+    "BEM-548.1": "0c4ed6dd1f66c62d6fae769d36043b1b0c6c1e50",
+    "BEM-548.2": "cc936b16dcca40276a7255da70c1ed905ff2e61e",
+    "BEM-548.2_FIX": "3f71cbf19fbd47bad876d33f1d3509f1c95c8e1e",
+    "BEM-548.3": "2b5bd2567788bb6092bac756cdfd884768956ed8",
+    "BEM-548.4": "5c8679139aa2832036f81e421144fc0d65e24859",
+    "BEM-548.5a": "8807cb850fc2ef428e580c2b49e55531d74a1055",
+    "BEM-548.5b": "080069abab9ced9ae4c9f18b753314a95a845673",
+    "BEM-548.6": "this_commit",
+    "reports": [
+      "governance/reports/bem548_5a_synthetic_regression.md",
+      "governance/reports/bem548_5b_live_regression_telegram.md",
+      "governance/reports/bem548_6_dashboard_v2_final.md"
     ]
   },
-  "bem546_technical_status": "TECHNICALLY_COMPLETE_OUTBOX_READY",
-  "bem548_4_telegram_delivery_confirmation": {
-    "status": "TECHNICAL_COMPLETE_OUTBOX_READY",
-    "outbox_ready": true,
-    "live_sent": false,
-    "outbox_ready_count": 7,
-    "delivery_records_count": 4,
-    "sent_records_count": 0,
-    "outbox_ready_records": [
-      {
-        "line": 140,
-        "cycle_id": "bem540-full-system-autotest",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 141,
-        "cycle_id": "bem541-telegram-delivery-synthetic-e2e",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 142,
-        "cycle_id": "bem541-telegram-delivery-synthetic-e2e",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 143,
-        "cycle_id": "bem541-telegram-delivery-synthetic-e2e",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 144,
-        "cycle_id": "bem541-corrected-full-system-retest",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 145,
-        "cycle_id": "bem544-live-telegram-sender",
-        "status": "queued_for_sender"
-      },
-      {
-        "line": 146,
-        "cycle_id": "bem546-live-delivery-verification",
-        "status": "queued_for_sender"
-      }
-    ],
-    "sent_records": [],
-    "blocker": null
+  "transport_record_counts": {
+    "intake": 4,
+    "execution": 9,
+    "analysis": 7,
+    "audit": 14,
+    "final_result": 9,
+    "telegram_intake": 1,
+    "telegram_ack": 1,
+    "provider_failover_test": 3,
+    "telegram_hourly_report_synthetic": 1,
+    "curator_intake": 7,
+    "consumer_decision": 1,
+    "adapter_reaction": 1,
+    "runtime_dispatch_bridge_result": 1,
+    "architecture_correction": 1,
+    "provider_failover_system_test": 1,
+    "telegram_outbox_system_test": 1,
+    "system_autotest_final_result": 1,
+    "role_orchestrator_decision": 21,
+    "provider_selection_decision": 5,
+    "curator_assignment": 3,
+    "provider_probe_result": 3,
+    "provider_selection_decision_test": 2,
+    "provider_selection_audit": 2,
+    "telegram_delivery_result": 5,
+    "telegram_outbox_delivery_test": 3,
+    "telegram_live_sender_ready": 1,
+    "telegram_live_sender_wiring": 1,
+    "telegram_live_delivery_verification_queued": 1,
+    "external_audit_report_ready": 1,
+    "external_audit_report_prepared": 1,
+    "external_audit_approval": 1,
+    "curator_intake_validation": 4,
+    "role_orchestrator_workflow_parity_audit": 1,
+    "provider_adapter_probe_integration_audit": 1,
+    "telegram_delivery_confirmation": 1,
+    "role_orchestrator_yaml_fix": 1,
+    "telegram_live_regression_observation": 1,
+    "operator_visible_progress_mode": 1
   },
-  "bem548_5a_synthetic_regression": {
-    "status": "PASS",
-    "sequence": [
-      "analyst",
-      "auditor",
-      "executor",
-      "auditor_final",
-      "curator_closure"
-    ],
-    "provider": "claude",
-    "telegram": "sent_synthetic",
-    "blocker": null
-  },
-  "bem548_5b_live_regression": {
-    "status": "LIVE_OBSERVED_BY_OPERATOR_STALE_QUEUE_FIXED",
-    "operator_observed_live_delivery": true,
-    "stale_queue_fixed": true,
-    "repo_sent_records_count": 0,
-    "delivery_records_count": 5,
-    "blocker": null
-  },
-  "operator_visible_progress_mode": {
-    "status": "ACTIVE",
-    "protocol": "governance/protocols/OPERATOR_VISIBLE_PROGRESS_MODE.md",
-    "rule": "short progress only; full report after stage/blocker"
-  }
+  "blocker": null
 }
