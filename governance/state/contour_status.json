@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 22:30 (UTC+3)",
+  "updated_at": "2026-05-17 | 22:32 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,10 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "OPERATOR_REPLY_INTAKE_RESULT_NOT_FOUND",
+    "message": "No operator reply intake last_run found yet. Workflow may still be running or failed before commit."
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -484,5 +487,13 @@
     "trigger": "governance/triggers/operator_reply_intake.trigger",
     "expected": "operator-reply-intake auto-runs after commit",
     "blocker": null
+  },
+  "bem588_operator_reply_intake_result_check": {
+    "status": "state_missing_or_no_last_run",
+    "decision_files": [],
+    "blocker": {
+      "code": "OPERATOR_REPLY_INTAKE_RESULT_NOT_FOUND",
+      "message": "No operator reply intake last_run found yet. Workflow may still be running or failed before commit."
+    }
   }
 }
