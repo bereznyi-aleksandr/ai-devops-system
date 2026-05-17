@@ -121,3 +121,16 @@ BEM-<N> | CLAUDE-GPT SYNC RESULT | YYYY-MM-DD | HH:MM (UTC+3)
 | Telegram operator decision message queued | PASS |
 | Вопросы Claude сформулированы | PASS |
 | Ответы GPT сформулированы | PASS |
+
+
+---
+
+# BEM-564 CORRECTION | Agreed External Decision Goes To Curator
+
+Дата: 2026-05-17 | 20:00 (UTC+3)
+
+| Наименование | Описание | Обоснование |
+|---|---|---|
+| Correction | После согласования Claude-GPT или подтверждения оператором решение передаётся Curator, не Analyst напрямую | Curator — единая точка входа внутреннего контура |
+| Internal route | Curator -> Role-orchestrator -> Analyst -> Auditor -> Executor -> Final audit -> Curator closure | Внутренний контур сам назначает следующие роли |
+| Boundary | Внешний аудит только согласует; внутренний контур выполняет | Не смешивать контуры |
