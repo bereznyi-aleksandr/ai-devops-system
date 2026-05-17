@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem570_telegram_mobile_friendly_mailbox",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Converted mailbox Telegram notifications to mobile-readable non-table format",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/TELEGRAM_MOBILE_READABLE_FORMAT.md",
+    "scripts/mailbox_pick_notification.py",
+    ".github/workflows/mailbox-dispatcher.yml",
+    "governance/reports/bem570_telegram_mobile_friendly_mailbox.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem570_telegram_mobile_friendly_mailbox.txt",
+    "governance/codex/proofs/bem570_telegram_mobile_friendly_mailbox.txt"
+  ],
+  "commit_sha": "24998d79ba1e69e5b504156b2b564a0d6afc1e68",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem570_telegram_mobile_friendly_mailbox.md",
+  "completed_at": "2026-05-17T18:22:12Z"
+}
