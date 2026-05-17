@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem586_operator_reply_intake_poller
+task_type: code_patch
+executed_at: 2026-05-17T19:28:27Z
+ops_applied: Implemented operator reply intake poller: Telegram getUpdates -> operator_decisions JSON -> curator handoff, custom_script
+changed_files: governance/protocols/OPERATOR_REPLY_INTAKE_POLLER.md, scripts/operator_reply_intake.py, .github/workflows/operator-reply-intake.yml, governance/reports/bem586_operator_reply_intake_poller.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem586_operator_reply_intake_poller.txt
+errors: none
