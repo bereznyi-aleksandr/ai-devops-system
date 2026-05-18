@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 19:03 (UTC+3)",
+  "updated_at": "2026-05-18 | 19:04 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,74 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "RU_COMPACT_HOURLY_NOT_CONFIRMED",
+    "failed": [
+      {
+        "name": "queue_archived",
+        "pass": false,
+        "evidence": "governance/workflow_dispatch_processed/"
+      }
+    ],
+    "status_file": "204\n",
+    "active_queue": [],
+    "processed": [],
+    "hourly_state": {
+      "schema_version": "curator_hourly_report_state.v3_ru_compact",
+      "status": "sent",
+      "report_hour": "2026-05-18 | 19:00 (UTC+3)",
+      "stage_done": 6,
+      "stage_total": 6,
+      "stage_percent": 100,
+      "roadmap_done": 6,
+      "roadmap_total": 6,
+      "roadmap_percent": 100,
+      "telegram_delivery": "sent",
+      "language": "ru",
+      "layout": "compact_table",
+      "rows": [
+        {
+          "number": 1,
+          "name": "Канал",
+          "essence": "восстановлен",
+          "status": "✅"
+        },
+        {
+          "number": 2,
+          "name": "Роли",
+          "essence": "проверены",
+          "status": "✅"
+        },
+        {
+          "number": 3,
+          "name": "Провайдер",
+          "essence": "маршрут ясен",
+          "status": "✅"
+        },
+        {
+          "number": 4,
+          "name": "ТГ-тест",
+          "essence": "отправка есть",
+          "status": "✅"
+        },
+        {
+          "number": 5,
+          "name": "Часовой",
+          "essence": "доставка есть",
+          "status": "✅"
+        },
+        {
+          "number": 6,
+          "name": "Готовность",
+          "essence": "принята",
+          "status": "✅"
+        }
+      ],
+      "blocker": null
+    },
+    "runtime_preview": "# Curator Hourly Report Runtime\n\nBEM-HOURLY | ЧАСОВОЙ ОТЧЁТ\nДата: 2026-05-18 | 19:00 (UTC+3)\n\nЭтап: 6/6 (100%)\nДорожная карта: 6/6 (100%)\n\n```\n№ | Наименование | Краткая суть     | Ст\n--+--------------+------------------+---\n1 | Канал        | восстановлен     | ✅\n2 | Роли         | проверены        | ✅\n3 | Провайдер    | маршрут ясен     | ✅\n4 | ТГ-тест      | отправка есть    | ✅\n5 | Часовой      | доставка есть    | ✅\n6 | Готовность   | принята          | ✅\n```\n",
+    "delivery_report": "# Curator Hourly Delivery\n\nTelegram delivery: sent\n"
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -1325,7 +1392,7 @@
       }
     }
   },
-  "operator_telegram_report_delivery_status": "canonical_hourly_not_confirmed",
+  "operator_telegram_report_delivery_status": "ru_compact_hourly_not_confirmed",
   "bem671_fix_hourly_yaml_and_dispatch_queue_cleanup": {
     "status": "pass",
     "state_file": "governance/state/bem671_fix_hourly_yaml_and_dispatch_queue_cleanup.json",
@@ -1421,5 +1488,77 @@
     "state_file": "governance/state/bem674_russian_compact_hourly_report.json",
     "queue_file": "governance/workflow_dispatch_queue/curator_hourly_report_ru_compact_once.json",
     "blocker": null
+  },
+  "bem675_verify_ru_compact_hourly_delivery": {
+    "status": "ru_compact_hourly_not_confirmed",
+    "state_file": "governance/state/bem675_verify_ru_compact_hourly_delivery.json",
+    "blocker": {
+      "code": "RU_COMPACT_HOURLY_NOT_CONFIRMED",
+      "failed": [
+        {
+          "name": "queue_archived",
+          "pass": false,
+          "evidence": "governance/workflow_dispatch_processed/"
+        }
+      ],
+      "status_file": "204\n",
+      "active_queue": [],
+      "processed": [],
+      "hourly_state": {
+        "schema_version": "curator_hourly_report_state.v3_ru_compact",
+        "status": "sent",
+        "report_hour": "2026-05-18 | 19:00 (UTC+3)",
+        "stage_done": 6,
+        "stage_total": 6,
+        "stage_percent": 100,
+        "roadmap_done": 6,
+        "roadmap_total": 6,
+        "roadmap_percent": 100,
+        "telegram_delivery": "sent",
+        "language": "ru",
+        "layout": "compact_table",
+        "rows": [
+          {
+            "number": 1,
+            "name": "Канал",
+            "essence": "восстановлен",
+            "status": "✅"
+          },
+          {
+            "number": 2,
+            "name": "Роли",
+            "essence": "проверены",
+            "status": "✅"
+          },
+          {
+            "number": 3,
+            "name": "Провайдер",
+            "essence": "маршрут ясен",
+            "status": "✅"
+          },
+          {
+            "number": 4,
+            "name": "ТГ-тест",
+            "essence": "отправка есть",
+            "status": "✅"
+          },
+          {
+            "number": 5,
+            "name": "Часовой",
+            "essence": "доставка есть",
+            "status": "✅"
+          },
+          {
+            "number": 6,
+            "name": "Готовность",
+            "essence": "принята",
+            "status": "✅"
+          }
+        ],
+        "blocker": null
+      },
+      "runtime_preview": "# Curator Hourly Report Runtime\n\nBEM-HOURLY | ЧАСОВОЙ ОТЧЁТ\nДата: 2026-05-18 | 19:00 (UTC+3)\n\nЭтап: 6/6 (100%)\nДорожная карта: 6/6 (100%)\n\n```\n№ | Наименование | Краткая суть     | Ст\n--+--------------+------------------+---\n1 | Канал        | восстановлен     | ✅\n2 | Роли         | проверены        | ✅\n3 | Провайдер    | маршрут ясен     | ✅\n4 | ТГ-тест      | отправка есть    | ✅\n5 | Часовой      | доставка есть    | ✅\n6 | Готовность   | принята          | ✅\n```\n",
+      "delivery_report": "# Curator Hourly Delivery\n\nTelegram delivery: sent\n"
+    }
   }
 }
