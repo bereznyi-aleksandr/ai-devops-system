@@ -4,6 +4,12 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 * * * *'
+  push:
+    paths:
+      - 'governance/triggers/curator_hourly_report.trigger'
+      - 'scripts/render_curator_hourly_report.py'
+      - 'scripts/record_curator_hourly_delivery.py'
+      - '.github/workflows/curator-hourly-report.yml'
 
 permissions:
   contents: write
@@ -48,6 +54,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/curator_hourly_report_state.json governance/reports/curator_hourly_report_runtime.md
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-614 curator hourly report runtime"
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-618 curator hourly report runtime"
           git pull --rebase --autostash origin main || true
           git push || true
