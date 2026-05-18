@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem662_dispatch_telegram_and_runtime_workflows",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Created workflow dispatch queue items for telegram smoke",
+    " curator hourly report",
+    " delivery verifier",
+    " and Claude runtime smoke",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/telegram_send_smoke.json",
+    "governance/workflow_dispatch_queue/curator_hourly_report.json",
+    "governance/workflow_dispatch_queue/curator_hourly_delivery_verification.json",
+    "governance/workflow_dispatch_queue/claude_primary_runtime_smoke.json",
+    "governance/state/bem662_dispatch_telegram_and_runtime_workflows.json",
+    "governance/reports/bem662_dispatch_telegram_and_runtime_workflows.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem662_dispatch_telegram_and_runtime_workflows.txt",
+    "governance/codex/proofs/bem662_dispatch_telegram_and_runtime_workflows.txt"
+  ],
+  "commit_sha": "b50ba9623a6d46e0037d20df8529ced301f8dd5e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem662_dispatch_telegram_and_runtime_workflows.md",
+  "completed_at": "2026-05-18T12:56:28Z"
+}
