@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem658_post_yaml_fix_delivery_check",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Checked Telegram smoke and hourly delivery states after removing heredoc from telegram-send-smoke.yml",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem658_post_yaml_fix_delivery_check.json",
+    "governance/reports/bem658_post_yaml_fix_delivery_check.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem658_post_yaml_fix_delivery_check.txt",
+    "governance/codex/proofs/bem658_post_yaml_fix_delivery_check.txt"
+  ],
+  "commit_sha": "5a0d6d648b3a85a886966aa3294ca26c7f70b20e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem658_post_yaml_fix_delivery_check.md",
+  "completed_at": "2026-05-18T12:50:42Z"
+}
