@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem659_diagnose_workflow_trigger_path",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Diagnosed workflow trigger path and identified need for explicit workflow_dispatch repair if push-trigger results are absent",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem659_diagnose_workflow_trigger_path.json",
+    "governance/reports/bem659_diagnose_workflow_trigger_path.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem659_diagnose_workflow_trigger_path.txt",
+    "governance/codex/proofs/bem659_diagnose_workflow_trigger_path.txt"
+  ],
+  "commit_sha": "73475fc405784fa2ae4615b56d396e2c2248824c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem659_diagnose_workflow_trigger_path.md",
+  "completed_at": "2026-05-18T12:52:17Z"
+}
