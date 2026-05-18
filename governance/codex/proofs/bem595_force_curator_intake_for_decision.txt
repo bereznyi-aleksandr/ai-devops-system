@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem595_force_curator_intake_for_decision
+task_type: code_patch
+executed_at: 2026-05-18T02:45:51Z
+ops_applied: Forced existing operator decision into curator inbox and marked handoff completed, custom_script
+changed_files: governance/operator_decisions/bem584_decision_format_live_test.json, governance/curator/inbox/operator_decision_bem584_decision_format_live_test.json, governance/state/decision_curator_handoff_state.json, governance/reports/bem595_force_curator_intake_for_decision.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem595_force_curator_intake_for_decision.txt
+errors: none
