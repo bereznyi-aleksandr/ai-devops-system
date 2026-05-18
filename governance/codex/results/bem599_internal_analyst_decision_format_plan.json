@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem599_internal_analyst_decision_format_plan",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Created internal analyst plan and audit request for operator decision format pipeline",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/internal_contour/analyst/plans/bem599_internal_analyst_decision_format_plan.json",
+    "governance/internal_contour/analyst/plans/bem599_internal_analyst_decision_format_plan.md",
+    "governance/internal_contour/auditor/inbox/bem599_internal_analyst_decision_format_plan.json",
+    "governance/protocols/INTERNAL_ANALYST_OPERATOR_DECISION_FORMAT_PLAN.md",
+    "governance/reports/bem599_internal_analyst_decision_format_plan.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem599_internal_analyst_decision_format_plan.txt",
+    "governance/codex/proofs/bem599_internal_analyst_decision_format_plan.txt"
+  ],
+  "commit_sha": "3d7c1e3299c4ac4af5552fdd0092207aee6a3399",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem599_internal_analyst_decision_format_plan.md",
+  "completed_at": "2026-05-18T02:52:51Z"
+}
