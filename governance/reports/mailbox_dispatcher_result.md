@@ -3,10 +3,10 @@
 Дата: workflow_runtime
 
 ## Result
-Picked: False
-Mailbox file: None
+Picked: True
+Mailbox file: governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md
 Notify operator: False
-Reason: no_new_mailbox_file
+Reason: routine_mailbox_no_telegram_use_decision_queue
 
 ## Blocker
 null
