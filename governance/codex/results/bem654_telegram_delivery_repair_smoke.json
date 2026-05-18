@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem654_telegram_delivery_repair_smoke",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem654_telegram_delivery_repair_smoke.txt"
+  ],
+  "commit_sha": "5909570b96379f669c74b641b92399ffb2114d64",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: forbidden calls: urllib"
+  },
+  "report_path": "governance/codex/results/bem654_telegram_delivery_repair_smoke.md",
+  "completed_at": "2026-05-18T12:46:13Z"
+}
