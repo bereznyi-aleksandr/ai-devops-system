@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem662_dispatch_telegram_and_runtime_workflows",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-662 dispatch workflows",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nqueue=Path('governance/workflow_dispatch_queue'); queue.mkdir(parents=True,exist_ok=True)\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\nstate_dir=Path('governance/state'); state_dir.mkdir(parents=True,exist_ok=True)\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\n\nitems={\n 'telegram_send_smoke':{'workflow':'telegram-send-smoke.yml','ref':'main','inputs':{}},\n 'curator_hourly_report':{'workflow':'curator-hourly-report.yml','ref':'main','inputs':{}},\n 'curator_hourly_delivery_verification':{'workflow':'curator-hourly-delivery-verification.yml','ref':'main','inputs':{}},\n 'claude_primary_runtime_smoke':{'workflow':'claude-primary-runtime-smoke.yml','ref':'main','inputs':{}}\n}\nfiles=[]\nfor name,data in items.items():\n    p=queue/(name+'.json')\n    p.write_text(json.dumps(data,indent=2,ensure_ascii=False)+sep)\n    files.append(str(p))\n\nstate={'schema_version':'workflow_dispatch_queue_items.v1','bem':'BEM-662','status':'queue_items_created','items':items,'files':files,'expected_dispatch_status':'204 for each workflow after codex-runner dispatch queue step','blocker':None,'created_at':'2026-05-18 | 15:56 (UTC+3)'}\nstate_file=state_dir/'bem662_dispatch_telegram_and_runtime_workflows.json'\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=reports/'bem662_dispatch_telegram_and_runtime_workflows.md'\nreport.write_text('# BEM-662 | Dispatch Telegram And Runtime Workflows | QUEUED'+sep+sep+'Дата: 2026-05-18 | 15:56 (UTC+3)'+sep+sep+'Created workflow dispatch queue items. The updated codex-runner dispatch queue step should dispatch them after this task commit.'+sep+sep+'## Queue files'+sep+sep+sep.join(['- '+f for f in files])+sep+sep+'## Blocker'+sep+'null'+sep)\nrecord={'record_type':'bem662_dispatch_telegram_and_runtime_workflows','cycle_id':'bem662-dispatch-telegram-and-runtime-workflows','source':'executor','status':'queue_items_created','files':files,'blocker':None,'created_at':'2026-05-18 | 15:56 (UTC+3)'}\nwith transport.open('a',encoding='utf-8') as handle: handle.write(json.dumps(record,ensure_ascii=False)+sep)\ncontour_state={}\nif contour.exists():\n    try: contour_state=json.loads(contour.read_text(errors='ignore'))\n    except: contour_state={}\ncontour_state['bem662_dispatch_telegram_and_runtime_workflows']={'status':'queue_items_created','state_file':str(state_file),'files':files,'blocker':None}\ncontour_state['workflow_dispatch_queue_status']='queue_items_created'\ncontour_state['updated_at']='2026-05-18 | 15:56 (UTC+3)'; contour_state['blocker']=None\ncontour.write_text(json.dumps(contour_state,indent=2,ensure_ascii=False)+sep)\nproof=proofs/'bem662_dispatch_telegram_and_runtime_workflows.txt'\nproof.write_text('BEM-662 PASS: workflow dispatch queue items created for Telegram/hourly/verifier/Claude runtime.\\n')\nchanged_files.extend(files+[str(state_file),str(report),str(transport),str(contour),str(proof)])\nops_applied.append('Created workflow dispatch queue items for telegram smoke, curator hourly report, delivery verifier, and Claude runtime smoke')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem662_dispatch_telegram_and_runtime_workflows.md",
+    "result_json": "governance/codex/results/bem662_dispatch_telegram_and_runtime_workflows.json"
+  },
+  "created_at": "2026-05-18T12:56:06.776Z"
+}
