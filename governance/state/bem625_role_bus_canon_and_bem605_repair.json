@@ -1,0 +1,15 @@
+{
+  "schema_version": "role_bus_validation.v1",
+  "bem": "BEM-625",
+  "status": "canon_enforced_for_bem605_repair",
+  "internal_role_bus_package": "governance/internal_contour/auditor/inbox/bem625_bem605_hourly_report_internal_auditor_review.json",
+  "mailbox_misroute_annotation": "governance/audit_mailbox/meta/bem625_bem605_mailbox_misroute_annotation.json",
+  "external_auditor_sync_lane": "governance/audit_mailbox/internal_auditor_to_external_auditor/bem625_external_auditor_sync_placeholder.md",
+  "rules": [
+    "internal roles use internal_contour inboxes",
+    "audit_mailbox only auditor-to-auditor",
+    "Deno is transport adapter not executor role"
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 07:24 (UTC+3)"
+}

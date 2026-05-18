@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:05 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:24 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,16 +103,7 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": {
-    "code": "ARCHITECTURE_GAPS_FOUND",
-    "gaps": [
-      "G1",
-      "G2",
-      "G3",
-      "G4",
-      "G5"
-    ]
-  },
+  "blocker": null,
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -855,5 +846,13 @@
       "G4",
       "G5"
     ]
-  }
+  },
+  "bem625_role_bus_canon_and_bem605_repair": {
+    "status": "completed",
+    "canon": "governance/protocols/ROLE_COMMUNICATION_CANON.md",
+    "internal_auditor_package": "governance/internal_contour/auditor/inbox/bem625_bem605_hourly_report_internal_auditor_review.json",
+    "misroute_annotation": "governance/audit_mailbox/meta/bem625_bem605_mailbox_misroute_annotation.json",
+    "blocker": null
+  },
+  "role_communication_canon": "internal_role_bus_primary_audit_mailbox_auditor_sync_only"
 }
