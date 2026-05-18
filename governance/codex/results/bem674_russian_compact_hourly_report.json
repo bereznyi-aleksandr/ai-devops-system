@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem674_russian_compact_hourly_report",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Updated hourly report renderer to Russian compact mobile table with shorter columns and queued only curator hourly report",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/render_curator_hourly_report.py",
+    "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md",
+    "governance/workflow_dispatch_queue/curator_hourly_report_ru_compact_once.json",
+    "governance/triggers/curator_hourly_report.trigger",
+    "governance/state/bem674_russian_compact_hourly_report.json",
+    "governance/reports/bem674_russian_compact_hourly_report.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem674_russian_compact_hourly_report.txt",
+    "governance/codex/proofs/bem674_russian_compact_hourly_report.txt"
+  ],
+  "commit_sha": "1f125746ae7bc871f71830286b07e9c736ca25cc",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem674_russian_compact_hourly_report.md",
+  "completed_at": "2026-05-18T16:04:57Z"
+}
