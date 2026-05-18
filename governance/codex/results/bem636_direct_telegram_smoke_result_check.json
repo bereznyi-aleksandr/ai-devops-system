@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem636_direct_telegram_smoke_result_check",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Checked direct Telegram delivery smoke result and hourly report delivery proof",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem636_direct_telegram_smoke_result_check.json",
+    "governance/reports/bem636_direct_telegram_smoke_result_check.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem636_direct_telegram_smoke_result_check.txt",
+    "governance/codex/proofs/bem636_direct_telegram_smoke_result_check.txt"
+  ],
+  "commit_sha": "5d92fffe6eb3702ef83e7fd2a86d4935fc5837cf",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem636_direct_telegram_smoke_result_check.md",
+  "completed_at": "2026-05-18T04:48:20Z"
+}
