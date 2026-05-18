@@ -1,0 +1,85 @@
+{
+  "schema_version": "telegram_smoke_and_hourly_results_check.v1",
+  "bem": "BEM-656",
+  "status": "smoke_or_hourly_pending_or_failed",
+  "smoke_ok": false,
+  "hourly_ok": true,
+  "verify_ok": false,
+  "metadata": {
+    "telegram_smoke": {
+      "path": "governance/state/telegram_send_smoke_result.json",
+      "exists": false,
+      "size": 0
+    },
+    "telegram_smoke_report": {
+      "path": "governance/reports/telegram_send_smoke_result.md",
+      "exists": false,
+      "size": 0
+    },
+    "hourly_state": {
+      "path": "governance/state/curator_hourly_report_state.json",
+      "exists": true,
+      "size": 347
+    },
+    "hourly_runtime_report": {
+      "path": "governance/reports/curator_hourly_report_runtime.md",
+      "exists": true,
+      "size": 121
+    },
+    "delivery_verification": {
+      "path": "governance/state/curator_hourly_delivery_verification.json",
+      "exists": false,
+      "size": 0
+    },
+    "curator_trigger": {
+      "path": "governance/triggers/curator_hourly_report.trigger",
+      "exists": true,
+      "size": 93
+    },
+    "smoke_trigger": {
+      "path": "governance/triggers/telegram_send_smoke.trigger",
+      "exists": true,
+      "size": 68
+    }
+  },
+  "loaded": {
+    "telegram_smoke": null,
+    "telegram_smoke_report": null,
+    "hourly_state": {
+      "schema_version": "curator_hourly_report_state.v1",
+      "status": "rendered",
+      "message_file": "governance/tmp/curator_hourly_report_message.txt",
+      "provider_checked": true,
+      "selected_provider": "gpt_reserve",
+      "reserve_used": true,
+      "blocker": null,
+      "event_count": 5,
+      "created_at": "workflow_runtime",
+      "telegram_delivery": "sent"
+    },
+    "hourly_runtime_report": {
+      "parse_error": true,
+      "raw": "# Curator Hourly Report Runtime\n\nTelegram delivery: sent\nSelected provider: gpt_reserve\nReserve used: True\nBlocker: null\n"
+    },
+    "delivery_verification": null,
+    "curator_trigger": {
+      "parse_error": true,
+      "raw": "BEM-655 retrigger curator hourly report after safe telegram smoke 2026-05-18 | 15:47 (UTC+3)\n"
+    },
+    "smoke_trigger": {
+      "parse_error": true,
+      "raw": "BEM-655 trigger safe telegram send smoke 2026-05-18 | 15:47 (UTC+3)\n"
+    }
+  },
+  "blocker": {
+    "code": "TELEGRAM_DELIVERY_NOT_FULLY_CONFIRMED",
+    "smoke_ok": false,
+    "hourly_ok": true,
+    "verify_ok": false,
+    "smoke_status": null,
+    "hourly_delivery": "sent",
+    "verify_status": null,
+    "message": "If smoke result is missing, GitHub workflow may still be running or push trigger did not fire. If smoke fails, inspect status_text/http_status."
+  },
+  "created_at": "2026-05-18 | 15:48 (UTC+3)"
+}
