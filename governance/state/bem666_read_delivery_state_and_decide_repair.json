@@ -1,0 +1,84 @@
+{
+  "schema_version": "delivery_state_decision.v1",
+  "bem": "BEM-666",
+  "status": "telegram_delivery_ready",
+  "next_action": "final_readiness_report",
+  "bem665_status": "delivery_confirmed",
+  "status_files": [
+    {
+      "name": "bem637_run_claude_runtime_smoke",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "bem637_run_curator_hourly_report",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "bem637_run_direct_telegram_smoke",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "claude_primary_runtime_smoke",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "curator_hourly_delivery_verification",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "curator_hourly_report",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "telegram_send_smoke",
+      "status": "204",
+      "response": ""
+    }
+  ],
+  "smoke_ok": true,
+  "hourly_ok": true,
+  "verify_ok": true,
+  "smoke_state": {
+    "schema_version": "telegram_send_smoke_result.v1",
+    "status": "sent",
+    "status_text": "sent_http_200",
+    "http_status": 200,
+    "telegram_ok": true,
+    "delivery_confirmed": true,
+    "blocker": null
+  },
+  "hourly_state": {
+    "schema_version": "curator_hourly_report_state.v1",
+    "status": "rendered",
+    "message_file": "governance/tmp/curator_hourly_report_message.txt",
+    "provider_checked": true,
+    "selected_provider": "gpt_reserve",
+    "reserve_used": true,
+    "blocker": null,
+    "event_count": 5,
+    "created_at": "workflow_runtime",
+    "telegram_delivery": "sent"
+  },
+  "verification_state": {
+    "schema_version": "curator_hourly_delivery_verification.v1",
+    "checked": true,
+    "telegram_delivery": "sent",
+    "delivery_confirmed": true,
+    "status": "pass",
+    "blocker": null
+  },
+  "workflow_static": {
+    "telegram_no_heredoc": true,
+    "telegram_file_based_message": true,
+    "curator_send_uses_text_file": true,
+    "codex_dispatch_queue": true
+  },
+  "blocker": null,
+  "created_at": "2026-05-18 | 16:03 (UTC+3)"
+}
