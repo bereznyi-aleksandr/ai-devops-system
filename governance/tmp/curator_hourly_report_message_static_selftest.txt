@@ -1,0 +1,28 @@
+BEM-HOURLY | SYSTEM MONITORING REPORT | workflow_runtime
+
+Этап: 4/6 (67%)
+Дорожная карта: 4/6 (67%)
+
+Чек-лист:
+✅ Роли/контуры проверены
+✅ Provider gate выполнен: true
+✅ Последние события собраны: 5
+✅ Telegram delivery проверяется этим workflow
+✅ Blocker: null
+
+Мониторинг:
+• Текущий этап
+  Описание: canonical_renderer_implemented
+  Обоснование: Показывает, на каком участке roadmap находится система.
+• Provider route
+  Описание: selected=gpt_reserve; reserve_used=true
+  Обоснование: Если Claude primary не доказан, система фиксирует fallback.
+• Основной контур
+  Описание: Claude Code primary = not selected or not proven
+  Обоснование: Отчёт явно показывает, сработал ли основной provider.
+• Резервный контур
+  Описание: GPT reserve = used
+  Обоснование: Fallback фиксируется без имитации PASS.
+• Следующее действие
+  Описание: finish BEM-605 execution, selftest, monitoring report
+  Обоснование: Roadmap продолжается без ожидания отчёта.

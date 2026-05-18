@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 06:44 (UTC+3)",
+  "updated_at": "2026-05-18 | 06:49 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,29 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "HOURLY_REPORT_STATIC_SELFTEST_FAILED",
+    "failed": [
+      {
+        "name": "renderer_syntax_compile",
+        "pass": false,
+        "error": "syntax_compile_failed"
+      },
+      {
+        "name": "recorder_syntax_compile",
+        "pass": false,
+        "error": "syntax_compile_failed"
+      },
+      {
+        "name": "schedule_only_curator_hourly",
+        "pass": false,
+        "schedule_files": [
+          ".github/workflows/curator-hourly-report.yml",
+          ".github/workflows/telegram-outbox-dispatch.yml"
+        ]
+      }
+    ]
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -664,7 +686,7 @@
       "message": "Claude must review template before operator approval package is finalized."
     }
   },
-  "hourly_report_template_flow": "canonical_renderer_implemented",
+  "hourly_report_template_flow": "static_selftest_failed",
   "bem606_conflict_safe_workflow_commits": {
     "status": "completed",
     "changed_workflows": [
@@ -741,5 +763,33 @@
     "workflow": ".github/workflows/curator-hourly-report.yml",
     "recorder": "scripts/record_curator_hourly_delivery.py",
     "blocker": null
+  },
+  "bem617_hourly_report_static_selftest_safe": {
+    "status": "failed",
+    "state_file": "governance/state/bem617_hourly_report_static_selftest_safe.json",
+    "sample_message": "governance/tmp/curator_hourly_report_message_static_selftest.txt",
+    "blocker": {
+      "code": "HOURLY_REPORT_STATIC_SELFTEST_FAILED",
+      "failed": [
+        {
+          "name": "renderer_syntax_compile",
+          "pass": false,
+          "error": "syntax_compile_failed"
+        },
+        {
+          "name": "recorder_syntax_compile",
+          "pass": false,
+          "error": "syntax_compile_failed"
+        },
+        {
+          "name": "schedule_only_curator_hourly",
+          "pass": false,
+          "schedule_files": [
+            ".github/workflows/curator-hourly-report.yml",
+            ".github/workflows/telegram-outbox-dispatch.yml"
+          ]
+        }
+      ]
+    }
   }
 }

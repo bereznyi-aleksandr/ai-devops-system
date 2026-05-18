@@ -1,0 +1,133 @@
+{
+  "schema_version": "hourly_report_static_selftest.v1",
+  "selftest_id": "bem617_hourly_report_static_selftest_safe",
+  "status": "failed",
+  "checks": [
+    {
+      "name": "renderer_exists",
+      "pass": true,
+      "path": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "recorder_exists",
+      "pass": true,
+      "path": "scripts/record_curator_hourly_delivery.py"
+    },
+    {
+      "name": "workflow_exists",
+      "pass": true,
+      "path": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "renderer_syntax_compile",
+      "pass": false,
+      "error": "syntax_compile_failed"
+    },
+    {
+      "name": "recorder_syntax_compile",
+      "pass": false,
+      "error": "syntax_compile_failed"
+    },
+    {
+      "name": "renderer_source_contains_BEM-HOURLY",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Этап:",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Дорожная карта:",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Чек-лист:",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Мониторинг:",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Provider route",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Основной контур",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Резервный контур",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Telegram delivery",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Blocker",
+      "pass": true
+    },
+    {
+      "name": "renderer_source_contains_Следующее действие",
+      "pass": true
+    },
+    {
+      "name": "workflow_has_allowed_schedule",
+      "pass": true
+    },
+    {
+      "name": "workflow_no_inline_python_heredoc",
+      "pass": true
+    },
+    {
+      "name": "workflow_uses_renderer_and_recorder",
+      "pass": true
+    },
+    {
+      "name": "workflow_commit_conflict_safe",
+      "pass": true
+    },
+    {
+      "name": "recorder_updates_delivery",
+      "pass": true
+    },
+    {
+      "name": "schedule_only_curator_hourly",
+      "pass": false,
+      "schedule_files": [
+        ".github/workflows/curator-hourly-report.yml",
+        ".github/workflows/telegram-outbox-dispatch.yml"
+      ]
+    },
+    {
+      "name": "sample_no_wide_pipe_table",
+      "pass": true
+    }
+  ],
+  "sample_message_file": "governance/tmp/curator_hourly_report_message_static_selftest.txt",
+  "blocker": {
+    "code": "HOURLY_REPORT_STATIC_SELFTEST_FAILED",
+    "failed": [
+      {
+        "name": "renderer_syntax_compile",
+        "pass": false,
+        "error": "syntax_compile_failed"
+      },
+      {
+        "name": "recorder_syntax_compile",
+        "pass": false,
+        "error": "syntax_compile_failed"
+      },
+      {
+        "name": "schedule_only_curator_hourly",
+        "pass": false,
+        "schedule_files": [
+          ".github/workflows/curator-hourly-report.yml",
+          ".github/workflows/telegram-outbox-dispatch.yml"
+        ]
+      }
+    ]
+  },
+  "created_at": "2026-05-18 | 06:49 (UTC+3)"
+}
