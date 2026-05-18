@@ -1,0 +1,39 @@
+{
+  "schema_version": "telegram_operator_notification.v1",
+  "type": "audit_mailbox_new_response",
+  "status": "pending_delivery",
+  "created_at": "2026-05-18 | 21:34 (UTC+3)",
+  "message": "BEM-MAILBOX | Ответ Claude получен\nДата: 2026-05-18 | 21:34 (UTC+3)\nНовых сообщений: 5\nРешение: APPROVE\nФайл: governance/audit_mailbox/external_auditor_to_internal_auditor/bem652_full_readiness_plan_request.md",
+  "items": [
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
+      "size": 3009,
+      "decision": "APPROVE",
+      "subject": "AUDIT RESPONSE FROM CLAUDE | BEM-563 Claude-GPT Sync Protocol"
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
+      "size": 6147,
+      "decision": "APPROVE",
+      "subject": "AUDIT MESSAGE FROM CLAUDE | BEM-564"
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem566_claude_response.md",
+      "size": 3088,
+      "decision": "APPROVE",
+      "subject": "AUDIT RESPONSE FROM CLAUDE | BEM-566"
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md",
+      "size": 2437,
+      "decision": "APPROVE",
+      "subject": "AUDIT RESPONSE FROM CLAUDE | BEM-677"
+    },
+    {
+      "path": "governance/audit_mailbox/external_auditor_to_internal_auditor/bem652_full_readiness_plan_request.md",
+      "size": 1825,
+      "decision": "APPROVE",
+      "subject": "EXTERNAL AUDITOR TO INTERNAL AUDITOR | BEM-652 | FULL READINESS PLAN REVIEW"
+    }
+  ]
+}
