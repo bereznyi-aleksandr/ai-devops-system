@@ -1,0 +1,40 @@
+{
+  "schema_version": "workflow_dispatch_queue_patch.v1",
+  "bem": "BEM-661",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "codex_runner_exists",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "actions_write_present",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "actions_read_absent",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "dispatch_step_present",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "queue_dir_exists",
+      "pass": true,
+      "evidence": "governance/workflow_dispatch_queue"
+    },
+    {
+      "name": "results_dir_exists",
+      "pass": true,
+      "evidence": "governance/workflow_dispatch_results"
+    }
+  ],
+  "workflow": ".github/workflows/codex-runner.yml",
+  "blocker": null,
+  "created_at": "2026-05-18 | 15:55 (UTC+3)"
+}
