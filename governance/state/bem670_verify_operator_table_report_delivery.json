@@ -1,0 +1,78 @@
+{
+  "schema_version": "operator_table_report_delivery_verification.v1",
+  "bem": "BEM-670",
+  "status": "operator_table_report_not_fully_confirmed",
+  "checks": [
+    {
+      "name": "hourly_state_exists",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_report_state.json"
+    },
+    {
+      "name": "telegram_delivery_sent",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_report_state.json"
+    },
+    {
+      "name": "message_has_readable_table",
+      "pass": false,
+      "evidence": "governance/reports/curator_hourly_report_runtime.md"
+    },
+    {
+      "name": "message_has_no_raw_bem_events",
+      "pass": true,
+      "evidence": "governance/reports/curator_hourly_report_runtime.md"
+    },
+    {
+      "name": "message_has_date_hour",
+      "pass": false,
+      "evidence": "governance/reports/curator_hourly_report_runtime.md"
+    },
+    {
+      "name": "workflow_runs_hourly",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    }
+  ],
+  "hourly_state": {
+    "schema_version": "curator_hourly_report_state.v1",
+    "status": "rendered",
+    "message_file": "governance/tmp/curator_hourly_report_message.txt",
+    "provider_checked": true,
+    "selected_provider": "gpt_reserve",
+    "reserve_used": true,
+    "blocker": null,
+    "event_count": 5,
+    "created_at": "workflow_runtime",
+    "telegram_delivery": "sent"
+  },
+  "blocker": {
+    "code": "OPERATOR_TABLE_REPORT_NOT_FULLY_CONFIRMED",
+    "failed": [
+      {
+        "name": "message_has_readable_table",
+        "pass": false,
+        "evidence": "governance/reports/curator_hourly_report_runtime.md"
+      },
+      {
+        "name": "message_has_date_hour",
+        "pass": false,
+        "evidence": "governance/reports/curator_hourly_report_runtime.md"
+      }
+    ],
+    "delivery_text": "",
+    "state": {
+      "schema_version": "curator_hourly_report_state.v1",
+      "status": "rendered",
+      "message_file": "governance/tmp/curator_hourly_report_message.txt",
+      "provider_checked": true,
+      "selected_provider": "gpt_reserve",
+      "reserve_used": true,
+      "blocker": null,
+      "event_count": 5,
+      "created_at": "workflow_runtime",
+      "telegram_delivery": "sent"
+    }
+  },
+  "created_at": "2026-05-18 | 16:09 (UTC+3)"
+}

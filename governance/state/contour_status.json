@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 16:08 (UTC+3)",
+  "updated_at": "2026-05-18 | 16:09 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,34 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "OPERATOR_TABLE_REPORT_NOT_FULLY_CONFIRMED",
+    "failed": [
+      {
+        "name": "message_has_readable_table",
+        "pass": false,
+        "evidence": "governance/reports/curator_hourly_report_runtime.md"
+      },
+      {
+        "name": "message_has_date_hour",
+        "pass": false,
+        "evidence": "governance/reports/curator_hourly_report_runtime.md"
+      }
+    ],
+    "delivery_text": "",
+    "state": {
+      "schema_version": "curator_hourly_report_state.v1",
+      "status": "rendered",
+      "message_file": "governance/tmp/curator_hourly_report_message.txt",
+      "provider_checked": true,
+      "selected_provider": "gpt_reserve",
+      "reserve_used": true,
+      "blocker": null,
+      "event_count": 5,
+      "created_at": "workflow_runtime",
+      "telegram_delivery": "sent"
+    }
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -1292,5 +1319,38 @@
     "blocker": null
   },
   "operator_telegram_report_format": "canonical_table_v2",
-  "operator_approval_format": "question_plus_options_table_v1"
+  "operator_approval_format": "question_plus_options_table_v1",
+  "bem670_verify_operator_table_report_delivery": {
+    "status": "operator_table_report_not_fully_confirmed",
+    "state_file": "governance/state/bem670_verify_operator_table_report_delivery.json",
+    "blocker": {
+      "code": "OPERATOR_TABLE_REPORT_NOT_FULLY_CONFIRMED",
+      "failed": [
+        {
+          "name": "message_has_readable_table",
+          "pass": false,
+          "evidence": "governance/reports/curator_hourly_report_runtime.md"
+        },
+        {
+          "name": "message_has_date_hour",
+          "pass": false,
+          "evidence": "governance/reports/curator_hourly_report_runtime.md"
+        }
+      ],
+      "delivery_text": "",
+      "state": {
+        "schema_version": "curator_hourly_report_state.v1",
+        "status": "rendered",
+        "message_file": "governance/tmp/curator_hourly_report_message.txt",
+        "provider_checked": true,
+        "selected_provider": "gpt_reserve",
+        "reserve_used": true,
+        "blocker": null,
+        "event_count": 5,
+        "created_at": "workflow_runtime",
+        "telegram_delivery": "sent"
+      }
+    }
+  },
+  "operator_telegram_report_delivery_status": "operator_table_report_not_fully_confirmed"
 }
