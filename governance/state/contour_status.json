@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 06:42 (UTC+3)",
+  "updated_at": "2026-05-18 | 06:43 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -664,7 +664,7 @@
       "message": "Claude must review template before operator approval package is finalized."
     }
   },
-  "hourly_report_template_flow": "reserve_audit_approved_ready_for_execution",
+  "hourly_report_template_flow": "canonical_renderer_implemented",
   "bem606_conflict_safe_workflow_commits": {
     "status": "completed",
     "changed_workflows": [
@@ -728,6 +728,12 @@
     "operator_package": "governance/operator_decision_queue/bem612_hourly_report_template_operator_visibility.json",
     "selected_provider": "gpt_reserve",
     "reserve_used": true,
+    "blocker": null
+  },
+  "bem613_implement_canonical_hourly_report_renderer": {
+    "status": "completed",
+    "renderer": "scripts/render_curator_hourly_report.py",
+    "workflow": ".github/workflows/curator-hourly-report.yml",
     "blocker": null
   }
 }

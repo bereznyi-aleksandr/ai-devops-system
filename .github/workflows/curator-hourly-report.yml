@@ -1,51 +1,65 @@
 name: Curator Hourly Report
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 * * * *'
-  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: curator-hourly-report
+  cancel-in-progress: false
+
 jobs:
-  report:
+  curator-hourly-report:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Generate curator hourly report
-        continue-on-error: true
-        run: python3 scripts/curator_hourly_report.py
-      - name: Pick queued Telegram message
-        continue-on-error: true
-        run: python3 scripts/telegram_outbox_pick.py
-      - name: Send queued Telegram message
-        continue-on-error: true
+        with:
+          fetch-depth: 0
+
+      - name: Syntax check hourly renderer
+        run: python3 -m py_compile scripts/render_curator_hourly_report.py
+
+      - name: Render canonical hourly report
+        run: python3 scripts/render_curator_hourly_report.py
+
+      - name: Send Telegram hourly report
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          python3 - <<PY
-          import json
-          from pathlib import Path
-          pick = json.loads(Path("governance/tmp/telegram_pick.json").read_text())
-          Path("governance/tmp/message.txt").write_text(pick.get("message", ""), encoding="utf-8")
-          PY
-          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
-            echo "missing_runtime_secret" > governance/tmp/telegram_status.txt
+          if [ ! -s governance/tmp/curator_hourly_report_message.txt ]; then
+            echo "not_sent_empty_message" > governance/tmp/curator_hourly_report_delivery.txt
+          elif [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "not_sent_missing_secret" > governance/tmp/curator_hourly_report_delivery.txt
           else
-            MSG=$(cat governance/tmp/message.txt)
-            HTTP_CODE=$(curl -sS -o governance/tmp/telegram_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" --data-urlencode "disable_web_page_preview=true" || echo "000")
-            if [ "${HTTP_CODE}" = "200" ]; then echo "sent" > governance/tmp/telegram_status.txt; else echo "telegram_http_${HTTP_CODE}" > governance/tmp/telegram_status.txt; fi
+            HTTP_CODE=$(curl -sS -o governance/tmp/curator_hourly_report_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text@governance/tmp/curator_hourly_report_message.txt" --data-urlencode "disable_web_page_preview=true" || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then echo "sent" > governance/tmp/curator_hourly_report_delivery.txt; else echo "not_sent_http_${HTTP_CODE}" > governance/tmp/curator_hourly_report_delivery.txt; fi
           fi
-      - name: Record Telegram delivery result
-        continue-on-error: true
-        run: python3 scripts/telegram_delivery_record.py
-      - name: Commit hourly report result
-        continue-on-error: true
+
+      - name: Record delivery status
+        run: |
+          STATUS=$(cat governance/tmp/curator_hourly_report_delivery.txt 2>/dev/null || echo unknown)
+          python3 - <<'PY'
+import json
+from pathlib import Path
+sep = chr(10)
+state_path = Path('governance/state/curator_hourly_report_state.json')
+state = json.loads(state_path.read_text()) if state_path.exists() else {}
+status = Path('governance/tmp/curator_hourly_report_delivery.txt').read_text().strip() if Path('governance/tmp/curator_hourly_report_delivery.txt').exists() else 'unknown'
+state['telegram_delivery'] = status
+state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + sep)
+Path('governance/reports/curator_hourly_report_runtime.md').write_text('# Curator Hourly Report Runtime' + sep + sep + 'Telegram delivery: ' + status + sep + 'Blocker: ' + ('null' if state.get('blocker') is None else json.dumps(state.get('blocker'), ensure_ascii=False)) + sep)
+PY
+
+      - name: Commit hourly report state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/telegram_outbox.jsonl governance/transport/results.jsonl governance/state/contour_status.json
-          git commit -m "Curator hourly Telegram report" || echo "No changes"
-          git push
+          git add governance/state/curator_hourly_report_state.json governance/reports/curator_hourly_report_runtime.md
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-613 curator hourly report runtime"
+          git pull --rebase --autostash origin main || true
+          git push || true
