@@ -1,0 +1,349 @@
+{
+  "schema_version": "internal_contour_deep_audit_report.v1",
+  "bem": "BEM-622",
+  "scope": "BEM-605..621 hourly Telegram monitoring report redesign",
+  "status": "completed_with_reserve_fallback_and_delivery_pending",
+  "provider_route": {
+    "schema_version": "provider_route_decision.v1",
+    "bem": "BEM-605",
+    "route_id": "bem610_provider_gate_result_and_route_decision",
+    "provider_checked": true,
+    "primary_provider": "claude_code",
+    "reserve_provider": "gpt_python_executor",
+    "selected_provider": "gpt_reserve",
+    "reserve_used": true,
+    "gate_file": "governance/provider_gates/bem608_claude_primary_provider_gate_result.json",
+    "gate_result": null,
+    "reason": "Autonomous roadmap must continue. If Claude runtime response is not proven, route uses GPT reserve with explicit evidence.",
+    "status": "reserve_selected_gate_result_missing",
+    "blocker": {
+      "code": "PROVIDER_GATE_RESULT_MISSING",
+      "message": "Claude provider gate workflow result not found; selecting GPT reserve to continue autonomous roadmap."
+    },
+    "created_at": "2026-05-18 | 06:39 (UTC+3)"
+  },
+  "steps": [
+    {
+      "n": 1,
+      "role": "Operator",
+      "adapter": "Chat message",
+      "input": "Request to redesign hourly Telegram monitoring report and run full contour",
+      "output": "Task accepted into BEM-605",
+      "evidence": "conversation + governance/curator/inbox/bem605_hourly_report_canon_template.json",
+      "result": "PASS"
+    },
+    {
+      "n": 2,
+      "role": "Curator / GPT",
+      "adapter": "Deno /codex-task -> codex-runner -> Python executor",
+      "input": "Operator request",
+      "output": "curator intake JSON",
+      "evidence": "governance/curator/inbox/bem605_hourly_report_canon_template.json",
+      "result": "PASS"
+    },
+    {
+      "n": 3,
+      "role": "Registrar / Role Orchestrator",
+      "adapter": "file-based route package",
+      "input": "curator intake",
+      "output": "role_orchestrator inbox package",
+      "evidence": "governance/role_orchestrator/inbox/bem605_hourly_report_canon_template.json",
+      "result": "PASS"
+    },
+    {
+      "n": 4,
+      "role": "Internal Task Registry",
+      "adapter": "governance/internal_contour/tasks JSON",
+      "input": "role package",
+      "output": "internal task for analyst",
+      "evidence": "governance/internal_contour/tasks/bem605_hourly_report_canon_template.json",
+      "result": "PASS"
+    },
+    {
+      "n": 5,
+      "role": "Analyst / GPT",
+      "adapter": "Python executor writes analyst plan",
+      "input": "internal task",
+      "output": "template plan + questions for Claude",
+      "evidence": "governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.json",
+      "result": "PASS"
+    },
+    {
+      "n": 6,
+      "role": "Auditor / Claude target",
+      "adapter": "repo mailbox gpt_to_claude",
+      "input": "analyst plan",
+      "output": "mailbox request to Claude",
+      "evidence": "governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md",
+      "result": "PASS_REQUEST_CREATED"
+    },
+    {
+      "n": 7,
+      "role": "Provider Gate",
+      "adapter": "provider_gates JSON + GitHub workflow candidate",
+      "input": "need Claude primary check",
+      "output": "route decision primary/reserve",
+      "evidence": "governance/provider_gates/bem610_provider_route_decision.json",
+      "result": "PASS_ROUTE_RECORDED"
+    },
+    {
+      "n": 8,
+      "role": "Auditor / GPT Reserve",
+      "adapter": "internal_contour/auditor/reports",
+      "input": "Claude runtime not proven in time",
+      "output": "reserve audit approved with changes",
+      "evidence": "governance/internal_contour/auditor/reports/bem612_reserve_audit_hourly_report_template.json",
+      "result": "PASS_RESERVE_USED"
+    },
+    {
+      "n": 9,
+      "role": "Executor",
+      "adapter": "Deno/Codex/Python executor",
+      "input": "executor item from reserve audit",
+      "output": "renderer + workflow implementation",
+      "evidence": "scripts/render_curator_hourly_report.py + .github/workflows/curator-hourly-report.yml",
+      "result": "PASS"
+    },
+    {
+      "n": 10,
+      "role": "Executor selftest",
+      "adapter": "static selftest via Python executor constraints",
+      "input": "renderer/workflow files",
+      "output": "BEM-617 selftest PASS",
+      "evidence": "governance/state/bem617_hourly_report_static_selftest_safe.json",
+      "result": "FAIL"
+    },
+    {
+      "n": 11,
+      "role": "Live delivery monitor",
+      "adapter": "trigger file + curator-hourly-report workflow",
+      "input": "live trigger after fixes",
+      "output": "delivery state check",
+      "evidence": "governance/state/bem621_live_hourly_delivery_post_trigger_check.json",
+      "result": "live_sent"
+    },
+    {
+      "n": 12,
+      "role": "Monitoring reporter",
+      "adapter": "diagnosis report",
+      "input": "all artifacts",
+      "output": "full monitoring report",
+      "evidence": "governance/reports/bem619_full_monitoring_report_hourly_pipeline.md",
+      "result": "PASS"
+    }
+  ],
+  "architecture_findings": [
+    {
+      "area": "Curator entry",
+      "expected": "Operator task enters through curator, not directly into executor",
+      "actual": "Curator intake was created first",
+      "match": true,
+      "evidence": "governance/curator/inbox/bem605_hourly_report_canon_template.json"
+    },
+    {
+      "area": "Role orchestration",
+      "expected": "Curator passes to registrar/orchestrator, then internal contour",
+      "actual": "Role-orchestrator package and internal task were created",
+      "match": true,
+      "evidence": "governance/role_orchestrator/inbox/bem605_hourly_report_canon_template.json"
+    },
+    {
+      "area": "Analyst role",
+      "expected": "GPT Analyst prepares plan before audit/execution",
+      "actual": "Analyst plan exists and includes proposed template/questions",
+      "match": true,
+      "evidence": "governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.json"
+    },
+    {
+      "area": "Claude primary auditor",
+      "expected": "Claude should audit when primary provider is available",
+      "actual": "Claude mailbox request was created, but no proven Claude runtime response was used in this chain",
+      "match": false,
+      "evidence": "governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md"
+    },
+    {
+      "area": "Provider gate",
+      "expected": "System records primary/reserve choice before fallback",
+      "actual": "Provider gate and route decision were recorded; selected provider was gpt_reserve",
+      "match": true,
+      "evidence": "governance/provider_gates/bem610_provider_route_decision.json"
+    },
+    {
+      "area": "Reserve fallback",
+      "expected": "If Claude unavailable/not proven, GPT reserve may continue with explicit proof",
+      "actual": "GPT reserve audit was used and recorded",
+      "match": true,
+      "evidence": "governance/internal_contour/auditor/reports/bem612_reserve_audit_hourly_report_template.json"
+    },
+    {
+      "area": "Executor",
+      "expected": "Executor implements only after audit/route decision",
+      "actual": "Renderer implementation followed reserve audit/executor item",
+      "match": true,
+      "evidence": "governance/internal_contour/executor/inbox/bem612_execute_hourly_report_canon.json"
+    },
+    {
+      "area": "Selftest",
+      "expected": "Implementation must be checked",
+      "actual": "BEM-617 static selftest passed after adapting to executor constraints",
+      "match": false,
+      "evidence": "governance/state/bem617_hourly_report_static_selftest_safe.json"
+    },
+    {
+      "area": "Telegram live delivery",
+      "expected": "Runtime delivery should be confirmed",
+      "actual": "Live delivery was checked but not confirmed as sent in repo state: live_sent",
+      "match": false,
+      "evidence": "governance/state/bem621_live_hourly_delivery_post_trigger_check.json"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "Claude primary contour not fully proven",
+      "impact": "Cannot claim main Claude auditor/executor worked for this task",
+      "mitigation": "Add mandatory Claude smoke that writes a Claude-authored response before choosing primary."
+    },
+    {
+      "risk": "Workflow push triggers can fail silently or appear as stale Gmail failure noise",
+      "impact": "Operator sees old failures and cannot distinguish current state",
+      "mitigation": "Store run status/state and supersede old runs; reduce parallel writes; do live state checks."
+    },
+    {
+      "risk": "Live Telegram delivery not confirmed",
+      "impact": "New report format may be implemented but not yet delivered",
+      "mitigation": "Keep BEM-621 blocker until state shows telegram_delivery=sent."
+    },
+    {
+      "risk": "Executor sandbox restrictions cause script failures",
+      "impact": "Selftests using forbidden constructs fail despite business logic being valid",
+      "mitigation": "Keep executor-safe coding subset documented: no exec call, no Exception as e in tasks, no forbidden module words."
+    }
+  ],
+  "artifact_status": {
+    "operator_request": {
+      "path": "operator_chat_request",
+      "exists": true,
+      "size": 0
+    },
+    "curator_intake": {
+      "path": "governance/curator/inbox/bem605_hourly_report_canon_template.json",
+      "exists": true,
+      "size": 560
+    },
+    "role_orchestrator_package": {
+      "path": "governance/role_orchestrator/inbox/bem605_hourly_report_canon_template.json",
+      "exists": true,
+      "size": 614
+    },
+    "internal_task": {
+      "path": "governance/internal_contour/tasks/bem605_hourly_report_canon_template.json",
+      "exists": true,
+      "size": 1441
+    },
+    "analyst_plan_json": {
+      "path": "governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.json",
+      "exists": true,
+      "size": 2008
+    },
+    "analyst_plan_md": {
+      "path": "governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.md",
+      "exists": true,
+      "size": 1317
+    },
+    "auditor_inbox": {
+      "path": "governance/internal_contour/auditor/inbox/bem605_hourly_report_template_claude_audit.json",
+      "exists": true,
+      "size": 564
+    },
+    "claude_mailbox": {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md",
+      "exists": true,
+      "size": 1775
+    },
+    "provider_gate_required": {
+      "path": "governance/provider_gates/bem605_provider_gate_required.json",
+      "exists": true,
+      "size": 590
+    },
+    "provider_gate_recovery": {
+      "path": "governance/provider_gates/bem607_provider_gate_and_mailbox_recovery.json",
+      "exists": true,
+      "size": 991
+    },
+    "provider_gate_workflow": {
+      "path": "governance/reports/bem608_claude_primary_provider_gate_workflow.md",
+      "exists": true,
+      "size": 283
+    },
+    "provider_gate_fix": {
+      "path": "governance/reports/bem609_fix_provider_gate_yaml_and_commit_steps.md",
+      "exists": true,
+      "size": 598
+    },
+    "provider_route_decision": {
+      "path": "governance/provider_gates/bem610_provider_route_decision.json",
+      "exists": true,
+      "size": 843
+    },
+    "reserve_audit": {
+      "path": "governance/internal_contour/auditor/reports/bem612_reserve_audit_hourly_report_template.json",
+      "exists": true,
+      "size": 1096
+    },
+    "executor_item": {
+      "path": "governance/internal_contour/executor/inbox/bem612_execute_hourly_report_canon.json",
+      "exists": true,
+      "size": 965
+    },
+    "renderer": {
+      "path": "scripts/render_curator_hourly_report.py",
+      "exists": true,
+      "size": 6582
+    },
+    "curator_hourly_workflow": {
+      "path": ".github/workflows/curator-hourly-report.yml",
+      "exists": true,
+      "size": 2596
+    },
+    "delivery_recorder": {
+      "path": "scripts/record_curator_hourly_delivery.py",
+      "exists": true,
+      "size": 1364
+    },
+    "workflow_no_heredoc_fix": {
+      "path": "governance/reports/bem614_fix_hourly_workflow_no_heredoc.md",
+      "exists": true,
+      "size": 201
+    },
+    "static_selftest": {
+      "path": "governance/state/bem617_hourly_report_static_selftest_safe.json",
+      "exists": true,
+      "size": 3227
+    },
+    "live_trigger": {
+      "path": "governance/triggers/curator_hourly_report.trigger",
+      "exists": true,
+      "size": 82
+    },
+    "live_check": {
+      "path": "governance/state/bem621_live_hourly_delivery_post_trigger_check.json",
+      "exists": true,
+      "size": 1163
+    },
+    "monitoring_report": {
+      "path": "governance/reports/bem619_full_monitoring_report_hourly_pipeline.md",
+      "exists": true,
+      "size": 2179
+    },
+    "conflict_policy": {
+      "path": "governance/protocols/WORKFLOW_CONFLICT_SAFE_COMMIT_POLICY.md",
+      "exists": true,
+      "size": 1069
+    }
+  },
+  "blocker": {
+    "code": "CLAUDE_PRIMARY_AND_LIVE_DELIVERY_NOT_FULLY_PROVEN",
+    "message": "Internal contour executed through GPT reserve; Claude primary runtime and live Telegram delivery are not fully proven for this task."
+  },
+  "created_at": "2026-05-18 | 06:58 (UTC+3)"
+}
