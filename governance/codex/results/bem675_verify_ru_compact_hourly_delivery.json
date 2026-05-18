@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem675_verify_ru_compact_hourly_delivery",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified Russian compact hourly report delivery",
+    " column width",
+    " language",
+    " queue archive",
+    " and Telegram sent state",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem675_verify_ru_compact_hourly_delivery.json",
+    "governance/reports/bem675_verify_ru_compact_hourly_delivery.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem675_verify_ru_compact_hourly_delivery.txt",
+    "governance/codex/proofs/bem675_verify_ru_compact_hourly_delivery.txt"
+  ],
+  "commit_sha": "492f327cd33244c325ca532641a2c901f12fe5cb",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem675_verify_ru_compact_hourly_delivery.md",
+  "completed_at": "2026-05-18T16:05:47Z"
+}
