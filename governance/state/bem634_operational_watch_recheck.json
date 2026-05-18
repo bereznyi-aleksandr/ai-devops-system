@@ -1,0 +1,52 @@
+{
+  "schema_version": "operational_watch_recheck.v1",
+  "bem": "BEM-634",
+  "status": "operational_closed",
+  "architecture_ok": true,
+  "delivery_ok": true,
+  "claude_runtime_ok": false,
+  "metadata": {
+    "claude_runtime": {
+      "path": "governance/provider_gates/claude_primary_runtime_smoke_result.json",
+      "exists": true,
+      "size": 650
+    },
+    "delivery_verification": {
+      "path": "governance/state/curator_hourly_delivery_verification.json",
+      "exists": false,
+      "size": 0
+    },
+    "hourly_state": {
+      "path": "governance/state/curator_hourly_report_state.json",
+      "exists": true,
+      "size": 660
+    },
+    "hourly_runtime_report": {
+      "path": "governance/reports/curator_hourly_report_runtime.md",
+      "exists": true,
+      "size": 348
+    },
+    "architecture_lint": {
+      "path": "governance/state/internal_contour_architecture_lint.json",
+      "exists": true,
+      "size": 3005
+    },
+    "final_acceptance": {
+      "path": "governance/state/bem633_final_acceptance_internal_contour_and_auditor_sync.json",
+      "exists": true,
+      "size": 3703
+    },
+    "closure": {
+      "path": "governance/state/bem632_close_provider_route_and_delivery_status.json",
+      "exists": true,
+      "size": 516
+    }
+  },
+  "watch": null,
+  "claude_watch": {
+    "code": "CLAUDE_RUNTIME_PROOF_NOT_CONFIRMED",
+    "message": "Claude primary remains unavailable/not proven. Reserve route remains valid per provider closure policy.",
+    "claude_result": "http_not_ok"
+  },
+  "created_at": "2026-05-18 | 07:35 (UTC+3)"
+}

@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:33 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:35 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -930,5 +930,18 @@
     "blocker": null,
     "operational_watch": null
   },
-  "internal_contour_calibration_final_status": "accepted"
+  "internal_contour_calibration_final_status": "accepted",
+  "bem634_operational_watch_recheck": {
+    "status": "operational_closed",
+    "state_file": "governance/state/bem634_operational_watch_recheck.json",
+    "delivery_ok": true,
+    "claude_runtime_ok": false,
+    "watch": null,
+    "claude_watch": {
+      "code": "CLAUDE_RUNTIME_PROOF_NOT_CONFIRMED",
+      "message": "Claude primary remains unavailable/not proven. Reserve route remains valid per provider closure policy.",
+      "claude_result": "http_not_ok"
+    }
+  },
+  "operational_watch_status": "operational_closed"
 }
