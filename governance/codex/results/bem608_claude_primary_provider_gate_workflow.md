@@ -1,0 +1,13 @@
+# Codex Runner v3 Result - bem608_claude_primary_provider_gate_workflow
+
+| Field | Value |
+|---|---|
+| Trace | bem608_claude_primary_provider_gate_workflow |
+| Executor | Python v3 (ubuntu-latest) |
+| Status | completed |
+| Operations | Created and triggered Claude primary provider gate workflow to check primary/reserve routing evidence without exposing secrets, custom_script |
+| Commit SHA | 70bd82f5291fe5c306c44796ac8e0f209a0e783e |
+| Changed files | governance/protocols/CLAUDE_PRIMARY_PROVIDER_GATE.md, .github/workflows/claude-primary-provider-gate.yml, governance/triggers/claude_primary_provider_gate.trigger, governance/reports/bem608_claude_primary_provider_gate_workflow.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem608_claude_primary_provider_gate_workflow.txt, governance/codex/proofs/bem608_claude_primary_provider_gate_workflow.txt |
+| Completed | 2026-05-18T03:15:36Z |
+
+### Completed successfully.
