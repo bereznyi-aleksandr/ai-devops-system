@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem684_event_mailbox_watcher_retry",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Installed event-driven audit mailbox watcher on push to Claude inbound mailbox lanes without schedule trigger",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/audit_mailbox_watcher.py",
+    ".github/workflows/audit-mailbox-watcher.yml",
+    "governance/protocols/AUDIT_MAILBOX_WATCHER_PROTOCOL.md",
+    "governance/state/bem684_event_mailbox_watcher_retry.json",
+    "governance/reports/bem684_event_mailbox_watcher_retry.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem684_event_mailbox_watcher_retry.txt",
+    "governance/codex/proofs/bem684_event_mailbox_watcher_retry.txt"
+  ],
+  "commit_sha": "e6eb544258833d6d1c65675e907ab69c20d60901",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem684_event_mailbox_watcher_retry.md",
+  "completed_at": "2026-05-18T18:34:07Z"
+}
