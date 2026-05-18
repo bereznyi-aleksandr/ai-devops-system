@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:26 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:27 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,13 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "RUNTIME_PROOF_REMAINS",
+    "items": [
+      "CLAUDE_PRIMARY_RUNTIME_NOT_PROVEN",
+      "LIVE_TELEGRAM_DELIVERY_NOT_CONFIRMED"
+    ]
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -869,5 +875,22 @@
     "workflow": ".github/workflows/internal-contour-architecture-lint.yml",
     "blocker": null
   },
-  "internal_contour_architecture_lint": "active_pass"
+  "internal_contour_architecture_lint": "active_pass",
+  "bem628_final_internal_contour_calibration_report": {
+    "status": "calibrated_with_known_runtime_blockers",
+    "report": "governance/reports/bem628_final_internal_contour_calibration_report.md",
+    "state_file": "governance/state/bem628_final_internal_contour_calibration_report.json",
+    "lint_status": "pass",
+    "selected_provider": "gpt_reserve",
+    "reserve_used": true,
+    "live_delivery_status": "live_sent",
+    "blocker": {
+      "code": "RUNTIME_PROOF_REMAINS",
+      "items": [
+        "CLAUDE_PRIMARY_RUNTIME_NOT_PROVEN",
+        "LIVE_TELEGRAM_DELIVERY_NOT_CONFIRMED"
+      ]
+    }
+  },
+  "internal_contour_calibration": "completed_with_runtime_proof_blockers"
 }

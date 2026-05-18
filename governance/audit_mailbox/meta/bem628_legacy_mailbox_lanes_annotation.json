@@ -1,0 +1,14 @@
+{
+  "schema_version": "legacy_mailbox_lanes_annotation.v1",
+  "bem": "BEM-628",
+  "legacy_lanes": [
+    "governance/audit_mailbox/gpt_to_claude",
+    "governance/audit_mailbox/claude_to_gpt"
+  ],
+  "canonical_lanes": [
+    "governance/audit_mailbox/internal_auditor_to_external_auditor",
+    "governance/audit_mailbox/external_auditor_to_internal_auditor"
+  ],
+  "status": "legacy_compatible_not_internal_role_bus",
+  "created_at": "2026-05-18 | 07:27 (UTC+3)"
+}
