@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem667_repair_based_on_delivery_decision",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Applied delivery repair decision by refreshing explicit workflow dispatch queue items and trigger markers for Telegram/hourly checks",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/triggers/telegram_send_smoke.trigger",
+    "governance/triggers/curator_hourly_report.trigger",
+    "governance/state/bem667_repair_based_on_delivery_decision.json",
+    "governance/reports/bem667_repair_based_on_delivery_decision.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem667_repair_based_on_delivery_decision.txt",
+    "governance/codex/proofs/bem667_repair_based_on_delivery_decision.txt"
+  ],
+  "commit_sha": "17a957d551b80469dfb1eb3f144f37552fde043d",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem667_repair_based_on_delivery_decision.md",
+  "completed_at": "2026-05-18T13:03:41Z"
+}
