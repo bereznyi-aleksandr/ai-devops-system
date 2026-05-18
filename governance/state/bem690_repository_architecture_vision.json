@@ -1,0 +1,234 @@
+{
+  "schema_version": "repository_architecture_vision.v1",
+  "bem": "BEM-690",
+  "status": "draft_ready",
+  "principles": [
+    "Repository is a control-plane, not just a code folder.",
+    "One source of truth for runtime state: governance/runtime.",
+    "Product workspaces are separated from system governance.",
+    "Board of Directors domains are configured in registry, not hardcoded in workflows.",
+    "Every task has trace_id, owner, lane, status, evidence, result, audit trail.",
+    "Risk-based controls: fast lane for low risk, audit lane for architecture or sensitive work, operator lane for strategic/high-risk decisions.",
+    "Workflows stay thin; long logic lives in scripts.",
+    "Repo structure must support later split into multiple repositories without rewriting governance model."
+  ],
+  "recommended_structure": "\n/\n├── README.md\n├── docs/                              # human documentation, product docs, operator docs\n│   ├── architecture/\n│   ├── operator/\n│   └── runbooks/\n├── governance/                        # control plane of the autonomous system\n│   ├── protocols/                     # каноны и правила\n│   ├── roadmap/                       # стратегические и BEM-дорожные карты\n│   ├── runtime/                       # registry v2: источник истины\n│   │   ├── tasks/                     # активные задачи\n│   │   ├── results/                   # результаты задач\n│   │   ├── agents/                    # состояние агентов/ролей\n│   │   ├── domains/                   # совет директоров / домены бизнеса\n│   │   ├── decisions/                 # решения директоров/оператора\n│   │   ├── controls/                  # control checks, gates, policies\n│   │   ├── checkpoints/               # resume-points для error recovery\n│   │   └── audit/                     # audit trail\n│   ├── audit_mailbox/                 # только связь аудиторов\n│   ├── internal_contour/              # текущий file-based внутренний контур, постепенно мигрирует в runtime/\n│   ├── codex/                         # write-channel tasks/results/proofs\n│   ├── reports/                       # operator/audit reports\n│   └── state/                         # legacy state до миграции в runtime/\n├── agents/                            # runtime contracts and adapters\n│   ├── board/                         # domain directors\n│   ├── roles/                         # analyst/auditor/executor/monitor\n│   └── adapters/                      # github, telegram, crm, accounting\n├── scripts/                           # all logic called by workflows\n├── .github/workflows/                 # thin workflow entrypoints only\n├── products/                          # бизнес-продукты внутри mono-repo на первом этапе\n│   ├── shared/\n│   └── barber-staff/\n│       ├── docs/\n│       ├── src/\n│       ├── tests/\n│       └── governance-link.json\n└── integrations/                      # external integrations schemas/connectors\n    ├── telegram/\n    ├── github/\n    ├── accounting/\n    └── crm/\n",
+  "repo_strategy": [
+    {
+      "option": "Mono-repo now",
+      "description": "Система управления и первые продукты в одном репозитории, но с жёстким разделением governance/, agents/, products/.",
+      "when": "текущий этап и первый продукт",
+      "pros": "проще контроль, единый audit trail, меньше инфраструктуры",
+      "cons": "при росте может стать тяжёлым"
+    },
+    {
+      "option": "Hybrid next",
+      "description": "governance/control-plane остаётся в ai-devops-system; продукты могут быть отдельными репозиториями, подключёнными через product registry.",
+      "when": "когда появится 2+ продукта или отдельные клиенты",
+      "pros": "масштабируется, продукты изолированы, управление единое",
+      "cons": "нужны cross-repo adapters и permissions"
+    },
+    {
+      "option": "Multi-repo later",
+      "description": "каждый продукт и каждый крупный домен в отдельном repo; control-plane управляет ими через registry и API.",
+      "when": "несколько клиентов/SLA/product teams",
+      "pros": "максимальная изоляция и масштаб",
+      "cons": "сложнее orchestration, больше DevOps"
+    }
+  ],
+  "registries": [
+    {
+      "path": "governance/runtime/domains/directors.json",
+      "purpose": "Совет директоров: домены, полномочия, SLA, escalation."
+    },
+    {
+      "path": "governance/runtime/agents/agents.json",
+      "purpose": "Агенты/роли: lifecycle, runner, permissions, health."
+    },
+    {
+      "path": "governance/runtime/tasks/*.json",
+      "purpose": "Активные задачи: trace_id, owner, lane, status, dependencies."
+    },
+    {
+      "path": "governance/runtime/results/*.json",
+      "purpose": "Результаты: immutable evidence, commit, controls, status."
+    },
+    {
+      "path": "governance/runtime/controls/policies.json",
+      "purpose": "Risk-based lanes, blocking criteria, approval thresholds."
+    },
+    {
+      "path": "governance/runtime/checkpoints/*.json",
+      "purpose": "Checkpoint/resume для error recovery."
+    },
+    {
+      "path": "governance/runtime/audit/*.jsonl",
+      "purpose": "Append-only audit trail."
+    },
+    {
+      "path": "products/product_registry.json",
+      "purpose": "Список продуктов, владельцы-директора, repo/path, SLA, status."
+    }
+  ],
+  "migration_steps": [
+    {
+      "step": "M1",
+      "name": "Repo skeleton",
+      "result": "Создать docs/, agents/, products/, governance/runtime/ skeleton with README per folder."
+    },
+    {
+      "step": "M2",
+      "name": "Runtime registry v2",
+      "result": "Ввести схемы tasks/results/agents/domains/controls/checkpoints/audit."
+    },
+    {
+      "step": "M3",
+      "name": "Board registry",
+      "result": "Описать директоров доменов, полномочия, escalation, KPI/SLA."
+    },
+    {
+      "step": "M4",
+      "name": "Product registry",
+      "result": "Описать продукты и связь продукта с доменами/директорами."
+    },
+    {
+      "step": "M5",
+      "name": "Role-runtime contracts",
+      "result": "Контракты analyst/auditor/executor/monitor/board-director."
+    },
+    {
+      "step": "M6",
+      "name": "Role-specific runners",
+      "result": "Отдельные runners, но одинаковая схема registry/evidence."
+    },
+    {
+      "step": "M7",
+      "name": "Hybrid split readiness",
+      "result": "Подготовить products/* так, чтобы продукт можно было вынести в отдельный repo без потери управления."
+    }
+  ],
+  "discovered_docs": [
+    "governance/AGENT_ROLES.md",
+    "governance/GPT_ARCHITECTURE_UPDATE.md",
+    "governance/INTERNAL_CONTOUR_REFERENCE.md",
+    "governance/MASTER_PLAN.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem530_internal_contour_audit.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem530_internal_contour_audit.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem530_internal_contour_audit_v2.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem530_internal_contour_audit_v2.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem531_curator_role_audit.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem531_curator_role_audit.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem531_internal_role_contour_audit.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem531_internal_role_contour_audit.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem531_internal_role_contour_audit_v2.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/results/bem531_internal_role_contour_audit_v2.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/tasks/bem530_internal_contour_audit.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/tasks/bem530_internal_contour_audit_v2.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/tasks/bem531_curator_role_audit.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/tasks/bem531_internal_role_contour_audit.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/codex/tasks/bem531_internal_role_contour_audit_v2.json",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/reports/bem530_internal_contour_audit_and_roadmap.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/reports/bem531_claude_internal_contour_roadmap_update.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/reports/bem531_curator_role_audit.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/reports/bem531_full_curator_entry_architecture_audit.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/reports/bem531_internal_role_contour_audit.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/tasks/pending/BEM530_INTERNAL_CONTOUR_IMPROVEMENT_ROADMAP.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/tasks/pending/BEM532_REPOSITORY_ARCHIVE_CLEANUP_ROADMAP.md",
+    "governance/archive/bem531_3_workflow_audit_20260517/.github/workflows/role-orchestrator.yml",
+    "governance/archive/bem532_20260517_phase1/governance/codex/results/bem525_p9_roadmap_update.json",
+    "governance/archive/bem532_20260517_phase1/governance/codex/results/bem525_p9_roadmap_update.md",
+    "governance/archive/bem532_20260517_phase1/governance/codex/tasks/bem525_p9_roadmap_update.json",
+    "governance/archive/bem532_20260517_phase1/governance/tasks/pending/P8_FULL_ROLE_CYCLE_E2E.md",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/auditor_ledger_payload_v3_6_rc2.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/auditor_materialize_result.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/auditor_packet_v3_6_rc2.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/auditor_real_call_request.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/auditor_real_call_response_raw.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/executor_ledger_payload_v3_6_rc2.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/executor_materialize_result.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/executor_packet_v3_6_rc2.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/executor_real_call_request.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/.runtime/executor_real_call_response_raw.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/MASTER_PROMPT.md",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/action_registry.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/audit/BEM-276-runtime-static-validation.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/audit/BEM-277-secondary-writer-runtime-quarantine.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/audit/BEM-279-runtime-static-validation-rerun.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/audit/BEM-281-runtime-static-validation-after-bem280.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/audit/BEM-283-runtime-static-validation-after-bem282s.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/audit/BEM-284-runtime-dry-run-smoke.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/consolidated_architecture_v3_v4_v5.md",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/dispatch_registry.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/quarantine/BEM-205-legacy-cut/runtime/governance/inbox/processed/TASK-P0-EXEC-0017.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/quarantine/BEM-205-legacy-cut/runtime/governance/inbox/processed/TASK-P0-EXEC-0021.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/quarantine/BEM-205-legacy-cut/runtime/governance/inbox/processed/TASK-P0-EXEC-0023.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/quarantine/BEM-205-legacy-cut/runtime/governance/inbox/processed/TASK-P0-RESULT-0018.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/roadmap_discipline_enforcement.md",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/runtime/tasks/TASK-CODEX-001.json",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/runtime/tasks/index.json",
+    "governance/audit_mailbox/gpt_to_claude/bem678_gpt_architecture_response_to_claude.md",
+    "governance/audit_mailbox/internal_auditor_to_external_auditor/bem678_gpt_architecture_response_to_claude.md",
+    "governance/codex/results/bem523_update_roadmap_state.json",
+    "governance/codex/results/bem523_update_roadmap_state.md",
+    "governance/codex/results/bem524_role_cycle_diag.json",
+    "governance/codex/results/bem524_role_cycle_diag.md",
+    "governance/codex/results/bem529_chain_roadmap_create.json",
+    "governance/codex/results/bem529_chain_roadmap_create.md",
+    "governance/codex/results/bem531_1_role_state_lifecycle.json",
+    "governance/codex/results/bem531_1_role_state_lifecycle.md",
+    "governance/codex/results/bem531_5_contour_status_close.json",
+    "governance/codex/results/bem531_5_contour_status_close.md",
+    "governance/codex/results/bem531_apply_claude_review_roadmap.json",
+    "governance/codex/results/bem531_apply_claude_review_roadmap.md",
+    "governance/codex/results/bem535_1_architecture_contract.json",
+    "governance/codex/results/bem535_1_architecture_contract.md",
+    "governance/codex/results/bem535_provider_scheduler_roadmap.json",
+    "governance/codex/results/bem535_provider_scheduler_roadmap.md",
+    "governance/codex/results/bem536_internal_contour_test_task1.json",
+    "governance/codex/results/bem536_internal_contour_test_task1.md",
+    "governance/codex/results/bem536_internal_contour_test_task2.json",
+    "governance/codex/results/bem536_internal_contour_test_task2.md",
+    "governance/codex/results/bem536_internal_contour_test_task3.json",
+    "governance/codex/results/bem536_internal_contour_test_task3.md",
+    "governance/codex/results/bem538_runtime_dispatch_bridge_audit.json",
+    "governance/codex/results/bem538_runtime_dispatch_bridge_audit.md",
+    "governance/codex/results/bem538_runtime_dispatch_final.json",
+    "governance/codex/results/bem538_runtime_dispatch_final.md",
+    "governance/codex/results/bem548_2_fix_role_orchestrator_yaml_v2.json",
+    "governance/codex/results/bem548_2_fix_role_orchestrator_yaml_v2.md",
+    "governance/codex/results/bem550_3_runtime_curator_intake_force.json",
+    "governance/codex/results/bem550_3_runtime_curator_intake_force.md",
+    "governance/codex/results/bem550_3_runtime_curator_intake_v2.json",
+    "governance/codex/results/bem550_3_runtime_curator_intake_v2.md",
+    "governance/codex/results/bem550_3_runtime_curator_intake_verify.json",
+    "governance/codex/results/bem550_3_runtime_curator_intake_verify.md",
+    "governance/codex/results/bem550_4_role_orchestrator_live_test.json",
+    "governance/codex/results/bem550_4_role_orchestrator_live_test.md",
+    "governance/codex/results/bem550_4_role_orchestrator_live_test_force.json",
+    "governance/codex/results/bem550_4_role_orchestrator_live_test_force.md",
+    "governance/codex/results/bem550_4_role_orchestrator_live_test_v3.json",
+    "governance/codex/results/bem550_4_role_orchestrator_live_test_v3.md",
+    "governance/codex/results/bem550_4_role_orchestrator_live_test_v4.json",
+    "governance/codex/results/bem550_4_role_orchestrator_live_test_v4.md",
+    "governance/codex/results/bem550_6_full_internal_contour_smoke.json",
+    "governance/codex/results/bem550_6_full_internal_contour_smoke.md",
+    "governance/codex/results/bem553_master_prompt_170_analysis.json",
+    "governance/codex/results/bem553_master_prompt_170_analysis.md",
+    "governance/codex/results/bem553_master_prompt_170_readable_report.json",
+    "governance/codex/results/bem553_master_prompt_170_readable_report.md",
+    "governance/codex/results/bem553_master_prompt_170_report_force.json",
+    "governance/codex/results/bem553_master_prompt_170_report_force.md",
+    "governance/codex/results/bem553_master_prompt_170_research.json",
+    "governance/codex/results/bem553_master_prompt_170_research.md",
+    "governance/codex/results/bem557_restore_active_analyst_role.json",
+    "governance/codex/results/bem557_restore_active_analyst_role.md",
+    "governance/codex/results/bem558_restore_curator_gpt_codex_role.json",
+    "governance/codex/results/bem558_restore_curator_gpt_codex_role.md",
+    "governance/codex/results/bem597_force_curator_to_role_inbox.json",
+    "governance/codex/results/bem597_force_curator_to_role_inbox.md",
+    "governance/codex/results/bem598_role_orchestrator_to_internal.json",
+    "governance/codex/results/bem598_role_orchestrator_to_internal.md"
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 19:34 (UTC+3)"
+}
