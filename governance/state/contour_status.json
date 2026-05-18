@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 19:34 (UTC+3)",
+  "updated_at": "2026-05-18 | 19:36 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1522,5 +1522,13 @@
     "protocol": "governance/protocols/REPOSITORY_ARCHITECTURE_CANON_DRAFT.md",
     "blocker": null
   },
-  "repository_architecture_target": "control_plane_plus_products_hybrid_ready"
+  "repository_architecture_target": "control_plane_plus_products_hybrid_ready",
+  "bem679_repository_infrastructure_options": {
+    "status": "sent_to_claude",
+    "recommended_topology": "hybrid_control_plane_product_repos",
+    "mailbox_file": "governance/audit_mailbox/gpt_to_claude/bem679_repository_infrastructure_options_to_claude.md",
+    "report": "governance/reports/bem679_repository_infrastructure_options.md",
+    "blocker": null
+  },
+  "repository_infrastructure_draft": "hybrid_control_plane_product_repos_runtime_registry_v2"
 }
