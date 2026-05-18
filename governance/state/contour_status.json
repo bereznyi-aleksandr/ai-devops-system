@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 06:51 (UTC+3)",
+  "updated_at": "2026-05-18 | 06:54 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -104,13 +104,15 @@
     "operator_visible_progress_mode": 1
   },
   "blocker": {
-    "code": "HOURLY_PIPELINE_MONITORING_FINDINGS",
+    "code": "WORKFLOW_STATIC_VALIDATION_FAILED",
     "failed": [
       {
-        "element": "Selftest",
-        "status": "FAIL",
-        "evidence": "governance/state/bem617_hourly_report_static_selftest_safe.json",
-        "comment": "Static selftest status=failed"
+        "name": "schedule_only_curator_hourly",
+        "pass": false,
+        "schedule_files": [
+          ".github/workflows/curator-hourly-report.yml",
+          ".github/workflows/telegram-outbox-dispatch.yml"
+        ]
       }
     ]
   },
@@ -674,7 +676,7 @@
       "message": "Claude must review template before operator approval package is finalized."
     }
   },
-  "hourly_report_template_flow": "monitoring_report_completed",
+  "hourly_report_template_flow": "old_failures_superseded_live_trigger_committed",
   "bem606_conflict_safe_workflow_commits": {
     "status": "completed",
     "changed_workflows": [
@@ -799,6 +801,24 @@
           "status": "FAIL",
           "evidence": "governance/state/bem617_hourly_report_static_selftest_safe.json",
           "comment": "Static selftest status=failed"
+        }
+      ]
+    }
+  },
+  "bem620_supersede_old_failed_runs_and_live_trigger": {
+    "status": "static_validation_failed_live_trigger_committed",
+    "state_file": "governance/state/bem620_supersede_old_failed_runs_and_live_trigger.json",
+    "live_trigger": "governance/triggers/curator_hourly_report.trigger",
+    "blocker": {
+      "code": "WORKFLOW_STATIC_VALIDATION_FAILED",
+      "failed": [
+        {
+          "name": "schedule_only_curator_hourly",
+          "pass": false,
+          "schedule_files": [
+            ".github/workflows/curator-hourly-report.yml",
+            ".github/workflows/telegram-outbox-dispatch.yml"
+          ]
         }
       ]
     }

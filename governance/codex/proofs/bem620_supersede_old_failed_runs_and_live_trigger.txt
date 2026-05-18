@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem620_supersede_old_failed_runs_and_live_trigger
+task_type: code_patch
+executed_at: 2026-05-18T03:56:37Z
+ops_applied: Superseded stale failed workflow runs, statically validated latest workflows, and committed new live hourly report trigger, custom_script
+changed_files: governance/protocols/STALE_GITHUB_RUN_FAILURE_SUPERSEDED.md, governance/state/bem620_supersede_old_failed_runs_and_live_trigger.json, governance/reports/bem620_supersede_old_failed_runs_and_live_trigger.md, governance/triggers/curator_hourly_report.trigger, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem620_supersede_old_failed_runs_and_live_trigger.txt
+errors: none
