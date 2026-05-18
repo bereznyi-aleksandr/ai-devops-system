@@ -1,0 +1,39 @@
+name: Curator Inbox Router
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/curator/inbox/**'
+      - 'scripts/curator_inbox_router.py'
+      - '.github/workflows/curator-inbox-router.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: curator-inbox-router
+  cancel-in-progress: false
+
+jobs:
+  route-curator-inbox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Syntax check router script
+        run: python3 -m py_compile scripts/curator_inbox_router.py
+
+      - name: Route curator inbox to role orchestrator
+        run: python3 scripts/curator_inbox_router.py
+
+      - name: Commit router result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/state/curator_inbox_router_state.json governance/role_orchestrator/inbox governance/tasks/pending governance/transport/results.jsonl governance/reports/curator_inbox_router_result.md
+          git commit -m "BEM-596 curator inbox router result" || echo "No changes"
+          git pull --rebase origin main || git rebase --abort || true
+          git push || (git pull --rebase origin main && git push)
