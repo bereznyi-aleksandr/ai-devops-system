@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 18:58 (UTC+3)",
+  "updated_at": "2026-05-18 | 18:59 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,70 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "CANONICAL_HOURLY_NOT_CONFIRMED",
+    "failed": [
+      {
+        "name": "queue_archived",
+        "pass": false,
+        "evidence": "governance/workflow_dispatch_processed/"
+      }
+    ],
+    "status_file": "204\n",
+    "response_preview": null,
+    "hourly_state": {
+      "schema_version": "curator_hourly_report_state.v2",
+      "status": "sent",
+      "report_hour": "2026-05-18 | 19:00 (UTC+3)",
+      "stage_done": 6,
+      "stage_total": 6,
+      "stage_percent": 100,
+      "roadmap_done": 6,
+      "roadmap_total": 6,
+      "roadmap_percent": 100,
+      "telegram_delivery": "sent",
+      "rows": [
+        {
+          "number": 1,
+          "name": "Write-channel",
+          "essence": "runner restored",
+          "status": "✅"
+        },
+        {
+          "number": 2,
+          "name": "Role-bus",
+          "essence": "roles and lanes checked",
+          "status": "✅"
+        },
+        {
+          "number": 3,
+          "name": "Provider route",
+          "essence": "primary/reserve explicit",
+          "status": "✅"
+        },
+        {
+          "number": 4,
+          "name": "Telegram smoke",
+          "essence": "direct send proof",
+          "status": "✅"
+        },
+        {
+          "number": 5,
+          "name": "Hourly report",
+          "essence": "hourly delivery",
+          "status": "✅"
+        },
+        {
+          "number": 6,
+          "name": "Readiness",
+          "essence": "final acceptance",
+          "status": "✅"
+        }
+      ],
+      "blocker": null
+    },
+    "delivery_report": "# Curator Hourly Delivery\n\nTelegram delivery: sent\n"
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -1325,7 +1388,7 @@
       }
     }
   },
-  "operator_telegram_report_delivery_status": "hourly_dispatch_queued",
+  "operator_telegram_report_delivery_status": "canonical_hourly_not_confirmed",
   "bem671_fix_hourly_yaml_and_dispatch_queue_cleanup": {
     "status": "pass",
     "state_file": "governance/state/bem671_fix_hourly_yaml_and_dispatch_queue_cleanup.json",
@@ -1346,5 +1409,74 @@
     "state_file": "governance/state/bem672_dispatch_only_canonical_hourly_report.json",
     "queue_file": "governance/workflow_dispatch_queue/curator_hourly_report_once.json",
     "blocker": null
+  },
+  "bem673_verify_canonical_hourly_dispatch_and_delivery": {
+    "status": "canonical_hourly_not_confirmed",
+    "state_file": "governance/state/bem673_verify_canonical_hourly_dispatch_and_delivery.json",
+    "dispatch_status": "204\n",
+    "blocker": {
+      "code": "CANONICAL_HOURLY_NOT_CONFIRMED",
+      "failed": [
+        {
+          "name": "queue_archived",
+          "pass": false,
+          "evidence": "governance/workflow_dispatch_processed/"
+        }
+      ],
+      "status_file": "204\n",
+      "response_preview": null,
+      "hourly_state": {
+        "schema_version": "curator_hourly_report_state.v2",
+        "status": "sent",
+        "report_hour": "2026-05-18 | 19:00 (UTC+3)",
+        "stage_done": 6,
+        "stage_total": 6,
+        "stage_percent": 100,
+        "roadmap_done": 6,
+        "roadmap_total": 6,
+        "roadmap_percent": 100,
+        "telegram_delivery": "sent",
+        "rows": [
+          {
+            "number": 1,
+            "name": "Write-channel",
+            "essence": "runner restored",
+            "status": "✅"
+          },
+          {
+            "number": 2,
+            "name": "Role-bus",
+            "essence": "roles and lanes checked",
+            "status": "✅"
+          },
+          {
+            "number": 3,
+            "name": "Provider route",
+            "essence": "primary/reserve explicit",
+            "status": "✅"
+          },
+          {
+            "number": 4,
+            "name": "Telegram smoke",
+            "essence": "direct send proof",
+            "status": "✅"
+          },
+          {
+            "number": 5,
+            "name": "Hourly report",
+            "essence": "hourly delivery",
+            "status": "✅"
+          },
+          {
+            "number": 6,
+            "name": "Readiness",
+            "essence": "final acceptance",
+            "status": "✅"
+          }
+        ],
+        "blocker": null
+      },
+      "delivery_report": "# Curator Hourly Delivery\n\nTelegram delivery: sent\n"
+    }
   }
 }
