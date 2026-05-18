@@ -51,7 +51,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/state/operator_decision_dispatcher_state.json governance/transport/results.jsonl governance/reports/operator_decision_dispatch_result.md
+          git add governance/state/operator_decision_dispatcher_state.json governance/reports/operator_decision_dispatch_result.md
           git commit -m "BEM-581 operator decision dispatch result" || echo "No changes"
           git pull --rebase origin main || git rebase --abort || true
           git push || (git pull --rebase origin main && git push)

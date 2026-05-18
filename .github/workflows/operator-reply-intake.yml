@@ -50,7 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/state/operator_reply_intake_state.json governance/operator_decisions governance/tasks/pending governance/transport/results.jsonl governance/reports/operator_reply_intake_result.md
+          git add governance/state/operator_reply_intake_state.json governance/operator_decisions governance/tasks/pending governance/reports/operator_reply_intake_result.md
           git commit -m "BEM-602 operator reply intake result" || echo "No changes"
           git pull --rebase origin main || git rebase --abort || true
           git push || (git pull --rebase origin main && git push)

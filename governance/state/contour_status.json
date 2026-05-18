@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 06:06 (UTC+3)",
+  "updated_at": "2026-05-18 | 06:13 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,10 +103,7 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": {
-    "code": "CLAUDE_AUDIT_RESPONSE_PENDING",
-    "message": "Claude must review template before operator approval package is finalized."
-  },
+  "blocker": null,
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -667,5 +664,19 @@
       "message": "Claude must review template before operator approval package is finalized."
     }
   },
-  "hourly_report_template_flow": "claude_audit_pending"
+  "hourly_report_template_flow": "claude_audit_pending",
+  "bem606_conflict_safe_workflow_commits": {
+    "status": "completed",
+    "changed_workflows": [
+      ".github/workflows/mailbox-dispatcher.yml",
+      ".github/workflows/operator-decision-dispatcher.yml",
+      ".github/workflows/operator-reply-intake.yml",
+      ".github/workflows/decision-curator-handoff.yml",
+      ".github/workflows/curator-inbox-router.yml",
+      ".github/workflows/role-orchestrator-internal-router.yml"
+    ],
+    "policy": "governance/protocols/WORKFLOW_CONFLICT_SAFE_COMMIT_POLICY.md",
+    "blocker": null
+  },
+  "workflow_conflict_safe_commit_policy": "dispatcher_router_workflows_do_not_commit_transport_results_jsonl"
 }

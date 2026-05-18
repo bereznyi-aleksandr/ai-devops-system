@@ -33,7 +33,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/state/decision_curator_handoff_state.json governance/curator/inbox governance/transport/results.jsonl governance/reports/decision_curator_handoff_result.md
+          git add governance/state/decision_curator_handoff_state.json governance/curator/inbox governance/reports/decision_curator_handoff_result.md
           git commit -m "BEM-593 decision curator handoff result" || echo "No changes"
           git pull --rebase origin main || git rebase --abort || true
           git push || (git pull --rebase origin main && git push)
