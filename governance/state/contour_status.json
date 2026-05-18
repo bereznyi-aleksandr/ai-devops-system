@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 15:51 (UTC+3)",
+  "updated_at": "2026-05-18 | 15:52 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -104,15 +104,12 @@
     "operator_visible_progress_mode": 1
   },
   "blocker": {
-    "code": "TELEGRAM_DELIVERY_PENDING_AFTER_YAML_FIX",
-    "yaml_fixed": true,
-    "smoke_ok": false,
-    "hourly_ok": true,
-    "verify_ok": false,
-    "smoke_status": null,
-    "hourly_delivery": "sent",
-    "verify_status": null,
-    "message": "Workflow YAML is fixed. If result files are still absent, GitHub push-trigger may not have completed yet or needs manual workflow_dispatch."
+    "code": "WORKFLOW_TRIGGER_PATH_NOT_PROVEN",
+    "trigger_problem": {
+      "code": "PUSH_TRIGGER_FROM_GITHUB_TOKEN_NOT_RELIABLE",
+      "suspected": true,
+      "message": "Commits made by GitHub Actions token may not trigger other workflows via push. Need explicit workflow_dispatch using actions:write or direct Deno/GitHub PAT dispatch."
+    }
   },
   "operator_progress_feed": {
     "status": "ACTIVE",
@@ -1152,5 +1149,18 @@
       "verify_status": null,
       "message": "Workflow YAML is fixed. If result files are still absent, GitHub push-trigger may not have completed yet or needs manual workflow_dispatch."
     }
-  }
+  },
+  "bem659_diagnose_workflow_trigger_path": {
+    "status": "needs_dispatch_repair",
+    "state_file": "governance/state/bem659_diagnose_workflow_trigger_path.json",
+    "blocker": {
+      "code": "WORKFLOW_TRIGGER_PATH_NOT_PROVEN",
+      "trigger_problem": {
+        "code": "PUSH_TRIGGER_FROM_GITHUB_TOKEN_NOT_RELIABLE",
+        "suspected": true,
+        "message": "Commits made by GitHub Actions token may not trigger other workflows via push. Need explicit workflow_dispatch using actions:write or direct Deno/GitHub PAT dispatch."
+      }
+    }
+  },
+  "workflow_trigger_path_status": "needs_dispatch_repair"
 }
