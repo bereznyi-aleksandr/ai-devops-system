@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem643_dispatch_queue_tick_after_permission_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-643 dispatch tick v2",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\nstate_dir=Path('governance/state'); state_dir.mkdir(parents=True,exist_ok=True)\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\nqueue=Path('governance/workflow_dispatch_queue')\nitems=[]\nif queue.exists():\n    for p in sorted(queue.glob('*.json')):\n        try: items.append(json.loads(p.read_text(errors='ignore')))\n        except: items.append({'path':str(p),'parse_error':True})\nstate={'schema_version':'dispatch_queue_tick.v2','bem':'BEM-643','status':'tick_after_permission_fix_recorded','queue_items':items,'created_at':'2026-05-18 | 07:55 (UTC+3)'}\nstate_file=state_dir/'bem643_dispatch_queue_tick_after_permission_fix.json'\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=reports/'bem643_dispatch_queue_tick_after_permission_fix.md'\nreport.write_text('# BEM-643 | Dispatch Queue Tick After Permission Fix | PASS'+sep+sep+'Дата: 2026-05-18 | 07:55 (UTC+3)'+sep+sep+'No-op tick to let updated codex-runner process workflow dispatch queue with corrected token/permissions.'+sep)\nrecord={'record_type':'bem643_dispatch_queue_tick_after_permission_fix','cycle_id':'bem643-dispatch-queue-tick-after-permission-fix','source':'gpt_monitor','status':'tick_recorded','queue_count':len(items),'blocker':None,'created_at':'2026-05-18 | 07:55 (UTC+3)'}\nwith transport.open('a',encoding='utf-8') as handle: handle.write(json.dumps(record,ensure_ascii=False)+sep)\ncontour_state={}\nif contour.exists():\n    try: contour_state=json.loads(contour.read_text(errors='ignore'))\n    except: contour_state={}\ncontour_state['bem643_dispatch_queue_tick_after_permission_fix']={'status':'tick_recorded','state_file':str(state_file),'queue_count':len(items),'blocker':None}\ncontour_state['workflow_dispatch_queue']='tick_after_permission_fix'\ncontour_state['updated_at']='2026-05-18 | 07:55 (UTC+3)'; contour_state['blocker']=None\ncontour.write_text(json.dumps(contour_state,indent=2,ensure_ascii=False)+sep)\nproof=proofs/'bem643_dispatch_queue_tick_after_permission_fix.txt'\nproof.write_text('BEM-643 PASS: dispatch queue tick after permission fix recorded.\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(contour),str(proof)])\nops_applied.append('Recorded no-op dispatch tick after token and permissions fix')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem643_dispatch_queue_tick_after_permission_fix.md",
+    "result_json": "governance/codex/results/bem643_dispatch_queue_tick_after_permission_fix.json"
+  },
+  "created_at": "2026-05-18T04:53:41.452Z"
+}
