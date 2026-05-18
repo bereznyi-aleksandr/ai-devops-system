@@ -1,0 +1,12 @@
+{
+  "schema_version": "internal_contour_final.v1",
+  "final_id": "bem601_operator_decision_pipeline_final",
+  "status": "production_ready",
+  "scope": "operator_decision_pipeline",
+  "result": "Operator-selected short readable comparison table format is accepted, persisted, routed through curator and role-orchestrator, and present as internal contour task.",
+  "limitations": [
+    "Telegram reply intake poller exists but should still be hardened against HTTP 403/webhook edge cases."
+  ],
+  "blocker": null,
+  "created_at": "2026-05-17 | 23:04 (UTC+3)"
+}

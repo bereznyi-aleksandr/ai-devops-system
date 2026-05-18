@@ -1,0 +1,97 @@
+{
+  "schema_version": "internal_executor_selftest.v1",
+  "selftest_id": "bem601_executor_selftest_operator_pipeline",
+  "status": "pass",
+  "file_checks": [
+    {
+      "name": "operator_decision_format_canon",
+      "path": "governance/protocols/OPERATOR_DECISION_FORMAT_CANON.md",
+      "pass": true,
+      "size": 955
+    },
+    {
+      "name": "structured_queue_protocol",
+      "path": "governance/protocols/STRUCTURED_OPERATOR_DECISION_QUEUE.md",
+      "pass": true,
+      "size": 1656
+    },
+    {
+      "name": "operator_decision_renderer",
+      "path": "scripts/operator_decision_pick.py",
+      "pass": true,
+      "size": 5980
+    },
+    {
+      "name": "mailbox_no_routine_telegram",
+      "path": "scripts/mailbox_pick_notification.py",
+      "pass": true,
+      "size": 1484
+    },
+    {
+      "name": "operator_decision_record",
+      "path": "governance/operator_decisions/bem584_decision_format_live_test.json",
+      "pass": true,
+      "size": 593
+    },
+    {
+      "name": "curator_intake",
+      "path": "governance/curator/inbox/operator_decision_bem584_decision_format_live_test.json",
+      "pass": true,
+      "size": 1248
+    },
+    {
+      "name": "role_orchestrator_route",
+      "path": "governance/role_orchestrator/inbox/curator_operator_decision_bem584_decision_format_live_test.json",
+      "pass": true,
+      "size": 1975
+    },
+    {
+      "name": "internal_contour_task",
+      "path": "governance/internal_contour/tasks/operator_decision_bem584_decision_format_live_test.json",
+      "pass": true,
+      "size": 3241
+    },
+    {
+      "name": "analyst_plan",
+      "path": "governance/internal_contour/analyst/plans/bem599_internal_analyst_decision_format_plan.json",
+      "pass": true,
+      "size": 2639
+    },
+    {
+      "name": "audit_report",
+      "path": "governance/internal_contour/auditor/reports/bem600_internal_audit_operator_decision_pipeline.json",
+      "pass": true,
+      "size": 2240
+    },
+    {
+      "name": "executor_request",
+      "path": "governance/internal_contour/executor/inbox/bem600_internal_audit_operator_decision_pipeline.json",
+      "pass": true,
+      "size": 490
+    }
+  ],
+  "semantic_checks": [
+    {
+      "name": "renderer_has_question",
+      "pass": true
+    },
+    {
+      "name": "renderer_has_table",
+      "pass": true
+    },
+    {
+      "name": "renderer_has_details",
+      "pass": true
+    },
+    {
+      "name": "mailbox_no_operator_notify",
+      "pass": true
+    },
+    {
+      "name": "canon_structured_queue_only",
+      "pass": true
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-17 | 23:04 (UTC+3)"
+}
