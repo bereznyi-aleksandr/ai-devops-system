@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 15:50 (UTC+3)",
+  "updated_at": "2026-05-18 | 15:51 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,17 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "TELEGRAM_DELIVERY_PENDING_AFTER_YAML_FIX",
+    "yaml_fixed": true,
+    "smoke_ok": false,
+    "hourly_ok": true,
+    "verify_ok": false,
+    "smoke_status": null,
+    "hourly_delivery": "sent",
+    "verify_status": null,
+    "message": "Workflow YAML is fixed. If result files are still absent, GitHub push-trigger may not have completed yet or needs manual workflow_dispatch."
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -1100,7 +1110,7 @@
     "state_file": "governance/state/bem655_telegram_delivery_smoke_safe.json",
     "blocker": null
   },
-  "telegram_delivery_repair_status": "telegram_smoke_yaml_fixed_triggered",
+  "telegram_delivery_repair_status": "yaml_fixed_results_pending",
   "bem656_check_telegram_smoke_and_hourly_results": {
     "status": "smoke_or_hourly_pending_or_failed",
     "smoke_ok": false,
@@ -1123,5 +1133,24 @@
     "state_file": "governance/state/bem657_fix_telegram_smoke_workflow_no_heredoc.json",
     "workflow": ".github/workflows/telegram-send-smoke.yml",
     "blocker": null
+  },
+  "bem658_post_yaml_fix_delivery_check": {
+    "status": "yaml_fixed_results_pending",
+    "yaml_fixed": true,
+    "smoke_ok": false,
+    "hourly_ok": true,
+    "verify_ok": false,
+    "state_file": "governance/state/bem658_post_yaml_fix_delivery_check.json",
+    "blocker": {
+      "code": "TELEGRAM_DELIVERY_PENDING_AFTER_YAML_FIX",
+      "yaml_fixed": true,
+      "smoke_ok": false,
+      "hourly_ok": true,
+      "verify_ok": false,
+      "smoke_status": null,
+      "hourly_delivery": "sent",
+      "verify_status": null,
+      "message": "Workflow YAML is fixed. If result files are still absent, GitHub push-trigger may not have completed yet or needs manual workflow_dispatch."
+    }
   }
 }
