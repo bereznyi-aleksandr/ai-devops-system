@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem672_dispatch_only_canonical_hourly_report",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Queued only canonical curator hourly report workflow through dispatch queue",
+    " with no Telegram smoke dispatch",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/curator_hourly_report_once.json",
+    "governance/state/bem672_dispatch_only_canonical_hourly_report.json",
+    "governance/reports/bem672_dispatch_only_canonical_hourly_report.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem672_dispatch_only_canonical_hourly_report.txt",
+    "governance/codex/proofs/bem672_dispatch_only_canonical_hourly_report.txt"
+  ],
+  "commit_sha": "d685624d1a93765757e5779d37a822b65d39178c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem672_dispatch_only_canonical_hourly_report.md",
+  "completed_at": "2026-05-18T16:01:47Z"
+}
