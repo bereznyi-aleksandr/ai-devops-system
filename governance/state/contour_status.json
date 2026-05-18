@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 06:13 (UTC+3)",
+  "updated_at": "2026-05-18 | 06:14 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,10 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "CLAUDE_AUDIT_RESPONSE_PENDING",
+    "message": "Template execution must wait for Claude audit response or explicit fallback policy."
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -678,5 +681,15 @@
     "policy": "governance/protocols/WORKFLOW_CONFLICT_SAFE_COMMIT_POLICY.md",
     "blocker": null
   },
-  "workflow_conflict_safe_commit_policy": "dispatcher_router_workflows_do_not_commit_transport_results_jsonl"
+  "workflow_conflict_safe_commit_policy": "dispatcher_router_workflows_do_not_commit_transport_results_jsonl",
+  "bem607_provider_gate_and_mailbox_recovery": {
+    "status": "waiting_for_claude_audit_response",
+    "mailbox_request_present": true,
+    "provider_gate": "governance/provider_gates/bem607_provider_gate_and_mailbox_recovery.json",
+    "blocker": {
+      "code": "CLAUDE_AUDIT_RESPONSE_PENDING",
+      "message": "Template execution must wait for Claude audit response or explicit fallback policy."
+    }
+  },
+  "bem605_provider_gate_status": "waiting_for_claude_audit_response"
 }

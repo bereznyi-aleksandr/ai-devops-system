@@ -1,0 +1,22 @@
+{
+  "schema_version": "provider_gate_result.v1",
+  "bem": "BEM-605",
+  "gate_id": "bem607_provider_gate_and_mailbox_recovery",
+  "provider_checked": true,
+  "primary_provider": "claude_code",
+  "reserve_provider": "gpt_python_executor",
+  "selected_provider": "pending_claude_response",
+  "reserve_used": false,
+  "reason": "Claude auditor review is requested through repo mailbox. Actual Claude Code primary execution is not yet proven until Claude writes response or dedicated Claude provider smoke succeeds.",
+  "proof_files": [
+    "governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md",
+    "governance/reports/bem604_audit_actual_provider_route.md"
+  ],
+  "mailbox_request_present": true,
+  "checked_at": "2026-05-18 | 06:14 (UTC+3)",
+  "status": "waiting_for_claude_audit_response",
+  "blocker": {
+    "code": "CLAUDE_AUDIT_RESPONSE_PENDING",
+    "message": "Template execution must wait for Claude audit response or explicit fallback policy."
+  }
+}

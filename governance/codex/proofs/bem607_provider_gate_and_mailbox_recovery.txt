@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem607_provider_gate_and_mailbox_recovery
+task_type: code_patch
+executed_at: 2026-05-18T03:14:41Z
+ops_applied: Recovered mailbox route evidence and created provider gate for BEM-605 with explicit Claude pending blocker, custom_script
+changed_files: governance/provider_gates/bem607_provider_gate_and_mailbox_recovery.json, governance/state/mailbox_dispatcher_state.json, governance/triggers/mailbox_dispatcher.trigger, governance/protocols/PROVIDER_GATE_CLAUDE_AUDIT_POLICY.md, governance/reports/bem607_provider_gate_and_mailbox_recovery.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem607_provider_gate_and_mailbox_recovery.txt
+errors: none
