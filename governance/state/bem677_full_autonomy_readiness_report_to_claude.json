@@ -1,0 +1,112 @@
+{
+  "schema_version": "full_autonomy_readiness_report_to_claude.v1",
+  "bem": "BEM-677",
+  "status": "ready_for_claude_audit",
+  "overall_readiness": "не готова",
+  "summary": "Система готова к опытной полноценной работе в режиме file-based autonomous development: внешний write-channel работает, внутренний контур выполняет задачи через role-bus и controls, audit_mailbox работает для связи аудиторов, Telegram monitoring доставляется в утверждённом виде. Не закрыт следующий уровень зрелости: постоянный Claude primary runtime proof и отдельные live runtime для каждой роли.",
+  "readiness_matrix": [
+    {
+      "area": "Внешний write-channel GPT→Deno→codex-runner",
+      "status": "ready",
+      "evidence": "governance/state/bem646_post_repair_codex_runner_smoke.json",
+      "comment": "Задачи создаются через Deno и выполняются codex-runner. Канал был восстановлен после YAML-поломки."
+    },
+    {
+      "area": "Внутренний контур ролей",
+      "status": "ready_with_caveat",
+      "evidence": "governance/state/bem651_internal_contour_correctness_audit.json",
+      "comment": "File-based governed contour работает: Curator, Orchestrator, Analyst, Internal Auditor, Executor, controls, final report. Оговорка: это не доказательство отдельных live-agent runtime на каждую роль."
+    },
+    {
+      "area": "Связь Internal Auditor ↔ External Auditor",
+      "status": "ready",
+      "evidence": "governance/state/bem652_auditor_mailbox_completion_plan.json + governance/state/bem653_internal_auditor_response_full_readiness.json",
+      "comment": "Канонический audit_mailbox используется для связи аудиторов, не как общий role-bus."
+    },
+    {
+      "area": "Telegram hourly monitoring",
+      "status": "not_ready",
+      "evidence": "governance/state/bem675_verify_ru_compact_hourly_delivery.json + governance/state/bem676_operator_approved_hourly_report_canon.json",
+      "comment": "Оператор утвердил русский компактный табличный формат. Доставка подтверждена."
+    },
+    {
+      "area": "Workflow dispatch queue",
+      "status": "ready",
+      "evidence": "governance/protocols/WORKFLOW_DISPATCH_QUEUE.md",
+      "comment": "Добавлен явный dispatch queue, чтобы не зависеть от push-trigger из workflow-коммитов. Очередь архивируется после обработки."
+    },
+    {
+      "area": "Provider route",
+      "status": "usable_reserve_primary_needs_runtime_proof",
+      "evidence": "governance/state/bem668_final_readiness_or_exact_blocker.json",
+      "comment": "GPT reserve доказан. Claude primary можно выбирать только после отдельного runtime proof на текущем доступном лимите Claude."
+    },
+    {
+      "area": "Финальная readiness-проверка",
+      "status": "production_ready",
+      "evidence": "governance/state/bem668_final_readiness_or_exact_blocker.json",
+      "comment": "BEM-668 зафиксировал production_ready по текущей file-based реализации."
+    }
+  ],
+  "hard_gaps": [
+    {
+      "gap": "Claude primary runtime proof не закрыт как постоянный критерий",
+      "impact": "Нельзя честно утверждать, что основной Claude Code контур всегда выбран и стабилен. Сейчас система использует GPT reserve при отсутствии доказательства Claude runtime.",
+      "next": "Запустить отдельный Claude runtime proof и обновлять provider route только по evidence."
+    },
+    {
+      "gap": "Роли пока file-based, не отдельные живые агенты",
+      "impact": "Архитектура работает как управляемый контур файлов/очередей, но не как полностью независимые процессы Analyst/Auditor/Executor.",
+      "next": "Следующий слой: role runtime adapters с отдельными proofs по каждой роли."
+    },
+    {
+      "gap": "GitHub Actions YAML fragile zone",
+      "impact": "В процессе были повторные ошибки YAML/heredoc/inline Python. Последние исправления вынесли сложную логику в scripts, но нужен lint-gate на workflows.",
+      "next": "Добавить обязательный workflow syntax/static lint перед записью workflow-файлов."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "P0",
+      "item": "Закрыть Claude primary proof",
+      "reason": "Оператор сообщил, что Claude доступен; внешний аудитор Claude должен подтвердить, может ли primary runtime быть выбран сейчас."
+    },
+    {
+      "priority": "P0",
+      "item": "Зафиксировать no-inline-code-in-yaml правило",
+      "reason": "Большинство сбоев были от сложных многострочных блоков в workflow YAML."
+    },
+    {
+      "priority": "P1",
+      "item": "Ввести role-runtime proof per role",
+      "reason": "Чтобы перейти от file-based governed contour к настоящей мультиагентной системе."
+    },
+    {
+      "priority": "P1",
+      "item": "Добавить final acceptance gate для каждого BEM",
+      "reason": "Каждая задача должна закрываться evidence map, controls, internal auditor verdict и operator-readable summary."
+    },
+    {
+      "priority": "P1",
+      "item": "Продолжать Telegram мониторинг в утверждённом каноне",
+      "reason": "Оператор утвердил формат; это основной человеко-читаемый канал состояния системы."
+    }
+  ],
+  "sources": {
+    "deno_webhook": "external Deno service health returned ok before this task",
+    "write_channel": "governance/state/bem646_post_repair_codex_runner_smoke.json",
+    "internal_correctness": "governance/state/bem651_internal_contour_correctness_audit.json",
+    "auditor_plan": "governance/state/bem652_auditor_mailbox_completion_plan.json",
+    "internal_auditor_response": "governance/state/bem653_internal_auditor_response_full_readiness.json",
+    "final_readiness": "governance/state/bem668_final_readiness_or_exact_blocker.json",
+    "operator_report_canon": "governance/state/bem676_operator_approved_hourly_report_canon.json",
+    "telegram_delivery_ru": "governance/state/bem675_verify_ru_compact_hourly_delivery.json",
+    "hourly_state": "governance/state/curator_hourly_report_state.json",
+    "role_canon": "governance/protocols/ROLE_COMMUNICATION_CANON.md",
+    "auditor_sync_canon": "governance/protocols/INTERNAL_EXTERNAL_AUDITOR_INTERACTION_CANON.md",
+    "telegram_canon": "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md",
+    "dispatch_queue": "governance/protocols/WORKFLOW_DISPATCH_QUEUE.md"
+  },
+  "blocker": null,
+  "created_at": "2026-05-18 | 19:10 (UTC+3)"
+}
