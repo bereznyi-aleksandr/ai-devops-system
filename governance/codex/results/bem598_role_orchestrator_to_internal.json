@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem598_role_orchestrator_to_internal",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Implemented and force-ran role_orchestrator inbox to internal_contour inbox/tasks route",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/ROLE_ORCHESTRATOR_INTERNAL_ROUTER.md",
+    "scripts/role_orchestrator_internal_router.py",
+    ".github/workflows/role-orchestrator-internal-router.yml",
+    "governance/state/role_orchestrator_internal_router_state.json",
+    "governance/reports/bem598_role_orchestrator_to_internal.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem598_role_orchestrator_to_internal.txt",
+    "governance/internal_contour/inbox/operator_decision_bem584_decision_format_live_test.json",
+    "governance/internal_contour/tasks/operator_decision_bem584_decision_format_live_test.json",
+    "governance/tasks/pending/internal_contour_operator_decision_bem584_decision_format_live_test.md",
+    "governance/codex/proofs/bem598_role_orchestrator_to_internal.txt"
+  ],
+  "commit_sha": "5d9eed4f873b24ba0d7ee0e7d01ee24ab680f316",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem598_role_orchestrator_to_internal.md",
+  "completed_at": "2026-05-18T02:50:34Z"
+}

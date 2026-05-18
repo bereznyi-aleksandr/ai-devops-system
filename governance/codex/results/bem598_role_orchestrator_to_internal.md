@@ -1,0 +1,13 @@
+# Codex Runner v3 Result - bem598_role_orchestrator_to_internal
+
+| Field | Value |
+|---|---|
+| Trace | bem598_role_orchestrator_to_internal |
+| Executor | Python v3 (ubuntu-latest) |
+| Status | completed |
+| Operations | Implemented and force-ran role_orchestrator inbox to internal_contour inbox/tasks route, custom_script |
+| Commit SHA | 5d9eed4f873b24ba0d7ee0e7d01ee24ab680f316 |
+| Changed files | governance/protocols/ROLE_ORCHESTRATOR_INTERNAL_ROUTER.md, scripts/role_orchestrator_internal_router.py, .github/workflows/role-orchestrator-internal-router.yml, governance/state/role_orchestrator_internal_router_state.json, governance/reports/bem598_role_orchestrator_to_internal.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem598_role_orchestrator_to_internal.txt, governance/internal_contour/inbox/operator_decision_bem584_decision_format_live_test.json, governance/internal_contour/tasks/operator_decision_bem584_decision_format_live_test.json, governance/tasks/pending/internal_contour_operator_decision_bem584_decision_format_live_test.md, governance/codex/proofs/bem598_role_orchestrator_to_internal.txt |
+| Completed | 2026-05-18T02:50:34Z |
+
+### Completed successfully.
