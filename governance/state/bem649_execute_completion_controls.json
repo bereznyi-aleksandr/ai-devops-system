@@ -1,0 +1,59 @@
+{
+  "schema_version": "completion_controls_result.v1",
+  "bem": "BEM-649",
+  "status": "pass",
+  "controls": [
+    {
+      "id": "C1",
+      "name": "write_channel_smoke",
+      "pass": true,
+      "evidence": "governance/state/bem646_post_repair_codex_runner_smoke.json"
+    },
+    {
+      "id": "C2",
+      "name": "architecture_lint",
+      "pass": true,
+      "evidence": "governance/state/internal_contour_architecture_lint.json"
+    },
+    {
+      "id": "C3",
+      "name": "role_bus_boundary",
+      "pass": true,
+      "evidence": "governance/protocols/ROLE_COMMUNICATION_CANON.md"
+    },
+    {
+      "id": "C4",
+      "name": "provider_route_closure",
+      "pass": true,
+      "evidence": "governance/state/bem632_close_provider_route_and_delivery_status.json"
+    },
+    {
+      "id": "C5",
+      "name": "runtime_proof_or_reserve_policy",
+      "pass": true,
+      "evidence": "governance/provider_gates/claude_primary_runtime_smoke_result.json"
+    },
+    {
+      "id": "C6",
+      "name": "telegram_delivery_verification",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_delivery_verification.json"
+    },
+    {
+      "id": "C7",
+      "name": "final_acceptance",
+      "pass": true,
+      "evidence": "governance/state/bem633_final_acceptance_internal_contour_and_auditor_sync.json"
+    }
+  ],
+  "auditor_verdict": "governance/internal_contour/auditor/reports/bem649_internal_auditor_verdict.json",
+  "executor_result": "governance/internal_contour/executor/reports/bem649_executor_completion_result.json",
+  "operational_watch": [
+    {
+      "code": "CLAUDE_PRIMARY_RUNTIME_NOT_PROVEN",
+      "meaning": "primary not proven; reserve route remains valid by policy"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 15:26 (UTC+3)"
+}
