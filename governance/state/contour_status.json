@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 15:59 (UTC+3)",
+  "updated_at": "2026-05-18 | 16:01 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1100,7 +1100,7 @@
     "state_file": "governance/state/bem655_telegram_delivery_smoke_safe.json",
     "blocker": null
   },
-  "telegram_delivery_repair_status": "file_based_smoke_dispatch_queued",
+  "telegram_delivery_repair_status": "delivery_confirmed",
   "bem656_check_telegram_smoke_and_hourly_results": {
     "status": "smoke_or_hourly_pending_or_failed",
     "smoke_ok": false,
@@ -1245,6 +1245,15 @@
       "governance/workflow_dispatch_queue/curator_hourly_report.json",
       "governance/workflow_dispatch_queue/curator_hourly_delivery_verification.json"
     ],
+    "blocker": null
+  },
+  "bem665_verify_dispatch_results_and_delivery": {
+    "status": "delivery_confirmed",
+    "state_file": "governance/state/bem665_verify_dispatch_results_and_delivery.json",
+    "dispatch_ok": true,
+    "smoke_ok": true,
+    "hourly_ok": true,
+    "verify_ok": true,
     "blocker": null
   }
 }

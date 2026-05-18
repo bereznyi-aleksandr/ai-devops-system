@@ -1,0 +1,93 @@
+{
+  "schema_version": "dispatch_results_and_delivery_verification.v1",
+  "bem": "BEM-665",
+  "status": "delivery_confirmed",
+  "dispatch_ok": true,
+  "status_files": [
+    {
+      "name": "bem637_run_claude_runtime_smoke",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "bem637_run_curator_hourly_report",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "bem637_run_direct_telegram_smoke",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "claude_primary_runtime_smoke",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "curator_hourly_delivery_verification",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "curator_hourly_report",
+      "status": "204",
+      "response": ""
+    },
+    {
+      "name": "telegram_send_smoke",
+      "status": "204",
+      "response": ""
+    }
+  ],
+  "smoke_ok": true,
+  "hourly_ok": true,
+  "verify_ok": true,
+  "telegram_smoke_state": {
+    "schema_version": "telegram_send_smoke_result.v1",
+    "status": "sent",
+    "status_text": "sent_http_200",
+    "http_status": 200,
+    "telegram_ok": true,
+    "delivery_confirmed": true,
+    "blocker": null
+  },
+  "hourly_state": {
+    "schema_version": "curator_hourly_report_state.v1",
+    "status": "rendered",
+    "message_file": "governance/tmp/curator_hourly_report_message.txt",
+    "provider_checked": true,
+    "selected_provider": "gpt_reserve",
+    "reserve_used": true,
+    "blocker": null,
+    "event_count": 5,
+    "created_at": "workflow_runtime",
+    "telegram_delivery": "sent"
+  },
+  "delivery_verification": {
+    "schema_version": "curator_hourly_delivery_verification.v1",
+    "checked": true,
+    "telegram_delivery": "sent",
+    "delivery_confirmed": true,
+    "status": "pass",
+    "blocker": null
+  },
+  "claude_runtime_state": {
+    "schema_version": "claude_primary_runtime_smoke.v1",
+    "provider_checked": true,
+    "primary_provider": "claude_api",
+    "has_anthropic_api_key": true,
+    "model": "gpt-5.2",
+    "status": "http_not_ok",
+    "http_status": 400,
+    "claude_runtime_proven": false,
+    "claude_authored_artifact": false,
+    "blocker": {
+      "code": "CLAUDE_HTTP_NOT_OK",
+      "http_status": 400,
+      "body_preview": "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CbA5KYcGXz1QSWhPi1oZR\"}"
+    }
+  },
+  "blocker": null,
+  "created_at": "2026-05-18 | 16:01 (UTC+3)"
+}
