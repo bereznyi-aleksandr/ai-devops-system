@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem594_decision_curator_handoff_live_check",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Checked whether operator decision was handed off into curator inbox",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/bem594_decision_curator_handoff_live_check.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem594_decision_curator_handoff_live_check.txt",
+    "governance/codex/proofs/bem594_decision_curator_handoff_live_check.txt"
+  ],
+  "commit_sha": "2021eb807fd467885cf76c2d2080563cf60ab099",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem594_decision_curator_handoff_live_check.md",
+  "completed_at": "2026-05-18T02:45:16Z"
+}
