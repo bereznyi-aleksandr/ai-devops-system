@@ -1,0 +1,18 @@
+{
+  "schema_version": "operator_approved_hourly_report_canon.v1",
+  "bem": "BEM-676",
+  "status": "operator_approved",
+  "approved_format": "ru_compact_table_v3",
+  "operator_feedback": "Это то что нужно",
+  "protocol": "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md",
+  "locked_requirements": [
+    "Russian language",
+    "compact mobile table",
+    "no raw trace ids",
+    "no long event list",
+    "hourly at 0 * * * *",
+    "approval messages question plus options table"
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 19:08 (UTC+3)"
+}
