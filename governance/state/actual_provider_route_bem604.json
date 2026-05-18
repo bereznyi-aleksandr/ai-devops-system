@@ -1,0 +1,139 @@
+{
+  "schema_version": "actual_provider_route_audit.v1",
+  "audit_id": "bem604_audit_actual_provider_route",
+  "status": "reserve_path_completed_primary_not_proven",
+  "actual_route": {
+    "curator_role": "GPT/file-based through Deno/Codex task artifacts",
+    "registrar_or_orchestrator": "file-based router scripts and JSON inboxes",
+    "analyst_role": "GPT-generated internal analyst plan via Python executor",
+    "auditor_role": "GPT-generated internal audit via diagnosis task, not live Claude Code auditor",
+    "executor_role": "Python executor/GitHub Actions selftest, not live Claude Code executor",
+    "provider_probe_before_executor": "not proven for this BEM-599..603 chain",
+    "primary_claude_code_contour_used": "not proven",
+    "reserve_gpt_contour_used": "yes, effectively GPT/Python executor path handled the task",
+    "route_verdict": "FILE_BASED_RESERVE_GPT_PATH_COMPLETED; CLAUDE_CODE_PRIMARY_NOT_PROVEN"
+  },
+  "file_based_chain_ok": true,
+  "path_evidence": {
+    "curator_intake": {
+      "path": "governance/curator/inbox/operator_decision_bem584_decision_format_live_test.json",
+      "exists": true,
+      "size": 1248
+    },
+    "role_orchestrator_intake": {
+      "path": "governance/role_orchestrator/inbox/curator_operator_decision_bem584_decision_format_live_test.json",
+      "exists": true,
+      "size": 1975
+    },
+    "internal_task": {
+      "path": "governance/internal_contour/tasks/operator_decision_bem584_decision_format_live_test.json",
+      "exists": true,
+      "size": 3241
+    },
+    "analyst_plan": {
+      "path": "governance/internal_contour/analyst/plans/bem599_internal_analyst_decision_format_plan.json",
+      "exists": true,
+      "size": 2639
+    },
+    "auditor_report": {
+      "path": "governance/internal_contour/auditor/reports/bem600_internal_audit_operator_decision_pipeline.json",
+      "exists": true,
+      "size": 2240
+    },
+    "executor_selftest": {
+      "path": "governance/internal_contour/executor/reports/bem601_executor_selftest_operator_pipeline.json",
+      "exists": true,
+      "size": 2610
+    },
+    "executor_request": {
+      "path": "governance/internal_contour/executor/inbox/bem600_internal_audit_operator_decision_pipeline.json",
+      "exists": true,
+      "size": 490
+    },
+    "final_status": {
+      "path": "governance/internal_contour/final/bem601_operator_decision_pipeline_final.json",
+      "exists": true,
+      "size": 559
+    },
+    "claude_token_smoke": {
+      "path": "governance/reports/bem568_claude_token_secret_smoke.md",
+      "exists": true,
+      "size": 208
+    },
+    "claude_token_smoke_fix": {
+      "path": "governance/reports/bem568_trigger_claude_token_smoke_now.md",
+      "exists": true,
+      "size": 358
+    },
+    "claude_code_workflow": {
+      "path": ".github/workflows/claude-code.yml",
+      "exists": false,
+      "size": 0
+    },
+    "claude_token_workflow": {
+      "path": ".github/workflows/claude-token-smoke.yml",
+      "exists": true,
+      "size": 1105
+    },
+    "provider_status": {
+      "path": "governance/state/provider_status.json",
+      "exists": true,
+      "size": 1161
+    },
+    "provider_probe": {
+      "path": "governance/reports/provider_probe.md",
+      "exists": false,
+      "size": 0
+    }
+  },
+  "transport_markers": {
+    "contains_claude_code": true,
+    "contains_provider_probe": true,
+    "contains_reserve": true,
+    "contains_gpt_internal_executor": true,
+    "contains_python_executor": true
+  },
+  "checks": [
+    {
+      "name": "curator_intake_exists",
+      "pass": true
+    },
+    {
+      "name": "role_orchestrator_intake_exists",
+      "pass": true
+    },
+    {
+      "name": "internal_task_exists",
+      "pass": true
+    },
+    {
+      "name": "analyst_plan_exists",
+      "pass": true
+    },
+    {
+      "name": "auditor_report_exists",
+      "pass": true
+    },
+    {
+      "name": "executor_selftest_exists",
+      "pass": true
+    },
+    {
+      "name": "final_status_exists",
+      "pass": true
+    },
+    {
+      "name": "provider_probe_evidence_exists",
+      "pass": true
+    },
+    {
+      "name": "claude_primary_execution_proof_exists",
+      "pass": false
+    }
+  ],
+  "blocker": {
+    "code": "CLAUDE_CODE_PRIMARY_CONTOUR_NOT_PROVEN",
+    "message": "The chain completed through GPT/Deno/Codex/Python executor artifacts. There is no proof in inspected repo artifacts that Claude Code primary auditor/executor provider was probed and used for this specific task."
+  },
+  "created_at": "2026-05-18 | 06:02 (UTC+3)"
+}
