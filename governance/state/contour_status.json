@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 18:57 (UTC+3)",
+  "updated_at": "2026-05-18 | 18:58 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1325,7 +1325,7 @@
       }
     }
   },
-  "operator_telegram_report_delivery_status": "operator_table_report_not_fully_confirmed",
+  "operator_telegram_report_delivery_status": "hourly_dispatch_queued",
   "bem671_fix_hourly_yaml_and_dispatch_queue_cleanup": {
     "status": "pass",
     "state_file": "governance/state/bem671_fix_hourly_yaml_and_dispatch_queue_cleanup.json",
@@ -1340,5 +1340,11 @@
     ],
     "blocker": null
   },
-  "hourly_report_yaml_status": "fixed"
+  "hourly_report_yaml_status": "fixed",
+  "bem672_dispatch_only_canonical_hourly_report": {
+    "status": "queued_hourly_report_only",
+    "state_file": "governance/state/bem672_dispatch_only_canonical_hourly_report.json",
+    "queue_file": "governance/workflow_dispatch_queue/curator_hourly_report_once.json",
+    "blocker": null
+  }
 }

@@ -1,0 +1,9 @@
+{
+  "schema_version": "dispatch_only_canonical_hourly_report.v1",
+  "bem": "BEM-672",
+  "status": "queued_hourly_report_only",
+  "queue_file": "governance/workflow_dispatch_queue/curator_hourly_report_once.json",
+  "note": "No telegram-send-smoke dispatch was queued. This avoids repeated smoke messages.",
+  "blocker": null,
+  "created_at": "2026-05-18 | 18:58 (UTC+3)"
+}
