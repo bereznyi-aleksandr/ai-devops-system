@@ -5,7 +5,19 @@
   "provider_checked": true,
   "selected_provider": "gpt_reserve",
   "reserve_used": true,
-  "blocker": null,
+  "blocker": {
+    "code": "WORKFLOW_STATIC_VALIDATION_FAILED",
+    "failed": [
+      {
+        "name": "schedule_only_curator_hourly",
+        "pass": false,
+        "schedule_files": [
+          ".github/workflows/curator-hourly-report.yml",
+          ".github/workflows/telegram-outbox-dispatch.yml"
+        ]
+      }
+    ]
+  },
   "event_count": 5,
   "created_at": "workflow_runtime",
   "telegram_delivery": "sent"
