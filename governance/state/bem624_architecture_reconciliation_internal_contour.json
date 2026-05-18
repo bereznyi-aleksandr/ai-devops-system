@@ -1,0 +1,330 @@
+{
+  "schema_version": "architecture_reconciliation.v1",
+  "bem": "BEM-624",
+  "status": "gaps_found",
+  "scanned_files": [
+    "governance/AGENT_ROLES.md",
+    "governance/AUDIT_DIFF_PROTOCOL.md",
+    "governance/EXTERNAL_AUDITOR_CONTRACT.md",
+    "governance/GPT_ARCHITECTURE_UPDATE.md",
+    "governance/GPT_HANDOFF.md",
+    "governance/GPT_WRITE_CHANNEL.md",
+    "governance/INTERNAL_CONTOUR_REFERENCE.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/reports/bem531_full_curator_entry_architecture_audit.md",
+    "governance/archive/bem531_00_cleanup_preflight_20260517/governance/tasks/pending/BEM530_INTERNAL_CONTOUR_IMPROVEMENT_ROADMAP.md",
+    "governance/archive/bem532_20260517_phase1/governance/tasks/pending/P8_FULL_ROLE_CYCLE_E2E.md",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/consolidated_architecture_v3_v4_v5.md",
+    "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/fixtures/gha_e2e/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json",
+    "governance/codex/proofs/bem535_1_architecture_contract.txt",
+    "governance/codex/proofs/bem623_internal_contour_architecture_remediation_plan.txt",
+    "governance/codex/results/bem535_1_architecture_contract.json",
+    "governance/codex/results/bem535_1_architecture_contract.md",
+    "governance/codex/results/bem623_internal_contour_architecture_remediation_plan.json",
+    "governance/codex/results/bem623_internal_contour_architecture_remediation_plan.md",
+    "governance/codex/tasks/bem535_1_architecture_contract.json",
+    "governance/codex/tasks/bem623_internal_contour_architecture_remediation_plan.json",
+    "governance/codex/tasks/bem624_architecture_reconciliation_internal_contour.json",
+    "governance/protocols/ACTIVE_ANALYST_ROLE_OPERATOR_DECISION.md",
+    "governance/protocols/ACTIVE_CURATOR_ROLE_OPERATOR_DECISION.md",
+    "governance/protocols/EXTERNAL_AUDIT_TO_INTERNAL_CURATOR_HANDOFF.md",
+    "governance/protocols/HANDOFF_PROTOCOL_CLAUDE_GPT.md",
+    "governance/protocols/INTERNAL_CONTOUR_ARCHITECTURE_GAP_CLOSURE.md",
+    "governance/protocols/MAILBOX_TELEGRAM_DECISION_ONLY_POLICY.md",
+    "governance/protocols/MAILBOX_TELEGRAM_OPERATOR_FYI_FORMAT.md",
+    "governance/protocols/OPERATOR_DECISION_CURATOR_HANDOFF.md",
+    "governance/protocols/PEER_AUDITORS_DECISION_TO_CURATOR.md",
+    "governance/protocols/PROVIDER_GATE_CLAUDE_AUDIT_POLICY.md",
+    "governance/protocols/ROLE_ORCHESTRATOR_INTERNAL_ROUTER.md",
+    "governance/protocols/ROLE_ORCHESTRATOR_WORKFLOW_PARITY.md",
+    "governance/protocols/ROLE_STATE_SCHEMA.md",
+    "governance/reports/bem535_1_provider_architecture_contract.md",
+    "governance/reports/bem623_internal_contour_architecture_remediation_plan.md",
+    "governance/state/bem623_internal_contour_architecture_remediation_plan.json",
+    "governance/tasks/done/BEM531_INTERNAL_ROLE_CONTOUR_ROADMAP.md",
+    "governance/tasks/done/BEM536_INTERNAL_CONTOUR_AUTOTEST_ROADMAP.md",
+    "governance/tasks/done/P8_FULL_ROLE_CYCLE_E2E.md",
+    "governance/tasks/done/P9_HANDOFF_PROTOCOL.md"
+  ],
+  "relevant_snippets": [
+    {
+      "path": "governance/AGENT_ROLES.md",
+      "score": 3,
+      "snippet": "# РОЛИ И КОНТРАКТ АГЕНТОВ\nВерсия: v1.0 | Дата: 2026-05-02 | BEM-267\n\n---\n\n## РОЛИ\n\n### CLAUDE (этот чат) — ВНЕШНИЙ АУДИТОР\nНе является куратором.\nРаботает только когда оператор открывает чат.\nЗадачи:\n- Читать репозиторий и докладывать состояние\n- Писать @analyst/@auditor/@executor в issue\n- Проверять работу GPT-куратора\n- Отвечать на вопросы оператора\n\n### GPT — КУРАТОР\nЕдинственный автономный агент системы.\nРаботает по таймеру без участия оператора.\nЗадачи:\n- Мониторить issue #31 каждые 5 минут\n- Запускать @analyst если нет прогресса\n- Писать отчёт оператору в чат GPT при каждом срабатывании\n\n---\n\n## АБСОЛЮТНОЕ ПРАВИЛО — ПРОВЕРКА УТВЕРЖДЕНИЙ\n\nЛюбое утверждение о возможностях платформы, инструмента или системы\nОБЯЗАНО быть подтверждено одним из двух способов:\n\n1. **Документально** — ссылка на официальную документацию\n2. **Тестом** — реальный результат в системе который можно проверить\n\nУтверждение без подтверждения = ложь.\nЛожь оператору = нарушение контракта.\n\nЗапрещено:\n- Утверждать "
+    },
+    {
+      "path": "governance/AUDIT_DIFF_PROTOCOL.md",
+      "score": 1,
+      "snippet": "# AUDIT DIFF PROTOCOL\nВерсия: v1.0 | Дата: 2026-05-01\nАвторы: GPT-архитектор (BEM-147) + Claude-аудитор\n\n---\n\n## НАЗНАЧЕНИЕ\n\nПротокол определяет как АУДИТОР проверяет изменения в репозитории.\n\nКлючевое правило: аудитор проверяет только фактический diff конкретного commit или PR — не весь локальный checkout.\n\n---\n\n## ПРОБЛЕМА КОТОРУЮ РЕШАЕТ ЭТОТ ПРОТОКОЛ\n\nАудитор при проверке BEM-130 увидел в локальном checkout файлы из:\n- `.github/workflows/` (legacy)\n- `governance/archive/`\n- `governance/quarantine/`\n\nИ сделал вывод что forbidden areas были затронуты.\n\nЭто была ошибка метода. Фактически BEM-130 изменил только два файла:\n- `governance/EXCHANGE.md`\n- `governance/exchange.jsonl`\n\nКорневая причина: аудитор смотрел на весь checkout вместо commit diff.\n\n---\n\n## ПРАВИЛА АУДИТА ИЗМЕНЕНИЙ\n\n### Шаг 1. Получить commit SHA или PR SHA\nИсточник: issue, комментарий исполнителя, state layer.\n\n### Шаг 2. Получить список изменённых файлов\n\n```bash\ngit diff --name-only <base_sha>..<head_sha>\n```\n\nИли че"
+    },
+    {
+      "path": "governance/EXTERNAL_AUDITOR_CONTRACT.md",
+      "score": 2,
+      "snippet": "# EXTERNAL AUDITOR CONTRACT — Claude\nВерсия: v2.0 | Дата: 2026-05-17 | BEM-531\n\n---\n\n## КТО Я\n\nЯ — внешний аудитор системы AI DevOps.\n\nЯ не куратор. Я не исполнитель разработки.\nЯ не существую между сообщениями оператора.\nЯ работаю только когда оператор открывает этот чат.\n\nРазработку внутреннего контура ведёт GPT-агент автономно.\nМоя роль — независимый аудит, анализ архитектуры и поддержка оператора в принятии решений.\n\n---\n\n## ЧАСТЬ 1. МОЯ РОЛЬ\n\n**Внешний аудитор** — независимый взгляд на систему.\n\nЯ:\n- читаю репозиторий и докладываю актуальное состояние при каждом обращении\n- аудирую архитектуру и решения GPT-куратора\n- пишу `@curator` в issue #31 через GitHub PAT MCP когда нужно вмешательство\n- даю честную оценку — даже если она неудобна\n- обновляю документацию (контракты, reference, SSOT файлы)\n- готовлю инструкции для GPT нового чата\n\nЯ НЕ:\n- являюсь основным исполнителем разработки внутреннего контура\n- останавливаю или подменяю автономную работу GPT\n- принимаю архитектурные реш"
+    },
+    {
+      "path": "governance/GPT_HANDOFF.md",
+      "score": 5,
+      "snippet": "# GPT HANDOFF — ai-devops-system\n\n**Версия:** 2.0 | **Дата:** 2026-05-17\n**Репозиторий:** bereznyi-aleksandr/ai-devops-system\n\n---\n\n## КАК ЧИТАТЬ ЭТОТ ДОКУМЕНТ\n\nТы — GPT-агент, который продолжает разработку вместо Claude когда у него заканчиваются лимиты.\nУ тебя есть GitHub MCP (чтение) и Deno Actions (запись через createCodexTask).\nЧитай этот файл первым в каждом чате.\n\n---\n\n## АРХИТЕКТУРА (v2.0 — BEM-523)\n\n```\nGPT Custom → createCodexTask (Deno Action)\n  → Deno /codex-task\n    → GitHub Actions codex-runner.yml\n      → ubuntu-latest (бесплатно, без платного API)\n        → Python executor читает objective\n        → создаёт/обновляет файлы\n        → git commit + push\n  → getCodexStatus → completed + SHA\n```\n\n### Почему Python, не Codex CLI\n\nCodex CLI требует `OPENAI_API_KEY` с оплатой в OpenAI Platform — это отдельно от подписки ChatGPT. Противоречит требованию \"без доп. оплат\". Python executor на ubuntu-latest полностью бесплатен.\n\n### Что умеет Python executor\n\n| Паттерн в objective |"
+    },
+    {
+      "path": "governance/GPT_WRITE_CHANNEL.md",
+      "score": 2,
+      "snippet": "# GPT WRITE CHANNEL — ai-devops-system\n\n**BEM-526** | Версия: 3.0 | 2026-05-17\n\n---\n\n## Принцип работы\n\n**GPT думает. Python executor делает.**\n\nGPT читает задачу, анализирует репозиторий через MCP, формулирует objective, отправляет через Deno. Python executor выполняет операции с файлами и делает коммит в репозиторий. Никакого платного API. Никаких ограничений по типам задач.\n\n---\n\n## Алгоритм\n\n```\n1. Сформулировать objective с нужными паттернами\n2. createCodexTask(trace_id, task_type, title, objective)\n3. Проверить: ok=true + dispatch=204\n4. Подождать 1-3 минуты\n5. getCodexStatus(trace_id)\n6. Проверить operations_applied — там список реально выполненных операций\n7. Если нужно — прочитать результат через MCP fetch_file\n```\n\n**Важно:** если `operations_applied` пустой при `completed` — objective не совпал с паттерном. Проверить формат.\n\n**Максимум 2 вызова getCodexStatus подряд. Затем — blocker, не продолжать.**\n\n---\n\n## Уровень 1 — Паттерны (12 операций)\n\nВставить в objective нужные с"
+    },
+    {
+      "path": "governance/INTERNAL_CONTOUR_REFERENCE.md",
+      "score": 2,
+      "snippet": "# INTERNAL AUTONOMY CONTOUR — REFERENCE\n\nВерсия: v2.7 | Дата: 2026-05-14\nРепозиторий: bereznyi-aleksandr/ai-devops-system\nОсновная ISA: issue #31\n\n---\n\n## CHANGELOG\n\n| Версия | Дата | Изменения |\n|---|---|---|\n| v2.7 | 2026-05-14 | BEM-420: /gpt-safe-run primary trigger = workflow_dispatch; repository_dispatch не primary для GPT Runner; deno v4.5; Reference update |\n| v2.6 | 2026-05-14 | BEM-409: Deno Safe Entrypoint PRIMARY без token, /gpt-safe-status, rate limit |\n| v2.5 | 2026-05-14 | BEM-406: ChatGPT-compatible GPT_DEV_RUN без @mention |\n| v2.4 | 2026-05-14 | BEM-402: GPT Full Autonomy Closure — lock/retry/watchdog |\n| v2.3 | 2026-05-13 | BEM-395: GPT Developer Runner, anti-hang contract |\n\n---\n\n## 1. ВХОДЫ (ПРИОРИТЕТ)\n\n| Приоритет | Канал | Синтаксис | Кто |\n|---|---|---|---|\n| **PRIMARY** | **Deno Safe Entrypoint** | `GET /gpt-safe-run?preset=X&trace_id=Y` | **ChatGPT (open URL)** |\n| backup | Issue comment (safe) | `GPT_DEV_RUN preset=X trace_id=Y` | ChatGPT (comment tool, ненад"
+    },
+    {
+      "path": "governance/archive/bem531_00_cleanup_preflight_20260517/governance/reports/bem531_full_curator_entry_architecture_audit.md",
+      "score": 9,
+      "snippet": "# BEM-531 | Full Curator Entry Architecture Audit\n\nДата: 2026-05-17 | 12:42 (UTC+3)\n\n## Вывод\nДа, полная целевая структура должна рассматриваться как несколько внешних веток с единой точкой входа через curator. Предыдущий audit учёл curator как роль, но недостаточно явно учёл Telegram bot/webhook как отдельную внешнюю ветку.\n\n## Статус\nMAPPED\n\n## Проверенные файлы\n- governance/INTERNAL_CONTOUR_REFERENCE.md: exists, bytes=7525\n- governance/GPT_HANDOFF.md: exists, bytes=4039\n- governance/GPT_WRITE_CHANNEL.md: exists, bytes=5653\n- governance/state/role_cycle_state.json: exists, bytes=273\n- governance/transport/results.jsonl: exists, bytes=0\n- governance/protocols/HANDOFF_PROTOCOL_CLAUDE_GPT.md: exists, bytes=39\n- governance/protocols/PRODUCTION_STABILITY_RUNBOOK.md: exists, bytes=1304\n- governance/protocols/MONITORING_ALERTS_RUNBOOK.md: exists, bytes=1221\n- .github/workflows/role-orchestrator.yml: exists, bytes=6188\n- .github/workflows/provider-adapter.yml: exists, bytes=12136\n- .github/w"
+    },
+    {
+      "path": "governance/archive/bem531_00_cleanup_preflight_20260517/governance/tasks/pending/BEM530_INTERNAL_CONTOUR_IMPROVEMENT_ROADMAP.md",
+      "score": 4,
+      "snippet": "# BEM-530 | Internal Contour Improvement Roadmap\n\nДата: 2026-05-17 | 12:28 (UTC+3)\n\n## Цель\nДоработать внутренний контур разработки после закрытия базовой автономности.\n\n## Исходное состояние\n- Roadmap P0-P11: закрыт.\n- Current phase: COMPLETE\n- Executor: ubuntu-latest Python executor v3.\n- Paid API: disabled.\n- Codex CLI: disabled.\n- Write channel: Deno createCodexTask.\n\n## Roadmap доработок\n\n### BEM-530.1 — Executor v3 hardening\nЦель: формализовать и протестировать Run script sandbox.\nЗадачи: allowed globals, script templates, negative tests for blocked capabilities, better result fields.\nPASS: report + proof + negative-test results.\n\n### BEM-530.2 — Role Cycle E2E business scenario\nЦель: проверить analyst/auditor/executor цикл на реалистичной задаче.\nЗадачи: synthetic request, analyst output, auditor review, executor patch, state update, report.\nPASS: role artifacts exist, state updated, blocker=null.\n\n### BEM-530.3 — Transport observability\nЦель: сделать результаты контура читаемым"
+    },
+    {
+      "path": "governance/archive/bem532_20260517_phase1/governance/tasks/pending/P8_FULL_ROLE_CYCLE_E2E.md",
+      "score": 1,
+      "snippet": "# P8_FULL_ROLE_CYCLE_E2E — ARCHIVED\n\nStatus: completed\nCompleted at: 2026-05-17\nArchived by: Claude (BEM-524 closure)\nDone marker: governance/tasks/done/P8_FULL_ROLE_CYCLE_E2E.md\n\nThis task has been completed and archived.\n"
+    },
+    {
+      "path": "governance/archive/legacy-2026-05-01/full-repo-cleanup/governance/fixtures/gha_e2e/AUDIT-TASK-GHA-E2E-001-AUTO-0001.json",
+      "score": 1,
+      "snippet": "{\n  \"artifact_type\": \"verification_decision\",\n  \"task_id\": \"TASK-GHA-E2E-001\",\n  \"created_at\": \"2026-04-19T15:35:00Z\",\n  \"summary\": \"auditor verification decision for gha e2e\"\n}\n"
+    },
+    {
+      "path": "governance/codex/proofs/bem535_1_architecture_contract.txt",
+      "score": 3,
+      "snippet": "Executor: Python v3 (ubuntu-latest)\ntrace_id: bem535_1_architecture_contract\ntask_type: code_patch\nexecuted_at: 2026-05-17T10:14:09Z\nops_applied: BEM-535.1 provider architecture contract fixed according to Claude review, custom_script\nchanged_files: governance/protocols/PROVIDER_CONTOUR_FAILOVER_CONTRACT.md, governance/reports/bem535_1_provider_architecture_contract.md, governance/codex/proofs/bem535_1_architecture_contract.txt, governance/tasks/pending/BEM535_PROVIDER_CONTOURS_SCHEDULER_ROADMAP.md\nerrors: none\n"
+    },
+    {
+      "path": "governance/codex/proofs/bem623_internal_contour_architecture_remediation_plan.txt",
+      "score": 2,
+      "snippet": "Executor: Python v3 (ubuntu-latest)\ntrace_id: bem623_internal_contour_architecture_remediation_plan\ntask_type: code_patch\nexecuted_at: 2026-05-18T04:03:48Z\nops_applied: Created architecture remediation plan for gaps found in BEM-622 internal contour audit, custom_script\nchanged_files: governance/state/bem623_internal_contour_architecture_remediation_plan.json, governance/protocols/INTERNAL_CONTOUR_ARCHITECTURE_GAP_CLOSURE.md, governance/reports/bem623_internal_contour_architecture_remediation_plan.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem623_internal_contour_architecture_remediation_plan.txt\nerrors: none\n"
+    },
+    {
+      "path": "governance/codex/results/bem535_1_architecture_contract.json",
+      "score": 4,
+      "snippet": "{\n  \"schema_version\": 1,\n  \"trace_id\": \"bem535_1_architecture_contract\",\n  \"executor\": \"python-v3\",\n  \"status\": \"completed\",\n  \"operations_applied\": [\n    \"BEM-535.1 provider architecture contract fixed according to Claude review\",\n    \"custom_script\"\n  ],\n  \"changed_files\": [\n    \"governance/protocols/PROVIDER_CONTOUR_FAILOVER_CONTRACT.md\",\n    \"governance/reports/bem535_1_provider_architecture_contract.md\",\n    \"governance/codex/proofs/bem535_1_architecture_contract.txt\",\n    \"governance/tasks/pending/BEM535_PROVIDER_CONTOURS_SCHEDULER_ROADMAP.md\",\n    \"governance/codex/proofs/bem535_1_architecture_contract.txt\"\n  ],\n  \"commit_sha\": \"f1ca30827a7c0c9a2366eeb2d305db26afd5eb63\",\n  \"blocker\": null,\n  \"report_path\": \"governance/codex/results/bem535_1_architecture_contract.md\",\n  \"completed_at\": \"2026-05-17T10:14:10Z\"\n}\n"
+    },
+    {
+      "path": "governance/codex/results/bem535_1_architecture_contract.md",
+      "score": 3,
+      "snippet": "# Codex Runner v3 Result - bem535_1_architecture_contract\n\n| Field | Value |\n|---|---|\n| Trace | bem535_1_architecture_contract |\n| Executor | Python v3 (ubuntu-latest) |\n| Status | completed |\n| Operations | BEM-535.1 provider architecture contract fixed according to Claude review, custom_script |\n| Commit SHA | f1ca30827a7c0c9a2366eeb2d305db26afd5eb63 |\n| Changed files | governance/protocols/PROVIDER_CONTOUR_FAILOVER_CONTRACT.md, governance/reports/bem535_1_provider_architecture_contract.md, governance/codex/proofs/bem535_1_architecture_contract.txt, governance/tasks/pending/BEM535_PROVIDER_CONTOURS_SCHEDULER_ROADMAP.md, governance/codex/proofs/bem535_1_architecture_contract.txt |\n| Completed | 2026-05-17T10:14:10Z |\n\n### Completed successfully.\n"
+    },
+    {
+      "path": "governance/codex/results/bem623_internal_contour_architecture_remediation_plan.json",
+      "score": 3,
+      "snippet": "{\n  \"schema_version\": 1,\n  \"trace_id\": \"bem623_internal_contour_architecture_remediation_plan\",\n  \"executor\": \"python-v3\",\n  \"status\": \"completed\",\n  \"operations_applied\": [\n    \"Created architecture remediation plan for gaps found in BEM-622 internal contour audit\",\n    \"custom_script\"\n  ],\n  \"changed_files\": [\n    \"governance/state/bem623_internal_contour_architecture_remediation_plan.json\",\n    \"governance/protocols/INTERNAL_CONTOUR_ARCHITECTURE_GAP_CLOSURE.md\",\n    \"governance/reports/bem623_internal_contour_architecture_remediation_plan.md\",\n    \"governance/transport/results.jsonl\",\n    \"governance/state/contour_status.json\",\n    \"governance/codex/proofs/bem623_internal_contour_architecture_remediation_plan.txt\",\n    \"governance/codex/proofs/bem623_internal_contour_architecture_remediation_plan.txt\"\n  ],\n  \"commit_sha\": \"c0064320a1c8f72f0b7c294cc632441b52bdec28\",\n  \"blocker\": null,\n  \"report_path\": \"governance/codex/results/bem623_internal_contour_architecture_remediation_plan.md\""
+    },
+    {
+      "path": "governance/codex/results/bem623_internal_contour_architecture_remediation_plan.md",
+      "score": 2,
+      "snippet": "# Codex Runner v3 Result - bem623_internal_contour_architecture_remediation_plan\n\n| Field | Value |\n|---|---|\n| Trace | bem623_internal_contour_architecture_remediation_plan |\n| Executor | Python v3 (ubuntu-latest) |\n| Status | completed |\n| Operations | Created architecture remediation plan for gaps found in BEM-622 internal contour audit, custom_script |\n| Commit SHA | c0064320a1c8f72f0b7c294cc632441b52bdec28 |\n| Changed files | governance/state/bem623_internal_contour_architecture_remediation_plan.json, governance/protocols/INTERNAL_CONTOUR_ARCHITECTURE_GAP_CLOSURE.md, governance/reports/bem623_internal_contour_architecture_remediation_plan.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem623_internal_contour_architecture_remediation_plan.txt, governance/codex/proofs/bem623_internal_contour_architecture_remediation_plan.txt |\n| Completed | 2026-05-18T04:03:49Z |\n\n### Completed successfully.\n"
+    },
+    {
+      "path": "governance/codex/tasks/bem535_1_architecture_contract.json",
+      "score": 7,
+      "snippet": "{\n  \"schema_version\": 1,\n  \"trace_id\": \"bem535_1_architecture_contract\",\n  \"created_by\": \"chatgpt_external_contour\",\n  \"target_executor\": \"gpt_codex\",\n  \"task_type\": \"code_patch\",\n  \"title\": \"BEM-535.1 provider architecture contract\",\n  \"objective\": \"Run script:\\n\\\"\\\"\\\"\\nproto = Path('governance/protocols/PROVIDER_CONTOUR_FAILOVER_CONTRACT.md')\\nproto.parent.mkdir(parents=True, exist_ok=True)\\nreport = Path('governance/reports/bem535_1_provider_architecture_contract.md')\\nreport.parent.mkdir(parents=True, exist_ok=True)\\nproof = Path('governance/codex/proofs/bem535_1_architecture_contract.txt')\\nproof.parent.mkdir(parents=True, exist_ok=True)\\nroadmap = Path('governance/tasks/pending/BEM535_PROVIDER_CONTOURS_SCHEDULER_ROADMAP.md')\\n\\nif roadmap.exists():\\n    text = roadmap.read_text(errors='ignore')\\n    text = text.replace('GPT Scheduler hourly Telegram report contract', 'External cron -> Deno -> workflow_dispatch Telegram hourly report contract')\\n    text = text.replace('GPT Schedu"
+    },
+    {
+      "path": "governance/codex/tasks/bem623_internal_contour_architecture_remediation_plan.json",
+      "score": 8,
+      "snippet": "{\n  \"schema_version\": 1,\n  \"trace_id\": \"bem623_internal_contour_architecture_remediation_plan\",\n  \"created_by\": \"chatgpt_external_contour\",\n  \"target_executor\": \"gpt_codex\",\n  \"task_type\": \"code_patch\",\n  \"title\": \"BEM-623 remediation plan\",\n  \"objective\": \"Run script:\\n\\\"\\\"\\\"\\nsep='\\\\n'\\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\\nprotocols=Path('governance/protocols'); protocols.mkdir(parents=True,exist_ok=True)\\nstate_dir=Path('governance/state'); state_dir.mkdir(parents=True,exist_ok=True)\\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\\n\\nplan={\\n 'schema_version':'architecture_remediation_plan.v1',\\n 'bem':'BEM-623',\\n 'source_report':'governance/reports/bem622_internal_contour_deep_audit_report.md',\\n 'st"
+    },
+    {
+      "path": "governance/codex/tasks/bem624_architecture_reconciliation_internal_contour.json",
+      "score": 15,
+      "snippet": "{\n  \"schema_version\": 1,\n  \"trace_id\": \"bem624_architecture_reconciliation_internal_contour\",\n  \"created_by\": \"chatgpt_external_contour\",\n  \"target_executor\": \"gpt_codex\",\n  \"task_type\": \"diagnosis\",\n  \"title\": \"BEM-624 architecture reconcile\",\n  \"objective\": \"Run script:\\n\\\"\\\"\\\"\\nsep='\\\\n'\\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\\nstate_dir=Path('governance/state'); state_dir.mkdir(parents=True,exist_ok=True)\\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\\n\\n# Scan architecture/planning files without assuming exact names.\\npatterns=['*MASTER*171*','*master*171*','*PROMPT*171*','*prompt*171*','*HANDOFF*','*WRITE_CHANNEL*','*ARCHITECTURE*','*architecture*','*INTERNAL*CONTOUR*','*ROLE*','*MAILBOX*','*AUDIT*']\\"
+    },
+    {
+      "path": "governance/protocols/ACTIVE_ANALYST_ROLE_OPERATOR_DECISION.md",
+      "score": 3,
+      "snippet": "# BEM-557 | Active Analyst Role — Operator Decision\n\nДата: 2026-05-17 | 18:01 (UTC+3)\n\n## Решение оператора\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Analyst | Активная обязательная отдельная роль | Оператор явно подтвердил: аналитик должен быть всегда |\n| Provider | GPT/Codex only | Оператор подтвердил: аналитиком всегда выступает GPT/Codex |\n| Auditor | Может быть Claude | Оператор подтвердил: роли аудитора и исполнителя могут быть Claude |\n| Executor | Может быть Claude / другой исполнитель | Исполнитель не равен аналитику |\n| Master prompts | Используются как черновики/исторические документы, не как запрет на Analyst | Оператор явно отказался от буквального исполнения v171 по этому пункту |\n\n## Новая активная цепочка обсуждения\n\nExternal task -> Curator -> Analyst(GPT/Codex) -> Auditor(Claude/GPT) -> System/Curator decision -> Executor -> Auditor final -> Closure.\n\n## Запрет\nGPT-agent не должен снова упразднять аналитика или сводить его к executor planning function"
+    },
+    {
+      "path": "governance/protocols/ACTIVE_CURATOR_ROLE_OPERATOR_DECISION.md",
+      "score": 2,
+      "snippet": "# BEM-558 | Active Curator Role — Operator Decision\n\nДата: 2026-05-17 | 18:09 (UTC+3)\n\n## Решение оператора\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Curator | Активная обязательная отдельная роль | Оператор уточнил: куратор тоже GPT/Codex |\n| Curator provider | GPT/Codex only | Куратор не Claude и не абстрактный SYSTEM-gate |\n| Analyst | Активная обязательная отдельная роль | BEM-557: аналитик всегда GPT/Codex |\n| Auditor | Может быть Claude/GPT reserve | Аудитор отделён от куратора и аналитика |\n| Executor | Может быть Claude/GPT/другой provider | Исполнитель отделён от куратора и аналитика |\n\n## Обновлённая активная цепочка\n\nExternal task -> Curator(GPT/Codex) -> Analyst(GPT/Codex) -> Auditor(Claude/GPT) -> Curator/System decision -> Executor(Claude/GPT/provider) -> Auditor final -> Curator closure.\n\n## Запрет\nGPT-agent не должен описывать Curator как пассивный gateway без provider. Curator — активная GPT/Codex роль.\n"
+    },
+    {
+      "path": "governance/protocols/EXTERNAL_AUDIT_TO_INTERNAL_CURATOR_HANDOFF.md",
+      "score": 3,
+      "snippet": "# BEM-564 | External Audit Result -> Internal Curator Handoff\n\nДата: 2026-05-17 | 20:00 (UTC+3)\n\n## Решение оператора\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Внешнее обсуждение | Claude и GPT обсуждают вопрос через audit mailbox | Оператор не должен быть передаточным звеном |\n| Финальное решение | Если вопрос стратегический, итог уходит оператору в Telegram | BEM-562 operator decision gate |\n| Передача во внутренний контур | Согласованное или утверждённое решение передаётся куратору | Curator — единая точка входа |\n| Дальнейший маршрут | Curator(GPT/Codex) -> Orchestrator -> Analyst(GPT/Codex) -> Auditor -> Executor -> Final audit -> Curator closure | Внутренний контур сам распределяет роли |\n| Запрет | Нельзя передавать согласованное внешним аудитом решение напрямую аналитику или исполнителю | Это обходит куратора и ломает архитектуру единого входа |\n\n## Правильная цепочка\n\n```text\nExternal audit discussion:\nGPT <-> audit_mailbox <-> Claude\n        |\n        v\nif st"
+    },
+    {
+      "path": "governance/protocols/HANDOFF_PROTOCOL_CLAUDE_GPT.md",
+      "score": 1,
+      "snippet": "BEM-525 P9 Handoff Protocol Claude↔GPT\n"
+    },
+    {
+      "path": "governance/protocols/INTERNAL_CONTOUR_ARCHITECTURE_GAP_CLOSURE.md",
+      "score": 2,
+      "snippet": "# BEM-623 | Internal Contour Architecture Gap Closure\n\nДата: 2026-05-18 | 07:03 (UTC+3)\n\n## Required fixes\n\n1. Claude primary cannot be marked PASS without Claude-authored runtime artifact.\n2. Telegram delivery cannot be marked PASS without `telegram_delivery=sent` in repo state.\n3. File-based role artifacts must be labeled separately from live provider execution.\n4. Executor tasks must pass preflight against known sandbox restrictions before dispatch.\n5. Old failed GitHub runs must be superseded only by newer validated run evidence.\n"
+    },
+    {
+      "path": "governance/protocols/MAILBOX_TELEGRAM_DECISION_ONLY_POLICY.md",
+      "score": 2,
+      "snippet": "# BEM-573 | Mailbox Telegram Decision-only Policy\n\nДата: 2026-05-17 | 21:35 (UTC+3)\n\n## Решение оператора\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Routine mailbox | Не отправлять в Telegram | Оператор не должен получать шум и становиться relay |\n| Claude↔GPT sync | Идёт через audit mailbox и GitHub Actions | Claude не читает Telegram; GPT читает mailbox |\n| Telegram | Только для operator decision gate | Оператор подключается в момент согласования/финального решения |\n| Strategic / disagreement | Отправлять оператору в Telegram | Только если требуется решение оператора |\n| Recipient routing | Адресату сообщает mailbox/workflow, не Telegram | Telegram не является транспортом между Claude и GPT |\n\n## Правило\n\nTelegram используется только если файл mailbox явно содержит один из признаков:\n\n- `Requires operator decision: yes`\n- `Требует решения оператора: да`\n- `OPERATOR DECISION REQUIRED`\n- `operator_decision_required`\n- `disagreement_requires_operator`\n- `Архитектурное р"
+    },
+    {
+      "path": "governance/protocols/MAILBOX_TELEGRAM_OPERATOR_FYI_FORMAT.md",
+      "score": 3,
+      "snippet": "# BEM-571 | Mailbox Telegram Operator FYI Format\n\nДата: 2026-05-17 | 21:29 (UTC+3)\n\n## Решение\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Mailbox адресат | Сообщение из `claude_to_gpt` адресовано GPT, не оператору | Mailbox является каналом Claude↔GPT |\n| Telegram роль | Telegram показывает оператору уведомление/аудит-трейл | Оператор не должен быть relay |\n| Формулировка | В Telegram обязательно писать `Действие оператора: не требуется`, если это не strategic decision gate | Чтобы оператор не думал, что должен пересылать сообщение |\n| Исключение | Если требуется стратегическое решение, использовать `OPERATOR DECISION REQUIRED` | BEM-562 |\n\n## Mobile notification pattern\n\n```text\nBEM-MAILBOX | УВЕДОМЛЕНИЕ ОПЕРАТОРУ | workflow_runtime\n\nЭтап: 1/1 (100%)\nДорожная карта: 1/1 (100%)\n\nЧек-лист:\n✅ Новое сообщение mailbox обнаружено\n✅ Адресат: GPT\n✅ Записано в repo mailbox\n✅ Действие оператора не требуется\n\nСообщение:\nОт: Claude\nКому: GPT\nТема: ...\nФайл: governance/audit_mailbo"
+    },
+    {
+      "path": "governance/protocols/OPERATOR_DECISION_CURATOR_HANDOFF.md",
+      "score": 1,
+      "snippet": "# BEM-593 | Operator Decision Curator Handoff\n\nДата: 2026-05-17 | 22:46 (UTC+3)\n\n## Назначение\n\nЛюбое решение оператора из `governance/operator_decisions/*.json` должно автоматически попадать куратору как machine-readable intake.\n\n## Поток\n\noperator_decisions JSON -> decision_curator_handoff.py -> governance/curator/inbox/operator_decision_<id>.json -> transport/results.jsonl -> curator/orchestrator.\n\n## Правило\n\nОператор не переносит решение вручную. GPT/Actions фиксируют решение и передают куратору.\n"
+    },
+    {
+      "path": "governance/protocols/PEER_AUDITORS_DECISION_TO_CURATOR.md",
+      "score": 2,
+      "snippet": "# BEM-565 | Peer Auditors Decision -> Curator\n\nДата: 2026-05-17 | 20:02 (UTC+3)\n\n## Решение оператора\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| External auditor | Равноправный участник аудиторского обсуждения | Нет старшего/младшего аудитора |\n| Internal auditor | Равноправный участник аудиторского обсуждения | Нет подчинения внешнему аудитору |\n| Operator | Единственный старший / final authority | Оператор принимает окончательное стратегическое решение |\n| Audit mailbox | Место совместного обсуждения внешнего и внутреннего аудиторов | Оператор не является передаточным звеном |\n| Curator handoff | В куратор передаётся уже совместное решение аудиторов или решение оператора | Curator — единая точка входа внутреннего контура |\n\n## Правильная цепочка\n\n```text\nExternal auditor <-> audit_mailbox <-> Internal auditor\n        |\n        v\nJoint audit decision / disagreement package\n        |\n        v\nif strategic or disagreement: Telegram -> Operator final decision\n        |\n "
+    },
+    {
+      "path": "governance/protocols/PROVIDER_GATE_CLAUDE_AUDIT_POLICY.md",
+      "score": 5,
+      "snippet": "# BEM-607 | Provider Gate Claude Audit Policy\n\nДата: 2026-05-18 | 06:14 (UTC+3)\n\n## Rule\nBefore implementation tasks that require Claude primary auditor/executor, the system must record a provider gate result.\n\n## Required fields\n- provider_checked\n- primary_provider\n- reserve_provider\n- selected_provider\n- reserve_used\n- reason\n- proof_files\n- checked_at\n\n## Current BEM-605 state\nClaude audit request exists in mailbox. Implementation remains blocked until Claude response or explicit fallback policy chooses GPT reserve.\n"
+    },
+    {
+      "path": "governance/protocols/ROLE_ORCHESTRATOR_INTERNAL_ROUTER.md",
+      "score": 5,
+      "snippet": "# BEM-598 | Role Orchestrator To Internal Contour Router\n\nДата: 2026-05-17 | 22:58 (UTC+3)\n\n## Назначение\n\nМаршрутизировать machine-readable решения из `governance/role_orchestrator/inbox/` во внутренний контур.\n\n## Поток\n\nrole_orchestrator/inbox -> internal_contour/inbox -> internal_contour/tasks -> analyst/auditor/executor cycle.\n\n## Правило\n\nРешение оператора не должно зависать в role-orchestrator. Оно должно превращаться в задачу внутреннего контура.\n"
+    },
+    {
+      "path": "governance/protocols/ROLE_ORCHESTRATOR_WORKFLOW_PARITY.md",
+      "score": 5,
+      "snippet": "# BEM-548.2 | Role-Orchestrator Workflow Parity\n\nДата: 2026-05-17 | 14:53 (UTC+3)\n\n## Source of truth\nBEM-543 corrected sequence:\nexternal -> curator_intake -> curator_assignment -> role-orchestrator -> analyst -> auditor -> executor -> auditor_final -> curator_closure.\n\n## Routing rules\n| Latest record | Condition | Next role |\n|---|---|---|\n| curator_assignment | task_type=development | analyst |\n| curator_assignment | task_type=audit | auditor |\n| curator_assignment | task_type=hotfix | auditor |\n| analysis | status=completed | auditor |\n| audit | decision=PASS_TO_EXECUTOR | executor |\n| execution | status=completed | auditor_final |\n| audit | decision=FINAL_PASS | curator_closure |\n| any failed/cancelled/timeout | any | curator |\n\n## Output\nEvery decision writes `role_orchestrator_decision` to `governance/transport/results.jsonl` and updates `governance/state/role_cycle_state.json`.\n"
+    },
+    {
+      "path": "governance/protocols/ROLE_STATE_SCHEMA.md",
+      "score": 4,
+      "snippet": "# BEM-531.1 | Role Cycle State Schema\n\nДата: 2026-05-17 | 12:50 (UTC+3)\n\n## Purpose\n`governance/state/role_cycle_state.json` is the source of truth for the internal role cycle.\n\n## Required fields\n- schema_version\n- updated_at\n- cycle_id\n- source\n- curator_status\n- active_role\n- next_role\n- current_task\n- handoff\n- agents\n- agent_lifecycle\n- history\n- blocker\n\n## Agent lifecycle\nCANDIDATE -> ACTIVE -> RETIRED\n\nRules:\n- CANDIDATE can be proposed but cannot execute.\n- ACTIVE can receive role assignments.\n- RETIRED cannot receive new assignments, but remains in history.\n\n## Active roles\ncurator, analyst, auditor, executor.\n\n## Backward compatibility\nLegacy keys are preserved under `legacy.previous_keys` and history records.\n"
+    },
+    {
+      "path": "governance/reports/bem535_1_provider_architecture_contract.md",
+      "score": 3,
+      "snippet": "# BEM-535.1 | Provider Contour Architecture Contract | PASS\n\nДата: 2026-05-17 | 13:05 (UTC+3)\n\n## Выполнено\n- Зафиксирован real detection mechanism для Claude limits/unavailable.\n- Зафиксировано: Claude не сообщает UI-лимиты сам; trigger — workflow failure/cancelled/timeout или failed transport result.\n- Зафиксировано failover rule: Claude failed -> GPT reserve.\n- Исправлен механизм hourly Telegram: external cron -> Deno endpoint -> workflow_dispatch, не GPT Scheduler и не GitHub schedule.\n- Roadmap BEM-535 обновлена по замечаниям Claude.\n\n## Files\n- governance/protocols/PROVIDER_CONTOUR_FAILOVER_CONTRACT.md\n- governance/tasks/pending/BEM535_PROVIDER_CONTOURS_SCHEDULER_ROADMAP.md\n\n## Blocker\nnull\n"
+    },
+    {
+      "path": "governance/reports/bem623_internal_contour_architecture_remediation_plan.md",
+      "score": 7,
+      "snippet": "# BEM-623 | Internal Contour Architecture Remediation Plan\n\nДата: 2026-05-18 | 07:03 (UTC+3)\n\n## Goal\nClose architecture gaps found during BEM-622 internal contour deep audit.\n\n## Items\n### R1 | Claude primary runtime not proven\n- Fix: Add mandatory Claude-authored smoke response artifact before selecting Claude primary. If absent, selected_provider must be gpt_reserve with blocker/reason.\n- Evidence required: governance/audit_mailbox/claude_to_gpt/*response*.md, governance/provider_gates/*claude_runtime_smoke*.json\n\n### R2 | Live Telegram delivery not confirmed\n- Fix: Add post-trigger delivery verifier that checks curator_hourly_report_state.telegram_delivery=sent and creates alert/report if not sent.\n- Evidence required: governance/state/curator_hourly_report_state.json, governance/reports/curator_hourly_report_runtime.md\n\n### R3 | Old failed workflow notifications confuse operator\n- Fix: Add current-run supersede report and suppress false PASS. Keep stale failures tagged as supersed"
+    },
+    {
+      "path": "governance/state/bem623_internal_contour_architecture_remediation_plan.json",
+      "score": 7,
+      "snippet": "{\n  \"schema_version\": \"architecture_remediation_plan.v1\",\n  \"bem\": \"BEM-623\",\n  \"source_report\": \"governance/reports/bem622_internal_contour_deep_audit_report.md\",\n  \"status\": \"ready_for_execution\",\n  \"goal\": \"Close architecture gaps found during BEM-622 internal contour deep audit.\",\n  \"items\": [\n    {\n      \"id\": \"R1\",\n      \"gap\": \"Claude primary runtime not proven\",\n      \"fix\": \"Add mandatory Claude-authored smoke response artifact before selecting Claude primary. If absent, selected_provider must be gpt_reserve with blocker/reason.\",\n      \"evidence_required\": [\n        \"governance/audit_mailbox/claude_to_gpt/*response*.md\",\n        \"governance/provider_gates/*claude_runtime_smoke*.json\"\n      ]\n    },\n    {\n      \"id\": \"R2\",\n      \"gap\": \"Live Telegram delivery not confirmed\",\n      \"fix\": \"Add post-trigger delivery verifier that checks curator_hourly_report_state.telegram_delivery=sent and creates alert/report if not sent.\",\n      \"evidence_required\": [\n        \"governance/stat"
+    },
+    {
+      "path": "governance/tasks/done/BEM531_INTERNAL_ROLE_CONTOUR_ROADMAP.md",
+      "score": 5,
+      "snippet": "# BEM-531 | Internal Role Contour Improvement Roadmap v2\n\nДата: 2026-05-17 | 12:45 (UTC+3)\n\n## Статус\nRoadmap обновлена по замечаниям внешнего аудитора Claude.\n\n## Объект\nВнутренний контур разработки мультиагента. Это не внешний GPT autonomy contour.\n\n## Целевая архитектура BEM-531\nGPT / Claude external audit branches -> curator -> internal roles -> GitHub Actions -> file transport -> role state -> curator closure.\n\nTelegram webhook branch признаётся частью общей большой архитектуры, но исключается из scope BEM-531, чтобы не усложнять текущую доработку. Подключение Telegram branch откладывается на отдельный будущий этап после PASS внутреннего контура.\n\n## Принципы\n- Curator is the single entry point for BEM-531 scope.\n- Claude is external audit branch, not default developer.\n- GPT performs autonomous development through Deno + Python executor v3.\n- No issue #31 comments.\n- No schedule triggers.\n- No secrets in files.\n- No paid OpenAI API.\n- Reports do not stop roadmap execution.\n\n## Ко"
+    },
+    {
+      "path": "governance/tasks/done/BEM536_INTERNAL_CONTOUR_AUTOTEST_ROADMAP.md",
+      "score": 5,
+      "snippet": "# BEM-536 | Internal Contour Full Development Cycle Autotest Roadmap\n\nДата: 2026-05-17 | 13:34 (UTC+3)\n\n## Цель\nПроверить, что внутренний контур разработки работоспособен на полном цикле: curator -> analyst -> auditor -> executor -> auditor final -> curator closure.\n\n## Тестовая задача разработки\nСоздать новый development artifact `governance/internal_contour/tests/bem536/development_artifact.md`, провести его через анализ, аудит, исполнение и закрытие.\n\n## Три задачи roadmap\n\n### Task 1 — Curator intake + Analyst plan\nCurator принимает synthetic development request, назначает analyst, analyst создаёт план реализации.\nPASS: intake, analyst plan, transport records, role state updated.\n\n### Task 2 — Auditor approval + Executor patch\nAuditor проверяет план, executor создаёт development artifact.\nPASS: audit approval, development artifact, execution record, SHA.\n\n### Task 3 — Final audit + Curator closure\nAuditor final проверяет artifact, curator закрывает cycle, обновляет contour_status.\n"
+    },
+    {
+      "path": "governance/tasks/done/P9_HANDOFF_PROTOCOL.md",
+      "score": 1,
+      "snippet": "BEM-525 P9 Handoff Protocol Claude↔GPT completed\n"
+    }
+  ],
+  "actual_artifacts": {
+    "curator_inbox": {
+      "path": "governance/curator/inbox/bem605_hourly_report_canon_template.json",
+      "exists": true,
+      "size": 560
+    },
+    "role_orchestrator": {
+      "path": "governance/role_orchestrator/inbox/bem605_hourly_report_canon_template.json",
+      "exists": true,
+      "size": 614
+    },
+    "internal_task": {
+      "path": "governance/internal_contour/tasks/bem605_hourly_report_canon_template.json",
+      "exists": true,
+      "size": 1441
+    },
+    "analyst_plan": {
+      "path": "governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.json",
+      "exists": true,
+      "size": 2008
+    },
+    "internal_auditor_inbox": {
+      "path": "governance/internal_contour/auditor/inbox/bem605_hourly_report_template_claude_audit.json",
+      "exists": true,
+      "size": 564
+    },
+    "wrong_mailbox_to_claude": {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md",
+      "exists": true,
+      "size": 1775
+    },
+    "provider_route": {
+      "path": "governance/provider_gates/bem610_provider_route_decision.json",
+      "exists": true,
+      "size": 843
+    },
+    "reserve_audit": {
+      "path": "governance/internal_contour/auditor/reports/bem612_reserve_audit_hourly_report_template.json",
+      "exists": true,
+      "size": 1096
+    },
+    "executor_item": {
+      "path": "governance/internal_contour/executor/inbox/bem612_execute_hourly_report_canon.json",
+      "exists": true,
+      "size": 965
+    }
+  },
+  "gaps": [
+    {
+      "id": "G1",
+      "title": "Mailbox used as internal role communication",
+      "expected": "Internal roles communicate through role_orchestrator/internal_contour inboxes; audit_mailbox is only for external<->internal auditor sync.",
+      "actual": "BEM-605 sent analyst->Claude auditor request through governance/audit_mailbox/gpt_to_claude.",
+      "severity": "high",
+      "fix": "Create internal role-bus canon, move/duplicate BEM-605 audit request into internal_contour/auditor/inbox, mark mailbox copy as external-audit-copy only, and add validator."
+    },
+    {
+      "id": "G2",
+      "title": "External auditor link missing in chain",
+      "expected": "External auditor and internal auditor coordinate through audit_mailbox; operator is not relay.",
+      "actual": "Only GPT->Claude mailbox was created; no explicit internal_auditor<->external_auditor decision thread was modeled.",
+      "severity": "high",
+      "fix": "Create external_internal_audit_sync package and route only auditor-to-auditor messages via audit_mailbox."
+    },
+    {
+      "id": "G3",
+      "title": "Claude primary provider proof incomplete",
+      "expected": "Before fallback, system checks Claude runtime/limits and records proof.",
+      "actual": "Provider gate recorded primary not proven and selected GPT reserve; no Claude-authored runtime artifact.",
+      "severity": "high",
+      "fix": "Add Claude runtime proof contract: primary cannot be selected without Claude-authored artifact; otherwise automatic reserve with reason."
+    },
+    {
+      "id": "G4",
+      "title": "Deno role confusion",
+      "expected": "Deno is external GPT write transport, not internal executor role. Internal executor should be Codex/direct repo write when available.",
+      "actual": "All repo writes from this ChatGPT session used Deno /codex-task because that is the available write channel here.",
+      "severity": "medium",
+      "fix": "Document Deno as external transport adapter only; introduce execution_adapter field distinguishing deno_transport from internal executor."
+    },
+    {
+      "id": "G5",
+      "title": "Live Telegram delivery not proven",
+      "expected": "Hourly report delivery state should say sent.",
+      "actual": "BEM-621 did not confirm sent.",
+      "severity": "medium",
+      "fix": "Keep delivery blocker until live state confirms sent and add delivery verifier."
+    }
+  ],
+  "created_at": "2026-05-18 | 07:05 (UTC+3)"
+}

@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:03 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:05 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,16 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "ARCHITECTURE_GAPS_FOUND",
+    "gaps": [
+      "G1",
+      "G2",
+      "G3",
+      "G4",
+      "G5"
+    ]
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -834,5 +843,17 @@
     "report": "governance/reports/bem623_internal_contour_architecture_remediation_plan.md",
     "blocker": null
   },
-  "internal_contour_architecture_gap_closure": "ready_for_execution"
+  "internal_contour_architecture_gap_closure": "ready_for_execution",
+  "bem624_architecture_reconciliation_internal_contour": {
+    "status": "gaps_found",
+    "report": "governance/reports/bem624_architecture_reconciliation_internal_contour.md",
+    "state_file": "governance/state/bem624_architecture_reconciliation_internal_contour.json",
+    "gaps": [
+      "G1",
+      "G2",
+      "G3",
+      "G4",
+      "G5"
+    ]
+  }
 }
