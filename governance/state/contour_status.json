@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:30 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:31 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,15 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "RUNTIME_OR_DELIVERY_PROOF_NOT_COMPLETE",
+    "claude_runtime_proven": false,
+    "delivery_confirmed": false,
+    "hourly_sent": true,
+    "claude_result_exists": true,
+    "delivery_result_exists": false,
+    "hourly_state_exists": true
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -892,5 +900,21 @@
     "state_file": "governance/state/bem630_runtime_delivery_proof_no_import_hook.json",
     "blocker": null
   },
-  "runtime_proof_and_delivery_verification": "triggered_safe"
+  "runtime_proof_and_delivery_verification": "triggered_safe",
+  "bem631_runtime_delivery_results_check": {
+    "status": "proof_pending_or_failed",
+    "state_file": "governance/state/bem631_runtime_delivery_results_check.json",
+    "claude_runtime_proven": false,
+    "delivery_confirmed": true,
+    "blocker": {
+      "code": "RUNTIME_OR_DELIVERY_PROOF_NOT_COMPLETE",
+      "claude_runtime_proven": false,
+      "delivery_confirmed": false,
+      "hourly_sent": true,
+      "claude_result_exists": true,
+      "delivery_result_exists": false,
+      "hourly_state_exists": true
+    }
+  },
+  "runtime_delivery_results_status": "proof_pending_or_failed"
 }

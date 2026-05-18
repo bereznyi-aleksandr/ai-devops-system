@@ -1,0 +1,59 @@
+{
+  "schema_version": "runtime_delivery_results_check.v1",
+  "bem": "BEM-631",
+  "status": "proof_pending_or_failed",
+  "claude_runtime_proven": false,
+  "delivery_confirmed": false,
+  "hourly_sent": true,
+  "claude_result": {
+    "schema_version": "claude_primary_runtime_smoke.v1",
+    "provider_checked": true,
+    "primary_provider": "claude_api",
+    "has_anthropic_api_key": true,
+    "model": "gpt-5.2",
+    "status": "http_not_ok",
+    "http_status": 400,
+    "claude_runtime_proven": false,
+    "claude_authored_artifact": false,
+    "blocker": {
+      "code": "CLAUDE_HTTP_NOT_OK",
+      "http_status": 400,
+      "body_preview": "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011Cb9QZ9LtXB6xGQFLiS8Xo\"}"
+    }
+  },
+  "delivery_result": null,
+  "hourly_state": {
+    "schema_version": "curator_hourly_report_state.v1",
+    "status": "rendered",
+    "message_file": "governance/tmp/curator_hourly_report_message.txt",
+    "provider_checked": true,
+    "selected_provider": "gpt_reserve",
+    "reserve_used": true,
+    "blocker": {
+      "code": "WORKFLOW_STATIC_VALIDATION_FAILED",
+      "failed": [
+        {
+          "name": "schedule_only_curator_hourly",
+          "pass": false,
+          "schedule_files": [
+            ".github/workflows/curator-hourly-report.yml",
+            ".github/workflows/telegram-outbox-dispatch.yml"
+          ]
+        }
+      ]
+    },
+    "event_count": 5,
+    "created_at": "workflow_runtime",
+    "telegram_delivery": "sent"
+  },
+  "blocker": {
+    "code": "RUNTIME_OR_DELIVERY_PROOF_NOT_COMPLETE",
+    "claude_runtime_proven": false,
+    "delivery_confirmed": false,
+    "hourly_sent": true,
+    "claude_result_exists": true,
+    "delivery_result_exists": false,
+    "hourly_state_exists": true
+  },
+  "created_at": "2026-05-18 | 07:31 (UTC+3)"
+}
