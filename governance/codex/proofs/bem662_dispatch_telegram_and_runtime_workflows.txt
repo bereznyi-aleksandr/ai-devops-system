@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem662_dispatch_telegram_and_runtime_workflows
+task_type: code_patch
+executed_at: 2026-05-18T12:56:18Z
+ops_applied: Created workflow dispatch queue items for telegram smoke, curator hourly report, delivery verifier, and Claude runtime smoke, custom_script
+changed_files: governance/workflow_dispatch_queue/telegram_send_smoke.json, governance/workflow_dispatch_queue/curator_hourly_report.json, governance/workflow_dispatch_queue/curator_hourly_delivery_verification.json, governance/workflow_dispatch_queue/claude_primary_runtime_smoke.json, governance/state/bem662_dispatch_telegram_and_runtime_workflows.json, governance/reports/bem662_dispatch_telegram_and_runtime_workflows.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem662_dispatch_telegram_and_runtime_workflows.txt
+errors: none
