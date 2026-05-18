@@ -1,0 +1,13 @@
+# Codex Runner v3 Result - bem671_fix_hourly_yaml_and_dispatch_queue_cleanup
+
+| Field | Value |
+|---|---|
+| Trace | bem671_fix_hourly_yaml_and_dispatch_queue_cleanup |
+| Executor | Python v3 (ubuntu-latest) |
+| Status | completed |
+| Operations | Fixed curator-hourly-report invalid YAML by moving delivery recorder into a script and cleaned dispatch queue to stop repeated Telegram smoke messages, custom_script |
+| Commit SHA | 7099b5a07325c5edbd73f80555681e219ba47bc5 |
+| Changed files | scripts/record_curator_hourly_delivery.py, .github/workflows/curator-hourly-report.yml, .github/workflows/codex-runner.yml, governance/triggers/curator_hourly_report.trigger, governance/protocols/HOURLY_REPORT_YAML_AND_QUEUE_CLEANUP.md, governance/state/bem671_fix_hourly_yaml_and_dispatch_queue_cleanup.json, governance/reports/bem671_fix_hourly_yaml_and_dispatch_queue_cleanup.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem671_fix_hourly_yaml_and_dispatch_queue_cleanup.txt, governance/workflow_dispatch_processed/bem637_run_claude_runtime_smoke_removed_by_bem671.json, governance/workflow_dispatch_processed/curator_hourly_report_removed_by_bem671.json, governance/workflow_dispatch_processed/claude_primary_runtime_smoke_removed_by_bem671.json, governance/workflow_dispatch_processed/telegram_send_smoke_removed_by_bem671.json, governance/workflow_dispatch_processed/bem637_run_curator_hourly_report_removed_by_bem671.json, governance/workflow_dispatch_processed/curator_hourly_delivery_verification_removed_by_bem671.json, governance/workflow_dispatch_processed/bem637_run_direct_telegram_smoke_removed_by_bem671.json, governance/codex/proofs/bem671_fix_hourly_yaml_and_dispatch_queue_cleanup.txt |
+| Completed | 2026-05-18T16:00:50Z |
+
+### Completed successfully.
