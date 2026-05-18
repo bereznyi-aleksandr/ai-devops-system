@@ -1,0 +1,42 @@
+name: Telegram Direct Delivery Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/triggers/telegram_direct_delivery_smoke.trigger'
+      - 'scripts/telegram_direct_delivery_smoke.py'
+      - '.github/workflows/telegram-direct-delivery-smoke.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: telegram-direct-delivery-smoke
+  cancel-in-progress: false
+
+jobs:
+  telegram-direct-delivery-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Syntax check direct smoke
+        run: python3 -m py_compile scripts/telegram_direct_delivery_smoke.py
+
+      - name: Run direct Telegram smoke
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 scripts/telegram_direct_delivery_smoke.py
+
+      - name: Commit direct smoke result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/state/telegram_direct_delivery_smoke.json governance/reports/telegram_direct_delivery_smoke.md
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-635 Telegram direct delivery smoke result"
+          git pull --rebase --autostash origin main || true
+          git push || true

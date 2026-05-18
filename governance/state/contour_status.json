@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:35 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:47 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -943,5 +943,12 @@
       "claude_result": "http_not_ok"
     }
   },
-  "operational_watch_status": "operational_closed"
+  "operational_watch_status": "operational_closed",
+  "bem635_direct_telegram_delivery_smoke": {
+    "status": "created_and_triggered",
+    "workflow": ".github/workflows/telegram-direct-delivery-smoke.yml",
+    "state_file": "governance/state/bem635_direct_telegram_delivery_smoke.json",
+    "blocker": null
+  },
+  "telegram_delivery_proof_layer": "direct_smoke_triggered"
 }

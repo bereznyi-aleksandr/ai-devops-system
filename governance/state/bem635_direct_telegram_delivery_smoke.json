@@ -1,0 +1,10 @@
+{
+  "schema_version": "telegram_direct_delivery_smoke_setup.v1",
+  "bem": "BEM-635",
+  "status": "created_and_triggered",
+  "workflow": ".github/workflows/telegram-direct-delivery-smoke.yml",
+  "script": "scripts/telegram_direct_delivery_smoke.py",
+  "trigger": "governance/triggers/telegram_direct_delivery_smoke.trigger",
+  "blocker": null,
+  "created_at": "2026-05-18 | 07:47 (UTC+3)"
+}
