@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem608_claude_primary_provider_gate_workflow
+task_type: code_patch
+executed_at: 2026-05-18T03:15:35Z
+ops_applied: Created and triggered Claude primary provider gate workflow to check primary/reserve routing evidence without exposing secrets, custom_script
+changed_files: governance/protocols/CLAUDE_PRIMARY_PROVIDER_GATE.md, .github/workflows/claude-primary-provider-gate.yml, governance/triggers/claude_primary_provider_gate.trigger, governance/reports/bem608_claude_primary_provider_gate_workflow.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem608_claude_primary_provider_gate_workflow.txt
+errors: none
