@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem638_integrate_dispatch_queue_into_codex_runner
+task_type: code_patch
+executed_at: 2026-05-18T04:50:16Z
+ops_applied: Integrated workflow dispatch queue runner into codex-runner so queued workflows can be dispatched by workflow_dispatch-driven codex tasks, custom_script
+changed_files: governance/protocols/CODEX_RUNNER_DISPATCH_QUEUE_HOOK.md, governance/state/bem638_integrate_dispatch_queue_into_codex_runner.json, governance/reports/bem638_integrate_dispatch_queue_into_codex_runner.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem638_integrate_dispatch_queue_into_codex_runner.txt, .github/workflows/codex-runner.yml
+errors: none
