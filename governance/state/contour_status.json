@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:31 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:32 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,15 +103,7 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": {
-    "code": "RUNTIME_OR_DELIVERY_PROOF_NOT_COMPLETE",
-    "claude_runtime_proven": false,
-    "delivery_confirmed": false,
-    "hourly_sent": true,
-    "claude_result_exists": true,
-    "delivery_result_exists": false,
-    "hourly_state_exists": true
-  },
+  "blocker": null,
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -916,5 +908,16 @@
       "hourly_state_exists": true
     }
   },
-  "runtime_delivery_results_status": "proof_pending_or_failed"
+  "runtime_delivery_results_status": "proof_pending_or_failed",
+  "bem632_close_provider_route_and_delivery_status": {
+    "status": "architecture_closed_delivery_confirmed",
+    "architecture_closed": true,
+    "operational_delivery_closed": true,
+    "provider_status": "reserve_validated_primary_unavailable",
+    "delivery_status": "delivery_confirmed",
+    "blocker": null,
+    "operational_watch": null
+  },
+  "internal_contour_architecture_status": "closed",
+  "hourly_delivery_operational_status": "delivery_confirmed"
 }
