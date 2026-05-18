@@ -1,11 +1,18 @@
-# BEM-586 | Operator Reply Intake Result
+# BEM-602 | Operator Reply Intake Result
 
+## Status
+blocked
+
+## HTTP
+getUpdates: 409
+getWebhookInfo: 200
+webhook_active: True
+
+## Record
+null
+
+## Blocker
 {
-  "record_type": "operator_reply_intake",
-  "cycle_id": "bem586-operator-reply-intake-poller",
-  "status": "no_operator_reply_found",
-  "http_status": "409",
-  "record": null,
-  "blocker": null,
-  "created_at": "workflow_runtime"
+  "code": "TELEGRAM_WEBHOOK_ACTIVE",
+  "message": "Webhook is active; polling getUpdates may not receive replies reliably."
 }

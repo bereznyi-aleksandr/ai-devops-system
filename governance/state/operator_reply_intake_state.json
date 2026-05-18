@@ -3,8 +3,13 @@
   "last_update_id": 0,
   "last_run": {
     "http_status": "409",
-    "status": "no_operator_reply_found",
+    "webhook_http_status": "200",
+    "webhook_active": true,
+    "status": "blocked",
     "record": null,
-    "blocker": null
+    "blocker": {
+      "code": "TELEGRAM_WEBHOOK_ACTIVE",
+      "message": "Webhook is active; polling getUpdates may not receive replies reliably."
+    }
   }
 }
