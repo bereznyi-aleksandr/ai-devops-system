@@ -1,0 +1,62 @@
+{
+  "schema_version": "role_execution_evidence_matrix.v1",
+  "bem": "BEM-626",
+  "roles": [
+    {
+      "role": "Curator",
+      "expected_actor": "GPT",
+      "allowed_execution_types": [
+        "gpt_reserve_execution",
+        "artifact_only_for_routing"
+      ],
+      "internal_bus": "governance/curator/inbox"
+    },
+    {
+      "role": "Registrar/Role Orchestrator",
+      "expected_actor": "system/router",
+      "allowed_execution_types": [
+        "artifact_only_for_routing",
+        "codex_direct_execution"
+      ],
+      "internal_bus": "governance/role_orchestrator/inbox"
+    },
+    {
+      "role": "Analyst",
+      "expected_actor": "GPT",
+      "allowed_execution_types": [
+        "gpt_reserve_execution"
+      ],
+      "internal_bus": "governance/internal_contour/analyst/plans"
+    },
+    {
+      "role": "Internal Auditor",
+      "expected_actor": "Claude Code primary or GPT reserve",
+      "allowed_execution_types": [
+        "claude_primary_execution",
+        "gpt_reserve_execution"
+      ],
+      "internal_bus": "governance/internal_contour/auditor/inbox"
+    },
+    {
+      "role": "External Auditor",
+      "expected_actor": "Claude external auditor",
+      "allowed_execution_types": [
+        "claude_primary_execution",
+        "artifact_only_for_sync"
+      ],
+      "mailbox": "governance/audit_mailbox"
+    },
+    {
+      "role": "Executor",
+      "expected_actor": "Claude Code primary, Codex direct, or GPT reserve",
+      "allowed_execution_types": [
+        "claude_primary_execution",
+        "codex_direct_execution",
+        "gpt_reserve_execution"
+      ],
+      "internal_bus": "governance/internal_contour/executor/inbox"
+    }
+  ],
+  "created_at": "2026-05-18 | 07:25 (UTC+3)",
+  "blocker": null
+}
