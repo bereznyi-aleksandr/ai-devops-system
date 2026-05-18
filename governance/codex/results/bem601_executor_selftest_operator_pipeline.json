@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem601_executor_selftest_operator_pipeline",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Ran executor selftest and finalized operator decision pipeline production status",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/internal_contour/executor/reports/bem601_executor_selftest_operator_pipeline.json",
+    "governance/internal_contour/executor/reports/bem601_executor_selftest_operator_pipeline.md",
+    "governance/internal_contour/final/bem601_operator_decision_pipeline_final.json",
+    "governance/internal_contour/final/bem601_operator_decision_pipeline_final.md",
+    "governance/protocols/OPERATOR_DECISION_PIPELINE_PRODUCTION_STATUS.md",
+    "governance/reports/bem601_executor_selftest_operator_pipeline.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem601_executor_selftest_operator_pipeline.txt",
+    "governance/codex/proofs/bem601_executor_selftest_operator_pipeline.txt"
+  ],
+  "commit_sha": "9edf7c76cac378a30822f06429d257aa3823e031",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem601_executor_selftest_operator_pipeline.md",
+  "completed_at": "2026-05-18T02:54:20Z"
+}
