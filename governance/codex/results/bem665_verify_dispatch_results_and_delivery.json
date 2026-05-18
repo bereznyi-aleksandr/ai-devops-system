@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem665_verify_dispatch_results_and_delivery",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified workflow dispatch result status files and Telegram smoke/hourly delivery states after file-based smoke patch",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem665_verify_dispatch_results_and_delivery.json",
+    "governance/reports/bem665_verify_dispatch_results_and_delivery.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem665_verify_dispatch_results_and_delivery.txt",
+    "governance/codex/proofs/bem665_verify_dispatch_results_and_delivery.txt"
+  ],
+  "commit_sha": "ba809501e57f24973a3a320d3d968c0b5dacd301",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem665_verify_dispatch_results_and_delivery.md",
+  "completed_at": "2026-05-18T13:00:40Z"
+}
