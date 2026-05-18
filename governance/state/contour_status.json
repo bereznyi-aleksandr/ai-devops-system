@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:54 (UTC+3)",
+  "updated_at": "2026-05-18 | 15:13 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1015,5 +1015,12 @@
     ],
     "blocker": null
   },
-  "workflow_dispatch_token_permissions": "fixed"
+  "workflow_dispatch_token_permissions": "fixed",
+  "bem646_post_repair_codex_runner_smoke": {
+    "status": "pass",
+    "state_file": "governance/state/bem646_post_repair_codex_runner_smoke.json",
+    "report": "governance/reports/bem646_post_repair_codex_runner_smoke.md",
+    "blocker": null
+  },
+  "codex_runner_write_channel_status": "restored"
 }

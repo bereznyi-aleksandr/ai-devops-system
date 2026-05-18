@@ -1,0 +1,39 @@
+{
+  "schema_version": "codex_runner_post_repair_smoke.v1",
+  "bem": "BEM-646",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "codex_runner_exists",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "permissions_has_contents_write",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "permissions_has_actions_read",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "no_duplicate_top_level_actions_read",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "workflow_dispatch_present",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "python_executor_patterns_present",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 15:13 (UTC+3)"
+}
