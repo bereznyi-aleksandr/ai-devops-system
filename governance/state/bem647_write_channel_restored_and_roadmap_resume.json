@@ -1,0 +1,45 @@
+{
+  "schema_version": "write_channel_restored_and_roadmap_resume.v1",
+  "bem": "BEM-647",
+  "status": "write_channel_restored_roadmap_resumed",
+  "write_channel_restored": true,
+  "architecture_ready": true,
+  "checks": [
+    {
+      "name": "codex_runner_yaml_exists",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "codex_runner_permissions_valid_static",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "post_repair_smoke_pass",
+      "pass": true,
+      "evidence": "governance/state/bem646_post_repair_codex_runner_smoke.json"
+    },
+    {
+      "name": "final_acceptance_accepted",
+      "pass": true,
+      "evidence": "governance/state/bem633_final_acceptance_internal_contour_and_auditor_sync.json"
+    },
+    {
+      "name": "provider_route_architecture_closed",
+      "pass": true,
+      "evidence": "governance/state/bem632_close_provider_route_and_delivery_status.json"
+    }
+  ],
+  "claude_fix_commit": "61a3f631",
+  "post_repair_smoke_commit": "cea99c89306fc6961dd5c78af221559e21f4e0d4",
+  "operational_watch": [
+    {
+      "code": "CLAUDE_RUNTIME_PROOF_NOT_CONFIRMED",
+      "source": "BEM-634",
+      "action": "keep reserve route valid until Claude smoke passes"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 15:19 (UTC+3)"
+}

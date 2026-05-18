@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 15:13 (UTC+3)",
+  "updated_at": "2026-05-18 | 15:19 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1022,5 +1022,21 @@
     "report": "governance/reports/bem646_post_repair_codex_runner_smoke.md",
     "blocker": null
   },
-  "codex_runner_write_channel_status": "restored"
+  "codex_runner_write_channel_status": "restored",
+  "bem647_write_channel_restored_and_roadmap_resume": {
+    "status": "write_channel_restored_roadmap_resumed",
+    "write_channel_restored": true,
+    "architecture_ready": true,
+    "state_file": "governance/state/bem647_write_channel_restored_and_roadmap_resume.json",
+    "report": "governance/reports/bem647_write_channel_restored_and_roadmap_resume.md",
+    "blocker": null,
+    "operational_watch": [
+      {
+        "code": "CLAUDE_RUNTIME_PROOF_NOT_CONFIRMED",
+        "source": "BEM-634",
+        "action": "keep reserve route valid until Claude smoke passes"
+      }
+    ]
+  },
+  "roadmap_status": "resumed"
 }
