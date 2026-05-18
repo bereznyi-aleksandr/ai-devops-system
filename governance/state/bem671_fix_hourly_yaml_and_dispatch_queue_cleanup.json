@@ -1,0 +1,53 @@
+{
+  "schema_version": "hourly_yaml_and_dispatch_queue_cleanup.v1",
+  "bem": "BEM-671",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "delivery_recorder_exists",
+      "pass": true,
+      "evidence": "scripts/record_curator_hourly_delivery.py"
+    },
+    {
+      "name": "hourly_workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "hourly_has_only_allowed_cron",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "hourly_uses_recorder_script",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "hourly_has_no_inline_python_block",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "queue_is_empty_after_cleanup",
+      "pass": true,
+      "evidence": "governance/workflow_dispatch_queue"
+    },
+    {
+      "name": "runner_archives_queue_items",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    }
+  ],
+  "removed_queue_files": [
+    "governance/workflow_dispatch_queue/bem637_run_claude_runtime_smoke.json",
+    "governance/workflow_dispatch_queue/curator_hourly_report.json",
+    "governance/workflow_dispatch_queue/claude_primary_runtime_smoke.json",
+    "governance/workflow_dispatch_queue/telegram_send_smoke.json",
+    "governance/workflow_dispatch_queue/bem637_run_curator_hourly_report.json",
+    "governance/workflow_dispatch_queue/curator_hourly_delivery_verification.json",
+    "governance/workflow_dispatch_queue/bem637_run_direct_telegram_smoke.json"
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 18:57 (UTC+3)"
+}

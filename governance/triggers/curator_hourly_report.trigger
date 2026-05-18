@@ -1,1 +1,1 @@
-BEM-669 trigger canonical hourly table report 2026-05-18 | 16:08 (UTC+3)
+BEM-671 trigger fixed canonical hourly report 2026-05-18 | 18:57 (UTC+3)

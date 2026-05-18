@@ -385,7 +385,7 @@ jobs:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           GH_REPOSITORY: ${{ github.repository }}
         run: |
-          mkdir -p governance/workflow_dispatch_results
+          mkdir -p governance/workflow_dispatch_results governance/workflow_dispatch_processed
           if [ ! -d governance/workflow_dispatch_queue ]; then
             echo "No workflow dispatch queue"
             exit 0
@@ -402,6 +402,7 @@ jobs:
             HTTP_CODE=$(curl -sS -o "governance/workflow_dispatch_results/$(basename "$f" .json).response.json" -w "%{http_code}" -X POST "https://api.github.com/repos/${GH_REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches" -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -d "$BODY" || echo "000")
             echo "$HTTP_CODE" > "governance/workflow_dispatch_results/$(basename "$f" .json).status"
             echo "Dispatched ${WORKFLOW}: ${HTTP_CODE}"
+            mv "$f" "governance/workflow_dispatch_processed/$(basename "$f")"
           done
           git add governance/workflow_dispatch_results governance/workflow_dispatch_queue 2>/dev/null || true
           if ! git diff --cached --quiet; then

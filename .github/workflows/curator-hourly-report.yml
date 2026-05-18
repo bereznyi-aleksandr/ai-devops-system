@@ -8,6 +8,7 @@ on:
     paths:
       - 'governance/triggers/curator_hourly_report.trigger'
       - 'scripts/render_curator_hourly_report.py'
+      - 'scripts/record_curator_hourly_delivery.py'
       - '.github/workflows/curator-hourly-report.yml'
 
 permissions:
@@ -25,8 +26,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Syntax check hourly renderer
-        run: python3 -m py_compile scripts/render_curator_hourly_report.py
+      - name: Syntax check hourly scripts
+        run: python3 -m py_compile scripts/render_curator_hourly_report.py scripts/record_curator_hourly_delivery.py
 
       - name: Render hourly report
         run: python3 scripts/render_curator_hourly_report.py
@@ -49,30 +50,13 @@ jobs:
           fi
 
       - name: Record delivery status
-        run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          sep='
-'
-          state_path=Path('governance/state/curator_hourly_report_state.json')
-          state=json.loads(state_path.read_text(encoding='utf-8')) if state_path.exists() else {}
-          delivery=Path('governance/tmp/curator_hourly_report_delivery.txt').read_text(encoding='utf-8', errors='ignore').strip() if Path('governance/tmp/curator_hourly_report_delivery.txt').exists() else 'missing'
-          state['telegram_delivery']=delivery
-          state['status']='sent' if delivery == 'sent' else 'not_sent'
-          state['blocker']=None if delivery == 'sent' else {'code':'TELEGRAM_HOURLY_NOT_SENT','delivery':delivery}
-          state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False)+sep, encoding='utf-8')
-          Path('governance/reports/curator_hourly_report_delivery.md').write_text('# Curator Hourly Delivery
-
-Telegram delivery: '+delivery+'
-', encoding='utf-8')
-          PY
+        run: python3 scripts/record_curator_hourly_delivery.py
 
       - name: Commit hourly report state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/curator_hourly_report_state.json governance/reports/curator_hourly_report_runtime.md governance/reports/curator_hourly_report_delivery.md
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-669 curator hourly canonical table report"
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-671 curator hourly table delivery state"
           git pull --rebase --autostash origin main || true
           git push || true
