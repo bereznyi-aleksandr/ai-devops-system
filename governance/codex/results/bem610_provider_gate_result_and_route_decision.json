@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem610_provider_gate_result_and_route_decision",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Read provider gate result and selected Claude primary candidate or GPT reserve route with explicit evidence",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/provider_gates/bem610_provider_route_decision.json",
+    "governance/reports/bem610_provider_gate_result_and_route_decision.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem610_provider_gate_result_and_route_decision.txt",
+    "governance/codex/proofs/bem610_provider_gate_result_and_route_decision.txt"
+  ],
+  "commit_sha": "ec17e1fa3e6df5e4f6dc1a109e6a86d18b4f99a6",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem610_provider_gate_result_and_route_decision.md",
+  "completed_at": "2026-05-18T03:39:23Z"
+}
