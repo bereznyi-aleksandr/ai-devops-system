@@ -1,0 +1,458 @@
+{
+  "schema_version": "full_readiness_report.v1",
+  "bem": "BEM-668",
+  "status": "production_ready",
+  "telegram_ready": true,
+  "checks": [
+    {
+      "id": "R1",
+      "name": "write_channel_restored",
+      "pass": true,
+      "evidence": "governance/state/bem646_post_repair_codex_runner_smoke.json"
+    },
+    {
+      "id": "R2",
+      "name": "architecture_lint_pass",
+      "pass": true,
+      "evidence": "governance/state/internal_contour_architecture_lint.json"
+    },
+    {
+      "id": "R3",
+      "name": "auditor_plan_approved",
+      "pass": true,
+      "evidence": "governance/internal_contour/auditor/reports/bem653_full_readiness_plan_verdict.json"
+    },
+    {
+      "id": "R4",
+      "name": "telegram_smoke_delivery",
+      "pass": true,
+      "evidence": "governance/state/telegram_send_smoke_result.json"
+    },
+    {
+      "id": "R5",
+      "name": "hourly_delivery_or_verifier",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_report_state.json + governance/state/curator_hourly_delivery_verification.json"
+    },
+    {
+      "id": "R6",
+      "name": "claude_runtime_or_reserve",
+      "pass": true,
+      "evidence": "governance/provider_gates/claude_primary_runtime_smoke_result.json + provider route policy"
+    },
+    {
+      "id": "R7",
+      "name": "telegram_workflow_yaml_safe",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    }
+  ],
+  "claude_runtime_proven": false,
+  "reserve_valid": true,
+  "states": {
+    "telegram_smoke": {
+      "schema_version": "telegram_send_smoke_result.v1",
+      "status": "sent",
+      "status_text": "sent_http_200",
+      "http_status": 200,
+      "telegram_ok": true,
+      "delivery_confirmed": true,
+      "blocker": null
+    },
+    "curator_hourly": {
+      "schema_version": "curator_hourly_report_state.v1",
+      "status": "rendered",
+      "message_file": "governance/tmp/curator_hourly_report_message.txt",
+      "provider_checked": true,
+      "selected_provider": "gpt_reserve",
+      "reserve_used": true,
+      "blocker": null,
+      "event_count": 5,
+      "created_at": "workflow_runtime",
+      "telegram_delivery": "sent"
+    },
+    "delivery_verification": {
+      "schema_version": "curator_hourly_delivery_verification.v1",
+      "checked": true,
+      "telegram_delivery": "sent",
+      "delivery_confirmed": true,
+      "status": "pass",
+      "blocker": null
+    },
+    "claude_runtime": {
+      "schema_version": "claude_primary_runtime_smoke.v1",
+      "provider_checked": true,
+      "primary_provider": "claude_api",
+      "has_anthropic_api_key": true,
+      "model": "gpt-5.2",
+      "status": "http_not_ok",
+      "http_status": 400,
+      "claude_runtime_proven": false,
+      "claude_authored_artifact": false,
+      "blocker": {
+        "code": "CLAUDE_HTTP_NOT_OK",
+        "http_status": 400,
+        "body_preview": "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CbA5ebbdg8V2mpsW6sNUi\"}"
+      }
+    },
+    "architecture_lint": {
+      "schema_version": "internal_contour_architecture_lint.v1",
+      "status": "pass",
+      "checks": [
+        {
+          "name": "role_communication_canon_exists",
+          "pass": true,
+          "evidence": "governance/protocols/ROLE_COMMUNICATION_CANON.md",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "role_execution_evidence_canon_exists",
+          "pass": true,
+          "evidence": "governance/protocols/ROLE_EXECUTION_EVIDENCE_CANON.md",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "bem605_internal_auditor_package_exists",
+          "pass": true,
+          "evidence": "governance/internal_contour/auditor/inbox/bem625_bem605_hourly_report_internal_auditor_review.json",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "bem605_mailbox_misroute_annotated",
+          "pass": true,
+          "evidence": "governance/audit_mailbox/meta/bem625_bem605_mailbox_misroute_annotation.json",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "auditor_to_auditor_mailbox_lane_exists",
+          "pass": true,
+          "evidence": "governance/audit_mailbox/internal_auditor_to_external_auditor",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "provider_route_has_provider_checked",
+          "pass": true,
+          "evidence": "governance/provider_gates/bem610_provider_route_decision.json",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "provider_route_has_primary_provider",
+          "pass": true,
+          "evidence": "governance/provider_gates/bem610_provider_route_decision.json",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "provider_route_has_reserve_provider",
+          "pass": true,
+          "evidence": "governance/provider_gates/bem610_provider_route_decision.json",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "provider_route_has_selected_provider",
+          "pass": true,
+          "evidence": "governance/provider_gates/bem610_provider_route_decision.json",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "provider_route_has_reserve_used",
+          "pass": true,
+          "evidence": "governance/provider_gates/bem610_provider_route_decision.json",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "provider_route_has_reason",
+          "pass": true,
+          "evidence": "governance/provider_gates/bem610_provider_route_decision.json",
+          "severity": "high",
+          "note": ""
+        },
+        {
+          "name": "historical_bem605_mailbox_misroute_not_unannotated",
+          "pass": true,
+          "evidence": "governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md",
+          "severity": "high",
+          "note": "Old misroute must be annotated and superseded."
+        },
+        {
+          "name": "deno_labeled_transport_not_executor",
+          "pass": true,
+          "evidence": "governance/protocols/ROLE_COMMUNICATION_CANON.md",
+          "severity": "high",
+          "note": ""
+        }
+      ],
+      "blocker": null,
+      "created_at": "workflow_runtime"
+    },
+    "write_channel_smoke": {
+      "schema_version": "codex_runner_post_repair_smoke.v1",
+      "bem": "BEM-646",
+      "status": "pass",
+      "checks": [
+        {
+          "name": "codex_runner_exists",
+          "pass": true,
+          "evidence": ".github/workflows/codex-runner.yml"
+        },
+        {
+          "name": "permissions_has_contents_write",
+          "pass": true,
+          "evidence": ".github/workflows/codex-runner.yml"
+        },
+        {
+          "name": "permissions_has_actions_read",
+          "pass": true,
+          "evidence": ".github/workflows/codex-runner.yml"
+        },
+        {
+          "name": "no_duplicate_top_level_actions_read",
+          "pass": true,
+          "evidence": ".github/workflows/codex-runner.yml"
+        },
+        {
+          "name": "workflow_dispatch_present",
+          "pass": true,
+          "evidence": ".github/workflows/codex-runner.yml"
+        },
+        {
+          "name": "python_executor_patterns_present",
+          "pass": true,
+          "evidence": ".github/workflows/codex-runner.yml"
+        }
+      ],
+      "blocker": null,
+      "created_at": "2026-05-18 | 15:13 (UTC+3)"
+    },
+    "auditor_verdict": {
+      "schema_version": "internal_auditor_verdict.v1",
+      "bem": "BEM-653",
+      "source_request": "governance/audit_mailbox/external_auditor_to_internal_auditor/bem652_full_readiness_plan_request.md",
+      "source_plan": "governance/internal_contour/analyst/plans/bem652_internal_contour_full_readiness_plan.json",
+      "mailbox_response": "governance/audit_mailbox/internal_auditor_to_external_auditor/bem652_full_readiness_plan_response.md",
+      "status": "approved_with_mandatory_controls",
+      "approved_workstreams": [
+        "W1",
+        "W2",
+        "W3",
+        "W4",
+        "W5"
+      ],
+      "hard_blockers_for_full_readiness": [
+        "telegram_delivery_confirmed"
+      ],
+      "non_blocking_for_internal_development": [
+        "claude_primary_runtime_not_proven_if_reserve_route_valid"
+      ],
+      "required_execution_order": [
+        "diagnose_hourly_non_delivery",
+        "telegram_send_smoke",
+        "curator_hourly_retrigger",
+        "delivery_verifier",
+        "claude_runtime_recheck",
+        "final_readiness_report"
+      ],
+      "decision": "Proceed to executor. Telegram hourly delivery must be repaired before marking hourly-report production-ready.",
+      "created_at": "2026-05-18 | 15:44 (UTC+3)",
+      "blocker": null
+    },
+    "bem665": {
+      "schema_version": "dispatch_results_and_delivery_verification.v1",
+      "bem": "BEM-665",
+      "status": "delivery_confirmed",
+      "dispatch_ok": true,
+      "status_files": [
+        {
+          "name": "bem637_run_claude_runtime_smoke",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "bem637_run_curator_hourly_report",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "bem637_run_direct_telegram_smoke",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "claude_primary_runtime_smoke",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "curator_hourly_delivery_verification",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "curator_hourly_report",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "telegram_send_smoke",
+          "status": "204",
+          "response": ""
+        }
+      ],
+      "smoke_ok": true,
+      "hourly_ok": true,
+      "verify_ok": true,
+      "telegram_smoke_state": {
+        "schema_version": "telegram_send_smoke_result.v1",
+        "status": "sent",
+        "status_text": "sent_http_200",
+        "http_status": 200,
+        "telegram_ok": true,
+        "delivery_confirmed": true,
+        "blocker": null
+      },
+      "hourly_state": {
+        "schema_version": "curator_hourly_report_state.v1",
+        "status": "rendered",
+        "message_file": "governance/tmp/curator_hourly_report_message.txt",
+        "provider_checked": true,
+        "selected_provider": "gpt_reserve",
+        "reserve_used": true,
+        "blocker": null,
+        "event_count": 5,
+        "created_at": "workflow_runtime",
+        "telegram_delivery": "sent"
+      },
+      "delivery_verification": {
+        "schema_version": "curator_hourly_delivery_verification.v1",
+        "checked": true,
+        "telegram_delivery": "sent",
+        "delivery_confirmed": true,
+        "status": "pass",
+        "blocker": null
+      },
+      "claude_runtime_state": {
+        "schema_version": "claude_primary_runtime_smoke.v1",
+        "provider_checked": true,
+        "primary_provider": "claude_api",
+        "has_anthropic_api_key": true,
+        "model": "gpt-5.2",
+        "status": "http_not_ok",
+        "http_status": 400,
+        "claude_runtime_proven": false,
+        "claude_authored_artifact": false,
+        "blocker": {
+          "code": "CLAUDE_HTTP_NOT_OK",
+          "http_status": 400,
+          "body_preview": "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CbA5KYcGXz1QSWhPi1oZR\"}"
+        }
+      },
+      "blocker": null,
+      "created_at": "2026-05-18 | 16:01 (UTC+3)"
+    },
+    "bem666": {
+      "schema_version": "delivery_state_decision.v1",
+      "bem": "BEM-666",
+      "status": "telegram_delivery_ready",
+      "next_action": "final_readiness_report",
+      "bem665_status": "delivery_confirmed",
+      "status_files": [
+        {
+          "name": "bem637_run_claude_runtime_smoke",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "bem637_run_curator_hourly_report",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "bem637_run_direct_telegram_smoke",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "claude_primary_runtime_smoke",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "curator_hourly_delivery_verification",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "curator_hourly_report",
+          "status": "204",
+          "response": ""
+        },
+        {
+          "name": "telegram_send_smoke",
+          "status": "204",
+          "response": ""
+        }
+      ],
+      "smoke_ok": true,
+      "hourly_ok": true,
+      "verify_ok": true,
+      "smoke_state": {
+        "schema_version": "telegram_send_smoke_result.v1",
+        "status": "sent",
+        "status_text": "sent_http_200",
+        "http_status": 200,
+        "telegram_ok": true,
+        "delivery_confirmed": true,
+        "blocker": null
+      },
+      "hourly_state": {
+        "schema_version": "curator_hourly_report_state.v1",
+        "status": "rendered",
+        "message_file": "governance/tmp/curator_hourly_report_message.txt",
+        "provider_checked": true,
+        "selected_provider": "gpt_reserve",
+        "reserve_used": true,
+        "blocker": null,
+        "event_count": 5,
+        "created_at": "workflow_runtime",
+        "telegram_delivery": "sent"
+      },
+      "verification_state": {
+        "schema_version": "curator_hourly_delivery_verification.v1",
+        "checked": true,
+        "telegram_delivery": "sent",
+        "delivery_confirmed": true,
+        "status": "pass",
+        "blocker": null
+      },
+      "workflow_static": {
+        "telegram_no_heredoc": true,
+        "telegram_file_based_message": true,
+        "curator_send_uses_text_file": true,
+        "codex_dispatch_queue": true
+      },
+      "blocker": null,
+      "created_at": "2026-05-18 | 16:03 (UTC+3)"
+    },
+    "bem667": {
+      "schema_version": "delivery_repair_based_on_decision.v1",
+      "bem": "BEM-667",
+      "status": "ready_for_final_readiness_report",
+      "previous_status": "telegram_delivery_ready",
+      "next_action": "final_readiness_report",
+      "queue_files": [],
+      "blocker": null,
+      "created_at": "2026-05-18 | 16:04 (UTC+3)"
+    }
+  },
+  "blocker": null,
+  "created_at": "2026-05-18 | 16:05 (UTC+3)"
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "internal_auditor_final_readiness_verdict.v1",
+  "bem": "BEM-668",
+  "status": "approved_ready",
+  "report": "governance/reports/bem668_final_readiness_or_exact_blocker.md",
+  "checks": [
+    {
+      "id": "R1",
+      "name": "write_channel_restored",
+      "pass": true,
+      "evidence": "governance/state/bem646_post_repair_codex_runner_smoke.json"
+    },
+    {
+      "id": "R2",
+      "name": "architecture_lint_pass",
+      "pass": true,
+      "evidence": "governance/state/internal_contour_architecture_lint.json"
+    },
+    {
+      "id": "R3",
+      "name": "auditor_plan_approved",
+      "pass": true,
+      "evidence": "governance/internal_contour/auditor/reports/bem653_full_readiness_plan_verdict.json"
+    },
+    {
+      "id": "R4",
+      "name": "telegram_smoke_delivery",
+      "pass": true,
+      "evidence": "governance/state/telegram_send_smoke_result.json"
+    },
+    {
+      "id": "R5",
+      "name": "hourly_delivery_or_verifier",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_report_state.json + governance/state/curator_hourly_delivery_verification.json"
+    },
+    {
+      "id": "R6",
+      "name": "claude_runtime_or_reserve",
+      "pass": true,
+      "evidence": "governance/provider_gates/claude_primary_runtime_smoke_result.json + provider route policy"
+    },
+    {
+      "id": "R7",
+      "name": "telegram_workflow_yaml_safe",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 16:05 (UTC+3)"
+}
