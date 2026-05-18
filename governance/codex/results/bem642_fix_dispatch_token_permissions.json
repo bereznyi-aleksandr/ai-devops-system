@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem642_fix_dispatch_token_permissions",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Fixed workflow dispatch token fallback and actions write permission in codex-runner and dispatch queue runner",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/WORKFLOW_DISPATCH_TOKEN_PERMISSIONS.md",
+    "governance/state/bem642_fix_dispatch_token_permissions.json",
+    "governance/reports/bem642_fix_dispatch_token_permissions.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem642_fix_dispatch_token_permissions.txt",
+    ".github/workflows/codex-runner.yml",
+    ".github/workflows/workflow-dispatch-queue-runner.yml",
+    "governance/codex/proofs/bem642_fix_dispatch_token_permissions.txt"
+  ],
+  "commit_sha": "b301bf075c23e91f65288bf29390daecb3e2985d",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem642_fix_dispatch_token_permissions.md",
+  "completed_at": "2026-05-18T04:53:13Z"
+}
