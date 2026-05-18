@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 19:59 (UTC+3)",
+  "updated_at": "2026-05-18 | 20:05 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1568,5 +1568,11 @@
     "active_file": "governance/agreements/active/bem682_multi_agent_infrastructure_agreement_active.json",
     "reminder_file": null,
     "blocker": null
-  }
+  },
+  "bem684_event_mailbox_watcher_retry": {
+    "status": "pass",
+    "workflow": ".github/workflows/audit-mailbox-watcher.yml",
+    "blocker": null
+  },
+  "audit_mailbox_watcher": "event_driven_enabled"
 }

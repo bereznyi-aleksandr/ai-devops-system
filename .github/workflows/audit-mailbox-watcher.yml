@@ -1,0 +1,38 @@
+name: Audit Mailbox Watcher
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/audit_mailbox/claude_to_gpt/**'
+      - 'governance/audit_mailbox/external_auditor_to_internal_auditor/**'
+      - 'governance/agreements/active/**'
+      - 'scripts/audit_mailbox_watcher.py'
+      - '.github/workflows/audit-mailbox-watcher.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audit-mailbox-watcher
+  cancel-in-progress: false
+
+jobs:
+  audit-mailbox-watcher:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Syntax check watcher
+        run: python3 -m py_compile scripts/audit_mailbox_watcher.py
+      - name: Run watcher
+        run: python3 scripts/audit_mailbox_watcher.py
+      - name: Commit watcher state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/state/audit_mailbox_watcher_state.json governance/reports/audit_mailbox_watcher_report.md governance/telegram/outbox/audit_mailbox_notification.json
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-684 audit mailbox watcher state"
+          git pull --rebase --autostash origin main || true
+          git push || true

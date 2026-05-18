@@ -1,0 +1,30 @@
+{
+  "schema_version": "event_mailbox_watcher_retry.v1",
+  "bem": "BEM-684",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "script",
+      "pass": true,
+      "evidence": "scripts/audit_mailbox_watcher.py"
+    },
+    {
+      "name": "workflow",
+      "pass": true,
+      "evidence": ".github/workflows/audit-mailbox-watcher.yml"
+    },
+    {
+      "name": "no_schedule",
+      "pass": true,
+      "evidence": ".github/workflows/audit-mailbox-watcher.yml"
+    },
+    {
+      "name": "inbound_paths",
+      "pass": true,
+      "evidence": ".github/workflows/audit-mailbox-watcher.yml"
+    }
+  ],
+  "workflow": ".github/workflows/audit-mailbox-watcher.yml",
+  "blocker": null,
+  "created_at": "2026-05-18 | 20:05 (UTC+3)"
+}
