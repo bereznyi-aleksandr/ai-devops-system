@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem656_check_telegram_smoke_and_hourly_results",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Checked Telegram send smoke and curator hourly delivery result states after safe triggers",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem656_check_telegram_smoke_and_hourly_results.json",
+    "governance/reports/bem656_check_telegram_smoke_and_hourly_results.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem656_check_telegram_smoke_and_hourly_results.txt",
+    "governance/codex/proofs/bem656_check_telegram_smoke_and_hourly_results.txt"
+  ],
+  "commit_sha": "ca70a5d69134712e8475f9a9cfc5aeec727b7bab",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem656_check_telegram_smoke_and_hourly_results.md",
+  "completed_at": "2026-05-18T12:48:10Z"
+}
