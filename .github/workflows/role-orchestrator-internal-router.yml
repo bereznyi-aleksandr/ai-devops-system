@@ -1,0 +1,39 @@
+name: Role Orchestrator Internal Router
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/role_orchestrator/inbox/**'
+      - 'scripts/role_orchestrator_internal_router.py'
+      - '.github/workflows/role-orchestrator-internal-router.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: role-orchestrator-internal-router
+  cancel-in-progress: false
+
+jobs:
+  route-role-orchestrator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Syntax check internal router
+        run: python3 -m py_compile scripts/role_orchestrator_internal_router.py
+
+      - name: Route role orchestrator inbox to internal contour
+        run: python3 scripts/role_orchestrator_internal_router.py
+
+      - name: Commit internal route result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/state/role_orchestrator_internal_router_state.json governance/internal_contour governance/tasks/pending governance/transport/results.jsonl governance/reports/role_orchestrator_internal_router_result.md
+          git commit -m "BEM-598 role orchestrator internal route result" || echo "No changes"
+          git pull --rebase origin main || git rebase --abort || true
+          git push || (git pull --rebase origin main && git push)

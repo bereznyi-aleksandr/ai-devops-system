@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 22:55 (UTC+3)",
+  "updated_at": "2026-05-17 | 22:58 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -565,5 +565,19 @@
     "pending_task": "governance/tasks/pending/role_orchestrator_operator_decision_bem584_decision_format_live_test.md",
     "blocker": null
   },
-  "operator_decision_role_orchestrator_handoff": "completed"
+  "operator_decision_role_orchestrator_handoff": "completed",
+  "bem598_role_orchestrator_to_internal": {
+    "status": "completed",
+    "workflow": ".github/workflows/role-orchestrator-internal-router.yml",
+    "script": "scripts/role_orchestrator_internal_router.py",
+    "created": [
+      {
+        "inbox": "governance/internal_contour/inbox/operator_decision_bem584_decision_format_live_test.json",
+        "task": "governance/internal_contour/tasks/operator_decision_bem584_decision_format_live_test.json",
+        "pending": "governance/tasks/pending/internal_contour_operator_decision_bem584_decision_format_live_test.md"
+      }
+    ],
+    "blocker": null
+  },
+  "operator_decision_internal_contour_handoff": "completed"
 }
