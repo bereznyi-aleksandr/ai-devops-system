@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:27 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:30 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,13 +103,7 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": {
-    "code": "RUNTIME_PROOF_REMAINS",
-    "items": [
-      "CLAUDE_PRIMARY_RUNTIME_NOT_PROVEN",
-      "LIVE_TELEGRAM_DELIVERY_NOT_CONFIRMED"
-    ]
-  },
+  "blocker": null,
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -892,5 +886,11 @@
       ]
     }
   },
-  "internal_contour_calibration": "completed_with_runtime_proof_blockers"
+  "internal_contour_calibration": "completed_with_runtime_proof_blockers",
+  "bem630_runtime_delivery_proof_no_import_hook": {
+    "status": "workflows_created_and_triggered",
+    "state_file": "governance/state/bem630_runtime_delivery_proof_no_import_hook.json",
+    "blocker": null
+  },
+  "runtime_proof_and_delivery_verification": "triggered_safe"
 }

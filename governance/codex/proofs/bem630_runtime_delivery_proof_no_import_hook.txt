@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem630_runtime_delivery_proof_no_import_hook
+task_type: code_patch
+executed_at: 2026-05-18T04:31:04Z
+ops_applied: Created Claude runtime proof and delivery verification workflows without dynamic import hook and triggered them, custom_script
+changed_files: scripts/claude_primary_runtime_smoke.py, .github/workflows/claude-primary-runtime-smoke.yml, scripts/verify_curator_hourly_delivery.py, .github/workflows/curator-hourly-delivery-verification.yml, governance/triggers/claude_primary_runtime_smoke.trigger, governance/triggers/curator_hourly_report.trigger, governance/protocols/RUNTIME_PROOF_AND_DELIVERY_VERIFICATION.md, governance/state/bem630_runtime_delivery_proof_no_import_hook.json, governance/reports/bem630_runtime_delivery_proof_no_import_hook.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem630_runtime_delivery_proof_no_import_hook.txt
+errors: none

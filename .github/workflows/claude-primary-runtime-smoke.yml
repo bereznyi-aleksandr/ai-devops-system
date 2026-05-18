@@ -1,0 +1,42 @@
+name: Claude Primary Runtime Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/triggers/claude_primary_runtime_smoke.trigger'
+      - 'scripts/claude_primary_runtime_smoke.py'
+      - '.github/workflows/claude-primary-runtime-smoke.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: claude-primary-runtime-smoke
+  cancel-in-progress: false
+
+jobs:
+  claude-primary-runtime-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Syntax check Claude runtime smoke
+        run: python3 -m py_compile scripts/claude_primary_runtime_smoke.py
+
+      - name: Run Claude runtime smoke
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AUDITOR_MODEL: ${{ secrets.AUDITOR_MODEL }}
+        run: python3 scripts/claude_primary_runtime_smoke.py
+
+      - name: Commit Claude runtime smoke result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/provider_gates/claude_primary_runtime_smoke_result.json governance/reports/claude_primary_runtime_smoke_result.md
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-630 Claude runtime smoke result"
+          git pull --rebase --autostash origin main || true
+          git push || true

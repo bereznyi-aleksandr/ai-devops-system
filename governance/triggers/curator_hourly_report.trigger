@@ -1,1 +1,1 @@
-BEM-620 live trigger after superseding old failed runs 2026-05-18 | 06:54 (UTC+3)
+BEM-630 trigger curator hourly report for delivery verification 2026-05-18 | 07:30 (UTC+3)
