@@ -2,6 +2,8 @@
   "queue_id": "bem637_run_curator_hourly_report",
   "workflow": "curator-hourly-report.yml",
   "reason": "Need live hourly report delivery proof via workflow_dispatch, not push-trigger cascade.",
-  "status": "queued",
-  "created_at": "2026-05-18 | 07:49 (UTC+3)"
+  "status": "dispatched",
+  "created_at": "2026-05-18 | 07:49 (UTC+3)",
+  "dispatch_http_status": 204,
+  "dispatch_response_preview": ""
 }
