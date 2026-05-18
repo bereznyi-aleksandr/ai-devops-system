@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem593_operator_decision_curator_handoff",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Implemented automatic operator decision to curator inbox handoff workflow",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/OPERATOR_DECISION_CURATOR_HANDOFF.md",
+    "scripts/decision_curator_handoff.py",
+    ".github/workflows/decision-curator-handoff.yml",
+    "governance/reports/bem593_operator_decision_curator_handoff.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem593_operator_decision_curator_handoff.txt",
+    "governance/codex/proofs/bem593_operator_decision_curator_handoff.txt"
+  ],
+  "commit_sha": "9eb1a340b7c5e68dc289ebc29d9b64b97307409f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem593_operator_decision_curator_handoff.md",
+  "completed_at": "2026-05-18T02:44:41Z"
+}
