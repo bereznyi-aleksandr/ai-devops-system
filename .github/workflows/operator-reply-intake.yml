@@ -26,17 +26,21 @@ jobs:
       - name: Syntax check reply intake
         run: python3 -m py_compile scripts/operator_reply_intake.py
 
-      - name: Fetch Telegram updates
+      - name: Fetch Telegram webhook info and updates
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           mkdir -p governance/tmp
           if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
             echo "not_sent_missing_secret" > governance/tmp/operator_reply_status.txt
+            echo "not_sent_missing_secret" > governance/tmp/operator_reply_webhook_status.txt
             echo '{"ok":false,"result":[]}' > governance/tmp/operator_reply_updates.json
+            echo '{"ok":false,"result":{}}' > governance/tmp/operator_reply_webhook_info.json
           else
-            HTTP_CODE=$(curl -sS -o governance/tmp/operator_reply_updates.json -w "%{http_code}" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates" || echo "000")
-            echo "$HTTP_CODE" > governance/tmp/operator_reply_status.txt
+            WH_CODE=$(curl -sS -o governance/tmp/operator_reply_webhook_info.json -w "%{http_code}" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo" || echo "000")
+            echo "$WH_CODE" > governance/tmp/operator_reply_webhook_status.txt
+            UP_CODE=$(curl -sS -o governance/tmp/operator_reply_updates.json -w "%{http_code}" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates" || echo "000")
+            echo "$UP_CODE" > governance/tmp/operator_reply_status.txt
           fi
 
       - name: Parse and record operator reply
@@ -47,6 +51,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/operator_reply_intake_state.json governance/operator_decisions governance/tasks/pending governance/transport/results.jsonl governance/reports/operator_reply_intake_result.md
-          git commit -m "BEM-591 operator reply intake result" || echo "No changes"
+          git commit -m "BEM-602 operator reply intake result" || echo "No changes"
           git pull --rebase origin main || git rebase --abort || true
           git push || (git pull --rebase origin main && git push)

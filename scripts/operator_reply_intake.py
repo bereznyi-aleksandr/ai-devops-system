@@ -3,7 +3,9 @@ import json
 from pathlib import Path
 SEP = bytes.fromhex("0a").decode("ascii")
 UPDATES_PATH = Path("governance/tmp/operator_reply_updates.json")
+WEBHOOK_PATH = Path("governance/tmp/operator_reply_webhook_info.json")
 STATUS_PATH = Path("governance/tmp/operator_reply_status.txt")
+WEBHOOK_STATUS_PATH = Path("governance/tmp/operator_reply_webhook_status.txt")
 STATE_PATH = Path("governance/state/operator_reply_intake_state.json")
 DISPATCH_STATE_PATH = Path("governance/state/operator_decision_dispatcher_state.json")
 DECISIONS_DIR = Path("governance/operator_decisions")
@@ -29,6 +31,10 @@ def active_decision_id():
     last = st.get("last_run") if isinstance(st, dict) else None
     if isinstance(last, dict) and last.get("decision_id"):
         return str(last.get("decision_id"))
+    # fallback to known active test decision if already exists
+    known = Path("governance/operator_decisions/bem584_decision_format_live_test.json")
+    if known.exists():
+        return "bem584_decision_format_live_test"
     return "unknown_decision"
 def normalize_choice(text):
     raw = " ".join(str(text or "").strip().split())
@@ -43,11 +49,29 @@ def normalize_choice(text):
         return "custom", raw
     return None, raw
 def extract_updates(data):
-    result = data.get("result") if isinstance(data, dict) else []
+    if not isinstance(data, dict):
+        return []
+    result = data.get("result")
     return result if isinstance(result, list) else []
+def webhook_active(webhook_info):
+    if not isinstance(webhook_info, dict):
+        return False
+    result = webhook_info.get("result") or {}
+    url = result.get("url") if isinstance(result, dict) else ""
+    return bool(url)
+def classify_http(http_status, webhook_info, updates):
+    if str(http_status).strip() == "403":
+        return {"code":"TELEGRAM_FORBIDDEN","message":"Telegram Bot API returned HTTP 403. Token may be revoked/invalid or bot lacks access to chat."}
+    if webhook_active(webhook_info):
+        return {"code":"TELEGRAM_WEBHOOK_ACTIVE","message":"Webhook is active; polling getUpdates may not receive replies reliably."}
+    if isinstance(updates, dict) and updates.get("ok") is False:
+        return {"code":"TELEGRAM_API_NOT_OK","message":str(updates.get("description") or updates)[:300]}
+    return None
 def main():
-    status = STATUS_PATH.read_text(encoding="utf-8", errors="ignore").strip() if STATUS_PATH.exists() else "missing_status"
+    http_status = STATUS_PATH.read_text(encoding="utf-8", errors="ignore").strip() if STATUS_PATH.exists() else "missing_status"
+    webhook_http_status = WEBHOOK_STATUS_PATH.read_text(encoding="utf-8", errors="ignore").strip() if WEBHOOK_STATUS_PATH.exists() else "missing_webhook_status"
     updates = load_json(UPDATES_PATH, {})
+    webhook_info = load_json(WEBHOOK_PATH, {})
     state = load_json(STATE_PATH, {})
     seen = set(state.get("seen_update_ids", []))
     chosen = None
@@ -66,42 +90,34 @@ def main():
         choice, raw = normalize_choice(text)
         if choice:
             chosen = {"update_id": uid, "message": msg, "choice": choice, "raw_text": raw}
+    blocker = classify_http(http_status, webhook_info, updates)
     record = None
-    blocker = None
     if chosen is None:
-        status_out = "no_operator_reply_found"
+        status_out = "no_operator_reply_found" if blocker is None else "blocked"
     else:
         decision_id = active_decision_id()
         DECISIONS_DIR.mkdir(parents=True, exist_ok=True)
         HANDOFF_DIR.mkdir(parents=True, exist_ok=True)
-        rec = {
-            "schema_version": "operator_decision.v1",
-            "decision_id": decision_id,
-            "source": "telegram_text_reply",
-            "operator_choice": chosen.get("choice"),
-            "raw_text": chosen.get("raw_text"),
-            "telegram_update_id": chosen.get("update_id"),
-            "status": "received",
-            "handoff_to": "curator",
-            "created_at": "workflow_runtime"
-        }
+        rec = {"schema_version":"operator_decision.v1","decision_id":decision_id,"source":"telegram_text_reply_hardened_poller","operator_choice":chosen.get("choice"),"raw_text":chosen.get("raw_text"),"telegram_update_id":chosen.get("update_id"),"status":"received","handoff_to":"curator","created_at":"workflow_runtime"}
         decision_path = DECISIONS_DIR / (decision_id + ".json")
         save_json(decision_path, rec)
         handoff = HANDOFF_DIR / ("operator_decision_" + decision_id + ".md")
         handoff.write_text("# Operator decision handoff" + SEP + SEP + "Decision: " + decision_id + SEP + "Choice: " + str(rec.get("operator_choice")) + SEP + "Raw: " + str(rec.get("raw_text")) + SEP + SEP + "Next: curator must route this decision into the internal contour." + SEP, encoding="utf-8")
         record = rec
         status_out = "operator_decision_recorded"
+        blocker = None
     for upd in extract_updates(updates):
         if upd.get("update_id") is not None:
             seen.add(str(upd.get("update_id")))
     state["seen_update_ids"] = sorted(seen)
     state["last_update_id"] = max_update_id
-    state["last_run"] = {"http_status": status, "status": status_out, "record": record, "blocker": blocker}
+    state["last_run"] = {"http_status":http_status,"webhook_http_status":webhook_http_status,"webhook_active":webhook_active(webhook_info),"status":status_out,"record":record,"blocker":blocker}
     save_json(STATE_PATH, state)
-    tr = {"record_type":"operator_reply_intake","cycle_id":"bem586-operator-reply-intake-poller","status":status_out,"http_status":status,"record":record,"blocker":blocker,"created_at":"workflow_runtime"}
+    tr = {"record_type":"operator_reply_intake","cycle_id":"bem602-harden-telegram-reply-intake","status":status_out,"http_status":http_status,"webhook_http_status":webhook_http_status,"webhook_active":webhook_active(webhook_info),"record":record,"blocker":blocker,"created_at":"workflow_runtime"}
     append_jsonl(TRANSPORT_PATH, tr)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text("# BEM-586 | Operator Reply Intake Result" + SEP + SEP + json.dumps(tr, ensure_ascii=False, indent=2) + SEP, encoding="utf-8")
+    lines = ["# BEM-602 | Operator Reply Intake Result", "", "## Status", status_out, "", "## HTTP", "getUpdates: " + str(http_status), "getWebhookInfo: " + str(webhook_http_status), "webhook_active: " + str(webhook_active(webhook_info)), "", "## Record", json.dumps(record, ensure_ascii=False, indent=2), "", "## Blocker", "null" if blocker is None else json.dumps(blocker, ensure_ascii=False, indent=2)]
+    REPORT_PATH.write_text(SEP.join(lines) + SEP, encoding="utf-8")
     print(json.dumps(tr, ensure_ascii=False))
 if __name__ == "__main__":
     main()

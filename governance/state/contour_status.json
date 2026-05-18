@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 23:04 (UTC+3)",
+  "updated_at": "2026-05-18 | 05:56 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -601,5 +601,16 @@
     "final": "governance/internal_contour/final/bem601_operator_decision_pipeline_final.json",
     "blocker": null
   },
-  "operator_decision_pipeline_status": "production_ready"
+  "operator_decision_pipeline_status": "production_ready",
+  "bem602_harden_telegram_reply_intake": {
+    "status": "completed",
+    "workflow": ".github/workflows/operator-reply-intake.yml",
+    "script": "scripts/operator_reply_intake.py",
+    "diagnostics": [
+      "getWebhookInfo",
+      "HTTP403 classification",
+      "webhook_active classification"
+    ],
+    "blocker": null
+  }
 }

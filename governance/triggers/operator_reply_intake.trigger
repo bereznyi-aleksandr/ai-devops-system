@@ -1,1 +1,1 @@
-BEM-591 trigger operator reply intake safe yaml at 2026-05-17 | 22:40 (UTC+3)
+BEM-602 trigger hardened reply intake at 2026-05-18 | 05:56 (UTC+3)
