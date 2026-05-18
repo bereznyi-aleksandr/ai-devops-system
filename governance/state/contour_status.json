@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:47 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:48 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,14 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "DIRECT_TELEGRAM_SMOKE_NOT_CONFIRMED",
+    "smoke_result_exists": true,
+    "smoke_status": "runtime_error",
+    "smoke_blocker": {
+      "code": "TELEGRAM_SMOKE_RUNTIME_ERROR"
+    }
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -950,5 +957,21 @@
     "state_file": "governance/state/bem635_direct_telegram_delivery_smoke.json",
     "blocker": null
   },
-  "telegram_delivery_proof_layer": "direct_smoke_triggered"
+  "telegram_delivery_proof_layer": "direct_smoke_triggered",
+  "bem636_direct_telegram_smoke_result_check": {
+    "status": "direct_delivery_failed_or_not_confirmed",
+    "state_file": "governance/state/bem636_direct_telegram_smoke_result_check.json",
+    "direct_ok": false,
+    "hourly_ok": true,
+    "blocker": {
+      "code": "DIRECT_TELEGRAM_SMOKE_NOT_CONFIRMED",
+      "smoke_result_exists": true,
+      "smoke_status": "runtime_error",
+      "smoke_blocker": {
+        "code": "TELEGRAM_SMOKE_RUNTIME_ERROR"
+      }
+    },
+    "watch": null
+  },
+  "telegram_delivery_proof_status": "direct_delivery_failed_or_not_confirmed"
 }
