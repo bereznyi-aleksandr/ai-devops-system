@@ -8,7 +8,6 @@ on:
     paths:
       - 'governance/triggers/curator_hourly_report.trigger'
       - 'scripts/render_curator_hourly_report.py'
-      - 'scripts/record_curator_hourly_delivery.py'
       - '.github/workflows/curator-hourly-report.yml'
 
 permissions:
@@ -26,10 +25,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Syntax check hourly scripts
-        run: python3 -m py_compile scripts/render_curator_hourly_report.py scripts/record_curator_hourly_delivery.py
+      - name: Syntax check hourly renderer
+        run: python3 -m py_compile scripts/render_curator_hourly_report.py
 
-      - name: Render canonical hourly report
+      - name: Render hourly report
         run: python3 scripts/render_curator_hourly_report.py
 
       - name: Send Telegram hourly report
@@ -37,23 +36,43 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ ! -s governance/tmp/curator_hourly_report_message.txt ]; then
-            echo "not_sent_empty_message" > governance/tmp/curator_hourly_report_delivery.txt
-          elif [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+          mkdir -p governance/tmp
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
             echo "not_sent_missing_secret" > governance/tmp/curator_hourly_report_delivery.txt
+            printf '{"ok":false,"description":"missing secret"}' > governance/tmp/curator_hourly_report_response.json
+          elif [ ! -s governance/tmp/curator_hourly_report_message.txt ]; then
+            echo "not_sent_missing_message" > governance/tmp/curator_hourly_report_delivery.txt
+            printf '{"ok":false,"description":"missing message"}' > governance/tmp/curator_hourly_report_response.json
           else
-            HTTP_CODE=$(curl -sS -o governance/tmp/curator_hourly_report_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text@governance/tmp/curator_hourly_report_message.txt" --data-urlencode "disable_web_page_preview=true" || echo "000")
+            HTTP_CODE=$(curl -sS -o governance/tmp/curator_hourly_report_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text@governance/tmp/curator_hourly_report_message.txt" --data-urlencode "parse_mode=Markdown" --data-urlencode "disable_web_page_preview=true" || echo "000")
             if [ "$HTTP_CODE" = "200" ]; then echo "sent" > governance/tmp/curator_hourly_report_delivery.txt; else echo "not_sent_http_${HTTP_CODE}" > governance/tmp/curator_hourly_report_delivery.txt; fi
           fi
 
       - name: Record delivery status
-        run: python3 scripts/record_curator_hourly_delivery.py
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          sep='
+'
+          state_path=Path('governance/state/curator_hourly_report_state.json')
+          state=json.loads(state_path.read_text(encoding='utf-8')) if state_path.exists() else {}
+          delivery=Path('governance/tmp/curator_hourly_report_delivery.txt').read_text(encoding='utf-8', errors='ignore').strip() if Path('governance/tmp/curator_hourly_report_delivery.txt').exists() else 'missing'
+          state['telegram_delivery']=delivery
+          state['status']='sent' if delivery == 'sent' else 'not_sent'
+          state['blocker']=None if delivery == 'sent' else {'code':'TELEGRAM_HOURLY_NOT_SENT','delivery':delivery}
+          state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False)+sep, encoding='utf-8')
+          Path('governance/reports/curator_hourly_report_delivery.md').write_text('# Curator Hourly Delivery
+
+Telegram delivery: '+delivery+'
+', encoding='utf-8')
+          PY
 
       - name: Commit hourly report state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/state/curator_hourly_report_state.json governance/reports/curator_hourly_report_runtime.md
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-618 curator hourly report runtime"
+          git add governance/state/curator_hourly_report_state.json governance/reports/curator_hourly_report_runtime.md governance/reports/curator_hourly_report_delivery.md
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-669 curator hourly canonical table report"
           git pull --rebase --autostash origin main || true
           git push || true

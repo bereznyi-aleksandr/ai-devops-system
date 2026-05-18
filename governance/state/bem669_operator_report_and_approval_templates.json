@@ -1,0 +1,48 @@
+{
+  "schema_version": "operator_report_and_approval_templates.v1",
+  "bem": "BEM-669",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "hourly_renderer_exists",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "approval_renderer_exists",
+      "pass": true,
+      "evidence": "scripts/render_operator_approval_message.py"
+    },
+    {
+      "name": "hourly_workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "only_allowed_hourly_schedule_present",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "hourly_uses_table_renderer",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "hourly_sends_text_file",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "canon_protocol_created",
+      "pass": true,
+      "evidence": "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md"
+    }
+  ],
+  "hourly_renderer": "scripts/render_curator_hourly_report.py",
+  "approval_renderer": "scripts/render_operator_approval_message.py",
+  "hourly_workflow": ".github/workflows/curator-hourly-report.yml",
+  "protocol": "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md",
+  "blocker": null,
+  "created_at": "2026-05-18 | 16:08 (UTC+3)"
+}

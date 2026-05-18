@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 16:07 (UTC+3)",
+  "updated_at": "2026-05-18 | 16:08 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1284,5 +1284,13 @@
     "state_file": "governance/state/bem669_find_telegram_report_renderers.json",
     "blocker": null
   },
-  "telegram_template_refactor_status": "renderers_found"
+  "telegram_template_refactor_status": "renderers_found",
+  "bem669_operator_report_and_approval_templates": {
+    "status": "pass",
+    "state_file": "governance/state/bem669_operator_report_and_approval_templates.json",
+    "report": "governance/reports/bem669_operator_report_and_approval_templates.md",
+    "blocker": null
+  },
+  "operator_telegram_report_format": "canonical_table_v2",
+  "operator_approval_format": "question_plus_options_table_v1"
 }
