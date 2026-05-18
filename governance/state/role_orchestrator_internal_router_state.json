@@ -1,10 +1,23 @@
 {
   "processed_role_packages": [
-    "governance/role_orchestrator/inbox/curator_operator_decision_bem584_decision_format_live_test.json"
+    "governance/role_orchestrator/inbox/bem605_hourly_report_canon_template.json",
+    "governance/role_orchestrator/inbox/curator_operator_decision_bem584_decision_format_live_test.json",
+    "governance/role_orchestrator/inbox/curator_operator_decision_bem605_hourly_report_canon_template.json"
   ],
   "last_run": {
-    "created": [],
-    "count": 0,
+    "created": [
+      {
+        "inbox": "governance/internal_contour/inbox/operator_decision_bem605_hourly_report_canon_template.json",
+        "task": "governance/internal_contour/tasks/operator_decision_bem605_hourly_report_canon_template.json",
+        "pending": "governance/tasks/pending/internal_contour_operator_decision_bem605_hourly_report_canon_template.md"
+      },
+      {
+        "inbox": "governance/internal_contour/inbox/operator_decision_bem605_hourly_report_canon_template.json",
+        "task": "governance/internal_contour/tasks/operator_decision_bem605_hourly_report_canon_template.json",
+        "pending": "governance/tasks/pending/internal_contour_operator_decision_bem605_hourly_report_canon_template.md"
+      }
+    ],
+    "count": 2,
     "status": "completed",
     "blocker": null
   },
