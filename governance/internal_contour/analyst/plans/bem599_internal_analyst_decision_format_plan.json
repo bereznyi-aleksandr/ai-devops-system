@@ -1,0 +1,61 @@
+{
+  "schema_version": "internal_analyst_plan.v1",
+  "plan_id": "bem599_internal_analyst_decision_format_plan",
+  "source_task": "governance/internal_contour/tasks/operator_decision_bem584_decision_format_live_test.json",
+  "decision_id": "bem584_decision_format_live_test",
+  "role": "analyst",
+  "status": "ready_for_audit",
+  "goal": "Apply operator-selected short readable comparison table as canonical operator decision format.",
+  "operator_choice": "1",
+  "selected_format": "short_readable_comparison_table",
+  "implementation_scope": [
+    {
+      "item": "Decision package source",
+      "path": "governance/operator_decision_queue/*.json",
+      "requirement": "Operator decision Telegram must be generated only from structured decision packages."
+    },
+    {
+      "item": "Telegram renderer",
+      "path": "scripts/operator_decision_pick.py",
+      "requirement": "Render BEM header, stage, roadmap, checklist, question, readable comparison table, details, recommendation, reply instruction."
+    },
+    {
+      "item": "Routine mailbox",
+      "path": "scripts/mailbox_pick_notification.py",
+      "requirement": "Never notify Telegram for routine Claude↔GPT mailbox messages."
+    },
+    {
+      "item": "Decision persistence",
+      "path": "governance/operator_decisions/*.json",
+      "requirement": "Operator choices must persist as machine-readable JSON."
+    },
+    {
+      "item": "Routing",
+      "path": "governance/curator/inbox -> governance/role_orchestrator/inbox -> governance/internal_contour",
+      "requirement": "Decision must route to curator, role orchestrator, and internal contour without manual relay."
+    }
+  ],
+  "acceptance_criteria": [
+    "Canonical protocol exists and states short readable comparison table.",
+    "Routine mailbox Telegram is disabled.",
+    "Structured decision package renderer exists.",
+    "Operator decision JSON exists for bem584_decision_format_live_test.",
+    "Curator intake exists for same decision.",
+    "Role orchestrator intake exists for same decision.",
+    "Internal contour task exists for same decision.",
+    "Evidence report and proof files exist."
+  ],
+  "risks": [
+    {
+      "risk": "Telegram reply intake may still be flaky due HTTP 403 or webhook state.",
+      "mitigation": "Keep chat fallback only for explicit operator choice; continue hardening poller/webhook separately."
+    },
+    {
+      "risk": "Box-drawing table can still wrap on very narrow screens.",
+      "mitigation": "Keep cells short and move long text to details block."
+    }
+  ],
+  "next_role": "auditor",
+  "created_at": "2026-05-17 | 23:00 (UTC+3)",
+  "blocker": null
+}
