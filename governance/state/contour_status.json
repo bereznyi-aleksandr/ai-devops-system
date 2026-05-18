@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 06:54 (UTC+3)",
+  "updated_at": "2026-05-18 | 06:56 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,19 +103,7 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": {
-    "code": "WORKFLOW_STATIC_VALIDATION_FAILED",
-    "failed": [
-      {
-        "name": "schedule_only_curator_hourly",
-        "pass": false,
-        "schedule_files": [
-          ".github/workflows/curator-hourly-report.yml",
-          ".github/workflows/telegram-outbox-dispatch.yml"
-        ]
-      }
-    ]
-  },
+  "blocker": null,
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -676,7 +664,7 @@
       "message": "Claude must review template before operator approval package is finalized."
     }
   },
-  "hourly_report_template_flow": "old_failures_superseded_live_trigger_committed",
+  "hourly_report_template_flow": "live_delivery_live_sent",
   "bem606_conflict_safe_workflow_commits": {
     "status": "completed",
     "changed_workflows": [
@@ -822,5 +810,11 @@
         }
       ]
     }
+  },
+  "bem621_live_hourly_delivery_post_trigger_check": {
+    "status": "live_sent",
+    "telegram_delivery": "sent",
+    "state_file": "governance/state/bem621_live_hourly_delivery_post_trigger_check.json",
+    "blocker": null
   }
 }

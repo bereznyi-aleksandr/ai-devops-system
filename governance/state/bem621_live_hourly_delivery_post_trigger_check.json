@@ -1,0 +1,36 @@
+{
+  "schema_version": "live_hourly_delivery_check.v1",
+  "bem": "BEM-621",
+  "status": "live_sent",
+  "runtime_state_exists": true,
+  "runtime_report_exists": true,
+  "telegram_delivery": "sent",
+  "message_file": "governance/tmp/curator_hourly_report_message.txt",
+  "trigger_text": "BEM-620 live trigger after superseding old failed runs 2026-05-18 | 06:54 (UTC+3)\n",
+  "runtime_state": {
+    "schema_version": "curator_hourly_report_state.v1",
+    "status": "rendered",
+    "message_file": "governance/tmp/curator_hourly_report_message.txt",
+    "provider_checked": true,
+    "selected_provider": "gpt_reserve",
+    "reserve_used": true,
+    "blocker": {
+      "code": "WORKFLOW_STATIC_VALIDATION_FAILED",
+      "failed": [
+        {
+          "name": "schedule_only_curator_hourly",
+          "pass": false,
+          "schedule_files": [
+            ".github/workflows/curator-hourly-report.yml",
+            ".github/workflows/telegram-outbox-dispatch.yml"
+          ]
+        }
+      ]
+    },
+    "event_count": 5,
+    "created_at": "workflow_runtime",
+    "telegram_delivery": "sent"
+  },
+  "blocker": null,
+  "created_at": "2026-05-18 | 06:56 (UTC+3)"
+}
