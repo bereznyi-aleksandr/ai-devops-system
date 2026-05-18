@@ -1,0 +1,39 @@
+{
+  "schema_version": "telegram_smoke_workflow_no_heredoc.v1",
+  "bem": "BEM-657",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    },
+    {
+      "name": "no_heredoc_marker",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    },
+    {
+      "name": "uses_shell_message_variable",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    },
+    {
+      "name": "uses_recorder_script",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    },
+    {
+      "name": "commit_conflict_safe",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    }
+  ],
+  "workflow": ".github/workflows/telegram-send-smoke.yml",
+  "triggers": [
+    "governance/triggers/telegram_send_smoke.trigger",
+    "governance/triggers/curator_hourly_report.trigger"
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 15:50 (UTC+3)"
+}

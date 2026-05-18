@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem657_fix_telegram_smoke_workflow_no_heredoc
+task_type: code_patch
+executed_at: 2026-05-18T12:49:43Z
+ops_applied: Fixed telegram-send-smoke.yml by removing heredoc, using shell message variable, and retriggering smoke/hourly workflows, custom_script
+changed_files: .github/workflows/telegram-send-smoke.yml, governance/triggers/telegram_send_smoke.trigger, governance/triggers/curator_hourly_report.trigger, governance/protocols/TELEGRAM_SMOKE_WORKFLOW_NO_HEREDOC.md, governance/state/bem657_fix_telegram_smoke_workflow_no_heredoc.json, governance/reports/bem657_fix_telegram_smoke_workflow_no_heredoc.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem657_fix_telegram_smoke_workflow_no_heredoc.txt
+errors: none

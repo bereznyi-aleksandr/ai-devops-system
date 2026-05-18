@@ -1,1 +1,1 @@
-BEM-655 retrigger curator hourly report after safe telegram smoke 2026-05-18 | 15:47 (UTC+3)
+BEM-657 retrigger curator hourly report after telegram smoke YAML fix 2026-05-18 | 15:50 (UTC+3)

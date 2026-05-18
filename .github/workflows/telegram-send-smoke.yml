@@ -34,14 +34,12 @@ jobs:
           mkdir -p governance/tmp
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
             echo "not_sent_missing_secret" > governance/tmp/telegram_send_smoke_status.txt
-            echo '{"ok":false,"description":"missing secret"}' > governance/tmp/telegram_send_smoke_response.json
+            printf '{"ok":false,"description":"missing secret"}' > governance/tmp/telegram_send_smoke_response.json
           else
-            cat > governance/tmp/telegram_send_smoke_message.txt <<'MSG'
-BEM-655 | TELEGRAM DELIVERY SMOKE | workflow_runtime
+            MESSAGE="BEM-657 | TELEGRAM DELIVERY SMOKE | workflow_runtime"$'
 
-Проверка доставки Telegram из GitHub Actions. Если это сообщение получено, bot/chat secrets and sendMessage path work.
-MSG
-            HTTP_CODE=$(curl -sS -o governance/tmp/telegram_send_smoke_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text@governance/tmp/telegram_send_smoke_message.txt" --data-urlencode "disable_web_page_preview=true" || echo "000")
+'"Проверка доставки Telegram из GitHub Actions. Если это сообщение получено, bot/chat secrets and sendMessage path work."
+            HTTP_CODE=$(curl -sS -o governance/tmp/telegram_send_smoke_response.json -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MESSAGE}" --data-urlencode "disable_web_page_preview=true" || echo "000")
             if [ "$HTTP_CODE" = "200" ]; then echo "sent_http_${HTTP_CODE}" > governance/tmp/telegram_send_smoke_status.txt; else echo "not_sent_http_${HTTP_CODE}" > governance/tmp/telegram_send_smoke_status.txt; fi
           fi
 
@@ -53,6 +51,6 @@ MSG
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/telegram_send_smoke_result.json governance/reports/telegram_send_smoke_result.md
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-655 telegram send smoke result"
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-657 telegram send smoke result"
           git pull --rebase --autostash origin main || true
           git push || true

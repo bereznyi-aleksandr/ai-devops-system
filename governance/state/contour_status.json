@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 15:48 (UTC+3)",
+  "updated_at": "2026-05-18 | 15:50 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,16 +103,7 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": {
-    "code": "TELEGRAM_DELIVERY_NOT_FULLY_CONFIRMED",
-    "smoke_ok": false,
-    "hourly_ok": true,
-    "verify_ok": false,
-    "smoke_status": null,
-    "hourly_delivery": "sent",
-    "verify_status": null,
-    "message": "If smoke result is missing, GitHub workflow may still be running or push trigger did not fire. If smoke fails, inspect status_text/http_status."
-  },
+  "blocker": null,
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -1109,7 +1100,7 @@
     "state_file": "governance/state/bem655_telegram_delivery_smoke_safe.json",
     "blocker": null
   },
-  "telegram_delivery_repair_status": "smoke_or_hourly_pending_or_failed",
+  "telegram_delivery_repair_status": "telegram_smoke_yaml_fixed_triggered",
   "bem656_check_telegram_smoke_and_hourly_results": {
     "status": "smoke_or_hourly_pending_or_failed",
     "smoke_ok": false,
@@ -1126,5 +1117,11 @@
       "verify_status": null,
       "message": "If smoke result is missing, GitHub workflow may still be running or push trigger did not fire. If smoke fails, inspect status_text/http_status."
     }
+  },
+  "bem657_fix_telegram_smoke_workflow_no_heredoc": {
+    "status": "pass",
+    "state_file": "governance/state/bem657_fix_telegram_smoke_workflow_no_heredoc.json",
+    "workflow": ".github/workflows/telegram-send-smoke.yml",
+    "blocker": null
   }
 }
