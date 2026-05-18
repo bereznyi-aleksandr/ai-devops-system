@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem646_post_repair_codex_runner_smoke",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "selftest",
+  "title": "BEM-646 runner smoke",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\nstate_dir=Path('governance/state'); state_dir.mkdir(parents=True,exist_ok=True)\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\nrunner=Path('.github/workflows/codex-runner.yml')\ntext=runner.read_text(errors='ignore') if runner.exists() else ''\nchecks=[]\nchecks.append({'name':'codex_runner_exists','pass':runner.exists(),'evidence':str(runner)})\nchecks.append({'name':'permissions_has_contents_write','pass':'  contents: write' in text,'evidence':str(runner)})\nchecks.append({'name':'permissions_has_actions_read','pass':'  actions: read' in text,'evidence':str(runner)})\nchecks.append({'name':'no_duplicate_top_level_actions_read','pass':'\\nactions: read' not in text,'evidence':str(runner)})\nchecks.append({'name':'workflow_dispatch_present','pass':'workflow_dispatch:' in text,'evidence':str(runner)})\nchecks.append({'name':'python_executor_patterns_present','pass':'Run script:' in text or 'objective' in text,'evidence':str(runner)})\nfailed=[x for x in checks if not x['pass']]\nstatus='pass' if not failed else 'failed'\nblocker=None if not failed else {'code':'CODEX_RUNNER_POST_REPAIR_SMOKE_FAILED','failed':failed}\nstate={'schema_version':'codex_runner_post_repair_smoke.v1','bem':'BEM-646','status':status,'checks':checks,'blocker':blocker,'created_at':'2026-05-18 | 15:13 (UTC+3)'}\nstate_file=state_dir/'bem646_post_repair_codex_runner_smoke.json'\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=reports/'bem646_post_repair_codex_runner_smoke.md'\nreport.write_text('# BEM-646 | Post-Repair Codex Runner Smoke | '+status.upper()+sep+sep+'Дата: 2026-05-18 | 15:13 (UTC+3)'+sep+sep+'## Checks'+sep+sep+sep.join(['- '+x['name']+': '+('PASS' if x['pass'] else 'FAIL') for x in checks])+sep+sep+'## Blocker'+sep+('null' if blocker is None else json.dumps(blocker,ensure_ascii=False,indent=2))+sep)\nrecord={'record_type':'bem646_post_repair_codex_runner_smoke','cycle_id':'bem646-post-repair-codex-runner-smoke','source':'gpt_selftest','status':status,'state_file':str(state_file),'report':str(report),'blocker':blocker,'created_at':'2026-05-18 | 15:13 (UTC+3)'}\nwith transport.open('a',encoding='utf-8') as handle: handle.write(json.dumps(record,ensure_ascii=False)+sep)\ncontour_state={}\nif contour.exists():\n    try: contour_state=json.loads(contour.read_text(errors='ignore'))\n    except: contour_state={}\ncontour_state['bem646_post_repair_codex_runner_smoke']={'status':status,'state_file':str(state_file),'report':str(report),'blocker':blocker}\ncontour_state['codex_runner_write_channel_status']='restored' if status=='pass' else 'not_restored'\ncontour_state['updated_at']='2026-05-18 | 15:13 (UTC+3)'; contour_state['blocker']=blocker\ncontour.write_text(json.dumps(contour_state,indent=2,ensure_ascii=False)+sep)\nproof=proofs/'bem646_post_repair_codex_runner_smoke.txt'\nproof.write_text('BEM-646 '+status.upper()+': post-repair codex runner smoke completed.\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(contour),str(proof)])\nops_applied.append('Ran post-repair smoke for codex-runner.yml permissions and workflow dispatch')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem646_post_repair_codex_runner_smoke.md",
+    "result_json": "governance/codex/results/bem646_post_repair_codex_runner_smoke.json"
+  },
+  "created_at": "2026-05-18T12:18:40.585Z"
+}
