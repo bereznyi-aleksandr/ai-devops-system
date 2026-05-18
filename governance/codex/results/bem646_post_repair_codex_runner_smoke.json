@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem646_post_repair_codex_runner_smoke",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Ran post-repair smoke for codex-runner.yml permissions and workflow dispatch",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem646_post_repair_codex_runner_smoke.json",
+    "governance/reports/bem646_post_repair_codex_runner_smoke.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem646_post_repair_codex_runner_smoke.txt",
+    "governance/codex/proofs/bem646_post_repair_codex_runner_smoke.txt"
+  ],
+  "commit_sha": "cea99c89306fc6961dd5c78af221559e21f4e0d4",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem646_post_repair_codex_runner_smoke.md",
+  "completed_at": "2026-05-18T12:18:53Z"
+}
