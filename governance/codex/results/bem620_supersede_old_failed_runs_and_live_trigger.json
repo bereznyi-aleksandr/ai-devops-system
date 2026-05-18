@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem620_supersede_old_failed_runs_and_live_trigger",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Superseded stale failed workflow runs",
+    " statically validated latest workflows",
+    " and committed new live hourly report trigger",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/STALE_GITHUB_RUN_FAILURE_SUPERSEDED.md",
+    "governance/state/bem620_supersede_old_failed_runs_and_live_trigger.json",
+    "governance/reports/bem620_supersede_old_failed_runs_and_live_trigger.md",
+    "governance/triggers/curator_hourly_report.trigger",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem620_supersede_old_failed_runs_and_live_trigger.txt",
+    "governance/codex/proofs/bem620_supersede_old_failed_runs_and_live_trigger.txt"
+  ],
+  "commit_sha": "ff92025bc4c0c26ebd07eb76d04b4716ac3a50b1",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem620_supersede_old_failed_runs_and_live_trigger.md",
+  "completed_at": "2026-05-18T03:56:38Z"
+}
