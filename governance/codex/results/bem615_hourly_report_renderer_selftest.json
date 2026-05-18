@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem615_hourly_report_renderer_selftest",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem615_hourly_report_renderer_selftest.txt"
+  ],
+  "commit_sha": "824d11adf9ad6020f90da18457af8d6313b509b5",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: forbidden calls: exec("
+  },
+  "report_path": "governance/codex/results/bem615_hourly_report_renderer_selftest.md",
+  "completed_at": "2026-05-18T03:43:48Z"
+}
