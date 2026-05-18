@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem673_verify_canonical_hourly_dispatch_and_delivery",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified dispatch status",
+    " queue cleanup",
+    " Telegram delivery state",
+    " and operator-readable canonical hourly report table",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem673_verify_canonical_hourly_dispatch_and_delivery.json",
+    "governance/reports/bem673_verify_canonical_hourly_dispatch_and_delivery.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem673_verify_canonical_hourly_dispatch_and_delivery.txt",
+    "governance/codex/proofs/bem673_verify_canonical_hourly_dispatch_and_delivery.txt"
+  ],
+  "commit_sha": "3b73c198f42864de60603b7b2e5dc32357c4e8dd",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem673_verify_canonical_hourly_dispatch_and_delivery.md",
+  "completed_at": "2026-05-18T16:02:33Z"
+}
