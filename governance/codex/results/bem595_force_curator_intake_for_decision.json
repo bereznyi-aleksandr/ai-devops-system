@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem595_force_curator_intake_for_decision",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Forced existing operator decision into curator inbox and marked handoff completed",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/operator_decisions/bem584_decision_format_live_test.json",
+    "governance/curator/inbox/operator_decision_bem584_decision_format_live_test.json",
+    "governance/state/decision_curator_handoff_state.json",
+    "governance/reports/bem595_force_curator_intake_for_decision.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem595_force_curator_intake_for_decision.txt",
+    "governance/codex/proofs/bem595_force_curator_intake_for_decision.txt"
+  ],
+  "commit_sha": "cada18e0d22abdd136055cd1404d60f25d3cc374",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem595_force_curator_intake_for_decision.md",
+  "completed_at": "2026-05-18T02:45:52Z"
+}
