@@ -1,0 +1,52 @@
+{
+  "schema_version": "operator_decision_queue.v1",
+  "decision_id": "bem612_hourly_report_template_operator_visibility",
+  "bem": "BEM-612",
+  "title": "HOURLY REPORT TEMPLATE VISIBILITY",
+  "stage": {
+    "done": 3,
+    "total": 6
+  },
+  "roadmap": {
+    "done": 3,
+    "total": 6
+  },
+  "checklist": [
+    "✅ Analyst GPT prepared template",
+    "✅ Provider gate recorded",
+    "✅ Claude primary not waited indefinitely",
+    "✅ GPT reserve audit approved with changes",
+    "⚠️ Roadmap continues without blocking on operator reply"
+  ],
+  "question": "Какой формат hourly Telegram monitoring report использовать дальше?",
+  "options": [
+    {
+      "id": "1",
+      "title": "Канон-блоки",
+      "difference": "Короткие мобильные блоки вместо широкой таблицы",
+      "rationale": "Лучше читается в Telegram и сохраняет канон",
+      "impact": "Внедряется в curator-hourly-report.yml"
+    },
+    {
+      "id": "2",
+      "title": "Markdown table",
+      "difference": "Обычная таблица с колонками",
+      "rationale": "Ближе к канону, но ломается на телефоне",
+      "impact": "Риск нечитаемых сообщений"
+    },
+    {
+      "id": "3",
+      "title": "Доработать",
+      "difference": "Вернуть в аудит и изменить макет",
+      "rationale": "Если блоки всё ещё неудобны",
+      "impact": "Задержка внедрения"
+    }
+  ],
+  "recommendation": {
+    "option_id": "1",
+    "rationale": "Рекомендуется мобильный канон-блок: он сохраняет структуру отчёта и не ломается в Telegram."
+  },
+  "reply_format": "Можно ответить 1, 2, 3 или своим текстом. Roadmap не останавливается: вариант 1 внедряется как рекомендуемый.",
+  "handoff_to": "curator",
+  "created_at": "2026-05-18 | 06:42 (UTC+3)"
+}

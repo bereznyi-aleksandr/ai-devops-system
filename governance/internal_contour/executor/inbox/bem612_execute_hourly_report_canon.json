@@ -1,0 +1,20 @@
+{
+  "schema_version": "internal_executor_item.v1",
+  "item_id": "bem612_execute_hourly_report_canon",
+  "from_role": "auditor:gpt_reserve",
+  "to_role": "executor",
+  "status": "ready_for_execution",
+  "objective": "Implement canonical hourly Telegram report renderer and wire it into curator-hourly-report.yml without breaking the allowed schedule.",
+  "audit_report": "governance/internal_contour/auditor/reports/bem612_reserve_audit_hourly_report_template.json",
+  "template_file": "governance/protocols/HOURLY_TELEGRAM_REPORT_CANON_DRAFT.md",
+  "provider_route": "governance/provider_gates/bem610_provider_route_decision.json",
+  "acceptance_criteria": [
+    "curator-hourly-report.yml keeps schedule cron only here",
+    "hourly message follows canon",
+    "message includes provider route and blocker",
+    "selftest can render sample report",
+    "workflow commit step is conflict-safe"
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 06:42 (UTC+3)"
+}
