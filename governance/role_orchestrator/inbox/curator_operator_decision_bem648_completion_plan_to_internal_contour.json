@@ -1,0 +1,94 @@
+{
+  "schema_version": "role_orchestrator_intake.v1",
+  "record_type": "curator_operator_decision_route",
+  "decision_id": "bem648_completion_plan_to_internal_contour",
+  "source_file": "governance/curator/inbox/bem648_completion_plan_to_internal_contour.json",
+  "from_role": "curator",
+  "to_role": "role_orchestrator",
+  "next_route": "internal_contour",
+  "operator_choice": null,
+  "selected_option": null,
+  "question": null,
+  "status": "ready_for_role_orchestrator",
+  "created_at": "workflow_runtime",
+  "payload": {
+    "schema_version": "internal_contour_completion_plan.v1",
+    "bem": "BEM-648",
+    "title": "Complete internal contour and auditor sync development",
+    "status": "ready_for_execution",
+    "goal": "Close remaining operational proof items and produce final acceptance report without stopping roadmap.",
+    "entrypoint": "curator",
+    "chain": [
+      "curator",
+      "role_orchestrator",
+      "analyst_gpt",
+      "internal_auditor",
+      "executor",
+      "selftest",
+      "monitor"
+    ],
+    "scope": [
+      "Verify write-channel remains restored after Claude repair",
+      "Run internal contour architecture lint",
+      "Run Claude runtime proof; if not proven, close as valid reserve route by policy",
+      "Run hourly Telegram delivery proof; if not sent, produce repair item and keep watch active",
+      "Verify audit mailbox boundary: internal roles use role-bus, mailbox only auditor sync",
+      "Produce final acceptance report with evidence files and commit SHAs"
+    ],
+    "mandatory_controls": [
+      {
+        "id": "C1",
+        "name": "write_channel_smoke",
+        "evidence": "governance/state/bem646_post_repair_codex_runner_smoke.json",
+        "pass_rule": "status == pass"
+      },
+      {
+        "id": "C2",
+        "name": "architecture_lint",
+        "evidence": "governance/state/internal_contour_architecture_lint.json",
+        "pass_rule": "status == pass"
+      },
+      {
+        "id": "C3",
+        "name": "role_bus_boundary",
+        "evidence": "governance/protocols/ROLE_COMMUNICATION_CANON.md",
+        "pass_rule": "mailbox is not internal role-bus"
+      },
+      {
+        "id": "C4",
+        "name": "provider_route_closure",
+        "evidence": "governance/state/bem632_close_provider_route_and_delivery_status.json",
+        "pass_rule": "architecture_closed == true"
+      },
+      {
+        "id": "C5",
+        "name": "runtime_proof_or_reserve_policy",
+        "evidence": "governance/provider_gates/claude_primary_runtime_smoke_result.json + governance/protocols/PROVIDER_ROUTE_CLOSURE_POLICY.md",
+        "pass_rule": "primary proven OR reserve route valid"
+      },
+      {
+        "id": "C6",
+        "name": "telegram_delivery_verification",
+        "evidence": "governance/state/curator_hourly_delivery_verification.json",
+        "pass_rule": "delivery_confirmed true OR operational watch with repair item"
+      },
+      {
+        "id": "C7",
+        "name": "final_acceptance",
+        "evidence": "governance/state/bem633_final_acceptance_internal_contour_and_auditor_sync.json",
+        "pass_rule": "status == accepted"
+      }
+    ],
+    "reports_required": [
+      "analyst plan",
+      "internal auditor verdict",
+      "executor result",
+      "selftest result",
+      "monitoring report",
+      "final acceptance report"
+    ],
+    "operator_policy": "No stop on stage report. Report only after full acceptance or hard technical blocker.",
+    "created_at": "2026-05-18 | 15:21 (UTC+3)",
+    "blocker": null
+  }
+}
