@@ -4,7 +4,7 @@
 
 ## Created
 [
-  "governance/role_orchestrator/inbox/curator_operator_decision_bem584_decision_format_live_test.json"
+  "governance/role_orchestrator/inbox/curator_operator_decision_bem605_hourly_report_canon_template.json"
 ]
 
 ## Blocker
