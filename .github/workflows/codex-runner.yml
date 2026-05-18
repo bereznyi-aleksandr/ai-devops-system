@@ -21,6 +21,7 @@ on:
         type: string
 
 permissions:
+  actions: write
   contents: write
   actions: read
 
@@ -549,7 +550,7 @@ jobs:
         if: always()
         env:
           GH_DISPATCH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           if [ -f scripts/workflow_dispatch_queue_runner.py ]; then

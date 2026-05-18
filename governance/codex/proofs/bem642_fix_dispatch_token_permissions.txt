@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem642_fix_dispatch_token_permissions
+task_type: code_patch
+executed_at: 2026-05-18T04:53:12Z
+ops_applied: Fixed workflow dispatch token fallback and actions write permission in codex-runner and dispatch queue runner, custom_script
+changed_files: governance/protocols/WORKFLOW_DISPATCH_TOKEN_PERMISSIONS.md, governance/state/bem642_fix_dispatch_token_permissions.json, governance/reports/bem642_fix_dispatch_token_permissions.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem642_fix_dispatch_token_permissions.txt, .github/workflows/codex-runner.yml, .github/workflows/workflow-dispatch-queue-runner.yml
+errors: none

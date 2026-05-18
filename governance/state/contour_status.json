@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:53 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:54 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1006,5 +1006,14 @@
     "failed_count": 0,
     "blocker": null
   },
-  "workflow_dispatch_queue_post_hook": "all_dispatched"
+  "workflow_dispatch_queue_post_hook": "all_dispatched",
+  "bem642_fix_dispatch_token_permissions": {
+    "status": "completed",
+    "changed": [
+      ".github/workflows/codex-runner.yml",
+      ".github/workflows/workflow-dispatch-queue-runner.yml"
+    ],
+    "blocker": null
+  },
+  "workflow_dispatch_token_permissions": "fixed"
 }
