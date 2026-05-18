@@ -1,0 +1,80 @@
+{
+  "schema_version": "final_completion_report_internal_contour.v1",
+  "bem": "BEM-650",
+  "status": "completed",
+  "stage": {
+    "done": 10,
+    "total": 10,
+    "percent": 100
+  },
+  "roadmap": {
+    "done": 10,
+    "total": 10,
+    "percent": 100
+  },
+  "status_map": {
+    "BEM-646 write-channel smoke": {
+      "path": "governance/state/bem646_post_repair_codex_runner_smoke.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "BEM-648 completion plan": {
+      "path": "governance/state/bem648_completion_plan_to_internal_contour.json",
+      "exists": true,
+      "status": "dispatched_to_internal_contour"
+    },
+    "BEM-649 controls": {
+      "path": "governance/state/bem649_execute_completion_controls.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "Internal auditor verdict": {
+      "path": "governance/internal_contour/auditor/reports/bem649_internal_auditor_verdict.json",
+      "exists": true,
+      "status": "approved_with_operational_watch"
+    },
+    "Executor result": {
+      "path": "governance/internal_contour/executor/reports/bem649_executor_completion_result.json",
+      "exists": true,
+      "status": "completed"
+    },
+    "Final acceptance BEM-633": {
+      "path": "governance/state/bem633_final_acceptance_internal_contour_and_auditor_sync.json",
+      "exists": true,
+      "status": "accepted"
+    },
+    "Role communication canon": {
+      "path": "governance/protocols/ROLE_COMMUNICATION_CANON.md",
+      "exists": true,
+      "status": null
+    },
+    "Auditor interaction canon": {
+      "path": "governance/protocols/INTERNAL_EXTERNAL_AUDITOR_INTERACTION_CANON.md",
+      "exists": true,
+      "status": null
+    },
+    "Evidence canon": {
+      "path": "governance/protocols/ROLE_EXECUTION_EVIDENCE_CANON.md",
+      "exists": true,
+      "status": null
+    },
+    "Architecture lint": {
+      "path": "governance/state/internal_contour_architecture_lint.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "Provider closure": {
+      "path": "governance/state/bem632_close_provider_route_and_delivery_status.json",
+      "exists": true,
+      "status": "architecture_closed_delivery_confirmed"
+    }
+  },
+  "operational_watch": [
+    {
+      "code": "CLAUDE_PRIMARY_RUNTIME_NOT_PROVEN",
+      "meaning": "primary not proven; reserve route remains valid by policy"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 15:27 (UTC+3)"
+}

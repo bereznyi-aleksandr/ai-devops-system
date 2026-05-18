@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 15:26 (UTC+3)",
+  "updated_at": "2026-05-18 | 15:27 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1059,5 +1059,18 @@
     ],
     "blocker": null
   },
-  "development_completion_controls": "pass"
+  "development_completion_controls": "pass",
+  "bem650_final_completion_report_internal_contour": {
+    "status": "completed",
+    "state_file": "governance/state/bem650_final_completion_report_internal_contour.json",
+    "report": "governance/reports/bem650_final_completion_report_internal_contour.md",
+    "operational_watch": [
+      {
+        "code": "CLAUDE_PRIMARY_RUNTIME_NOT_PROVEN",
+        "meaning": "primary not proven; reserve route remains valid by policy"
+      }
+    ],
+    "blocker": null
+  },
+  "internal_contour_development_completion": "completed"
 }
