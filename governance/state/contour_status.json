@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-17 | 22:43 (UTC+3)",
+  "updated_at": "2026-05-17 | 22:46 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -526,6 +526,13 @@
     "handoff_files": [
       "governance/tasks/pending/operator_decision_bem584_decision_format_live_test.md"
     ],
+    "blocker": null
+  },
+  "bem593_operator_decision_curator_handoff": {
+    "status": "completed",
+    "workflow": ".github/workflows/decision-curator-handoff.yml",
+    "script": "scripts/decision_curator_handoff.py",
+    "curator_inbox": "governance/curator/inbox",
     "blocker": null
   }
 }

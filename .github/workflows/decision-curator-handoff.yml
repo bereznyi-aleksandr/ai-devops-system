@@ -1,0 +1,39 @@
+name: Decision Curator Handoff
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/operator_decisions/**'
+      - 'scripts/decision_curator_handoff.py'
+      - '.github/workflows/decision-curator-handoff.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: decision-curator-handoff
+  cancel-in-progress: false
+
+jobs:
+  handoff-decision:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Syntax check handoff script
+        run: python3 -m py_compile scripts/decision_curator_handoff.py
+
+      - name: Create curator intake from operator decisions
+        run: python3 scripts/decision_curator_handoff.py
+
+      - name: Commit curator handoff result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/state/decision_curator_handoff_state.json governance/curator/inbox governance/transport/results.jsonl governance/reports/decision_curator_handoff_result.md
+          git commit -m "BEM-593 decision curator handoff result" || echo "No changes"
+          git pull --rebase origin main || git rebase --abort || true
+          git push || (git pull --rebase origin main && git push)
