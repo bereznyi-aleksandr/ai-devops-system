@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 05:56 (UTC+3)",
+  "updated_at": "2026-05-18 | 05:58 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,10 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "TELEGRAM_WEBHOOK_ACTIVE",
+    "message": "Webhook is active; polling getUpdates may not receive replies reliably."
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -612,5 +615,26 @@
       "webhook_active classification"
     ],
     "blocker": null
+  },
+  "bem603_reply_intake_live_diagnostics": {
+    "status": "blocked",
+    "last_run": {
+      "http_status": "409",
+      "webhook_http_status": "200",
+      "webhook_active": true,
+      "status": "blocked",
+      "record": null,
+      "blocker": {
+        "code": "TELEGRAM_WEBHOOK_ACTIVE",
+        "message": "Webhook is active; polling getUpdates may not receive replies reliably."
+      }
+    },
+    "decision_files": [
+      "governance/operator_decisions/bem584_decision_format_live_test.json"
+    ],
+    "blocker": {
+      "code": "TELEGRAM_WEBHOOK_ACTIVE",
+      "message": "Webhook is active; polling getUpdates may not receive replies reliably."
+    }
   }
 }
