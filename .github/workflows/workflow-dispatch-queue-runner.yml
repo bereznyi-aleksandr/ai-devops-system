@@ -1,0 +1,44 @@
+name: Workflow Dispatch Queue Runner
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/workflow_dispatch_queue/**'
+      - 'scripts/workflow_dispatch_queue_runner.py'
+      - '.github/workflows/workflow-dispatch-queue-runner.yml'
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: workflow-dispatch-queue-runner
+  cancel-in-progress: false
+
+jobs:
+  run-workflow-dispatch-queue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Syntax check queue runner
+        run: python3 -m py_compile scripts/workflow_dispatch_queue_runner.py
+
+      - name: Run workflow dispatch queue
+        env:
+          GH_DISPATCH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/workflow_dispatch_queue_runner.py
+
+      - name: Commit dispatch queue result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/workflow_dispatch_queue governance/state/workflow_dispatch_queue_runner.json governance/reports/workflow_dispatch_queue_runner.md
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-637 workflow dispatch queue result"
+          git pull --rebase --autostash origin main || true
+          git push || true

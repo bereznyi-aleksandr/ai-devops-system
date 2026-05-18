@@ -1,0 +1,14 @@
+{
+  "schema_version": "workflow_dispatch_queue_setup.v1",
+  "bem": "BEM-637",
+  "status": "queue_created",
+  "queued": [
+    "bem637_run_claude_runtime_smoke",
+    "bem637_run_curator_hourly_report",
+    "bem637_run_direct_telegram_smoke"
+  ],
+  "runner_script": "scripts/workflow_dispatch_queue_runner.py",
+  "runner_workflow": ".github/workflows/workflow-dispatch-queue-runner.yml",
+  "blocker": null,
+  "created_at": "2026-05-18 | 07:49 (UTC+3)"
+}
