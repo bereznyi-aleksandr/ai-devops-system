@@ -1,0 +1,46 @@
+{
+  "schema_version": "telegram_smoke_file_based_message.v1",
+  "bem": "BEM-664",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    },
+    {
+      "name": "renderer_exists",
+      "pass": true,
+      "evidence": "scripts/render_telegram_send_smoke_message.py"
+    },
+    {
+      "name": "no_heredoc",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    },
+    {
+      "name": "no_shell_ansi_c_string",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    },
+    {
+      "name": "uses_text_file_upload",
+      "pass": true,
+      "evidence": ".github/workflows/telegram-send-smoke.yml"
+    },
+    {
+      "name": "queue_items_created",
+      "pass": true,
+      "evidence": "governance/workflow_dispatch_queue"
+    }
+  ],
+  "workflow": ".github/workflows/telegram-send-smoke.yml",
+  "renderer": "scripts/render_telegram_send_smoke_message.py",
+  "queue_files": [
+    "governance/workflow_dispatch_queue/telegram_send_smoke.json",
+    "governance/workflow_dispatch_queue/curator_hourly_report.json",
+    "governance/workflow_dispatch_queue/curator_hourly_delivery_verification.json"
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 15:59 (UTC+3)"
+}

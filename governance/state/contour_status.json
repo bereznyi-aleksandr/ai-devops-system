@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 15:58 (UTC+3)",
+  "updated_at": "2026-05-18 | 15:59 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,63 +103,7 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": {
-    "code": "DISPATCH_OR_TELEGRAM_WORKFLOW_ISSUE",
-    "failed": [
-      {
-        "name": "telegram_no_shell_ansi_c_newline",
-        "pass": false,
-        "evidence": ".github/workflows/telegram-send-smoke.yml"
-      },
-      {
-        "name": "telegram_smoke_result_exists",
-        "pass": false,
-        "evidence": "governance/state/telegram_send_smoke_result.json"
-      }
-    ],
-    "result_files": [
-      {
-        "path": "governance/workflow_dispatch_results/bem637_run_claude_runtime_smoke.response.json",
-        "content": ""
-      },
-      {
-        "path": "governance/workflow_dispatch_results/bem637_run_claude_runtime_smoke.status",
-        "content": "204\n"
-      },
-      {
-        "path": "governance/workflow_dispatch_results/bem637_run_curator_hourly_report.response.json",
-        "content": ""
-      },
-      {
-        "path": "governance/workflow_dispatch_results/bem637_run_curator_hourly_report.status",
-        "content": "204\n"
-      },
-      {
-        "path": "governance/workflow_dispatch_results/bem637_run_direct_telegram_smoke.response.json",
-        "content": ""
-      },
-      {
-        "path": "governance/workflow_dispatch_results/bem637_run_direct_telegram_smoke.status",
-        "content": "204\n"
-      },
-      {
-        "path": "governance/workflow_dispatch_results/claude_primary_runtime_smoke.response.json",
-        "content": ""
-      },
-      {
-        "path": "governance/workflow_dispatch_results/claude_primary_runtime_smoke.status",
-        "content": "204\n"
-      },
-      {
-        "path": "governance/workflow_dispatch_results/curator_hourly_delivery_verification.response.json",
-        "content": ""
-      },
-      {
-        "path": "governance/workflow_dispatch_results/curator_hourly_delivery_verification.status",
-        "content": "204\n"
-      }
-    ]
-  },
+  "blocker": null,
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -1156,7 +1100,7 @@
     "state_file": "governance/state/bem655_telegram_delivery_smoke_safe.json",
     "blocker": null
   },
-  "telegram_delivery_repair_status": "needs_telegram_yaml_repair",
+  "telegram_delivery_repair_status": "file_based_smoke_dispatch_queued",
   "bem656_check_telegram_smoke_and_hourly_results": {
     "status": "smoke_or_hourly_pending_or_failed",
     "smoke_ok": false,
@@ -1290,5 +1234,17 @@
         }
       ]
     }
+  },
+  "bem664_telegram_smoke_file_based_message": {
+    "status": "pass",
+    "state_file": "governance/state/bem664_telegram_smoke_file_based_message.json",
+    "workflow": ".github/workflows/telegram-send-smoke.yml",
+    "renderer": "scripts/render_telegram_send_smoke_message.py",
+    "queue_files": [
+      "governance/workflow_dispatch_queue/telegram_send_smoke.json",
+      "governance/workflow_dispatch_queue/curator_hourly_report.json",
+      "governance/workflow_dispatch_queue/curator_hourly_delivery_verification.json"
+    ],
+    "blocker": null
   }
 }
