@@ -1,158 +1,78 @@
 {
-  "schema_version": "gpt_architecture_response_to_claude.v1",
+  "schema_version": "gpt_architecture_response_to_claude.v2",
   "bem": "BEM-678",
   "status": "sent_to_claude",
   "selected_architecture": "A",
   "architecture_options": [
     {
       "id": "A",
-      "name": "Ролевая фабрика + совет директоров",
+      "name": "Ролевая фабрика + Совет директоров",
       "summary": "Система состоит из Совета направлений и операционного контура исполнения. Каждый директор курирует бизнес-направление и имеет собственные подроли, метрики и лимиты полномочий.",
-      "pros": [
-        "масштабируется по бизнес-направлениям",
-        "снимает нагрузку с одного главного агента",
-        "быстрее отвечает на запросы клиентов",
-        "каждый директор несёт ответственность за свой домен"
-      ],
-      "cons": [
-        "нужен строгий registry ролей и полномочий",
-        "нужны cross-domain правила, чтобы директора не конфликтовали"
-      ],
       "recommendation": "Рекомендую как целевую архитектуру."
     },
     {
       "id": "B",
       "name": "Единый куратор + пул специалистов",
       "summary": "Один главный куратор принимает все запросы и раздаёт их специалистам. Специалисты не являются самостоятельными директорами.",
-      "pros": [
-        "проще стартовать",
-        "меньше рисков конфликтов",
-        "легче контролировать"
-      ],
-      "cons": [
-        "узкое место в кураторе",
-        "медленнее масштабируется",
-        "главный агент перегружается"
-      ],
       "recommendation": "Подходит только как переходный этап."
     },
     {
       "id": "C",
       "name": "Полностью автономные агенты без совета",
       "summary": "Каждый агент сам принимает и исполняет задачи в своей области. Координация минимальна.",
-      "pros": [
-        "самая высокая скорость локально",
-        "минимум центрального управления"
-      ],
-      "cons": [
-        "сложно контролировать",
-        "высокий риск конфликтов",
-        "трудно аудировать",
-        "плохая управляемость при масштабировании"
-      ],
       "recommendation": "Не рекомендую для production."
     }
-  ],
-  "principles": [
-    "Разделить стратегическое управление и операционное исполнение.",
-    "Совет директоров не исполняет мелкие задачи напрямую; он принимает доменные решения, ставит приоритеты, контролирует SLA и передаёт задачи в операционный контур.",
-    "Каждый директор имеет ограниченные полномочия, бюджет действий и собственный audit trail.",
-    "Контроли должны быть risk-based: быстрые задачи проходят fast-lane, рискованные задачи идут через аудит и/или оператора.",
-    "Оператор остаётся верховным утверждающим органом только по спорным, финансовым, юридическим, стратегическим и irreversible-действиям.",
-    "Mailbox применяется для аудиторского взаимодействия, а не как общий role-bus.",
-    "Runtime registry становится источником истины: задачи, агенты, решения, события, метрики, блокеры."
   ],
   "layers": [
     {
       "level": "L0",
       "name": "Operator Layer",
-      "purpose": "Оператор задаёт стратегию и утверждает спорные/критичные решения.",
-      "examples": [
-        "утверждение бизнес-правил",
-        "изменение полномочий директоров",
-        "финальные решения при конфликте"
-      ]
+      "purpose": "Оператор утверждает стратегические, спорные и критичные решения."
     },
     {
       "level": "L1",
       "name": "Board Layer / Совет директоров",
-      "purpose": "Директора доменов управляют направлениями бизнеса.",
-      "examples": [
-        "финансы",
-        "администрирование",
-        "клиентская служба",
-        "маркетинг",
-        "операции",
-        "юридический контур",
-        "технический контур"
-      ]
+      "purpose": "Директора доменов управляют направлениями бизнеса."
     },
     {
       "level": "L2",
       "name": "Curator / Orchestrator Layer",
-      "purpose": "Маршрутизирует задачи, выбирает контур, назначает роли и следит за очередями.",
-      "examples": [
-        "приоритет",
-        "SLA",
-        "назначение analyst/auditor/executor"
-      ]
+      "purpose": "Маршрутизирует задачи, выбирает контур, назначает роли и следит за очередями."
     },
     {
       "level": "L3",
       "name": "Role Runtime Layer",
-      "purpose": "Ролевые исполнители: analyst-runner, auditor-runner, executor-runner, monitor-runner.",
-      "examples": [
-        "анализ",
-        "аудит",
-        "исполнение",
-        "самотест",
-        "мониторинг"
-      ]
+      "purpose": "Ролевые исполнители: analyst-runner, auditor-runner, executor-runner, monitor-runner."
     },
     {
       "level": "L4",
       "name": "Control Layer",
-      "purpose": "Контроли, проверки, идемпотентность, error recovery, audit trail.",
-      "examples": [
-        "trace_id lock",
-        "checkpoint",
-        "workflow lint",
-        "evidence map"
-      ]
+      "purpose": "Контроли, проверки, идемпотентность, error recovery, audit trail."
     },
     {
       "level": "L5",
       "name": "Transport / Tool Layer",
-      "purpose": "GitHub API, workflows, Telegram, файлы, внешние интеграции.",
-      "examples": [
-        "GitHub Contents API",
-        "Actions dispatch",
-        "Telegram bot",
-        "CRM/API"
-      ]
+      "purpose": "GitHub API, workflows, Telegram, файлы, внешние интеграции."
     }
   ],
   "control_model": [
     {
       "lane": "Fast lane",
-      "when": "низкий риск, обратимые действия, есть шаблон",
-      "controls": "idempotency, schema validation, post-check",
-      "operator": "не нужен",
-      "speed": "максимальная"
+      "when": "Низкий риск, обратимые действия, есть шаблон.",
+      "controls": "Idempotency, schema validation, post-check.",
+      "operator": "Не нужен."
     },
     {
       "lane": "Audit lane",
-      "when": "изменение архитектуры, workflow, прав доступа, финансовая/юридическая логика",
-      "controls": "internal auditor + optional external auditor + evidence map",
-      "operator": "только если спор/критичность",
-      "speed": "средняя"
+      "when": "Архитектура, workflow, права доступа, финансовая/юридическая логика.",
+      "controls": "Internal auditor + optional external auditor + evidence map.",
+      "operator": "Только при споре или критичности."
     },
     {
       "lane": "Operator lane",
-      "when": "стратегическое решение, конфликт директоров, irreversible-действия, высокий риск",
-      "controls": "таблица вариантов в Telegram + выбор оператора",
-      "operator": "обязателен",
-      "speed": "медленнее, но безопасно"
+      "when": "Стратегия, конфликт директоров, irreversible-действия, высокий риск.",
+      "controls": "Таблица вариантов в Telegram + выбор оператора.",
+      "operator": "Обязателен."
     }
   ],
   "claude_agreements": [
@@ -162,7 +82,7 @@
     },
     {
       "topic": "No inline Python in workflow YAML",
-      "gpt_position": "Полностью согласен. P0. Расширяю правило: все блоки длиннее 5 строк выносить в scripts/*.py, workflow только вызывает скрипт."
+      "gpt_position": "Полностью согласен. P0. Все блоки длиннее 5 строк выносить в scripts/*.py, workflow только вызывает скрипт."
     },
     {
       "topic": "Idempotency",
@@ -190,73 +110,73 @@
       "bem": "BEM-678",
       "name": "Architecture response and board model",
       "priority": "P0",
-      "status": "this package"
+      "acceptance": "Claude получает пакет, выбирает/корректирует архитектурный вариант и приоритеты."
     },
     {
       "bem": "BEM-679",
       "name": "Claude primary runtime proof",
       "priority": "P0",
-      "acceptance": "claude.yml minimal task creates commit SHA; provider route updates primary_proven=true"
+      "acceptance": "claude.yml minimal task creates commit SHA; provider route updates primary_proven=true."
     },
     {
       "bem": "BEM-680",
       "name": "Workflow lint-gate + no-inline-code rule",
       "priority": "P0",
-      "acceptance": "workflow changes blocked unless static lint passes; inline Python/heredoc banned"
+      "acceptance": "workflow changes blocked unless static lint passes; inline Python/heredoc banned."
     },
     {
       "bem": "BEM-681",
       "name": "Trace id idempotency",
       "priority": "P0",
-      "acceptance": "same trace_id returns same result or safe resume; no duplicate execution"
+      "acceptance": "same trace_id returns same result or safe resume; no duplicate execution."
     },
     {
       "bem": "BEM-682",
       "name": "Checkpoint/resume recovery",
       "priority": "P0/P1",
-      "acceptance": "failed executor can resume from last completed checkpoint"
+      "acceptance": "failed executor can resume from last completed checkpoint."
     },
     {
       "bem": "BEM-683",
       "name": "Runtime registry v2",
       "priority": "P1",
-      "acceptance": "governance/runtime/tasks, results, agents, audit with schemas"
+      "acceptance": "governance/runtime/tasks, results, agents, audit with schemas."
     },
     {
       "bem": "BEM-684",
       "name": "Role runtime contracts",
       "priority": "P1",
-      "acceptance": "analyst/auditor/executor contracts with inputs, outputs, lifecycle, permissions"
+      "acceptance": "analyst/auditor/executor contracts with inputs, outputs, lifecycle, permissions."
     },
     {
       "bem": "BEM-685",
       "name": "Role-specific runners",
       "priority": "P1",
-      "acceptance": "analyst-runner, auditor-runner, executor-runner independently dispatchable"
+      "acceptance": "analyst-runner, auditor-runner, executor-runner independently dispatchable."
     },
     {
       "bem": "BEM-686",
       "name": "Board of Directors domain registry",
       "priority": "P1",
-      "acceptance": "domain directors, authority matrix, escalation rules, SLA per domain"
+      "acceptance": "domain directors, authority matrix, escalation rules, SLA per domain."
     },
     {
       "bem": "BEM-687",
       "name": "GPT direct GitHub API experimental path",
       "priority": "P1",
-      "acceptance": "Custom GPT Actions can read/write contents and dispatch workflows; Deno kept as fallback"
+      "acceptance": "Custom GPT Actions can read/write contents and dispatch workflows; Deno kept as fallback."
     },
     {
       "bem": "BEM-688",
       "name": "Risk-based control lanes",
       "priority": "P1",
-      "acceptance": "fast/audit/operator lanes implemented with policy checks"
+      "acceptance": "fast/audit/operator lanes implemented with policy checks."
     },
     {
       "bem": "BEM-689",
       "name": "Business-domain pilot",
       "priority": "P2",
-      "acceptance": "one domain director, e.g. Admin or Client Support, handles real workflow end-to-end"
+      "acceptance": "one domain director handles real workflow end-to-end."
     }
   ],
   "questions_to_claude": [
@@ -267,6 +187,7 @@
     "Подтверждаешь ли risk-based lanes: Fast lane, Audit lane, Operator lane?",
     "Готов ли Claude взять P0 BEM-679: Claude primary runtime proof через минимальный claude.yml с commit SHA?"
   ],
+  "repair_note": "Fixed missing acceptance field from previous BEM-678 attempt.",
   "blocker": null,
-  "created_at": "2026-05-18 | 19:16 (UTC+3)"
+  "created_at": "2026-05-18 | 19:31 (UTC+3)"
 }
