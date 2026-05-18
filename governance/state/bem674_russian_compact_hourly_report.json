@@ -1,0 +1,41 @@
+{
+  "schema_version": "russian_compact_hourly_report.v1",
+  "bem": "BEM-674",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "renderer_exists",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "russian_title",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "no_english_row_labels",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "compact_widths",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "queue_only_hourly",
+      "pass": true,
+      "evidence": "governance/workflow_dispatch_queue/curator_hourly_report_ru_compact_once.json"
+    },
+    {
+      "name": "canon_updated",
+      "pass": true,
+      "evidence": "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md"
+    }
+  ],
+  "renderer": "scripts/render_curator_hourly_report.py",
+  "queue_file": "governance/workflow_dispatch_queue/curator_hourly_report_ru_compact_once.json",
+  "blocker": null,
+  "created_at": "2026-05-18 | 19:03 (UTC+3)"
+}

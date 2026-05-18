@@ -1,13 +1,13 @@
-# BEM-669 | Operator Telegram Report Canon
+# BEM-674 | Канон Telegram-отчёта оператору
 
-Дата: 2026-05-18 | 16:08 (UTC+3)
+Дата: 2026-05-18 | 19:03 (UTC+3)
 
-## Hourly monitoring report
-Keep only: title, date/time, stage percent, roadmap percent, and one readable table with columns `№`, `Наименование`, `Краткая суть`, `Статус`.
+## Часовой отчёт
+Язык: русский. Состав: заголовок, дата/час, процент этапа, процент дорожной карты, компактная таблица.
 
-Do not show raw trace IDs as operator-facing events. Do not include long monitoring bullet lists.
+Колонки таблицы: `№`, `Наименование`, `Краткая суть`, `Ст`. Ширина колонок сокращена для мобильного Telegram: наименование до 12 символов, суть до 16 символов.
 
-Schedule: only `curator-hourly-report.yml` may use cron, exactly `0 * * * *`. The rendered report shows the report hour as `HH:00 (UTC+3)`.
+Запрещено в операторском отчёте: английские статусы, raw trace-id, длинные списки событий, широкие колонки.
 
-## Approval message
-Header contains short question and date/time. Table columns: `№`, `Наименование варианта`, `Обоснование`. Operator answers with option number or custom text.
+## Сообщение согласования
+В шапке краткий вопрос и дата/время. Таблица: `№`, `Наименование варианта`, `Обоснование`.

@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 18:59 (UTC+3)",
+  "updated_at": "2026-05-18 | 19:03 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,70 +103,7 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": {
-    "code": "CANONICAL_HOURLY_NOT_CONFIRMED",
-    "failed": [
-      {
-        "name": "queue_archived",
-        "pass": false,
-        "evidence": "governance/workflow_dispatch_processed/"
-      }
-    ],
-    "status_file": "204\n",
-    "response_preview": null,
-    "hourly_state": {
-      "schema_version": "curator_hourly_report_state.v2",
-      "status": "sent",
-      "report_hour": "2026-05-18 | 19:00 (UTC+3)",
-      "stage_done": 6,
-      "stage_total": 6,
-      "stage_percent": 100,
-      "roadmap_done": 6,
-      "roadmap_total": 6,
-      "roadmap_percent": 100,
-      "telegram_delivery": "sent",
-      "rows": [
-        {
-          "number": 1,
-          "name": "Write-channel",
-          "essence": "runner restored",
-          "status": "✅"
-        },
-        {
-          "number": 2,
-          "name": "Role-bus",
-          "essence": "roles and lanes checked",
-          "status": "✅"
-        },
-        {
-          "number": 3,
-          "name": "Provider route",
-          "essence": "primary/reserve explicit",
-          "status": "✅"
-        },
-        {
-          "number": 4,
-          "name": "Telegram smoke",
-          "essence": "direct send proof",
-          "status": "✅"
-        },
-        {
-          "number": 5,
-          "name": "Hourly report",
-          "essence": "hourly delivery",
-          "status": "✅"
-        },
-        {
-          "number": 6,
-          "name": "Readiness",
-          "essence": "final acceptance",
-          "status": "✅"
-        }
-      ],
-      "blocker": null
-    },
-    "delivery_report": "# Curator Hourly Delivery\n\nTelegram delivery: sent\n"
-  },
+  "blocker": null,
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -1354,7 +1291,7 @@
     "report": "governance/reports/bem669_operator_report_and_approval_templates.md",
     "blocker": null
   },
-  "operator_telegram_report_format": "canonical_table_v2",
+  "operator_telegram_report_format": "ru_compact_table_v3",
   "operator_approval_format": "question_plus_options_table_v1",
   "bem670_verify_operator_table_report_delivery": {
     "status": "operator_table_report_not_fully_confirmed",
@@ -1478,5 +1415,11 @@
       },
       "delivery_report": "# Curator Hourly Delivery\n\nTelegram delivery: sent\n"
     }
+  },
+  "bem674_russian_compact_hourly_report": {
+    "status": "pass",
+    "state_file": "governance/state/bem674_russian_compact_hourly_report.json",
+    "queue_file": "governance/workflow_dispatch_queue/curator_hourly_report_ru_compact_once.json",
+    "blocker": null
   }
 }
