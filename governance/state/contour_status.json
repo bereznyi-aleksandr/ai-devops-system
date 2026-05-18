@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 06:50 (UTC+3)",
+  "updated_at": "2026-05-18 | 06:51 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -103,7 +103,17 @@
     "telegram_live_regression_observation": 1,
     "operator_visible_progress_mode": 1
   },
-  "blocker": null,
+  "blocker": {
+    "code": "HOURLY_PIPELINE_MONITORING_FINDINGS",
+    "failed": [
+      {
+        "element": "Selftest",
+        "status": "FAIL",
+        "evidence": "governance/state/bem617_hourly_report_static_selftest_safe.json",
+        "comment": "Static selftest status=failed"
+      }
+    ]
+  },
   "operator_progress_feed": {
     "status": "ACTIVE",
     "protocol": "governance/protocols/OPERATOR_PROGRESS_FEED.md",
@@ -664,7 +674,7 @@
       "message": "Claude must review template before operator approval package is finalized."
     }
   },
-  "hourly_report_template_flow": "live_trigger_committed",
+  "hourly_report_template_flow": "monitoring_report_completed",
   "bem606_conflict_safe_workflow_commits": {
     "status": "completed",
     "changed_workflows": [
@@ -775,5 +785,22 @@
     "workflow": ".github/workflows/curator-hourly-report.yml",
     "trigger": "governance/triggers/curator_hourly_report.trigger",
     "blocker": null
+  },
+  "bem619_full_monitoring_report_hourly_pipeline": {
+    "status": "completed_with_live_delivery_live_sent",
+    "state_file": "governance/state/bem619_full_monitoring_report_hourly_pipeline.json",
+    "report": "governance/reports/bem619_full_monitoring_report_hourly_pipeline.md",
+    "live_delivery": "sent",
+    "blocker": {
+      "code": "HOURLY_PIPELINE_MONITORING_FINDINGS",
+      "failed": [
+        {
+          "element": "Selftest",
+          "status": "FAIL",
+          "evidence": "governance/state/bem617_hourly_report_static_selftest_safe.json",
+          "comment": "Static selftest status=failed"
+        }
+      ]
+    }
   }
 }
