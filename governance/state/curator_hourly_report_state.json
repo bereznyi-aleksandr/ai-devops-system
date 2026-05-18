@@ -1,12 +1,51 @@
 {
-  "schema_version": "curator_hourly_report_state.v1",
-  "status": "rendered",
-  "message_file": "governance/tmp/curator_hourly_report_message.txt",
-  "provider_checked": true,
-  "selected_provider": "gpt_reserve",
-  "reserve_used": true,
-  "blocker": null,
-  "event_count": 5,
-  "created_at": "workflow_runtime",
-  "telegram_delivery": "sent"
+  "schema_version": "curator_hourly_report_state.v2",
+  "status": "sent",
+  "report_hour": "2026-05-18 | 19:00 (UTC+3)",
+  "stage_done": 6,
+  "stage_total": 6,
+  "stage_percent": 100,
+  "roadmap_done": 6,
+  "roadmap_total": 6,
+  "roadmap_percent": 100,
+  "telegram_delivery": "sent",
+  "rows": [
+    {
+      "number": 1,
+      "name": "Write-channel",
+      "essence": "runner restored",
+      "status": "✅"
+    },
+    {
+      "number": 2,
+      "name": "Role-bus",
+      "essence": "roles and lanes checked",
+      "status": "✅"
+    },
+    {
+      "number": 3,
+      "name": "Provider route",
+      "essence": "primary/reserve explicit",
+      "status": "✅"
+    },
+    {
+      "number": 4,
+      "name": "Telegram smoke",
+      "essence": "direct send proof",
+      "status": "✅"
+    },
+    {
+      "number": 5,
+      "name": "Hourly report",
+      "essence": "hourly delivery",
+      "status": "✅"
+    },
+    {
+      "number": 6,
+      "name": "Readiness",
+      "essence": "final acceptance",
+      "status": "✅"
+    }
+  ],
+  "blocker": null
 }
