@@ -1,0 +1,173 @@
+# BEM-669 | Find Telegram Report Renderers
+
+Дата: 2026-05-18 | 16:07 (UTC+3)
+
+## Matches
+- scripts/render_curator_hourly_report.py | SYSTEM MONITORING REPORT, Последние события, curator_hourly_report_message, BEM-HOURLY
+- scripts/role_orchestrator_internal_router.py | operator decision
+- scripts/curator_hourly_report.py | BEM-HOURLY
+- scripts/operator_decision_pick.py | Как ответить
+- .github/workflows/curator-hourly-report.yml | curator_hourly_report_message
+- .github/workflows/decision-curator-handoff.yml | operator decision
+- .github/workflows/operator-decision-dispatcher.yml | operator decision
+- governance/protocols/OPERATOR_DECISION_TELEGRAM_CANON_TABLE.md | Таблица решений, Как ответить
+- governance/protocols/OPERATOR_DECISION_PIPELINE_PRODUCTION_STATUS.md | operator decision
+- governance/protocols/TELEGRAM_INLINE_OPERATOR_DECISION_BUTTONS.md | operator decision
+- governance/protocols/HOURLY_TELEGRAM_REPORT_CANON_DRAFT.md | SYSTEM MONITORING REPORT, Последние события, BEM-HOURLY
+- governance/protocols/OPERATOR_DECISION_TELEGRAM_ACTIONABLE_FORMAT.md | Как ответить
+- governance/protocols/CLAUDE_GPT_SYNC_PROTOCOL.md | operator decision
+- governance/protocols/STRUCTURED_OPERATOR_DECISION_QUEUE.md | operator decision, Как ответить
+- governance/protocols/EXTERNAL_AUDIT_TO_INTERNAL_CURATOR_HANDOFF.md | operator decision
+- governance/protocols/OPERATOR_DECISION_FORMAT_CANON.md | operator decision
+- governance/protocols/OPERATOR_DECISION_READABLE_COMPARISON_TABLE.md | Как ответить
+- governance/protocols/MAILBOX_TELEGRAM_DECISION_ONLY_POLICY.md | operator decision
+- governance/protocols/TELEGRAM_OPERATOR_DECISION_GATE.md | operator decision
+- governance/operator_decision_queue/bem584_decision_format_live_test.json | operator decision
+- governance/tmp/curator_hourly_report_message_static_selftest.txt | SYSTEM MONITORING REPORT, Последние события, BEM-HOURLY
+- governance/reports/bem593_operator_decision_curator_handoff.md | operator decision
+- governance/reports/bem573_mailbox_no_routine_telegram.md | operator decision
+- governance/reports/bem617_hourly_report_static_selftest_safe.md | SYSTEM MONITORING REPORT, Последние события, BEM-HOURLY
+- governance/reports/bem579_fix_mailbox_no_chr.md | operator decision
+- governance/reports/bem599_internal_analyst_decision_format_plan.md | operator decision
+- governance/reports/bem576_inline_buttons_protocol_fix.md | operator decision
+- governance/reports/bem589_record_operator_choice_from_chat.md | operator decision
+- governance/reports/bem571_mailbox_operator_fyi_format.md | operator decision
+- governance/reports/bem590_finalize_operator_decision_format.md | operator decision
+- governance/reports/bem559_claude_consolidated_autonomy_and_multiagent_vision.md | operator decision
+- governance/state/bem663_check_dispatch_queue_and_telegram_yaml.json | curator_hourly_report_message
+- governance/state/bem624_architecture_reconciliation_internal_contour.json | operator decision
+- governance/state/bem665_verify_dispatch_results_and_delivery.json | curator_hourly_report_message
+- governance/state/curator_hourly_report_state.json | curator_hourly_report_message
+- governance/state/bem621_live_hourly_delivery_post_trigger_check.json | curator_hourly_report_message
+- governance/state/bem631_runtime_delivery_results_check.json | curator_hourly_report_message
+- governance/state/bem617_hourly_report_static_selftest_safe.json | curator_hourly_report_message, BEM-HOURLY
+- governance/state/bem636_direct_telegram_smoke_result_check.json | curator_hourly_report_message
+- governance/state/contour_status.json | operator decision, curator_hourly_report_message, BEM-HOURLY
+- governance/state/bem668_final_readiness_or_exact_blocker.json | curator_hourly_report_message
+- governance/state/bem656_check_telegram_smoke_and_hourly_results.json | curator_hourly_report_message
+- governance/state/bem658_post_yaml_fix_delivery_check.json | curator_hourly_report_message
+- governance/state/bem666_read_delivery_state_and_decide_repair.json | curator_hourly_report_message
+- governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md | SYSTEM MONITORING REPORT, Последние события, operator decision, BEM-HOURLY
+- governance/audit_mailbox/gpt_to_claude/bem563_claude_gpt_sync_protocol_request.md | operator decision
+- governance/audit_mailbox/gpt_to_claude/bem572_gpt_ack_claude_bem566_response.md | operator decision
+- governance/audit_mailbox/gpt_to_claude/bem566_questions_answers_to_claude_sync_protocol.md | operator decision
+- governance/audit_mailbox/gpt_to_claude/bem590_operator_decision_format_finalized.md | operator decision
+- governance/audit_mailbox/claude_to_gpt/bem566_claude_response.md | operator decision
+- governance/archive/legacy-2026-05-01/full-repo-cleanup/ssot/MASTER_PROMPT_v164_CANON_FINAL.txt | operator decision
+- governance/tasks/pending/internal_contour_operator_decision_bem605_hourly_report_canon_template.md | operator decision
+- governance/tasks/pending/internal_contour_operator_decision_bem584_decision_format_live_test.md | operator decision
+- governance/tasks/pending/operator_decision_bem584_decision_format_live_test.md | operator decision
+- governance/codex/tasks/bem563_claude_gpt_sync_protocol.json | operator decision
+- governance/codex/tasks/bem571_mailbox_operator_fyi_format.json | operator decision
+- governance/codex/tasks/bem600_internal_audit_operator_decision_pipeline.json | operator decision
+- governance/codex/tasks/bem577_structured_operator_decision_package.json | Таблица решений, operator decision, Как ответить
+- governance/codex/tasks/bem612_reserve_audit_hourly_template_no_forbidden_words.json | SYSTEM MONITORING REPORT, Последние события, operator decision, BEM-HOURLY
+- governance/codex/tasks/bem576_telegram_inline_decision_buttons.json | operator decision
+- governance/codex/tasks/bem576_inline_buttons_protocol_fix.json | operator decision
+- governance/codex/tasks/bem589_record_operator_choice_from_chat.json | operator decision
+- governance/codex/tasks/bem575_operator_decision_canon_table.json | Таблица решений, operator decision, Как ответить
+- governance/codex/tasks/bem590_finalize_operator_decision_format.json | operator decision
+- governance/codex/tasks/bem559_claude_consolidated_report_force.json | operator decision
+- governance/codex/tasks/bem616_hourly_report_static_selftest.json | SYSTEM MONITORING REPORT, Последние события, curator_hourly_report_message, BEM-HOURLY
+- governance/codex/tasks/bem573_mailbox_no_routine_telegram.json | operator decision
+- governance/codex/tasks/bem617_hourly_report_static_selftest_safe.json | SYSTEM MONITORING REPORT, Последние события, curator_hourly_report_message, BEM-HOURLY
+- governance/codex/tasks/bem577_structured_operator_decision_queue.json | Таблица решений, operator decision, Как ответить
+- governance/codex/tasks/bem595_force_curator_intake_for_decision.json | operator decision
+- governance/codex/tasks/bem552_telegram_hourly_scheduler_force.json | BEM-HOURLY
+- governance/codex/tasks/bem669_find_telegram_report_renderers.json | SYSTEM MONITORING REPORT, Последние события, Таблица решений, operator decision, Как ответить, curator_hourly_report_message, BEM-HOURLY
+- governance/codex/tasks/bem618_trigger_live_curator_hourly_report.json | curator_hourly_report_message
+- governance/codex/tasks/bem582_live_test_readable_decision_table.json | operator decision
+- governance/codex/tasks/bem594_decision_curator_handoff_live_check.json | operator decision
+- governance/codex/tasks/bem593_operator_decision_curator_handoff.json | operator decision
+- governance/codex/tasks/bem564_sync_result_to_curator_protocol.json | operator decision
+- governance/codex/tasks/bem599_internal_analyst_decision_format_plan.json | operator decision
+- governance/codex/tasks/bem613_implement_canonical_hourly_report_renderer.json | SYSTEM MONITORING REPORT, Последние события, curator_hourly_report_message, BEM-HOURLY
+- governance/codex/tasks/bem614_fix_hourly_workflow_no_heredoc.json | curator_hourly_report_message
+- governance/codex/tasks/bem566_mailbox_qa_to_claude_force.json | operator decision
+- governance/codex/tasks/bem605_hourly_report_template_claude_request.json | SYSTEM MONITORING REPORT, Последние события, operator decision, BEM-HOURLY
+- governance/codex/tasks/bem559_claude_consolidated_system_report.json | operator decision
+- governance/codex/tasks/bem598_role_orchestrator_to_internal.json | operator decision
+- governance/codex/tasks/bem601_executor_selftest_operator_pipeline.json | operator decision
+- governance/codex/tasks/bem611_reserve_audit_and_operator_template_package.json | SYSTEM MONITORING REPORT, Последние события, operator decision, BEM-HOURLY
+- governance/codex/tasks/bem583_operator_decision_live_status.json | operator decision
+- governance/codex/tasks/bem562_telegram_operator_decision_gate.json | operator decision
+- governance/codex/tasks/bem560_telegram_stage_progress_canon.json | BEM-HOURLY
+- governance/codex/tasks/bem580_operator_decision_readable_table.json | operator decision, Как ответить
+- governance/codex/tasks/bem574_actionable_operator_decision_fix.json | operator decision, Как ответить
+- governance/codex/tasks/bem603_reply_intake_live_diagnostics.json | operator decision
+- governance/codex/tasks/bem581_fix_operator_decision_recorder_syntax.json | operator decision
+- governance/codex/tasks/bem585_operator_reply_intake_diagnosis.json | operator decision
+- governance/codex/tasks/bem572_gpt_ack_claude_bem566_response.json | operator decision
+- governance/codex/tasks/bem615_hourly_report_renderer_selftest.json | curator_hourly_report_message, BEM-HOURLY
+- governance/codex/tasks/bem666_read_delivery_state_and_decide_repair.json | curator_hourly_report_message
+- governance/codex/tasks/bem579_fix_mailbox_no_chr.json | operator decision
+- governance/codex/tasks/bem584_fix_decision_renderer_no_newline_literal.json | operator decision, Как ответить
+- governance/codex/tasks/bem574_actionable_operator_decision_telegram.json | operator decision, Как ответить
+- governance/codex/proofs/bem593_operator_decision_curator_handoff.txt | operator decision
+- governance/codex/proofs/bem574_actionable_operator_decision_fix.txt | operator decision
+- governance/codex/proofs/bem577_structured_operator_decision_queue.txt | operator decision
+- governance/codex/proofs/bem600_internal_audit_operator_decision_pipeline.txt | operator decision
+- governance/codex/proofs/bem590_finalize_operator_decision_format.txt | operator decision
+- governance/codex/proofs/bem573_mailbox_no_routine_telegram.txt | operator decision
+- governance/codex/proofs/bem562_telegram_operator_decision_gate.txt | operator decision
+- governance/codex/proofs/bem601_executor_selftest_operator_pipeline.txt | operator decision
+- governance/codex/proofs/bem583_operator_decision_live_status.txt | operator decision
+- governance/codex/proofs/bem576_inline_buttons_protocol_fix.txt | operator decision
+- governance/codex/proofs/bem580_operator_decision_readable_table.txt | operator decision
+- governance/codex/proofs/bem617_hourly_report_static_selftest_safe.txt | curator_hourly_report_message
+- governance/codex/proofs/bem595_force_curator_intake_for_decision.txt | operator decision
+- governance/codex/proofs/bem575_operator_decision_canon_table.txt | operator decision
+- governance/codex/proofs/bem599_internal_analyst_decision_format_plan.txt | operator decision
+- governance/codex/proofs/bem594_decision_curator_handoff_live_check.txt | operator decision
+- governance/codex/proofs/bem584_fix_decision_renderer_no_newline_literal.txt | operator decision
+- governance/codex/results/bem593_operator_decision_curator_handoff.md | operator decision
+- governance/codex/results/bem573_mailbox_no_routine_telegram.md | operator decision
+- governance/codex/results/bem600_internal_audit_operator_decision_pipeline.json | operator decision
+- governance/codex/results/bem617_hourly_report_static_selftest_safe.md | curator_hourly_report_message
+- governance/codex/results/bem580_operator_decision_readable_table.md | operator decision
+- governance/codex/results/bem601_executor_selftest_operator_pipeline.md | operator decision
+- governance/codex/results/bem576_inline_buttons_protocol_fix.json | operator decision
+- governance/codex/results/bem595_force_curator_intake_for_decision.md | operator decision
+- governance/codex/results/bem575_operator_decision_canon_table.json | operator decision
+- governance/codex/results/bem590_finalize_operator_decision_format.json | operator decision
+- governance/codex/results/bem574_actionable_operator_decision_fix.md | operator decision
+- governance/codex/results/bem573_mailbox_no_routine_telegram.json | operator decision
+- governance/codex/results/bem617_hourly_report_static_selftest_safe.json | curator_hourly_report_message
+- governance/codex/results/bem577_structured_operator_decision_queue.json | operator decision
+- governance/codex/results/bem595_force_curator_intake_for_decision.json | operator decision
+- governance/codex/results/bem599_internal_analyst_decision_format_plan.md | operator decision
+- governance/codex/results/bem600_internal_audit_operator_decision_pipeline.md | operator decision
+- governance/codex/results/bem594_decision_curator_handoff_live_check.json | operator decision
+- governance/codex/results/bem575_operator_decision_canon_table.md | operator decision
+- governance/codex/results/bem593_operator_decision_curator_handoff.json | operator decision
+- governance/codex/results/bem583_operator_decision_live_status.md | operator decision
+- governance/codex/results/bem576_inline_buttons_protocol_fix.md | operator decision
+- governance/codex/results/bem599_internal_analyst_decision_format_plan.json | operator decision
+- governance/codex/results/bem584_fix_decision_renderer_no_newline_literal.md | operator decision
+- governance/codex/results/bem601_executor_selftest_operator_pipeline.json | operator decision
+- governance/codex/results/bem594_decision_curator_handoff_live_check.md | operator decision
+- governance/codex/results/bem583_operator_decision_live_status.json | operator decision
+- governance/codex/results/bem562_telegram_operator_decision_gate.json | operator decision
+- governance/codex/results/bem580_operator_decision_readable_table.json | operator decision
+- governance/codex/results/bem577_structured_operator_decision_queue.md | operator decision
+- governance/codex/results/bem574_actionable_operator_decision_fix.json | operator decision
+- governance/codex/results/bem562_telegram_operator_decision_gate.md | operator decision
+- governance/codex/results/bem590_finalize_operator_decision_format.md | operator decision
+- governance/codex/results/bem584_fix_decision_renderer_no_newline_literal.json | operator decision
+- governance/internal_contour/tasks/operator_decision_bem584_decision_format_live_test.json | operator decision
+- governance/internal_contour/tasks/operator_decision_bem605_hourly_report_canon_template.json | operator decision
+- governance/internal_contour/inbox/operator_decision_bem584_decision_format_live_test.json | operator decision
+- governance/internal_contour/inbox/operator_decision_bem605_hourly_report_canon_template.json | operator decision
+- governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.json | SYSTEM MONITORING REPORT, Последние события, operator decision, BEM-HOURLY
+- governance/internal_contour/analyst/plans/bem599_internal_analyst_decision_format_plan.md | operator decision
+- governance/internal_contour/analyst/plans/bem599_internal_analyst_decision_format_plan.json | operator decision
+- governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.md | SYSTEM MONITORING REPORT, Последние события, operator decision, BEM-HOURLY
+- governance/internal_contour/auditor/reports/bem600_internal_audit_operator_decision_pipeline.json | operator decision
+- governance/internal_contour/auditor/reports/bem612_reserve_audit_hourly_report_template.json | operator decision
+- governance/internal_contour/auditor/reports/bem612_reserve_audit_hourly_report_template.md | operator decision
+- governance/internal_contour/auditor/inbox/bem625_bem605_hourly_report_internal_auditor_review.json | SYSTEM MONITORING REPORT, Последние события, operator decision, BEM-HOURLY
+- governance/internal_contour/auditor/inbox/bem599_internal_analyst_decision_format_plan.json | operator decision
+- governance/internal_contour/executor/inbox/bem600_internal_audit_operator_decision_pipeline.json | operator decision
+
+## Blocker
+null
