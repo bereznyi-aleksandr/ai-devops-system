@@ -1,0 +1,13 @@
+# Codex Runner v3 Result - bem605_hourly_report_template_claude_request
+
+| Field | Value |
+|---|---|
+| Trace | bem605_hourly_report_template_claude_request |
+| Executor | Python v3 (ubuntu-latest) |
+| Status | completed |
+| Operations | Created full task chain for hourly Telegram report template and sent review request to Claude auditor via mailbox with provider gate requirement, custom_script |
+| Commit SHA | 7c288daf9b5785a8fcd6ca195ccf016d11f12cac |
+| Changed files | governance/curator/inbox/bem605_hourly_report_canon_template.json, governance/role_orchestrator/inbox/bem605_hourly_report_canon_template.json, governance/internal_contour/tasks/bem605_hourly_report_canon_template.json, governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.json, governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.md, governance/internal_contour/auditor/inbox/bem605_hourly_report_template_claude_audit.json, governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md, governance/provider_gates/bem605_provider_gate_required.json, governance/operator_decision_queue/bem605_hourly_report_template_operator_approval_PENDING_CLAUDE.json, governance/protocols/HOURLY_REPORT_TEMPLATE_APPROVAL_FLOW.md, governance/reports/bem605_hourly_report_template_claude_request.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem605_hourly_report_template_claude_request.txt, governance/codex/proofs/bem605_hourly_report_template_claude_request.txt |
+| Completed | 2026-05-18T03:08:37Z |
+
+### Completed successfully.
