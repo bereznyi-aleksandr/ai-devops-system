@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem627_internal_contour_architecture_lint
+task_type: code_patch
+executed_at: 2026-05-18T04:26:22Z
+ops_applied: Created and ran internal contour architecture lint to enforce role-bus, provider evidence, mailbox boundaries, and Deno transport labeling, custom_script
+changed_files: scripts/internal_contour_architecture_lint.py, .github/workflows/internal-contour-architecture-lint.yml, governance/state/internal_contour_architecture_lint.json, governance/protocols/INTERNAL_CONTOUR_PREFLIGHT_LINT.md, governance/reports/bem627_internal_contour_architecture_lint.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem627_internal_contour_architecture_lint.txt
+errors: none

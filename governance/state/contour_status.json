@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 07:25 (UTC+3)",
+  "updated_at": "2026-05-18 | 07:26 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -861,5 +861,13 @@
     "matrix": "governance/state/bem626_role_execution_evidence_matrix.json",
     "blocker": null
   },
-  "role_execution_evidence_canon": "active"
+  "role_execution_evidence_canon": "active",
+  "bem627_internal_contour_architecture_lint": {
+    "status": "pass",
+    "state_file": "governance/state/internal_contour_architecture_lint.json",
+    "lint_script": "scripts/internal_contour_architecture_lint.py",
+    "workflow": ".github/workflows/internal-contour-architecture-lint.yml",
+    "blocker": null
+  },
+  "internal_contour_architecture_lint": "active_pass"
 }

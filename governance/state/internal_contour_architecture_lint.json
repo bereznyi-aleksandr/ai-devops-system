@@ -1,0 +1,68 @@
+{
+  "schema_version": "internal_contour_architecture_lint.v1",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "role_communication_canon_exists",
+      "pass": true,
+      "evidence": "governance/protocols/ROLE_COMMUNICATION_CANON.md"
+    },
+    {
+      "name": "role_execution_evidence_canon_exists",
+      "pass": true,
+      "evidence": "governance/protocols/ROLE_EXECUTION_EVIDENCE_CANON.md"
+    },
+    {
+      "name": "bem605_internal_auditor_package_exists",
+      "pass": true,
+      "evidence": "governance/internal_contour/auditor/inbox/bem625_bem605_hourly_report_internal_auditor_review.json"
+    },
+    {
+      "name": "bem605_mailbox_misroute_annotated",
+      "pass": true,
+      "evidence": "governance/audit_mailbox/meta/bem625_bem605_mailbox_misroute_annotation.json"
+    },
+    {
+      "name": "auditor_to_auditor_mailbox_lane_exists",
+      "pass": true,
+      "evidence": "governance/audit_mailbox/internal_auditor_to_external_auditor"
+    },
+    {
+      "name": "provider_route_has_provider_checked",
+      "pass": true,
+      "evidence": "governance/provider_gates/bem610_provider_route_decision.json"
+    },
+    {
+      "name": "provider_route_has_primary_provider",
+      "pass": true,
+      "evidence": "governance/provider_gates/bem610_provider_route_decision.json"
+    },
+    {
+      "name": "provider_route_has_reserve_provider",
+      "pass": true,
+      "evidence": "governance/provider_gates/bem610_provider_route_decision.json"
+    },
+    {
+      "name": "provider_route_has_selected_provider",
+      "pass": true,
+      "evidence": "governance/provider_gates/bem610_provider_route_decision.json"
+    },
+    {
+      "name": "provider_route_has_reserve_used",
+      "pass": true,
+      "evidence": "governance/provider_gates/bem610_provider_route_decision.json"
+    },
+    {
+      "name": "provider_route_has_reason",
+      "pass": true,
+      "evidence": "governance/provider_gates/bem610_provider_route_decision.json"
+    },
+    {
+      "name": "deno_labeled_transport_not_executor",
+      "pass": true,
+      "evidence": "governance/protocols/ROLE_COMMUNICATION_CANON.md"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 07:26 (UTC+3)"
+}
