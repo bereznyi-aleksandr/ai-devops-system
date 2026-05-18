@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem652_auditor_mailbox_completion_plan",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Prepared full readiness plan and sent it to internal auditor through audit_mailbox external_to_internal lane with internal inbox intake and controls",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/internal_contour/analyst/plans/bem652_internal_contour_full_readiness_plan.json",
+    "governance/internal_contour/analyst/plans/bem652_internal_contour_full_readiness_plan.md",
+    "governance/audit_mailbox/external_auditor_to_internal_auditor/bem652_full_readiness_plan_request.md",
+    "governance/internal_contour/auditor/inbox/bem652_mailbox_request_intake_for_internal_auditor.json",
+    "governance/internal_contour/controls/bem652_full_readiness_controls.json",
+    "governance/protocols/FULL_READINESS_DEVELOPMENT_PLAN.md",
+    "governance/state/bem652_auditor_mailbox_completion_plan.json",
+    "governance/reports/bem652_auditor_mailbox_completion_plan.md",
+    "governance/transport/results.jsonl",
+    "governance/state/contour_status.json",
+    "governance/codex/proofs/bem652_auditor_mailbox_completion_plan.txt",
+    "governance/codex/proofs/bem652_auditor_mailbox_completion_plan.txt"
+  ],
+  "commit_sha": "ea1d1ff4ccda66b5d53926da49902d287896a21d",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem652_auditor_mailbox_completion_plan.md",
+  "completed_at": "2026-05-18T12:43:38Z"
+}
