@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem672_dispatch_only_canonical_hourly_report",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-672 dispatch hourly",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nqueue=Path('governance/workflow_dispatch_queue'); queue.mkdir(parents=True,exist_ok=True)\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\nstate_dir=Path('governance/state'); state_dir.mkdir(parents=True,exist_ok=True)\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\n\n# Queue only canonical hourly report. No Telegram smoke queue item.\nitem={'workflow':'curator-hourly-report.yml','ref':'main','inputs':{}}\nqueue_file=queue/'curator_hourly_report_once.json'\nqueue_file.write_text(json.dumps(item,indent=2,ensure_ascii=False)+sep)\n\nstate={'schema_version':'dispatch_only_canonical_hourly_report.v1','bem':'BEM-672','status':'queued_hourly_report_only','queue_file':str(queue_file),'note':'No telegram-send-smoke dispatch was queued. This avoids repeated smoke messages.','blocker':None,'created_at':'2026-05-18 | 18:58 (UTC+3)'}\nstate_file=state_dir/'bem672_dispatch_only_canonical_hourly_report.json'\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=reports/'bem672_dispatch_only_canonical_hourly_report.md'\nreport.write_text('# BEM-672 | Dispatch Only Canonical Hourly Report | QUEUED'+sep+sep+'Дата: 2026-05-18 | 18:58 (UTC+3)'+sep+sep+'Queued only curator-hourly-report.yml. Telegram smoke was not queued.'+sep+sep+'Blocker: null'+sep)\nrecord={'record_type':'bem672_dispatch_only_canonical_hourly_report','cycle_id':'bem672-dispatch-only-canonical-hourly-report','source':'executor','status':'queued_hourly_report_only','queue_file':str(queue_file),'blocker':None,'created_at':'2026-05-18 | 18:58 (UTC+3)'}\nwith transport.open('a',encoding='utf-8') as handle: handle.write(json.dumps(record,ensure_ascii=False)+sep)\ncontour_state={}\nif contour.exists():\n    try: contour_state=json.loads(contour.read_text(errors='ignore'))\n    except: contour_state={}\ncontour_state['bem672_dispatch_only_canonical_hourly_report']={'status':'queued_hourly_report_only','state_file':str(state_file),'queue_file':str(queue_file),'blocker':None}\ncontour_state['operator_telegram_report_delivery_status']='hourly_dispatch_queued'\ncontour_state['updated_at']='2026-05-18 | 18:58 (UTC+3)'; contour_state['blocker']=None\ncontour.write_text(json.dumps(contour_state,indent=2,ensure_ascii=False)+sep)\nproof=proofs/'bem672_dispatch_only_canonical_hourly_report.txt'\nproof.write_text('BEM-672 PASS: queued only curator-hourly-report workflow; no smoke queued.\\n')\nchanged_files.extend([str(queue_file),str(state_file),str(report),str(transport),str(contour),str(proof)])\nops_applied.append('Queued only canonical curator hourly report workflow through dispatch queue, with no Telegram smoke dispatch')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem672_dispatch_only_canonical_hourly_report.md",
+    "result_json": "governance/codex/results/bem672_dispatch_only_canonical_hourly_report.json"
+  },
+  "created_at": "2026-05-18T16:01:28.719Z"
+}
