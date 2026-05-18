@@ -1,0 +1,18 @@
+{
+  "schema_version": "internal_auditor_mailbox_intake.v1",
+  "bem": "BEM-652",
+  "package_id": "bem652_mailbox_request_intake_for_internal_auditor",
+  "source_mailbox_file": "governance/audit_mailbox/external_auditor_to_internal_auditor/bem652_full_readiness_plan_request.md",
+  "source_plan": "governance/internal_contour/analyst/plans/bem652_internal_contour_full_readiness_plan.json",
+  "from_role": "external_auditor",
+  "to_role": "internal_auditor",
+  "transport": "audit_mailbox_external_to_internal",
+  "status": "ready_for_internal_auditor_review",
+  "required_output": [
+    "mailbox response to internal_auditor_to_external_auditor",
+    "internal auditor verdict report",
+    "approved/revised execution plan"
+  ],
+  "created_at": "2026-05-18 | 15:36 (UTC+3)",
+  "blocker": null
+}

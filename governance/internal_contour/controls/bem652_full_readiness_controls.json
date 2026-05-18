@@ -1,0 +1,26 @@
+{
+  "schema_version": "bem652_controls.v1",
+  "bem": "BEM-652",
+  "status": "ready",
+  "controls": [
+    {
+      "id": "C6",
+      "name": "telegram_delivery_confirmed",
+      "hard_blocker": true,
+      "evidence": "governance/state/curator_hourly_delivery_verification.json"
+    },
+    {
+      "id": "C9",
+      "name": "auditor_mailbox_response",
+      "hard_blocker": true,
+      "evidence": "governance/audit_mailbox/internal_auditor_to_external_auditor/bem652_full_readiness_plan_response.md"
+    },
+    {
+      "id": "C10",
+      "name": "internal_auditor_verdict",
+      "hard_blocker": true,
+      "evidence": "governance/internal_contour/auditor/reports/bem652_full_readiness_plan_verdict.json"
+    }
+  ],
+  "created_at": "2026-05-18 | 15:36 (UTC+3)"
+}

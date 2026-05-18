@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem652_auditor_mailbox_completion_plan
+task_type: code_patch
+executed_at: 2026-05-18T12:43:36Z
+ops_applied: Prepared full readiness plan and sent it to internal auditor through audit_mailbox external_to_internal lane with internal inbox intake and controls, custom_script
+changed_files: governance/internal_contour/analyst/plans/bem652_internal_contour_full_readiness_plan.json, governance/internal_contour/analyst/plans/bem652_internal_contour_full_readiness_plan.md, governance/audit_mailbox/external_auditor_to_internal_auditor/bem652_full_readiness_plan_request.md, governance/internal_contour/auditor/inbox/bem652_mailbox_request_intake_for_internal_auditor.json, governance/internal_contour/controls/bem652_full_readiness_controls.json, governance/protocols/FULL_READINESS_DEVELOPMENT_PLAN.md, governance/state/bem652_auditor_mailbox_completion_plan.json, governance/reports/bem652_auditor_mailbox_completion_plan.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem652_auditor_mailbox_completion_plan.txt
+errors: none
