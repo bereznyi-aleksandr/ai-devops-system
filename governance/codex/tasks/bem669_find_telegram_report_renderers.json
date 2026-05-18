@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem669_find_telegram_report_renderers",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-669 find renderers",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\nstate_dir=Path('governance/state'); state_dir.mkdir(parents=True,exist_ok=True)\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\npatterns=['SYSTEM MONITORING REPORT','Последние события','Таблица решений','operator decision','Как ответить','curator_hourly_report_message','BEM-HOURLY']\nmatches=[]\nfor root in ['scripts','.github/workflows','governance']:\n    base=Path(root)\n    if not base.exists():\n        continue\n    for p in base.rglob('*'):\n        if p.is_file() and p.suffix in ['.py','.yml','.yaml','.md','.json','.txt']:\n            try:\n                text=p.read_text(errors='ignore')\n            except:\n                continue\n            found=[pat for pat in patterns if pat in text]\n            if found:\n                matches.append({'path':str(p),'found':found,'preview':text[:1200]})\nstate={'schema_version':'telegram_report_renderer_discovery.v1','bem':'BEM-669','status':'completed','matches':matches,'match_count':len(matches),'blocker':None,'created_at':'2026-05-18 | 16:07 (UTC+3)'}\nstate_file=state_dir/'bem669_find_telegram_report_renderers.json'\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=reports/'bem669_find_telegram_report_renderers.md'\nlines=['# BEM-669 | Find Telegram Report Renderers','', 'Дата: 2026-05-18 | 16:07 (UTC+3)', '', '## Matches']\nfor m in matches:\n    lines.append('- '+m['path']+' | '+', '.join(m['found']))\nlines += ['', '## Blocker', 'null']\nreport.write_text(sep.join(lines)+sep)\nrecord={'record_type':'bem669_find_telegram_report_renderers','cycle_id':'bem669-find-telegram-report-renderers','source':'gpt_diagnosis','status':'completed','match_count':len(matches),'state_file':str(state_file),'blocker':None,'created_at':'2026-05-18 | 16:07 (UTC+3)'}\nwith transport.open('a',encoding='utf-8') as handle: handle.write(json.dumps(record,ensure_ascii=False)+sep)\ncontour_state={}\nif contour.exists():\n    try: contour_state=json.loads(contour.read_text(errors='ignore'))\n    except: contour_state={}\ncontour_state['bem669_find_telegram_report_renderers']={'status':'completed','match_count':len(matches),'state_file':str(state_file),'blocker':None}\ncontour_state['telegram_template_refactor_status']='renderers_found'\ncontour_state['updated_at']='2026-05-18 | 16:07 (UTC+3)'; contour_state['blocker']=None\ncontour.write_text(json.dumps(contour_state,indent=2,ensure_ascii=False)+sep)\nproof=proofs/'bem669_find_telegram_report_renderers.txt'\nproof.write_text('BEM-669 PASS: found '+str(len(matches))+' renderer/template matches.\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(contour),str(proof)])\nops_applied.append('Discovered current Telegram hourly and approval renderer/template files for refactor')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem669_find_telegram_report_renderers.md",
+    "result_json": "governance/codex/results/bem669_find_telegram_report_renderers.json"
+  },
+  "created_at": "2026-05-18T15:49:54.890Z"
+}
