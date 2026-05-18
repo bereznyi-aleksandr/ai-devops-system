@@ -1,11 +1,7 @@
 name: Codex Runner
 
 # BEM-526: Python executor v3
-# - 12 file operation patterns
-# - arbitrary Python script (Run script: """...""")
-# - operations_applied in result
-# - objective validation
-# - NO paid API, NO self-hosted, NO issue comments
+# BEM-645: fixed duplicate permissions key
 
 on:
   workflow_dispatch:
@@ -21,7 +17,6 @@ on:
         type: string
 
 permissions:
-  actions: write
   contents: write
   actions: read
 
@@ -89,44 +84,7 @@ jobs:
         shell: bash
         run: |
           python3 - <<'PYEOF'
-          """
-          =================================================================
-          PYTHON EXECUTOR v3 — BEM-526
-          =================================================================
-
-          УРОВЕНЬ 1 — ПАТТЕРНЫ (12 операций):
-
-          1.  Create file <path> with content <text>
-          2.  Delete file <path>
-          3.  Move file <path> to <path2>
-          4.  Copy file <path> to <path2>
-          5.  Append to <path>: <content>
-          6.  Prepend to <path>: <content>
-          7.  Set <path> field <key>=<value>
-          8.  Set <path> fields: k1=v1, k2=v2
-          9.  Replace in <path> line containing <old> with <new>
-          10. Delete from <path> line containing <text>
-          11. Insert in <path> after line containing <anchor>: <content>
-          12. Create dir <path>
-
-          УРОВЕНЬ 2 — ПРОИЗВОЛЬНЫЙ PYTHON СКРИПТ:
-
-          Run script:
-          """
-          # любой Python код здесь
-          # доступ к файловой системе репозитория
-          """
-
-          БЕЗОПАСНОСТЬ СКРИПТА:
-          - Запрещены: requests, urllib, subprocess, os.system, socket
-          - Запрещено: читать переменные окружения с секретами
-          - Только файловые операции внутри репозитория
-
-          КОМБИНИРОВАНИЕ:
-          Можно использовать несколько паттернов и скрипт в одном objective.
-          =================================================================
-          """
-          import json, os, re, shutil, ast
+          import json, os, re, shutil
           from datetime import datetime, timezone
           from pathlib import Path
 
@@ -135,8 +93,6 @@ jobs:
           objective = os.environ.get('TASK_OBJECTIVE', '')
           task_type = os.environ.get('TASK_TYPE', 'unknown')
 
-          # Восстанавливаем переносы строк (были заменены пробелами при передаче)
-          # Скрипт ищем в оригинальном task file
           task_path = 'governance/codex/tasks/' + trace + '.json'
           try:
               full_task = json.loads(Path(task_path).read_text())
@@ -146,31 +102,27 @@ jobs:
 
           print('Executing: ' + trace)
 
-          changed_files    = []
-          errors           = []
-          ops_applied      = []
-          exec_status      = 'completed'
+          changed_files = []
+          errors        = []
+          ops_applied   = []
+          exec_status   = 'completed'
 
-          # ── УРОВЕНЬ 2: Произвольный Python скрипт ───────────────────────
+          # ── УРОВЕНЬ 2: Произвольный Python скрипт ──────────────────────
           script_match = re.search(r'Run script:\s*\n\s*"""(.*?)"""', objective, re.DOTALL)
           if not script_match:
               script_match = re.search(r"Run script:\s*\n\s*'''(.*?)'''", objective, re.DOTALL)
 
           if script_match:
               script_code = script_match.group(1)
-
-              # Валидация безопасности
               forbidden = ['requests', 'urllib', 'subprocess', 'os.system',
                            'os.popen', 'socket', 'exec(', 'eval(', '__import__']
               blocked = [f for f in forbidden if f in script_code]
-
               if blocked:
                   errors.append('Script blocked: forbidden calls: ' + ', '.join(blocked))
                   exec_status = 'failed'
               else:
                   print('Running custom script...')
                   try:
-                      # Выполняем скрипт в безопасном контексте
                       safe_globals = {
                           '__builtins__': {
                               'print': print, 'len': len, 'str': str, 'int': int,
@@ -181,19 +133,12 @@ jobs:
                               'isinstance': isinstance, 'type': type, 'repr': repr,
                               'open': open, 'True': True, 'False': False, 'None': None,
                           },
-                          'json': json,
-                          'Path': Path,
-                          're': re,
-                          'datetime': datetime,
-                          'timezone': timezone,
-                          'now': now,
-                          'trace': trace,
-                          'shutil': shutil,
-                          'changed_files': changed_files,
-                          'ops_applied': ops_applied,
+                          'json': json, 'Path': Path, 're': re,
+                          'datetime': datetime, 'timezone': timezone,
+                          'now': now, 'trace': trace, 'shutil': shutil,
+                          'changed_files': changed_files, 'ops_applied': ops_applied,
                       }
                       exec(script_code, safe_globals)
-                      # Подбираем изменённые файлы из контекста скрипта
                       if 'changed_files' in safe_globals:
                           changed_files = safe_globals['changed_files']
                       ops_applied.append('custom_script')
@@ -209,8 +154,7 @@ jobs:
               r'Create\s+file\s+([^\s]+)\s+with\s+content\s+["\']?(.*?)["\']?\s*(?=\.|Create|Delete|Move|Copy|Append|Prepend|Set|Replace|Insert|Run|$)',
               objective, re.DOTALL | re.IGNORECASE
           ):
-              target  = m.group(1).strip()
-              content = m.group(2).strip()
+              target, content = m.group(1).strip(), m.group(2).strip()
               try:
                   p = Path(target)
                   p.parent.mkdir(parents=True, exist_ok=True)
@@ -390,7 +334,7 @@ jobs:
               except Exception as e:
                   errors.append('Create dir failed: ' + str(e))
 
-          # ── Proof file ───────────────────────────────────────────────────
+          # ── Proof file ──────────────────────────────────────────────────
           proof_dir = Path('governance/codex/proofs')
           proof_dir.mkdir(parents=True, exist_ok=True)
           proof = proof_dir / (trace + '.txt')
@@ -471,34 +415,31 @@ jobs:
           result_dir.mkdir(parents=True, exist_ok=True)
 
           result = {
-              'schema_version':    1,
-              'trace_id':          trace,
-              'executor':          'python-v3',
-              'status':            status,
+              'schema_version':     1,
+              'trace_id':           trace,
+              'executor':           'python-v3',
+              'status':             status,
               'operations_applied': ops,
-              'changed_files':     changed,
-              'commit_sha':        commit_sha or None,
-              'blocker':           blocker,
-              'report_path':       'governance/codex/results/' + trace + '.md',
-              'completed_at':      now
+              'changed_files':      changed,
+              'commit_sha':         commit_sha or None,
+              'blocker':            blocker,
+              'report_path':        'governance/codex/results/' + trace + '.md',
+              'completed_at':       now
           }
           (result_dir / (trace + '.json')).write_text(
               json.dumps(result, indent=2, ensure_ascii=False) + '\n'
           )
 
           lines = [
-              '# Codex Runner v3 Result - ' + trace,
-              '',
-              '| Field | Value |',
-              '|---|---|',
+              '# Codex Runner v3 Result - ' + trace, '',
+              '| Field | Value |', '|---|---|',
               '| Trace | ' + trace + ' |',
               '| Executor | Python v3 (ubuntu-latest) |',
               '| Status | ' + status + ' |',
               '| Operations | ' + (', '.join(ops) or 'none') + ' |',
               '| Commit SHA | ' + (commit_sha or 'none') + ' |',
               '| Changed files | ' + (', '.join(changed) or 'none') + ' |',
-              '| Completed | ' + now + ' |',
-              '',
+              '| Completed | ' + now + ' |', '',
           ]
           if blocker:
               lines += ['### Blocker', '```json', json.dumps(blocker, indent=2), '```']
@@ -541,11 +482,12 @@ jobs:
               '| Operations | ' + ops + ' |',
               '| SHA | ' + (sha or 'none') + ' |',
               ('| Errors | ' + errors + ' |') if errors else '',
-              '**No issue #31 comments (BEM-526)**', '',
+              '**No issue #31 comments (BEM-645)**', '',
           ]
           with open(os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/s.md'), 'a') as f:
               f.write('\n'.join(l for l in lines if l))
           PYEOF
+
       - name: Run workflow dispatch queue if present
         if: always()
         env:
@@ -565,4 +507,3 @@ jobs:
           else
             echo "No workflow dispatch queue runner present"
           fi
-
