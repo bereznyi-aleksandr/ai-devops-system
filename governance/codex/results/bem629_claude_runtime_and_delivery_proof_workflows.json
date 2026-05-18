@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem629_claude_runtime_and_delivery_proof_workflows",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem629_claude_runtime_and_delivery_proof_workflows.txt"
+  ],
+  "commit_sha": "8bc433308b3a2df89f1477b8c70f7ff34ed70418",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: forbidden calls: __import__"
+  },
+  "report_path": "governance/codex/results/bem629_claude_runtime_and_delivery_proof_workflows.md",
+  "completed_at": "2026-05-18T04:30:11Z"
+}
