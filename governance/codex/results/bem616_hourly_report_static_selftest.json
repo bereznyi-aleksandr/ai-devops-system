@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem616_hourly_report_static_selftest",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem616_hourly_report_static_selftest.txt"
+  ],
+  "commit_sha": "179047cee8da2e49e1fd290bd217b5c9601e66a1",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'Exception' is not defined"
+  },
+  "report_path": "governance/codex/results/bem616_hourly_report_static_selftest.md",
+  "completed_at": "2026-05-18T03:44:35Z"
+}
