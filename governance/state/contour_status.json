@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 15:44 (UTC+3)",
+  "updated_at": "2026-05-18 | 15:47 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -1094,5 +1094,11 @@
     "verdict": "governance/internal_contour/auditor/reports/bem653_full_readiness_plan_verdict.json",
     "executor_request": "governance/internal_contour/executor/inbox/bem653_execute_full_readiness_repairs.json",
     "blocker": null
-  }
+  },
+  "bem655_telegram_delivery_smoke_safe": {
+    "status": "safe_smoke_workflow_created_and_triggered",
+    "state_file": "governance/state/bem655_telegram_delivery_smoke_safe.json",
+    "blocker": null
+  },
+  "telegram_delivery_repair_status": "safe_smoke_triggered"
 }

@@ -1,1 +1,1 @@
-BEM-630 trigger curator hourly report for delivery verification 2026-05-18 | 07:30 (UTC+3)
+BEM-655 retrigger curator hourly report after safe telegram smoke 2026-05-18 | 15:47 (UTC+3)
