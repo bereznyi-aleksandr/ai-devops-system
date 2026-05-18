@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem603_reply_intake_live_diagnostics",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-603 intake diagnostics",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nreports=Path('governance/reports'); reports.mkdir(parents=True,exist_ok=True)\nproofs=Path('governance/codex/proofs'); proofs.mkdir(parents=True,exist_ok=True)\ntransport=Path('governance/transport/results.jsonl'); transport.parent.mkdir(parents=True,exist_ok=True)\ncontour=Path('governance/state/contour_status.json'); contour.parent.mkdir(parents=True,exist_ok=True)\nstate_path=Path('governance/state/operator_reply_intake_state.json')\nresult_path=Path('governance/reports/operator_reply_intake_result.md')\nworkflow=Path('.github/workflows/operator-reply-intake.yml')\ntrigger=Path('governance/triggers/operator_reply_intake.trigger')\nscript=Path('scripts/operator_reply_intake.py')\ndecisions=Path('governance/operator_decisions')\nstate={}\nif state_path.exists():\n    try: state=json.loads(state_path.read_text(errors='ignore'))\n    except Exception: state={'parse_error':True,'raw':state_path.read_text(errors='ignore')[:2000]}\nlast=state.get('last_run') if isinstance(state,dict) else None\ndecision_files=[str(p) for p in sorted(decisions.glob('*.json'), key=lambda p: str(p))] if decisions.exists() else []\nstatus='unknown'\nblocker=None\nif isinstance(last,dict):\n    status=last.get('status') or 'unknown'\n    blocker=last.get('blocker')\nelse:\n    status='no_live_state_yet'\n    blocker={'code':'REPLY_INTAKE_LIVE_STATE_NOT_FOUND','message':'operator_reply_intake_state.json or last_run not present after trigger; workflow may still be running or did not commit.'}\n# Existing decision file means operator decision is safe, but live intake can still be diagnostic-only.\nreport_lines=['# BEM-603 | Reply Intake Live Diagnostics','', 'Дата: 2026-05-18 | 05:58 (UTC+3)', '', '## Files', '- workflow exists: '+str(workflow.exists()), '- script exists: '+str(script.exists()), '- trigger exists: '+str(trigger.exists()), '- state exists: '+str(state_path.exists()), '- result report exists: '+str(result_path.exists()), '', '## Last run', json.dumps(last,ensure_ascii=False,indent=2) if isinstance(last,dict) else str(last), '', '## Decision files', json.dumps(decision_files,ensure_ascii=False,indent=2), '', '## Status', status, '', '## Blocker', 'null' if blocker is None else json.dumps(blocker,ensure_ascii=False,indent=2)]\nreport=reports/'bem603_reply_intake_live_diagnostics.md'\nreport.write_text(sep.join(report_lines)+sep)\nrecord={'record_type':'bem603_reply_intake_live_diagnostics','cycle_id':'bem603-reply-intake-live-diagnostics','source':'gpt','status':status,'last_run':last,'decision_files':decision_files,'blocker':blocker,'created_at':'2026-05-18 | 05:58 (UTC+3)'}\nwith transport.open('a',encoding='utf-8') as handle: handle.write(json.dumps(record,ensure_ascii=False)+sep)\nstate2={}\nif contour.exists():\n    try: state2=json.loads(contour.read_text(errors='ignore'))\n    except Exception: state2={}\nstate2['bem603_reply_intake_live_diagnostics']={'status':status,'last_run':last,'decision_files':decision_files,'blocker':blocker}\nstate2['updated_at']='2026-05-18 | 05:58 (UTC+3)'; state2['blocker']=blocker\ncontour.write_text(json.dumps(state2,indent=2,ensure_ascii=False)+sep)\nproof=proofs/'bem603_reply_intake_live_diagnostics.txt'\nproof.write_text('BEM-603 status='+status+' blocker='+('null' if blocker is None else json.dumps(blocker,ensure_ascii=False))+'\\n')\nchanged_files.extend([str(report),str(transport),str(contour),str(proof)])\nops_applied.append('Recorded live diagnostics for hardened operator reply intake')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem603_reply_intake_live_diagnostics.md",
+    "result_json": "governance/codex/results/bem603_reply_intake_live_diagnostics.json"
+  },
+  "created_at": "2026-05-18T02:57:22.005Z"
+}
