@@ -1,1 +1,1 @@
-BEM-608 trigger claude primary provider gate at 2026-05-18 | 06:15 (UTC+3)
+BEM-609 trigger claude provider gate safe YAML at 2026-05-18 | 06:24 (UTC+3)

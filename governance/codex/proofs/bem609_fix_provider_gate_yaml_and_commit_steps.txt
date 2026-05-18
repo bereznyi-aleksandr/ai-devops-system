@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem609_fix_provider_gate_yaml_and_commit_steps
+task_type: code_patch
+executed_at: 2026-05-18T03:38:33Z
+ops_applied: Fixed invalid provider gate YAML by moving logic to Python script and hardened router workflow commit steps, custom_script
+changed_files: scripts/claude_primary_provider_gate.py, .github/workflows/claude-primary-provider-gate.yml, governance/triggers/claude_primary_provider_gate.trigger, governance/protocols/YAML_AND_COMMIT_FAILURE_HARDENING.md, governance/reports/bem609_fix_provider_gate_yaml_and_commit_steps.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem609_fix_provider_gate_yaml_and_commit_steps.txt, .github/workflows/mailbox-dispatcher.yml, .github/workflows/operator-decision-dispatcher.yml, .github/workflows/operator-reply-intake.yml, .github/workflows/decision-curator-handoff.yml, .github/workflows/curator-inbox-router.yml, .github/workflows/role-orchestrator-internal-router.yml
+errors: none

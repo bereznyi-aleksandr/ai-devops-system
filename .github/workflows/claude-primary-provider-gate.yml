@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'governance/triggers/claude_primary_provider_gate.trigger'
+      - 'scripts/claude_primary_provider_gate.py'
       - '.github/workflows/claude-primary-provider-gate.yml'
 
 permissions:
@@ -22,63 +23,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Syntax check provider gate script
+        run: python3 -m py_compile scripts/claude_primary_provider_gate.py
+
       - name: Write provider gate result
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          mkdir -p governance/provider_gates governance/reports governance/state
-          HAS_CLAUDE_CODE="false"
-          HAS_ANTHROPIC="false"
-          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then HAS_CLAUDE_CODE="true"; fi
-          if [ -n "$ANTHROPIC_API_KEY" ]; then HAS_ANTHROPIC="true"; fi
-          SELECTED="gpt_reserve"
-          RESERVE_USED="true"
-          REASON="Claude primary runtime not proven by this gate; using reserve unless Claude audit response appears."
-          STATUS="primary_not_proven"
-          if [ "$HAS_CLAUDE_CODE" = "true" ]; then
-            SELECTED="claude_code_candidate"
-            RESERVE_USED="false"
-            REASON="CLAUDE_CODE_OAUTH_TOKEN is present. Primary provider is candidate, but runtime/limits still require Claude smoke response."
-            STATUS="primary_candidate_secret_present"
-          fi
-          cat > governance/provider_gates/bem608_claude_primary_provider_gate_result.json <<EOF
-{
-  "schema_version": "provider_gate_result.v1",
-  "bem": "BEM-605",
-  "gate_id": "bem608_claude_primary_provider_gate",
-  "provider_checked": true,
-  "primary_provider": "claude_code",
-  "reserve_provider": "gpt_python_executor",
-  "selected_provider": "${SELECTED}",
-  "reserve_used": ${RESERVE_USED},
-  "has_claude_code_oauth_token": ${HAS_CLAUDE_CODE},
-  "has_anthropic_api_key": ${HAS_ANTHROPIC},
-  "reason": "${REASON}",
-  "proof_file": "governance/provider_gates/bem608_claude_primary_provider_gate_result.json",
-  "checked_at": "workflow_runtime",
-  "status": "${STATUS}",
-  "blocker": null
-}
-EOF
-          cat > governance/reports/bem608_claude_primary_provider_gate_result.md <<EOF
-# BEM-608 | Claude Primary Provider Gate Result
-
-Status: ${STATUS}
-Selected provider: ${SELECTED}
-Reserve used: ${RESERVE_USED}
-Claude Code token present: ${HAS_CLAUDE_CODE}
-Anthropic key present: ${HAS_ANTHROPIC}
-
-Secrets were not printed.
-EOF
+        run: python3 scripts/claude_primary_provider_gate.py
 
       - name: Commit provider gate result
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git pull --rebase --autostash origin main || true
           git add governance/provider_gates/bem608_claude_primary_provider_gate_result.json governance/reports/bem608_claude_primary_provider_gate_result.md
-          git commit -m "BEM-608 Claude primary provider gate result" || echo "No changes"
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-609 Claude primary provider gate result"
           git pull --rebase --autostash origin main || true
           git push || true

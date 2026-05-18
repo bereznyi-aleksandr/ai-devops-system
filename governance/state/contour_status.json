@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 06:15 (UTC+3)",
+  "updated_at": "2026-05-18 | 06:24 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -693,6 +693,20 @@
     "status": "completed",
     "workflow": ".github/workflows/claude-primary-provider-gate.yml",
     "trigger": "governance/triggers/claude_primary_provider_gate.trigger",
+    "blocker": null
+  },
+  "bem609_fix_provider_gate_yaml_and_commit_steps": {
+    "status": "completed",
+    "script": "scripts/claude_primary_provider_gate.py",
+    "provider_workflow": ".github/workflows/claude-primary-provider-gate.yml",
+    "changed_workflows": [
+      ".github/workflows/mailbox-dispatcher.yml",
+      ".github/workflows/operator-decision-dispatcher.yml",
+      ".github/workflows/operator-reply-intake.yml",
+      ".github/workflows/decision-curator-handoff.yml",
+      ".github/workflows/curator-inbox-router.yml",
+      ".github/workflows/role-orchestrator-internal-router.yml"
+    ],
     "blocker": null
   }
 }

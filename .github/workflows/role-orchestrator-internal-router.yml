@@ -34,6 +34,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/role_orchestrator_internal_router_state.json governance/internal_contour governance/tasks/pending governance/reports/role_orchestrator_internal_router_result.md
-          git commit -m "BEM-598 role orchestrator internal route result" || echo "No changes"
-          git pull --rebase origin main || git rebase --abort || true
-          git push || (git pull --rebase origin main && git push)
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-609 conflict-safe workflow result"
+          git pull --rebase --autostash origin main || true
+          git push || true
