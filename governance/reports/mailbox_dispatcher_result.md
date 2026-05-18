@@ -4,7 +4,7 @@
 
 ## Result
 Picked: True
-Mailbox file: governance/audit_mailbox/gpt_to_claude/bem566_questions_answers_to_claude_sync_protocol.md
+Mailbox file: governance/audit_mailbox/gpt_to_claude/bem572_gpt_ack_claude_bem566_response.md
 Notify operator: False
 Reason: routine_mailbox_no_telegram_use_decision_queue
 
