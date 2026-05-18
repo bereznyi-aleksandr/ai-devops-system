@@ -1,0 +1,19 @@
+{
+  "schema_version": "provider_route_decision.v1",
+  "bem": "BEM-605",
+  "route_id": "bem610_provider_gate_result_and_route_decision",
+  "provider_checked": true,
+  "primary_provider": "claude_code",
+  "reserve_provider": "gpt_python_executor",
+  "selected_provider": "gpt_reserve",
+  "reserve_used": true,
+  "gate_file": "governance/provider_gates/bem608_claude_primary_provider_gate_result.json",
+  "gate_result": null,
+  "reason": "Autonomous roadmap must continue. If Claude runtime response is not proven, route uses GPT reserve with explicit evidence.",
+  "status": "reserve_selected_gate_result_missing",
+  "blocker": {
+    "code": "PROVIDER_GATE_RESULT_MISSING",
+    "message": "Claude provider gate workflow result not found; selecting GPT reserve to continue autonomous roadmap."
+  },
+  "created_at": "2026-05-18 | 06:39 (UTC+3)"
+}
