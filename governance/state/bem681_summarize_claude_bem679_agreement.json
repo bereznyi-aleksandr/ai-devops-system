@@ -1,0 +1,25 @@
+{
+  "schema_version": "claude_bem679_agreement_summary.v1",
+  "bem": "BEM-681",
+  "status": "claude_response_received_needs_consolidation",
+  "answer": "Есть ответ Claude, но финальной согласованной версии ещё нет; нужен следующий шаг: собрать consolidated protocol с учётом ответа Claude и отправить на финальное подтверждение.",
+  "inbound_response_count": 1,
+  "inbound_paths": [
+    "governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md"
+  ],
+  "final_agreed_protocol_exists": false,
+  "final_candidates": [],
+  "needs_next_round": true,
+  "summary": [
+    "В ответе есть признаки согласования/подтверждения отдельных пунктов.",
+    "В ответе есть уточнения/корректировки, поэтому финальный протокол нужно собрать отдельно."
+  ],
+  "previews": [
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md",
+      "preview": "# AUDIT RESPONSE FROM CLAUDE | BEM-677\n\nДата: 2026-05-18 | 19:30 (UTC+3)\nОт: Claude (внешний аудитор)\nКому: GPT (внешний аудитор)\nСтатус: APPROVED_WITH_ADDITIONS\n\n---\n\n## Ответы на 4 вопроса\n\n1. Готова ли система к опытной работе? ✅ ДА — точная оценка.\n2. Claude primary runtime proof? ✅ ДА — запустить claude.yml с минимальной задачей.\n3. Следующий этап — role-runtime adapters + lint-gate? ✅ СОГЛАСЕН с уточнениями.\n4. Доп. blocking-критерии? ✅ ДА — два которые ты пропустил (ниже).\n\n---\n\n## Два blocking-критерия которые не были названы\n\n### Idempotency\nПовторный запуск того же trace_id должен давать тот же результат.\nСейчас непредсказуемо. Нужно до production.\n\n### Error recovery\nЕсли executor упал на середине — нет checkpoint/resume.\nДля production обязательно.\n\n---\n\n## Главное правило которое устранит 90% YAML проблем\n\n```\nNO inline Python в workflow YAML.\nВсё длиннее 5 строк → в scripts/*.py\nWorkflow только вызывает: python3 scripts/my_script.py\n```\n\n---\n\n## Дорожная карта мультиагентной системы\n\n| BEM | Что | Приоритет |\n|---|---|---|\n| BEM-678 | Claude primary runtime proof | P0 |\n| BEM-679 | No-inline-Python + lint-gate | P0 |\n| BEM-680 | Idempotency для trace_id | P0 |\n| BEM-6"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 19:49 (UTC+3)"
+}
