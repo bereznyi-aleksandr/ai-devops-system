@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem667_repair_based_on_delivery_decision
+task_type: code_patch
+executed_at: 2026-05-18T13:03:29Z
+ops_applied: Applied delivery repair decision by refreshing explicit workflow dispatch queue items and trigger markers for Telegram/hourly checks, custom_script
+changed_files: governance/triggers/telegram_send_smoke.trigger, governance/triggers/curator_hourly_report.trigger, governance/state/bem667_repair_based_on_delivery_decision.json, governance/reports/bem667_repair_based_on_delivery_decision.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem667_repair_based_on_delivery_decision.txt
+errors: none
