@@ -1,0 +1,33 @@
+{
+  "schema_version": "internal_contour_task.v1",
+  "record_type": "hourly_report_template_fix_task",
+  "bem": "BEM-605",
+  "task_id": "bem605_hourly_report_canon_template",
+  "goal": "Replace hourly Telegram monitoring report with canonical, readable, operator-approved template and verify full autonomous contour.",
+  "problem_evidence": [
+    "Telegram hourly messages are short non-canonical lines such as BEM-41/BEM-48 pass candidates and do not show stage, roadmap, checklist, table, provider route, or blockers."
+  ],
+  "required_chain": [
+    "Curator GPT",
+    "Registrar/Role Orchestrator",
+    "Analyst GPT",
+    "Provider gate for Claude Code",
+    "Auditor Claude primary or explicit fallback",
+    "Operator approval decision package",
+    "Executor Claude primary or explicit fallback",
+    "Internal audit",
+    "Executor selftest",
+    "Monitoring report"
+  ],
+  "acceptance_criteria": [
+    "Template follows canon: BEM header, stage/roadmap %, checklist, readable table, provider route, blockers, next action.",
+    "Template is mobile-readable in Telegram.",
+    "Routine hourly report uses this template.",
+    "Operator approval is requested through structured decision package.",
+    "Provider gate records whether Claude Code primary or GPT reserve was used.",
+    "Final report states how every element worked."
+  ],
+  "status": "ready_for_analyst",
+  "created_at": "2026-05-18 | 06:06 (UTC+3)",
+  "blocker": null
+}

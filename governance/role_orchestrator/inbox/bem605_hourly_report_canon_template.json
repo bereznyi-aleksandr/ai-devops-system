@@ -1,0 +1,19 @@
+{
+  "schema_version": "role_orchestrator_intake.v1",
+  "record_type": "curator_route_to_internal_contour",
+  "bem": "BEM-605",
+  "task_id": "bem605_hourly_report_canon_template",
+  "source_file": "governance/curator/inbox/bem605_hourly_report_canon_template.json",
+  "from_role": "curator",
+  "to_role": "analyst",
+  "route": [
+    "analyst:gpt",
+    "auditor:claude_primary_required",
+    "operator_decision:telegram",
+    "executor:claude_primary_then_gpt_reserve"
+  ],
+  "provider_gate_required": true,
+  "status": "ready_for_internal_contour",
+  "created_at": "2026-05-18 | 06:06 (UTC+3)",
+  "blocker": null
+}

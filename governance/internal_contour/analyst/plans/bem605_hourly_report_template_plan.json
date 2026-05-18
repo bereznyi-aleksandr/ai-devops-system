@@ -1,0 +1,45 @@
+{
+  "schema_version": "internal_analyst_plan.v1",
+  "bem": "BEM-605",
+  "plan_id": "bem605_hourly_report_template_plan",
+  "source_task": "governance/internal_contour/tasks/bem605_hourly_report_canon_template.json",
+  "role": "analyst:gpt",
+  "status": "ready_for_claude_audit",
+  "current_problem": "Hourly Telegram report is not canonical and does not explain route/provider/checks. Operator cannot evaluate system health from it.",
+  "proposed_template": {
+    "header": "BEM-HOURLY | SYSTEM MONITORING REPORT | YYYY-MM-DD | HH:MM (UTC+3)",
+    "stage": "Этап: X/Y (Z%)",
+    "roadmap": "Дорожная карта: X/Y (Z%)",
+    "checklist": [
+      "✅ Роли/контуры проверены",
+      "✅ Provider gate выполнен",
+      "✅ Последние события собраны",
+      "⚠️ Blocker если есть"
+    ],
+    "table_columns": [
+      "Наименование",
+      "Описание",
+      "Обоснование"
+    ],
+    "required_rows": [
+      "Текущий этап",
+      "Последнее действие",
+      "Provider route",
+      "Основной контур",
+      "Резервный контур",
+      "Telegram delivery",
+      "Blocker",
+      "Следующее действие"
+    ],
+    "mobile_rule": "No wide markdown pipe tables in Telegram; use short 3-column semantic blocks or compact rows."
+  },
+  "questions_for_claude": [
+    "Подтверждаешь ли этот канон hourly report?",
+    "Нужно ли разделить hourly status и operator decision request?",
+    "Какие поля обязательны для provider route: provider_checked, selected_provider, reserve_used, reason, proof_file?",
+    "Какой минимальный формат будет читабельным в Telegram на телефоне?"
+  ],
+  "next": "Claude auditor review required before operator approval package.",
+  "created_at": "2026-05-18 | 06:06 (UTC+3)",
+  "blocker": null
+}

@@ -1,6 +1,6 @@
 {
   "schema_version": "contour_status.v2",
-  "updated_at": "2026-05-18 | 06:02 (UTC+3)",
+  "updated_at": "2026-05-18 | 06:06 (UTC+3)",
   "roadmap": {
     "id": "BEM-548",
     "title": "Next Development Roadmap approved by Claude",
@@ -104,8 +104,8 @@
     "operator_visible_progress_mode": 1
   },
   "blocker": {
-    "code": "CLAUDE_CODE_PRIMARY_CONTOUR_NOT_PROVEN",
-    "message": "The chain completed through GPT/Deno/Codex/Python executor artifacts. There is no proof in inspected repo artifacts that Claude Code primary auditor/executor provider was probed and used for this specific task."
+    "code": "CLAUDE_AUDIT_RESPONSE_PENDING",
+    "message": "Claude must review template before operator approval package is finalized."
   },
   "operator_progress_feed": {
     "status": "ACTIVE",
@@ -657,5 +657,15 @@
     },
     "report": "governance/reports/bem604_audit_actual_provider_route.md",
     "state_file": "governance/state/actual_provider_route_bem604.json"
-  }
+  },
+  "bem605_hourly_report_template_claude_request": {
+    "status": "waiting_for_claude_audit",
+    "mailbox_to_claude": "governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md",
+    "provider_gate": "governance/provider_gates/bem605_provider_gate_required.json",
+    "blocker": {
+      "code": "CLAUDE_AUDIT_RESPONSE_PENDING",
+      "message": "Claude must review template before operator approval package is finalized."
+    }
+  },
+  "hourly_report_template_flow": "claude_audit_pending"
 }

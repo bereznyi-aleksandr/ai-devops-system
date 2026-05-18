@@ -1,0 +1,19 @@
+{
+  "schema_version": "provider_gate.v1",
+  "bem": "BEM-605",
+  "gate_id": "bem605_provider_gate_required",
+  "purpose": "Before execution, check whether Claude Code primary contour is available for auditor/executor. If not, route to GPT reserve with explicit proof.",
+  "required_fields": [
+    "provider_checked",
+    "selected_provider",
+    "primary_provider",
+    "reserve_provider",
+    "reserve_used",
+    "reason",
+    "proof_file",
+    "checked_at"
+  ],
+  "status": "required_not_yet_completed",
+  "created_at": "2026-05-18 | 06:06 (UTC+3)",
+  "blocker": "PROVIDER_GATE_PENDING"
+}

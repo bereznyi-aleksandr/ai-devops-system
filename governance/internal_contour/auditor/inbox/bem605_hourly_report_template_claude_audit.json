@@ -1,0 +1,13 @@
+{
+  "schema_version": "internal_audit_request.v1",
+  "bem": "BEM-605",
+  "request_id": "bem605_hourly_report_template_claude_audit",
+  "from_role": "analyst:gpt",
+  "to_role": "auditor:claude",
+  "status": "ready_for_claude_audit",
+  "plan_file": "governance/internal_contour/analyst/plans/bem605_hourly_report_template_plan.json",
+  "provider_gate_required": true,
+  "question": "Review and agree canonical hourly Telegram monitoring report template before operator approval and implementation.",
+  "created_at": "2026-05-18 | 06:06 (UTC+3)",
+  "blocker": null
+}
