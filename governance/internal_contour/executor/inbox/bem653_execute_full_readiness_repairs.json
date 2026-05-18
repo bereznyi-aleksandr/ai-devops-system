@@ -1,0 +1,25 @@
+{
+  "schema_version": "internal_executor_request.v1",
+  "bem": "BEM-653",
+  "request_id": "bem653_execute_full_readiness_repairs",
+  "from_role": "internal_auditor",
+  "to_role": "executor",
+  "status": "ready_for_execution",
+  "objective": "Repair and prove hourly Telegram delivery, rerun Claude runtime proof, then produce final readiness report.",
+  "source_verdict": "governance/internal_contour/auditor/reports/bem653_full_readiness_plan_verdict.json",
+  "tasks": [
+    "diagnose current curator-hourly-report state",
+    "create direct Telegram send smoke if needed",
+    "retrigger curator-hourly-report",
+    "verify delivery_confirmed=true",
+    "rerun Claude runtime proof",
+    "create final readiness report"
+  ],
+  "acceptance": [
+    "delivery_confirmed=true or exact blocker with HTTP status",
+    "Claude runtime proof rerun and route updated",
+    "final readiness report contains all evidence"
+  ],
+  "created_at": "2026-05-18 | 15:44 (UTC+3)",
+  "blocker": null
+}

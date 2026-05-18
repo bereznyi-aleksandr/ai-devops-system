@@ -1,0 +1,33 @@
+{
+  "schema_version": "full_readiness_controls.v2",
+  "bem": "BEM-653",
+  "status": "approved_by_internal_auditor",
+  "hard_controls": [
+    {
+      "id": "C6",
+      "name": "telegram_delivery_confirmed",
+      "evidence": "governance/state/curator_hourly_delivery_verification.json",
+      "pass_rule": "delivery_confirmed == true"
+    },
+    {
+      "id": "C11",
+      "name": "telegram_send_smoke",
+      "evidence": "governance/state/telegram_send_smoke_result.json",
+      "pass_rule": "status == sent"
+    },
+    {
+      "id": "C12",
+      "name": "final_readiness_report",
+      "evidence": "governance/reports/bem_final_readiness_report.md",
+      "pass_rule": "status production_ready or blocked_with_exact_reason"
+    }
+  ],
+  "soft_controls": [
+    {
+      "id": "C5",
+      "name": "claude_runtime_proof",
+      "pass_rule": "runtime proven OR reserve route valid"
+    }
+  ],
+  "created_at": "2026-05-18 | 15:44 (UTC+3)"
+}

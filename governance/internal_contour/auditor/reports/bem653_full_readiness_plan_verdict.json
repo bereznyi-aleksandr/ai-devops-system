@@ -1,0 +1,32 @@
+{
+  "schema_version": "internal_auditor_verdict.v1",
+  "bem": "BEM-653",
+  "source_request": "governance/audit_mailbox/external_auditor_to_internal_auditor/bem652_full_readiness_plan_request.md",
+  "source_plan": "governance/internal_contour/analyst/plans/bem652_internal_contour_full_readiness_plan.json",
+  "mailbox_response": "governance/audit_mailbox/internal_auditor_to_external_auditor/bem652_full_readiness_plan_response.md",
+  "status": "approved_with_mandatory_controls",
+  "approved_workstreams": [
+    "W1",
+    "W2",
+    "W3",
+    "W4",
+    "W5"
+  ],
+  "hard_blockers_for_full_readiness": [
+    "telegram_delivery_confirmed"
+  ],
+  "non_blocking_for_internal_development": [
+    "claude_primary_runtime_not_proven_if_reserve_route_valid"
+  ],
+  "required_execution_order": [
+    "diagnose_hourly_non_delivery",
+    "telegram_send_smoke",
+    "curator_hourly_retrigger",
+    "delivery_verifier",
+    "claude_runtime_recheck",
+    "final_readiness_report"
+  ],
+  "decision": "Proceed to executor. Telegram hourly delivery must be repaired before marking hourly-report production-ready.",
+  "created_at": "2026-05-18 | 15:44 (UTC+3)",
+  "blocker": null
+}
