@@ -1,0 +1,119 @@
+{
+  "schema_version": "final_acceptance_internal_contour_and_auditor_sync.v1",
+  "bem": "BEM-633",
+  "status": "accepted",
+  "checks": [
+    {
+      "name": "role_communication_canon",
+      "pass": true,
+      "evidence": "governance/protocols/ROLE_COMMUNICATION_CANON.md"
+    },
+    {
+      "name": "auditor_interaction_canon",
+      "pass": true,
+      "evidence": "governance/protocols/INTERNAL_EXTERNAL_AUDITOR_INTERACTION_CANON.md"
+    },
+    {
+      "name": "role_execution_evidence_canon",
+      "pass": true,
+      "evidence": "governance/protocols/ROLE_EXECUTION_EVIDENCE_CANON.md"
+    },
+    {
+      "name": "architecture_lint_script",
+      "pass": true,
+      "evidence": "scripts/internal_contour_architecture_lint.py"
+    },
+    {
+      "name": "architecture_lint_workflow",
+      "pass": true,
+      "evidence": ".github/workflows/internal-contour-architecture-lint.yml"
+    },
+    {
+      "name": "architecture_lint_state",
+      "pass": true,
+      "evidence": "governance/state/internal_contour_architecture_lint.json"
+    },
+    {
+      "name": "bem605_internal_auditor_package",
+      "pass": true,
+      "evidence": "governance/internal_contour/auditor/inbox/bem625_bem605_hourly_report_internal_auditor_review.json"
+    },
+    {
+      "name": "mailbox_misroute_annotation",
+      "pass": true,
+      "evidence": "governance/audit_mailbox/meta/bem625_bem605_mailbox_misroute_annotation.json"
+    },
+    {
+      "name": "auditor_to_auditor_lane",
+      "pass": true,
+      "evidence": "governance/audit_mailbox/internal_auditor_to_external_auditor/bem625_external_auditor_sync_placeholder.md"
+    },
+    {
+      "name": "legacy_mailbox_annotation",
+      "pass": true,
+      "evidence": "governance/audit_mailbox/meta/bem628_legacy_mailbox_lanes_annotation.json"
+    },
+    {
+      "name": "provider_route_closure_policy",
+      "pass": true,
+      "evidence": "governance/protocols/PROVIDER_ROUTE_CLOSURE_POLICY.md"
+    },
+    {
+      "name": "provider_route_closure_state",
+      "pass": true,
+      "evidence": "governance/state/bem632_close_provider_route_and_delivery_status.json"
+    },
+    {
+      "name": "runtime_smoke_script",
+      "pass": true,
+      "evidence": "scripts/claude_primary_runtime_smoke.py"
+    },
+    {
+      "name": "delivery_verifier_script",
+      "pass": true,
+      "evidence": "scripts/verify_curator_hourly_delivery.py"
+    },
+    {
+      "name": "final_calibration_report",
+      "pass": true,
+      "evidence": "governance/reports/bem628_final_internal_contour_calibration_report.md"
+    },
+    {
+      "name": "deep_audit_report",
+      "pass": true,
+      "evidence": "governance/reports/bem622_internal_contour_deep_audit_report.md"
+    },
+    {
+      "name": "lint_status_pass",
+      "pass": true,
+      "evidence": "governance/state/internal_contour_architecture_lint.json"
+    },
+    {
+      "name": "architecture_closed",
+      "pass": true,
+      "evidence": "governance/state/bem632_close_provider_route_and_delivery_status.json"
+    },
+    {
+      "name": "provider_route_valid",
+      "pass": true,
+      "evidence": "governance/state/bem632_close_provider_route_and_delivery_status.json"
+    },
+    {
+      "name": "mailbox_not_internal_role_bus",
+      "pass": true,
+      "evidence": "governance/protocols/ROLE_COMMUNICATION_CANON.md"
+    },
+    {
+      "name": "deno_transport_not_executor_documented",
+      "pass": true,
+      "evidence": "governance/protocols/ROLE_COMMUNICATION_CANON.md"
+    }
+  ],
+  "selected_provider": "gpt_reserve",
+  "reserve_used": true,
+  "architecture_closed": true,
+  "operational_delivery_closed": true,
+  "operational_watch": null,
+  "blocker": null,
+  "created_at": "2026-05-18 | 07:33 (UTC+3)"
+}
