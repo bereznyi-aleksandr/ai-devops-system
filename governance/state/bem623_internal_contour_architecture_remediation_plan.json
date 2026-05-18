@@ -1,0 +1,61 @@
+{
+  "schema_version": "architecture_remediation_plan.v1",
+  "bem": "BEM-623",
+  "source_report": "governance/reports/bem622_internal_contour_deep_audit_report.md",
+  "status": "ready_for_execution",
+  "goal": "Close architecture gaps found during BEM-622 internal contour deep audit.",
+  "items": [
+    {
+      "id": "R1",
+      "gap": "Claude primary runtime not proven",
+      "fix": "Add mandatory Claude-authored smoke response artifact before selecting Claude primary. If absent, selected_provider must be gpt_reserve with blocker/reason.",
+      "evidence_required": [
+        "governance/audit_mailbox/claude_to_gpt/*response*.md",
+        "governance/provider_gates/*claude_runtime_smoke*.json"
+      ]
+    },
+    {
+      "id": "R2",
+      "gap": "Live Telegram delivery not confirmed",
+      "fix": "Add post-trigger delivery verifier that checks curator_hourly_report_state.telegram_delivery=sent and creates alert/report if not sent.",
+      "evidence_required": [
+        "governance/state/curator_hourly_report_state.json",
+        "governance/reports/curator_hourly_report_runtime.md"
+      ]
+    },
+    {
+      "id": "R3",
+      "gap": "Old failed workflow notifications confuse operator",
+      "fix": "Add current-run supersede report and suppress false PASS. Keep stale failures tagged as superseded only after latest workflow static validation.",
+      "evidence_required": [
+        "governance/state/bem620_supersede_old_failed_runs_and_live_trigger.json"
+      ]
+    },
+    {
+      "id": "R4",
+      "gap": "Executor sandbox restrictions caused repeated selftest failures",
+      "fix": "Document executor-safe subset and add preflight linter for task objectives: no exec call, no Exception as e, no forbidden module words.",
+      "evidence_required": [
+        "governance/protocols/PYTHON_EXECUTOR_SAFE_SUBSET.md",
+        "scripts/executor_objective_preflight.py"
+      ]
+    },
+    {
+      "id": "R5",
+      "gap": "File-based roles can look like live LLM roles",
+      "fix": "Report must explicitly distinguish live provider role vs file-based governance artifact role.",
+      "evidence_required": [
+        "governance/protocols/ROLE_EXECUTION_EVIDENCE_CANON.md"
+      ]
+    }
+  ],
+  "next_execution_order": [
+    "R4",
+    "R1",
+    "R2",
+    "R5",
+    "R3"
+  ],
+  "created_at": "2026-05-18 | 07:03 (UTC+3)",
+  "blocker": null
+}
