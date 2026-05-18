@@ -20,8 +20,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Syntax check hourly renderer
-        run: python3 -m py_compile scripts/render_curator_hourly_report.py
+      - name: Syntax check hourly scripts
+        run: python3 -m py_compile scripts/render_curator_hourly_report.py scripts/record_curator_hourly_delivery.py
 
       - name: Render canonical hourly report
         run: python3 scripts/render_curator_hourly_report.py
@@ -41,25 +41,13 @@ jobs:
           fi
 
       - name: Record delivery status
-        run: |
-          STATUS=$(cat governance/tmp/curator_hourly_report_delivery.txt 2>/dev/null || echo unknown)
-          python3 - <<'PY'
-import json
-from pathlib import Path
-sep = chr(10)
-state_path = Path('governance/state/curator_hourly_report_state.json')
-state = json.loads(state_path.read_text()) if state_path.exists() else {}
-status = Path('governance/tmp/curator_hourly_report_delivery.txt').read_text().strip() if Path('governance/tmp/curator_hourly_report_delivery.txt').exists() else 'unknown'
-state['telegram_delivery'] = status
-state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + sep)
-Path('governance/reports/curator_hourly_report_runtime.md').write_text('# Curator Hourly Report Runtime' + sep + sep + 'Telegram delivery: ' + status + sep + 'Blocker: ' + ('null' if state.get('blocker') is None else json.dumps(state.get('blocker'), ensure_ascii=False)) + sep)
-PY
+        run: python3 scripts/record_curator_hourly_delivery.py
 
       - name: Commit hourly report state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/curator_hourly_report_state.json governance/reports/curator_hourly_report_runtime.md
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-613 curator hourly report runtime"
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-614 curator hourly report runtime"
           git pull --rebase --autostash origin main || true
           git push || true

@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem614_fix_hourly_workflow_no_heredoc
+task_type: code_patch
+executed_at: 2026-05-18T03:42:59Z
+ops_applied: Removed inline Python heredoc from curator-hourly-report.yml and added delivery recorder script, custom_script
+changed_files: scripts/record_curator_hourly_delivery.py, .github/workflows/curator-hourly-report.yml, governance/protocols/CURATOR_HOURLY_WORKFLOW_SAFE_YAML.md, governance/reports/bem614_fix_hourly_workflow_no_heredoc.md, governance/transport/results.jsonl, governance/state/contour_status.json, governance/codex/proofs/bem614_fix_hourly_workflow_no_heredoc.txt
+errors: none
