@@ -1,0 +1,316 @@
+{
+  "schema_version": "internal_contour_correctness_audit.v1",
+  "bem": "BEM-651",
+  "status": "correct_file_based_internal_contour_with_runtime_caveats",
+  "short_verdict": "The internal contour worked correctly as a file-based governed contour with GPT reserve execution. It did not prove independent live multi-agent execution for each role, and it did not prove Claude primary runtime.",
+  "chain": [
+    {
+      "step": 1,
+      "mechanism": "Operator → GPT Curator",
+      "expected": "Operator sets task; Curator forms structured package.",
+      "actual": "BEM-648 created curator inbox package.",
+      "evidence": "governance/curator/inbox/bem648_completion_plan_to_internal_contour.json",
+      "pass": true,
+      "note": "This is file-based Curator routing, executed by GPT reserve via restored codex-runner."
+    },
+    {
+      "step": 2,
+      "mechanism": "Curator → Role Orchestrator",
+      "expected": "Curator does not bypass router.",
+      "actual": "Matching package was placed in role_orchestrator/inbox.",
+      "evidence": "governance/role_orchestrator/inbox/bem648_completion_plan_to_internal_contour.json",
+      "pass": true,
+      "note": "Correct role-bus path was used."
+    },
+    {
+      "step": 3,
+      "mechanism": "Role Orchestrator → Internal Task Registry",
+      "expected": "Task is registered in internal_contour/tasks before role execution.",
+      "actual": "Internal task file was created.",
+      "evidence": "governance/internal_contour/tasks/bem648_completion_plan_to_internal_contour.json",
+      "pass": true,
+      "note": "Correct internal registry artifact exists."
+    },
+    {
+      "step": 4,
+      "mechanism": "Task Registry → Analyst GPT",
+      "expected": "Analyst prepares plan; Analyst does not contact external auditor directly.",
+      "actual": "Analyst plan artifact exists in internal_contour/analyst/plans.",
+      "evidence": "governance/internal_contour/analyst/plans/bem648_completion_plan_to_internal_contour.json",
+      "pass": true,
+      "note": "Matches corrected architecture."
+    },
+    {
+      "step": 5,
+      "mechanism": "Analyst → Internal Auditor",
+      "expected": "Analyst sends to internal_contour/auditor/inbox, not audit_mailbox.",
+      "actual": "Internal auditor inbox package exists.",
+      "evidence": "governance/internal_contour/auditor/inbox/bem648_completion_plan_to_internal_contour_review.json",
+      "pass": true,
+      "note": "This repairs previous BEM-605 misroute."
+    },
+    {
+      "step": 6,
+      "mechanism": "Internal Auditor controls",
+      "expected": "Internal Auditor checks controls, provider route, role-bus boundary, acceptance.",
+      "actual": "BEM-649 internal auditor verdict exists and status is approved_with_operational_watch.",
+      "evidence": "governance/internal_contour/auditor/reports/bem649_internal_auditor_verdict.json",
+      "pass": true,
+      "note": "Auditor did not claim Claude primary; it accepted reserve policy and operational watch."
+    },
+    {
+      "step": 7,
+      "mechanism": "Internal Auditor → Executor",
+      "expected": "Executor receives package after auditor verdict/controls.",
+      "actual": "Executor inbox exists; executor result exists.",
+      "evidence": "governance/internal_contour/executor/reports/bem649_executor_completion_result.json",
+      "pass": true,
+      "note": "Executor executed via GPT reserve/Deno transport as recorded, not via Claude primary."
+    },
+    {
+      "step": 8,
+      "mechanism": "Selftest controls C1-C7",
+      "expected": "Mandatory controls must pass before completion.",
+      "actual": "BEM-649 controls status is pass.",
+      "evidence": "governance/state/bem649_execute_completion_controls.json",
+      "pass": true,
+      "note": "Controls passed; operational watches are non-blocking by policy."
+    },
+    {
+      "step": 9,
+      "mechanism": "Final completion report",
+      "expected": "Final monitoring report with evidence map.",
+      "actual": "BEM-650 report state exists and status completed.",
+      "evidence": "governance/state/bem650_final_completion_report_internal_contour.json",
+      "pass": true,
+      "note": "Final report was created after controls, not before."
+    }
+  ],
+  "compliance": [
+    {
+      "area": "Role-bus instead of mailbox for internal roles",
+      "expected": "Internal communication via governance/internal_contour/* and role_orchestrator.",
+      "actual": "BEM-648 created packages in curator, role_orchestrator, tasks, analyst, auditor, executor paths.",
+      "pass": true,
+      "evidence": "BEM-648 packages"
+    },
+    {
+      "area": "Mailbox boundary",
+      "expected": "audit_mailbox only for Internal Auditor ↔ External Auditor.",
+      "actual": "Role communication canon and auditor interaction canon exist; old BEM-605 misuse annotated as misroute.",
+      "pass": true,
+      "evidence": "ROLE_COMMUNICATION_CANON.md + INTERNAL_EXTERNAL_AUDITOR_INTERACTION_CANON.md"
+    },
+    {
+      "area": "Provider evidence honesty",
+      "expected": "Do not claim Claude primary unless Claude runtime artifact exists.",
+      "actual": "Provider closure says reserve_validated_primary_unavailable; executor result says gpt_reserve_execution_via_deno_transport.",
+      "pass": true,
+      "evidence": "bem632_close_provider_route_and_delivery_status.json + bem649_executor_completion_result.json"
+    },
+    {
+      "area": "Deno role clarity",
+      "expected": "Deno is transport adapter, not internal Executor role.",
+      "actual": "Canon documents Deno as transport; executor result records deno_role=transport_adapter_only.",
+      "pass": true,
+      "evidence": "ROLE_COMMUNICATION_CANON.md + executor result"
+    },
+    {
+      "area": "Controls and selftest",
+      "expected": "C1-C7 controls executed and passed.",
+      "actual": "BEM-649 status pass; auditor verdict approved_with_operational_watch.",
+      "pass": true,
+      "evidence": "bem649_execute_completion_controls.json"
+    },
+    {
+      "area": "Write-channel recovery",
+      "expected": "codex-runner restored before further work.",
+      "actual": "BEM-646 smoke pass; BEM-647 roadmap resumed.",
+      "pass": true,
+      "evidence": "BEM-646/BEM-647 states"
+    },
+    {
+      "area": "True independent multi-agent runtime",
+      "expected": "Separate live agents execute roles autonomously.",
+      "actual": "Current run used file-based role artifacts executed by GPT reserve through codex-runner; not proof of separate live Analyst/Auditor/Executor runtimes.",
+      "pass": false,
+      "evidence": "ROLE_EXECUTION_EVIDENCE_CANON.md + executor result"
+    },
+    {
+      "area": "Telegram/Claude operational proofs",
+      "expected": "Delivery confirmed and/or Claude runtime proven for primary route.",
+      "actual": "Controls allow operational watch; architecture closed through reserve route.",
+      "pass": true,
+      "evidence": "BEM-649 operational_watch + BEM-632 provider policy"
+    }
+  ],
+  "mechanisms": [
+    {
+      "mechanism": "Deno /codex-task",
+      "status": "PASS",
+      "evidence": "BEM-646 workflow_dispatch_status=204 and smoke commit",
+      "comment": "Write-channel restored after Claude fixed codex-runner.yml."
+    },
+    {
+      "mechanism": "codex-runner.yml",
+      "status": "PASS",
+      "evidence": "governance/state/bem646_post_repair_codex_runner_smoke.json",
+      "comment": "Runner executed BEM-648, BEM-649, BEM-650 successfully."
+    },
+    {
+      "mechanism": "Python executor",
+      "status": "PASS_WITH_LIMITS",
+      "evidence": "BEM-648..650 commits",
+      "comment": "Executor works but requires safe subset; prior failures showed blocked constructs."
+    },
+    {
+      "mechanism": "Internal role-bus",
+      "status": "PASS",
+      "evidence": "BEM-648 package chain",
+      "comment": "Correct file lanes now used."
+    },
+    {
+      "mechanism": "Audit mailbox",
+      "status": "PASS_AS_BOUNDARY",
+      "evidence": "BEM-625/BEM-628 canons",
+      "comment": "Reserved for auditor-to-auditor sync, not internal role traffic."
+    },
+    {
+      "mechanism": "Provider gate",
+      "status": "PASS_AS_POLICY",
+      "evidence": "BEM-632 closure policy",
+      "comment": "Primary not proven, reserve route valid and honestly reported."
+    },
+    {
+      "mechanism": "Telegram delivery proof",
+      "status": "WATCH",
+      "evidence": "BEM-649 operational_watch",
+      "comment": "Not architecture blocker; remains operational monitoring item."
+    },
+    {
+      "mechanism": "Claude runtime proof",
+      "status": "WATCH",
+      "evidence": "BEM-649 operational_watch",
+      "comment": "Not required for reserve route, but required before selecting Claude primary."
+    }
+  ],
+  "status_map": {
+    "write_channel_repair_claude_commit": {
+      "path": "61a3f631",
+      "exists": true,
+      "status": null
+    },
+    "post_repair_smoke": {
+      "path": "governance/state/bem646_post_repair_codex_runner_smoke.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "write_channel_restored": {
+      "path": "governance/state/bem647_write_channel_restored_and_roadmap_resume.json",
+      "exists": true,
+      "status": "write_channel_restored_roadmap_resumed"
+    },
+    "completion_plan": {
+      "path": "governance/state/bem648_completion_plan_to_internal_contour.json",
+      "exists": true,
+      "status": "dispatched_to_internal_contour"
+    },
+    "curator_package": {
+      "path": "governance/curator/inbox/bem648_completion_plan_to_internal_contour.json",
+      "exists": true,
+      "status": "ready_for_execution"
+    },
+    "orchestrator_package": {
+      "path": "governance/role_orchestrator/inbox/bem648_completion_plan_to_internal_contour.json",
+      "exists": true,
+      "status": "ready_for_execution"
+    },
+    "internal_task": {
+      "path": "governance/internal_contour/tasks/bem648_completion_plan_to_internal_contour.json",
+      "exists": true,
+      "status": "ready_for_execution"
+    },
+    "analyst_plan": {
+      "path": "governance/internal_contour/analyst/plans/bem648_completion_plan_to_internal_contour.json",
+      "exists": true,
+      "status": "ready_for_execution"
+    },
+    "internal_auditor_inbox": {
+      "path": "governance/internal_contour/auditor/inbox/bem648_completion_plan_to_internal_contour_review.json",
+      "exists": true,
+      "status": "ready_for_execution"
+    },
+    "executor_inbox": {
+      "path": "governance/internal_contour/executor/inbox/bem648_completion_plan_to_internal_contour_execute.json",
+      "exists": true,
+      "status": "ready_for_execution"
+    },
+    "mandatory_controls": {
+      "path": "governance/internal_contour/controls/bem648_mandatory_controls.json",
+      "exists": true,
+      "status": "ready_for_execution"
+    },
+    "completion_controls": {
+      "path": "governance/state/bem649_execute_completion_controls.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "auditor_verdict": {
+      "path": "governance/internal_contour/auditor/reports/bem649_internal_auditor_verdict.json",
+      "exists": true,
+      "status": "approved_with_operational_watch"
+    },
+    "executor_result": {
+      "path": "governance/internal_contour/executor/reports/bem649_executor_completion_result.json",
+      "exists": true,
+      "status": "completed"
+    },
+    "final_completion_report": {
+      "path": "governance/state/bem650_final_completion_report_internal_contour.json",
+      "exists": true,
+      "status": "completed"
+    },
+    "role_communication_canon": {
+      "path": "governance/protocols/ROLE_COMMUNICATION_CANON.md",
+      "exists": true,
+      "status": null
+    },
+    "auditor_interaction_canon": {
+      "path": "governance/protocols/INTERNAL_EXTERNAL_AUDITOR_INTERACTION_CANON.md",
+      "exists": true,
+      "status": null
+    },
+    "evidence_canon": {
+      "path": "governance/protocols/ROLE_EXECUTION_EVIDENCE_CANON.md",
+      "exists": true,
+      "status": null
+    },
+    "architecture_lint_state": {
+      "path": "governance/state/internal_contour_architecture_lint.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "provider_route_closure": {
+      "path": "governance/state/bem632_close_provider_route_and_delivery_status.json",
+      "exists": true,
+      "status": "architecture_closed_delivery_confirmed"
+    },
+    "provider_route_decision": {
+      "path": "governance/provider_gates/bem610_provider_route_decision.json",
+      "exists": true,
+      "status": "reserve_selected_gate_result_missing"
+    },
+    "mailbox_misroute_annotation": {
+      "path": "governance/audit_mailbox/meta/bem625_bem605_mailbox_misroute_annotation.json",
+      "exists": true,
+      "status": "superseded_by_internal_role_bus"
+    },
+    "legacy_mailbox_annotation": {
+      "path": "governance/audit_mailbox/meta/bem628_legacy_mailbox_lanes_annotation.json",
+      "exists": true,
+      "status": "legacy_compatible_not_internal_role_bus"
+    }
+  },
+  "blocker": null,
+  "created_at": "2026-05-18 | 15:29 (UTC+3)"
+}
