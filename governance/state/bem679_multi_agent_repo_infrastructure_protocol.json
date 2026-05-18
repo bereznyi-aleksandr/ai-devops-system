@@ -1,0 +1,253 @@
+{
+  "schema_version": "multi_agent_repo_infrastructure_protocol.v1",
+  "bem": "BEM-679",
+  "status": "sent_to_claude_for_agreement",
+  "selected_repo_model": "R3 target, R2 transition",
+  "recommended_structure": "Control-plane repo ai-devops-system как управляющая система + product repos для реальных продуктов. На переходном этапе допускаются product folders, но с обязательным products registry и готовностью вынести продукт в отдельный repo.",
+  "repo_options": [
+    {
+      "id": "R1",
+      "name": "Один репозиторий: всё внутри ai-devops-system",
+      "governance": "простая",
+      "speed": "высокая на старте",
+      "control": "высокий, один audit trail",
+      "scale": "средняя",
+      "risk": "смешивание системы управления и продуктов",
+      "cost": "низкая",
+      "verdict": "Не рекомендую как конечную модель; удобно только для раннего этапа."
+    },
+    {
+      "id": "R2",
+      "name": "Control-plane repo + product folders",
+      "governance": "простая/средняя",
+      "speed": "высокая",
+      "control": "высокий",
+      "scale": "средняя",
+      "risk": "папки продуктов могут разрастись и загрязнить control-plane",
+      "cost": "низкая",
+      "verdict": "Рекомендую как переходный этап на 1-2 продукта."
+    },
+    {
+      "id": "R3",
+      "name": "Control-plane repo + отдельные product repos",
+      "governance": "средняя",
+      "speed": "высокая после настройки",
+      "control": "высокий через registry и policy",
+      "scale": "высокая",
+      "risk": "нужны cross-repo permissions и registry",
+      "cost": "средняя",
+      "verdict": "Рекомендую как целевую модель."
+    },
+    {
+      "id": "R4",
+      "name": "Отдельный repo на каждый агент/роль",
+      "governance": "сложная",
+      "speed": "ниже на старте",
+      "control": "сложный distributed audit",
+      "scale": "технически высокая, управленчески тяжелая",
+      "risk": "фрагментация и дорогая координация",
+      "cost": "высокая",
+      "verdict": "Не рекомендую до зрелого registry v2."
+    }
+  ],
+  "repo_layout": [
+    {
+      "path": "governance/runtime/tasks/",
+      "purpose": "Активные задачи и их состояние",
+      "why": "Registry вместо хаотичных jsonl: позволяет идемпотентность, очередь, SLA и ownership."
+    },
+    {
+      "path": "governance/runtime/results/",
+      "purpose": "Результаты задач",
+      "why": "Повторный trace_id должен возвращать тот же result или resume-plan."
+    },
+    {
+      "path": "governance/runtime/agents/",
+      "purpose": "Состояние агентов и ролей",
+      "why": "Нужен lifecycle для Directors, Analyst, Auditor, Executor."
+    },
+    {
+      "path": "governance/runtime/audit/",
+      "purpose": "Audit trail решений, действий и проверок",
+      "why": "Проверяемость без чтения разрозненных отчётов."
+    },
+    {
+      "path": "governance/runtime/checkpoints/",
+      "purpose": "Checkpoint/resume",
+      "why": "Error recovery: продолжать с места сбоя."
+    },
+    {
+      "path": "governance/runtime/locks/",
+      "purpose": "Idempotency locks по trace_id",
+      "why": "Повторный запуск не должен создавать второй конфликтующий результат."
+    },
+    {
+      "path": "governance/board/directors/",
+      "purpose": "Доменные директора и их полномочия",
+      "why": "Совет директоров должен быть описан как управляемая структура."
+    },
+    {
+      "path": "governance/board/policies/",
+      "purpose": "Правила полномочий, escalation, SLA",
+      "why": "Директора не должны конфликтовать и выходить за границы."
+    },
+    {
+      "path": "governance/board/decisions/",
+      "purpose": "Доменные решения Board Layer",
+      "why": "Разделение стратегических решений и операционного исполнения."
+    },
+    {
+      "path": "governance/internal_contour/roles/",
+      "purpose": "Role runtime contracts",
+      "why": "Перед role-specific runners нужно определить input/output/lifecycle."
+    },
+    {
+      "path": "governance/products/registry/",
+      "purpose": "Реестр продуктов и привязка к product repos",
+      "why": "Control-plane должен знать, где какой продукт, кто владелец, SLA, risk class."
+    },
+    {
+      "path": "governance/integrations/",
+      "purpose": "Подключения: Telegram, GitHub API, CRM, клиенты",
+      "why": "Интеграции должны быть управляемыми и проверяемыми."
+    }
+  ],
+  "registry_options": [
+    {
+      "id": "G1",
+      "name": "Оставить jsonl как сейчас",
+      "control": "низкий/средний",
+      "speed": "высокая",
+      "idempotency": "слабая",
+      "recovery": "слабая",
+      "scale": "низкая",
+      "verdict": "Только временно."
+    },
+    {
+      "id": "G2",
+      "name": "Структурированный registry в файлах JSON",
+      "control": "высокий",
+      "speed": "высокая",
+      "idempotency": "высокая через locks/results",
+      "recovery": "высокая через checkpoints",
+      "scale": "средняя/высокая",
+      "verdict": "Рекомендую следующий шаг."
+    },
+    {
+      "id": "G3",
+      "name": "База данных / external storage",
+      "control": "высокий",
+      "speed": "высокая",
+      "idempotency": "высокая",
+      "recovery": "высокая",
+      "scale": "высокая",
+      "verdict": "Позже, когда файловый registry станет узким местом."
+    }
+  ],
+  "board_options": [
+    {
+      "id": "B1",
+      "name": "Один главный агент + специалисты",
+      "speed": "средняя",
+      "control": "простое",
+      "load": "главный агент перегружен",
+      "scale": "средняя",
+      "verdict": "Переходный режим."
+    },
+    {
+      "id": "B2",
+      "name": "Совет директоров доменов",
+      "speed": "высокая за счёт параллельности",
+      "control": "высокий при registry/policy",
+      "load": "нагрузка распределена",
+      "scale": "высокая",
+      "verdict": "Рекомендую целевым вариантом."
+    },
+    {
+      "id": "B3",
+      "name": "Полностью автономные агенты без совета",
+      "speed": "локально высокая",
+      "control": "низкий",
+      "load": "распределена, но хаотично",
+      "scale": "рискованная",
+      "verdict": "Не рекомендую."
+    }
+  ],
+  "control_options": [
+    {
+      "lane": "Fast lane",
+      "criteria": "Низкий риск, обратимое действие, есть шаблон",
+      "checks": "schema + idempotency + post-check",
+      "operator": "нет",
+      "why": "Быстро, не тормозит поток."
+    },
+    {
+      "lane": "Audit lane",
+      "criteria": "Архитектура, права, workflow, деньги, юридические риски",
+      "checks": "internal auditor + evidence map + optional Claude",
+      "operator": "только при споре",
+      "why": "Контроль там, где риск оправдывает задержку."
+    },
+    {
+      "lane": "Operator lane",
+      "criteria": "Стратегия, конфликт директоров, irreversible или high-risk",
+      "checks": "таблица вариантов в Telegram",
+      "operator": "да",
+      "why": "Оператор вмешивается только там, где нужен финальный выбор."
+    }
+  ],
+  "stages": [
+    {
+      "stage": "S1",
+      "name": "Registry v2 в текущем repo",
+      "result": "governance/runtime/*, board/*, products/registry/*",
+      "reason": "Нужна управляемость до разделения репозиториев."
+    },
+    {
+      "stage": "S2",
+      "name": "Idempotency + checkpoint/resume",
+      "result": "trace locks, immutable results, checkpoints",
+      "reason": "Production невозможен без повторяемости и восстановления."
+    },
+    {
+      "stage": "S3",
+      "name": "Workflow lint-gate",
+      "result": "запрет inline Python/heredoc, workflow static check",
+      "reason": "Снимает класс YAML-поломок."
+    },
+    {
+      "stage": "S4",
+      "name": "Board domain registry",
+      "result": "директора, полномочия, SLA, escalation rules",
+      "reason": "Совет директоров должен быть формальной управляемой структурой."
+    },
+    {
+      "stage": "S5",
+      "name": "Role runtime contracts",
+      "result": "analyst/auditor/executor/monitor contracts",
+      "reason": "Сначала контракты, потом отдельные runners."
+    },
+    {
+      "stage": "S6",
+      "name": "Role-specific runners",
+      "result": "analyst-runner, auditor-runner, executor-runner",
+      "reason": "Переход к настоящей мультиагентности."
+    },
+    {
+      "stage": "S7",
+      "name": "Product repo split",
+      "result": "control-plane repo управляет product repos через registry",
+      "reason": "Масштабирование на несколько продуктов/клиентов."
+    }
+  ],
+  "questions_to_claude": [
+    "Согласен ли с целевой repo-моделью: control-plane repo + отдельные product repos, а product folders только как переходный этап?",
+    "Согласен ли, что registry v2 должен идти до role-specific runners и до разделения product repos?",
+    "Согласен ли с предложенной структурой governance/runtime, governance/board и governance/products/registry?",
+    "Какие поля обязательно включить в product registry и director registry?",
+    "Какой первый домен Board Layer выбрать для пилота: Администратор, Клиентская служба, Финансы или Технический директор?",
+    "Нужно ли выносить Deno в отдельный transport repo позже или оставить как адаптер внутри control-plane?"
+  ],
+  "blocker": null,
+  "created_at": "2026-05-18 | 19:34 (UTC+3)"
+}
