@@ -1,0 +1,35 @@
+{
+  "schema_version": "hourly_report_delta_no_changes_patch.v1",
+  "bem": "BEM-687",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "renderer_exists",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "snapshot_compare_present",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "no_changes_message_present",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "full_table_only_when_changed",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "canon_updated",
+      "pass": true,
+      "evidence": "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md"
+    }
+  ],
+  "renderer": "scripts/render_curator_hourly_report.py",
+  "blocker": null,
+  "created_at": "2026-05-19 | 05:36 (UTC+3)"
+}

@@ -1,1 +1,1 @@
-BEM-674 trigger Russian compact hourly report 2026-05-18 | 19:03 (UTC+3)
+BEM-687 trigger delta-aware hourly report 2026-05-19 | 05:36 (UTC+3)

@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem687_hourly_report_delta_no_changes
+task_type: code_patch
+executed_at: 2026-05-19T02:38:42Z
+ops_applied: Installed delta-aware hourly report: if snapshot unchanged since previous hour, Telegram sends no-change message without duplicate table, custom_script
+changed_files: scripts/render_curator_hourly_report.py, governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md, governance/triggers/curator_hourly_report.trigger, governance/state/bem687_hourly_report_delta_no_changes.json, governance/reports/bem687_hourly_report_delta_no_changes.md, governance/transport/results.jsonl, governance/codex/proofs/bem687_hourly_report_delta_no_changes.txt
+errors: none
