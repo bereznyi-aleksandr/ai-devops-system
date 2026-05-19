@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem695_fix_hourly_semantic_delta",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Fixed hourly report no-change logic by comparing stable semantic digest only; excluded hourly workflow delivery state from comparison",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/render_curator_hourly_report.py",
+    "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md",
+    "governance/triggers/curator_hourly_report.trigger",
+    "governance/state/bem695_fix_hourly_semantic_delta.json",
+    "governance/reports/bem695_fix_hourly_semantic_delta.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem695_fix_hourly_semantic_delta.txt",
+    "governance/codex/proofs/bem695_fix_hourly_semantic_delta.txt"
+  ],
+  "commit_sha": "350332d0dfee4fd7b6e22ccac15944b5f92cf47f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem695_fix_hourly_semantic_delta.md",
+  "completed_at": "2026-05-19T07:06:52Z"
+}
