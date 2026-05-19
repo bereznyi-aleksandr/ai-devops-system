@@ -73,7 +73,8 @@ previous_snapshot = load_json(SNAPSHOT)
 unchanged = previous_snapshot == current_snapshot
 lines=[]
 lines.append("BEM-HOURLY | ЧАСОВОЙ ОТЧЁТ")
-lines.append("Дата: " + report_hour.strftime("%Y-%m-%d | %H:00 (UTC+3)"))
+lines.append("Сформировано: " + now.strftime("%Y-%m-%d | %H:%M (UTC+3)"))
+lines.append("Период: " + report_hour.strftime("%H:00–%H:59 (UTC+3)"))
 lines.append("")
 if unchanged:
     lines.append("Изменений за отчётный час нет.")
@@ -95,6 +96,8 @@ state={
     "schema_version":"curator_hourly_report_state.v4_ru_delta",
     "status":"rendered_no_changes" if unchanged else "rendered_changes",
     "report_hour":report_hour.strftime("%Y-%m-%d | %H:00 (UTC+3)"),
+    "generated_at":now.strftime("%Y-%m-%d | %H:%M (UTC+3)"),
+    "period":report_hour.strftime("%H:00–%H:59 (UTC+3)"),
     "stage_done":done,
     "stage_total":total,
     "stage_percent":percent,

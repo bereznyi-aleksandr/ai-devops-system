@@ -1,0 +1,35 @@
+{
+  "schema_version": "fix_hourly_time_and_protocol_summary.v1",
+  "bem": "BEM-692",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "renderer_exists",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "generated_at_added",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "period_added",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "canon_updated",
+      "pass": true,
+      "evidence": "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md"
+    },
+    {
+      "name": "operator_summary_written",
+      "pass": true,
+      "evidence": "governance/operator/MULTI_AGENT_SYSTEM_PROTOCOL_OPERATOR_SUMMARY.md"
+    }
+  ],
+  "operator_summary": "governance/operator/MULTI_AGENT_SYSTEM_PROTOCOL_OPERATOR_SUMMARY.md",
+  "blocker": null,
+  "created_at": "2026-05-19 | 05:54 (UTC+3)"
+}
