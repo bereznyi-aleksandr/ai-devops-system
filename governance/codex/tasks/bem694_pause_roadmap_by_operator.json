@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem694_pause_roadmap_by_operator",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-694 pause roadmap",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport','governance/handoff']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-19 | 05:58 (UTC+3)'\nstate={'schema_version':'operator_pause_roadmap.v1','bem':'BEM-694','status':'roadmap_paused_by_operator','reason':'Operator requested to pause roadmap implementation and receive protocol MD file first.','allowed_actions':['reporting','reading','protocol preparation','operator-requested fixes only'],'blocked_actions':['new P0/P1 implementation without operator resume command'],'resume_condition':'operator explicitly says resume/continue roadmap','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem694_roadmap_pause_by_operator.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nhandoff=Path('governance/handoff/GPT_NEXT_ACTION.md')\nhandoff.write_text('# GPT NEXT ACTION | ROADMAP PAUSED BY OPERATOR'+sep+sep+'Дата: '+created+sep+sep+'Статус: roadmap paused. Не запускать новые P0/P1 implementation tasks до явной команды оператора resume/continue. Разрешены только отчёты, чтение, подготовка протокола и точечные исправления по прямому запросу оператора.'+sep)\nreport=Path('governance/reports/bem694_roadmap_pause_by_operator.md')\nreport.write_text('# BEM-694 | Roadmap Pause By Operator | PASS'+sep+sep+'Дата: '+created+sep+sep+'Roadmap implementation paused by operator request. Blocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem694_roadmap_pause_by_operator','status':'roadmap_paused_by_operator','blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem694_roadmap_pause_by_operator.txt')\nproof.write_text('BEM-694 PASS: roadmap paused by operator.\\n')\nchanged_files.extend([str(state_file),str(handoff),str(report),str(transport),str(proof)])\nops_applied.append('Paused roadmap implementation by operator request and recorded resume condition')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem694_pause_roadmap_by_operator.md",
+    "result_json": "governance/codex/results/bem694_pause_roadmap_by_operator.json"
+  },
+  "created_at": "2026-05-19T02:56:38.148Z"
+}
