@@ -1,0 +1,39 @@
+{
+  "schema_version": "fix_hourly_snapshot_commit.v1",
+  "bem": "BEM-695",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "renderer_exists",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "snapshot_file_is_committed",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "delta_message_exists",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "generated_at_and_period_exist",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    }
+  ],
+  "changed": [
+    ".github/workflows/curator-hourly-report.yml",
+    "scripts/render_curator_hourly_report.py"
+  ],
+  "root_cause": "snapshot file was not guaranteed to be committed by curator-hourly-report workflow; without committed snapshot every run renders full table",
+  "blocker": null,
+  "created_at": "2026-05-19 | 10:05 (UTC+3)"
+}

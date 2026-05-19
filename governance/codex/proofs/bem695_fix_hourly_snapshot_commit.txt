@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem695_fix_hourly_snapshot_commit
+task_type: code_patch
+executed_at: 2026-05-19T07:07:07Z
+ops_applied: Fixed hourly delta persistence by ensuring curator_hourly_report_last_snapshot.json is committed by curator-hourly-report workflow, custom_script
+changed_files: .github/workflows/curator-hourly-report.yml, scripts/render_curator_hourly_report.py, governance/state/bem695_fix_hourly_snapshot_commit.json, governance/reports/bem695_fix_hourly_snapshot_commit.md, governance/transport/results.jsonl, governance/codex/proofs/bem695_fix_hourly_snapshot_commit.txt
+errors: none
