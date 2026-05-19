@@ -1,5 +1,5 @@
 {
-  "schema_version": "curator_hourly_report_state.v3_ru_compact",
+  "schema_version": "curator_hourly_report_state.v4_ru_delta",
   "status": "sent",
   "report_hour": "2026-05-19 | 05:00 (UTC+3)",
   "stage_done": 6,
@@ -10,7 +10,9 @@
   "roadmap_percent": 100,
   "telegram_delivery": "sent",
   "language": "ru",
-  "layout": "compact_table",
+  "layout": "delta_compact_table",
+  "unchanged_since_last_snapshot": false,
+  "snapshot_file": "governance/state/curator_hourly_report_last_snapshot.json",
   "rows": [
     {
       "number": 1,
