@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem697_repair_hourly_state_commit_and_snapshot",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Repaired curator hourly report to persist stable status fingerprint snapshot and commit state without failing on missing files; seeded baseline snapshot for immediate no-change behavior",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/render_curator_hourly_report.py",
+    "scripts/send_curator_hourly_report.sh",
+    "scripts/record_curator_hourly_delivery.py",
+    "scripts/commit_curator_hourly_state.sh",
+    ".github/workflows/curator-hourly-report.yml",
+    "governance/state/curator_hourly_report_last_snapshot.json",
+    "governance/triggers/curator_hourly_report.trigger",
+    "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md",
+    "governance/state/bem697_repair_hourly_state_commit_and_snapshot.json",
+    "governance/reports/bem697_repair_hourly_state_commit_and_snapshot.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem697_repair_hourly_state_commit_and_snapshot.txt",
+    "governance/codex/proofs/bem697_repair_hourly_state_commit_and_snapshot.txt"
+  ],
+  "commit_sha": "678b7c69123f5cc38996778b0849f3fcd8ba8a81",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem697_repair_hourly_state_commit_and_snapshot.md",
+  "completed_at": "2026-05-19T07:18:18Z"
+}
