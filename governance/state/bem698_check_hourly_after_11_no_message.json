@@ -1,0 +1,44 @@
+{
+  "schema_version": "check_hourly_after_11_no_message.v1",
+  "bem": "BEM-698",
+  "status": "state_checked",
+  "last_generated": "2026-05-19 | 10:18 (UTC+3)",
+  "last_period": "10:00–10:59 (UTC+3)",
+  "last_delivery": "sent",
+  "last_report_status": "rendered_no_changes",
+  "checks": [
+    {
+      "name": "workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "schedule_present",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "state_exists",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_report_state.json"
+    },
+    {
+      "name": "snapshot_exists",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_report_last_snapshot.json"
+    },
+    {
+      "name": "last_state_has_generated_at",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_report_state.json"
+    },
+    {
+      "name": "last_delivery_recorded",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_report_state.json"
+    }
+  ],
+  "message_preview": "# Curator Hourly Report Runtime\n\nBEM-HOURLY | ЧАСОВОЙ ОТЧЁТ\nСформировано: 2026-05-19 | 10:18 (UTC+3)\nПериод: 10:00–10:59 (UTC+3)\n\nИзменений за отчётный период нет.\n\n## Delivery\nsent",
+  "blocker": null,
+  "created_at": "2026-05-19 | 11:08 (UTC+3)"
+}
