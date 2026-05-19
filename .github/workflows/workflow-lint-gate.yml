@@ -1,0 +1,35 @@
+name: Workflow Lint Gate
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/check_workflow_lint_gate.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: workflow-lint-gate
+  cancel-in-progress: false
+
+jobs:
+  workflow-lint-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Syntax check lint script
+        run: python3 -m py_compile scripts/check_workflow_lint_gate.py
+      - name: Run workflow lint gate
+        run: python3 scripts/check_workflow_lint_gate.py
+      - name: Commit lint result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/reports/workflow_lint_gate_result.json
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-693 workflow lint gate result"
+          git pull --rebase --autostash origin main || true
+          git push || true
