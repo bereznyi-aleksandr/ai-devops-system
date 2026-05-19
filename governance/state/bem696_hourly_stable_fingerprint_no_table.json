@@ -1,0 +1,54 @@
+{
+  "schema_version": "hourly_stable_fingerprint_no_table.v1",
+  "bem": "BEM-696",
+  "status": "failed",
+  "checks": [
+    {
+      "name": "renderer_exists",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "stable_fingerprint_present",
+      "pass": false,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "full_snapshot_compare_removed",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "period_no_change_wording",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "table_conditional_kept",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "snapshot_stores_fingerprint",
+      "pass": false,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    }
+  ],
+  "message": "Изменений за отчётный период нет.",
+  "blocker": {
+    "code": "STABLE_FINGERPRINT_PATCH_FAILED",
+    "failed": [
+      {
+        "name": "stable_fingerprint_present",
+        "pass": false,
+        "evidence": "scripts/render_curator_hourly_report.py"
+      },
+      {
+        "name": "snapshot_stores_fingerprint",
+        "pass": false,
+        "evidence": "scripts/render_curator_hourly_report.py"
+      }
+    ]
+  },
+  "created_at": "2026-05-19 | 10:13 (UTC+3)"
+}
