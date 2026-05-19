@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem688_verify_hourly_delta_no_changes",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-688 verify hourly delta",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-19 | 05:39 (UTC+3)'\nrenderer=Path('scripts/render_curator_hourly_report.py')\ntext=renderer.read_text(errors='ignore') if renderer.exists() else ''\nchecks=[\n {'name':'renderer_exists','pass':renderer.exists(),'evidence':str(renderer)},\n {'name':'uses_snapshot_file','pass':'curator_hourly_report_last_snapshot.json' in text,'evidence':str(renderer)},\n {'name':'compares_previous_current_snapshot','pass':'previous_snapshot == current_snapshot' in text,'evidence':str(renderer)},\n {'name':'no_change_branch_exists','pass':'Изменений за отчётный час нет' in text,'evidence':str(renderer)},\n {'name':'state_records_unchanged_flag','pass':'unchanged_since_last_snapshot' in text,'evidence':str(renderer)},\n {'name':'full_table_is_conditional','pass':'if unchanged:' in text and 'else:' in text and '№ | Наименование' in text,'evidence':str(renderer)}\n]\nfailed=[x for x in checks if not x['pass']]\nstatus='delta_logic_verified' if not failed else 'delta_logic_failed'\nblocker=None if not failed else {'code':'HOURLY_DELTA_VERIFY_FAILED','failed':failed}\nstate={'schema_version':'verify_hourly_delta_no_changes.v1','bem':'BEM-688','status':status,'checks':checks,'blocker':blocker,'created_at':created}\nstate_file=Path('governance/state/bem688_verify_hourly_delta_no_changes.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem688_verify_hourly_delta_no_changes.md')\nreport.write_text('# BEM-688 | Verify Hourly Delta No Changes | '+status.upper()+sep+sep+'Дата: '+created+sep+sep+'## Checks'+sep+sep+sep.join(['- '+x['name']+': '+('PASS' if x['pass'] else 'FAIL') for x in checks])+sep+sep+'Blocker: '+('null' if blocker is None else json.dumps(blocker,ensure_ascii=False))+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem688_verify_hourly_delta_no_changes','status':status,'blocker':blocker,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem688_verify_hourly_delta_no_changes.txt')\nproof.write_text('BEM-688 '+status+'\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Verified hourly delta/no-change renderer logic statically: snapshot compare, no-change message, conditional full table, state flag')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem688_verify_hourly_delta_no_changes.md",
+    "result_json": "governance/codex/results/bem688_verify_hourly_delta_no_changes.json"
+  },
+  "created_at": "2026-05-19T02:39:05.228Z"
+}
