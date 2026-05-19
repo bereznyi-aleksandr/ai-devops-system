@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem695_fix_hourly_snapshot_commit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Fixed hourly delta persistence by ensuring curator_hourly_report_last_snapshot.json is committed by curator-hourly-report workflow",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/curator-hourly-report.yml",
+    "scripts/render_curator_hourly_report.py",
+    "governance/state/bem695_fix_hourly_snapshot_commit.json",
+    "governance/reports/bem695_fix_hourly_snapshot_commit.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem695_fix_hourly_snapshot_commit.txt",
+    "governance/codex/proofs/bem695_fix_hourly_snapshot_commit.txt"
+  ],
+  "commit_sha": "68b20fe21f0be4eae5294ea072f2b3e6a5730c32",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem695_fix_hourly_snapshot_commit.md",
+  "completed_at": "2026-05-19T07:07:08Z"
+}
