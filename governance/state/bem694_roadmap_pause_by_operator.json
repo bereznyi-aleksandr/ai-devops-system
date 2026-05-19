@@ -1,0 +1,18 @@
+{
+  "schema_version": "operator_pause_roadmap.v1",
+  "bem": "BEM-694",
+  "status": "roadmap_paused_by_operator",
+  "reason": "Operator requested to pause roadmap implementation and receive protocol MD file first.",
+  "allowed_actions": [
+    "reporting",
+    "reading",
+    "protocol preparation",
+    "operator-requested fixes only"
+  ],
+  "blocked_actions": [
+    "new P0/P1 implementation without operator resume command"
+  ],
+  "resume_condition": "operator explicitly says resume/continue roadmap",
+  "blocker": null,
+  "created_at": "2026-05-19 | 05:58 (UTC+3)"
+}

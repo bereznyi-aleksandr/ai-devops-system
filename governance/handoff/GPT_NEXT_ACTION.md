@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | CHECK FINAL AGREEMENTS
+# GPT NEXT ACTION | ROADMAP PAUSED BY OPERATOR
 
-Дата: 2026-05-18 | 21:40 (UTC+3)
+Дата: 2026-05-19 | 05:58 (UTC+3)
 
-Проверить `governance/agreements/final/` и `governance/state/internal_result_ready_handoff_state.json`. Если появился финальный результат внутреннего контура — прочитать его, подготовить операторский отчёт и продолжить roadmap.
+Статус: roadmap paused. Не запускать новые P0/P1 implementation tasks до явной команды оператора resume/continue. Разрешены только отчёты, чтение, подготовка протокола и точечные исправления по прямому запросу оператора.
