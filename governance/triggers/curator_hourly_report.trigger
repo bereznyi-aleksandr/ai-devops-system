@@ -1,1 +1,1 @@
-BEM-687 trigger delta-aware hourly report 2026-05-19 | 05:36 (UTC+3)
+BEM-695 semantic delta fix 2026-05-19 | 10:06 (UTC+3)

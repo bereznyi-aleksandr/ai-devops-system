@@ -1,0 +1,39 @@
+{
+  "schema_version": "fix_hourly_semantic_delta.v1",
+  "bem": "BEM-695",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "renderer_exists",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "uses_semantic_digest",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "does_not_use_hourly_state_as_input",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "no_change_message_present",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "semantic_flag_present",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "canon_updated",
+      "pass": true,
+      "evidence": "governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-19 | 10:06 (UTC+3)"
+}
