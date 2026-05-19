@@ -79,7 +79,7 @@ lines.append("Сформировано: " + now.strftime("%Y-%m-%d | %H:%M (UTC+
 lines.append("Период: " + report_hour.strftime("%H:00–%H:59 (UTC+3)"))
 lines.append("")
 if unchanged:
-    lines.append("Изменений за отчётный час нет.")
+    lines.append("Изменений за отчётный период нет.")
 else:
     lines.append(f"Этап: {done}/{total} ({percent}%)")
     lines.append(f"Дорожная карта: {done}/{total} ({percent}%)")

@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem695_hourly_no_change_period_message
+task_type: code_patch
+executed_at: 2026-05-19T07:12:24Z
+ops_applied: Changed no-change Telegram hourly wording to period-based phrase and kept full table conditional on status snapshot changes, custom_script
+changed_files: scripts/render_curator_hourly_report.py, governance/protocols/OPERATOR_TELEGRAM_REPORT_CANON.md, governance/triggers/curator_hourly_report.trigger, governance/state/bem695_hourly_no_change_period_message.json, governance/reports/bem695_hourly_no_change_period_message.md, governance/transport/results.jsonl, governance/codex/proofs/bem695_hourly_no_change_period_message.txt
+errors: none
