@@ -1,9 +1,9 @@
 {
-  "schema_version": "curator_hourly_report_state.v5_semantic_delta",
-  "status": "sent",
-  "generated_at": "2026-05-19 | 10:07 (UTC+3)",
-  "report_hour": "2026-05-19 | 10:00 (UTC+3)",
+  "schema_version": "curator_hourly_report_state.v6_stable_fingerprint",
+  "status": "rendered_no_changes",
+  "generated_at": "2026-05-19 | 10:18 (UTC+3)",
   "period": "10:00–10:59 (UTC+3)",
+  "report_hour": "2026-05-19 | 10:00 (UTC+3)",
   "stage_done": 6,
   "stage_total": 6,
   "stage_percent": 100,
@@ -12,9 +12,55 @@
   "roadmap_percent": 100,
   "telegram_delivery": "sent",
   "language": "ru",
-  "layout": "semantic_delta_compact_table",
-  "unchanged_since_last_semantic_digest": false,
-  "semantic_digest_file": "governance/state/curator_hourly_report_last_semantic_digest.json",
+  "layout": "delta_compact_table",
+  "unchanged_since_last_fingerprint": true,
+  "snapshot_file": "governance/state/curator_hourly_report_last_snapshot.json",
+  "fingerprint": {
+    "stage_done": 6,
+    "stage_total": 6,
+    "stage_percent": 100,
+    "roadmap_done": 6,
+    "roadmap_total": 6,
+    "roadmap_percent": 100,
+    "rows": [
+      {
+        "number": 1,
+        "name": "Канал",
+        "essence": "восстановлен",
+        "status": "✅"
+      },
+      {
+        "number": 2,
+        "name": "Роли",
+        "essence": "проверены",
+        "status": "✅"
+      },
+      {
+        "number": 3,
+        "name": "Провайдер",
+        "essence": "маршрут ясен",
+        "status": "✅"
+      },
+      {
+        "number": 4,
+        "name": "ТГ-тест",
+        "essence": "отправка есть",
+        "status": "✅"
+      },
+      {
+        "number": 5,
+        "name": "Часовой",
+        "essence": "доставка есть",
+        "status": "✅"
+      },
+      {
+        "number": 6,
+        "name": "Готовность",
+        "essence": "принята",
+        "status": "✅"
+      }
+    ]
+  },
   "rows": [
     {
       "number": 1,
@@ -53,5 +99,6 @@
       "status": "✅"
     }
   ],
-  "blocker": null
+  "blocker": null,
+  "telegram_response_file": "governance/tmp/curator_hourly_report_response.json"
 }
