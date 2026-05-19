@@ -1,0 +1,39 @@
+{
+  "schema_version": "repair_hourly_state_commit_and_snapshot.v1",
+  "bem": "BEM-697",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "renderer_writes_snapshot",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    },
+    {
+      "name": "commit_script_ignores_missing_files",
+      "pass": true,
+      "evidence": "scripts/commit_curator_hourly_state.sh"
+    },
+    {
+      "name": "workflow_uses_commit_script",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "schedule_allowed_only_here",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "seed_snapshot_exists",
+      "pass": true,
+      "evidence": "governance/state/curator_hourly_report_last_snapshot.json"
+    },
+    {
+      "name": "no_change_wording",
+      "pass": true,
+      "evidence": "scripts/render_curator_hourly_report.py"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-19 | 10:16 (UTC+3)"
+}
