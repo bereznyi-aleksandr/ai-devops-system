@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem691_prepare_claude_primary_runtime_proof",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Prepared Claude primary runtime proof gate and queued dispatch for a dispatchable Claude workflow if available",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/provider_gates/bem691_claude_primary_runtime_proof_request.json",
+    "governance/state/bem691_prepare_claude_primary_runtime_proof.json",
+    "governance/reports/bem691_prepare_claude_primary_runtime_proof.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem691_prepare_claude_primary_runtime_proof.txt",
+    "governance/workflow_dispatch_queue/bem691_claude_primary_runtime_proof.json",
+    "governance/codex/proofs/bem691_prepare_claude_primary_runtime_proof.txt"
+  ],
+  "commit_sha": "f2c6478cf7f270733e7c7df2539ad3cc82a11e4c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem691_prepare_claude_primary_runtime_proof.md",
+  "completed_at": "2026-05-19T02:50:29Z"
+}
