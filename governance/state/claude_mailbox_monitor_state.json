@@ -1,0 +1,53 @@
+{
+  "schema_version": "claude_mailbox_monitor_state.v1",
+  "status": "new_claude_response_detected",
+  "checked_at": "2026-05-20 | 22:45 (UTC+3)",
+  "active_agreements": [
+    {
+      "path": "governance/agreements/active/bem682_multi_agent_infrastructure_agreement_active.json",
+      "agreement_id": "BEM-682",
+      "status": "final_protocol_approved_and_written",
+      "next_action": "operator_final_summary_then_begin_p0_implementation"
+    },
+    {
+      "path": "governance/agreements/active/bem699_multiagent_protocol_v2_operator_remarks.json",
+      "agreement_id": "BEM-699",
+      "status": "sent_to_claude_for_review",
+      "next_action": "wait_for_claude_review_then_prepare_agreed_protocol_v2"
+    },
+    {
+      "path": "governance/agreements/active/bem703_multiagent_strategy_architecture_v21.json",
+      "agreement_id": "BEM-703",
+      "status": "sent_to_claude_for_review",
+      "next_action": "wait_for_claude_review_then_prepare_agreed_protocol_v2_1"
+    }
+  ],
+  "hits": [
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
+      "decision": "APPROVED",
+      "mtime": 1779306327.723726
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
+      "decision": "APPROVED",
+      "mtime": 1779306327.7237778
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem566_claude_response.md",
+      "decision": "APPROVED",
+      "mtime": 1779306327.7237778
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md",
+      "decision": "APPROVED",
+      "mtime": 1779306327.7237778
+    }
+  ],
+  "notified_paths": [
+    "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
+    "governance/audit_mailbox/claude_to_gpt/bem566_claude_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md"
+  ]
+}
