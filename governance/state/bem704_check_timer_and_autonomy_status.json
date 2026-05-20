@@ -1,0 +1,18 @@
+{
+  "schema_version": "timer_and_autonomy_status.v1",
+  "bem": "BEM-704",
+  "status": "partial_autonomy_timer_request_only",
+  "one_shot_smoke_confirmed": true,
+  "one_shot_scheduled_for": "2026-05-20 | 22:08 (UTC+3)",
+  "mandatory_rule_status": "active_rule_recorded",
+  "bem703_task_monitor_request_exists": true,
+  "bem703_task_monitor_status": "confirmation_required",
+  "active_bem703_status": "sent_to_claude_for_review",
+  "active_bem699_status": "sent_to_claude_for_review",
+  "autonomy_assessment": "mailbox request and repo-side state work; recurring ChatGPT timer is not proven until task confirmation exists",
+  "blocker": {
+    "code": "RECURRING_CHATGPT_TASK_CONFIRMATION_MISSING",
+    "detail": "Repo contains mandatory monitor rule and BEM-703 task monitor request, but no task-card/confirmation record for a recurring task after BEM-703."
+  },
+  "created_at": "2026-05-20 | 22:35 (UTC+3)"
+}
