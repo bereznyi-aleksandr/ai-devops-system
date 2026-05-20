@@ -1,0 +1,64 @@
+{
+  "schema_version": "mailbox_autonomy_autotest.v1",
+  "bem": "BEM-707",
+  "status": "repo_mailbox_autoprocess_ready__chatgpt_timer_unconfirmed",
+  "checks": [
+    {
+      "name": "deno_health_available",
+      "pass": true,
+      "evidence": "healthCheck ok before task"
+    },
+    {
+      "name": "monitor_script_exists",
+      "pass": true,
+      "evidence": "scripts/check_claude_mailbox_alert.py"
+    },
+    {
+      "name": "monitor_writes_handoff",
+      "pass": true,
+      "evidence": "scripts/check_claude_mailbox_alert.py"
+    },
+    {
+      "name": "monitor_writes_pending_artifact",
+      "pass": true,
+      "evidence": "scripts/check_claude_mailbox_alert.py"
+    },
+    {
+      "name": "operator_notification_disabled",
+      "pass": true,
+      "evidence": "scripts/check_claude_mailbox_alert.py"
+    },
+    {
+      "name": "workflow_runs_monitor",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "workflow_has_only_allowed_schedule",
+      "pass": true,
+      "evidence": ".github/workflows/curator-hourly-report.yml"
+    },
+    {
+      "name": "commit_persists_handoff",
+      "pass": true,
+      "evidence": "scripts/commit_curator_hourly_state.sh"
+    },
+    {
+      "name": "commit_persists_pending",
+      "pass": true,
+      "evidence": "scripts/commit_curator_hourly_state.sh"
+    },
+    {
+      "name": "fixture_created_isolated",
+      "pass": true,
+      "evidence": "governance/tests/mailbox_autonomy/bem707_fixture_claude_response.md"
+    }
+  ],
+  "chatgpt_timer_confirmed": false,
+  "repo_autoprocessor_ready": true,
+  "blocker": {
+    "code": "CHATGPT_RECURRING_TASK_CONFIRMATION_MISSING",
+    "detail": "Repo-side mailbox autoprocessor is ready and tested statically. GPT-side push/scheduler is not proven until task-card/confirmation exists."
+  },
+  "created_at": "2026-05-20 | 22:49 (UTC+3)"
+}
