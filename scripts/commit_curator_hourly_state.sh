@@ -8,6 +8,8 @@ paths=(
   "governance/reports/curator_hourly_report_runtime.md"
   "governance/tmp/curator_hourly_report_delivery.txt"
   "governance/tmp/curator_hourly_report_response.json"
+  "governance/state/claude_mailbox_monitor_state.json"
+  "governance/tmp/claude_mailbox_alert_message.txt"
 )
 for path in "${paths[@]}"; do
   if [[ -e "$path" ]]; then

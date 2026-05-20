@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Syntax check hourly scripts
-        run: python3 -m py_compile scripts/render_curator_hourly_report.py scripts/record_curator_hourly_delivery.py
+        run: python3 -m py_compile scripts/render_curator_hourly_report.py scripts/record_curator_hourly_delivery.py scripts/check_claude_mailbox_alert.py
       - name: Render hourly report
         run: python3 scripts/render_curator_hourly_report.py
       - name: Send Telegram hourly report
@@ -38,5 +38,15 @@ jobs:
         run: bash scripts/send_curator_hourly_report.sh
       - name: Record delivery status
         run: python3 scripts/record_curator_hourly_delivery.py
+      - name: Check Claude mailbox alert
+        run: python3 scripts/check_claude_mailbox_alert.py
+      - name: Send Claude mailbox alert if any
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -s governance/tmp/claude_mailbox_alert_message.txt ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+            curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode text@governance/tmp/claude_mailbox_alert_message.txt >/dev/null
+          fi
       - name: Commit hourly report state
         run: bash scripts/commit_curator_hourly_state.sh

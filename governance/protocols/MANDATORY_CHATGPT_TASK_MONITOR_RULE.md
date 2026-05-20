@@ -15,3 +15,8 @@ PASS допускается только если есть task-card / task conf
 
 ## Scope
 Это эксплуатационное правило связи с Claude. Оно не является продолжением paused roadmap implementation.
+
+## BEM-705 | Correction and fallback
+Дата: 2026-05-20 | 22:41 (UTC+3)
+
+After each Claude mailbox request, GPT must create/update ChatGPT Task from chat and require task-card confirmation. If confirmation is missing, status is BLOCKER, not PASS. Repo-side fallback is allowed only as alert layer through the already-permitted `curator-hourly-report.yml` schedule; it does not replace ChatGPT Task autonomy.

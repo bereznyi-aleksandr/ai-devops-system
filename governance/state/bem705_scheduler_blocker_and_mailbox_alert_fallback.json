@@ -1,0 +1,14 @@
+{
+  "schema_version": "scheduler_blocker_and_mailbox_alert_fallback.v1",
+  "bem": "BEM-705",
+  "status": "blocker_recorded_fallback_installed",
+  "chatgpt_task_status": "not_confirmed",
+  "claude_request": "BEM-703",
+  "fallback": "curator-hourly-report mailbox alert",
+  "roadmap_implementation": "paused; not resumed",
+  "blocker": {
+    "code": "CHATGPT_RECURRING_TASK_NOT_CONFIRMED_AFTER_CLAUDE_REQUEST",
+    "detail": "BEM-703 Claude mailbox request was sent, but recurring ChatGPT Task monitor confirmation/task-card was not produced in this chat. Repo/Deno cannot mutate ChatGPT account schedules directly; until task confirmation exists, autonomy is partial."
+  },
+  "created_at": "2026-05-20 | 22:41 (UTC+3)"
+}
