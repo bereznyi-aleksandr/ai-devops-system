@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem706_remove_operator_from_mailbox_loop",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Removed operator from Claude mailbox response loop; fallback now records repo handoff/pending autoprocess artifacts instead of Telegram operator relay",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/check_claude_mailbox_alert.py",
+    ".github/workflows/curator-hourly-report.yml",
+    "scripts/commit_curator_hourly_state.sh",
+    "governance/protocols/MANDATORY_CHATGPT_TASK_MONITOR_RULE.md",
+    "governance/state/bem706_remove_operator_from_mailbox_loop.json",
+    "governance/reports/bem706_remove_operator_from_mailbox_loop.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem706_remove_operator_from_mailbox_loop.txt",
+    "governance/codex/proofs/bem706_remove_operator_from_mailbox_loop.txt"
+  ],
+  "commit_sha": "e64ab61996af5c008671a5b8027f12f7c0a0d582",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem706_remove_operator_from_mailbox_loop.md",
+  "completed_at": "2026-05-20T19:47:11Z"
+}
