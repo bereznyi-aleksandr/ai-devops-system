@@ -9,6 +9,8 @@ paths=(
   "governance/tmp/curator_hourly_report_delivery.txt"
   "governance/tmp/curator_hourly_report_response.json"
   "governance/state/claude_mailbox_monitor_state.json"
+  "governance/handoff/GPT_NEXT_ACTION.md"
+  "governance/tasks/pending/claude_mailbox_autoprocess_next.md"
   "governance/tmp/claude_mailbox_alert_message.txt"
 )
 for path in "${paths[@]}"; do

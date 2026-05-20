@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem706_remove_operator_from_mailbox_loop
+task_type: code_patch
+executed_at: 2026-05-20T19:47:10Z
+ops_applied: Removed operator from Claude mailbox response loop; fallback now records repo handoff/pending autoprocess artifacts instead of Telegram operator relay, custom_script
+changed_files: scripts/check_claude_mailbox_alert.py, .github/workflows/curator-hourly-report.yml, scripts/commit_curator_hourly_state.sh, governance/protocols/MANDATORY_CHATGPT_TASK_MONITOR_RULE.md, governance/state/bem706_remove_operator_from_mailbox_loop.json, governance/reports/bem706_remove_operator_from_mailbox_loop.md, governance/transport/results.jsonl, governance/codex/proofs/bem706_remove_operator_from_mailbox_loop.txt
+errors: none

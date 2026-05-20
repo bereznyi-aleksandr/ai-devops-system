@@ -20,3 +20,8 @@ PASS допускается только если есть task-card / task conf
 Дата: 2026-05-20 | 22:41 (UTC+3)
 
 After each Claude mailbox request, GPT must create/update ChatGPT Task from chat and require task-card confirmation. If confirmation is missing, status is BLOCKER, not PASS. Repo-side fallback is allowed only as alert layer through the already-permitted `curator-hourly-report.yml` schedule; it does not replace ChatGPT Task autonomy.
+
+## BEM-706 | No-operator mailbox processing rule
+Дата: 2026-05-20 | 22:47 (UTC+3)
+
+Оператор не является relay для ответов Claude. Если ChatGPT Task не подтверждён, repo-side fallback не должен слать оператору просьбу пересказать содержание. Fallback только фиксирует repo-state, handoff и pending autoprocess artifact. GPT/Codex читает mailbox напрямую из repo и доводит согласование до результата.
