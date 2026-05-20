@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem701_record_chatgpt_task_smoke_scheduled",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-701 task scheduled",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport','governance/scheduled_tasks']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-20 | 22:08 (UTC+3)'\nrecord={'schema_version':'chatgpt_scheduled_task_smoke.v1','bem':'BEM-701','status':'scheduled_by_operator_confirmation','task_name':'AI DevOps mailbox monitor smoke-test','scheduled_for':'2026-05-20 | 22:08 (UTC+3)','mode':'one-shot smoke-test','purpose':'Check BEM-699 active agreement, Claude mailbox, and Deno healthCheck through ChatGPT Scheduled Tasks','roadmap_implementation':'paused; not resumed','no_issue_comments':True,'blocker':None,'created_at':created}\nstate=Path('governance/state/bem701_record_chatgpt_task_smoke_scheduled.json')\nstate.write_text(json.dumps(record,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem701_record_chatgpt_task_smoke_scheduled.md')\nreport.write_text('# BEM-701 | ChatGPT Task Smoke Scheduled | RECORDED'+sep+sep+'Дата: '+created+sep+sep+'Task: AI DevOps mailbox monitor smoke-test'+sep+'Scheduled for: 2026-05-20 | 22:08 (UTC+3)'+sep+'Roadmap implementation: paused; not resumed'+sep+sep+'Blocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem701_record_chatgpt_task_smoke_scheduled','status':'scheduled_by_operator_confirmation','task_name':'AI DevOps mailbox monitor smoke-test','scheduled_for':'2026-05-20 | 22:08 (UTC+3)','blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem701_record_chatgpt_task_smoke_scheduled.txt')\nproof.write_text('BEM-701 RECORDED: ChatGPT Scheduled Task smoke-test scheduled by operator confirmation.\\n')\nchanged_files.extend([str(state),str(report),str(transport),str(proof)])\nops_applied.append('Recorded operator confirmation that ChatGPT Scheduled Task smoke-test is scheduled; roadmap remains paused')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem701_record_chatgpt_task_smoke_scheduled.md",
+    "result_json": "governance/codex/results/bem701_record_chatgpt_task_smoke_scheduled.json"
+  },
+  "created_at": "2026-05-20T19:14:36.737Z"
+}
