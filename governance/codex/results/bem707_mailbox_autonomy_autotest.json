@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem707_mailbox_autonomy_autotest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Ran mailbox autonomy autotest: validated no-operator repo-side autoprocessor paths and recorded that ChatGPT recurring timer confirmation is still missing",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/tests/mailbox_autonomy/bem707_fixture_claude_response.md",
+    "governance/state/bem707_mailbox_autonomy_autotest.json",
+    "governance/reports/bem707_mailbox_autonomy_autotest.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem707_mailbox_autonomy_autotest.txt",
+    "governance/codex/proofs/bem707_mailbox_autonomy_autotest.txt"
+  ],
+  "commit_sha": "73f455bef6981ad0b74ef40adc043a1f9c8a1423",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem707_mailbox_autonomy_autotest.md",
+  "completed_at": "2026-05-20T19:52:24Z"
+}
