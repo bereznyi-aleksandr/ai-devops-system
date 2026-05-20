@@ -1,0 +1,10 @@
+{
+  "schema_version": "mandatory_chatgpt_task_monitor_rule.v1",
+  "bem": "BEM-702",
+  "status": "active_rule_recorded",
+  "rule": "Every Claude-mailbox request must create/update ChatGPT Scheduled Task monitor in the same operator cycle",
+  "proof_required": "task-card or task confirmation; otherwise TASK_SCHEDULER_CONFIRMATION_MISSING",
+  "roadmap_implementation": "paused; not resumed",
+  "blocker": null,
+  "created_at": "2026-05-20 | 22:21 (UTC+3)"
+}

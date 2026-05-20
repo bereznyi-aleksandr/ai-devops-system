@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem702_mandatory_chatgpt_task_monitor_rule
+task_type: code_patch
+executed_at: 2026-05-20T19:25:53Z
+ops_applied: Recorded mandatory rule: every Claude mailbox request must create/update a ChatGPT Scheduled Task monitor with proof requirement, custom_script
+changed_files: governance/protocols/MANDATORY_CHATGPT_TASK_MONITOR_RULE.md, governance/handoff/CHATGPT_TASK_MONITOR_MANDATORY_PROMPT.md, governance/state/bem702_mandatory_chatgpt_task_monitor_rule.json, governance/reports/bem702_mandatory_chatgpt_task_monitor_rule.md, governance/transport/results.jsonl, governance/codex/proofs/bem702_mandatory_chatgpt_task_monitor_rule.txt
+errors: none
