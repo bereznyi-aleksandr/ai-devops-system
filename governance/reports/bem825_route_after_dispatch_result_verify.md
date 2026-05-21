@@ -1,0 +1,3 @@
+# BEM-825 | Route After Dispatch Result Verify | next_patch_processor_result_writer
+
+{"bem": "BEM-825", "status": "next_patch_processor_result_writer", "previous_status": "processor_marker_present_but_no_results", "next_action": "patch shell processor result writer; marker proves step executes", "created_at": "2026-05-21 | 20:56 (UTC+3)"}

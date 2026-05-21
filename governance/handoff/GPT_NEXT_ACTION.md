@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-824
+# GPT NEXT ACTION | BEM-825
 
-Status: processor_marker_present_but_no_results
-Next: patch processor shell loop/result writer because marker exists but no result files
+Status: next_patch_processor_result_writer
+Next: patch shell processor result writer; marker proves step executes
