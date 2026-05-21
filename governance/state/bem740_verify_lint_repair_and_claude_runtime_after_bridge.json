@@ -1,0 +1,68 @@
+{
+  "schema_version": "verify_lint_repair_and_claude_runtime_after_bridge.v1",
+  "bem": "BEM-740",
+  "status": "claude_runtime_proven_waiting_response_or_outcome",
+  "workflow_lint_state": {
+    "schema_version": "workflow_lint_gate_state.v1",
+    "status": "failed_new_violations",
+    "violation_count": 146,
+    "new_violation_count": 2,
+    "resolved_baseline_count": 0,
+    "new_violations": [
+      {
+        "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+        "line": 32,
+        "rule": "NO_INLINE_CODE",
+        "text": "python3 - <<'PY' > /tmp/active.txt"
+      },
+      {
+        "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+        "line": 32,
+        "rule": "NO_INLINE_HEREDOC",
+        "text": "python3 - <<'PY' > /tmp/active.txt"
+      }
+    ],
+    "resolved_baseline_keys": []
+  },
+  "watchdog_check_count": 120,
+  "watchdog_last_checked_at": "2026-05-21 | 14:58 (UTC+3)",
+  "watchdog_latest_status": "no_response",
+  "claude_runtime_state_exists": true,
+  "claude_runtime_runs": [
+    {
+      "time": "2026-05-21 | 13:54 (UTC+3)",
+      "mode": "start",
+      "outcome": "started"
+    },
+    {
+      "time": "2026-05-21 | 13:54 (UTC+3)",
+      "mode": "complete",
+      "outcome": "failure"
+    },
+    {
+      "time": "2026-05-21 | 13:55 (UTC+3)",
+      "mode": "start",
+      "outcome": "started"
+    },
+    {
+      "time": "2026-05-21 | 13:55 (UTC+3)",
+      "mode": "complete",
+      "outcome": "failure"
+    }
+  ],
+  "claude_runtime_started_at": "2026-05-21 | 13:55 (UTC+3)",
+  "claude_runtime_completed_at": "2026-05-21 | 13:55 (UTC+3)",
+  "claude_action_outcome": "failure",
+  "responses_found": 0,
+  "responses": [],
+  "operator_role": "none",
+  "blocker": {
+    "code": "CLAUDE_RUNTIME_PROVEN_NO_RESPONSE_FILE_YET",
+    "runtime_latest": {
+      "mode": "complete",
+      "outcome": "failure",
+      "time": "2026-05-21 | 13:55 (UTC+3)"
+    }
+  },
+  "created_at": "2026-05-21 | 15:27 (UTC+3)"
+}
