@@ -1,12 +1,14 @@
 {
-  "schema_version": "agreement_active.v1",
+  "schema_version": "agreement_active.v2",
   "agreement_id": "BEM-703",
-  "version": "v2.1-global-patterns-2026-05-20",
-  "status": "sent_to_claude_for_review",
-  "mailbox_file": "governance/audit_mailbox/gpt_to_claude/bem703_strategy_architecture_global_patterns_for_claude.md",
+  "version": "v2.1-global-patterns-2026-05-21-repeat",
+  "status": "repeat_request_sent_to_claude_final_decision_required",
+  "mailbox_file": "governance/audit_mailbox/gpt_to_claude/bem712_repeat_bem703_strategy_request_final_decision_required.md",
   "previous_agreement": "BEM-699",
-  "next_action": "wait_for_claude_review_then_prepare_agreed_protocol_v2_1",
+  "next_action": "monitor_claude_mailbox_until_approved_change_required_or_blocked",
   "operator_task": "strategy architecture with global multi-agent patterns",
   "blocker": null,
-  "created_at": "2026-05-20 | 22:28 (UTC+3)"
+  "created_at": "2026-05-20 | 22:28 (UTC+3)",
+  "operator_role": "none_in_routine_loop",
+  "updated_at": "2026-05-21 | 05:32 (UTC+3)"
 }

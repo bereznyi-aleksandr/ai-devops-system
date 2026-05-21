@@ -1,0 +1,12 @@
+{
+  "schema_version": "repeat_claude_strategy_request_until_result.v1",
+  "bem": "BEM-712",
+  "status": "repeat_request_sent_to_claude",
+  "mailbox_file": "governance/audit_mailbox/gpt_to_claude/bem712_repeat_bem703_strategy_request_final_decision_required.md",
+  "active_file": "governance/agreements/active/bem703_multiagent_strategy_architecture_v21.json",
+  "monitor_task_prompt": "governance/scheduled_tasks/AI_DEVOPS_CLAUDE_MAILBOX_MONITOR_RECURRING_TASK.md",
+  "operator_role": "none_in_routine_loop",
+  "next_action": "check_mailbox_until_result",
+  "blocker": null,
+  "created_at": "2026-05-21 | 05:32 (UTC+3)"
+}

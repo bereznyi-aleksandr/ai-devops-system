@@ -20,3 +20,7 @@
 5. Если ответа нет — не отправляй оператору длинный отчёт; при необходимости зафиксируй no_new_mail в state.
 6. Roadmap implementation не запускать без явной команды оператора resume.
 7. No issue comments.
+
+## BEM-712 active scope update
+Дата: 2026-05-21 | 05:32 (UTC+3)
+Scope: BEM-703/BEM-712 final decision. Monitor paths: `governance/audit_mailbox/claude_to_gpt/`, `governance/audit_mailbox/external_auditor_to_internal_auditor/`. On APPROVED/CHANGE_REQUIRED/BLOCKED create Codex task to finalize or continue round. Operator relay forbidden.
