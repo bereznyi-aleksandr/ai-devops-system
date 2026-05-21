@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem775_queue_claude_dispatch_via_codex_runner",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-775 queue Claude dispatch",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/workflow_dispatch_queue','governance/state','governance/reports','governance/codex/proofs','governance/transport','governance/tasks/pending','governance/handoff']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 19:27 (UTC+3)'\nqueue=Path('governance/workflow_dispatch_queue/bem775_claude_internal_auditor_dispatch.json')\nqueue.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v1','workflow':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-775 queue Claude internal auditor dispatcher through Codex Runner built-in workflow dispatch queue','created_at':created},indent=2,ensure_ascii=False)+sep)\npending=Path('governance/tasks/pending/bem775_verify_queue_dispatch_result.md')\npending.write_text('# BEM-775 Next | Verify Queue Dispatch Result'+sep+sep+'Дата: '+created+sep+'Next: after Codex Runner queue step, verify governance/workflow_dispatch_results/bem775_claude_internal_auditor_dispatch.status and Claude runtime state.'+sep)\nhandoff=Path('governance/handoff/GPT_NEXT_ACTION.md')\nhandoff.write_text('# GPT NEXT ACTION | BEM-775 CLAUDE DISPATCH QUEUED'+sep+sep+'Дата: '+created+sep+'Claude dispatcher queued through built-in Codex workflow dispatch queue. Verify dispatch status and runtime state next.'+sep+'Operator relay: forbidden.'+sep)\nstate={'schema_version':'queue_claude_dispatch_via_codex_runner.v1','bem':'BEM-775','status':'claude_dispatch_queued','queue_file':str(queue),'expected_result_status':'governance/workflow_dispatch_results/bem775_claude_internal_auditor_dispatch.status','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem775_queue_claude_dispatch_via_codex_runner.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem775_queue_claude_dispatch_via_codex_runner.md')\nreport.write_text('# BEM-775 | Queue Claude Dispatch Via Codex Runner | QUEUED'+sep+sep+'Дата: '+created+sep+'Queue file: '+str(queue)+sep+'Blocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem775_queue_claude_dispatch_via_codex_runner','status':'claude_dispatch_queued','queue_file':str(queue),'blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem775_queue_claude_dispatch_via_codex_runner.txt')\nproof.write_text('BEM-775 queued Claude dispatcher via Codex workflow dispatch queue.\\n')\nchanged_files.extend([str(queue),str(pending),str(handoff),str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Queued Claude internal auditor dispatcher through existing Codex Runner workflow_dispatch_queue mechanism')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem775_queue_claude_dispatch_via_codex_runner.md",
+    "result_json": "governance/codex/results/bem775_queue_claude_dispatch_via_codex_runner.json"
+  },
+  "created_at": "2026-05-21T16:28:55.497Z"
+}
