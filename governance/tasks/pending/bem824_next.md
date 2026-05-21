@@ -1,2 +1,2 @@
-Next: patch processor shell loop/result writer because marker exists but no result files
+Next: repair missing proofs: workflow_dispatch_results, real_claude_response
 Operator relay forbidden.

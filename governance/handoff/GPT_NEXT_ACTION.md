@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-825
+# GPT NEXT ACTION | BEM-824
 
-Status: next_patch_processor_result_writer
-Next: patch shell processor result writer; marker proves step executes
+Status: single_smoke_fail
+Missing: workflow_dispatch_results, real_claude_response
+Next: repair missing proofs: workflow_dispatch_results, real_claude_response
