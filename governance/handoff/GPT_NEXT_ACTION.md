@@ -1,7 +1,5 @@
-# GPT NEXT ACTION | CONTINUE AFTER REPORT
+# GPT NEXT ACTION | FIX CLAUDE WAKEUP
 
-Дата: 2026-05-21 | 14:05 (UTC+3)
+Дата: 2026-05-21 | 14:04 (UTC+3)
 
-Do not stop after report. Current blocker/status: claude_runtime_triggered_no_response_yet
-
-Next: if Claude runtime state absent, repair/dispatch Claude inbound workflow; if response appears, process final decision.
+Do not stop. Root cause: Claude inbound workflow runtime not proven. Next: install explicit dispatch bridge or direct Claude runner path.
