@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | FIX CLAUDE WAKEUP
+# GPT NEXT ACTION | CLAUDE DISPATCHER KICKED
 
-Дата: 2026-05-21 | 14:04 (UTC+3)
+Дата: 2026-05-21 | 15:24 (UTC+3)
 
-Do not stop. Root cause: Claude inbound workflow runtime not proven. Next: install explicit dispatch bridge or direct Claude runner path.
+BEM-739 creates a Codex Runner completion event. Next: check claude_inbound_mailbox_workflow_state.json for dispatcher start/completion.
