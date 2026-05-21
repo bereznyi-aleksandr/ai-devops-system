@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-810
+# GPT NEXT ACTION | BEM-811
 
-Status: next_unknown_state
+Status: infra_repair_required
 Next: diagnose BEM-809 state
