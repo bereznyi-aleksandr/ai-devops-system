@@ -1,0 +1,21 @@
+{
+  "schema_version": "chatgpt_task_proof_schema.v1",
+  "required_fields": [
+    "task_name",
+    "schedule",
+    "confirmation_source",
+    "created_at",
+    "run_proofs"
+  ],
+  "pass_rules": {
+    "task_confirmation": "task-card or platform confirmation required",
+    "run_proofs": "at least two scheduled run results with timestamps",
+    "no_operator_relay": "operator must not relay Claude content"
+  },
+  "status_values": [
+    "pending_confirmation",
+    "confirmed",
+    "two_runs_verified",
+    "failed"
+  ]
+}
