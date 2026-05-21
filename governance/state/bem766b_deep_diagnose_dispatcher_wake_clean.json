@@ -1,0 +1,348 @@
+{
+  "schema_version": "deep_diagnose_dispatcher_wake_path_clean.v1",
+  "bem": "BEM-766B",
+  "status": "dispatcher_runtime_seen",
+  "workflow_names": {
+    ".github/workflows/codex-runner.yml": "Codex Runner",
+    ".github/workflows/claude-internal-auditor-dispatcher.yml": "Claude Internal Auditor Dispatcher",
+    ".github/workflows/claude-internal-auditor-mailbox.yml": "Claude Internal Auditor Mailbox"
+  },
+  "checks": [
+    {
+      "name": "codex_workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/codex-runner.yml"
+    },
+    {
+      "name": "dispatcher_exists",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    },
+    {
+      "name": "dispatcher_has_workflow_run",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    },
+    {
+      "name": "dispatcher_listens_actual_codex_name",
+      "pass": true,
+      "evidence": "Codex Runner"
+    },
+    {
+      "name": "dispatcher_has_no_inline_heredoc",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    },
+    {
+      "name": "latest_mail_item_exists",
+      "pass": true,
+      "evidence": "governance/audit_mailbox/gpt_to_claude/bem741_refresh_after_dispatcher_yaml_repair.md"
+    },
+    {
+      "name": "runtime_state_seen",
+      "pass": true,
+      "evidence": "{\"started_at\": \"2026-05-21 | 19:17 (UTC+3)\", \"schema_version\": \"claude_inbound_mailbox_workflow_state.v1\", \"status\": \"runtime_complete\", \"latest\": {\"mode\": \"complete\", \"outcome\": \"failure\", \"time\": \"2026-05-21 | 19:17 (UTC+3)\"}, \"runs\": [{\"time\": \"2026-05-21 | 13:54 (UTC+3)\", \"mode\": \"start\", \"outcome\": \"started\"}, {\"time\": \"2026-05-21 | 13:54 (UTC+3)\", \"mode\": \"complete\", \"outcome\": \"failure\"}, {\"time\": \"2026-05-21 | 13:55 (UTC+3)\", \"mode\": \"start\", \"outcome\": \"started\"}, {\"time\": \"2026-05-21 |"
+    }
+  ],
+  "latest_mail_items": [
+    "governance/audit_mailbox/gpt_to_claude/bem679_repository_infrastructure_options_to_claude.md",
+    "governance/audit_mailbox/gpt_to_claude/bem682_consolidated_protocol_for_claude_final_approval.md",
+    "governance/audit_mailbox/gpt_to_claude/bem699_operator_remarks_multiagent_protocol_for_claude.md",
+    "governance/audit_mailbox/gpt_to_claude/bem703_strategy_architecture_global_patterns_for_claude.md",
+    "governance/audit_mailbox/gpt_to_claude/bem712_repeat_bem703_strategy_request_final_decision_required.md",
+    "governance/audit_mailbox/gpt_to_claude/bem725_repeat_strategy_and_ask_claude_no_response_reason.md",
+    "governance/audit_mailbox/gpt_to_claude/bem728_trigger_after_claude_inbound_workflow_install.md",
+    "governance/audit_mailbox/gpt_to_claude/bem732_trigger_claude_runtime_evidence.md",
+    "governance/audit_mailbox/gpt_to_claude/bem741_fresh_trigger_after_lint_repair.md",
+    "governance/audit_mailbox/gpt_to_claude/bem741_refresh_after_dispatcher_yaml_repair.md"
+  ],
+  "watchdog_status": "no_response",
+  "watchdog_checked_at": "2026-05-21 | 19:04 (UTC+3)",
+  "runtime_state": {
+    "started_at": "2026-05-21 | 19:17 (UTC+3)",
+    "schema_version": "claude_inbound_mailbox_workflow_state.v1",
+    "status": "runtime_complete",
+    "latest": {
+      "mode": "complete",
+      "outcome": "failure",
+      "time": "2026-05-21 | 19:17 (UTC+3)"
+    },
+    "runs": [
+      {
+        "time": "2026-05-21 | 13:54 (UTC+3)",
+        "mode": "start",
+        "outcome": "started"
+      },
+      {
+        "time": "2026-05-21 | 13:54 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 13:55 (UTC+3)",
+        "mode": "start",
+        "outcome": "started"
+      },
+      {
+        "time": "2026-05-21 | 13:55 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 15:33 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_start"
+      },
+      {
+        "time": "2026-05-21 | 15:33 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 15:35 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 15:35 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 15:36 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 15:36 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:34 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:34 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:37 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:38 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:38 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:39 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:39 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:39 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:40 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:41 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:41 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:41 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:42 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:42 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:43 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:43 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:44 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:44 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:47 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:47 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:48 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:48 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:49 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:49 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:50 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:50 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:51 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:51 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:52 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:53 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:55 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:56 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:57 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:57 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:06 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:07 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:08 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:08 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:09 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:09 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:10 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:10 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:17 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:17 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      }
+    ],
+    "operator_role": "none",
+    "completed_at": "2026-05-21 | 19:17 (UTC+3)",
+    "claude_action_outcome": "failure"
+  },
+  "blocker": null,
+  "created_at": "2026-05-21 | 19:17 (UTC+3)"
+}
