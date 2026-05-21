@@ -5,14 +5,15 @@ on:
   push:
     paths:
       - '.github/workflows/**'
-      - 'scripts/check_workflow_lint_gate.py'
+      - 'scripts/workflow_lint_gate.py'
+      - 'governance/workflow_lint/baseline.json'
 
 permissions:
   contents: write
 
 concurrency:
   group: workflow-lint-gate
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   workflow-lint-gate:
@@ -21,15 +22,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Syntax check lint script
-        run: python3 -m py_compile scripts/check_workflow_lint_gate.py
       - name: Run workflow lint gate
-        run: python3 scripts/check_workflow_lint_gate.py
-      - name: Commit lint result
+        run: python3 scripts/workflow_lint_gate.py
+      - name: Commit lint state
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/reports/workflow_lint_gate_result.json
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-693 workflow lint gate result"
+          git add governance/state/workflow_lint_gate_state.json governance/reports/workflow_lint_report.md || true
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-735 workflow lint gate state"
           git pull --rebase --autostash origin main || true
           git push || true
