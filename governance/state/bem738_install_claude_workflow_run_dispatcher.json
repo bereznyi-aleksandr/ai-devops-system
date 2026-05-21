@@ -1,0 +1,10 @@
+{
+  "schema_version": "install_claude_workflow_run_dispatcher.v1",
+  "bem": "BEM-738",
+  "status": "dispatcher_installed",
+  "workflow": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+  "trigger": "workflow_run Codex Runner completed plus manual workflow_dispatch",
+  "why": "Avoid reliance on push cascade from automation commits",
+  "blocker": null,
+  "created_at": "2026-05-21 | 15:22 (UTC+3)"
+}
