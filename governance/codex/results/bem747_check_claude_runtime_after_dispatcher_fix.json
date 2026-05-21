@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem747_check_claude_runtime_after_dispatcher_fix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Checked Claude runtime state and responses after dispatcher workflow repair",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem747_check_claude_runtime_after_dispatcher_fix.json",
+    "governance/reports/bem747_check_claude_runtime_after_dispatcher_fix.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem747_check_claude_runtime_after_dispatcher_fix.txt",
+    "governance/codex/proofs/bem747_check_claude_runtime_after_dispatcher_fix.txt"
+  ],
+  "commit_sha": "8608c21910455ce9a6cc39632a255ed4f4007d0b",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem747_check_claude_runtime_after_dispatcher_fix.md",
+  "completed_at": "2026-05-21T15:39:20Z"
+}
