@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem730_watchdog_and_claude_trigger_evidence",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Measured watchdog tick count",
+    " inbound Claude response count",
+    " and whether Claude inbound workflow runtime trigger is proven by repo evidence",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem730_watchdog_and_claude_trigger_evidence.json",
+    "governance/reports/bem730_watchdog_and_claude_trigger_evidence.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem730_watchdog_and_claude_trigger_evidence.txt",
+    "governance/codex/proofs/bem730_watchdog_and_claude_trigger_evidence.txt"
+  ],
+  "commit_sha": "3fc8ed9ec5654d37825332f4647d55647591ac2a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem730_watchdog_and_claude_trigger_evidence.md",
+  "completed_at": "2026-05-21T10:50:47Z"
+}
