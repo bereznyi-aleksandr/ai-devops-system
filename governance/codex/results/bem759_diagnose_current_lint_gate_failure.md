@@ -1,0 +1,13 @@
+# Codex Runner v3 Result - bem759_diagnose_current_lint_gate_failure
+
+| Field | Value |
+|---|---|
+| Trace | bem759_diagnose_current_lint_gate_failure |
+| Executor | Python v3 (ubuntu-latest) |
+| Status | completed |
+| Operations | Diagnosed whether the workflow-lint-gate failure shown for BEM-753 remains in current repository state, custom_script |
+| Commit SHA | 2ee4e5abbc3ad2dbbd990f6707405e00256d306e |
+| Changed files | governance/state/bem759_diagnose_current_lint_gate_failure.json, governance/reports/bem759_diagnose_current_lint_gate_failure.md, governance/transport/results.jsonl, governance/codex/proofs/bem759_diagnose_current_lint_gate_failure.txt, governance/codex/proofs/bem759_diagnose_current_lint_gate_failure.txt |
+| Completed | 2026-05-21T15:55:38Z |
+
+### Completed successfully.
