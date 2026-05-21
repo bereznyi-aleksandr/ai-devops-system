@@ -1,0 +1,31 @@
+name: Claude Mailbox Minute Watchdog
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/autonomy/claude_mailbox_watchdog_active.json'
+      - 'scripts/claude_mailbox_minute_watchdog.py'
+      - 'scripts/claude_mailbox_minute_watchdog_loop.sh'
+      - 'scripts/read_claude_watchdog_status.py'
+      - '.github/workflows/claude-mailbox-minute-watchdog.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: claude-mailbox-minute-watchdog
+  cancel-in-progress: false
+
+jobs:
+  minute-watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 125
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Syntax check
+        run: python3 -m py_compile scripts/claude_mailbox_minute_watchdog.py scripts/read_claude_watchdog_status.py
+      - name: Run minute watchdog loop
+        run: bash scripts/claude_mailbox_minute_watchdog_loop.sh
