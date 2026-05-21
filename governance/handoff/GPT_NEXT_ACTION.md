@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-827
+# GPT NEXT ACTION | BEM-825
 
-Status: next_patch_result_writer
-Next: rewrite shell processor to always write status json before/after queue loop
+Status: repair_dispatch_results_first
+Missing: workflow_dispatch_results, real_claude_response
+Next: diagnose why queue processor still creates no workflow_dispatch_results; patch runner/processor
