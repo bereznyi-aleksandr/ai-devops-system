@@ -1,0 +1,12 @@
+{
+  "schema_version": "route_after_bem756_verification.v1",
+  "bem": "BEM-757",
+  "status": "route_diagnose_claude_action_outcome",
+  "previous_status": "dispatcher_runtime_seen_no_response",
+  "next_action": "inspect Claude action outcome and secrets/provider availability; if failed, create minimal smoke workflow",
+  "blocker": {
+    "code": "CLAUDE_ACTION_RUNTIME_SEEN_NO_RESPONSE",
+    "outcome": "failure"
+  },
+  "created_at": "2026-05-21 | 18:50 (UTC+3)"
+}
