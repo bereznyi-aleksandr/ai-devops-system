@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-820
+# GPT NEXT ACTION | BEM-824
 
-Status: next_create_queue_item
-Next: processor runs but queue empty; create fresh queue item
+Status: response_files_present_filter_needed
+Next: filter real Claude response
