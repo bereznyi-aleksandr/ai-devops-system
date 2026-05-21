@@ -1,0 +1,58 @@
+{
+  "schema_version": "codex_runner_dispatch_patch_point.v1",
+  "bem": "BEM-774",
+  "status": "codex_runner_needs_direct_dispatch_step",
+  "previous_bem773_status": "direct_dispatch_runtime_seen_no_response",
+  "codex_workflow_exists": true,
+  "codex_workflow_name": "Codex Runner",
+  "step_names_tail": [
+    {
+      "line": 30,
+      "name": "Checkout"
+    },
+    {
+      "line": 36,
+      "name": "Sync latest main"
+    },
+    {
+      "line": 45,
+      "name": "Read task file"
+    },
+    {
+      "line": 82,
+      "name": "Execute task"
+    },
+    {
+      "line": 365,
+      "name": "Commit changes"
+    },
+    {
+      "line": 381,
+      "name": "Dispatch workflow queue"
+    },
+    {
+      "line": 413,
+      "name": "Write result files"
+    },
+    {
+      "line": 484,
+      "name": "Commit result"
+    },
+    {
+      "line": 496,
+      "name": "Job summary"
+    },
+    {
+      "line": 523,
+      "name": "Run workflow dispatch queue if present"
+    }
+  ],
+  "has_dispatch_step": false,
+  "has_ai_pat": true,
+  "next_action": "patch codex-runner with final always step that calls scripts/dispatch_claude_internal_auditor.sh when Claude mailbox watchdog active",
+  "blocker": {
+    "code": "CODEX_RUNNER_DIRECT_DISPATCH_MISSING",
+    "previous_status": "direct_dispatch_runtime_seen_no_response"
+  },
+  "created_at": "2026-05-21 | 19:26 (UTC+3)"
+}
