@@ -4,7 +4,7 @@
 
 ## Result
 Picked: True
-Mailbox file: governance/audit_mailbox/gpt_to_claude/bem732_trigger_claude_runtime_evidence.md
+Mailbox file: governance/audit_mailbox/claude_to_gpt/bem770_runtime_channel_blocker_not_claude_approval.md
 Notify operator: False
 Reason: routine_mailbox_no_telegram_use_decision_queue
 
