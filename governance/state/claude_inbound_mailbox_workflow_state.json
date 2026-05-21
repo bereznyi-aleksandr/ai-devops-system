@@ -1,11 +1,11 @@
 {
-  "started_at": "2026-05-21 | 19:30 (UTC+3)",
+  "started_at": "2026-05-21 | 19:32 (UTC+3)",
   "schema_version": "claude_inbound_mailbox_workflow_state.v1",
   "status": "runtime_complete",
   "latest": {
     "mode": "complete",
     "outcome": "failure",
-    "time": "2026-05-21 | 19:31 (UTC+3)"
+    "time": "2026-05-21 | 19:32 (UTC+3)"
   },
   "runs": [
     {
@@ -387,9 +387,19 @@
       "time": "2026-05-21 | 19:31 (UTC+3)",
       "mode": "complete",
       "outcome": "failure"
+    },
+    {
+      "time": "2026-05-21 | 19:32 (UTC+3)",
+      "mode": "start",
+      "outcome": "dispatcher_started"
+    },
+    {
+      "time": "2026-05-21 | 19:32 (UTC+3)",
+      "mode": "complete",
+      "outcome": "failure"
     }
   ],
   "operator_role": "none",
-  "completed_at": "2026-05-21 | 19:31 (UTC+3)",
+  "completed_at": "2026-05-21 | 19:32 (UTC+3)",
   "claude_action_outcome": "failure"
 }
