@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem827_repair_invalid_dispatch_queue_json",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem827_repair_invalid_dispatch_queue_json.txt"
+  ],
+  "commit_sha": "ea9ace35d90afe94b4bc8bf7f811308a740724c9",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'Exception' is not defined"
+  },
+  "report_path": "governance/codex/results/bem827_repair_invalid_dispatch_queue_json.md",
+  "completed_at": "2026-05-21T19:39:52Z"
+}
