@@ -1,0 +1,100 @@
+{
+  "schema_version": "verify_normalized_queue_dispatch_outcome.v1",
+  "bem": "BEM-781",
+  "status": "claude_runtime_seen_after_queue_no_response",
+  "result_files_found": 202,
+  "result_files": [
+    {
+      "path": "governance/workflow_dispatch_results/bem637_run_claude_runtime_smoke.response.json",
+      "preview": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem637_run_claude_runtime_smoke.status",
+      "preview": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem691_claude_primary_runtime_proof.response.json",
+      "preview": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem691_claude_primary_runtime_proof.status",
+      "preview": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem775_claude_internal_auditor_dispatch.response.json",
+      "preview": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem775_claude_internal_auditor_dispatch.status",
+      "preview": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem779_claude_dispatch_direct_file.response.json",
+      "preview": "{\n  \"message\": \"Workflow does not have 'workflow_dispatch' trigger\",\n  \"documentation_url\": \"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\n  \"status\": \"422\"\n}\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem779_claude_dispatch_direct_file.status",
+      "preview": "422\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem779_claude_dispatch_workflow_id.response.json",
+      "preview": "{\n  \"message\": \"Workflow does not have 'workflow_dispatch' trigger\",\n  \"documentation_url\": \"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\n  \"status\": \"422\"\n}\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem779_claude_dispatch_workflow_id.status",
+      "preview": "422\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem779_claude_dispatch_workflow_name.response.json",
+      "preview": "{\n  \"message\": \"Workflow does not have 'workflow_dispatch' trigger\",\n  \"documentation_url\": \"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\n  \"status\": \"422\"\n}\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem779_claude_dispatch_workflow_name.status",
+      "preview": "422\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/claude_primary_runtime_smoke.response.json",
+      "preview": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/claude_primary_runtime_smoke.status",
+      "preview": "204\n"
+    },
+    {
+      "path": "governance/state/bem637_workflow_dispatch_queue_architecture.json",
+      "preview": "{\n  \"schema_version\": \"workflow_dispatch_queue_setup.v1\",\n  \"bem\": \"BEM-637\",\n  \"status\": \"queue_created\",\n  \"queued\": [\n    \"bem637_run_claude_runtime_smoke\",\n    \"bem637_run_curator_hourly_report\",\n    \"bem637_run_direct_telegram_smoke\"\n  ],\n  \"runner_script\": \"scripts/workflow_dispatch_queue_runner.py\",\n  \"runner_workflow\": \".github/workflows/workflow-dispatch-queue-runner.yml\",\n  \"blocker\": null,\n  \"created_at\": \"2026-05-18 | 07:49 (UTC+3)\"\n}\n"
+    },
+    {
+      "path": "governance/state/bem638_integrate_dispatch_queue_into_codex_runner.json",
+      "preview": "{\n  \"schema_version\": \"codex_runner_dispatch_queue_hook.v1\",\n  \"bem\": \"BEM-638\",\n  \"status\": \"integrated\",\n  \"workflow\": \".github/workflows/codex-runner.yml\",\n  \"blocker\": null,\n  \"created_at\": \"2026-05-18 | 07:50 (UTC+3)\"\n}\n"
+    },
+    {
+      "path": "governance/state/bem639_dispatch_queue_tick.json",
+      "preview": "{\n  \"schema_version\": \"dispatch_queue_tick.v1\",\n  \"bem\": \"BEM-639\",\n  \"status\": \"tick_recorded\",\n  \"queued_count\": 3,\n  \"queued\": [\n    {\n      \"queue_id\": \"bem637_run_claude_runtime_smoke\",\n      \"workflow\": \"claude-primary-runtime-smoke.yml\",\n      \"reason\": \"Need Claude primary runtime proof via workflow_dispatch because push from GITHUB_TOKEN may not cascade.\",\n      \"status\": \"dispatched\",\n      \"created_at\": \"2026-05-18 | 07:49 (UTC+3)\",\n      \"dispatch_http_status\": 204,\n      \"dispatch_response_preview\": \"\"\n    },\n    {\n      \"queue_id\": \"bem637_run_curator_hourly_report\",\n      \"workflow\": \"curator-hourly-report.yml\",\n      \"reason\": \"Need live hourly report delivery proof via workflow_dispatch, not push-trigger cascade.\",\n      \"status\": \"dispatched\",\n      \"created_at\": \"2026-05-18 | 07:49 (UTC+3)\",\n      \"dispatch_http_status\": 204,\n      \"dispatch_response_preview\": \"\"\n    }"
+    },
+    {
+      "path": "governance/state/bem640_dispatch_queue_result_check.json",
+      "preview": "{\n  \"schema_version\": \"dispatch_queue_result_check.v1\",\n  \"bem\": \"BEM-640\",\n  \"status\": \"all_dispatched\",\n  \"items\": [\n    {\n      \"queue_id\": \"bem637_run_claude_runtime_smoke\",\n      \"workflow\": \"claude-primary-runtime-smoke.yml\",\n      \"reason\": \"Need Claude primary runtime proof via workflow_dispatch because push from GITHUB_TOKEN may not cascade.\",\n      \"status\": \"dispatched\",\n      \"created_at\": \"2026-05-18 | 07:49 (UTC+3)\",\n      \"dispatch_http_status\": 204,\n      \"dispatch_response_preview\": \"\",\n      \"path\": \"governance/workflow_dispatch_queue/bem637_run_claude_runtime_smoke.json\"\n    },\n    {\n      \"queue_id\": \"bem637_run_curator_hourly_report\",\n      \"workflow\": \"curator-hourly-report.yml\",\n      \"reason\": \"Need live hourly report delivery proof via workflow_dispatch, not push-trigger cascade.\",\n      \"status\": \"dispatched\",\n      \"created_at\": \"2026-05-18 | 07:49 (UTC+3)\",\n  "
+    },
+    {
+      "path": "governance/state/bem641_dispatch_queue_post_hook_check.json",
+      "preview": "{\n  \"schema_version\": \"dispatch_queue_post_hook_check.v1\",\n  \"bem\": \"BEM-641\",\n  \"status\": \"all_dispatched\",\n  \"items\": [\n    {\n      \"queue_id\": \"bem637_run_claude_runtime_smoke\",\n      \"workflow\": \"claude-primary-runtime-smoke.yml\",\n      \"reason\": \"Need Claude primary runtime proof via workflow_dispatch because push from GITHUB_TOKEN may not cascade.\",\n      \"status\": \"dispatched\",\n      \"created_at\": \"2026-05-18 | 07:49 (UTC+3)\",\n      \"dispatch_http_status\": 204,\n      \"dispatch_response_preview\": \"\",\n      \"path\": \"governance/workflow_dispatch_queue/bem637_run_claude_runtime_smoke.json\"\n    },\n    {\n      \"queue_id\": \"bem637_run_curator_hourly_report\",\n      \"workflow\": \"curator-hourly-report.yml\",\n      \"reason\": \"Need live hourly report delivery proof via workflow_dispatch, not push-trigger cascade.\",\n      \"status\": \"dispatched\",\n      \"created_at\": \"2026-05-18 | 07:49 (UTC+3)\","
+    },
+    {
+      "path": "governance/state/bem642_fix_dispatch_token_permissions.json",
+      "preview": "{\n  \"schema_version\": \"dispatch_token_permissions_fix.v1\",\n  \"bem\": \"BEM-642\",\n  \"status\": \"completed\",\n  \"changed\": [\n    \".github/workflows/codex-runner.yml\",\n    \".github/workflows/workflow-dispatch-queue-runner.yml\"\n  ],\n  \"blocker\": null,\n  \"created_at\": \"2026-05-18 | 07:54 (UTC+3)\"\n}\n"
+    }
+  ],
+  "queue_remaining": [],
+  "runtime_started_at": "2026-05-21 | 19:33 (UTC+3)",
+  "runtime_completed_at": "2026-05-21 | 19:33 (UTC+3)",
+  "claude_outcome": "failure",
+  "responses_found": 0,
+  "responses": [],
+  "next_action": "diagnose Claude Action outcome and provider access",
+  "blocker": {
+    "code": "CLAUDE_RUNTIME_SEEN_NO_RESPONSE",
+    "outcome": "failure"
+  },
+  "created_at": "2026-05-21 | 19:56 (UTC+3)"
+}
