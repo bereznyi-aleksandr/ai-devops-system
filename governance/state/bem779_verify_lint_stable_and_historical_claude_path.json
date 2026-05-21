@@ -1,0 +1,538 @@
+{
+  "schema_version": "verify_lint_stable_and_historical_claude_path.v1",
+  "bem": "BEM-779",
+  "status": "current_lint_stable_no_new_violations",
+  "active_workflows": [
+    {
+      "path": ".github/workflows/actions-diagnostic.yml",
+      "first_line": "name: Actions Diagnostic",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/analyst.yml",
+      "first_line": "name: Analyst",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/audit-mailbox-watcher.yml",
+      "first_line": "name: Audit Mailbox Watcher",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/auditor.yml",
+      "first_line": "name: Auditor",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/autonomous-task-engine.yml",
+      "first_line": "name: Autonomous Task Engine",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/claude-mailbox-autoprocess.yml",
+      "first_line": "name: Claude Mailbox Autoprocess",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude-mailbox-minute-watchdog.yml",
+      "first_line": "name: Claude Mailbox Minute Watchdog",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude-primary-provider-gate.yml",
+      "first_line": "name: Claude Primary Provider Gate",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude-primary-runtime-smoke.yml",
+      "first_line": "name: Claude Primary Runtime Smoke",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude-token-smoke.yml",
+      "first_line": "name: Claude Token Smoke",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude.yml",
+      "first_line": "name: Claude Code",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/cloud-scheduler-tick.yml",
+      "first_line": "# DISABLED",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/codex-local.yml",
+      "first_line": "name: Codex Local ISA",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/codex-runner.yml",
+      "first_line": "name: Codex Runner",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/curator-hosted-gpt.yml",
+      "first_line": "name: Curator Hosted GPT",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/curator-hourly-delivery-verification.yml",
+      "first_line": "name: Curator Hourly Delivery Verification",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/curator-hourly-report.yml",
+      "first_line": "name: Curator Hourly Report",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/curator-inbox-router.yml",
+      "first_line": "name: Curator Inbox Router",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/curator-intake.yml",
+      "first_line": "name: Curator Intake",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/curator-monitor.yml",
+      "first_line": "# DISABLED — BEM-319",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/curator-telegram-report.yml",
+      "first_line": "# DISABLED",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/curator.yml",
+      "first_line": "name: Curator",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/decision-curator-handoff.yml",
+      "first_line": "name: Decision Curator Handoff",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/emergency-stop.yml",
+      "first_line": "name: Emergency Stop",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/executor.yml",
+      "first_line": "name: Executor",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/fix-telegram-webhook.yml",
+      "first_line": "# DISABLED",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/gpt-action-ingress.yml",
+      "first_line": "name: GPT Action Ingress",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/gpt-curator-inbox.yml",
+      "first_line": "# DISABLED",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/gpt-dev-entrypoint.yml",
+      "first_line": "name: GPT Dev Entrypoint (issue_comment)",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/gpt-dev-runner.yml",
+      "first_line": "name: GPT Developer Runner",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/gpt-hosted-roles.yml",
+      "first_line": "name: GPT Hosted Roles",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/gpt-scheduler-tick.yml",
+      "first_line": "# DISABLED",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/internal-contour-architecture-lint.yml",
+      "first_line": "name: Internal Contour Architecture Lint",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/isa-patch-runner.yml",
+      "first_line": "name: ISA Patch Runner",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/mailbox-dispatcher.yml",
+      "first_line": "name: Mailbox Dispatcher",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/operator-decision-dispatcher.yml",
+      "first_line": "name: Operator Decision Dispatcher",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/operator-reply-intake.yml",
+      "first_line": "name: Operator Reply Intake",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/provider-adapter.yml",
+      "first_line": "name: Provider Adapter",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/role-orchestrator-internal-router.yml",
+      "first_line": "name: Role Orchestrator Internal Router",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/role-orchestrator.yml",
+      "first_line": "name: Role Orchestrator",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/role-router.yml",
+      "first_line": "name: Role Router",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/system-status-report.yml",
+      "first_line": "name: System Status Report",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/telegram-direct-delivery-smoke.yml",
+      "first_line": "name: Telegram Direct Delivery Smoke",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/telegram-gateway.yml",
+      "first_line": "# DISABLED — E3-CLEANUP Этап 0B — 2026-05-03",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/telegram-outbox-dispatch.yml",
+      "first_line": "name: Telegram Outbox Dispatch",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/telegram-outbox-sender.yml",
+      "first_line": "name: Telegram Outbox Sender",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/telegram-poll.yml",
+      "first_line": "# DISABLED",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/telegram-report.yml",
+      "first_line": "# DISABLED — E3-CLEANUP Этап 0B — 2026-05-03",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/telegram-send-smoke.yml",
+      "first_line": "name: Telegram Send Smoke",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/telegram-send.yml",
+      "first_line": "# DISABLED — E3-CLEANUP Этап 0B — 2026-05-03",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/telegram-webhook.yml",
+      "first_line": "# DISABLED — E3-CLEANUP Этап 0B — 2026-05-03",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/update-status.yml",
+      "first_line": "name: Update Status Report",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/workflow-dispatch-queue-runner.yml",
+      "first_line": "name: Workflow Dispatch Queue Runner",
+      "mentions_claude": false
+    },
+    {
+      "path": ".github/workflows/workflow-lint-gate.yml",
+      "first_line": "name: Workflow Lint Gate",
+      "mentions_claude": false
+    }
+  ],
+  "active_claude_workflows": [
+    {
+      "path": ".github/workflows/analyst.yml",
+      "first_line": "name: Analyst",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/audit-mailbox-watcher.yml",
+      "first_line": "name: Audit Mailbox Watcher",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/auditor.yml",
+      "first_line": "name: Auditor",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude-mailbox-autoprocess.yml",
+      "first_line": "name: Claude Mailbox Autoprocess",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude-mailbox-minute-watchdog.yml",
+      "first_line": "name: Claude Mailbox Minute Watchdog",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude-primary-provider-gate.yml",
+      "first_line": "name: Claude Primary Provider Gate",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude-primary-runtime-smoke.yml",
+      "first_line": "name: Claude Primary Runtime Smoke",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude-token-smoke.yml",
+      "first_line": "name: Claude Token Smoke",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/claude.yml",
+      "first_line": "name: Claude Code",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/curator-hosted-gpt.yml",
+      "first_line": "name: Curator Hosted GPT",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/curator-hourly-report.yml",
+      "first_line": "name: Curator Hourly Report",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/curator-monitor.yml",
+      "first_line": "# DISABLED — BEM-319",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/curator.yml",
+      "first_line": "name: Curator",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/executor.yml",
+      "first_line": "name: Executor",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/gpt-hosted-roles.yml",
+      "first_line": "name: GPT Hosted Roles",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/provider-adapter.yml",
+      "first_line": "name: Provider Adapter",
+      "mentions_claude": true
+    },
+    {
+      "path": ".github/workflows/role-router.yml",
+      "first_line": "name: Role Router",
+      "mentions_claude": true
+    }
+  ],
+  "current_new_lint_violations_count": 0,
+  "current_new_lint_violations": [],
+  "historical_claude_mailbox_candidates": [
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
+      "first_line": "# AUDIT RESPONSE FROM CLAUDE | BEM-563 Claude-GPT Sync Protocol",
+      "size": 2113,
+      "has_decision": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
+      "first_line": "# AUDIT MESSAGE FROM CLAUDE | BEM-564",
+      "size": 4114,
+      "has_decision": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem566_claude_response.md",
+      "first_line": "# AUDIT RESPONSE FROM CLAUDE | BEM-566",
+      "size": 2101,
+      "has_decision": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md",
+      "first_line": "# AUDIT RESPONSE FROM CLAUDE | BEM-677",
+      "size": 1873,
+      "has_decision": false,
+      "has_commit_word": true
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem770_runtime_channel_blocker_not_claude_approval.md",
+      "first_line": "# BEM-770 | RUNTIME CHANNEL BLOCKER | NOT CLAUDE APPROVAL",
+      "size": 563,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem563_claude_gpt_sync_protocol_request.md",
+      "first_line": "# AUDIT REQUEST TO CLAUDE | BEM-563 Claude-GPT Sync Protocol",
+      "size": 974,
+      "has_decision": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem566_questions_answers_to_claude_sync_protocol.md",
+      "first_line": "# AUDIT REQUEST | BEM-566 | Questions and Answers for Claude",
+      "size": 3843,
+      "has_decision": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem572_gpt_ack_claude_bem566_response.md",
+      "first_line": "# AUDIT RESPONSE | BEM-572 | GPT ACK for Claude BEM-566 Response",
+      "size": 1421,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem590_operator_decision_format_finalized.md",
+      "first_line": "# GPT TO CLAUDE | BEM-590 | OPERATOR DECISION FORMAT FINALIZED",
+      "size": 975,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem605_hourly_report_template_review_request.md",
+      "first_line": "# GPT TO CLAUDE | BEM-605 | HOURLY TELEGRAM REPORT TEMPLATE REVIEW",
+      "size": 1592,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem678_gpt_architecture_response_to_claude.md",
+      "first_line": "# BEM-678 | GPT RESPONSE TO CLAUDE | ARCHITECTURE AND SCALE PLAN",
+      "size": 6564,
+      "has_decision": false,
+      "has_commit_word": true
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem679_multi_agent_repo_infrastructure_protocol.md",
+      "first_line": "# BEM-679 | ПРОТОКОЛ РАЗВИТИЯ ИНФРАСТРУКТУРЫ МУЛЬТИАГЕНТНОЙ СИСТЕМЫ",
+      "size": 7234,
+      "has_decision": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem679_repository_infrastructure_options_to_claude.md",
+      "first_line": "# BEM-679 | REPOSITORY INFRASTRUCTURE OPTIONS | GPT TO CLAUDE",
+      "size": 6932,
+      "has_decision": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem682_consolidated_protocol_for_claude_final_approval.md",
+      "first_line": "# BEM-682 | CONSOLIDATED MULTI-AGENT INFRASTRUCTURE PROTOCOL",
+      "size": 6111,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem699_operator_remarks_multiagent_protocol_for_claude.md",
+      "first_line": "# BEM-699 | OPERATOR REMARKS REVIEW | MULTI-AGENT SYSTEM PROTOCOL v2.0-operator-remarks-2026-05-20",
+      "size": 5612,
+      "has_decision": true,
+      "has_commit_word": true
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem703_strategy_architecture_global_patterns_for_claude.md",
+      "first_line": "# BEM-703 | STRATEGY ARCHITECTURE REVIEW | MULTI-AGENT SYSTEM v2.1-global-patterns-2026-05-20",
+      "size": 5742,
+      "has_decision": true,
+      "has_commit_word": true
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem712_repeat_bem703_strategy_request_final_decision_required.md",
+      "first_line": "# BEM-712 | FINAL DECISION REQUIRED | BEM-703 MULTI-AGENT STRATEGY v2.1-global-patterns-2026-05-21-repeat",
+      "size": 1309,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem725_repeat_strategy_and_ask_claude_no_response_reason.md",
+      "first_line": "# BEM-725 | CLAUDE RESPONSE REQUIRED | WHY NO MAILBOX RESPONSE",
+      "size": 1003,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem728_trigger_after_claude_inbound_workflow_install.md",
+      "first_line": "# BEM-728 | TRIGGER CLAUDE AFTER INBOUND WORKFLOW INSTALL",
+      "size": 892,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem732_trigger_claude_runtime_evidence.md",
+      "first_line": "# BEM-732 | TRIGGER CLAUDE RUNTIME EVIDENCE",
+      "size": 681,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem741_fresh_trigger_after_lint_repair.md",
+      "first_line": "# BEM-741 | FRESH CLAUDE TRIGGER AFTER LINT REPAIR",
+      "size": 796,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem741_refresh_after_dispatcher_yaml_repair.md",
+      "first_line": "# BEM-741 | REFRESH CLAUDE TRIGGER AFTER DISPATCHER YAML REPAIR",
+      "size": 481,
+      "has_decision": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem772_direct_dispatch_channel_trigger.md",
+      "first_line": "# BEM-772 | DIRECT DISPATCH CHANNEL TRIGGER",
+      "size": 370,
+      "has_decision": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/external_auditor_to_internal_auditor/bem652_full_readiness_plan_request.md",
+      "first_line": "# EXTERNAL AUDITOR TO INTERNAL AUDITOR | BEM-652 | FULL READINESS PLAN REVIEW",
+      "size": 1809,
+      "has_decision": false,
+      "has_commit_word": false
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-21 | 19:34 (UTC+3)"
+}
