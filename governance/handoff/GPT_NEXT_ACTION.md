@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-825
+# GPT NEXT ACTION | BEM-826
 
-Status: next_filter_response
-Next: filter real Claude response
+Status: only_blockers_or_no_response
+Next: continue dispatch/runtime repair; blockers ignored
