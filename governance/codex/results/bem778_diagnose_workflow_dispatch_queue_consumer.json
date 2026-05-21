@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem778_diagnose_workflow_dispatch_queue_consumer",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Diagnosed codex-runner workflow_dispatch_queue consumer references",
+    " existing queue files",
+    " and dispatch result files",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/tasks/pending/bem778_next_normalize_queue_item_or_patch_consumer.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/state/bem778_diagnose_workflow_dispatch_queue_consumer.json",
+    "governance/reports/bem778_diagnose_workflow_dispatch_queue_consumer.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem778_diagnose_workflow_dispatch_queue_consumer.txt",
+    "governance/codex/proofs/bem778_diagnose_workflow_dispatch_queue_consumer.txt"
+  ],
+  "commit_sha": "2bf89f3a7da79c2820f03a1325f705064d1b757b",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem778_diagnose_workflow_dispatch_queue_consumer.md",
+  "completed_at": "2026-05-21T16:53:46Z"
+}
