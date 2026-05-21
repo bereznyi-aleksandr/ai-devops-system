@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem805_execute_bem804_route",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-805 execute 804 route",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 20:32 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\ndef files(g): return [str(p) for p in sorted(Path('.').glob(g)) if p.is_file()]\nroute=load('governance/state/bem804_route_after_marker_execution.json')\nrs=route.get('status','unknown')\nresults=files('governance/workflow_dispatch_results/*.status.json')\nqueue=files('governance/workflow_dispatch_queue/*.json')\nif rs=='route_parse_dispatch_results' or results:\n    status='parse_dispatch_results_ready'; next_action='parse dispatch result JSON and patch exact failure'\nelif rs=='route_patch_shell_loop_no_results':\n    status='patch_shell_loop_needed'; next_action='patch shell loop result file creation and commit path'\nelif rs=='route_create_new_queue_item':\n    status='create_queue_item_needed'; next_action='create fresh Claude dispatch queue item then tick'\nelif rs=='route_reposition_runner_step':\n    status='reposition_runner_step_needed'; next_action='reposition processor inside codex-runner job and verify lint'\nelse:\n    status='diagnose_again_needed'; next_action='inspect route state, queue, marker and runner placement again'\nstate={'bem':'BEM-805','status':status,'route_status':rs,'results':results[-10:],'queue':queue[-10:],'next_action':next_action,'created_at':created}\nPath('governance/state/bem805_execute_bem804_route.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem805_execute_bem804_route.md').write_text('# BEM-805 | Execute BEM-804 Route | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem805_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-805'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem805_execute_bem804_route.json','governance/reports/bem805_execute_bem804_route.md','governance/tasks/pending/bem805_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Executed route after BEM-804 by checking dispatch results and queue state')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem805_execute_bem804_route.md",
+    "result_json": "governance/codex/results/bem805_execute_bem804_route.json"
+  },
+  "created_at": "2026-05-21T17:32:40.674Z"
+}
