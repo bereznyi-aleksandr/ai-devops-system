@@ -1,0 +1,48 @@
+{
+  "schema_version": "diagnose_current_lint_gate_failure.v1",
+  "bem": "BEM-759",
+  "status": "current_lint_gate_has_new_violations",
+  "screenshot_trace": "bem753_fix_dispatcher_lint_gate_long_run",
+  "current_total_violations": 145,
+  "baseline_violation_count": 144,
+  "current_new_violation_count": 1,
+  "current_new_violations": [
+    {
+      "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+      "line": 30,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 31
+    }
+  ],
+  "repo_workflow_lint_state": {
+    "schema_version": "workflow_lint_gate_state.v1",
+    "status": "failed_new_violations",
+    "violation_count": 145,
+    "new_violation_count": 1,
+    "resolved_baseline_count": 0,
+    "new_violations": [
+      {
+        "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+        "line": 30,
+        "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+        "length": 31
+      }
+    ],
+    "resolved_baseline_keys": []
+  },
+  "bem754_status": "new_lint_violations_remain",
+  "interpretation": "The screenshot shows a failed run for BEM-753. This task checks whether current repository state still contains new lint-gate violations after BEM-754/BEM-755/BEM-756.",
+  "blocker": {
+    "code": "CURRENT_WORKFLOW_LINT_NEW_VIOLATIONS",
+    "count": 1,
+    "new_violations": [
+      {
+        "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+        "line": 30,
+        "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+        "length": 31
+      }
+    ]
+  },
+  "created_at": "2026-05-21 | 18:53 (UTC+3)"
+}
