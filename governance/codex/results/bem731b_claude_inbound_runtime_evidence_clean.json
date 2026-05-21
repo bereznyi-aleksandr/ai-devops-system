@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem731b_claude_inbound_runtime_evidence_clean",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem731b_claude_inbound_runtime_evidence_clean.txt"
+  ],
+  "commit_sha": "6b01917f6c23b16d160efd1456371c32ca947ce7",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: forbidden calls: requests"
+  },
+  "report_path": "governance/codex/results/bem731b_claude_inbound_runtime_evidence_clean.md",
+  "completed_at": "2026-05-21T10:53:08Z"
+}
