@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem750_kick_codex_to_wake_claude_dispatcher",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-750 kick dispatcher",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 18:41 (UTC+3)'\nstate={'schema_version':'kick_codex_to_wake_claude_dispatcher.v1','bem':'BEM-750','status':'codex_tick_completed_to_wake_dispatcher','expected_next':'claude-internal-auditor-dispatcher workflow_run should start after this Codex Runner completion','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem750_kick_codex_to_wake_claude_dispatcher.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem750_kick_codex_to_wake_claude_dispatcher.md')\nreport.write_text('# BEM-750 | Kick Codex To Wake Claude Dispatcher | PASS'+sep+sep+'Дата: '+created+sep+'This Codex Runner completion is intended to trigger Claude dispatcher workflow_run.\\nBlocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem750_kick_codex_to_wake_claude_dispatcher','status':'codex_tick_completed_to_wake_dispatcher','blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem750_kick_codex_to_wake_claude_dispatcher.txt')\nproof.write_text('BEM-750 PASS codex tick to wake Claude dispatcher.\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Completed a Codex Runner tick after aligning dispatcher workflow name to trigger Claude dispatcher via workflow_run')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem750_kick_codex_to_wake_claude_dispatcher.md",
+    "result_json": "governance/codex/results/bem750_kick_codex_to_wake_claude_dispatcher.json"
+  },
+  "created_at": "2026-05-21T15:41:44.316Z"
+}
