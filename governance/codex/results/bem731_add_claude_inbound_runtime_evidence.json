@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem731_add_claude_inbound_runtime_evidence",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem731_add_claude_inbound_runtime_evidence.txt"
+  ],
+  "commit_sha": "e688bc69c67f7ddd3447f6af052c8f4e430faa87",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: forbidden calls: requests"
+  },
+  "report_path": "governance/codex/results/bem731_add_claude_inbound_runtime_evidence.md",
+  "completed_at": "2026-05-21T10:52:01Z"
+}
