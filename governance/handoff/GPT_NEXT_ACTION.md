@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-836
+# GPT NEXT ACTION | BEM-837
 
-Status: next_diagnose_current_failure
-Next: diagnose current workflow failure and smoke missing proofs
+Status: diagnose_current_failure_next
+Next: run single smoke and action failure diagnosis

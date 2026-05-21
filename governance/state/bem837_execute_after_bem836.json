@@ -1,0 +1,25 @@
+{
+  "bem": "BEM-837",
+  "status": "diagnose_current_failure_next",
+  "route_status": "next_diagnose_current_failure",
+  "runtime_started_at": "2026-05-21 | 19:33 (UTC+3)",
+  "runtime_completed_at": "2026-05-21 | 19:33 (UTC+3)",
+  "response_files": [
+    "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
+    "governance/audit_mailbox/claude_to_gpt/bem566_claude_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem770_runtime_channel_blocker_not_claude_approval.md"
+  ],
+  "dispatch_results_tail": [
+    {
+      "path": "governance/workflow_dispatch_results/queue_processor_summary.status.json",
+      "data": {
+        "status": "processor_entered",
+        "time": "2026-05-21T19:37:03Z"
+      }
+    }
+  ],
+  "next_action": "run single smoke and action failure diagnosis",
+  "created_at": "2026-05-21 | 21:09 (UTC+3)"
+}
