@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem777_root_cause_mailbox_history_and_lint_loop",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem777_root_cause_mailbox_history_and_lint_loop.txt"
+  ],
+  "commit_sha": "df8d36c211611777cf6a55d6dde20f8f7dbf86ea",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'next' is not defined"
+  },
+  "report_path": "governance/codex/results/bem777_root_cause_mailbox_history_and_lint_loop.md",
+  "completed_at": "2026-05-21T16:32:13Z"
+}
