@@ -1,0 +1,3 @@
+# BEM-818 | Route After BEM-817 | next_repair_no_dispatch_results
+
+{"bem": "BEM-818", "status": "next_repair_no_dispatch_results", "previous_status": "no_real_response_no_dispatch_results", "next_action": "diagnose why processor still creates no dispatch results and patch runner/loop", "created_at": "2026-05-21 | 20:48 (UTC+3)"}
