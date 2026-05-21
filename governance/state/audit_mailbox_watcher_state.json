@@ -1,7 +1,7 @@
 {
   "schema_version": "audit_mailbox_watcher_state.v1",
   "status": "no_new_mail",
-  "checked_at": "2026-05-19 | 05:50 (UTC+3)",
+  "checked_at": "2026-05-21 | 10:35 (UTC+3)",
   "seen_files": [
     "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
     "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
@@ -47,6 +47,16 @@
       "path": "governance/agreements/active/bem682_multi_agent_infrastructure_agreement_active.json",
       "status": "final_protocol_approved_and_written",
       "next_action": "operator_final_summary_then_begin_p0_implementation"
+    },
+    {
+      "path": "governance/agreements/active/bem699_multiagent_protocol_v2_operator_remarks.json",
+      "status": "sent_to_claude_for_review",
+      "next_action": "wait_for_claude_review_then_prepare_agreed_protocol_v2"
+    },
+    {
+      "path": "governance/agreements/active/bem703_multiagent_strategy_architecture_v21.json",
+      "status": "repeat_request_sent_to_claude_final_decision_required",
+      "next_action": "monitor_claude_mailbox_until_approved_change_required_or_blocked"
     }
   ],
   "blocker": null
