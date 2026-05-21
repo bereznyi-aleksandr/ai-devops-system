@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem723_verify_minute_watchdog_first_tick",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-723 watchdog tick",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 12:57 (UTC+3)'\nstate_path=Path('governance/state/claude_mailbox_minute_watchdog_state.json')\ntry:\n    watchdog=json.loads(state_path.read_text(errors='ignore')) if state_path.exists() else {}\nexcept:\n    watchdog={}\ncheck_count=watchdog.get('check_count',0)\nstatus='watchdog_tick_seen' if check_count and check_count>0 else 'watchdog_tick_not_seen_yet'\nblocker=None if status=='watchdog_tick_seen' else {'code':'MINUTE_WATCHDOG_TICK_NOT_SEEN_YET','message':'Workflow may still be queued/running, or push trigger did not fire. Need continue verification or dispatch/repair.'}\nstate={'schema_version':'verify_minute_watchdog_first_tick.v1','bem':'BEM-723','status':status,'watchdog_state_exists':state_path.exists(),'check_count':check_count,'watchdog_status':watchdog.get('status'),'last_checked_at':watchdog.get('checked_at'),'blocker':blocker,'created_at':created}\nstate_file=Path('governance/state/bem723_verify_minute_watchdog_first_tick.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem723_verify_minute_watchdog_first_tick.md')\nreport.write_text('# BEM-723 | Verify Minute Watchdog First Tick | '+status.upper()+sep+sep+'Дата: '+created+sep+sep+'State exists: '+str(state_path.exists())+sep+'Check count: '+str(check_count)+sep+'Watchdog status: '+str(watchdog.get('status'))+sep+sep+'Blocker: '+('null' if blocker is None else json.dumps(blocker,ensure_ascii=False))+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem723_verify_minute_watchdog_first_tick','status':status,'check_count':check_count,'blocker':blocker,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem723_verify_minute_watchdog_first_tick.txt')\nproof.write_text('BEM-723 '+status+' check_count='+str(check_count)+'\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Checked whether minute watchdog workflow produced its first persisted tick state')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem723_verify_minute_watchdog_first_tick.md",
+    "result_json": "governance/codex/results/bem723_verify_minute_watchdog_first_tick.json"
+  },
+  "created_at": "2026-05-21T09:57:56.734Z"
+}
