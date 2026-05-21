@@ -1,0 +1,620 @@
+{
+  "schema_version": "workflow_lint_gate_diagnosis.v1",
+  "bem": "BEM-734",
+  "status": "violations_found",
+  "workflow_count": 55,
+  "violation_count": 101,
+  "violations": [
+    {
+      "file": ".github/workflows/actions-diagnostic.yml",
+      "line": 64,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "RUN_ID=\"$(python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/actions-diagnostic.yml",
+      "line": 64,
+      "rule": "NO_INLINE_CODE",
+      "text": "RUN_ID=\"$(python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/actions-diagnostic.yml",
+      "line": 77,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/actions-diagnostic.yml",
+      "line": 77,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/actions-diagnostic.yml",
+      "line": 43,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 11
+    },
+    {
+      "file": ".github/workflows/analyst.yml",
+      "line": 31,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "echo 'text<<EOF'"
+    },
+    {
+      "file": ".github/workflows/auditor.yml",
+      "line": 31,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "echo 'text<<EOF'"
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 87,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 87,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 187,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 187,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 311,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 311,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 355,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 355,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 271,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 14
+    },
+    {
+      "file": ".github/workflows/claude.yml",
+      "line": 298,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 14
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 83,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 83,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 182,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 182,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 282,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 282,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 324,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 324,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 135,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 20
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 160,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 15
+    },
+    {
+      "file": ".github/workflows/codex-local.yml",
+      "line": 271,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 12
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 51,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 51,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 86,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 86,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 419,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 419,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 502,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 502,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 368,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 11
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 387,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 24
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 501,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 20
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 529,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 12
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 38,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 38,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 73,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 73,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 124,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 124,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 173,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY' > \"$OUTPUT_FILE\" 2>&1"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 173,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY' > \"$OUTPUT_FILE\" 2>&1"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 231,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 231,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 279,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 279,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 35,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 10
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 121,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 41
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 170,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 47
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 229,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 39
+    },
+    {
+      "file": ".github/workflows/curator-hosted-gpt.yml",
+      "line": 277,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 23
+    },
+    {
+      "file": ".github/workflows/curator.yml",
+      "line": 232,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator.yml",
+      "line": 232,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/curator.yml",
+      "line": 197,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 13
+    },
+    {
+      "file": ".github/workflows/emergency-stop.yml",
+      "line": 80,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 11
+    },
+    {
+      "file": ".github/workflows/executor.yml",
+      "line": 31,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "echo 'text<<EOF'"
+    },
+    {
+      "file": ".github/workflows/gpt-action-ingress.yml",
+      "line": 42,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/gpt-action-ingress.yml",
+      "line": 42,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/gpt-action-ingress.yml",
+      "line": 92,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 14
+    },
+    {
+      "file": ".github/workflows/gpt-dev-entrypoint.yml",
+      "line": 39,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/gpt-dev-entrypoint.yml",
+      "line": 39,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/gpt-dev-entrypoint.yml",
+      "line": 170,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "cat >> \"$GITHUB_STEP_SUMMARY\" <<EOF"
+    },
+    {
+      "file": ".github/workflows/gpt-dev-entrypoint.yml",
+      "line": 115,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 14
+    },
+    {
+      "file": ".github/workflows/gpt-dev-runner.yml",
+      "line": 177,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/gpt-dev-runner.yml",
+      "line": 177,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/gpt-dev-runner.yml",
+      "line": 105,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 15
+    },
+    {
+      "file": ".github/workflows/gpt-dev-runner.yml",
+      "line": 128,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 17
+    },
+    {
+      "file": ".github/workflows/gpt-dev-runner.yml",
+      "line": 153,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 17
+    },
+    {
+      "file": ".github/workflows/gpt-hosted-roles.yml",
+      "line": 79,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/gpt-hosted-roles.yml",
+      "line": 79,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/gpt-hosted-roles.yml",
+      "line": 219,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY' > \"$OUTPUT_FILE\" 2>&1"
+    },
+    {
+      "file": ".github/workflows/gpt-hosted-roles.yml",
+      "line": 219,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY' > \"$OUTPUT_FILE\" 2>&1"
+    },
+    {
+      "file": ".github/workflows/gpt-hosted-roles.yml",
+      "line": 310,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/gpt-hosted-roles.yml",
+      "line": 310,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/gpt-hosted-roles.yml",
+      "line": 343,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/gpt-hosted-roles.yml",
+      "line": 343,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY'"
+    },
+    {
+      "file": ".github/workflows/gpt-hosted-roles.yml",
+      "line": 284,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 15
+    },
+    {
+      "file": ".github/workflows/isa-patch-runner.yml",
+      "line": 52,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY' > \"$RUNNER_TEMP/patch_inputs.env\""
+    },
+    {
+      "file": ".github/workflows/isa-patch-runner.yml",
+      "line": 52,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY' > \"$RUNNER_TEMP/patch_inputs.env\""
+    },
+    {
+      "file": ".github/workflows/isa-patch-runner.yml",
+      "line": 47,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 23
+    },
+    {
+      "file": ".github/workflows/isa-patch-runner.yml",
+      "line": 84,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 28
+    },
+    {
+      "file": ".github/workflows/operator-reply-intake.yml",
+      "line": 32,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 12
+    },
+    {
+      "file": ".github/workflows/provider-adapter.yml",
+      "line": 36,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<PY"
+    },
+    {
+      "file": ".github/workflows/provider-adapter.yml",
+      "line": 36,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<PY"
+    },
+    {
+      "file": ".github/workflows/provider-adapter.yml",
+      "line": 35,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 44
+    },
+    {
+      "file": ".github/workflows/role-router.yml",
+      "line": 52,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/role-router.yml",
+      "line": 52,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/system-status-report.yml",
+      "line": 61,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 10
+    },
+    {
+      "file": ".github/workflows/system-status-report.yml",
+      "line": 77,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 9
+    },
+    {
+      "file": ".github/workflows/telegram-outbox-dispatch.yml",
+      "line": 33,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'EOF'"
+    },
+    {
+      "file": ".github/workflows/telegram-outbox-dispatch.yml",
+      "line": 33,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'EOF'"
+    },
+    {
+      "file": ".github/workflows/telegram-outbox-sender.yml",
+      "line": 34,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<PY"
+    },
+    {
+      "file": ".github/workflows/telegram-outbox-sender.yml",
+      "line": 34,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<PY"
+    },
+    {
+      "file": ".github/workflows/telegram-outbox-sender.yml",
+      "line": 33,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 15
+    },
+    {
+      "file": ".github/workflows/telegram-send-smoke.yml",
+      "line": 37,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 11
+    }
+  ],
+  "blocker": {
+    "code": "WORKFLOW_LINT_GATE_VIOLATIONS",
+    "count": 101
+  },
+  "created_at": "2026-05-21 | 13:58 (UTC+3)"
+}
