@@ -1,0 +1,3 @@
+# BEM-820 | Verify Single Smoke | single_smoke_fail
+
+{"bem": "BEM-820", "status": "single_smoke_fail", "missing": ["workflow_dispatch_results", "real_claude_response"], "dispatch_results": [], "runtime_started_at": "2026-05-21 | 19:33 (UTC+3)", "runtime_completed_at": "2026-05-21 | 19:33 (UTC+3)", "real_responses": [], "blocker_files": ["governance/audit_mailbox/claude_to_gpt/bem770_runtime_channel_blocker_not_claude_approval.md"], "created_at": "2026-05-21 | 20:51 (UTC+3)"}
