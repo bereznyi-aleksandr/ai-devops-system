@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-802
+# GPT NEXT ACTION | BEM-803
 
-Status: next_filter_response
-Next: filter real Claude response from blocker files
+Status: filter_response_again
+Next: filter real Claude response
