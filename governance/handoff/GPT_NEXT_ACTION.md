@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-806
+# GPT NEXT ACTION | BEM-807
 
-Status: next_diagnose_route_state
-Next: diagnose route mismatch
+Status: route_execution_unclear
+Next: diagnose route next_diagnose_route_state

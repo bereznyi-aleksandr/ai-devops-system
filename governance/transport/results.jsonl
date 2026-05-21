@@ -447,3 +447,4 @@
 {"bem": "BEM-804", "status": "route_diagnose_again", "previous_status": "filter_response_again", "queue_count": 0, "result_count": 0, "marker_status": "processor_started", "next_action": "diagnose marker/queue/result mismatch", "created_at": "2026-05-21 | 20:31 (UTC+3)"}
 {"bem": "BEM-805", "status": "diagnose_again_needed", "route_status": "route_diagnose_again", "results": [], "queue": [], "next_action": "inspect route state, queue, marker and runner placement again", "created_at": "2026-05-21 | 20:32 (UTC+3)"}
 {"bem": "BEM-806", "status": "next_diagnose_route_state", "previous_status": "diagnose_again_needed", "next_action": "diagnose route mismatch", "created_at": "2026-05-21 | 20:33 (UTC+3)"}
+{"bem": "BEM-807", "status": "route_execution_unclear", "route_status": "next_diagnose_route_state", "results_tail": [], "next_action": "diagnose route next_diagnose_route_state", "created_at": "2026-05-21 | 20:34 (UTC+3)"}
