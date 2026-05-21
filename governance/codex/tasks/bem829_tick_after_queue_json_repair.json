@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem829_tick_after_queue_json_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-829 tick after repair",
+  "objective": "Create file governance/state/bem829_tick_after_queue_json_repair.json with content {\"bem\":\"BEM-829\",\"status\":\"fresh_tick_after_invalid_queue_json_repair\",\"created_at\":\"2026-05-21 | 22:42 (UTC+3)\",\"expected\":\"Codex Runner Dispatch workflow queue no longer fails with JSONDecodeError\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem829_tick_after_queue_json_repair.md",
+    "result_json": "governance/codex/results/bem829_tick_after_queue_json_repair.json"
+  },
+  "created_at": "2026-05-21T19:42:58.132Z"
+}
