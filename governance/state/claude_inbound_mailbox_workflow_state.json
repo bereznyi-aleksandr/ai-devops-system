@@ -1,5 +1,5 @@
 {
-  "started_at": "2026-05-21 | 18:38 (UTC+3)",
+  "started_at": "2026-05-21 | 18:39 (UTC+3)",
   "schema_version": "claude_inbound_mailbox_workflow_state.v1",
   "status": "runtime_complete",
   "latest": {
@@ -80,6 +80,16 @@
     },
     {
       "time": "2026-05-21 | 18:38 (UTC+3)",
+      "mode": "start",
+      "outcome": "dispatcher_started"
+    },
+    {
+      "time": "2026-05-21 | 18:39 (UTC+3)",
+      "mode": "complete",
+      "outcome": "failure"
+    },
+    {
+      "time": "2026-05-21 | 18:39 (UTC+3)",
       "mode": "start",
       "outcome": "dispatcher_started"
     },
