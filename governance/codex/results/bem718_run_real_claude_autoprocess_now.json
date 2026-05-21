@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem718_run_real_claude_autoprocess_now",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem718_run_real_claude_autoprocess_now.txt"
+  ],
+  "commit_sha": "a513d1f46bec0fdcf248eb9c948b9ceff8d563f6",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: forbidden calls: subprocess"
+  },
+  "report_path": "governance/codex/results/bem718_run_real_claude_autoprocess_now.md",
+  "completed_at": "2026-05-21T07:54:30Z"
+}
