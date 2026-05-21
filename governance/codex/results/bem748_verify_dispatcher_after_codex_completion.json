@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem748_verify_dispatcher_after_codex_completion",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified whether Claude dispatcher runtime state appeared after a Codex Runner completion",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem748_verify_dispatcher_after_codex_completion.json",
+    "governance/reports/bem748_verify_dispatcher_after_codex_completion.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem748_verify_dispatcher_after_codex_completion.txt",
+    "governance/codex/proofs/bem748_verify_dispatcher_after_codex_completion.txt"
+  ],
+  "commit_sha": "dedc5a70a700a6c9fd3e8e583371f7a218dd0dc2",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem748_verify_dispatcher_after_codex_completion.md",
+  "completed_at": "2026-05-21T15:40:31Z"
+}
