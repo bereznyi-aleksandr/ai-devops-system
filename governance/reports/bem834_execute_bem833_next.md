@@ -1,0 +1,3 @@
+# BEM-834 | Execute BEM-833 Next | parse_results_required
+
+{"bem": "BEM-834", "status": "parse_results_required", "previous_status": "parse_results_next", "next_action": "read status JSON and patch exact failure or check runtime", "created_at": "2026-05-21 | 21:06 (UTC+3)"}

@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-834
-
-Status: parse_results_required
 Next: read status JSON and patch exact failure or check runtime
+Operator relay forbidden.
