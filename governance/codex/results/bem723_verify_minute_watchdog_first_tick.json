@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem723_verify_minute_watchdog_first_tick",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Checked whether minute watchdog workflow produced its first persisted tick state",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem723_verify_minute_watchdog_first_tick.json",
+    "governance/reports/bem723_verify_minute_watchdog_first_tick.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem723_verify_minute_watchdog_first_tick.txt",
+    "governance/codex/proofs/bem723_verify_minute_watchdog_first_tick.txt"
+  ],
+  "commit_sha": "0c60fc82667eed74513ab2a4e324d9ede2e8be0c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem723_verify_minute_watchdog_first_tick.md",
+  "completed_at": "2026-05-21T09:58:09Z"
+}
