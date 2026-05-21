@@ -1,6 +1,5 @@
-# GPT NEXT ACTION | BEM-778 QUEUE CONSUMER DIAGNOSIS
+# GPT NEXT ACTION | BEM-779 NORMALIZED QUEUE ITEMS
 
-Дата: 2026-05-21 | 19:52 (UTC+3)
-Route from BEM-777: route_diagnose_claude_runtime_outcome
-Status: queue_consumer_found_needs_format_check
-Next: normalize queue item or patch consumer. Operator relay: forbidden.
+Дата: 2026-05-21 | 19:54 (UTC+3)
+Created normalized queue items for Claude dispatcher. Next: force Codex tick and verify dispatch results.
+Operator relay: forbidden.

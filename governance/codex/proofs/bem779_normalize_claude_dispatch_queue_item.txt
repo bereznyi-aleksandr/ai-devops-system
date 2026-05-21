@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem779_normalize_claude_dispatch_queue_item
+task_type: code_patch
+executed_at: 2026-05-21T16:55:05Z
+ops_applied: Created normalized workflow dispatch queue items with workflow_id/workflow_name/file aliases for Claude dispatcher, custom_script
+changed_files: governance/workflow_dispatch_queue/bem779_claude_dispatch_workflow_id.json, governance/workflow_dispatch_queue/bem779_claude_dispatch_workflow_name.json, governance/workflow_dispatch_queue/bem779_claude_dispatch_direct_file.json, governance/tasks/pending/bem779_verify_normalized_queue_items.md, governance/handoff/GPT_NEXT_ACTION.md, governance/state/bem779_normalize_claude_dispatch_queue_item.json, governance/reports/bem779_normalize_claude_dispatch_queue_item.md, governance/transport/results.jsonl, governance/codex/proofs/bem779_normalize_claude_dispatch_queue_item.txt
+errors: none
