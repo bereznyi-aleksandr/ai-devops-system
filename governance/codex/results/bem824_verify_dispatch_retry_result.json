@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem824_verify_dispatch_retry_result",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified dispatch retry result against BEM-819 three-proof smoke contract",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem824_verify_dispatch_retry_result.json",
+    "governance/reports/bem824_verify_dispatch_retry_result.md",
+    "governance/tasks/pending/bem824_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem824_verify_dispatch_retry_result.txt"
+  ],
+  "commit_sha": "b647d13e9183446769ae8c6d4103ecac90d1ad48",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem824_verify_dispatch_retry_result.md",
+  "completed_at": "2026-05-21T19:25:40Z"
+}
