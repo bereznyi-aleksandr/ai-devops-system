@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem767_dispatcher_wake_smoke_no_claude",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Installed minimal workflow_run dispatcher smoke without Claude Action to isolate wake path from Claude provider/action issues",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/record_dispatcher_wake_smoke.py",
+    "scripts/commit_dispatcher_wake_smoke_state.sh",
+    ".github/workflows/dispatcher-wake-smoke.yml",
+    "governance/state/bem767_dispatcher_wake_smoke_no_claude.json",
+    "governance/reports/bem767_dispatcher_wake_smoke_no_claude.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem767_dispatcher_wake_smoke_no_claude.txt",
+    "governance/codex/proofs/bem767_dispatcher_wake_smoke_no_claude.txt"
+  ],
+  "commit_sha": "40f59089ce7672d8b3a056214f15f99c521db191",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem767_dispatcher_wake_smoke_no_claude.md",
+  "completed_at": "2026-05-21T16:19:14Z"
+}
