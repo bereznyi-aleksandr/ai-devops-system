@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-824
+# GPT NEXT ACTION | BEM-826
 
-Status: single_smoke_fail
-Missing: workflow_dispatch_results, real_claude_response
-Next: repair missing proofs: workflow_dispatch_results, real_claude_response
+Status: patch_result_writer_needed
+Next: rewrite shell processor to always write status json before/after loop
