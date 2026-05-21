@@ -1,0 +1,13 @@
+{
+  "schema_version": "route_after_queue_dispatch_verify.v1",
+  "bem": "BEM-777",
+  "status": "route_diagnose_claude_runtime_outcome",
+  "previous_status": "queue_dispatch_runtime_seen_no_response",
+  "next_action": "diagnose Claude Action/provider outcome without exposing secrets, then retry real response",
+  "blocker": {
+    "code": "CLAUDE_RUNTIME_NO_RESPONSE",
+    "previous_status": "queue_dispatch_runtime_seen_no_response",
+    "outcome": "failure"
+  },
+  "created_at": "2026-05-21 | 19:50 (UTC+3)"
+}
