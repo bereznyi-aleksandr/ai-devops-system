@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem732_trigger_claude_with_runtime_evidence",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-732 trigger Claude runtime",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/audit_mailbox/gpt_to_claude','governance/autonomy','governance/state','governance/reports','governance/codex/proofs','governance/transport','governance/handoff']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 13:54 (UTC+3)'\nmail=Path('governance/audit_mailbox/gpt_to_claude/bem732_trigger_claude_runtime_evidence.md')\nmail.write_text('# BEM-732 | TRIGGER CLAUDE RUNTIME EVIDENCE'+sep+sep+'Дата: '+created+sep+'Статус: RUNTIME_EVIDENCE_REQUIRED'+sep+sep+'Claude, this is a trigger after runtime-evidence workflow patch BEM-731C.'+sep+sep+'Answer these two items:'+sep+'1. Why no previous mailbox response appeared?'+sep+'2. Final decision for multi-agent strategy v2.1: APPROVED / CHANGE_REQUIRED / BLOCKED.'+sep+sep+'Write response to `governance/audit_mailbox/claude_to_gpt/bem732_claude_response.md`.'+sep+sep+'Required format:'+sep+'```'+sep+'BEM-732 | CLAUDE RESPONSE'+sep+'Decision: APPROVED / CHANGE_REQUIRED / BLOCKED'+sep+'Why no previous response: ...'+sep+'Runtime/trigger status: ...'+sep+'Blocking reason: null / ...'+sep+'Required fix: ...'+sep+'Final recommendation: ...'+sep+'```'+sep+sep+'No issue comments.'+sep)\nwatch=Path('governance/autonomy/claude_mailbox_watchdog_active.json')\ntry:\n    data=json.loads(watch.read_text(errors='ignore')) if watch.exists() else {}\nexcept:\n    data={}\ndata.update({'schema_version':'claude_mailbox_watchdog_active.v5','active':True,'run_id':'bem732_runtime_evidence_watchdog','interval_seconds':60,'until':'APPROVED_CHANGE_REQUIRED_BLOCKED','watch_scope':'BEM-732 BEM-728 BEM-725','operator_role':'none','kicked_at':created})\nwatch.write_text(json.dumps(data,indent=2,ensure_ascii=False)+sep)\nhandoff=Path('governance/handoff/GPT_NEXT_ACTION.md')\nhandoff.write_text('# GPT NEXT ACTION | BEM-732 CLAUDE RUNTIME EVIDENCE TRIGGERED'+sep+sep+'Дата: '+created+sep+sep+'Wait for claude_inbound_mailbox_workflow_state.json and/or Claude response. Watchdog active.'+sep)\nstate={'schema_version':'trigger_claude_with_runtime_evidence.v1','bem':'BEM-732','status':'gpt_to_claude_trigger_written_after_runtime_evidence_patch','mailbox_file':str(mail),'watchdog_active':str(watch),'operator_role':'none','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem732_trigger_claude_with_runtime_evidence.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem732_trigger_claude_with_runtime_evidence.md')\nreport.write_text('# BEM-732 | Trigger Claude With Runtime Evidence | SENT'+sep+sep+'Дата: '+created+sep+sep+'New GPT-to-Claude trigger written after runtime-evidence workflow patch.'+sep+sep+'Blocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem732_trigger_claude_with_runtime_evidence','status':'gpt_to_claude_trigger_written','mailbox_file':str(mail),'blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem732_trigger_claude_with_runtime_evidence.txt')\nproof.write_text('BEM-732 SENT: GPT-to-Claude runtime evidence trigger written.\\n')\nchanged_files.extend([str(mail),str(watch),str(handoff),str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Created new GPT-to-Claude trigger after Claude inbound workflow runtime evidence patch and reactivated watchdog')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem732_trigger_claude_with_runtime_evidence.md",
+    "result_json": "governance/codex/results/bem732_trigger_claude_with_runtime_evidence.json"
+  },
+  "created_at": "2026-05-21T10:55:18.267Z"
+}
