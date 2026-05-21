@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem787_verify_runtime_short",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-787 verify runtime short",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/transport','governance/tasks/pending']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 20:09 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\ndef files(glob): return [str(p) for p in sorted(Path('.').glob(glob)) if p.is_file()]\nb785=load('governance/state/bem785_verify_shell_queue_processor_outcome.json')\nruntime=load('governance/state/claude_inbound_mailbox_workflow_state.json')\nres=files('governance/workflow_dispatch_results/*.status.json')\nresp=files('governance/audit_mailbox/claude_to_gpt/*')\nstatus='response_found' if resp else ('runtime_seen' if runtime.get('started_at') or runtime.get('completed_at') else ('dispatch_results_seen' if res else 'no_runtime_no_results'))\nstate={'bem':'BEM-787','status':status,'b785_status':b785.get('status'),'dispatch_results':res[-20:],'runtime_started_at':runtime.get('started_at'),'runtime_completed_at':runtime.get('completed_at'),'responses':resp[-20:],'created_at':created}\nPath('governance/state/bem787_verify_runtime_short.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem787_verify_runtime_short.md').write_text('# BEM-787 | Verify Runtime Short | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem787_next.md').write_text('BEM-787 next: if no_runtime_no_results, patch codex-runner queue step placement and lint. Operator relay forbidden.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem787_verify_runtime_short.json','governance/reports/bem787_verify_runtime_short.md','governance/tasks/pending/bem787_next.md','governance/transport/results.jsonl'])\nops_applied.append('Short verification of BEM-785 state, workflow_dispatch_results, Claude runtime state, and Claude mailbox responses')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem787_verify_runtime_short.md",
+    "result_json": "governance/codex/results/bem787_verify_runtime_short.json"
+  },
+  "created_at": "2026-05-21T17:10:14.532Z"
+}
