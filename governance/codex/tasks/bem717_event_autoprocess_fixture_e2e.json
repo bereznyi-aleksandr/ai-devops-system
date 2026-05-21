@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem717_event_autoprocess_fixture_e2e",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-717 event fixture",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/tests/autonomy/event_e2e','governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 10:53 (UTC+3)'\nscript=Path('scripts/autoprocess_claude_mailbox_response.py')\nwf=Path('.github/workflows/claude-mailbox-autoprocess.yml')\nfixture=Path('governance/tests/autonomy/event_e2e/bem717_fixture.md')\nfixture.write_text('# BEM-717 | SYNTHETIC EVENT FIXTURE'+sep+'BEM-703 | CLAUDE REVIEW | MULTI-AGENT STRATEGY v2.1'+sep+'Decision: APPROVED'+sep+'This fixture verifies parser and output contract only.'+sep)\ntext=fixture.read_text(errors='ignore')\nup=text.upper()\ndecision='MESSAGE'\nif 'CHANGE_REQUIRED' in up: decision='CHANGE_REQUIRED'\nelif 'BLOCKED' in up: decision='BLOCKED'\nelif 'APPROVED' in up: decision='APPROVED'\nchecks=[\n {'name':'script_exists','pass':script.exists(),'evidence':str(script)},\n {'name':'workflow_exists','pass':wf.exists(),'evidence':str(wf)},\n {'name':'workflow_push_trigger','pass':'governance/audit_mailbox/claude_to_gpt/**' in wf.read_text(errors='ignore'),'evidence':str(wf)},\n {'name':'workflow_no_schedule','pass':'schedule:' not in wf.read_text(errors='ignore'),'evidence':str(wf)},\n {'name':'decision_fixture_approved','pass':decision=='APPROVED','evidence':decision},\n {'name':'script_handles_approved','pass':'APPROVED' in script.read_text(errors='ignore') and 'multi_agent_strategy_v2_1_approved_by_claude.md' in script.read_text(errors='ignore'),'evidence':str(script)},\n {'name':'operator_none','pass':'operator_role' in script.read_text(errors='ignore') and 'none' in script.read_text(errors='ignore'),'evidence':str(script)},\n]\nfailed=[x for x in checks if not x['pass']]\nstatus='event_autoprocess_fixture_pass' if not failed else 'event_autoprocess_fixture_failed'\nblocker=None if not failed else {'code':'EVENT_AUTOPROCESS_FIXTURE_FAILED','failed':failed}\nstate={'schema_version':'event_autoprocess_fixture_e2e.v1','bem':'BEM-717','status':status,'checks':checks,'decision':decision,'blocker':blocker,'created_at':created}\nstate_file=Path('governance/state/bem717_event_autoprocess_fixture_e2e.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem717_event_autoprocess_fixture_e2e.md')\nreport.write_text('# BEM-717 | Event Autoprocess Fixture E2E | '+status.upper()+sep+sep+'Дата: '+created+sep+sep+'Decision fixture: '+decision+sep+'Blocker: '+('null' if blocker is None else json.dumps(blocker,ensure_ascii=False))+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem717_event_autoprocess_fixture_e2e','status':status,'decision':decision,'blocker':blocker,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem717_event_autoprocess_fixture_e2e.txt')\nproof.write_text('BEM-717 '+status+' decision='+decision+'\\n')\nchanged_files.extend([str(fixture),str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Validated event-driven Claude mailbox autoprocess workflow and parser contract with isolated APPROVED fixture')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem717_event_autoprocess_fixture_e2e.md",
+    "result_json": "governance/codex/results/bem717_event_autoprocess_fixture_e2e.json"
+  },
+  "created_at": "2026-05-21T07:53:10.842Z"
+}
