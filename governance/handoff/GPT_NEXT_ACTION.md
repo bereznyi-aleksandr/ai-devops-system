@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-825
+# GPT NEXT ACTION | BEM-826
 
-Status: repair_dispatch_results_first
-Missing: workflow_dispatch_results, real_claude_response
-Next: diagnose why queue processor still creates no workflow_dispatch_results; patch runner/processor
+Status: processor_runs_no_results
+Next: patch shell processor result-writing path because marker exists but no result files

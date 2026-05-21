@@ -1,2 +1,2 @@
-Next: rewrite shell processor to always write status json before/after loop
+Next: patch shell processor result-writing path because marker exists but no result files
 Operator relay forbidden.
