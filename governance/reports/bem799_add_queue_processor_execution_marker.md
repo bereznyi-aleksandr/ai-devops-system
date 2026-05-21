@@ -1,0 +1,3 @@
+# BEM-799 | Add Queue Processor Execution Marker | PASS
+
+{"bem": "BEM-799", "status": "processor_marker_installed", "marker": "governance/state/workflow_dispatch_queue_processor_marker.json", "created_at": "2026-05-21 | 20:25 (UTC+3)"}

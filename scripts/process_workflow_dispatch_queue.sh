@@ -3,6 +3,8 @@ set -euo pipefail
 mkdir -p governance/workflow_dispatch_results
 now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 count=0
+mkdir -p governance/state
+printf '{"status":"processor_started","time":"%s"}\n' "$now" > governance/state/workflow_dispatch_queue_processor_marker.json
 for f in governance/workflow_dispatch_queue/*.json; do
   [ -f "$f" ] || continue
   count=$((count+1))

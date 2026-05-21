@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-798
+# GPT NEXT ACTION | BEM-799
 
-Status: placement_inspected
-Next: if queue step is after job end or malformed, rewrite codex-runner section; else force result-marker script to prove execution
+Next: run tick and verify processor marker/results.
