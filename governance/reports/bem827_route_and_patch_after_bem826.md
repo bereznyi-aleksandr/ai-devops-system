@@ -1,0 +1,3 @@
+# BEM-827 | Route And Patch After BEM-826 | patched_result_writer_needed
+
+{"bem": "BEM-827", "status": "patched_result_writer_needed", "previous_status": "processor_runs_no_results", "next_action": "rewrite shell processor to create summary result before and after loop", "created_at": "2026-05-21 | 22:29 (UTC+3)"}

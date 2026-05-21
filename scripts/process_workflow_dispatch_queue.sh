@@ -3,6 +3,7 @@ set -euo pipefail
 mkdir -p governance/workflow_dispatch_results
 now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 count=0
+printf '{"status":"processor_entered","time":"%s"}\n' "$now" > governance/workflow_dispatch_results/queue_processor_summary.status.json
 mkdir -p governance/state
 printf '{"status":"processor_started","time":"%s"}\n' "$now" > governance/state/workflow_dispatch_queue_processor_marker.json
 for f in governance/workflow_dispatch_queue/*.json; do
@@ -31,4 +32,5 @@ for f in governance/workflow_dispatch_queue/*.json; do
 ' "$code" "$f" "$workflow" "$ref" "$now" > "$out"
   fi
 done
+printf '{"status":"processor_completed","processed_queue_items":%s,"time":"%s"}\n' "$count" "$now" > governance/workflow_dispatch_results/queue_processor_summary.status.json
 echo "processed_queue_items=$count"

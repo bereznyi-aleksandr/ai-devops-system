@@ -1,2 +1,2 @@
-Next: rewrite shell processor to always write status json before/after queue loop
+Next: rewrite shell processor to create summary result before and after loop
 Operator relay forbidden.
