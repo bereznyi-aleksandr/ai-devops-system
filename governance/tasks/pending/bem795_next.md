@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-795
-
-Status: continue_real_runtime_dispatch_repair
 Next: diagnose why dispatch processor/Claude runtime still not producing real response
+Operator relay forbidden.
