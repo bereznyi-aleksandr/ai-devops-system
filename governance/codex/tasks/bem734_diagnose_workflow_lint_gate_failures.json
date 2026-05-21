@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem734_diagnose_workflow_lint_gate_failures",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-734 lint diagnosis",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 13:58 (UTC+3)'\nworkflow_dir=Path('.github/workflows')\nviolations=[]\nfiles=[]\nif workflow_dir.exists():\n    for p in sorted(list(workflow_dir.glob('*.yml'))+list(workflow_dir.glob('*.yaml'))):\n        txt=p.read_text(errors='ignore')\n        files.append(str(p))\n        lines=txt.splitlines()\n        for i,line in enumerate(lines, start=1):\n            if '<<' in line and ('PY' in line or 'EOF' in line or 'MSG' in line):\n                violations.append({'file':str(p),'line':i,'rule':'NO_INLINE_HEREDOC','text':line.strip()[:160]})\n            if 'python3 - <<' in line or 'python - <<' in line:\n                violations.append({'file':str(p),'line':i,'rule':'NO_INLINE_CODE','text':line.strip()[:160]})\n        # rough long run block detection\n        in_run=False; start=0; count=0\n        for i,line in enumerate(lines, start=1):\n            if line.strip()=='run: |':\n                in_run=True; start=i; count=0\n                continue\n            if in_run:\n                if line.startswith('      - name:') or line.startswith('    - name:') or line.startswith('  ')==False:\n                    if count>8:\n                        violations.append({'file':str(p),'line':start,'rule':'LONG_RUN_BLOCK_MOVE_TO_SCRIPT','length':count})\n                    in_run=False\n                else:\n                    count+=1\n        if in_run and count>8:\n            violations.append({'file':str(p),'line':start,'rule':'LONG_RUN_BLOCK_MOVE_TO_SCRIPT','length':count})\nstatus='violations_found' if violations else 'no_violations_found'\nstate={'schema_version':'workflow_lint_gate_diagnosis.v1','bem':'BEM-734','status':status,'workflow_count':len(files),'violation_count':len(violations),'violations':violations[:200],'blocker':None if not violations else {'code':'WORKFLOW_LINT_GATE_VIOLATIONS','count':len(violations)},'created_at':created}\nstate_file=Path('governance/state/bem734_diagnose_workflow_lint_gate_failures.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem734_diagnose_workflow_lint_gate_failures.md')\nreport.write_text('# BEM-734 | Workflow Lint Gate Failures Diagnosis | '+status.upper()+sep+sep+'Дата: '+created+sep+sep+'Workflows scanned: '+str(len(files))+sep+'Violations: '+str(len(violations))+sep+sep+'Blocker: '+('null' if not violations else json.dumps(state['blocker'],ensure_ascii=False))+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem734_diagnose_workflow_lint_gate_failures','status':status,'workflow_count':len(files),'violation_count':len(violations),'blocker':state['blocker'],'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem734_diagnose_workflow_lint_gate_failures.txt')\nproof.write_text('BEM-734 '+status+' violations='+str(len(violations))+'\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Diagnosed workflow lint-gate violations causing repeated failed workflow notifications')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem734_diagnose_workflow_lint_gate_failures.md",
+    "result_json": "governance/codex/results/bem734_diagnose_workflow_lint_gate_failures.json"
+  },
+  "created_at": "2026-05-21T10:59:25.471Z"
+}
