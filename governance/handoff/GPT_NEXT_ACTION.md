@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-792
+# GPT NEXT ACTION | BEM-793
 
-Status: route_unknown
-Next: diagnose unknown state
+Status: response_files_present_process_next
+Next: parse latest response and prepare agreed protocol
