@@ -1,8 +1,8 @@
 {
   "schema_version": "workflow_lint_gate_state.v1",
   "status": "failed_new_violations",
-  "violation_count": 147,
-  "new_violation_count": 3,
+  "violation_count": 146,
+  "new_violation_count": 2,
   "resolved_baseline_count": 0,
   "new_violations": [
     {
@@ -16,12 +16,6 @@
       "line": 32,
       "rule": "NO_INLINE_HEREDOC",
       "text": "python3 - <<'PY' > /tmp/active.txt"
-    },
-    {
-      "file": ".github/workflows/claude-internal-auditor-mailbox.yml",
-      "line": 37,
-      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
-      "length": 33
     }
   ],
   "resolved_baseline_keys": []
