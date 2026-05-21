@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem739_repair_lint_gate_after_claude_bridge",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Repaired Claude inbound workflow lint issue by moving shell blocks to scripts and verified no new lint violations beyond baseline",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/commit_claude_inbound_state.sh",
+    "scripts/write_claude_inbound_preflight_output.sh",
+    ".github/workflows/claude-internal-auditor-mailbox.yml",
+    "governance/state/bem739_repair_lint_gate_after_claude_bridge.json",
+    "governance/reports/bem739_repair_lint_gate_after_claude_bridge.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem739_repair_lint_gate_after_claude_bridge.txt",
+    "governance/codex/proofs/bem739_repair_lint_gate_after_claude_bridge.txt"
+  ],
+  "commit_sha": "3a963d6576a2e626ad3419232a833922ee666a36",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem739_repair_lint_gate_after_claude_bridge.md",
+  "completed_at": "2026-05-21T12:26:58Z"
+}
