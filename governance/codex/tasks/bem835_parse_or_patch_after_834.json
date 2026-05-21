@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem835_parse_or_patch_after_834",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-835 parse or patch",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 21:07 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nprev=load('governance/state/bem834_execute_bem833_next.json')\nps=prev.get('status','unknown')\nresults=[]\nfor p in sorted(Path('governance/workflow_dispatch_results').glob('*.status.json')) if Path('governance/workflow_dispatch_results').exists() else []:\n    try: results.append({'path':str(p),'data':json.loads(read(p))})\n    except: results.append({'path':str(p),'data':{'status':'unparsed','text':read(p)[:400]}})\nif ps=='parse_results_required' and results:\n    latest=results[-1]['data']; st=latest.get('status')\n    status='parsed_dispatch_result_'+str(st)\n    next_action='check runtime if dispatch_attempted else patch '+str(st)\nelif ps=='patch_result_writer_required':\n    status='result_writer_patch_pending'\n    next_action='rewrite processor to emit summary status even when queue loop has no matches'\nelif ps=='patch_runner_placement_required':\n    status='runner_placement_patch_pending'\n    next_action='move queue processor step inside active job before finish'\nelse:\n    status='no_results_to_parse_or_unknown'\n    next_action='diagnose result writer and runner placement'\nstate={'bem':'BEM-835','status':status,'previous_status':ps,'results_tail':results[-8:],'next_action':next_action,'created_at':created}\nPath('governance/state/bem835_parse_or_patch_after_834.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem835_parse_or_patch_after_834.md').write_text('# BEM-835 | Parse Or Patch After BEM-834 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem835_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-835'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem835_parse_or_patch_after_834.json','governance/reports/bem835_parse_or_patch_after_834.md','governance/tasks/pending/bem835_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Parsed workflow dispatch results or routed result-writer/runner-placement patch after BEM-834')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem835_parse_or_patch_after_834.md",
+    "result_json": "governance/codex/results/bem835_parse_or_patch_after_834.json"
+  },
+  "created_at": "2026-05-21T19:35:52.335Z"
+}
