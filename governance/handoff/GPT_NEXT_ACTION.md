@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-824
+# GPT NEXT ACTION | BEM-825
 
-Status: response_files_present_filter_needed
+Status: next_filter_response
 Next: filter real Claude response
