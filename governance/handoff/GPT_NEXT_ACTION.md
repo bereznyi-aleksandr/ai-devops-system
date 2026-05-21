@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-805
+# GPT NEXT ACTION | BEM-806
 
-Status: diagnose_again_needed
-Next: inspect route state, queue, marker and runner placement again
+Status: next_diagnose_route_state
+Next: diagnose route mismatch

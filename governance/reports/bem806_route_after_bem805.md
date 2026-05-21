@@ -1,0 +1,3 @@
+# BEM-806 | Route After BEM-805 | next_diagnose_route_state
+
+{"bem": "BEM-806", "status": "next_diagnose_route_state", "previous_status": "diagnose_again_needed", "next_action": "diagnose route mismatch", "created_at": "2026-05-21 | 20:33 (UTC+3)"}
