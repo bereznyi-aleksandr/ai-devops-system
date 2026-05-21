@@ -1,3 +1,9 @@
+# QUARANTINED WORKFLOW | claude-dispatch-bridge.yml
+
+Дата: 2026-05-21 | 19:33 (UTC+3)
+Причина: experimental Claude wake-up workflow caused repeated workflow-lint-gate failures. Kept as text artifact, not active GitHub workflow.
+
+```yaml
 name: Claude Dispatch Bridge
 
 on:
@@ -25,3 +31,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: bash scripts/dispatch_claude_internal_auditor.sh
+
+```

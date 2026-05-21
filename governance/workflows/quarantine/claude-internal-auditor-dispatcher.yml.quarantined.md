@@ -1,3 +1,9 @@
+# QUARANTINED WORKFLOW | claude-internal-auditor-dispatcher.yml
+
+Дата: 2026-05-21 | 19:33 (UTC+3)
+Причина: experimental Claude wake-up workflow caused repeated workflow-lint-gate failures. Kept as text artifact, not active GitHub workflow.
+
+```yaml
 name: Claude Internal Auditor Dispatcher
 
 on:
@@ -59,3 +65,5 @@ jobs:
       - name: Commit dispatcher state
         if: always()
         run: bash scripts/commit_claude_dispatcher_state.sh
+
+```

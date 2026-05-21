@@ -1,0 +1,25 @@
+{
+  "schema_version": "quarantine_experimental_claude_workflows.v1",
+  "bem": "BEM-778",
+  "status": "experimental_claude_workflows_quarantined",
+  "quarantined": [
+    {
+      "from": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+      "to": "governance/workflows/quarantine/claude-internal-auditor-dispatcher.yml.quarantined.md"
+    },
+    {
+      "from": ".github/workflows/claude-internal-auditor-mailbox.yml",
+      "to": "governance/workflows/quarantine/claude-internal-auditor-mailbox.yml.quarantined.md"
+    },
+    {
+      "from": ".github/workflows/claude-dispatch-bridge.yml",
+      "to": "governance/workflows/quarantine/claude-dispatch-bridge.yml.quarantined.md"
+    },
+    {
+      "from": ".github/workflows/dispatcher-wake-smoke.yml",
+      "to": "governance/workflows/quarantine/dispatcher-wake-smoke.yml.quarantined.md"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-21 | 19:33 (UTC+3)"
+}
