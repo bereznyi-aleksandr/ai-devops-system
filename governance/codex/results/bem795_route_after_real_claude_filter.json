@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem795_route_after_real_claude_filter",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Routed after filtering real Claude response from fallback/blocker files",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem795_route_after_real_claude_filter.json",
+    "governance/reports/bem795_route_after_real_claude_filter.md",
+    "governance/tasks/pending/bem795_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem795_route_after_real_claude_filter.txt"
+  ],
+  "commit_sha": "f5f9d9ee143650cfc09d268358a2659a094a923f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem795_route_after_real_claude_filter.md",
+  "completed_at": "2026-05-21T17:20:59Z"
+}
