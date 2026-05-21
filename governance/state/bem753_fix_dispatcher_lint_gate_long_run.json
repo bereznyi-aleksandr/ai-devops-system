@@ -1,0 +1,29 @@
+{
+  "schema_version": "fix_dispatcher_lint_gate_long_run.v1",
+  "bem": "BEM-753",
+  "status": "dispatcher_lint_gate_repaired",
+  "checks": [
+    {
+      "name": "commit_script_exists",
+      "pass": true,
+      "evidence": "scripts/commit_claude_dispatcher_state.sh"
+    },
+    {
+      "name": "dispatcher_commit_uses_script",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    },
+    {
+      "name": "dispatcher_no_long_commit_block",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    },
+    {
+      "name": "workflow_has_no_inline_python_heredoc",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-21 | 18:45 (UTC+3)"
+}
