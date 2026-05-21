@@ -1,0 +1,3 @@
+# BEM-833 | Execute After Results Verify | parse_results_next
+
+{"bem": "BEM-833", "status": "parse_results_next", "previous_status": "results_present", "next_action": "parse workflow_dispatch_results status files", "created_at": "2026-05-21 | 21:05 (UTC+3)"}

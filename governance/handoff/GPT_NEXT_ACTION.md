@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-832
+# GPT NEXT ACTION | BEM-833
 
-Status: results_present
-Next: parse results
+Status: parse_results_next
+Next: parse workflow_dispatch_results status files
