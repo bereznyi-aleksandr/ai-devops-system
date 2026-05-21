@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem719_real_claude_mailbox_check_clean",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Checked real Claude mailbox using production matching logic and confirmed event-driven workflow is armed for future mailbox push",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem719_real_claude_mailbox_check_clean.json",
+    "governance/reports/bem719_real_claude_mailbox_check_clean.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem719_real_claude_mailbox_check_clean.txt",
+    "governance/codex/proofs/bem719_real_claude_mailbox_check_clean.txt"
+  ],
+  "commit_sha": "994b3c1eb30d5e5f3a878f1832f091fe64559a6d",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem719_real_claude_mailbox_check_clean.md",
+  "completed_at": "2026-05-21T07:55:20Z"
+}
