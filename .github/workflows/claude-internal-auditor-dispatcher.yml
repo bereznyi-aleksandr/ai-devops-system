@@ -24,10 +24,12 @@ jobs:
         with:
           fetch-depth: 0
       - name: Syntax check helper scripts
-        run: python3 -m py_compile scripts/claude_dispatcher_active_check.py scripts/record_claude_inbound_workflow_state.py scripts/prepare_claude_inbound_context.py scripts/mark_claude_inbound_seen.py
+        run: python3 -m py_compile scripts/check_claude_mailbox_work.py scripts/record_claude_inbound_workflow_state.py
       - name: Check active mailbox work
         id: active_check
-        run: python3 scripts/claude_dispatcher_active_check.py
+        run: |
+          python3 scripts/check_claude_mailbox_work.py > governance/tmp/claude_active.env
+          cat governance/tmp/claude_active.env >> "$GITHUB_OUTPUT"
       - name: Record dispatcher start
         if: steps.active_check.outputs.active == 'true'
         run: python3 scripts/record_claude_inbound_workflow_state.py start dispatcher_started
@@ -43,9 +45,9 @@ jobs:
           prompt: |
             You are Claude Internal Auditor for repository bereznyi-aleksandr/ai-devops-system.
             Read the newest file in governance/audit_mailbox/gpt_to_claude/.
-            Write a concise response to governance/audit_mailbox/claude_to_gpt/ with a filename containing the BEM id.
-            Include explicit Decision: APPROVED / CHANGE_REQUIRED / BLOCKED when asked.
-            If asked why no prior response existed, explain the runtime or trigger reason based on repository evidence.
+            Write response to governance/audit_mailbox/claude_to_gpt/ with BEM id in filename.
+            Include Decision: APPROVED / CHANGE_REQUIRED / BLOCKED when asked.
+            Explain why prior mailbox response was missing when asked.
             Do not write issue comments. Do not expose secrets.
           claude_args: |
             --max-turns 8
@@ -59,7 +61,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A governance/audit_mailbox/claude_to_gpt governance/state/claude_inbound_mailbox_workflow_state.json governance/reports/claude_inbound_mailbox_workflow_state.md governance/state governance/reports governance/transport || true
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-739 Claude dispatcher state"
+          git add -A governance/audit_mailbox/claude_to_gpt governance/state/claude_inbound_mailbox_workflow_state.json governance/reports/claude_inbound_mailbox_workflow_state.md governance/tmp/claude_active.env || true
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-746 Claude dispatcher state"
           git pull --rebase --autostash origin main || true
           git push || true
