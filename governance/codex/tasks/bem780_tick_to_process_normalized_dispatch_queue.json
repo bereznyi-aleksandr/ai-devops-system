@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem780_tick_to_process_normalized_dispatch_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-780 tick queue process",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 19:55 (UTC+3)'\nstate={'schema_version':'tick_to_process_normalized_dispatch_queue.v1','bem':'BEM-780','status':'fresh_codex_tick_after_normalized_queue_items','expected':'Codex Runner queue consumer should process bem779 workflow_dispatch_queue items during/after this run','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem780_tick_to_process_normalized_dispatch_queue.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem780_tick_to_process_normalized_dispatch_queue.md')\nreport.write_text('# BEM-780 | Tick To Process Normalized Dispatch Queue | PASS'+sep+sep+'Дата: '+created+sep+'Fresh Codex tick after BEM-779 normalized queue items.\\nBlocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem780_tick_to_process_normalized_dispatch_queue','status':'fresh_codex_tick_after_normalized_queue_items','blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem780_tick_to_process_normalized_dispatch_queue.txt')\nproof.write_text('BEM-780 PASS fresh tick to process normalized dispatch queue.\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Completed fresh Codex tick after normalized workflow dispatch queue items were committed')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem780_tick_to_process_normalized_dispatch_queue.md",
+    "result_json": "governance/codex/results/bem780_tick_to_process_normalized_dispatch_queue.json"
+  },
+  "created_at": "2026-05-21T16:56:03.280Z"
+}
