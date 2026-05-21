@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem793_execute_bem792_route",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-793 execute route",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 20:17 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nroute=load('governance/state/bem792_route_after_bem791.json')\nrs=route.get('status','unknown')\nresult_files=[str(p) for p in sorted(Path('governance/workflow_dispatch_results').glob('*.status.json'))] if Path('governance/workflow_dispatch_results').exists() else []\nresp_files=[str(p) for p in sorted(Path('governance/audit_mailbox/claude_to_gpt').glob('*'))] if Path('governance/audit_mailbox/claude_to_gpt').exists() else []\nruntime=load('governance/state/claude_inbound_mailbox_workflow_state.json')\nif rs=='route_process_response' or resp_files:\n    status='response_files_present_process_next'; next_action='parse latest response and prepare agreed protocol'\nelif rs=='route_parse_dispatch_results' and result_files:\n    latest=result_files[-1]; txt=read(latest); status='dispatch_result_files_present'; next_action='parse latest dispatch result '+latest+' and patch failure if not dispatch_attempted'\nelif rs=='route_parse_dispatch_results':\n    status='no_dispatch_results_repair_runner_next'; next_action='runner queue processor did not create results; inspect codex-runner YAML placement and workflow-lint status'\nelif rs=='route_repair_runner_processor':\n    status='repair_runner_processor_next'; next_action='inspect and patch codex-runner queue processor placement'\nelif rs=='route_diagnose_runtime_outcome':\n    status='runtime_outcome_diagnosis_next'; next_action='diagnose claude_action_outcome '+str(runtime.get('claude_action_outcome'))\nelse:\n    status='unknown_route_next'; next_action='diagnose unknown route '+rs\nstate={'bem':'BEM-793','status':status,'route_status':rs,'result_files':result_files[-10:],'response_files':resp_files[-10:],'runtime_started_at':runtime.get('started_at'),'runtime_completed_at':runtime.get('completed_at'),'next_action':next_action,'created_at':created}\nPath('governance/state/bem793_execute_bem792_route.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem793_execute_bem792_route.md').write_text('# BEM-793 | Execute BEM-792 Route | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem793_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-793'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem793_execute_bem792_route.json','governance/reports/bem793_execute_bem792_route.md','governance/tasks/pending/bem793_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Executed BEM-792 route based on response files, dispatch result files, and runtime state')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem793_execute_bem792_route.md",
+    "result_json": "governance/codex/results/bem793_execute_bem792_route.json"
+  },
+  "created_at": "2026-05-21T17:18:07.317Z"
+}
