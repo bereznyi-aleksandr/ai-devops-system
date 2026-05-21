@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem804_route_after_marker_execution",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Routed after BEM-803 marker execution facts",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem804_route_after_marker_execution.json",
+    "governance/reports/bem804_route_after_marker_execution.md",
+    "governance/tasks/pending/bem804_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem804_route_after_marker_execution.txt"
+  ],
+  "commit_sha": "196220be62413c45a8edb61dc8496f8ea65c30d1",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem804_route_after_marker_execution.md",
+  "completed_at": "2026-05-21T17:31:42Z"
+}
