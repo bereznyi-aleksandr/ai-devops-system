@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem756_verify_after_dispatcher_lint_kick",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified workflow lint state",
+    " Claude dispatcher runtime state and Claude response after fresh Codex kick",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem756_verify_after_dispatcher_lint_kick.json",
+    "governance/reports/bem756_verify_after_dispatcher_lint_kick.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem756_verify_after_dispatcher_lint_kick.txt",
+    "governance/codex/proofs/bem756_verify_after_dispatcher_lint_kick.txt"
+  ],
+  "commit_sha": "ab241ce1e04a27ec97d2b01ddac61092da1a4c5c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem756_verify_after_dispatcher_lint_kick.md",
+  "completed_at": "2026-05-21T15:50:09Z"
+}
