@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-771 FALLBACK EXECUTED
+# GPT NEXT ACTION | BEM-772 DIRECT DISPATCH CHANNEL INSTALLED
 
-Дата: 2026-05-21 | 19:23 (UTC+3)
-Fallback state is available. Continue: repair/prove real Claude Action dispatch and read real mailbox answer.
+Дата: 2026-05-21 | 19:24 (UTC+3)
+Next: verify direct dispatch bridge started Claude dispatcher and produced runtime state/response.
 Operator relay: forbidden.
