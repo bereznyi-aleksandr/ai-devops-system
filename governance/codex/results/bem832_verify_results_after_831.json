@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem832_verify_results_after_831",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified workflow_dispatch_results and processor marker after BEM-831 tick",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem832_verify_results_after_831.json",
+    "governance/reports/bem832_verify_results_after_831.md",
+    "governance/tasks/pending/bem832_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem832_verify_results_after_831.txt"
+  ],
+  "commit_sha": "5cfa7213e49f22e06187ef6901a76861d5900ad9",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem832_verify_results_after_831.md",
+  "completed_at": "2026-05-21T19:33:07Z"
+}
