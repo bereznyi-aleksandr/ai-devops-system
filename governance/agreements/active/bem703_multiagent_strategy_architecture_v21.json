@@ -1,14 +1,16 @@
 {
-  "schema_version": "agreement_active.v2",
+  "schema_version": "agreement_active.v3",
   "agreement_id": "BEM-703",
   "version": "v2.1-global-patterns-2026-05-21-repeat",
-  "status": "repeat_request_sent_to_claude_final_decision_required",
+  "status": "bem725_repeat_sent_awaiting_claude_reason_and_decision",
   "mailbox_file": "governance/audit_mailbox/gpt_to_claude/bem712_repeat_bem703_strategy_request_final_decision_required.md",
   "previous_agreement": "BEM-699",
   "next_action": "monitor_claude_mailbox_until_approved_change_required_or_blocked",
   "operator_task": "strategy architecture with global multi-agent patterns",
   "blocker": null,
   "created_at": "2026-05-20 | 22:28 (UTC+3)",
-  "operator_role": "none_in_routine_loop",
-  "updated_at": "2026-05-21 | 05:32 (UTC+3)"
+  "operator_role": "none",
+  "updated_at": "2026-05-21 | 13:02 (UTC+3)",
+  "latest_mailbox_file": "governance/audit_mailbox/gpt_to_claude/bem725_repeat_strategy_and_ask_claude_no_response_reason.md",
+  "required_response": "APPROVED_CHANGE_REQUIRED_BLOCKED plus why no previous response"
 }

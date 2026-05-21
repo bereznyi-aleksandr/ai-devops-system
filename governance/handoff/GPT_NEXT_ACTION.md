@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | MINUTE WATCHDOG REQUIRED
+# GPT NEXT ACTION | BEM-725 WAIT CLAUDE RESPONSE
 
-Дата: 2026-05-21 | 11:13 (UTC+3)
+Дата: 2026-05-21 | 13:02 (UTC+3)
 
-BEM-722A active. Next step: install minute watchdog workflow/script. Do not stop after reports.
+Claude asked again. Required: final decision and explanation why no previous mailbox response. Minute watchdog active; operator is not relay.

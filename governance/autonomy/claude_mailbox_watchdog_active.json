@@ -1,11 +1,12 @@
 {
-  "schema_version": "claude_mailbox_watchdog_active.v2",
+  "schema_version": "claude_mailbox_watchdog_active.v3",
   "active": true,
-  "run_id": "bem703_bem712_watchdog",
+  "run_id": "bem703_bem712_bem725_watchdog",
   "interval_seconds": 60,
   "until": "APPROVED_CHANGE_REQUIRED_BLOCKED",
   "operator_role": "none",
   "created_at": "2026-05-21 | 11:13 (UTC+3)",
   "kick_reason": "BEM-722C force push trigger for minute watchdog workflow",
-  "kicked_at": "2026-05-21 | 12:56 (UTC+3)"
+  "kicked_at": "2026-05-21 | 13:02 (UTC+3)",
+  "watch_scope": "BEM-703 BEM-712 BEM-725"
 }
