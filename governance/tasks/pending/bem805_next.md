@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-805
-
-Status: diagnose_again_needed
 Next: inspect route state, queue, marker and runner placement again
+Operator relay forbidden.
