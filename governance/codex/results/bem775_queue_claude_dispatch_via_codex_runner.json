@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem775_queue_claude_dispatch_via_codex_runner",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Queued Claude internal auditor dispatcher through existing Codex Runner workflow_dispatch_queue mechanism",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem775_claude_internal_auditor_dispatch.json",
+    "governance/tasks/pending/bem775_verify_queue_dispatch_result.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/state/bem775_queue_claude_dispatch_via_codex_runner.json",
+    "governance/reports/bem775_queue_claude_dispatch_via_codex_runner.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem775_queue_claude_dispatch_via_codex_runner.txt",
+    "governance/codex/proofs/bem775_queue_claude_dispatch_via_codex_runner.txt"
+  ],
+  "commit_sha": "9ed25397c1b7fb9615831f13a38c289bff2ae727",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem775_queue_claude_dispatch_via_codex_runner.md",
+  "completed_at": "2026-05-21T16:29:12Z"
+}
