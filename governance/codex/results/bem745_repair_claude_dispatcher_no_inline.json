@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem745_repair_claude_dispatcher_no_inline",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem745_repair_claude_dispatcher_no_inline.txt"
+  ],
+  "commit_sha": "6c99010c421f6eadbf3f388f5b23f87080f8df11",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: __import__ not found"
+  },
+  "report_path": "governance/codex/results/bem745_repair_claude_dispatcher_no_inline.md",
+  "completed_at": "2026-05-21T15:37:28Z"
+}
