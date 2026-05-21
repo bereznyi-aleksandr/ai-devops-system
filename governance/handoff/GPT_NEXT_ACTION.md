@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-809
+# GPT NEXT ACTION | BEM-810
 
-Status: unknown_route_execution_needed
-Next: diagnose route next_diagnose_bem807
+Status: next_unknown_state
+Next: diagnose BEM-809 state
