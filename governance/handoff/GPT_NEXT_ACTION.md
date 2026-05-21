@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-790
+# GPT NEXT ACTION | BEM-791
 
-Status: next_process_response
-Next: read Claude response and produce agreed protocol
+Status: response_processing_pending
+Next: read response and produce agreed protocol
