@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem740_check_dispatcher_runtime_after_kick",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Checked Claude dispatcher runtime state and response files after BEM-739 kick",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem740_check_dispatcher_runtime_after_kick.json",
+    "governance/reports/bem740_check_dispatcher_runtime_after_kick.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem740_check_dispatcher_runtime_after_kick.txt",
+    "governance/codex/proofs/bem740_check_dispatcher_runtime_after_kick.txt"
+  ],
+  "commit_sha": "dc6396f78ed67ea1fab8ecc4acb95ad6ef0c7c7c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem740_check_dispatcher_runtime_after_kick.md",
+  "completed_at": "2026-05-21T12:25:49Z"
+}
