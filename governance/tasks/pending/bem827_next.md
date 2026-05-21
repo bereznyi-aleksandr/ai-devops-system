@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-827
-
-Status: next_patch_result_writer
 Next: rewrite shell processor to always write status json before/after queue loop
+Operator relay forbidden.
