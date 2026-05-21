@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem720_scheduler_runs_and_claude_status",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem720_scheduler_runs_and_claude_status.txt"
+  ],
+  "commit_sha": "241d2dcef22cc10ff6468419a637771bdafeb6ed",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'Exception' is not defined"
+  },
+  "report_path": "governance/codex/results/bem720_scheduler_runs_and_claude_status.md",
+  "completed_at": "2026-05-21T08:08:44Z"
+}
