@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem811_execute_bem810_route",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-811 execute 810",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 20:40 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\ndef files(g): return [str(p) for p in sorted(Path('.').glob(g)) if p.is_file()]\nroute=load('governance/state/bem810_route_after_bem809.json')\nrs=route.get('status','unknown')\nruntime=load('governance/state/claude_inbound_mailbox_workflow_state.json')\nresults=files('governance/workflow_dispatch_results/*.status.json')\nresponses=files('governance/audit_mailbox/claude_to_gpt/*')\nif rs=='next_filter_and_process_response':\n    status='filter_response_required'; next_action='filter real Claude response from blocker files'\nelif rs=='next_diagnose_claude_runtime_outcome':\n    status='runtime_outcome_read'; next_action='patch Claude workflow/action based on outcome '+str(runtime.get('claude_action_outcome'))\nelif rs=='next_verify_dispatch_target_run':\n    status='dispatch_target_verify_required'; next_action='parse dispatch results or verify dispatcher workflow existence'\nelif rs=='next_verify_pat_env':\n    status='pat_env_verify_required'; next_action='parse token_missing result and patch GH_TOKEN secret name'\nelif rs=='next_patch_dispatch_target':\n    status='dispatch_target_patch_required'; next_action='patch target workflow id/ref/permissions'\nelse:\n    status='infra_repair_required'; next_action=route.get('next_action','continue repair')\nstate={'bem':'BEM-811','status':status,'route_status':rs,'runtime_started_at':runtime.get('started_at'),'runtime_completed_at':runtime.get('completed_at'),'claude_outcome':runtime.get('claude_action_outcome'),'dispatch_results':results[-10:],'responses':responses[-10:],'next_action':next_action,'created_at':created}\nPath('governance/state/bem811_execute_bem810_route.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem811_execute_bem810_route.md').write_text('# BEM-811 | Execute BEM-810 Route | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem811_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-811'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem811_execute_bem810_route.json','governance/reports/bem811_execute_bem810_route.md','governance/tasks/pending/bem811_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Executed BEM-810 route by inspecting runtime/dispatch results/response files')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem811_execute_bem810_route.md",
+    "result_json": "governance/codex/results/bem811_execute_bem810_route.json"
+  },
+  "created_at": "2026-05-21T17:40:23.340Z"
+}
