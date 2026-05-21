@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-829
+# GPT NEXT ACTION | BEM-830
 
-Status: single_smoke_fail
-Missing: real_claude_response
-Next: repair missing proofs: real_claude_response
+Status: real_response_missing_next
+Next: patch Claude prompt/provider once runtime proof exists
