@@ -1,12 +1,12 @@
 {
   "schema_version": "claude_mailbox_watchdog_active.v6",
   "active": true,
-  "run_id": "bem739_dispatcher_kick",
+  "run_id": "bem741_after_lint_repair",
   "interval_seconds": 60,
   "until": "APPROVED_CHANGE_REQUIRED_BLOCKED",
   "operator_role": "none",
   "created_at": "2026-05-21 | 11:13 (UTC+3)",
   "kick_reason": "Trigger Codex Runner completion so claude-internal-auditor-dispatcher workflow_run can start Claude",
-  "kicked_at": "2026-05-21 | 15:24 (UTC+3)",
-  "watch_scope": "BEM-732 BEM-728 BEM-725 BEM-703"
+  "kicked_at": "2026-05-21 | 15:28 (UTC+3)",
+  "watch_scope": "BEM-741 BEM-732 BEM-728 BEM-725"
 }
