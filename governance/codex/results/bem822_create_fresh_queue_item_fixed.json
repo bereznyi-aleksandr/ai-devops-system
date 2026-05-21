@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem822_create_fresh_queue_item_fixed",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflow_dispatch_queue/bem822_fresh_claude_dispatch.json",
+    "create:governance/tasks/pending/bem822_next.md",
+    "create_dir:governance/workflow_dispatch_queue"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem822_fresh_claude_dispatch.json",
+    "governance/tasks/pending/bem822_next.md",
+    "governance/workflow_dispatch_queue/.gitkeep",
+    "governance/codex/proofs/bem822_create_fresh_queue_item_fixed.txt"
+  ],
+  "commit_sha": "979e9cea442d6cd4fbbd6ab0453f892b48ebf718",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem822_create_fresh_queue_item_fixed.md",
+  "completed_at": "2026-05-21T17:53:18Z"
+}
