@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem757_route_after_bem756_verification",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-757 route after verify",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport','governance/handoff','governance/tasks/pending']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 18:50 (UTC+3)'\ndef load(path):\n    p=Path(path)\n    if not p.exists(): return {}\n    try: return json.loads(p.read_text(encoding='utf-8', errors='ignore'))\n    except: return {}\nprev=load('governance/state/bem756_verify_after_dispatcher_lint_kick.json')\nprev_status=prev.get('status','unknown')\nif prev_status=='claude_response_found':\n    status='route_process_claude_response'\n    next_action='process Claude response from mailbox and finalize or continue agreement'\n    blocker=None\nelif prev_status=='lint_gate_still_failing':\n    status='route_repair_lint_gate_again'\n    next_action='repair remaining workflow lint violations before dispatcher work'\n    blocker={'code':'LINT_GATE_STILL_BLOCKING','previous_state':prev_status}\nelif prev_status=='dispatcher_runtime_seen_no_response':\n    status='route_diagnose_claude_action_outcome'\n    next_action='inspect Claude action outcome and secrets/provider availability; if failed, create minimal smoke workflow'\n    blocker={'code':'CLAUDE_ACTION_RUNTIME_SEEN_NO_RESPONSE','outcome':prev.get('claude_outcome')}\nelse:\n    status='route_direct_dispatcher_not_proven'\n    next_action='create repo-side dispatcher smoke state and trigger a direct Claude mailbox run artifact; continue without operator relay'\n    blocker={'code':'DISPATCHER_RUNTIME_NOT_PROVEN','previous_state':prev_status}\nhandoff=Path('governance/handoff/GPT_NEXT_ACTION.md')\nhandoff.write_text('# GPT NEXT ACTION | BEM-757 AUTO ROUTE'+sep+sep+'Дата: '+created+sep+'Previous BEM-756 status: '+prev_status+sep+'Route: '+status+sep+'Next: '+next_action+sep+'Operator relay: forbidden.'+sep)\npending=Path('governance/tasks/pending/bem757_auto_route_next.md')\npending.write_text('# BEM-757 Auto Route Next'+sep+sep+'Дата: '+created+sep+'Previous: '+prev_status+sep+'Route: '+status+sep+'Next: '+next_action+sep)\nstate={'schema_version':'route_after_bem756_verification.v1','bem':'BEM-757','status':status,'previous_status':prev_status,'next_action':next_action,'blocker':blocker,'created_at':created}\nstate_file=Path('governance/state/bem757_route_after_bem756_verification.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem757_route_after_bem756_verification.md')\nreport.write_text('# BEM-757 | Route After BEM-756 Verification | '+status.upper()+sep+sep+'Дата: '+created+sep+'Previous: '+prev_status+sep+'Next: '+next_action+sep+'Blocker: '+('null' if blocker is None else json.dumps(blocker,ensure_ascii=False))+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem757_route_after_bem756_verification','status':status,'previous_status':prev_status,'next_action':next_action,'blocker':blocker,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem757_route_after_bem756_verification.txt')\nproof.write_text('BEM-757 '+status+' previous='+prev_status+'\\n')\nchanged_files.extend([str(handoff),str(pending),str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Read BEM-756 result and created explicit next-route artifact without waiting for operator')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem757_route_after_bem756_verification.md",
+    "result_json": "governance/codex/results/bem757_route_after_bem756_verification.json"
+  },
+  "created_at": "2026-05-21T15:50:57.454Z"
+}
