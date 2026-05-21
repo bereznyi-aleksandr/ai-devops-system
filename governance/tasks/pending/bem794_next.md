@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-794
-
-Status: real_claude_response_missing
 Next: continue runtime dispatch repair; do not accept blocker files as Claude answer
+Operator relay forbidden.
