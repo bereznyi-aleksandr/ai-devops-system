@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem827_route_after_bem826",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-827 route after 826",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 20:59 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\nprev=load('governance/state/bem826_execute_bem825_route.json')\nps=prev.get('status','unknown')\nif str(ps).startswith('dispatch_result_status_dispatch_attempted'):\n    status='next_check_runtime_after_dispatch_attempted'; next_action='verify Claude runtime state and real Claude response after dispatch_attempted'\nelif str(ps).startswith('dispatch_result_status_token_missing'):\n    status='next_patch_token_env'; next_action='patch GH_TOKEN / AI_SYSTEM_GITHUB_PAT wiring in queue processor workflow step'\nelif str(ps).startswith('dispatch_result_status_dispatch_failed'):\n    status='next_patch_dispatch_failure'; next_action='patch workflow id/ref/permissions using latest dispatch result'\nelif ps=='patch_result_writer_needed':\n    status='next_patch_result_writer'; next_action='rewrite shell processor to always write status json before/after queue loop'\nelif ps=='patch_runner_placement_needed':\n    status='next_patch_runner_placement'; next_action='move queue processor inside codex-runner job before completion'\nelse:\n    status='next_diagnose_bem826'; next_action='diagnose BEM-826 state and current Actions failure screenshot'\nstate={'bem':'BEM-827','status':status,'previous_status':ps,'next_action':next_action,'created_at':created}\nPath('governance/state/bem827_route_after_bem826.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem827_route_after_bem826.md').write_text('# BEM-827 | Route After BEM-826 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem827_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-827'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem827_route_after_bem826.json','governance/reports/bem827_route_after_bem826.md','governance/tasks/pending/bem827_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Routed after BEM-826 parsed dispatch result status and selected next repair step')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem827_route_after_bem826.md",
+    "result_json": "governance/codex/results/bem827_route_after_bem826.json"
+  },
+  "created_at": "2026-05-21T19:27:25.823Z"
+}
