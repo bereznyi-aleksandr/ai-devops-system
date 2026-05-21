@@ -1,0 +1,34 @@
+{
+  "schema_version": "fix_claude_dispatcher_yaml_inline_python.v1",
+  "bem": "BEM-739",
+  "status": "dispatcher_yaml_fixed",
+  "checks": [
+    {
+      "name": "workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    },
+    {
+      "name": "no_inline_python_marker",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    },
+    {
+      "name": "helper_script_exists",
+      "pass": true,
+      "evidence": "scripts/check_claude_mailbox_active.py"
+    },
+    {
+      "name": "workflow_run_bridge",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    },
+    {
+      "name": "records_state",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-dispatcher.yml"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-21 | 15:26 (UTC+3)"
+}

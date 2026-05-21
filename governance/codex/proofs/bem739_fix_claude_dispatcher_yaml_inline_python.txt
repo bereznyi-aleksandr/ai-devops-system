@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem739_fix_claude_dispatcher_yaml_inline_python
+task_type: code_patch
+executed_at: 2026-05-21T12:32:42Z
+ops_applied: Fixed invalid Claude dispatcher workflow by moving inline Python logic into scripts and preserving workflow_run bridge, custom_script
+changed_files: scripts/check_claude_mailbox_active.py, scripts/record_claude_inbound_workflow_state.py, .github/workflows/claude-internal-auditor-dispatcher.yml, governance/state/bem739_fix_claude_dispatcher_yaml_inline_python.json, governance/reports/bem739_fix_claude_dispatcher_yaml_inline_python.md, governance/transport/results.jsonl, governance/codex/proofs/bem739_fix_claude_dispatcher_yaml_inline_python.txt
+errors: none
