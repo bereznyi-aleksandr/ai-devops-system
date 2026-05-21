@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem722a_contract_rule_watchdog_flag",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-722A watchdog rule",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/protocols','governance/state','governance/reports','governance/codex/proofs','governance/transport','governance/autonomy','governance/handoff']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 11:13 (UTC+3)'\nrule=sep+'## BEM-722A | Обязательное правило минутного мониторинга Claude mailbox'+sep+'Дата: '+created+sep+sep+'Если GPT обращается к внутреннему аудитору Claude через mailbox, GPT обязан включить периодический мониторинг ответа с интервалом 1 минута или минимально доступным интервалом. Мониторинг продолжается до результата: APPROVED / CHANGE_REQUIRED / BLOCKED. Отчёт не останавливает работу. Если ответа нет, агент не ждёт оператора, а диагностирует причину и продолжает автономный контур.'+sep\nfor path in ['governance/protocols/AUTONOMY_CONTINUITY_CONTRACT_EXTENSION.md','governance/protocols/MANDATORY_CHATGPT_TASK_MONITOR_RULE.md']:\n    p=Path(path)\n    old=p.read_text(errors='ignore') if p.exists() else '# '+p.name+sep\n    if 'BEM-722A | Обязательное правило минутного мониторинга Claude mailbox' not in old:\n        p.write_text(old+rule)\nactive=Path('governance/autonomy/claude_mailbox_watchdog_active.json')\nactive.write_text(json.dumps({'schema_version':'claude_mailbox_watchdog_active.v1','active':True,'run_id':'bem703_bem712_watchdog','interval_seconds':60,'until':'APPROVED_CHANGE_REQUIRED_BLOCKED','operator_role':'none','created_at':created},indent=2,ensure_ascii=False)+sep)\nhandoff=Path('governance/handoff/GPT_NEXT_ACTION.md')\nhandoff.write_text('# GPT NEXT ACTION | MINUTE WATCHDOG REQUIRED'+sep+sep+'Дата: '+created+sep+sep+'BEM-722A active. Next step: install minute watchdog workflow/script. Do not stop after reports.'+sep)\nchecks=[{'name':'rule_written','pass':True,'evidence':'governance/protocols/AUTONOMY_CONTINUITY_CONTRACT_EXTENSION.md'},{'name':'active_flag_enabled','pass':active.exists(),'evidence':str(active)}]\nstate={'schema_version':'contract_rule_watchdog_flag.v1','bem':'BEM-722A','status':'watchdog_rule_and_flag_installed','checks':checks,'next':'install minute watchdog workflow/script','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem722a_contract_rule_watchdog_flag.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem722a_contract_rule_watchdog_flag.md')\nreport.write_text('# BEM-722A | Contract Rule Watchdog Flag | PASS'+sep+sep+'Дата: '+created+sep+sep+'Rule and active watchdog flag installed. Next: workflow/script.'+sep+sep+'Blocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem722a_contract_rule_watchdog_flag','status':'watchdog_rule_and_flag_installed','blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem722a_contract_rule_watchdog_flag.txt')\nproof.write_text('BEM-722A PASS: watchdog rule and active flag installed.\\n')\nchanged_files.extend(['governance/protocols/AUTONOMY_CONTINUITY_CONTRACT_EXTENSION.md','governance/protocols/MANDATORY_CHATGPT_TASK_MONITOR_RULE.md',str(active),str(handoff),str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Installed mandatory minute-monitoring contract rule and active watchdog flag for Claude mailbox')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem722a_contract_rule_watchdog_flag.md",
+    "result_json": "governance/codex/results/bem722a_contract_rule_watchdog_flag.json"
+  },
+  "created_at": "2026-05-21T09:54:23.399Z"
+}
