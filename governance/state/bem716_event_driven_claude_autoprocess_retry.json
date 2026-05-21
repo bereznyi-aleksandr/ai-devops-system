@@ -1,0 +1,39 @@
+{
+  "schema_version": "event_driven_autoprocess_retry.v1",
+  "bem": "BEM-716",
+  "status": "event_autoprocess_installed",
+  "checks": [
+    {
+      "name": "rule_exists",
+      "pass": true,
+      "evidence": "governance/protocols/AUTONOMY_CONTINUITY_CONTRACT_EXTENSION.md"
+    },
+    {
+      "name": "script_exists",
+      "pass": true,
+      "evidence": "scripts/autoprocess_claude_mailbox_response.py"
+    },
+    {
+      "name": "workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/claude-mailbox-autoprocess.yml"
+    },
+    {
+      "name": "workflow_no_schedule",
+      "pass": true,
+      "evidence": ".github/workflows/claude-mailbox-autoprocess.yml"
+    },
+    {
+      "name": "mailbox_push_trigger",
+      "pass": true,
+      "evidence": ".github/workflows/claude-mailbox-autoprocess.yml"
+    },
+    {
+      "name": "operator_none",
+      "pass": true,
+      "evidence": "scripts/autoprocess_claude_mailbox_response.py"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-21 | 10:52 (UTC+3)"
+}

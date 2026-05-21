@@ -1,0 +1,37 @@
+name: Claude Mailbox Autoprocess
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/audit_mailbox/claude_to_gpt/**'
+      - 'governance/audit_mailbox/external_auditor_to_internal_auditor/**'
+      - 'scripts/autoprocess_claude_mailbox_response.py'
+      - '.github/workflows/claude-mailbox-autoprocess.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: claude-mailbox-autoprocess
+  cancel-in-progress: false
+
+jobs:
+  autoprocess:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Syntax check
+        run: python3 -m py_compile scripts/autoprocess_claude_mailbox_response.py
+      - name: Autoprocess Claude mailbox
+        run: python3 scripts/autoprocess_claude_mailbox_response.py
+      - name: Commit state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A governance/state/claude_mailbox_autoprocess_state.json governance/reports/claude_mailbox_autoprocess_report.md governance/handoff/GPT_NEXT_ACTION.md governance/tasks/pending/claude_mailbox_autoprocess_next.md governance/agreements/final
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-716 claude mailbox autoprocess state"
+          git pull --rebase --autostash origin main || true
+          git push || true
