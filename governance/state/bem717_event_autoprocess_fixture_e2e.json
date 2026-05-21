@@ -1,0 +1,45 @@
+{
+  "schema_version": "event_autoprocess_fixture_e2e.v1",
+  "bem": "BEM-717",
+  "status": "event_autoprocess_fixture_pass",
+  "checks": [
+    {
+      "name": "script_exists",
+      "pass": true,
+      "evidence": "scripts/autoprocess_claude_mailbox_response.py"
+    },
+    {
+      "name": "workflow_exists",
+      "pass": true,
+      "evidence": ".github/workflows/claude-mailbox-autoprocess.yml"
+    },
+    {
+      "name": "workflow_push_trigger",
+      "pass": true,
+      "evidence": ".github/workflows/claude-mailbox-autoprocess.yml"
+    },
+    {
+      "name": "workflow_no_schedule",
+      "pass": true,
+      "evidence": ".github/workflows/claude-mailbox-autoprocess.yml"
+    },
+    {
+      "name": "decision_fixture_approved",
+      "pass": true,
+      "evidence": "APPROVED"
+    },
+    {
+      "name": "script_handles_approved",
+      "pass": true,
+      "evidence": "scripts/autoprocess_claude_mailbox_response.py"
+    },
+    {
+      "name": "operator_none",
+      "pass": true,
+      "evidence": "scripts/autoprocess_claude_mailbox_response.py"
+    }
+  ],
+  "decision": "APPROVED",
+  "blocker": null,
+  "created_at": "2026-05-21 | 10:53 (UTC+3)"
+}
