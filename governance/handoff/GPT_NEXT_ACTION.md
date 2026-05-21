@@ -1,7 +1,5 @@
-# GPT NEXT ACTION | BEM-774 CODEX PATCH POINT
+# GPT NEXT ACTION | BEM-775 CLAUDE DISPATCH QUEUED
 
-Дата: 2026-05-21 | 19:26 (UTC+3)
-Codex workflow name: Codex Runner
-Status: codex_runner_needs_direct_dispatch_step
-Next: patch codex-runner with final always step that calls scripts/dispatch_claude_internal_auditor.sh when Claude mailbox watchdog active
+Дата: 2026-05-21 | 19:27 (UTC+3)
+Claude dispatcher queued through built-in Codex workflow dispatch queue. Verify dispatch status and runtime state next.
 Operator relay: forbidden.
