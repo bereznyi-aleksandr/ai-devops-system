@@ -1,0 +1,8 @@
+name: Claude Internal Auditor Mailbox
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/audit_mailbox/gpt_to_claude/**'
+      -
