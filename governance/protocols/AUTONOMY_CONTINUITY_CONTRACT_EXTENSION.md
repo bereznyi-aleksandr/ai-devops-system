@@ -20,3 +20,6 @@
 ## BEM-744 | Запрет UI-confirmation при Deno вызовах
 Дата: 2026-05-21 | 18:31 (UTC+3)
 Если ChatGPT UI показывает оператору кнопку Подтвердить для отправки данных во внешний Deno endpoint, это считается нарушением no-operator-routine
+## BEM-762 | Checkpoint Guard: отчёт не завершает разработку
+Дата: 2026-05-21 | 18:59 (UTC+3)
+Перед любым checkpoint-отчётом оператору агент обязан создать доказуемый следующий шаг: active task, pending artifact, watchdog state или dispatched repair task
