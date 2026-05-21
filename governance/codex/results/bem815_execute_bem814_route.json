@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem815_execute_bem814_route",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Executed BEM-814 route by collecting dispatch results",
+    " response files and runtime state",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem815_execute_bem814_route.json",
+    "governance/reports/bem815_execute_bem814_route.md",
+    "governance/tasks/pending/bem815_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem815_execute_bem814_route.txt"
+  ],
+  "commit_sha": "b96452a74e8bcd25809bb9181883473abb4c0f04",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem815_execute_bem814_route.md",
+  "completed_at": "2026-05-21T17:45:15Z"
+}
