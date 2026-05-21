@@ -1,2 +1,2 @@
-Next: patch Claude prompt/provider once runtime proof exists
+Next: repair missing proofs real_claude_response
 Operator relay forbidden.
