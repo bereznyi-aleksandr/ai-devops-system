@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-822
+# GPT NEXT ACTION | BEM-824
 
-Status: dispatch_result_repair_queued
-Next: run fresh tick and require workflow_dispatch_results status file
+Status: processor_marker_present_but_no_results
+Next: patch processor shell loop/result writer because marker exists but no result files
