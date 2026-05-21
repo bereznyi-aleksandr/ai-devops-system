@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem740_verify_lint_repair_and_claude_runtime_after_bridge",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified lint repair state",
+    " watchdog tick count",
+    " Claude runtime state and response files after bridge repair",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem740_verify_lint_repair_and_claude_runtime_after_bridge.json",
+    "governance/reports/bem740_verify_lint_repair_and_claude_runtime_after_bridge.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem740_verify_lint_repair_and_claude_runtime_after_bridge.txt",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/codex/proofs/bem740_verify_lint_repair_and_claude_runtime_after_bridge.txt"
+  ],
+  "commit_sha": "da1d49ba0bce994909de261ce11af21d0d7d7bb2",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem740_verify_lint_repair_and_claude_runtime_after_bridge.md",
+  "completed_at": "2026-05-21T12:28:29Z"
+}
