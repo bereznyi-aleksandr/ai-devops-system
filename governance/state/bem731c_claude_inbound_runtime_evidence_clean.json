@@ -1,0 +1,29 @@
+{
+  "schema_version": "claude_inbound_runtime_evidence_clean.v2",
+  "bem": "BEM-731C",
+  "status": "claude_inbound_runtime_evidence_installed",
+  "checks": [
+    {
+      "name": "recorder_script_exists",
+      "pass": true,
+      "evidence": "scripts/record_claude_inbound_workflow_state.py"
+    },
+    {
+      "name": "workflow_records_start",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-mailbox.yml"
+    },
+    {
+      "name": "workflow_records_completion_always",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-mailbox.yml"
+    },
+    {
+      "name": "claude_continue_on_error",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-mailbox.yml"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-21 | 13:53 (UTC+3)"
+}

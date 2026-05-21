@@ -5,4 +5,57 @@ on:
   push:
     paths:
       - 'governance/audit_mailbox/gpt_to_claude/**'
-      -
+      - '.github/workflows/claude-internal-auditor-mailbox.yml'
+      - 'scripts/record_claude_inbound_workflow_state.py'
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: claude-internal-auditor-mailbox
+  cancel-in-progress: false
+
+jobs:
+  claude-internal-auditor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Syntax check state recorder
+        run: python3 -m py_compile scripts/record_claude_inbound_workflow_state.py
+      - name: Record workflow start
+        run: python3 scripts/record_claude_inbound_workflow_state.py start started
+      - name: Claude internal auditor responds to mailbox
+        id: claude_response
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are Claude Internal Auditor for repository bereznyi-aleksandr/ai-devops-system.
+            Read the newest file in governance/audit_mailbox/gpt_to_claude/.
+            Write a concise response to governance/audit_mailbox/claude_to_gpt/ with a filename containing the BEM id.
+            Include explicit Decision: APPROVED / CHANGE_REQUIRED / BLOCKED when asked.
+            If asked why no prior response existed, explain the runtime or trigger reason based on repository evidence.
+            Do not write issue comments. Do not expose secrets.
+          claude_args: |
+            --max-turns 8
+      - name: Record workflow completion
+        if: always()
+        env:
+          CLAUDE_OUTCOME: ${{ steps.claude_response.outcome }}
+        run: python3 scripts/record_claude_inbound_workflow_state.py complete "$CLAUDE_OUTCOME"
+      - name: Commit Claude mailbox response and runtime state
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A governance/audit_mailbox/claude_to_gpt governance/state/claude_inbound_mailbox_workflow_state.json governance/reports/claude_inbound_mailbox_workflow_state.md governance/state governance/reports governance/transport || true
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-731C Claude inbound runtime state"
+          git pull --rebase --autostash origin main || true
+          git push || true
