@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-827
+# GPT NEXT ACTION | BEM-829
 
-Status: patched_result_writer_needed
-Next: rewrite shell processor to create summary result before and after loop
+Status: single_smoke_fail
+Missing: real_claude_response
