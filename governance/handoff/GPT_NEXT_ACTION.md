@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-814
+# GPT NEXT ACTION | BEM-815
 
-Status: next_continue_infra_repair
+Status: continue_infra_repair
 Next: diagnose BEM-809 state
