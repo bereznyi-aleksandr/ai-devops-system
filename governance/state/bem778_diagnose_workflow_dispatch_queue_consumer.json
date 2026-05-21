@@ -1,0 +1,150 @@
+{
+  "schema_version": "diagnose_workflow_dispatch_queue_consumer.v1",
+  "bem": "BEM-778",
+  "status": "queue_consumer_found_needs_format_check",
+  "route_status": "route_diagnose_claude_runtime_outcome",
+  "codex_runner_exists": true,
+  "queue_refs": [
+    {
+      "line": 388,
+      "snippet": "376:             SHA=$(git rev-parse HEAD)\n377:             echo \"COMMIT_SHA=$SHA\" >> \"$GITHUB_ENV\"\n378:             echo \"Committed: $SHA\"\n379:           fi\n380: \n381:       - name: Dispatch workflow queue\n382:         if: env.TASK_FOUND == 'true'\n383:         shell: bash\n384:         env:\n385:           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}\n386:           GH_REPOSITORY: ${{ github.repository }}\n387:         run: |\n388:           mkdir -p governance/workflow_dispatch_results governance/workflow_dispatch_processed\n389:           if [ ! -d governance/workflow_dispatch_queue ]; then\n390:             echo \"No workflow dispatch queue\"\n391:             exit 0\n392:           fi\n393:           shopt -s nullglob\n394:           for f in governance/workflow_dispatch_queue/*.json; do\n395:             WORKFLOW=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('workflow',''))\" \"$f\")\n396:             REF=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('ref','main'))\" \"$f\")\n397:             if [ -z \"$WORKFLOW\" ]; then\n398:               echo \"missing_workflow\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n399:               continue\n400:             fi\n401:             BODY=$(python3 -c \"import json,sys; data=json.load(open(sys.argv[1])); print(json.dumps({'ref':data.get('ref','main'),'inputs':data.get('inputs',{})}))\" \"$f\")\n402:             HTTP_CODE=$(curl -sS -o \"governance/workflow_dispatch_results/$(basename \"$f\" .json).response.json\" -w \"%{http_code}\" -X POST \"https://api.github.com/repos/${GH_REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches\" -H \"Authorization: Bearer ${GH_TOKEN}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\" -d \"$BODY\" || echo \"000\")\n403:             echo \"$HTTP_CODE\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n404:             echo \"Dispatched ${WORKFLOW}: ${HTTP_CODE}\"\n405:             mv \"$f\" \"governance/workflow_dispatch_processed/$(basename \"$f\")\"\n406:           done"
+    },
+    {
+      "line": 389,
+      "snippet": "377:             echo \"COMMIT_SHA=$SHA\" >> \"$GITHUB_ENV\"\n378:             echo \"Committed: $SHA\"\n379:           fi\n380: \n381:       - name: Dispatch workflow queue\n382:         if: env.TASK_FOUND == 'true'\n383:         shell: bash\n384:         env:\n385:           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}\n386:           GH_REPOSITORY: ${{ github.repository }}\n387:         run: |\n388:           mkdir -p governance/workflow_dispatch_results governance/workflow_dispatch_processed\n389:           if [ ! -d governance/workflow_dispatch_queue ]; then\n390:             echo \"No workflow dispatch queue\"\n391:             exit 0\n392:           fi\n393:           shopt -s nullglob\n394:           for f in governance/workflow_dispatch_queue/*.json; do\n395:             WORKFLOW=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('workflow',''))\" \"$f\")\n396:             REF=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('ref','main'))\" \"$f\")\n397:             if [ -z \"$WORKFLOW\" ]; then\n398:               echo \"missing_workflow\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n399:               continue\n400:             fi\n401:             BODY=$(python3 -c \"import json,sys; data=json.load(open(sys.argv[1])); print(json.dumps({'ref':data.get('ref','main'),'inputs':data.get('inputs',{})}))\" \"$f\")\n402:             HTTP_CODE=$(curl -sS -o \"governance/workflow_dispatch_results/$(basename \"$f\" .json).response.json\" -w \"%{http_code}\" -X POST \"https://api.github.com/repos/${GH_REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches\" -H \"Authorization: Bearer ${GH_TOKEN}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\" -d \"$BODY\" || echo \"000\")\n403:             echo \"$HTTP_CODE\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n404:             echo \"Dispatched ${WORKFLOW}: ${HTTP_CODE}\"\n405:             mv \"$f\" \"governance/workflow_dispatch_processed/$(basename \"$f\")\"\n406:           done\n407:           git add governance/workflow_dispatch_results governance/workflow_dispatch_queue 2>/dev/null || true"
+    },
+    {
+      "line": 394,
+      "snippet": "382:         if: env.TASK_FOUND == 'true'\n383:         shell: bash\n384:         env:\n385:           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}\n386:           GH_REPOSITORY: ${{ github.repository }}\n387:         run: |\n388:           mkdir -p governance/workflow_dispatch_results governance/workflow_dispatch_processed\n389:           if [ ! -d governance/workflow_dispatch_queue ]; then\n390:             echo \"No workflow dispatch queue\"\n391:             exit 0\n392:           fi\n393:           shopt -s nullglob\n394:           for f in governance/workflow_dispatch_queue/*.json; do\n395:             WORKFLOW=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('workflow',''))\" \"$f\")\n396:             REF=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('ref','main'))\" \"$f\")\n397:             if [ -z \"$WORKFLOW\" ]; then\n398:               echo \"missing_workflow\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n399:               continue\n400:             fi\n401:             BODY=$(python3 -c \"import json,sys; data=json.load(open(sys.argv[1])); print(json.dumps({'ref':data.get('ref','main'),'inputs':data.get('inputs',{})}))\" \"$f\")\n402:             HTTP_CODE=$(curl -sS -o \"governance/workflow_dispatch_results/$(basename \"$f\" .json).response.json\" -w \"%{http_code}\" -X POST \"https://api.github.com/repos/${GH_REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches\" -H \"Authorization: Bearer ${GH_TOKEN}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\" -d \"$BODY\" || echo \"000\")\n403:             echo \"$HTTP_CODE\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n404:             echo \"Dispatched ${WORKFLOW}: ${HTTP_CODE}\"\n405:             mv \"$f\" \"governance/workflow_dispatch_processed/$(basename \"$f\")\"\n406:           done\n407:           git add governance/workflow_dispatch_results governance/workflow_dispatch_queue 2>/dev/null || true\n408:           if ! git diff --cached --quiet; then\n409:             git commit -m \"CODEX-RUNNER: workflow dispatch queue trace=${{ inputs.trace_id }}\" || true\n410:             git push || true\n411:           fi\n412: "
+    },
+    {
+      "line": 398,
+      "snippet": "386:           GH_REPOSITORY: ${{ github.repository }}\n387:         run: |\n388:           mkdir -p governance/workflow_dispatch_results governance/workflow_dispatch_processed\n389:           if [ ! -d governance/workflow_dispatch_queue ]; then\n390:             echo \"No workflow dispatch queue\"\n391:             exit 0\n392:           fi\n393:           shopt -s nullglob\n394:           for f in governance/workflow_dispatch_queue/*.json; do\n395:             WORKFLOW=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('workflow',''))\" \"$f\")\n396:             REF=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('ref','main'))\" \"$f\")\n397:             if [ -z \"$WORKFLOW\" ]; then\n398:               echo \"missing_workflow\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n399:               continue\n400:             fi\n401:             BODY=$(python3 -c \"import json,sys; data=json.load(open(sys.argv[1])); print(json.dumps({'ref':data.get('ref','main'),'inputs':data.get('inputs',{})}))\" \"$f\")\n402:             HTTP_CODE=$(curl -sS -o \"governance/workflow_dispatch_results/$(basename \"$f\" .json).response.json\" -w \"%{http_code}\" -X POST \"https://api.github.com/repos/${GH_REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches\" -H \"Authorization: Bearer ${GH_TOKEN}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\" -d \"$BODY\" || echo \"000\")\n403:             echo \"$HTTP_CODE\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n404:             echo \"Dispatched ${WORKFLOW}: ${HTTP_CODE}\"\n405:             mv \"$f\" \"governance/workflow_dispatch_processed/$(basename \"$f\")\"\n406:           done\n407:           git add governance/workflow_dispatch_results governance/workflow_dispatch_queue 2>/dev/null || true\n408:           if ! git diff --cached --quiet; then\n409:             git commit -m \"CODEX-RUNNER: workflow dispatch queue trace=${{ inputs.trace_id }}\" || true\n410:             git push || true\n411:           fi\n412: \n413:       - name: Write result files\n414:         if: always()\n415:         shell: bash\n416:         env:"
+    },
+    {
+      "line": 402,
+      "snippet": "390:             echo \"No workflow dispatch queue\"\n391:             exit 0\n392:           fi\n393:           shopt -s nullglob\n394:           for f in governance/workflow_dispatch_queue/*.json; do\n395:             WORKFLOW=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('workflow',''))\" \"$f\")\n396:             REF=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('ref','main'))\" \"$f\")\n397:             if [ -z \"$WORKFLOW\" ]; then\n398:               echo \"missing_workflow\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n399:               continue\n400:             fi\n401:             BODY=$(python3 -c \"import json,sys; data=json.load(open(sys.argv[1])); print(json.dumps({'ref':data.get('ref','main'),'inputs':data.get('inputs',{})}))\" \"$f\")\n402:             HTTP_CODE=$(curl -sS -o \"governance/workflow_dispatch_results/$(basename \"$f\" .json).response.json\" -w \"%{http_code}\" -X POST \"https://api.github.com/repos/${GH_REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches\" -H \"Authorization: Bearer ${GH_TOKEN}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\" -d \"$BODY\" || echo \"000\")\n403:             echo \"$HTTP_CODE\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n404:             echo \"Dispatched ${WORKFLOW}: ${HTTP_CODE}\"\n405:             mv \"$f\" \"governance/workflow_dispatch_processed/$(basename \"$f\")\"\n406:           done\n407:           git add governance/workflow_dispatch_results governance/workflow_dispatch_queue 2>/dev/null || true\n408:           if ! git diff --cached --quiet; then\n409:             git commit -m \"CODEX-RUNNER: workflow dispatch queue trace=${{ inputs.trace_id }}\" || true\n410:             git push || true\n411:           fi\n412: \n413:       - name: Write result files\n414:         if: always()\n415:         shell: bash\n416:         env:\n417:           INPUT_TRACE_ID: ${{ inputs.trace_id }}\n418:         run: |\n419:           python3 - <<'PYEOF'\n420:           import json, os"
+    },
+    {
+      "line": 403,
+      "snippet": "391:             exit 0\n392:           fi\n393:           shopt -s nullglob\n394:           for f in governance/workflow_dispatch_queue/*.json; do\n395:             WORKFLOW=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('workflow',''))\" \"$f\")\n396:             REF=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('ref','main'))\" \"$f\")\n397:             if [ -z \"$WORKFLOW\" ]; then\n398:               echo \"missing_workflow\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n399:               continue\n400:             fi\n401:             BODY=$(python3 -c \"import json,sys; data=json.load(open(sys.argv[1])); print(json.dumps({'ref':data.get('ref','main'),'inputs':data.get('inputs',{})}))\" \"$f\")\n402:             HTTP_CODE=$(curl -sS -o \"governance/workflow_dispatch_results/$(basename \"$f\" .json).response.json\" -w \"%{http_code}\" -X POST \"https://api.github.com/repos/${GH_REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches\" -H \"Authorization: Bearer ${GH_TOKEN}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\" -d \"$BODY\" || echo \"000\")\n403:             echo \"$HTTP_CODE\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n404:             echo \"Dispatched ${WORKFLOW}: ${HTTP_CODE}\"\n405:             mv \"$f\" \"governance/workflow_dispatch_processed/$(basename \"$f\")\"\n406:           done\n407:           git add governance/workflow_dispatch_results governance/workflow_dispatch_queue 2>/dev/null || true\n408:           if ! git diff --cached --quiet; then\n409:             git commit -m \"CODEX-RUNNER: workflow dispatch queue trace=${{ inputs.trace_id }}\" || true\n410:             git push || true\n411:           fi\n412: \n413:       - name: Write result files\n414:         if: always()\n415:         shell: bash\n416:         env:\n417:           INPUT_TRACE_ID: ${{ inputs.trace_id }}\n418:         run: |\n419:           python3 - <<'PYEOF'\n420:           import json, os\n421:           from datetime import datetime, timezone"
+    },
+    {
+      "line": 407,
+      "snippet": "395:             WORKFLOW=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('workflow',''))\" \"$f\")\n396:             REF=$(python3 -c \"import json,sys; print(json.load(open(sys.argv[1])).get('ref','main'))\" \"$f\")\n397:             if [ -z \"$WORKFLOW\" ]; then\n398:               echo \"missing_workflow\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n399:               continue\n400:             fi\n401:             BODY=$(python3 -c \"import json,sys; data=json.load(open(sys.argv[1])); print(json.dumps({'ref':data.get('ref','main'),'inputs':data.get('inputs',{})}))\" \"$f\")\n402:             HTTP_CODE=$(curl -sS -o \"governance/workflow_dispatch_results/$(basename \"$f\" .json).response.json\" -w \"%{http_code}\" -X POST \"https://api.github.com/repos/${GH_REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches\" -H \"Authorization: Bearer ${GH_TOKEN}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\" -d \"$BODY\" || echo \"000\")\n403:             echo \"$HTTP_CODE\" > \"governance/workflow_dispatch_results/$(basename \"$f\" .json).status\"\n404:             echo \"Dispatched ${WORKFLOW}: ${HTTP_CODE}\"\n405:             mv \"$f\" \"governance/workflow_dispatch_processed/$(basename \"$f\")\"\n406:           done\n407:           git add governance/workflow_dispatch_results governance/workflow_dispatch_queue 2>/dev/null || true\n408:           if ! git diff --cached --quiet; then\n409:             git commit -m \"CODEX-RUNNER: workflow dispatch queue trace=${{ inputs.trace_id }}\" || true\n410:             git push || true\n411:           fi\n412: \n413:       - name: Write result files\n414:         if: always()\n415:         shell: bash\n416:         env:\n417:           INPUT_TRACE_ID: ${{ inputs.trace_id }}\n418:         run: |\n419:           python3 - <<'PYEOF'\n420:           import json, os\n421:           from datetime import datetime, timezone\n422:           from pathlib import Path\n423: \n424:           now   = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')\n425:           trace = os.environ.get('TRACE_ID') or os.environ['INPUT_TRACE_ID']"
+    },
+    {
+      "line": 530,
+      "snippet": "518:           ]\n519:           with open(os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/s.md'), 'a') as f:\n520:               f.write('\\n'.join(l for l in lines if l))\n521:           PYEOF\n522: \n523:       - name: Run workflow dispatch queue if present\n524:         if: always()\n525:         env:\n526:           GH_DISPATCH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\n527:           GITHUB_TOKEN: ${{ github.token }}\n528:           GITHUB_REPOSITORY: ${{ github.repository }}\n529:         run: |\n530:           if [ -f scripts/workflow_dispatch_queue_runner.py ]; then\n531:             python3 -m py_compile scripts/workflow_dispatch_queue_runner.py\n532:             python3 scripts/workflow_dispatch_queue_runner.py || true\n533:             git config user.name \"github-actions[bot]\"\n534:             git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\n535:             git add governance/workflow_dispatch_queue governance/state/workflow_dispatch_queue_runner.json governance/reports/workflow_dispatch_queue_runner.md || true\n536:             git diff --cached --quiet && echo \"No dispatch queue changes\" || git commit -m \"BEM-638 workflow dispatch queue processed\"\n537:             git pull --rebase --autostash origin main || true\n538:             git push || true\n539:           else\n540:             echo \"No workflow dispatch queue runner present\"\n541:           fi"
+    },
+    {
+      "line": 531,
+      "snippet": "519:           with open(os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/s.md'), 'a') as f:\n520:               f.write('\\n'.join(l for l in lines if l))\n521:           PYEOF\n522: \n523:       - name: Run workflow dispatch queue if present\n524:         if: always()\n525:         env:\n526:           GH_DISPATCH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\n527:           GITHUB_TOKEN: ${{ github.token }}\n528:           GITHUB_REPOSITORY: ${{ github.repository }}\n529:         run: |\n530:           if [ -f scripts/workflow_dispatch_queue_runner.py ]; then\n531:             python3 -m py_compile scripts/workflow_dispatch_queue_runner.py\n532:             python3 scripts/workflow_dispatch_queue_runner.py || true\n533:             git config user.name \"github-actions[bot]\"\n534:             git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\n535:             git add governance/workflow_dispatch_queue governance/state/workflow_dispatch_queue_runner.json governance/reports/workflow_dispatch_queue_runner.md || true\n536:             git diff --cached --quiet && echo \"No dispatch queue changes\" || git commit -m \"BEM-638 workflow dispatch queue processed\"\n537:             git pull --rebase --autostash origin main || true\n538:             git push || true\n539:           else\n540:             echo \"No workflow dispatch queue runner present\"\n541:           fi"
+    },
+    {
+      "line": 532,
+      "snippet": "520:               f.write('\\n'.join(l for l in lines if l))\n521:           PYEOF\n522: \n523:       - name: Run workflow dispatch queue if present\n524:         if: always()\n525:         env:\n526:           GH_DISPATCH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\n527:           GITHUB_TOKEN: ${{ github.token }}\n528:           GITHUB_REPOSITORY: ${{ github.repository }}\n529:         run: |\n530:           if [ -f scripts/workflow_dispatch_queue_runner.py ]; then\n531:             python3 -m py_compile scripts/workflow_dispatch_queue_runner.py\n532:             python3 scripts/workflow_dispatch_queue_runner.py || true\n533:             git config user.name \"github-actions[bot]\"\n534:             git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\n535:             git add governance/workflow_dispatch_queue governance/state/workflow_dispatch_queue_runner.json governance/reports/workflow_dispatch_queue_runner.md || true\n536:             git diff --cached --quiet && echo \"No dispatch queue changes\" || git commit -m \"BEM-638 workflow dispatch queue processed\"\n537:             git pull --rebase --autostash origin main || true\n538:             git push || true\n539:           else\n540:             echo \"No workflow dispatch queue runner present\"\n541:           fi"
+    },
+    {
+      "line": 535,
+      "snippet": "523:       - name: Run workflow dispatch queue if present\n524:         if: always()\n525:         env:\n526:           GH_DISPATCH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\n527:           GITHUB_TOKEN: ${{ github.token }}\n528:           GITHUB_REPOSITORY: ${{ github.repository }}\n529:         run: |\n530:           if [ -f scripts/workflow_dispatch_queue_runner.py ]; then\n531:             python3 -m py_compile scripts/workflow_dispatch_queue_runner.py\n532:             python3 scripts/workflow_dispatch_queue_runner.py || true\n533:             git config user.name \"github-actions[bot]\"\n534:             git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\n535:             git add governance/workflow_dispatch_queue governance/state/workflow_dispatch_queue_runner.json governance/reports/workflow_dispatch_queue_runner.md || true\n536:             git diff --cached --quiet && echo \"No dispatch queue changes\" || git commit -m \"BEM-638 workflow dispatch queue processed\"\n537:             git pull --rebase --autostash origin main || true\n538:             git push || true\n539:           else\n540:             echo \"No workflow dispatch queue runner present\"\n541:           fi"
+    }
+  ],
+  "queue_files": [],
+  "result_files": [
+    {
+      "path": "governance/workflow_dispatch_results/bem637_run_curator_hourly_report.response.json",
+      "text": "{\n  \"message\": \"Workflow does not have 'workflow_dispatch' trigger\",\n  \"documentation_url\": \"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\n  \"status\": \"422\"\n}\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem637_run_curator_hourly_report.status",
+      "text": "422\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem637_run_direct_telegram_smoke.response.json",
+      "text": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem637_run_direct_telegram_smoke.status",
+      "text": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem691_claude_primary_runtime_proof.response.json",
+      "text": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem691_claude_primary_runtime_proof.status",
+      "text": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem775_claude_internal_auditor_dispatch.response.json",
+      "text": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/bem775_claude_internal_auditor_dispatch.status",
+      "text": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/claude_primary_runtime_smoke.response.json",
+      "text": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/claude_primary_runtime_smoke.status",
+      "text": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/curator_hourly_delivery_verification.response.json",
+      "text": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/curator_hourly_delivery_verification.status",
+      "text": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/curator_hourly_report.response.json",
+      "text": "{\n  \"message\": \"Workflow does not have 'workflow_dispatch' trigger\",\n  \"documentation_url\": \"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\n  \"status\": \"422\"\n}\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/curator_hourly_report.status",
+      "text": "422\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/curator_hourly_report_once.response.json",
+      "text": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/curator_hourly_report_once.status",
+      "text": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/curator_hourly_report_ru_compact_once.response.json",
+      "text": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/curator_hourly_report_ru_compact_once.status",
+      "text": "204\n"
+    },
+    {
+      "path": "governance/workflow_dispatch_results/telegram_send_smoke.response.json",
+      "text": ""
+    },
+    {
+      "path": "governance/workflow_dispatch_results/telegram_send_smoke.status",
+      "text": "204\n"
+    }
+  ],
+  "expected_keys_seen_in_runner_text": [
+    "workflow",
+    "ref",
+    "inputs",
+    "file",
+    "id"
+  ],
+  "blocker": {
+    "code": "QUEUE_CONSUMER_FORMAT_NEEDS_CHECK",
+    "queue_refs": 11,
+    "queue_files": 0,
+    "result_files": 22
+  },
+  "created_at": "2026-05-21 | 19:52 (UTC+3)"
+}

@@ -1,7 +1,6 @@
-# GPT NEXT ACTION | BEM-777 ROUTE AFTER QUEUE VERIFY
+# GPT NEXT ACTION | BEM-778 QUEUE CONSUMER DIAGNOSIS
 
-Дата: 2026-05-21 | 19:50 (UTC+3)
-Previous: queue_dispatch_runtime_seen_no_response
-Route: route_diagnose_claude_runtime_outcome
-Next: diagnose Claude Action/provider outcome without exposing secrets, then retry real response
-Operator relay: forbidden.
+Дата: 2026-05-21 | 19:52 (UTC+3)
+Route from BEM-777: route_diagnose_claude_runtime_outcome
+Status: queue_consumer_found_needs_format_check
+Next: normalize queue item or patch consumer. Operator relay: forbidden.
