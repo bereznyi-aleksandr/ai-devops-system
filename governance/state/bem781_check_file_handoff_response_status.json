@@ -1,0 +1,13 @@
+{
+  "schema_version": "check_file_handoff_response_status.v1",
+  "bem": "BEM-781",
+  "status": "real_file_handoff_response_pending",
+  "responses_found": 0,
+  "responses": [],
+  "next_action": "continue mailbox monitoring; do not create new workflows and do not fake approval",
+  "blocker": {
+    "code": "REAL_CLAUDE_FILE_HANDOFF_RESPONSE_PENDING",
+    "message": "BEM-780 request is committed. No real Claude response file found yet."
+  },
+  "created_at": "2026-05-21 | 19:36 (UTC+3)"
+}
