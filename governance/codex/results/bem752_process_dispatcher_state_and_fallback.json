@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem752_process_dispatcher_state_and_fallback",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Processed dispatcher runtime state and created no-operator fallback artifact if Claude workflow runtime is not proven",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem752_process_dispatcher_state_and_fallback.json",
+    "governance/reports/bem752_process_dispatcher_state_and_fallback.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem752_process_dispatcher_state_and_fallback.txt",
+    "governance/tasks/pending/claude_mailbox_runtime_fallback_required.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/codex/proofs/bem752_process_dispatcher_state_and_fallback.txt"
+  ],
+  "commit_sha": "b9d8a97fec7261437598ec45871f59ebe3afccab",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem752_process_dispatcher_state_and_fallback.md",
+  "completed_at": "2026-05-21T15:43:43Z"
+}
