@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem722c_kick_minute_watchdog_active_flag",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-722C kick watchdog",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/autonomy','governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 12:56 (UTC+3)'\nactive=Path('governance/autonomy/claude_mailbox_watchdog_active.json')\ntry:\n    data=json.loads(active.read_text(errors='ignore')) if active.exists() else {}\nexcept:\n    data={}\ndata.update({'schema_version':'claude_mailbox_watchdog_active.v2','active':True,'run_id':'bem703_bem712_watchdog','interval_seconds':60,'until':'APPROVED_CHANGE_REQUIRED_BLOCKED','operator_role':'none','kick_reason':'BEM-722C force push trigger for minute watchdog workflow','kicked_at':created})\nactive.write_text(json.dumps(data,indent=2,ensure_ascii=False)+sep)\nstate={'schema_version':'kick_minute_watchdog_active_flag.v1','bem':'BEM-722C','status':'active_flag_kicked','expected_effect':'push should trigger .github/workflows/claude-mailbox-minute-watchdog.yml','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem722c_kick_minute_watchdog_active_flag.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem722c_kick_minute_watchdog_active_flag.md')\nreport.write_text('# BEM-722C | Kick Minute Watchdog Active Flag | PASS'+sep+sep+'Дата: '+created+sep+sep+'Active flag changed; push should trigger minute watchdog workflow.'+sep+sep+'Blocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem722c_kick_minute_watchdog_active_flag','status':'active_flag_kicked','blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem722c_kick_minute_watchdog_active_flag.txt')\nproof.write_text('BEM-722C PASS: active flag kicked to trigger minute watchdog workflow.\\n')\nchanged_files.extend([str(active),str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Updated active watchdog flag to force a push event for claude-mailbox-minute-watchdog workflow')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem722c_kick_minute_watchdog_active_flag.md",
+    "result_json": "governance/codex/results/bem722c_kick_minute_watchdog_active_flag.json"
+  },
+  "created_at": "2026-05-21T09:56:50.564Z"
+}
