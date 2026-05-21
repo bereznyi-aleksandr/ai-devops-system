@@ -4,7 +4,7 @@
 
 ## Result
 Picked: True
-Mailbox file: governance/audit_mailbox/gpt_to_claude/bem712_repeat_bem703_strategy_request_final_decision_required.md
+Mailbox file: governance/audit_mailbox/gpt_to_claude/bem725_repeat_strategy_and_ask_claude_no_response_reason.md
 Notify operator: False
 Reason: routine_mailbox_no_telegram_use_decision_queue
 
