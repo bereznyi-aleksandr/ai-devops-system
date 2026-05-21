@@ -539,3 +539,12 @@ jobs:
           else
             echo "No workflow dispatch queue runner present"
           fi
+
+      - name: Process workflow dispatch queue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: bash scripts/process_workflow_dispatch_queue.sh
+      - name: Commit workflow dispatch queue results
+        if: always()
+        run: bash scripts/commit_workflow_dispatch_results.sh
