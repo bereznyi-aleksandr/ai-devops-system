@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem762_checkpoint_guard_no_stop_rule",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-762 checkpoint guard",
+  "objective": "Append to governance/protocols/AUTONOMY_CONTINUITY_CONTRACT_EXTENSION.md: \n\n## BEM-762 | Checkpoint Guard: отчёт не завершает разработку\nДата: 2026-05-21 | 18:59 (UTC+3)\nПеред любым checkpoint-отчётом оператору агент обязан создать доказуемый следующий шаг: active task, pending artifact, watchdog state или dispatched repair task. Если следующий шаг не создан, checkpoint-отчёт запрещён. После checkpoint агент обязан сразу продолжить выполнение следующего шага. Final-message в ChatGPT не считается завершением roadmap и не является разрешением остановиться.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem762_checkpoint_guard_no_stop_rule.md",
+    "result_json": "governance/codex/results/bem762_checkpoint_guard_no_stop_rule.json"
+  },
+  "created_at": "2026-05-21T16:06:09.340Z"
+}
