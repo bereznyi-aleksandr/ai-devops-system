@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem769b_check_wake_smoke_result_retry",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Retried wake-smoke result check after previous task creation conflict and routed next step",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/tasks/pending/bem769b_next_after_wake_smoke.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/state/bem769b_check_wake_smoke_result_retry.json",
+    "governance/reports/bem769b_check_wake_smoke_result_retry.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem769b_check_wake_smoke_result_retry.txt",
+    "governance/codex/proofs/bem769b_check_wake_smoke_result_retry.txt"
+  ],
+  "commit_sha": "e9de43aae7e5bc025cd8a942720a30ebefeab340",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem769b_check_wake_smoke_result_retry.md",
+  "completed_at": "2026-05-21T16:21:54Z"
+}
