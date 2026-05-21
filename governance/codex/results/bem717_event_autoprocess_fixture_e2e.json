@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem717_event_autoprocess_fixture_e2e",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Validated event-driven Claude mailbox autoprocess workflow and parser contract with isolated APPROVED fixture",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/tests/autonomy/event_e2e/bem717_fixture.md",
+    "governance/state/bem717_event_autoprocess_fixture_e2e.json",
+    "governance/reports/bem717_event_autoprocess_fixture_e2e.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem717_event_autoprocess_fixture_e2e.txt",
+    "governance/codex/proofs/bem717_event_autoprocess_fixture_e2e.txt"
+  ],
+  "commit_sha": "88c8c93fc2476d67a27c4e54b98b9180e4e9c8ff",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem717_event_autoprocess_fixture_e2e.md",
+  "completed_at": "2026-05-21T07:53:23Z"
+}
