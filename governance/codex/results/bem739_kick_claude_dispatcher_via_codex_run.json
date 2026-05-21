@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem739_kick_claude_dispatcher_via_codex_run",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Kicked Claude dispatcher by committing active watchdog flag through Codex Runner so workflow_run has a new completion event",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/autonomy/claude_mailbox_watchdog_active.json",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/state/bem739_kick_claude_dispatcher_via_codex_run.json",
+    "governance/reports/bem739_kick_claude_dispatcher_via_codex_run.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem739_kick_claude_dispatcher_via_codex_run.txt",
+    "governance/codex/proofs/bem739_kick_claude_dispatcher_via_codex_run.txt"
+  ],
+  "commit_sha": "5c47291aa20dbf9314222916aa16605fc43e15e5",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem739_kick_claude_dispatcher_via_codex_run.md",
+  "completed_at": "2026-05-21T12:24:50Z"
+}
