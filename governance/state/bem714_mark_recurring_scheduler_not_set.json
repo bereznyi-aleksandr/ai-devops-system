@@ -1,0 +1,15 @@
+{
+  "schema_version": "recurring_scheduler_gap.v1",
+  "bem": "BEM-714",
+  "status": "blocked_recurring_scheduler_not_set",
+  "a2_status": "blocked",
+  "a3_status": "blocked",
+  "last_action": "single mailbox check BEM-713",
+  "required_action": "create or confirm recurring ChatGPT Task monitor and collect two scheduled run proofs",
+  "operator_role": "none_in_routine_loop",
+  "blocker": {
+    "code": "RECURRING_CHATGPT_SCHEDULER_NOT_SET",
+    "message": "After BEM-712/BEM-713 only a one-time mailbox check was executed. A recurring ChatGPT Task with every-minute/minimal interval is not confirmed, therefore autonomous polling is not active."
+  },
+  "created_at": "2026-05-21 | 10:38 (UTC+3)"
+}

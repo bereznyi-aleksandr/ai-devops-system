@@ -2,12 +2,13 @@
   "schema_version": "a3_scheduled_run_proofs.v1",
   "stage": "A3",
   "task_name": "AI DevOps Claude mailbox monitor",
-  "status": "waiting_for_runs",
+  "status": "blocked_waiting_for_recurring_scheduler",
   "required_runs": 2,
   "runs": [],
   "blocker": {
-    "code": "TWO_RUN_PROOF_MISSING",
-    "message": "Need two scheduled run proofs with timestamps."
+    "code": "RECURRING_CHATGPT_SCHEDULER_NOT_SET",
+    "message": "After BEM-712/BEM-713 only a one-time mailbox check was executed. A recurring ChatGPT Task with every-minute/minimal interval is not confirmed, therefore autonomous polling is not active."
   },
-  "created_at": "2026-05-21 | 05:20 (UTC+3)"
+  "created_at": "2026-05-21 | 05:20 (UTC+3)",
+  "updated_at": "2026-05-21 | 10:38 (UTC+3)"
 }
