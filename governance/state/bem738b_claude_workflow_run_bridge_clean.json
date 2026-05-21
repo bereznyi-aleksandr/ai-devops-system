@@ -1,0 +1,34 @@
+{
+  "schema_version": "claude_workflow_run_bridge_clean.v1",
+  "bem": "BEM-738B",
+  "status": "workflow_run_bridge_installed",
+  "checks": [
+    {
+      "name": "workflow_run_bridge",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-mailbox.yml"
+    },
+    {
+      "name": "preflight_exists",
+      "pass": true,
+      "evidence": "scripts/prepare_claude_inbound_context.py"
+    },
+    {
+      "name": "mark_exists",
+      "pass": true,
+      "evidence": "scripts/mark_claude_inbound_seen.py"
+    },
+    {
+      "name": "preflight_guard",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-mailbox.yml"
+    },
+    {
+      "name": "no_schedule_trigger",
+      "pass": true,
+      "evidence": ".github/workflows/claude-internal-auditor-mailbox.yml"
+    }
+  ],
+  "blocker": null,
+  "created_at": "2026-05-21 | 15:24 (UTC+3)"
+}

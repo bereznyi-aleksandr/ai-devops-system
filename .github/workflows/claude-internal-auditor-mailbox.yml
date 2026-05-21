@@ -2,11 +2,17 @@ name: Claude Internal Auditor Mailbox
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Codex Runner"]
+    types:
+      - completed
   push:
     paths:
       - 'governance/audit_mailbox/gpt_to_claude/**'
       - '.github/workflows/claude-internal-auditor-mailbox.yml'
       - 'scripts/record_claude_inbound_workflow_state.py'
+      - 'scripts/prepare_claude_inbound_context.py'
+      - 'scripts/mark_claude_inbound_seen.py'
 
 permissions:
   contents: write
@@ -24,11 +30,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Syntax check state recorder
-        run: python3 -m py_compile scripts/record_claude_inbound_workflow_state.py
+      - name: Syntax check helper scripts
+        run: python3 -m py_compile scripts/record_claude_inbound_workflow_state.py scripts/prepare_claude_inbound_context.py scripts/mark_claude_inbound_seen.py
+      - name: Preflight latest inbox item
+        id: preflight
+        run: |
+          python3 scripts/prepare_claude_inbound_context.py > governance/tmp/claude_inbound_preflight.env
+          cat governance/tmp/claude_inbound_preflight.env >> "$GITHUB_OUTPUT"
       - name: Record workflow start
+        if: steps.preflight.outputs.should_run == 'true'
         run: python3 scripts/record_claude_inbound_workflow_state.py start started
       - name: Claude internal auditor responds to mailbox
+        if: steps.preflight.outputs.should_run == 'true'
         id: claude_response
         continue-on-error: true
         uses: anthropics/claude-code-action@v1
@@ -46,16 +59,19 @@ jobs:
           claude_args: |
             --max-turns 8
       - name: Record workflow completion
-        if: always()
+        if: steps.preflight.outputs.should_run == 'true' && always()
         env:
           CLAUDE_OUTCOME: ${{ steps.claude_response.outcome }}
         run: python3 scripts/record_claude_inbound_workflow_state.py complete "$CLAUDE_OUTCOME"
-      - name: Commit Claude mailbox response and runtime state
+      - name: Mark seen on success
+        if: steps.preflight.outputs.should_run == 'true' && steps.claude_response.outcome == 'success'
+        run: python3 scripts/mark_claude_inbound_seen.py "${{ steps.preflight.outputs.latest_file }}" success
+      - name: Commit Claude runtime state
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A governance/audit_mailbox/claude_to_gpt governance/state/claude_inbound_mailbox_workflow_state.json governance/reports/claude_inbound_mailbox_workflow_state.md governance/state governance/reports governance/transport || true
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-731C Claude inbound runtime state"
+          git add -A governance/audit_mailbox/claude_to_gpt governance/state/claude_inbound_mailbox_workflow_state.json governance/state/claude_inbound_seen_items.json governance/reports/claude_inbound_mailbox_workflow_state.md governance/state governance/reports governance/transport governance/tmp/claude_inbound_preflight.env || true
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-738B Claude inbound bridge state"
           git pull --rebase --autostash origin main || true
           git push || true

@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem738b_claude_workflow_run_bridge_clean
+task_type: code_patch
+executed_at: 2026-05-21T12:25:04Z
+ops_applied: Installed clean workflow_run bridge from Codex Runner to Claude inbound workflow so GitHub Actions commits can wake Claude path, custom_script
+changed_files: scripts/prepare_claude_inbound_context.py, scripts/mark_claude_inbound_seen.py, .github/workflows/claude-internal-auditor-mailbox.yml, governance/state/bem738b_claude_workflow_run_bridge_clean.json, governance/reports/bem738b_claude_workflow_run_bridge_clean.md, governance/transport/results.jsonl, governance/codex/proofs/bem738b_claude_workflow_run_bridge_clean.txt
+errors: none
