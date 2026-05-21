@@ -8,6 +8,15 @@ mkdir -p governance/state
 printf '{"status":"processor_started","time":"%s"}\n' "$now" > governance/state/workflow_dispatch_queue_processor_marker.json
 for f in governance/workflow_dispatch_queue/*.json; do
   [ -f "$f" ] || continue
+  # BEM-828 invalid json guard
+  if ! python3 -m json.tool "$f" >/dev/null 2>&1; then
+    base="$(basename "$f" .json)"
+    out="governance/workflow_dispatch_results/${base}.status.json"
+    printf '{"status":"invalid_json","queue_file":"%s","time":"%s"}\n' "$f" "$now" > "$out"
+    mkdir -p governance/workflow_dispatch_queue_invalid
+    mv "$f" "governance/workflow_dispatch_queue_invalid/${base}.json.txt"
+    continue
+  fi
   count=$((count+1))
   base="$(basename "$f" .json)"
   out="governance/workflow_dispatch_results/${base}.status.json"

@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-838
+# GPT NEXT ACTION | BEM-828
 
-Status: next_smoke_diagnosis
-Next: single smoke diagnosis and first missing proof repair
+Invalid queue JSON repaired safely. Next: tick and verify dispatch queue no JSONDecodeError.
