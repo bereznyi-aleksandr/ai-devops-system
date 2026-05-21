@@ -1,0 +1,3 @@
+# BEM-820 | Route After BEM-819 | next_create_queue_item
+
+{"bem": "BEM-820", "status": "next_create_queue_item", "previous_status": "no_results_repair_needed", "next_action": "processor runs but queue empty; create fresh queue item", "created_at": "2026-05-21 | 20:50 (UTC+3)"}

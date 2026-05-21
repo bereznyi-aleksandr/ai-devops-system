@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-820
-
-Status: next_create_queue_item
 Next: processor runs but queue empty; create fresh queue item
+Operator relay forbidden.
