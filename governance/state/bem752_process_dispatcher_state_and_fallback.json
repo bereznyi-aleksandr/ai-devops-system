@@ -1,0 +1,13 @@
+{
+  "schema_version": "process_dispatcher_state_and_fallback.v1",
+  "bem": "BEM-752",
+  "status": "fallback_pending_created",
+  "previous_status": "dispatcher_runtime_seen_no_response",
+  "previous_state": "governance/state/bem751_check_dispatcher_runtime_after_kick.json",
+  "responses_found": 0,
+  "blocker": {
+    "code": "CLAUDE_WORKFLOW_RUNTIME_NOT_AVAILABLE",
+    "message": "Dispatcher runtime is not proven. A pending fallback artifact is created so the next available Claude/GPT contour processes the latest mailbox item without operator relay."
+  },
+  "created_at": "2026-05-21 | 18:43 (UTC+3)"
+}
