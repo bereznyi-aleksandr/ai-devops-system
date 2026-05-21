@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem768_kick_wake_smoke_after_install",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Completed a fresh Codex tick to trigger the newly installed dispatcher wake smoke workflow via workflow_run",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem768_kick_wake_smoke_after_install.json",
+    "governance/reports/bem768_kick_wake_smoke_after_install.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem768_kick_wake_smoke_after_install.txt",
+    "governance/codex/proofs/bem768_kick_wake_smoke_after_install.txt"
+  ],
+  "commit_sha": "79e09abef30203df4c6a52bfafe2a888f285d448",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem768_kick_wake_smoke_after_install.md",
+  "completed_at": "2026-05-21T16:20:00Z"
+}
