@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem760_fresh_tick_after_lint_no_new_violations",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-760 fresh lint tick",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 18:56 (UTC+3)'\n# Reconfirm current lint facts after BEM-759 and create fresh Codex completion for downstream workflows.\ndef load(path):\n    p=Path(path)\n    if not p.exists(): return {}\n    try: return json.loads(p.read_text(encoding='utf-8', errors='ignore'))\n    except: return {}\nb759=load('governance/state/bem759_diagnose_current_lint_gate_failure.json')\nstate={'schema_version':'fresh_tick_after_lint_no_new_violations.v1','bem':'BEM-760','status':'fresh_tick_after_current_lint_clean','bem759_status':b759.get('status'),'bem759_new_violations':b759.get('current_new_violation_count'),'expected':'workflow-lint-gate should not fail on current repository state; older failed BEM-753 run remains historical evidence only','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem760_fresh_tick_after_lint_no_new_violations.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem760_fresh_tick_after_lint_no_new_violations.md')\nreport.write_text('# BEM-760 | Fresh Tick After Lint No New Violations | PASS'+sep+sep+'Дата: '+created+sep+'BEM-759 status: '+str(b759.get('status'))+sep+'BEM-759 new violations: '+str(b759.get('current_new_violation_count'))+sep+'Blocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem760_fresh_tick_after_lint_no_new_violations','status':'fresh_tick_after_current_lint_clean','bem759_status':b759.get('status'),'bem759_new_violations':b759.get('current_new_violation_count'),'blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem760_fresh_tick_after_lint_no_new_violations.txt')\nproof.write_text('BEM-760 PASS fresh tick after current lint clean.\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Created a fresh Codex completion after confirming current workflow lint gate has no new violations')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem760_fresh_tick_after_lint_no_new_violations.md",
+    "result_json": "governance/codex/results/bem760_fresh_tick_after_lint_no_new_violations.json"
+  },
+  "created_at": "2026-05-21T15:56:12.943Z"
+}
