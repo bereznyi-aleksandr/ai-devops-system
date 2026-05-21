@@ -1,7 +1,5 @@
-# GPT NEXT ACTION | BEM-770 WAKE ROUTE EXECUTED
+# GPT NEXT ACTION | BEM-771 FALLBACK EXECUTED
 
-Дата: 2026-05-21 | 19:22 (UTC+3)
-Previous: workflow_run_wake_path_not_proven
-Status: direct_dispatch_fallback_installed
-Next: use direct state-producing fallback and continue real Claude runtime repair
+Дата: 2026-05-21 | 19:23 (UTC+3)
+Fallback state is available. Continue: repair/prove real Claude Action dispatch and read real mailbox answer.
 Operator relay: forbidden.

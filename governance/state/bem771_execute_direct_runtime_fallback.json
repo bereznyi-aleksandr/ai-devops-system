@@ -1,0 +1,12 @@
+{
+  "schema_version": "execute_direct_runtime_fallback.v1",
+  "bem": "BEM-771",
+  "status": "direct_fallback_executed_not_claude_answer",
+  "fallback_state": "governance/state/claude_direct_runtime_fallback_state.json",
+  "next_action": "repair real Claude Action dispatch/proof",
+  "blocker": {
+    "code": "REAL_CLAUDE_RESPONSE_STILL_MISSING",
+    "message": "Fallback executed but real Claude response is still not present."
+  },
+  "created_at": "2026-05-21 | 19:23 (UTC+3)"
+}
