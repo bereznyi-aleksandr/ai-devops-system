@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-830
+# GPT NEXT ACTION | BEM-832
 
-Status: real_response_missing_next
-Next: patch Claude prompt/provider once runtime proof exists
+Status: results_present
+Next: parse results
