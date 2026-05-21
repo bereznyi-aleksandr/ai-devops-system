@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem761_verify_after_fresh_lint_tick",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified fresh lint state and Claude runtime state after BEM-760 tick",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem761_verify_after_fresh_lint_tick.json",
+    "governance/reports/bem761_verify_after_fresh_lint_tick.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem761_verify_after_fresh_lint_tick.txt",
+    "governance/codex/proofs/bem761_verify_after_fresh_lint_tick.txt"
+  ],
+  "commit_sha": "989c1e46dde99819ed46f699e74e88a2a4a45be2",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem761_verify_after_fresh_lint_tick.md",
+  "completed_at": "2026-05-21T15:57:18Z"
+}
