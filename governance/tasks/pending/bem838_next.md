@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-838
-
-Status: next_smoke_diagnosis
 Next: single smoke diagnosis and first missing proof repair
+Operator relay forbidden.

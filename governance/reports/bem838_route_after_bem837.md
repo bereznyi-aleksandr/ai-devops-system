@@ -1,0 +1,3 @@
+# BEM-838 | Route After BEM-837 | next_smoke_diagnosis
+
+{"bem": "BEM-838", "status": "next_smoke_diagnosis", "previous_status": "diagnose_current_failure_next", "next_action": "single smoke diagnosis and first missing proof repair", "created_at": "2026-05-21 | 21:10 (UTC+3)"}
