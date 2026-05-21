@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem830_repair_missing_after_829",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Repaired first missing proof after BEM-829 by queuing Claude dispatch retry if dispatch results missing",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem830_repair_missing_after_829.json",
+    "governance/reports/bem830_repair_missing_after_829.md",
+    "governance/tasks/pending/bem830_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem830_repair_missing_after_829.txt"
+  ],
+  "commit_sha": "517ac669afbf31899f1a5b1c3d29a8d9c32dfa97",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem830_repair_missing_after_829.md",
+  "completed_at": "2026-05-21T19:31:23Z"
+}
