@@ -1,0 +1,12 @@
+{
+  "schema_version": "restore_file_mailbox_handoff_mode.v1",
+  "bem": "BEM-780",
+  "status": "file_handoff_mode_restored",
+  "protocol": "governance/protocols/CLAUDE_MAILBOX_FILE_HANDOFF_MODE.md",
+  "mailbox_request": "governance/audit_mailbox/gpt_to_claude/bem780_file_handoff_protocol_decision_required.md",
+  "blocker": {
+    "code": "REAL_CLAUDE_RESPONSE_PENDING",
+    "message": "Awaiting real committed Claude mailbox response; approval not yet received."
+  },
+  "created_at": "2026-05-21 | 19:35 (UTC+3)"
+}
