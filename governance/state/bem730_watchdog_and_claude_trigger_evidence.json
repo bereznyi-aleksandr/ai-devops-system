@@ -1,0 +1,112 @@
+{
+  "schema_version": "watchdog_and_claude_trigger_evidence.v1",
+  "bem": "BEM-730",
+  "status": "watchdog_running_trigger_not_proven",
+  "watchdog_check_count": 53,
+  "recent_checks": [
+    {
+      "time": "2026-05-21 | 13:35 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:36 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:37 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:38 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:39 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:40 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:41 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:42 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:43 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:44 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:45 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:46 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:47 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:48 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    },
+    {
+      "time": "2026-05-21 | 13:49 (UTC+3)",
+      "status": "no_response",
+      "items": 0,
+      "new": 0
+    }
+  ],
+  "watchdog_latest_status": "no_response",
+  "watchdog_last_checked_at": "2026-05-21 | 13:49 (UTC+3)",
+  "responses_found": 0,
+  "responses": [],
+  "claude_inbound_workflow_exists": true,
+  "claude_inbound_workflow_has_gpt_to_claude_path": true,
+  "claude_inbound_trigger_runtime_state": {},
+  "claude_inbound_trigger_proven": false,
+  "operator_role": "none",
+  "blocker": {
+    "code": "CLAUDE_INBOUND_TRIGGER_RUNTIME_NOT_PROVEN",
+    "message": "Workflow file exists and BEM-728 push should trigger it, but repo has no runtime state or Claude response proving the workflow actually started/completed."
+  },
+  "created_at": "2026-05-21 | 13:48 (UTC+3)"
+}
