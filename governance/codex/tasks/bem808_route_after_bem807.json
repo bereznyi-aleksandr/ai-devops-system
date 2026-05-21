@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem808_route_after_bem807",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-808 route after 807",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 20:36 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\nprev=load('governance/state/bem807_execute_bem806_route.json')\nps=prev.get('status','unknown')\nif str(ps).startswith('dispatch_result_dispatch_attempted'):\n    status='next_check_runtime_after_dispatch_attempted'; next_action='check Claude runtime and real response after dispatch_attempted'\nelif str(ps).startswith('dispatch_result_token_missing'):\n    status='next_fix_pat_secret_or_env'; next_action='verify AI_SYSTEM_GITHUB_PAT env wiring in runner'\nelif str(ps).startswith('dispatch_result_dispatch_failed'):\n    status='next_patch_dispatch_failed'; next_action='patch workflow id/ref/permission based on dispatch_failed result'\nelif ps=='shell_loop_patch_required':\n    status='next_patch_shell_loop'; next_action='rewrite shell processor to always emit summary result before loop and commit marker/results'\nelif ps=='fresh_queue_item_required':\n    status='next_create_queue_item'; next_action='create fresh queue item and tick'\nelif ps=='runner_reposition_required':\n    status='next_reposition_runner'; next_action='reposition processor in codex-runner'\nelse:\n    status='next_diagnose_bem807'; next_action='diagnose BEM-807 state'\nstate={'bem':'BEM-808','status':status,'previous_status':ps,'next_action':next_action,'created_at':created}\nPath('governance/state/bem808_route_after_bem807.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem808_route_after_bem807.md').write_text('# BEM-808 | Route After BEM-807 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem808_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-808'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem808_route_after_bem807.json','governance/reports/bem808_route_after_bem807.md','governance/tasks/pending/bem808_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Routed after BEM-807 dispatch result status')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem808_route_after_bem807.md",
+    "result_json": "governance/codex/results/bem808_route_after_bem807.json"
+  },
+  "created_at": "2026-05-21T17:36:34.696Z"
+}
