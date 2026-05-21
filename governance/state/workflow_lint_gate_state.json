@@ -1,16 +1,9 @@
 {
   "schema_version": "workflow_lint_gate_state.v1",
-  "status": "failed_new_violations",
-  "violation_count": 145,
-  "new_violation_count": 1,
+  "status": "passed_with_baseline",
+  "violation_count": 144,
+  "new_violation_count": 0,
   "resolved_baseline_count": 0,
-  "new_violations": [
-    {
-      "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
-      "line": 30,
-      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
-      "length": 31
-    }
-  ],
+  "new_violations": [],
   "resolved_baseline_keys": []
 }
