@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem838_route_after_bem837",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-838 route after 837",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 21:10 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\nprev=load('governance/state/bem837_execute_after_bem836.json')\nps=prev.get('status','unknown')\nif ps=='response_files_present_filter_next':\n    status='next_filter_real_response'; next_action='filter real Claude response now'\nelif ps=='runtime_seen_no_response':\n    status='next_diagnose_runtime_mailbox_write'; next_action='diagnose Claude action outcome and mailbox write path'\nelif ps=='dispatch_attempted_but_no_runtime':\n    status='next_patch_dispatcher_state_recorder'; next_action='patch dispatcher workflow to record state before Claude Action and commit even on failure'\nelif ps=='token_missing_patch_next':\n    status='next_patch_token_env'; next_action='patch GH_TOKEN env wiring'\nelif ps=='dispatch_failed_patch_next':\n    status='next_patch_dispatch_failure'; next_action='patch dispatch target workflow id/ref/permissions'\nelif ps=='result_writer_patch_next':\n    status='next_patch_result_writer'; next_action='patch result writer'\nelif ps=='runner_placement_patch_next':\n    status='next_patch_runner_placement'; next_action='patch runner placement'\nelse:\n    status='next_smoke_diagnosis'; next_action='single smoke diagnosis and first missing proof repair'\nstate={'bem':'BEM-838','status':status,'previous_status':ps,'next_action':next_action,'created_at':created}\nPath('governance/state/bem838_route_after_bem837.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem838_route_after_bem837.md').write_text('# BEM-838 | Route After BEM-837 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem838_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-838'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem838_route_after_bem837.json','governance/reports/bem838_route_after_bem837.md','governance/tasks/pending/bem838_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Routed after BEM-837 runtime/dispatch status')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem838_route_after_bem837.md",
+    "result_json": "governance/codex/results/bem838_route_after_bem837.json"
+  },
+  "created_at": "2026-05-21T19:38:42.837Z"
+}
