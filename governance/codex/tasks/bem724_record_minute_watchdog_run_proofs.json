@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem724_record_minute_watchdog_run_proofs",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-724 run proofs",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/autonomy','governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 12:58 (UTC+3)'\nwatch_path=Path('governance/state/claude_mailbox_minute_watchdog_state.json')\ntry:\n    watch=json.loads(watch_path.read_text(errors='ignore')) if watch_path.exists() else {}\nexcept:\n    watch={}\nchecks=watch.get('checks',[]) if isinstance(watch.get('checks',[]), list) else []\nledger=Path('governance/autonomy/a3_scheduled_run_proofs.json')\ntry:\n    led=json.loads(ledger.read_text(errors='ignore')) if ledger.exists() else {}\nexcept:\n    led={}\nruns=[]\nfor c in checks:\n    runs.append({'source':'claude-mailbox-minute-watchdog.yml','time':c.get('time'),'status':c.get('status'),'items':c.get('items'),'new':c.get('new')})\nstatus='two_or_more_minute_watchdog_runs_recorded' if len(runs)>=2 else 'waiting_for_two_runs'\nblocker=None if len(runs)>=2 else {'code':'TWO_RUN_PROOF_MISSING','runs':len(runs)}\nled.update({'schema_version':'a3_scheduled_run_proofs.v2','stage':'A3','status':status,'required_runs':2,'runs':runs,'run_count':len(runs),'source':'repo-side minute watchdog workflow','note':'This proves repo-side minute watchdog, not ChatGPT task-card scheduler.','blocker':blocker,'updated_at':created})\nledger.write_text(json.dumps(led,indent=2,ensure_ascii=False)+sep)\nstate={'schema_version':'record_minute_watchdog_run_proofs.v1','bem':'BEM-724','status':status,'run_count':len(runs),'watchdog_status':watch.get('status'),'last_checked_at':watch.get('checked_at'),'blocker':blocker,'created_at':created}\nstate_file=Path('governance/state/bem724_record_minute_watchdog_run_proofs.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem724_record_minute_watchdog_run_proofs.md')\nreport.write_text('# BEM-724 | Record Minute Watchdog Run Proofs | '+status.upper()+sep+sep+'Дата: '+created+sep+sep+'Run count: '+str(len(runs))+sep+'Watchdog status: '+str(watch.get('status'))+sep+'Last checked: '+str(watch.get('checked_at'))+sep+sep+'Blocker: '+('null' if blocker is None else json.dumps(blocker,ensure_ascii=False))+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem724_record_minute_watchdog_run_proofs','status':status,'run_count':len(runs),'watchdog_status':watch.get('status'),'blocker':blocker,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem724_record_minute_watchdog_run_proofs.txt')\nproof.write_text('BEM-724 '+status+' run_count='+str(len(runs))+' watchdog_status='+str(watch.get('status'))+'\\n')\nchanged_files.extend([str(ledger),str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Recorded minute watchdog checks as A3 run proofs; at least two repo-side minute watchdog runs prove the watchdog loop is active')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem724_record_minute_watchdog_run_proofs.md",
+    "result_json": "governance/codex/results/bem724_record_minute_watchdog_run_proofs.json"
+  },
+  "created_at": "2026-05-21T09:59:52.541Z"
+}
