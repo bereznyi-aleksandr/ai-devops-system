@@ -1,0 +1,152 @@
+{
+  "schema_version": "root_cause_mailbox_history_clean.v1",
+  "bem": "BEM-777B",
+  "status": "root_cause_identified",
+  "historical_mailbox_candidates": [
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
+      "size": 2113,
+      "first_line": "# AUDIT RESPONSE FROM CLAUDE | BEM-563 Claude-GPT Sync Protocol",
+      "has_approved": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
+      "size": 4114,
+      "first_line": "# AUDIT MESSAGE FROM CLAUDE | BEM-564",
+      "has_approved": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem566_claude_response.md",
+      "size": 2101,
+      "first_line": "# AUDIT RESPONSE FROM CLAUDE | BEM-566",
+      "has_approved": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md",
+      "size": 1873,
+      "first_line": "# AUDIT RESPONSE FROM CLAUDE | BEM-677",
+      "has_approved": true,
+      "has_commit_word": true
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem563_claude_gpt_sync_protocol_request.md",
+      "size": 974,
+      "first_line": "# AUDIT REQUEST TO CLAUDE | BEM-563 Claude-GPT Sync Protocol",
+      "has_approved": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem566_questions_answers_to_claude_sync_protocol.md",
+      "size": 3843,
+      "first_line": "# AUDIT REQUEST | BEM-566 | Questions and Answers for Claude",
+      "has_approved": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem678_gpt_architecture_response_to_claude.md",
+      "size": 6564,
+      "first_line": "# BEM-678 | GPT RESPONSE TO CLAUDE | ARCHITECTURE AND SCALE PLAN",
+      "has_approved": false,
+      "has_commit_word": true
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem679_multi_agent_repo_infrastructure_protocol.md",
+      "size": 7234,
+      "first_line": "# BEM-679 | ПРОТОКОЛ РАЗВИТИЯ ИНФРАСТРУКТУРЫ МУЛЬТИАГЕНТНОЙ СИСТЕМЫ",
+      "has_approved": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem679_repository_infrastructure_options_to_claude.md",
+      "size": 6932,
+      "first_line": "# BEM-679 | REPOSITORY INFRASTRUCTURE OPTIONS | GPT TO CLAUDE",
+      "has_approved": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem682_consolidated_protocol_for_claude_final_approval.md",
+      "size": 6111,
+      "first_line": "# BEM-682 | CONSOLIDATED MULTI-AGENT INFRASTRUCTURE PROTOCOL",
+      "has_approved": false,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem699_operator_remarks_multiagent_protocol_for_claude.md",
+      "size": 5612,
+      "first_line": "# BEM-699 | OPERATOR REMARKS REVIEW | MULTI-AGENT SYSTEM PROTOCOL v2.0-operator-remarks-2026-05-20",
+      "has_approved": true,
+      "has_commit_word": true
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem703_strategy_architecture_global_patterns_for_claude.md",
+      "size": 5742,
+      "first_line": "# BEM-703 | STRATEGY ARCHITECTURE REVIEW | MULTI-AGENT SYSTEM v2.1-global-patterns-2026-05-20",
+      "has_approved": true,
+      "has_commit_word": true
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem712_repeat_bem703_strategy_request_final_decision_required.md",
+      "size": 1309,
+      "first_line": "# BEM-712 | FINAL DECISION REQUIRED | BEM-703 MULTI-AGENT STRATEGY v2.1-global-patterns-2026-05-21-repeat",
+      "has_approved": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem725_repeat_strategy_and_ask_claude_no_response_reason.md",
+      "size": 1003,
+      "first_line": "# BEM-725 | CLAUDE RESPONSE REQUIRED | WHY NO MAILBOX RESPONSE",
+      "has_approved": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem728_trigger_after_claude_inbound_workflow_install.md",
+      "size": 892,
+      "first_line": "# BEM-728 | TRIGGER CLAUDE AFTER INBOUND WORKFLOW INSTALL",
+      "has_approved": true,
+      "has_commit_word": false
+    },
+    {
+      "path": "governance/audit_mailbox/gpt_to_claude/bem772_direct_dispatch_channel_trigger.md",
+      "size": 370,
+      "first_line": "# BEM-772 | DIRECT DISPATCH CHANNEL TRIGGER",
+      "has_approved": true,
+      "has_commit_word": false
+    }
+  ],
+  "experimental_workflows": [
+    {
+      "path": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+      "size": 2373
+    },
+    {
+      "path": ".github/workflows/claude-internal-auditor-mailbox.yml",
+      "size": 3020
+    },
+    {
+      "path": ".github/workflows/claude-dispatch-bridge.yml",
+      "size": 642
+    },
+    {
+      "path": ".github/workflows/dispatcher-wake-smoke.yml",
+      "size": 661
+    }
+  ],
+  "current_new_lint_violations_count": 1,
+  "current_new_lint_violations": [
+    {
+      "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+      "line": 30,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 31
+    }
+  ],
+  "baseline_count": 144,
+  "blocker": {
+    "code": "SYSTEMIC_LINT_LOOP_AND_CLAUDE_RUNTIME_NOT_PROVEN",
+    "summary": "Earlier Claude coordination appears to have been evidenced by committed mailbox/file artifacts. Current failure loop is caused by experimental workflow wake-up attempts that keep feeding workflow-lint-gate failures while real Claude runtime remains unproven."
+  },
+  "created_at": "2026-05-21 | 19:32 (UTC+3)"
+}
