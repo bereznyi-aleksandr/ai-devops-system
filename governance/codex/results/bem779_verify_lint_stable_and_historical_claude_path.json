@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem779_verify_lint_stable_and_historical_claude_path",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified lint stability after quarantining experimental Claude workflows and collected historical Claude mailbox evidence",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/tasks/pending/bem779_next_return_to_file_mailbox_handoff.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/state/bem779_verify_lint_stable_and_historical_claude_path.json",
+    "governance/reports/bem779_verify_lint_stable_and_historical_claude_path.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem779_verify_lint_stable_and_historical_claude_path.txt",
+    "governance/codex/proofs/bem779_verify_lint_stable_and_historical_claude_path.txt"
+  ],
+  "commit_sha": "e423a6dbf04568173c732e888a614f8a92ad398f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem779_verify_lint_stable_and_historical_claude_path.md",
+  "completed_at": "2026-05-21T16:35:18Z"
+}
