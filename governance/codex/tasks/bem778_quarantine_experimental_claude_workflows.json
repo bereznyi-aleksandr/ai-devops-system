@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem778_quarantine_experimental_claude_workflows",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-778 quarantine workflows",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/workflows/quarantine','governance/state','governance/reports','governance/codex/proofs','governance/transport','governance/tasks/pending','governance/handoff']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 19:33 (UTC+3)'\nquarantined=[]\nfor name in ['claude-internal-auditor-dispatcher.yml','claude-internal-auditor-mailbox.yml','claude-dispatch-bridge.yml','dispatcher-wake-smoke.yml']:\n    src=Path('.github/workflows')/name\n    if src.exists():\n        dst=Path('governance/workflows/quarantine')/(name+'.quarantined.md')\n        content=src.read_text(errors='ignore')\n        dst.write_text('# QUARANTINED WORKFLOW | '+name+sep+sep+'Дата: '+created+sep+'Причина: experimental Claude wake-up workflow caused repeated workflow-lint-gate failures. Kept as text artifact, not active GitHub workflow.'+sep+sep+'```yaml'+sep+content+sep+'```'+sep)\n        src.unlink()\n        quarantined.append({'from':str(src),'to':str(dst)})\n# Remove direct fallback trigger workflow if present? It is listed above. Keep scripts but inactive.\npending=Path('governance/tasks/pending/bem778_next_verify_lint_stable_and_return_mailbox_file_handoff.md')\npending.write_text('# BEM-778 Next | Verify lint stable and return to mailbox/file handoff'+sep+sep+'Дата: '+created+sep+'Next: verify no active experimental workflows remain, workflow-lint-gate has no new violations, and use file/mailbox handoff path until real Claude runtime is separately proven.'+sep)\nhandoff=Path('governance/handoff/GPT_NEXT_ACTION.md')\nhandoff.write_text('# GPT NEXT ACTION | BEM-778 EXPERIMENTAL WORKFLOWS QUARANTINED'+sep+sep+'Дата: '+created+sep+'Quarantined experimental Claude workflows from active GitHub workflows. Next: verify lint stability and return to mailbox/file handoff.'+sep+'Operator relay: forbidden.'+sep)\nstate={'schema_version':'quarantine_experimental_claude_workflows.v1','bem':'BEM-778','status':'experimental_claude_workflows_quarantined','quarantined':quarantined,'blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem778_quarantine_experimental_claude_workflows.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem778_quarantine_experimental_claude_workflows.md')\nreport.write_text('# BEM-778 | Quarantine Experimental Claude Workflows | QUARANTINED'+sep+sep+'Дата: '+created+sep+'Quarantined workflows: '+str(len(quarantined))+sep+'Blocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem778_quarantine_experimental_claude_workflows','status':'experimental_claude_workflows_quarantined','quarantined_count':len(quarantined),'blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem778_quarantine_experimental_claude_workflows.txt')\nproof.write_text('BEM-778 quarantined experimental Claude workflows count='+str(len(quarantined))+'\\n')\nchanged_files.extend([q['to'] for q in quarantined]+[str(pending),str(handoff),str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Quarantined experimental Claude wake-up workflows from .github/workflows to stop repeated workflow-lint-gate failure loop')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem778_quarantine_experimental_claude_workflows.md",
+    "result_json": "governance/codex/results/bem778_quarantine_experimental_claude_workflows.json"
+  },
+  "created_at": "2026-05-21T16:33:56.417Z"
+}
