@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-819
-
-Status: no_results_repair_needed
 Next: processor marker processor_started, queue_count 0: patch runner/loop based on these facts
+Operator relay forbidden.
