@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem803_execute_marker_route",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Executed BEM-802 marker route and recorded queue/result/marker facts",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem803_execute_marker_route.json",
+    "governance/reports/bem803_execute_marker_route.md",
+    "governance/tasks/pending/bem803_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem803_execute_marker_route.txt"
+  ],
+  "commit_sha": "5d5d8a9dca96f20d031262b1198b1aef9c2faeba",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem803_execute_marker_route.md",
+  "completed_at": "2026-05-21T17:30:38Z"
+}
