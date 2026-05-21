@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-791
+# GPT NEXT ACTION | BEM-792
 
-Status: response_processing_pending
-Next: read response and produce agreed protocol
+Status: route_unknown
+Next: diagnose unknown state
