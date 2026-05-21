@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem817_execute_bem816_route",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-817 execute 816",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 20:47 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nroute=load('governance/state/bem816_route_after_bem815.json')\nrs=route.get('status','unknown')\nreal=[]; blockers=[]\nd=Path('governance/audit_mailbox/claude_to_gpt')\nif d.exists():\n    for p in sorted(d.glob('*')):\n        if p.is_file():\n            txt=read(p); up=txt.upper(); low=(p.name+' '+txt).lower()\n            is_blocker='NOT CLAUDE APPROVAL' in up or 'RUNTIME BLOCKER' in up or 'not treat this as claude' in low\n            has_decision='DECISION:' in up and ('APPROVED' in up or 'CHANGE_REQUIRED' in up or 'BLOCKED' in up)\n            has_marker='CLAUDE RESPONSE' in up or 'Claude Internal Auditor' in txt\n            item={'path':str(p),'preview':txt[:500]}\n            if is_blocker: blockers.append(item)\n            elif has_decision and has_marker: real.append(item)\nresults=[]\nfor p in sorted(Path('governance/workflow_dispatch_results').glob('*.status.json')) if Path('governance/workflow_dispatch_results').exists() else []:\n    results.append({'path':str(p),'preview':read(p)[:500]})\nif real:\n    status='real_response_found'; next_action='process real Claude response and prepare agreed protocol'\nelif results:\n    status='dispatch_results_need_parse'; next_action='parse dispatch result status and patch exact failure'\nelse:\n    status='no_real_response_no_dispatch_results'; next_action='continue dispatch infrastructure repair; blocker files ignored'\nstate={'bem':'BEM-817','status':status,'route_status':rs,'real_responses':real[-5:],'blocker_files':blockers[-5:],'dispatch_results':results[-10:],'next_action':next_action,'created_at':created}\nPath('governance/state/bem817_execute_bem816_route.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem817_execute_bem816_route.md').write_text('# BEM-817 | Execute BEM-816 Route | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem817_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-817'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem817_execute_bem816_route.json','governance/reports/bem817_execute_bem816_route.md','governance/tasks/pending/bem817_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Executed BEM-816 route by filtering real Claude response and collecting dispatch result files')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem817_execute_bem816_route.md",
+    "result_json": "governance/codex/results/bem817_execute_bem816_route.json"
+  },
+  "created_at": "2026-05-21T17:47:20.263Z"
+}
