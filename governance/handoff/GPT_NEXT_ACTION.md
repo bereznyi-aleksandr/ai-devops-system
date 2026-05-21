@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-725 WAIT CLAUDE RESPONSE
+# GPT NEXT ACTION | BEM-728 CLAUDE TRIGGER SENT
 
-Дата: 2026-05-21 | 13:02 (UTC+3)
+Дата: 2026-05-21 | 13:38 (UTC+3)
 
-Claude asked again. Required: final decision and explanation why no previous mailbox response. Minute watchdog active; operator is not relay.
+A new GPT-to-Claude mailbox file was written after Claude inbound workflow installation. Watchdog must monitor Claude-to-GPT mailbox until Decision appears.
