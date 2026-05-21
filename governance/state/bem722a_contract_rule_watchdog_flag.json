@@ -1,0 +1,20 @@
+{
+  "schema_version": "contract_rule_watchdog_flag.v1",
+  "bem": "BEM-722A",
+  "status": "watchdog_rule_and_flag_installed",
+  "checks": [
+    {
+      "name": "rule_written",
+      "pass": true,
+      "evidence": "governance/protocols/AUTONOMY_CONTINUITY_CONTRACT_EXTENSION.md"
+    },
+    {
+      "name": "active_flag_enabled",
+      "pass": true,
+      "evidence": "governance/autonomy/claude_mailbox_watchdog_active.json"
+    }
+  ],
+  "next": "install minute watchdog workflow/script",
+  "blocker": null,
+  "created_at": "2026-05-21 | 11:13 (UTC+3)"
+}

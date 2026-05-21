@@ -25,3 +25,8 @@ After each Claude mailbox request, GPT must create/update ChatGPT Task from chat
 Дата: 2026-05-20 | 22:47 (UTC+3)
 
 Оператор не является relay для ответов Claude. Если ChatGPT Task не подтверждён, repo-side fallback не должен слать оператору просьбу пересказать содержание. Fallback только фиксирует repo-state, handoff и pending autoprocess artifact. GPT/Codex читает mailbox напрямую из repo и доводит согласование до результата.
+
+## BEM-722A | Обязательное правило минутного мониторинга Claude mailbox
+Дата: 2026-05-21 | 11:13 (UTC+3)
+
+Если GPT обращается к внутреннему аудитору Claude через mailbox, GPT обязан включить периодический мониторинг ответа с интервалом 1 минута или минимально доступным интервалом. Мониторинг продолжается до результата: APPROVED / CHANGE_REQUIRED / BLOCKED. Отчёт не останавливает работу. Если ответа нет, агент не ждёт оператора, а диагностирует причину и продолжает автономный контур.
