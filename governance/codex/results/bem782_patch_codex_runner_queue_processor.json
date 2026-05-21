@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem782_patch_codex_runner_queue_processor",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem782_patch_codex_runner_queue_processor.txt"
+  ],
+  "commit_sha": "c87103c2073bde530d2a3e9b3312eabc11782f0a",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: forbidden calls: os.system"
+  },
+  "report_path": "governance/codex/results/bem782_patch_codex_runner_queue_processor.md",
+  "completed_at": "2026-05-21T16:59:19Z"
+}
