@@ -24,15 +24,13 @@ jobs:
         with:
           fetch-depth: 0
       - name: Syntax check helper scripts
-        run: python3 -m py_compile scripts/check_claude_mailbox_active.py scripts/record_claude_inbound_workflow_state.py
+        run: python3 -m py_compile scripts/claude_dispatcher_active_check.py scripts/record_claude_inbound_workflow_state.py scripts/prepare_claude_inbound_context.py scripts/mark_claude_inbound_seen.py
       - name: Check active mailbox work
         id: active_check
-        run: |
-          python3 scripts/check_claude_mailbox_active.py
-          cat governance/tmp/claude_mailbox_active.env >> "$GITHUB_OUTPUT"
+        run: python3 scripts/claude_dispatcher_active_check.py
       - name: Record dispatcher start
         if: steps.active_check.outputs.active == 'true'
-        run: python3 scripts/record_claude_inbound_workflow_state.py start dispatcher_start
+        run: python3 scripts/record_claude_inbound_workflow_state.py start dispatcher_started
       - name: Claude internal auditor responds to mailbox
         if: steps.active_check.outputs.active == 'true'
         id: claude_response
@@ -61,7 +59,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A governance/state/claude_inbound_mailbox_workflow_state.json governance/reports/claude_inbound_mailbox_workflow_state.md governance/audit_mailbox/claude_to_gpt governance/tmp/claude_mailbox_active.env || true
+          git add -A governance/audit_mailbox/claude_to_gpt governance/state/claude_inbound_mailbox_workflow_state.json governance/reports/claude_inbound_mailbox_workflow_state.md governance/state governance/reports governance/transport || true
           git diff --cached --quiet && echo "No changes" || git commit -m "BEM-739 Claude dispatcher state"
           git pull --rebase --autostash origin main || true
           git push || true

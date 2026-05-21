@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem739_repair_claude_dispatcher_yaml
+task_type: code_patch
+executed_at: 2026-05-21T12:32:52Z
+ops_applied: Repaired invalid Claude dispatcher workflow by removing inline Python and using a helper script for active check, custom_script
+changed_files: scripts/claude_dispatcher_active_check.py, .github/workflows/claude-internal-auditor-dispatcher.yml, governance/state/bem739_repair_claude_dispatcher_yaml.json, governance/reports/bem739_repair_claude_dispatcher_yaml.md, governance/transport/results.jsonl, governance/codex/proofs/bem739_repair_claude_dispatcher_yaml.txt
+errors: none
