@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem722c_kick_minute_watchdog_active_flag",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Updated active watchdog flag to force a push event for claude-mailbox-minute-watchdog workflow",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/autonomy/claude_mailbox_watchdog_active.json",
+    "governance/state/bem722c_kick_minute_watchdog_active_flag.json",
+    "governance/reports/bem722c_kick_minute_watchdog_active_flag.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem722c_kick_minute_watchdog_active_flag.txt",
+    "governance/codex/proofs/bem722c_kick_minute_watchdog_active_flag.txt"
+  ],
+  "commit_sha": "5b7d697da2444ea1416cb6ae24d37c0005285f68",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem722c_kick_minute_watchdog_active_flag.md",
+  "completed_at": "2026-05-21T09:57:01Z"
+}
