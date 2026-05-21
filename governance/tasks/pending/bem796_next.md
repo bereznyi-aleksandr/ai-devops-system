@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-796
-
-Status: processor_present_but_no_results
 Next: verify codex-runner step placement and lint; processor may not execute or commit may fail
+Operator relay forbidden.

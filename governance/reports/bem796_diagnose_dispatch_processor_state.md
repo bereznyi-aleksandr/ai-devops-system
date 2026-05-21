@@ -1,0 +1,3 @@
+# BEM-796 | Diagnose Dispatch Processor State | processor_present_but_no_results
+
+{"bem": "BEM-796", "status": "processor_present_but_no_results", "processor_present": true, "commit_present": true, "queue_count": 0, "queue_tail": [], "result_count": 0, "runtime_started_at": "2026-05-21 | 19:33 (UTC+3)", "runtime_completed_at": "2026-05-21 | 19:33 (UTC+3)", "next_action": "verify codex-runner step placement and lint; processor may not execute or commit may fail", "created_at": "2026-05-21 | 20:21 (UTC+3)"}
