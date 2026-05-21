@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem750_kick_codex_to_wake_claude_dispatcher",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Completed a Codex Runner tick after aligning dispatcher workflow name to trigger Claude dispatcher via workflow_run",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem750_kick_codex_to_wake_claude_dispatcher.json",
+    "governance/reports/bem750_kick_codex_to_wake_claude_dispatcher.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem750_kick_codex_to_wake_claude_dispatcher.txt",
+    "governance/codex/proofs/bem750_kick_codex_to_wake_claude_dispatcher.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem750_kick_codex_to_wake_claude_dispatcher.md",
+  "completed_at": "2026-05-21T15:41:56Z"
+}
