@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem832_verify_results_after_831",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-832 verify results",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 21:04 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nresults=[]\nfor p in sorted(Path('governance/workflow_dispatch_results').glob('*.status.json')) if Path('governance/workflow_dispatch_results').exists() else []:\n    results.append({'path':str(p),'text':read(p)[:700]})\nmarker=load('governance/state/workflow_dispatch_queue_processor_marker.json')\nruntime=load('governance/state/claude_inbound_mailbox_workflow_state.json')\nstatus='results_present' if results else ('marker_present_no_results' if marker.get('status') else 'marker_missing_no_results')\nnext_action='parse results' if results else ('patch result writer' if marker.get('status') else 'patch runner placement')\nstate={'bem':'BEM-832','status':status,'results':results[-10:],'marker':marker,'runtime_started_at':runtime.get('started_at'),'runtime_completed_at':runtime.get('completed_at'),'next_action':next_action,'created_at':created}\nPath('governance/state/bem832_verify_results_after_831.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem832_verify_results_after_831.md').write_text('# BEM-832 | Verify Results After BEM-831 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem832_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-832'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem832_verify_results_after_831.json','governance/reports/bem832_verify_results_after_831.md','governance/tasks/pending/bem832_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Verified workflow_dispatch_results and processor marker after BEM-831 tick')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem832_verify_results_after_831.md",
+    "result_json": "governance/codex/results/bem832_verify_results_after_831.json"
+  },
+  "created_at": "2026-05-21T19:32:56.690Z"
+}
