@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-834
+# GPT NEXT ACTION | BEM-835
 
-Status: parse_results_required
-Next: read status JSON and patch exact failure or check runtime
+Status: parsed_dispatch_result_processor_entered
+Next: check runtime if dispatch_attempted else patch processor_entered

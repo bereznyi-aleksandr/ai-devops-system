@@ -1,0 +1,3 @@
+# BEM-835 | Parse Or Patch After BEM-834 | parsed_dispatch_result_processor_entered
+
+{"bem": "BEM-835", "status": "parsed_dispatch_result_processor_entered", "previous_status": "parse_results_required", "results_tail": [{"path": "governance/workflow_dispatch_results/queue_processor_summary.status.json", "data": {"status": "processor_entered", "time": "2026-05-21T19:35:00Z"}}], "next_action": "check runtime if dispatch_attempted else patch processor_entered", "created_at": "2026-05-21 | 21:07 (UTC+3)"}
