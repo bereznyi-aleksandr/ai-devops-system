@@ -1,0 +1,3 @@
+# BEM-821 | Repair First Missing Smoke Proof | repair_dispatch_results_first
+
+{"bem": "BEM-821", "status": "repair_dispatch_results_first", "missing": ["workflow_dispatch_results", "real_claude_response"], "next_action": "fix queue processor/result writer until workflow_dispatch_results exists", "created_at": "2026-05-21 | 20:52 (UTC+3)"}

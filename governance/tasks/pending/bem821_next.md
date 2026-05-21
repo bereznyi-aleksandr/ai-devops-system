@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-821
-
-Status: repair_dispatch_results_first
 Next: fix queue processor/result writer until workflow_dispatch_results exists
+Operator relay forbidden.
