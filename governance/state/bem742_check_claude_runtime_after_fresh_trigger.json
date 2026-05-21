@@ -1,0 +1,48 @@
+{
+  "schema_version": "check_claude_runtime_after_fresh_trigger.v1",
+  "bem": "BEM-742",
+  "status": "claude_runtime_started_no_response_file_yet",
+  "watchdog_check_count": 120,
+  "watchdog_last_checked_at": "2026-05-21 | 14:58 (UTC+3)",
+  "watchdog_latest_status": "no_response",
+  "claude_runtime_exists": true,
+  "claude_runtime_started_at": "2026-05-21 | 13:55 (UTC+3)",
+  "claude_runtime_completed_at": "2026-05-21 | 13:55 (UTC+3)",
+  "claude_action_outcome": "failure",
+  "claude_runtime_runs": [
+    {
+      "time": "2026-05-21 | 13:54 (UTC+3)",
+      "mode": "start",
+      "outcome": "started"
+    },
+    {
+      "time": "2026-05-21 | 13:54 (UTC+3)",
+      "mode": "complete",
+      "outcome": "failure"
+    },
+    {
+      "time": "2026-05-21 | 13:55 (UTC+3)",
+      "mode": "start",
+      "outcome": "started"
+    },
+    {
+      "time": "2026-05-21 | 13:55 (UTC+3)",
+      "mode": "complete",
+      "outcome": "failure"
+    }
+  ],
+  "seen_state": {},
+  "responses_found": 0,
+  "responses": [],
+  "operator_role": "none",
+  "blocker": {
+    "code": "CLAUDE_RUNTIME_STARTED_NO_RESPONSE_FILE_YET",
+    "runtime_latest": {
+      "mode": "complete",
+      "outcome": "failure",
+      "time": "2026-05-21 | 13:55 (UTC+3)"
+    },
+    "seen_state": {}
+  },
+  "created_at": "2026-05-21 | 15:30 (UTC+3)"
+}
