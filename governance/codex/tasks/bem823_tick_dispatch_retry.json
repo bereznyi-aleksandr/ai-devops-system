@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem823_tick_dispatch_retry",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-823 tick dispatch retry",
+  "objective": "Create file governance/state/bem823_tick_dispatch_retry.json with content {\"bem\":\"BEM-823\",\"status\":\"fresh_tick_to_process_bem822_dispatch_retry\",\"created_at\":\"2026-05-21 | 20:54 (UTC+3)\",\"expected\":\"workflow_dispatch_results status file for bem822 queue item\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem823_tick_dispatch_retry.md",
+    "result_json": "governance/codex/results/bem823_tick_dispatch_retry.json"
+  },
+  "created_at": "2026-05-21T19:23:32.459Z"
+}
