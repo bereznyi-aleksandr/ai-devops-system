@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem735_workflow_lint_baseline_gate",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Installed workflow lint baseline gate to stop repeated failures from legacy workflow debt while still failing new violations",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/workflow_lint_gate.py",
+    "governance/workflow_lint/baseline.json",
+    ".github/workflows/workflow-lint-gate.yml",
+    "governance/state/bem735_workflow_lint_baseline_gate.json",
+    "governance/reports/bem735_workflow_lint_baseline_gate.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem735_workflow_lint_baseline_gate.txt",
+    "governance/codex/proofs/bem735_workflow_lint_baseline_gate.txt"
+  ],
+  "commit_sha": "9412f0bd5383b7d8400d2fcb8ddb8f8b96c3fbff",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem735_workflow_lint_baseline_gate.md",
+  "completed_at": "2026-05-21T11:01:51Z"
+}
