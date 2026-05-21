@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem825_route_after_bem824",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-825 route 824",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 20:56 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except: return {}\nprev=load('governance/state/bem824_verify_bem822_queue_result.json')\nps=prev.get('status','unknown')\nif ps=='response_files_present_filter_needed':\n    status='next_filter_response'; next_action='filter real Claude response'\nelif ps=='runtime_seen_after_bem822_queue':\n    status='next_diagnose_runtime'; next_action='diagnose Claude runtime outcome'\nelif ps=='dispatch_results_present_after_bem822_queue':\n    status='next_parse_dispatch_results'; next_action='parse dispatch result status files'\nelif ps=='processor_marker_seen_no_results_after_bem822':\n    status='next_patch_shell_loop'; next_action='patch shell loop result-file creation'\nelif ps=='processor_marker_missing_after_bem822':\n    status='next_repair_runner_placement'; next_action='repair codex-runner processor step placement'\nelse:\n    status='next_unknown'; next_action='diagnose BEM-824 state'\nstate={'bem':'BEM-825','status':status,'previous_status':ps,'next_action':next_action,'created_at':created}\nPath('governance/state/bem825_route_after_bem824.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem825_route_after_bem824.md').write_text('# BEM-825 | Route After BEM-824 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem825_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-825'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem825_route_after_bem824.json','governance/reports/bem825_route_after_bem824.md','governance/tasks/pending/bem825_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Routed after BEM-824 queue verification')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem825_route_after_bem824.md",
+    "result_json": "governance/codex/results/bem825_route_after_bem824.json"
+  },
+  "created_at": "2026-05-21T17:56:25.655Z"
+}
