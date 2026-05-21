@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-803
+# GPT NEXT ACTION | BEM-804
 
-Status: filter_response_again
-Next: filter real Claude response
+Status: route_diagnose_again
+Next: diagnose marker/queue/result mismatch
