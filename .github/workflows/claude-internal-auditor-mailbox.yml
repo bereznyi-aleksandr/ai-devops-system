@@ -13,6 +13,8 @@ on:
       - 'scripts/record_claude_inbound_workflow_state.py'
       - 'scripts/prepare_claude_inbound_context.py'
       - 'scripts/mark_claude_inbound_seen.py'
+      - 'scripts/write_claude_inbound_preflight_output.sh'
+      - 'scripts/commit_claude_inbound_state.sh'
 
 permissions:
   contents: write
@@ -34,9 +36,7 @@ jobs:
         run: python3 -m py_compile scripts/record_claude_inbound_workflow_state.py scripts/prepare_claude_inbound_context.py scripts/mark_claude_inbound_seen.py
       - name: Preflight latest inbox item
         id: preflight
-        run: |
-          python3 scripts/prepare_claude_inbound_context.py > governance/tmp/claude_inbound_preflight.env
-          cat governance/tmp/claude_inbound_preflight.env >> "$GITHUB_OUTPUT"
+        run: bash scripts/write_claude_inbound_preflight_output.sh
       - name: Record workflow start
         if: steps.preflight.outputs.should_run == 'true'
         run: python3 scripts/record_claude_inbound_workflow_state.py start started
@@ -68,10 +68,4 @@ jobs:
         run: python3 scripts/mark_claude_inbound_seen.py "${{ steps.preflight.outputs.latest_file }}" success
       - name: Commit Claude runtime state
         if: always()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A governance/audit_mailbox/claude_to_gpt governance/state/claude_inbound_mailbox_workflow_state.json governance/state/claude_inbound_seen_items.json governance/reports/claude_inbound_mailbox_workflow_state.md governance/state governance/reports governance/transport governance/tmp/claude_inbound_preflight.env || true
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-738B Claude inbound bridge state"
-          git pull --rebase --autostash origin main || true
-          git push || true
+        run: bash scripts/commit_claude_inbound_state.sh

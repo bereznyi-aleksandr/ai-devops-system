@@ -1,0 +1,39 @@
+{
+  "schema_version": "repair_lint_gate_after_claude_bridge.v1",
+  "bem": "BEM-739",
+  "status": "lint_gate_still_has_new_violations",
+  "new_violation_count": 2,
+  "new_violations": [
+    {
+      "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+      "line": 32,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PY' > /tmp/active.txt"
+    },
+    {
+      "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+      "line": 32,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PY' > /tmp/active.txt"
+    }
+  ],
+  "blocker": {
+    "code": "NEW_WORKFLOW_LINT_VIOLATIONS_REMAIN",
+    "count": 2,
+    "new": [
+      {
+        "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+        "line": 32,
+        "rule": "NO_INLINE_CODE",
+        "text": "python3 - <<'PY' > /tmp/active.txt"
+      },
+      {
+        "file": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+        "line": 32,
+        "rule": "NO_INLINE_HEREDOC",
+        "text": "python3 - <<'PY' > /tmp/active.txt"
+      }
+    ]
+  },
+  "created_at": "2026-05-21 | 14:33 (UTC+3)"
+}
