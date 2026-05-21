@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem798_inspect_codex_runner_queue_step_placement",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Inspected codex-runner queue processor step placement and captured context",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem798_inspect_codex_runner_queue_step_placement.json",
+    "governance/reports/bem798_inspect_codex_runner_queue_step_placement.md",
+    "governance/tasks/pending/bem798_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem798_inspect_codex_runner_queue_step_placement.txt"
+  ],
+  "commit_sha": "ce77af23aaac04e22fc856a0b2144f7de68dda14",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem798_inspect_codex_runner_queue_step_placement.md",
+  "completed_at": "2026-05-21T17:24:32Z"
+}
