@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem828_repair_invalid_dispatch_queue_json_safe",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Safely quarantined invalid workflow_dispatch_queue JSON files",
+    " created fresh compact valid Claude dispatch queue item",
+    " and hardened custom queue processor against invalid JSON",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem828_repair_invalid_dispatch_queue_json_safe.json",
+    "governance/reports/bem828_repair_invalid_dispatch_queue_json_safe.md",
+    "governance/tasks/pending/bem828_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/workflow_dispatch_queue/bem828_claude_dispatch_valid_retry.json",
+    "governance/workflow_dispatch_queue_invalid/bem822_fresh_claude_dispatch.json.txt",
+    "scripts/process_workflow_dispatch_queue.sh",
+    "governance/codex/proofs/bem828_repair_invalid_dispatch_queue_json_safe.txt"
+  ],
+  "commit_sha": "8d060540f60566755c631a654c40a3e7e592457f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem828_repair_invalid_dispatch_queue_json_safe.md",
+  "completed_at": "2026-05-21T19:42:18Z"
+}
