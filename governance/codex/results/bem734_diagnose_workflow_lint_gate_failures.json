@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem734_diagnose_workflow_lint_gate_failures",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Diagnosed workflow lint-gate violations causing repeated failed workflow notifications",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem734_diagnose_workflow_lint_gate_failures.json",
+    "governance/reports/bem734_diagnose_workflow_lint_gate_failures.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem734_diagnose_workflow_lint_gate_failures.txt",
+    "governance/codex/proofs/bem734_diagnose_workflow_lint_gate_failures.txt"
+  ],
+  "commit_sha": "5d2f8626a3880966bfd12007d85c41c014c4e725",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem734_diagnose_workflow_lint_gate_failures.md",
+  "completed_at": "2026-05-21T10:59:37Z"
+}
