@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-797
-
-Status: runner_step_placement_diagnosis_next
 Next: inspect codex-runner placement around Process workflow dispatch queue step
+Operator relay forbidden.
