@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-789
+# GPT NEXT ACTION | BEM-790
 
-Status: real_response_processing_queued
-Next: read and convert Claude answer to agreed protocol
+Status: next_process_response
+Next: read Claude response and produce agreed protocol
