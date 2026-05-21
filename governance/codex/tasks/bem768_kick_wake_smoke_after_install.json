@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem768_kick_wake_smoke_after_install",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-768 kick wake smoke",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/codex/proofs','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 19:19 (UTC+3)'\nstate={'schema_version':'kick_wake_smoke_after_install.v1','bem':'BEM-768','status':'codex_tick_to_trigger_wake_smoke','expected':'dispatcher-wake-smoke workflow_run should record dispatcher_wake_smoke_state after this Codex completion','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem768_kick_wake_smoke_after_install.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem768_kick_wake_smoke_after_install.md')\nreport.write_text('# BEM-768 | Kick Wake Smoke After Install | PASS'+sep+sep+'Дата: '+created+sep+'Fresh Codex completion to trigger dispatcher wake smoke.\\nBlocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem768_kick_wake_smoke_after_install','status':'codex_tick_to_trigger_wake_smoke','blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem768_kick_wake_smoke_after_install.txt')\nproof.write_text('BEM-768 PASS codex tick to trigger wake smoke.\\n')\nchanged_files.extend([str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Completed a fresh Codex tick to trigger the newly installed dispatcher wake smoke workflow via workflow_run')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem768_kick_wake_smoke_after_install.md",
+    "result_json": "governance/codex/results/bem768_kick_wake_smoke_after_install.json"
+  },
+  "created_at": "2026-05-21T16:19:47.370Z"
+}
