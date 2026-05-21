@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem820_verify_single_smoke",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified the three-proof smoke contract: dispatch result",
+    " Claude runtime state",
+    " and real Claude response",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem820_verify_single_smoke.json",
+    "governance/reports/bem820_verify_single_smoke.md",
+    "governance/tasks/pending/bem820_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem820_verify_single_smoke.txt"
+  ],
+  "commit_sha": "3d35d4c1ff949137b2df58cd8428027feb2975e7",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem820_verify_single_smoke.md",
+  "completed_at": "2026-05-21T19:19:19Z"
+}
