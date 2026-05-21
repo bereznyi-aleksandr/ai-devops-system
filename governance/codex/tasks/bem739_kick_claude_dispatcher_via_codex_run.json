@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem739_kick_claude_dispatcher_via_codex_run",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-739 kick dispatcher",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/autonomy','governance/state','governance/reports','governance/codex/proofs','governance/transport','governance/handoff']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 15:24 (UTC+3)'\nactive=Path('governance/autonomy/claude_mailbox_watchdog_active.json')\ntry:\n    data=json.loads(active.read_text(errors='ignore')) if active.exists() else {}\nexcept:\n    data={}\ndata.update({'schema_version':'claude_mailbox_watchdog_active.v6','active':True,'run_id':'bem739_dispatcher_kick','interval_seconds':60,'until':'APPROVED_CHANGE_REQUIRED_BLOCKED','watch_scope':'BEM-732 BEM-728 BEM-725 BEM-703','operator_role':'none','kicked_at':created,'kick_reason':'Trigger Codex Runner completion so claude-internal-auditor-dispatcher workflow_run can start Claude'})\nactive.write_text(json.dumps(data,indent=2,ensure_ascii=False)+sep)\nhandoff=Path('governance/handoff/GPT_NEXT_ACTION.md')\nhandoff.write_text('# GPT NEXT ACTION | CLAUDE DISPATCHER KICKED'+sep+sep+'Дата: '+created+sep+sep+'BEM-739 creates a Codex Runner completion event. Next: check claude_inbound_mailbox_workflow_state.json for dispatcher start/completion.'+sep)\nstate={'schema_version':'kick_claude_dispatcher_via_codex_run.v1','bem':'BEM-739','status':'dispatcher_kick_committed','expected_effect':'Codex Runner completion should trigger Claude Internal Auditor Dispatcher workflow_run','operator_role':'none','blocker':None,'created_at':created}\nstate_file=Path('governance/state/bem739_kick_claude_dispatcher_via_codex_run.json')\nstate_file.write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nreport=Path('governance/reports/bem739_kick_claude_dispatcher_via_codex_run.md')\nreport.write_text('# BEM-739 | Kick Claude Dispatcher Via Codex Run | SENT'+sep+sep+'Дата: '+created+sep+sep+'Active flag updated to create a Codex Runner completion event for the dispatcher.'+sep+sep+'Blocker: null'+sep)\ntransport=Path('governance/transport/results.jsonl')\nwith transport.open('a',encoding='utf-8') as h:\n    h.write(json.dumps({'record_type':'bem739_kick_claude_dispatcher_via_codex_run','status':'dispatcher_kick_committed','blocker':None,'created_at':created},ensure_ascii=False)+sep)\nproof=Path('governance/codex/proofs/bem739_kick_claude_dispatcher_via_codex_run.txt')\nproof.write_text('BEM-739 dispatcher_kick_committed\\n')\nchanged_files.extend([str(active),str(handoff),str(state_file),str(report),str(transport),str(proof)])\nops_applied.append('Kicked Claude dispatcher by committing active watchdog flag through Codex Runner so workflow_run has a new completion event')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem739_kick_claude_dispatcher_via_codex_run.md",
+    "result_json": "governance/codex/results/bem739_kick_claude_dispatcher_via_codex_run.json"
+  },
+  "created_at": "2026-05-21T12:24:37.350Z"
+}
