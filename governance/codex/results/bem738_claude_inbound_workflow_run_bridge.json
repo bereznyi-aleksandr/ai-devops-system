@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem738_claude_inbound_workflow_run_bridge",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem738_claude_inbound_workflow_run_bridge.txt"
+  ],
+  "commit_sha": null,
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: forbidden calls: requests"
+  },
+  "report_path": "governance/codex/results/bem738_claude_inbound_workflow_run_bridge.md",
+  "completed_at": "2026-05-21T12:23:35Z"
+}
