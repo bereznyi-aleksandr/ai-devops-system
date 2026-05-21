@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem727b_install_claude_inbound_mailbox_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-727B Claude inbound",
+  "objective": "Create file .github/workflows/claude-internal-auditor-mailbox.yml with content name: Claude Internal Auditor Mailbox\n\non:\n  workflow_dispatch:\n  push:\n    paths:\n      - 'governance/audit_mailbox/gpt_to_claude/**'\n      - '.github/workflows/claude-internal-auditor-mailbox.yml'\n\npermissions:\n  contents: write\n  pull-requests: write\n  issues: write\n\nconcurrency:\n  group: claude-internal-auditor-mailbox\n  cancel-in-progress: false\n\njobs:\n  claude-internal-auditor:\n    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n      - name: Claude internal auditor responds to mailbox\n        uses: anthropics/claude-code-action@v1\n        env:\n          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}\n        with:\n          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}\n          prompt: |\n            You are Claude Internal Auditor for repository bereznyi-aleksandr/ai-devops-system.\n            Read the newest file in governance/audit_mailbox/gpt_to_claude/.\n            Write a concise response to governance/audit_mailbox/claude_to_gpt/ with a filename containing the BEM id.\n            Include explicit Decision: APPROVED / CHANGE_REQUIRED / BLOCKED when requested.\n            If asked why no prior response existed, explain the runtime or trigger reason based on repository evidence.\n            Do not write issue comments. Do not expose secrets.\n          claude_args: |\n            --max-turns 8\n      - name: Commit Claude mailbox response if needed\n        run: |\n          git config user.name \"github-actions[bot]\"\n          git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\n          git add -A governance/audit_mailbox/claude_to_gpt governance/state governance/reports governance/transport || true\n          git diff --cached --quiet && echo \"No changes\" || git commit -m \"BEM-727 Claude internal auditor mailbox response\"\n          git pull --rebase --autostash origin main || true\n          git push || true\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem727b_install_claude_inbound_mailbox_workflow.md",
+    "result_json": "governance/codex/results/bem727b_install_claude_inbound_mailbox_workflow.json"
+  },
+  "created_at": "2026-05-21T10:37:56.509Z"
+}
