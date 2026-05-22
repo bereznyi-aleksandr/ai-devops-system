@@ -1,0 +1,3 @@
+# BEM-841 | Fix Codex Git Push Race | PATCHED
+
+{"bem": "BEM-841", "status": "git_push_race_patch_applied", "script": "scripts/git_safe_commit_push.sh", "runner_changed": true, "commit_script_changed": true, "created_at": "2026-05-22 | 11:38 (UTC+3)", "reason": "non-fast-forward push rejection from parallel Codex Runner runs"}

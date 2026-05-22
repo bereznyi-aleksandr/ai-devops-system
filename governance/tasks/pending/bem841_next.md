@@ -1,2 +1,1 @@
-Next: if conflict exists, choose one auth path in workflow and document operator secret update
-Operator relay forbidden. Secrets must not be pasted into chat.
+Next: run fresh tick to verify no non-fast-forward push rejection. Then continue Claude triad proof. Operator relay forbidden.

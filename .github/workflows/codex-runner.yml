@@ -16,6 +16,10 @@ on:
         default: ''
         type: string
 
+concurrency:
+  group: codex-runner-main
+  cancel-in-progress: false
+
 permissions:
   contents: write
   actions: write
@@ -372,7 +376,7 @@ jobs:
             echo "COMMIT_SHA=" >> "$GITHUB_ENV"
           else
             git commit -m "CODEX-RUNNER: trace=${{ inputs.trace_id }}"
-            git push
+            bash scripts/git_safe_commit_push.sh "CODEx safe push"
             SHA=$(git rev-parse HEAD)
             echo "COMMIT_SHA=$SHA" >> "$GITHUB_ENV"
             echo "Committed: $SHA"
@@ -407,7 +411,7 @@ jobs:
           git add governance/workflow_dispatch_results governance/workflow_dispatch_queue 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "CODEX-RUNNER: workflow dispatch queue trace=${{ inputs.trace_id }}" || true
-            git push || true
+            bash scripts/git_safe_commit_push.sh "CODEx safe push" || true
           fi
 
       - name: Write result files
@@ -490,7 +494,7 @@ jobs:
             echo "No result changes"
           else
             git commit -m "CODEX-RUNNER: result trace=${{ inputs.trace_id }}"
-            git push
+            bash scripts/git_safe_commit_push.sh "CODEx safe push"
           fi
 
       - name: Job summary
@@ -535,7 +539,7 @@ jobs:
             git add governance/workflow_dispatch_queue governance/state/workflow_dispatch_queue_runner.json governance/reports/workflow_dispatch_queue_runner.md || true
             git diff --cached --quiet && echo "No dispatch queue changes" || git commit -m "BEM-638 workflow dispatch queue processed"
             git pull --rebase --autostash origin main || true
-            git push || true
+            bash scripts/git_safe_commit_push.sh "CODEx safe push" || true
           else
             echo "No workflow dispatch queue runner present"
           fi
