@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-833
+# GPT NEXT ACTION | BEM-833B
 
-Status: response_repair_selected
-Next: patch Claude response writer/provider prompt
+Claude dispatcher workflow restored clean. Next: tick and verify smoke triad.

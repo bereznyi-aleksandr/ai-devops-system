@@ -1,0 +1,46 @@
+name: Claude Internal Auditor Dispatcher
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: read
+
+concurrency:
+  group: claude-internal-auditor-dispatcher
+  cancel-in-progress: false
+
+jobs:
+  claude-internal-auditor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record dispatcher start
+        run: python3 scripts/record_claude_dispatcher_state.py start dispatcher_started
+      - name: Claude internal auditor responds to mailbox
+        id: claude
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are Claude Internal Auditor for repository bereznyi-aleksandr/ai-devops-system.
+            Read the newest item in governance/audit_mailbox/gpt_to_claude/.
+            Write a real response file to governance/audit_mailbox/claude_to_gpt/bem833b_claude_response.md.
+            The response must start with: CLAUDE RESPONSE.
+            Include DECISION: APPROVED, CHANGE_REQUIRED, or BLOCKED.
+            Explain why prior response was missing if you can infer it.
+            Do not write issue comments. Do not expose secrets.
+      - name: Record dispatcher complete
+        if: always()
+        run: python3 scripts/record_claude_dispatcher_state.py complete ${{ steps.claude.outcome }}
+      - name: Commit dispatcher state and mailbox
+        if: always()
+        run: bash scripts/commit_claude_dispatcher_state.sh
