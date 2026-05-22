@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem834_tick_after_claude_workflow_restore",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-834 tick restored Claude",
+  "objective": "Create file governance/state/bem834_tick_after_claude_workflow_restore.json with content {\"bem\":\"BEM-834\",\"status\":\"fresh_tick_after_claude_dispatcher_restore\",\"created_at\":\"2026-05-21 | 22:54 (UTC+3)\",\"expected\":\"dispatch restored Claude workflow and then verify smoke triad\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem834_tick_after_claude_workflow_restore.md",
+    "result_json": "governance/codex/results/bem834_tick_after_claude_workflow_restore.json"
+  },
+  "created_at": "2026-05-22T02:54:19.236Z"
+}
