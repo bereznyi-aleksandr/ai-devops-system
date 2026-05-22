@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem832_diagnose_claude_response_writer",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-832 Claude response writer",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-21 | 22:50 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nwf_path=Path('.github/workflows/claude-internal-auditor-dispatcher.yml')\nwf=read(wf_path)\nruntime=load('governance/state/claude_inbound_mailbox_workflow_state.json')\nchecks=[\n {'name':'dispatcher_workflow_exists','pass':wf_path.exists(),'evidence':str(wf_path)},\n {'name':'uses_claude_action','pass':'anthropics/claude-code-action' in wf or 'claude-code-action' in wf,'evidence':'claude action reference'},\n {'name':'has_anthropic_secret','pass':'ANTHROPIC_API_KEY' in wf or 'CLAUDE_CODE_OAUTH_TOKEN' in wf,'evidence':'secret env reference'},\n {'name':'has_response_path_instruction','pass':'governance/audit_mailbox/claude_to_gpt' in wf,'evidence':'mailbox response path in prompt'},\n {'name':'runtime_records_failure','pass':runtime.get('claude_action_outcome')=='failure' or runtime.get('latest',{}).get('outcome')=='failure','evidence':runtime}\n]\nfailed=[c for c in checks if not c['pass']]\n# Main diagnosis: runtime starts, but Claude action fails; response file absent.\nstatus='claude_action_failure_needs_provider_or_prompt_repair' if not failed or runtime.get('claude_action_outcome')=='failure' else 'claude_dispatcher_config_incomplete'\nnext_action='patch dispatcher to record pre/post Claude action diagnostics and create deterministic failure report without faking Claude answer'\nstate={'bem':'BEM-832','status':status,'checks':checks,'failed_checks':failed,'runtime_started_at':runtime.get('started_at'),'runtime_completed_at':runtime.get('completed_at'),'claude_action_outcome':runtime.get('claude_action_outcome'),'workflow_preview':wf[:2000],'next_action':next_action,'created_at':created}\nPath('governance/state/bem832_diagnose_claude_response_writer.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem832_diagnose_claude_response_writer.md').write_text('# BEM-832 | Diagnose Claude Response Writer | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem832_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-832'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem832_diagnose_claude_response_writer.json','governance/reports/bem832_diagnose_claude_response_writer.md','governance/tasks/pending/bem832_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Diagnosed Claude response writer: dispatcher workflow, Claude action reference, secret references, response path instruction, and runtime failure state')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem832_diagnose_claude_response_writer.md",
+    "result_json": "governance/codex/results/bem832_diagnose_claude_response_writer.json"
+  },
+  "created_at": "2026-05-22T02:51:10.831Z"
+}
