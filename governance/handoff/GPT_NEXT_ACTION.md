@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-832
+# GPT NEXT ACTION | BEM-833
 
-Status: runtime_exists_response_missing
-Missing: real_claude_response
-Next: repair Claude response generation/writer
+Status: response_repair_selected
+Next: patch Claude response writer/provider prompt

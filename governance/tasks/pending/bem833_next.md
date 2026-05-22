@@ -1,2 +1,2 @@
-Next: parse workflow_dispatch_results status files
-Operator relay forbidden.
+Next: patch Claude response writer/provider prompt
+Operator relay forbidden. Report does not stop development.
