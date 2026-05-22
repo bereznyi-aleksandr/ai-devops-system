@@ -1,0 +1,26 @@
+{
+  "bem": "BEM-841",
+  "status": "net_realnogo_otveta_claude",
+  "bem839_status": "only_real_response_missing",
+  "missing": [
+    "real_claude_response"
+  ],
+  "dispatch_results_tail": [
+    {
+      "path": "governance/workflow_dispatch_results/queue_processor_summary.status.json",
+      "data": {
+        "status": "processor_completed",
+        "processed_queue_items": 0,
+        "time": "2026-05-22T02:29:59Z"
+      }
+    }
+  ],
+  "runtime_started_at": "2026-05-21 | 19:33 (UTC+3)",
+  "runtime_completed_at": "2026-05-22 | 06:44 (UTC+3)",
+  "real_responses": [],
+  "blocker_files": [
+    "governance/audit_mailbox/claude_to_gpt/bem770_runtime_channel_blocker_not_claude_approval.md"
+  ],
+  "next_action": "починить генерацию/запись реального ответа Claude; blocker-файлы не засчитывать",
+  "created_at": "2026-05-22 | 07:09 (UTC+3)"
+}
