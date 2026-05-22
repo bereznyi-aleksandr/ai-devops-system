@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-829
+# GPT NEXT ACTION | BEM-830
 
-Status: dispatch_results_present_after_json_fix
-Next: parse latest dispatch result and then verify Claude runtime
+Status: autotest_fail_missing_proofs
+Missing: real_claude_response_exists
+Next: repair Claude Action/provider response writer
