@@ -1,6 +1,5 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-841
 
-Status: repair_real_claude_response_proof
-Missing: real_claude_response
-Next: repair Claude response generation/writer without asking operator to use computer
-Operator mobile-only: do not ask for computer or GitHub UI.
+Status: claude_response_probe_queued_mobile_only
+Next: fresh tick and verify real Claude response
+Operator mobile-only.
