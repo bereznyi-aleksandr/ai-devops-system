@@ -1,0 +1,3 @@
+# BEM-840 | Claude Secret Wiring Proof | CHECKER_INSTALLED
+
+{"bem": "BEM-840", "status": "claude_secret_wiring_checker_installed", "workflow_exists": true, "workflow_patched": true, "checker": "scripts/check_claude_secret_wiring.py", "operator_note": "If Claude platform shows keys Last used 30+ days, GitHub secret is likely missing/wrong or workflow never reaches Claude action. Do not paste secret into chat. Add repo Action secret ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN as used by workflow.", "created_at": "2026-05-22 | 16:01 (UTC+3)"}

@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-840
 
-Status: claude_auth_workflows_need_patch
-Next: patch Claude workflows to ANTHROPIC_API_KEY only
+Claude secret wiring checker installed. Next: trigger dispatcher and verify secret presence proof, runtime, and real response.

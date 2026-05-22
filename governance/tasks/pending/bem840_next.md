@@ -1,2 +1,1 @@
-Next: repair Claude response generation/writer without asking operator to use computer
-Operator is mobile-only; no computer/UI admin instructions.
+Next: run fresh Claude dispatcher/tick and verify governance/state/claude_secret_wiring_check.json plus Claude runtime/response. Operator relay forbidden. Report does not stop development.
