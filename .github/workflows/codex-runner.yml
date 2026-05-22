@@ -544,6 +544,10 @@ jobs:
             echo "No workflow dispatch queue runner present"
           fi
 
+
+      - name: Queue processor execution marker
+        if: always()
+        run: bash scripts/mark_queue_processor_step_seen.sh
       - name: Process workflow dispatch queue
         if: always()
         env:

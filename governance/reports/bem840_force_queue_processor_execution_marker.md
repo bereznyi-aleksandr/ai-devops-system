@@ -1,0 +1,3 @@
+# BEM-840 | Force Queue Processor Execution Marker | PASS
+
+{"bem": "BEM-840", "status": "queue_processor_execution_marker_installed", "runner_changed": true, "marker_script": "scripts/mark_queue_processor_step_seen.sh", "created_at": "2026-05-22 | 06:01 (UTC+3)"}
