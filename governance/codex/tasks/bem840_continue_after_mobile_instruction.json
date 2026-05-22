@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_continue_after_mobile_instruction",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-840 continue after instruction",
+  "objective": "Create file governance/tasks/pending/bem840_continue_after_mobile_instruction.md with content BEM-840 | Continue after mobile operator instruction | 2026-05-22 | 06:01 UTC+3. Operator asked for phone-friendly step instruction. Development does not stop: next repo-side action is to read BEM-839 next_action, then repair missing proof in triad dispatch result + Claude runtime + real Claude response. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_continue_after_mobile_instruction.md",
+    "result_json": "governance/codex/results/bem840_continue_after_mobile_instruction.json"
+  },
+  "created_at": "2026-05-22T08:51:04.812Z"
+}
