@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_tick_external_claude_dispatch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-842 tick external Claude",
+  "objective": "Create file governance/state/bem842_tick_external_claude_dispatch.json with content {\"bem\":\"BEM-842\",\"status\":\"fresh_tick_after_bem841_external_claude_dispatch_queue\",\"created_at\":\"2026-05-22 | 06:44 (UTC+3)\",\"expected\":\"dispatch result, Claude runtime state, external Claude response protocol\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem842_tick_external_claude_dispatch.md",
+    "result_json": "governance/codex/results/bem842_tick_external_claude_dispatch.json"
+  },
+  "created_at": "2026-05-22T03:44:29.788Z"
+}
