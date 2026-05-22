@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-844
+# СЛЕДУЮЩЕЕ ДЕЙСТВИЕ GPT | BEM-840
 
-Status: next_repair_response_writer
-Previous: dispatch_and_runtime_exist_but_no_protocol_response
-Next: runtime works; patch Claude prompt/response writer to produce protocol response
+Дата: 2026-05-22 | 06:00 (UTC+3)
+
+Статус: исправляю язык задач. Дальше: проверить BEM-839, затем продолжить ремонт до трёх доказательств: результат dispatch, runtime-state Claude, реальный ответ Claude. Оператор не используется как relay.

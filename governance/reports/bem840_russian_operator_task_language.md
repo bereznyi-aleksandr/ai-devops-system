@@ -1,0 +1,3 @@
+# BEM-840 | Русский язык операторских задач | ГОТОВО
+
+{"bem": "BEM-840", "status": "russian_operator_language_rule_added", "rule": "governance/protocols/BEM840_RUSSIAN_OPERATOR_TASK_LANGUAGE.md", "next_action": "проверить BEM-839 и продолжить ремонт отсутствующего доказательства", "created_at": "2026-05-22 | 06:00 (UTC+3)"}
