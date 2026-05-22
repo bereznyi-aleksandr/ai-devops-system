@@ -1,0 +1,3 @@
+# BEM-827 | Delete Bad Queue JSONs | PASS
+
+{"bem": "BEM-827", "status": "bad_queue_jsons_deleted_clean_queue_created", "invalid_deleted": [], "clean_queue_file": "governance/workflow_dispatch_queue/bem827_clean_claude_dispatch.json", "created_at": "2026-05-21 | 22:26 (UTC+3)"}

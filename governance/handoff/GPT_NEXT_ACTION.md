@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-830
+# GPT NEXT ACTION | BEM-827
 
-Status: single_smoke_fail
-Missing: real_claude_response
+Deleted invalid queue JSONs and created one clean Claude dispatch queue item. Next: tick and verify single smoke proof.
