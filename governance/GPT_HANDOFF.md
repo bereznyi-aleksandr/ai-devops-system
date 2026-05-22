@@ -157,3 +157,7 @@ createCodexTask → governance/tasks/pending/handoff_<YYYYMMDD_HHMM>.md
 ---
 
 *v2.0 | 2026-05-17 | Claude Sonnet 4.6 | BEM-523*
+
+
+## BEM-840 Mandatory Continuity Pointer
+Перед каждым ответом читать `governance/handoff/NEXT_CHAT_MANDATORY_HANDOFF.md`. Отчёт не останавливает разработку; после checkpoint сразу следующий Deno/Codex task.

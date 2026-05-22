@@ -1,2 +1,1 @@
-Next: repair Claude response generation/writer; runtime and dispatch proof exist
-Operator relay forbidden. Report does not stop development.
+Next: check BEM-839 status, read triad missing proof, continue repair. Report does not stop development. Operator relay forbidden.

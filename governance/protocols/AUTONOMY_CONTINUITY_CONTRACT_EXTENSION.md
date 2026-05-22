@@ -24,3 +24,8 @@
 Дата: 2026-05-21 | 18:59 (UTC+3)
 Перед любым checkpoint-отчётом оператору агент обязан создать доказуемый следующий шаг: active task, pending artifact, watchdog state или dispatched repair task
 ## BEM-840 | Mobile-first оператор: запрет local
+
+
+## BEM-840 | Жёсткий handoff для нового чата
+Дата: 2026-05-22 | 06:00 (UTC+3)
+Новый чат обязан считать разработку незавершённой, пока нет явного PASS по текущей цели. Перед первым ответом он читает `governance/handoff/NEXT_CHAT_MANDATORY_HANDOFF.md` и `governance/handoff/GPT_NEXT_ACTION.md`. Любой отчёт оператору является только checkpoint и запрещён, если до него не создан следующий active task/pending/watchdog-state. После отчёта агент обязан сразу продолжить Deno/Codex loop. Для Claude-согласования PASS возможен только при наличии трёх доказательств: workflow dispatch result, Claude runtime state, real Claude response. Fallback/blocker-файлы не являются ответом Claude. No issue comments.
