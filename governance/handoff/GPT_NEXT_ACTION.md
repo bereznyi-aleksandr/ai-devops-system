@@ -1,4 +1,6 @@
 # GPT NEXT ACTION | BEM-840
 
-Status: next_repair_real_response
-Next: repair Claude response writer/provider; dispatch and runtime proof exist but real response missing
+Status: repair_real_claude_response_proof
+Missing: real_claude_response
+Next: repair Claude response generation/writer without asking operator to use computer
+Operator mobile-only: do not ask for computer or GitHub UI.
