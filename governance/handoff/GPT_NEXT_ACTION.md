@@ -1,3 +1,5 @@
-# GPT NEXT ACTION | BEM-833B
+# GPT NEXT ACTION | BEM-834
 
-Claude dispatcher workflow restored clean. Next: tick and verify smoke triad.
+Status: real_response_missing
+Missing: real_claude_response
+Next: patch Claude prompt/provider response writer and retry
