@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-850
+# GPT NEXT ACTION | BEM-851
 
-Status: next_patch_response_writer
-Next: patch Claude dispatcher prompt/action to write CLAUDE RESPONSE file
+Status: response_writer_retry_queued
+Next: fresh tick then verify real Claude response
