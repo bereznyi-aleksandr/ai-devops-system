@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem843_route_after_bem842",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Routed after BEM-842 proof verification to the first missing proof pipeline",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem843_route_after_bem842.json",
+    "governance/reports/bem843_route_after_bem842.md",
+    "governance/tasks/pending/bem843_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem843_route_after_bem842.txt"
+  ],
+  "commit_sha": "8e1186d4320a24cd5bead5611615e84e67de9957",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem843_route_after_bem842.md",
+  "completed_at": "2026-05-22T04:17:53Z"
+}
