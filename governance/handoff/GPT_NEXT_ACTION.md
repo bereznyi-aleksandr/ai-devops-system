@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-846
+# GPT NEXT ACTION | BEM-847
 
-Status: real_response_missing_queue_empty
-Next: create new mailbox request and dispatcher queue item
+Status: real_response_retry_created
+Next: fresh tick then verify response
