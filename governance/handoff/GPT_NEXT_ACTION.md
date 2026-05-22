@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-843
+# GPT NEXT ACTION | BEM-842
 
-Status: patch_response_writer_selected
-Next: fresh tick and verify real response file
+Status: marker_diagnosed
+Next: move marker before main commit step or add marker paths to final commit stage so files are persisted
