@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem841_tick_queue_processor_marker",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-841 tick marker",
+  "objective": "Create file governance/state/bem841_tick_queue_processor_marker.json with content {\"bem\":\"BEM-841\",\"status\":\"fresh_tick_after_bem840_queue_processor_marker\",\"created_at\":\"2026-05-22 | 06:02 (UTC+3)\",\"expected\":\"queue_processor_step_seen marker and workflow_dispatch_results marker\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem841_tick_queue_processor_marker.md",
+    "result_json": "governance/codex/results/bem841_tick_queue_processor_marker.json"
+  },
+  "created_at": "2026-05-22T20:00:44.523Z"
+}
