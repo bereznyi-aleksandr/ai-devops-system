@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-851
+# GPT NEXT ACTION | BEM-841
 
-Status: response_writer_retry_queued
-Next: fresh tick then verify real Claude response
+Status: bem840_claude_response_missing
+Next: dispatch or retry Claude auditor with BEM-840 task; do not accept header-only response

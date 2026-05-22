@@ -1,0 +1,3 @@
+# BEM-841 | Verify Claude BEM-840 Response | bem840_claude_response_missing
+
+{"bem": "BEM-841", "status": "bem840_claude_response_missing", "responses": [], "next_action": "dispatch or retry Claude auditor with BEM-840 task; do not accept header-only response", "created_at": "2026-05-22 | 07:38 (UTC+3)"}
