@@ -37,6 +37,17 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
+      - name: Queue processor execution marker
+        if: always()
+        run: bash scripts/mark_queue_processor_step_seen.sh
+      - name: Process workflow dispatch queue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: bash scripts/process_workflow_dispatch_queue.sh
+      - name: Commit queue processor marker results
+        if: always()
+        run: bash scripts/commit_queue_processor_marker_results.sh
       - name: Sync latest main
         shell: bash
         run: |
@@ -545,18 +556,3 @@ jobs:
           fi
 
 
-      - name: Queue processor execution marker
-        if: always()
-        run: bash scripts/mark_queue_processor_step_seen.sh
-
-      - name: Commit queue processor marker results
-        if: always()
-        run: bash scripts/commit_queue_processor_marker_results.sh
-      - name: Process workflow dispatch queue
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-        run: bash scripts/process_workflow_dispatch_queue.sh
-      - name: Commit workflow dispatch queue results
-        if: always()
-        run: bash scripts/commit_workflow_dispatch_results.sh

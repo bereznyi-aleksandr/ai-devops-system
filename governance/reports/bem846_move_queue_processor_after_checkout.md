@@ -1,0 +1,3 @@
+# BEM-846 | Move Queue Processor After Checkout | PASS
+
+{"bem": "BEM-846", "status": "queue_processor_moved_after_checkout", "inserted": true, "created_at": "2026-05-22 | 06:07 (UTC+3)"}

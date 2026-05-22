@@ -1,2 +1,1 @@
-Next: fresh tick then inspect Claude action outcome and response file writer
-Operator relay forbidden. Report does not stop development.
+Next: fresh tick and verify queue marker/result. Operator relay forbidden.

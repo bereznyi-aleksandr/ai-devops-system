@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-845
+# GPT NEXT ACTION | BEM-846
 
-Status: layout_dumped_marker_present
-Next: rewrite queue processor placement based on layout.
+Queue processor moved after checkout. Next: tick and verify marker/result.
