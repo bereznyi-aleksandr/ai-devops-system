@@ -1,5 +1,4 @@
 # GPT NEXT ACTION | BEM-840
 
-Status: next_repair_real_response_writer
-Missing: real_claude_response
-Next: patch Claude response writer/provider prompt; require real response file not blocker
+Status: no_real_claude_response_escalated_to_external_claude
+Next: external Claude must produce protocol or diagnose why internal Claude mailbox cannot respond
