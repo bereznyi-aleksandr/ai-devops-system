@@ -1,2 +1,1 @@
-Next: inspect Claude workflow action outcome and why file is not written
-Operator relay forbidden. Report does not stop development.
+Next: rewrite codex-runner queue marker/processor placement based on dumped layout. Operator relay forbidden.
