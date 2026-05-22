@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-843
+# GPT NEXT ACTION | BEM-844
 
-Status: real_response_missing
-Missing: real_claude_response
-Next: repair Claude response generation/writer and retry dispatcher
+Status: claude_response_probe_queued
+Next: fresh tick and verify real Claude response

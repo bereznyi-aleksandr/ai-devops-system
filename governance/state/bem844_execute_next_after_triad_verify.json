@@ -1,0 +1,13 @@
+{
+  "bem": "BEM-844",
+  "status": "claude_response_probe_queued",
+  "input_status": "real_response_missing",
+  "input_missing": [
+    "real_claude_response"
+  ],
+  "created_files": [
+    "governance/workflow_dispatch_queue/bem844_claude_response_probe_after_safe_push.json"
+  ],
+  "next_action": "fresh tick and verify real Claude response",
+  "created_at": "2026-05-22 | 11:43 (UTC+3)"
+}
