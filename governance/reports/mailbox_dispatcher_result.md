@@ -4,7 +4,7 @@
 
 ## Result
 Picked: True
-Mailbox file: governance/audit_mailbox/gpt_to_claude/bem780_file_handoff_protocol_decision_required.md
+Mailbox file: governance/audit_mailbox/gpt_to_claude/bem840_external_claude_escalation_request.md
 Notify operator: False
 Reason: routine_mailbox_no_telegram_use_decision_queue
 
