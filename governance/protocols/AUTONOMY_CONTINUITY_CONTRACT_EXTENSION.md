@@ -23,3 +23,4 @@
 ## BEM-762 | Checkpoint Guard: отчёт не завершает разработку
 Дата: 2026-05-21 | 18:59 (UTC+3)
 Перед любым checkpoint-отчётом оператору агент обязан создать доказуемый следующий шаг: active task, pending artifact, watchdog state или dispatched repair task
+## BEM-840 | Mobile-first оператор: запрет local
