@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_external_claude_task_handoff",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-840 Claude handoff",
+  "objective": "Create file governance/handoff/BEM840_EXTERNAL_CLAUDE_TASK.md with content BEM-840 | External Claude Task | 2026-05-22 | 05:59 UTC+3. Goal: fix autonomous Claude dispatch/mailbox integration. Required proof triad: workflow_dispatch_results status file exists, claude_inbound_mailbox_workflow_state has started_at or completed_at, real Claude response exists in governance/audit_mailbox/claude_to_gpt and is not NOT CLAUDE APPROVAL or runtime blocker. Current blocker: Codex tasks work, Deno works, bad JSON was fixed in BEM-827, but real Claude response and agreed protocol are still missing. External Claude must inspect codex-runner.yml, scripts/process_workflow_dispatch_queue.sh, scripts/commit_workflow_dispatch_results.sh, claude-internal-auditor-dispatcher.yml, record_claude_inbound_workflow_state.py, queue files, workflow_dispatch_results, and claude_to_gpt. Deliverable: code patch plus evidence report with exact files changed, root cause, and next proof status. Do not use issue comments. Do not expose secrets. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_external_claude_task_handoff.md",
+    "result_json": "governance/codex/results/bem840_external_claude_task_handoff.json"
+  },
+  "created_at": "2026-05-22T03:52:02.241Z"
+}
