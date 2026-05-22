@@ -1,1 +1,2 @@
-Next: continue roadmap using agreed route C; maintain Route A secret refresh as pending repair. Operator relay forbidden. Report does not stop development.
+Option A step 3: patch Claude response writer/provider and retry real Claude answer
+Operator relay forbidden. Report does not stop development.

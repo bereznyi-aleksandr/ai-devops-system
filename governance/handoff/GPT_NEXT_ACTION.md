@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-841 OPTION A STEP 2
 
-Status: execute_A_repair_real_response
-Missing: real_claude_response
-Next: patch Claude response writer/provider first
+Status: step2_repair_real_response_selected
+Next: patch Claude response writer/provider and retry real Claude answer
