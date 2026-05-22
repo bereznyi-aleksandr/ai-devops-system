@@ -1,1 +1,2 @@
-Next: after Anthropic key is saved as GitHub Actions secret ANTHROPIC_API_KEY, run smoke triad again. Never put secret in files or chat.
+Next: repair Claude response generation/writer; runtime and dispatch proof exist
+Operator relay forbidden. Report does not stop development.

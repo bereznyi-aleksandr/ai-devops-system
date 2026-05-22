@@ -1,4 +1,5 @@
 # GPT NEXT ACTION | BEM-840
 
-Status: claude_secret_wiring_diagnosed
-Next: operator must place Anthropic key only into GitHub Actions secret ANTHROPIC_API_KEY; then run smoke triad again
+Status: real_response_missing
+Missing: real_claude_response
+Next: repair Claude response generation/writer; runtime and dispatch proof exist
