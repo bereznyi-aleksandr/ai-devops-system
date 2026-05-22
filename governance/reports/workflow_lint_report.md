@@ -1,6 +1,6 @@
 # Workflow Lint Gate Report
 
-Status: PASSED_WITH_BASELINE
+Status: FAILED_NEW_VIOLATIONS
 Total violations: 144
-New violations: 0
-Resolved baseline: 0
+New violations: 17
+Resolved baseline: 17

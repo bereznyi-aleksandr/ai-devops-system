@@ -1,9 +1,130 @@
 {
   "schema_version": "workflow_lint_gate_state.v1",
-  "status": "passed_with_baseline",
+  "status": "failed_new_violations",
   "violation_count": 144,
-  "new_violation_count": 0,
-  "resolved_baseline_count": 0,
-  "new_violations": [],
-  "resolved_baseline_keys": []
+  "new_violation_count": 17,
+  "resolved_baseline_count": 17,
+  "new_violations": [
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 55,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 55,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 90,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 90,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 423,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 423,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 506,
+      "rule": "NO_INLINE_CODE",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 506,
+      "rule": "NO_INLINE_HEREDOC",
+      "text": "python3 - <<'PYEOF'"
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 42,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 11
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 54,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 34
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 89,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 282
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 372,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 18
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 391,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 30
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 422,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 68
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 491,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 13
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 505,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 27
+    },
+    {
+      "file": ".github/workflows/codex-runner.yml",
+      "line": 533,
+      "rule": "LONG_RUN_BLOCK_MOVE_TO_SCRIPT",
+      "length": 21
+    }
+  ],
+  "resolved_baseline_keys": [
+    ".github/workflows/codex-runner.yml|LONG_RUN_BLOCK_MOVE_TO_SCRIPT|387|",
+    ".github/workflows/codex-runner.yml|LONG_RUN_BLOCK_MOVE_TO_SCRIPT|50|",
+    ".github/workflows/codex-runner.yml|LONG_RUN_BLOCK_MOVE_TO_SCRIPT|38|",
+    ".github/workflows/codex-runner.yml|NO_INLINE_CODE|51|python3 - <<'PYEOF'",
+    ".github/workflows/codex-runner.yml|LONG_RUN_BLOCK_MOVE_TO_SCRIPT|418|",
+    ".github/workflows/codex-runner.yml|LONG_RUN_BLOCK_MOVE_TO_SCRIPT|501|",
+    ".github/workflows/codex-runner.yml|NO_INLINE_CODE|502|python3 - <<'PYEOF'",
+    ".github/workflows/codex-runner.yml|LONG_RUN_BLOCK_MOVE_TO_SCRIPT|85|",
+    ".github/workflows/codex-runner.yml|NO_INLINE_HEREDOC|86|python3 - <<'PYEOF'",
+    ".github/workflows/codex-runner.yml|NO_INLINE_HEREDOC|419|python3 - <<'PYEOF'",
+    ".github/workflows/codex-runner.yml|NO_INLINE_HEREDOC|51|python3 - <<'PYEOF'",
+    ".github/workflows/codex-runner.yml|LONG_RUN_BLOCK_MOVE_TO_SCRIPT|487|",
+    ".github/workflows/codex-runner.yml|NO_INLINE_CODE|86|python3 - <<'PYEOF'",
+    ".github/workflows/codex-runner.yml|LONG_RUN_BLOCK_MOVE_TO_SCRIPT|529|",
+    ".github/workflows/codex-runner.yml|NO_INLINE_CODE|419|python3 - <<'PYEOF'",
+    ".github/workflows/codex-runner.yml|LONG_RUN_BLOCK_MOVE_TO_SCRIPT|368|",
+    ".github/workflows/codex-runner.yml|NO_INLINE_HEREDOC|502|python3 - <<'PYEOF'"
+  ]
 }
