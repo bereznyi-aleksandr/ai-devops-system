@@ -1,5 +1,4 @@
-# СЛЕДУЮЩЕЕ ДЕЙСТВИЕ GPT | BEM-841
+# СЛЕДУЮЩЕЕ ДЕЙСТВИЕ GPT | BEM-842
 
-Статус: net_realnogo_otveta_claude
-Отсутствует: real_claude_response
-Следующее действие: починить генерацию/запись реального ответа Claude; blocker-файлы не засчитывать
+Статус: sozdana_queue_zadacha_dlya_realnogo_otveta_claude
+Следующее действие: запустить fresh tick и проверить реальный ответ Claude
