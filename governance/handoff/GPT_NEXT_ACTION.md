@@ -1,5 +1,6 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-843
 
-Status: claude_response_probe_queued_mobile_only
-Next: fresh tick and verify real Claude response
+Status: only_real_response_missing
+Missing: real_claude_response
+Next: repair Claude response writer/provider, no operator UI
 Operator mobile-only.

@@ -1,2 +1,2 @@
-Next: repair Claude response generation/writer and retry dispatcher
-Operator relay forbidden. Report does not stop development.
+Next: repair Claude response writer/provider, no operator UI
+Operator mobile-only; no computer or GitHub UI instructions.
