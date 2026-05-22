@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem841_audit_claude_auth_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-841 audit Claude auth",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-22 | 15:58 (UTC+3)'\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nworkflows=[]\nfor p in sorted(Path('.github/workflows').glob('*.yml')) if Path('.github/workflows').exists() else []:\n    txt=read(p)\n    if 'claude-code-action' in txt or 'ANTHROPIC_API_KEY' in txt or 'CLAUDE_CODE_OAUTH_TOKEN' in txt:\n        workflows.append({'path':str(p),'has_anthropic_secret':'ANTHROPIC_API_KEY' in txt,'has_oauth_secret':'CLAUDE_CODE_OAUTH_TOKEN' in txt,'has_anthropic_input':'anthropic_api_key:' in txt,'has_oauth_input':'claude_code_oauth_token:' in txt,'preview':txt[:1600]})\nneeds_patch=[]\nfor w in workflows:\n    if w['has_oauth_secret'] or w['has_oauth_input'] or not w['has_anthropic_input']:\n        needs_patch.append(w['path'])\nstatus='claude_auth_workflows_need_patch' if needs_patch else 'claude_auth_workflows_ok'\nnext_action='patch Claude workflows to ANTHROPIC_API_KEY only' if needs_patch else 'continue smoke triad verification'\nstate={'bem':'BEM-841','status':status,'workflows':workflows,'needs_patch':needs_patch,'next_action':next_action,'created_at':created}\nPath('governance/state/bem841_audit_claude_auth_workflow.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem841_audit_claude_auth_workflow.md').write_text('# BEM-841 | Audit Claude Auth Workflow | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem841_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-841'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem841_audit_claude_auth_workflow.json','governance/reports/bem841_audit_claude_auth_workflow.md','governance/tasks/pending/bem841_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Audited Claude-related workflows for ANTHROPIC_API_KEY vs CLAUDE_CODE_OAUTH_TOKEN usage after BEM-840 auth decision')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem841_audit_claude_auth_workflow.md",
+    "result_json": "governance/codex/results/bem841_audit_claude_auth_workflow.json"
+  },
+  "created_at": "2026-05-22T12:59:09.908Z"
+}
