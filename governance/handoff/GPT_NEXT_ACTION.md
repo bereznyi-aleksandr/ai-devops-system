@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-842
+# GPT NEXT ACTION | BEM-840
 
-Status: claude_oauth_variant_a_workflows_patched
-Next: after secret is set, run Claude OAuth smoke.
+Instruction added. Await only secret rotation by operator, then run smoke-loop. No secret in repo.

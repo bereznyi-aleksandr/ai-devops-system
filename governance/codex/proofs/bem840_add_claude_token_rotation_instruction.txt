@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem840_add_claude_token_rotation_instruction
+task_type: code_patch
+executed_at: 2026-05-22T08:35:55Z
+ops_applied: Added Claude Code token rotation runbook and protocol without storing any token value in repository, custom_script
+changed_files: governance/runbooks/CLAUDE_CODE_TOKEN_ROTATION.md, governance/protocols/BEM840_CLAUDE_TOKEN_ROTATION_INSTRUCTION.md, governance/state/bem840_add_claude_token_rotation_instruction.json, governance/reports/bem840_add_claude_token_rotation_instruction.md, governance/tasks/pending/bem840_next_after_operator_secret_update.md, governance/handoff/GPT_NEXT_ACTION.md, governance/transport/results.jsonl
+errors: none

@@ -1,0 +1,1 @@
+Next after operator updates GitHub secret CLAUDE_CODE_OAUTH_TOKEN: run smoke-loop for dispatch result, Claude runtime state, and real Claude response. Operator relay forbidden. Secret value must never be written to repo.
