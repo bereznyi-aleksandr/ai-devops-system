@@ -1,2 +1,2 @@
-Next: fresh tick and verify real Claude response
-Operator relay forbidden. Report does not stop development.
+Next: fresh tick then verify real Claude response
+Operator mobile-only; no GitHub UI/computer instructions.
