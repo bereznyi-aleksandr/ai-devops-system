@@ -1,0 +1,3 @@
+# BEM-835 | Execute BEM-834 Repair | real_response_repair_selected
+
+{"bem": "BEM-835", "status": "real_response_repair_selected", "input_status": "real_response_missing", "input_missing": ["real_claude_response"], "created_files": [], "next_action": "patch Claude prompt/provider response writer and retry", "created_at": "2026-05-22 | 05:54 (UTC+3)"}
