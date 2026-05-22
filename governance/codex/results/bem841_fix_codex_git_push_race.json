@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem841_fix_codex_git_push_race",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Added safe git pull --rebase --autostash push retry script",
+    " added codex-runner concurrency if missing",
+    " and patched direct push paths to avoid non-fast-forward failures",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/git_safe_commit_push.sh",
+    "governance/state/bem841_fix_codex_git_push_race.json",
+    "governance/reports/bem841_fix_codex_git_push_race.md",
+    "governance/tasks/pending/bem841_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    ".github/workflows/codex-runner.yml",
+    "scripts/commit_workflow_dispatch_results.sh",
+    "governance/codex/proofs/bem841_fix_codex_git_push_race.txt"
+  ],
+  "commit_sha": "fdbc48f962c2343dc92e8f3199ac3853a461e956",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem841_fix_codex_git_push_race.md",
+  "completed_at": "2026-05-22T08:40:47Z"
+}
