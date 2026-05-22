@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem827_fix_bad_dispatch_queue_json
+task_type: code_patch
+executed_at: 2026-05-22T02:31:44Z
+ops_applied: Removed malformed dispatch queue JSON files, archived them, created one valid Claude dispatch queue item, and hardened the shell processor so invalid JSON cannot kill Codex Runner, custom_script
+changed_files: governance/state/bem827_fix_bad_dispatch_queue_json.json, governance/reports/bem827_fix_bad_dispatch_queue_json.md, governance/tasks/pending/bem827_next.md, governance/handoff/GPT_NEXT_ACTION.md, governance/transport/results.jsonl, governance/workflow_dispatch_queue/bem827_claude_dispatch_retry_valid.json, scripts/process_workflow_dispatch_queue.sh, scripts/commit_workflow_dispatch_results.sh
+errors: none
