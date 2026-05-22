@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-835
+# GPT NEXT ACTION | BEM-836
 
-Status: real_response_repair_selected
-Next: patch Claude prompt/provider response writer and retry
+Status: next_repair_real_claude_response
+Missing: real_claude_response
+Next: patch Claude response prompt/provider writer; do not accept blocker files
