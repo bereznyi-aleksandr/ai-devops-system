@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem843_commit_queue_marker_results",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Installed a dedicated commit step for queue processor marker and workflow dispatch result files in codex-runner",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/commit_queue_processor_marker_results.sh",
+    ".github/workflows/codex-runner.yml",
+    "governance/state/bem843_commit_queue_marker_results.json",
+    "governance/reports/bem843_commit_queue_marker_results.md",
+    "governance/tasks/pending/bem843_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem843_commit_queue_marker_results.txt"
+  ],
+  "commit_sha": "dad75adba262e47b1ec9564640e4a967f9bf256f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem843_commit_queue_marker_results.md",
+  "completed_at": "2026-05-22T20:02:43Z"
+}
