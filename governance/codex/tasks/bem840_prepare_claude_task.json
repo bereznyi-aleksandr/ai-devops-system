@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_prepare_claude_task",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-840 Claude task",
+  "objective": "Create file governance/audit_mailbox/gpt_to_claude/bem840_task_for_claude_internal_auditor.md with content # BEM-840 | TASK FOR CLAUDE INTERNAL AUDITOR | URGENT\n\nДата: 2026-05-22 | 06:00 (UTC+3)\n\nClaude, do not answer with a short heading. Perform a full audit and return a practical patch plan.\n\nMain question: why after bad JSON cleanup the proof chain still does not complete: 1 workflow_dispatch_results status, 2 claude_inbound_mailbox_workflow_state start/completion, 3 real Claude response in governance/audit_mailbox/claude_to_gpt that is not NOT CLAUDE APPROVAL and not runtime blocker.\n\nRead: governance/state/bem827_fix_bad_dispatch_queue_json.json, governance/state/bem829_verify_dispatch_after_json_fix.json, governance/state/bem830_read_bem829_and_continue.json, governance/state/bem832_verify_bem831_and_triad.json, governance/state/bem839_verify_after_response_retry_tick.json, scripts/process_workflow_dispatch_queue.sh, scripts/commit_workflow_dispatch_results.sh, .github/workflows/codex-runner.yml, .github/workflows/claude-internal-auditor-dispatcher.yml, governance/workflow_dispatch_queue, governance/workflow_dispatch_results, governance/audit_mailbox/claude_to_gpt.\n\nReturn exactly one file: governance/audit_mailbox/claude_to_gpt/bem840_claude_diagnosis_and_patch_plan.md with sections Decision, Root cause, Evidence, Minimal patch, Smoke test, Stop condition, Risk. Decision must be CHANGE_REQUIRED or BLOCKED. No issue comments.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_prepare_claude_task.md",
+    "result_json": "governance/codex/results/bem840_prepare_claude_task.json"
+  },
+  "created_at": "2026-05-22T04:37:47.960Z"
+}
