@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem827_quarantine_bad_dispatch_json",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem827_quarantine_bad_dispatch_json.txt"
+  ],
+  "commit_sha": "ff1245497eb6a5be92d921cdb178d099f233b856",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: __import__ not found"
+  },
+  "report_path": "governance/codex/results/bem827_quarantine_bad_dispatch_json.md",
+  "completed_at": "2026-05-22T02:26:21Z"
+}
