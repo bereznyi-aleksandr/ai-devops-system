@@ -1,2 +1,1 @@
-Next: dispatch or retry Claude auditor with BEM-840 task; do not accept header-only response
-Operator relay forbidden. Report does not stop development.
+Next: continue roadmap using agreed route C; maintain Route A secret refresh as pending repair. Operator relay forbidden. Report does not stop development.
