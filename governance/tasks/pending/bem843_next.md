@@ -1,2 +1,1 @@
-Next: fresh tick and verify real response file
-Operator relay forbidden. Report does not stop development.
+Next: run fresh Codex tick and verify queue marker/result persisted. Operator relay forbidden.

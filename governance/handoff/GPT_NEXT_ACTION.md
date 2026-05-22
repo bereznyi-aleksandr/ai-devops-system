@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-842
+# GPT NEXT ACTION | BEM-843
 
-Status: marker_diagnosed
-Next: move marker before main commit step or add marker paths to final commit stage so files are persisted
+Queue marker commit step installed. Next: tick and verify marker/result.

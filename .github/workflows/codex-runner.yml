@@ -548,6 +548,10 @@ jobs:
       - name: Queue processor execution marker
         if: always()
         run: bash scripts/mark_queue_processor_step_seen.sh
+
+      - name: Commit queue processor marker results
+        if: always()
+        run: bash scripts/commit_queue_processor_marker_results.sh
       - name: Process workflow dispatch queue
         if: always()
         env:
