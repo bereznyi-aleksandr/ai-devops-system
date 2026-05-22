@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-843
+# GPT NEXT ACTION | BEM-844
 
-Status: next_fix_real_response_pipeline
-Missing: real_claude_response
-Next: verify Claude dispatcher ran; patch prompt/action so it writes CLAUDE RESPONSE file
+Status: real_response_retry_queued
+Next: fresh tick then verify real Claude response

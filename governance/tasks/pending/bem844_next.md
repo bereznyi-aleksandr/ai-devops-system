@@ -1,2 +1,2 @@
-Next: runtime works; patch Claude prompt/response writer to produce protocol response
+Next: fresh tick then verify real Claude response
 Operator relay forbidden. Report does not stop development.
