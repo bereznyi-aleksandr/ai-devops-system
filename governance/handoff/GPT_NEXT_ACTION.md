@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-843
 
-Status: repair_real_claude_response_mobile_safe
+Status: real_response_missing
 Missing: real_claude_response
-Next: repair Claude response writer/provider path; no operator local setup
+Next: repair Claude response generation/writer and retry dispatcher

@@ -1,2 +1,2 @@
-Next: verify Claude dispatcher ran; patch prompt/action so it writes CLAUDE RESPONSE file
+Next: repair Claude response generation/writer and retry dispatcher
 Operator relay forbidden. Report does not stop development.
