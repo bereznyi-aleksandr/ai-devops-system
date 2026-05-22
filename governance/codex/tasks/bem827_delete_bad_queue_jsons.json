@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem827_delete_bad_queue_jsons",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-827 delete bad queue",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/workflow_dispatch_queue','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True, exist_ok=True)\ncreated='2026-05-21 | 22:26 (UTC+3)'\nqueue_dir=Path('governance/workflow_dispatch_queue')\ninvalid=[]\nvalid=[]\nfor p in sorted(queue_dir.glob('*.json')):\n    try:\n        data=json.loads(p.read_text(encoding='utf-8', errors='ignore'))\n        if not (data.get('workflow') or data.get('workflow_id') or data.get('file')):\n            invalid.append({'path':str(p),'reason':'missing workflow key'})\n        else:\n            valid.append(str(p))\n    except Exception as exc:\n        invalid.append({'path':str(p),'reason':str(exc)})\nfor item in invalid:\n    p=Path(item['path'])\n    if p.exists():\n        p.unlink()\n# Replace the whole queue state with one clean item for Claude dispatcher.\nfor p in sorted(queue_dir.glob('*.json')):\n    # keep valid existing items only if they are not old BEM775/BEM779/BEM822 retries\n    if any(x in p.name for x in ['bem775','bem779','bem822']):\n        p.unlink()\nclean=queue_dir/'bem827_clean_claude_dispatch.json'\nclean.write_text(json.dumps({\n    'schema_version':'workflow_dispatch_queue_item.v4',\n    'workflow':'claude-internal-auditor-dispatcher.yml',\n    'workflow_id':'claude-internal-auditor-dispatcher.yml',\n    'ref':'main',\n    'inputs':{},\n    'reason':'BEM-827 clean dispatch after deleting invalid queue JSON files',\n    'created_at':created\n}, indent=2, ensure_ascii=False)+sep, encoding='utf-8')\nstate={'bem':'BEM-827','status':'bad_queue_jsons_deleted_clean_queue_created','invalid_deleted':invalid,'clean_queue_file':str(clean),'created_at':created}\nPath('governance/state/bem827_delete_bad_queue_jsons.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem827_delete_bad_queue_jsons.md').write_text('# BEM-827 | Delete Bad Queue JSONs | PASS'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem827_next.md').write_text('Next: run fresh Codex tick and verify workflow_dispatch_results, Claude runtime, real Claude response. Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-827'+sep+sep+'Deleted invalid queue JSONs and created one clean Claude dispatch queue item. Next: tick and verify single smoke proof.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h:\n    h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/workflow_dispatch_queue/bem827_clean_claude_dispatch.json','governance/state/bem827_delete_bad_queue_jsons.json','governance/reports/bem827_delete_bad_queue_jsons.md','governance/tasks/pending/bem827_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nfor item in invalid:\n    changed_files.append(item['path'])\nops_applied.append('Deleted invalid workflow dispatch queue JSON files instead of patching them and created one clean Claude dispatcher queue item')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem827_delete_bad_queue_jsons.md",
+    "result_json": "governance/codex/results/bem827_delete_bad_queue_jsons.json"
+  },
+  "created_at": "2026-05-22T02:28:27.650Z"
+}
