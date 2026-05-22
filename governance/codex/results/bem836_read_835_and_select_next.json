@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem836_read_835_and_select_next",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Read BEM-835 status and current proof triad",
+    " selected the next missing proof to repair",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem836_read_835_and_select_next.json",
+    "governance/reports/bem836_read_835_and_select_next.md",
+    "governance/tasks/pending/bem836_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem836_read_835_and_select_next.txt"
+  ],
+  "commit_sha": "5e296781711b473b8640a9512955e3e4167a3127",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem836_read_835_and_select_next.md",
+  "completed_at": "2026-05-22T02:56:42Z"
+}
