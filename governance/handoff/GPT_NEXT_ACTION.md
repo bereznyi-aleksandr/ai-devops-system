@@ -1,3 +1,4 @@
-# GPT NEXT ACTION | BEM-827
+# GPT NEXT ACTION | BEM-829
 
-Queue JSON cleaned. Processor hardened. Next: tick and verify dispatch result.
+Status: dispatch_results_present_after_json_fix
+Next: parse latest dispatch result and then verify Claude runtime

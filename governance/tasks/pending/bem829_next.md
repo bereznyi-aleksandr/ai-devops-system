@@ -1,2 +1,2 @@
-Next: repair missing proofs: real_claude_response
+Next: parse latest dispatch result and then verify Claude runtime
 Operator relay forbidden.

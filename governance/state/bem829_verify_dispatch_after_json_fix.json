@@ -1,0 +1,20 @@
+{
+  "bem": "BEM-829",
+  "status": "dispatch_results_present_after_json_fix",
+  "result_count": 1,
+  "results": [
+    {
+      "path": "governance/workflow_dispatch_results/queue_processor_summary.status.json",
+      "text": "{\"status\":\"processor_completed\",\"processed_queue_items\":0,\"time\":\"2026-05-22T02:29:59Z\"}\n"
+    }
+  ],
+  "marker": {
+    "status": "processor_started",
+    "time": "2026-05-22T02:32:55Z"
+  },
+  "queue_remaining": [],
+  "runtime_started_at": "2026-05-21 | 19:33 (UTC+3)",
+  "runtime_completed_at": "2026-05-21 | 19:33 (UTC+3)",
+  "next_action": "parse latest dispatch result and then verify Claude runtime",
+  "created_at": "2026-05-21 | 22:33 (UTC+3)"
+}
