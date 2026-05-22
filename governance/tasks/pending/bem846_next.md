@@ -1,2 +1,2 @@
-Next: create new mailbox request and dispatcher queue item
-Operator relay forbidden. Report does not stop development.
+Next: inspect Claude dispatcher workflow/prompt/result because dispatch/runtime proof exists but response missing
+Operator mobile-only; no GitHub UI/computer instructions.
