@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem828_tick_after_bad_queue_delete",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-828 tick clean queue",
+  "objective": "Create file governance/state/bem828_tick_after_bad_queue_delete.json with content {\"bem\":\"BEM-828\",\"status\":\"fresh_tick_after_bad_queue_delete\",\"created_at\":\"2026-05-21 | 22:28 (UTC+3)\",\"expected\":\"workflow_dispatch_results for bem827 clean queue item\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem828_tick_after_bad_queue_delete.md",
+    "result_json": "governance/codex/results/bem828_tick_after_bad_queue_delete.json"
+  },
+  "created_at": "2026-05-22T02:29:47.588Z"
+}
