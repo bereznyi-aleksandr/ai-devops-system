@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-844 OPTION A RESULTS
+# GPT NEXT ACTION | BEM-845 OPTION A ROUTE
 
-Status: option_a_blocked_real_response_missing
-Missing: real_claude_response
-Next: patch Claude response writer/provider; dispatch/runtime proof exists or is partial
+Status: step6_repair_real_response_next
+Next: patch Claude response writer/provider and retry until real response exists
