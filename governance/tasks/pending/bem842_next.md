@@ -1,1 +1,2 @@
-Next: operator sets CLAUDE_CODE_OAUTH_TOKEN secret, then run BEM-843 smoke. Operator participation is required only for external GitHub/Claude secret setup.
+Next: inspect Claude dispatcher/action outcome and patch response writing
+Operator relay forbidden. Report does not stop development.

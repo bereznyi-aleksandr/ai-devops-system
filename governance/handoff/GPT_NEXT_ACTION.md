@@ -1,3 +1,4 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-842
 
-Queue processor execution marker installed. Next: tick and verify marker/result.
+Status: runtime_present_but_real_response_missing
+Next: inspect Claude dispatcher/action outcome and patch response writing
