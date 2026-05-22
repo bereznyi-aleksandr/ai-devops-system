@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem841_extract_claude_variant_a",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-841 extract variant A",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-22 | 11:22 (UTC+3)'\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nitems=[]\nfor root in ['governance/audit_mailbox/claude_to_gpt','governance/reports','governance/state','governance/handoff','governance/tasks/pending']:\n    r=Path(root)\n    if r.exists():\n        for p in sorted(r.glob('*')):\n            if p.is_file():\n                txt=read(p)\n                low=(p.name+' '+txt).lower()\n                if 'variant a' in low or 'вариант а' in low or 'вариант a' in low or 'claude' in low and ('oauth' in low or 'anthropic' in low or 'claude_code' in low or 'secret' in low or 'app' in low):\n                    items.append({'path':str(p),'preview':txt[:2500]})\n# classify likely variant A requirements from actual files\ncombined='\\n\\n'.join(x['preview'] for x in items).lower()\nflags={\n 'needs_claude_code_oauth_token':'claude_code_oauth_token' in combined,\n 'needs_anthropic_api_key':'anthropic_api_key' in combined,\n 'mentions_github_app':'github app' in combined or 'app' in combined,\n 'mentions_oauth':'oauth' in combined,\n 'mentions_variant_a':'variant a' in combined or 'вариант а' in combined or 'вариант a' in combined\n}\nstate={'bem':'BEM-841','status':'variant_a_evidence_extracted' if items else 'variant_a_evidence_not_found','items_found':len(items),'items':items[-20:],'flags':flags,'created_at':created}\nPath('governance/state/bem841_extract_claude_variant_a.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem841_extract_claude_variant_a.md').write_text('# BEM-841 | Extract Claude Variant A | '+state['status']+sep+sep+json.dumps(state,ensure_ascii=False,indent=2)+sep)\nPath('governance/tasks/pending/bem841_next.md').write_text('Next: use extracted Variant A evidence to guide operator through Claude configuration, then run smoke proof. Operator relay forbidden except required external account configuration.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-841'+sep+sep+'Status: '+state['status']+sep+'Next: configure Claude Variant A and smoke-test.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem841_extract_claude_variant_a.json','governance/reports/bem841_extract_claude_variant_a.md','governance/tasks/pending/bem841_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Extracted Claude Variant A evidence from mailbox/reports/state to guide operator configuration')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem841_extract_claude_variant_a.md",
+    "result_json": "governance/codex/results/bem841_extract_claude_variant_a.json"
+  },
+  "created_at": "2026-05-22T08:21:39.248Z"
+}
