@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem831_route_after_autotest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Routed after BEM-830 autotest based on missing proof list",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem831_route_after_autotest.json",
+    "governance/reports/bem831_route_after_autotest.md",
+    "governance/tasks/pending/bem831_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem831_route_after_autotest.txt"
+  ],
+  "commit_sha": "f8cc8d8ba6a5c19514484e44bc422f3158c00b51",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem831_route_after_autotest.md",
+  "completed_at": "2026-05-22T02:50:10Z"
+}
