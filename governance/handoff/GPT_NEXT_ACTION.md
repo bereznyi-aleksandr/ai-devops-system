@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-842 OPTION A STEP 3
+# GPT NEXT ACTION | BEM-844 OPTION A RESULTS
 
-Status: step3_real_response_request_and_dispatch_queued
-Next: fresh tick then verify real Claude response
+Status: option_a_blocked_real_response_missing
+Missing: real_claude_response
+Next: patch Claude response writer/provider; dispatch/runtime proof exists or is partial
