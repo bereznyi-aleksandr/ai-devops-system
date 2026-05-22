@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_add_claude_token_rotation_runbook",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-840 Claude token runbook",
+  "objective": "Create file governance/protocols/CLAUDE_TOKEN_ROTATION_RUNBOOK.md with content # BEM-840 | Claude Token Rotation Runbook | 2026-05-22 | 06:00 UTC+3\n\n## Purpose\nReplace expired Claude authentication without committing secrets to repository.\n\n## Which secret to update\nUse one auth path only.\n1. Preferred for Claude subscription auth: CLAUDE_CODE_OAUTH_TOKEN.\n2. Alternative for paid Anthropic API auth: ANTHROPIC_API_KEY.\n\nDo not paste token values into files, issues, chat logs, reports, or workflow YAML.\n\n## How to get a new CLAUDE_CODE_OAUTH_TOKEN\n1. On a trusted local machine where Claude Code CLI is installed, open terminal.\n2. Make sure you are logged in to the correct Claude account with an active Pro, Max, Team, or Enterprise plan.\n3. Run: claude setup-token\n4. Complete the browser OAuth flow.\n5. Copy the token printed in the terminal. It is not saved by the command.\n6. Do not send the token to GPT or Claude.\n\n## How to get a new ANTHROPIC_API_KEY\n1. Open Anthropic Console.\n2. Go to API Keys.\n3. Create a new key for the correct organization/project.\n4. Copy it once.\n5. Do not send the key to GPT or Claude.\n\n## Where to put the token in GitHub\n1. Open GitHub repository bereznyi-aleksandr/ai-devops-system.\n2. Open Settings.\n3. Open Secrets and variables.\n4. Open Actions.\n5. Open Repository secrets.\n6. Update or create CLAUDE_CODE_OAUTH_TOKEN for OAuth auth, or ANTHROPIC_API_KEY for API-key auth.\n7. Save secret.\n\n## Important precedence rule\nIf both ANTHROPIC_API_KEY and Claude subscription OAuth are present, API key auth can take precedence in Claude Code. If the API key belongs to an expired or disabled organization, remove or update ANTHROPIC_API_KEY before expecting OAuth auth to work.\n\n## Verification checklist\n1. No secret value appears in git diff.\n2. GitHub Actions secret exists with exact name.\n3. Claude workflow references secrets only as GitHub secrets.\n4. Run Claude dispatcher smoke.\n5. PASS requires all three proofs: workflow dispatch result, Claude runtime state, real Claude response in governance/audit_mailbox/claude_to_gpt.\n\n## Operator role\nOperator only updates GitHub secret value. GPT must not ask operator to paste secret into chat.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_add_claude_token_rotation_runbook.md",
+    "result_json": "governance/codex/results/bem840_add_claude_token_rotation_runbook.json"
+  },
+  "created_at": "2026-05-22T08:36:17.128Z"
+}
