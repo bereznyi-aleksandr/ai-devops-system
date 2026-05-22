@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_russian_operator_task_language",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-840 русский язык задач",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/protocols','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-22 | 06:00 (UTC+3)'\nrule=Path('governance/protocols/BEM840_RUSSIAN_OPERATOR_TASK_LANGUAGE.md')\nrule.write_text('# BEM-840 | Язык операторских задач и отчётов'+sep+sep+'Дата: '+created+sep+sep+'Правило: все операторские задачи, handoff, pending, отчёты и объяснения должны быть написаны на русском языке. Английский допускается только для технических имён файлов, workflow, JSON-ключей, команд, статусов CI и идентификаторов trace_id. Если задача содержит пользовательский смысл, он должен быть продублирован по-русски. Отчёт не останавливает разработку.'+sep)\nhandoff=Path('governance/handoff/GPT_NEXT_ACTION.md')\nhandoff.write_text('# СЛЕДУЮЩЕЕ ДЕЙСТВИЕ GPT | BEM-840'+sep+sep+'Дата: '+created+sep+sep+'Статус: исправляю язык задач. Дальше: проверить BEM-839, затем продолжить ремонт до трёх доказательств: результат dispatch, runtime-state Claude, реальный ответ Claude. Оператор не используется как relay.'+sep)\npending=Path('governance/tasks/pending/bem840_next_ru.md')\npending.write_text('# BEM-840 | Следующая задача'+sep+sep+'Дата: '+created+sep+sep+'Проверить результат BEM-839 и продолжить ремонт отсутствующего доказательства. Критерий результата: есть workflow_dispatch_results, есть claude_inbound_mailbox_workflow_state, есть реальный ответ Claude в claude_to_gpt. Отчёт не останавливает разработку.'+sep)\nstate={'bem':'BEM-840','status':'russian_operator_language_rule_added','rule':str(rule),'next_action':'проверить BEM-839 и продолжить ремонт отсутствующего доказательства','created_at':created}\nPath('governance/state/bem840_russian_operator_task_language.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem840_russian_operator_task_language.md').write_text('# BEM-840 | Русский язык операторских задач | ГОТОВО'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(rule),str(handoff),str(pending),'governance/state/bem840_russian_operator_task_language.json','governance/reports/bem840_russian_operator_task_language.md','governance/transport/results.jsonl'])\nops_applied.append('Добавлено правило русского языка для операторских задач и переписаны handoff/pending на русский')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_russian_operator_task_language.md",
+    "result_json": "governance/codex/results/bem840_russian_operator_task_language.json"
+  },
+  "created_at": "2026-05-22T04:08:21.373Z"
+}
