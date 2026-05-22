@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-830
+# GPT NEXT ACTION | BEM-831
 
-Status: missing_real_claude_response_after_runtime
-Missing: real_claude_response
-Next: repair Claude prompt/provider response writer
+Status: autotest_fail_route_real_response
+Missing: real_claude_response_exists
+Next: repair Claude Action/provider response writer

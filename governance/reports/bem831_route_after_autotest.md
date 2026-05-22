@@ -1,0 +1,3 @@
+# BEM-831 | Route After Autotest | autotest_fail_route_real_response
+
+{"bem": "BEM-831", "status": "autotest_fail_route_real_response", "previous_status": "autotest_fail_missing_proofs", "missing": ["real_claude_response_exists"], "next_action": "repair Claude Action/provider response writer", "created_at": "2026-05-21 | 22:49 (UTC+3)"}
