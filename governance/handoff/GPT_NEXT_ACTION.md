@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-842
+# GPT NEXT ACTION | BEM-843
 
-Status: runtime_exists_real_response_missing_after_bem841
+Status: next_fix_real_response_pipeline
 Missing: real_claude_response
-Next: repair Claude response writer/provider
+Next: verify Claude dispatcher ran; patch prompt/action so it writes CLAUDE RESPONSE file
