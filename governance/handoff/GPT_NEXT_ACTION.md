@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-840
 
-Status: agreed_protocol_route_c_created
-Next: continue roadmap using route C; route A secret refresh remains pending.
+Status: execute_A_repair_real_response
+Missing: real_claude_response
+Next: patch Claude response writer/provider first
