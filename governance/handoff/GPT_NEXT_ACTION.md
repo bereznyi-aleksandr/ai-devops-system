@@ -1,3 +1,4 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-841
 
-Instruction added. Await only secret rotation by operator, then run smoke-loop. No secret in repo.
+Status: claude_auth_conflict_possible
+Next: if conflict exists, choose one auth path in workflow and document operator secret update

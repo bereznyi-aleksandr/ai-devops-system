@@ -1,1 +1,2 @@
-Next: use extracted Variant A evidence to guide operator through Claude configuration, then run smoke proof. Operator relay forbidden except required external account configuration.
+Next: if conflict exists, choose one auth path in workflow and document operator secret update
+Operator relay forbidden. Secrets must not be pasted into chat.
