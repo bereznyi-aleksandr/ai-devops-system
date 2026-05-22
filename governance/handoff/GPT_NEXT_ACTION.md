@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-839
+# GPT NEXT ACTION | BEM-840
 
-Status: only_real_response_missing
+Status: next_repair_real_response_writer
 Missing: real_claude_response
-Next: repair Claude response writer/provider; runtime and dispatch proof exist
+Next: patch Claude response writer/provider prompt; require real response file not blocker
