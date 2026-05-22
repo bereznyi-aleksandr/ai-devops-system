@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-842
 
-Status: variant_a_evidence_extracted
-Next: configure Claude Variant A and smoke-test.
+Status: claude_oauth_variant_a_workflows_patched
+Next: after secret is set, run Claude OAuth smoke.

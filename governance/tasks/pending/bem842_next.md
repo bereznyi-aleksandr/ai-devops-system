@@ -1,2 +1,1 @@
-Option A step 4: fresh tick then verify real Claude response
-Operator relay forbidden. Report does not stop development.
+Next: operator sets CLAUDE_CODE_OAUTH_TOKEN secret, then run BEM-843 smoke. Operator participation is required only for external GitHub/Claude secret setup.
