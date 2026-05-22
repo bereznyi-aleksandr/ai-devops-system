@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem853_external_claude_task_handoff",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-853 external Claude task",
+  "objective": "Create file governance/tasks/pending/BEM853_EXTERNAL_CLAUDE_TASK.md with content # BEM-853 | TASK FOR EXTERNAL CLAUDE | 2026-05-22 | 06:25 UTC+3\n\nRole: External Claude auditor/developer for bereznyi-aleksandr/ai-devops-system.\n\nProblem: GPT/Deno/Codex task execution works, but the autonomous Claude mailbox path is not producing a real Claude response. The current failing chain is: governance/workflow_dispatch_queue JSON item -> Codex Runner queue processor -> governance/workflow_dispatch_results status -> claude-internal-auditor-dispatcher workflow -> governance/state/claude_inbound_mailbox_workflow_state.json -> governance/audit_mailbox/claude_to_gpt real CLAUDE RESPONSE file.\n\nObserved history: A malformed queue JSON caused JSONDecodeError and blocked Codex Runner. BEM-827 attempted cleanup and processor hardening. Later retries BEM-840, BEM-847, BEM-851 queued Claude response dispatch items, but real Claude response is still not proven. GPT produced too many route tasks and needs an external clean diagnosis/fix.\n\nYour objective:\n1. Inspect these files: .github/workflows/codex-runner.yml, scripts/process_workflow_dispatch_queue.sh, scripts/commit_workflow_dispatch_results.sh, .github/workflows/claude-internal-auditor-dispatcher.yml, scripts/record_claude_inbound_workflow_state.py, scripts/check_claude_mailbox_work.py, governance/workflow_dispatch_queue, governance/workflow_dispatch_results, governance/state/claude_inbound_mailbox_workflow_state.json, governance/audit_mailbox/gpt_to_claude, governance/audit_mailbox/claude_to_gpt.\n2. Find the exact blocker preventing a real Claude response.\n3. Patch the repo so one invalid queue JSON cannot stop queue processing.\n4. Patch queue processing so each queue item always creates a status file in governance/workflow_dispatch_results.\n5. Patch Claude dispatcher/runtime so it writes start/completion state to governance/state/claude_inbound_mailbox_workflow_state.json.\n6. Patch Claude response path so a real response file is written to governance/audit_mailbox/claude_to_gpt/ with literal marker CLAUDE RESPONSE and Decision: APPROVED / CHANGE_REQUIRED / BLOCKED.\n7. Produce a concise proof report with the three required proofs.\n\nPASS criteria, all required:\n- Proof 1: at least one valid workflow_dispatch_results/*.status.json for the Claude dispatcher dispatch item.\n- Proof 2: claude_inbound_mailbox_workflow_state.json shows runtime start or completion.\n- Proof 3: governance/audit_mailbox/claude_to_gpt contains a real Claude response file, not NOT CLAUDE APPROVAL and not a runtime blocker placeholder.\n\nConstraints:\n- No issue comments.\n- Do not expose or print secrets.\n- Do not use paid OpenAI/Codex CLI/API keys.\n- Do not add schedule triggers except curator-hourly-report.yml.\n- Avoid inline Python/heredoc in workflows; put logic in scripts.\n- Keep changes minimal and auditable.\n\nExpected output:\n- Code patch commit.\n- governance/reports/BEM853_EXTERNAL_CLAUDE_RESULT.md describing root cause, changed files, and proof paths.\n- If blocked, write exact blocker and the smallest next patch required.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem853_external_claude_task_handoff.md",
+    "result_json": "governance/codex/results/bem853_external_claude_task_handoff.json"
+  },
+  "created_at": "2026-05-22T04:25:04.879Z"
+}
