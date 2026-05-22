@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_force_queue_processor_execution_marker",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Installed a direct queue processor execution marker step in codex-runner to prove whether the queue processing section executes at all",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/mark_queue_processor_step_seen.sh",
+    ".github/workflows/codex-runner.yml",
+    "governance/state/bem840_force_queue_processor_execution_marker.json",
+    "governance/reports/bem840_force_queue_processor_execution_marker.md",
+    "governance/tasks/pending/bem840_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem840_force_queue_processor_execution_marker.txt"
+  ],
+  "commit_sha": "8083881508b4e7adb484840b16d3f57718e78dae",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem840_force_queue_processor_execution_marker.md",
+  "completed_at": "2026-05-22T20:00:13Z"
+}
