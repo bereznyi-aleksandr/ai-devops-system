@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_mobile_first_no_local_setup_rule",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-840 mobile first rule",
+  "objective": "Append to governance/protocols/AUTONOMY_CONTINUITY_CONTRACT_EXTENSION.md: \n\n## BEM-840 | Mobile-first оператор: запрет local setup\nДата: 2026-05-22 | 06:00 (UTC+3)\nОператор работает с телефона. Агенту запрещено предлагать оператору выполнить local setup token, terminal commands, desktop-only setup или действия на своём компьютере. Все токены и доступы должны обрабатываться через repo-side automation, GitHub Secrets, Deno endpoint, GitHub Actions или короткие mobile UI шаги только если это действительно невозможно автоматизировать. Если секрет отсутствует, агент должен назвать точный missing secret и предложить mobile-safe путь добавления через GitHub UI, но не перекладывать routine-loop на оператора. Отчёт не останавливает разработку.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_mobile_first_no_local_setup_rule.md",
+    "result_json": "governance/codex/results/bem840_mobile_first_no_local_setup_rule.json"
+  },
+  "created_at": "2026-05-22T08:40:10.784Z"
+}
