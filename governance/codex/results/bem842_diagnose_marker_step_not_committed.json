@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_diagnose_marker_step_not_committed",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Diagnosed why the queue processor execution marker did not appear after BEM-841 tick",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem842_diagnose_marker_step_not_committed.json",
+    "governance/reports/bem842_diagnose_marker_step_not_committed.md",
+    "governance/tasks/pending/bem842_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem842_diagnose_marker_step_not_committed.txt"
+  ],
+  "commit_sha": "7f840039d5fcc264b42ef7a0547b53433fb5c805",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem842_diagnose_marker_step_not_committed.md",
+  "completed_at": "2026-05-22T20:01:50Z"
+}
