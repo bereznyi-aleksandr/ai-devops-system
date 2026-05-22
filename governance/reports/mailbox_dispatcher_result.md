@@ -4,7 +4,7 @@
 
 ## Result
 Picked: True
-Mailbox file: governance/audit_mailbox/gpt_to_claude/bem840_real_response_retry.md
+Mailbox file: governance/audit_mailbox/gpt_to_claude/bem840_task_for_claude_internal_auditor.md
 Notify operator: False
 Reason: routine_mailbox_no_telegram_use_decision_queue
 
