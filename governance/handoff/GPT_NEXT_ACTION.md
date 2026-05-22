@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-841 OPTION A STEP 2
+# GPT NEXT ACTION | BEM-842 OPTION A STEP 3
 
-Status: step2_repair_real_response_selected
-Next: patch Claude response writer/provider and retry real Claude answer
+Status: step3_real_response_request_and_dispatch_queued
+Next: fresh tick then verify real Claude response
