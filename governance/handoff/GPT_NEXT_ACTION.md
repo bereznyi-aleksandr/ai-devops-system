@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-846
+# GPT NEXT ACTION | BEM-841
 
-Status: real_response_still_missing
-Next: inspect Claude dispatcher workflow/prompt/result because dispatch/runtime proof exists but response missing
-Operator mobile-only.
+Status: claude_auth_workflows_need_patch
+Next: patch Claude workflows to ANTHROPIC_API_KEY only

@@ -1,2 +1,2 @@
-Next: fresh tick and verify real Claude response
-Operator mobile-only; no GitHub UI/computer instructions.
+Next: patch Claude workflows to ANTHROPIC_API_KEY only
+Operator relay forbidden. Report does not stop development.
