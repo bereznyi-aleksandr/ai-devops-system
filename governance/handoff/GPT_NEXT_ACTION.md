@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-840
 
-Status: bem840_claude_response_missing
-Next: dispatch or retry Claude auditor with BEM-840 task; do not accept header-only response
+Status: real_claude_response_not_found
+Decision: UNKNOWN
+Next: produce agreed GPT+Claude protocol and continue roadmap using route C.

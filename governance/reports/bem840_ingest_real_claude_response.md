@@ -1,0 +1,3 @@
+# BEM-840 | Ingest Real Claude Response | real_claude_response_not_found
+
+{"bem": "BEM-840", "status": "real_claude_response_not_found", "decision": "UNKNOWN", "latest_real_response": null, "real_count": 0, "blocker_count": 2, "selected_route": "C_now_A_later", "blocker": {"code": "REAL_CLAUDE_RESPONSE_NOT_FOUND", "message": "Operator says bem840 response exists, but repository scan did not find CLAUDE RESPONSE + DECISION marker."}, "created_at": "2026-05-22 | 06:00 (UTC+3)"}
