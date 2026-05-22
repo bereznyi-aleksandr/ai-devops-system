@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem828_tick_after_bad_json_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-828 tick after JSON fix",
+  "objective": "Create file governance/state/bem828_tick_after_bad_json_fix.json with content {\"bem\":\"BEM-828\",\"status\":\"fresh_tick_after_bem827_bad_json_fix\",\"created_at\":\"2026-05-21 | 22:31 (UTC+3)\",\"expected\":\"workflow_dispatch_results status file for bem827 queue item\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem828_tick_after_bad_json_fix.md",
+    "result_json": "governance/codex/results/bem828_tick_after_bad_json_fix.json"
+  },
+  "created_at": "2026-05-22T02:32:42.034Z"
+}
