@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem834_read_833_execute_next_proof",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Read BEM-833 state and current proof triad",
+    " then selected the next missing proof to repair",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem834_read_833_execute_next_proof.json",
+    "governance/reports/bem834_read_833_execute_next_proof.md",
+    "governance/tasks/pending/bem834_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem834_read_833_execute_next_proof.txt"
+  ],
+  "commit_sha": "614fe6e23cca4cf13051f6fc70ff8c4cfd560abb",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem834_read_833_execute_next_proof.md",
+  "completed_at": "2026-05-22T02:54:22Z"
+}
