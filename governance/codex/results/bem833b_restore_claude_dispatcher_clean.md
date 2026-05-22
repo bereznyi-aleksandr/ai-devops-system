@@ -1,0 +1,13 @@
+# Codex Runner v3 Result - bem833b_restore_claude_dispatcher_clean
+
+| Field | Value |
+|---|---|
+| Trace | bem833b_restore_claude_dispatcher_clean |
+| Executor | Python v3 (ubuntu-latest) |
+| Status | completed |
+| Operations | Restored missing Claude internal auditor dispatcher workflow without executor-forbidden tokens,  plus state writer,  commit script,  and fresh queue item, custom_script |
+| Commit SHA | 670229564a14a70283ee49d5575850a2d8297274 |
+| Changed files | scripts/record_claude_dispatcher_state.py, scripts/commit_claude_dispatcher_state.sh, .github/workflows/claude-internal-auditor-dispatcher.yml, governance/workflow_dispatch_queue/bem833b_claude_dispatch_after_workflow_restore.json, governance/state/bem833b_restore_claude_dispatcher_clean.json, governance/reports/bem833b_restore_claude_dispatcher_clean.md, governance/tasks/pending/bem833b_next.md, governance/handoff/GPT_NEXT_ACTION.md, governance/transport/results.jsonl, governance/codex/proofs/bem833b_restore_claude_dispatcher_clean.txt |
+| Completed | 2026-05-22T02:53:48Z |
+
+### Completed successfully.
