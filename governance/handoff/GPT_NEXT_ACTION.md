@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-843
+# GPT NEXT ACTION | BEM-844
 
-Status: dispatch_and_runtime_exist_but_no_protocol_response
-Next: repair Claude response writer/prompt; runtime works but no protocol response
+Status: next_repair_response_writer
+Previous: dispatch_and_runtime_exist_but_no_protocol_response
+Next: runtime works; patch Claude prompt/response writer to produce protocol response
