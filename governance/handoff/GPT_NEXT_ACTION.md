@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-841
 
-Status: queued_real_claude_response_retry
-Next: fresh tick then verify real Claude response in claude_to_gpt
+Status: variant_a_evidence_extracted
+Next: configure Claude Variant A and smoke-test.
