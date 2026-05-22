@@ -1,1 +1,2 @@
-Next: run fresh tick to verify no non-fast-forward push rejection. Then continue Claude triad proof. Operator relay forbidden.
+Next: repair Claude response writer/provider path; no operator local setup
+Operator relay forbidden. Mobile-first: no local setup token.
