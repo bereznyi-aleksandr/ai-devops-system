@@ -1,3 +1,4 @@
 # GPT NEXT ACTION | BEM-840
 
-Claude secret wiring checker installed. Next: trigger dispatcher and verify secret presence proof, runtime, and real response.
+Status: claude_secret_wiring_diagnosed
+Next: operator must place Anthropic key only into GitHub Actions secret ANTHROPIC_API_KEY; then run smoke triad again

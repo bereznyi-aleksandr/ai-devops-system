@@ -1,1 +1,1 @@
-Next: run fresh Claude dispatcher/tick and verify governance/state/claude_secret_wiring_check.json plus Claude runtime/response. Operator relay forbidden. Report does not stop development.
+Next: after Anthropic key is saved as GitHub Actions secret ANTHROPIC_API_KEY, run smoke triad again. Never put secret in files or chat.
