@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-848
-
-Status: no_guard_state_no_real_response
 Next: dispatcher did not reach guard; inspect workflow dispatch/runtime path
+Operator relay forbidden. Report does not stop development.
