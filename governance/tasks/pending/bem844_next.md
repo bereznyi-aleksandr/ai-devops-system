@@ -1,2 +1,2 @@
-Next: fresh tick then verify real Claude response
-Operator mobile-only; no GitHub UI/computer instructions.
+Next: patch Claude dispatcher workflow to always create explicit runtime failure/result file and require Claude output path
+Operator relay forbidden. Report does not stop development.

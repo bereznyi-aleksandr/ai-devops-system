@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-843
+# GPT NEXT ACTION | BEM-844
 
-Status: real_claude_response_still_missing
-Next: patch Claude dispatcher prompt/action to guarantee response file creation or surface Claude Action failure
+Status: next_patch_claude_dispatcher_response_writer
+Previous: real_claude_response_still_missing
+Next: patch Claude dispatcher workflow to always create explicit runtime failure/result file and require Claude output path
