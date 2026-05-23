@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem841_verify_840_async_and_triad",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-841 verify 840 async",
+  "objective": "Create file governance/tasks/pending/bem841_verify_840_async_and_triad.md with content BEM-841 | verify BEM-840 async and triad | 2026-05-23 | 19:53 UTC+3. Check BEM-840 result after runner completion, then verify triad proofs: workflow_dispatch_results, Claude runtime state, real Claude response. Operator relay forbidden. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem841_verify_840_async_and_triad.md",
+    "result_json": "governance/codex/results/bem841_verify_840_async_and_triad.json"
+  },
+  "created_at": "2026-05-23T16:53:36.659Z"
+}
