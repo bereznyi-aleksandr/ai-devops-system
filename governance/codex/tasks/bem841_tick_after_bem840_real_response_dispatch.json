@@ -4,8 +4,8 @@
   "created_by": "chatgpt_external_contour",
   "target_executor": "gpt_codex",
   "task_type": "diagnosis",
-  "title": "BEM-841 tick real response",
-  "objective": "Create file governance/state/bem841_tick_after_bem840_real_response_dispatch.json with content {\"bem\":\"BEM-841\",\"status\":\"fresh_tick_after_bem840_real_response_dispatch\",\"created_at\":\"2026-05-23 | 14:32 (UTC+3)\",\"expected\":\"dispatch queue processes bem840_claude_real_response_dispatch, Claude runtime runs, real response appears\"}\nNo issue comments.",
+  "title": "BEM-841 tick Claude response",
+  "objective": "Create file governance/state/bem841_tick_after_bem840_real_response_dispatch.json with content {\"bem\":\"BEM-841\",\"status\":\"fresh_tick_after_bem840_real_response_dispatch\",\"created_at\":\"2026-05-22 | 11:20 (UTC+3)\",\"expected\":\"dispatch queue processes bem840 Claude response dispatch, then runtime state and real Claude response appear\"}\nNo issue comments.",
   "constraints": [
     "no issue comments",
     "no schedule triggers",
@@ -16,5 +16,5 @@
     "result_md": "governance/codex/results/bem841_tick_after_bem840_real_response_dispatch.md",
     "result_json": "governance/codex/results/bem841_tick_after_bem840_real_response_dispatch.json"
   },
-  "created_at": "2026-05-23T11:33:13.948Z"
+  "created_at": "2026-05-23T17:55:55.173Z"
 }
