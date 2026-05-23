@@ -1,14 +1,8 @@
 name: Claude Mailbox Minute Watchdog
 
+# BEM-848: removed push trigger — 125 min timeout was blocking all concurrent slots
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'governance/autonomy/claude_mailbox_watchdog_active.json'
-      - 'scripts/claude_mailbox_minute_watchdog.py'
-      - 'scripts/claude_mailbox_minute_watchdog_loop.sh'
-      - 'scripts/read_claude_watchdog_status.py'
-      - '.github/workflows/claude-mailbox-minute-watchdog.yml'
 
 permissions:
   contents: write
