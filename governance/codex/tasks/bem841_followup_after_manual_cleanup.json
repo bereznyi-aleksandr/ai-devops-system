@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem841_followup_after_manual_cleanup",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-841 followup cleanup",
+  "objective": "Create file governance/tasks/pending/bem841_followup_after_manual_cleanup.md with content BEM-841 | follow-up after manual queue cleanup | 2026-05-23 | 00:00 UTC+3. After BEM-840, verify exactly one valid queue item was created or processed, then verify workflow_dispatch_results, claude_inbound_mailbox_workflow_state, and real Claude response. Operator relay forbidden. Report does not stop development. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem841_followup_after_manual_cleanup.md",
+    "result_json": "governance/codex/results/bem841_followup_after_manual_cleanup.json"
+  },
+  "created_at": "2026-05-23T16:08:54.306Z"
+}
