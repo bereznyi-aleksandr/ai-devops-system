@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem841_runner_kick_after_840_queued",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-841 runner kick",
+  "objective": "Create file governance/state/bem841_runner_kick_after_840_queued.json with content {\"bem\":\"BEM-841\",\"status\":\"runner_kick_after_bem840_queued\",\"created_at\":\"2026-05-22 | 06:01 (UTC+3)\",\"reason\":\"BEM-840 stayed queued twice; verify Codex Runner still processes new tasks\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem841_runner_kick_after_840_queued.md",
+    "result_json": "governance/codex/results/bem841_runner_kick_after_840_queued.json"
+  },
+  "created_at": "2026-05-23T07:49:39.516Z"
+}
