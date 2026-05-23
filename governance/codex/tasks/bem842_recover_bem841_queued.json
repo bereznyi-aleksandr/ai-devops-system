@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_recover_bem841_queued",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-842 recover queued",
+  "objective": "Create file governance/tasks/pending/bem842_recover_bem841_queued.md with content BEM-842 | recover BEM-841 queued | 2026-05-22 | 06:01 UTC+3. BEM-841 remained queued on two checks. Do not perform third consecutive getCodexStatus. Next: verify runner queue/stuck state, workflow dispatch results, Claude runtime state, and real Claude response when runner resumes. Operator relay forbidden. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem842_recover_bem841_queued.md",
+    "result_json": "governance/codex/results/bem842_recover_bem841_queued.json"
+  },
+  "created_at": "2026-05-23T10:59:35.157Z"
+}
