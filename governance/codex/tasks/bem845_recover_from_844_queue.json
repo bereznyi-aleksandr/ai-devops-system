@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem845_recover_from_844_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-845 recover 844 queue",
+  "objective": "Create file governance/tasks/pending/bem845_recover_from_844_queue.md with content BEM-845 | recover from BEM-844 queued state | 2026-05-23 | 14:35 UTC+3. BEM-844 stayed queued while safe status lock was idle. Continue without operator. Next: force real Claude response retry and verify triad. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem845_recover_from_844_queue.md",
+    "result_json": "governance/codex/results/bem845_recover_from_844_queue.json"
+  },
+  "created_at": "2026-05-23T11:37:50.796Z"
+}
