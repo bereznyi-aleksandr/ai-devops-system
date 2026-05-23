@@ -1,1 +1,2 @@
-Next: rewrite codex-runner queue marker/processor placement based on dumped layout. Operator relay forbidden.
+Next: queue Claude dispatcher retry, tick, then inspect guard state and real response
+Operator relay forbidden. Report does not stop development.

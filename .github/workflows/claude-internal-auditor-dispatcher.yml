@@ -47,6 +47,10 @@ jobs:
       - name: Record dispatcher complete
         if: always()
         run: python3 scripts/record_claude_dispatcher_state.py complete ${{ steps.claude.outcome }}
+
+      - name: Ensure Claude response or explicit failure
+        if: always()
+        run: python3 scripts/ensure_claude_response_or_failure.py
       - name: Commit dispatcher state and mailbox
         if: always()
         run: bash scripts/commit_claude_dispatcher_state.sh
