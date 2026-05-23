@@ -1,17 +1,20 @@
 {
   "schema_version": 1,
   "trace_id": "bem847_runner_smoke",
-  "created_by": "claude_external_auditor_mcp",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
   "task_type": "selftest",
-  "title": "Runner smoke test — created by Claude via MCP",
-  "objective": "Create file governance/codex/proofs/bem847_runner_smoke.txt with content 'Runner alive. BEM-847 smoke test. 2026-05-23'. No issue comments.",
+  "title": "BEM-847 runner smoke",
+  "objective": "Selftest dispatch only for existing task bem847_runner_smoke. If task exists, do not overwrite semantic content; dispatch codex-runner.yml for this trace. No issue comments.",
   "constraints": [
     "no issue comments",
-    "no schedule triggers"
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
   ],
   "expected_outputs": {
     "result_md": "governance/codex/results/bem847_runner_smoke.md",
     "result_json": "governance/codex/results/bem847_runner_smoke.json"
   },
-  "created_at": "2026-05-23T07:00:00Z"
+  "created_at": "2026-05-23T10:40:41.121Z"
 }
