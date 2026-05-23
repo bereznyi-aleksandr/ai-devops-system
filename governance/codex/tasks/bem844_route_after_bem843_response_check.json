@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem844_route_after_bem843_response_check",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-844 route after response check",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 01:07 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nprev=load('governance/state/bem843_verify_real_response_after_retry.json')\nps=prev.get('status','unknown')\nif ps=='real_claude_response_found':\n    status='next_process_real_claude_response'\n    next_action='parse real Claude response and create agreed protocol'\nelse:\n    status='next_patch_claude_dispatcher_response_writer'\n    next_action='patch Claude dispatcher workflow to always create explicit runtime failure/result file and require Claude output path'\nstate={'bem':'BEM-844','status':status,'previous_status':ps,'runtime_outcome':prev.get('runtime_outcome'),'next_action':next_action,'created_at':created}\nPath('governance/state/bem844_route_after_bem843_response_check.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem844_route_after_bem843_response_check.md').write_text('# BEM-844 | Route After BEM-843 Response Check | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem844_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-844'+sep+sep+'Status: '+status+sep+'Previous: '+str(ps)+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem844_route_after_bem843_response_check.json','governance/reports/bem844_route_after_bem843_response_check.md','governance/tasks/pending/bem844_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Routed after BEM-843 real Claude response check: either process response or patch dispatcher response writer')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem844_route_after_bem843_response_check.md",
+    "result_json": "governance/codex/results/bem844_route_after_bem843_response_check.json"
+  },
+  "created_at": "2026-05-23T22:07:37.968Z"
+}
