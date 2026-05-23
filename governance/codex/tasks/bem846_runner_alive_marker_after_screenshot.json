@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem846_runner_alive_marker_after_screenshot",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-846 runner marker",
+  "objective": "Create file governance/state/bem846_runner_alive_marker_after_screenshot.json with content {\"bem\":\"BEM-846\",\"status\":\"runner_marker_after_actions_screenshot\",\"created_at\":\"2026-05-23 | 09:27 (UTC+3)\",\"purpose\":\"prove Codex Runner still processes new tasks while BEM-845 diagnoses lint blockers\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem846_runner_alive_marker_after_screenshot.md",
+    "result_json": "governance/codex/results/bem846_runner_alive_marker_after_screenshot.json"
+  },
+  "created_at": "2026-05-23T06:28:00.355Z"
+}
