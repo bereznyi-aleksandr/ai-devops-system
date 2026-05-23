@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem844_emergency_queued_runner_recovery",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-844 queued recovery",
+  "objective": "Create file governance/tasks/pending/bem844_emergency_queued_runner_recovery.md with content BEM-844 | Emergency queued runner recovery | 2026-05-22 | 09:12 UTC+3. Current facts: BEM-843 remains queued after two status checks; gpt safe status is idle and unlocked; therefore blocker is not GPT session lock. Required repair when runner executes: inspect .github/workflows/codex-runner.yml for any remaining global concurrency group, remove or make it unique by github.run_id/trace; inspect workflow-lint-gate failure after commit 7e90d327; ensure no inline Python/heredoc/long run blocks remain; verify governance/codex/results/bem841* and bem842*; then rerun proof triad dispatch result plus Claude runtime plus real Claude response. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem844_emergency_queued_runner_recovery.md",
+    "result_json": "governance/codex/results/bem844_emergency_queued_runner_recovery.json"
+  },
+  "created_at": "2026-05-23T06:13:43.887Z"
+}
