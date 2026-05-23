@@ -1,24 +1,12 @@
 name: Internal Contour Architecture Lint
-
+# BEM-848: push disabled — workflow_dispatch only
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'governance/protocols/ROLE_COMMUNICATION_CANON.md'
-      - 'governance/protocols/ROLE_EXECUTION_EVIDENCE_CANON.md'
-      - 'governance/internal_contour/**'
-      - 'governance/audit_mailbox/**'
-      - 'governance/provider_gates/**'
-      - 'scripts/internal_contour_architecture_lint.py'
-      - '.github/workflows/internal-contour-architecture-lint.yml'
-
 permissions:
   contents: write
-
 concurrency:
   group: internal-contour-architecture-lint
   cancel-in-progress: false
-
 jobs:
   lint-internal-contour:
     runs-on: ubuntu-latest
@@ -26,13 +14,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Syntax check lint script
         run: python3 -m py_compile scripts/internal_contour_architecture_lint.py
-
       - name: Run architecture lint
         run: python3 scripts/internal_contour_architecture_lint.py
-
       - name: Commit lint result
         run: |
           git config user.name "github-actions[bot]"
