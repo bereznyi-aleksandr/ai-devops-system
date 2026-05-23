@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem841_queue_stall_recovery_marker",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-841 queue stall marker",
+  "objective": "Create file governance/tasks/pending/bem841_queue_stall_recovery_marker.md with content BEM-841 | queue stall recovery marker | 2026-05-22 | 06:02 UTC+3. BEM-840 stayed queued in two checks. Do not stop. Next action: when runner frees, verify BEM-840 output, then tick/verify valid proof probe. Operator relay forbidden. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem841_queue_stall_recovery_marker.md",
+    "result_json": "governance/codex/results/bem841_queue_stall_recovery_marker.json"
+  },
+  "created_at": "2026-05-23T16:13:47.277Z"
+}
