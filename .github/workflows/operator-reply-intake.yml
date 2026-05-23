@@ -1,20 +1,12 @@
 name: Operator Reply Intake
-
+# BEM-848: push disabled
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'governance/triggers/operator_reply_intake.trigger'
-      - 'scripts/operator_reply_intake.py'
-      - '.github/workflows/operator-reply-intake.yml'
-
 permissions:
   contents: write
-
 concurrency:
   group: operator-reply-intake
   cancel-in-progress: false
-
 jobs:
   intake-operator-reply:
     runs-on: ubuntu-latest
@@ -22,10 +14,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Syntax check reply intake
         run: python3 -m py_compile scripts/operator_reply_intake.py
-
       - name: Fetch Telegram webhook info and updates
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -42,10 +32,8 @@ jobs:
             UP_CODE=$(curl -sS -o governance/tmp/operator_reply_updates.json -w "%{http_code}" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates" || echo "000")
             echo "$UP_CODE" > governance/tmp/operator_reply_status.txt
           fi
-
       - name: Parse and record operator reply
         run: python3 scripts/operator_reply_intake.py
-
       - name: Commit intake result
         run: |
           git config user.name "github-actions[bot]"
