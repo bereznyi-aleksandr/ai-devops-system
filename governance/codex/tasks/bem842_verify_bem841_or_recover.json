@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_verify_bem841_or_recover",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-842 verify/recover",
+  "objective": "Create file governance/tasks/pending/bem842_verify_bem841_or_recover.md with content BEM-842 | verify BEM-841 or recover | 2026-05-22 | 06:05 UTC+3. BEM-841 was queued on first check. Next action: verify dispatch result, Claude runtime state, and real Claude response after the BEM-840 probe; if BEM-841 remains queued, diagnose Codex runner queue. Operator relay forbidden. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem842_verify_bem841_or_recover.md",
+    "result_json": "governance/codex/results/bem842_verify_bem841_or_recover.json"
+  },
+  "created_at": "2026-05-23T13:21:40.658Z"
+}
