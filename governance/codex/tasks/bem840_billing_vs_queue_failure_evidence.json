@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_billing_vs_queue_failure_evidence",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-840 billing vs queue",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-22 | 06:01 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\n# Evidence from repository state and queue processor artifacts.\nb827=load('governance/state/bem827_fix_bad_dispatch_queue_json.json')\nb829=load('governance/state/bem829_verify_dispatch_after_json_fix.json')\nb839=load('governance/state/bem839_verify_after_response_retry_tick.json')\nresults=[]\nrd=Path('governance/workflow_dispatch_results')\nif rd.exists():\n    for p in sorted(rd.glob('*.status.json')):\n        results.append({'path':str(p),'preview':read(p)[:700]})\nrunner_alive_evidence=[]\nfor bem in ['bem827','bem828','bem829','bem830','bem831','bem832','bem833','bem834','bem835','bem836','bem837','bem838','bem839']:\n    matches=list(Path('governance/state').glob(bem+'*.json'))\n    if matches:\n        runner_alive_evidence.append(str(matches[-1]))\nconclusion='not_billing_for_jsondecode_screenshot'\nreason='The observed failure was JSON parsing in workflow_dispatch_queue. Codex Runner continued to create commits after the incident, so the shown error was not an Actions-minutes exhaustion symptom. Billing can still be a separate external blocker only if GitHub UI/billing page says minutes/quota exhausted.'\nstate={'bem':'BEM-840','status':conclusion,'reason':reason,'bad_json_evidence':b827,'post_fix_dispatch_check':b829,'latest_triad_check':b839,'dispatch_results_found':len(results),'dispatch_results_tail':results[-10:],'runner_alive_evidence_tail':runner_alive_evidence[-20:],'created_at':created}\nPath('governance/state/bem840_billing_vs_queue_failure_evidence.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem840_billing_vs_queue_failure_evidence.md').write_text('# BEM-840 | Billing Vs Queue Failure Evidence | NOT_BILLING_FOR_JSONDECODE_SCREENSHOT'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem840_next.md').write_text('Next: continue proof triad repair. Billing must be checked separately only through GitHub billing/Actions usage UI or explicit billing error in run logs. Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-840'+sep+sep+'Conclusion: not billing for JSONDecodeError screenshot. Continue proof triad repair.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem840_billing_vs_queue_failure_evidence.json','governance/reports/bem840_billing_vs_queue_failure_evidence.md','governance/tasks/pending/bem840_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Recorded evidence distinguishing the JSONDecodeError queue failure from a GitHub Actions billing/minutes blocker')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_billing_vs_queue_failure_evidence.md",
+    "result_json": "governance/codex/results/bem840_billing_vs_queue_failure_evidence.json"
+  },
+  "created_at": "2026-05-23T15:06:53.066Z"
+}
