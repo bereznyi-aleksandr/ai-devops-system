@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_remove_invalid_dispatch_json",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-840 remove bad JSON",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/workflow_dispatch_queue','governance/workflow_dispatch_queue_invalid','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-22 | 06:00 (UTC+3)'\nqueue=Path('governance/workflow_dispatch_queue')\ninvalid_dir=Path('governance/workflow_dispatch_queue_invalid')\narchived=[]\nvalid=[]\nfor p in sorted(queue.glob('*.json')):\n    txt=p.read_text(errors='ignore')\n    try:\n        json.loads(txt)\n        valid.append(str(p))\n    except Exception as exc:\n        target=invalid_dir/(p.name+'.bad.txt')\n        target.write_text(txt+sep+'--- parse_error ---'+sep+str(exc)+sep)\n        p.unlink()\n        archived.append({'path':str(p),'archived_as':str(target),'error':str(exc)})\n# Ensure one clean valid Claude retry item remains if queue became empty.\nremaining=[str(p) for p in sorted(queue.glob('*.json'))]\ncreated_file=None\nif not remaining:\n    fresh=queue/'bem840_claude_dispatch_valid_retry.json'\n    fresh.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v9','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-840 clean valid retry after invalid queue JSON removal','created_at':created},indent=2,ensure_ascii=False)+sep)\n    created_file=str(fresh)\n    remaining.append(str(fresh))\nstatus='invalid_dispatch_json_removed' if archived else 'no_invalid_dispatch_json_found'\nstate={'bem':'BEM-840','status':status,'archived_count':len(archived),'archived':archived,'valid_before':valid,'remaining_queue':remaining,'created_file':created_file,'created_at':created}\nPath('governance/state/bem840_remove_invalid_dispatch_json.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem840_remove_invalid_dispatch_json.md').write_text('# BEM-840 | Remove Invalid Dispatch JSON | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem840_next.md').write_text('Next: run fresh Codex tick and verify workflow_dispatch_results, Claude runtime state, and real Claude response. Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-840'+sep+sep+'Status: '+status+sep+'Next: fresh tick and verify proof triad.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged=['governance/state/bem840_remove_invalid_dispatch_json.json','governance/reports/bem840_remove_invalid_dispatch_json.md','governance/tasks/pending/bem840_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl']\nfor item in archived: changed.append(item['archived_as'])\nif created_file: changed.append(created_file)\nchanged_files.extend(changed)\nops_applied.append('Scanned workflow_dispatch_queue, archived malformed JSON files, removed blockers, and ensured a clean valid Claude dispatch retry item exists')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_remove_invalid_dispatch_json.md",
+    "result_json": "governance/codex/results/bem840_remove_invalid_dispatch_json.json"
+  },
+  "created_at": "2026-05-23T16:02:03.536Z"
+}
