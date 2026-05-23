@@ -1,13 +1,10 @@
 name: Mailbox Dispatcher
 
+# BEM-848: removed push trigger — was flooding GitHub Actions queue on every mailbox commit
+# Use workflow_dispatch only
+
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'governance/audit_mailbox/**'
-      - 'scripts/mailbox_pick_notification.py'
-      - 'scripts/mailbox_record_delivery.py'
-      - '.github/workflows/mailbox-dispatcher.yml'
 
 permissions:
   contents: write
