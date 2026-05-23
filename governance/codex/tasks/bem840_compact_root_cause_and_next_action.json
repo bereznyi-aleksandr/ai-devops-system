@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_compact_root_cause_and_next_action",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-840 root cause compact",
+  "objective": "Create file governance/reports/bem840_compact_root_cause_and_next_action.md with content BEM-840 | ROOT CAUSE | 2026-05-22 | 06:00 UTC+3. Root cause: GPT to Deno and Codex Runner work, but Claude mailbox end-to-end is not proven. Required smoke proofs: workflow_dispatch_results status file, claude_inbound_mailbox_workflow_state started/completed, real Claude response in claude_to_gpt not blocker. If proof1 missing repair queue/result writer. If proof2 missing repair workflow target/permissions/dispatcher. If proof3 missing repair Claude Action prompt/provider/writer. Reports do not stop development. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_compact_root_cause_and_next_action.md",
+    "result_json": "governance/codex/results/bem840_compact_root_cause_and_next_action.json"
+  },
+  "created_at": "2026-05-23T04:27:05.836Z"
+}
