@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_fix_timestamp_source_rule",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-840 timestamp guard",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/protocols','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated=str(now)\nprotocol=Path('governance/protocols/AUTONOMY_CONTINUITY_CONTRACT_EXTENSION.md')\nold=protocol.read_text(errors='ignore') if protocol.exists() else ''\nblock='''\n\n## BEM-840 | Timestamp Source Guard\nДата: '''+created+'''\nВсе новые repo-отчёты, state-файлы, pending/handoff и Telegram-ориентированные сообщения должны брать время из executor переменной `now` в UTC+3. Ручные hard-coded timestamps в будущих задачах запрещены. Если агент не уверен в текущем времени, он обязан сначала проверить UTC+3 и не писать старую дату. Отчёт с неверным временем считается недостоверным и не может быть основанием для PASS.\n'''\nif '## BEM-840 | Timestamp Source Guard' not in old:\n    protocol.write_text(old+block)\nstate={'bem':'BEM-840','status':'timestamp_source_guard_installed','created_at':created,'rule':'use executor now UTC+3; hard-coded timestamps forbidden','blocker':None}\nPath('governance/state/bem840_fix_timestamp_source_rule.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem840_fix_timestamp_source_rule.md').write_text('# BEM-840 | Timestamp Source Guard | PASS'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem840_next.md').write_text('Next: re-read BEM-839 with corrected timestamp discipline and continue triad repair. Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-840'+sep+sep+'Timestamp guard installed using executor now. Continue BEM-839 triad repair.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(protocol),'governance/state/bem840_fix_timestamp_source_rule.json','governance/reports/bem840_fix_timestamp_source_rule.md','governance/tasks/pending/bem840_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Installed timestamp source guard: future repo artifacts must use executor now UTC+3, not manual hard-coded dates')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_fix_timestamp_source_rule.md",
+    "result_json": "governance/codex/results/bem840_fix_timestamp_source_rule.json"
+  },
+  "created_at": "2026-05-23T17:52:15.271Z"
+}
