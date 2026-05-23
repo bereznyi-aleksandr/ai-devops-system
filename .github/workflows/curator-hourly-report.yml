@@ -1,17 +1,10 @@
 name: Curator Hourly Report
 
+# BEM-848: removed push trigger — schedule and workflow_dispatch are sufficient
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 * * * *'
-  push:
-    paths:
-      - 'governance/triggers/curator_hourly_report.trigger'
-      - 'scripts/render_curator_hourly_report.py'
-      - 'scripts/send_curator_hourly_report.sh'
-      - 'scripts/record_curator_hourly_delivery.py'
-      - 'scripts/commit_curator_hourly_state.sh'
-      - '.github/workflows/curator-hourly-report.yml'
 
 permissions:
   contents: write
