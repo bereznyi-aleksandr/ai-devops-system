@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_recover_from_bem841_queued",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-842 recover queued",
+  "objective": "Create file governance/state/bem842_recover_from_bem841_queued.json with content {\"bem\":\"BEM-842\",\"status\":\"recover_from_bem841_queued\",\"created_at\":\"2026-05-22 | 23:00 (UTC+3)\",\"reason\":\"BEM-841 remained queued while gpt safe lock was idle\",\"next\":\"verify BEM-841 result later and continue Claude probe processing\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem842_recover_from_bem841_queued.md",
+    "result_json": "governance/codex/results/bem842_recover_from_bem841_queued.json"
+  },
+  "created_at": "2026-05-23T06:03:53.666Z"
+}
