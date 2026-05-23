@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem844_tick_after_bem843_force_response",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-844 tick force response",
+  "objective": "Create file governance/state/bem844_tick_after_bem843_force_response.json with content {\"bem\":\"BEM-844\",\"status\":\"fresh_tick_after_bem843_force_real_response_dispatch\",\"created_at\":\"2026-05-22 | 23:01 (UTC+3)\",\"expected\":\"dispatch queue processes bem843 force real response dispatch, then real Claude response appears\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem844_tick_after_bem843_force_response.md",
+    "result_json": "governance/codex/results/bem844_tick_after_bem843_force_response.json"
+  },
+  "created_at": "2026-05-23T17:58:34.784Z"
+}
