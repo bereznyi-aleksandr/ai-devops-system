@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem841_continue_without_bulk_delete",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-841 continue no bulk delete",
+  "objective": "Create file governance/tasks/pending/bem841_continue_without_bulk_delete.md with content BEM-841 | Continue without bulk delete | 2026-05-22 | 06:00 UTC+3. Continue BEM-839 route. Do not ask operator to delete folders. Do not bulk delete queue or result folders. Only quarantine invalid JSON with evidence, keep valid files, create one valid retry item if needed, then verify three proofs: workflow_dispatch_results, Claude runtime state, real Claude response. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem841_continue_without_bulk_delete.md",
+    "result_json": "governance/codex/results/bem841_continue_without_bulk_delete.json"
+  },
+  "created_at": "2026-05-23T15:59:15.234Z"
+}
