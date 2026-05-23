@@ -1,21 +1,13 @@
 name: Workflow Dispatch Queue Runner
-
+# BEM-848: push disabled — workflow_dispatch only
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'governance/workflow_dispatch_queue/**'
-      - 'scripts/workflow_dispatch_queue_runner.py'
-      - '.github/workflows/workflow-dispatch-queue-runner.yml'
-
 permissions:
   actions: write
   contents: write
-
 concurrency:
   group: workflow-dispatch-queue-runner
   cancel-in-progress: false
-
 jobs:
   run-workflow-dispatch-queue:
     runs-on: ubuntu-latest
@@ -23,17 +15,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Syntax check queue runner
         run: python3 -m py_compile scripts/workflow_dispatch_queue_runner.py
-
       - name: Run workflow dispatch queue
         env:
           GH_DISPATCH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python3 scripts/workflow_dispatch_queue_runner.py
-
       - name: Commit dispatch queue result
         run: |
           git config user.name "github-actions[bot]"
