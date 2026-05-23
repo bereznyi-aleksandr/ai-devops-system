@@ -1,12 +1,10 @@
 name: Workflow Lint Gate
 
+# BEM-848: removed push trigger — was triggering on every workflow change creating cascade
+# Use workflow_dispatch only
+
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/**'
-      - 'scripts/workflow_lint_gate.py'
-      - 'governance/workflow_lint/baseline.json'
 
 permissions:
   contents: write
