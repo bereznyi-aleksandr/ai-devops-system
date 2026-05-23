@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_no_bulk_delete_queue_rule",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-840 no bulk delete",
+  "objective": "Append to governance/protocols/BEM819_SINGLE_SMOKE_PROOF_CONTRACT.md: \n\n## BEM-840 | No bulk delete for dispatch queue\nDate: 2026-05-22 | 06:00 (UTC+3)\nOperator must not be asked to delete folder contents manually. Bulk deletion of governance/workflow_dispatch_queue or workflow_dispatch_results is forbidden. Allowed cleanup: validate each JSON file, move only invalid JSON files to governance/workflow_dispatch_queue_invalid with parse error evidence, keep valid files, create exactly one fresh valid retry item when needed, and harden processor so one invalid JSON cannot fail Codex Runner. Reports do not stop development.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_no_bulk_delete_queue_rule.md",
+    "result_json": "governance/codex/results/bem840_no_bulk_delete_queue_rule.json"
+  },
+  "created_at": "2026-05-23T15:58:31.863Z"
+}
