@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem845_recover_from_queued_bem844",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-845 queued recovery",
+  "objective": "Create file governance/tasks/pending/bem845_recover_from_queued_bem844.md with content BEM-845 | Recover from queued BEM-844 | 2026-05-22 | 23:02 UTC+3. BEM-844 remained queued after two status checks. Do not make a third getCodexStatus in the same chain. Next active step: verify BEM-844 completion, then verify workflow_dispatch_results, Claude runtime state, and real Claude response. Operator relay forbidden. Reports do not stop development. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem845_recover_from_queued_bem844.md",
+    "result_json": "governance/codex/results/bem845_recover_from_queued_bem844.json"
+  },
+  "created_at": "2026-05-23T17:59:51.296Z"
+}
