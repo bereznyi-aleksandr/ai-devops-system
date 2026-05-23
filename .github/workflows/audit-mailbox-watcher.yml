@@ -1,14 +1,10 @@
 name: Audit Mailbox Watcher
 
+# BEM-848: removed push trigger — too many concurrent workflows blocking codex-runner
+# Use workflow_dispatch only
+
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'governance/audit_mailbox/claude_to_gpt/**'
-      - 'governance/audit_mailbox/external_auditor_to_internal_auditor/**'
-      - 'governance/agreements/active/**'
-      - 'scripts/audit_mailbox_watcher.py'
-      - '.github/workflows/audit-mailbox-watcher.yml'
 
 permissions:
   contents: write
