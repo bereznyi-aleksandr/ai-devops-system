@@ -1,3 +1,3 @@
-# GPT NEXT ACTION | BEM-846
+# GPT NEXT ACTION | BEM-840
 
-Queue processor moved after checkout. Next: tick and verify marker/result.
+Post-secret Claude smoke queued. Next: tick and verify proof triad.
