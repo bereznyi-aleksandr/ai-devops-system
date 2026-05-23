@@ -1,20 +1,12 @@
 name: Curator Inbox Router
-
+# BEM-848: push disabled
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'governance/curator/inbox/**'
-      - 'scripts/curator_inbox_router.py'
-      - '.github/workflows/curator-inbox-router.yml'
-
 permissions:
   contents: write
-
 concurrency:
   group: curator-inbox-router
   cancel-in-progress: false
-
 jobs:
   route-curator-inbox:
     runs-on: ubuntu-latest
@@ -22,13 +14,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Syntax check router script
         run: python3 -m py_compile scripts/curator_inbox_router.py
-
       - name: Route curator inbox to role orchestrator
         run: python3 scripts/curator_inbox_router.py
-
       - name: Commit router result
         run: |
           git config user.name "github-actions[bot]"
