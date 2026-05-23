@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem846_queue_retry_after_response_guard",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-846 queue after guard",
+  "objective": "Create file governance/workflow_dispatch_queue/bem846_claude_retry_after_response_guard.json with content {\"schema_version\":\"workflow_dispatch_queue_item.v10\",\"workflow\":\"claude-internal-auditor-dispatcher.yml\",\"workflow_id\":\"claude-internal-auditor-dispatcher.yml\",\"ref\":\"main\",\"inputs\":{},\"reason\":\"BEM-846 retry Claude dispatcher after response guard install\",\"created_at\":\"2026-05-24 | 01:09 (UTC+3)\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem846_queue_retry_after_response_guard.md",
+    "result_json": "governance/codex/results/bem846_queue_retry_after_response_guard.json"
+  },
+  "created_at": "2026-05-23T22:09:26.819Z"
+}
