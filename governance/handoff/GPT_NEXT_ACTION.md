@@ -1,3 +1,4 @@
-# GPT NEXT ACTION | BEM-849
+# GPT NEXT ACTION | BEM-851
 
-Status: validated Claude response dispatch queued. Next: tick and verify.
+Status: claude_action_failed_no_response
+Next: patch provider/action configuration based on outcome failure
