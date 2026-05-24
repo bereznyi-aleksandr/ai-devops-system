@@ -1,2 +1,2 @@
-Next: inspect dispatcher ensure step and commit script; response file not committed or step not reached
+Next: patch protocol using extracted changes
 Operator relay forbidden. Report does not stop development.

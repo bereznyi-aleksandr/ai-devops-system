@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-854
+# GPT NEXT ACTION | BEM-855
 
-Decision: BLOCKED
-Status: reapproval_repair_required
-Next: extract changes/blockers from reapproval response and patch protocol
+Status: changes_extracted
+Next: patch protocol using extracted changes
