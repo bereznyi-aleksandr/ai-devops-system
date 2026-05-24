@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem854_next_active_after_protocol",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-854 next active",
+  "objective": "Create file governance/tasks/pending/bem854_harden_response_writer_next.md with content BEM-854 | Next active step after protocol | 2026-05-24 | 13:17 UTC+3. Protocol file exists: governance/protocols/BEM853_MULTI_AGENT_DEVELOPMENT_PROTOCOL.md. Next: harden Claude response writer and export operator-readable protocol package. Report does not stop development. Operator relay forbidden. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem854_next_active_after_protocol.md",
+    "result_json": "governance/codex/results/bem854_next_active_after_protocol.json"
+  },
+  "created_at": "2026-05-24T10:17:20.635Z"
+}
