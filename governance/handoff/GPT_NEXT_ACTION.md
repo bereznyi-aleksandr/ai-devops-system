@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-848
+# GPT NEXT ACTION | BEM-850
 
-Status: fail_closed_response_writer_installed_and_dispatch_queued
-Next: tick and verify response file.
+Status: fail_closed_writer_not_executed
+Next: inspect dispatcher YAML placement of ensure_claude_response_file.py
