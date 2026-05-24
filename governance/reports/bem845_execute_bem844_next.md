@@ -1,3 +1,3 @@
-# BEM-845 | Execute BEM-844 Next | protocol_draft_created_from_real_response
+# BEM-845 | Execute BEM-844 Next | protocol_draft_created_from_triad
 
-{"bem": "BEM-845", "status": "protocol_draft_created_from_real_response", "input_status": "triad_present_ready_to_process_protocol", "input_missing": [], "created_files": ["governance/protocols/BEM845_AGREED_MULTI_AGENT_PROTOCOL_DRAFT.md"], "next_action": "validate protocol decision and either finalize or continue agreement loop", "created_at": "2026-05-24 | 16:35 (UTC+3)"}
+{"bem": "BEM-845", "status": "protocol_draft_created_from_triad", "input_status": "triad_ready_for_protocol", "input_missing": [], "created_files": ["governance/protocols/BEM845_AGREED_MULTI_AGENT_PROTOCOL_DRAFT.md"], "next_action": "render human-readable protocol table and verify against operator requirements", "created_at": "2026-05-24 | 21:36 (UTC+3)"}

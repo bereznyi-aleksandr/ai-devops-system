@@ -4,7 +4,8 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Executed BEM-844 next step by creating protocol draft from real response or creating the next missing-proof repair artifacts",
+    "Executed BEM-844 next action by creating protocol draft if triad is ready",
+    " otherwise queueing exact missing proof repair",
     "custom_script"
   ],
   "changed_files": [
@@ -19,5 +20,5 @@
   "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem845_execute_bem844_next.md",
-  "completed_at": "2026-05-24T13:36:07Z"
+  "completed_at": "2026-05-24T18:37:52Z"
 }

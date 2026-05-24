@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-844
+# GPT NEXT ACTION | BEM-845
 
-Status: triad_ready_for_protocol
-Missing: 
-Next: create agreed protocol from real Claude response
+Status: protocol_draft_created_from_triad
+Next: render human-readable protocol table and verify against operator requirements
