@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-860
+# GPT NEXT ACTION | BEM-861
 
-Decision: MISSING
-Status: patched_approval_missing_or_unknown
-Next: repair Claude response dispatch/relevance filter; approval response not usable
+Decision: BLOCKED
+Status: latest_real_response_not_approved
+Next: extract concrete changes from latest real response and patch protocol
