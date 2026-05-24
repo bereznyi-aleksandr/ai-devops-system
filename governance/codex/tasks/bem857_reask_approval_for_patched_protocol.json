@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem857_reask_approval_for_patched_protocol",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-857 reask patched approval",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/audit_mailbox/gpt_to_claude','governance/workflow_dispatch_queue','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 12:33 (UTC+3)'\nreq=Path('governance/audit_mailbox/gpt_to_claude/bem857_patched_protocol_approval_request.md')\nreq.write_text('# BEM-857 | PATCHED PROTOCOL APPROVAL REQUEST'+sep+sep+'Дата: '+created+sep+sep+'Claude Internal Auditor: review `governance/protocols/BEM856_PATCHED_MULTI_AGENT_PROTOCOL.md`. Write response to `governance/audit_mailbox/claude_to_gpt/bem857_claude_patched_protocol_response.md`. Required exact marker: `Claude Internal Auditor`. Required exact decision line: `Decision: APPROVED` or `Decision: CHANGE_REQUIRED` or `Decision: BLOCKED`. If not APPROVED, list concrete patchable required changes. No issue comments. Do not expose secrets.'+sep)\nq=Path('governance/workflow_dispatch_queue/bem857_patched_protocol_approval_dispatch.json')\nq.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v12','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-857 request Claude approval for patched protocol','created_at':created},indent=2,ensure_ascii=False)+sep)\nstate={'bem':'BEM-857','status':'patched_protocol_approval_request_queued','request':str(req),'queue':str(q),'next_action':'fresh tick then verify patched protocol approval response','created_at':created}\nPath('governance/state/bem857_reask_approval_for_patched_protocol.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem857_reask_approval_for_patched_protocol.md').write_text('# BEM-857 | Reask Approval For Patched Protocol | QUEUED'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem857_next.md').write_text('Next: fresh tick then verify patched protocol approval response. Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-857'+sep+sep+'Status: queued patched protocol approval request'+sep+'Next: fresh tick then verify response'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(req),str(q),'governance/state/bem857_reask_approval_for_patched_protocol.json','governance/reports/bem857_reask_approval_for_patched_protocol.md','governance/tasks/pending/bem857_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Queued Claude approval request for the patched protocol BEM856')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem857_reask_approval_for_patched_protocol.md",
+    "result_json": "governance/codex/results/bem857_reask_approval_for_patched_protocol.json"
+  },
+  "created_at": "2026-05-24T09:33:51.838Z"
+}
