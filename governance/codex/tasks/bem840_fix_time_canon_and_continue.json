@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_fix_time_canon_and_continue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-840 time canon",
+  "objective": "Create file governance/tasks/pending/bem840_fix_time_canon_and_continue.md with content BEM-840 | Time Canon Fix | 2026-05-24 | 20:05 UTC+3. Operator correction accepted: all visible checkpoints must use actual current UTC+3 time in format YYYY-MM-DD | HH:MM (UTC+3), not stale artifact time. Continue from BEM-839 proof triad; reports do not stop development. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem840_fix_time_canon_and_continue.md",
+    "result_json": "governance/codex/results/bem840_fix_time_canon_and_continue.json"
+  },
+  "created_at": "2026-05-24T17:06:08.924Z"
+}
