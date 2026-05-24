@@ -1,2 +1,2 @@
-Next: repair Claude response generation/writer; do not count blocker files
+Next: patch Claude dispatcher prompt/response writer and retry real response
 Operator relay forbidden. Report does not stop development.

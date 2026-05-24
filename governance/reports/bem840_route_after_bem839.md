@@ -1,3 +1,3 @@
-# BEM-840 | Route After BEM-839 | route_repair_real_claude_response
+# BEM-840 | Route After BEM-839 | repair_real_response_next
 
-{"bem": "BEM-840", "status": "route_repair_real_claude_response", "bem839_status": "only_real_response_missing", "missing": ["real_claude_response"], "dispatch_results_tail": [{"path": "governance/workflow_dispatch_results/queue_processor_summary.status.json", "data": {"status": "processor_completed", "processed_queue_items": 0, "time": "2026-05-22T02:29:59Z"}}], "next_action": "repair Claude response generation/writer; do not count blocker files", "created_at": "2026-05-22 | 06:00 (UTC+3)"}
+{"bem": "BEM-840", "status": "repair_real_response_next", "previous_status": "only_real_response_missing", "missing": ["real_claude_response"], "next_action": "patch Claude dispatcher prompt/response writer and retry real response", "created_at": "2026-05-22 | 06:00 (UTC+3)"}
