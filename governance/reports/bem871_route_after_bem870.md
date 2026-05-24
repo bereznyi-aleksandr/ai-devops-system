@@ -1,0 +1,3 @@
+# BEM-871 | Route After BEM-870 | next_repair_dispatch_processing
+
+{"bem": "BEM-871", "status": "next_repair_dispatch_processing", "previous_status": "dispatch_processing_repair_needed", "next_action": "inspect queue processor/results and target workflow visibility", "created_at": "2026-05-24 | 16:18 (UTC+3)"}

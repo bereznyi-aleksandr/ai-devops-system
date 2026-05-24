@@ -1,1 +1,2 @@
-Next: fresh tick then verify BEM871 Claude decision. Operator relay forbidden. Report does not stop development.
+Next: inspect queue processor/results and target workflow visibility
+Operator relay forbidden. Continue Claude Code Action track until result.
