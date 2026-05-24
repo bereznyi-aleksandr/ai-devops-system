@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-846
+# GPT NEXT ACTION | BEM-848
 
-Status: protocol_needs_next_claude_round
-Decision: BLOCKED
-Next: fresh tick, verify Claude final review response, then finalize protocol
+Status: protocol_review_response_missing
+Decision: None
+Next: continue mailbox watchdog/dispatch retry until Claude final review response exists
