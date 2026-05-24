@@ -1,0 +1,3 @@
+# BEM-876 | Force Machine Readable Claude Decision | QUEUED
+
+{"bem": "BEM-876", "status": "machine_readable_decision_request_queued", "request": "governance/audit_mailbox/gpt_to_claude/bem876_machine_readable_decision_required.md", "queue": "governance/workflow_dispatch_queue/bem876_machine_decision_dispatch.json", "previous_problem": "BEM-875 decision MISSING / approval_response_missing_or_unknown", "next_action": "fresh tick then verify bem876_claude_machine_decision.json", "created_at": "2026-05-24 | 12:53 (UTC+3)"}

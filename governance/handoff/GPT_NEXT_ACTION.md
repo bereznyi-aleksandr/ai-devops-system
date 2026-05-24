@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-875
+# GPT NEXT ACTION | BEM-876
 
-Decision: MISSING
-Status: approval_response_missing_or_unknown
-Next: repair Claude response format: require machine-readable decision in dedicated state file
+Status: machine-readable decision request queued
+Next: tick then verify JSON decision
