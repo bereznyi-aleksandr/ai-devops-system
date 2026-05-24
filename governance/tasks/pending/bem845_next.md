@@ -1,2 +1,2 @@
-Next: parse real Claude response into agreed protocol
+Next: resolve Claude blockers then retry protocol agreement
 Operator relay forbidden. Report does not stop development.
