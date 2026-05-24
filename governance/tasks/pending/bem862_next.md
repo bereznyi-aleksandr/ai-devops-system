@@ -1,2 +1,1 @@
-Next: extract concrete changes from latest real response and patch protocol
-Operator relay forbidden. Report does not stop development.
+Next: implement request template and resilient queue proof. Operator relay forbidden. Report does not stop development.
