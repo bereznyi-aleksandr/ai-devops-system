@@ -5,8 +5,8 @@
 | Trace | bem840_route_after_bem839_verify |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Routed after BEM-839 and queued the first missing proof repair without stopping, custom_script |
+| Operations | Routed after BEM-839 triad verification and selected the next missing proof repair, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T08:36:47Z |
+| Completed | 2026-05-24T17:04:31Z |
 
 ### Completed successfully.
