@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem855_route_after_bem854",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-855 route 854",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/workflow_dispatch_queue']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 11:51 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nprev=load('governance/state/bem854_verify_response_after_writer_fix.json')\nps=prev.get('status','unknown')\ncreated_files=[]\nif ps=='response_file_present_after_writer_fix':\n    status='process_response_next'\n    next_action='parse BEM-844 response into final agreed/BLOCKED protocol'\nelif ps=='still_no_dispatch_results':\n    q=Path('governance/workflow_dispatch_queue/bem855_result_writer_probe.json')\n    q.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v16','workflow':'codex-runner.yml','workflow_id':'codex-runner.yml','ref':'main','inputs':{},'reason':'BEM-855 still no dispatch results after writer fix','created_at':created},indent=2,ensure_ascii=False)+sep)\n    created_files.append(str(q))\n    status='dispatch_result_probe_queued'\n    next_action='fresh tick and verify dispatch result writer'\nelif ps=='still_no_runtime_state':\n    q=Path('governance/workflow_dispatch_queue/bem855_runtime_probe.json')\n    q.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v16','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-855 runtime still missing after writer fix','created_at':created},indent=2,ensure_ascii=False)+sep)\n    created_files.append(str(q))\n    status='runtime_probe_queued'\n    next_action='fresh tick and verify runtime state'\nelif ps=='runtime_seen_but_response_missing':\n    status='runtime_seen_response_missing_next'\n    next_action='inspect dispatcher ensure step and commit script; response file not committed or step not reached'\nelse:\n    status='unknown_bem854_status'\n    next_action='diagnose BEM-854 state'\nstate={'bem':'BEM-855','status':status,'previous_status':ps,'created_files':created_files,'next_action':next_action,'created_at':created}\nPath('governance/state/bem855_route_after_bem854.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem855_route_after_bem854.md').write_text('# BEM-855 | Route After BEM-854 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem855_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-855'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged=['governance/state/bem855_route_after_bem854.json','governance/reports/bem855_route_after_bem854.md','governance/tasks/pending/bem855_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl']+created_files\nchanged_files.extend(changed)\nops_applied.append('Routed after BEM-854 response verification and selected next concrete step')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem855_route_after_bem854.md",
+    "result_json": "governance/codex/results/bem855_route_after_bem854.json"
+  },
+  "created_at": "2026-05-24T08:51:43.949Z"
+}
