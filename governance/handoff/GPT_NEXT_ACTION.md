@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-857
+# GPT NEXT ACTION | BEM-858
 
-Status: next_patch_dispatcher_commit_response_path
-Next: patch dispatcher commit script/git add to include bem844_claude_response.md and reports after ensure step
+Status: commit_response_path_patched_and_dispatch_queued
+Next: fresh tick then verify bem844_claude_response.md
