@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-851
+# GPT NEXT ACTION | BEM-840
 
-Status: claude_action_failed_no_response
-Next: patch provider/action configuration based on outcome failure
+Status: real_response_retry_queued
+Next: fresh tick then verify real Claude response; do not accept blocker files
