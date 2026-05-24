@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem844_read_843_and_process_or_repair",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Read BEM-843 and current proof triad; selected protocol processing if triad is present or direct repair for the first missing proof",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem844_read_843_and_process_or_repair.json",
+    "governance/reports/bem844_read_843_and_process_or_repair.md",
+    "governance/tasks/pending/bem844_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem844_read_843_and_process_or_repair.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem844_read_843_and_process_or_repair.md",
+  "completed_at": "2026-05-24T13:34:55Z"
+}
