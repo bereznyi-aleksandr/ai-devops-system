@@ -4,8 +4,7 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Verified whether real Claude response appeared after BEM-844 retry and BEM-845 tick",
-    " without relying on operator UI",
+    "Verified whether a real Claude response appeared after BEM-844 response retry and BEM-845 tick",
     "custom_script"
   ],
   "changed_files": [
@@ -16,8 +15,8 @@
     "governance/transport/results.jsonl",
     "governance/codex/proofs/bem846_verify_real_response_after_retry.txt"
   ],
-  "commit_sha": "dfe1d62528b472cf8b7a412884b698245f5ac1be",
+  "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem846_verify_real_response_after_retry.md",
-  "completed_at": "2026-05-22T09:07:26Z"
+  "completed_at": "2026-05-24T07:22:57Z"
 }
