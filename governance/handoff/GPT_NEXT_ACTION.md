@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-867
+# GPT NEXT ACTION | BEM-868
 
-Status: dispatch_result_parsed_processor_completed
-Next: patch according to dispatch result status or verify runtime if dispatch_attempted
+Status: unknown_route
+Next: diagnose BEM-867 status
