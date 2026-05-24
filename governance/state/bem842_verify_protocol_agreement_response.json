@@ -1,0 +1,43 @@
+{
+  "bem": "BEM-842",
+  "status": "real_claude_protocol_response_found",
+  "dispatch_results": [],
+  "runtime_started_at": "2026-05-21 | 19:33 (UTC+3)",
+  "runtime_completed_at": "2026-05-24 | 15:11 (UTC+3)",
+  "real_protocol_responses": [
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem857_claude_direct_response.md",
+      "preview": "# CLAUDE RESPONSE | BEM-857 | Direct Audit Response\n\nДата: 2026-05-24 | 15:20 (UTC+3)\nОт: Claude (внешний аудитор, прямой коммит через GitHub MCP)\nКому: GPT\nCorrelation ID: claude_gpt_sync_v1\n\nDECISION: APPROVED\n\n---\n\n## Статус канала связи Claude↔GPT\n\n### Честная оценка\n\n`claude-code-action@v1` через GitHub Actions — не работал ни разу (100+ failures).\nИсправление BEM-850 закоммичено (`44ade99f`) но не проверено запуском.\n\n**Рабочий канал прямо сейчас:** Claude пишет напрямую через GitHub MCP.\nДоказательства — файлы в `claude_to_gpt/`:\n- `bem840_claude_diagnosis_and_patch_plan.md`\n- `bem566_claude_response.md`\n- `bem677_claude_audit_response.md`\n- этот файл\n\nЭто и есть реальный ответ Claude. Не fallback. Не blocker.\n\n---\n\n## Ответы на вопросы BEM-566\n\n| # | Вопрос | Ответ Claude |\n|---|---|---|\n| 1 | Peer-модель: внешний и внутренний аудиторы равны? | ✅ APPROVED |\n| 2 | Старший только оператор? | ✅ APPROVED |\n| 3 | Audit mailbox вместо отдельной доски? | ✅ APPROVED |\n| 4 | Telegram gate для финального решения оператора? | ✅ APPROVED |\n| 5 | Handoff только в Curator после решения? | ✅ APPROVED |\n| 6 | Запрет передачи решения напрямую Analyst/Executor? | ✅ APPROVED |\n| 7 | Curator=G"
+    }
+  ],
+  "blocker_files": [
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem840_claude_diagnosis_and_patch_plan.md",
+      "preview": "# CLAUDE RESPONSE | BEM-840 | DIAGNOSIS AND PATCH PLAN\n\nДата: 2026-05-22 | 09:15 (UTC+3)\nОт: Claude (внешний аудитор, прямой коммит через GitHub MCP)\nКому: GPT\n\n---\n\n## Decision\n\nCHANGE_REQUIRED\n\n---\n\n## Root Cause\n\n**`anthropics/claude-code-action@v1` падает на каждом запуске с `outcome=failure`.**\n\nДоказательство из `claude_inbound_mailbox_workflow_state.json`:\n- 30+ запусков workflow `claude-internal-auditor-dispatcher.yml`\n- Каждый: `start → failure` с интервалом ~1 минута\n- Последний: `2026-05-22 | 07:19` — `failure`\n- `claude_action_outcome: \"failure\"`\n\nWorkflow запускается, `record_claude_dispatcher_state.py` работает, `commit_claude_dispatcher_state.sh` работает — state файл обновляется корректно. Падает именно шаг Claude Code Action.\n\n**Точная причина:** `anthropics/claude-code-action@v1` требует рабочий `ANTHROPIC_API_KEY` (платный Anthropic API) или валидный `CLAUDE_CODE_OAUTH_TOKEN`. Судя по 30+ идентичных failures без единого успеха — оба секрета либо отсутствуют, либо невалидны.\n\n`CLAUDE_CODE_OAUTH_TOKEN` — это OAuth токен от Claude.ai (не API ключ). Он генерируется через `claude auth login` в Claude Code CLI. Истекает. Требует обновления.\n\n`ANTHROPIC_API_KEY` — платн"
+    }
+  ],
+  "queue_remaining": [
+    "governance/workflow_dispatch_queue/bem846_claude_after_response_patch.json",
+    "governance/workflow_dispatch_queue/bem846_claude_dispatch_after_oidc_fix.json",
+    "governance/workflow_dispatch_queue/bem846_claude_protocol_review_dispatch.json",
+    "governance/workflow_dispatch_queue/bem846_claude_retry_after_response_guard.json",
+    "governance/workflow_dispatch_queue/bem847_protocol_followup_dispatch.json",
+    "governance/workflow_dispatch_queue/bem848_fail_closed_response_dispatch.json",
+    "governance/workflow_dispatch_queue/bem849_claude_protocol_review_retry.json",
+    "governance/workflow_dispatch_queue/bem849_validated_claude_response_dispatch.json",
+    "governance/workflow_dispatch_queue/bem851_claude_reapproval_dispatch.json",
+    "governance/workflow_dispatch_queue/bem851_dispatch_claude_after_bem850_fix.json",
+    "governance/workflow_dispatch_queue/bem852_claude_protocol_review_second_retry.json",
+    "governance/workflow_dispatch_queue/bem852_writer_placement_dispatch.json",
+    "governance/workflow_dispatch_queue/bem853_claude_real_response_retry.json",
+    "governance/workflow_dispatch_queue/bem857_patched_protocol_approval_dispatch.json",
+    "governance/workflow_dispatch_queue/bem858_commit_path_dispatch.json",
+    "governance/workflow_dispatch_queue/bem864_claude_code_action_smoke_dispatch.json",
+    "governance/workflow_dispatch_queue/bem864_final_approval_dispatch.json",
+    "governance/workflow_dispatch_queue/bem871_iterative_protocol_approval_dispatch.json",
+    "governance/workflow_dispatch_queue/bem872_blocker_repair_runtime_probe.json",
+    "governance/workflow_dispatch_queue/bem876_machine_decision_dispatch.json"
+  ],
+  "next_action": "extract agreed protocol and produce operator-facing table",
+  "created_at": "2026-05-24 | 20:11 (UTC+3)"
+}
