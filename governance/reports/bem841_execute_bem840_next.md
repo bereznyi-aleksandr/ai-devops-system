@@ -1,3 +1,3 @@
-# BEM-841 | Execute BEM-840 Next | real_response_probe_queued
+# BEM-841 | Execute BEM-840 Next | real_response_retry_queued_with_mailbox_prompt
 
-{"bem": "BEM-841", "status": "real_response_probe_queued", "route_status": "next_repair_real_claude_response", "created_files": ["governance/workflow_dispatch_queue/bem841_real_response_probe.json"], "next_action": "fresh tick and verify real Claude response", "created_at": "2026-05-24 | 08:51 (UTC+3)"}
+{"bem": "BEM-841", "status": "real_response_retry_queued_with_mailbox_prompt", "input_status": "repair_real_response_next", "created_files": ["governance/audit_mailbox/gpt_to_claude/bem841_real_response_required.md", "governance/workflow_dispatch_queue/bem841_claude_real_response_retry.json"], "next_action": "fresh tick then verify real Claude response", "created_at": "2026-05-24 | 13:49 (UTC+3)"}
