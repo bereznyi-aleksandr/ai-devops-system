@@ -1,0 +1,3 @@
+# BEM-847 | Route After Protocol Decision | protocol_blocked
+
+{"bem": "BEM-847", "status": "protocol_blocked", "decision": "BLOCKED", "protocol": "governance/protocols/BEM846_AGREED_MULTI_AGENT_PROTOCOL.md", "source_draft": "governance/protocols/BEM845_CLAUDE_AGREED_PROTOCOL_DRAFT.md", "next_action": "extract blocker and repair transport/runtime/protocol before roadmap resume", "created_at": "2026-05-24 | 12:23 (UTC+3)"}
