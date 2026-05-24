@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-871
+# GPT NEXT ACTION | BEM-872
 
-Status: next_repair_dispatch_processing
+Status: dispatch_processing_diagnosis_required
 Next: inspect queue processor/results and target workflow visibility
