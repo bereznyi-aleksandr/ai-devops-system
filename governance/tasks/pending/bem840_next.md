@@ -1,2 +1,2 @@
-Next: patch Claude dispatcher prompt/response writer; do not accept fallback blocker files
+Next: fresh tick; verify real Claude response file
 Operator relay forbidden. Report does not stop development.
