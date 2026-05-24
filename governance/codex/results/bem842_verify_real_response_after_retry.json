@@ -4,7 +4,9 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Verified real Claude response after BEM-840 retry request and BEM-841 tick; routed next action based on runtime/dispatch/response evidence",
+    "Verified dispatch results",
+    " Claude runtime state",
+    " and real Claude response after BEM-840/BEM-841 retry",
     "custom_script"
   ],
   "changed_files": [
@@ -15,8 +17,8 @@
     "governance/transport/results.jsonl",
     "governance/codex/proofs/bem842_verify_real_response_after_retry.txt"
   ],
-  "commit_sha": "3e1b74f9253656be0306100c82bb26e30e781d06",
+  "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem842_verify_real_response_after_retry.md",
-  "completed_at": "2026-05-22T20:00:40Z"
+  "completed_at": "2026-05-24T08:38:52Z"
 }

@@ -1,2 +1,2 @@
-Next: move marker before main commit step or add marker paths to final commit stage so files are persisted
+Next: repair Claude action prompt/provider/write response path
 Operator relay forbidden. Report does not stop development.

@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-842
 
-Status: real_response_retry_queued
-Next: fresh tick then verify real Claude response; do not accept blocker files
+Status: runtime_present_real_response_missing
+Next: repair Claude action prompt/provider/write response path
