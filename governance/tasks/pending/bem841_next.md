@@ -1,1 +1,2 @@
-Next: if response accepted, repair/verify Claude dispatcher OIDC workflow separately; if missing, pull/merge commit 5be99e84 or request repo sync. Operator relay forbidden.
+Next: verify triad and process protocol if present
+Operator relay forbidden. Report does not stop development.
