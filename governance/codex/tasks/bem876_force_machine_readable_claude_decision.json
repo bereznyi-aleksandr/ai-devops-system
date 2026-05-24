@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem876_force_machine_readable_claude_decision",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-876 machine decision",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/audit_mailbox/gpt_to_claude','governance/workflow_dispatch_queue','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 12:53 (UTC+3)'\nreq=Path('governance/audit_mailbox/gpt_to_claude/bem876_machine_readable_decision_required.md')\nreq.write_text('# BEM-876 | MACHINE READABLE DECISION REQUIRED'+sep+sep+'Дата: '+created+sep+sep+'Claude Internal Auditor: review `governance/protocols/BEM870_ITERATIVE_PATCHED_PROTOCOL.md` and write BOTH files:'+sep+sep+'1. `governance/audit_mailbox/claude_to_gpt/bem876_claude_decision.md` with marker `Claude Internal Auditor` and exact line `Decision: APPROVED` or `Decision: CHANGE_REQUIRED` or `Decision: BLOCKED`.'+sep+'2. `governance/state/bem876_claude_machine_decision.json` with valid JSON: {\"decision\":\"APPROVED|CHANGE_REQUIRED|BLOCKED\",\"reason\":\"...\",\"required_changes\":[\"...\"]}.'+sep+sep+'If not APPROVED, required_changes must contain concrete patchable file/path/rule changes. No issue comments. Do not expose secrets.'+sep)\nq=Path('governance/workflow_dispatch_queue/bem876_machine_decision_dispatch.json')\nq.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v15','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-876 require machine-readable Claude decision JSON because markdown decision was missing/unknown','created_at':created},indent=2,ensure_ascii=False)+sep)\nstate={'bem':'BEM-876','status':'machine_readable_decision_request_queued','request':str(req),'queue':str(q),'previous_problem':'BEM-875 decision MISSING / approval_response_missing_or_unknown','next_action':'fresh tick then verify bem876_claude_machine_decision.json','created_at':created}\nPath('governance/state/bem876_force_machine_readable_claude_decision.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem876_force_machine_readable_claude_decision.md').write_text('# BEM-876 | Force Machine Readable Claude Decision | QUEUED'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem876_next.md').write_text('Next: fresh tick then verify bem876_claude_machine_decision.json. Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-876'+sep+sep+'Status: machine-readable decision request queued'+sep+'Next: tick then verify JSON decision'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(req),str(q),'governance/state/bem876_force_machine_readable_claude_decision.json','governance/reports/bem876_force_machine_readable_claude_decision.md','governance/tasks/pending/bem876_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Queued a Claude request that requires a valid machine-readable decision JSON in addition to mailbox markdown, because BEM-875 exposed missing final decision')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem876_force_machine_readable_claude_decision.md",
+    "result_json": "governance/codex/results/bem876_force_machine_readable_claude_decision.json"
+  },
+  "created_at": "2026-05-24T09:53:13.558Z"
+}
