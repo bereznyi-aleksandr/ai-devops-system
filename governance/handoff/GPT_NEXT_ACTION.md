@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-855
+# GPT NEXT ACTION | BEM-840
 
-Status: queue_files_present
-Next: if queue missing, recreate queue and force commit; if queue present, process/verify dispatch results
+Status: claude_direct_response_not_accepted
+Next: verify dispatcher workflow OIDC failure separately; continue roadmap.

@@ -1,2 +1,1 @@
-Next: repair missing proofs 
-Mailbox watchdog interval: 1 minute. Operator relay forbidden. Report does not stop development.
+Next: verify dispatcher workflow OIDC failure separately; protocol can be accepted only if direct Claude response is approved. Operator relay forbidden.
