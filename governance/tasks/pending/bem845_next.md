@@ -1,2 +1,2 @@
-Next: render human-readable protocol table and verify against operator requirements
+Next: process real Claude response and create agreed protocol
 Operator relay forbidden. Report does not stop development.
