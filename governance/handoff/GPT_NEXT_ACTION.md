@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-861
+# GPT NEXT ACTION | BEM-840
 
-Status: queue_remaining_requires_tick
-Next: run fresh tick and verify real response again
+Status: next_repair_real_claude_response
+BEM-839 missing: real_claude_response
+Next: patch Claude prompt/provider response writer and retry mailbox answer
