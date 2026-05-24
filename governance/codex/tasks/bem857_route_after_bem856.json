@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem857_route_after_bem856",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-857 route 856",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 11:53 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nprev=load('governance/state/bem856_execute_bem855_route.json')\nps=prev.get('status','unknown')\nif ps=='protocol_result_created_from_bem844_response':\n    status='next_finalize_or_repair_protocol_decision'\n    next_action='read protocol result decision and finalize/repair'\nelif ps=='inspect_writer_commit_path_required':\n    status='next_patch_dispatcher_commit_response_path'\n    next_action='patch dispatcher commit script/git add to include bem844_claude_response.md and reports after ensure step'\nelif ps in ['dispatch_probe_created_wait_tick','runtime_probe_created_wait_tick']:\n    status='next_tick_probe'\n    next_action='tick and verify probe result'\nelse:\n    status='next_diagnose_response_absence'\n    next_action='inspect BEM-850/BEM-856 state, dispatcher workflow, commit script and queue result'\nstate={'bem':'BEM-857','status':status,'previous_status':ps,'next_action':next_action,'created_at':created}\nPath('governance/state/bem857_route_after_bem856.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem857_route_after_bem856.md').write_text('# BEM-857 | Route After BEM-856 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem857_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-857'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem857_route_after_bem856.json','governance/reports/bem857_route_after_bem856.md','governance/tasks/pending/bem857_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Routed after BEM-856 to either finalize protocol or patch missing response/commit path')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem857_route_after_bem856.md",
+    "result_json": "governance/codex/results/bem857_route_after_bem856.json"
+  },
+  "created_at": "2026-05-24T08:53:43.037Z"
+}
