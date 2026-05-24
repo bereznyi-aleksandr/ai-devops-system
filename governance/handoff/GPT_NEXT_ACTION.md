@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-843
+# GPT NEXT ACTION | BEM-840
 
-Status: real_claude_response_found
-Next: process Claude response and update protocol DOCX
+Status: repair_real_claude_response_writer
+Missing: real_claude_response
+Next: patch Claude dispatcher prompt/response writer; do not accept fallback blocker files

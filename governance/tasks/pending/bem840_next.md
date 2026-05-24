@@ -1,1 +1,2 @@
-Next: tick dispatch queue and monitor Claude mailbox every minute until real response. Operator relay forbidden.
+Next: patch Claude dispatcher prompt/response writer; do not accept fallback blocker files
+Operator relay forbidden. Report does not stop development.
