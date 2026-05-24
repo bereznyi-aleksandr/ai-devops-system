@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-847
+# GPT NEXT ACTION | BEM-849
 
-Status: next_patch_unclear
-Next: fresh tick then verify triad again.
+Status: triad_pass
+Missing: 
+Next: process real Claude response into agreed protocol

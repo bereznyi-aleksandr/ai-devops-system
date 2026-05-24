@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem849_verify_triad_after_bem848",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified proof triad after BEM-848 tick: dispatch result",
+    " Claude runtime state",
+    " and real Claude response",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem849_verify_triad_after_bem848.json",
+    "governance/reports/bem849_verify_triad_after_bem848.md",
+    "governance/tasks/pending/bem849_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem849_verify_triad_after_bem848.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem849_verify_triad_after_bem848.md",
+  "completed_at": "2026-05-24T18:04:03Z"
+}
