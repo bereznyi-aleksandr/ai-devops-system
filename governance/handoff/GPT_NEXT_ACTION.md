@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-850
+# GPT NEXT ACTION | BEM-840
 
-Status: triad_regression_gate_installed
-Next: continue roadmap with triad gate enforced.
+Status: repair_real_claude_response_next
+Missing: real_claude_response
+Next: patch Claude prompt/provider response writer and retry without accepting blocker files
