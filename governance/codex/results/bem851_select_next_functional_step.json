@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem851_select_next_functional_step",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Selected next functional roadmap step after accepting BEM-849 write channel restoration and ignoring commit_sha null",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem851_select_next_functional_step.json",
+    "governance/reports/bem851_select_next_functional_step.md",
+    "governance/tasks/pending/bem851_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem851_select_next_functional_step.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem851_select_next_functional_step.md",
+  "completed_at": "2026-05-24T05:33:02Z"
+}

@@ -1,2 +1,2 @@
-Next: fresh tick then verify real Claude response
-Operator relay forbidden. Report does not stop development.
+Next: dispatch Claude response retry and require real claude_to_gpt answer
+Operator relay forbidden. commit_sha null ignored by BEM-849 decision.

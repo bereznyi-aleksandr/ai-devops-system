@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-848
+# GPT NEXT ACTION | BEM-851
 
-Status: no_guard_state_no_real_response
-Next: dispatcher did not reach guard; inspect workflow dispatch/runtime path
+Status: next_repair_real_claude_response
+Next: dispatch Claude response retry and require real claude_to_gpt answer
