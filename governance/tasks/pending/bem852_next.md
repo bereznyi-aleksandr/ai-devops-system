@@ -1,2 +1,2 @@
-Next: format protocol into operator-readable final table
+Next: fresh tick and verify second retry response
 Operator relay forbidden. Report does not stop development.

@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-851
+# GPT NEXT ACTION | BEM-852
 
-Status: protocol_review_retry_missing
-Decision: None
-Next: continue watchdog/dispatch retry; do not ask operator as relay
+Status: protocol_review_still_missing_next_retry_queued
+Next: fresh tick and verify second retry response
