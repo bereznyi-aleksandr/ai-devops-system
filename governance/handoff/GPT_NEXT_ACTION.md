@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-867
+# GPT NEXT ACTION | BEM-868
 
-Status: route_repair_dispatch_queue_or_target
-Next: inspect dispatch queue processor, queue remainder, and smoke workflow target
+Status: dispatch_not_processed_or_target_missing
+Next: repair dispatch queue processor/result writer or target workflow visibility

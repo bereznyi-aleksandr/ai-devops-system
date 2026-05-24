@@ -5,8 +5,8 @@
 | Trace | bem868_execute_bem867_route |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Executed BEM-867 route by selecting dispatch-attempted verification,  token/dispatch patch,  runtime outcome patch,  or result-writer probe, custom_script |
+| Operations | Executed BEM-867 route by classifying smoke response,  dispatch result,  smoke state,  and queue remainder, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T09:04:51Z |
+| Completed | 2026-05-24T13:15:18Z |
 
 ### Completed successfully.

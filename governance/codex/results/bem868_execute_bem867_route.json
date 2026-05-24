@@ -4,10 +4,10 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Executed BEM-867 route by selecting dispatch-attempted verification",
-    " token/dispatch patch",
-    " runtime outcome patch",
-    " or result-writer probe",
+    "Executed BEM-867 route by classifying smoke response",
+    " dispatch result",
+    " smoke state",
+    " and queue remainder",
     "custom_script"
   ],
   "changed_files": [
@@ -16,10 +16,11 @@
     "governance/tasks/pending/bem868_next.md",
     "governance/handoff/GPT_NEXT_ACTION.md",
     "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem868_execute_bem867_route.txt",
     "governance/codex/proofs/bem868_execute_bem867_route.txt"
   ],
   "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem868_execute_bem867_route.md",
-  "completed_at": "2026-05-24T09:04:51Z"
+  "completed_at": "2026-05-24T13:15:18Z"
 }
