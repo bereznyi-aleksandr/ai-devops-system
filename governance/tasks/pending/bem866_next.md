@@ -1,2 +1,2 @@
-Next: parse latest dispatch result and patch exact status failure
+Next: repair response filter/dispatch and retry final approval
 Operator relay forbidden. Report does not stop development.

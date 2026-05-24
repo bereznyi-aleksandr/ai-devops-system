@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-864
+# GPT NEXT ACTION | BEM-866
 
-Status: latest_changes_applied_and_final_approval_queued
-Next: fresh tick then verify final approval response
+Status: final_approval_missing_or_unknown
+Decision: MISSING
+Next: repair response filter/dispatch and retry final approval
