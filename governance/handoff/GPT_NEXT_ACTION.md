@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-841
 
-Status: next_repair_real_claude_response
-Missing: real_claude_response
-Next: patch Claude dispatcher prompt/action so real response is written to claude_to_gpt
+Status: real_claude_response_request_and_dispatch_queued
+Next: fresh tick, then verify dispatch result, runtime state, and real Claude response file
