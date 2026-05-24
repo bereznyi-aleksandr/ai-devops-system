@@ -1,9 +1,8 @@
 name: Claude Internal Auditor Dispatcher
 
 # BEM-850: fixed claude-code-action@v1 inputs
-# - removed invalid 'with: claude_code_oauth_token' (not a valid v1 input)
-# - kept CLAUDE_CODE_OAUTH_TOKEN via env (correct)
-# - added 'prompt' as top-level input (required in v1 automation mode)
+# BEM-848: removed invalid with:claude_code_oauth_token
+# BEM-857: added id-token: write for OIDC
 
 on:
   workflow_dispatch:
@@ -11,8 +10,8 @@ on:
 permissions:
   contents: write
   issues: read
-
   id-token: write
+
 concurrency:
   group: claude-internal-auditor-dispatcher
   cancel-in-progress: false
