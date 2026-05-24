@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem847_parse_response_evidence_for_protocol",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-847 parse evidence",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/protocols']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 21:39 (UTC+3)'\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nreal=[]; blockers=[]\nd=Path('governance/audit_mailbox/claude_to_gpt')\nif d.exists():\n    for p in sorted(d.glob('*')):\n        if p.is_file():\n            txt=read(p); up=txt.upper(); low=(p.name+' '+txt).lower()\n            bad='NOT CLAUDE APPROVAL' in up or 'RUNTIME BLOCKER' in up or 'not treat this as claude' in low\n            ok=('DECISION:' in up and ('APPROVED' in up or 'CHANGE_REQUIRED' in up or 'BLOCKED' in up) and ('CLAUDE RESPONSE' in up or 'Claude Internal Auditor' in txt))\n            if bad: blockers.append({'path':str(p),'preview':txt[:700]})\n            elif ok: real.append({'path':str(p),'preview':txt[:1400]})\nif real:\n    status='real_response_evidence_present_protocol_can_advance'\n    decision='evidence_present'\n    next_action='promote BEM846 protocol to v1.0 after operator review or if autonomous gate allows'\nelse:\n    status='real_response_evidence_missing_protocol_remains_draft'\n    decision='blocked'\n    next_action='continue Claude runtime/response repair; do not call protocol fully agreed'\nprotocol=Path('governance/protocols/BEM847_PROTOCOL_EVIDENCE_STATUS.md')\nprotocol.write_text('# BEM-847 | Protocol Evidence Status'+sep+sep+'Дата: '+created+sep+'Status: '+status+sep+'Decision: '+decision+sep+sep+'Real responses found: '+str(len(real))+sep+'Blocker files found: '+str(len(blockers))+sep+sep+'Next: '+next_action+sep+sep+'## Real response evidence'+sep+json.dumps(real[-5:],indent=2,ensure_ascii=False)+sep+sep+'## Blocker files ignored'+sep+json.dumps(blockers[-5:],indent=2,ensure_ascii=False)+sep)\nstate={'bem':'BEM-847','status':status,'real_response_count':len(real),'blocker_count':len(blockers),'real_responses':real[-5:],'blockers_ignored':blockers[-5:],'next_action':next_action,'created_at':created}\nPath('governance/state/bem847_parse_response_evidence_for_protocol.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem847_parse_response_evidence_for_protocol.md').write_text('# BEM-847 | Parse Response Evidence For Protocol | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem847_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-847'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(protocol),'governance/state/bem847_parse_response_evidence_for_protocol.json','governance/reports/bem847_parse_response_evidence_for_protocol.md','governance/tasks/pending/bem847_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Parsed real Claude response evidence for protocol promotion and recorded whether the human-readable protocol remains draft or can advance')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem847_parse_response_evidence_for_protocol.md",
+    "result_json": "governance/codex/results/bem847_parse_response_evidence_for_protocol.json"
+  },
+  "created_at": "2026-05-24T18:39:55.856Z"
+}
