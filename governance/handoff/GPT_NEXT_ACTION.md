@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-845
+# GPT NEXT ACTION | BEM-846
 
-Status: real_response_processed_to_protocol_draft
-Next: review Claude decision and finalize agreed protocol table
+Status: protocol_blocked
+Decision: BLOCKED
+Next: process Claude changes/blockers

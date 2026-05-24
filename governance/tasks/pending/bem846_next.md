@@ -1,2 +1,2 @@
-Next: repair Claude action output/write path; mandatory response file not produced
+Next: process Claude changes/blockers
 Operator relay forbidden. Report does not stop development.
