@@ -1,2 +1,2 @@
-Next: process accepted protocol and response into final agreed protocol
+Next: fresh tick and verify real Claude response
 Operator relay forbidden. Report does not stop development.

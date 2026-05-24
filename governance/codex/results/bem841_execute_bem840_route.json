@@ -4,7 +4,7 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Executed BEM-840 route by creating the next proof repair artifact and dispatch queue item without waiting for operator",
+    "Executed BEM-840 route by creating the required probe queue item or selecting response processing",
     "custom_script"
   ],
   "changed_files": [
@@ -13,10 +13,11 @@
     "governance/tasks/pending/bem841_next.md",
     "governance/handoff/GPT_NEXT_ACTION.md",
     "governance/transport/results.jsonl",
+    "governance/workflow_dispatch_queue/bem841_real_response_probe.json",
     "governance/codex/proofs/bem841_execute_bem840_route.txt"
   ],
   "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem841_execute_bem840_route.md",
-  "completed_at": "2026-05-24T13:31:24Z"
+  "completed_at": "2026-05-24T15:59:12Z"
 }

@@ -1,7 +1,7 @@
 Executor: Python v3 (ubuntu-latest)
 trace_id: bem841_execute_bem840_route
 task_type: code_patch
-executed_at: 2026-05-24T13:31:24Z
-ops_applied: Executed BEM-840 route by creating the next proof repair artifact and dispatch queue item without waiting for operator, custom_script
-changed_files: governance/state/bem841_execute_bem840_route.json, governance/reports/bem841_execute_bem840_route.md, governance/tasks/pending/bem841_next.md, governance/handoff/GPT_NEXT_ACTION.md, governance/transport/results.jsonl
+executed_at: 2026-05-24T15:59:12Z
+ops_applied: Executed BEM-840 route by creating the required probe queue item or selecting response processing, custom_script
+changed_files: governance/state/bem841_execute_bem840_route.json, governance/reports/bem841_execute_bem840_route.md, governance/tasks/pending/bem841_next.md, governance/handoff/GPT_NEXT_ACTION.md, governance/transport/results.jsonl, governance/workflow_dispatch_queue/bem841_real_response_probe.json
 errors: none
