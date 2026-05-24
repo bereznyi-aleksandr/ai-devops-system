@@ -1,2 +1,2 @@
-Next: process real Claude response and create agreed protocol
+Next: verify triad and process protocol if ready
 Operator relay forbidden. Report does not stop development.

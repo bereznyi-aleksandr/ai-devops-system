@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-842
 
-Status: triad_present_process_protocol_next
-Next: process real Claude response and prepare agreed protocol
-Watchdog interval: 1 minute
+Status: no_missing_proofs_or_unknown
+Next: verify triad and process protocol if ready
