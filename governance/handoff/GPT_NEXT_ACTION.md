@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-845
+# GPT NEXT ACTION | BEM-846
 
-Status: protocol_blocked
+Status: protocol_needs_next_claude_round
 Decision: BLOCKED
-Next: resolve Claude blockers then retry protocol agreement
+Next: fresh tick, verify Claude final review response, then finalize protocol

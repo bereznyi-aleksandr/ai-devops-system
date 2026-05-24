@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem846_route_protocol_decision",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Routed BEM-845 protocol decision; if not approved",
+    " sent protocol back to Claude for the next review round and queued dispatcher",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem846_route_protocol_decision.json",
+    "governance/reports/bem846_route_protocol_decision.md",
+    "governance/tasks/pending/bem846_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/audit_mailbox/gpt_to_claude/bem846_protocol_next_round_to_claude.md",
+    "governance/workflow_dispatch_queue/bem846_claude_protocol_review_dispatch.json",
+    "governance/codex/proofs/bem846_route_protocol_decision.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem846_route_protocol_decision.md",
+  "completed_at": "2026-05-24T11:25:10Z"
+}
