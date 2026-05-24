@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem861_execute_bem860_next",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Executed BEM-860 next-action by checking real response",
+    " queue",
+    " and runtime facts and writing the next active handoff",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem861_execute_bem860_next.json",
+    "governance/reports/bem861_execute_bem860_next.md",
+    "governance/tasks/pending/bem861_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem861_execute_bem860_next.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem861_execute_bem860_next.md",
+  "completed_at": "2026-05-24T05:43:11Z"
+}

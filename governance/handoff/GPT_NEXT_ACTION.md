@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-860
+# GPT NEXT ACTION | BEM-861
 
-Status: route_tick_queue_remaining
-Next: fresh tick because queue still contains pending response item
+Status: queue_remaining_requires_tick
+Next: run fresh tick and verify real response again
