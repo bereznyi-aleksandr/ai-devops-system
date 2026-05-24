@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem849_promote_protocol_v1",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-849 protocol v1",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/protocols','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 21:41 (UTC+3)'\nsource=Path('governance/protocols/BEM846_MULTI_AGENT_DEVELOPMENT_PROTOCOL.md')\ntext=source.read_text(errors='ignore') if source.exists() else '# Missing BEM846 source\\n'\nv1=Path('governance/protocols/BEM849_MULTI_AGENT_DEVELOPMENT_PROTOCOL_V1.md')\nv1.write_text(text.replace('Версия: v0.1','Версия: v1.0').replace('Статус: draft_for_operator_review','Статус: promoted_after_evidence_marker')+sep+'## Promotion evidence'+sep+sep+'- BEM-848 marker: `governance/state/bem848_PROTOCOL_CAN_ADVANCE.marker`'+sep+'- Promoted at: '+created+sep+'- Rule: reports do not stop development; next active regression gate is required.'+sep)\nstate={'bem':'BEM-849','status':'protocol_promoted_to_v1','protocol':str(v1),'evidence_marker':'governance/state/bem848_PROTOCOL_CAN_ADVANCE.marker','next_action':'install regression gate so dispatch/runtime/response triad remains enforced','created_at':created}\nPath('governance/state/bem849_promote_protocol_v1.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem849_promote_protocol_v1.md').write_text('# BEM-849 | Promote Protocol V1 | PASS'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem849_next.md').write_text('Next: install regression gate for dispatch/runtime/response triad. Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-849'+sep+sep+'Status: protocol_promoted_to_v1'+sep+'Next: install regression gate for triad proof.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(v1),'governance/state/bem849_promote_protocol_v1.json','governance/reports/bem849_promote_protocol_v1.md','governance/tasks/pending/bem849_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Promoted the human-readable multi-agent development protocol to v1.0 after BEM-848 evidence marker allowed advancement')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem849_promote_protocol_v1.md",
+    "result_json": "governance/codex/results/bem849_promote_protocol_v1.json"
+  },
+  "created_at": "2026-05-24T18:42:10.181Z"
+}
