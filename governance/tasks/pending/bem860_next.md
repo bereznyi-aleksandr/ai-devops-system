@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-860
-
-Status: route_tick_queue_remaining
 Next: fresh tick because queue still contains pending response item
+Operator relay forbidden. commit_sha null ignored.
