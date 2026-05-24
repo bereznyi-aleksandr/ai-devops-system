@@ -1,0 +1,10 @@
+{
+  "schema_version": "curator_task.v1",
+  "bem": "BEM-840",
+  "status": "assigned_to_curator",
+  "objective": "Curator must route protocol alignment task to Claude Internal Auditor through mailbox, then GPT monitors mailbox every minute until real response appears.",
+  "target": "claude_internal_auditor",
+  "mailbox_request": "governance/audit_mailbox/gpt_to_claude/bem840_protocol_alignment_request.md",
+  "created_at": "2026-05-22 | 05:59 (UTC+3)",
+  "operator_role": "none"
+}

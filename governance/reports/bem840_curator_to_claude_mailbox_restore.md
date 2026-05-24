@@ -1,0 +1,3 @@
+# BEM-840 | Curator To Claude Mailbox Restore | ACTIVE
+
+{"bem": "BEM-840", "status": "curator_to_claude_mailbox_flow_restored", "curator_task": "governance/curator/tasks/bem840_internal_auditor_protocol_alignment.json", "mailbox_request": "governance/audit_mailbox/gpt_to_claude/bem840_protocol_alignment_request.md", "watchdog_active": "governance/autonomy/claude_mailbox_watchdog_active.json", "dispatch_queue": "governance/workflow_dispatch_queue/bem840_claude_internal_auditor_dispatch.json", "next_action": "fresh Codex tick, then verify dispatch result, runtime, and real Claude response every minute", "created_at": "2026-05-22 | 05:59 (UTC+3)"}

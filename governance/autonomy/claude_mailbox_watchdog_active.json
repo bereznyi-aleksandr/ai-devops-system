@@ -1,9 +1,12 @@
 {
   "schema_version": "claude_mailbox_watchdog_active.v2",
   "active": true,
-  "reason": "BEM-840 protocol agreement request sent to Claude; monitor until real Claude response appears",
   "interval_minutes": 1,
-  "started_at": "2026-05-22 | 06:01 (UTC+3)",
+  "mode": "monitor_until_real_claude_response",
+  "source_bem": "BEM-840",
+  "mailbox": "governance/audit_mailbox/claude_to_gpt",
+  "request": "governance/audit_mailbox/gpt_to_claude/bem840_protocol_alignment_request.md",
+  "started_at": "2026-05-22 | 05:59 (UTC+3)",
   "operator_role": "none",
-  "target_response": "governance/audit_mailbox/claude_to_gpt/bem840_claude_protocol_agreement_response.md"
+  "stop_condition": "real Claude response with Decision and without NOT CLAUDE APPROVAL/runtime blocker"
 }

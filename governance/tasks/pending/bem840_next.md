@@ -1,1 +1,1 @@
-Next: tick dispatch queue and verify real Claude protocol response. Operator relay forbidden.
+Next: tick dispatch queue and monitor Claude mailbox every minute until real response. Operator relay forbidden.

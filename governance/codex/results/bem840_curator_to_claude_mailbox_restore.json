@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem840_curator_to_claude_mailbox_restore",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Restored curator to Claude internal auditor mailbox flow: curator task",
+    " GPT-to-Claude request",
+    " active 1-minute watchdog state",
+    " and workflow dispatch queue item",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/curator/tasks/bem840_internal_auditor_protocol_alignment.json",
+    "governance/audit_mailbox/gpt_to_claude/bem840_protocol_alignment_request.md",
+    "governance/autonomy/claude_mailbox_watchdog_active.json",
+    "governance/workflow_dispatch_queue/bem840_claude_internal_auditor_dispatch.json",
+    "governance/state/bem840_curator_to_claude_mailbox_restore.json",
+    "governance/reports/bem840_curator_to_claude_mailbox_restore.md",
+    "governance/tasks/pending/bem840_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem840_curator_to_claude_mailbox_restore.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem840_curator_to_claude_mailbox_restore.md",
+  "completed_at": "2026-05-24T17:21:54Z"
+}
