@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-855
+# GPT NEXT ACTION | BEM-856
 
-Status: changes_extracted
-Next: patch protocol using extracted changes
+Status: protocol_patched_from_reapproval_changes
+Next: re-request Claude approval for patched protocol
