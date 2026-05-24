@@ -1,7 +1,8 @@
 {
   "bem": "BEM-857",
-  "status": "fresh_tick_required_for_claude_response_retry",
-  "route_status": "route_process_queue_again",
-  "next_action": "create fresh tick then verify real Claude response",
-  "created_at": "2026-05-24 | 08:38 (UTC+3)"
+  "status": "dispatch_results_parse_next",
+  "bem856_status": "dispatch_results_present",
+  "patched": [],
+  "next_action": "parse dispatch result and proceed to Claude runtime proof",
+  "created_at": "2026-05-24 | 21:11 (UTC+3)"
 }

@@ -5,8 +5,8 @@
 | Trace | bem857_execute_bem856_next |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Executed BEM-856 next route,  selecting a fresh tick for queued Claude response retry or response processing if available, custom_script |
+| Operations | Executed BEM-856 next action by patching result persistence or runner processor placement depending on marker/results status, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T05:38:59Z |
+| Completed | 2026-05-24T18:13:07Z |
 
 ### Completed successfully.
