@@ -1,2 +1,2 @@
-Next: patch codex-runner commit step to always write commit SHA proof file and expose result commit SHA when changed_files exist
+Next: process real Claude response and create agreed protocol
 Operator relay forbidden. Report does not stop development.
