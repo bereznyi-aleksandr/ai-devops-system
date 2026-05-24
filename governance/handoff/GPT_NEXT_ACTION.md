@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-854
+# GPT NEXT ACTION | BEM-840
 
-Status: second_retry_review_missing
-Decision: None
-Next: continue dispatch/watchdog; no operator relay
+Status: system_ready
+Missing: 
