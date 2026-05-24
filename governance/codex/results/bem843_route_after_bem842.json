@@ -4,7 +4,7 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Routed after BEM-842 and queued the next targeted proof repair if needed",
+    "Read BEM-842 missing proof list and queued the next required dispatch/runtime/response probe",
     "custom_script"
   ],
   "changed_files": [
@@ -18,5 +18,5 @@
   "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem843_route_after_bem842.md",
-  "completed_at": "2026-05-24T08:39:54Z"
+  "completed_at": "2026-05-24T16:56:18Z"
 }

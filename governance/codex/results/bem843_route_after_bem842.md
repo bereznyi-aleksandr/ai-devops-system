@@ -5,8 +5,8 @@
 | Trace | bem843_route_after_bem842 |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Routed after BEM-842 and queued the next targeted proof repair if needed, custom_script |
+| Operations | Read BEM-842 missing proof list and queued the next required dispatch/runtime/response probe, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T08:39:54Z |
+| Completed | 2026-05-24T16:56:18Z |
 
 ### Completed successfully.
