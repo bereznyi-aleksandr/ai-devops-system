@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem843_diagnose_commit_stage_null",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Diagnosed why Codex task changed files but commit_sha remains null: inspected codex-runner commit-related sections and helper scripts",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem843_diagnose_commit_stage_null.json",
+    "governance/codex/proofs/bem843_diagnose_commit_stage_null.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem843_diagnose_commit_stage_null.md",
+  "completed_at": "2026-05-24T12:19:25Z"
+}
