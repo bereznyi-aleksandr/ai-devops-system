@@ -1,2 +1,2 @@
-Next: process real Claude response and protocol
+Next: patch validator to accept found files and process protocol
 Operator relay forbidden. Report does not stop development.
