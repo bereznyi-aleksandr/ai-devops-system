@@ -5,8 +5,8 @@
 | Trace | bem840_route_after_bem839 |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Routed after BEM-839 verification to the next concrete proof repair or response processing step, custom_script |
+| Operations | Read BEM-839 and live proof triad,  routed the next repair step without waiting for operator, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T10:49:27Z |
+| Completed | 2026-05-24T13:30:15Z |
 
 ### Completed successfully.
