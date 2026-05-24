@@ -1,0 +1,3 @@
+# BEM-850 | Route Extracted Blocker | blocker_is_proof_or_runtime_gap
+
+{"bem": "BEM-850", "status": "blocker_is_proof_or_runtime_gap", "blocker_lines_count": 3, "repair_plan": "governance/protocols/BEM850_BLOCKER_REPAIR_PLAN.md", "next_action": "document actual proof triad and re-request Claude approval with evidence paths", "created_at": "2026-05-24 | 12:26 (UTC+3)"}
