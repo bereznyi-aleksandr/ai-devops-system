@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem850_route_extracted_blocker",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-850 route blocker",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/protocols']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 12:26 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nprev=load('governance/state/bem849_extract_protocol_blocker.json')\nlines=prev.get('blocker_lines',[])\njoined=' '.join(lines).lower()\nif not lines:\n    status='blocker_extraction_failed'\n    next_action='inspect full BEM845 draft and improve extraction'\nelif any(k in joined for k in ['not approved','blocked','missing proof','triad','dispatch', 'runtime', 'response']):\n    status='blocker_is_proof_or_runtime_gap'\n    next_action='document actual proof triad and re-request Claude approval with evidence paths'\nelse:\n    status='blocker_is_protocol_clarification'\n    next_action='patch protocol with extracted blocker clarifications and re-request Claude approval'\npatch=Path('governance/protocols/BEM850_BLOCKER_REPAIR_PLAN.md')\npatch.write_text('# BEM-850 | Blocker Repair Plan'+sep+sep+'Дата: '+created+sep+sep+'Status: '+status+sep+sep+'## Extracted blocker lines'+sep+sep+'\\n'.join('- '+x for x in lines[:40])+sep+sep+'## Next action'+sep+sep+next_action+sep)\nstate={'bem':'BEM-850','status':status,'blocker_lines_count':len(lines),'repair_plan':str(patch),'next_action':next_action,'created_at':created}\nPath('governance/state/bem850_route_extracted_blocker.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem850_route_extracted_blocker.md').write_text('# BEM-850 | Route Extracted Blocker | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem850_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-850'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(patch),'governance/state/bem850_route_extracted_blocker.json','governance/reports/bem850_route_extracted_blocker.md','governance/tasks/pending/bem850_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Routed extracted Claude blocker into a concrete repair plan before re-requesting protocol approval')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem850_route_extracted_blocker.md",
+    "result_json": "governance/codex/results/bem850_route_extracted_blocker.json"
+  },
+  "created_at": "2026-05-24T09:26:35.396Z"
+}
