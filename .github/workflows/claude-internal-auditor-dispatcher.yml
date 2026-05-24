@@ -63,3 +63,8 @@ jobs:
       - name: Commit dispatcher state and mailbox
         if: always()
         run: bash scripts/commit_claude_dispatcher_state.sh
+
+      - name: Verify real Claude response
+        if: steps.active_check.outputs.active == 'true' && always()
+        continue-on-error: true
+        run: python3 scripts/verify_real_claude_response.py
