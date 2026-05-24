@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-846
-Status: real_bem840_response_triad_present
-Missing: 
-Next: process Claude response into agreed protocol
+# GPT NEXT ACTION | BEM-847
+Status: process_real_bem840_response_next
+Next: read real Claude response and create agreed protocol document
