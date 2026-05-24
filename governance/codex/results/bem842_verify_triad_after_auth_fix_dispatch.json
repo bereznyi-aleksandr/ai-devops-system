@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_verify_triad_after_auth_fix_dispatch",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified dispatch result",
+    " Claude runtime state",
+    " and real Claude response after auth-fix queued dispatch and tick",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem842_verify_triad_after_auth_fix_dispatch.json",
+    "governance/reports/bem842_verify_triad_after_auth_fix_dispatch.md",
+    "governance/tasks/pending/bem842_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem842_verify_triad_after_auth_fix_dispatch.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem842_verify_triad_after_auth_fix_dispatch.md",
+  "completed_at": "2026-05-24T11:20:43Z"
+}
