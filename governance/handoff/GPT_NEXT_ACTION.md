@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-847
+# GPT NEXT ACTION | BEM-848
 
+Status: protocol_blocker_repair_opened
 Decision: BLOCKED
-Status: protocol_blocked
-Next: extract blocker and repair transport/runtime/protocol before roadmap resume
+Next: extract blocker and repair
