@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_route_final_approval",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Routed after BEM-866 final approval decision",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem867_route_final_approval.json",
+    "governance/reports/bem867_route_final_approval.md",
+    "governance/tasks/pending/bem867_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem867_route_final_approval.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_route_final_approval.md",
+  "completed_at": "2026-05-24T09:44:20Z"
+}

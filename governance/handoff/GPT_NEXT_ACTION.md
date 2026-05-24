@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-866
+# GPT NEXT ACTION | BEM-867
 
-Status: final_approval_missing_or_unknown
 Decision: MISSING
-Next: repair response filter/dispatch and retry final approval
+Status: final_approval_missing_or_unknown
+Next: broaden final response filter and inspect all real Claude responses
