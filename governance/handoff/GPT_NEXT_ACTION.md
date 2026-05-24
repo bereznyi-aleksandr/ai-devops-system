@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-857
+# GPT NEXT ACTION | BEM-859
 
-Status: queued patched protocol approval request
-Next: fresh tick then verify response
+Status: patched_protocol_response_missing_or_unknown
+Decision: MISSING
+Next: continue Claude response dispatch repair

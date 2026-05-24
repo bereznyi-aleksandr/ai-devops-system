@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem859_verify_patched_protocol_approval",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified Claude patched-protocol approval response after BEM-857 request and BEM-858 tick",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem859_verify_patched_protocol_approval.json",
+    "governance/reports/bem859_verify_patched_protocol_approval.md",
+    "governance/tasks/pending/bem859_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem859_verify_patched_protocol_approval.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem859_verify_patched_protocol_approval.md",
+  "completed_at": "2026-05-24T09:36:06Z"
+}
