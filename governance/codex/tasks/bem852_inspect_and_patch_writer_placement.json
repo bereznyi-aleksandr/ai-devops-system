@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem852_inspect_and_patch_writer_placement",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-852 writer placement",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['.github/workflows','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/workflow_dispatch_queue']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 11:48 (UTC+3)'\nwf=Path('.github/workflows/claude-internal-auditor-dispatcher.yml')\ntext=wf.read_text(errors='ignore') if wf.exists() else ''\nchanged=False\n# Make ensure step unconditional on active_check so a dispatcher run always leaves a response file/state when invoked.\nold=\"if: steps.active_check.outputs.active == 'true' && always()\"\nif old in text and 'Ensure Claude response file exists' in text:\n    text=text.replace(old, 'if: always()')\n    changed=True\n# If ensure step absent, append before commit state.\nif 'scripts/ensure_claude_response_file.py' not in text:\n    insert='''\\n      - name: Ensure Claude response file exists\\n        if: always()\\n        env:\\n          CLAUDE_OUTCOME: ${{ steps.claude_response.outcome }}\\n        run: python3 scripts/ensure_claude_response_file.py \"$CLAUDE_OUTCOME\"\\n'''\n    marker='      - name: Commit dispatcher state'\n    if marker in text:\n        text=text.replace(marker, insert+marker, 1)\n    else:\n        text=text+insert\n    changed=True\nif wf.exists():\n    wf.write_text(text)\n# Queue dispatcher after placement fix.\nq=Path('governance/workflow_dispatch_queue/bem852_writer_placement_dispatch.json')\nq.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v15','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-852 dispatch after making ensure response step unconditional','created_at':created},indent=2,ensure_ascii=False)+sep)\nstate={'bem':'BEM-852','status':'writer_placement_patched_and_dispatch_queued','workflow_exists':wf.exists(),'workflow_changed':changed,'queue_file':str(q),'next_action':'fresh tick then verify bem844_claude_response.md','created_at':created}\nPath('governance/state/bem852_inspect_and_patch_writer_placement.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem852_inspect_and_patch_writer_placement.md').write_text('# BEM-852 | Inspect And Patch Writer Placement | PATCHED'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem852_next.md').write_text('Next: fresh tick and verify bem844_claude_response.md. Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-852'+sep+sep+'Status: writer_placement_patched_and_dispatch_queued'+sep+'Next: tick and verify response.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem852_inspect_and_patch_writer_placement.json','governance/reports/bem852_inspect_and_patch_writer_placement.md','governance/tasks/pending/bem852_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl',str(q),str(wf)])\nops_applied.append('Patched Claude dispatcher fail-closed writer placement to run with if: always(), then queued dispatcher retry')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem852_inspect_and_patch_writer_placement.md",
+    "result_json": "governance/codex/results/bem852_inspect_and_patch_writer_placement.json"
+  },
+  "created_at": "2026-05-24T08:48:52.796Z"
+}
