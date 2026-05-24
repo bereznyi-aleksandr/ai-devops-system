@@ -1,2 +1,2 @@
-Next: repair Claude response dispatch/relevance filter; approval response not usable
+Next: extract Claude decisions into final agreed protocol table
 Operator relay forbidden. Report does not stop development.

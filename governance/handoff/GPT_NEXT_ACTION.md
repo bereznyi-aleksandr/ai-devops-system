@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-859
+# GPT NEXT ACTION | BEM-860
 
-Status: yaml_patch_required_next
-Next: patch claude dispatcher yaml permissions/env and rerun smoke
+Status: real_claude_response_present_protocol_status_written
+Next: extract Claude decisions into final agreed protocol table

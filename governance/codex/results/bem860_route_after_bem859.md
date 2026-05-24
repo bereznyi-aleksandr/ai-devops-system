@@ -5,8 +5,8 @@
 | Trace | bem860_route_after_bem859 |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Routed after BEM-859 response verification and queued runtime repair retry if runtime remained absent, custom_script |
+| Operations | Read BEM-859 route,  detected whether real Claude response exists,  wrote protocol status or queued retry, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T05:42:07Z |
+| Completed | 2026-05-24T12:36:31Z |
 
 ### Completed successfully.
