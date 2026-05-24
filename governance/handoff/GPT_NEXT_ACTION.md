@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-856
+# GPT NEXT ACTION | BEM-857
 
-Status: protocol_patched_from_reapproval_changes
-Next: re-request Claude approval for patched protocol
+Status: queued patched protocol approval request
+Next: fresh tick then verify response

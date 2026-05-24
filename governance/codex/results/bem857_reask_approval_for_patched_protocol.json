@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem857_reask_approval_for_patched_protocol",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Queued Claude approval request for the patched protocol BEM856",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/audit_mailbox/gpt_to_claude/bem857_patched_protocol_approval_request.md",
+    "governance/workflow_dispatch_queue/bem857_patched_protocol_approval_dispatch.json",
+    "governance/state/bem857_reask_approval_for_patched_protocol.json",
+    "governance/reports/bem857_reask_approval_for_patched_protocol.md",
+    "governance/tasks/pending/bem857_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem857_reask_approval_for_patched_protocol.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem857_reask_approval_for_patched_protocol.md",
+  "completed_at": "2026-05-24T09:34:02Z"
+}
