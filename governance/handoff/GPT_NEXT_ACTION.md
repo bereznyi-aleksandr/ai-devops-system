@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-849
+# GPT NEXT ACTION | BEM-850
 
-Status: protocol_processing_selected
-Next: parse real response and create agreed protocol
+Status: real_response_found_protocol_created
+Missing: 
+Next: review/process agreed protocol and continue implementation
