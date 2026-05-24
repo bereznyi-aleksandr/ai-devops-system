@@ -1,0 +1,3 @@
+# BEM-849 | Route After Protocol Review Verify | protocol_review_retry_queued
+
+{"bem": "BEM-849", "status": "protocol_review_retry_queued", "previous_status": "protocol_review_response_missing", "decision": null, "created_files": ["governance/audit_mailbox/gpt_to_claude/bem849_protocol_review_retry_to_claude.md", "governance/workflow_dispatch_queue/bem849_claude_protocol_review_retry.json"], "next_action": "fresh tick and verify protocol review response again", "created_at": "2026-05-24 | 14:28 (UTC+3)"}
