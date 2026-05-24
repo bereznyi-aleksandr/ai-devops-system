@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem871_request_approval_for_bem870",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-871 request approval",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/audit_mailbox/gpt_to_claude','governance/workflow_dispatch_queue','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 12:48 (UTC+3)'\nreq=Path('governance/audit_mailbox/gpt_to_claude/bem871_iterative_protocol_approval_request.md')\nreq.write_text('# BEM-871 | ITERATIVE PATCHED PROTOCOL APPROVAL REQUEST'+sep+sep+'Дата: '+created+sep+sep+'Claude Internal Auditor: review `governance/protocols/BEM870_ITERATIVE_PATCHED_PROTOCOL.md`. If acceptable, write `Decision: APPROVED`. If not acceptable, write `Decision: CHANGE_REQUIRED` or `Decision: BLOCKED` and include concrete patchable path/rule changes only. Response file: `governance/audit_mailbox/claude_to_gpt/bem871_claude_iterative_protocol_response.md`. Include marker `Claude Internal Auditor`. No issue comments. Do not expose secrets.'+sep)\nq=Path('governance/workflow_dispatch_queue/bem871_iterative_protocol_approval_dispatch.json')\nq.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v14','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-871 approval request for BEM870 iterative patched protocol','created_at':created},indent=2,ensure_ascii=False)+sep)\nstate={'bem':'BEM-871','status':'iterative_protocol_approval_request_queued','request':str(req),'queue':str(q),'next_action':'fresh tick then verify BEM871 Claude decision','created_at':created}\nPath('governance/state/bem871_request_approval_for_bem870.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem871_request_approval_for_bem870.md').write_text('# BEM-871 | Request Approval For BEM870 | QUEUED'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem871_next.md').write_text('Next: fresh tick then verify BEM871 Claude decision. Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-871'+sep+sep+'Status: queued approval for BEM870'+sep+'Next: tick and verify decision'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(req),str(q),'governance/state/bem871_request_approval_for_bem870.json','governance/reports/bem871_request_approval_for_bem870.md','governance/tasks/pending/bem871_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Queued Claude approval request for BEM870 iterative patched protocol')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem871_request_approval_for_bem870.md",
+    "result_json": "governance/codex/results/bem871_request_approval_for_bem870.json"
+  },
+  "created_at": "2026-05-24T09:48:05.141Z"
+}
