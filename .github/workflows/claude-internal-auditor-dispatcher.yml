@@ -58,3 +58,9 @@ jobs:
       - name: Validate real Claude response
         if: steps.active_check.outputs.active == 'true' && steps.claude_response.outcome == 'success'
         run: python3 scripts/validate_real_claude_response.py
+
+      - name: Ensure Claude response file exists
+        if: steps.active_check.outputs.active == 'true' && always()
+        env:
+          CLAUDE_OUTCOME: ${{ steps.claude_response.outcome }}
+        run: python3 scripts/ensure_claude_response_file.py "$CLAUDE_OUTCOME"
