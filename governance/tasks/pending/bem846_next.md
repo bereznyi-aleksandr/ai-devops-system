@@ -1,1 +1,2 @@
-Next: parse real response evidence and promote protocol to v1.0 if consistent. Operator relay forbidden. Report does not stop development.
+Next: create agreed protocol from real Claude response
+Operator relay forbidden. Report does not stop development.
