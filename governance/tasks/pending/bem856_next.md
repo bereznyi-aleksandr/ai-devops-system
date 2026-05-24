@@ -1,1 +1,2 @@
-Next: re-request Claude approval for patched protocol. Operator relay forbidden. Report does not stop development.
+Next: parse result and continue to Claude runtime proof
+Operator relay forbidden. Report does not stop development.

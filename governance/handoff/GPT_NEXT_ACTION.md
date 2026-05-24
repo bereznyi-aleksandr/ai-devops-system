@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-854
+# GPT NEXT ACTION | BEM-856
 
-Status: parse_dispatch_results_next
-Next: parse dispatch result status and continue to Claude runtime proof
+Status: dispatch_results_present
+Next: parse result and continue to Claude runtime proof
