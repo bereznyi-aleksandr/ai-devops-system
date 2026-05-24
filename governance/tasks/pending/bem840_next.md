@@ -1,2 +1,1 @@
-Next: patch Claude response generation/writer and retry; blocker files are not accepted
-Operator relay forbidden. Report does not stop development.
+Next: tick dispatch queue and verify real Claude protocol response. Operator relay forbidden.
