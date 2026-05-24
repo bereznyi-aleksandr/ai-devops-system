@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-851
+# GPT NEXT ACTION | BEM-852
 
-Status: triad_present_protocol_next
-Missing: 
-Next: build agreed protocol now
+Status: protocol_draft_created
+Next: format protocol into operator-readable final table
