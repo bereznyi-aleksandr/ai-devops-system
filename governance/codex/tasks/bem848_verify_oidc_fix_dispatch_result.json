@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem848_verify_oidc_fix_dispatch_result",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-848 verify OIDC dispatch",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated=str(now)\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nresults=[]\nrd=Path('governance/workflow_dispatch_results')\nif rd.exists():\n    for p in sorted(rd.glob('*.status.json')):\n        txt=read(p)\n        if 'bem846' in p.name or 'claude' in txt.lower():\n            try: data=json.loads(txt)\n            except Exception as exc: data={'status':'unparsed','error':str(exc),'text':txt[:500]}\n            results.append({'path':str(p),'data':data})\nruntime=load('governance/state/claude_inbound_mailbox_workflow_state.json')\nqueue_remaining=[str(p) for p in sorted(Path('governance/workflow_dispatch_queue').glob('*.json'))] if Path('governance/workflow_dispatch_queue').exists() else []\nif results and any(r['data'].get('status')=='dispatch_attempted' for r in results):\n    status='dispatch_attempted_after_oidc_fix'\n    next_action='verify latest Claude dispatcher run outcome and mailbox response'\nelif results:\n    status='dispatch_result_present_but_not_attempted'\n    next_action='patch dispatch queue processor result: '+str(results[-1]['data'])[:300]\nelif 'governance/workflow_dispatch_queue/bem846_claude_dispatch_after_oidc_fix.json' in queue_remaining:\n    status='dispatch_queue_not_processed'\n    next_action='repair Codex workflow dispatch queue processor or use direct dispatch endpoint'\nelse:\n    status='dispatch_result_missing_queue_not_remaining'\n    next_action='inspect queue processor commit/results path'\nstate={'bem':'BEM-848','status':status,'dispatch_results':results[-10:],'runtime_started_at':runtime.get('started_at'),'runtime_completed_at':runtime.get('completed_at'),'claude_outcome':runtime.get('claude_action_outcome'),'queue_remaining':queue_remaining[-20:],'next_action':next_action,'created_at':created}\nPath('governance/state/bem848_verify_oidc_fix_dispatch_result.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem848_verify_oidc_fix_dispatch_result.md').write_text('# BEM-848 | Verify OIDC Fix Dispatch Result | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem848_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-848'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem848_verify_oidc_fix_dispatch_result.json','governance/reports/bem848_verify_oidc_fix_dispatch_result.md','governance/tasks/pending/bem848_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Verified dispatch queue result and Claude runtime after BEM-845 OIDC permission fix and BEM-846/BEM-847 dispatch retry')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem848_verify_oidc_fix_dispatch_result.md",
+    "result_json": "governance/codex/results/bem848_verify_oidc_fix_dispatch_result.json"
+  },
+  "created_at": "2026-05-24T12:26:59.195Z"
+}
