@@ -1,0 +1,3 @@
+# BEM-875 | Expose BEM-874 Decision In Filename | MISSING / approval_response_missing_or_unknown
+
+{"bem": "BEM-875", "status": "visible_decision_written", "bem874_decision": "MISSING", "bem874_status": "approval_response_missing_or_unknown", "decision_counts": {"APPROVED": 0, "CHANGE_REQUIRED": 0, "BLOCKED": 2, "UNKNOWN": 5}, "visible_file": "governance/debug/BEM875_VISIBLE_DECISION_MISSING_approval_response_missing_or_unknown.md", "next_action": "repair Claude response format: require machine-readable decision in dedicated state file", "created_at": "2026-05-24 | 12:52 (UTC+3)"}
