@@ -4,7 +4,7 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Routed after BEM-843 verification to the next concrete repair or real response processing step",
+    "Routed after BEM-843 and queued the next dispatch/runtime retry when needed",
     "custom_script"
   ],
   "changed_files": [
@@ -18,5 +18,5 @@
   "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem844_route_after_bem843.md",
-  "completed_at": "2026-05-24T10:53:30Z"
+  "completed_at": "2026-05-24T16:01:56Z"
 }
