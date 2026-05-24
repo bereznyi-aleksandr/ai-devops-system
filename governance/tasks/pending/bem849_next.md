@@ -1,1 +1,2 @@
-Next: install regression gate for dispatch/runtime/response triad. Operator relay forbidden. Report does not stop development.
+Next: continue roadmap implementation from agreed protocol; harden dispatch/runtime proofs and prepare operator-facing md/doc export
+Operator relay forbidden. Report does not stop development.

@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-848
+# GPT NEXT ACTION | BEM-849
 
-Status: protocol_table_created_from_real_claude_response
-Next: review protocol completeness and produce final operator-facing summary without stopping roadmap
+Status: protocol_table_validated
+Next: continue roadmap implementation from agreed protocol; harden dispatch/runtime proofs and prepare operator-facing md/doc export
