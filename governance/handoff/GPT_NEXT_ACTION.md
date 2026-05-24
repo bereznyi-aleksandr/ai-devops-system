@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-856
+# GPT NEXT ACTION | BEM-857
 
-Status: inspect_writer_commit_path_required
-Next: patch dispatcher commit script to include bem844_claude_response.md and verify ensure step
+Status: next_patch_dispatcher_commit_response_path
+Next: patch dispatcher commit script/git add to include bem844_claude_response.md and reports after ensure step
