@@ -1,2 +1,1 @@
-Next: process governance/audit_mailbox/claude_to_gpt/bem844_claude_response.md into final agreed protocol / continue negotiation if not APPROVED
-Operator relay forbidden. Report does not stop development.
+Next: treat BEM-566 protocol as AGREED if accepted=true; continue P0 infra repair for Claude dispatcher OIDC separately. Operator relay forbidden.

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem844_fix_false_fallback_filter_and_accept_claude",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Fixed false fallback detection",
+    " accepted real Claude BEM-857 direct response",
+    " and wrote BEM-566 agreed sync protocol V2",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem844_fix_false_fallback_filter_and_accept_claude.json",
+    "governance/reports/bem844_fix_false_fallback_filter_and_accept_claude.md",
+    "governance/tasks/pending/bem844_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/protocols/BEM566_SYNC_PROTOCOL_AGREED_V2.md",
+    "governance/codex/proofs/bem844_fix_false_fallback_filter_and_accept_claude.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem844_fix_false_fallback_filter_and_accept_claude.md",
+  "completed_at": "2026-05-24T12:22:03Z"
+}

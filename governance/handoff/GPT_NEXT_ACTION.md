@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-844
 
-Status: bem857_real_claude_response_not_visible_or_not_accepted
-Next: verify dispatcher OIDC workflow separately or sync missing response.
+Status: claude_response_accepted_after_false_fallback_filter_fix
+Next: continue P0 infra repair for Claude dispatcher OIDC separately.
