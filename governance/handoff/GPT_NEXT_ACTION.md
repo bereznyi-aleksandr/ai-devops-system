@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-843
+# GPT NEXT ACTION | BEM-858
 
-Status: null_commit_sha_diagnosed
-Next: patch codex-runner commit step to always write commit SHA proof file and expose result commit SHA when changed_files exist
+Status: agreed_protocol_created
+Next: implement operating loop; repair Claude Code Action separately.
