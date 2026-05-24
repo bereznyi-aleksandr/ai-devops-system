@@ -1,1 +1,2 @@
-Next: dispatch Claude Internal Auditor Dispatcher again and verify outcome no longer reports OIDC token permission failure. Operator relay forbidden.
+Next: validate protocol decision and either finalize or continue agreement loop
+Operator relay forbidden. Report does not stop development.
