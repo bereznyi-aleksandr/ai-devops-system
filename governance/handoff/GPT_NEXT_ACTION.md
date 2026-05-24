@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-851
+# GPT NEXT ACTION | BEM-853
 
-Status: blocker repair applied and reapproval queued
-Next: fresh tick then verify Claude reapproval response
+Status: reapproval_not_approved
+Decision: BLOCKED
+Next: extract new Claude changes/blockers and patch protocol again
