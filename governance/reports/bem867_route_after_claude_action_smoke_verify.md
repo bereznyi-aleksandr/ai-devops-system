@@ -1,0 +1,3 @@
+# BEM-867 | Route After Claude Action Smoke Verify | route_repair_dispatch_queue_or_target
+
+{"bem": "BEM-867", "status": "route_repair_dispatch_queue_or_target", "previous_status": "no_dispatch_result_no_smoke_runtime", "next_action": "inspect dispatch queue processor, queue remainder, and smoke workflow target", "created_at": "2026-05-24 | 16:13 (UTC+3)"}

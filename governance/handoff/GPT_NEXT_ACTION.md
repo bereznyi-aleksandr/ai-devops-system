@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-866
+# GPT NEXT ACTION | BEM-867
 
-Status: no_dispatch_result_no_smoke_runtime
-Next: repair workflow_dispatch_queue processor/result writer or dispatch target
+Status: route_repair_dispatch_queue_or_target
+Next: inspect dispatch queue processor, queue remainder, and smoke workflow target
