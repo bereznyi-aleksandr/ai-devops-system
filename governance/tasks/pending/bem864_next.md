@@ -1,1 +1,1 @@
-Next: fresh tick then verify final approval response. Operator relay forbidden. Report does not stop development.
+Next: fresh Codex tick, verify workflow_dispatch_results, smoke state, and response file.

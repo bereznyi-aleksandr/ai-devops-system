@@ -1,3 +1,3 @@
-# GPT NEXT ACTION | BEM-863C
+# GPT NEXT ACTION | BEM-864
 
-Claude Code Action smoke installed. Next: dispatch and verify. Reports do not stop development.
+Claude Code Action smoke dispatch queued. Next: tick and verify.

@@ -1,0 +1,3 @@
+# BEM-864 | Queue Claude Action Smoke Dispatch | QUEUED
+
+{"bem": "BEM-864", "status": "claude_code_action_smoke_dispatch_queued", "queue_file": "governance/workflow_dispatch_queue/bem864_claude_code_action_smoke_dispatch.json", "next_action": "fresh Codex tick to process workflow dispatch queue, then verify dispatch result and smoke state", "created_at": "2026-05-24 | 16:09 (UTC+3)", "blocker": null}
