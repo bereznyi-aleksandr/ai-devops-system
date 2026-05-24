@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem853_verify_dispatch_pipeline_probe",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-853 verify pipeline",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 21:07 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nresults=[]\nrd=Path('governance/workflow_dispatch_results')\nif rd.exists():\n    for p in sorted(rd.glob('*.status.json')):\n        try: data=json.loads(read(p))\n        except Exception as exc: data={'status':'unparsed','error':str(exc),'text':read(p)[:500]}\n        results.append({'path':str(p),'data':data})\nqueue=[str(p) for p in sorted(Path('governance/workflow_dispatch_queue').glob('*.json'))] if Path('governance/workflow_dispatch_queue').exists() else []\nmarker=load('governance/state/workflow_dispatch_queue_processor_marker.json')\nif results:\n    status='dispatch_results_exist'\n    next_action='parse dispatch results and continue to Claude runtime proof'\nelif marker.get('status'):\n    status='processor_marker_exists_no_results'\n    next_action='processor runs but no results; patch result writer or commit script path'\nelse:\n    status='processor_step_not_running'\n    next_action='patch codex-runner placement because marker still absent'\nstate={'bem':'BEM-853','status':status,'dispatch_results_tail':results[-10:],'queue_remaining':queue[-20:],'marker':marker,'next_action':next_action,'created_at':created}\nPath('governance/state/bem853_verify_dispatch_pipeline_probe.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem853_verify_dispatch_pipeline_probe.md').write_text('# BEM-853 | Verify Dispatch Pipeline Probe | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem853_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-853'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem853_verify_dispatch_pipeline_probe.json','governance/reports/bem853_verify_dispatch_pipeline_probe.md','governance/tasks/pending/bem853_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Verified workflow dispatch results, queue remaining items, and processor marker after BEM-851/BEM-852 probe')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem853_verify_dispatch_pipeline_probe.md",
+    "result_json": "governance/codex/results/bem853_verify_dispatch_pipeline_probe.json"
+  },
+  "created_at": "2026-05-24T18:08:20.905Z"
+}
