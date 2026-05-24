@@ -1,2 +1,2 @@
-Next: queue Claude dispatcher retry, tick, then inspect guard state and real response
+Next: review Claude decision and finalize agreed protocol table
 Operator relay forbidden. Report does not stop development.
