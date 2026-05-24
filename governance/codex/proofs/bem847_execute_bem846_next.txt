@@ -1,7 +1,7 @@
 Executor: Python v3 (ubuntu-latest)
 trace_id: bem847_execute_bem846_next
 task_type: code_patch
-executed_at: 2026-05-24T10:56:43Z
-ops_applied: Executed BEM-846 next action by creating required queue/mailbox artifacts or selecting protocol processing, custom_script
-changed_files: governance/state/bem847_execute_bem846_next.json, governance/reports/bem847_execute_bem846_next.md, governance/tasks/pending/bem847_next.md, governance/handoff/GPT_NEXT_ACTION.md, governance/transport/results.jsonl
+executed_at: 2026-05-24T20:06:37Z
+ops_applied: Executed BEM-846 next-action: process protocol if triad exists, otherwise queue runtime/response retry for the missing proof, custom_script
+changed_files: governance/state/bem847_execute_bem846_next.json, governance/reports/bem847_execute_bem846_next.md, governance/tasks/pending/bem847_next.md, governance/handoff/GPT_NEXT_ACTION.md, governance/transport/results.jsonl, governance/protocols/BEM847_AGREED_MULTI_AGENT_PROTOCOL.md
 errors: none

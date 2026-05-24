@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-846
+# GPT NEXT ACTION | BEM-847
 
-Status: triad_present_process_protocol_next
-Missing: 
-Next: create agreed protocol from real Claude response
+Status: protocol_draft_created_from_real_response
+Next: extract decisions from real Claude response into final protocol table

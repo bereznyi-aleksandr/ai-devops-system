@@ -5,8 +5,8 @@
 | Trace | bem847_execute_bem846_next |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Executed BEM-846 next action by creating required queue/mailbox artifacts or selecting protocol processing, custom_script |
+| Operations | Executed BEM-846 next-action: process protocol if triad exists,  otherwise queue runtime/response retry for the missing proof, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T10:56:44Z |
+| Completed | 2026-05-24T20:06:37Z |
 
 ### Completed successfully.

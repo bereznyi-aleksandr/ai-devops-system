@@ -1,3 +1,3 @@
-# BEM-847 | Execute BEM-846 Next | process_protocol_selected
+# BEM-847 | Execute BEM-846 Next | protocol_draft_created_from_real_response
 
-{"bem": "BEM-847", "status": "process_protocol_selected", "input_status": "triad_present", "created_files": [], "next_action": "parse real Claude response and create agreed protocol", "created_at": "2026-05-24 | 13:55 (UTC+3)"}
+{"bem": "BEM-847", "status": "protocol_draft_created_from_real_response", "input_status": "triad_present_process_protocol_next", "input_missing": [], "next_action": "extract decisions from real Claude response into final protocol table", "created_at": "2026-05-24 | 23:05 (UTC+3)"}
