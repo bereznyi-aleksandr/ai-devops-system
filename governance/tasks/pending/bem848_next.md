@@ -1,2 +1,2 @@
-Next: repair Codex workflow dispatch queue processor or use direct dispatch endpoint
+Next: process real Claude response and prepare agreed protocol
 Operator relay forbidden. Report does not stop development.
