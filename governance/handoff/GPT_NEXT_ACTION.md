@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-842
+# GPT NEXT ACTION | BEM-843
 
-Status: runtime_present_real_response_missing
-Next: repair Claude action prompt/provider/write response path
+Status: real_response_writer_repair_required
+Next: patch Claude dispatcher prompt/provider/write path to force real claude_to_gpt response
