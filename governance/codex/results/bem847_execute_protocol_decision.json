@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem847_execute_protocol_decision",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Executed BEM-846 decision: finalized protocol when approved or sent followup to Claude when not approved",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem847_execute_protocol_decision.json",
+    "governance/reports/bem847_execute_protocol_decision.md",
+    "governance/tasks/pending/bem847_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/audit_mailbox/gpt_to_claude/bem847_protocol_decision_followup.md",
+    "governance/workflow_dispatch_queue/bem847_protocol_followup_dispatch.json",
+    "governance/codex/proofs/bem847_execute_protocol_decision.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem847_execute_protocol_decision.md",
+  "completed_at": "2026-05-24T13:38:29Z"
+}
