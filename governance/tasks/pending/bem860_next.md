@@ -1,2 +1,2 @@
-Next: inspect dispatcher ensure step execution and response file generation
+Next: repair Claude response dispatch/relevance filter; approval response not usable
 Operator relay forbidden. Report does not stop development.

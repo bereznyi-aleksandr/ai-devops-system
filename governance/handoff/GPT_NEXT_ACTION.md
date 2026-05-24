@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-859
+# GPT NEXT ACTION | BEM-860
 
-Status: patched_protocol_response_missing_or_unknown
 Decision: MISSING
-Next: continue Claude response dispatch repair
+Status: patched_approval_missing_or_unknown
+Next: repair Claude response dispatch/relevance filter; approval response not usable

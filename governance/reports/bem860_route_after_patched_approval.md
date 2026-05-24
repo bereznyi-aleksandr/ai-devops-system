@@ -1,0 +1,3 @@
+# BEM-860 | Route After Patched Approval | patched_approval_missing_or_unknown
+
+{"bem": "BEM-860", "status": "patched_approval_missing_or_unknown", "decision": "MISSING", "created_files": [], "next_action": "repair Claude response dispatch/relevance filter; approval response not usable", "created_at": "2026-05-24 | 12:36 (UTC+3)"}
