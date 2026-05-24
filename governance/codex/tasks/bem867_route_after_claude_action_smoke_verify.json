@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_route_after_claude_action_smoke_verify",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-867 route smoke verify",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/codex/proofs']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 16:13 (UTC+3)'\ndef load(path):\n    p=Path(path)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nprev=load('governance/state/bem866_verify_claude_action_smoke_result.json')\nps=prev.get('status','unknown')\nif ps=='claude_code_action_response_present':\n    status='route_classify_smoke_response'\n    next_action='classify Claude Code Action smoke response as APPROVED or BLOCKED'\nelif ps=='smoke_runtime_seen_no_response':\n    status='route_patch_response_writer'\n    next_action='patch prompt/commit path so smoke writes response file'\nelif ps=='dispatch_result_seen_no_smoke_runtime':\n    status='route_parse_dispatch_result'\n    next_action='parse dispatch result and patch exact workflow dispatch failure or target workflow issue'\nelse:\n    status='route_repair_dispatch_queue_or_target'\n    next_action='inspect dispatch queue processor, queue remainder, and smoke workflow target'\nstate={'bem':'BEM-867','status':status,'previous_status':ps,'next_action':next_action,'created_at':created}\nPath('governance/state/bem867_route_after_claude_action_smoke_verify.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem867_route_after_claude_action_smoke_verify.md').write_text('# BEM-867 | Route After Claude Action Smoke Verify | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem867_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Continue Claude Code Action track until result.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-867'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps({'record_type':'bem867_route_after_claude_action_smoke_verify','status':status,'previous_status':ps,'next_action':next_action,'created_at':created},ensure_ascii=False)+sep)\nPath('governance/codex/proofs/bem867_route_after_claude_action_smoke_verify.txt').write_text('BEM-867 '+status+' previous='+ps+'\\n')\nchanged_files.extend(['governance/state/bem867_route_after_claude_action_smoke_verify.json','governance/reports/bem867_route_after_claude_action_smoke_verify.md','governance/tasks/pending/bem867_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl','governance/codex/proofs/bem867_route_after_claude_action_smoke_verify.txt'])\nops_applied.append('Routed after BEM-866 Claude Code Action smoke verification')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_route_after_claude_action_smoke_verify.md",
+    "result_json": "governance/codex/results/bem867_route_after_claude_action_smoke_verify.json"
+  },
+  "created_at": "2026-05-24T13:13:54.327Z"
+}
