@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem846_validate_protocol_draft_decision",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-846 validate protocol",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/protocols']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 16:36 (UTC+3)'\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nprotocol=Path('governance/protocols/BEM845_AGREED_MULTI_AGENT_PROTOCOL_DRAFT.md')\ntext=read(protocol)\nup=text.upper()\nif 'CHANGE_REQUIRED' in up:\n    decision='CHANGE_REQUIRED'\nelif 'BLOCKED' in up:\n    decision='BLOCKED'\nelif 'APPROVED' in up:\n    decision='APPROVED'\nelse:\n    decision='UNKNOWN'\nif decision=='APPROVED':\n    status='protocol_approved_finalize_next'\n    next_action='create final agreed protocol document and operator-facing summary'\nelif decision=='CHANGE_REQUIRED':\n    status='protocol_change_required_continue_agreement'\n    next_action='extract required changes and send targeted response to Claude/internal audit'\nelif decision=='BLOCKED':\n    status='protocol_blocked_continue_repair'\n    next_action='extract blocker and repair before requesting approval again'\nelse:\n    status='protocol_decision_unknown_continue_agreement'\n    next_action='ask Claude for explicit Decision field and continue agreement loop'\nstate={'bem':'BEM-846','status':status,'decision':decision,'protocol_path':str(protocol),'next_action':next_action,'created_at':created}\nPath('governance/state/bem846_validate_protocol_draft_decision.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem846_validate_protocol_draft_decision.md').write_text('# BEM-846 | Validate Protocol Draft Decision | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem846_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-846'+sep+sep+'Decision: '+decision+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem846_validate_protocol_draft_decision.json','governance/reports/bem846_validate_protocol_draft_decision.md','governance/tasks/pending/bem846_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Validated decision field in BEM845 agreed protocol draft and selected finalize or continue-agreement next step')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem846_validate_protocol_draft_decision.md",
+    "result_json": "governance/codex/results/bem846_validate_protocol_draft_decision.json"
+  },
+  "created_at": "2026-05-24T13:37:01.226Z"
+}
