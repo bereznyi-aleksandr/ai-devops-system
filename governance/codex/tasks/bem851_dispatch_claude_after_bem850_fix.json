@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem851_dispatch_claude_after_bem850_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-851 dispatch Claude",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/workflow_dispatch_queue','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-22 | 06:02 (UTC+3)'\nqueue=Path('governance/workflow_dispatch_queue/bem851_dispatch_claude_after_bem850_fix.json')\nqueue.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v9','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-851 dispatch Claude Internal Auditor Dispatcher after BEM-850 fix; prove claude-code-action path','created_at':created},indent=2,ensure_ascii=False)+sep)\nstate={'bem':'BEM-851','status':'claude_dispatch_queued_after_bem850_fix','queue_file':str(queue),'required_proofs':['workflow_dispatch_results status','claude_inbound_mailbox_workflow_state start_or_completion','real Claude response in claude_to_gpt not fallback/blocker'],'created_at':created}\nPath('governance/state/bem851_dispatch_claude_after_bem850_fix.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem851_dispatch_claude_after_bem850_fix.md').write_text('# BEM-851 | Dispatch Claude After BEM-850 Fix | QUEUED'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem851_next.md').write_text('Next: run fresh Codex tick to process queue, then verify dispatch result, Claude runtime state, and real response. Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-851'+sep+sep+'Claude dispatcher queued after BEM-850. Next: tick and verify three proofs.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(queue),'governance/state/bem851_dispatch_claude_after_bem850_fix.json','governance/reports/bem851_dispatch_claude_after_bem850_fix.md','governance/tasks/pending/bem851_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Queued Claude Internal Auditor Dispatcher after BEM-850 fix and recorded strict three-proof smoke criteria')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem851_dispatch_claude_after_bem850_fix.md",
+    "result_json": "governance/codex/results/bem851_dispatch_claude_after_bem850_fix.json"
+  },
+  "created_at": "2026-05-24T11:57:18.126Z"
+}
