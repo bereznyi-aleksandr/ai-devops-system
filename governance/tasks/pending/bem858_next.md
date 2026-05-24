@@ -1,2 +1,2 @@
-Next: fresh tick then verify bem844_claude_response.md
+Next: patch claude dispatcher yaml before rerun
 Operator relay forbidden. Report does not stop development.
