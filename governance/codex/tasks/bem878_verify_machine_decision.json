@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem878_verify_machine_decision",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-878 verify machine decision",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 12:55 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nmachine=load('governance/state/bem876_claude_machine_decision.json')\nmail=read('governance/audit_mailbox/claude_to_gpt/bem876_claude_decision.md')\ndecision=machine.get('decision') or 'MISSING'\nif decision=='APPROVED':\n    status='machine_decision_approved'\n    next_action='mark protocol approved and resume roadmap'\nelif decision in ['CHANGE_REQUIRED','BLOCKED']:\n    status='machine_decision_not_approved'\n    next_action='apply required_changes from machine decision and re-request approval'\nelif machine.get('_load_error'):\n    status='machine_decision_invalid_json'\n    next_action='repair Claude response format; invalid JSON decision file'\nelse:\n    status='machine_decision_missing'\n    next_action='repair Claude dispatcher/response writer; machine decision JSON missing'\nstate={'bem':'BEM-878','status':status,'decision':decision,'machine_decision':machine,'mailbox_preview':mail[:1200],'next_action':next_action,'created_at':created}\nPath('governance/state/bem878_verify_machine_decision.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem878_verify_machine_decision.md').write_text('# BEM-878 | Verify Machine Decision | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem878_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-878'+sep+sep+'Status: '+status+sep+'Decision: '+decision+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem878_verify_machine_decision.json','governance/reports/bem878_verify_machine_decision.md','governance/tasks/pending/bem878_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Verified whether Claude produced the required machine-readable decision JSON and routed the next step')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem878_verify_machine_decision.md",
+    "result_json": "governance/codex/results/bem878_verify_machine_decision.json"
+  },
+  "created_at": "2026-05-24T09:55:05.049Z"
+}
