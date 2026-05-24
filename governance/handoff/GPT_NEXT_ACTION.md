@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-853.1
+# GPT NEXT ACTION | BEM-853.2
 
-Status: protocol_source_frozen
-Next: BEM-853.2 proof triad gate
+Status: proof_triad_gate_script_created
+Next: wire gate into workflows
