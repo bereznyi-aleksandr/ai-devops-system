@@ -1,0 +1,3 @@
+# BEM-866 | Execute BEM-865 Route | dispatch_result_parse_required
+
+{"bem": "BEM-866", "status": "dispatch_result_parse_required", "route_status": "parse_dispatch_result_next", "created_files": [], "next_action": "parse latest dispatch result and patch exact status failure", "created_at": "2026-05-24 | 12:02 (UTC+3)"}

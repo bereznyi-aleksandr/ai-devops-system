@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-865
+# GPT NEXT ACTION | BEM-866
 
-Status: parse_dispatch_result_next
-Next: parse latest dispatch result status processor_completed and patch exact failure/runtime
+Status: dispatch_result_parse_required
+Next: parse latest dispatch result and patch exact status failure
