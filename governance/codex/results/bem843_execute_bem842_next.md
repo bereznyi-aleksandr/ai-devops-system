@@ -5,8 +5,8 @@
 | Trace | bem843_execute_bem842_next |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Executed BEM-842 selected next action by queuing the exact probe/retry for the remaining missing proof, custom_script |
+| Operations | Executed BEM-842 next step: if dispatch results were missing,  wrote a local result-writer probe to unblock runtime diagnosis while marking it not a GitHub dispatch success, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T18:35:37Z |
+| Completed | 2026-05-24T20:01:52Z |
 
 ### Completed successfully.
