@@ -4,9 +4,7 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Routed after BEM-868 by checking BEM-844 response",
-    " Claude runtime",
-    " and dispatch result facts",
+    "Routed after BEM-868 Claude Code Action smoke execution status",
     "custom_script"
   ],
   "changed_files": [
@@ -15,10 +13,11 @@
     "governance/tasks/pending/bem869_next.md",
     "governance/handoff/GPT_NEXT_ACTION.md",
     "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem869_route_after_bem868.txt",
     "governance/codex/proofs/bem869_route_after_bem868.txt"
   ],
   "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem869_route_after_bem868.md",
-  "completed_at": "2026-05-24T09:05:54Z"
+  "completed_at": "2026-05-24T13:16:28Z"
 }

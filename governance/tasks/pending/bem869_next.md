@@ -1,2 +1,2 @@
-Next: extract concrete changes and patch protocol again
-Operator relay forbidden. Report does not stop development.
+Next: repair dispatch queue processor/result writer or smoke workflow target visibility
+Operator relay forbidden. Continue Claude Code Action track until result.
