@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-856
+# GPT NEXT ACTION | BEM-857
 
-Status: route_process_queue_again
-Next: run another tick; queue still contains unprocessed items
+Status: fresh_tick_required_for_claude_response_retry
+Next: create fresh tick then verify real Claude response
