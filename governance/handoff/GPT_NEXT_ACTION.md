@@ -1,3 +1,5 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-842
 
-Curator task, Claude mailbox request, active minute watchdog, and dispatch queue item created. Continue until real response.
+Status: curator_claude_mailbox_flow_restored
+Missing: 
+Next: process real Claude response and update protocol DOCX
