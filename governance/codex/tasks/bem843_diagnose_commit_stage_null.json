@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem843_diagnose_commit_stage_null",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-843 commit null diag",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\ncreated=str(now)\n# Diagnose likely commit stage from current checkout and write into task result. Commit may be broken, so proof also appears in codex result.\npaths=['.github/workflows/codex-runner.yml','scripts/commit_workflow_dispatch_results.sh','scripts/process_workflow_dispatch_queue.sh']\nsummary=[]\nfor raw in paths:\n    p=Path(raw)\n    if p.exists():\n        txt=p.read_text(errors='ignore')\n        summary.append({'path':raw,'exists':True,'has_git_commit':'git commit' in txt,'has_git_push':'git push' in txt,'has_git_add':'git add' in txt,'contains_commit_changes':'Commit changes' in txt or 'Commit result' in txt,'preview':txt[:1200]})\n    else:\n        summary.append({'path':raw,'exists':False})\nPath('governance/state').mkdir(parents=True,exist_ok=True)\nPath('governance/state/bem843_diagnose_commit_stage_null.json').write_text(json.dumps({'bem':'BEM-843','status':'commit_stage_diagnosed','summary':summary,'created_at':created},indent=2,ensure_ascii=False)+sep)\nchanged_files.append('governance/state/bem843_diagnose_commit_stage_null.json')\nops_applied.append('Diagnosed why Codex task changed files but commit_sha remains null: inspected codex-runner commit-related sections and helper scripts')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem843_diagnose_commit_stage_null.md",
+    "result_json": "governance/codex/results/bem843_diagnose_commit_stage_null.json"
+  },
+  "created_at": "2026-05-24T12:19:16.584Z"
+}
