@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-844
+# GPT NEXT ACTION | BEM-845
 
-Status: route_process_real_response
-Previous: real_claude_response_found
-Next: parse real Claude response and produce agreed protocol
+Status: process_real_response_selected
+Next: parse real Claude response into agreed protocol
