@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-865
-
-Status: parse_dispatch_result_next
 Next: parse latest dispatch result status processor_completed and patch exact failure/runtime
+Operator relay forbidden. Report does not stop development.
