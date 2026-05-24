@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-845
+# GPT NEXT ACTION | BEM-846
 
-Status: protocol_draft_created_from_triad
-Next: render human-readable protocol table and verify against operator requirements
+Status: human_protocol_table_created
+Next: parse response evidence and promote protocol to v1.0 if consistent.
