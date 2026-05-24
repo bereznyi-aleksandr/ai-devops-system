@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-840
 
-Status: triad_or_no_missing_seen_process_protocol_next
-Next: process real Claude response and create agreed protocol if response file is real; otherwise re-filter
+Status: claude_auth_fix_present_dispatch_queued
+Next: fresh tick to process dispatch queue, then verify dispatch-result/runtime/real-response

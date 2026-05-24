@@ -1,2 +1,2 @@
-Next: process real Claude answer and create agreed protocol
-Operator relay forbidden. Report does not stop development.
+Next: fresh tick to process dispatch queue, then verify dispatch-result/runtime/real-response
+Operator relay forbidden. No manual Run workflow.
