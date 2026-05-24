@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-871
+# GPT NEXT ACTION | BEM-873
 
-Status: queued approval for BEM870
-Next: tick and verify decision
+Status: bem871_response_missing_or_unknown
+Decision: MISSING
+Next: repair response dispatch/filter; BEM871 decision not found
