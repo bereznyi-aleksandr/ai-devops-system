@@ -1,0 +1,3 @@
+# BEM-868 | Broaden Final Response Filter | broad_final_filter_not_approved
+
+{"bem": "BEM-868", "status": "broad_final_filter_not_approved", "decision": "BLOCKED", "real_response_count": 1, "latest_real": [{"path": "governance/audit_mailbox/claude_to_gpt/bem844_claude_response.md", "preview": "# CLAUDE RESPONSE | BEM-844\n\nDate: 2026-05-24 | 11:59 (UTC+3)\nDecision: BLOCKED\nReason: The real Claude dispatcher did not produce the required response file after dispatch, ensure-step, and commit-path repairs. This is a fail-closed result, not approval.\n"}], "blocker_count": 2, "next_action": "extract latest response changes and patch again", "created_at": "2026-05-24 | 12:44 (UTC+3)"}

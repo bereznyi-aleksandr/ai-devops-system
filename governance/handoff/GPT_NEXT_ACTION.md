@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-867
+# GPT NEXT ACTION | BEM-868
 
-Decision: MISSING
-Status: final_approval_missing_or_unknown
-Next: broaden final response filter and inspect all real Claude responses
+Decision: BLOCKED
+Status: broad_final_filter_not_approved
+Next: extract latest response changes and patch again
