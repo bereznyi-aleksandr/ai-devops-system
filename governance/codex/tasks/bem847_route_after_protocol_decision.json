@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem847_route_after_protocol_decision",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-847 protocol decision route",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 12:23 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nprev=load('governance/state/bem846_finalize_agreed_protocol_table.json')\ndecision=prev.get('decision','UNKNOWN')\nif decision=='APPROVED':\n    status='protocol_approved_resume_roadmap'\n    next_action='resume roadmap implementation using BEM-846 agreed protocol as source of truth'\nelif decision=='CHANGE_REQUIRED':\n    status='protocol_change_required'\n    next_action='extract Claude requested changes and patch protocol before roadmap resume'\nelif decision=='BLOCKED':\n    status='protocol_blocked'\n    next_action='extract blocker and repair transport/runtime/protocol before roadmap resume'\nelse:\n    status='protocol_decision_unknown'\n    next_action='inspect BEM-845 draft and Claude response manually in repo, then fix decision extraction'\nstate={'bem':'BEM-847','status':status,'decision':decision,'protocol':prev.get('protocol'),'source_draft':prev.get('source_draft'),'next_action':next_action,'created_at':created}\nPath('governance/state/bem847_route_after_protocol_decision.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem847_route_after_protocol_decision.md').write_text('# BEM-847 | Route After Protocol Decision | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem847_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-847'+sep+sep+'Decision: '+decision+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem847_route_after_protocol_decision.json','governance/reports/bem847_route_after_protocol_decision.md','governance/tasks/pending/bem847_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Routed after BEM-846 protocol decision to either resume roadmap or process Claude changes/blockers')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem847_route_after_protocol_decision.md",
+    "result_json": "governance/codex/results/bem847_route_after_protocol_decision.json"
+  },
+  "created_at": "2026-05-24T09:23:30.430Z"
+}
