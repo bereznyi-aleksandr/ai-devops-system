@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-851
+# GPT NEXT ACTION | BEM-852
 
-Status: agreed_protocol_validated
-Protocol: governance/protocols/BEM850_AGREED_PROTOCOL_FROM_CLAUDE.md
-Next: prepare concise operator report and continue roadmap implementation from protocol
+Status: implementation_backlog_created
+Next: start BEM-852.1 and BEM-852.2
