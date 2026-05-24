@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-847
+# GPT NEXT ACTION | BEM-849
 
-Decision: CHANGE_REQUIRED
-Status: followup_to_claude_created
-Next: fresh tick, read Claude followup, update protocol until final approval
+Status: followup_approved_finalize_next
+Decision: APPROVED
+Next: create final agreed protocol from draft and followup response
