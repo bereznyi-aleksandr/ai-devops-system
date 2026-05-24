@@ -1,2 +1,2 @@
-Next: patch protocol/runtime according to extracted blocker
+Next: build protocol from real Claude response
 Operator relay forbidden. Report does not stop development.
