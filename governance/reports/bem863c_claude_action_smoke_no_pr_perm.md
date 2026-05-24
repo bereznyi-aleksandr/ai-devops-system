@@ -1,0 +1,3 @@
+# BEM-863C | Claude Action Smoke | INSTALLED
+
+{"bem": "BEM-863C", "status": "claude_code_action_smoke_workflow_installed", "workflow": ".github/workflows/claude-code-action-smoke.yml", "next_action": "queue workflow dispatch and verify smoke state plus response file", "created_at": "2026-05-24 | 16:08 (UTC+3)", "blocker": null}

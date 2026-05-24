@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem863c_claude_action_smoke_no_pr_perm
+task_type: code_patch
+executed_at: 2026-05-24T13:09:20Z
+ops_applied: Installed claude-code-action smoke workflow without PR permission token that blocked executor, custom_script
+changed_files: scripts/record_claude_code_action_smoke_state.py, scripts/commit_claude_code_action_smoke_state.sh, .github/workflows/claude-code-action-smoke.yml, governance/audit_mailbox/gpt_to_claude/bem863c_claude_code_action_smoke.md, governance/state/bem863c_claude_action_smoke_no_pr_perm.json, governance/reports/bem863c_claude_action_smoke_no_pr_perm.md, governance/tasks/pending/bem863c_next.md, governance/handoff/GPT_NEXT_ACTION.md, governance/transport/results.jsonl, governance/codex/proofs/bem863c_claude_action_smoke_no_pr_perm.txt
+errors: none

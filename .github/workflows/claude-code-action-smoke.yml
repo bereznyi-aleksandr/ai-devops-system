@@ -1,0 +1,48 @@
+name: Claude Code Action Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: read
+
+concurrency:
+  group: claude-code-action-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Syntax check helpers
+        run: python3 -m py_compile scripts/record_claude_code_action_smoke_state.py
+      - name: Record smoke start
+        run: python3 scripts/record_claude_code_action_smoke_state.py started started
+      - name: Claude Code Action smoke
+        id: claude_smoke
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are Claude Code Action smoke test for ai-devops-system.
+            Create or update governance/audit_mailbox/claude_to_gpt/bem863c_claude_code_action_smoke_response.md.
+            Include Decision: APPROVED if this action can write the file, otherwise Decision: BLOCKED with a non-secret reason.
+            Do not write issue comments. Do not expose secrets.
+          claude_args: |
+            --max-turns 4
+      - name: Record smoke completion
+        if: always()
+        env:
+          CLAUDE_SMOKE_OUTCOME: ${{ steps.claude_smoke.outcome }}
+        run: python3 scripts/record_claude_code_action_smoke_state.py completed "$CLAUDE_SMOKE_OUTCOME"
+      - name: Commit smoke state and response
+        if: always()
+        run: bash scripts/commit_claude_code_action_smoke_state.sh
