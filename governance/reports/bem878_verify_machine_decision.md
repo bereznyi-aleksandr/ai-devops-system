@@ -1,0 +1,3 @@
+# BEM-878 | Verify Machine Decision | machine_decision_missing
+
+{"bem": "BEM-878", "status": "machine_decision_missing", "decision": "MISSING", "machine_decision": {}, "mailbox_preview": "", "next_action": "repair Claude dispatcher/response writer; machine decision JSON missing", "created_at": "2026-05-24 | 12:55 (UTC+3)"}

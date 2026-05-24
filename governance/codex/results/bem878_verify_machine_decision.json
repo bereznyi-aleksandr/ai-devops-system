@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem878_verify_machine_decision",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified whether Claude produced the required machine-readable decision JSON and routed the next step",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem878_verify_machine_decision.json",
+    "governance/reports/bem878_verify_machine_decision.md",
+    "governance/tasks/pending/bem878_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem878_verify_machine_decision.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem878_verify_machine_decision.md",
+  "completed_at": "2026-05-24T09:55:13Z"
+}

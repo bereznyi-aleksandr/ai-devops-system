@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-876
+# GPT NEXT ACTION | BEM-878
 
-Status: machine-readable decision request queued
-Next: tick then verify JSON decision
+Status: machine_decision_missing
+Decision: MISSING
+Next: repair Claude dispatcher/response writer; machine decision JSON missing
