@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-848
+# GPT NEXT ACTION | BEM-849
 
-Status: protocol_can_advance_to_v1
-Next: promote BEM846 protocol to v1.0 with evidence references
+Status: protocol_promoted_to_v1
+Next: install regression gate for triad proof.
