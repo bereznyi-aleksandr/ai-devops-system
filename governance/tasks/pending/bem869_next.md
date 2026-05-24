@@ -1,2 +1,2 @@
-Next: create protocol result from bem844 response
+Next: extract concrete changes and patch protocol again
 Operator relay forbidden. Report does not stop development.
