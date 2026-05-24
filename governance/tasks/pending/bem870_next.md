@@ -1,1 +1,2 @@
-Next: request Claude approval for BEM870 iterative patched protocol. Operator relay forbidden. Report does not stop development.
+Next: inspect queue processor/results and target workflow visibility
+Operator relay forbidden. Continue Claude Code Action track until result.

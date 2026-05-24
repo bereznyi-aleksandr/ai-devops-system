@@ -1,0 +1,3 @@
+# BEM-870 | Execute BEM-869 Route | dispatch_processing_repair_needed
+
+{"bem": "BEM-870", "status": "dispatch_processing_repair_needed", "route_status": "route_repair_dispatch_processing", "smoke_state": {}, "response_preview": "", "dispatch_results_tail": [], "next_action": "inspect queue processor/results and target workflow visibility", "created_at": "2026-05-24 | 16:16 (UTC+3)"}
