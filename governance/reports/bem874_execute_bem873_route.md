@@ -1,0 +1,3 @@
+# BEM-874 | Execute BEM-873 Route | dispatch_processing_diagnosis_required
+
+{"bem": "BEM-874", "status": "dispatch_processing_diagnosis_required", "route_status": "next_diagnose_dispatch_processing", "response_preview": "", "smoke_state": {}, "dispatch_results_tail": [], "next_action": "inspect queue files/results/target workflow visibility", "created_at": "2026-05-24 | 16:21 (UTC+3)"}

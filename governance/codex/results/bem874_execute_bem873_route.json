@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem874_execute_bem873_route",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Executed BEM-873 route by selecting the exact next action for Claude Code Action smoke track",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem874_execute_bem873_route.json",
+    "governance/reports/bem874_execute_bem873_route.md",
+    "governance/tasks/pending/bem874_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem874_execute_bem873_route.txt",
+    "governance/codex/proofs/bem874_execute_bem873_route.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem874_execute_bem873_route.md",
+  "completed_at": "2026-05-24T13:22:29Z"
+}

@@ -1,2 +1,2 @@
-Next: repair Claude decision response dispatch/filter
-Operator relay forbidden. Report does not stop development.
+Next: inspect queue files/results/target workflow visibility
+Operator relay forbidden. Continue Claude Code Action track until result.
