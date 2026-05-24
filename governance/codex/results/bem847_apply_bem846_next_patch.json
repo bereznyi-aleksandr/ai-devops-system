@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem847_apply_bem846_next_patch",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Applied the next patch selected by BEM-846",
+    " especially adding summary dispatch result output when result writer was the issue",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem847_apply_bem846_next_patch.json",
+    "governance/reports/bem847_apply_bem846_next_patch.md",
+    "governance/tasks/pending/bem847_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem847_apply_bem846_next_patch.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem847_apply_bem846_next_patch.md",
+  "completed_at": "2026-05-24T18:01:53Z"
+}
