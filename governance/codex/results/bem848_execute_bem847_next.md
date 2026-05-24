@@ -5,8 +5,8 @@
 | Trace | bem848_execute_bem847_next |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Executed BEM-847 next action by queuing required item,  selecting protocol build,  or choosing tick for pending queue, custom_script |
+| Operations | Executed BEM-847 next action: either created protocol draft from real Claude response or created result-writer probe without faking Claude dispatch, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T10:10:38Z |
+| Completed | 2026-05-24T17:01:27Z |
 
 ### Completed successfully.

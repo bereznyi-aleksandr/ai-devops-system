@@ -4,9 +4,7 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Executed BEM-847 next action by queuing required item",
-    " selecting protocol build",
-    " or choosing tick for pending queue",
+    "Executed BEM-847 next action: either created protocol draft from real Claude response or created result-writer probe without faking Claude dispatch",
     "custom_script"
   ],
   "changed_files": [
@@ -15,10 +13,11 @@
     "governance/tasks/pending/bem848_next.md",
     "governance/handoff/GPT_NEXT_ACTION.md",
     "governance/transport/results.jsonl",
+    "governance/protocols/BEM840_AGREED_PROTOCOL_DRAFT_FROM_CLAUDE.md",
     "governance/codex/proofs/bem848_execute_bem847_next.txt"
   ],
   "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem848_execute_bem847_next.md",
-  "completed_at": "2026-05-24T10:10:38Z"
+  "completed_at": "2026-05-24T17:01:27Z"
 }
