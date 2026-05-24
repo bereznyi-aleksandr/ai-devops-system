@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem851_apply_blocker_repair_and_reask_claude",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Applied blocker repair by creating an evidence package and queued Claude re-approval request",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/BEM851_PROTOCOL_APPROVAL_EVIDENCE.md",
+    "governance/audit_mailbox/gpt_to_claude/bem851_reapproval_request.md",
+    "governance/workflow_dispatch_queue/bem851_claude_reapproval_dispatch.json",
+    "governance/state/bem851_apply_blocker_repair_and_reask_claude.json",
+    "governance/reports/bem851_apply_blocker_repair_and_reask_claude.md",
+    "governance/tasks/pending/bem851_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem851_apply_blocker_repair_and_reask_claude.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem851_apply_blocker_repair_and_reask_claude.md",
+  "completed_at": "2026-05-24T09:27:46Z"
+}

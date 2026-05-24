@@ -1,2 +1,1 @@
-Next: inspect and patch dispatcher YAML placement of ensure_claude_response_file.py
-Operator relay forbidden. Report does not stop development.
+Next: fresh tick then verify Claude reapproval response. Operator relay forbidden. Report does not stop development.
