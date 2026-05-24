@@ -1,1 +1,2 @@
-Next: fresh tick then verify Claude reapproval response. Operator relay forbidden. Report does not stop development.
+Next: build agreed protocol now
+Operator relay forbidden. Report does not stop development.

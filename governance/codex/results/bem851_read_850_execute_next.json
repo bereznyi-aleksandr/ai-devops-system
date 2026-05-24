@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem851_read_850_execute_next",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Read BEM-850 and selected direct next action: protocol build",
+    " tick",
+    " or queue missing proof",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem851_read_850_execute_next.json",
+    "governance/reports/bem851_read_850_execute_next.md",
+    "governance/tasks/pending/bem851_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem851_read_850_execute_next.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem851_read_850_execute_next.md",
+  "completed_at": "2026-05-24T10:14:05Z"
+}
