@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem852_tick_reapproval_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-852 tick reapproval",
+  "objective": "Create file governance/state/bem852_tick_reapproval_queue.json with content {\"bem\":\"BEM-852\",\"status\":\"fresh_tick_after_bem851_reapproval_queue\",\"created_at\":\"2026-05-24 | 12:28 (UTC+3)\",\"expected\":\"Claude reapproval response in claude_to_gpt\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem852_tick_reapproval_queue.md",
+    "result_json": "governance/codex/results/bem852_tick_reapproval_queue.json"
+  },
+  "created_at": "2026-05-24T09:28:29.061Z"
+}
