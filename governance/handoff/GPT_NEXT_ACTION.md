@@ -1,3 +1,4 @@
-# GPT NEXT ACTION | BEM-864
+# GPT NEXT ACTION | BEM-866
 
-Claude Code Action smoke dispatch queued. Next: tick and verify.
+Status: no_dispatch_result_no_smoke_runtime
+Next: repair workflow_dispatch_queue processor/result writer or dispatch target

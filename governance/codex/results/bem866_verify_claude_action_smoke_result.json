@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_verify_claude_action_smoke_result",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified workflow dispatch result",
+    " Claude Code Action smoke state",
+    " smoke response file",
+    " and queue remainder after BEM-865 tick",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem866_verify_claude_action_smoke_result.json",
+    "governance/reports/bem866_verify_claude_action_smoke_result.md",
+    "governance/tasks/pending/bem866_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem866_verify_claude_action_smoke_result.txt",
+    "governance/codex/proofs/bem866_verify_claude_action_smoke_result.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_verify_claude_action_smoke_result.md",
+  "completed_at": "2026-05-24T13:12:49Z"
+}

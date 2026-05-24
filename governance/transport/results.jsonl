@@ -715,3 +715,4 @@
 {"record_type": "bem862_claude_code_action_track_diagnosis", "status": "runtime_state_seen_need_response_or_outcome", "next_action": "inspect outcome and mailbox response; patch prompt/provider if needed", "created_at": "2026-05-24 | 16:04 (UTC+3)"}
 {"record_type": "bem863c_claude_action_smoke_no_pr_perm", "status": "installed", "created_at": "2026-05-24 | 16:08 (UTC+3)"}
 {"record_type": "bem864_queue_claude_action_smoke_dispatch", "status": "queued", "queue_file": "governance/workflow_dispatch_queue/bem864_claude_code_action_smoke_dispatch.json", "created_at": "2026-05-24 | 16:09 (UTC+3)"}
+{"record_type": "bem866_verify_claude_action_smoke_result", "status": "no_dispatch_result_no_smoke_runtime", "next_action": "repair workflow_dispatch_queue processor/result writer or dispatch target", "created_at": "2026-05-24 | 16:11 (UTC+3)"}

@@ -1,2 +1,2 @@
-Next: repair response filter/dispatch and retry final approval
-Operator relay forbidden. Report does not stop development.
+Next: repair workflow_dispatch_queue processor/result writer or dispatch target
+Operator relay forbidden. Continue Claude Code Action track until result.
