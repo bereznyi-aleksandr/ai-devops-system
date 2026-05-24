@@ -1,2 +1,2 @@
-Next: publish operator-facing summary and continue roadmap implementation
+Next: continue protocol implementation or review agreement delta
 Operator relay forbidden. Report does not stop development.
