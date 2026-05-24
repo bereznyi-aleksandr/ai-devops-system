@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem844_operator_facing_agreed_protocol",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-844 protocol table",
+  "objective": "Create file governance/protocols/BEM844_OPERATOR_FACING_AGREED_PROTOCOL.md with content BEM-844 | Operator-facing agreed protocol | 2026-05-24 | 20:14 UTC+3. Source: governance/audit_mailbox/claude_to_gpt/bem857_claude_direct_response.md. Decision: APPROVED with one CHANGE_REQUIRED clarification. Protocol: peer model GPT external auditor and Claude internal auditor are equal; operator is only senior authority; audit mailbox is the primary cross-agent channel; technical disagreements are resolved by GPT and Claude autonomously; architectural disagreements go to Telegram/operator; operator decisions must not be disputed; no direct handoff to Analyst or Executor without Curator/operator gate; final operator-facing handoff goes through Curator; implementation PASS requires proof artifacts not verbal claims; blocker/fallback files are not Claude approval; reports do not stop development. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem844_operator_facing_agreed_protocol.md",
+    "result_json": "governance/codex/results/bem844_operator_facing_agreed_protocol.json"
+  },
+  "created_at": "2026-05-24T17:14:08.385Z"
+}
