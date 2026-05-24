@@ -1,2 +1,2 @@
-Next: continue repair of Claude dispatcher runtime/action logs; do not claim protocol approved
+Next: patch protocol using latest response changes
 Operator relay forbidden. Report does not stop development.

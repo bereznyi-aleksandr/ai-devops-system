@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem863_extract_latest_response_changes",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Extracted actionable change/blocker lines from the latest broad-filter real Claude response",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem863_extract_latest_response_changes.json",
+    "governance/reports/bem863_extract_latest_response_changes.md",
+    "governance/tasks/pending/bem863_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem863_extract_latest_response_changes.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem863_extract_latest_response_changes.md",
+  "completed_at": "2026-05-24T09:40:17Z"
+}

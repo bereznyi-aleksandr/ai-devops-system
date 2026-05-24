@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-862
+# GPT NEXT ACTION | BEM-863
 
-Decision: BLOCKED
-Status: not_approved_extract_changes_next
-Next: extract concrete changes from latest real response and patch protocol
+Status: latest_changes_extracted
+Next: patch protocol using latest response changes
