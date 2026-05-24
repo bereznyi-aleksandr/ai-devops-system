@@ -1,1 +1,2 @@
-Next: verify dispatcher workflow OIDC failure separately; protocol can be accepted only if direct Claude response is approved. Operator relay forbidden.
+Next: parse Claude response and prepare agreed protocol
+Operator relay forbidden. Report does not stop development.
