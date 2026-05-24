@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem845_tick_bem844_claude_dispatch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-845 tick bem844 dispatch",
+  "objective": "Create file governance/state/bem845_tick_bem844_claude_dispatch.json with content {\"bem\":\"BEM-845\",\"status\":\"fresh_tick_after_bem844_claude_response_dispatch\",\"created_at\":\"2026-05-24 | 11:41 (UTC+3)\",\"expected\":\"process bem844_claude_response_dispatch queue item and produce bem844_claude_response.md\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem845_tick_bem844_claude_dispatch.md",
+    "result_json": "governance/codex/results/bem845_tick_bem844_claude_dispatch.json"
+  },
+  "created_at": "2026-05-24T08:41:43.707Z"
+}
