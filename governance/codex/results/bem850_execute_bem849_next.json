@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem850_execute_bem849_next",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Executed BEM-849 next action by creating the needed queue item",
+    " selecting tick",
+    " or selecting protocol build",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem850_execute_bem849_next.json",
+    "governance/reports/bem850_execute_bem849_next.md",
+    "governance/tasks/pending/bem850_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem850_execute_bem849_next.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem850_execute_bem849_next.md",
+  "completed_at": "2026-05-24T10:12:55Z"
+}
