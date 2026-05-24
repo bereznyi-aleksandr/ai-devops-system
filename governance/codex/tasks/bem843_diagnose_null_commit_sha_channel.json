@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem843_diagnose_null_commit_sha_channel",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-843 null commit sha",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/codex/proofs']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 15:54 (UTC+3)'\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nrunner=read('.github/workflows/codex-runner.yml')\ncommit_scripts=[]\nfor p in Path('scripts').glob('*commit*') if Path('scripts').exists() else []:\n    if p.is_file(): commit_scripts.append({'path':str(p),'preview':read(p)[:1500]})\nindicators={\n 'runner_has_commit_changes':'Commit changes' in runner or 'git commit' in runner,\n 'runner_has_result_commit':'Commit result' in runner,\n 'runner_has_continue_on_error': 'continue-on-error' in runner,\n 'runner_has_git_push':'git push' in runner,\n 'runner_has_commit_sha_output':'commit_sha' in runner or 'GITHUB_OUTPUT' in runner,\n 'runner_has_pull_rebase':'pull --rebase' in runner,\n}\nstatus='null_commit_sha_diagnosed'\nnext_action='patch codex-runner commit step to always write commit SHA proof file and expose result commit SHA when changed_files exist'\nstate={'bem':'BEM-843','status':status,'indicators':indicators,'commit_scripts':commit_scripts,'next_action':next_action,'created_at':created}\nfiles={\n 'governance/state/bem843_diagnose_null_commit_sha_channel.json': json.dumps(state,indent=2,ensure_ascii=False)+sep,\n 'governance/reports/bem843_diagnose_null_commit_sha_channel.md': '# BEM-843 | Diagnose Null Commit SHA Channel | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep,\n 'governance/tasks/pending/bem843_next.md': 'Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep,\n 'governance/handoff/GPT_NEXT_ACTION.md': '# GPT NEXT ACTION | BEM-843'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep,\n 'governance/codex/proofs/bem843_null_commit_sha_channel.txt': 'BEM-843 diagnosed null commit sha channel at '+created+sep\n}\nfor path,content in files.items(): Path(path).write_text(content)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(list(files.keys())+['governance/transport/results.jsonl'])\nops_applied.append('Diagnosed why Codex status reports changed_files but commit_sha null by inspecting codex-runner commit/result indicators')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem843_diagnose_null_commit_sha_channel.md",
+    "result_json": "governance/codex/results/bem843_diagnose_null_commit_sha_channel.json"
+  },
+  "created_at": "2026-05-24T12:55:39.795Z"
+}
