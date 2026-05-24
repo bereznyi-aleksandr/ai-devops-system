@@ -1,2 +1,2 @@
-Next: fresh tick, then verify dispatch result, runtime state, and real Claude response file
+Next: fresh tick; verify real Claude response file excluding blocker files
 Operator relay forbidden. Report does not stop development.

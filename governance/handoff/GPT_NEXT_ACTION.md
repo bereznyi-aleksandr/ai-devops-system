@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-841
 
-Status: route_repair_real_claude_response
-Next: repair Claude response generation/writer; do not count blocker files
+Status: real_response_probe_queued
+Next: fresh tick; verify real Claude response file excluding blocker files
