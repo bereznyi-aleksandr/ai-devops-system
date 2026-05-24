@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem844_force_bem840_response_retry",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Forced a fresh BEM-840 protocol response retry request",
+    " queued Claude dispatcher",
+    " and refreshed watchdog state",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/audit_mailbox/gpt_to_claude/bem844_force_protocol_response_retry.md",
+    "governance/workflow_dispatch_queue/bem844_force_claude_protocol_response_dispatch.json",
+    "governance/state/claude_mailbox_minute_watchdog_state.json",
+    "governance/state/bem844_force_bem840_response_retry.json",
+    "governance/reports/bem844_force_bem840_response_retry.md",
+    "governance/tasks/pending/bem844_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem844_force_bem840_response_retry.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem844_force_bem840_response_retry.md",
+  "completed_at": "2026-05-24T16:57:21Z"
+}

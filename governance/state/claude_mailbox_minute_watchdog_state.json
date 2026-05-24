@@ -1,14 +1,16 @@
 {
-  "schema_version": "claude_mailbox_minute_watchdog_state.v2",
-  "status": "active_waiting_for_bem840_claude_response",
-  "checked_at": "2026-05-22 | 06:01 (UTC+3)",
+  "schema_version": "claude_mailbox_minute_watchdog_state.v3",
+  "status": "active_waiting_for_bem840_response_retry",
+  "checked_at": "2026-05-24 | 19:57 (UTC+3)",
   "interval_minutes": 1,
   "checks": [
     {
-      "time": "2026-05-22 | 06:01 (UTC+3)",
-      "status": "request_written",
-      "target": "governance/audit_mailbox/claude_to_gpt/bem840_claude_protocol_agreement_response.md"
+      "time": "2026-05-24 | 19:57 (UTC+3)",
+      "status": "force_retry_written",
+      "request": "governance/audit_mailbox/gpt_to_claude/bem844_force_protocol_response_retry.md",
+      "queue": "governance/workflow_dispatch_queue/bem844_force_claude_protocol_response_dispatch.json"
     }
   ],
-  "operator_role": "none"
+  "operator_role": "none",
+  "target_response": "governance/audit_mailbox/claude_to_gpt/bem840_claude_protocol_agreement_response.md"
 }
