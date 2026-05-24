@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-842
+# GPT NEXT ACTION | BEM-843
 
-Status: real_claude_response_found
-Missing: 
-Next: parse latest real Claude response and prepare agreed protocol
+Status: null_commit_sha_diagnosed
+Next: patch codex-runner commit step to always write commit SHA proof file and expose result commit SHA when changed_files exist

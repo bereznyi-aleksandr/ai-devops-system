@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem843_diagnose_null_commit_sha_channel",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Diagnosed why Codex status reports changed_files but commit_sha null by inspecting codex-runner commit/result indicators",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem843_diagnose_null_commit_sha_channel.json",
+    "governance/reports/bem843_diagnose_null_commit_sha_channel.md",
+    "governance/tasks/pending/bem843_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/codex/proofs/bem843_null_commit_sha_channel.txt",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem843_diagnose_null_commit_sha_channel.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem843_diagnose_null_commit_sha_channel.md",
+  "completed_at": "2026-05-24T12:55:48Z"
+}
