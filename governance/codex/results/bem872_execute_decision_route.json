@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem872_execute_decision_route",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Executed BEM-871 decision route: finalized approved protocol or queued runtime repair for BLOCKED/other decisions",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem872_execute_decision_route.json",
+    "governance/reports/bem872_execute_decision_route.md",
+    "governance/tasks/pending/bem872_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/workflow_dispatch_queue/bem872_blocker_repair_runtime_probe.json",
+    "governance/codex/proofs/bem872_execute_decision_route.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem872_execute_decision_route.md",
+  "completed_at": "2026-05-24T09:08:40Z"
+}

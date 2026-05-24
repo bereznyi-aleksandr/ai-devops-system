@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-871
+# GPT NEXT ACTION | BEM-872
 
 Decision: BLOCKED
-Status: protocol_blocked
-Next: repair blocker: Claude dispatcher did not provide real approval; continue runtime/action evidence repair
+Status: blocked_protocol_runtime_repair_queued
+Next: fresh tick; repair real Claude runtime/action evidence, not claim approval
