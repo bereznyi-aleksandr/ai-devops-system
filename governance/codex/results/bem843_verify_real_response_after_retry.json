@@ -4,7 +4,11 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Verified whether a real Claude response appeared after the BEM-841 retry and BEM-842 tick",
+    "Verified dispatch results",
+    " Claude runtime state",
+    " real Claude response",
+    " blocker files",
+    " and pending queue after BEM-841/BEM-842 retry",
     "custom_script"
   ],
   "changed_files": [
@@ -18,5 +22,5 @@
   "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem843_verify_real_response_after_retry.md",
-  "completed_at": "2026-05-23T22:06:44Z"
+  "completed_at": "2026-05-24T10:52:30Z"
 }
