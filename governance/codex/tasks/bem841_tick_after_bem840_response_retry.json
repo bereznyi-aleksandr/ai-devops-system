@@ -4,8 +4,8 @@
   "created_by": "chatgpt_external_contour",
   "target_executor": "gpt_codex",
   "task_type": "diagnosis",
-  "title": "BEM-841 tick BEM840 retry",
-  "objective": "Create file governance/state/bem841_tick_after_bem840_response_retry.json with content {\"bem\":\"BEM-841\",\"status\":\"fresh_tick_after_bem840_real_response_retry\",\"created_at\":\"2026-05-24 | 21:32 (UTC+3)\",\"expected\":\"process bem840_claude_response_retry queue item and produce dispatch result, Claude runtime state, then real Claude response\"}\nNo issue comments.",
+  "title": "BEM-841 tick response retry",
+  "objective": "Create file governance/state/bem841_tick_after_bem840_response_retry.json with content {\"bem\":\"BEM-841\",\"status\":\"fresh_tick_after_bem840_response_retry\",\"created_at\":\"2026-05-24 | 22:58 (UTC+3)\",\"expected\":\"process bem840 Claude response retry queue and produce real Claude response\"}\nNo issue comments.",
   "constraints": [
     "no issue comments",
     "no schedule triggers",
@@ -16,5 +16,5 @@
     "result_md": "governance/codex/results/bem841_tick_after_bem840_response_retry.md",
     "result_json": "governance/codex/results/bem841_tick_after_bem840_response_retry.json"
   },
-  "created_at": "2026-05-24T18:33:11.665Z"
+  "created_at": "2026-05-24T19:59:26.306Z"
 }
