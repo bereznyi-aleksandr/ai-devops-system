@@ -1,3 +1,4 @@
-# GPT NEXT ACTION | BEM-846
+# GPT NEXT ACTION | BEM-848
 
-Status: queued dispatch after OIDC fix.
+Status: dispatch_queue_not_processed
+Next: repair Codex workflow dispatch queue processor or use direct dispatch endpoint

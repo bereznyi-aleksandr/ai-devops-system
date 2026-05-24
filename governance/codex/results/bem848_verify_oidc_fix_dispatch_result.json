@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem848_verify_oidc_fix_dispatch_result",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified dispatch queue result and Claude runtime after BEM-845 OIDC permission fix and BEM-846/BEM-847 dispatch retry",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem848_verify_oidc_fix_dispatch_result.json",
+    "governance/reports/bem848_verify_oidc_fix_dispatch_result.md",
+    "governance/tasks/pending/bem848_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem848_verify_oidc_fix_dispatch_result.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem848_verify_oidc_fix_dispatch_result.md",
+  "completed_at": "2026-05-24T12:27:08Z"
+}
