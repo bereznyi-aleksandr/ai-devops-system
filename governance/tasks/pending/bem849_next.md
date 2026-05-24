@@ -1,1 +1,2 @@
-Next: fresh tick then verify validator result and real Claude response. Operator relay forbidden.
+Next: patch protocol/runtime according to extracted blocker
+Operator relay forbidden. Report does not stop development.

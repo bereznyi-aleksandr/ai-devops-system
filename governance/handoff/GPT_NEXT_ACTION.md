@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-848
+# GPT NEXT ACTION | BEM-849
 
-Status: protocol_blocker_repair_opened
-Decision: BLOCKED
-Next: extract blocker and repair
+Status: blocker_extracted
+Next: patch protocol/runtime according to extracted blocker

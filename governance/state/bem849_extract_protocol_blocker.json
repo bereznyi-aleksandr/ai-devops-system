@@ -1,0 +1,12 @@
+{
+  "bem": "BEM-849",
+  "status": "blocker_extracted",
+  "source_draft": "governance/protocols/BEM845_CLAUDE_AGREED_PROTOCOL_DRAFT.md",
+  "blocker_lines": [
+    "Decision: BLOCKED",
+    "Reason: The real Claude dispatcher did not produce the required response file after dispatch, ensure-step, and commit-path repairs. This is a fail-closed result, not approval.",
+    "Реальный ответ Claude найден. Следующий шаг: GPT должен сверить решение, оформить человекочитаемый протокол и проверить, нет ли CHANGE_REQUIRED/BLOCKED."
+  ],
+  "next_action": "patch protocol/runtime according to extracted blocker",
+  "created_at": "2026-05-24 | 12:25 (UTC+3)"
+}
