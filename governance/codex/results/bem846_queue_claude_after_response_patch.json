@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem846_queue_claude_after_response_patch",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Queued Claude dispatcher after response writer/verifier patch",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem846_claude_after_response_patch.json",
+    "governance/state/bem846_queue_claude_after_response_patch.json",
+    "governance/reports/bem846_queue_claude_after_response_patch.md",
+    "governance/tasks/pending/bem846_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem846_queue_claude_after_response_patch.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem846_queue_claude_after_response_patch.md",
+  "completed_at": "2026-05-24T16:03:56Z"
+}
