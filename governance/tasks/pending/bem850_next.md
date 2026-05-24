@@ -1,2 +1,2 @@
-Next: continue protocol implementation or review agreement delta
+Next: process real Claude response into agreed protocol
 Operator relay forbidden. Report does not stop development.

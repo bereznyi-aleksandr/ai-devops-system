@@ -4,9 +4,8 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "Executed BEM-849 next action by creating the needed queue item",
-    " selecting tick",
-    " or selecting protocol build",
+    "Executed BEM-849 next action by patching or confirming dispatch result pipeline",
+    " or routing to runtime/response repair",
     "custom_script"
   ],
   "changed_files": [
@@ -20,5 +19,5 @@
   "commit_sha": null,
   "blocker": null,
   "report_path": "governance/codex/results/bem850_execute_bem849_next.md",
-  "completed_at": "2026-05-24T10:12:55Z"
+  "completed_at": "2026-05-24T18:05:20Z"
 }
