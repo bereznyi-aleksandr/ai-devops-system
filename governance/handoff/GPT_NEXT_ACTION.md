@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-853.2
+# GPT NEXT ACTION | BEM-840
 
-Status: proof_triad_gate_script_created
-Next: wire gate into workflows
+Status: route_repair_real_claude_response
+Missing: real_claude_response
+Next: repair Claude response writer/provider prompt and retry dispatch
