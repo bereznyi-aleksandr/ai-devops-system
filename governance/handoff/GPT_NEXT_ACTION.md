@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-873
+# GPT NEXT ACTION | BEM-874
 
-Status: bem871_response_missing_or_unknown
 Decision: MISSING
-Next: repair response dispatch/filter; BEM871 decision not found
+Status: approval_response_missing_or_unknown
+Next: repair Claude decision response dispatch/filter
