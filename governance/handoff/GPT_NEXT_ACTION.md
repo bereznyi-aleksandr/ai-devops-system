@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-846
+# GPT NEXT ACTION | BEM-847
 
-Status: runtime_present_bem844_response_missing
-Next: repair Claude action output/write path; mandatory response file not produced
+Status: response_write_path_still_broken
+Next: patch Claude dispatcher to create fallback failure response file when Claude action exits without writing response
