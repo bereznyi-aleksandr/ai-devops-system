@@ -1,2 +1,2 @@
-Next: patch claude dispatcher yaml permissions/env and rerun smoke
+Next: parse dispatch result and continue Claude runtime proof
 Operator relay forbidden. Report does not stop development.
