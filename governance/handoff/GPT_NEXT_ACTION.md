@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-845
+# GPT NEXT ACTION | BEM-846
 
-Status: protocol_draft_created_from_real_response
-Next: validate protocol decision and either finalize or continue agreement loop
+Decision: CHANGE_REQUIRED
+Status: protocol_change_required_continue_agreement
+Next: extract required changes and send targeted response to Claude/internal audit
