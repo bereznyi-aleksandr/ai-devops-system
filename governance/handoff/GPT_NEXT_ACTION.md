@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-844
+# GPT NEXT ACTION | BEM-846
 
-Status: real_response_writer_path_hardened_and_dispatch_queued
-Next: tick and verify real Claude response.
+Status: runtime_present_bem844_response_missing
+Next: repair Claude action output/write path; mandatory response file not produced

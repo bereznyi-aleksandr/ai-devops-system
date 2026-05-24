@@ -1,2 +1,2 @@
-Next: inspect Claude dispatcher outcome/provider and response writer; dispatch/runtime proofs exist but answer not written
+Next: repair Claude action output/write path; mandatory response file not produced
 Operator relay forbidden. Report does not stop development.
