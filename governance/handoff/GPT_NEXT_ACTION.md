@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-854
+# GPT NEXT ACTION | BEM-855
 
-Status: route_process_protocol
-Next: process real Claude response and create agreed protocol
+Status: queue_files_present
+Next: if queue missing, recreate queue and force commit; if queue present, process/verify dispatch results

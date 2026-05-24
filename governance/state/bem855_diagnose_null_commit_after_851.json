@@ -1,0 +1,18 @@
+{
+  "bem": "BEM-855",
+  "status": "queue_files_present",
+  "checks": {
+    "bem851_queue_exists": true,
+    "bem837_queue_exists": false,
+    "dispatch_results_dir_exists": true,
+    "queue_processor_exists": true,
+    "queue_commit_script_exists": true,
+    "codex_runner_exists": true
+  },
+  "dispatch_results_tail": [
+    "governance/workflow_dispatch_results/queue_processor_step_seen.status.json",
+    "governance/workflow_dispatch_results/queue_processor_summary.status.json"
+  ],
+  "next_action": "if queue missing, recreate queue and force commit; if queue present, process/verify dispatch results",
+  "created_at": "2026-05-24 | 15:01 (UTC+3)"
+}
