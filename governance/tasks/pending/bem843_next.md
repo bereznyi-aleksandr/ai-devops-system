@@ -1,2 +1,2 @@
-Next: patch Claude dispatcher prompt/action to guarantee response file creation or surface Claude Action failure
+Next: patch Claude prompt/writer or provider; re-dispatch once
 Operator relay forbidden. Report does not stop development.
