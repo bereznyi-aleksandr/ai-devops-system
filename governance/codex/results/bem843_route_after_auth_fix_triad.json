@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem843_route_after_auth_fix_triad",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Routed after BEM-842 triad verification and queued the next probe for the first missing proof",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem843_route_after_auth_fix_triad.json",
+    "governance/reports/bem843_route_after_auth_fix_triad.md",
+    "governance/tasks/pending/bem843_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem843_route_after_auth_fix_triad.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem843_route_after_auth_fix_triad.md",
+  "completed_at": "2026-05-24T11:21:53Z"
+}
