@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-840
+# GPT NEXT ACTION | BEM-841
 
-Status: dispatch_and_runtime_ok_response_missing
-Next: patch Claude dispatcher prompt/writer and re-dispatch once
+Status: queued_real_response_retry
+Next: fresh tick then verify real Claude response
