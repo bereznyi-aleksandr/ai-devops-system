@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem849_push_fix_test",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "selftest",
+  "title": "Push fix verification",
+  "objective": "Create file governance/codex/proofs/bem849_push_fix_test.txt with content 'BEM-849 git push fix verified 2026-05-24'. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem849_push_fix_test.md",
+    "result_json": "governance/codex/results/bem849_push_fix_test.json"
+  },
+  "created_at": "2026-05-24T05:09:03.717Z"
+}
