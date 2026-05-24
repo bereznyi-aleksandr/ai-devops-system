@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem855_extract_reapproval_changes",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-855 extract reapproval",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 12:31 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nb853=load('governance/state/bem853_verify_reapproval_response.json')\nresponses=b853.get('responses',[])\ntext='\\n'.join([r.get('text','') for r in responses])\nif not text:\n    # fallback scan relevant files\n    d=Path('governance/audit_mailbox/claude_to_gpt')\n    if d.exists():\n        for p in sorted(d.glob('*')):\n            if p.is_file() and ('851' in p.name or 'reapproval' in p.name.lower()):\n                text += read(p)+'\\n'\nlines=[x.strip() for x in text.splitlines() if x.strip()]\nchanges=[]\nfor line in lines:\n    low=line.lower()\n    if any(k in low for k in ['change_required','blocked','required','must','missing','should','need','треб', 'нужно', 'долж']):\n        changes.append(line[:600])\nstatus='changes_extracted' if changes else 'changes_not_found'\nnext_action='patch protocol using extracted changes' if changes else 'inspect full response text and improve extraction'\nstate={'bem':'BEM-855','status':status,'decision':b853.get('decision'),'changes':changes[:60],'next_action':next_action,'created_at':created}\nPath('governance/state/bem855_extract_reapproval_changes.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem855_extract_reapproval_changes.md').write_text('# BEM-855 | Extract Reapproval Changes | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem855_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-855'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem855_extract_reapproval_changes.json','governance/reports/bem855_extract_reapproval_changes.md','governance/tasks/pending/bem855_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Extracted concrete reapproval changes/blockers from the latest Claude response state for protocol patching')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem855_extract_reapproval_changes.md",
+    "result_json": "governance/codex/results/bem855_extract_reapproval_changes.json"
+  },
+  "created_at": "2026-05-24T09:31:28.676Z"
+}
