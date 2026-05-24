@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-848
+# GPT NEXT ACTION | BEM-849
 
-Status: real_response_ready_to_process
-Next: create agreed protocol from real Claude response
+Status: protocol_processing_selected
+Next: parse real response and create agreed protocol
