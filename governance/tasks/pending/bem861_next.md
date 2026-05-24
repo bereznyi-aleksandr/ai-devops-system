@@ -1,2 +1,2 @@
-Next: run fresh tick and verify real response again
-Operator relay forbidden. commit_sha null ignored.
+Next: inspect dispatcher YAML and ensure_claude_response_file.py invocation; patch to run before Claude action if needed
+Operator relay forbidden. Report does not stop development.

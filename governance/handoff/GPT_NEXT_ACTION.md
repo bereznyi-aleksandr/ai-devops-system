@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-860
+# GPT NEXT ACTION | BEM-861
 
-Status: runtime_seen_response_still_missing_after_commit_path_fix
-Next: inspect dispatcher ensure step execution and response file generation
+Status: inspect_ensure_step_execution_next
+Next: inspect dispatcher YAML and ensure_claude_response_file.py invocation; patch to run before Claude action if needed
