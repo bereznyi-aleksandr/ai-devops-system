@@ -1,2 +1,1 @@
-Next: continue watchdog/dispatch retry; do not ask operator as relay
-Operator relay forbidden. Report does not stop development.
+Next: run fresh Codex tick to process queue, then verify dispatch result, Claude runtime state, and real response. Operator relay forbidden.

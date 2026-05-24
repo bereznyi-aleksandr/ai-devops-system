@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-842
+# GPT NEXT ACTION | BEM-851
 
-Status: no_missing_proofs_or_unknown
-Next: verify triad and process protocol if ready
+Claude dispatcher queued after BEM-850. Next: tick and verify three proofs.
