@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem861_execute_bem860_next",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-861 execute 860",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 08:42 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\ndef read(p):\n    p=Path(p)\n    return p.read_text(errors='ignore') if p.exists() else ''\nroute=load('governance/state/bem860_route_after_bem859.json')\nrs=route.get('status','unknown')\nreal=[]\nd=Path('governance/audit_mailbox/claude_to_gpt')\nif d.exists():\n    for p in sorted(d.glob('*')):\n        if p.is_file():\n            txt=read(p); up=txt.upper(); low=(p.name+' '+txt).lower()\n            bad='NOT CLAUDE APPROVAL' in up or 'RUNTIME BLOCKER' in up or 'not treat this as claude' in low\n            ok=('DECISION:' in up and ('APPROVED' in up or 'CHANGE_REQUIRED' in up or 'BLOCKED' in up) and ('CLAUDE RESPONSE' in up or 'Claude Internal Auditor' in txt))\n            if ok and not bad: real.append({'path':str(p),'preview':txt[:1200]})\nruntime=load('governance/state/claude_inbound_mailbox_workflow_state.json')\nqueue=[str(p) for p in sorted(Path('governance/workflow_dispatch_queue').glob('*.json'))] if Path('governance/workflow_dispatch_queue').exists() else []\nif rs=='route_process_real_response' or real:\n    status='real_response_available_for_protocol'\n    next_action='create agreed protocol from real Claude response'\nelif rs=='route_tick_queue_remaining' or queue:\n    status='queue_remaining_requires_tick'\n    next_action='run fresh tick and verify real response again'\nelif rs=='route_diagnose_provider_response_writer' or (runtime.get('started_at') or runtime.get('completed_at')):\n    status='runtime_seen_provider_response_writer_diagnosis_required'\n    next_action='diagnose Claude action outcome/provider response writer'\nelse:\n    status='runtime_or_response_still_missing'\n    next_action='create runtime repair retry queue item or inspect dispatcher workflow'\nstate={'bem':'BEM-861','status':status,'route_status':rs,'real_responses':real[-10:],'runtime_started_at':runtime.get('started_at'),'runtime_completed_at':runtime.get('completed_at'),'queue_remaining':queue[-20:],'next_action':next_action,'created_at':created}\nPath('governance/state/bem861_execute_bem860_next.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem861_execute_bem860_next.md').write_text('# BEM-861 | Execute BEM-860 Next | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem861_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. commit_sha null ignored.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-861'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem861_execute_bem860_next.json','governance/reports/bem861_execute_bem860_next.md','governance/tasks/pending/bem861_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Executed BEM-860 next-action by checking real response, queue, and runtime facts and writing the next active handoff')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem861_execute_bem860_next.md",
+    "result_json": "governance/codex/results/bem861_execute_bem860_next.json"
+  },
+  "created_at": "2026-05-24T05:43:01.565Z"
+}
