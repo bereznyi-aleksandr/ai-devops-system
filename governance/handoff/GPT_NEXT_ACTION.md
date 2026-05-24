@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-853
+# GPT NEXT ACTION | BEM-854
 
-Status: reapproval_not_approved
 Decision: BLOCKED
-Next: extract new Claude changes/blockers and patch protocol again
+Status: reapproval_repair_required
+Next: extract changes/blockers from reapproval response and patch protocol

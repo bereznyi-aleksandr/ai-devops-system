@@ -1,2 +1,2 @@
-Next: inspect dispatcher logs/state and ensure step placement again
+Next: extract changes/blockers from reapproval response and patch protocol
 Operator relay forbidden. Report does not stop development.
