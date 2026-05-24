@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_short_protocol_response_check",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-842 short protocol check",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 19:55 (UTC+3)'\ndef files(g): return [str(p) for p in sorted(Path('.').glob(g)) if p.is_file()]\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nres=files('governance/workflow_dispatch_results/*.status.json')\nruntime=load('governance/state/claude_inbound_mailbox_workflow_state.json')\nresp=[]\nfor p in files('governance/audit_mailbox/claude_to_gpt/*'):\n    txt=Path(p).read_text(errors='ignore')\n    up=txt.upper(); low=(p+' '+txt).lower()\n    if 'bem840' in low and 'DECISION:' in up and 'NOT CLAUDE APPROVAL' not in up and 'RUNTIME BLOCKER' not in up:\n        resp.append(p)\nmissing=[]\nif not res: missing.append('dispatch_results')\nif not (runtime.get('started_at') or runtime.get('completed_at')): missing.append('runtime')\nif not resp: missing.append('real_bem840_response')\nstatus='pass' if not missing else 'missing_'+'_'.join(missing)\nstate={'bem':'BEM-842','status':status,'missing':missing,'dispatch_result_count':len(res),'runtime_started_at':runtime.get('started_at'),'runtime_completed_at':runtime.get('completed_at'),'real_bem840_responses':resp[-5:],'created_at':created}\nPath('governance/state/bem842_short_protocol_response_check.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem842_short_protocol_response_check.md').write_text('# BEM-842 | Short Protocol Response Check | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem842_next.md').write_text('Next: repair first missing proof '+(missing[0] if missing else 'none')+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-842'+sep+'Status: '+status+sep+'Missing: '+', '.join(missing)+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem842_short_protocol_response_check.json','governance/reports/bem842_short_protocol_response_check.md','governance/tasks/pending/bem842_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Short check for BEM-840 protocol response triad: dispatch results, runtime, real BEM-840 Claude response')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem842_short_protocol_response_check.md",
+    "result_json": "governance/codex/results/bem842_short_protocol_response_check.json"
+  },
+  "created_at": "2026-05-24T16:54:55.413Z"
+}
