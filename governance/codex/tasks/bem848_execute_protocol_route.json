@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem848_execute_protocol_route",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-848 execute protocol route",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/roadmap']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 12:24 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nroute=load('governance/state/bem847_route_after_protocol_decision.json')\nrs=route.get('status','unknown')\ndecision=route.get('decision','UNKNOWN')\nif rs=='protocol_approved_resume_roadmap':\n    marker=Path('governance/roadmap/BEM848_PROTOCOL_APPROVED_RESUME_ROADMAP.md')\n    marker.write_text('# BEM-848 | Protocol Approved — Resume Roadmap'+sep+sep+'Дата: '+created+sep+sep+'Decision: '+decision+sep+'Protocol: '+str(route.get('protocol'))+sep+'Next roadmap: resume implementation under BEM-846 agreed protocol.'+sep)\n    status='roadmap_resume_marker_created'\n    next_action='continue current roadmap implementation under approved protocol'\n    created_files=[str(marker)]\nelif rs=='protocol_change_required':\n    marker=Path('governance/tasks/pending/bem848_protocol_change_required_repair.md')\n    marker.write_text('# BEM-848 | Protocol Change Required Repair'+sep+sep+'Дата: '+created+sep+'Decision: '+decision+sep+'Next: extract Claude requested changes from BEM-845 draft and patch protocol.'+sep)\n    status='protocol_change_repair_opened'\n    next_action='extract requested changes and patch protocol'\n    created_files=[str(marker)]\nelif rs=='protocol_blocked':\n    marker=Path('governance/tasks/pending/bem848_protocol_blocker_repair.md')\n    marker.write_text('# BEM-848 | Protocol Blocker Repair'+sep+sep+'Дата: '+created+sep+'Decision: '+decision+sep+'Next: extract blocker from BEM-845 draft and repair.'+sep)\n    status='protocol_blocker_repair_opened'\n    next_action='extract blocker and repair'\n    created_files=[str(marker)]\nelse:\n    status='protocol_route_unknown'\n    next_action='inspect BEM-847/BEM-846 decision extraction'\n    created_files=[]\nstate={'bem':'BEM-848','status':status,'route_status':rs,'decision':decision,'created_files':created_files,'next_action':next_action,'created_at':created}\nPath('governance/state/bem848_execute_protocol_route.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem848_execute_protocol_route.md').write_text('# BEM-848 | Execute Protocol Route | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem848_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-848'+sep+sep+'Status: '+status+sep+'Decision: '+decision+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged=['governance/state/bem848_execute_protocol_route.json','governance/reports/bem848_execute_protocol_route.md','governance/tasks/pending/bem848_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl']+created_files\nchanged_files.extend(changed)\nops_applied.append('Executed BEM-847 protocol route by creating a roadmap resume marker or a protocol repair task')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem848_execute_protocol_route.md",
+    "result_json": "governance/codex/results/bem848_execute_protocol_route.json"
+  },
+  "created_at": "2026-05-24T09:24:35.355Z"
+}
