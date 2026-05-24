@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-867
-
-Status: dispatch_result_parsed_processor_completed
 Next: patch according to dispatch result status or verify runtime if dispatch_attempted
+Operator relay forbidden. Report does not stop development.
