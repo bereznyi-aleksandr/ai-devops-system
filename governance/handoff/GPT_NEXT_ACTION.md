@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-852
+# GPT NEXT ACTION | BEM-853
 
-Status: functional_smoke_missing_real_response_only
-Missing: real_response
-Next: queue Claude response retry; runtime and dispatch proofs exist
+Status: queued_real_response_retry
+Next: fresh tick then verify real Claude response
