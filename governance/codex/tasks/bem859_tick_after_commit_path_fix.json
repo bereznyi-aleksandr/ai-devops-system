@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem859_tick_after_commit_path_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-859 tick commit path",
+  "objective": "Create file governance/state/bem859_tick_after_commit_path_fix.json with content {\"bem\":\"BEM-859\",\"status\":\"fresh_tick_after_bem858_commit_path_fix\",\"created_at\":\"2026-05-24 | 11:55 (UTC+3)\",\"expected\":\"dispatcher commits bem844_claude_response.md after ensure step\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem859_tick_after_commit_path_fix.md",
+    "result_json": "governance/codex/results/bem859_tick_after_commit_path_fix.json"
+  },
+  "created_at": "2026-05-24T08:55:38.243Z"
+}
