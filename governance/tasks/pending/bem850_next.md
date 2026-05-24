@@ -1,2 +1,1 @@
-Next: process real Claude response into agreed protocol
-Operator relay forbidden. Report does not stop development.
+Next: continue roadmap with BEM-850 triad regression gate enforced. Operator relay forbidden. Report does not stop development.

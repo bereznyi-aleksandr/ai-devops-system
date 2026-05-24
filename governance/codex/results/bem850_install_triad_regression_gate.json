@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem850_install_triad_regression_gate",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Installed triad regression gate policy so future GPT-Claude agreement cycles cannot pass without dispatch result",
+    " runtime state",
+    " and real Claude response",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/BEM850_TRIAD_REGRESSION_GATE.md",
+    "governance/state/bem850_install_triad_regression_gate.json",
+    "governance/reports/bem850_install_triad_regression_gate.md",
+    "governance/tasks/pending/bem850_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem850_install_triad_regression_gate.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem850_install_triad_regression_gate.md",
+  "completed_at": "2026-05-24T18:43:24Z"
+}
