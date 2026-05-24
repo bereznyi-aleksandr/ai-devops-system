@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-878
+# GPT NEXT ACTION | BEM-840
 
-Status: machine_decision_missing
-Decision: MISSING
-Next: repair Claude dispatcher/response writer; machine decision JSON missing
+Status: route_repair_real_claude_response
+Next: repair Claude response generation/writer; do not count blocker files

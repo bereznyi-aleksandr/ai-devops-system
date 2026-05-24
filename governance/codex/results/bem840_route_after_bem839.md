@@ -5,8 +5,8 @@
 | Trace | bem840_route_after_bem839 |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Routed after BEM-839 proof verification and selected the next missing proof repair, custom_script |
+| Operations | Routed immediately after BEM-839 to the first missing smoke proof repair without stopping on report, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T09:16:10Z |
+| Completed | 2026-05-24T10:01:15Z |
 
 ### Completed successfully.

@@ -1,2 +1,2 @@
-Next: patch Claude dispatcher prompt/action so real response is written to claude_to_gpt
+Next: repair Claude response generation/writer; do not count blocker files
 Operator relay forbidden. Report does not stop development.

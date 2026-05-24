@@ -1,10 +1,20 @@
 {
   "bem": "BEM-840",
-  "status": "next_repair_real_claude_response",
-  "previous_status": "only_real_response_missing",
+  "status": "route_repair_real_claude_response",
+  "bem839_status": "only_real_response_missing",
   "missing": [
     "real_claude_response"
   ],
-  "next_action": "patch Claude dispatcher prompt/action so real response is written to claude_to_gpt",
+  "dispatch_results_tail": [
+    {
+      "path": "governance/workflow_dispatch_results/queue_processor_summary.status.json",
+      "data": {
+        "status": "processor_completed",
+        "processed_queue_items": 0,
+        "time": "2026-05-22T02:29:59Z"
+      }
+    }
+  ],
+  "next_action": "repair Claude response generation/writer; do not count blocker files",
   "created_at": "2026-05-22 | 06:00 (UTC+3)"
 }
