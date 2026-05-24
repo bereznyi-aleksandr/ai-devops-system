@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-858
+# GPT NEXT ACTION | BEM-860
 
-Status: commit_response_path_patched_and_dispatch_queued
-Next: fresh tick then verify bem844_claude_response.md
+Status: runtime_seen_response_still_missing_after_commit_path_fix
+Next: inspect dispatcher ensure step execution and response file generation
