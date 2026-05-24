@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem850_install_triad_regression_gate",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-850 triad gate",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/protocols','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 21:42 (UTC+3)'\ngate=Path('governance/protocols/BEM850_TRIAD_REGRESSION_GATE.md')\ngate.write_text('''# BEM-850 | Triad Regression Gate\n\nДата: 2026-05-24 | 21:42 (UTC+3)\nСтатус: active_policy\n\n## Правило\n\nЛюбой новый цикл GPT ↔ Claude считается успешным только при наличии всех трёх доказательств:\n\n| Proof | Файл / признак | PASS условие |\n|---|---|---|\n| Dispatch result | `governance/workflow_dispatch_results/*.status.json` | Есть status-файл запуска Claude dispatcher |\n| Claude runtime | `governance/state/claude_inbound_mailbox_workflow_state.json` | Есть `started_at` или `completed_at` |\n| Real response | `governance/audit_mailbox/claude_to_gpt/*` | Есть `Decision:` и это не `NOT CLAUDE APPROVAL` / не runtime blocker |\n\n## Запрет\n\nБез triad-proof нельзя писать `APPROVED`, нельзя повышать протокол до финального статуса и нельзя считать задачу согласования завершённой.\n\n## Следующее действие\n\nПоддерживать этот gate как обязательную проверку перед каждым отчётом по согласованию.\n''')\nstate={'bem':'BEM-850','status':'triad_regression_gate_installed','gate':str(gate),'next_action':'continue roadmap with triad gate enforced','created_at':created}\nPath('governance/state/bem850_install_triad_regression_gate.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem850_install_triad_regression_gate.md').write_text('# BEM-850 | Install Triad Regression Gate | PASS'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem850_next.md').write_text('Next: continue roadmap with BEM-850 triad regression gate enforced. Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-850'+sep+sep+'Status: triad_regression_gate_installed'+sep+'Next: continue roadmap with triad gate enforced.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(gate),'governance/state/bem850_install_triad_regression_gate.json','governance/reports/bem850_install_triad_regression_gate.md','governance/tasks/pending/bem850_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Installed triad regression gate policy so future GPT-Claude agreement cycles cannot pass without dispatch result, runtime state, and real Claude response')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem850_install_triad_regression_gate.md",
+    "result_json": "governance/codex/results/bem850_install_triad_regression_gate.json"
+  },
+  "created_at": "2026-05-24T18:43:14.093Z"
+}
