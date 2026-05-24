@@ -1,2 +1,2 @@
-Next: extract Claude decisions into final agreed protocol table
-Operator relay forbidden. Report does not stop development.
+Next: parse dispatch result and continue to Claude runtime proof
+Operator relay forbidden. Checkpoint report does not stop development.
