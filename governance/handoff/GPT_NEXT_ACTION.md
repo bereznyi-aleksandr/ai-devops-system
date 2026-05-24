@@ -1,5 +1,5 @@
-# GPT NEXT ACTION | BEM-849
+# GPT NEXT ACTION | BEM-850
 
-Status: followup_approved_finalize_next
+Status: final_protocol_created
 Decision: APPROVED
-Next: create final agreed protocol from draft and followup response
+Next: publish operator-facing summary and continue roadmap implementation
