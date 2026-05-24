@@ -1,5 +1,5 @@
 # GPT NEXT ACTION | BEM-841
 
-Status: ready_to_process_protocol
-Missing: 
-Next: process real Claude response and create agreed protocol
+Status: triad_present_process_protocol_next
+Next: process real Claude response and prepare agreed protocol
+Watchdog interval: 1 minute
