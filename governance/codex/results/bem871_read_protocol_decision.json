@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem871_read_protocol_decision",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Read BEM-870 protocol result and classified decision as APPROVED",
+    " CHANGE_REQUIRED",
+    " BLOCKED or UNKNOWN",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem871_read_protocol_decision.json",
+    "governance/reports/bem871_read_protocol_decision.md",
+    "governance/tasks/pending/bem871_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem871_read_protocol_decision.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem871_read_protocol_decision.md",
+  "completed_at": "2026-05-24T09:07:45Z"
+}
