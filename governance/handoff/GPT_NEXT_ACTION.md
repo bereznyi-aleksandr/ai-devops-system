@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-841
+# GPT NEXT ACTION | BEM-840
 
-Status: real_response_probe_queued
-Next: fresh tick, verify real Claude response excluding blocker files
+Status: repair_real_claude_response
+Next: fresh tick, then verify real Claude response

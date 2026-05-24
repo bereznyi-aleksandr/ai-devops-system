@@ -1,2 +1,2 @@
-Next: patch Claude prompt/provider response writer and retry without accepting blocker files
+Next: fresh tick, then verify real Claude response
 Operator relay forbidden. Report does not stop development.
