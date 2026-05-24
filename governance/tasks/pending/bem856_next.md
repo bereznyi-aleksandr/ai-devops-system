@@ -1,4 +1,2 @@
-# GPT NEXT ACTION | BEM-856
-
-Status: route_process_queue_again
 Next: run another tick; queue still contains unprocessed items
+Operator relay forbidden. commit_sha null ignored.
