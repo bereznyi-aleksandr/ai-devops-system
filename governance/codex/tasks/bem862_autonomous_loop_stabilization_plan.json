@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_autonomous_loop_stabilization_plan",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-862 stabilize loop",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/protocols','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-22 | 15:38 (UTC+3)'\nplan=Path('governance/protocols/BEM862_AUTONOMOUS_LOOP_STABILIZATION_PLAN.md')\nplan.write_text('# BEM-862 | План стабилизации автономного цикла GPT ↔ Claude'+sep+sep+'Дата: '+created+sep+sep+'| Шаг | Компонент | PASS-критерий | Следующее действие |'+sep+'|---|---|---|---|'+sep+'| 1 | GPT request | файл запроса в gpt_to_claude создан | нормализовать шаблон запроса |'+sep+'| 2 | Dispatch queue | workflow_dispatch_results status = dispatch_attempted | закрепить resilient queue processor |'+sep+'| 3 | Claude runtime | claude_inbound_mailbox_workflow_state содержит started/completed | стабилизировать state writer |'+sep+'| 4 | Claude response | real response в claude_to_gpt, не blocker | закрепить фильтр real/blocker |'+sep+'| 5 | Protocol update | BEM861-style agreed protocol обновлён | автоматизировать extract/update |'+sep+'| 6 | Watchdog | если ответа нет, retry каждую минуту до результата/diagnostic blocker | связать с scheduled/watchdog contour |'+sep+sep+'Правило: отчёт не останавливает разработку. Operator relay forbidden.'+sep)\nstate={'bem':'BEM-862','status':'autonomous_loop_stabilization_plan_written','plan':str(plan),'next_action':'implement step 1 request template and step 2 resilient queue proof','created_at':created}\nPath('governance/state/bem862_autonomous_loop_stabilization_plan.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem862_autonomous_loop_stabilization_plan.md').write_text('# BEM-862 | Autonomous Loop Stabilization Plan | PASS'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem862_next.md').write_text('Next: implement request template and resilient queue proof. Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-862'+sep+sep+'Status: autonomous_loop_stabilization_plan_written'+sep+'Next: implement request template and resilient queue proof.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/protocols/BEM862_AUTONOMOUS_LOOP_STABILIZATION_PLAN.md','governance/state/bem862_autonomous_loop_stabilization_plan.json','governance/reports/bem862_autonomous_loop_stabilization_plan.md','governance/tasks/pending/bem862_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Created BEM862 autonomous GPT-Claude loop stabilization plan with pass criteria and next implementation steps')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem862_autonomous_loop_stabilization_plan.md",
+    "result_json": "governance/codex/results/bem862_autonomous_loop_stabilization_plan.json"
+  },
+  "created_at": "2026-05-24T12:38:59.008Z"
+}
