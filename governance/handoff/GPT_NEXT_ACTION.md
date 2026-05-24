@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-844
+# GPT NEXT ACTION | BEM-845
 
-Status: claude_response_accepted_after_false_fallback_filter_fix
-Next: continue P0 infra repair for Claude dispatcher OIDC separately.
+Status: oidc_permission_present
+Next: dispatch dispatcher and verify OIDC error fixed.

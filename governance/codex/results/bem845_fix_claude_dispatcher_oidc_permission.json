@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem845_fix_claude_dispatcher_oidc_permission",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Added id-token: write permission to Claude Internal Auditor Dispatcher workflow to fix OIDC token fetch failure shown in GitHub Actions annotations",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/claude-internal-auditor-dispatcher.yml",
+    "governance/state/bem845_fix_claude_dispatcher_oidc_permission.json",
+    "governance/reports/bem845_fix_claude_dispatcher_oidc_permission.md",
+    "governance/tasks/pending/bem845_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem845_fix_claude_dispatcher_oidc_permission.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem845_fix_claude_dispatcher_oidc_permission.md",
+  "completed_at": "2026-05-24T12:23:43Z"
+}
