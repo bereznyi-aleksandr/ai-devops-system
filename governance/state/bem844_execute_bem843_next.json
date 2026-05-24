@@ -1,14 +1,9 @@
 {
   "bem": "BEM-844",
-  "status": "real_response_retry_queued",
-  "input_status": "only_real_response_missing",
-  "input_missing": [
-    "real_claude_response"
-  ],
-  "created_files": [
-    "governance/workflow_dispatch_queue/bem844_real_response_retry.json"
-  ],
-  "next_action": "fresh tick then verify real Claude response",
-  "operator_device": "mobile_only",
-  "created_at": "2026-05-22 | 06:04 (UTC+3)"
+  "status": "process_protocol_selected",
+  "bem843_status": "triad_present",
+  "bem843_missing": [],
+  "created_files": [],
+  "next_action": "parse real Claude response and create agreed protocol document",
+  "created_at": "2026-05-24 | 13:05 (UTC+3)"
 }
