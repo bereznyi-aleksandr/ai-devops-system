@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem851_route_after_bem850",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-851 route 850",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/workflow_dispatch_queue']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 11:47 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nprev=load('governance/state/bem850_verify_fail_closed_response_file.json')\nps=prev.get('status','unknown')\ncreated_files=[]\nif ps=='bem844_response_file_present':\n    status='process_bem844_response_next'\n    next_action='parse bem844_claude_response.md and create agreed protocol or BLOCKED protocol report'\nelif ps=='dispatch_results_missing_for_fail_closed':\n    q=Path('governance/workflow_dispatch_queue/bem851_result_writer_probe.json')\n    q.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v14','workflow':'codex-runner.yml','workflow_id':'codex-runner.yml','ref':'main','inputs':{},'reason':'BEM-851 repair dispatch result missing for fail-closed writer','created_at':created},indent=2,ensure_ascii=False)+sep)\n    created_files.append(str(q))\n    status='dispatch_result_probe_queued'\n    next_action='fresh tick and verify workflow_dispatch_results'\nelif ps=='runtime_missing_for_fail_closed':\n    q=Path('governance/workflow_dispatch_queue/bem851_runtime_probe.json')\n    q.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v14','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-851 repair runtime missing for fail-closed writer','created_at':created},indent=2,ensure_ascii=False)+sep)\n    created_files.append(str(q))\n    status='runtime_probe_queued'\n    next_action='fresh tick and verify runtime state'\nelif ps=='fail_closed_writer_not_executed':\n    status='inspect_dispatcher_writer_placement_next'\n    next_action='inspect and patch dispatcher YAML placement of ensure_claude_response_file.py'\nelse:\n    status='unknown_bem850_status'\n    next_action='diagnose BEM-850 state'\nstate={'bem':'BEM-851','status':status,'previous_status':ps,'created_files':created_files,'next_action':next_action,'created_at':created}\nPath('governance/state/bem851_route_after_bem850.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem851_route_after_bem850.md').write_text('# BEM-851 | Route After BEM-850 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem851_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-851'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged=['governance/state/bem851_route_after_bem850.json','governance/reports/bem851_route_after_bem850.md','governance/tasks/pending/bem851_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl']+created_files\nchanged_files.extend(changed)\nops_applied.append('Routed after BEM-850 fail-closed response verification and selected next exact step')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem851_route_after_bem850.md",
+    "result_json": "governance/codex/results/bem851_route_after_bem850.json"
+  },
+  "created_at": "2026-05-24T08:47:55.216Z"
+}
