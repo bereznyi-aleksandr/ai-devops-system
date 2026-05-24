@@ -1,0 +1,3 @@
+# BEM-859 | Execute After OIDC Verify | yaml_patch_required_next
+
+{"bem": "BEM-859", "status": "yaml_patch_required_next", "input_status": "workflow_yaml_still_suspicious", "input_missing": [], "created_files": [], "next_action": "patch claude dispatcher yaml permissions/env and rerun smoke", "created_at": "2026-05-22 | 15:33 (UTC+3)"}

@@ -1,5 +1,4 @@
-# GPT NEXT ACTION | BEM-858
+# GPT NEXT ACTION | BEM-859
 
-Status: workflow_yaml_still_suspicious
-Missing: 
-Next: patch claude dispatcher yaml before rerun
+Status: yaml_patch_required_next
+Next: patch claude dispatcher yaml permissions/env and rerun smoke
