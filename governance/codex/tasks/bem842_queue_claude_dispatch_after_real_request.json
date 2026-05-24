@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_queue_claude_dispatch_after_real_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-842 queue Claude dispatch",
+  "objective": "Create file governance/workflow_dispatch_queue/bem842_claude_dispatch_after_real_request.json with content {\"schema_version\":\"workflow_dispatch_queue_item.v9\",\"workflow\":\"claude-internal-auditor-dispatcher.yml\",\"workflow_id\":\"claude-internal-auditor-dispatcher.yml\",\"ref\":\"main\",\"inputs\":{},\"reason\":\"BEM-842 dispatch Claude after explicit real response request BEM-841\",\"created_at\":\"2026-05-24 | 20:55 (UTC+3)\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem842_queue_claude_dispatch_after_real_request.md",
+    "result_json": "governance/codex/results/bem842_queue_claude_dispatch_after_real_request.json"
+  },
+  "created_at": "2026-05-24T17:56:21.438Z"
+}
