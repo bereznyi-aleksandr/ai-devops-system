@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem877_tick_machine_decision_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-877 tick machine decision",
+  "objective": "Create file governance/state/bem877_tick_machine_decision_queue.json with content {\"bem\":\"BEM-877\",\"status\":\"fresh_tick_after_bem876_machine_decision_queue\",\"created_at\":\"2026-05-24 | 12:54 (UTC+3)\",\"expected\":\"governance/state/bem876_claude_machine_decision.json\"}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem877_tick_machine_decision_queue.md",
+    "result_json": "governance/codex/results/bem877_tick_machine_decision_queue.json"
+  },
+  "created_at": "2026-05-24T09:54:07.297Z"
+}
