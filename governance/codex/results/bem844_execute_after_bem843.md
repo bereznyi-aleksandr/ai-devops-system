@@ -5,8 +5,8 @@
 | Trace | bem844_execute_after_bem843 |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | Executed BEM-843 next action: protocol build when triad is present or queued a focused retry for the first missing proof, custom_script |
+| Operations | Executed BEM-843 next action by queuing the next missing proof repair or selecting response processing, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-24T07:20:37Z |
+| Completed | 2026-05-24T09:20:24Z |
 
 ### Completed successfully.
