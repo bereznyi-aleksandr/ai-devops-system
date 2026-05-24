@@ -1,4 +1,5 @@
 # GPT NEXT ACTION | BEM-840
 
-Status: system_ready
+Status: mailbox_system_operational
 Missing: 
+Watchdog interval: 1 minute

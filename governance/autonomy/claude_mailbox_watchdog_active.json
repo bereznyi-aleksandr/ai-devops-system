@@ -1,12 +1,9 @@
 {
-  "schema_version": "claude_mailbox_watchdog_active.v6",
+  "schema_version": "claude_mailbox_watchdog_active.v2",
   "active": true,
-  "run_id": "bem741_after_dispatcher_yaml_repair",
-  "interval_seconds": 60,
-  "until": "APPROVED_CHANGE_REQUIRED_BLOCKED",
-  "operator_role": "none",
-  "created_at": "2026-05-21 | 11:13 (UTC+3)",
-  "kick_reason": "Trigger Codex Runner completion so claude-internal-auditor-dispatcher workflow_run can start Claude",
-  "kicked_at": "2026-05-21 | 15:35 (UTC+3)",
-  "watch_scope": "BEM-741 BEM-732 BEM-728 BEM-725"
+  "interval_minutes": 1,
+  "mode": "monitor_until_real_claude_response",
+  "last_configured_at": "2026-05-22 | 06:00 (UTC+3)",
+  "stop_condition": "real Claude response found in governance/audit_mailbox/claude_to_gpt and protocol processed",
+  "operator_role": "none"
 }
