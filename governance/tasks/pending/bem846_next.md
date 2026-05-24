@@ -1,2 +1,1 @@
-Next: fresh tick, verify Claude final review response, then finalize protocol
-Operator relay forbidden. Report does not stop development.
+Next: fresh Codex tick processes dispatch queue; verify Claude dispatcher runtime and mailbox response. Operator relay forbidden.

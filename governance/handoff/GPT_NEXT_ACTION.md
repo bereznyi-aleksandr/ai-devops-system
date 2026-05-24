@@ -1,4 +1,3 @@
-# GPT NEXT ACTION | BEM-845
+# GPT NEXT ACTION | BEM-846
 
-Status: oidc_permission_present
-Next: dispatch dispatcher and verify OIDC error fixed.
+Status: queued dispatch after OIDC fix.

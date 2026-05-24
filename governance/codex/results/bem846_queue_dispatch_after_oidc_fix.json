@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem846_queue_dispatch_after_oidc_fix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Queued Claude Internal Auditor Dispatcher workflow dispatch after adding id-token write permission",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem846_claude_dispatch_after_oidc_fix.json",
+    "governance/state/bem846_queue_dispatch_after_oidc_fix.json",
+    "governance/reports/bem846_queue_dispatch_after_oidc_fix.md",
+    "governance/tasks/pending/bem846_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem846_queue_dispatch_after_oidc_fix.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem846_queue_dispatch_after_oidc_fix.md",
+  "completed_at": "2026-05-24T12:24:58Z"
+}
