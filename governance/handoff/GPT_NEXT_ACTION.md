@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-852
+# GPT NEXT ACTION | BEM-854
 
-Status: writer_placement_patched_and_dispatch_queued
-Next: tick and verify response.
+Status: runtime_seen_but_response_missing
+Next: inspect dispatcher logs/state and ensure step placement again
