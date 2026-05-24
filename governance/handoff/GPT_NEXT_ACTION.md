@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-869
+# GPT NEXT ACTION | BEM-870
 
-Status: response_present_process_protocol
-Next: create protocol result from bem844 response
+Status: protocol_result_created_from_response
+Next: continue: if BLOCKED repair blocker; if APPROVED finalize protocol
