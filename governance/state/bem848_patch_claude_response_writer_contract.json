@@ -1,0 +1,10 @@
+{
+  "bem": "BEM-848",
+  "status": "response_writer_contract_patched",
+  "bem847_status": "dispatcher_not_recording_runtime",
+  "dispatcher_exists": true,
+  "validator": "scripts/validate_real_claude_response.py",
+  "workflow_changed": true,
+  "next_action": "dispatch Claude again and require validator to fail if real response absent",
+  "created_at": "2026-05-24 | 10:25 (UTC+3)"
+}

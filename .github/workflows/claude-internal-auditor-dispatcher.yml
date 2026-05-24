@@ -54,3 +54,7 @@ jobs:
       - name: Commit dispatcher state and mailbox
         if: always()
         run: bash scripts/commit_claude_dispatcher_state.sh
+
+      - name: Validate real Claude response
+        if: steps.active_check.outputs.active == 'true' && steps.claude_response.outcome == 'success'
+        run: python3 scripts/validate_real_claude_response.py

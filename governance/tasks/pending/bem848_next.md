@@ -1,2 +1,1 @@
-Next: dispatcher did not reach guard; inspect workflow dispatch/runtime path
-Operator relay forbidden. Report does not stop development.
+Next: dispatch Claude again and require real response validator. Operator relay forbidden.

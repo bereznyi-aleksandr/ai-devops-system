@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-847
+# GPT NEXT ACTION | BEM-848
 
-Status: dispatcher_not_recording_runtime
-Next: patch runtime state writer into dispatcher
+Status: response_writer_contract_patched
+Next: dispatch Claude again and require validator proof.
