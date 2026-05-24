@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-846
+# GPT NEXT ACTION | BEM-847
 
-Status: human_protocol_table_created
-Next: parse response evidence and promote protocol to v1.0 if consistent.
+Status: real_response_evidence_present_protocol_can_advance
+Next: promote BEM846 protocol to v1.0 after operator review or if autonomous gate allows

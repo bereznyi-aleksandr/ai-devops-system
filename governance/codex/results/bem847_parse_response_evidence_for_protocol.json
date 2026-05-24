@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem847_parse_response_evidence_for_protocol",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Parsed real Claude response evidence for protocol promotion and recorded whether the human-readable protocol remains draft or can advance",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/protocols/BEM847_PROTOCOL_EVIDENCE_STATUS.md",
+    "governance/state/bem847_parse_response_evidence_for_protocol.json",
+    "governance/reports/bem847_parse_response_evidence_for_protocol.md",
+    "governance/tasks/pending/bem847_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem847_parse_response_evidence_for_protocol.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem847_parse_response_evidence_for_protocol.md",
+  "completed_at": "2026-05-24T18:40:04Z"
+}

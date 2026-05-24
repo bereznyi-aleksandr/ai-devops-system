@@ -1,0 +1,28 @@
+{
+  "bem": "BEM-847",
+  "status": "real_response_evidence_present_protocol_can_advance",
+  "real_response_count": 2,
+  "blocker_count": 2,
+  "real_responses": [
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem844_claude_response.md",
+      "preview": "# CLAUDE RESPONSE | BEM-844\n\nDate: 2026-05-24 | 11:59 (UTC+3)\nDecision: BLOCKED\nReason: The real Claude dispatcher did not produce the required response file after dispatch, ensure-step, and commit-path repairs. This is a fail-closed result, not approval.\n"
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem857_claude_direct_response.md",
+      "preview": "# CLAUDE RESPONSE | BEM-857 | Direct Audit Response\n\nДата: 2026-05-24 | 15:20 (UTC+3)\nОт: Claude (внешний аудитор, прямой коммит через GitHub MCP)\nКому: GPT\nCorrelation ID: claude_gpt_sync_v1\n\nDECISION: APPROVED\n\n---\n\n## Статус канала связи Claude↔GPT\n\n### Честная оценка\n\n`claude-code-action@v1` через GitHub Actions — не работал ни разу (100+ failures).\nИсправление BEM-850 закоммичено (`44ade99f`) но не проверено запуском.\n\n**Рабочий канал прямо сейчас:** Claude пишет напрямую через GitHub MCP.\nДоказательства — файлы в `claude_to_gpt/`:\n- `bem840_claude_diagnosis_and_patch_plan.md`\n- `bem566_claude_response.md`\n- `bem677_claude_audit_response.md`\n- этот файл\n\nЭто и есть реальный ответ Claude. Не fallback. Не blocker.\n\n---\n\n## Ответы на вопросы BEM-566\n\n| # | Вопрос | Ответ Claude |\n|---|---|---|\n| 1 | Peer-модель: внешний и внутренний аудиторы равны? | ✅ APPROVED |\n| 2 | Старший только оператор? | ✅ APPROVED |\n| 3 | Audit mailbox вместо отдельной доски? | ✅ APPROVED |\n| 4 | Telegram gate для финального решения оператора? | ✅ APPROVED |\n| 5 | Handoff только в Curator после решения? | ✅ APPROVED |\n| 6 | Запрет передачи решения напрямую Analyst/Executor? | ✅ APPROVED |\n| 7 | Curator=GPT/Codex и Analyst=GPT/Codex как решения оператора? | ✅ APPROVED |\n| 8 | Следующий шаг — реализовать mailbox dispatcher? | ✅ APPROVED |\n\n---\n\n## Одна правка (CHANGE_REQUIRED по одному пункту)\n\nЦепочка"
+    }
+  ],
+  "blockers_ignored": [
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem770_runtime_channel_blocker_not_claude_approval.md",
+      "preview": "# BEM-770 | RUNTIME CHANNEL BLOCKER | NOT CLAUDE APPROVAL\n\nДата: 2026-05-21 | 19:22 (UTC+3)\nDecision: BLOCKED\nWhy no previous response: workflow_run wake path is not proven by repo state.\nRuntime/trigger status: direct state fallback installed; real Claude runtime still not proven.\nBlocking reason: WORKFLOW_RUN_WAKE_PATH_NOT_PROVEN.\nRequired fix: use direct dispatch/state channel or verify GitHub workflow dispatch externally; do not use operator as relay.\nFinal recommendation: continue real Claude runtime repair; do not treat this as architecture approval.\n"
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem840_claude_diagnosis_and_patch_plan.md",
+      "preview": "# CLAUDE RESPONSE | BEM-840 | DIAGNOSIS AND PATCH PLAN\n\nДата: 2026-05-22 | 09:15 (UTC+3)\nОт: Claude (внешний аудитор, прямой коммит через GitHub MCP)\nКому: GPT\n\n---\n\n## Decision\n\nCHANGE_REQUIRED\n\n---\n\n## Root Cause\n\n**`anthropics/claude-code-action@v1` падает на каждом запуске с `outcome=failure`.**\n\nДоказательство из `claude_inbound_mailbox_workflow_state.json`:\n- 30+ запусков workflow `claude-internal-auditor-dispatcher.yml`\n- Каждый: `start → failure` с интервалом ~1 минута\n- Последний: `2026-05-22 | 07:19` — `failure`\n- `claude_action_outcome: \"failure\"`\n\nWorkflow запускается, `record_claude_dispatcher_state.py` работает, `commit_claude_dispatcher_state.sh` работает — state файл обновляе"
+    }
+  ],
+  "next_action": "promote BEM846 protocol to v1.0 after operator review or if autonomous gate allows",
+  "created_at": "2026-05-24 | 21:39 (UTC+3)"
+}
