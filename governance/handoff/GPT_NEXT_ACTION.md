@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-851
+# GPT NEXT ACTION | BEM-852
 
-Status: next_repair_real_claude_response
-Next: dispatch Claude response retry and require real claude_to_gpt answer
+Status: functional_smoke_missing_real_response_only
+Missing: real_response
+Next: queue Claude response retry; runtime and dispatch proofs exist
