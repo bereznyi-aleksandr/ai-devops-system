@@ -1,4 +1,4 @@
-# GPT NEXT ACTION | BEM-870
+# GPT NEXT ACTION | BEM-871
 
-Status: iterative_protocol_patch_created
-Next: request Claude approval for BEM870 iterative patched protocol
+Status: queued approval for BEM870
+Next: tick and verify decision
