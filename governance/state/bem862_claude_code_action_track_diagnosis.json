@@ -1,0 +1,787 @@
+{
+  "bem": "BEM-862",
+  "status": "runtime_state_seen_need_response_or_outcome",
+  "workflows": [
+    {
+      "path": ".github/workflows/analyst.yml",
+      "has_claude_action": true,
+      "has_oauth_token": true,
+      "has_api_key": false,
+      "has_workflow_dispatch": false,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/auditor.yml",
+      "has_claude_action": true,
+      "has_oauth_token": true,
+      "has_api_key": false,
+      "has_workflow_dispatch": false,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/claude-internal-auditor-dispatcher.yml",
+      "has_claude_action": true,
+      "has_oauth_token": true,
+      "has_api_key": true,
+      "has_workflow_dispatch": true,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/claude-mailbox-autoprocess.yml",
+      "has_claude_action": false,
+      "has_oauth_token": false,
+      "has_api_key": false,
+      "has_workflow_dispatch": true,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/claude-mailbox-minute-watchdog.yml",
+      "has_claude_action": false,
+      "has_oauth_token": false,
+      "has_api_key": false,
+      "has_workflow_dispatch": true,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/claude-primary-provider-gate.yml",
+      "has_claude_action": false,
+      "has_oauth_token": true,
+      "has_api_key": true,
+      "has_workflow_dispatch": true,
+      "has_push": true,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/claude-primary-runtime-smoke.yml",
+      "has_claude_action": false,
+      "has_oauth_token": false,
+      "has_api_key": true,
+      "has_workflow_dispatch": true,
+      "has_push": true,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/claude-token-smoke.yml",
+      "has_claude_action": false,
+      "has_oauth_token": true,
+      "has_api_key": false,
+      "has_workflow_dispatch": true,
+      "has_push": true,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/claude.yml",
+      "has_claude_action": true,
+      "has_oauth_token": true,
+      "has_api_key": false,
+      "has_workflow_dispatch": true,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/curator-hosted-gpt.yml",
+      "has_claude_action": false,
+      "has_oauth_token": false,
+      "has_api_key": false,
+      "has_workflow_dispatch": false,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/curator-hourly-report.yml",
+      "has_claude_action": false,
+      "has_oauth_token": false,
+      "has_api_key": false,
+      "has_workflow_dispatch": true,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": true
+    },
+    {
+      "path": ".github/workflows/curator-monitor.yml",
+      "has_claude_action": false,
+      "has_oauth_token": false,
+      "has_api_key": false,
+      "has_workflow_dispatch": true,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/curator.yml",
+      "has_claude_action": true,
+      "has_oauth_token": false,
+      "has_api_key": false,
+      "has_workflow_dispatch": false,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/executor.yml",
+      "has_claude_action": true,
+      "has_oauth_token": true,
+      "has_api_key": false,
+      "has_workflow_dispatch": false,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/gpt-hosted-roles.yml",
+      "has_claude_action": false,
+      "has_oauth_token": false,
+      "has_api_key": false,
+      "has_workflow_dispatch": true,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/provider-adapter.yml",
+      "has_claude_action": false,
+      "has_oauth_token": false,
+      "has_api_key": false,
+      "has_workflow_dispatch": true,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    },
+    {
+      "path": ".github/workflows/role-router.yml",
+      "has_claude_action": false,
+      "has_oauth_token": false,
+      "has_api_key": false,
+      "has_workflow_dispatch": true,
+      "has_push": false,
+      "has_workflow_run": false,
+      "has_schedule": false
+    }
+  ],
+  "runtime_state": {
+    "started_at": "2026-05-21 | 19:33 (UTC+3)",
+    "schema_version": "claude_inbound_mailbox_workflow_state.v1",
+    "status": "runtime_complete",
+    "latest": {
+      "mode": "complete",
+      "outcome": "failure",
+      "time": "2026-05-24 | 15:11 (UTC+3)"
+    },
+    "runs": [
+      {
+        "time": "2026-05-21 | 13:54 (UTC+3)",
+        "mode": "start",
+        "outcome": "started"
+      },
+      {
+        "time": "2026-05-21 | 13:54 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 13:55 (UTC+3)",
+        "mode": "start",
+        "outcome": "started"
+      },
+      {
+        "time": "2026-05-21 | 13:55 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 15:33 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_start"
+      },
+      {
+        "time": "2026-05-21 | 15:33 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 15:35 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 15:35 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 15:36 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 15:36 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:34 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:34 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:37 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:38 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:38 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:39 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:39 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:39 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:40 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:41 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:41 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:41 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:42 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:42 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:43 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:43 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:44 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:44 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:47 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:47 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:48 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:48 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:49 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:49 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:50 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:50 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:51 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:51 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:52 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:53 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:55 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:56 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 18:57 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 18:57 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:06 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:07 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:08 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:08 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:09 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:09 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:10 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:10 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:17 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:17 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:18 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:18 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:19 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:19 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:20 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:20 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:22 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:22 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:23 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:23 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:24 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:24 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:25 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:25 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:26 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:26 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:28 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:28 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:29 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:29 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:30 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:31 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:32 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:32 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-21 | 19:33 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-21 | 19:33 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 05:53 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 05:54 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 05:57 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 05:58 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 06:44 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 06:44 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 07:10 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 07:10 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 07:15 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 07:15 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 07:18 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 07:19 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 08:06 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 08:06 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 11:20 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 11:20 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 11:43 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 11:44 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 12:02 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 12:02 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 12:05 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 12:05 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 16:06 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 16:06 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 22:59 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 22:59 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 23:01 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 23:02 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-22 | 23:04 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-22 | 23:04 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-23 | 07:14 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-23 | 07:14 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      },
+      {
+        "time": "2026-05-24 | 15:11 (UTC+3)",
+        "mode": "start",
+        "outcome": "dispatcher_started"
+      },
+      {
+        "time": "2026-05-24 | 15:11 (UTC+3)",
+        "mode": "complete",
+        "outcome": "failure"
+      }
+    ],
+    "operator_role": "none",
+    "completed_at": "2026-05-24 | 15:11 (UTC+3)",
+    "claude_action_outcome": "failure"
+  },
+  "seen_state": {},
+  "gpt_to_claude_tail": [
+    "governance/audit_mailbox/gpt_to_claude/bem846_protocol_next_round_to_claude.md",
+    "governance/audit_mailbox/gpt_to_claude/bem847_real_response_required_retry.md",
+    "governance/audit_mailbox/gpt_to_claude/bem849_protocol_review_retry_to_claude.md",
+    "governance/audit_mailbox/gpt_to_claude/bem849_request_validated_claude_response.md",
+    "governance/audit_mailbox/gpt_to_claude/bem851_reapproval_request.md",
+    "governance/audit_mailbox/gpt_to_claude/bem852_protocol_review_second_retry_to_claude.md",
+    "governance/audit_mailbox/gpt_to_claude/bem857_patched_protocol_approval_request.md",
+    "governance/audit_mailbox/gpt_to_claude/bem864_final_approval_request.md",
+    "governance/audit_mailbox/gpt_to_claude/bem871_iterative_protocol_approval_request.md",
+    "governance/audit_mailbox/gpt_to_claude/bem876_machine_readable_decision_required.md"
+  ],
+  "claude_to_gpt_tail": [
+    "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
+    "governance/audit_mailbox/claude_to_gpt/bem566_claude_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem677_claude_audit_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem770_runtime_channel_blocker_not_claude_approval.md",
+    "governance/audit_mailbox/claude_to_gpt/bem840_claude_diagnosis_and_patch_plan.md",
+    "governance/audit_mailbox/claude_to_gpt/bem844_claude_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem857_claude_direct_response.md",
+    "governance/audit_mailbox/claude_to_gpt/bem858_protocol_accepted_by_claude.md"
+  ],
+  "next_action": "inspect outcome and mailbox response; patch prompt/provider if needed",
+  "created_at": "2026-05-24 | 16:04 (UTC+3)"
+}
