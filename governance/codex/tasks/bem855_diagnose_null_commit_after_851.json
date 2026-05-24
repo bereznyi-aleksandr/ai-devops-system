@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem855_diagnose_null_commit_after_851",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-855 null commit diagnosis",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 15:01 (UTC+3)'\ndef exists(p): return Path(p).exists()\nchecks={\n 'bem851_queue_exists': exists('governance/workflow_dispatch_queue/bem851_dispatch_claude_after_bem850_fix.json'),\n 'bem837_queue_exists': exists('governance/workflow_dispatch_queue/bem837_claude_response_retry_dispatch.json'),\n 'dispatch_results_dir_exists': exists('governance/workflow_dispatch_results'),\n 'queue_processor_exists': exists('scripts/process_workflow_dispatch_queue.sh'),\n 'queue_commit_script_exists': exists('scripts/commit_workflow_dispatch_results.sh'),\n 'codex_runner_exists': exists('.github/workflows/codex-runner.yml')\n}\nresults=[]\nrd=Path('governance/workflow_dispatch_results')\nif rd.exists():\n    results=[str(p) for p in sorted(rd.glob('*.status.json'))]\nstatus='queue_files_present' if checks['bem851_queue_exists'] else 'queue_file_missing_after_null_commit'\nnext_action='if queue missing, recreate queue and force commit; if queue present, process/verify dispatch results'\nstate={'bem':'BEM-855','status':status,'checks':checks,'dispatch_results_tail':results[-20:],'next_action':next_action,'created_at':created}\nPath('governance/state/bem855_diagnose_null_commit_after_851.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem855_diagnose_null_commit_after_851.md').write_text('# BEM-855 | Diagnose Null Commit After BEM-851 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem855_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-855'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem855_diagnose_null_commit_after_851.json','governance/reports/bem855_diagnose_null_commit_after_851.md','governance/tasks/pending/bem855_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Diagnosed whether queue files and dispatch processor artifacts are present after repeated null-commit Codex results')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem855_diagnose_null_commit_after_851.md",
+    "result_json": "governance/codex/results/bem855_diagnose_null_commit_after_851.json"
+  },
+  "created_at": "2026-05-24T12:01:47.828Z"
+}
