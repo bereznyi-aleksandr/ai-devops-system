@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem854_route_after_reapproval",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-854 route reapproval",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/protocols','governance/roadmap']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 12:30 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nprev=load('governance/state/bem853_verify_reapproval_response.json')\ndecision=prev.get('decision','UNKNOWN')\nif decision=='APPROVED':\n    marker=Path('governance/roadmap/BEM854_PROTOCOL_REAPPROVED_RESUME.md')\n    marker.write_text('# BEM-854 | Protocol Reapproved — Resume Roadmap'+sep+sep+'Дата: '+created+sep+sep+'Decision: APPROVED'+sep+'Source: governance/state/bem853_verify_reapproval_response.json'+sep+'Protocol: governance/protocols/BEM846_AGREED_MULTI_AGENT_PROTOCOL.md'+sep)\n    status='reapproval_approved_resume_marker_created'\n    next_action='resume roadmap implementation under reapproved protocol'\n    created_files=[str(marker)]\nelif decision in ['CHANGE_REQUIRED','BLOCKED']:\n    marker=Path('governance/tasks/pending/bem854_reapproval_repair_required.md')\n    marker.write_text('# BEM-854 | Reapproval Repair Required'+sep+sep+'Дата: '+created+sep+'Decision: '+decision+sep+'Next: extract required changes from BEM-853 response and patch protocol.'+sep)\n    status='reapproval_repair_required'\n    next_action='extract changes/blockers from reapproval response and patch protocol'\n    created_files=[str(marker)]\nelse:\n    status='reapproval_missing_or_unknown'\n    next_action='repair dispatcher/response path; reapproval response not usable'\n    created_files=[]\nstate={'bem':'BEM-854','status':status,'decision':decision,'created_files':created_files,'next_action':next_action,'created_at':created}\nPath('governance/state/bem854_route_after_reapproval.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem854_route_after_reapproval.md').write_text('# BEM-854 | Route After Reapproval | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem854_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. Report does not stop development.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-854'+sep+sep+'Decision: '+decision+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged=['governance/state/bem854_route_after_reapproval.json','governance/reports/bem854_route_after_reapproval.md','governance/tasks/pending/bem854_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl']+created_files\nchanged_files.extend(changed)\nops_applied.append('Routed after Claude reapproval decision to roadmap resume, repair required, or response-path repair')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem854_route_after_reapproval.md",
+    "result_json": "governance/codex/results/bem854_route_after_reapproval.json"
+  },
+  "created_at": "2026-05-24T09:30:29.554Z"
+}
