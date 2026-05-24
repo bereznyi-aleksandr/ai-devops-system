@@ -1,0 +1,3 @@
+# BEM-849 | Validate And Format Agreed Protocol | operator_protocol_created
+
+{"bem": "BEM-849", "status": "operator_protocol_created", "source": "governance/protocols/BEM840_AGREED_PROTOCOL_DRAFT_FROM_CLAUDE.md", "operator_protocol": "governance/protocols/BEM840_OPERATOR_AGREED_PROTOCOL_TABLE.md", "decision": "APPROVED", "valid_decision": true, "created_at": "2026-05-24 | 20:02 (UTC+3)"}

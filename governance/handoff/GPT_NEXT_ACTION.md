@@ -1,3 +1,4 @@
-# GPT NEXT ACTION | BEM-848
-Status: protocol_draft_created_from_real_response
-Next: review protocol draft and continue implementation
+# GPT NEXT ACTION | BEM-849
+Status: operator_protocol_created
+Decision: APPROVED
+Next: continue according to decision.
