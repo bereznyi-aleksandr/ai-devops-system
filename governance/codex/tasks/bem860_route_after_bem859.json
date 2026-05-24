@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem860_route_after_bem859",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-860 route after 859",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport','governance/workflow_dispatch_queue']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 08:41 (UTC+3)'\ndef load(p):\n    p=Path(p)\n    try: return json.loads(p.read_text(errors='ignore')) if p.exists() else {}\n    except Exception as exc: return {'_load_error':str(exc)}\nprev=load('governance/state/bem859_verify_response_after_bem858.json')\nps=prev.get('status','unknown')\ncreated_files=[]\nif ps=='real_response_found':\n    status='route_process_real_response'\n    next_action='parse real Claude response and produce agreed protocol'\nelif ps=='response_missing_queue_remaining':\n    status='route_tick_queue_remaining'\n    next_action='fresh tick because queue still contains pending response item'\nelif ps=='response_missing_runtime_seen':\n    status='route_diagnose_provider_response_writer'\n    next_action='diagnose Claude action outcome/provider and response writer'\nelif ps=='response_missing_runtime_absent':\n    p=Path('governance/workflow_dispatch_queue/bem860_claude_runtime_repair_retry.json')\n    p.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v11','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-860 runtime absent after response retry; dispatch Claude dispatcher again','created_at':created},indent=2,ensure_ascii=False)+sep)\n    created_files.append(str(p))\n    status='route_requeue_runtime_repair'\n    next_action='fresh tick and verify runtime state'\nelse:\n    status='route_unknown_bem859_status'\n    next_action='diagnose BEM-859 status'\nstate={'bem':'BEM-860','status':status,'previous_status':ps,'created_files':created_files,'next_action':next_action,'created_at':created}\nPath('governance/state/bem860_route_after_bem859.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem860_route_after_bem859.md').write_text('# BEM-860 | Route After BEM-859 | '+status+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem860_next.md').write_text('Next: '+next_action+sep+'Operator relay forbidden. commit_sha null ignored.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-860'+sep+sep+'Status: '+status+sep+'Next: '+next_action+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged=['governance/state/bem860_route_after_bem859.json','governance/reports/bem860_route_after_bem859.md','governance/tasks/pending/bem860_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl']+created_files\nchanged_files.extend(changed)\nops_applied.append('Routed after BEM-859 response verification and queued runtime repair retry if runtime remained absent')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem860_route_after_bem859.md",
+    "result_json": "governance/codex/results/bem860_route_after_bem859.json"
+  },
+  "created_at": "2026-05-24T05:41:57.096Z"
+}
