@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem849_dispatch_after_writer_contract",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-849 dispatch after writer",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\nfor d in ['governance/workflow_dispatch_queue','governance/audit_mailbox/gpt_to_claude','governance/state','governance/reports','governance/tasks/pending','governance/handoff','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\ncreated='2026-05-24 | 10:26 (UTC+3)'\nprompt=Path('governance/audit_mailbox/gpt_to_claude/bem849_request_validated_claude_response.md')\nprompt.write_text('# BEM-849 | REQUEST VALIDATED CLAUDE RESPONSE'+sep+sep+'Дата: '+created+sep+sep+'Claude Internal Auditor: provide a real response for multi-agent architecture strategy agreement. The response file must be `governance/audit_mailbox/claude_to_gpt/bem848_claude_response.md`. It must include exact marker `CLAUDE RESPONSE` and a line `Decision: APPROVED` or `Decision: CHANGE_REQUIRED` or `Decision: BLOCKED`. Do not write issue comments. Do not expose secrets.'+sep)\nq=Path('governance/workflow_dispatch_queue/bem849_validated_claude_response_dispatch.json')\nq.write_text(json.dumps({'schema_version':'workflow_dispatch_queue_item.v11','workflow':'claude-internal-auditor-dispatcher.yml','workflow_id':'claude-internal-auditor-dispatcher.yml','ref':'main','inputs':{},'reason':'BEM-849 dispatch after response writer validator contract','created_at':created},indent=2,ensure_ascii=False)+sep)\nstate={'bem':'BEM-849','status':'validated_claude_response_dispatch_queued','prompt':str(prompt),'queue_file':str(q),'next_action':'fresh tick then verify validator result / real Claude response','created_at':created}\nPath('governance/state/bem849_dispatch_after_writer_contract.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem849_dispatch_after_writer_contract.md').write_text('# BEM-849 | Dispatch After Writer Contract | QUEUED'+sep+sep+json.dumps(state,ensure_ascii=False)+sep)\nPath('governance/tasks/pending/bem849_next.md').write_text('Next: fresh tick then verify validator result and real Claude response. Operator relay forbidden.'+sep)\nPath('governance/handoff/GPT_NEXT_ACTION.md').write_text('# GPT NEXT ACTION | BEM-849'+sep+sep+'Status: validated Claude response dispatch queued. Next: tick and verify.'+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend([str(prompt),str(q),'governance/state/bem849_dispatch_after_writer_contract.json','governance/reports/bem849_dispatch_after_writer_contract.md','governance/tasks/pending/bem849_next.md','governance/handoff/GPT_NEXT_ACTION.md','governance/transport/results.jsonl'])\nops_applied.append('Queued Claude dispatcher after strengthening response writer contract and created a precise prompt requiring CLAUDE RESPONSE marker and Decision line')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem849_dispatch_after_writer_contract.md",
+    "result_json": "governance/codex/results/bem849_dispatch_after_writer_contract.json"
+  },
+  "created_at": "2026-05-24T07:27:05.358Z"
+}
