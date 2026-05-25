@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_verify_after_response_probe_tick",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "Verified dispatch result",
+    " Claude runtime state",
+    " and real Claude response after BEM-840/BEM-841 response probe",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/bem842_verify_after_response_probe_tick.json",
+    "governance/reports/bem842_verify_after_response_probe_tick.md",
+    "governance/tasks/pending/bem842_next.md",
+    "governance/handoff/GPT_NEXT_ACTION.md",
+    "governance/transport/results.jsonl",
+    "governance/codex/proofs/bem842_verify_after_response_probe_tick.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem842_verify_after_response_probe_tick.md",
+  "completed_at": "2026-05-25T04:25:08Z"
+}
