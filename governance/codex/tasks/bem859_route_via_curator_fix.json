@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem859_route_via_curator_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-859 route via Curator fix",
+  "objective": "Correct BEM-859 protocol alignment routing. The operator clarified that internal auditor Claude must be contacted only through Curator, not directly. Required actions: 1) If governance/audit/mailbox/to_claude/BEM859_PROTOCOL_ALIGNMENT_REQUEST.md exists, move it or replace it with an archived/superseded marker stating: SUPERSEDED - invalid direct route, use Curator route only. 2) Create directory governance/audit/mailbox/to_curator if missing, or use the existing curator mailbox/handoff path if the repository already has one. 3) Create governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md. This file must ask Curator to route the protocol draft to internal auditor Claude and collect one of exactly three audit statuses: APPROVED, APPROVED_WITH_AMENDMENTS, BLOCKED_WITH_REASON. 4) Update governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md to state pending Curator routing to Claude, not direct Claude audit. 5) If AGENT_CONTEXT.md has a current work or notes section, add a short note that BEM-859 direct Claude route was corrected to Curator-only route. Do not write to issue #31. Do not use secrets. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem859_route_via_curator_fix.md",
+    "result_json": "governance/codex/results/bem859_route_via_curator_fix.json"
+  },
+  "created_at": "2026-05-25T12:29:12.669Z"
+}
