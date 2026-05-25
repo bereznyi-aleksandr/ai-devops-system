@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_poller_append_github_io",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-862 poller github io",
+  "objective": "Append to governance/runtime/mailbox_polling/bem859_mailbox_poller.ts: \nfunction b64(text: string): string { let bin = ''; for (const b of new TextEncoder().encode(text)) bin += String.fromCharCode(b); return btoa(bin); }\nfunction unb64(text: string): string { const bin = atob(text.replace(/\\n/g, '')); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); }\nasync function getFile(path: string): Promise<{ text: string; sha?: string }> { const url = api + encodeURIComponent(path).replaceAll('%2F','/'); const res = await fetch(url, { headers }); if (res.status === 404) return { text: '' }; if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`); const json = await res.json(); return { text: unb64(json.content || ''), sha: json.sha }; }\nasync function putFile(path: string, content: string, message: string): Promise<void> { const current = await getFile(path); const body: Record<string,string> = { message, content: b64(content) }; if (current.sha) body.sha = current.sha; const url = api + encodeURIComponent(path).replaceAll('%2F','/'); const res = await fetch(url, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); if (!res.ok) throw new Error(`PUT ${path} failed: ${res.status} ${await res.text()}`); }\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem862_poller_append_github_io.md",
+    "result_json": "governance/codex/results/bem862_poller_append_github_io.json"
+  },
+  "created_at": "2026-05-25T13:46:07.532Z"
+}
