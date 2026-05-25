@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem863_curator_claude_mechanism",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-863 curator Claude mechanism",
+  "objective": "Inspect and repair mechanism for routing internal auditor Claude tasks through Curator. Required: create executable/registry files if missing. Route must be GPT -> governance/audit/mailbox/to_curator -> Curator dispatch -> Claude audit task -> governance/audit/mailbox/from_claude -> GPT polling. Create tools/gpt-autonomy-relay/curator_claude_dispatch.py that reads governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md, creates governance/tasks/pending/CLAUDE_INTERNAL_AUDIT_BEM859.md, and ensures governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md exists. Wire curator_claude_dispatch.py into tools/gpt-autonomy-relay/relay_watch.py loop before mailbox_poll.py if safe. Create governance/runtime/curator_dispatch/BEM863_CURATOR_CLAUDE_ROUTE.md with ACTIVE status. Update AGENT_CONTEXT.md note. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem863_curator_claude_mechanism.md",
+    "result_json": "governance/codex/results/bem863_curator_claude_mechanism.json"
+  },
+  "created_at": "2026-05-25T17:52:28.597Z"
+}
