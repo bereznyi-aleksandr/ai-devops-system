@@ -1,3 +1,4 @@
 # GPT NEXT ACTION | BEM-840
 
-Status: no internal Claude agreement yet. Continue repair after BEM-839 missing proofs.
+Status: queued_claude_response_probe
+Next: fresh tick then verify real Claude response
