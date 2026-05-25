@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_second_mailbox_poll",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "mailbox waiting second check written",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/mailbox_polling/BEM859_LAST_CHECK.md",
+    "governance/codex/proofs/bem862_second_mailbox_poll.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem862_second_mailbox_poll.md",
+  "completed_at": "2026-05-25T14:01:16Z"
+}
