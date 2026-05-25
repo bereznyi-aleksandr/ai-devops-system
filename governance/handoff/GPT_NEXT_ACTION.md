@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-845
+# GPT NEXT ACTION | BEM-846
 
-Status: protocol_processing_selected
-Next: process real Claude response and create agreed protocol
+Status: protocol_created_from_real_response
+Missing: 
+Next: validate and format agreed protocol table
