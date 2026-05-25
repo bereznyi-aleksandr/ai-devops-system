@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_syntax_check",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-862 syntax check",
+  "objective": "Run script:\n\"\"\"\nfiles = [Path('tools/gpt-autonomy-relay/relay_watch.py'), Path('tools/gpt-autonomy-relay/mailbox_poll.py')]\nfor p in files:\n    text = p.read_text(encoding='utf-8')\n    compile(text, str(p), 'exec')\nout = Path('governance/runtime/mailbox_polling/BEM862_SYNTAX_CHECK.md')\nout.parent.mkdir(parents=True, exist_ok=True)\nout.write_text('# BEM-862 syntax check\\nStatus: PASS\\nFiles checked:\\n- tools/gpt-autonomy-relay/relay_watch.py\\n- tools/gpt-autonomy-relay/mailbox_poll.py\\n', encoding='utf-8')\nchanged_files.append(str(out))\nops_applied.append('syntax check passed')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem862_syntax_check.md",
+    "result_json": "governance/codex/results/bem862_syntax_check.json"
+  },
+  "created_at": "2026-05-25T13:57:11.145Z"
+}
