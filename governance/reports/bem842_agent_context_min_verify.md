@@ -1,0 +1,2 @@
+# BEM-842 | Agent Context Min Verify | agent_context_verified
+{"bem": "BEM-842", "created_at": "2026-05-25 | 12:53 (UTC+3)", "exists": {"governance/AGENT_CONTEXT.md": true, "scripts/update_agent_context.py": true, ".github/workflows/curator-hourly-report.yml": true}, "status": "agent_context_verified"}
