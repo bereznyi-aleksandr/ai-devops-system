@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem860_real_deno_scheduler",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-860 real Deno scheduler",
+  "objective": "Implement real server-side mailbox polling for BEM-859 in Deno/Curator runtime, not only config files. Requirements: inspect the repo for Deno webhook/autonomy/curator scheduler code. Add a safe internal polling mechanism that checks governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md every 60 seconds until one of APPROVED, APPROVED_WITH_AMENDMENTS, BLOCKED_WITH_REASON appears. When final status appears, write governance/runtime/mailbox_polling/BEM859_PROTOCOL_ALIGNMENT_RESULT.md and update governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md. Do not rely on external GPT chat wake-up. Do not add GitHub schedule triggers except existing allowed curator-hourly-report if already present. Do not write issue #31. No manual operator confirmation. If Deno runtime cannot access repo files directly, create a clear blocker file governance/runtime/mailbox_polling/BEM860_REAL_SCHEDULER_BLOCKER.md explaining exact missing capability and next code path to add. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem860_real_deno_scheduler.md",
+    "result_json": "governance/codex/results/bem860_real_deno_scheduler.json"
+  },
+  "created_at": "2026-05-25T13:17:50.440Z"
+}
