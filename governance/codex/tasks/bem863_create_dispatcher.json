@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem863_create_dispatcher",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-863 create dispatcher",
+  "objective": "Run script:\n\"\"\"\nd = Path('tools/gpt-autonomy-relay/curator_claude_dispatch.py')\nd.parent.mkdir(parents=True, exist_ok=True)\nd.write_text('''#!/usr/bin/env python3\nimport json\nfrom datetime import datetime, timezone\nfrom pathlib import Path\n\nROOT = Path.cwd()\nREQUEST = ROOT / \"governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md\"\nCLAUDE_TASK = ROOT / \"governance/tasks/pending/CLAUDE_INTERNAL_AUDIT_BEM859.md\"\nRESPONSE = ROOT / \"governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\"\nSTATE = ROOT / \"governance/runtime/curator_dispatch/BEM863_CURATOR_CLAUDE_ROUTE.md\"\nEVENTS = ROOT / \"governance/events/bem863_curator_claude_dispatch.jsonl\"\n\n\ndef now():\n    return datetime.now(timezone.utc).strftime(\"%Y-%m-%dT%H:%M:%SZ\")\n\n\ndef event(obj):\n    EVENTS.parent.mkdir(parents=True, exist_ok=True)\n    obj[\"timestamp\"] = obj.get(\"timestamp\") or now()\n    with EVENTS.open(\"a\", encoding=\"utf-8\") as f:\n        f.write(json.dumps(obj, ensure_ascii=False) + \"\\\\n\")\n\n\ndef main():\n    ts = now()\n    if not REQUEST.exists():\n        event({\"event\": \"BEM863_NO_CURATOR_REQUEST\", \"request\": str(REQUEST)})\n        return 0\n    request_text = REQUEST.read_text(encoding=\"utf-8\")\n    RESPONSE.parent.mkdir(parents=True, exist_ok=True)\n    if not RESPONSE.exists():\n        RESPONSE.write_text(\"# BEM-859 CLAUDE AUDIT RESPONSE MAILBOX\\\\nStatus: PENDING_CLAUDE_RESPONSE\\\\nAllowed: APPROVED | APPROVED_WITH_AMENDMENTS | BLOCKED_WITH_REASON\\\\n\", encoding=\"utf-8\")\n    CLAUDE_TASK.parent.mkdir(parents=True, exist_ok=True)\n    CLAUDE_TASK.write_text(f\"# CLAUDE INTERNAL AUDIT — BEM-859\\\\nStatus: PENDING_CLAUDE_AUDIT\\\\nCreated: {ts}\\\\nRoute: GPT -> Curator -> Claude -> mailbox -> GPT\\\\nResponse mailbox: governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\\\\n\\\\n## Task\\\\nReview the protocol draft and write exactly one final status to the response mailbox:\\\\n- APPROVED\\\\n- APPROVED_WITH_AMENDMENTS\\\\n- BLOCKED_WITH_REASON\\\\n\\\\n## Curator request snapshot\\\\n{request_text}\\\\n\", encoding=\"utf-8\")\n    STATE.parent.mkdir(parents=True, exist_ok=True)\n    STATE.write_text(f\"# BEM-863 Curator Claude route\\\\nStatus: ACTIVE\\\\nUpdated: {ts}\\\\nRequest: {REQUEST}\\\\nClaude task: {CLAUDE_TASK}\\\\nResponse mailbox: {RESPONSE}\\\\n\", encoding=\"utf-8\")\n    event({\"event\": \"BEM863_CLAUDE_TASK_DISPATCHED\", \"task\": str(CLAUDE_TASK), \"response\": str(RESPONSE)})\n    print(\"BEM863_CLAUDE_TASK_DISPATCHED\")\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n''', encoding='utf-8')\nchanged_files.append(str(d))\nops_applied.append('created curator_claude_dispatch.py')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem863_create_dispatcher.md",
+    "result_json": "governance/codex/results/bem863_create_dispatcher.json"
+  },
+  "created_at": "2026-05-25T17:53:43.312Z"
+}
