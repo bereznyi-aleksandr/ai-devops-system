@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem859_protocol_align",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-859 protocol alignment",
+  "objective": "Create files for Claude protocol agreement. 1) Create governance/protocols/BEM859_MULTIAGENT_DEVELOPMENT_PROTOCOL_OPERATOR_REMARKS_DRAFT.md in Russian. Include: universal multiagent model from one worker to hierarchy/ERP; Director is contour of roles Curator/Auditor/Analyst/Executor/Monitor, not one agent; worker contour with Curator, subordinate worker contours exchange data and provide cleaned data to Curator; Curators exchange cleaned data and send to Director; Directors send cleaned data to General Director contour; domain roles are customer/project-specific; control-plane + product repos connection via product registry with repo URL/id, owner contour, permissions, routing rules, trace_id mapping, CI dispatch contract, audit trail, result backflow; product logic must not pollute control-plane; Fast/Audit/Operator lanes; GPT and Claude are peer auditors, Operator only senior, audit mailbox primary, Telegram only gate/notification, disagreements protocol; source-of-truth hierarchy AGENT_CONTEXT.md, final agreements/protocols, Runtime Registry v2; roadmap_state and GPT_HANDOFF not authoritative without AGENT_CONTEXT. 2) Create governance/audit/mailbox/to_claude/BEM859_PROTOCOL_ALIGNMENT_REQUEST.md asking Claude to review role hierarchy, repo-link model, risk lanes, source-of-truth hierarchy, and BEM-858 compatibility, and return exactly one status: APPROVED, APPROVED_WITH_AMENDMENTS, or BLOCKED_WITH_REASON. 3) Create governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md as pending Claude audit marker. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem859_protocol_align.md",
+    "result_json": "governance/codex/results/bem859_protocol_align.json"
+  },
+  "created_at": "2026-05-25T12:28:17.631Z"
+}
