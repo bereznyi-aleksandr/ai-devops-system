@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_syntax_check",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem862_syntax_check.txt"
+  ],
+  "commit_sha": null,
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'compile' is not defined"
+  },
+  "report_path": "governance/codex/results/bem862_syntax_check.md",
+  "completed_at": "2026-05-25T13:57:21Z"
+}
