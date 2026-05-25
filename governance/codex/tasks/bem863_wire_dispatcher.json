@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem863_wire_dispatcher",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-863 wire dispatcher",
+  "objective": "Run script:\n\"\"\"\np = Path('tools/gpt-autonomy-relay/relay_watch.py')\ntext = p.read_text(encoding='utf-8')\nif 'CURATOR_DISPATCH' not in text:\n    text = text.replace('MAILBOX_POLL = ROOT / \"tools/gpt-autonomy-relay/mailbox_poll.py\"', 'MAILBOX_POLL = ROOT / \"tools/gpt-autonomy-relay/mailbox_poll.py\"\\nCURATOR_DISPATCH = ROOT / \"tools/gpt-autonomy-relay/curator_claude_dispatch.py\"')\nif 'def dispatch_curator()' not in text:\n    text = text.replace('def poll_mailbox():\\n    if MAILBOX_POLL.exists():\\n        run(f\"python3 {MAILBOX_POLL}\")', 'def dispatch_curator():\\n    if CURATOR_DISPATCH.exists():\\n        run(f\"python3 {CURATOR_DISPATCH}\")\\n\\ndef poll_mailbox():\\n    if MAILBOX_POLL.exists():\\n        run(f\"python3 {MAILBOX_POLL}\")')\nif 'dispatch_curator()\\n        poll_mailbox()' not in text:\n    text = text.replace('while True:\\n        poll_mailbox()', 'while True:\\n        dispatch_curator()\\n        poll_mailbox()')\np.write_text(text, encoding='utf-8')\nchanged_files.append(str(p))\nops_applied.append('wired curator dispatcher into relay_watch loop')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem863_wire_dispatcher.md",
+    "result_json": "governance/codex/results/bem863_wire_dispatcher.json"
+  },
+  "created_at": "2026-05-25T17:54:46.457Z"
+}
