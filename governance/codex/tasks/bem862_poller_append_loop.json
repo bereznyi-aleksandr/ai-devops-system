@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_poller_append_loop",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-862 poller loop",
+  "objective": "Append to governance/runtime/mailbox_polling/bem859_mailbox_poller.ts: \nfunction finalStatus(text: string): string | undefined { return FINAL.find(s => text.includes(s)); }\nasync function checkOnce(): Promise<void> { const now = new Date().toISOString(); const box = await getFile(RESPONSE_PATH); const status = finalStatus(box.text); if (status) { await putFile(RESULT_PATH, `# BEM-859 protocol alignment result\\nStatus: ${status}\\nChecked: ${now}\\nSource: ${RESPONSE_PATH}\\n`, `BEM-862 mailbox final status ${status}`); console.log(`[BEM-859] final status: ${status}`); return; } await putFile(LAST_CHECK_PATH, `# BEM-859 mailbox last check\\nStatus: WAITING_FOR_CLAUDE_RESPONSE\\nChecked: ${now}\\nSource: ${RESPONSE_PATH}\\nInterval: 60 seconds\\n`, 'BEM-862 mailbox waiting check'); console.log('[BEM-859] waiting for Claude response'); }\nawait checkOnce();\nsetInterval(() => { checkOnce().catch(err => console.error('[BEM-859 mailbox poller]', err)); }, INTERVAL_MS);\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem862_poller_append_loop.md",
+    "result_json": "governance/codex/results/bem862_poller_append_loop.json"
+  },
+  "created_at": "2026-05-25T13:47:20.733Z"
+}
