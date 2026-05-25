@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_scheduler_state",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-862 scheduler state",
+  "objective": "Create file governance/runtime/mailbox_polling/BEM862_SCHEDULER_ACTIVE.md with content # BEM-862 scheduler active\nStatus: ACTIVE_WAITING_FOR_CLAUDE_RESPONSE\nInterval: 60 seconds\nScheduler path: tools/gpt-autonomy-relay/relay_watch.py --loop --interval 60\nMailbox poll module: tools/gpt-autonomy-relay/mailbox_poll.py\nMailbox response path: governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\nLast check path: governance/runtime/mailbox_polling/BEM859_LAST_CHECK.md\nResult path: governance/runtime/mailbox_polling/BEM859_PROTOCOL_ALIGNMENT_RESULT.md\nAllowed final statuses: APPROVED, APPROVED_WITH_AMENDMENTS, BLOCKED_WITH_REASON\nNo manual operator confirmation. No issue #31.\n\nCreate file governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md with content # BEM-859 PROTOCOL ALIGNMENT\nStatus: pending_mailbox_response\nScheduler: active\nInterval: 60 seconds\nRoute: GPT -> Curator -> Claude internal audit -> mailbox -> GPT reads mailbox\nMailbox: governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\nResult: governance/runtime/mailbox_polling/BEM859_PROTOCOL_ALIGNMENT_RESULT.md\nDirect GPT -> Claude route is invalid.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem862_scheduler_state.md",
+    "result_json": "governance/codex/results/bem862_scheduler_state.json"
+  },
+  "created_at": "2026-05-25T13:59:46.879Z"
+}
