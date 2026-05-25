@@ -137,3 +137,5 @@ Claude → прямой коммит через GitHub MCP
 *BEM-843 | 2026-05-25*
 ## BEM-859 routing note
 - BEM-859 protocol alignment is routed through Curator only
+## BEM-863 Curator-Claude mechanism
+- Status: implemented_dispatch_route
