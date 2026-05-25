@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_repair_scripts_tracked2",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "repaired relay_watch and mailbox_poll tracked",
+    "custom_script"
+  ],
+  "changed_files": [
+    "tools/gpt-autonomy-relay/relay_watch.py",
+    "tools/gpt-autonomy-relay/mailbox_poll.py",
+    "governance/codex/proofs/bem862_repair_scripts_tracked2.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem862_repair_scripts_tracked2.md",
+  "completed_at": "2026-05-25T13:55:55Z"
+}
