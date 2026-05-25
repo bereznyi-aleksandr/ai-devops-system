@@ -1,4 +1,5 @@
-# GPT NEXT ACTION | BEM-849
+# GPT NEXT ACTION | BEM-840
 
-Status: protocol_table_validated
-Next: continue roadmap implementation from agreed protocol; harden dispatch/runtime proofs and prepare operator-facing md/doc export
+Status: queued_real_response_retry
+Missing: real_claude_response
+Next: fresh tick and verify real Claude response
