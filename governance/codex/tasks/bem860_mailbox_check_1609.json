@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem860_mailbox_check_1609",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-860 mailbox check",
+  "objective": "Check file governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md. If it contains one final status APPROVED, APPROVED_WITH_AMENDMENTS, or BLOCKED_WITH_REASON, create governance/runtime/mailbox_polling/BEM859_PROTOCOL_ALIGNMENT_RESULT.md with that status and evidence. If it is missing or still pending, create/update governance/runtime/mailbox_polling/BEM859_LAST_CHECK.md with status WAITING_FOR_CLAUDE_RESPONSE and timestamp. Do not write issue #31. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem860_mailbox_check_1609.md",
+    "result_json": "governance/codex/results/bem860_mailbox_check_1609.json"
+  },
+  "created_at": "2026-05-25T13:10:47.650Z"
+}
