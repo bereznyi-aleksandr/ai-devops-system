@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_poller_code_script",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem862_poller_code_script.txt"
+  ],
+  "commit_sha": null,
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: __import__ not found"
+  },
+  "report_path": "governance/codex/results/bem862_poller_code_script.md",
+  "completed_at": "2026-05-25T13:40:42Z"
+}
