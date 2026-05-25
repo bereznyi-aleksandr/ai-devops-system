@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem848_protocol_implementation_next_task",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-848 protocol implementation",
+  "objective": "Create file governance/tasks/pending/bem848_protocol_implementation_next_task.md with content BEM-848 | Protocol Implementation Next Task | 2026-05-25 | 05:51 UTC+3. Next implementation task: convert BEM-847 agreed multi-agent protocol into enforced repo checks: valid workflow_dispatch_queue JSON, single smoke proof gate, real Claude response filter, checkpoint guard, and no operator relay. Report does not stop development. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem848_protocol_implementation_next_task.md",
+    "result_json": "governance/codex/results/bem848_protocol_implementation_next_task.json"
+  },
+  "created_at": "2026-05-25T02:52:17.957Z"
+}
