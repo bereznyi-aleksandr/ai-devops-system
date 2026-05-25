@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_mailbox_poll_py",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-862 mailbox poll py",
+  "objective": "Create file tools/gpt-autonomy-relay/mailbox_poll.py with content #!/usr/bin/env python3\nimport json\nfrom datetime import datetime, timezone\nfrom pathlib import Path\nROOT = Path.cwd()\nRESPONSE = ROOT / 'governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md'\nRESULT = ROOT / 'governance/runtime/mailbox_polling/BEM859_PROTOCOL_ALIGNMENT_RESULT.md'\nLAST = ROOT / 'governance/runtime/mailbox_polling/BEM859_LAST_CHECK.md'\nEVENTS = ROOT / 'governance/events/bem859_mailbox_poll.jsonl'\nFINAL = ['APPROVED','APPROVED_WITH_AMENDMENTS','BLOCKED_WITH_REASON']\ndef now(): return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')\ndef event(obj):\n    EVENTS.parent.mkdir(parents=True, exist_ok=True)\n    obj['timestamp'] = obj.get('timestamp') or now()\n    with EVENTS.open('a', encoding='utf-8') as f: f.write(json.dumps(obj, ensure_ascii=False) + '\\n')\ndef find_status(text):\n    for s in FINAL:\n        if s in text: return s\n    return None\ndef main():\n    ts = now()\n    text = RESPONSE.read_text(encoding='utf-8') if RESPONSE.exists() else ''\n    status = find_status(text)\n    if status:\n        RESULT.parent.mkdir(parents=True, exist_ok=True)\n        RESULT.write_text(f'# BEM-859 protocol alignment result\\nStatus: {status}\\nChecked: {ts}\\nSource: {RESPONSE}\\n', encoding='utf-8')\n        event({'event':'BEM859_MAILBOX_FINAL_STATUS','status':status,'source':str(RESPONSE)})\n        print('BEM859_MAILBOX_FINAL_STATUS | ' + status)\n        return 0\n    LAST.parent.mkdir(parents=True, exist_ok=True)\n    LAST.write_text(f'# BEM-859 mailbox last check\\nStatus: WAITING_FOR_CLAUDE_RESPONSE\\nChecked: {ts}\\nSource: {RESPONSE}\\nInterval: 60 seconds\\n', encoding='utf-8')\n    event({'event':'BEM859_MAILBOX_WAITING','source':str(RESPONSE)})\n    print('BEM859_MAILBOX_WAITING')\n    return 0\nif __name__ == '__main__': raise SystemExit(main())\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem862_mailbox_poll_py.md",
+    "result_json": "governance/codex/results/bem862_mailbox_poll_py.json"
+  },
+  "created_at": "2026-05-25T13:49:08.386Z"
+}
