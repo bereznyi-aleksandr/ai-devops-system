@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem863_execute_dispatch_once",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-863 execute dispatch",
+  "objective": "Run script:\n\"\"\"\nrequest = Path('governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md')\nclaude_task = Path('governance/tasks/pending/CLAUDE_INTERNAL_AUDIT_BEM859.md')\nresponse = Path('governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md')\nstate = Path('governance/runtime/curator_dispatch/BEM863_CURATOR_CLAUDE_ROUTE.md')\nrequest_text = request.read_text(encoding='utf-8') if request.exists() else 'MISSING_CURATOR_REQUEST'\nresponse.parent.mkdir(parents=True, exist_ok=True)\nif not response.exists():\n    response.write_text('# BEM-859 CLAUDE AUDIT RESPONSE MAILBOX\\nStatus: PENDING_CLAUDE_RESPONSE\\nAllowed: APPROVED | APPROVED_WITH_AMENDMENTS | BLOCKED_WITH_REASON\\n', encoding='utf-8')\nclaude_task.parent.mkdir(parents=True, exist_ok=True)\nclaude_task.write_text('# CLAUDE INTERNAL AUDIT — BEM-859\\nStatus: PENDING_CLAUDE_AUDIT\\nRoute: GPT -> Curator -> Claude -> mailbox -> GPT\\nResponse mailbox: governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\\n\\n## Task\\nReview the protocol draft and write exactly one final status to response mailbox:\\n- APPROVED\\n- APPROVED_WITH_AMENDMENTS\\n- BLOCKED_WITH_REASON\\n\\n## Curator request snapshot\\n' + request_text + '\\n', encoding='utf-8')\nstate.parent.mkdir(parents=True, exist_ok=True)\nstate.write_text('# BEM-863 Curator Claude route\\nStatus: ACTIVE_DISPATCHED\\nRequest: governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md\\nClaude task: governance/tasks/pending/CLAUDE_INTERNAL_AUDIT_BEM859.md\\nResponse mailbox: governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\\n', encoding='utf-8')\nchanged_files.append(str(claude_task))\nchanged_files.append(str(response))\nchanged_files.append(str(state))\nops_applied.append('curator dispatched BEM859 to Claude task and response mailbox')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem863_execute_dispatch_once.md",
+    "result_json": "governance/codex/results/bem863_execute_dispatch_once.json"
+  },
+  "created_at": "2026-05-25T17:55:53.856Z"
+}
