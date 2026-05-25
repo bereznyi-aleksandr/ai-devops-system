@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem860_mailbox_scheduler",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-860 mailbox scheduler",
+  "objective": "Implement correct Curator-Claude-GPT mailbox protocol and one-minute mailbox polling. Required: 1) Create or update governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md as expected response path placeholder with allowed statuses APPROVED, APPROVED_WITH_AMENDMENTS, BLOCKED_WITH_REASON. 2) Update governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md so route is GPT -> Curator -> Claude -> governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md -> GPT reads mailbox; not Claude -> Curator -> GPT. 3) Create governance/runtime/mailbox_polling/BEM859_MAILBOX_POLLING.md describing one-minute polling of that mailbox path by GPT scheduler until final status appears. 4) If repository has existing scheduler/curator polling config, set BEM859 mailbox check interval to 1 minute without adding paid APIs and without writing issue #31. 5) Update governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md with status pending_mailbox_response. 6) Append short BEM-860 note to governance/AGENT_CONTEXT.md. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem860_mailbox_scheduler.md",
+    "result_json": "governance/codex/results/bem860_mailbox_scheduler.json"
+  },
+  "created_at": "2026-05-25T13:04:30.057Z"
+}
