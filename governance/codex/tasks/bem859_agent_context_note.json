@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem859_agent_context_note",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-859 AGENT_CONTEXT note",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-859 routing note\n- BEM-859 protocol alignment is routed through Curator only.\n- Direct GPT -> Claude route is superseded and invalid.\n- Files: governance/protocols/BEM859_MULTIAGENT_DEVELOPMENT_PROTOCOL_OPERATOR_REMARKS_DRAFT.md; governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md; governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md.\n- Date: 2026-05-25.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem859_agent_context_note.md",
+    "result_json": "governance/codex/results/bem859_agent_context_note.json"
+  },
+  "created_at": "2026-05-25T12:59:34.730Z"
+}
