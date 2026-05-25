@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem860_mailbox_poll_atomic",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-860 mailbox poll atomic",
+  "objective": "Create file governance/runtime/mailbox_polling/BEM859_PROTOCOL_ALIGNMENT_POLLING.md with content # BEM-859 MAILBOX POLLING\nStatus: active_waiting_for_claude_response\nInterval: 1 minute\n\nCorrect protocol route:\nGPT -> Curator -> Claude internal audit -> mailbox -> GPT reads mailbox.\n\nExpected response mailbox path:\ngovernance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\n\nGPT scheduler rule:\nCheck the mailbox path every 1 minute until one final status appears:\nAPPROVED\nAPPROVED_WITH_AMENDMENTS\nBLOCKED_WITH_REASON\n\nNo GitHub schedule trigger may be added. Do not write issue #31. No manual operator confirmation.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem860_mailbox_poll_atomic.md",
+    "result_json": "governance/codex/results/bem860_mailbox_poll_atomic.json"
+  },
+  "created_at": "2026-05-25T13:05:56.626Z"
+}
