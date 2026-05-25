@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem859_commit_sha_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-859 commit SHA fix",
+  "objective": "Fix BEM-859 so the protocol alignment result is committed with commit SHA. Inspect previous tasks bem859_protocol_align, bem859_route_via_curator_fix, bem859_curator_result_fix and their reports. Ensure actual repository files exist: governance/protocols/BEM859_MULTIAGENT_DEVELOPMENT_PROTOCOL_OPERATOR_REMARKS_DRAFT.md, governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md, governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md. Direct to_claude request must be superseded invalid route marker. If files are missing, create them with concise Russian content: universal multiagent hierarchy, Director as contour not single agent, Worker-Curator-Director-General Director data flow, product repos via registry, Fast/Audit/Operator lanes, GPT-Claude peer auditors, Claude only through Curator, AGENT_CONTEXT as current source of truth. Update AGENT_CONTEXT.md with BEM-859 note if possible. Produce a real git commit and result containing commit_sha. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem859_commit_sha_fix.md",
+    "result_json": "governance/codex/results/bem859_commit_sha_fix.json"
+  },
+  "created_at": "2026-05-25T12:51:18.669Z"
+}
