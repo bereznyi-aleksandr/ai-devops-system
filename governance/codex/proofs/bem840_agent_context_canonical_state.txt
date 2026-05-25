@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem840_agent_context_canonical_state
+task_type: code_patch
+executed_at: 2026-05-25T09:51:05Z
+ops_applied: Created canonical governance/AGENT_CONTEXT.md, machine-readable state, updater script, startup reference, and curator hourly update hook when workflow exists, custom_script
+changed_files: governance/AGENT_CONTEXT.md, governance/state/agent_context.json, scripts/update_agent_context.py, governance/state/bem840_agent_context_canonical_state.json, governance/reports/bem840_agent_context_canonical_state.md, governance/tasks/pending/bem840_next.md, governance/handoff/GPT_NEXT_ACTION.md, governance/transport/results.jsonl, .github/workflows/curator-hourly-report.yml
+errors: none

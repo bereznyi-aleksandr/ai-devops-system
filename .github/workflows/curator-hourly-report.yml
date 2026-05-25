@@ -33,5 +33,8 @@ jobs:
         run: python3 scripts/record_curator_hourly_delivery.py
       - name: Check Claude mailbox autoprocess state
         run: python3 scripts/check_claude_mailbox_alert.py
+
+      - name: Update canonical agent context
+        run: python3 scripts/update_agent_context.py
       - name: Commit hourly report state
         run: bash scripts/commit_curator_hourly_state.sh

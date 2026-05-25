@@ -1,0 +1,23 @@
+{
+  "schema_version": "agent_context.v1",
+  "updated_at": "2026-05-25 | 12:48 (UTC+3)",
+  "current_phase": "autonomous multi-agent development contour repair",
+  "required_proofs": [
+    "workflow_dispatch_results status for Claude dispatcher",
+    "claude_inbound_mailbox_workflow_state start or completion",
+    "real Claude response in claude_to_gpt, not blocker"
+  ],
+  "active_blockers": [
+    "real Claude response not proven",
+    "protocol not agreed",
+    "fallback files not approval"
+  ],
+  "operator_decisions": [
+    "reports do not stop development",
+    "operator is not relay",
+    "monitor Claude until result or repaired blocker",
+    "bad queue JSON must not kill runner",
+    "new agents read AGENT_CONTEXT.md"
+  ],
+  "next_action": "verify proof triad and repair first missing proof"
+}

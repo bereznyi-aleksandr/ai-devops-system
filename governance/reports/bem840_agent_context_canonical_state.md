@@ -1,0 +1,3 @@
+# BEM-840 | Agent Context Canonical State | agent_context_created_and_updater_installed
+
+{"bem": "BEM-840", "status": "agent_context_created_and_updater_installed", "context": "governance/AGENT_CONTEXT.md", "state_json": "governance/state/agent_context.json", "updater": "scripts/update_agent_context.py", "curator_patched": true, "created_at": "2026-05-25 | 12:48 (UTC+3)"}
