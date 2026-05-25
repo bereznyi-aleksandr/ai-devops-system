@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem859_supersede_direct_atomic",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-859 supersede direct route",
+  "objective": "Create file governance/audit/mailbox/to_claude/BEM859_PROTOCOL_ALIGNMENT_REQUEST.md with content # BEM-859 DIRECT CLAUDE ROUTE SUPERSEDED\nStatus: SUPERSEDED_INVALID_ROUTE\nReason: Operator clarified that internal auditor Claude must be contacted only through Curator.\nValid route: GPT -> Curator -> Claude internal audit -> Curator -> GPT/operator.\nDirect GPT -> Claude request is invalid and must not be used.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem859_supersede_direct_atomic.md",
+    "result_json": "governance/codex/results/bem859_supersede_direct_atomic.json"
+  },
+  "created_at": "2026-05-25T12:58:37.676Z"
+}
