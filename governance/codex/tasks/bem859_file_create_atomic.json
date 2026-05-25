@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem859_file_create_atomic",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-859 atomic file create",
+  "objective": "Create file governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md with content # BEM-859 PROTOCOL ALIGNMENT\nStatus: pending_curator_routing\nRoute: GPT -> Curator -> Claude internal audit -> Curator -> GPT/operator\nDirect GPT -> Claude route is invalid.\nRequired Claude status via Curator: APPROVED or APPROVED_WITH_AMENDMENTS or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem859_file_create_atomic.md",
+    "result_json": "governance/codex/results/bem859_file_create_atomic.json"
+  },
+  "created_at": "2026-05-25T12:55:42.303Z"
+}
