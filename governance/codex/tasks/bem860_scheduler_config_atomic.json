@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem860_scheduler_config_atomic",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-860 scheduler config",
+  "objective": "Create file governance/runtime/mailbox_polling/BEM859_MINUTE_SCHEDULER_CONFIG.json with content {\"task\":\"BEM859_PROTOCOL_ALIGNMENT\",\"status\":\"active\",\"interval_seconds\":60,\"response_path\":\"governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\",\"allowed_final_statuses\":[\"APPROVED\",\"APPROVED_WITH_AMENDMENTS\",\"BLOCKED_WITH_REASON\"],\"route\":\"GPT -> Curator -> Claude internal audit -> mailbox -> GPT reads mailbox\",\"manual_operator_confirmation\":false,\"github_schedule_trigger\":false,\"issue_31\":false}. Also update governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md to include status pending_mailbox_response and scheduler_config governance/runtime/mailbox_polling/BEM859_MINUTE_SCHEDULER_CONFIG.json. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem860_scheduler_config_atomic.md",
+    "result_json": "governance/codex/results/bem860_scheduler_config_atomic.json"
+  },
+  "created_at": "2026-05-25T13:09:36.313Z"
+}
