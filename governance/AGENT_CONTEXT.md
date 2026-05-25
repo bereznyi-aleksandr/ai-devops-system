@@ -135,3 +135,5 @@ Claude → прямой коммит через GitHub MCP
 *Файл обновляется автоматически curator-hourly-report.yml*
 *Источник истины: этот файл главнее roadmap_state.json и GPT_HANDOFF.md*
 *BEM-843 | 2026-05-25*
+## BEM-859 routing note
+- BEM-859 protocol alignment is routed through Curator only
