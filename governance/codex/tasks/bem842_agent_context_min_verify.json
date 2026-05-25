@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem842_agent_context_min_verify",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-842 context min verify",
+  "objective": "Run script:\n\"\"\"\nsep='\\n'\ncreated='2026-05-25 | 12:53 (UTC+3)'\nfor d in ['governance/state','governance/reports','governance/transport']:\n    Path(d).mkdir(parents=True,exist_ok=True)\nfiles=['governance/AGENT_CONTEXT.md','scripts/update_agent_context.py','.github/workflows/curator-hourly-report.yml']\nstate={'bem':'BEM-842','created_at':created,'exists':{f:Path(f).exists() for f in files}}\nstate['status']='agent_context_verified' if state['exists'].get('governance/AGENT_CONTEXT.md') and state['exists'].get('scripts/update_agent_context.py') else 'agent_context_missing'\nPath('governance/state/bem842_agent_context_min_verify.json').write_text(json.dumps(state,indent=2,ensure_ascii=False)+sep)\nPath('governance/reports/bem842_agent_context_min_verify.md').write_text('# BEM-842 | Agent Context Min Verify | '+state['status']+sep+json.dumps(state,ensure_ascii=False)+sep)\nwith Path('governance/transport/results.jsonl').open('a',encoding='utf-8') as h: h.write(json.dumps(state,ensure_ascii=False)+sep)\nchanged_files.extend(['governance/state/bem842_agent_context_min_verify.json','governance/reports/bem842_agent_context_min_verify.md','governance/transport/results.jsonl'])\nops_applied.append('Minimal verification that AGENT_CONTEXT and updater exist')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem842_agent_context_min_verify.md",
+    "result_json": "governance/codex/results/bem842_agent_context_min_verify.json"
+  },
+  "created_at": "2026-05-25T09:54:40.919Z"
+}
