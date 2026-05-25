@@ -1,5 +1,3 @@
-# GPT NEXT ACTION | BEM-846
+# GPT NEXT ACTION | BEM-847
 
-Status: protocol_created_from_real_response
-Missing: 
-Next: validate and format agreed protocol table
+Protocol formatted. Next: operator report plus continue implementation.

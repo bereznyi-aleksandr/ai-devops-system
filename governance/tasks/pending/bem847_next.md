@@ -1,2 +1,1 @@
-Next: extract decisions from real Claude response into final protocol table
-Operator relay forbidden. Report does not stop development.
+Next: deliver concise operator report and continue roadmap from protocol implementation. Operator relay forbidden.
