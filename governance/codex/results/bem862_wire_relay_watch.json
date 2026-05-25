@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_wire_relay_watch",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "replace_line:tools/gpt-autonomy-relay/relay_watch.py",
+    "insert_after:tools/gpt-autonomy-relay/relay_watch.py",
+    "insert_after:tools/gpt-autonomy-relay/relay_watch.py"
+  ],
+  "changed_files": [
+    "tools/gpt-autonomy-relay/relay_watch.py",
+    "tools/gpt-autonomy-relay/relay_watch.py",
+    "tools/gpt-autonomy-relay/relay_watch.py",
+    "governance/codex/proofs/bem862_wire_relay_watch.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem862_wire_relay_watch.md",
+  "completed_at": "2026-05-25T13:50:31Z"
+}

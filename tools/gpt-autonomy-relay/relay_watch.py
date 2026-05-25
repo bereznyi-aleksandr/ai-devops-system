@@ -14,6 +14,7 @@ FAILED = ROOT / "governance/state/gpt_relay_failed"
 EVENTS = ROOT / "governance/events/gpt_autonomy_relay_watch.jsonl"
 STATE = ROOT / "governance/state/gpt_relay_watch_state.json"
 RELAY = ROOT / "tools/gpt-autonomy-relay/relay.py"
+MAILBOX_POLL = ROOT / "tools/gpt-autonomy-relay/mailbox_poll
 
 def now():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -73,7 +74,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--loop", action="store_true")
-    ap.add_argument("--interval", type=int, default=10)
+    ap.add_argument(
     ap.add_argument("--no-push", action="store_true")
     args = ap.parse_args()
 
@@ -90,6 +91,8 @@ def main():
         path = next_action()
         if not path:
             print("BEM-GPT-RELAY-WATCH | NO_ACTION")
+run(f"python3 {MAILBOX_POLL}")'
+Replace in tools/gpt-autonomy-relay/relay_watch
             if args.once:
                 return 0
             time.sleep(args.interval)
