@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_deno_mailbox_poller_impl",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-862 Deno mailbox poller",
+  "objective": "Implement executable Deno/Curator-side mailbox polling for BEM-859, not just documentation.\n\nRequired implementation:\n1. Inspect repository for Deno webhook/autonomy runtime files that define endpoints shown by healthCheck: /autonomy, /autonomy-trigger, /gpt-dev-session, /codex-task, /codex-status.\n2. Add a safe internal mailbox polling job or scheduler hook in that Deno/Curator runtime. It must check every 60 seconds for final status in governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md.\n3. Final statuses: APPROVED, APPROVED_WITH_AMENDMENTS, BLOCKED_WITH_REASON.\n4. When final status appears, write/update governance/runtime/mailbox_polling/BEM859_PROTOCOL_ALIGNMENT_RESULT.md with status, timestamp, and source path.\n5. While waiting, write/update governance/runtime/mailbox_polling/BEM859_LAST_CHECK.md with WAITING_FOR_CLAUDE_RESPONSE and timestamp.\n6. Update governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md status to pending_mailbox_response and include poller interval 60 seconds.\n7. Update governance/AGENT_CONTEXT.md with BEM-862 note.\n8. Add minimal selftest or proof file proving the poller code path/config was added.\n\nConstraints:\n- Do not add new GitHub schedule triggers.\n- Do not write issue #31.\n- Do not ask operator for manual confirmation.\n- Do not use paid APIs.\n- If the current Deno runtime source is not present in repo, create blocker file governance/runtime/mailbox_polling/BEM862_DENO_POLLER_BLOCKED.md with exact missing file/path and create the minimal poller module/config that Curator can wire next.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem862_deno_mailbox_poller_impl.md",
+    "result_json": "governance/codex/results/bem862_deno_mailbox_poller_impl.json"
+  },
+  "created_at": "2026-05-25T13:36:11.483Z"
+}
