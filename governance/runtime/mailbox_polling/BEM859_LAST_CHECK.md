@@ -2,4 +2,4 @@
 Status: WAITING_FOR_CLAUDE_RESPONSE
 Source: governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md
 Interval: 60 seconds
-Check: second
+After: BEM863 Curator dispatch
