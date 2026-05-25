@@ -15,6 +15,7 @@ EVENTS = ROOT / "governance/events/gpt_autonomy_relay_watch.jsonl"
 STATE = ROOT / "governance/state/gpt_relay_watch_state.json"
 RELAY = ROOT / "tools/gpt-autonomy-relay/relay.py"
 MAILBOX_POLL = ROOT / "tools/gpt-autonomy-relay/mailbox_poll.py"
+CURATOR_DISPATCH = ROOT / "tools/gpt-autonomy-relay/curator_claude_dispatch.py"
 
 def now():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -37,6 +38,10 @@ def next_action():
     INBOX.mkdir(parents=True, exist_ok=True)
     files = sorted(INBOX.glob("*.json"))
     return files[0] if files else None
+
+def dispatch_curator():
+    if CURATOR_DISPATCH.exists():
+        run(f"python3 {CURATOR_DISPATCH}")
 
 def poll_mailbox():
     if MAILBOX_POLL.exists():
@@ -78,6 +83,7 @@ def main():
     state("idle")
     event({"event": "GPT_RELAY_WATCH_STARTED", "mode": "loop" if args.loop else "once", "interval": args.interval})
     while True:
+        dispatch_curator()
         poll_mailbox()
         path = next_action()
         if not path:
