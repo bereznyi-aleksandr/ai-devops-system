@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem862_second_mailbox_poll",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-862 second mailbox poll",
+  "objective": "Run script:\n\"\"\"\nresponse = Path('governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md')\nresult = Path('governance/runtime/mailbox_polling/BEM859_PROTOCOL_ALIGNMENT_RESULT.md')\nlast = Path('governance/runtime/mailbox_polling/BEM859_LAST_CHECK.md')\ntext = response.read_text(encoding='utf-8') if response.exists() else ''\nfinals = ['APPROVED', 'APPROVED_WITH_AMENDMENTS', 'BLOCKED_WITH_REASON']\nstatus = None\nfor item in finals:\n    if item in text:\n        status = item\n        break\nif status:\n    result.parent.mkdir(parents=True, exist_ok=True)\n    result.write_text('# BEM-859 protocol alignment result\\nStatus: ' + status + '\\nSource: governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\\n', encoding='utf-8')\n    changed_files.append(str(result))\n    ops_applied.append('mailbox final status found')\nelse:\n    last.parent.mkdir(parents=True, exist_ok=True)\n    last.write_text('# BEM-859 mailbox last check\\nStatus: WAITING_FOR_CLAUDE_RESPONSE\\nSource: governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md\\nInterval: 60 seconds\\nCheck: second\\n', encoding='utf-8')\n    changed_files.append(str(last))\n    ops_applied.append('mailbox waiting second check written')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem862_second_mailbox_poll.md",
+    "result_json": "governance/codex/results/bem862_second_mailbox_poll.json"
+  },
+  "created_at": "2026-05-25T14:01:04.623Z"
+}
