@@ -1,3 +1,3 @@
-# GPT NEXT ACTION | BEM-847
+# GPT NEXT ACTION | BEM-840
 
-Protocol formatted. Next: operator report plus continue implementation.
+Status: no internal Claude agreement yet. Continue repair after BEM-839 missing proofs.
