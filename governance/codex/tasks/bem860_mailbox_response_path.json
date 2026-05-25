@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem860_mailbox_response_path",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-860 mailbox response path",
+  "objective": "Create file governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md with content # BEM-859 CLAUDE AUDIT RESPONSE MAILBOX\nStatus: PENDING_CLAUDE_RESPONSE\n\nThis is the mailbox file that GPT must read every 1 minute.\n\nAllowed final statuses:\nAPPROVED\nAPPROVED_WITH_AMENDMENTS\nBLOCKED_WITH_REASON\n\nClaude internal auditor must write the protocol audit result here through the Curator-routed process.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem860_mailbox_response_path.md",
+    "result_json": "governance/codex/results/bem860_mailbox_response_path.json"
+  },
+  "created_at": "2026-05-25T13:06:28.105Z"
+}
