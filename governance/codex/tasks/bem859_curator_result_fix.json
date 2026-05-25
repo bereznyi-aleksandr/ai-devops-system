@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem859_curator_result_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-859 curator route result",
+  "objective": "Create BEM-859 curator-routed protocol result. Create governance/protocols/BEM859_MULTIAGENT_DEVELOPMENT_PROTOCOL_OPERATOR_REMARKS_DRAFT.md with Russian draft: universal multiagent model from one Worker to hierarchy and ERP-like management; Director is role contour Curator/Auditor/Analyst/Executor/Monitor, not one agent; Worker contour includes Curator; Workers send cleaned data to Curator; Curators send cleaned data to Director; Directors send cleaned data to General Director; roles are customer/project specific; control-plane plus product repos connected through product registry: repo url/id, owner contour, permissions, routing rules, trace_id mapping, CI dispatch, audit trail, result backflow; Fast/Audit/Operator lanes; GPT and Claude are peer auditors; Operator only senior; Claude route only via Curator; Telegram only gate/notification; AGENT_CONTEXT is current source of truth. Create governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md asking Curator to route to Claude and return APPROVED or APPROVED_WITH_AMENDMENTS or BLOCKED_WITH_REASON. Create governance/tasks/pending/BEM859_PROTOCOL_ALIGNMENT.md with status pending_curator_routing. If direct to_claude request exists, replace with superseded invalid route marker. Create governance/codex/proofs/bem859_curator_result_fix.txt. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem859_curator_result_fix.md",
+    "result_json": "governance/codex/results/bem859_curator_result_fix.json"
+  },
+  "created_at": "2026-05-25T12:46:21.637Z"
+}
