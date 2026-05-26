@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_touch_queue_after_sanitize",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "touched BEM865 queue after codex-runner sanitize",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem865_claude_write_selftest.json",
+    "governance/runtime/curator_dispatch/BEM866_QUEUE_TOUCHED_AFTER_SANITIZE.md",
+    "governance/codex/proofs/bem866_touch_queue_after_sanitize.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_touch_queue_after_sanitize.md",
+  "completed_at": "2026-05-26T04:31:13Z"
+}
