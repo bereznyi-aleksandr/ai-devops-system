@@ -1,0 +1,36 @@
+{
+  "status": "DISPATCHED",
+  "workflow": "claude.yml",
+  "ref": "main",
+  "inputs": {
+    "role": "auditor",
+    "provider": "claude",
+    "trace_id": "bem867_battle_audit_mailbox",
+    "cycle_id": "bem867",
+    "task_type": "battle_audit_mailbox_response",
+    "task": "BEM-867 battle audit after mailbox patch. Produce substantive mailbox response. No issue comments."
+  },
+  "returncode": 0,
+  "stdout": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26446614765\n",
+  "stderr": "",
+  "cmd": [
+    "gh",
+    "workflow",
+    "run",
+    "claude.yml",
+    "--ref",
+    "main",
+    "-f",
+    "role=auditor",
+    "-f",
+    "provider=claude",
+    "-f",
+    "trace_id=bem867_battle_audit_mailbox",
+    "-f",
+    "cycle_id=bem867",
+    "-f",
+    "task_type=battle_audit_mailbox_response",
+    "-f",
+    "task=BEM-867 battle audit after mailbox patch. Produce substantive mailbox response. No issue comments."
+  ]
+}
