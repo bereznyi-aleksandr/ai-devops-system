@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_classify_processor_error",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "processor error classification: JSON_ERROR",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM866_PROCESSOR_ERROR_JSON_ERROR.md",
+    "governance/codex/proofs/bem866_classify_processor_error.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_classify_processor_error.md",
+  "completed_at": "2026-05-26T04:59:27Z"
+}
