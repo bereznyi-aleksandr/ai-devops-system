@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem864_agent_context_note",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-864 AGENT_CONTEXT note",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-864 Curator-Claude selftest\n- Status: route_selftest_completed_waiting_for_claude_response.\n- Selftest report: governance/runtime/curator_dispatch/BEM864_CURATOR_CLAUDE_SELFTEST.md.\n- Mailbox marker: governance/runtime/curator_dispatch/BEM864_MAILBOX_WAITING_FOR_CLAUDE_RESPONSE.md.\n- Confirmed route files: tools/gpt-autonomy-relay/curator_claude_dispatch.py, tools/gpt-autonomy-relay/relay_watch.py, tools/gpt-autonomy-relay/mailbox_poll.py.\n- Production mailbox checked: governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md.\n- Result: mechanism reaches Claude task + response mailbox; final Claude audit status is not present yet.\n- Date: 2026-05-26.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem864_agent_context_note.md",
+    "result_json": "governance/codex/results/bem864_agent_context_note.json"
+  },
+  "created_at": "2026-05-26T03:12:58.126Z"
+}
