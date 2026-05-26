@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem868_append_next_exact_line",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-868 append next exact line",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \nNext: continue roadmap from AGENT_CONTEXT.md\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem868_append_next_exact_line.md",
+    "result_json": "governance/codex/results/bem868_append_next_exact_line.json"
+  },
+  "created_at": "2026-05-26T13:19:34.497Z"
+}
