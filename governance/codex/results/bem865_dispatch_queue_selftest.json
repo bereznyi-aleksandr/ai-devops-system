@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_dispatch_queue_selftest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflow_dispatch_queue/bem865_claude_write_selftest.json",
+    "create:governance/runtime/curator_dispatch/BEM865_DISPATCH_QUEUE_SUBMITTED.md"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem865_claude_write_selftest.json",
+    "governance/runtime/curator_dispatch/BEM865_DISPATCH_QUEUE_SUBMITTED.md",
+    "governance/codex/proofs/bem865_dispatch_queue_selftest.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem865_dispatch_queue_selftest.md",
+  "completed_at": "2026-05-26T03:36:19Z"
+}
