@@ -1,0 +1,21 @@
+{
+  "status": "DISPATCHED",
+  "workflow": "claude_battle_audit_bem867.yml",
+  "ref": "main",
+  "inputs": {
+    "trace_id": "bem867_battle_audit_mailbox"
+  },
+  "returncode": 0,
+  "stdout": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26447313745\n",
+  "stderr": "",
+  "cmd": [
+    "gh",
+    "workflow",
+    "run",
+    "claude_battle_audit_bem867.yml",
+    "--ref",
+    "main",
+    "-f",
+    "trace_id=bem867_battle_audit_mailbox"
+  ]
+}
