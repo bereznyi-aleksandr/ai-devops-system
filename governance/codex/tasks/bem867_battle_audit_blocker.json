@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_battle_audit_blocker",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-867 battle audit blocker",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM867_BATTLE_AUDIT_BLOCKED.md with content # BEM-867 battle audit blocked\nStatus: BLOCKED_NO_BATTLE_MAILBOX_RESPONSE\nFacts:\n- BEM-866 selftest confirmed mailbox write capability with CLAUDE_WRITE_OK.\n- BEM-867 battle audit task was created: governance/tasks/pending/CLAUDE_BATTLE_AUDIT_BEM867.md.\n- BEM-867 mailbox placeholder exists: governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md.\n- BEM-867 queue exists but remained pending: governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json.\n- Queue processor step is present in codex-runner.yml but heartbeat did not appear in runtime.\n- Direct gh workflow dispatch from restricted executor failed: governance/runtime/curator_dispatch/BEM867_DIRECT_PROBE2_STATUS_DIRECT_DISPATCH_HELPER_FAILED.md.\nResult:\n- Battle audit response is not confirmed.\n- Do not mark internal auditor as fully operational for battle audit yet.\nNext required repair:\n- Restore a reliable queue dispatch runner or expose an allowed Deno endpoint for workflow_dispatch of Claude workflows.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_battle_audit_blocker.md",
+    "result_json": "governance/codex/results/bem867_battle_audit_blocker.json"
+  },
+  "created_at": "2026-05-26T09:53:14.449Z"
+}
