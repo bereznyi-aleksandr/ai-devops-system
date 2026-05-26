@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_check_selftest_workflow_result",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 check selftest workflow",
+  "objective": "Run script:\n\"\"\"\nqueue = Path('governance/workflow_dispatch_queue/bem865_claude_write_selftest.json')\nprocessed = Path('governance/workflow_dispatch_processed/bem865_claude_write_selftest.json')\nresult = Path('governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json')\nresponse = Path('governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md')\nresult_text = result.read_text(encoding='utf-8') if result.exists() else ''\nresponse_text = response.read_text(encoding='utf-8') if response.exists() else ''\nok = 'Status: CLAUDE_WRITE_OK' in [line.strip() for line in response_text.splitlines()]\nlow = result_text.lower()\nif ok:\n    status = 'CLAUDE_WRITE_OK_CONFIRMED'\nelif result.exists() and '\"status\": \"dispatched\"' in low:\n    status = 'DISPATCHED_WAITING_CLAUDE_WRITE'\nelif result.exists() and '\"status\": \"dispatch_failed\"' in low:\n    status = 'DISPATCH_FAILED'\nelif processed.exists():\n    status = 'QUEUE_PROCESSED_NO_RESULT'\nelif queue.exists():\n    status = 'QUEUE_STILL_PENDING'\nelse:\n    status = 'QUEUE_MISSING'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_SELFTEST_WORKFLOW_RESULT_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 selftest workflow result\\nStatus: ' + status + '\\nQueue exists: ' + str(queue.exists()) + '\\nProcessed exists: ' + str(processed.exists()) + '\\nResult exists: ' + str(result.exists()) + '\\nClaude write OK: ' + str(ok) + '\\n\\nResult text:\\n' + result_text[:3000] + '\\n\\nResponse text:\\n' + response_text[:2000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('selftest workflow result: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_check_selftest_workflow_result.md",
+    "result_json": "governance/codex/results/bem866_check_selftest_workflow_result.json"
+  },
+  "created_at": "2026-05-26T08:03:57.291Z"
+}
