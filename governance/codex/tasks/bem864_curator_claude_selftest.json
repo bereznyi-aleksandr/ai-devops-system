@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem864_curator_claude_selftest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-864 Curator Claude selftest",
+  "objective": "Run script:\n\"\"\"\nrequired = {\n    'dispatcher': Path('tools/gpt-autonomy-relay/curator_claude_dispatch.py'),\n    'relay_watch': Path('tools/gpt-autonomy-relay/relay_watch.py'),\n    'mailbox_poll': Path('tools/gpt-autonomy-relay/mailbox_poll.py'),\n    'curator_request': Path('governance/audit/mailbox/to_curator/BEM859_PROTOCOL_ALIGNMENT_REQUEST_FOR_CURATOR.md'),\n    'claude_task': Path('governance/tasks/pending/CLAUDE_INTERNAL_AUDIT_BEM859.md'),\n    'response_mailbox': Path('governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md'),\n    'route_state': Path('governance/runtime/curator_dispatch/BEM863_CURATOR_CLAUDE_ROUTE.md'),\n    'last_check': Path('governance/runtime/mailbox_polling/BEM859_LAST_CHECK.md'),\n}\nmissing = [name for name, path in required.items() if not path.exists()]\nrelay_text = required['relay_watch'].read_text(encoding='utf-8') if required['relay_watch'].exists() else ''\nwire_ok = all(token in relay_text for token in ['CURATOR_DISPATCH', 'dispatch_curator()', 'poll_mailbox()', 'while True:'])\nmailbox_text = required['response_mailbox'].read_text(encoding='utf-8') if required['response_mailbox'].exists() else ''\nfinals = ['APPROVED', 'APPROVED_WITH_AMENDMENTS', 'BLOCKED_WITH_REASON']\nfinal_status = None\nfor status in finals:\n    if status in mailbox_text and 'PENDING_CLAUDE_RESPONSE' not in mailbox_text:\n        final_status = status\n        break\nreport = Path('governance/runtime/curator_dispatch/BEM864_CURATOR_CLAUDE_SELFTEST.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nif missing:\n    status_line = 'FAIL'\nelif not wire_ok:\n    status_line = 'FAIL_WIRING'\nelif final_status:\n    status_line = 'PASS_FINAL_RESPONSE_FOUND'\nelse:\n    status_line = 'PASS_ROUTE_WORKS_WAITING_FOR_CLAUDE_RESPONSE'\nreport.write_text('# BEM-864 Curator-Claude selftest\\nStatus: ' + status_line + '\\n\\n## Checks\\n- dispatcher exists: ' + str(required['dispatcher'].exists()) + '\\n- relay_watch wired: ' + str(wire_ok) + '\\n- mailbox_poll exists: ' + str(required['mailbox_poll'].exists()) + '\\n- curator request exists: ' + str(required['curator_request'].exists()) + '\\n- Claude task exists: ' + str(required['claude_task'].exists()) + '\\n- response mailbox exists: ' + str(required['response_mailbox'].exists()) + '\\n- route state exists: ' + str(required['route_state'].exists()) + '\\n- last check exists: ' + str(required['last_check'].exists()) + '\\n\\n## Mailbox result\\n- final_status: ' + str(final_status) + '\\n- pending_marker: ' + str('PENDING_CLAUDE_RESPONSE' in mailbox_text) + '\\n\\n## Missing\\n' + '\\n'.join('- ' + m for m in missing) + '\\n', encoding='utf-8')\nchanged_files.append(str(report))\nops_applied.append('BEM864 curator Claude selftest completed: ' + status_line)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem864_curator_claude_selftest.md",
+    "result_json": "governance/codex/results/bem864_curator_claude_selftest.json"
+  },
+  "created_at": "2026-05-26T03:10:17.613Z"
+}
