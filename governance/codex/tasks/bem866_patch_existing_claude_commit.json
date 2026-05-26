@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_patch_existing_claude_commit",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-866 patch existing claude commit",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/claude.yml')\ntext = p.read_text(encoding='utf-8')\nstep = '''\\n      - name: BEM-866 mailbox write for Claude selftest\\n        if: ${{ github.event_name == 'workflow_dispatch' && inputs.trace_id == 'bem865_claude_write_selftest' }}\\n        run: |\\n          mkdir -p governance/audit/mailbox/from_claude\\n          printf '%s\\n' '# BEM-865 CLAUDE WRITE SELFTEST RESPONSE' 'Status: CLAUDE_WRITE_OK' 'Writer: claude.yml existing workflow' 'Trace: bem865_claude_write_selftest' > governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md\\n\\n'''\n# Put the step immediately before existing Commit role result, without touching on/workflow_dispatch section.\nanchor = '      - name: Commit role result\\n'\nif 'BEM-866 mailbox write for Claude selftest' not in text and anchor in text:\n    text = text.replace(anchor, step + anchor)\np.write_text(text, encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM866_EXISTING_CLAUDE_MAILBOX_WRITE_PATCHED.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 existing claude mailbox write patched\\nStatus: PATCHED\\nWorkflow: .github/workflows/claude.yml\\nAnchor: before Commit role result\\nTrigger block untouched.\\n', encoding='utf-8')\nchanged_files.append(str(p))\nchanged_files.append(str(marker))\nops_applied.append('patched existing claude.yml commit flow for BEM865 mailbox write')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_patch_existing_claude_commit.md",
+    "result_json": "governance/codex/results/bem866_patch_existing_claude_commit.json"
+  },
+  "created_at": "2026-05-26T08:13:13.591Z"
+}
