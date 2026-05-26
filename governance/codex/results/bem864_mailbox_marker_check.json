@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem864_mailbox_marker_check",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "mailbox marker check: WAITING_FOR_CLAUDE_RESPONSE",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM864_MAILBOX_WAITING_FOR_CLAUDE_RESPONSE.md",
+    "governance/codex/proofs/bem864_mailbox_marker_check.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem864_mailbox_marker_check.md",
+  "completed_at": "2026-05-26T03:11:45Z"
+}
