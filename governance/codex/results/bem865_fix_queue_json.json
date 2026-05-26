@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_fix_queue_json",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "fixed BEM865 workflow dispatch queue JSON",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem865_claude_write_selftest.json",
+    "governance/codex/proofs/bem865_fix_queue_json.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem865_fix_queue_json.md",
+  "completed_at": "2026-05-26T04:03:13Z"
+}
