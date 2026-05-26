@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_inspect_codex_queue_block",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 inspect codex queue block",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\nlines = p.read_text(encoding='utf-8').splitlines() if p.exists() else []\nidxs = [i for i,l in enumerate(lines) if 'Process workflow dispatch queue' in l or 'process_workflow_dispatch_queue.py' in l or 'GH_TOKEN:' in l]\nout = Path('governance/runtime/curator_dispatch/BEM866_CODEX_QUEUE_BLOCK.md')\nout.parent.mkdir(parents=True, exist_ok=True)\nblocks = []\nfor idx in idxs:\n    start = max(0, idx-8)\n    end = min(len(lines), idx+12)\n    block = []\n    for n in range(start, end):\n        block.append(str(n+1) + ': ' + lines[n])\n    blocks.append('\\n'.join(block))\nout.write_text('# BEM-866 codex queue block\\nIndexes: ' + str(idxs) + '\\n\\n' + '\\n\\n---\\n\\n'.join(blocks) + '\\n', encoding='utf-8')\nchanged_files.append(str(out))\nops_applied.append('inspected codex queue block')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_inspect_codex_queue_block.md",
+    "result_json": "governance/codex/results/bem866_inspect_codex_queue_block.json"
+  },
+  "created_at": "2026-05-26T04:17:00.075Z"
+}
