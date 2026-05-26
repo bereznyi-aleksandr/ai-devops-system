@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_queue_runner_push_trigger",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "added push path trigger for workflow dispatch queue and touched BEM865 queue file",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/workflow_dispatch_queue_runner.yml",
+    "governance/workflow_dispatch_queue/bem865_claude_write_selftest.json",
+    "governance/codex/proofs/bem865_queue_runner_push_trigger.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem865_queue_runner_push_trigger.md",
+  "completed_at": "2026-05-26T03:45:52Z"
+}

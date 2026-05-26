@@ -2,6 +2,9 @@ name: workflow_dispatch_queue_runner
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "governance/workflow_dispatch_queue/**"
 
 permissions:
   contents: write
