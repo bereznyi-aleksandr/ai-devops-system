@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_claude_step_names",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 Claude step names",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/claude.yml')\nlines = p.read_text(encoding='utf-8').splitlines() if p.exists() else []\noutdir = Path('governance/runtime/curator_dispatch/bem866_claude_step_names')\noutdir.mkdir(parents=True, exist_ok=True)\ncount = 0\nfor i, line in enumerate(lines, 1):\n    if line.lstrip().startswith('- name:') or line.lstrip().startswith('uses:') or line.lstrip().startswith('run:'):\n        safe = ''.join(ch if ch.isalnum() else '_' for ch in line.strip())[:120] or 'blank'\n        marker = outdir / (str(i).zfill(4) + '_' + safe + '.md')\n        marker.write_text('# BEM-866 claude step name\\nLine: ' + str(i) + '\\nText: ' + line + '\\n', encoding='utf-8')\n        changed_files.append(str(marker))\n        count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM866_CLAUDE_STEP_NAMES_INDEX.md')\nsummary.write_text('# BEM-866 claude step names index\\nCount: ' + str(count) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('listed claude.yml step names: ' + str(count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_claude_step_names.md",
+    "result_json": "governance/codex/results/bem866_claude_step_names.json"
+  },
+  "created_at": "2026-05-26T08:20:52.032Z"
+}
