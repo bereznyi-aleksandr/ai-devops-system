@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_wakeup_claude_yml",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 wakeup claude.yml",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM866_WAKEUP_CLAUDE_YML.md with content # BEM-866 wakeup claude.yml\nStatus: WAKEUP_AFTER_QUEUE_RETARGET_TO_CLAUDE_YML\nPurpose: dispatch BEM-865 Claude write selftest through claude.yml.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_wakeup_claude_yml.md",
+    "result_json": "governance/codex/results/bem866_wakeup_claude_yml.json"
+  },
+  "created_at": "2026-05-26T07:34:39.807Z"
+}
