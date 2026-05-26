@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_repair_queue_runner_token",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-865 queue runner token fix",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/workflow_dispatch_queue_runner.yml')\np.parent.mkdir(parents=True, exist_ok=True)\np.write_text('''name: workflow_dispatch_queue_runner\n\non:\n  workflow_dispatch:\n  push:\n    paths:\n      - \"governance/workflow_dispatch_queue/**\"\n\npermissions:\n  contents: write\n  actions: write\n\njobs:\n  dispatch-queue:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}\n      - uses: actions/github-script@v7\n        with:\n          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}\n          script: |\n            const fs = require('fs');\n            const path = require('path');\n            const queueDir = 'governance/workflow_dispatch_queue';\n            const processedDir = 'governance/workflow_dispatch_processed';\n            const resultsDir = 'governance/workflow_dispatch_results';\n            fs.mkdirSync(queueDir, { recursive: true });\n            fs.mkdirSync(processedDir, { recursive: true });\n            fs.mkdirSync(resultsDir, { recursive: true });\n            const files = fs.readdirSync(queueDir).filter(f => f.endsWith('.json')).sort();\n            for (const file of files) {\n              const full = path.join(queueDir, file);\n              const raw = fs.readFileSync(full, 'utf8');\n              const item = JSON.parse(raw);\n              const workflow_id = item.workflow;\n              const ref = item.ref || 'main';\n              const inputs = item.inputs || {};\n              let status = 'DISPATCHED';\n              let error = null;\n              try {\n                await github.rest.actions.createWorkflowDispatch({ owner: context.repo.owner, repo: context.repo.repo, workflow_id, ref, inputs });\n              } catch (e) {\n                status = 'DISPATCH_FAILED';\n                error = String(e).slice(0, 1000);\n              }\n              fs.writeFileSync(path.join(resultsDir, file.replace(/\\\\.json$/, '_result.json')), JSON.stringify({status, workflow_id, ref, inputs, error, dispatched_at: new Date().toISOString()}, null, 2));\n              fs.renameSync(full, path.join(processedDir, file));\n            }\n      - name: Commit dispatch state\n        run: |\n          git config user.name \"ai-devops-system\"\n          git config user.email \"actions@users.noreply.github.com\"\n          git add governance/workflow_dispatch_queue governance/workflow_dispatch_processed governance/workflow_dispatch_results || true\n          if ! git diff --cached --quiet; then\n            git commit -m \"BEM-865 process workflow dispatch queue\"\n            git push\n          fi\n''', encoding='utf-8')\nchanged_files.append(str(p))\nops_applied.append('fixed workflow dispatch queue runner token fallback')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_repair_queue_runner_token.md",
+    "result_json": "governance/codex/results/bem865_repair_queue_runner_token.json"
+  },
+  "created_at": "2026-05-26T04:08:27.684Z"
+}
