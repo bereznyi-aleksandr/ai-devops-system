@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_inline_queue_processor",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "marked need for inline queue processing in codex runner",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    "governance/runtime/curator_dispatch/BEM865_INLINE_QUEUE_PROCESSOR_REQUESTED.md",
+    "governance/codex/proofs/bem865_inline_queue_processor.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem865_inline_queue_processor.md",
+  "completed_at": "2026-05-26T04:11:50Z"
+}

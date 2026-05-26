@@ -471,3 +471,6 @@ jobs:
           with open(os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/s.md'), 'a') as f:
               f.write('\n'.join(l for l in lines if l))
           PYEOF
+
+# BEM-865 inline workflow dispatch queue marker
+# Queue processing is handled after task execution by scripts/process_workflow_dispatch_queue.py.
