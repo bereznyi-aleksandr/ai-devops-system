@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_direct_queue_process",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-865 direct queue process",
+  "objective": "Run script:\n\"\"\"\nqueue = Path('governance/workflow_dispatch_queue/bem865_claude_write_selftest.json')\nprocessed = Path('governance/workflow_dispatch_processed/bem865_claude_write_selftest.json')\nresult_file = Path('governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json')\nprocessed.parent.mkdir(parents=True, exist_ok=True)\nresult_file.parent.mkdir(parents=True, exist_ok=True)\nif queue.exists():\n    data = json.loads(queue.read_text(encoding='utf-8'))\n    # Do not call external shell from restricted executor. Mark exact blocker for actual dispatch layer.\n    result_file.write_text(json.dumps({'status':'DISPATCH_BLOCKED_IN_RESTRICTED_EXECUTOR','reason':'restricted executor cannot call gh workflow run directly','workflow':data.get('workflow'),'ref':data.get('ref'),'inputs':data.get('inputs')}, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')\n    processed.write_text(queue.read_text(encoding='utf-8'), encoding='utf-8')\n    queue.unlink()\n    status = 'QUEUE_MOVED_TO_PROCESSED_DISPATCH_BLOCKED'\nelse:\n    status = 'QUEUE_NOT_FOUND'\nmarker = Path('governance/runtime/curator_dispatch/BEM865_DIRECT_QUEUE_PROCESS_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-865 direct queue process\\nStatus: ' + status + '\\nResult: governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json\\nProcessed: governance/workflow_dispatch_processed/bem865_claude_write_selftest.json\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nchanged_files.append(str(processed))\nchanged_files.append(str(result_file))\nops_applied.append('direct queue process: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_direct_queue_process.md",
+    "result_json": "governance/codex/results/bem865_direct_queue_process.json"
+  },
+  "created_at": "2026-05-26T04:06:07.084Z"
+}
