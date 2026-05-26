@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_validate_processor_inputs",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/bem865_validate_processor_inputs.txt"
+  ],
+  "commit_sha": null,
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'Exception' is not defined"
+  },
+  "report_path": "governance/codex/results/bem865_validate_processor_inputs.md",
+  "completed_at": "2026-05-26T04:00:01Z"
+}
