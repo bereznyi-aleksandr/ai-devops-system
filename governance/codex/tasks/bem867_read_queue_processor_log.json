@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_read_queue_processor_log",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-867 read queue log",
+  "objective": "Run script:\n\"\"\"\nheartbeat = Path('governance/runtime/curator_dispatch/BEM867_QUEUE_PROCESSOR_HEARTBEAT.md')\nlog = Path('governance/runtime/curator_dispatch/BEM867_QUEUE_PROCESSOR_LOG.txt')\nqueue = Path('governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json')\nprocessed = Path('governance/workflow_dispatch_processed/bem867_battle_audit_mailbox.json')\nresult = Path('governance/workflow_dispatch_results/bem867_battle_audit_mailbox_result.json')\nmail = Path('governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md')\nhb_text = heartbeat.read_text(encoding='utf-8') if heartbeat.exists() else ''\nlog_text = log.read_text(encoding='utf-8') if log.exists() else ''\nresult_text = result.read_text(encoding='utf-8') if result.exists() else ''\nmail_text = mail.read_text(encoding='utf-8') if mail.exists() else ''\nlines = [line.strip() for line in mail_text.splitlines()]\nfinal = None\nfor s in ['Status: APPROVED_WITH_NOTES', 'Status: BLOCKED_WITH_REASON']:\n    if s in lines:\n        final = s.split(': ', 1)[1]\n        break\nhas_sections = all(token in mail_text for token in ['Findings:', 'Evidence:', 'Recommendation:'])\nif final and has_sections:\n    status = 'BATTLE_AUDIT_MAILBOX_CONFIRMED_' + final\nelif result.exists() and '\"status\": \"DISPATCHED\"' in result_text:\n    status = 'DISPATCHED_WAITING_BATTLE_MAILBOX'\nelif result.exists() and '\"status\": \"DISPATCH_FAILED\"' in result_text:\n    status = 'DISPATCH_FAILED'\nelif heartbeat.exists() and queue.exists():\n    status = 'HEARTBEAT_EXISTS_QUEUE_PENDING'\nelif not heartbeat.exists() and queue.exists():\n    status = 'HEARTBEAT_MISSING_QUEUE_PENDING'\nelif processed.exists():\n    status = 'QUEUE_PROCESSED_NO_RESULT'\nelse:\n    status = 'UNKNOWN'\nmarker = Path('governance/runtime/curator_dispatch/BEM867_QUEUE_PROCESSOR_LOG_READ_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-867 queue processor log read\\nStatus: ' + status + '\\nHeartbeat exists: ' + str(heartbeat.exists()) + '\\nLog exists: ' + str(log.exists()) + '\\nQueue exists: ' + str(queue.exists()) + '\\nProcessed exists: ' + str(processed.exists()) + '\\nResult exists: ' + str(result.exists()) + '\\nFinal: ' + str(final) + '\\nHas sections: ' + str(has_sections) + '\\n\\nHeartbeat:\\n' + hb_text[:1000] + '\\n\\nLog:\\n' + log_text[:3000] + '\\n\\nResult:\\n' + result_text[:3000] + '\\n\\nMailbox:\\n' + mail_text[:3000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM867 queue processor log read: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_read_queue_processor_log.md",
+    "result_json": "governance/codex/results/bem867_read_queue_processor_log.json"
+  },
+  "created_at": "2026-05-26T09:42:54.980Z"
+}
