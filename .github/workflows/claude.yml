@@ -377,15 +377,3 @@ jobs:
           with open(summary_path, 'a') as f:
               f.write('\n'.join(lines))
           PYEOF
-
-      - name: BEM-865 Claude mailbox write selftest
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.trace_id == 'bem865_claude_write_selftest' }}
-        run: |
-          mkdir -p governance/audit/mailbox/from_claude
-          cat > governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md <<'EOF'
-# BEM-865 CLAUDE WRITE SELFTEST RESPONSE
-Status: CLAUDE_WRITE_OK
-Writer: claude.yml workflow_dispatch role adapter
-Trace: bem865_claude_write_selftest
-EOF
-

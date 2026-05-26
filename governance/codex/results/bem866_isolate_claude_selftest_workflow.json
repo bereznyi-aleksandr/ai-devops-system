@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_isolate_claude_selftest_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "isolated Claude mailbox write selftest workflow and cleaned claude.yml",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/claude.yml",
+    ".github/workflows/claude_write_selftest.yml",
+    "governance/runtime/curator_dispatch/BEM866_CLAUDE_SELFTEST_WORKFLOW_ISOLATED.md",
+    "governance/codex/proofs/bem866_isolate_claude_selftest_workflow.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_isolate_claude_selftest_workflow.md",
+  "completed_at": "2026-05-26T08:00:56Z"
+}
