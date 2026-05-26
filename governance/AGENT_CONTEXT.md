@@ -141,3 +141,5 @@ Claude → прямой коммит через GitHub MCP
 - Status: implemented_dispatch_route
 ## BEM-864 Curator-Claude selftest
 - Status: route_selftest_completed_waiting_for_claude_response
+## BEM-867 completed | 2026-05-26
+Internal auditor battle mailbox confirmed
