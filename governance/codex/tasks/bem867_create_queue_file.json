@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_create_queue_file",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-867 queue file",
+  "objective": "Create file governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json with content {\"workflow\":\"claude.yml\",\"ref\":\"main\",\"inputs\":{\"role\":\"auditor\",\"provider\":\"claude\",\"trace_id\":\"bem867_battle_audit_mailbox\",\"cycle_id\":\"bem867\",\"task_type\":\"battle_audit_mailbox_response\",\"task\":\"BEM-867 battle audit. Read governance/tasks/pending/CLAUDE_BATTLE_AUDIT_BEM867.md. Write a substantive audit response to governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md. Status must be APPROVED_WITH_NOTES or BLOCKED_WITH_REASON. Include Findings, Evidence, Recommendation. No issue comments.\"}}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_create_queue_file.md",
+    "result_json": "governance/codex/results/bem867_create_queue_file.json"
+  },
+  "created_at": "2026-05-26T09:26:58.437Z"
+}
