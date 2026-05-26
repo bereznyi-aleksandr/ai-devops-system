@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_read_log_after_order",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM867 read log after order: HEARTBEAT_MISSING_QUEUE_PENDING",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM867_READ_LOG_AFTER_ORDER_HEARTBEAT_MISSING_QUEUE_PENDING.md",
+    "governance/codex/proofs/bem867_read_log_after_order.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_read_log_after_order.md",
+  "completed_at": "2026-05-26T09:47:51Z"
+}
