@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem868_read_agent_context_next",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "read AGENT_CONTEXT key lines after BEM867/BEM868",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM868_AGENT_CONTEXT_NEXT_READ.md",
+    "governance/codex/proofs/bem868_read_agent_context_next.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem868_read_agent_context_next.md",
+  "completed_at": "2026-05-26T17:57:18Z"
+}
