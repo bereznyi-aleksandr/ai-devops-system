@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_sanitize_codex_runner",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "sanitized codex-runner by removing experimental queue steps",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    "governance/runtime/curator_dispatch/BEM866_CODEX_RUNNER_SANITIZED.md",
+    "governance/codex/proofs/bem866_sanitize_codex_runner.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_sanitize_codex_runner.md",
+  "completed_at": "2026-05-26T04:30:10Z"
+}

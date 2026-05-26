@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem866_sanitize_codex_runner
+task_type: code_patch
+executed_at: 2026-05-26T04:30:10Z
+ops_applied: sanitized codex-runner by removing experimental queue steps, custom_script
+changed_files: .github/workflows/codex-runner.yml, governance/runtime/curator_dispatch/BEM866_CODEX_RUNNER_SANITIZED.md
+errors: none
