@@ -16,10 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
       - uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           script: |
             const fs = require('fs');
             const path = require('path');
@@ -37,8 +37,15 @@ jobs:
               const workflow_id = item.workflow;
               const ref = item.ref || 'main';
               const inputs = item.inputs || {};
-              await github.rest.actions.createWorkflowDispatch({ owner: context.repo.owner, repo: context.repo.repo, workflow_id, ref, inputs });
-              fs.writeFileSync(path.join(resultsDir, file.replace(/\.json$/, '_result.json')), JSON.stringify({status:'DISPATCHED', workflow_id, ref, inputs, dispatched_at: new Date().toISOString()}, null, 2));
+              let status = 'DISPATCHED';
+              let error = null;
+              try {
+                await github.rest.actions.createWorkflowDispatch({ owner: context.repo.owner, repo: context.repo.repo, workflow_id, ref, inputs });
+              } catch (e) {
+                status = 'DISPATCH_FAILED';
+                error = String(e).slice(0, 1000);
+              }
+              fs.writeFileSync(path.join(resultsDir, file.replace(/\.json$/, '_result.json')), JSON.stringify({status, workflow_id, ref, inputs, error, dispatched_at: new Date().toISOString()}, null, 2));
               fs.renameSync(full, path.join(processedDir, file));
             }
       - name: Commit dispatch state
