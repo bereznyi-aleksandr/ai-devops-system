@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_wakeup_after_queue_step_move",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 wakeup after step move",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM866_WAKEUP_AFTER_QUEUE_STEP_MOVE.md with content # BEM-866 wakeup after queue step move\nStatus: WAKEUP_AFTER_QUEUE_STEP_MOVE\nPurpose: trigger codex-runner after moving workflow dispatch queue processing before commit.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_wakeup_after_queue_step_move.md",
+    "result_json": "governance/codex/results/bem866_wakeup_after_queue_step_move.json"
+  },
+  "created_at": "2026-05-26T04:19:17.268Z"
+}
