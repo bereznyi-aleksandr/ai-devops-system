@@ -1,0 +1,3 @@
+# BEM-867 wakeup final retry
+Status: WAKEUP_FINAL_RETRY_AFTER_STEP_PRESENCE_CONFIRMED
+Queue: governance/workflow_dispatch_queue/bem867_battle_audit_mailbox
