@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_queue_isolated_battle_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM867 retargeted queue to isolated battle workflow",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json",
+    "governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md",
+    "governance/runtime/curator_dispatch/BEM867_QUEUE_ISOLATED_BATTLE_WORKFLOW.md",
+    "governance/codex/proofs/bem867_queue_isolated_battle_workflow.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_queue_isolated_battle_workflow.md",
+  "completed_at": "2026-05-26T10:37:56Z"
+}
