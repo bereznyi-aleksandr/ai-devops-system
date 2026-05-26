@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_update_agent_context",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-867 update context",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-867 | Battle internal auditor mailbox confirmed | 2026-05-26\nStatus: completed\nProof: governance/runtime/curator_dispatch/BEM867_ISOLATED_BATTLE_RESULT_BATTLE_AUDIT_MAILBOX_CONFIRMED_APPROVED_WITH_NOTES.md\nMailbox: governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md\nResult: internal auditor battle response confirmed with Status: APPROVED_WITH_NOTES and required sections Findings/Evidence/Recommendation.\nNext: continue roadmap after confirmed GPT -> Curator/queue -> Claude workflow -> from_claude mailbox -> GPT poll cycle.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_update_agent_context.md",
+    "result_json": "governance/codex/results/bem867_update_agent_context.json"
+  },
+  "created_at": "2026-05-26T10:41:34.466Z"
+}
