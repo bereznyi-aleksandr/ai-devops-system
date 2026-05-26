@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_claude_report_lines",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 Claude report lines",
+  "objective": "Run script:\n\"\"\"\nreport = Path('governance/reports/bem865_claude_write_selftest.md')\ntext = report.read_text(encoding='utf-8', errors='ignore') if report.exists() else ''\noutdir = Path('governance/runtime/curator_dispatch/bem866_claude_report_lines')\noutdir.mkdir(parents=True, exist_ok=True)\ncount = 0\nfor i, line in enumerate(text.splitlines()[:120], 1):\n    if line.strip() or i <= 20:\n        safe = ''.join(ch if ch.isalnum() else '_' for ch in line.strip())[:140] or 'blank'\n        marker = outdir / (str(i).zfill(4) + '_' + safe + '.md')\n        marker.write_text('# BEM-866 Claude report line\\nLine: ' + str(i) + '\\nText: ' + line + '\\n', encoding='utf-8')\n        changed_files.append(str(marker))\n        count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM866_CLAUDE_REPORT_LINES_INDEX.md')\nsummary.write_text('# BEM-866 Claude report lines\\nReport exists: ' + str(report.exists()) + '\\nLines marked: ' + str(count) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('Claude report lines marked: ' + str(count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_claude_report_lines.md",
+    "result_json": "governance/codex/results/bem866_claude_report_lines.json"
+  },
+  "created_at": "2026-05-26T07:53:42.101Z"
+}
