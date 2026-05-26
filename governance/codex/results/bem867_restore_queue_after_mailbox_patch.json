@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_restore_queue_after_mailbox_patch",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "restored BEM867 queue after mailbox patch",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json",
+    "governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md",
+    "governance/runtime/curator_dispatch/BEM867_QUEUE_RESTORED_AFTER_MAILBOX_PATCH.md",
+    "governance/codex/proofs/bem867_restore_queue_after_mailbox_patch.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_restore_queue_after_mailbox_patch.md",
+  "completed_at": "2026-05-26T10:22:23Z"
+}
