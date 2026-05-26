@@ -448,7 +448,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: |
-          python3 scripts/process_workflow_dispatch_queue.py || true
+          mkdir -p governance/runtime/curator_dispatch
+          echo "# BEM-867 queue processor heartbeat" > governance/runtime/curator_dispatch/BEM867_QUEUE_PROCESSOR_HEARTBEAT.md
+          echo "Status: STARTED" >> governance/runtime/curator_dispatch/BEM867_QUEUE_PROCESSOR_HEARTBEAT.md
+          python3 scripts/process_workflow_dispatch_queue.py > governance/runtime/curator_dispatch/BEM867_QUEUE_PROCESSOR_LOG.txt 2>&1 || echo "PROCESSOR_FAILED" >> governance/runtime/curator_dispatch/BEM867_QUEUE_PROCESSOR_HEARTBEAT.md
+          echo "Status_after: FINISHED" >> governance/runtime/curator_dispatch/BEM867_QUEUE_PROCESSOR_HEARTBEAT.md
 
 
       - name: BEM-866 commit evidence
