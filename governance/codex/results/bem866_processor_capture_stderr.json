@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_processor_capture_stderr",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "processor now captures gh stdout stderr",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/process_workflow_dispatch_queue.py",
+    "governance/runtime/curator_dispatch/BEM866_PROCESSOR_STDERR_CAPTURED.md",
+    "governance/codex/proofs/bem866_processor_capture_stderr.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_processor_capture_stderr.md",
+  "completed_at": "2026-05-26T07:27:11Z"
+}
