@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_restore_queue_for_stderr",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "restored live queue for stderr capture",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem865_claude_write_selftest.json",
+    "governance/runtime/curator_dispatch/BEM866_QUEUE_RESTORED_FOR_STDERR.md",
+    "governance/codex/proofs/bem866_restore_queue_for_stderr.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_restore_queue_for_stderr.md",
+  "completed_at": "2026-05-26T07:28:13Z"
+}
