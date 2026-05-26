@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_list_workflows",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-865 list workflows",
+  "objective": "Run script:\n\"\"\"\noutdir = Path('governance/runtime/curator_dispatch/bem865_workflow_list')\noutdir.mkdir(parents=True, exist_ok=True)\nwfdir = Path('.github/workflows')\ncount = 0\nif wfdir.exists():\n    for f in sorted(wfdir.glob('*')):\n        if f.is_file():\n            safe = ''.join(ch if ch.isalnum() else '_' for ch in f.name)\n            marker = outdir / (str(count).zfill(2) + '_' + safe + '.md')\n            text = f.read_text(encoding='utf-8', errors='ignore')[:5000]\n            flags = []\n            low = (f.name + '\\n' + text).lower()\n            for token in ['claude', 'auditor', 'curator', 'workflow_dispatch', 'anthropic', 'from_claude']:\n                if token in low:\n                    flags.append(token)\n            marker.write_text('# workflow file\\nPath: ' + str(f) + '\\nFlags: ' + ', '.join(flags) + '\\n', encoding='utf-8')\n            changed_files.append(str(marker))\n            count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM865_WORKFLOW_LIST_INDEX.md')\nsummary.write_text('# BEM-865 workflow list\\nCount: ' + str(count) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('listed workflow files: ' + str(count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_list_workflows.md",
+    "result_json": "governance/codex/results/bem865_list_workflows.json"
+  },
+  "created_at": "2026-05-26T03:31:31.439Z"
+}
