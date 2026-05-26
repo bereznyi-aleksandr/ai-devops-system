@@ -1,0 +1,3 @@
+# BEM-866 Claude trace output candidate
+Path: governance/runtime/curator_dispatch/BEM866_DISPATCH_ERROR_INVALID_REF_Command__gh_workflow_run_claude_internal_auditor_dispatcher_yml___ref_main__f_trace_id_bem865_claude_write_selftest__f_t.md
+Contains trace: True
