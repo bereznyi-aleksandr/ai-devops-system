@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_classify_compare",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-867 classify compare",
+  "objective": "Run script:\n\"\"\"\nfiles = {\n    'b866_result': Path('governance/runtime/curator_dispatch/bem867_compare_bem866_result.md'),\n    'b866_mailbox': Path('governance/runtime/curator_dispatch/bem867_compare_bem866_mailbox.md'),\n    'b867_queue': Path('governance/runtime/curator_dispatch/bem867_compare_bem867_queue.md'),\n    'b867_result': Path('governance/runtime/curator_dispatch/bem867_compare_bem867_result.md'),\n    'b867_mailbox': Path('governance/runtime/curator_dispatch/bem867_compare_bem867_mailbox.md'),\n}\ntexts = {k: (p.read_text(encoding='utf-8', errors='ignore') if p.exists() else '') for k,p in files.items()}\nif 'CLAUDE_WRITE_OK' in texts['b866_mailbox'] and 'workflow' in texts['b867_queue'] and 'PENDING_INTERNAL_AUDITOR_RESPONSE' in texts['b867_mailbox'] and 'Exists: False' in texts['b867_result']:\n    status = 'B866_OK_B867_QUEUE_NOT_PROCESSED'\nelif 'DISPATCH_FAILED' in texts['b867_result']:\n    status = 'B867_DISPATCH_FAILED'\nelif 'APPROVED_WITH_NOTES' in texts['b867_mailbox'] or 'BLOCKED_WITH_REASON' in texts['b867_mailbox']:\n    status = 'B867_MAILBOX_HAS_FINAL'\nelse:\n    status = 'UNCLEAR'\nmarker = Path('governance/runtime/curator_dispatch/BEM867_COMPARE_CLASSIFICATION_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-867 compare classification\\nStatus: ' + status + '\\n\\nB866 mailbox contains CLAUDE_WRITE_OK: ' + str('CLAUDE_WRITE_OK' in texts['b866_mailbox']) + '\\nB867 queue has workflow: ' + str('workflow' in texts['b867_queue']) + '\\nB867 result missing marker: ' + str('Exists: False' in texts['b867_result']) + '\\nB867 mailbox pending: ' + str('PENDING_INTERNAL_AUDITOR_RESPONSE' in texts['b867_mailbox']) + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM867 compare classification: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_classify_compare.md",
+    "result_json": "governance/codex/results/bem867_classify_compare.json"
+  },
+  "created_at": "2026-05-26T10:09:44.225Z"
+}
