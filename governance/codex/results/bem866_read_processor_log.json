@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_read_processor_log",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "processor log read: LOG_EXISTS_QUEUE_PENDING",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM866_PROCESSOR_LOG_READ_LOG_EXISTS_QUEUE_PENDING.md",
+    "governance/codex/proofs/bem866_read_processor_log.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_read_processor_log.md",
+  "completed_at": "2026-05-26T04:58:24Z"
+}
