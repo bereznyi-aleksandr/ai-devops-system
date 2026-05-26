@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_classify_processor_error",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 classify processor error",
+  "objective": "Run script:\n\"\"\"\nlog = Path('governance/runtime/curator_dispatch/BEM866_PROCESSOR_RUN_LOG.txt')\ntext = log.read_text(encoding='utf-8') if log.exists() else ''\nlow = text.lower()\nif not log.exists():\n    status = 'LOG_MISSING'\nelif 'nameerror' in low:\n    status = 'NAMEERROR'\nelif 'permission denied' in low or 'resource not accessible' in low or '403' in low:\n    status = 'PERMISSION_DENIED'\nelif 'gh:' in low or 'gh ' in low or 'not found' in low:\n    status = 'GH_NOT_FOUND_OR_FAILED'\nelif 'jsondecodeerror' in low or 'expecting' in low:\n    status = 'JSON_ERROR'\nelif 'keyerror' in low:\n    status = 'KEY_ERROR'\nelif 'fatal:' in low:\n    status = 'GIT_FATAL'\nelif 'workflow_dispatch_queue_empty' in low:\n    status = 'QUEUE_EMPTY_IN_WORKSPACE'\nelif 'workflow_dispatch_result dispatch_failed' in low:\n    status = 'DISPATCH_FAILED_LOGGED'\nelif 'workflow_dispatched' in low or 'workflow_dispatch_result dispatched' in low:\n    status = 'DISPATCHED_LOGGED'\nelse:\n    status = 'UNKNOWN_ERROR'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_PROCESSOR_ERROR_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 processor error classification\\nStatus: ' + status + '\\n\\nLog prefix:\\n' + text[:3000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('processor error classification: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_classify_processor_error.md",
+    "result_json": "governance/codex/results/bem866_classify_processor_error.json"
+  },
+  "created_at": "2026-05-26T04:59:18.968Z"
+}
