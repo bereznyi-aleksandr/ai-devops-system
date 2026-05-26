@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_isolate_queue_runner",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "isolated workflow dispatch queue runner and cleaned codex-runner",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    ".github/workflows/workflow_dispatch_queue_runner.yml",
+    "governance/runtime/curator_dispatch/BEM866_QUEUE_RUNNER_ISOLATED.md",
+    "governance/codex/proofs/bem866_isolate_queue_runner.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_isolate_queue_runner.md",
+  "completed_at": "2026-05-26T04:37:45Z"
+}

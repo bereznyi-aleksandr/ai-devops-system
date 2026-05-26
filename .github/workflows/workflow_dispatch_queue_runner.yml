@@ -2,9 +2,6 @@ name: workflow_dispatch_queue_runner
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "governance/workflow_dispatch_queue/**"
 
 permissions:
   contents: write
@@ -35,27 +32,19 @@ jobs:
             const files = fs.readdirSync(queueDir).filter((f) => f.endsWith('.json')).sort();
             for (const file of files) {
               const full = path.join(queueDir, file);
-              const raw = fs.readFileSync(full, 'utf8');
-              const item = JSON.parse(raw);
+              const item = JSON.parse(fs.readFileSync(full, 'utf8'));
               const workflow_id = item.workflow;
               const ref = item.ref || 'main';
               const inputs = item.inputs || {};
               let status = 'DISPATCHED';
               let error = null;
               try {
-                await github.rest.actions.createWorkflowDispatch({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  workflow_id,
-                  ref,
-                  inputs,
-                });
+                await github.rest.actions.createWorkflowDispatch({ owner: context.repo.owner, repo: context.repo.repo, workflow_id, ref, inputs });
               } catch (e) {
                 status = 'DISPATCH_FAILED';
                 error = String(e).slice(0, 1000);
               }
-              const resultName = file.replace(/\.json$/, '_result.json');
-              fs.writeFileSync(path.join(resultsDir, resultName), JSON.stringify({ status, workflow_id, ref, inputs, error, dispatched_at: new Date().toISOString() }, null, 2));
+              fs.writeFileSync(path.join(resultsDir, file.replace(/\.json$/, '_result.json')), JSON.stringify({ status, workflow_id, ref, inputs, error, dispatched_at: new Date().toISOString() }, null, 2));
               fs.renameSync(full, path.join(processedDir, file));
             }
 
