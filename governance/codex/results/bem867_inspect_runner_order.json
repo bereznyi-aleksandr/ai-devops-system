@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_inspect_runner_order",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM867 runner order inspected: 14",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/bem867_runner_order/0034___name__Checkout.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0040___name__Sync_latest_main.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0049___name__Read_task_file.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0086___name__Execute_task.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0354___name__Write_result_files.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0413____Commit_SHA________commit_sha_or__none__________.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0427___name__Commit_and_push_everything.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0446___name__Process_workflow_dispatch_queue_after_commit.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0452_echo____BEM_867_queue_processor_heartbeat____governance_runtime_curator_dispatch_BEM867_QUEUE_PROCESSOR_HEARTBEAT_md.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0453_echo__Status__STARTED_____governance_runtime_curator_dispatch_BEM867_QUEUE_PROCESSOR_HEARTBEAT_md.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0454_python3_scripts_process_workflow_dispatch_queue_py___governance_runtime_curator_dispatch_BEM867_QUEUE_PROCESSOR_LOG_txt_.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0455_echo__Status_after__FINISHED_____governance_runtime_curator_dispatch_BEM867_QUEUE_PROCESSOR_HEARTBEAT_md.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0458___name__BEM_866_commit_evidence.md",
+    "governance/runtime/curator_dispatch/bem867_runner_order/0474___name__Job_summary.md",
+    "governance/runtime/curator_dispatch/BEM867_RUNNER_ORDER_INDEX.md",
+    "governance/codex/proofs/bem867_inspect_runner_order.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_inspect_runner_order.md",
+  "completed_at": "2026-05-26T09:46:26Z"
+}
