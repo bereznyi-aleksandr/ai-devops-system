@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_writer_candidates_markers",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-865 writer candidates markers",
+  "objective": "Run script:\n\"\"\"\noutdir = Path('governance/runtime/curator_dispatch/bem865_writer_candidates')\noutdir.mkdir(parents=True, exist_ok=True)\ncount = 0\nfor root in ['.github/workflows', 'tools', 'scripts', 'governance']:\n    p = Path(root)\n    if not p.exists():\n        continue\n    for f in p.rglob('*'):\n        if count >= 30:\n            break\n        if f.is_file() and f.suffix.lower() in ['.py', '.yml', '.yaml', '.ts', '.js', '.md', '.json']:\n            name = str(f)\n            text = f.read_text(encoding='utf-8', errors='ignore')[:50000]\n            low = (name + '\\n' + text).lower()\n            if ('claude' in low or 'anthropic' in low or 'from_claude' in low or 'claude_internal_audit' in low) and ('from_claude' in low or 'claude_internal' in low or 'anthropic' in low):\n                safe = ''.join(ch if ch.isalnum() else '_' for ch in name)[:120]\n                marker = outdir / (str(count).zfill(2) + '_' + safe + '.md')\n                flags = []\n                for token in ['from_claude', 'CLAUDE_INTERNAL_AUDIT', 'anthropic', 'write_text', 'workflow_dispatch', 'contents/']:\n                    if token.lower() in low:\n                        flags.append(token)\n                marker.write_text('# BEM-865 writer candidate\\nPath: ' + name + '\\nFlags: ' + ', '.join(flags) + '\\n', encoding='utf-8')\n                changed_files.append(str(marker))\n                count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM865_WRITER_CANDIDATES_INDEX.md')\nsummary.write_text('# BEM-865 writer candidates index\\nCount: ' + str(count) + '\\nDirectory: governance/runtime/curator_dispatch/bem865_writer_candidates\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('writer candidate markers created: ' + str(count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_writer_candidates_markers.md",
+    "result_json": "governance/codex/results/bem865_writer_candidates_markers.json"
+  },
+  "created_at": "2026-05-26T03:29:05.376Z"
+}
