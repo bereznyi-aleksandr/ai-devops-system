@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_wakeup_after_script_step",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 wakeup script step",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM866_WAKEUP_AFTER_SCRIPT_STEP.md with content # BEM-866 wakeup after script step\nStatus: WAKEUP_AFTER_SCRIPT_STEP_PATCH\nPurpose: trigger codex-runner after adding script-call queue processor step before commit.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_wakeup_after_script_step.md",
+    "result_json": "governance/codex/results/bem866_wakeup_after_script_step.json"
+  },
+  "created_at": "2026-05-26T04:35:17.763Z"
+}
