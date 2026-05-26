@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_queue_after_real_anchor",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-866 queue after real anchor",
+  "objective": "Run script:\n\"\"\"\nq = Path('governance/workflow_dispatch_queue/bem865_claude_write_selftest.json')\np = Path('governance/workflow_dispatch_processed/bem865_claude_write_selftest.json')\nr = Path('governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json')\nmail = Path('governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md')\nq.parent.mkdir(parents=True, exist_ok=True)\nif p.exists():\n    p.unlink()\nif r.exists():\n    r.unlink()\nmail.parent.mkdir(parents=True, exist_ok=True)\nmail.write_text('# BEM-865 CLAUDE WRITE SELFTEST RESPONSE\\nStatus: PENDING_CLAUDE_WRITE_TEST\\n', encoding='utf-8')\ndata = {\n    'workflow': 'claude.yml',\n    'ref': 'main',\n    'inputs': {\n        'role': 'auditor',\n        'provider': 'claude',\n        'trace_id': 'bem865_claude_write_selftest',\n        'cycle_id': 'bem865',\n        'task_type': 'audit_write_selftest',\n        'task': 'BEM-865 Claude write selftest after real anchor patch. No issue comments.'\n    }\n}\nq.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM866_QUEUE_AFTER_REAL_ANCHOR.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 queue after real anchor\\nStatus: LIVE_QUEUE_RESTORED\\nWorkflow: claude.yml\\nMailbox reset: PENDING_CLAUDE_WRITE_TEST\\n', encoding='utf-8')\nchanged_files.append(str(q))\nchanged_files.append(str(mail))\nchanged_files.append(str(marker))\nops_applied.append('restored queue after real anchor patch')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_queue_after_real_anchor.md",
+    "result_json": "governance/codex/results/bem866_queue_after_real_anchor.json"
+  },
+  "created_at": "2026-05-26T08:23:14.670Z"
+}
