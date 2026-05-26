@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_commit_sha_null_diag",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 commit sha null diag",
+  "objective": "Run script:\n\"\"\"\n# Diagnose codex-runner commit/push/report path from workflow text and recent results.\nwf = Path('.github/workflows/codex-runner.yml')\ntext = wf.read_text(encoding='utf-8', errors='ignore') if wf.exists() else ''\nchecks = {\n    'codex_runner_exists': wf.exists(),\n    'has_checkout': 'actions/checkout' in text,\n    'has_git_add': 'git add' in text,\n    'has_git_commit': 'git commit' in text,\n    'has_git_push': 'git push' in text,\n    'has_commit_sha_string': 'commit_sha' in text,\n    'has_changed_files_string': 'changed_files' in text,\n    'has_GITHUB_OUTPUT': 'GITHUB_OUTPUT' in text,\n    'has_AI_PAT': 'AI_SYSTEM_GITHUB_PAT' in text,\n}\n# Count recent result JSONs with changed_files and null commit_sha.\nresdir = Path('governance/codex/results')\nnull_count = 0\nwith_changes = 0\nrecent = []\nif resdir.exists():\n    for f in sorted(resdir.glob('*.json'))[-100:]:\n        try:\n            data = json.loads(f.read_text(encoding='utf-8'))\n        except:\n            continue\n        if data.get('changed_files'):\n            with_changes += 1\n            if not data.get('commit_sha'):\n                null_count += 1\n                recent.append(f.name)\nstatus = 'COMMIT_SHA_NULL_SYSTEMIC' if with_changes and null_count == with_changes else 'COMMIT_SHA_PARTIAL'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_COMMIT_SHA_NULL_DIAG_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 commit sha null diag\\nStatus: ' + status + '\\n' + '\\n'.join('- ' + k + ': ' + str(v) for k,v in checks.items()) + '\\n\\nRecent changed results: ' + str(with_changes) + '\\nNull commit_sha: ' + str(null_count) + '\\nExamples:\\n' + '\\n'.join('- ' + x for x in recent[:30]) + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('commit sha null diagnosis: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_commit_sha_null_diag.md",
+    "result_json": "governance/codex/results/bem866_commit_sha_null_diag.json"
+  },
+  "created_at": "2026-05-26T08:32:16.680Z"
+}
