@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_claude_workflow_inputs",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 Claude workflow inputs",
+  "objective": "Run script:\n\"\"\"\ncandidates = [\n    Path('.github/workflows/claude.yml'),\n    Path('.github/workflows/auditor.yml'),\n    Path('.github/workflows/claude_mailbox_autoprocess.yml'),\n    Path('.github/workflows/claude_mailbox_minute_watchdog.yml'),\n    Path('.github/workflows/audit_mailbox_watcher.yml'),\n    Path('.github/workflows/mailbox_dispatcher.yml')\n]\noutdir = Path('governance/runtime/curator_dispatch/bem866_claude_inputs')\noutdir.mkdir(parents=True, exist_ok=True)\nfor f in candidates:\n    text = f.read_text(encoding='utf-8', errors='ignore') if f.exists() else ''\n    lines = text.splitlines()\n    input_names = []\n    in_inputs = False\n    base_indent = None\n    for line in lines:\n        stripped = line.strip()\n        indent = len(line) - len(line.lstrip(' '))\n        if stripped == 'inputs:':\n            in_inputs = True\n            base_indent = indent\n            continue\n        if in_inputs:\n            if stripped and indent <= base_indent:\n                in_inputs = False\n                continue\n            if stripped.endswith(':') and not stripped.startswith(('description:', 'required:', 'default:', 'type:', 'options:')):\n                input_names.append(stripped[:-1])\n    flags = []\n    low = text.lower()\n    for token in ['workflow_dispatch', 'task_path', 'response_path', 'trace_id', 'mailbox', 'from_claude', 'claude']:\n        if token in low:\n            flags.append(token)\n    safe = ''.join(ch if ch.isalnum() else '_' for ch in f.name)\n    inputs_slug = '_'.join(input_names)[:120] if input_names else 'NO_INPUTS_FOUND'\n    marker = outdir / (safe + '__INPUTS__' + ''.join(ch if ch.isalnum() else '_' for ch in inputs_slug) + '.md')\n    marker.write_text('# BEM-866 Claude workflow inputs\\nWorkflow: ' + str(f) + '\\nExists: ' + str(f.exists()) + '\\nFlags: ' + ', '.join(flags) + '\\nInputs:\\n' + '\\n'.join('- ' + x for x in input_names) + '\\n', encoding='utf-8')\n    changed_files.append(str(marker))\nsummary = Path('governance/runtime/curator_dispatch/BEM866_CLAUDE_WORKFLOW_INPUTS_INDEX.md')\nsummary.write_text('# BEM-866 Claude workflow inputs index\\nCandidates: ' + str(len(candidates)) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('inspected Claude workflow dispatch inputs')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_claude_workflow_inputs.md",
+    "result_json": "governance/codex/results/bem866_claude_workflow_inputs.json"
+  },
+  "created_at": "2026-05-26T07:32:32.377Z"
+}
