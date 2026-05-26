@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_wakeup_commit_evidence",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 wakeup commit evidence",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM866_WAKEUP_COMMIT_EVIDENCE.md with content # BEM-866 wakeup commit evidence\nStatus: WAKEUP_AFTER_COMMIT_EVIDENCE_PATCH\nPurpose: run codex-runner after adding commit evidence step and verify actual persisted SHA/status files.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_wakeup_commit_evidence.md",
+    "result_json": "governance/codex/results/bem866_wakeup_commit_evidence.json"
+  },
+  "created_at": "2026-05-26T08:34:30.265Z"
+}
