@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_inspect_claude_mailbox_workflows",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 inspect Claude mailbox workflows",
+  "objective": "Run script:\n\"\"\"\nfiles = [Path('.github/workflows/claude_mailbox_autoprocess.yml'), Path('.github/workflows/claude_mailbox_minute_watchdog.yml'), Path('.github/workflows/claude_internal_auditor_dispatcher.yml'), Path('.github/workflows/audit_mailbox_watcher.yml')]\noutdir = Path('governance/runtime/curator_dispatch/bem866_claude_workflow_lines')\noutdir.mkdir(parents=True, exist_ok=True)\ncount = 0\nfor f in files:\n    text = f.read_text(encoding='utf-8', errors='ignore') if f.exists() else ''\n    for i, line in enumerate(text.splitlines(), 1):\n        low = line.lower()\n        if any(tok in low for tok in ['on:', 'workflow_dispatch', 'push:', 'paths:', 'schedule:', 'mailbox', 'to_curator', 'from_claude', 'claude', 'task_path', 'response_path', 'status:']):\n            safe = ''.join(ch if ch.isalnum() else '_' for ch in str(f) + '_' + str(i))[:120]\n            marker = outdir / (safe + '.md')\n            marker.write_text('# Claude workflow line\\nFile: ' + str(f) + '\\nLine: ' + str(i) + '\\nText: ' + line + '\\n', encoding='utf-8')\n            changed_files.append(str(marker))\n            count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM866_CLAUDE_WORKFLOW_LINES_INDEX.md')\nsummary.write_text('# BEM-866 Claude workflow line scan\\nCount: ' + str(count) + '\\nFiles checked:\\n' + '\\n'.join('- ' + str(f) for f in files) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('inspected Claude mailbox workflows: ' + str(count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_inspect_claude_mailbox_workflows.md",
+    "result_json": "governance/codex/results/bem866_inspect_claude_mailbox_workflows.json"
+  },
+  "created_at": "2026-05-26T04:38:43.779Z"
+}
