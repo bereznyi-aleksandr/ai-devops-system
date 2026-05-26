@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem866_patch_claude_mailbox_write
+task_type: code_patch
+executed_at: 2026-05-26T07:55:10Z
+ops_applied: patched claude.yml to write BEM865 selftest mailbox, custom_script
+changed_files: .github/workflows/claude.yml, governance/runtime/curator_dispatch/BEM866_CLAUDE_MAILBOX_WRITE_PATCHED.md
+errors: none
