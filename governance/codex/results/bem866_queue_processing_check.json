@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_queue_processing_check",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM866 queue processing check: QUEUE_STILL_PENDING_AFTER_BEM866_REPAIR",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM866_QUEUE_PROCESSING_CHECK_QUEUE_STILL_PENDING_AFTER_BEM866_REPAIR.md",
+    "governance/codex/proofs/bem866_queue_processing_check.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_queue_processing_check.md",
+  "completed_at": "2026-05-26T04:15:49Z"
+}
