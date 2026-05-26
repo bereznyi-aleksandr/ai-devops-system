@@ -422,6 +422,14 @@ jobs:
           PYEOF
 
 
+
+      - name: Process workflow dispatch queue before commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          python3 scripts/process_workflow_dispatch_queue.py
+
       - name: Commit and push everything
         if: always()
         shell: bash
