@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_queue_to_selftest_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "retargeted queue to isolated Claude selftest workflow",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem865_claude_write_selftest.json",
+    "governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md",
+    "governance/runtime/curator_dispatch/BEM866_QUEUE_TARGET_SELFTEST_WORKFLOW.md",
+    "governance/codex/proofs/bem866_queue_to_selftest_workflow.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_queue_to_selftest_workflow.md",
+  "completed_at": "2026-05-26T08:02:05Z"
+}
