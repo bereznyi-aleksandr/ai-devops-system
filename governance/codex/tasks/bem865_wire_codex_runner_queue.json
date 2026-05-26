@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_wire_codex_runner_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-865 wire codex runner queue",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\ntext = p.read_text(encoding='utf-8')\nstep = '''\\n      - name: Process workflow dispatch queue\\n        if: always()\\n        env:\\n          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GITHUB_TOKEN }}\\n        run: |\\n          python3 scripts/process_workflow_dispatch_queue.py || true\\n'''\nif 'Process workflow dispatch queue' not in text:\n    idx = text.rfind('\\n      - name:')\n    if idx != -1:\n        text = text[:idx] + step + text[idx:]\n    else:\n        text = text.rstrip() + step + '\\n'\np.write_text(text, encoding='utf-8')\nchanged_files.append(str(p))\nops_applied.append('wired workflow dispatch queue processor into codex-runner')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_wire_codex_runner_queue.md",
+    "result_json": "governance/codex/results/bem865_wire_codex_runner_queue.json"
+  },
+  "created_at": "2026-05-26T03:50:13.127Z"
+}
