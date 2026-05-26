@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_queue_processing_check",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "queue processing check: QUEUE_PENDING",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM865_QUEUE_PROCESSING_QUEUE_PENDING.md",
+    "governance/codex/proofs/bem865_queue_processing_check.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem865_queue_processing_check.md",
+  "completed_at": "2026-05-26T03:37:26Z"
+}
