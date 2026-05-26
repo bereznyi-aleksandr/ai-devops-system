@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_processor_failure_marker",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 processor failure marker",
+  "objective": "Run script:\n\"\"\"\nhb = Path('governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md')\ntext = hb.read_text(encoding='utf-8') if hb.exists() else ''\nif 'PROCESSOR_FAILED' in text:\n    status = 'PROCESSOR_FAILED'\nelif 'Status_after: FINISHED' in text:\n    status = 'PROCESSOR_FINISHED_NO_EFFECT'\nelif hb.exists():\n    status = 'HEARTBEAT_INCOMPLETE'\nelse:\n    status = 'HEARTBEAT_MISSING'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_PROCESSOR_FAILURE_MARKER_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 processor failure marker\\nStatus: ' + status + '\\n\\nHeartbeat text:\\n' + text[:2000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('processor failure marker: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_processor_failure_marker.md",
+    "result_json": "governance/codex/results/bem866_processor_failure_marker.json"
+  },
+  "created_at": "2026-05-26T04:55:12.270Z"
+}
