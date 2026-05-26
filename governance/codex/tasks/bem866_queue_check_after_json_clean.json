@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_queue_check_after_json_clean",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 queue check after clean",
+  "objective": "Run script:\n\"\"\"\nqueue = Path('governance/workflow_dispatch_queue/bem865_claude_write_selftest.json')\nprocessed = Path('governance/workflow_dispatch_processed/bem865_claude_write_selftest.json')\nresult_file = Path('governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json')\nresponse = Path('governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md')\ntext = response.read_text(encoding='utf-8') if response.exists() else ''\nok = 'Status: CLAUDE_WRITE_OK' in [line.strip() for line in text.splitlines()]\nresult_text = result_file.read_text(encoding='utf-8') if result_file.exists() else ''\nif ok:\n    status = 'CLAUDE_WRITE_OK'\nelif result_file.exists() and 'DISPATCHED' in result_text:\n    status = 'DISPATCHED_WAITING_CLAUDE_WRITE'\nelif result_file.exists() and 'DISPATCH_FAILED' in result_text:\n    status = 'DISPATCH_FAILED'\nelif processed.exists():\n    status = 'QUEUE_PROCESSED_NO_RESULT_FILE'\nelif queue.exists():\n    status = 'QUEUE_STILL_PENDING_AFTER_JSON_CLEAN'\nelse:\n    status = 'QUEUE_MISSING'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_QUEUE_CHECK_AFTER_JSON_CLEAN_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 queue check after JSON clean\\nStatus: ' + status + '\\nQueue exists: ' + str(queue.exists()) + '\\nProcessed exists: ' + str(processed.exists()) + '\\nResult file exists: ' + str(result_file.exists()) + '\\nClaude write OK: ' + str(ok) + '\\nResult text prefix:\\n' + result_text[:2000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('queue check after JSON clean: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_queue_check_after_json_clean.md",
+    "result_json": "governance/codex/results/bem866_queue_check_after_json_clean.json"
+  },
+  "created_at": "2026-05-26T05:01:53.451Z"
+}
