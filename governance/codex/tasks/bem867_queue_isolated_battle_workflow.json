@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_queue_isolated_battle_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-867 queue isolated battle",
+  "objective": "Run script:\n\"\"\"\nq = Path('governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json')\np = Path('governance/workflow_dispatch_processed/bem867_battle_audit_mailbox.json')\nr = Path('governance/workflow_dispatch_results/bem867_battle_audit_mailbox_result.json')\nmail = Path('governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md')\nq.parent.mkdir(parents=True, exist_ok=True)\nif p.exists():\n    p.unlink()\nif r.exists():\n    r.unlink()\nmail.parent.mkdir(parents=True, exist_ok=True)\nmail.write_text('# BEM-867 INTERNAL AUDITOR RESPONSE\\nStatus: PENDING_INTERNAL_AUDITOR_RESPONSE\\n', encoding='utf-8')\ndata = {\n    'workflow': 'claude_battle_audit_bem867.yml',\n    'ref': 'main',\n    'inputs': {\n        'trace_id': 'bem867_battle_audit_mailbox'\n    }\n}\nq.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM867_QUEUE_ISOLATED_BATTLE_WORKFLOW.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-867 queue isolated battle workflow\\nStatus: LIVE_QUEUE_RESTORED\\nWorkflow: claude_battle_audit_bem867.yml\\nMailbox reset: PENDING_INTERNAL_AUDITOR_RESPONSE\\n', encoding='utf-8')\nchanged_files.append(str(q))\nchanged_files.append(str(mail))\nchanged_files.append(str(marker))\nops_applied.append('BEM867 retargeted queue to isolated battle workflow')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_queue_isolated_battle_workflow.md",
+    "result_json": "governance/codex/results/bem867_queue_isolated_battle_workflow.json"
+  },
+  "created_at": "2026-05-26T10:37:45.537Z"
+}
