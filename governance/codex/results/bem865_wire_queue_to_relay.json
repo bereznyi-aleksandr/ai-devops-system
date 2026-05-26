@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_wire_queue_to_relay",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "relay loop now detects workflow dispatch queue pending state",
+    "custom_script"
+  ],
+  "changed_files": [
+    "tools/gpt-autonomy-relay/relay_watch.py",
+    "governance/codex/proofs/bem865_wire_queue_to_relay.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem865_wire_queue_to_relay.md",
+  "completed_at": "2026-05-26T03:41:09Z"
+}

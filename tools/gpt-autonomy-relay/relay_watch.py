@@ -15,6 +15,8 @@ EVENTS = ROOT / "governance/events/gpt_autonomy_relay_watch.jsonl"
 STATE = ROOT / "governance/state/gpt_relay_watch_state.json"
 RELAY = ROOT / "tools/gpt-autonomy-relay/relay.py"
 MAILBOX_POLL = ROOT / "tools/gpt-autonomy-relay/mailbox_poll.py"
+WORKFLOW_QUEUE = ROOT / "governance/workflow_dispatch_queue"
+WORKFLOW_QUEUE_STATE = ROOT / "governance/runtime/curator_dispatch/BEM865_WORKFLOW_QUEUE_WAKEUP.md"
 CURATOR_DISPATCH = ROOT / "tools/gpt-autonomy-relay/curator_claude_dispatch.py"
 
 def now():
@@ -38,6 +40,13 @@ def next_action():
     INBOX.mkdir(parents=True, exist_ok=True)
     files = sorted(INBOX.glob("*.json"))
     return files[0] if files else None
+
+def note_workflow_queue():
+    WORKFLOW_QUEUE.mkdir(parents=True, exist_ok=True)
+    files = sorted(WORKFLOW_QUEUE.glob("*.json"))
+    if files:
+        WORKFLOW_QUEUE_STATE.parent.mkdir(parents=True, exist_ok=True)
+        WORKFLOW_QUEUE_STATE.write_text("# BEM-865 workflow queue wakeup\nStatus: QUEUE_PENDING_WAKE_WORKFLOW_DISPATCH_RUNNER\nPending: " + str(len(files)) + "\n", encoding="utf-8")
 
 def dispatch_curator():
     if CURATOR_DISPATCH.exists():
@@ -83,6 +92,7 @@ def main():
     state("idle")
     event({"event": "GPT_RELAY_WATCH_STARTED", "mode": "loop" if args.loop else "once", "interval": args.interval})
     while True:
+        note_workflow_queue()
         dispatch_curator()
         poll_mailbox()
         path = next_action()
