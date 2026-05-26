@@ -1,0 +1,49 @@
+name: workflow_dispatch_queue_runner
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  dispatch-queue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GITHUB_TOKEN }}
+      - uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const queueDir = 'governance/workflow_dispatch_queue';
+            const processedDir = 'governance/workflow_dispatch_processed';
+            const resultsDir = 'governance/workflow_dispatch_results';
+            fs.mkdirSync(queueDir, { recursive: true });
+            fs.mkdirSync(processedDir, { recursive: true });
+            fs.mkdirSync(resultsDir, { recursive: true });
+            const files = fs.readdirSync(queueDir).filter(f => f.endsWith('.json')).sort();
+            for (const file of files) {
+              const full = path.join(queueDir, file);
+              const raw = fs.readFileSync(full, 'utf8');
+              const item = JSON.parse(raw);
+              const workflow_id = item.workflow;
+              const ref = item.ref || 'main';
+              const inputs = item.inputs || {};
+              await github.rest.actions.createWorkflowDispatch({ owner: context.repo.owner, repo: context.repo.repo, workflow_id, ref, inputs });
+              fs.writeFileSync(path.join(resultsDir, file.replace(/\.json$/, '_result.json')), JSON.stringify({status:'DISPATCHED', workflow_id, ref, inputs, dispatched_at: new Date().toISOString()}, null, 2));
+              fs.renameSync(full, path.join(processedDir, file));
+            }
+      - name: Commit dispatch state
+        run: |
+          git config user.name "ai-devops-system"
+          git config user.email "actions@users.noreply.github.com"
+          git add governance/workflow_dispatch_queue governance/workflow_dispatch_processed governance/workflow_dispatch_results || true
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM-865 process workflow dispatch queue"
+            git push
+          fi

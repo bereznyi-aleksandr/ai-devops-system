@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_repair_queue_runner",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "repaired workflow_dispatch_queue_runner.yml",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/workflow_dispatch_queue_runner.yml",
+    "governance/codex/proofs/bem865_repair_queue_runner.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem865_repair_queue_runner.md",
+  "completed_at": "2026-05-26T03:39:59Z"
+}
