@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_relay_process_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "relay processes workflow dispatch queue with gh workflow run",
+    "custom_script"
+  ],
+  "changed_files": [
+    "tools/gpt-autonomy-relay/relay_watch.py",
+    "governance/codex/proofs/bem865_relay_process_queue.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem865_relay_process_queue.md",
+  "completed_at": "2026-05-26T03:42:20Z"
+}

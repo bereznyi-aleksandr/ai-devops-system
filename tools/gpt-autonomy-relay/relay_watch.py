@@ -17,6 +17,8 @@ RELAY = ROOT / "tools/gpt-autonomy-relay/relay.py"
 MAILBOX_POLL = ROOT / "tools/gpt-autonomy-relay/mailbox_poll.py"
 WORKFLOW_QUEUE = ROOT / "governance/workflow_dispatch_queue"
 WORKFLOW_QUEUE_STATE = ROOT / "governance/runtime/curator_dispatch/BEM865_WORKFLOW_QUEUE_WAKEUP.md"
+WORKFLOW_PROCESSED = ROOT / "governance/workflow_dispatch_processed"
+WORKFLOW_RESULTS = ROOT / "governance/workflow_dispatch_results"
 CURATOR_DISPATCH = ROOT / "tools/gpt-autonomy-relay/curator_claude_dispatch.py"
 
 def now():
@@ -40,6 +42,23 @@ def next_action():
     INBOX.mkdir(parents=True, exist_ok=True)
     files = sorted(INBOX.glob("*.json"))
     return files[0] if files else None
+
+def process_workflow_queue():
+    WORKFLOW_QUEUE.mkdir(parents=True, exist_ok=True)
+    WORKFLOW_PROCESSED.mkdir(parents=True, exist_ok=True)
+    WORKFLOW_RESULTS.mkdir(parents=True, exist_ok=True)
+    for item in sorted(WORKFLOW_QUEUE.glob("*.json")):
+        data = json.loads(item.read_text(encoding="utf-8"))
+        workflow = data.get("workflow")
+        ref = data.get("ref", "main")
+        inputs = data.get("inputs", {})
+        if not workflow:
+            continue
+        flags = " ".join([f"-f {k}={v}" for k, v in inputs.items()])
+        run(f"gh workflow run {workflow} --ref {ref} {flags}")
+        result = WORKFLOW_RESULTS / item.name.replace(".json", "_result.json")
+        result.write_text(json.dumps({"status": "DISPATCHED", "workflow": workflow, "ref": ref, "inputs": inputs, "source": str(item)}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        shutil.move(str(item), str(WORKFLOW_PROCESSED / item.name))
 
 def note_workflow_queue():
     WORKFLOW_QUEUE.mkdir(parents=True, exist_ok=True)
@@ -92,6 +111,7 @@ def main():
     state("idle")
     event({"event": "GPT_RELAY_WATCH_STARTED", "mode": "loop" if args.loop else "once", "interval": args.interval})
     while True:
+        process_workflow_queue()
         note_workflow_queue()
         dispatch_curator()
         poll_mailbox()
