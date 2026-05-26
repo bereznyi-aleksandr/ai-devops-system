@@ -1,5 +1,5 @@
 {
-  "status": "DISPATCHED",
+  "status": "DISPATCH_FAILED",
   "workflow": "claude.yml",
   "ref": "main",
   "inputs": {
@@ -8,11 +8,11 @@
     "trace_id": "bem865_claude_write_selftest",
     "cycle_id": "bem865",
     "task_type": "audit_write_selftest",
-    "task": "BEM-865 Claude write selftest. Read governance/tasks/pending/CLAUDE_WRITE_SELFTEST_BEM865.md. Write governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md with exactly: Status: CLAUDE_WRITE_OK. No issue comments."
+    "task": "BEM-865 Claude write selftest after claude.yml patch. Write mailbox response with Status: CLAUDE_WRITE_OK. No issue comments."
   },
-  "returncode": 0,
-  "stdout": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26439375304\n",
-  "stderr": "",
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "could not create workflow dispatch event: HTTP 422: Workflow does not have 'workflow_dispatch' trigger (https://api.github.com/repos/bereznyi-aleksandr/ai-devops-system/actions/workflows/267324796/dispatches)\n",
   "cmd": [
     "gh",
     "workflow",
@@ -31,6 +31,6 @@
     "-f",
     "task_type=audit_write_selftest",
     "-f",
-    "task=BEM-865 Claude write selftest. Read governance/tasks/pending/CLAUDE_WRITE_SELFTEST_BEM865.md. Write governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md with exactly: Status: CLAUDE_WRITE_OK. No issue comments."
+    "task=BEM-865 Claude write selftest after claude.yml patch. Write mailbox response with Status: CLAUDE_WRITE_OK. No issue comments."
   ]
 }
