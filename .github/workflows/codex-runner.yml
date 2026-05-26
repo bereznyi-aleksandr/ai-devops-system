@@ -429,7 +429,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: |
-          python3 scripts/process_workflow_dispatch_queue.py
+          mkdir -p governance/runtime/curator_dispatch
+          echo "# BEM-866 queue step inline heartbeat" > governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md
+          echo "Status: STARTED" >> governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md
+          python3 scripts/process_workflow_dispatch_queue.py || echo "PROCESSOR_FAILED" >> governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md
+          echo "Status_after: FINISHED" >> governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md
 
       - name: Commit and push everything
         if: always()

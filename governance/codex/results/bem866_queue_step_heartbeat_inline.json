@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_queue_step_heartbeat_inline",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "patched queue step with inline heartbeat and non-fatal processor",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    "governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT_PATCHED.md",
+    "governance/codex/proofs/bem866_queue_step_heartbeat_inline.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_queue_step_heartbeat_inline.md",
+  "completed_at": "2026-05-26T04:52:26Z"
+}
