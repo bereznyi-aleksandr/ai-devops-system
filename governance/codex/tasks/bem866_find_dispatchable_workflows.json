@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_find_dispatchable_workflows",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 find dispatchable workflows",
+  "objective": "Run script:\n\"\"\"\noutdir = Path('governance/runtime/curator_dispatch/bem866_dispatchable_candidates')\noutdir.mkdir(parents=True, exist_ok=True)\ncount = 0\nfor root in ['governance/workflow_dispatch_results', 'governance/codex/results', 'governance/runtime/curator_dispatch', '.github/workflows']:\n    base = Path(root)\n    if not base.exists():\n        continue\n    for f in base.rglob('*'):\n        if count >= 100:\n            break\n        if f.is_file() and f.suffix.lower() in ['.json', '.md', '.yml', '.yaml', '.txt']:\n            text = f.read_text(encoding='utf-8', errors='ignore')[:50000]\n            low = text.lower()\n            if ('workflow_dispatch' in low or 'workflow' in low) and ('dispatched' in low or 'workflow_dispatch:' in low or 'workflow_dispatch_status' in low):\n                safe = ''.join(ch if ch.isalnum() else '_' for ch in str(f))[:140]\n                marker = outdir / (str(count).zfill(3) + '_' + safe + '.md')\n                flags = []\n                for tok in ['DISPATCHED', 'workflow_dispatch:', 'workflow_dispatch_status', 'workflow:', 'claude', 'auditor', 'curator']:\n                    if tok.lower() in low:\n                        flags.append(tok)\n                marker.write_text('# BEM-866 dispatchable candidate\\nPath: ' + str(f) + '\\nFlags: ' + ', '.join(flags) + '\\n', encoding='utf-8')\n                changed_files.append(str(marker))\n                count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM866_DISPATCHABLE_CANDIDATES_INDEX.md')\nsummary.write_text('# BEM-866 dispatchable candidates\\nCount: ' + str(count) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('dispatchable workflow candidates scanned: ' + str(count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_find_dispatchable_workflows.md",
+    "result_json": "governance/codex/results/bem866_find_dispatchable_workflows.json"
+  },
+  "created_at": "2026-05-26T08:27:37.080Z"
+}
