@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_wakeup_after_log_patch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-867 wakeup after log patch",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM867_WAKEUP_AFTER_LOG_PATCH.md with content # BEM-867 wakeup after log patch\nStatus: WAKEUP_AFTER_QUEUE_PROCESSOR_LOG_PATCH\nQueue: governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_wakeup_after_log_patch.md",
+    "result_json": "governance/codex/results/bem867_wakeup_after_log_patch.json"
+  },
+  "created_at": "2026-05-26T09:41:31.668Z"
+}
