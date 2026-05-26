@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_claude_write_diag",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-865 Claude write diag",
+  "objective": "Run script:\n\"\"\"\nbase = Path('.')\nreport = Path('governance/runtime/curator_dispatch/BEM865_CLAUDE_WRITE_CAPABILITY_DIAG.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nresponse = Path('governance/audit/mailbox/from_claude/BEM859_PROTOCOL_ALIGNMENT_RESPONSE.md')\nclaude_task = Path('governance/tasks/pending/CLAUDE_INTERNAL_AUDIT_BEM859.md')\nfinals = ['APPROVED', 'APPROVED_WITH_AMENDMENTS', 'BLOCKED_WITH_REASON']\nresponse_text = response.read_text(encoding='utf-8') if response.exists() else ''\nfinal_status = None\nfor s in finals:\n    if s in response_text and 'PENDING_CLAUDE_RESPONSE' not in response_text:\n        final_status = s\n        break\ncandidates = []\nfor root in ['.github/workflows', 'tools', 'scripts', 'governance']:\n    p = Path(root)\n    if not p.exists():\n        continue\n    for f in p.rglob('*'):\n        if f.is_file() and f.suffix.lower() in ['.py', '.yml', '.yaml', '.ts', '.js', '.md', '.json']:\n            name = str(f)\n            text = f.read_text(encoding='utf-8', errors='ignore')[:20000]\n            low = (name + '\\n' + text).lower()\n            if 'claude' in low or 'anthropic' in low or 'from_claude' in low or 'claude_internal_audit' in low:\n                candidates.append(name)\nwriter_files = []\nfor name in candidates:\n    text = Path(name).read_text(encoding='utf-8', errors='ignore')[:50000]\n    low = text.lower()\n    if 'from_claude' in low and ('write_text' in low or 'contents/' in low or 'create file' in low or 'append' in low or 'git commit' in low or 'push' in low):\n        writer_files.append(name)\nstatus = 'FINAL_ALREADY_PRESENT' if final_status else ('WRITER_FOUND_WAITING' if writer_files else 'BLOCKED_NO_CLAUDE_WRITER')\nmarker = Path('governance/runtime/curator_dispatch/BEM865_' + status + '.md')\nmarker.write_text('# BEM-865 Claude write capability\\nStatus: ' + status + '\\nFinal status: ' + str(final_status) + '\\nResponse mailbox exists: ' + str(response.exists()) + '\\nClaude task exists: ' + str(claude_task.exists()) + '\\nWriter files:\\n' + '\\n'.join('- ' + x for x in writer_files) + '\\nCandidates:\\n' + '\\n'.join('- ' + x for x in candidates[:50]) + '\\n', encoding='utf-8')\nreport.write_text(marker.read_text(encoding='utf-8'), encoding='utf-8')\nchanged_files.append(str(report))\nchanged_files.append(str(marker))\nops_applied.append('Claude write capability diagnosis: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_claude_write_diag.md",
+    "result_json": "governance/codex/results/bem865_claude_write_diag.json"
+  },
+  "created_at": "2026-05-26T03:20:40.836Z"
+}
