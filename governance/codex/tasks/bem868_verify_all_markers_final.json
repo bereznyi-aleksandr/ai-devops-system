@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem868_verify_all_markers_final",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-868 verify all markers",
+  "objective": "Run script:\n\"\"\"\nctx = Path('governance/AGENT_CONTEXT.md')\ntext = ctx.read_text(encoding='utf-8', errors='ignore') if ctx.exists() else ''\nneedles = ['BEM-867 completed', 'BEM-868 | Dispatch channel recovered', 'APPROVED_WITH_NOTES', 'Next: continue roadmap from AGENT_CONTEXT.md']\nstatus = 'CONTEXT_SYNCED' if all(n in text for n in needles) else 'CONTEXT_INCOMPLETE'\nmarker = Path('governance/runtime/curator_dispatch/BEM868_VERIFY_ALL_MARKERS_FINAL_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-868 verify all markers final\\nStatus: ' + status + '\\n' + '\\n'.join('- ' + n + ': ' + str(n in text) for n in needles) + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM868 verify all markers final: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem868_verify_all_markers_final.md",
+    "result_json": "governance/codex/results/bem868_verify_all_markers_final.json"
+  },
+  "created_at": "2026-05-26T13:20:59.567Z"
+}
