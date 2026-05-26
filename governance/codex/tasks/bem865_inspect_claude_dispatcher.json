@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_inspect_claude_dispatcher",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-865 inspect Claude dispatcher",
+  "objective": "Run script:\n\"\"\"\nwf = Path('.github/workflows/claude_internal_auditor_dispatcher.yml')\ntext = wf.read_text(encoding='utf-8') if wf.exists() else ''\nout = Path('governance/runtime/curator_dispatch/BEM865_CLAUDE_DISPATCHER_WORKFLOW_INSPECTION.md')\nout.parent.mkdir(parents=True, exist_ok=True)\nkeys = ['workflow_dispatch', 'inputs', 'trace_id', 'task', 'mailbox', 'from_claude', 'CLAUDE', 'ANTHROPIC', 'gh workflow run', 'actions/checkout']\nfound = []\nfor k in keys:\n    if k.lower() in text.lower():\n        found.append(k)\nlines = text.splitlines()\ninteresting = []\nfor i, line in enumerate(lines, 1):\n    low = line.lower()\n    if any(k.lower() in low for k in keys):\n        interesting.append(str(i) + ': ' + line)\nout.write_text('# BEM-865 Claude dispatcher workflow inspection\\nExists: ' + str(wf.exists()) + '\\nFound keys: ' + ', '.join(found) + '\\n\\n## Interesting lines\\n' + '\\n'.join(interesting[:120]) + '\\n', encoding='utf-8')\nstatus = 'WORKFLOW_EXISTS' if wf.exists() else 'WORKFLOW_MISSING'\nmarker = Path('governance/runtime/curator_dispatch/BEM865_' + status + '_CLAUDE_DISPATCHER.md')\nmarker.write_text(out.read_text(encoding='utf-8'), encoding='utf-8')\nchanged_files.append(str(out))\nchanged_files.append(str(marker))\nops_applied.append('inspected claude_internal_auditor_dispatcher workflow')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_inspect_claude_dispatcher.md",
+    "result_json": "governance/codex/results/bem865_inspect_claude_dispatcher.json"
+  },
+  "created_at": "2026-05-26T03:30:16.481Z"
+}
