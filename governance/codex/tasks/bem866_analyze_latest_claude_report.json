@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_analyze_latest_claude_report",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 analyze latest Claude report",
+  "objective": "Run script:\n\"\"\"\nreport = Path('governance/reports/bem865_claude_write_selftest.md')\nresponse = Path('governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md')\nreport_text = report.read_text(encoding='utf-8', errors='ignore') if report.exists() else ''\nresponse_text = response.read_text(encoding='utf-8') if response.exists() else ''\nlow = report_text.lower()\nok = 'Status: CLAUDE_WRITE_OK' in [line.strip() for line in response_text.splitlines()]\nif ok:\n    status = 'MAILBOX_WRITE_CONFIRMED'\nelif not report.exists():\n    status = 'REPORT_MISSING'\nelif 'changed_files: none' in low or 'changed files: none' in low:\n    status = 'REPORT_CHANGED_FILES_NONE'\nelif 'bem865_claude_write_selftest_response' in low and 'claude_write_ok' in low:\n    status = 'REPORT_HAS_MAILBOX_TOKEN'\nelif 'success' in low:\n    status = 'REPORT_SUCCESS_NO_MAILBOX'\nelse:\n    status = 'REPORT_UNCLEAR'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_LATEST_CLAUDE_REPORT_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 latest Claude report analysis\\nStatus: ' + status + '\\nReport exists: ' + str(report.exists()) + '\\nMailbox OK: ' + str(ok) + '\\n\\nReport text:\\n' + report_text[:4000] + '\\n\\nMailbox text:\\n' + response_text[:2000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('latest Claude report analysis: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_analyze_latest_claude_report.md",
+    "result_json": "governance/codex/results/bem866_analyze_latest_claude_report.json"
+  },
+  "created_at": "2026-05-26T08:18:40.257Z"
+}
