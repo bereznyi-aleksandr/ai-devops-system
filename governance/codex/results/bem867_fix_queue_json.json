@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_fix_queue_json",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM867 queue JSON fixed with json.dumps",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json",
+    "governance/runtime/curator_dispatch/BEM867_QUEUE_JSON_FIXED.md",
+    "governance/codex/proofs/bem867_fix_queue_json.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_fix_queue_json.md",
+  "completed_at": "2026-05-26T10:13:10Z"
+}
