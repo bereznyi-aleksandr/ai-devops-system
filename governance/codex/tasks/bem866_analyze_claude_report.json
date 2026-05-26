@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_analyze_claude_report",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 analyze Claude report",
+  "objective": "Run script:\n\"\"\"\nreport = Path('governance/reports/bem865_claude_write_selftest.md')\nmailbox = Path('governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md')\nreport_text = report.read_text(encoding='utf-8', errors='ignore') if report.exists() else ''\nmailbox_text = mailbox.read_text(encoding='utf-8', errors='ignore') if mailbox.exists() else ''\nlow = report_text.lower()\nmail_lines = [line.strip() for line in mailbox_text.splitlines()]\nmail_ok = 'Status: CLAUDE_WRITE_OK' in mail_lines\nif mail_ok:\n    status = 'MAILBOX_WRITE_CONFIRMED'\nelif not report.exists():\n    status = 'CLAUDE_REPORT_MISSING'\nelif 'error' in low or 'failed' in low or 'failure' in low:\n    status = 'CLAUDE_REPORT_ERROR'\nelif 'claude_write_ok' in low:\n    status = 'REPORT_HAS_TOKEN_MAILBOX_MISSING'\nelif 'bem865_claude_write_selftest_response' in low or 'from_claude' in low:\n    status = 'REPORT_MENTIONS_MAILBOX_NO_WRITE'\nelse:\n    status = 'REPORT_EXISTS_NO_MAILBOX_WRITE'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_CLAUDE_REPORT_ANALYSIS_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 Claude report analysis\\nStatus: ' + status + '\\nReport exists: ' + str(report.exists()) + '\\nMailbox OK: ' + str(mail_ok) + '\\n\\nReport prefix:\\n' + report_text[:4000] + '\\n\\nMailbox prefix:\\n' + mailbox_text[:1000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('Claude report analysis: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_analyze_claude_report.md",
+    "result_json": "governance/codex/results/bem866_analyze_claude_report.json"
+  },
+  "created_at": "2026-05-26T07:52:32.503Z"
+}
