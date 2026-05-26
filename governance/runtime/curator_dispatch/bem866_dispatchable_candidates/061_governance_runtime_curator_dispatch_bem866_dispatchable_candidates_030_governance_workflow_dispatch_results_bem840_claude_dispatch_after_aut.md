@@ -1,0 +1,3 @@
+# BEM-866 dispatchable candidate
+Path: governance/runtime/curator_dispatch/bem866_dispatchable_candidates/030_governance_workflow_dispatch_results_bem840_claude_dispatch_after_auth_fix_result_json.md
+Flags: DISPATCHED, claude, auditor

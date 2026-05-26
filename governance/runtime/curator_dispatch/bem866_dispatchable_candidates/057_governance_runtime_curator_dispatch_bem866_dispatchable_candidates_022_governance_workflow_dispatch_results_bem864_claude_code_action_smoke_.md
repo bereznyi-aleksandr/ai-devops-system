@@ -1,0 +1,3 @@
+# BEM-866 dispatchable candidate
+Path: governance/runtime/curator_dispatch/bem866_dispatchable_candidates/022_governance_workflow_dispatch_results_bem864_claude_code_action_smoke_dispatch_result_json.md
+Flags: DISPATCHED, claude

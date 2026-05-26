@@ -1,0 +1,3 @@
+# BEM-866 dispatchable candidate
+Path: governance/runtime/curator_dispatch/bem866_dispatchable_candidates/042_governance_runtime_curator_dispatch_BEM866_WORKFLOW_PRESENCE_WORKFLOW_FILE_OK_md.md
+Flags: workflow_dispatch:, claude, auditor, curator
