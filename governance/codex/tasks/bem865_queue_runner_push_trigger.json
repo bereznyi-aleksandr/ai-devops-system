@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_queue_runner_push_trigger",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-865 queue runner push trigger",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/workflow_dispatch_queue_runner.yml')\ntext = p.read_text(encoding='utf-8')\nif 'governance/workflow_dispatch_queue/**' not in text:\n    text = text.replace('on:\\n  workflow_dispatch:', 'on:\\n  workflow_dispatch:\\n  push:\\n    paths:\\n      - \"governance/workflow_dispatch_queue/**\"')\np.write_text(text, encoding='utf-8')\nq = Path('governance/workflow_dispatch_queue/bem865_claude_write_selftest.json')\nif q.exists():\n    data = q.read_text(encoding='utf-8')\n    q.write_text(data.rstrip() + '\\n', encoding='utf-8')\nchanged_files.append(str(p))\nif q.exists():\n    changed_files.append(str(q))\nops_applied.append('added push path trigger for workflow dispatch queue and touched BEM865 queue file')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_queue_runner_push_trigger.md",
+    "result_json": "governance/codex/results/bem865_queue_runner_push_trigger.json"
+  },
+  "created_at": "2026-05-26T03:45:42.013Z"
+}
