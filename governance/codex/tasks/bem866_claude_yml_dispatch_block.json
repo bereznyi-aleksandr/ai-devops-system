@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_claude_yml_dispatch_block",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 claude dispatch block",
+  "objective": "Run script:\n\"\"\"\nf = Path('.github/workflows/claude.yml')\ntext = f.read_text(encoding='utf-8', errors='ignore') if f.exists() else ''\nlines = text.splitlines()\noutdir = Path('governance/runtime/curator_dispatch/bem866_claude_yml_dispatch_block')\noutdir.mkdir(parents=True, exist_ok=True)\n# Mark first 80 lines and lines containing dispatch/input-related tokens.\ncount = 0\nfor i, line in enumerate(lines[:120], 1):\n    low = line.lower()\n    if i <= 60 or any(tok in low for tok in ['workflow_dispatch', 'inputs:', 'trace', 'task', 'role', 'cycle', 'provider']):\n        safe = ''.join(ch if ch.isalnum() else '_' for ch in line.strip())[:120] or 'blank'\n        marker = outdir / (str(i).zfill(4) + '_' + safe + '.md')\n        marker.write_text('# claude.yml dispatch block line\\nLine: ' + str(i) + '\\nText: ' + line + '\\n', encoding='utf-8')\n        changed_files.append(str(marker))\n        count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM866_CLAUDE_YML_DISPATCH_BLOCK_INDEX.md')\nsummary.write_text('# BEM-866 claude.yml dispatch block\\nLines marked: ' + str(count) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('marked claude.yml dispatch block lines: ' + str(count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_claude_yml_dispatch_block.md",
+    "result_json": "governance/codex/results/bem866_claude_yml_dispatch_block.json"
+  },
+  "created_at": "2026-05-26T07:44:44.206Z"
+}
