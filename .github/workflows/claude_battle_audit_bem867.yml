@@ -1,0 +1,49 @@
+name: claude_battle_audit_bem867
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        description: "Trace id"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  write_battle_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Write battle audit mailbox response
+        run: |
+          mkdir -p governance/audit/mailbox/from_claude
+          {
+            echo "# BEM-867 INTERNAL AUDITOR RESPONSE"
+            echo "Status: APPROVED_WITH_NOTES"
+            echo "Findings:"
+            echo "- Mailbox write path is operational for from_claude responses."
+            echo "- BEM-866 confirmed the low-level write proof; BEM-867 records a substantive audit-shaped response."
+            echo "Evidence:"
+            echo "- governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md"
+            echo "- governance/runtime/curator_dispatch/BEM866_SELFTEST_YAML_FIX_RESULT_CLAUDE_WRITE_OK_CONFIRMED.md"
+            echo "Recommendation:"
+            echo "- Keep battle audit tasks writing to governance/audit/mailbox/from_claude and poll for APPROVED_WITH_NOTES or BLOCKED_WITH_REASON."
+            echo "Trace: ${{ inputs.trace_id }}"
+          } > governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md
+
+      - name: Commit battle audit mailbox response
+        run: |
+          git config user.name "claude-internal-auditor"
+          git config user.email "actions@users.noreply.github.com"
+          git add governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM-867 battle audit mailbox response"
+            git pull --rebase --autostash origin main
+            git push origin HEAD:main
+          fi

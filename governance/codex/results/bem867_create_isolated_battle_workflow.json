@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_create_isolated_battle_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "created isolated BEM867 battle audit mailbox workflow",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/claude_battle_audit_bem867.yml",
+    "governance/runtime/curator_dispatch/BEM867_ISOLATED_BATTLE_WORKFLOW_CREATED.md",
+    "governance/codex/proofs/bem867_create_isolated_battle_workflow.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_create_isolated_battle_workflow.md",
+  "completed_at": "2026-05-26T09:44:47Z"
+}
