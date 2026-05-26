@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_fix_claude_inputs",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-866 fix Claude inputs",
+  "objective": "Run script:\n\"\"\"\nq = Path('governance/workflow_dispatch_queue/bem865_claude_write_selftest.json')\np = Path('governance/workflow_dispatch_processed/bem865_claude_write_selftest.json')\nr = Path('governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json')\nq.parent.mkdir(parents=True, exist_ok=True)\nif p.exists():\n    p.unlink()\nif r.exists():\n    r.unlink()\ntask = (\n    'BEM-865 Claude write selftest. '\n    'Read governance/tasks/pending/CLAUDE_WRITE_SELFTEST_BEM865.md. '\n    'Write governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md with exactly: Status: CLAUDE_WRITE_OK. '\n    'No issue comments.'\n)\ndata = {\n    'workflow': 'claude.yml',\n    'ref': 'main',\n    'inputs': {\n        'role': 'auditor',\n        'provider': 'claude',\n        'trace_id': 'bem865_claude_write_selftest',\n        'cycle_id': 'bem865',\n        'task_type': 'audit_write_selftest',\n        'task': task\n    }\n}\nq.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM866_CLAUDE_INPUTS_FIXED.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 Claude inputs fixed\\nStatus: FIXED\\nInputs: role, provider, trace_id, cycle_id, task_type, task\\nRemoved invalid input: role_provider\\n', encoding='utf-8')\nchanged_files.append(str(q))\nchanged_files.append(str(marker))\nops_applied.append('fixed claude.yml inputs in BEM865 queue')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_fix_claude_inputs.md",
+    "result_json": "governance/codex/results/bem866_fix_claude_inputs.json"
+  },
+  "created_at": "2026-05-26T07:45:50.271Z"
+}
