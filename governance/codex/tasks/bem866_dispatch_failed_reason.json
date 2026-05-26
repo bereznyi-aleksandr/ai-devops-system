@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_dispatch_failed_reason",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 dispatch failed reason",
+  "objective": "Run script:\n\"\"\"\nresult = Path('governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json')\ntext = result.read_text(encoding='utf-8') if result.exists() else ''\nlow = text.lower()\nif not result.exists():\n    status = 'RESULT_MISSING'\nelif 'not found' in low or '404' in low:\n    status = 'WORKFLOW_NOT_FOUND'\nelif 'permissions' in low or '403' in low or 'resource not accessible' in low:\n    status = 'PERMISSION_DENIED'\nelif 'inputs' in low and ('unexpected' in low or 'invalid' in low):\n    status = 'INVALID_INPUTS'\nelif 'ref' in low and ('not found' in low or 'invalid' in low):\n    status = 'INVALID_REF'\nelif 'dispatch_failed' in low:\n    status = 'DISPATCH_FAILED_UNKNOWN'\nelif 'dispatched' in low:\n    status = 'DISPATCHED'\nelse:\n    status = 'UNKNOWN'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_DISPATCH_FAILED_REASON_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 dispatch failed reason\\nStatus: ' + status + '\\nResult exists: ' + str(result.exists()) + '\\n\\nResult text:\\n' + text[:3000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('dispatch failed reason: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_dispatch_failed_reason.md",
+    "result_json": "governance/codex/results/bem866_dispatch_failed_reason.json"
+  },
+  "created_at": "2026-05-26T07:24:43.216Z"
+}
