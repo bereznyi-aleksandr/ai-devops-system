@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_queue_runner_workflow_run",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-866 workflow_run queue runner",
+  "objective": "Run script:\n\"\"\"\nwf = Path('.github/workflows/workflow_dispatch_queue_runner.yml')\nwf.parent.mkdir(parents=True, exist_ok=True)\nwf.write_text('''name: workflow_dispatch_queue_runner\n\non:\n  workflow_dispatch:\n  workflow_run:\n    workflows: [\"codex-runner\"]\n    types:\n      - completed\n\npermissions:\n  contents: write\n  actions: write\n\njobs:\n  dispatch_queue:\n    runs-on: ubuntu-latest\n    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n        with:\n          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\n\n      - name: Dispatch queued workflows\n        uses: actions/github-script@v7\n        with:\n          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\n          script: |\n            const fs = require('fs');\n            const path = require('path');\n            const queueDir = 'governance/workflow_dispatch_queue';\n            const processedDir = 'governance/workflow_dispatch_processed';\n            const resultsDir = 'governance/workflow_dispatch_results';\n            fs.mkdirSync(queueDir, { recursive: true });\n            fs.mkdirSync(processedDir, { recursive: true });\n            fs.mkdirSync(resultsDir, { recursive: true });\n            const files = fs.readdirSync(queueDir).filter((f) => f.endsWith('.json')).sort();\n            for (const file of files) {\n              const full = path.join(queueDir, file);\n              const item = JSON.parse(fs.readFileSync(full, 'utf8'));\n              const workflow_id = item.workflow;\n              const ref = item.ref || 'main';\n              const inputs = item.inputs || {};\n              let status = 'DISPATCHED';\n              let error = null;\n              try {\n                await github.rest.actions.createWorkflowDispatch({ owner: context.repo.owner, repo: context.repo.repo, workflow_id, ref, inputs });\n              } catch (e) {\n                status = 'DISPATCH_FAILED';\n                error = String(e).slice(0, 1000);\n              }\n              fs.writeFileSync(path.join(resultsDir, file.replace(/\\\\.json$/, '_result.json')), JSON.stringify({ status, workflow_id, ref, inputs, error, dispatched_at: new Date().toISOString() }, null, 2));\n              fs.renameSync(full, path.join(processedDir, file));\n            }\n\n      - name: Commit dispatch state\n        run: |\n          git config user.name \"ai-devops-system\"\n          git config user.email \"actions@users.noreply.github.com\"\n          git add governance/workflow_dispatch_queue governance/workflow_dispatch_processed governance/workflow_dispatch_results || true\n          if ! git diff --cached --quiet; then\n            git commit -m \"BEM-866 process workflow dispatch queue\"\n            git pull --rebase --autostash origin main\n            git push origin HEAD:main\n          fi\n''', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM866_QUEUE_RUNNER_WORKFLOW_RUN.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 queue runner workflow_run\\nStatus: PATCHED\\nTrigger: workflow_run after codex-runner completed\\nNo schedule trigger.\\n', encoding='utf-8')\nchanged_files.append(str(wf))\nchanged_files.append(str(marker))\nops_applied.append('added workflow_run trigger to queue runner')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_queue_runner_workflow_run.md",
+    "result_json": "governance/codex/results/bem866_queue_runner_workflow_run.json"
+  },
+  "created_at": "2026-05-26T04:39:57.243Z"
+}
