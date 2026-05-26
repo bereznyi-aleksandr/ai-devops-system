@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_inspect_smoke_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 inspect smoke workflow",
+  "objective": "Run script:\n\"\"\"\nf = Path('.github/workflows/claude_code_action_smoke.yml')\ntext = f.read_text(encoding='utf-8', errors='ignore') if f.exists() else ''\nlines = text.splitlines()\noutdir = Path('governance/runtime/curator_dispatch/bem866_smoke_workflow_lines')\noutdir.mkdir(parents=True, exist_ok=True)\ncount = 0\nfor i, line in enumerate(lines, 1):\n    low = line.lower()\n    if i <= 120 or any(tok in low for tok in ['workflow_dispatch', 'inputs:', 'trace', 'task', 'mailbox', 'commit', 'push', 'from_claude', 'run:', 'uses:']):\n        safe = ''.join(ch if ch.isalnum() else '_' for ch in line.strip())[:140] or 'blank'\n        marker = outdir / (str(i).zfill(4) + '_' + safe + '.md')\n        marker.write_text('# BEM-866 smoke workflow line\\nLine: ' + str(i) + '\\nText: ' + line + '\\n', encoding='utf-8')\n        changed_files.append(str(marker))\n        count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM866_SMOKE_WORKFLOW_LINES_INDEX.md')\nsummary.write_text('# BEM-866 smoke workflow lines\\nExists: ' + str(f.exists()) + '\\nLines marked: ' + str(count) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('inspected claude_code_action_smoke workflow lines: ' + str(count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_inspect_smoke_workflow.md",
+    "result_json": "governance/codex/results/bem866_inspect_smoke_workflow.json"
+  },
+  "created_at": "2026-05-26T08:29:56.621Z"
+}
