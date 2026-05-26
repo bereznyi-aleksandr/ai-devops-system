@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_inspect_processor_script",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 inspect processor script",
+  "objective": "Run script:\n\"\"\"\ns = Path('scripts/process_workflow_dispatch_queue.py')\ntext = s.read_text(encoding='utf-8') if s.exists() else ''\nchecks = {\n    'exists': s.exists(),\n    'has_import_subprocess': 'import subprocess' in text,\n    'has_import_SUBPROC': 'import SUBPROC' in text,\n    'has_gh_workflow_run': 'gh workflow run' in text,\n    'has_try_except': 'except Exception as exc' in text,\n    'has_commit_state': 'def commit_state()' in text,\n    'has_git_push': 'git push' in text,\n}\nstatus = 'OK' if checks['exists'] and checks['has_import_subprocess'] and checks['has_gh_workflow_run'] and checks['has_try_except'] else 'BAD'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_PROCESSOR_SCRIPT_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 processor script inspection\\nStatus: ' + status + '\\n' + '\\n'.join('- ' + k + ': ' + str(v) for k,v in checks.items()) + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('processor script inspection: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_inspect_processor_script.md",
+    "result_json": "governance/codex/results/bem866_inspect_processor_script.json"
+  },
+  "created_at": "2026-05-26T04:43:08.767Z"
+}
