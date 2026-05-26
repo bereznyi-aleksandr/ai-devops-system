@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_validate_all_queue_json",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM867 queue JSON validation: BAD_JSON_FOUND",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/bem867_queue_json_validation/BAD_bem867_battle_audit_mailbox_json.md",
+    "governance/runtime/curator_dispatch/BEM867_QUEUE_JSON_VALIDATION_BAD_JSON_FOUND.md",
+    "governance/codex/proofs/bem867_validate_all_queue_json.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_validate_all_queue_json.md",
+  "completed_at": "2026-05-26T10:11:29Z"
+}
