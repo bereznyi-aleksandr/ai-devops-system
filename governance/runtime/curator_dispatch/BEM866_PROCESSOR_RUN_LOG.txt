@@ -1,17 +1,23 @@
-Traceback (most recent call last):
-  File "/home/runner/work/ai-devops-system/ai-devops-system/scripts/process_workflow_dispatch_queue.py", line 55, in <module>
-    raise SystemExit(main())
-                     ^^^^^^
-  File "/home/runner/work/ai-devops-system/ai-devops-system/scripts/process_workflow_dispatch_queue.py", line 34, in main
-    data = json.loads(item.read_text(encoding="utf-8"))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
-    return _default_decoder.decode(s)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
-    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/json/decoder.py", line 353, in raw_decode
-    obj, end = self.scan_once(s, idx)
-               ^^^^^^^^^^^^^^^^^^^^^^
-json.decoder.JSONDecodeError: Invalid control character at: line 1 column 48 (char 47)
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433255802
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433256574
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433257377
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433258193
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433259037
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433259662
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433260445
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433261264
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433261974
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433262682
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433263409
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433264115
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433264893
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433265634
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433266413
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433267120
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433267902
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433268590
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433269266
+HTTP 404: workflow claude_internal_auditor_dispatcher.yml not found on the default branch (https://api.github.com/repos/bereznyi-aleksandr/ai-devops-system/actions/workflows/claude_internal_auditor_dispatcher.yml)
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433270091
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433270781
+https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433271444
