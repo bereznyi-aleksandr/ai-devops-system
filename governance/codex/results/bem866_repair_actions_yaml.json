@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_repair_actions_yaml",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "repaired Actions YAML and token expressions",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    ".github/workflows/workflow_dispatch_queue_runner.yml",
+    "governance/runtime/curator_dispatch/BEM866_ACTIONS_YAML_REPAIRED.md",
+    "governance/codex/proofs/bem866_repair_actions_yaml.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_repair_actions_yaml.md",
+  "completed_at": "2026-05-26T04:13:40Z"
+}

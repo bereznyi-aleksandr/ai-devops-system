@@ -11,15 +11,18 @@ permissions:
   actions: write
 
 jobs:
-  dispatch-queue:
+  dispatch_queue:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-      - uses: actions/github-script@v7
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Dispatch queued workflows
+        uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           script: |
             const fs = require('fs');
             const path = require('path');
@@ -29,7 +32,7 @@ jobs:
             fs.mkdirSync(queueDir, { recursive: true });
             fs.mkdirSync(processedDir, { recursive: true });
             fs.mkdirSync(resultsDir, { recursive: true });
-            const files = fs.readdirSync(queueDir).filter(f => f.endsWith('.json')).sort();
+            const files = fs.readdirSync(queueDir).filter((f) => f.endsWith('.json')).sort();
             for (const file of files) {
               const full = path.join(queueDir, file);
               const raw = fs.readFileSync(full, 'utf8');
@@ -40,20 +43,28 @@ jobs:
               let status = 'DISPATCHED';
               let error = null;
               try {
-                await github.rest.actions.createWorkflowDispatch({ owner: context.repo.owner, repo: context.repo.repo, workflow_id, ref, inputs });
+                await github.rest.actions.createWorkflowDispatch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id,
+                  ref,
+                  inputs,
+                });
               } catch (e) {
                 status = 'DISPATCH_FAILED';
                 error = String(e).slice(0, 1000);
               }
-              fs.writeFileSync(path.join(resultsDir, file.replace(/\.json$/, '_result.json')), JSON.stringify({status, workflow_id, ref, inputs, error, dispatched_at: new Date().toISOString()}, null, 2));
+              const resultName = file.replace(/\.json$/, '_result.json');
+              fs.writeFileSync(path.join(resultsDir, resultName), JSON.stringify({ status, workflow_id, ref, inputs, error, dispatched_at: new Date().toISOString() }, null, 2));
               fs.renameSync(full, path.join(processedDir, file));
             }
+
       - name: Commit dispatch state
         run: |
           git config user.name "ai-devops-system"
           git config user.email "actions@users.noreply.github.com"
           git add governance/workflow_dispatch_queue governance/workflow_dispatch_processed governance/workflow_dispatch_results || true
           if ! git diff --cached --quiet; then
-            git commit -m "BEM-865 process workflow dispatch queue"
+            git commit -m "BEM-866 process workflow dispatch queue"
             git push
           fi
