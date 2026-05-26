@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_wakeup_after_wiring",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-867 wakeup after wiring",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM867_WAKEUP_AFTER_WIRING.md with content # BEM-867 wakeup after queue processor wiring\nStatus: WAKEUP_AFTER_PROCESSOR_WIRING\nQueue: governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_wakeup_after_wiring.md",
+    "result_json": "governance/codex/results/bem867_wakeup_after_wiring.json"
+  },
+  "created_at": "2026-05-26T09:35:44.924Z"
+}
