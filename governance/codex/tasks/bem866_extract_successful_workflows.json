@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_extract_successful_workflows",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 extract successful workflows",
+  "objective": "Run script:\n\"\"\"\noutdir = Path('governance/runtime/curator_dispatch/bem866_successful_workflows')\noutdir.mkdir(parents=True, exist_ok=True)\ncount = 0\nseen = {}\nbase = Path('governance/workflow_dispatch_results')\nif base.exists():\n    for f in sorted(base.glob('*.json')):\n        try:\n            data = json.loads(f.read_text(encoding='utf-8'))\n        except:\n            continue\n        status = str(data.get('status') or '')\n        workflow = str(data.get('workflow') or data.get('workflow_id') or '')\n        if status.upper() == 'DISPATCHED' and workflow:\n            seen[workflow] = seen.get(workflow, 0) + 1\n            safe = ''.join(ch if ch.isalnum() else '_' for ch in workflow)[:100]\n            marker = outdir / (str(count).zfill(3) + '_' + safe + '.md')\n            marker.write_text('# BEM-866 successful workflow\\nResult: ' + str(f) + '\\nWorkflow: ' + workflow + '\\nStatus: ' + status + '\\nInputs keys: ' + ', '.join((data.get('inputs') or {}).keys()) + '\\n', encoding='utf-8')\n            changed_files.append(str(marker))\n            count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM866_SUCCESSFUL_WORKFLOWS_INDEX.md')\nsummary.write_text('# BEM-866 successful workflows\\nTotal results: ' + str(count) + '\\n\\n' + '\\n'.join('- ' + k + ': ' + str(v) for k,v in sorted(seen.items())) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('successful workflows extracted: ' + str(seen))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_extract_successful_workflows.md",
+    "result_json": "governance/codex/results/bem866_extract_successful_workflows.json"
+  },
+  "created_at": "2026-05-26T08:28:42.776Z"
+}
