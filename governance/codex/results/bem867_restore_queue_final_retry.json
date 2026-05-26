@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_restore_queue_final_retry",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM867 restored queue for final retry",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json",
+    "governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md",
+    "governance/runtime/curator_dispatch/BEM867_QUEUE_FINAL_RETRY_RESTORED.md",
+    "governance/codex/proofs/bem867_restore_queue_final_retry.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_restore_queue_final_retry.md",
+  "completed_at": "2026-05-26T10:30:46Z"
+}
