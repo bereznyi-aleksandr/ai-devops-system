@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_wakeup_heartbeat_retry",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 heartbeat retry",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM866_WAKEUP_FOR_HEARTBEAT_RETRY.md with content # BEM-866 wakeup for heartbeat retry\nStatus: WAKEUP_FOR_CODEX_QUEUE_STEP_HEARTBEAT_RETRY\nPurpose: verify whether codex-runner heartbeat step executes.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_wakeup_heartbeat_retry.md",
+    "result_json": "governance/codex/results/bem866_wakeup_heartbeat_retry.json"
+  },
+  "created_at": "2026-05-26T04:23:23.472Z"
+}
