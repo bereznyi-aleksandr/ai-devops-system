@@ -438,6 +438,13 @@ jobs:
             echo "Pushed: $(git rev-parse HEAD)"
           fi
 
+      - name: Process workflow dispatch queue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/process_workflow_dispatch_queue.py || true
+
       - name: Job summary
         if: always()
         shell: bash
