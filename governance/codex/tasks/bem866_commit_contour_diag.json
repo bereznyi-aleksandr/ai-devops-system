@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_commit_contour_diag",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 commit contour diag",
+  "objective": "Run script:\n\"\"\"\nwf = Path('.github/workflows/codex-runner.yml')\ntext = wf.read_text(encoding='utf-8') if wf.exists() else ''\nchecks = {\n    'codex_runner_exists': wf.exists(),\n    'has_commit_step': 'Commit and push everything' in text,\n    'has_git_commit': 'git commit' in text,\n    'has_git_push': 'git push' in text,\n    'has_commit_sha_write': 'commit_sha' in text,\n    'has_actions_checkout': 'actions/checkout' in text,\n    'has_ai_pat': 'AI_SYSTEM_GITHUB_PAT' in text,\n}\nstatus = 'COMMIT_STEP_PRESENT' if checks['has_commit_step'] and checks['has_git_commit'] and checks['has_git_push'] else 'COMMIT_STEP_MISSING'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_COMMIT_CONTOUR_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 commit contour diag\\nStatus: ' + status + '\\n' + '\\n'.join('- ' + k + ': ' + str(v) for k,v in checks.items()) + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('commit contour diag: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_commit_contour_diag.md",
+    "result_json": "governance/codex/results/bem866_commit_contour_diag.json"
+  },
+  "created_at": "2026-05-26T04:49:10.211Z"
+}
