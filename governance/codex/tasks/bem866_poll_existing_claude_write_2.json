@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_poll_existing_claude_write_2",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 poll existing Claude 2",
+  "objective": "Run script:\n\"\"\"\nresponse = Path('governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md')\nreport = Path('governance/reports/bem865_claude_write_selftest.md')\ntext = response.read_text(encoding='utf-8') if response.exists() else ''\nreport_text = report.read_text(encoding='utf-8', errors='ignore') if report.exists() else ''\nok = 'Status: CLAUDE_WRITE_OK' in [line.strip() for line in text.splitlines()]\nif ok:\n    status = 'CLAUDE_WRITE_OK_CONFIRMED'\nelif report.exists() and 'Changed_files:' in report_text:\n    status = 'REPORT_EXISTS_MAILBOX_WAITING'\nelse:\n    status = 'WAITING_FOR_CLAUDE_WRITE'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_POLL_EXISTING_CLAUDE_WRITE_2_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 poll existing Claude write 2\\nStatus: ' + status + '\\nResponse exists: ' + str(response.exists()) + '\\nReport exists: ' + str(report.exists()) + '\\nClaude write OK: ' + str(ok) + '\\n\\nResponse text:\\n' + text[:2000] + '\\n\\nReport text:\\n' + report_text[:2000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('poll existing Claude write 2: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_poll_existing_claude_write_2.md",
+    "result_json": "governance/codex/results/bem866_poll_existing_claude_write_2.json"
+  },
+  "created_at": "2026-05-26T08:17:32.887Z"
+}
