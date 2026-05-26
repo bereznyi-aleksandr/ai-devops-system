@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_extract_unexpected_inputs",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 extract inputs",
+  "objective": "Run script:\n\"\"\"\nresult = Path('governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json')\ndata = json.loads(result.read_text(encoding='utf-8')) if result.exists() else {}\nstderr = str(data.get('stderr') or '')\nstdout = str(data.get('stdout') or '')\ntext = stderr + '\\n' + stdout\n# Make filename markers for currently sent inputs and any bracketed unexpected list if present.\nsent = data.get('inputs') if isinstance(data.get('inputs'), dict) else {}\nsent_keys = list(sent.keys())\nlow = text.lower()\nif 'unexpected inputs provided' in low:\n    code = 'UNEXPECTED_INPUTS'\nelse:\n    code = 'NO_UNEXPECTED_TEXT'\nslug = ''.join(ch if ch.isalnum() else '_' for ch in ('_'.join(sent_keys) or 'no_sent_keys'))[:140]\nmarker = Path('governance/runtime/curator_dispatch/BEM866_UNEXPECTED_INPUTS_' + code + '_SENT_' + slug + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 unexpected inputs\\nCode: ' + code + '\\nSent inputs:\\n' + '\\n'.join('- ' + k for k in sent_keys) + '\\n\\nSTDERR:\\n' + stderr[:3000] + '\\n\\nSTDOUT:\\n' + stdout[:1000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('unexpected inputs extracted: ' + code)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_extract_unexpected_inputs.md",
+    "result_json": "governance/codex/results/bem866_extract_unexpected_inputs.json"
+  },
+  "created_at": "2026-05-26T07:43:02.799Z"
+}
