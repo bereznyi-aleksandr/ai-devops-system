@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem868_repair_dispatch_endpoint",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-868 repair dispatch endpoint",
+  "objective": "Diagnose and patch the Deno webhook /codex-task workflow_dispatch failure. Requirements: capture GitHub API response body when createWorkflowDispatch returns non-204; if status is 422, persist a marker governance/runtime/curator_dispatch/BEM868_WORKFLOW_DISPATCH_422_DETAILS.md with workflow file, ref, inputs, response body; add a noninteractive fallback route that can trigger codex-runner through the existing issue_comment_entrypoint or gpt-safe-run path without requiring operator confirmation; do not require manual PAT changes in the implementation path; update governance/AGENT_CONTEXT.md with BEM-867 completion if dispatch is restored. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem868_repair_dispatch_endpoint.md",
+    "result_json": "governance/codex/results/bem868_repair_dispatch_endpoint.json"
+  },
+  "created_at": "2026-05-26T13:06:16.247Z"
+}
