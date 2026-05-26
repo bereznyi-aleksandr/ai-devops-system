@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem866_fix_claude_inputs
+task_type: code_patch
+executed_at: 2026-05-26T07:46:01Z
+ops_applied: fixed claude.yml inputs in BEM865 queue, custom_script
+changed_files: governance/workflow_dispatch_queue/bem865_claude_write_selftest.json, governance/runtime/curator_dispatch/BEM866_CLAUDE_INPUTS_FIXED.md
+errors: none

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_fix_claude_inputs",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "fixed claude.yml inputs in BEM865 queue",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/workflow_dispatch_queue/bem865_claude_write_selftest.json",
+    "governance/runtime/curator_dispatch/BEM866_CLAUDE_INPUTS_FIXED.md",
+    "governance/codex/proofs/bem866_fix_claude_inputs.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_fix_claude_inputs.md",
+  "completed_at": "2026-05-26T07:46:01Z"
+}
