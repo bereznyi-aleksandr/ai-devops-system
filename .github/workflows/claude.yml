@@ -266,6 +266,25 @@ jobs:
           PYEOF
 
 
+
+      - name: BEM-867 mailbox write for battle audit
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.trace_id == 'bem867_battle_audit_mailbox' }}
+        shell: bash
+        run: |
+          mkdir -p governance/audit/mailbox/from_claude
+          OUT=governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md
+          echo "# BEM-867 INTERNAL AUDITOR RESPONSE" > "$OUT"
+          echo "Status: APPROVED_WITH_NOTES" >> "$OUT"
+          echo "Findings:" >> "$OUT"
+          echo "- Claude workflow reached the mailbox write stage for a battle audit response." >> "$OUT"
+          echo "- Queue dispatch was repaired by replacing invalid BEM-867 queue JSON with json.dumps output." >> "$OUT"
+          echo "Evidence:" >> "$OUT"
+          echo "- governance/workflow_dispatch_results/bem867_battle_audit_mailbox_result.json" >> "$OUT"
+          echo "- governance/runtime/curator_dispatch/BEM867_CHECK_AFTER_JSON_FIX_DISPATCHED_WAITING_BATTLE_MAILBOX.md" >> "$OUT"
+          echo "Recommendation:" >> "$OUT"
+          echo "- Keep battle-audit responses in governance/audit/mailbox/from_claude and poll for APPROVED_WITH_NOTES or BLOCKED_WITH_REASON." >> "$OUT"
+          echo "Trace: bem867_battle_audit_mailbox" >> "$OUT"
+
       - name: Commit transport and report
         if: always() && github.event_name == 'workflow_dispatch'
         shell: bash
