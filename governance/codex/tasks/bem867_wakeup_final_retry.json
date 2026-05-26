@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_wakeup_final_retry",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-867 wakeup final retry",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM867_WAKEUP_FINAL_RETRY.md with content # BEM-867 wakeup final retry\nStatus: WAKEUP_FINAL_RETRY_AFTER_STEP_PRESENCE_CONFIRMED\nQueue: governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_wakeup_final_retry.md",
+    "result_json": "governance/codex/results/bem867_wakeup_final_retry.json"
+  },
+  "created_at": "2026-05-26T10:31:59.693Z"
+}
