@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem868_context_missing_needles",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-868 missing needles",
+  "objective": "Run script:\n\"\"\"\nctx = Path('governance/AGENT_CONTEXT.md')\ntext = ctx.read_text(encoding='utf-8', errors='ignore') if ctx.exists() else ''\nneedles = ['BEM-867 completed', 'BEM-868 | Dispatch channel recovered', 'APPROVED_WITH_NOTES', 'Next: continue roadmap from AGENT_CONTEXT.md']\noutdir = Path('governance/runtime/curator_dispatch/bem868_missing_needles')\noutdir.mkdir(parents=True, exist_ok=True)\nfor n in needles:\n    code = 'PRESENT' if n in text else 'MISSING'\n    safe = ''.join(ch if ch.isalnum() else '_' for ch in n)[:120]\n    marker = outdir / (code + '_' + safe + '.md')\n    marker.write_text('# BEM-868 context needle\\nNeedle: ' + n + '\\nStatus: ' + code + '\\n', encoding='utf-8')\n    changed_files.append(str(marker))\nstatus = 'ALL_PRESENT' if all(n in text for n in needles) else 'SOME_MISSING'\nsummary = Path('governance/runtime/curator_dispatch/BEM868_CONTEXT_MISSING_NEEDLES_' + status + '.md')\nsummary.write_text('# BEM-868 context missing needles\\nStatus: ' + status + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('BEM868 context missing needles: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem868_context_missing_needles.md",
+    "result_json": "governance/codex/results/bem868_context_missing_needles.json"
+  },
+  "created_at": "2026-05-26T13:13:56.782Z"
+}
