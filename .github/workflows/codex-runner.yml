@@ -429,6 +429,15 @@ jobs:
         run: |
           python3 scripts/process_workflow_dispatch_queue.py || true
 
+
+      - name: BEM-866 queue step heartbeat
+        if: always()
+        run: |
+          mkdir -p governance/runtime/curator_dispatch
+          echo "# BEM-866 codex queue step heartbeat" > governance/runtime/curator_dispatch/BEM866_CODEX_QUEUE_STEP_HEARTBEAT.md
+          echo "Status: QUEUE_STEP_EXECUTED" >> governance/runtime/curator_dispatch/BEM866_CODEX_QUEUE_STEP_HEARTBEAT.md
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> governance/runtime/curator_dispatch/BEM866_CODEX_QUEUE_STEP_HEARTBEAT.md
+
       - name: Commit and push everything
         if: always()
         shell: bash
