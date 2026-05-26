@@ -1,0 +1,57 @@
+# BEM-866 workflow presence diag
+Status: WORKFLOW_FILE_OK
+- file_exists: True
+- has_name: True
+- has_on: True
+- has_workflow_dispatch: True
+- has_inputs: True
+- has_trace_id: True
+- has_permissions: True
+- has_checkout: True
+- has_commit: True
+- has_push: True
+
+Workflow prefix:
+name: claude_write_selftest
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        description: "Trace id"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  write_mailbox:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Write Claude selftest mailbox
+        run: |
+          mkdir -p governance/audit/mailbox/from_claude
+          cat > governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md <<'EOF'
+# BEM-865 CLAUDE WRITE SELFTEST RESPONSE
+Status: CLAUDE_WRITE_OK
+Writer: claude_write_selftest.yml
+Trace: bem865_claude_write_selftest
+EOF
+
+      - name: Commit mailbox write
+        run: |
+          git config user.name "claude-internal-auditor"
+          git config user.email "actions@users.noreply.github.com"
+          git add governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM-865 Claude write selftest mailbox"
+            git pull --rebase --autostash origin main
+            git push origin HEAD:main
+          fi
+
