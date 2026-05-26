@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem868_wakeup_context_update",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-868 wakeup context",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM868_WAKEUP_CONTEXT_UPDATE.md with content # BEM-868 wakeup context update\nStatus: WAKEUP_FOR_BEM867_AGENT_CONTEXT_UPDATE\nTarget: governance/AGENT_CONTEXT.md\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem868_wakeup_context_update.md",
+    "result_json": "governance/codex/results/bem868_wakeup_context_update.json"
+  },
+  "created_at": "2026-05-26T11:56:32.992Z"
+}
