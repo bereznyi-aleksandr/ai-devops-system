@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_patch_claude_real_anchor",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "patched claude.yml mailbox write before real commit anchor",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/claude.yml",
+    "governance/runtime/curator_dispatch/BEM866_CLAUDE_REAL_ANCHOR_PATCHED.md",
+    "governance/codex/proofs/bem866_patch_claude_real_anchor.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_patch_claude_real_anchor.md",
+  "completed_at": "2026-05-26T08:22:18Z"
+}
