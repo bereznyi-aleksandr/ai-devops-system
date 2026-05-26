@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_queue_runner_workflow_run",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "added workflow_run trigger to queue runner",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/workflow_dispatch_queue_runner.yml",
+    "governance/runtime/curator_dispatch/BEM866_QUEUE_RUNNER_WORKFLOW_RUN.md",
+    "governance/codex/proofs/bem866_queue_runner_workflow_run.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_queue_runner_workflow_run.md",
+  "completed_at": "2026-05-26T04:40:06Z"
+}

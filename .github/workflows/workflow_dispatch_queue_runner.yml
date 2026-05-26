@@ -2,6 +2,10 @@ name: workflow_dispatch_queue_runner
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["codex-runner"]
+    types:
+      - completed
 
 permissions:
   contents: write
@@ -10,6 +14,7 @@ permissions:
 jobs:
   dispatch_queue:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,5 +60,6 @@ jobs:
           git add governance/workflow_dispatch_queue governance/workflow_dispatch_processed governance/workflow_dispatch_results || true
           if ! git diff --cached --quiet; then
             git commit -m "BEM-866 process workflow dispatch queue"
-            git push
+            git pull --rebase --autostash origin main
+            git push origin HEAD:main
           fi
