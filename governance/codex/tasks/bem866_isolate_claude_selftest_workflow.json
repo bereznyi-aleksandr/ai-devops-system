@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_isolate_claude_selftest_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-866 isolate Claude selftest workflow",
+  "objective": "Run script:\n\"\"\"\n# Remove the risky BEM-865 selftest patch from claude.yml if present.\nclaude = Path('.github/workflows/claude.yml')\ntext = claude.read_text(encoding='utf-8')\nlines = text.splitlines()\nout = []\ni = 0\nwhile i < len(lines):\n    line = lines[i]\n    if '- name: BEM-865 Claude mailbox write selftest' in line:\n        indent = len(line) - len(line.lstrip(' '))\n        i += 1\n        while i < len(lines):\n            nxt = lines[i]\n            nindent = len(nxt) - len(nxt.lstrip(' '))\n            if nxt.lstrip().startswith('- name:') and nindent == indent:\n                break\n            i += 1\n        continue\n    out.append(line)\n    i += 1\nclaude.write_text('\\n'.join(out).rstrip() + '\\n', encoding='utf-8')\n\n# Dedicated workflow with minimal workflow_dispatch and explicit mailbox write.\nwf = Path('.github/workflows/claude_write_selftest.yml')\nwf.parent.mkdir(parents=True, exist_ok=True)\nwf.write_text('''name: claude_write_selftest\n\non:\n  workflow_dispatch:\n    inputs:\n      trace_id:\n        description: \"Trace id\"\n        required: true\n        type: string\n\npermissions:\n  contents: write\n\njobs:\n  write_mailbox:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n        with:\n          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\n\n      - name: Write Claude selftest mailbox\n        run: |\n          mkdir -p governance/audit/mailbox/from_claude\n          cat > governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md <<'EOF'\n# BEM-865 CLAUDE WRITE SELFTEST RESPONSE\nStatus: CLAUDE_WRITE_OK\nWriter: claude_write_selftest.yml\nTrace: bem865_claude_write_selftest\nEOF\n\n      - name: Commit mailbox write\n        run: |\n          git config user.name \"claude-internal-auditor\"\n          git config user.email \"actions@users.noreply.github.com\"\n          git add governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md\n          if ! git diff --cached --quiet; then\n            git commit -m \"BEM-865 Claude write selftest mailbox\"\n            git pull --rebase --autostash origin main\n            git push origin HEAD:main\n          fi\n''', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM866_CLAUDE_SELFTEST_WORKFLOW_ISOLATED.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 Claude selftest workflow isolated\\nStatus: PATCHED\\nWorkflow: .github/workflows/claude_write_selftest.yml\\nRestored: .github/workflows/claude.yml risky selftest step removed\\n', encoding='utf-8')\nchanged_files.append(str(claude))\nchanged_files.append(str(wf))\nchanged_files.append(str(marker))\nops_applied.append('isolated Claude mailbox write selftest workflow and cleaned claude.yml')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_isolate_claude_selftest_workflow.md",
+    "result_json": "governance/codex/results/bem866_isolate_claude_selftest_workflow.json"
+  },
+  "created_at": "2026-05-26T08:00:45.505Z"
+}
