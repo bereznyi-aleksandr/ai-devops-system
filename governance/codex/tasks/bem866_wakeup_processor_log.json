@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_wakeup_processor_log",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 wakeup processor log",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM866_WAKEUP_PROCESSOR_LOG.md with content # BEM-866 wakeup processor log\nStatus: WAKEUP_AFTER_PROCESSOR_LOG_CAPTURE\nPurpose: run codex-runner after processor log capture patch and collect processor error.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_wakeup_processor_log.md",
+    "result_json": "governance/codex/results/bem866_wakeup_processor_log.json"
+  },
+  "created_at": "2026-05-26T04:57:14.650Z"
+}
