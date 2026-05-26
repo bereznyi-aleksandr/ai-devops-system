@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_classify_aftercommit_fail",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "aftercommit fail classification: UNPROCESSABLE_ENTITY",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM866_AFTERCOMMIT_FAIL_UNPROCESSABLE_ENTITY_could_not_create_workflow_dispatch_event__HTTP_422__Workflow_does_not_have__work.md",
+    "governance/codex/proofs/bem866_classify_aftercommit_fail.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_classify_aftercommit_fail.md",
+  "completed_at": "2026-05-26T08:10:55Z"
+}
