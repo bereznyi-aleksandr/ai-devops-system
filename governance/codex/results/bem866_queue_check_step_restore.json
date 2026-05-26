@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_queue_check_step_restore",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM866 queue check step restore: QUEUE_STILL_PENDING_AFTER_STEP_RESTORE",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM866_QUEUE_CHECK_STEP_RESTORE_QUEUE_STILL_PENDING_AFTER_STEP_RESTORE.md",
+    "governance/codex/proofs/bem866_queue_check_step_restore.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_queue_check_step_restore.md",
+  "completed_at": "2026-05-26T04:48:10Z"
+}
