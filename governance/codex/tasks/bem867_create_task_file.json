@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_create_task_file",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-867 create task file",
+  "objective": "Create file governance/tasks/pending/CLAUDE_BATTLE_AUDIT_BEM867.md with content # CLAUDE BATTLE AUDIT BEM-867\nStatus: PENDING_INTERNAL_AUDITOR_RESPONSE\nRoute: GPT external audit -> Curator queue -> Claude internal auditor -> from_claude mailbox -> GPT poll\nObjective: perform a real internal audit response for BEM-867. This is not a selftest token check.\nRequired response file: governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md\nRequired response format:\n# BEM-867 INTERNAL AUDITOR RESPONSE\nStatus: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON\nFindings:\n- at least one concrete finding\nEvidence:\n- at least one file/path used as evidence\nRecommendation:\n- one next action\nRules: No issue comments. Do not write only CLAUDE_WRITE_OK. This must be a substantive audit response.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_create_task_file.md",
+    "result_json": "governance/codex/results/bem867_create_task_file.json"
+  },
+  "created_at": "2026-05-26T09:25:33.584Z"
+}
