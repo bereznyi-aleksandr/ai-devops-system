@@ -23,12 +23,12 @@ jobs:
       - name: Write Claude selftest mailbox
         run: |
           mkdir -p governance/audit/mailbox/from_claude
-          cat > governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md <<'EOF'
-# BEM-865 CLAUDE WRITE SELFTEST RESPONSE
-Status: CLAUDE_WRITE_OK
-Writer: claude_write_selftest.yml
-Trace: bem865_claude_write_selftest
-EOF
+          {
+            echo "# BEM-865 CLAUDE WRITE SELFTEST RESPONSE"
+            echo "Status: CLAUDE_WRITE_OK"
+            echo "Writer: claude_write_selftest.yml"
+            echo "Trace: ${{ inputs.trace_id }}"
+          } > governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md
 
       - name: Commit mailbox write
         run: |

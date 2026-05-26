@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_repair_invalid_yaml",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "repaired invalid YAML and removed risky claude.yml mailbox step",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/claude.yml",
+    ".github/workflows/claude_write_selftest.yml",
+    "governance/runtime/curator_dispatch/BEM866_INVALID_YAML_REPAIRED.md",
+    "governance/codex/proofs/bem866_repair_invalid_yaml.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_repair_invalid_yaml.md",
+  "completed_at": "2026-05-26T09:13:18Z"
+}

@@ -266,13 +266,6 @@ jobs:
           PYEOF
 
 
-      - name: BEM-866 mailbox write for Claude selftest
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.trace_id == 'bem865_claude_write_selftest' }}
-        run: |
-          mkdir -p governance/audit/mailbox/from_claude
-          printf '%s
-' '# BEM-865 CLAUDE WRITE SELFTEST RESPONSE' 'Status: CLAUDE_WRITE_OK' 'Writer: claude.yml existing workflow' 'Trace: bem865_claude_write_selftest' > governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md
-
       - name: Commit transport and report
         if: always() && github.event_name == 'workflow_dispatch'
         shell: bash
