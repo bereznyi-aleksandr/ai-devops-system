@@ -21,3 +21,112 @@ HTTP 404: workflow claude_internal_auditor_dispatcher.yml not found on the defau
 https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433270091
 https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433270781
 https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/26433271444
+[main de641e7] BEM-865 process workflow dispatch queue
+ 56 files changed, 204 insertions(+), 37 deletions(-)
+ create mode 100644 governance/runtime/curator_dispatch/BEM866_DISPATCH_QUEUE_JSON_CLEANED.md
+ create mode 100644 governance/runtime/curator_dispatch/bem866_bad_queue_json/bem842_claude_dispatch_after_real_request_bad.md
+ create mode 100644 governance/runtime/curator_dispatch/bem866_bad_queue_json/bem846_claude_retry_after_response_guard_bad.md
+ create mode 100644 governance/runtime/curator_dispatch/bem866_bad_queue_json/bem851_dispatch_pipeline_probe_bad.md
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem844_claude_response_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem844_force_claude_protocol_response_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem846_claude_after_response_patch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem846_claude_dispatch_after_oidc_fix.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem846_claude_protocol_review_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem847_protocol_followup_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem848_fail_closed_response_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem849_claude_protocol_review_retry.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem849_validated_claude_response_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem851_claude_reapproval_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem851_dispatch_claude_after_bem850_fix.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem852_claude_protocol_review_second_retry.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem852_writer_placement_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem853_claude_real_response_retry.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem857_patched_protocol_approval_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem858_commit_path_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem864_claude_code_action_smoke_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem864_final_approval_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem865_claude_write_selftest.json (73%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem871_iterative_protocol_approval_dispatch.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem872_blocker_repair_runtime_probe.json (100%)
+ rename governance/{workflow_dispatch_queue => workflow_dispatch_processed}/bem876_machine_decision_dispatch.json (100%)
+ delete mode 100644 governance/workflow_dispatch_queue/bem842_claude_dispatch_after_real_request.json
+ delete mode 100644 governance/workflow_dispatch_queue/bem844_real_response_retry.json
+ delete mode 100644 governance/workflow_dispatch_queue/bem846_claude_retry_after_response_guard.json
+ delete mode 100644 governance/workflow_dispatch_queue/bem851_dispatch_pipeline_probe.json
+ create mode 100644 governance/workflow_dispatch_results/bem844_claude_response_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem844_force_claude_protocol_response_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem844_real_response_retry_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem846_claude_after_response_patch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem846_claude_dispatch_after_oidc_fix_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem846_claude_protocol_review_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem847_protocol_followup_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem848_fail_closed_response_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem849_claude_protocol_review_retry_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem849_validated_claude_response_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem851_claude_reapproval_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem851_dispatch_claude_after_bem850_fix_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem852_claude_protocol_review_second_retry_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem852_writer_placement_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem853_claude_real_response_retry_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem857_patched_protocol_approval_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem858_commit_path_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem864_claude_code_action_smoke_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem864_final_approval_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem871_iterative_protocol_approval_dispatch_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem872_blocker_repair_runtime_probe_result.json
+ create mode 100644 governance/workflow_dispatch_results/bem876_machine_decision_dispatch_result.json
+To https://github.com/bereznyi-aleksandr/ai-devops-system
+   a904f9b..de641e7  HEAD -> main
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-code-action-smoke.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-code-action-smoke.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude_internal_auditor_dispatcher.yml --ref main -f trace_id=bem865_claude_write_selftest -f task_path=governance/tasks/pending/CLAUDE_WRITE_SELFTEST_BEM865.md -f response_path=governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md -f expected_status=CLAUDE_WRITE_OK
+WORKFLOW_DISPATCH_RESULT DISPATCH_FAILED claude_internal_auditor_dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ gh workflow run claude-internal-auditor-dispatcher.yml --ref main 
+WORKFLOW_DISPATCH_RESULT DISPATCHED claude-internal-auditor-dispatcher.yml
+$ git config user.name "ai-devops-system"
+$ git config user.email "actions@users.noreply.github.com"
+$ git add governance/workflow_dispatch_queue governance/workflow_dispatch_processed governance/workflow_dispatch_results governance/runtime/curator_dispatch || true
+$ git diff --cached --quiet
+$ git commit -m "BEM-865 process workflow dispatch queue"
+$ git push origin HEAD:main
