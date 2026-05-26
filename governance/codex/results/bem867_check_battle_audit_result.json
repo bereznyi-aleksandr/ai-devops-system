@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_check_battle_audit_result",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM867 battle audit result: QUEUE_STILL_PENDING",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM867_BATTLE_AUDIT_RESULT_QUEUE_STILL_PENDING.md",
+    "governance/codex/proofs/bem867_check_battle_audit_result.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_check_battle_audit_result.md",
+  "completed_at": "2026-05-26T09:31:30Z"
+}
