@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_direct_queue_process",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "direct queue process: QUEUE_MOVED_TO_PROCESSED_DISPATCH_BLOCKED",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM865_DIRECT_QUEUE_PROCESS_QUEUE_MOVED_TO_PROCESSED_DISPATCH_BLOCKED.md",
+    "governance/workflow_dispatch_processed/bem865_claude_write_selftest.json",
+    "governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json",
+    "governance/codex/proofs/bem865_direct_queue_process.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem865_direct_queue_process.md",
+  "completed_at": "2026-05-26T04:06:18Z"
+}

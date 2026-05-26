@@ -1,0 +1,4 @@
+# BEM-865 direct queue process
+Status: QUEUE_MOVED_TO_PROCESSED_DISPATCH_BLOCKED
+Result: governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json
+Processed: governance/workflow_dispatch_processed/bem865_claude_write_selftest.json
