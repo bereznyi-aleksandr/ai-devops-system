@@ -139,3 +139,5 @@ Claude → прямой коммит через GitHub MCP
 - BEM-859 protocol alignment is routed through Curator only
 ## BEM-863 Curator-Claude mechanism
 - Status: implemented_dispatch_route
+## BEM-864 Curator-Claude selftest
+- Status: route_selftest_completed_waiting_for_claude_response
