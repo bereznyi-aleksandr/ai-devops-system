@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_classify_after_patch_fail",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 classify after patch fail",
+  "objective": "Run script:\n\"\"\"\nresult = Path('governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json')\ndata = json.loads(result.read_text(encoding='utf-8')) if result.exists() else {}\nstderr = str(data.get('stderr') or '')\nstdout = str(data.get('stdout') or '')\nstatus_value = str(data.get('status') or '')\ntext = (stderr + '\\n' + stdout + '\\n' + status_value).lower()\nif not result.exists():\n    code = 'RESULT_MISSING'\nelif 'workflow is not valid' in text or 'yaml' in text or 'syntax' in text:\n    code = 'WORKFLOW_YAML_INVALID'\nelif 'could not resolve to a workflow' in text or 'not found' in text or '404' in text:\n    code = 'WORKFLOW_NOT_FOUND'\nelif 'does not have workflow_dispatch' in text:\n    code = 'NO_WORKFLOW_DISPATCH'\nelif 'unexpected inputs' in text or 'invalid input' in text or 'provided' in text:\n    code = 'INVALID_INPUTS'\nelif 'permission' in text or '403' in text or 'resource not accessible' in text:\n    code = 'PERMISSION_DENIED'\nelif '422' in text or 'unprocessable' in text:\n    code = 'UNPROCESSABLE_ENTITY'\nelif status_value == 'DISPATCH_FAILED':\n    code = 'DISPATCH_FAILED_UNKNOWN'\nelse:\n    code = 'UNKNOWN'\nslug_source = (stderr or stdout or status_value or 'empty')[:120]\nslug = ''.join(ch if ch.isalnum() else '_' for ch in slug_source)[:80]\nmarker = Path('governance/runtime/curator_dispatch/BEM866_AFTER_PATCH_FAIL_' + code + '_' + slug + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 after patch fail classification\\nCode: ' + code + '\\nStatus value: ' + status_value + '\\n\\nSTDERR:\\n' + stderr[:3000] + '\\n\\nSTDOUT:\\n' + stdout[:2000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('after patch fail classification: ' + code)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_classify_after_patch_fail.md",
+    "result_json": "governance/codex/results/bem866_classify_after_patch_fail.json"
+  },
+  "created_at": "2026-05-26T07:59:24.415Z"
+}
