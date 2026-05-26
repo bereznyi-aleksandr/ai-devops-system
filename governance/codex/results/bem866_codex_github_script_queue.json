@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_codex_github_script_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "added github-script workflow dispatch queue processing in codex-runner",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    "governance/runtime/curator_dispatch/BEM866_CODEX_GITHUB_SCRIPT_QUEUE_PATCHED.md",
+    "governance/codex/proofs/bem866_codex_github_script_queue.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_codex_github_script_queue.md",
+  "completed_at": "2026-05-26T04:25:42Z"
+}
