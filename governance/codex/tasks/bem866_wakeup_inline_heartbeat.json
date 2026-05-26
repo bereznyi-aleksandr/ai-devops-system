@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_wakeup_inline_heartbeat",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 wakeup inline heartbeat",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM866_WAKEUP_INLINE_HEARTBEAT.md with content # BEM-866 wakeup inline heartbeat\nStatus: WAKEUP_AFTER_INLINE_HEARTBEAT_PATCH\nPurpose: verify queue-step execution and processor behavior.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_wakeup_inline_heartbeat.md",
+    "result_json": "governance/codex/results/bem866_wakeup_inline_heartbeat.json"
+  },
+  "created_at": "2026-05-26T04:53:15.835Z"
+}
