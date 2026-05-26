@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_queue_after_commit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "moved workflow queue processing after commit and restored processor commit_state",
+    "custom_script"
+  ],
+  "changed_files": [
+    "scripts/process_workflow_dispatch_queue.py",
+    ".github/workflows/codex-runner.yml",
+    "governance/runtime/curator_dispatch/BEM866_QUEUE_AFTER_COMMIT_PATCHED.md",
+    "governance/codex/proofs/bem866_queue_after_commit.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_queue_after_commit.md",
+  "completed_at": "2026-05-26T08:06:29Z"
+}

@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem866_queue_after_commit
+task_type: code_patch
+executed_at: 2026-05-26T08:06:29Z
+ops_applied: moved workflow queue processing after commit and restored processor commit_state, custom_script
+changed_files: scripts/process_workflow_dispatch_queue.py, .github/workflows/codex-runner.yml, governance/runtime/curator_dispatch/BEM866_QUEUE_AFTER_COMMIT_PATCHED.md
+errors: none

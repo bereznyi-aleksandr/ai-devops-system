@@ -9,6 +9,20 @@ QUEUE = ROOT / "governance/workflow_dispatch_queue"
 PROCESSED = ROOT / "governance/workflow_dispatch_processed"
 RESULTS = ROOT / "governance/workflow_dispatch_results"
 
+def run(cmd, check=False):
+    print("$ " + cmd)
+    return subprocess.run(cmd, shell=True, text=True, capture_output=True, check=check)
+
+def commit_state():
+    run('git config user.name "ai-devops-system"')
+    run('git config user.email "actions@users.noreply.github.com"')
+    run('git add governance/workflow_dispatch_queue governance/workflow_dispatch_processed governance/workflow_dispatch_results governance/runtime/curator_dispatch || true')
+    diff = run('git diff --cached --quiet')
+    if diff.returncode != 0:
+        run('git commit -m "BEM-866 process workflow dispatch queue"', check=True)
+        run('git pull --rebase --autostash origin main')
+        run('git push origin HEAD:main', check=True)
+
 def main():
     QUEUE.mkdir(parents=True, exist_ok=True)
     PROCESSED.mkdir(parents=True, exist_ok=True)
@@ -40,6 +54,7 @@ def main():
         }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         shutil.move(str(item), str(PROCESSED / item.name))
         print("WORKFLOW_DISPATCH_RESULT " + status + " " + str(workflow))
+    commit_state()
     return 0
 
 if __name__ == "__main__":
