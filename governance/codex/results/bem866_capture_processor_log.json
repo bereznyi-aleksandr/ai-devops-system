@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_capture_processor_log",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "patched processor log capture",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    "governance/runtime/curator_dispatch/BEM866_PROCESSOR_LOG_CAPTURE_PATCHED.md",
+    "governance/codex/proofs/bem866_capture_processor_log.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_capture_processor_log.md",
+  "completed_at": "2026-05-26T04:56:22Z"
+}

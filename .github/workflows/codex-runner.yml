@@ -432,7 +432,7 @@ jobs:
           mkdir -p governance/runtime/curator_dispatch
           echo "# BEM-866 queue step inline heartbeat" > governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md
           echo "Status: STARTED" >> governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md
-          python3 scripts/process_workflow_dispatch_queue.py || echo "PROCESSOR_FAILED" >> governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md
+          python3 scripts/process_workflow_dispatch_queue.py > governance/runtime/curator_dispatch/BEM866_PROCESSOR_RUN_LOG.txt 2>&1 || echo "PROCESSOR_FAILED" >> governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md
           echo "Status_after: FINISHED" >> governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_INLINE_HEARTBEAT.md
 
       - name: Commit and push everything
