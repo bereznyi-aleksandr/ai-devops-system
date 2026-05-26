@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_verify_step_again",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 verify step again",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\ntext = p.read_text(encoding='utf-8') if p.exists() else ''\nchecks = {\n    'has_step': 'Process workflow dispatch queue before commit' in text,\n    'has_script_call': 'python3 scripts/process_workflow_dispatch_queue.py' in text,\n    'has_commit_after': text.find('Process workflow dispatch queue before commit') < text.find('Commit and push everything') if 'Process workflow dispatch queue before commit' in text and 'Commit and push everything' in text else False,\n}\nstatus = 'QUEUE_STEP_OK' if all(checks.values()) else 'QUEUE_STEP_BAD'\nmarker = Path('governance/runtime/curator_dispatch/BEM866_VERIFY_STEP_AGAIN_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 verify step again\\nStatus: ' + status + '\\n' + '\\n'.join('- ' + k + ': ' + str(v) for k,v in checks.items()) + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('verify step again: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_verify_step_again.md",
+    "result_json": "governance/codex/results/bem866_verify_step_again.json"
+  },
+  "created_at": "2026-05-26T04:50:09.380Z"
+}
