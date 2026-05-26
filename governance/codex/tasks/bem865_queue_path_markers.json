@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_queue_path_markers",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-865 queue path markers",
+  "objective": "Run script:\n\"\"\"\noutdir = Path('governance/runtime/curator_dispatch/bem865_queue_path_markers')\noutdir.mkdir(parents=True, exist_ok=True)\nfiles = [Path('.github/workflows/workflow_dispatch_queue_runner.yml'), Path('.github/workflows/claude_internal_auditor_dispatcher.yml'), Path('.github/workflows/claude_mailbox_autoprocess.yml'), Path('.github/workflows/claude_mailbox_minute_watchdog.yml')]\nseen = []\nfor f in files:\n    text = f.read_text(encoding='utf-8', errors='ignore') if f.exists() else ''\n    for token in ['governance/workflow_dispatch_queue', 'governance/workflow_dispatch/queue', 'workflow_dispatch_queue', 'workflow_dispatch_requests', 'dispatch_queue', 'workflow_dispatch_results', 'workflow_dispatch_processed']:\n        if token in text and token not in seen:\n            seen.append(token)\nfor i, token in enumerate(seen):\n    safe = ''.join(ch if ch.isalnum() else '_' for ch in token)\n    marker = outdir / (str(i).zfill(2) + '_' + safe + '.md')\n    marker.write_text('# BEM-865 queue path marker\\nToken: ' + token + '\\n', encoding='utf-8')\n    changed_files.append(str(marker))\nsummary = Path('governance/runtime/curator_dispatch/BEM865_QUEUE_PATH_MARKERS_INDEX.md')\nsummary.write_text('# BEM-865 queue path markers\\nCount: ' + str(len(seen)) + '\\n' + '\\n'.join('- ' + s for s in seen) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('queue path markers created: ' + str(len(seen)))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_queue_path_markers.md",
+    "result_json": "governance/codex/results/bem865_queue_path_markers.json"
+  },
+  "created_at": "2026-05-26T03:33:49.750Z"
+}
