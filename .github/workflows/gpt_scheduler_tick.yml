@@ -1,0 +1,21 @@
+name: gpt_scheduler_tick
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GITHUB_TOKEN }}
+      - name: Run GPT relay tick
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          python3 tools/gpt-autonomy-relay/relay_watch.py --once
