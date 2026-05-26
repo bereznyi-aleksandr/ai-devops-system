@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_list_real_claude_workflows",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 list real Claude workflows",
+  "objective": "Run script:\n\"\"\"\nwfdir = Path('.github/workflows')\noutdir = Path('governance/runtime/curator_dispatch/bem866_real_workflows')\noutdir.mkdir(parents=True, exist_ok=True)\ncount = 0\nclaude_count = 0\nif wfdir.exists():\n    for f in sorted(wfdir.glob('*')):\n        if f.is_file():\n            name = f.name\n            text = f.read_text(encoding='utf-8', errors='ignore')[:20000]\n            low = (name + '\\n' + text).lower()\n            flags = []\n            for token in ['claude', 'auditor', 'curator', 'workflow_dispatch', 'from_claude', 'anthropic', 'mailbox']:\n                if token in low:\n                    flags.append(token)\n            safe = ''.join(ch if ch.isalnum() else '_' for ch in name)[:100]\n            marker = outdir / (str(count).zfill(2) + '_' + safe + '.md')\n            marker.write_text('# BEM-866 workflow file\\nName: ' + name + '\\nPath: ' + str(f) + '\\nFlags: ' + ', '.join(flags) + '\\n', encoding='utf-8')\n            changed_files.append(str(marker))\n            count += 1\n            if 'claude' in flags:\n                claude_count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM866_REAL_WORKFLOWS_INDEX.md')\nsummary.write_text('# BEM-866 real workflows index\\nCount: ' + str(count) + '\\nClaude-related: ' + str(claude_count) + '\\nDirectory: governance/runtime/curator_dispatch/bem866_real_workflows\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('listed real workflow files: ' + str(count) + ', claude-related: ' + str(claude_count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_list_real_claude_workflows.md",
+    "result_json": "governance/codex/results/bem866_list_real_claude_workflows.json"
+  },
+  "created_at": "2026-05-26T07:31:23.769Z"
+}
