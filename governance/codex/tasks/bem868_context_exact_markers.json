@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem868_context_exact_markers",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-868 context exact markers",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-867 completed\nStatus: completed\nResult: Internal auditor battle mailbox confirmed with APPROVED_WITH_NOTES.\nProof: governance/runtime/curator_dispatch/BEM867_ISOLATED_BATTLE_RESULT_BATTLE_AUDIT_MAILBOX_CONFIRMED_APPROVED_WITH_NOTES.md\nMailbox: governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md\nRequired sections confirmed: Findings, Evidence, Recommendation.\n\n## BEM-868 | Dispatch channel recovered\nStatus: completed\nResult: /codex-task workflow_dispatch returned 204 and runner completed after transient 500/queued state.\nProof: governance/codex/proofs/bem868_repair_dispatch_endpoint.txt\nNext: continue roadmap from AGENT_CONTEXT.md.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem868_context_exact_markers.md",
+    "result_json": "governance/codex/results/bem868_context_exact_markers.json"
+  },
+  "created_at": "2026-05-26T13:10:55.274Z"
+}
