@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_script_step_before_commit",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-866 script step before commit",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\ntext = p.read_text(encoding='utf-8')\n# Remove older duplicate queue steps by name to avoid malformed workflow.\nremove_names = ['Process workflow dispatch queue before commit', 'Process workflow dispatch queue via github-script', 'Process workflow dispatch queue minimal', 'Process workflow dispatch queue']\nlines = text.splitlines()\nout = []\ni = 0\nwhile i < len(lines):\n    line = lines[i]\n    if any(('- name: ' + name) in line for name in remove_names):\n        indent = len(line) - len(line.lstrip(' '))\n        i += 1\n        while i < len(lines):\n            nxt = lines[i]\n            nindent = len(nxt) - len(nxt.lstrip(' '))\n            if nxt.lstrip().startswith('- name:') and nindent == indent:\n                break\n            i += 1\n        continue\n    out.append(line)\n    i += 1\ntext = '\\n'.join(out) + '\\n'\nstep = '''\\n      - name: Process workflow dispatch queue before commit\\n        if: always()\\n        env:\\n          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}\\n        run: |\\n          python3 scripts/process_workflow_dispatch_queue.py\\n\\n'''\nanchor = '      - name: Commit and push everything\\n'\nif anchor in text:\n    text = text.replace(anchor, step + anchor)\np.write_text(text, encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM866_SCRIPT_STEP_BEFORE_COMMIT.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 script step before commit\\nStatus: PATCHED\\nScript: scripts/process_workflow_dispatch_queue.py\\n', encoding='utf-8')\nchanged_files.append(str(p))\nchanged_files.append(str(marker))\nops_applied.append('added script-call queue processor step before commit')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_script_step_before_commit.md",
+    "result_json": "governance/codex/results/bem866_script_step_before_commit.json"
+  },
+  "created_at": "2026-05-26T04:34:20.316Z"
+}
