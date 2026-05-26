@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_codex_step_names",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-865 codex step names",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\nlines = p.read_text(encoding='utf-8').splitlines() if p.exists() else []\noutdir = Path('governance/runtime/curator_dispatch/bem865_codex_steps')\noutdir.mkdir(parents=True, exist_ok=True)\ncount = 0\nfor i,l in enumerate(lines,1):\n    if l.strip().startswith('- name:') or 'uses: actions/checkout' in l:\n        safe = ''.join(ch if ch.isalnum() else '_' for ch in l.strip())[:90]\n        marker = outdir / (str(i).zfill(4) + '_' + safe + '.md')\n        marker.write_text('# codex step line\\nLine: ' + str(i) + '\\nText: ' + l + '\\n', encoding='utf-8')\n        changed_files.append(str(marker))\n        count += 1\nsummary = Path('governance/runtime/curator_dispatch/BEM865_CODEX_STEP_NAMES_INDEX.md')\nsummary.write_text('# BEM-865 codex step names\\nCount: ' + str(count) + '\\n', encoding='utf-8')\nchanged_files.append(str(summary))\nops_applied.append('codex step names listed: ' + str(count))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_codex_step_names.md",
+    "result_json": "governance/codex/results/bem865_codex_step_names.json"
+  },
+  "created_at": "2026-05-26T03:58:45.091Z"
+}
