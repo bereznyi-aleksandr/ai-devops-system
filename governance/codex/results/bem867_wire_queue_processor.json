@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_wire_queue_processor",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "wired workflow dispatch queue processor for BEM867",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    "governance/runtime/curator_dispatch/BEM867_QUEUE_PROCESSOR_WIRED.md",
+    "governance/codex/proofs/bem867_wire_queue_processor.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem867_wire_queue_processor.md",
+  "completed_at": "2026-05-26T09:34:35Z"
+}
