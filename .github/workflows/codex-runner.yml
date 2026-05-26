@@ -450,6 +450,23 @@ jobs:
         run: |
           python3 scripts/process_workflow_dispatch_queue.py || true
 
+
+      - name: BEM-866 commit evidence
+        if: always()
+        run: |
+          mkdir -p governance/runtime/curator_dispatch
+          git rev-parse HEAD > governance/runtime/curator_dispatch/BEM866_CURRENT_HEAD_SHA.txt
+          git status --short > governance/runtime/curator_dispatch/BEM866_GIT_STATUS_SHORT.txt
+          git diff --name-only HEAD > governance/runtime/curator_dispatch/BEM866_GIT_DIFF_NAME_ONLY.txt || true
+          git add governance/runtime/curator_dispatch/BEM866_CURRENT_HEAD_SHA.txt governance/runtime/curator_dispatch/BEM866_GIT_STATUS_SHORT.txt governance/runtime/curator_dispatch/BEM866_GIT_DIFF_NAME_ONLY.txt || true
+          if ! git diff --cached --quiet; then
+            git config user.name "ai-devops-system"
+            git config user.email "actions@users.noreply.github.com"
+            git commit -m "BEM-866 commit evidence"
+            git pull --rebase --autostash origin main
+            git push origin HEAD:main
+          fi
+
       - name: Job summary
         if: always()
         shell: bash

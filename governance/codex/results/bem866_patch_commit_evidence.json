@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_patch_commit_evidence",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "patched codex-runner commit evidence step",
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    "governance/runtime/curator_dispatch/BEM866_COMMIT_EVIDENCE_PATCHED.md",
+    "governance/codex/proofs/bem866_patch_commit_evidence.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_patch_commit_evidence.md",
+  "completed_at": "2026-05-26T08:33:39Z"
+}
