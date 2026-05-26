@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_check_selftest_workflow_result",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "selftest workflow result: DISPATCH_FAILED",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM866_SELFTEST_WORKFLOW_RESULT_DISPATCH_FAILED.md",
+    "governance/codex/proofs/bem866_check_selftest_workflow_result.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem866_check_selftest_workflow_result.md",
+  "completed_at": "2026-05-26T08:04:08Z"
+}
