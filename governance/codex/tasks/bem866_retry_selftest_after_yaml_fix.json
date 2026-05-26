@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_retry_selftest_after_yaml_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-866 retry selftest YAML fix",
+  "objective": "Run script:\n\"\"\"\nq = Path('governance/workflow_dispatch_queue/bem865_claude_write_selftest.json')\np = Path('governance/workflow_dispatch_processed/bem865_claude_write_selftest.json')\nr = Path('governance/workflow_dispatch_results/bem865_claude_write_selftest_result.json')\nmail = Path('governance/audit/mailbox/from_claude/BEM865_CLAUDE_WRITE_SELFTEST_RESPONSE.md')\nq.parent.mkdir(parents=True, exist_ok=True)\nif p.exists():\n    p.unlink()\nif r.exists():\n    r.unlink()\nmail.parent.mkdir(parents=True, exist_ok=True)\nmail.write_text('# BEM-865 CLAUDE WRITE SELFTEST RESPONSE\\nStatus: PENDING_CLAUDE_WRITE_TEST\\n', encoding='utf-8')\ndata = {\n    'workflow': 'claude_write_selftest.yml',\n    'ref': 'main',\n    'inputs': {'trace_id': 'bem865_claude_write_selftest'}\n}\nq.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM866_RETRY_SELFTEST_AFTER_YAML_FIX.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-866 retry selftest after YAML fix\\nStatus: LIVE_QUEUE_RESTORED\\nWorkflow: claude_write_selftest.yml\\nMailbox reset: PENDING_CLAUDE_WRITE_TEST\\n', encoding='utf-8')\nchanged_files.append(str(q))\nchanged_files.append(str(mail))\nchanged_files.append(str(marker))\nops_applied.append('restored isolated selftest queue after YAML fix')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_retry_selftest_after_yaml_fix.md",
+    "result_json": "governance/codex/results/bem866_retry_selftest_after_yaml_fix.json"
+  },
+  "created_at": "2026-05-26T09:14:42.723Z"
+}
