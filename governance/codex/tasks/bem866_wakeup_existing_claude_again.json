@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_wakeup_existing_claude_again",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 wakeup existing Claude",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM866_WAKEUP_EXISTING_CLAUDE_AGAIN.md with content # BEM-866 wakeup existing Claude again\nStatus: WAKEUP_EXISTING_CLAUDE_YML_AFTER_MAILBOX_WRITE_PATCH\nPurpose: dispatch BEM-865 selftest through existing claude.yml after safe mailbox write patch.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_wakeup_existing_claude_again.md",
+    "result_json": "governance/codex/results/bem866_wakeup_existing_claude_again.json"
+  },
+  "created_at": "2026-05-26T08:15:25.142Z"
+}
