@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem866_queue_before_commit
+task_type: code_patch
+executed_at: 2026-05-26T04:18:28Z
+ops_applied: moved workflow dispatch queue processing before commit step, custom_script
+changed_files: .github/workflows/codex-runner.yml, governance/runtime/curator_dispatch/BEM866_QUEUE_STEP_BEFORE_COMMIT.md
+errors: none
