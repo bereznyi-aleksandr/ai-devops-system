@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem867_create_battle_audit_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-867 battle audit request",
+  "objective": "Run script:\n\"\"\"\nfrom pathlib import Path\nimport json\ntrace = 'bem867_battle_audit_mailbox'\n# Create real task for internal auditor Claude.\ntask_path = Path('governance/tasks/pending/CLAUDE_BATTLE_AUDIT_BEM867.md')\ntask_path.parent.mkdir(parents=True, exist_ok=True)\ntask_path.write_text('''# CLAUDE BATTLE AUDIT BEM-867\nStatus: PENDING_INTERNAL_AUDITOR_RESPONSE\nRoute: GPT external audit -> Curator/queue -> Claude internal auditor -> from_claude mailbox -> GPT poll\n\nObjective:\nPerform a real internal audit response for BEM-867. This is not a selftest token check.\n\nRequired response file:\ngovernance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md\n\nRequired response format:\n# BEM-867 INTERNAL AUDITOR RESPONSE\nStatus: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON\nFindings:\n- at least one concrete finding\nEvidence:\n- at least one file/path used as evidence\nRecommendation:\n- one next action\n\nRules:\n- No issue comments.\n- Do not write only CLAUDE_WRITE_OK.\n- This must be a substantive audit response.\n''', encoding='utf-8')\n# Placeholder mailbox.\nresponse = Path('governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md')\nresponse.parent.mkdir(parents=True, exist_ok=True)\nresponse.write_text('# BEM-867 INTERNAL AUDITOR RESPONSE\\nStatus: PENDING_INTERNAL_AUDITOR_RESPONSE\\n', encoding='utf-8')\n# Queue to existing Claude role workflow, which previously produced reports.\nqueue = Path('governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json')\nprocessed = Path('governance/workflow_dispatch_processed/bem867_battle_audit_mailbox.json')\nresult = Path('governance/workflow_dispatch_results/bem867_battle_audit_mailbox_result.json')\nqueue.parent.mkdir(parents=True, exist_ok=True)\nfor p in [processed, result]:\n    if p.exists():\n        p.unlink()\nobjective = (\n    'BEM-867 battle audit. Read governance/tasks/pending/CLAUDE_BATTLE_AUDIT_BEM867.md. '\n    'Write a substantive audit response to governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md. '\n    'Status must be APPROVED_WITH_NOTES or BLOCKED_WITH_REASON. Include Findings, Evidence, Recommendation. No issue comments.'\n)\nqueue.write_text(json.dumps({\n    'workflow': 'claude.yml',\n    'ref': 'main',\n    'inputs': {\n        'role': 'auditor',\n        'provider': 'claude',\n        'trace_id': trace,\n        'cycle_id': 'bem867',\n        'task_type': 'battle_audit_mailbox_response',\n        'task': objective\n    }\n}, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM867_BATTLE_AUDIT_REQUEST_CREATED.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-867 battle audit request\\nStatus: CREATED\\nTask: governance/tasks/pending/CLAUDE_BATTLE_AUDIT_BEM867.md\\nQueue: governance/workflow_dispatch_queue/bem867_battle_audit_mailbox.json\\nMailbox: governance/audit/mailbox/from_claude/BEM867_BATTLE_AUDIT_RESPONSE.md\\n', encoding='utf-8')\nchanged_files.extend([str(task_path), str(response), str(queue), str(marker)])\nops_applied.append('created BEM867 battle audit request and Claude dispatch queue')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem867_create_battle_audit_request.md",
+    "result_json": "governance/codex/results/bem867_create_battle_audit_request.json"
+  },
+  "created_at": "2026-05-26T09:24:00.312Z"
+}
