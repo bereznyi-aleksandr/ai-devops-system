@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem866_wakeup_workflow_run",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-866 wakeup workflow_run",
+  "objective": "Create file governance/runtime/curator_dispatch/BEM866_WAKEUP_WORKFLOW_RUN.md with content # BEM-866 wakeup workflow_run\nStatus: WAKEUP_AFTER_WORKFLOW_RUN_TRIGGER_PATCH\nPurpose: trigger codex-runner so workflow_dispatch_queue_runner wakes via workflow_run.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem866_wakeup_workflow_run.md",
+    "result_json": "governance/codex/results/bem866_wakeup_workflow_run.json"
+  },
+  "created_at": "2026-05-26T04:41:04.338Z"
+}
