@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem865_validate_processor_inputs2",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-865 validate inputs2",
+  "objective": "Run script:\n\"\"\"\nqueue = Path('governance/workflow_dispatch_queue/bem865_claude_write_selftest.json')\nscript = Path('scripts/process_workflow_dispatch_queue.py')\njson_ok = False\ndata = None\ntry:\n    data = json.loads(queue.read_text(encoding='utf-8')) if queue.exists() else None\n    json_ok = True\nexcept:\n    json_ok = False\nscript_text = script.read_text(encoding='utf-8') if script.exists() else ''\nchecks = {\n    'script_exists': script.exists(),\n    'queue_exists': queue.exists(),\n    'queue_json_ok': json_ok,\n    'has_main': 'def main()' in script_text,\n    'has_gh_workflow': 'gh workflow run' in script_text,\n    'has_commit_state': 'def commit_state()' in script_text,\n    'has_workflow_key': isinstance(data, dict) and bool(data.get('workflow')),\n    'has_inputs': isinstance(data, dict) and isinstance(data.get('inputs'), dict),\n}\nstatus = 'VALID' if all(checks.values()) else 'INVALID'\nmarker = Path('governance/runtime/curator_dispatch/BEM865_PROCESSOR_INPUTS_' + status + '_2.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-865 processor inputs validation2\\nStatus: ' + status + '\\n' + '\\n'.join('- ' + k + ': ' + str(v) for k,v in checks.items()) + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('processor inputs validation2: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem865_validate_processor_inputs2.md",
+    "result_json": "governance/codex/results/bem865_validate_processor_inputs2.json"
+  },
+  "created_at": "2026-05-26T04:00:54.912Z"
+}
