@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem872_validate_curator_mailbox",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM872 curator roadmap validation: CURATOR_ROADMAP_AGREEMENT_INCOMPLETE",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM872_VALIDATION_CURATOR_ROADMAP_AGREEMENT_INCOMPLETE.md",
+    "governance/codex/proofs/bem872_validate_curator_mailbox.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem872_validate_curator_mailbox.md",
+  "completed_at": "2026-05-27T13:39:08Z"
+}
