@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem871_curator_battle_artifacts",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-871 curator battle artifacts",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM871_EXTERNAL_AUDIT_REQUEST.md with content # BEM-871 EXTERNAL AUDIT REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> internal contour -> Curator -> external mailbox\nObjective: verify the new curator-mediated response protocol.\nRequired final mailbox: governance/audit/mailbox/from_curator/BEM871_CURATOR_MEDIATED_RESPONSE.md\nNo issue comments.\n\nCreate file governance/audit/internal/results/BEM871_INTERNAL_CONTOUR_RESULT.md with content # BEM-871 INTERNAL CONTOUR RESULT\nStatus: INTERNAL_RESULT_READY\nProducer: internal contour simulation for protocol validation\nFindings:\n- Internal contour processed the BEM-871 protocol change.\nEvidence:\n- governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL.md\nRecommendation:\n- Curator should publish the final external-audit mailbox response.\nNo issue comments.\n\nCreate file governance/audit/mailbox/from_curator/BEM871_CURATOR_MEDIATED_RESPONSE.md with content # BEM-871 CURATOR-MEDIATED RESPONSE\nStatus: APPROVED_WITH_NOTES\nFindings:\n- New canonical route is External GPT auditor -> Curator -> internal contour -> Curator -> mailbox.\n- Direct internal-auditor mailbox writes are now low-level transport proof only, not final production routing.\nEvidence:\n- governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL.md\n- governance/audit/internal/results/BEM871_INTERNAL_CONTOUR_RESULT.md\nRecommendation:\n- Use Curator as the only canonical final writer for external-audit mailbox responses.\nNo issue comments.\n\nCreate file governance/runtime/curator_dispatch/BEM871_CURATOR_BATTLE_ARTIFACTS_CREATED.md with content # BEM-871 curator battle artifacts\nStatus: CREATED\nRequest: governance/audit/mailbox/to_curator/BEM871_EXTERNAL_AUDIT_REQUEST.md\nInternal result: governance/audit/internal/results/BEM871_INTERNAL_CONTOUR_RESULT.md\nCurator mailbox: governance/audit/mailbox/from_curator/BEM871_CURATOR_MEDIATED_RESPONSE.md\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem871_curator_battle_artifacts.md",
+    "result_json": "governance/codex/results/bem871_curator_battle_artifacts.json"
+  },
+  "created_at": "2026-05-27T03:02:15.977Z"
+}
