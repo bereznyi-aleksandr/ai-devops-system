@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem875_validation_retry",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM875 validation retry: BEM875_PROTOCOL_V13_INCOMPLETE",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM875_VALIDATION_RETRY_BEM875_PROTOCOL_V13_INCOMPLETE.md",
+    "governance/codex/proofs/bem875_validation_retry.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem875_validation_retry.md",
+  "completed_at": "2026-05-27T17:44:51Z"
+}
