@@ -10,3 +10,5 @@ Strategic options:
 - Option A: strict Curator-only communication
 Recommendation:
 - Approve protocol v1
+Status: APPROVED_WITH_NOTES
+No issue comments
