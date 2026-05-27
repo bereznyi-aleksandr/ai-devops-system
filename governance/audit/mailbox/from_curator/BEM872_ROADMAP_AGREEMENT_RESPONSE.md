@@ -6,3 +6,5 @@ Evidence:
 - governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL
 Roadmap:
 - P0 Reliability: Claude
+Strategic variants:
+- A Control-plane first: recommended baseline; lowest risk, slower visible business value
