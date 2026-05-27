@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem871_final_validation_retry",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-871 final validation retry",
+  "objective": "Run script:\n\"\"\"\nresp = Path('governance/audit/mailbox/from_curator/BEM871_CURATOR_MEDIATED_RESPONSE.md')\ntext = resp.read_text(encoding='utf-8', errors='ignore') if resp.exists() else ''\nfinal = 'APPROVED_WITH_NOTES' if 'Status: APPROVED_WITH_NOTES' in text else ('BLOCKED_WITH_REASON' if 'Status: BLOCKED_WITH_REASON' in text else '')\nhas_sections = all(token in text for token in ['Findings:', 'Evidence:', 'Recommendation:'])\nstatus = 'CURATOR_MEDIATED_RESPONSE_CONFIRMED_' + final if resp.exists() and final and has_sections else 'CURATOR_MEDIATED_RESPONSE_INCOMPLETE'\nmarker = Path('governance/runtime/curator_dispatch/BEM871_FINAL_VALIDATION_RETRY_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-871 final validation retry\\nStatus: ' + status + '\\nResponse exists: ' + str(resp.exists()) + '\\nFinal: ' + final + '\\nHas sections: ' + str(has_sections) + '\\n\\nResponse text:\\n' + text[:5000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM871 final validation retry: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem871_final_validation_retry.md",
+    "result_json": "governance/codex/results/bem871_final_validation_retry.json"
+  },
+  "created_at": "2026-05-27T03:13:51.262Z"
+}
