@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem871_probe_after_append",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-871 probe after append",
+  "objective": "Run script:\n\"\"\"\nresp = Path('governance/audit/mailbox/from_curator/BEM871_CURATOR_MEDIATED_RESPONSE.md')\ntext = resp.read_text(encoding='utf-8', errors='ignore') if resp.exists() else ''\nflags = []\nflags.append('exists_' + str(resp.exists()))\nflags.append('status_' + str('Status: APPROVED_WITH_NOTES' in text))\nflags.append('findings_' + str('Findings:' in text))\nflags.append('evidence_' + str('Evidence:' in text))\nflags.append('recommendation_' + str('Recommendation:' in text))\nflags.append('len_' + str(len(text)))\nsafe = '_'.join(flags).replace('True','T').replace('False','F')\nmarker = Path('governance/runtime/curator_dispatch/BEM871_AFTER_APPEND_PROBE_' + safe + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-871 after append probe\\nFlags: ' + safe + '\\n\\nText:\\n' + text[:5000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM871 after append probe: ' + safe)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem871_probe_after_append.md",
+    "result_json": "governance/codex/results/bem871_probe_after_append.json"
+  },
+  "created_at": "2026-05-27T03:10:58.224Z"
+}
