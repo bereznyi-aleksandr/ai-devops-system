@@ -153,3 +153,6 @@ Next: continue roadmap from AGENT_CONTEXT
 Next: continue roadmap from AGENT_CONTEXT.md
 ## BEM-867 completed | 2026-05-26
 Internal auditor battle mailbox confirmed
+## BEM-871 | Curator-mediated internal audit protocol | 2026-05-27
+Status: active
+Protocol: governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL
