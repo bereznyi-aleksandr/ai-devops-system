@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem871_append_context_completed",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-871 context completed",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-871 completed | 2026-05-27\nCurator-mediated internal audit protocol confirmed.\nProtocol: governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL.md\nCurator mailbox: governance/audit/mailbox/from_curator/BEM871_CURATOR_MEDIATED_RESPONSE.md\nProof: governance/runtime/curator_dispatch/BEM871_FINAL_VALIDATION_RETRY_CURATOR_MEDIATED_RESPONSE_CONFIRMED_APPROVED_WITH_NOTES.md\nResult: final external-audit mailbox response is now canonical through Curator, with status APPROVED_WITH_NOTES and required sections Findings/Evidence/Recommendation.\nNext: continue roadmap using curator-mediated mailbox route.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem871_append_context_completed.md",
+    "result_json": "governance/codex/results/bem871_append_context_completed.json"
+  },
+  "created_at": "2026-05-27T03:15:00.582Z"
+}
