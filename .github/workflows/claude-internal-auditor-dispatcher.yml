@@ -1,8 +1,10 @@
 name: Claude Internal Auditor Dispatcher
 
-# BEM-850: fixed claude-code-action@v1 inputs
-# BEM-848: removed invalid with:claude_code_oauth_token
-# BEM-857: added id-token: write for OIDC
+# BEM-870: reconfigured claude-code-action@v1
+# - anthropic_api_key via with: (required for v1 automation mode)
+# - prompt via with: (automation mode trigger)
+# - allowed_tools to read/write files
+# - no CLAUDE_CODE_OAUTH_TOKEN needed when using API key
 
 on:
   workflow_dispatch:
@@ -21,36 +23,38 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Record dispatcher start
         run: python3 scripts/record_claude_dispatcher_state.py start dispatcher_started
 
-      - name: Check Claude secret wiring
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-        run: python3 scripts/check_claude_secret_wiring.py
-
       - name: Claude internal auditor responds to mailbox
         id: claude
         continue-on-error: true
         uses: anthropics/claude-code-action@v1
-        env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
             You are Claude Internal Auditor for repository bereznyi-aleksandr/ai-devops-system.
-            Read the newest file in governance/audit_mailbox/gpt_to_claude/ directory.
-            Write a real response file to governance/audit_mailbox/claude_to_gpt/ directory.
-            The response filename should be based on the request filename with _claude_response suffix.
-            The response file must start with exactly: CLAUDE RESPONSE
-            Include on a separate line: DECISION: APPROVED or DECISION: CHANGE_REQUIRED or DECISION: BLOCKED
-            Provide your analysis and reasoning.
-            Do not write issue comments. Do not expose secrets. No issue #31 comments.
+
+            TASK:
+            1. Read the newest file in governance/audit_mailbox/gpt_to_claude/ directory
+            2. Write a response file to governance/audit_mailbox/claude_to_gpt/ directory
+
+            RESPONSE FILE REQUIREMENTS:
+            - Filename: same as input file but with _claude_response suffix
+            - First line must be exactly: CLAUDE RESPONSE
+            - Include a line: DECISION: APPROVED or DECISION: CHANGE_REQUIRED or DECISION: BLOCKED
+            - Provide your analysis and reasoning in Russian or English
+
+            STRICT RULES:
+            - Do NOT write issue comments
+            - Do NOT write to issue #31
+            - Do NOT expose secrets
+            - Only read/write files in governance/ directory
 
       - name: Record dispatcher complete
         if: always()
@@ -63,8 +67,3 @@ jobs:
       - name: Commit dispatcher state and mailbox
         if: always()
         run: bash scripts/commit_claude_dispatcher_state.sh
-
-      - name: Verify real Claude response
-        if: steps.active_check.outputs.active == 'true' && always()
-        continue-on-error: true
-        run: python3 scripts/verify_real_claude_response.py
