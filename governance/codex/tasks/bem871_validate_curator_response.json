@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem871_validate_curator_response",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-871 validate curator response",
+  "objective": "Run script:\n\"\"\"\nresp = Path('governance/audit/mailbox/from_curator/BEM871_CURATOR_MEDIATED_RESPONSE.md')\ninternal = Path('governance/audit/internal/results/BEM871_INTERNAL_CONTOUR_RESULT.md')\nprotocol = Path('governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL.md')\ntext = resp.read_text(encoding='utf-8', errors='ignore') if resp.exists() else ''\nlines = [line.strip() for line in text.splitlines()]\nfinal = 'APPROVED_WITH_NOTES' if 'Status: APPROVED_WITH_NOTES' in lines else ('BLOCKED_WITH_REASON' if 'Status: BLOCKED_WITH_REASON' in lines else '')\nhas_sections = all(token in text for token in ['Findings:', 'Evidence:', 'Recommendation:'])\nif resp.exists() and internal.exists() and protocol.exists() and final and has_sections:\n    status = 'CURATOR_MEDIATED_RESPONSE_CONFIRMED_' + final\nelse:\n    status = 'CURATOR_MEDIATED_RESPONSE_INCOMPLETE'\nmarker = Path('governance/runtime/curator_dispatch/BEM871_VALIDATION_' + status + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-871 curator-mediated validation\\nStatus: ' + status + '\\nResponse exists: ' + str(resp.exists()) + '\\nInternal result exists: ' + str(internal.exists()) + '\\nProtocol exists: ' + str(protocol.exists()) + '\\nFinal: ' + final + '\\nHas sections: ' + str(has_sections) + '\\n\\nResponse text:\\n' + text[:3000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM871 curator-mediated response validation: ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem871_validate_curator_response.md",
+    "result_json": "governance/codex/results/bem871_validate_curator_response.json"
+  },
+  "created_at": "2026-05-27T03:03:32.556Z"
+}
