@@ -8,3 +8,5 @@ Roadmap:
 - P0 Reliability: Claude
 Strategic variants:
 - A Control-plane first: recommended baseline; lowest risk, slower visible business value
+Recommendation:
+- Adopt hybrid A+B: finish P0 reliability gates, then
