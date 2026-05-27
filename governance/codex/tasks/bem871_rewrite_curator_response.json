@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem871_rewrite_curator_response",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-871 rewrite curator response",
+  "objective": "Create file governance/audit/mailbox/from_curator/BEM871_CURATOR_MEDIATED_RESPONSE.md with content # BEM-871 CURATOR-MEDIATED RESPONSE\nStatus: APPROVED_WITH_NOTES\nFindings:\n- New canonical route is External GPT auditor -> Curator -> internal contour -> Curator -> mailbox.\n- Direct internal-auditor mailbox writes are now low-level transport proof only, not final production routing.\nEvidence:\n- governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL.md\n- governance/audit/internal/results/BEM871_INTERNAL_CONTOUR_RESULT.md\nRecommendation:\n- Use Curator as the only canonical final writer for external-audit mailbox responses.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem871_rewrite_curator_response.md",
+    "result_json": "governance/codex/results/bem871_rewrite_curator_response.json"
+  },
+  "created_at": "2026-05-27T03:04:49.337Z"
+}
