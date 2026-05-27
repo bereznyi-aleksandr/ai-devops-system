@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem872_probe_mailbox_tokens",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-872 probe mailbox tokens",
+  "objective": "Run script:\n\"\"\"\nmail = Path('governance/audit/mailbox/from_curator/BEM872_ROADMAP_AGREEMENT_RESPONSE.md')\ntext = mail.read_text(encoding='utf-8', errors='ignore') if mail.exists() else ''\nflags = []\nfor token in ['Status: APPROVED_WITH_NOTES','Findings:','Evidence:','Roadmap:','Strategic variants:','Recommendation:']:\n    flags.append(token.replace(':','').replace(' ','_') + '_' + str(token in text))\nflags.append('len_' + str(len(text)))\nsafe = '_'.join(flags).replace('True','T').replace('False','F')[:180]\nmarker = Path('governance/runtime/curator_dispatch/BEM872_MAILBOX_TOKEN_PROBE_' + safe + '.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-872 mailbox token probe\\nFlags: ' + safe + '\\n\\nText:\\n' + text[:5000] + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM872 mailbox token probe: ' + safe)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem872_probe_mailbox_tokens.md",
+    "result_json": "governance/codex/results/bem872_probe_mailbox_tokens.json"
+  },
+  "created_at": "2026-05-27T13:40:29.415Z"
+}
