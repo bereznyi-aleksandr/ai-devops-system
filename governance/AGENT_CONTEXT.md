@@ -158,3 +158,5 @@ Status: active
 Protocol: governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL
 ## BEM-871 completed | 2026-05-27
 Curator-mediated internal audit protocol confirmed
+## BEM-872 completed | 2026-05-27
+Roadmap protocol agreed through curator-mediated route
