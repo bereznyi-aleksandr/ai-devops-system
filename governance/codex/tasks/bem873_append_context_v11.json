@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem873_append_context_v11",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-873 context v1.1",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-873 completed | 2026-05-27\nUpdated BEM-872 roadmap protocol to version v1.1 after operator language review.\nChange: protocol text is now Russian-first; English terms are preserved only in parentheses after Russian terms.\nArtifact: BEM872_roadmap_protocol_curator_mediated_v1_1_ru.docx\nArchive: BEM872_roadmap_protocol_curator_mediated_v1_1_ru.zip\nResult: updated protocol v1.1 prepared for operator review with version history and terminology glossary.\nNext: continue roadmap using approved BEM-872/BEM-873 protocol after operator review.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem873_append_context_v11.md",
+    "result_json": "governance/codex/results/bem873_append_context_v11.json"
+  },
+  "created_at": "2026-05-27T14:24:46.775Z"
+}
