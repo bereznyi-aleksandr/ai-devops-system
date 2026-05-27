@@ -164,3 +164,5 @@ Roadmap protocol agreed through curator-mediated route
 Updated BEM-872 roadmap protocol to version v1
 ## BEM-874 completed | 2026-05-27
 Updated BEM-872 roadmap protocol to version v1
+## BEM-875 completed | 2026-05-27
+Protocol v1
