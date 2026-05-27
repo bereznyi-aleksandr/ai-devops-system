@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem871_create_protocol_direct",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-871 create protocol direct",
+  "objective": "Create file governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL.md with content # Curator-mediated internal audit protocol\n\nStatus: ACTIVE\nBEM: BEM-871\nDate: 2026-05-27\n\n## Canonical route\n\nExternal GPT auditor must not treat a direct internal-auditor mailbox write as the final architectural path.\n\nRequired route:\n1. External GPT auditor sends an audit ask through Curator.\n2. Curator dispatches the task into the internal contour.\n3. Internal contour may include Analyst, Auditor, Executor, and Claude role adapters.\n4. Internal contour returns its result to Curator.\n5. Curator validates and normalizes the result.\n6. Curator writes the final response into the external-audit mailbox.\n7. External GPT auditor polls the mailbox and reports only what Curator published.\n\n## Mailbox ownership\n\nCanonical external mailbox writer: Curator.\n\nDirect writes from internal auditor to governance/audit/mailbox/from_claude are allowed only as low-level transport selftest evidence, not as the final production route.\n\n## Accepted proof\n\nA production PASS requires:\n- Curator-mediated task exists.\n- Internal contour result exists.\n- Curator-published mailbox response exists.\n- Mailbox response contains final status APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\n- Mailbox response contains Findings, Evidence, and Recommendation.\n\n## BEM-867 status under this protocol\n\nBEM-867 remains valid as proof that mailbox write capability works.\nBEM-867 does not by itself prove the final curator-mediated production protocol.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem871_create_protocol_direct.md",
+    "result_json": "governance/codex/results/bem871_create_protocol_direct.json"
+  },
+  "created_at": "2026-05-27T02:59:34.078Z"
+}
