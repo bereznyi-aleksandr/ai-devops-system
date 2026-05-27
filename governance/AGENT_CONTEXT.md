@@ -156,3 +156,5 @@ Internal auditor battle mailbox confirmed
 ## BEM-871 | Curator-mediated internal audit protocol | 2026-05-27
 Status: active
 Protocol: governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL
+## BEM-871 completed | 2026-05-27
+Curator-mediated internal audit protocol confirmed
