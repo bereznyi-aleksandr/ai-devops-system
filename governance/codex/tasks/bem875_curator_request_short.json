@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem875_curator_request_short",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-875 curator request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM875_PROTOCOL_V13_REQUEST.md with content # BEM-875 PROTOCOL V1.3 REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> internal contour -> Curator -> external mailbox\nObjective: agree updated protocol v1.3 based on operator discussion after v1.2.\nRequired additions:\n- Pre-P0 repository cleanup before roadmap execution.\n- Worker model: one Curator manages several internal contours.\n- Parallel roadmap execution by task IDs and dependencies.\n- Isolated workspace for every internal contour.\n- Curator-controlled integration lane with tests before merge.\n- Architecture control registry: target, actual, delta, remaining work.\n- Director to Worker communication via task registry such as GitHub Issues.\n- Scalable data exchange between contours through policy-governed channels.\n- Time registry as audit log, separate from live communication channel.\n- Enterprise customer segment and large-business ERP pilot after P0.\n- Product repos: control-plane is factory and architect for client-specific multiagent systems.\nUse open-source practice: supervisor/orchestrator, handoffs, stateful workflows, typed outputs, guardrails, tracing, observability, staged autonomy, human approval for high risk.\nRequired Curator final mailbox: governance/audit/mailbox/from_curator/BEM875_PROTOCOL_V13_RESPONSE.md\nRequired status: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nRequired sections: Findings, Evidence, Agreed changes, Strategic options, Recommendation.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem875_curator_request_short.md",
+    "result_json": "governance/codex/results/bem875_curator_request_short.json"
+  },
+  "created_at": "2026-05-27T17:23:56.613Z"
+}
