@@ -9,3 +9,5 @@ Strategic options:
 - Selected model: managed shared channel under Curator policy
 Recommendation:
 - Prepare protocol v1
+Status: APPROVED_WITH_NOTES
+No issue comments
