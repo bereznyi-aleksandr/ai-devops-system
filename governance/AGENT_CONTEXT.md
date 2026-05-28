@@ -166,3 +166,5 @@ Updated BEM-872 roadmap protocol to version v1
 Updated BEM-872 roadmap protocol to version v1
 ## BEM-875 completed | 2026-05-27
 Protocol v1
+## BEM-876 completed | 2026-05-28
+Protocol v1
