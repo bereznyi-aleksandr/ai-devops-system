@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem876_curator_request_v14",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-876 curator request v1.4",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM876_PROTOCOL_V14_REQUEST.md with content # BEM-876 PROTOCOL V1.4 REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> internal contour -> Curator -> external mailbox\nObjective: agree protocol v1.4 after operator review of v1.3.\nBase documents: BEM872 v1.2, BEM875 v1.3, operator discussion, AI agents summary, Business Model Canvas source, open-source multiagent practice.\nRequired fixes:\n- Preserve v1.2 high-level line and do not lose previous content when adding details.\n- Replace control plane wording with управляющий контур.\n- Clarify role/object/component terminology: Director and Worker are role-objects; Curator is internal component inside any role-object.\n- General Director level is added above Directors.\n- Replace реестр времени with журнал событий.\n- Unify workspace terms: рабочая область only; integration/testing areas are special workspaces.\n- Merge audit/integration duplication into контур тестирования.\n- Main verified code location is основная рабочая область.\n- Task registry cannot rely on GitHub Issues because of limits; use scalable task registry.\n- Use only selected managed shared channel model, no rejected option tables unless needed as rationale.\n- Add rule system: rules store error conditions, decisions, duplicates/conflicts handling, and are authored by Directors/General Director.\n- Add cross-repository rule distribution and feedback from product repos.\n- Clarify product repository link to управляющий контур.\n- Expand business scope from small tasks/CRM to ERP and enterprise production management.\n- Redesign roadmap with detailed task IDs to build the actual system.\nRequired internal outputs: Analyst review, Auditor review, Curator response.\nRequired final status: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem876_curator_request_v14.md",
+    "result_json": "governance/codex/results/bem876_curator_request_v14.json"
+  },
+  "created_at": "2026-05-28T19:21:57.055Z"
+}
