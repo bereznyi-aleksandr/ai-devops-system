@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem876_auditor_review_v14",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-876 auditor review",
+  "objective": "Create file governance/audit/internal/results/BEM876_AUDITOR_PROTOCOL_V14_REVIEW.md with content # BEM-876 AUDITOR PROTOCOL V1.4 REVIEW\nStatus: AUDITOR_REVIEW_READY\nFindings:\n- Operator objection is valid: v1.4 must not replace v1.2 with details; it must preserve v1.2 as the upper-level frame and add v1.3/v1.4 details below it.\n- Куратор must not be defined only as Worker node. Correct definition: Curator is a management component inside every role-object: General Director, Director, Worker.\n- Use one terminology layer: role-object, internal component, internal contour, workspace, task registry, event log, rulebook.\n- Replace управляющая плоскость with управляющий контур throughout the main text.\n- Replace реестр времени with журнал событий.\n- GitHub Issues must not be the canonical task registry due scale limits; mention only as temporary implementation example, not architecture.\n- Free contour-to-contour exchange must be excluded from main decision text; selected model is managed shared channel under Curator policy.\n- Rulebook must include error condition, detection markers, approved action, forbidden action, owner, version, source incident, and conflict policy.\n- General Director writes rules for Directors; Director writes rules for Workers; Worker Curator applies rules to internal contours and reports incidents upward.\n- Roadmap must include concrete IDs for building General Director, Director, Worker, Curator component, task registry, rulebook, event log, architecture registry, workspaces, testing contour, product repo link.\nRisks:\n- Too many new concepts can reduce readability. Use tables and definitions.\n- If rule conditions are too rigid, elements may misapply rules. Use conditions as matching hints plus confidence and escalation rule.\nRecommendation:\n- Approve v1.4 with notes: keep Russian-first terminology, clickable TOC, version history, and section-by-section traceability from operator remarks to protocol changes.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem876_auditor_review_v14.md",
+    "result_json": "governance/codex/results/bem876_auditor_review_v14.json"
+  },
+  "created_at": "2026-05-28T19:24:47.292Z"
+}
