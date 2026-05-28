@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem876_read_context_start",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM876 read AGENT_CONTEXT key lines",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM876_AGENT_CONTEXT_START_READ.md",
+    "governance/codex/proofs/bem876_read_context_start.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem876_read_context_start.md",
+  "completed_at": "2026-05-28T19:20:01Z"
+}
