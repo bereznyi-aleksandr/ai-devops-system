@@ -7,3 +7,5 @@ Agreed changes:
 - Restore v1
 Strategic options:
 - Selected model: managed shared channel under Curator policy
+Recommendation:
+- Prepare protocol v1
