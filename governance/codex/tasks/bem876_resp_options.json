@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem876_resp_options",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-876 response options",
+  "objective": "Append to governance/audit/mailbox/from_curator/BEM876_PROTOCOL_V14_RESPONSE.md: \nStrategic options:\n- Selected model: managed shared channel under Curator policy.\n- Rejected models are not shown as equal choices in the main protocol.\n- Strict Curator-only channel may be used only for high-risk actions.\n- Free direct exchange between contours is rejected for audit and safety risk.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem876_resp_options.md",
+    "result_json": "governance/codex/results/bem876_resp_options.json"
+  },
+  "created_at": "2026-05-28T19:35:51.698Z"
+}
