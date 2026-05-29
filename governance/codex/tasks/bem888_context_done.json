@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem888_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-888 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-888 completed | 2026-05-29\nIntegration selftest implemented for BEM-880 baseline.\nTool: governance/tools/run_bem880_selftest.py\nReport: governance/reports/BEM888_INTEGRATION_SELFTEST.md\nProof: governance/runtime/curator_dispatch/BEM888_INTEGRATION_SELFTEST_PASS.md\nResult: BEM-882-006 completed. All BEM-882 executable backlog items are now completed. Next: BEM-889 final repository readiness and dispatch manifest.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem888_context_done.md",
+    "result_json": "governance/codex/results/bem888_context_done.json"
+  },
+  "created_at": "2026-05-29T20:44:42.524Z"
+}
