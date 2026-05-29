@@ -170,3 +170,5 @@ Protocol v1
 Protocol v1
 ## BEM-877 completed | 2026-05-29
 Protocol v1
+## BEM-878 completed | 2026-05-29
+Protocol v1
