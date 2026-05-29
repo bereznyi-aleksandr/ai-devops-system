@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem886_workspace_promotion",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM886 workspace promotion PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/workspace_promotion_policy.json",
+    "governance/workspaces/promotion_log.jsonl",
+    "governance/workspaces/development/BEM886_PROMOTION_CANDIDATE.md",
+    "governance/workspaces/testing/BEM886_PROMOTION_CANDIDATE.md",
+    "governance/workspaces/main/BEM886_PROMOTION_CANDIDATE.md",
+    "governance/tools/validate_workspace_promotion.py",
+    "governance/reports/BEM886_WORKSPACE_PROMOTION.md",
+    "governance/runtime/curator_dispatch/BEM886_WORKSPACE_PROMOTION_PASS.md",
+    "governance/backlog/BEM882_EXECUTABLE_BACKLOG.json",
+    "governance/codex/proofs/bem886_workspace_promotion.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem886_workspace_promotion.md",
+  "completed_at": "2026-05-29T20:38:08Z"
+}

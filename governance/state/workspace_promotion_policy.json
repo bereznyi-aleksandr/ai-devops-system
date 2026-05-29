@@ -1,0 +1,31 @@
+{
+  "status": "active",
+  "flow": [
+    "development",
+    "testing",
+    "main"
+  ],
+  "required_for_testing": [
+    "artifact_id",
+    "source_workspace",
+    "target_workspace",
+    "task_id",
+    "trace_id",
+    "owner",
+    "validation_status"
+  ],
+  "required_for_main": [
+    "artifact_id",
+    "source_workspace",
+    "target_workspace",
+    "task_id",
+    "trace_id",
+    "owner",
+    "validation_status",
+    "proof"
+  ],
+  "pass_values": [
+    "PASS"
+  ],
+  "log": "governance/workspaces/promotion_log.jsonl"
+}
