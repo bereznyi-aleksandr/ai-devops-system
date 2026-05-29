@@ -1,0 +1,29 @@
+{
+  "status": "active",
+  "schema_name": "managed_channel_message_envelope",
+  "required_fields": [
+    "message_id",
+    "task_id",
+    "trace_id",
+    "source_object",
+    "source_curator",
+    "target_object",
+    "target_curator",
+    "message_type",
+    "payload_ref",
+    "created_at_utc3",
+    "rule_refs",
+    "status"
+  ],
+  "allowed_message_types": [
+    "task",
+    "result",
+    "blocker",
+    "risk_warning",
+    "rule_update",
+    "testing_assignment",
+    "feedback"
+  ],
+  "routing_rule": "external object exchange must be curator-to-curator",
+  "append_only_log": "governance/messages/managed_channel_messages.jsonl"
+}

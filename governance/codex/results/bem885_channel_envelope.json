@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem885_channel_envelope",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM885 channel envelope PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/message_envelope_schema.json",
+    "governance/messages/managed_channel_messages.jsonl",
+    "governance/channels/BEM885_MESSAGE_ENVELOPE.md",
+    "governance/reports/BEM885_CHANNEL_ENVELOPE_VALIDATION.md",
+    "governance/runtime/curator_dispatch/BEM885_CHANNEL_ENVELOPE_PASS.md",
+    "governance/backlog/BEM882_EXECUTABLE_BACKLOG.json",
+    "governance/codex/proofs/bem885_channel_envelope.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem885_channel_envelope.md",
+  "completed_at": "2026-05-29T20:35:28Z"
+}
