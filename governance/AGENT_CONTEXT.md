@@ -190,3 +190,5 @@ Managed channel message envelope implemented
 Workspace promotion checks implemented
 ## BEM-887 completed | 2026-05-29
 Product repository registration template implemented
+## BEM-888 completed | 2026-05-29
+Integration selftest implemented for BEM-880 baseline
