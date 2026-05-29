@@ -1,0 +1,41 @@
+{
+  "status": "ready",
+  "items": [
+    {
+      "id": "BEM-882-001",
+      "title": "Add registry schema validation",
+      "owner": "WRK-C1",
+      "why": "ensure json registries are machine-checkable"
+    },
+    {
+      "id": "BEM-882-002",
+      "title": "Add rule registry operational seed rules",
+      "owner": "WRK-C2",
+      "why": "baseline rules are insufficient for real execution"
+    },
+    {
+      "id": "BEM-882-003",
+      "title": "Implement channel message envelope and append-only message log",
+      "owner": "WRK-C2",
+      "why": "managed channel must become executable, not only described"
+    },
+    {
+      "id": "BEM-882-004",
+      "title": "Add workspace promotion checks from development to testing to main",
+      "owner": "WRK-C3",
+      "why": "PASS promotion must be enforceable"
+    },
+    {
+      "id": "BEM-882-005",
+      "title": "Add product repository registration template",
+      "owner": "WRK-C3",
+      "why": "product repo loop needs repeatable onboarding"
+    },
+    {
+      "id": "BEM-882-006",
+      "title": "Add integration selftest for BEM-880 baseline",
+      "owner": "WRK-C3",
+      "why": "next changes need automatic proof"
+    }
+  ]
+}
