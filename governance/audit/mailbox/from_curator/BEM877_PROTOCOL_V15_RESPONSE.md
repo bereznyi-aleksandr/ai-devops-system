@@ -5,3 +5,5 @@ Evidence:
 - governance/audit/mailbox/to_curator/BEM877_PROTOCOL_V15_REQUEST
 Agreed changes:
 -
+Recommendation:
+- Approve v1
