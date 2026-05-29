@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem888_integration_selftest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM888 integration selftest PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/BEM888_INTEGRATION_SELFTEST.json",
+    "governance/reports/BEM888_INTEGRATION_SELFTEST.md",
+    "governance/tools/run_bem880_selftest.py",
+    "governance/runtime/curator_dispatch/BEM888_INTEGRATION_SELFTEST_PASS.md",
+    "governance/backlog/BEM882_EXECUTABLE_BACKLOG.json",
+    "governance/codex/proofs/bem888_integration_selftest.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem888_integration_selftest.md",
+  "completed_at": "2026-05-29T20:43:37Z"
+}

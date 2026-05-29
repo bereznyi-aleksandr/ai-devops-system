@@ -1,0 +1,91 @@
+{
+  "bem": "BEM-888",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "exists governance/state/registry_schemas.json",
+      "ok": true,
+      "detail": "governance/state/registry_schemas.json"
+    },
+    {
+      "name": "exists governance/state/rule_registry.json",
+      "ok": true,
+      "detail": "governance/state/rule_registry.json"
+    },
+    {
+      "name": "exists governance/state/message_envelope_schema.json",
+      "ok": true,
+      "detail": "governance/state/message_envelope_schema.json"
+    },
+    {
+      "name": "exists governance/messages/managed_channel_messages.jsonl",
+      "ok": true,
+      "detail": "governance/messages/managed_channel_messages.jsonl"
+    },
+    {
+      "name": "exists governance/state/workspace_promotion_policy.json",
+      "ok": true,
+      "detail": "governance/state/workspace_promotion_policy.json"
+    },
+    {
+      "name": "exists governance/workspaces/promotion_log.jsonl",
+      "ok": true,
+      "detail": "governance/workspaces/promotion_log.jsonl"
+    },
+    {
+      "name": "exists governance/state/product_repository_registry.json",
+      "ok": true,
+      "detail": "governance/state/product_repository_registry.json"
+    },
+    {
+      "name": "exists governance/state/product_repository_registration_schema.json",
+      "ok": true,
+      "detail": "governance/state/product_repository_registration_schema.json"
+    },
+    {
+      "name": "registry schema count",
+      "ok": true,
+      "detail": "schemas=8"
+    },
+    {
+      "name": "rule count",
+      "ok": true,
+      "detail": "rules=12"
+    },
+    {
+      "name": "continuity rule exists",
+      "ok": true,
+      "detail": "RULE-012"
+    },
+    {
+      "name": "message log nonempty",
+      "ok": true,
+      "detail": "messages=2"
+    },
+    {
+      "name": "curator routing",
+      "ok": true,
+      "detail": "curator-to-curator"
+    },
+    {
+      "name": "workspace promotion has main",
+      "ok": true,
+      "detail": "main PASS promotion"
+    },
+    {
+      "name": "product registry has template",
+      "ok": true,
+      "detail": "registration_template"
+    },
+    {
+      "name": "product registry has at least one candidate",
+      "ok": true,
+      "detail": "repositories=1"
+    },
+    {
+      "name": "backlog first five completed",
+      "ok": true,
+      "detail": "BEM-882-001,BEM-882-002,BEM-882-003,BEM-882-004,BEM-882-005"
+    }
+  ]
+}
