@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem877_resp_evidence",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-877 response evidence",
+  "objective": "Append to governance/audit/mailbox/from_curator/BEM877_PROTOCOL_V15_RESPONSE.md: \nEvidence:\n- governance/audit/mailbox/to_curator/BEM877_PROTOCOL_V15_REQUEST.md\n- governance/audit/internal/results/BEM877_WORKER_PROTOCOL_V15_REVIEW.md\n- BEM872 v1.2 protocol, BEM875 v1.3 protocol, BEM876 v1.4 protocol.\n- Operator dialogue about clickable TOC, object/element terms, duplicate removal, testing workspace, channels, and product repository support.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem877_resp_evidence.md",
+    "result_json": "governance/codex/results/bem877_resp_evidence.json"
+  },
+  "created_at": "2026-05-29T15:51:47.015Z"
+}
