@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem879_curator_request_v17",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-879 request v1.7",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM879_PROTOCOL_V17_REQUEST.md with content # BEM-879 PROTOCOL V1.7 REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: agree protocol v1.7 after operator review of v1.6.\nBase: BEM878 protocol v1.6 and table 9 roadmap.\nOperator requirement:\n- In roadmap, do not create Worker with minimum one internal contour.\n- Calculate optimal number of Worker internal contours from the roadmap tasks.\n- Add the calculated contour count to the roadmap and protocol.\nExternal auditor calculation:\n- Roadmap table has sequential gates plus two main parallel zones.\n- After P0-REG-001, useful parallel tasks are P0-ARCH-001, P0-RULE-001, P0-LOG-001: width 3.\n- After P1-DIR-001, useful parallel tasks are P1-DIR-RULE-001, P1-DIR-PLAN-001, P1-WRK-001: width 3.\n- Later useful parallelism is 2 or less.\n- With 2 contours, the roadmap is slower because one of the three parallel branches waits.\n- With 4 contours, the fourth contour is mostly idle and does not reduce the critical path.\n- Recommended optimum: 3 Worker internal contours.\nRequired protocol change:\n- P1-WRK-001 becomes: Create Worker object with Curator and 3 internal contours.\n- Add contour model: WRK-C1 Registry and architecture contour; WRK-C2 Rules and communication contour; WRK-C3 Implementation and testing contour.\n- Testing remains assigned function, not permanent separate testing contour. Curator assigns C3 or another non-authoring contour to testing workspace when needed.\nRequired Worker output and Curator final response. Status APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem879_curator_request_v17.md",
+    "result_json": "governance/codex/results/bem879_curator_request_v17.json"
+  },
+  "created_at": "2026-05-29T18:03:02.910Z"
+}
