@@ -186,3 +186,5 @@ Registry schema validation implemented
 Operational rule seed implemented
 ## BEM-885 completed | 2026-05-29
 Managed channel message envelope implemented
+## BEM-886 completed | 2026-05-29
+Workspace promotion checks implemented
