@@ -7,3 +7,5 @@ Agreed changes:
 - Protocol version becomes v1
 Recommendation:
 - Approve protocol v1
+Status: APPROVED_WITH_NOTES
+No issue comments
