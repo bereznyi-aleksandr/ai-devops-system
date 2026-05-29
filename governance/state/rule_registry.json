@@ -1,0 +1,35 @@
+{
+  "status": "active",
+  "canonical_term": "реестр правил",
+  "purpose": "versioned source of operational rules, conditions, incident sources, approved actions, prohibited actions, owners and conflict policy",
+  "rules": [
+    {
+      "id": "RULE-001",
+      "owner": "OBJ-GD-001",
+      "scope": "directors",
+      "condition": "director-level policy or cross-direction conflict",
+      "approved_action": "escalate to general director curator",
+      "prohibited_action": "low-level element changes director rules directly",
+      "version": "1.0"
+    },
+    {
+      "id": "RULE-002",
+      "owner": "OBJ-DIR-001",
+      "scope": "workers",
+      "condition": "worker execution or repeated worker incident",
+      "approved_action": "director rules-management contour updates worker rule after analysis",
+      "prohibited_action": "duplicate conflicting rule without review",
+      "version": "1.0"
+    },
+    {
+      "id": "RULE-003",
+      "owner": "OBJ-WRK-001",
+      "scope": "worker internal contours",
+      "condition": "task execution, result handoff, blocker, or testing assignment",
+      "approved_action": "curator assigns contour and records event",
+      "prohibited_action": "contour writes to main workspace without PASS",
+      "version": "1.0"
+    }
+  ],
+  "conflict_policy": "new rule must reference source incident; duplicate conditions are merged or versioned, not copied blindly"
+}

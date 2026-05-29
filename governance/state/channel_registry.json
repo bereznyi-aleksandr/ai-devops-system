@@ -1,0 +1,21 @@
+{
+  "status": "active",
+  "common_managed_channel": "global governance mechanism that includes rule registry and allowed message routes",
+  "external_exchange_rule": "object-to-object exchange goes curator-to-curator only",
+  "internal_channels": "inside each object, internal contours communicate through curator-governed internal channel",
+  "message_types": [
+    "task",
+    "result",
+    "blocker",
+    "risk_warning",
+    "rule_update",
+    "testing_assignment"
+  ],
+  "required_ids": [
+    "task_id",
+    "trace_id",
+    "owner",
+    "source_object",
+    "target_object"
+  ]
+}
