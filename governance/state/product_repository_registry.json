@@ -10,5 +10,31 @@
     "extend",
     "learn_from_feedback"
   ],
-  "repositories": []
+  "repositories": [
+    {
+      "repository_id": "PROD-EXAMPLE-001",
+      "repository_name": "example-product-repository",
+      "owner_object": "OBJ-DIR-001",
+      "worker_object": "OBJ-WRK-001",
+      "status": "candidate",
+      "purpose": "client or product implementation repository governed by managing contour",
+      "allowed_capabilities": [
+        "build",
+        "support",
+        "repair",
+        "upgrade",
+        "extend",
+        "learn_from_feedback"
+      ],
+      "required_links": {
+        "rule_registry": "governance/state/rule_registry.json",
+        "channel_registry": "governance/state/channel_registry.json",
+        "event_log": "governance/logs/event_log.jsonl"
+      },
+      "feedback_route": "product curator -> managing contour worker curator -> director curator if rule update is needed",
+      "created_at_utc3": "2026-05-29T23:40:00+03:00"
+    }
+  ],
+  "registration_template": "governance/product_repositories/templates/product_repository_registration_template.json",
+  "registration_schema": "governance/state/product_repository_registration_schema.json"
 }
