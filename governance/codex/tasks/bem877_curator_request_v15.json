@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem877_curator_request_v15",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-877 request v1.5",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM877_PROTOCOL_V15_REQUEST.md with content # BEM-877 PROTOCOL V1.5 REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: agree protocol v1.5 after operator review of v1.4.\nBase: BEM872 v1.2, BEM875 v1.3, BEM876 v1.4, AI agents summary, Business Model Canvas source, operator dialogue.\nRequired fixes:\n- Clickable TOC must be inside the table, not a separate link row.\n- Replace role-object with object everywhere.\n- Replace internal component with element everywhere. Curator, Analyst, Auditor, Executor are elements.\n- Reduce duplication: define each key term once, then reference it.\n- Remove low-value continuity table.\n- Clarify managing contour: main repository plus system logic, architecture, rules, factory, support and upgrade center for product repos.\n- Clarify testing: no permanent separate testing contour. Curator assigns one internal contour to testing workspace when needed.\n- Use only рабочая область terminology: development workspace, testing workspace, main workspace.\n- Clarify managed common channel: common channel includes global rulebook and rules written by Director/General Director; internal channels operate inside each object.\n- Curator of Worker communicates only with Curator of Director for external object exchange.\n- Product repos obey global rulebook and send experience feedback to managing contour.\n- Optimize structure: fewer tables, no repeated definitions.\nRequired Worker output and Curator final response. Status APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem877_curator_request_v15.md",
+    "result_json": "governance/codex/results/bem877_curator_request_v15.json"
+  },
+  "created_at": "2026-05-29T15:45:21.888Z"
+}
