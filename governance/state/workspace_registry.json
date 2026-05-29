@@ -1,0 +1,24 @@
+{
+  "status": "active",
+  "workspaces": [
+    {
+      "id": "WS-DEV-001",
+      "type": "development_workspace",
+      "path": "governance/workspaces/development",
+      "rule": "internal contours write here first"
+    },
+    {
+      "id": "WS-TEST-001",
+      "type": "testing_workspace",
+      "path": "governance/workspaces/testing",
+      "rule": "curator assigns one internal contour to test combined result"
+    },
+    {
+      "id": "WS-MAIN-001",
+      "type": "main_workspace",
+      "path": "governance/workspaces/main",
+      "rule": "only PASS artifacts are promoted here"
+    }
+  ],
+  "promotion_rule": "development -> testing -> main after PASS"
+}
