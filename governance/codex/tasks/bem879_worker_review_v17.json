@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem879_worker_review_v17",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-879 worker review",
+  "objective": "Create file governance/audit/internal/results/BEM879_WORKER_PROTOCOL_V17_REVIEW.md with content # BEM-879 WORKER PROTOCOL V1.7 REVIEW\nStatus: WORKER_REVIEW_READY\nFindings:\n- Operator remark is valid. Worker should not be described as having minimum one internal contour when the roadmap is intended for parallel execution.\n- The table 9 roadmap contains a maximum useful parallel width of 3.\n- The first width-3 zone appears after P0-REG-001: architecture registry, rule registry, and event log can be built in parallel.\n- The second width-3 zone appears after P1-DIR-001: Director rules contour, Director planning contour, and Worker object can be built in parallel.\n- Later stages have width 2 or 1, therefore more than 3 Worker internal contours does not shorten the critical path.\n- Two contours are not enough because one of each width-3 branch waits.\nDecision:\n- Optimal Worker internal contour count for this roadmap is 3.\n- Worker should be created with Curator plus 3 internal contours.\nRecommended contours:\n- WRK-C1: Registry and architecture contour.\n- WRK-C2: Rules and communication contour.\n- WRK-C3: Implementation, workspace, product-link, and assigned testing contour.\nTesting rule:\n- Testing remains an assigned function in testing workspace. It is not a permanent separate testing contour. Curator assigns a non-authoring contour when independent check is needed.\nRecommendation:\n- Approve protocol v1.7 with notes and update roadmap task P1-WRK-001 accordingly.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem879_worker_review_v17.md",
+    "result_json": "governance/codex/results/bem879_worker_review_v17.json"
+  },
+  "created_at": "2026-05-29T18:04:28.689Z"
+}
