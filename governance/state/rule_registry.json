@@ -29,7 +29,98 @@
       "approved_action": "curator assigns contour and records event",
       "prohibited_action": "contour writes to main workspace without PASS",
       "version": "1.0"
+    },
+    {
+      "id": "RULE-004",
+      "owner": "OBJ-WRK-001",
+      "scope": "registry_validation",
+      "condition": "before a registry is accepted or changed",
+      "approved_action": "run validate_registries and attach proof",
+      "prohibited_action": "mark registry PASS without schema validation",
+      "version": "1.0",
+      "source_incident": "BEM-882 readiness audit"
+    },
+    {
+      "id": "RULE-005",
+      "owner": "OBJ-WRK-001",
+      "scope": "workspace_promotion",
+      "condition": "artifact moves from development to testing or main workspace",
+      "approved_action": "record promotion and validation result",
+      "prohibited_action": "copy artifact to main workspace without PASS proof",
+      "version": "1.0",
+      "source_incident": "BEM-882 readiness audit"
+    },
+    {
+      "id": "RULE-006",
+      "owner": "OBJ-DIR-001",
+      "scope": "managed_channel",
+      "condition": "object-to-object exchange",
+      "approved_action": "use curator-to-curator message envelope",
+      "prohibited_action": "low-level element sends external object message directly",
+      "version": "1.0",
+      "source_incident": "BEM-880 channel baseline"
+    },
+    {
+      "id": "RULE-007",
+      "owner": "OBJ-DIR-001",
+      "scope": "rule_update",
+      "condition": "new incident proposes a rule change",
+      "approved_action": "deduplicate, version, record source incident and owner",
+      "prohibited_action": "create conflicting duplicate rule",
+      "version": "1.0",
+      "source_incident": "operator protocol v1.6"
+    },
+    {
+      "id": "RULE-008",
+      "owner": "OBJ-WRK-001",
+      "scope": "testing_assignment",
+      "condition": "combined result needs testing",
+      "approved_action": "curator assigns a non-authoring contour when possible",
+      "prohibited_action": "authoring contour approves its own candidate as final without independent check",
+      "version": "1.0",
+      "source_incident": "operator protocol v1.7"
+    },
+    {
+      "id": "RULE-009",
+      "owner": "OBJ-GD-001",
+      "scope": "director_governance",
+      "condition": "multiple directors or direction-level conflict",
+      "approved_action": "general director curator resolves or escalates to operator if strategic",
+      "prohibited_action": "director unilaterally changes global policy",
+      "version": "1.0",
+      "source_incident": "operator protocol v1.6"
+    },
+    {
+      "id": "RULE-010",
+      "owner": "OBJ-WRK-001",
+      "scope": "product_repository_feedback",
+      "condition": "product repository returns incident, fix or improvement",
+      "approved_action": "clean feedback through curator and propose rule/update",
+      "prohibited_action": "apply product-specific workaround globally without analysis",
+      "version": "1.0",
+      "source_incident": "BEM-880 product repository model"
+    },
+    {
+      "id": "RULE-011",
+      "owner": "OBJ-WRK-001",
+      "scope": "evidence",
+      "condition": "task is marked completed",
+      "approved_action": "attach proof file or changed artifact path",
+      "prohibited_action": "claim PASS without evidence",
+      "version": "1.0",
+      "source_incident": "auditor contract"
+    },
+    {
+      "id": "RULE-012",
+      "owner": "OBJ-WRK-001",
+      "scope": "continuity",
+      "condition": "after task/report completion",
+      "approved_action": "continue to next backlog item without waiting unless operator decision is required",
+      "prohibited_action": "stop roadmap after status report",
+      "version": "1.0",
+      "source_incident": "operator reminder after BEM-882"
     }
   ],
-  "conflict_policy": "new rule must reference source incident; duplicate conditions are merged or versioned, not copied blindly"
+  "conflict_policy": "new rule must reference source incident; duplicate conditions are merged or versioned, not copied blindly",
+  "operational_seed": "BEM-884"
 }

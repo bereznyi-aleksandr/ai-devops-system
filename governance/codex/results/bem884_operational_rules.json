@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem884_operational_rules",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM884 operational rules PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/rule_registry.json",
+    "governance/rules/BEM884_OPERATIONAL_RULE_SEED.md",
+    "governance/reports/BEM884_OPERATIONAL_RULES.md",
+    "governance/runtime/curator_dispatch/BEM884_OPERATIONAL_RULES_PASS.md",
+    "governance/backlog/BEM882_EXECUTABLE_BACKLOG.json",
+    "governance/codex/proofs/bem884_operational_rules.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem884_operational_rules.md",
+  "completed_at": "2026-05-29T20:32:44Z"
+}
