@@ -5,37 +5,44 @@
       "id": "BEM-882-001",
       "title": "Add registry schema validation",
       "owner": "WRK-C1",
-      "why": "ensure json registries are machine-checkable"
+      "why": "ensure json registries are machine-checkable",
+      "status": "completed",
+      "proof": "governance/runtime/curator_dispatch/BEM883_REGISTRY_SCHEMA_VALIDATION_PASS.md"
     },
     {
       "id": "BEM-882-002",
       "title": "Add rule registry operational seed rules",
       "owner": "WRK-C2",
-      "why": "baseline rules are insufficient for real execution"
+      "why": "baseline rules are insufficient for real execution",
+      "status": "pending"
     },
     {
       "id": "BEM-882-003",
       "title": "Implement channel message envelope and append-only message log",
       "owner": "WRK-C2",
-      "why": "managed channel must become executable, not only described"
+      "why": "managed channel must become executable, not only described",
+      "status": "pending"
     },
     {
       "id": "BEM-882-004",
       "title": "Add workspace promotion checks from development to testing to main",
       "owner": "WRK-C3",
-      "why": "PASS promotion must be enforceable"
+      "why": "PASS promotion must be enforceable",
+      "status": "pending"
     },
     {
       "id": "BEM-882-005",
       "title": "Add product repository registration template",
       "owner": "WRK-C3",
-      "why": "product repo loop needs repeatable onboarding"
+      "why": "product repo loop needs repeatable onboarding",
+      "status": "pending"
     },
     {
       "id": "BEM-882-006",
       "title": "Add integration selftest for BEM-880 baseline",
       "owner": "WRK-C3",
-      "why": "next changes need automatic proof"
+      "why": "next changes need automatic proof",
+      "status": "pending"
     }
   ]
 }

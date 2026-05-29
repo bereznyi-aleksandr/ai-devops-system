@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem883_registry_validation_retry",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM883 registry schema validation PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/registry_schemas.json",
+    "governance/tools/validate_registries.py",
+    "governance/reports/BEM883_REGISTRY_SCHEMA_VALIDATION.json",
+    "governance/reports/BEM883_REGISTRY_SCHEMA_VALIDATION.md",
+    "governance/runtime/curator_dispatch/BEM883_REGISTRY_SCHEMA_VALIDATION_PASS.md",
+    "governance/backlog/BEM882_EXECUTABLE_BACKLOG.json",
+    "governance/codex/proofs/bem883_registry_validation_retry.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem883_registry_validation_retry.md",
+  "completed_at": "2026-05-29T20:29:51Z"
+}

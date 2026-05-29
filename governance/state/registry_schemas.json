@@ -1,0 +1,77 @@
+{
+  "architecture_registry": {
+    "path": "governance/state/architecture_registry.json",
+    "required": [
+      "status",
+      "managing_contour",
+      "objects",
+      "workspaces",
+      "evidence"
+    ]
+  },
+  "objects_registry": {
+    "path": "governance/state/objects_registry.json",
+    "required": [
+      "status",
+      "objects"
+    ]
+  },
+  "task_registry": {
+    "path": "governance/state/task_registry.json",
+    "required": [
+      "bem",
+      "source_protocol",
+      "status",
+      "tasks"
+    ]
+  },
+  "rule_registry": {
+    "path": "governance/state/rule_registry.json",
+    "required": [
+      "status",
+      "canonical_term",
+      "purpose",
+      "rules",
+      "conflict_policy"
+    ]
+  },
+  "channel_registry": {
+    "path": "governance/state/channel_registry.json",
+    "required": [
+      "status",
+      "common_managed_channel",
+      "external_exchange_rule",
+      "internal_channels",
+      "message_types",
+      "required_ids"
+    ]
+  },
+  "workspace_registry": {
+    "path": "governance/state/workspace_registry.json",
+    "required": [
+      "status",
+      "workspaces",
+      "promotion_rule"
+    ]
+  },
+  "product_repository_registry": {
+    "path": "governance/state/product_repository_registry.json",
+    "required": [
+      "status",
+      "purpose",
+      "governance",
+      "capabilities",
+      "repositories"
+    ]
+  },
+  "testing_policy": {
+    "path": "governance/state/testing_policy.json",
+    "required": [
+      "status",
+      "testing_function",
+      "default_assignment",
+      "workspace",
+      "pass_required_for_main_workspace"
+    ]
+  }
+}
