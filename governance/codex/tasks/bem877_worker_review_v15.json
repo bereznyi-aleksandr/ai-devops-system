@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem877_worker_review_v15",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-877 worker review",
+  "objective": "Create file governance/audit/internal/results/BEM877_WORKER_PROTOCOL_V15_REVIEW.md with content # BEM-877 WORKER PROTOCOL V1.5 REVIEW\nStatus: WORKER_REVIEW_READY\nFindings:\n- Operator remarks are valid. v1.4 is usable but too repetitive and has inconsistent terms.\n- v1.5 should use object, element, contour, workspace, channel, event log, rulebook as the canonical terms.\n- Curator is an element, not only part of Worker. Analyst, Auditor, Executor are also elements.\n- Testing must be described as a function assigned to one internal contour and performed in testing workspace. A permanent separate testing contour is not required.\n- Common managed channel and global rulebook should be treated as one top-level governance mechanism. Internal channels exist inside each object.\n- External exchange between objects goes Curator-to-Curator, not from low-level elements directly.\n- Product repositories are not only release locations; the managing contour also upgrades, repairs, extends, and learns from them.\n- The protocol should be shorter, with centralized definitions and no duplicate explanations.\nRecommendation:\n- Approve v1.5 with notes and prepare DOCX for operator review.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem877_worker_review_v15.md",
+    "result_json": "governance/codex/results/bem877_worker_review_v15.json"
+  },
+  "created_at": "2026-05-29T15:46:55.632Z"
+}
