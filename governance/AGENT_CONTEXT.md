@@ -182,3 +182,5 @@ Operator accepted BEM-880 execution result with response: Да
 Readiness audit completed after BEM-881 accepted BEM-880 execution result
 ## BEM-883 completed | 2026-05-29
 Registry schema validation implemented
+## BEM-884 completed | 2026-05-29
+Operational rule seed implemented
