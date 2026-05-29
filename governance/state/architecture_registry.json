@@ -1,0 +1,36 @@
+{
+  "status": "implemented_baseline",
+  "managing_contour": "main repository plus system logic, architecture, registries, rules, worker model, support and upgrade center",
+  "objects": {
+    "general_director": {
+      "elements": [
+        "curator",
+        "internal_contour"
+      ],
+      "purpose": "governs directors and director-level rules"
+    },
+    "director": {
+      "elements": [
+        "curator",
+        "rules_management_contour",
+        "planning_analytics_strategy_contour"
+      ],
+      "purpose": "governs workers and strategy"
+    },
+    "worker": {
+      "elements": [
+        "curator",
+        "WRK-C1",
+        "WRK-C2",
+        "WRK-C3"
+      ],
+      "purpose": "executes accepted roadmap in parallel"
+    }
+  },
+  "workspaces": [
+    "development_workspace",
+    "testing_workspace",
+    "main_workspace"
+  ],
+  "evidence": "BEM-879 v1.7 accepted by operator; BEM-880 execution started"
+}
