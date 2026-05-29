@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem880_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-880 request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM880_EXECUTE_ROADMAP_V17_REQUEST.md with content # BEM-880 EXECUTE ROADMAP V1.7 REQUEST\nStatus: OPERATOR_APPROVED_FOR_EXECUTION\nOperator decision: protocol v1.7 is approved as accepted roadmap.\nWorker model: Curator plus 3 internal contours.\nWRK-C1: registry and architecture.\nWRK-C2: rules and communication.\nWRK-C3: implementation, workspaces, product-link, and assigned testing.\nObjective: execute accepted roadmap v1.7 and provide proof of completed roadmap execution.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem880_request.md",
+    "result_json": "governance/codex/results/bem880_request.json"
+  },
+  "created_at": "2026-05-29T18:40:58.601Z"
+}
