@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem916_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-916 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-916 completed | 2026-05-30\nCorrected BEM-915 protocol format mistake after operator clarification.\nContext read proof: governance/runtime/curator_dispatch/BEM916_AGENT_CONTEXT_READ.md\nWorker request: governance/audit/mailbox/to_curator/BEM916_UNIFIED_SYSTEM_IMPROVEMENT_PROTOCOL_REQUEST.md\nWorker review: governance/audit/internal/results/BEM916_WORKER_UNIFIED_SYSTEM_IMPROVEMENT_PROTOCOL_REVIEW.md\nCurator response: governance/audit/mailbox/from_curator/BEM916_UNIFIED_SYSTEM_IMPROVEMENT_PROTOCOL_RESPONSE.md\nRepo protocol record: governance/reports/BEM916_UNIFIED_SYSTEM_IMPROVEMENT_PROTOCOL.md\nResult: UNIFIED_PROTOCOL_APPROVED_WITH_OPERATOR_GATES. BEM-914 remains base system improvement protocol; BEM-915 is integrated as Telegram Operator Interface phase, not a standalone protocol. Unified protocol covers proof hardening, dispatch lifecycle, object execution, channel/event log, architecture canon, Telegram operator interface and Claude re-audit package. Operator gates remain for bot token/secrets, production webhook, issue #31 writes, schedule triggers, always-on daemon, real pilot/client/scope/metrics and LLM-agent runtime model.\nLocal operator artifacts: BEM916_unified_system_improvement_protocol_ru.docx and BEM916_unified_system_improvement_protocol_ru.zip.\nQA: DOCX rendered to 4 pages; no edge clipping detected.\nNext: operator review and approval of BEM-916 unified protocol.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem916_context_done.md",
+    "result_json": "governance/codex/results/bem916_context_done.json"
+  },
+  "created_at": "2026-05-30T06:57:47.389Z"
+}
