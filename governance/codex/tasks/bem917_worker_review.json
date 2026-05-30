@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem917_worker_review",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-917 worker review",
+  "objective": "Create file governance/audit/internal/results/BEM917_WORKER_TELEGRAM_GD_REPORTS_REVIEW.md with content # BEM-917 WORKER TELEGRAM GD REPORTS REVIEW\nStatus: WORKER_REVIEW_READY\nDecision: APPROVED_WITH_NOTES\nFindings:\n- Operator remarks are valid and must be integrated into the unified BEM-916 protocol.\n- Telegram must be bound to the General Director object by default: OBJ-GD-001 through EL-CUR-GD-001.\n- This fixes the ambiguity of 'which curator' receives Telegram interaction.\n- The General Director becomes the operator-facing entry and delivery point. It does not mean GD performs all tasks; GD Curator classifies and routes through Director/Worker according to policy gate.\n- Report periodicity must be operator-configurable. Default value is 1 hour.\n- Actual automated schedule behavior remains an operator gate if it changes repository workflow triggers; configuration state can be prepared autonomously.\n- Telegram reports must follow the same final-report canon used by the system: BEM, date/time, stage progress, roadmap progress, checklist with proof, table with next action and rationale.\nAutonomous scope:\n- Update protocol wording, schemas, command grammar, report templates, report interval state, deterministic parser/selftest plan.\nOperator gate:\n- Real Telegram token/secrets, production webhook mutation, schedule trigger activation, always-on daemon, issue #31 writes.\nRecommendation:\n- Approve BEM-917 update with notes.\n- Status: UNIFIED_PROTOCOL_APPROVED_WITH_GD_TELEGRAM_AND_CANON_REPORTS.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem917_worker_review.md",
+    "result_json": "governance/codex/results/bem917_worker_review.json"
+  },
+  "created_at": "2026-05-30T09:23:00.552Z"
+}
