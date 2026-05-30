@@ -246,3 +246,5 @@ Prepared detailed working roadmap to turn the system from concept/scaffold into 
 Prepared detailed working roadmap to turn the system from concept/scaffold into a fully working system, using existing Telegram/Deno/Codex implementation and Claude v1
 ## BEM-918-v2 completed | 2026-05-30
 Updated the BEM-918 working roadmap after operator remarks about the seven listed mechanisms/components and Telegram entry/exit route
+## BEM-919 completed | 2026-05-30
+Prepared updated full-system working protocol after operator rejected Telegram-only focus
