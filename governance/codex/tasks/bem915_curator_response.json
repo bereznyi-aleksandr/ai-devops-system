@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem915_curator_response",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-915 curator response",
+  "objective": "Create file governance/audit/mailbox/from_curator/BEM915_TELEGRAM_OPERATOR_INTERFACE_PROTOCOL_RESPONSE.md with content # BEM-915 TELEGRAM OPERATOR INTERFACE PROTOCOL RESPONSE\nStatus: APPROVED_WITH_NOTES\nFindings:\n- Worker approves adding Telegram Operator Interface to the system improvement protocol.\n- Current Telegram behavior is insufficient: passive hourly no-change reports do not solve operator tasking and report delivery.\n- Telegram must become the primary operator-facing control channel for routine task submission, status queries, gate decisions and role-based reports.\nEvidence:\n- Operator screenshot showing hourly reports with no changes and no working task interaction.\n- Deno healthCheck confirms Telegram webhook service exists.\n- governance/audit/mailbox/to_curator/BEM915_TELEGRAM_OPERATOR_INTERFACE_PROTOCOL_REQUEST.md\n- governance/audit/internal/results/BEM915_WORKER_TELEGRAM_OPERATOR_INTERFACE_REVIEW.md\nAgreed changes:\n- Update the BEM-914 improvement protocol with a Telegram Operator Interface layer.\n- Add commands: /status, /task, /approve, /reject, /gate, /report, /help.\n- Add structured Telegram task envelope with trace_id, task_id, source, target object, priority, policy decision and proof path.\n- Add routing to Curator, Director and General Director.\n- Add reporting levels: Curator operational report, Director planning/rules report, General Director strategic gate report.\n- Add delivery receipts, correlation IDs, error states, E2E selftest and acceptance criteria.\nOperator gates:\n- real bot token/secrets, production webhook changes, issue #31 writes, schedule triggers and always-on daemon model.\nRecommendation:\n- Submit updated protocol to operator for review.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem915_curator_response.md",
+    "result_json": "governance/codex/results/bem915_curator_response.json"
+  },
+  "created_at": "2026-05-30T06:37:44.335Z"
+}
