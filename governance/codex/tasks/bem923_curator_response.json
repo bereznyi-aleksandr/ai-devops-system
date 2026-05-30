@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem923_curator_response",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-923 curator response",
+  "objective": "Create file governance/audit/mailbox/from_curator/BEM923_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_RESPONSE.md with content # BEM-923 SYSTEM PROTOCOL V3 PROVIDER MODEL RESPONSE\nStatus: APPROVED_WITH_REQUIREMENTS\nFindings:\n- Worker approves the provider-model protocol update with requirements.\n- The protocol must remain full-system, not Telegram-only.\n- BEM-921 logical contour model is kept but must be expanded with provider execution layer.\n- Primary internal contour: GPT Analyst, Claude Auditor, Claude Executor.\n- Reserve contour: GPT-Codex/Codex replaces Claude Auditor and Claude Executor when Claude limits or availability block execution.\n- Prompt describes logical role; provider policy selects runtime provider.\n- GitHub Actions, codex-runner, webhook and dispatch consumer are activation/proof mechanisms, not roles.\n- Exchange files and event logs must carry logical_role, provider_id, provider_mode, fallback_used, fallback_reason, runner_ref and proof_ref.\nEvidence:\n- governance/runtime/curator_dispatch/BEM922_PROVIDER_ARCH_SCAN_READY.md\n- governance/audit/mailbox/to_curator/BEM923_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_REQUEST.md\n- governance/audit/internal/results/BEM923_WORKER_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_REVIEW.md\nRequired registries:\n- governance/state/providers_registry.json\n- governance/state/contour_provider_policy.json\n- governance/state/provider_failover_policy.json\n- governance/state/elements_registry.json\n- governance/state/contours_registry.json\nRoadmap requirements:\n- Provider registry and provider policy must be first-class implementation outputs.\n- Provider-aware lifecycle must be included in dispatch, object/contour runner, managed channel, event log, proof and E2E tests.\n- Claude re-audit package must include evidence for both primary and reserve provider scenarios.\nRecommendation:\n- Submit BEM-923 protocol v3 to operator for review.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem923_curator_response.md",
+    "result_json": "governance/codex/results/bem923_curator_response.json"
+  },
+  "created_at": "2026-05-30T18:29:51.431Z"
+}
