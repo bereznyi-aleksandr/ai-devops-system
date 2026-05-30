@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem895_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-895 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-895 completed | 2026-05-30\nAutonomous execution loop implemented.\nState: governance/state/autonomous_execution_loop.json\nNext backlog: governance/autonomy/NEXT_EXECUTABLE_BACKLOG.json\nSelector: governance/tools/select_next_autonomous_task.py\nSelection: governance/autonomy/next_task_selection.json\nReport: governance/reports/BEM895_AUTONOMOUS_LOOP.md\nProof: governance/runtime/curator_dispatch/BEM895_AUTONOMOUS_LOOP_PASS.md\nResult: autonomous loop can select next pending item and enqueue it through the ready sending contour. Selected next: BEM-896-001.\nNext: BEM-896 policy gate for strategic/blocker/scope-expansion tasks.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem895_context_done.md",
+    "result_json": "governance/codex/results/bem895_context_done.json"
+  },
+  "created_at": "2026-05-30T03:57:00.190Z"
+}
