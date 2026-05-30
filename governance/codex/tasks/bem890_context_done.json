@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem890_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-890 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-890 completed | 2026-05-30\nDispatch contour implemented after BEM-889 READY baseline.\nDispatch contour: governance/state/dispatch_contour.json\nQueue: governance/dispatch/dispatch_queue.jsonl\nTool: governance/tools/validate_dispatch_contour.py\nReport: governance/reports/BEM890_DISPATCH_CONTOUR.md\nProof: governance/runtime/curator_dispatch/BEM890_DISPATCH_CONTOUR_PASS.md\nResult: tasks can be routed to WRK-C1/WRK-C2/WRK-C3 and recorded in managed channel.\nNext: BEM-891 implement Worker contour inbox delivery.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem890_context_done.md",
+    "result_json": "governance/codex/results/bem890_context_done.json"
+  },
+  "created_at": "2026-05-30T03:45:31.428Z"
+}
