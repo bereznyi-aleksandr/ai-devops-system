@@ -250,3 +250,5 @@ Updated the BEM-918 working roadmap after operator remarks about the seven liste
 Prepared updated full-system working protocol after operator rejected Telegram-only focus
 ## BEM-920 completed | 2026-05-30
 Prepared new system evolution protocol after Claude APPROVED_WITH_REQUIREMENTS for BEM-919 and operator request to separately list existing/new object and element prompts for approval
+## BEM-921 completed | 2026-05-30
+Corrected BEM-920 after operator pointed out that prompt names were listed without readable prompt contents and without explaining how the protocol evolves the raw repository into a working managing contour
