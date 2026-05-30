@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem918_read_context_docs",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-918 read context docs",
+  "objective": "Run script:\n\"\"\"\nctx = Path('governance/AGENT_CONTEXT.md')\nctx_text = ctx.read_text(encoding='utf-8', errors='ignore') if ctx.exists() else ''\n# Scan repo for relevant technical documentation and implementation files.\npatterns = [\n    'governance/**/*.md',\n    'governance/**/*.json',\n    'governance/**/*.yml',\n    'governance/**/*.yaml',\n    'governance/**/*.py',\n    '.github/workflows/*.yml',\n    'src/**/*.ts', 'src/**/*.js', 'api/**/*.ts', 'api/**/*.js', 'server*.ts', 'main.ts', 'bot*.ts'\n]\nfiles = []\nfor pat in patterns:\n    files.extend([p for p in Path('.').glob(pat) if p.is_file()])\nkeywords = ['telegram','webhook','bot','autonomy','dispatch','consumer','curator','director','general','workflow_dispatch','codex','runner','issue_comment','safe-run','gpt-safe']\nrelevant = []\nfor p in files:\n    s = str(p)\n    low = s.lower()\n    score = sum(1 for k in keywords if k in low)\n    try:\n        txt = p.read_text(encoding='utf-8', errors='ignore')[:6000]\n        score += sum(2 for k in keywords if k in txt.lower())\n    except Exception:\n        txt = ''\n    if score:\n        relevant.append((score, s, txt[:1200].replace('\\n',' ')[:1200]))\nrelevant = sorted(relevant, reverse=True)[:80]\nkey_context = []\nfor line in ctx_text.splitlines():\n    low = line.lower()\n    if any(tok in low for tok in ['bem-913','bem-914','bem-915','bem-916','bem-917','telegram','claude','remediation','consumer','proof','operator','next']):\n        key_context.append(line)\nout = '# BEM-918 context and technical docs scan\\nStatus: READ\\n\\n## AGENT_CONTEXT key lines\\n' + '\\n'.join(key_context[-260:]) + '\\n\\n## Relevant files\\n'\nfor score, s, snippet in relevant:\n    out += f'\\n### score={score} | {s}\\n{snippet}\\n'\nmarker = Path('governance/runtime/curator_dispatch/BEM918_CONTEXT_TECH_DOCS_SCAN.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text(out, encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM918 read AGENT_CONTEXT and scanned technical docs')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem918_read_context_docs.md",
+    "result_json": "governance/codex/results/bem918_read_context_docs.json"
+  },
+  "created_at": "2026-05-30T10:09:45.661Z"
+}
