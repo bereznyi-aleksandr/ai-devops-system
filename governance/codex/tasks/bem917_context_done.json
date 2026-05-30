@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem917_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-917 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-917 completed | 2026-05-30\nUpdated unified BEM-916 system improvement protocol after operator remarks about Telegram mechanism.\nContext read proof: governance/runtime/curator_dispatch/BEM917_AGENT_CONTEXT_READ.md\nWorker request: governance/audit/mailbox/to_curator/BEM917_UNIFIED_PROTOCOL_TELEGRAM_GD_REPORTS_REQUEST.md\nWorker review: governance/audit/internal/results/BEM917_WORKER_TELEGRAM_GD_REPORTS_REVIEW.md\nCurator response: governance/audit/mailbox/from_curator/BEM917_UNIFIED_PROTOCOL_TELEGRAM_GD_REPORTS_RESPONSE.md\nRepo protocol record: governance/reports/BEM917_UNIFIED_PROTOCOL_TELEGRAM_GD_REPORTS.md\nResult: UNIFIED_PROTOCOL_APPROVED_WITH_GD_TELEGRAM_AND_CANON_REPORTS. Telegram is now specified as configured to General Director OBJ-GD-001 via EL-CUR-GD-001; report periodicity is operator-selected with default 1 hour and configurable through /report_interval or /settings; all Telegram reports must follow the canonical report format with BEM header, date/time UTC+3, stage %, roadmap %, checklist with proof, table and next action. Schedule trigger activation remains operator-gated.\nLocal operator artifacts: BEM917_unified_system_improvement_protocol_gd_telegram_ru.docx and BEM917_unified_system_improvement_protocol_gd_telegram_ru.zip.\nQA: DOCX rendered to 3 pages; no edge clipping detected.\nNext: operator review and approval of BEM-917 unified protocol update.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem917_context_done.md",
+    "result_json": "governance/codex/results/bem917_context_done.json"
+  },
+  "created_at": "2026-05-30T09:30:03.986Z"
+}
