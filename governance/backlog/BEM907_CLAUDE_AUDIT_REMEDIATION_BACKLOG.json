@@ -1,0 +1,83 @@
+{
+  "status": "active",
+  "source": "Claude external audit after BEM-906",
+  "items": [
+    {
+      "id": "CA-CRIT-001",
+      "severity": "critical",
+      "title": "Objects are JSON records, not executable agents",
+      "response": "accepted",
+      "bem": "BEM-909/BEM-910"
+    },
+    {
+      "id": "CA-CRIT-002",
+      "severity": "critical",
+      "title": "commit_sha null / independent proof weakness",
+      "response": "accepted",
+      "bem": "BEM-912"
+    },
+    {
+      "id": "CA-CRIT-003",
+      "severity": "critical",
+      "title": "Managed channel has no consumer",
+      "response": "accepted",
+      "bem": "BEM-909"
+    },
+    {
+      "id": "CA-HIGH-001",
+      "severity": "high",
+      "title": "GPT executed and validated same artifacts",
+      "response": "accepted",
+      "bem": "BEM-912"
+    },
+    {
+      "id": "CA-HIGH-002",
+      "severity": "high",
+      "title": "task_registry owner mismatch P1-DIR-RULE-001",
+      "response": "accepted",
+      "bem": "BEM-908"
+    },
+    {
+      "id": "CA-HIGH-003",
+      "severity": "high",
+      "title": "dispatch queue has queued DSP-BEM-896-001",
+      "response": "accepted",
+      "bem": "BEM-908"
+    },
+    {
+      "id": "CA-HIGH-004",
+      "severity": "high",
+      "title": "missing canonical architecture plan/fact/gap file",
+      "response": "accepted",
+      "bem": "BEM-911"
+    },
+    {
+      "id": "CA-MED-001",
+      "severity": "medium",
+      "title": "pilot scaffold uses placeholders",
+      "response": "accepted_with_gate",
+      "bem": "BEM-905 operator gate"
+    },
+    {
+      "id": "CA-MED-002",
+      "severity": "medium",
+      "title": "event log too small/not complete",
+      "response": "accepted",
+      "bem": "BEM-911"
+    },
+    {
+      "id": "CA-MED-003",
+      "severity": "medium",
+      "title": "autonomy log rotation strategy unclear",
+      "response": "accepted",
+      "bem": "BEM-911"
+    },
+    {
+      "id": "CA-MED-004",
+      "severity": "medium",
+      "title": "no GD/DIR prompts",
+      "response": "accepted",
+      "bem": "BEM-910"
+    }
+  ]
+}
