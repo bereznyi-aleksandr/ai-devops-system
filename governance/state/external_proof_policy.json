@@ -1,0 +1,24 @@
+{
+  "status": "active",
+  "name": "external_proof_policy",
+  "rule": "PASS must have at least one independent proof class beyond self-declared markdown",
+  "accepted_proof_classes": [
+    "git_commit_sha",
+    "github_actions_run_log",
+    "deterministic_tool_stdout",
+    "curator_mailbox_with_validation",
+    "external_auditor_result"
+  ],
+  "current_gap": "codex-status may return commit_sha null; therefore CI workflow and deterministic stdout are required until SHA capture is fixed",
+  "minimum_for_future_pass": [
+    "deterministic_tool_stdout",
+    "proof_file",
+    "changed_artifact_path"
+  ],
+  "minimum_for_release_pass": [
+    "git_commit_sha_or_actions_run_log",
+    "deterministic_tool_stdout",
+    "external_audit_if_requested"
+  ],
+  "owner": "OBJ-DIR-001"
+}

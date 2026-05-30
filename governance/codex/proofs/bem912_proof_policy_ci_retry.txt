@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem912_proof_policy_ci_retry
+task_type: code_patch
+executed_at: 2026-05-30T05:44:58Z
+ops_applied: BEM912 proof policy PASS_WITH_SHA_GAP, custom_script
+changed_files: governance/state/external_proof_policy.json, .github/workflows/governance-validation-ci.yml, governance/tools/collect_git_proof.sh, governance/proof/BEM912_PROOF_POLICY_SUMMARY.json, governance/reports/BEM912_PROOF_POLICY_CI.md, governance/runtime/curator_dispatch/BEM912_PROOF_POLICY_PASS_WITH_SHA_GAP.md, governance/logs/event_log.jsonl
+errors: none

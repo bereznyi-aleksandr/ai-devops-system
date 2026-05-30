@@ -1,0 +1,8 @@
+{
+  "status": "PASS_WITH_SHA_GAP",
+  "missing": [],
+  "policy": "governance/state/external_proof_policy.json",
+  "ci_workflow": ".github/workflows/governance-validation-ci.yml",
+  "collector": "governance/tools/collect_git_proof.sh",
+  "honest_gap": "Deno codex-status remains commit_sha null in observed runs; release proof requires Actions run log or git collector output"
+}
