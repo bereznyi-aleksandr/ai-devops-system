@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem924_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-924 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-924 completed | 2026-05-30\nPrepared final unified working-system protocol after operator rejected fragmented protocol versions. This protocol synthesizes protocol v1.7, actual repository state, Claude audits, BEM-907..BEM-913 remediation, BEM-919..BEM-923 protocol drafts and all operator decisions from 2026-05-30.\nContext proof: governance/runtime/curator_dispatch/BEM924_AGENT_CONTEXT_READ.md\nWorker request: governance/audit/mailbox/to_curator/BEM924_FINAL_WORKING_SYSTEM_PROTOCOL_REQUEST.md\nWorker review: governance/audit/internal/results/BEM924_WORKER_FINAL_WORKING_SYSTEM_PROTOCOL_REVIEW.md\nCurator response: governance/audit/mailbox/from_curator/BEM924_FINAL_WORKING_SYSTEM_PROTOCOL_RESPONSE.md\nRepo protocol record: governance/reports/BEM924_FINAL_WORKING_SYSTEM_PROTOCOL.md\nResult: FINAL_WORKING_SYSTEM_PROTOCOL_APPROVED_WITH_REQUIREMENTS. Protocol is not Telegram-only, not provider-only and not prompt-only. It defines one implementation contract from current partial governance baseline to a working managing system. Working system definition: operator submits task via registered channel; task enters GD Curator route; policy and dispatch route it; provider-aware contour lifecycle executes Analyst proposal -> Auditor gate -> Executor -> Auditor result gate with revision cycles; primary providers are GPT Analyst, Claude Auditor, Claude Executor; GPT-Codex/Codex fallback replaces Claude roles on limits/unavailability; event log and managed channel record transitions; proof includes non-null CI/Git release evidence; operator receives canonical report; Claude can verify release bundle. Roadmap: BEM-925 SSOT identity/provider layer, BEM-926 rule/experience layer, BEM-927 envelope/channel layer, BEM-928 dispatch lifecycle layer, BEM-929 object/contour execution layer, BEM-930 proof/CI layer, BEM-931 Telegram operator layer, BEM-932 E2E validation layer, BEM-933 Claude re-audit/release package.\nLocal operator artifacts: BEM924_final_working_system_protocol_ru.docx and BEM924_final_working_system_protocol_ru.zip.\nQA: DOCX rendered to 5 pages; contact sheet inspected; no edge clipping detected.\nNext: operator review and approval of BEM-924, then execution starts with BEM-925 SSOT identity/provider layer.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem924_context_done.md",
+    "result_json": "governance/codex/results/bem924_context_done.json"
+  },
+  "created_at": "2026-05-30T20:45:35.816Z"
+}
