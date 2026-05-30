@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem897_report_packaging",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-897 report packaging",
+  "objective": "Run script:\n\"\"\"\nPath('governance/cycles').mkdir(parents=True, exist_ok=True)\nPath('governance/tools').mkdir(parents=True, exist_ok=True)\nPath('governance/reports').mkdir(parents=True, exist_ok=True)\nPath('governance/runtime/curator_dispatch').mkdir(parents=True, exist_ok=True)\n\ncycle_id = 'CYCLE-BEM897-001'\nproofs = [\n 'governance/runtime/curator_dispatch/BEM890_DISPATCH_CONTOUR_PASS.md',\n 'governance/runtime/curator_dispatch/BEM891_WORKER_INBOX_DELIVERY_PASS.md',\n 'governance/runtime/curator_dispatch/BEM892_CONTOUR_PROCESSING_PASS.md',\n 'governance/runtime/curator_dispatch/BEM893_E2E_DISPATCH_SELFTEST_PASS.md',\n 'governance/runtime/curator_dispatch/BEM894_SENDING_CONTOUR_READY.md',\n 'governance/runtime/curator_dispatch/BEM895_AUTONOMOUS_LOOP_PASS.md',\n 'governance/runtime/curator_dispatch/BEM896_POLICY_GATE_PASS.md'\n]\nmissing = [p for p in proofs if not Path(p).exists()]\npackage = {\n  'cycle_id':cycle_id,\n  'status':'PASS' if not missing else 'FAIL',\n  'scope':'sending contour plus autonomous loop proof package',\n  'proofs':proofs,\n  'missing':missing,\n  'created_at_utc3':'2026-05-30T07:00:00+03:00'\n}\nPath('governance/cycles/' + cycle_id + '.json').write_text(json.dumps(package, ensure_ascii=False, indent=2), encoding='utf-8')\nmd = '# ' + cycle_id + '\\n\\nStatus: ' + package['status'] + '\\n\\nScope: ' + package['scope'] + '\\n\\nProofs:\\n'\nfor p in proofs:\n    md += '- ' + p + '\\n'\nmd += '\\nMissing: ' + (', '.join(missing) if missing else 'none') + '\\n'\nPath('governance/cycles/' + cycle_id + '.md').write_text(md, encoding='utf-8')\n\ntool = '''# BEM-897 cycle report packager\nimport json\nfrom pathlib import Path\ncycle_id = \"CYCLE-BEM897-001\"\npackage = json.loads(Path(\"governance/cycles/\" + cycle_id + \".json\").read_text(encoding=\"utf-8\"))\nmissing = [p for p in package.get(\"proofs\", []) if not Path(p).exists()]\nprint(\"PASS\" if not missing else \"FAIL\")\nfor p in missing:\n    print(\"missing \" + p)\nraise SystemExit(0 if not missing else 1)\n'''\nPath('governance/tools/package_cycle_report.py').write_text(tool, encoding='utf-8')\nstatus = package['status']\nPath('governance/reports/BEM897_REPORT_PACKAGING.md').write_text('# BEM-897 Report packaging\\n\\nStatus: ' + status + '\\n\\nCycle package: governance/cycles/' + cycle_id + '.md\\n\\nMissing: ' + (', '.join(missing) if missing else 'none') + '\\n', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM897_REPORT_PACKAGING_' + status + '.md')\nmarker.write_text('# BEM-897 report packaging proof\\nStatus: ' + status + '\\nCycle: ' + cycle_id + '\\nMissing: ' + (', '.join(missing) if missing else 'none') + '\\n', encoding='utf-8')\n\nbacklog = Path('governance/autonomy/NEXT_EXECUTABLE_BACKLOG.json')\nif backlog.exists():\n    b = json.loads(backlog.read_text(encoding='utf-8'))\n    for item in b.get('items', []):\n        if item.get('id') == 'BEM-897-001':\n            item['status'] = 'completed'\n            item['proof'] = str(marker)\n        elif 'status' not in item:\n            item['status'] = 'pending'\n    backlog.write_text(json.dumps(b, ensure_ascii=False, indent=2), encoding='utf-8')\n\nchanged_files.extend(['governance/cycles/' + cycle_id + '.json','governance/cycles/' + cycle_id + '.md','governance/tools/package_cycle_report.py','governance/reports/BEM897_REPORT_PACKAGING.md',str(marker),'governance/autonomy/NEXT_EXECUTABLE_BACKLOG.json'])\nops_applied.append('BEM897 report packaging ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem897_report_packaging.md",
+    "result_json": "governance/codex/results/bem897_report_packaging.json"
+  },
+  "created_at": "2026-05-30T04:00:37.775Z"
+}
