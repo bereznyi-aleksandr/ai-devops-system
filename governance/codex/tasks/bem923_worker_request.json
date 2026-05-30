@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem923_worker_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-923 worker request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM923_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_REQUEST.md with content # BEM-923 SYSTEM PROTOCOL V3 PROVIDER MODEL REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: prepare a new full-system protocol version for evolving the system to working state, correcting BEM-921 by adding the provider model of internal contours.\nOperator clarification:\n- The previous protocol described logical roles but missed the provider layer.\n- The system already had a picture of providers and primary/reserve contours.\n- Internal contour is not only Analyst/Auditor/Executor; it is logical roles plus provider assignment, failover policy, GitHub Actions/runner activation, exchange files, event log and proof.\nMandatory provider model:\n- Primary internal contour uses GPT Analyst, Claude Auditor and Claude Executor.\n- Internal contour algorithm remains iterative: Analyst proposal -> Auditor approves/rejects -> Executor runs approved proposal -> Executor returns result -> Auditor approves result or sends revision through Analyst.\n- Reserve contour is used when Claude limits or availability block Claude Auditor/Executor.\n- Reserve provider for Claude roles is GPT-Codex/Codex route.\n- Failover must be recorded in event_log and proof: original provider, fallback provider, reason, trace_id, role, contour_id.\n- GitHub Actions and codex-runner are activation/proof mechanisms, not logical roles.\n- Exchange files must carry both logical_role and provider_role/provider_id.\nRequired protocol sections:\n1. Full-system goal and current raw state.\n2. v1.7 plan/fact/gap plus Claude requirements.\n3. Logical architecture: objects, elements, internal contours, workspace, vertical/horizontal links.\n4. Provider architecture: provider registry, primary contour, reserve contour, failover conditions.\n5. Internal contour algorithm with providers at each step.\n6. Required registries: elements, contours, providers, provider policy, failover policy, rules, experience.\n7. Prompt architecture: prompts describe role; provider policy says who executes it.\n8. Roadmap to working system with acceptance criteria and proof.\n9. Operator gates: real secrets/tokens, production webhook, schedule/daemon, issue #31, paid API, LLM runtime, real pilot choices.\n10. Claude re-audit criteria.\nWorker must verify whether this closes the gap raised by the operator and flag any contradictions.\nExpected status: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem923_worker_request.md",
+    "result_json": "governance/codex/results/bem923_worker_request.json"
+  },
+  "created_at": "2026-05-30T18:26:29.800Z"
+}
