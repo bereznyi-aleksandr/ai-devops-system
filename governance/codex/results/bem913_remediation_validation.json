@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem913_remediation_validation",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM913 Claude remediation validation REMEDIATION_PARTIAL_PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/audit/claude/BEM913_CLAUDE_REMEDIATION_VALIDATION.json",
+    "governance/audit/claude/BEM913_CLAUDE_REMEDIATION_VALIDATION.md",
+    "governance/reports/BEM913_CLAUDE_REMEDIATION_VALIDATION.md",
+    "governance/runtime/curator_dispatch/BEM913_CLAUDE_REMEDIATION_REMEDIATION_PARTIAL_PASS.md",
+    "governance/audit/mailbox/from_curator/BEM913_CLAUDE_REMEDIATION_RESPONSE.md",
+    "governance/codex/proofs/bem913_remediation_validation.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem913_remediation_validation.md",
+  "completed_at": "2026-05-30T05:46:15Z"
+}

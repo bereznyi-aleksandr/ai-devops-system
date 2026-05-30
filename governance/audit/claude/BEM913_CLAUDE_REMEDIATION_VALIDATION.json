@@ -1,0 +1,110 @@
+{
+  "bem": "BEM-913",
+  "status": "REMEDIATION_PARTIAL_PASS",
+  "checks": [
+    {
+      "finding": "CA-CRIT-001 objects only JSON",
+      "status": "PARTIAL_FIXED",
+      "evidence": [
+        "governance/prompts/general_director_prompt.md",
+        "governance/prompts/director_prompt.md",
+        "governance/prompts/worker_prompt.md",
+        "governance/runners/object_runner.py",
+        "governance/runtime/curator_dispatch/BEM910_OBJECT_RUNNERS_PASS.md"
+      ],
+      "remaining_gap": "deterministic runner exists; full always-on LLM agent runtime still future work"
+    },
+    {
+      "finding": "CA-CRIT-002 commit_sha null",
+      "status": "PARTIAL_FIXED",
+      "evidence": [
+        "governance/state/external_proof_policy.json",
+        ".github/workflows/governance-validation-ci.yml",
+        "governance/tools/collect_git_proof.sh",
+        "governance/runtime/curator_dispatch/BEM912_PROOF_POLICY_PASS_WITH_SHA_GAP.md"
+      ],
+      "remaining_gap": "actual codex-status SHA capture still null until CI/git run is used as release proof"
+    },
+    {
+      "finding": "CA-CRIT-003 no channel consumer",
+      "status": "FIXED_TO_DETERMINISTIC_BASELINE",
+      "evidence": [
+        "governance/tools/dispatch_consumer.py",
+        ".github/workflows/governance-dispatch-consumer.yml",
+        "governance/runtime/curator_dispatch/BEM909_DISPATCH_CONSUMER_PASS.md"
+      ],
+      "remaining_gap": "consumer is workflow/manual deterministic runner, not always-on daemon"
+    },
+    {
+      "finding": "CA-HIGH-001 self-validation",
+      "status": "PARTIAL_FIXED",
+      "evidence": [
+        ".github/workflows/governance-validation-ci.yml",
+        "governance/state/external_proof_policy.json"
+      ],
+      "remaining_gap": "needs CI run log or external auditor rerun for release PASS"
+    },
+    {
+      "finding": "CA-HIGH-002 wrong owner",
+      "status": "FIXED",
+      "evidence": [
+        "governance/state/task_registry.json",
+        "governance/runtime/curator_dispatch/BEM908_REGISTRY_QUEUE_FIX_PASS.md"
+      ],
+      "remaining_gap": "none"
+    },
+    {
+      "finding": "CA-HIGH-003 queued dispatch",
+      "status": "FIXED",
+      "evidence": [
+        "governance/dispatch/dispatch_queue.jsonl",
+        "governance/runtime/curator_dispatch/BEM908_REGISTRY_QUEUE_FIX_PASS.md"
+      ],
+      "remaining_gap": "none"
+    },
+    {
+      "finding": "CA-HIGH-004 architecture canon missing",
+      "status": "FIXED",
+      "evidence": [
+        "governance/architecture/ARCHITECTURE_CANON.md",
+        "governance/state/architecture_plan_fact_gap.json",
+        "governance/runtime/curator_dispatch/BEM911_ARCH_EVENTLOG_PASS.md"
+      ],
+      "remaining_gap": "none"
+    },
+    {
+      "finding": "CA-MED-002 event log too small",
+      "status": "IMPROVED",
+      "evidence": [
+        "governance/logs/event_log.jsonl",
+        "governance/runtime/curator_dispatch/BEM911_ARCH_EVENTLOG_PASS.md"
+      ],
+      "remaining_gap": "historical reconstruction is proof-index based; not a true complete historical stream before BEM-911"
+    },
+    {
+      "finding": "CA-MED-003 log rotation unclear",
+      "status": "FIXED",
+      "evidence": [
+        "governance/state/log_rotation_policy.json",
+        "governance/tools/check_log_rotation.py"
+      ],
+      "remaining_gap": "none"
+    },
+    {
+      "finding": "CA-MED-004 no GD/DIR prompts",
+      "status": "FIXED",
+      "evidence": [
+        "governance/prompts/general_director_prompt.md",
+        "governance/prompts/director_prompt.md",
+        "governance/runtime/curator_dispatch/BEM910_OBJECT_RUNNERS_PASS.md"
+      ],
+      "remaining_gap": "none"
+    }
+  ],
+  "missing": [],
+  "honest_remaining_critical_gaps": [
+    "commit_sha capture requires actual CI/Git proof run",
+    "object runners are deterministic baseline, not full always-on agents",
+    "dispatch consumer is workflow/manual baseline, not daemon"
+  ]
+}
