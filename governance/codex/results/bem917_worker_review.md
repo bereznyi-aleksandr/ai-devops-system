@@ -5,8 +5,8 @@
 | Trace | bem917_worker_review |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | create:governance/audit/internal/results/BEM917_WORKER_TELEGRAM_GD_REPORTS_REVIEW.md |
+| Operations | create:governance/audit/internal/results/BEM917_WORKER_UNIFIED_PROTOCOL_V2_REVIEW.md |
 | Commit SHA | none |
-| Completed | 2026-05-30T09:23:09Z |
+| Completed | 2026-05-30T09:25:06Z |
 
 ### Completed successfully.
