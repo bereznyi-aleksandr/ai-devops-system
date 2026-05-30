@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem908_registry_queue_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-908 registry queue fix",
+  "objective": "Run script:\n\"\"\"\nPath('governance/reports').mkdir(parents=True, exist_ok=True)\nPath('governance/runtime/curator_dispatch').mkdir(parents=True, exist_ok=True)\nfixes = []\nerrors = []\n\n# Fix task owner mismatch if present.\ntr = Path('governance/state/task_registry.json')\nif tr.exists():\n    data = json.loads(tr.read_text(encoding='utf-8'))\n    for task in data.get('tasks', []):\n        if task.get('id') == 'P1-DIR-RULE-001':\n            old = task.get('owner')\n            task['owner'] = 'WRK-C2'\n            task['owner_correction'] = {'old_owner': old, 'new_owner': 'WRK-C2', 'reason': 'Claude audit CA-HIGH-002; rules and communication contour owns rule work'}\n            fixes.append('P1-DIR-RULE-001 owner ' + str(old) + ' -> WRK-C2')\n    tr.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')\nelse:\n    errors.append('task_registry missing')\n\n# Close stale queued dispatch if proof exists.\nq = Path('governance/dispatch/dispatch_queue.jsonl')\nif q.exists():\n    items = [json.loads(x) for x in q.read_text(encoding='utf-8').splitlines() if x.strip()]\n    for item in items:\n        if item.get('dispatch_id') == 'DSP-BEM-896-001' and item.get('status') == 'queued':\n            proof = 'governance/runtime/curator_dispatch/BEM896_POLICY_GATE_PASS.md'\n            if Path(proof).exists():\n                item['status'] = 'completed'\n                item['result_ref'] = proof\n                item['reconciled_by'] = 'BEM-908'\n                item['reconciliation_reason'] = 'BEM-896 already completed outside queue consumer; stale queued dispatch closed'\n                fixes.append('DSP-BEM-896-001 queued -> completed')\n            else:\n                item['status'] = 'operator_gate'\n                item['reconciliation_reason'] = 'BEM-896 proof missing; cannot mark completed'\n                errors.append('BEM896 proof missing for DSP-BEM-896-001')\n    q.write_text('\\n'.join(json.dumps(i, ensure_ascii=False) for i in items) + ('\\n' if items else ''), encoding='utf-8')\nelse:\n    errors.append('dispatch_queue missing')\n\n# Extend event log with remediation event.\nev = Path('governance/logs/event_log.jsonl')\nev.parent.mkdir(parents=True, exist_ok=True)\nexisting = ev.read_text(encoding='utf-8') if ev.exists() else ''\nentry = {'event':'claude_audit_remediation_bem908','actor':'OBJ-WRK-001','status':'completed' if not errors else 'partial','fixes':fixes,'errors':errors,'rule_refs':['RULE-011','RULE-012']}\nev.write_text(existing + json.dumps(entry, ensure_ascii=False) + '\\n', encoding='utf-8')\n\nstatus = 'PASS' if not errors else 'FAIL'\nreport = '# BEM-908 Registry and queue reconciliation\\n\\nStatus: ' + status + '\\n\\nFixes:\\n'\nfor f in fixes:\n    report += '- ' + f + '\\n'\nreport += '\\nErrors: ' + (', '.join(errors) if errors else 'none') + '\\n'\nPath('governance/reports/BEM908_REGISTRY_QUEUE_FIX.md').write_text(report, encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM908_REGISTRY_QUEUE_FIX_' + status + '.md')\nmarker.write_text('# BEM-908 registry queue fix proof\\nStatus: ' + status + '\\nFixes: ' + '; '.join(fixes) + '\\nErrors: ' + (', '.join(errors) if errors else 'none') + '\\n', encoding='utf-8')\nchanged_files.extend(['governance/state/task_registry.json','governance/dispatch/dispatch_queue.jsonl','governance/logs/event_log.jsonl','governance/reports/BEM908_REGISTRY_QUEUE_FIX.md',str(marker)])\nops_applied.append('BEM908 registry queue fix ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem908_registry_queue_fix.md",
+    "result_json": "governance/codex/results/bem908_registry_queue_fix.json"
+  },
+  "created_at": "2026-05-30T05:35:18.416Z"
+}
