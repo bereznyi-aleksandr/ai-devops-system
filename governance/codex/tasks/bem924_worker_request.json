@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem924_worker_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-924 worker request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM924_FINAL_WORKING_SYSTEM_PROTOCOL_REQUEST.md with content # BEM-924 FINAL WORKING SYSTEM PROTOCOL REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: prepare one final unified protocol that can actually evolve the repository from current raw/partial state to a working managing system.\nOperator complaint:\n- Previous protocols were fragmented and did not provide a single practical path to working state.\n- The next document must not be another partial Telegram/provider/prompt protocol.\n- It must synthesize the entire day: protocol v1.7, actual implementation, Claude audit, BEM-907..BEM-913 remediation, BEM-919..BEM-923 drafts, and operator corrections.\nMandatory contents:\n1. Current state fact table: what is real now and what is still partial or fake.\n2. One target architecture: objects, elements, contours, providers, channels, workspaces, GitHub Actions/runners, registries, proof, Telegram.\n3. Correct internal contour algorithm: Analyst proposal -> Auditor gate -> Executor -> Auditor result gate; revision cycles through Analyst until auditor-approved result.\n4. Provider model: primary GPT Analyst + Claude Auditor + Claude Executor; reserve GPT-Codex/Codex replaces Claude roles on limits/unavailability.\n5. Rule inheritance: no local element rules by default; curator inherits system/object/channel; contour elements inherit system/object/contour/properties/experience.\n6. Workspace model: workspace belongs to internal contour; main workspace is approved repo code/state.\n7. Vertical links: curator-to-curator. Internal input: Curator -> Analyst. Internal output: Auditor -> Curator. Horizontal links: Auditor A -> Analyst B or Analyst B requests verified data from Auditor A.\n8. Existing mechanisms: ai-devops-telegram-curator-webhook, POST / Telegram webhook, codex-task/status, codex-runner.yml, autonomy support, gpt-safe legacy.\n9. Claude mandatory requirements: elements registry, prompts, object refs, non-null SHA, consumer trigger, Telegram input schema, managed channel consumer, deterministic runner DoD, E2E mock/production split, workflow concurrency, report config owner OPERATOR, explicit secret names, fixed audit bundle checklist.\n10. One implementation roadmap with BEM tasks, acceptance criteria, proof, operator gates and release criteria.\n11. Prompt appendix with actual draft content templates, not only names.\n12. Definition of working system and release decision criteria.\nWorker must verify that this document can guide implementation to working system and flag missing pieces.\nExpected status: APPROVED_WITH_REQUIREMENTS or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem924_worker_request.md",
+    "result_json": "governance/codex/results/bem924_worker_request.json"
+  },
+  "created_at": "2026-05-30T20:34:39.848Z"
+}
