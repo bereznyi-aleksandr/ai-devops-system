@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem920_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-920 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-920 completed | 2026-05-30\nPrepared new system evolution protocol after Claude APPROVED_WITH_REQUIREMENTS for BEM-919 and operator request to separately list existing/new object and element prompts for approval.\nContext proof: governance/runtime/curator_dispatch/BEM920_AGENT_CONTEXT_READ.md\nWorker request: governance/audit/mailbox/to_curator/BEM920_SYSTEM_EVOLUTION_PROTOCOL_REQUEST.md\nWorker review: governance/audit/internal/results/BEM920_WORKER_SYSTEM_EVOLUTION_PROTOCOL_REVIEW.md\nCurator response: governance/audit/mailbox/from_curator/BEM920_SYSTEM_EVOLUTION_PROTOCOL_RESPONSE.md\nRepo protocol record: governance/reports/BEM920_SYSTEM_EVOLUTION_PROTOCOL.md\nResult: SYSTEM_EVOLUTION_PROTOCOL_APPROVED_WITH_REQUIREMENTS. Protocol is full-system, not Telegram-only. It incorporates Claude's 13 requirements as mandatory acceptance criteria. First priority: elements_registry.json, element prompts, object-to-element references, component inventory and workflow concurrency. Roadmap continues BEM-920..BEM-928: elements SSOT, proof hardening, Telegram input schema/routing, operator production gate, dispatch lifecycle, object lifecycle, managed channel/report pipeline, Telegram E2E and Claude re-audit. Prompt approval scope includes existing prompts general_director_prompt.md, director_prompt.md, worker_prompt.md and curator_prompt.md if present, plus new required prompts gd_curator_prompt.md, dir_curator_prompt.md, wrk_curator_prompt.md, wrk_c1_registry_architecture_prompt.md, wrk_c2_rules_communication_prompt.md, wrk_c3_execution_testing_product_prompt.md, dir_rules_contour_prompt.md, dir_planning_analytics_prompt.md and gd_internal_contour_prompt.md.\nLocal operator artifacts: BEM920_system_evolution_protocol_ru.docx and BEM920_system_evolution_protocol_ru.zip.\nQA: DOCX rendered to 5 pages; no edge clipping detected.\nNext: operator review and approval of BEM-920, then execution starts with BEM-920 implementation: elements SSOT and prompt registry.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem920_context_done.md",
+    "result_json": "governance/codex/results/bem920_context_done.json"
+  },
+  "created_at": "2026-05-30T14:58:12.611Z"
+}
