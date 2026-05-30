@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem896_policy_gate",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM896 policy gate PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/policy_gate.json",
+    "governance/policy/policy_gate_samples.json",
+    "governance/reports/BEM896_POLICY_GATE_RESULTS.json",
+    "governance/tools/evaluate_policy_gate.py",
+    "governance/reports/BEM896_POLICY_GATE.md",
+    "governance/runtime/curator_dispatch/BEM896_POLICY_GATE_PASS.md",
+    "governance/autonomy/NEXT_EXECUTABLE_BACKLOG.json",
+    "governance/codex/proofs/bem896_policy_gate.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem896_policy_gate.md",
+  "completed_at": "2026-05-30T03:58:23Z"
+}

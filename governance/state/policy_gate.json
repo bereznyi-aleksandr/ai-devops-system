@@ -1,0 +1,26 @@
+{
+  "status": "active",
+  "name": "autonomy_policy_gate",
+  "allow_without_operator": [
+    "routine_development",
+    "validation",
+    "report_packaging",
+    "registry_update",
+    "selftest",
+    "workspace_promotion"
+  ],
+  "operator_gate_required": [
+    "strategic_decision",
+    "scope_expansion",
+    "unresolved_blocker",
+    "security_secret",
+    "paid_api",
+    "issue_31_write",
+    "schedule_trigger_change"
+  ],
+  "default": "allow_if_task_is_inside_accepted_backlog_and_has_owner_and_proof_path",
+  "rules": [
+    "RULE-011",
+    "RULE-012"
+  ]
+}
