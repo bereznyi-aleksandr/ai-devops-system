@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem916_worker_review",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-916 worker review",
+  "objective": "Create file governance/audit/internal/results/BEM916_WORKER_UNIFIED_SYSTEM_IMPROVEMENT_PROTOCOL_REVIEW.md with content # BEM-916 WORKER UNIFIED SYSTEM IMPROVEMENT PROTOCOL REVIEW\nStatus: WORKER_REVIEW_READY\nDecision: APPROVED_WITH_NOTES\nFindings:\n- Operator clarification is correct. Telegram must not be a detached protocol. It should be a phase and mechanism inside the previous BEM-914 system improvement protocol.\n- BEM-915 should be treated as input material for the Telegram Operator Interface section of the unified protocol.\n- The unified protocol must preserve the original BEM-914 remediation roadmap and add Telegram as an integrated operator-facing channel.\n- The protocol must explicitly state that Telegram uses the same policy gate, dispatch queue, managed channel, proof policy and role hierarchy.\n- The Telegram layer should not bypass Curator/Director/General Director routing.\n- The operator must be able to submit tasks and receive meaningful reports from Curator, Director and General Director, not only hourly no-change reports.\nAutonomous scope:\n- Protocol writing, schemas, command grammar, routing tables, deterministic parser stub, E2E selftest design, report templates, ZIP/DOCX generation.\nOperator gates:\n- Real Telegram token/secrets, production webhook mutation, issue #31 write permission, schedule trigger, always-on daemon, real pilot selection, paid API and LLM-agent runtime model.\nRecommendation:\n- Approve unified protocol with notes.\n- Status: UNIFIED_PROTOCOL_APPROVED_WITH_OPERATOR_GATES.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem916_worker_review.md",
+    "result_json": "governance/codex/results/bem916_worker_review.json"
+  },
+  "created_at": "2026-05-30T06:51:08.858Z"
+}
