@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem919_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-919 protocol record",
+  "objective": "Create file governance/reports/BEM919_FULL_SYSTEM_WORKING_PROTOCOL.md with content # BEM-919 FULL SYSTEM WORKING PROTOCOL\nStatus: FULL_SYSTEM_WORKING_PROTOCOL_APPROVED_WITH_OPERATOR_GATES\nDate: 2026-05-30\nPurpose: updated full-system protocol for evolving the whole repository from v1.7 baseline and remediation partial pass to a working operational system.\nCorrection applied:\n- This is not a Telegram-only protocol.\n- Telegram is one module inside the full working-system roadmap.\n- The protocol analyzes v1.7 plan vs fact, Claude findings, operator remarks, actual mechanisms, component status, target architecture and implementation roadmap.\nWorker agreement:\n- Request: governance/audit/mailbox/to_curator/BEM919_FULL_SYSTEM_WORKING_PROTOCOL_REQUEST.md\n- Worker review: governance/audit/internal/results/BEM919_WORKER_FULL_SYSTEM_WORKING_PROTOCOL_REVIEW.md\n- Curator response: governance/audit/mailbox/from_curator/BEM919_FULL_SYSTEM_WORKING_PROTOCOL_RESPONSE.md\nKey conclusions:\n- v1.7 created useful governance baseline, but full operational state requires proof hardening, dispatch lifecycle, object lifecycle, report pipeline, Telegram workflow and E2E re-audit.\n- Claude audit findings remain mandatory requirements.\n- Existing mechanisms to use: ai-devops-telegram-curator-webhook, POST / Telegram webhook, /codex-task, /codex-status, codex-runner.yml. /autonomy is support; /gpt-safe is legacy compatibility; production token/webhook/schedule/daemon remains operator-gated.\n- Telegram route is Operator <-> Telegram webhook <-> EL-CUR-GD-001 <-> OBJ-GD-001 <-> Director/Worker through managed channel.\nRoadmap:\n- BEM-920 component inventory and SSOT freeze.\n- BEM-921 independent proof hardening and CI/Git release evidence.\n- BEM-922 Telegram operator workflow on existing webhook through General Director.\n- BEM-923 operator gate for production token/secrets/webhook/schedule/daemon.\n- BEM-924 dispatch lifecycle integration.\n- BEM-925 object execution lifecycle GD/DIR/Worker.\n- BEM-926 managed channel, event log and canonical report pipeline with 1-hour default config.\n- BEM-927 Telegram E2E selftest.\n- BEM-928 Claude re-audit package.\nLocal operator artifacts:\n- BEM919_full_system_working_protocol_ru.docx\n- BEM919_full_system_working_protocol_ru.zip\nQA: DOCX rendered to 5 pages, no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem919_protocol_record.md",
+    "result_json": "governance/codex/results/bem919_protocol_record.json"
+  },
+  "created_at": "2026-05-30T13:50:02.522Z"
+}
