@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem922_provider_arch_scan_retry",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM922 provider architecture scan ready",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/BEM922_PROVIDER_ARCH_SCAN.json",
+    "governance/reports/BEM922_PROVIDER_ARCH_SCAN.md",
+    "governance/runtime/curator_dispatch/BEM922_PROVIDER_ARCH_SCAN_READY.md",
+    "governance/codex/proofs/bem922_provider_arch_scan_retry.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem922_provider_arch_scan_retry.md",
+  "completed_at": "2026-05-30T18:17:51Z"
+}
