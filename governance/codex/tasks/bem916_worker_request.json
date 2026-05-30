@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem916_worker_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-916 worker request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM916_UNIFIED_SYSTEM_IMPROVEMENT_PROTOCOL_REQUEST.md with content # BEM-916 UNIFIED SYSTEM IMPROVEMENT PROTOCOL REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: correct BEM-915 mistake and prepare one unified updated system improvement protocol.\nCorrection:\n- BEM-914 was the system improvement protocol after Claude audit.\n- BEM-915 was incorrectly prepared as a separate Telegram protocol.\n- Operator clarification: update the previous protocol and add Telegram improvement mechanism inside it.\nRequired unified protocol:\n- Base protocol: BEM-914 system improvement protocol.\n- Integrated Telegram layer: BEM-915 Telegram Operator Interface, as a dedicated section/phase inside the same protocol.\nMust include all BEM-914 phases:\n1. Proof hardening: CI/Git proof, release proof manifest, SHA/Actions evidence.\n2. Dispatch lifecycle hardening: queue invariant, no stale queued records, consumer workflow_dispatch.\n3. Object execution hardening: GD/DIR/WRK runners, prompts, optional operator-gated LLM runtime.\n4. Channel and event log hardening: schema, consumer, event completeness, log rotation.\n5. Architecture canon freshness: plan/fact/gap updates.\n6. Re-audit package for Claude.\nMust integrate Telegram as a new phase, not as separate protocol:\n7. Telegram Operator Interface: task intake, commands, structured envelope, routing to Curator/Director/General Director/Worker, reports, receipts, correlation IDs, errors, E2E selftest.\nOperator gates:\n- bot token/secrets;\n- production webhook changes;\n- issue #31 writes;\n- schedule triggers;\n- always-on daemon;\n- real pilot/client/scope/metrics;\n- LLM-agent runtime model.\nWorker must confirm:\n- The integrated protocol is coherent and executable.\n- BEM-915 is not standalone; it is incorporated into unified BEM-916.\nExpected status: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem916_worker_request.md",
+    "result_json": "governance/codex/results/bem916_worker_request.json"
+  },
+  "created_at": "2026-05-30T06:49:45.569Z"
+}
