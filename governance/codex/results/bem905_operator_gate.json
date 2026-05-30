@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem905_operator_gate",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM905 operator gate required",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/pilot/gates/BEM905_OPERATOR_PILOT_SELECTION_GATE.json",
+    "governance/pilot/gates/BEM905_OPERATOR_PILOT_SELECTION_GATE.md",
+    "governance/reports/BEM905_OPERATOR_GATE.md",
+    "governance/runtime/curator_dispatch/BEM905_OPERATOR_GATE_REQUIRED.md",
+    "governance/audit/mailbox/from_curator/BEM905_PILOT_SELECTION_RESPONSE.md",
+    "governance/codex/proofs/bem905_operator_gate.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem905_operator_gate.md",
+  "completed_at": "2026-05-30T04:28:44Z"
+}

@@ -1,0 +1,35 @@
+{
+  "bem": "BEM-905",
+  "status": "OPERATOR_GATE_REQUIRED",
+  "reason": "technical preparation is complete; real pilot selection is strategic and cannot be chosen autonomously",
+  "technical_readiness_proofs": [
+    "governance/runtime/curator_dispatch/BEM889_REPOSITORY_READY.md",
+    "governance/runtime/curator_dispatch/BEM899_AUTONOMOUS_SENDING_CONTOUR_READY.md",
+    "governance/runtime/curator_dispatch/BEM901_PILOT_READINESS_PASS.md",
+    "governance/runtime/curator_dispatch/BEM902_BMC_EVALUATOR_PASS.md",
+    "governance/runtime/curator_dispatch/BEM903_PRODUCT_ONBOARDING_PASS.md",
+    "governance/runtime/curator_dispatch/BEM904_EVALUATION_SLA_PASS.md"
+  ],
+  "operator_required_inputs": [
+    {
+      "id": "real_business_segment",
+      "question": "Which business segment is selected for the first real pilot?"
+    },
+    {
+      "id": "real_client_or_internal_product",
+      "question": "Which real client/product/repository is the pilot target?"
+    },
+    {
+      "id": "pilot_objective",
+      "question": "What measurable business objective should the pilot prove?"
+    },
+    {
+      "id": "success_metrics",
+      "question": "Which success thresholds are accepted for cycle time, manual actions, defects, traceability and proof coverage?"
+    },
+    {
+      "id": "scope_boundary",
+      "question": "What is explicitly out of scope for the first pilot?"
+    }
+  ]
+}
