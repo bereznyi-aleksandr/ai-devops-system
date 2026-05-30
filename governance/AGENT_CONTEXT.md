@@ -248,3 +248,5 @@ Prepared detailed working roadmap to turn the system from concept/scaffold into 
 Updated the BEM-918 working roadmap after operator remarks about the seven listed mechanisms/components and Telegram entry/exit route
 ## BEM-919 completed | 2026-05-30
 Prepared updated full-system working protocol after operator rejected Telegram-only focus
+## BEM-920 completed | 2026-05-30
+Prepared new system evolution protocol after Claude APPROVED_WITH_REQUIREMENTS for BEM-919 and operator request to separately list existing/new object and element prompts for approval
