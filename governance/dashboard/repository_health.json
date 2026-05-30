@@ -1,0 +1,67 @@
+{
+  "status": "HEALTHY",
+  "updated_at_utc3": "2026-05-30T07:02:00+03:00",
+  "checks": [
+    {
+      "id": "baseline_ready",
+      "path": "governance/runtime/curator_dispatch/BEM889_REPOSITORY_READY.md",
+      "ok": true
+    },
+    {
+      "id": "sending_ready",
+      "path": "governance/runtime/curator_dispatch/BEM894_SENDING_CONTOUR_READY.md",
+      "ok": true
+    },
+    {
+      "id": "autonomous_loop",
+      "path": "governance/runtime/curator_dispatch/BEM895_AUTONOMOUS_LOOP_PASS.md",
+      "ok": true
+    },
+    {
+      "id": "policy_gate",
+      "path": "governance/runtime/curator_dispatch/BEM896_POLICY_GATE_PASS.md",
+      "ok": true
+    },
+    {
+      "id": "cycle_packaging",
+      "path": "governance/runtime/curator_dispatch/BEM897_REPORT_PACKAGING_PASS.md",
+      "ok": true
+    },
+    {
+      "id": "dispatch_queue",
+      "path": "governance/dispatch/dispatch_queue.jsonl",
+      "ok": true
+    },
+    {
+      "id": "message_log",
+      "path": "governance/messages/managed_channel_messages.jsonl",
+      "ok": true
+    },
+    {
+      "id": "worker_lifecycle",
+      "path": "governance/state/worker_contour_lifecycle.json",
+      "ok": true
+    },
+    {
+      "id": "readiness_state",
+      "path": "governance/state/repository_readiness.json",
+      "ok": true
+    },
+    {
+      "id": "sending_state",
+      "path": "governance/state/sending_contour_readiness.json",
+      "ok": true
+    }
+  ],
+  "autonomy_backlog_completed": [
+    "BEM-895-001",
+    "BEM-895-002",
+    "BEM-896-001",
+    "BEM-897-001"
+  ],
+  "autonomy_backlog_pending": [
+    "BEM-898-001"
+  ],
+  "next_recommended_task": "BEM-898-001",
+  "summary": "baseline ready, sending contour ready, autonomous loop active"
+}
