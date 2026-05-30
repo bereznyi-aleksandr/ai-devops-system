@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem924_worker_review",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-924 worker review",
+  "objective": "Create file governance/audit/internal/results/BEM924_WORKER_FINAL_WORKING_SYSTEM_PROTOCOL_REVIEW.md with content # BEM-924 WORKER FINAL WORKING SYSTEM PROTOCOL REVIEW\nStatus: WORKER_REVIEW_READY\nDecision: APPROVED_WITH_REQUIREMENTS\nFindings:\n- Operator complaint is valid. A final protocol must synthesize the entire day and must not focus on a single subsystem.\n- The document must be a practical implementation contract: current state, gaps, target architecture, implementation roadmap, acceptance criteria, proof and release gates.\n- Current real baseline: governance registries exist, task/dispatch/state files exist, deterministic consumers/runners were added, Telegram/Deno/Codex endpoints exist, but the system is not yet operational as a complete autonomous managing system.\n- Critical missing implementation blocks: elements_registry, contours_registry, providers_registry, provider policy, failover policy, provider-aware dispatch/managed-channel envelopes, real consumer triggers, non-null release SHA, prompt templates, event transition logging, Telegram input schema, managed channel consumer and E2E proof.\n- The final roadmap must be ordered so that SSOT and prompt/provider registries come before automation. Automation without identity/provider/rule SSOT repeats the same fake-autonomy problem.\nRequired implementation phases:\n1. BEM-925 SSOT identity layer: objects->elements refs, elements_registry, contours_registry, providers_registry, provider policies, prompt templates and workflow concurrency baseline.\n2. BEM-926 rule and experience layer: dynamic rule refs, experience registry, inheritance validator, no local element rules by default.\n3. BEM-927 envelope and channel layer: managed channel consumer, telegram_input_envelope_schema, mapping, provider-aware envelope fields.\n4. BEM-928 dispatch lifecycle layer: queue state machine, auto-trigger design, provider-aware dispatch consumer, stale queue validator.\n5. BEM-929 object/contour execution layer: deterministic provider-aware contour runner implementing Analyst->Auditor->Executor->Auditor with revision loops and failover events.\n6. BEM-930 proof and CI layer: non-null CI/Git SHA, release_proof_manifest, core workflow concurrency, release gate.\n7. BEM-931 Telegram operator layer: existing webhook integration, GD curator main route, optional curator routes, report_period_config owner OPERATOR, canonical reports.\n8. BEM-932 E2E validation layer: mock Telegram and production-status split, primary provider and reserve provider scenarios, managed channel, dispatch, runner and report proof.\n9. BEM-933 Claude re-audit and release package: fixed checklist before bundle, fact table, proof index, release decision.\nOperator gates:\n- real secrets/tokens, production webhook mutation, new schedule triggers, always-on daemon, issue #31 writes, paid API, LLM-agent runtime model, real pilot/client/scope/metrics.\nPrompt appendix must include actual templates for objects, roles, contour overlays and operational contracts.\nDefinition of working system:\n- Operator can submit task through registered channel, task enters GD curator route, passes policy/dispatch, runs provider-aware contour lifecycle, creates non-null proof evidence, updates event log/managed channel, returns canonical report, and Claude re-audit can verify files and CI/Git proof.\nStatus recommendation:\n- FINAL_WORKING_SYSTEM_PROTOCOL_APPROVED_WITH_REQUIREMENTS.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem924_worker_review.md",
+    "result_json": "governance/codex/results/bem924_worker_review.json"
+  },
+  "created_at": "2026-05-30T20:36:29.590Z"
+}
