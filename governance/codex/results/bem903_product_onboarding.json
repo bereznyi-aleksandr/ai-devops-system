@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem903_product_onboarding",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM903 product onboarding PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/pilot/product_onboarding/onboarding_kit.json",
+    "governance/pilot/product_onboarding/synthetic_product_registration.json",
+    "governance/pilot/product_onboarding/feedback_channel_stub.json",
+    "governance/tools/validate_product_onboarding.py",
+    "governance/reports/BEM903_PRODUCT_ONBOARDING.md",
+    "governance/runtime/curator_dispatch/BEM903_PRODUCT_ONBOARDING_PASS.md",
+    "governance/codex/proofs/bem903_product_onboarding.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem903_product_onboarding.md",
+  "completed_at": "2026-05-30T04:24:16Z"
+}

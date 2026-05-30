@@ -1,0 +1,12 @@
+{
+  "repository_id": "PROD-PILOT-SYNTHETIC-001",
+  "repository_name": "synthetic-pilot-product",
+  "owner_object": "OBJ-DIR-001",
+  "worker_object": "OBJ-WRK-001",
+  "status": "synthetic_candidate",
+  "purpose": "synthetic pilot repository for validating onboarding before real operator selection",
+  "feedback_route": "product curator -> worker curator -> director curator",
+  "inherits_rules_from": "governance/state/rule_registry.json",
+  "message_channel": "governance/messages/managed_channel_messages.jsonl",
+  "evaluation_profile": "governance/pilot/evaluation/synthetic_pilot_evaluation_profile.json"
+}

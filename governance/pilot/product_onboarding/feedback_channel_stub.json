@@ -1,0 +1,17 @@
+{
+  "status": "active",
+  "source_repository": "PROD-PILOT-SYNTHETIC-001",
+  "allowed_feedback_types": [
+    "incident",
+    "fix",
+    "improvement",
+    "rule_candidate",
+    "metric_result"
+  ],
+  "route": "curator-to-curator only",
+  "rule_refs": [
+    "RULE-006",
+    "RULE-010",
+    "RULE-011"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "status": "active",
+  "name": "product_repository_onboarding_kit",
+  "purpose": "repeatable onboarding of product repositories into managing contour",
+  "required_inputs": [
+    "repository_id",
+    "repository_name",
+    "owner_object",
+    "worker_object",
+    "purpose",
+    "feedback_route"
+  ],
+  "generated_artifacts": [
+    "registration json",
+    "feedback channel stub",
+    "rule inheritance stub",
+    "evaluation stub"
+  ],
+  "operator_gate": "real product/client repository choice remains strategic"
+}
