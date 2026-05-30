@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem900_roadmap_coverage",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-900 roadmap coverage",
+  "objective": "Run script:\n\"\"\"\nPath('governance/roadmap').mkdir(parents=True, exist_ok=True)\nPath('governance/reports').mkdir(parents=True, exist_ok=True)\nPath('governance/runtime/curator_dispatch').mkdir(parents=True, exist_ok=True)\n\ncoverage = {\n  'bem':'BEM-900',\n  'source_protocol':'BEM-879 v1.7 accepted roadmap',\n  'status':'COVERAGE_BUILT',\n  'autonomous_execution_boundary':{\n    'can_execute_without_operator':['routine_development','registry_updates','rules','channels','workspaces','product_repository_templates','selftests','dashboards','report_packaging','readiness_state','pilot_scaffold'],\n    'must_gate_operator':['strategic_business_pilot_choice','real_client_selection','scope_expansion','paid_api','secrets','issue_31_write','schedule_trigger_change','unresolved_blocker']\n  },\n  'completed_layers':[\n    {'range':'BEM-880','result':'accepted roadmap v1.7 executed through Worker 3 contours'},\n    {'range':'BEM-883..BEM-889','result':'baseline converted from scaffold to executable READY repository baseline'},\n    {'range':'BEM-890..BEM-899','result':'sending contour, autonomous loop, policy gate, cycle packaging, health dashboard READY'}\n  ],\n  'next_autonomous_layers':[\n    {'id':'BEM-901','title':'pilot readiness scaffold','operator_gate':False},\n    {'id':'BEM-902','title':'business model canvas machine-readable template and evaluator','operator_gate':False},\n    {'id':'BEM-903','title':'product repository onboarding kit','operator_gate':False},\n    {'id':'BEM-904','title':'evaluation dashboard and SLA templates','operator_gate':False},\n    {'id':'BEM-905','title':'real pilot selection gate','operator_gate':True}\n  ]\n}\nPath('governance/roadmap/BEM900_V17_COVERAGE_MATRIX.json').write_text(json.dumps(coverage, ensure_ascii=False, indent=2), encoding='utf-8')\nmd = '# BEM-900 v1.7 roadmap coverage matrix\\n\\nStatus: COVERAGE_BUILT\\n\\nAutonomous work continues until a true operator gate is reached.\\n\\nCompleted layers:\\n'\nfor item in coverage['completed_layers']:\n    md += '- ' + item['range'] + ': ' + item['result'] + '\\n'\nmd += '\\nNext autonomous layers:\\n'\nfor item in coverage['next_autonomous_layers']:\n    md += '- ' + item['id'] + ': ' + item['title'] + ' | operator gate: ' + str(item['operator_gate']) + '\\n'\nPath('governance/reports/BEM900_V17_COVERAGE_MATRIX.md').write_text(md, encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM900_ROADMAP_COVERAGE_READY.md')\nmarker.write_text('# BEM-900 roadmap coverage proof\\nStatus: READY\\nNext autonomous layers: BEM-901..BEM-904\\nGate: BEM-905 real pilot selection\\n', encoding='utf-8')\nchanged_files.extend(['governance/roadmap/BEM900_V17_COVERAGE_MATRIX.json','governance/reports/BEM900_V17_COVERAGE_MATRIX.md',str(marker)])\nops_applied.append('BEM900 roadmap coverage built')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem900_roadmap_coverage.md",
+    "result_json": "governance/codex/results/bem900_roadmap_coverage.json"
+  },
+  "created_at": "2026-05-30T04:17:15.350Z"
+}
