@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem920_worker_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-920 worker request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM920_SYSTEM_EVOLUTION_PROTOCOL_REQUEST.md with content # BEM-920 SYSTEM EVOLUTION PROTOCOL REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: prepare a new system evolution protocol after Claude audit APPROVED_WITH_REQUIREMENTS for BEM-919 plus operator remarks.\nContext:\n- Protocol v1.7 created baseline and BEM-907..BEM-913 remediation partial pass.\n- BEM-919 restored full-system focus, not Telegram-only.\n- Claude approved BEM-919 with mandatory requirements.\n- Operator requested a new protocol and separately requested existing/new object and element prompts for operator approval.\nMandatory Claude requirements:\n1. Create governance/state/elements_registry.json for all elements.\n2. Create prompts for WRK-C1, WRK-C2, WRK-C3 by curator_prompt pattern.\n3. objects_registry.json must reference elements_registry.json.\n4. release_proof_manifest.json commit_sha cannot be null.\n5. dispatch consumer auto-trigger on queue item added.\n6. telegram_input_envelope_schema.json plus Telegram-to-managed-channel mapping.\n7. managed channel consumer must be explicitly defined.\n8. BEM-925 definition of done: deterministic runner + state files + role reports = PASS; LLM runtime is next operator-gated stage.\n9. Telegram E2E selftest must separate mock_status and production_status; production_status remains null before production gate.\n10. concurrency groups for core workflows.\n11. report_period_config.json has version and owner: OPERATOR.\n12. BEM-923 gate has explicit secret names without values.\n13. BEM-928 bundle checklist fixed before bundle assembly.\nRequired protocol output:\n- Full system protocol, not Telegram-only.\n- Analysis of v1.7 done/partial/not done.\n- Incorporate Claude requirements as roadmap acceptance criteria.\n- Separate existing prompts and new required prompts for objects/elements.\n- Include operator approval table for prompt changes.\n- Update roadmap BEM-920..BEM-928 or BEM-921..BEM-929 if needed, but keep requirements mapped clearly.\n- State autonomous vs operator-gated work.\nWorker must assess coherence, executability, and whether prompt/register work is first priority.\nExpected status: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem920_worker_request.md",
+    "result_json": "governance/codex/results/bem920_worker_request.json"
+  },
+  "created_at": "2026-05-30T14:49:14.525Z"
+}
