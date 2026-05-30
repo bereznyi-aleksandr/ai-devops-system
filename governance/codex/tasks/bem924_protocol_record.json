@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem924_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-924 final protocol record",
+  "objective": "Create file governance/reports/BEM924_FINAL_WORKING_SYSTEM_PROTOCOL.md with content # BEM-924 FINAL WORKING SYSTEM PROTOCOL\nStatus: FINAL_WORKING_SYSTEM_PROTOCOL_APPROVED_WITH_REQUIREMENTS\nDate: 2026-05-30\nPurpose: one unified implementation contract for evolving the repository from current partial governance baseline to a working managing system.\nOperator correction:\n- Previous protocol versions were fragmented and did not provide a complete path to working state.\n- This protocol is not Telegram-only, not provider-only and not prompt-only.\n- It synthesizes protocol v1.7, actual repository state, Claude audits, BEM-907..BEM-913 remediation, BEM-919..BEM-923 drafts and all operator decisions from 2026-05-30.\nDefinition of working system:\n- Operator submits task through registered channel.\n- Task enters General Director Curator route.\n- Policy and dispatch route the task.\n- Provider-aware internal contour lifecycle executes: Analyst proposal -> Auditor gate -> Executor -> Auditor result gate with revision cycles through Analyst.\n- Provider model is recorded: GPT Analyst, Claude Auditor, Claude Executor primary; GPT-Codex/Codex fallback for Claude roles on limits/unavailability.\n- Event log and managed channel update every transition.\n- Proof includes non-null CI/Git release evidence.\n- Operator receives canonical report.\n- Claude can verify the release bundle.\nRoadmap:\n- BEM-925 SSOT identity/provider layer.\n- BEM-926 rule and experience layer.\n- BEM-927 envelope and channel layer.\n- BEM-928 dispatch lifecycle layer.\n- BEM-929 object/contour execution layer.\n- BEM-930 proof and CI layer.\n- BEM-931 Telegram operator layer.\n- BEM-932 E2E validation layer.\n- BEM-933 Claude re-audit and release package.\nWorker agreement:\n- Request: governance/audit/mailbox/to_curator/BEM924_FINAL_WORKING_SYSTEM_PROTOCOL_REQUEST.md\n- Worker review: governance/audit/internal/results/BEM924_WORKER_FINAL_WORKING_SYSTEM_PROTOCOL_REVIEW.md\n- Curator response: governance/audit/mailbox/from_curator/BEM924_FINAL_WORKING_SYSTEM_PROTOCOL_RESPONSE.md\nLocal operator artifacts:\n- BEM924_final_working_system_protocol_ru.docx\n- BEM924_final_working_system_protocol_ru.zip\nQA: DOCX rendered to 5 pages; contact sheet inspected; no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem924_protocol_record.md",
+    "result_json": "governance/codex/results/bem924_protocol_record.json"
+  },
+  "created_at": "2026-05-30T20:43:49.152Z"
+}
