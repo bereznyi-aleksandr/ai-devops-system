@@ -1,0 +1,18 @@
+{
+  "status": "active",
+  "name": "autonomous_execution_loop",
+  "uses": "SENDING_CONTOUR_READY",
+  "cycle_steps": [
+    "read readiness",
+    "select next pending item",
+    "route by dispatch contour",
+    "deliver to worker inbox",
+    "wait for result proof",
+    "update backlog and context"
+  ],
+  "safety_rules": [
+    "RULE-011",
+    "RULE-012"
+  ],
+  "operator_gate": "only strategic decisions, blockers, or scope expansion"
+}
