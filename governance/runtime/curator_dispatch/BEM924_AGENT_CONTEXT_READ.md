@@ -13,6 +13,7 @@ Key lines:
 ## 3. Согласованный протокол GPT↔Claude (BEM-858)
 | GPT и Claude — peer-аудиторы | ✅ APPROVED |
 | Telegram — только gate оператора | ✅ APPROVED |
+Файл протокола: `governance/protocols/BEM858_AGREED_MULTIAGENT_OPERATING_PROTOCOL.md`
 | task_id | P9_HANDOFF_PROTOCOL | Запись в roadmap_state.json |
 ❌ Останавливать roadmap ради отчёта
 Claude → прямой коммит через GitHub MCP
@@ -22,33 +23,51 @@ Claude → прямой коммит через GitHub MCP
 | State / roadmap | Аудит | Ведение файлов |
 2. **claude-code-action smoke-test** — запустить из Actions UI
 *Источник истины: этот файл главнее roadmap_state.json и GPT_HANDOFF.md*
+- BEM-859 protocol alignment is routed through Curator only
 ## BEM-863 Curator-Claude mechanism
 ## BEM-864 Curator-Claude selftest
 - Status: route_selftest_completed_waiting_for_claude_response
 Next: continue roadmap from AGENT_CONTEXT
 Next: continue roadmap from AGENT_CONTEXT
 Next: continue roadmap from AGENT_CONTEXT.md
+## BEM-871 | Curator-mediated internal audit protocol | 2026-05-27
+Protocol: governance/protocols/CURATOR_MEDIATED_INTERNAL_AUDIT_PROTOCOL
+Curator-mediated internal audit protocol confirmed
 Roadmap protocol agreed through curator-mediated route
 Updated BEM-872 roadmap protocol to version v1
 Updated BEM-872 roadmap protocol to version v1
+Protocol v1
+Protocol v1
+Protocol v1
+Protocol v1
+## BEM-879 completed | 2026-05-29
+Protocol v1
+Operator approved BEM-879 protocol v1
+Operator accepted BEM-880 execution result with response: Да
+## BEM-900 completed | 2026-05-30
 Roadmap v1
 Operator gate reached after maximum autonomous execution of accepted roadmap v1
 Prepared detailed external audit report for Claude about protocol v1
+## BEM-913 completed | 2026-05-30
 Claude external audit remediation validation completed
 Prepared system improvement protocol after Claude external audit and BEM-907
 Prepared updated system improvement protocol with Telegram Operator Interface layer after operator reported that Telegram bot channel is not working as a real operator interface
+Corrected BEM-915 protocol format mistake after operator clarification
 Updated unified BEM-916 system improvement protocol after operator remarks about Telegram mechanism
 Updated BEM-916 unified system improvement protocol according to operator remarks about Telegram configuration, reporting periodicity and report canon
 Prepared detailed working roadmap to turn the system from concept/scaffold into a fully working operational system
 Prepared detailed working roadmap to turn the system from concept/scaffold into a fully working system, using existing Telegram/Deno/Codex implementation and Claude v1
 Updated the BEM-918 working roadmap after operator remarks about the seven listed mechanisms/components and Telegram entry/exit route
+## BEM-919 completed | 2026-05-30
 Prepared updated full-system working protocol after operator rejected Telegram-only focus
 ## BEM-920 completed | 2026-05-30
 Prepared new system evolution protocol after Claude APPROVED_WITH_REQUIREMENTS for BEM-919 and operator request to separately list existing/new object and element prompts for approval
 ## BEM-921 completed | 2026-05-30
 Corrected BEM-920 after operator pointed out that prompt names were listed without readable prompt contents and without explaining how the protocol evolves the raw repository into a working managing contour
 ## BEM-921 completed | 2026-05-30
+Prepared System Working Protocol v2 after operator clarified the correct internal contour algorithm and all 2026-05-30 remarks
 ## BEM-921 completed | 2026-05-30
+Prepared new full-system protocol v2 after today's operator decisions about internal contour algorithm, workspaces, curators, rule inheritance, vertical/horizontal links, GitHub Actions/
 ## BEM-923 completed | 2026-05-30
 Prepared new full-system protocol v3 with provider execution model for internal contours after operator clarified that BEM-921 missed the primary/reserve provider architecture
 ## BEM-923 completed | 2026-05-30
