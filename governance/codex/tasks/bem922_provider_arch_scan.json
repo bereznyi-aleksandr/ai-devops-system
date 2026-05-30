@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem922_provider_arch_scan",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-922 provider architecture scan",
+  "objective": "Run script:\n\"\"\"\nfrom pathlib import Path\nimport json, re\nctx = Path('governance/AGENT_CONTEXT.md')\nctx_text = ctx.read_text(encoding='utf-8', errors='ignore') if ctx.exists() else ''\nkeywords = [\n    'provider','providers','провайдер','провайдеры','claude','cloud','codex','gpt','analyst','аналитик','auditor','аудитор','executor','исполнитель','primary','основной','reserve','резерв','backup','лимит','limit','контур','contour','OPENAI','runner'\n]\npatterns = ['governance/**/*.md','governance/**/*.json','governance/**/*.yml','governance/**/*.yaml','governance/**/*.py','.github/workflows/*.yml','.github/workflows/*.yaml','**/*.md','**/*.json','**/*.py','**/*.ts','**/*.js','**/*.yml','**/*.yaml']\nseen = set()\nfiles = []\nfor pat in patterns:\n    for p in Path('.').glob(pat):\n        if p.is_file() and str(p) not in seen and not any(part in {'.git','node_modules'} for part in p.parts):\n            seen.add(str(p)); files.append(p)\nrelevant = []\nfor p in files:\n    try:\n        text = p.read_text(encoding='utf-8', errors='ignore')\n    except Exception:\n        continue\n    low = text.lower(); pathlow = str(p).lower()\n    score = sum(3 for k in keywords if k in pathlow) + sum(1 for k in keywords if k in low)\n    if score:\n        hits = []\n        lines = text.splitlines()\n        for i, line in enumerate(lines, start=1):\n            ll = line.lower()\n            if any(k in ll for k in keywords):\n                hits.append(f'L{i}: {line[:260]}')\n            if len(hits) >= 18:\n                break\n        relevant.append({'score':score,'path':str(p),'hits':hits})\nrelevant = sorted(relevant, key=lambda x: x['score'], reverse=True)[:90]\nsummary = {\n  'status':'SCANNED',\n  'context_exists':ctx.exists(),\n  'top_files':[{'path':r['path'],'score':r['score']} for r in relevant[:30]],\n  'explicit_note':'scan intended to verify provider model: GPT analyst, Claude auditor/executor, reserve GPT-Codex/Codex when Claude limits'\n}\nPath('governance/runtime/curator_dispatch').mkdir(parents=True, exist_ok=True)\nPath('governance/reports').mkdir(parents=True, exist_ok=True)\nPath('governance/reports/BEM922_PROVIDER_ARCH_SCAN.json').write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8')\nmd = '# BEM-922 Provider architecture scan\\n\\nStatus: SCANNED\\n\\n## AGENT_CONTEXT snippets\\n'\nfor line in ctx_text.splitlines():\n    ll=line.lower()\n    if any(k in ll for k in ['claude','codex','gpt','provider','провайдер','контур','limit','лимит','bem-921','bem-920']):\n        md += line + '\\n'\nmd += '\\n## Relevant repository hits\\n'\nfor r in relevant:\n    md += f\"\\n### {r['path']} | score={r['score']}\\n\" + '\\n'.join(r['hits']) + '\\n'\nPath('governance/reports/BEM922_PROVIDER_ARCH_SCAN.md').write_text(md, encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM922_PROVIDER_ARCH_SCAN_READY.md')\nmarker.write_text('# BEM-922 provider architecture scan proof\\nStatus: READY\\nReport: governance/reports/BEM922_PROVIDER_ARCH_SCAN.md\\n', encoding='utf-8')\nchanged_files.extend(['governance/reports/BEM922_PROVIDER_ARCH_SCAN.json','governance/reports/BEM922_PROVIDER_ARCH_SCAN.md',str(marker)])\nops_applied.append('BEM922 provider architecture scan ready')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem922_provider_arch_scan.md",
+    "result_json": "governance/codex/results/bem922_provider_arch_scan.json"
+  },
+  "created_at": "2026-05-30T18:15:53.048Z"
+}
