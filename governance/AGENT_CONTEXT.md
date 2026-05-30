@@ -256,3 +256,5 @@ Corrected BEM-920 after operator pointed out that prompt names were listed witho
 Prepared System Working Protocol v2 after operator clarified the correct internal contour algorithm and all 2026-05-30 remarks
 ## BEM-921 completed | 2026-05-30
 Prepared new full-system protocol v2 after today's operator decisions about internal contour algorithm, workspaces, curators, rule inheritance, vertical/horizontal links, GitHub Actions/
+## BEM-923 completed | 2026-05-30
+Prepared new full-system protocol v3 with provider execution model for internal contours after operator clarified that BEM-921 missed the primary/reserve provider architecture
