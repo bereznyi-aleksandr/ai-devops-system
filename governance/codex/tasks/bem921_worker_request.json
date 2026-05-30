@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem921_worker_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-921 worker request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM921_SYSTEM_WORKING_PROTOCOL_V2_REQUEST.md with content # BEM-921 SYSTEM WORKING PROTOCOL V2 REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: prepare a new version of the full system improvement protocol to working state, incorporating all operator remarks from today and Claude APPROVED_WITH_REQUIREMENTS.\nThis must not be Telegram-only.\nMandatory updates from operator dialog:\n1. Elements are not unique agents with local rules. Remove local_rule_refs/local_rules from the base model.\n2. Element behavior = template role prompt + system rules + object rules + contour rules/properties + experience registry.\n3. Curator is also a role and an element of the object, but not a member of an internal contour by default. Curator inherits system rules + object rules + channel rules, not contour rules.\n4. Analyst/Auditor/Executor are elements inside internal contours and inherit contour rules/properties.\n5. Workspace belongs to internal contour, not to each element. Main workspace is the repository's main code/state.\n6. Every curator may have registered Telegram input/output; General Director curator remains primary top-level route.\n7. Vertical communication is strictly curator-to-curator between objects.\n8. Input to internal contour: curator -> analyst.\n9. Internal contour algorithm is not Analyst -> Executor -> Auditor. Correct algorithm is iterative: analyst prepares proposal -> auditor reviews proposal -> if rejected return to analyst -> if approved pass to executor -> executor executes -> auditor reviews result -> if rejected return through analyst with revision proposal -> repeat until auditor-approved result.\n10. Output from internal contour is auditor -> curator.\n11. Horizontal contour communication inside an object is verified-data exchange: auditor of contour A sends to analyst of contour B, or analyst of B requests verified data from auditor of A.\n12. GitHub Actions/workflows/runners are mechanisms that activate required roles/contours and write event_log/proof/status.\n13. Every significant transition must create an event in event_log and relevant managed_channel/queue/result/proof files.\nClaude mandatory requirements remain active:\n- elements_registry.json, element prompts, objects_registry references elements registry, non-null commit_sha in release_proof_manifest from CI/Git, dispatch consumer auto-trigger, telegram input schema/mapping, managed channel consumer, BEM-925 DoD, mock/production E2E split, workflow concurrency groups, report_period_config version owner OPERATOR, BEM-923 secret names, BEM-928 checklist.\nRequired output:\n- Protocol V2 full-system document.\n- Detailed roadmap BEM-920..BEM-928 updated with all above requirements.\n- Detailed prompt section: existing prompts, new prompts, prompt templates, and draft content/behavior for objects, curators, contours, analyst/auditor/executor roles.\n- Tables for registries: elements_registry, contours_registry, rule_registry, experience_registry, report_period_config, telegram schemas, event log events.\n- Clear operator gates and acceptance criteria.\nExpected status: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem921_worker_request.md",
+    "result_json": "governance/codex/results/bem921_worker_request.json"
+  },
+  "created_at": "2026-05-30T17:49:07.112Z"
+}
