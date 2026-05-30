@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem919_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-919 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-919 completed | 2026-05-30\nPrepared updated full-system working protocol after operator rejected Telegram-only focus.\nContext proof: governance/runtime/curator_dispatch/BEM919_AGENT_CONTEXT_READ.md\nWorker request: governance/audit/mailbox/to_curator/BEM919_FULL_SYSTEM_WORKING_PROTOCOL_REQUEST.md\nWorker review: governance/audit/internal/results/BEM919_WORKER_FULL_SYSTEM_WORKING_PROTOCOL_REVIEW.md\nCurator response: governance/audit/mailbox/from_curator/BEM919_FULL_SYSTEM_WORKING_PROTOCOL_RESPONSE.md\nRepo protocol record: governance/reports/BEM919_FULL_SYSTEM_WORKING_PROTOCOL.md\nResult: FULL_SYSTEM_WORKING_PROTOCOL_APPROVED_WITH_OPERATOR_GATES. Protocol analyzes v1.7 plan/fact, real completed work, remaining gaps, Claude findings and operator remarks. It defines a full-system roadmap BEM-920..BEM-928: component inventory/SSOT, proof hardening, Telegram workflow through General Director, production operator gate, dispatch lifecycle, object execution lifecycle, managed channel/event log/canonical reports, Telegram E2E selftest and Claude re-audit package. Telegram is one module only, not the focus of the protocol. Existing mechanisms to use: ai-devops-telegram-curator-webhook, POST / Telegram webhook, /codex-task, /codex-status and codex-runner.yml; /autonomy is support; /gpt-safe is legacy compatibility. Telegram entry/exit route: Operator <-> Telegram webhook <-> EL-CUR-GD-001 <-> OBJ-GD-001 <-> Director/Worker through managed channel.\nLocal operator artifacts: BEM919_full_system_working_protocol_ru.docx and BEM919_full_system_working_protocol_ru.zip.\nQA: DOCX rendered to 5 pages; no edge clipping detected.\nNext: operator review and approval of BEM-919, then execution starts with BEM-920 component inventory and SSOT freeze.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem919_context_done.md",
+    "result_json": "governance/codex/results/bem919_context_done.json"
+  },
+  "created_at": "2026-05-30T13:51:23.434Z"
+}
