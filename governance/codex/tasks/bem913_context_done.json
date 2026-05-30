@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem913_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-913 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-913 completed | 2026-05-30\nClaude external audit remediation validation completed.\nAudit backlog: governance/backlog/BEM907_CLAUDE_AUDIT_REMEDIATION_BACKLOG.json\nKey fixes:\n- BEM-908 fixed P1-DIR-RULE-001 owner to WRK-C2 and closed stale DSP-BEM-896-001 queued dispatch.\n- BEM-909 added deterministic dispatch consumer and workflow_dispatch runner.\n- BEM-910 added General Director, Director and Worker prompts plus deterministic object runner and last_run outputs.\n- BEM-911 added ARCHITECTURE_CANON.md, plan/fact/gap state, event log indexing and log rotation policy.\n- BEM-912 added external proof policy, governance validation CI workflow and git proof collector shell script.\nValidation: governance/audit/claude/BEM913_CLAUDE_REMEDIATION_VALIDATION.md\nCurator response: governance/audit/mailbox/from_curator/BEM913_CLAUDE_REMEDIATION_RESPONSE.md\nProof: governance/runtime/curator_dispatch/BEM913_CLAUDE_REMEDIATION_REMEDIATION_PARTIAL_PASS.md\nResult: REMEDIATION_PARTIAL_PASS. Fully fixed: owner mismatch, stale queued dispatch, architecture canon, GD/DIR prompts, log rotation. Reduced but not fully eliminated: commit_sha null until actual CI/Git proof run, deterministic runners are not full always-on agents, consumer is workflow/manual baseline rather than daemon.\nNext: return remediation package to Claude for re-audit or implement continuous runner only if operator approves allowed execution model.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem913_context_done.md",
+    "result_json": "governance/codex/results/bem913_context_done.json"
+  },
+  "created_at": "2026-05-30T05:47:21.977Z"
+}
