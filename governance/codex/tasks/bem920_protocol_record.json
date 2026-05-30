@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem920_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-920 protocol record",
+  "objective": "Create file governance/reports/BEM920_SYSTEM_EVOLUTION_PROTOCOL.md with content # BEM-920 SYSTEM EVOLUTION PROTOCOL\nStatus: SYSTEM_EVOLUTION_PROTOCOL_APPROVED_WITH_REQUIREMENTS\nDate: 2026-05-30\nPurpose: new system development protocol after Claude APPROVED_WITH_REQUIREMENTS for BEM-919 and operator request to separately list object/element prompts for approval.\nCorrection applied:\n- This protocol is full-system, not Telegram-only.\n- Telegram is one module inside the overall system evolution roadmap.\n- Claude's 13 requirements are mandatory acceptance criteria.\nKey mandatory requirements included:\n1. Create governance/state/elements_registry.json for all elements.\n2. Create element prompts for WRK-C1, WRK-C2, WRK-C3 and curator/contour elements.\n3. objects_registry.json must reference elements_registry.json.\n4. release_proof_manifest.json commit_sha must be non-null from CI/Git.\n5. Dispatch consumer must have an auto-trigger on queue item added.\n6. Create telegram_input_envelope_schema.json and Telegram-to-managed-channel mapping.\n7. Define managed channel consumer.\n8. BEM-925 PASS equals deterministic runner + state files + role reports; LLM runtime is later operator-gated stage.\n9. Telegram E2E separates mock_status and production_status.\n10. Add concurrency groups to core workflows.\n11. report_period_config.json must have version and owner OPERATOR.\n12. BEM-923 gate lists secret names without values.\n13. BEM-928 bundle checklist is fixed before assembly.\nRoadmap:\n- BEM-920 Elements SSOT, prompts, component inventory and concurrency baseline.\n- BEM-921 Proof hardening and release SHA.\n- BEM-922 Telegram input schema and General Director routing.\n- BEM-923 Operator production gate.\n- BEM-924 Dispatch lifecycle and auto-trigger.\n- BEM-925 Object execution lifecycle.\n- BEM-926 Managed channel, event log and canonical reports.\n- BEM-927 Telegram E2E selftest with mock/production split.\n- BEM-928 Claude re-audit package.\nPrompt approval scope:\n- Existing prompts: curator_prompt.md if present, general_director_prompt.md, director_prompt.md, worker_prompt.md.\n- New required prompts: gd_curator_prompt.md, dir_curator_prompt.md, wrk_curator_prompt.md, wrk_c1_registry_architecture_prompt.md, wrk_c2_rules_communication_prompt.md, wrk_c3_execution_testing_product_prompt.md, dir_rules_contour_prompt.md, dir_planning_analytics_prompt.md, gd_internal_contour_prompt.md.\nWorker agreement:\n- Request: governance/audit/mailbox/to_curator/BEM920_SYSTEM_EVOLUTION_PROTOCOL_REQUEST.md\n- Worker review: governance/audit/internal/results/BEM920_WORKER_SYSTEM_EVOLUTION_PROTOCOL_REVIEW.md\n- Curator response: governance/audit/mailbox/from_curator/BEM920_SYSTEM_EVOLUTION_PROTOCOL_RESPONSE.md\nLocal operator artifacts:\n- BEM920_system_evolution_protocol_ru.docx\n- BEM920_system_evolution_protocol_ru.zip\nQA: DOCX rendered to 5 pages; no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem920_protocol_record.md",
+    "result_json": "governance/codex/results/bem920_protocol_record.json"
+  },
+  "created_at": "2026-05-30T14:56:39.644Z"
+}
