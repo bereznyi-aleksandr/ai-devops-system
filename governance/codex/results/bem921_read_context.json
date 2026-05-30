@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem921_read_context",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM921 read AGENT_CONTEXT key lines",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/curator_dispatch/BEM921_AGENT_CONTEXT_READ.md",
+    "governance/codex/proofs/bem921_read_context.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem921_read_context.md",
+  "completed_at": "2026-05-30T15:17:39Z"
+}
