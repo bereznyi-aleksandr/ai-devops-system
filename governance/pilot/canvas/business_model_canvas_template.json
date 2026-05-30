@@ -1,0 +1,52 @@
+{
+  "status": "template_ready",
+  "note": "operator fills strategic pilot choices; system can validate completeness",
+  "blocks": {
+    "customer_segments": {
+      "required": true,
+      "value": "",
+      "owner": "operator_or_director"
+    },
+    "value_proposition": {
+      "required": true,
+      "value": "",
+      "owner": "operator_or_director"
+    },
+    "channels": {
+      "required": true,
+      "value": "",
+      "owner": "operator_or_director"
+    },
+    "customer_relationships": {
+      "required": true,
+      "value": "",
+      "owner": "operator_or_director"
+    },
+    "revenue_streams": {
+      "required": true,
+      "value": "",
+      "owner": "operator_or_director"
+    },
+    "key_resources": {
+      "required": true,
+      "value": "",
+      "owner": "operator_or_director"
+    },
+    "key_activities": {
+      "required": true,
+      "value": "",
+      "owner": "operator_or_director"
+    },
+    "key_partnerships": {
+      "required": true,
+      "value": "",
+      "owner": "operator_or_director"
+    },
+    "cost_structure": {
+      "required": true,
+      "value": "",
+      "owner": "operator_or_director"
+    }
+  },
+  "minimum_ready_rule": "all 9 blocks present; pilot can be synthetic until operator selects real target"
+}

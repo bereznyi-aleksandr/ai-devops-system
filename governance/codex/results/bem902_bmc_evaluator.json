@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem902_bmc_evaluator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM902 BMC evaluator PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/pilot/canvas/business_model_canvas_template.json",
+    "governance/pilot/canvas/business_model_canvas_synthetic_example.json",
+    "governance/reports/BEM902_BMC_EVALUATION.json",
+    "governance/tools/evaluate_business_model_canvas.py",
+    "governance/reports/BEM902_BMC_EVALUATOR.md",
+    "governance/runtime/curator_dispatch/BEM902_BMC_EVALUATOR_PASS.md",
+    "governance/codex/proofs/bem902_bmc_evaluator.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem902_bmc_evaluator.md",
+  "completed_at": "2026-05-30T04:22:03Z"
+}
