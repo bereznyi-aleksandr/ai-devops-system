@@ -4,3 +4,4 @@
 {"event": "wrk_c2_completed", "actor": "WRK-C2", "target": "rules channel event log", "status": "completed"}
 {"event": "claude_audit_remediation_bem908", "actor": "OBJ-WRK-001", "status": "completed", "fixes": ["P1-DIR-RULE-001 owner WRK-C1 -> WRK-C2", "DSP-BEM-896-001 queued -> completed"], "errors": [], "rule_refs": ["RULE-011", "RULE-012"]}
 {"event": "bem909_dispatch_consumer_created", "status": "PASS", "processed": ["DSP-BEM909-CONSUMER-SELFTEST"], "workflow": ".github/workflows/governance-dispatch-consumer.yml"}
+{"event": "bem910_object_runners_created", "status": "PASS", "results": ["governance/objects/OBJ-GD-001_last_run.json", "governance/objects/OBJ-DIR-001_last_run.json", "governance/objects/OBJ-WRK-001_last_run.json"]}

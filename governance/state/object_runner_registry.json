@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "runner": "governance/runners/object_runner.py",
+  "prompts": [
+    "general_director_prompt.md",
+    "director_prompt.md",
+    "worker_prompt.md"
+  ],
+  "results": [
+    "governance/objects/OBJ-GD-001_last_run.json",
+    "governance/objects/OBJ-DIR-001_last_run.json",
+    "governance/objects/OBJ-WRK-001_last_run.json"
+  ],
+  "missing": []
+}

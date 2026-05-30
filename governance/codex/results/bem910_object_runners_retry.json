@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem910_object_runners_retry",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM910 object runners PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/prompts/general_director_prompt.md",
+    "governance/prompts/director_prompt.md",
+    "governance/prompts/worker_prompt.md",
+    "governance/runners/object_runner.py",
+    "governance/state/object_runner_registry.json",
+    "governance/reports/BEM910_OBJECT_RUNNERS.md",
+    "governance/runtime/curator_dispatch/BEM910_OBJECT_RUNNERS_PASS.md",
+    "governance/logs/event_log.jsonl",
+    "governance/objects/OBJ-GD-001_last_run.json",
+    "governance/objects/OBJ-DIR-001_last_run.json",
+    "governance/objects/OBJ-WRK-001_last_run.json",
+    "governance/codex/proofs/bem910_object_runners_retry.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem910_object_runners_retry.md",
+  "completed_at": "2026-05-30T05:41:00Z"
+}
