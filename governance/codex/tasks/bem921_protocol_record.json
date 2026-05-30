@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem921_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-921 protocol record",
+  "objective": "Create file governance/reports/BEM921_SYSTEM_EVOLUTION_PROTOCOL_WITH_PROMPTS.md with content # BEM-921 SYSTEM EVOLUTION PROTOCOL WITH PROMPT TEXTS\nStatus: READY_FOR_OPERATOR_REVIEW\nDate: 2026-05-30\nPurpose: correct BEM-920 by providing not only a list of prompts but also working draft texts for object and element prompts, so the operator can review and approve them.\nReason:\n- Operator pointed out that BEM-920 listed prompts but did not provide their contents.\n- Without prompt contents and elements_registry, the system remains non-operational because executors do not know who they are, what they can do, what is prohibited, and whom they report to.\nCorrection included:\n- The protocol explains that it is a map from raw repository state to a working managing contour, not a Telegram protocol.\n- The document includes canonical draft prompts for OBJ-GD-001, EL-CUR-GD-001, OBJ-DIR-001, EL-CUR-DIR-001, OBJ-WRK-001, EL-CUR-WRK-001, WRK-C1, WRK-C2, WRK-C3, CNT-DIR-RULE-001, CNT-DIR-PLAN-001 and GD internal strategic contour.\n- It keeps Claude's 13 requirements as acceptance criteria.\n- It defines BEM-920..BEM-928 roadmap with Done conditions.\n- It states that after operator approval, implementation starts with elements_registry.json, prompt files, object-to-element references and component inventory.\nLocal operator artifacts:\n- BEM921_system_evolution_protocol_with_prompt_texts_ru.docx\n- BEM921_system_evolution_protocol_with_prompt_texts_ru.zip\nQA: DOCX rendered to 7 pages; no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem921_protocol_record.md",
+    "result_json": "governance/codex/results/bem921_protocol_record.json"
+  },
+  "created_at": "2026-05-30T15:22:40.986Z"
+}
