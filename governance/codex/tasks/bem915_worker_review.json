@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem915_worker_review",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-915 worker review",
+  "objective": "Create file governance/audit/internal/results/BEM915_WORKER_TELEGRAM_OPERATOR_INTERFACE_REVIEW.md with content # BEM-915 WORKER TELEGRAM OPERATOR INTERFACE REVIEW\nStatus: WORKER_REVIEW_READY\nDecision: APPROVED_WITH_NOTES\nFindings:\n- Operator remark is valid. The current Telegram channel behaves like a passive hourly notifier and does not yet provide a working operator interface.\n- The Telegram layer must be treated as a first-class external interface of the managing contour.\n- The bot should not only send 'no changes' reports. It must support task intake, acknowledgements, status tracking, gate approvals/rejections, and role-based reports.\n- The Telegram interface must map every operator message to a structured envelope with trace_id, task_id, source, target role/object, priority, policy decision and proof path.\n- Incoming Telegram tasks should route through the same managed channel, policy gate and dispatch queue already defined in BEM-914.\n- Reports should have levels: Curator operational report, Director planning/rules report, General Director strategic/gate report.\n- Bot must provide correlation IDs and must confirm delivery or failure.\nAutonomous scope:\n- Protocol design, command grammar, envelope schema, routing table, error model, report templates, deterministic parser stub, E2E selftest plan.\nOperator gate:\n- Real Telegram token/secrets, production webhook changes, issue #31 write actions, schedule triggers, and any always-on daemon model.\nRecommendation:\n- Approve updated protocol with notes.\n- Status: TELEGRAM_PROTOCOL_APPROVED_WITH_OPERATOR_GATES.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem915_worker_review.md",
+    "result_json": "governance/codex/results/bem915_worker_review.json"
+  },
+  "created_at": "2026-05-30T06:36:28.280Z"
+}
