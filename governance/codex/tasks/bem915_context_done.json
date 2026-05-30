@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem915_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-915 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-915 completed | 2026-05-30\nPrepared updated system improvement protocol with Telegram Operator Interface layer after operator reported that Telegram bot channel is not working as a real operator interface.\nContext read proof: governance/runtime/curator_dispatch/BEM915_AGENT_CONTEXT_READ.md\nWorker request: governance/audit/mailbox/to_curator/BEM915_TELEGRAM_OPERATOR_INTERFACE_PROTOCOL_REQUEST.md\nWorker review: governance/audit/internal/results/BEM915_WORKER_TELEGRAM_OPERATOR_INTERFACE_REVIEW.md\nCurator response: governance/audit/mailbox/from_curator/BEM915_TELEGRAM_OPERATOR_INTERFACE_PROTOCOL_RESPONSE.md\nRepo protocol record: governance/reports/BEM915_TELEGRAM_OPERATOR_INTERFACE_PROTOCOL.md\nResult: TELEGRAM_PROTOCOL_APPROVED_WITH_OPERATOR_GATES. Protocol adds Telegram task intake, command grammar, task envelope, role routing to Curator/Director/General Director/Worker, report levels, receipts/correlation IDs, error states, E2E selftest and acceptance criteria. Operator gates remain for bot token/secrets, production webhook, issue #31 writes, schedule triggers, always-on daemon and real pilot/client/scope selection.\nLocal operator artifacts: BEM915_protocol_telegram_operator_interface_ru.docx and BEM915_protocol_telegram_operator_interface_ru.zip.\nQA: DOCX rendered to 6 pages; no edge clipping detected.\nNext: operator review and approval of BEM-915 protocol, then autonomous execution of non-gated phases BEM-916..BEM-922 and BEM-924; BEM-923 remains operator-gated.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem915_context_done.md",
+    "result_json": "governance/codex/results/bem915_context_done.json"
+  },
+  "created_at": "2026-05-30T06:42:58.017Z"
+}
