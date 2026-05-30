@@ -24,8 +24,13 @@
     {
       "id": "P1-DIR-RULE-001",
       "title": "director rules-management contour",
-      "owner": "WRK-C1",
-      "status": "completed"
+      "owner": "WRK-C2",
+      "status": "completed",
+      "owner_correction": {
+        "old_owner": "WRK-C1",
+        "new_owner": "WRK-C2",
+        "reason": "Claude audit CA-HIGH-002; rules and communication contour owns rule work"
+      }
     },
     {
       "id": "P1-DIR-PLAN-001",
