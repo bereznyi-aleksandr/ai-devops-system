@@ -1,0 +1,12 @@
+{
+  "status": "active",
+  "worker": "OBJ-WRK-001",
+  "contours": [
+    "WRK-C1",
+    "WRK-C2",
+    "WRK-C3"
+  ],
+  "delivery_rule": "dispatch queue item is delivered to governance/worker/inbox/<contour>/<dispatch_id>.json",
+  "delivered_count": 3,
+  "errors": []
+}
