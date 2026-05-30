@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem923_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-923 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-923 completed | 2026-05-30\nPrepared new full-system protocol v3 with provider execution model for internal contours after operator clarified that BEM-921 missed the primary/reserve provider architecture.\nContext proof: governance/runtime/curator_dispatch/BEM923_AGENT_CONTEXT_READ.md\nProvider architecture scan: governance/reports/BEM922_PROVIDER_ARCH_SCAN.md\nWorker request: governance/audit/mailbox/to_curator/BEM923_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_REQUEST.md\nWorker review: governance/audit/internal/results/BEM923_WORKER_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_REVIEW.md\nCurator response: governance/audit/mailbox/from_curator/BEM923_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_RESPONSE.md\nRepo protocol record: governance/reports/BEM923_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL.md\nResult: SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_APPROVED_WITH_REQUIREMENTS. Protocol is full-system, not Telegram-only. Primary internal contour: GPT Analyst, Claude Auditor, Claude Executor. Reserve contour: GPT-Codex/Codex replaces Claude Auditor and Claude Executor on Claude limits/unavailability. Prompt describes logical role; provider policy selects runtime provider. GitHub Actions/codex-runner/webhook/dispatch consumer are activation/proof mechanisms, not roles. Exchange files and event logs must carry logical_role, provider_id, provider_mode, fallback_used, fallback_reason, runner_ref and proof_ref. Required registries include providers_registry.json, contour_provider_policy.json and provider_failover_policy.json alongside elements/contours registries.\nLocal operator artifacts: BEM923_system_protocol_v3_provider_model_ru.docx and BEM923_system_protocol_v3_provider_model_ru.zip.\nQA: DOCX rendered to 4 pages; no edge clipping detected.\nNext: operator review and approval of BEM-923, then implementation starts with elements/contours/provider registries and provider-aware lifecycle.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem923_context_done.md",
+    "result_json": "governance/codex/results/bem923_context_done.json"
+  },
+  "created_at": "2026-05-30T18:35:58.445Z"
+}
