@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem921_worker_review",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-921 worker review",
+  "objective": "Create file governance/audit/internal/results/BEM921_WORKER_SYSTEM_WORKING_PROTOCOL_V2_REVIEW.md with content # BEM-921 WORKER SYSTEM WORKING PROTOCOL V2 REVIEW\nStatus: WORKER_REVIEW_READY\nDecision: APPROVED_WITH_NOTES\nFindings:\n- The new version must be a full-system protocol, not Telegram-only.\n- Operator corrections are coherent and must replace the simplified internal-contour algorithm in previous drafts.\n- Internal contour algorithm must be represented as an iterative state machine with proposal audit and result audit.\n- Curators are roles/elements of objects, not contour members by default. Curator constraints come from role + object + channel rules.\n- Analyst/Auditor/Executor are contour elements. Their constraints come from role + object + contour + contour workspace.\n- Workspace belongs to internal contour. Main workspace is repository main code/state.\n- Vertical communication is curator-to-curator. Horizontal communication inside object is verified data exchange between auditor and analyst.\n- GitHub Actions/runners/event_log/proof must be part of execution mechanics, not background notes.\n- Claude 13 requirements remain mandatory acceptance criteria.\n- The prompt section must include actual prompt drafts/templates, not only file names.\nRecommended protocol title:\n- BEM-921 System Working Protocol v2: Full Evolution Roadmap and Prompt Architecture.\nRecommended roadmap:\n- BEM-920 Elements/contours SSOT and component inventory.\n- BEM-921 Proof hardening and non-null release SHA.\n- BEM-922 Telegram input schema and General Director routing.\n- BEM-923 Operator production gate.\n- BEM-924 Dispatch lifecycle and auto-trigger.\n- BEM-925 Object and contour execution lifecycle with deterministic DoD.\n- BEM-926 Managed channel consumer, event log and canonical reporting.\n- BEM-927 E2E mock/production split.\n- BEM-928 Claude re-audit package.\nPrompt acceptance:\n- Existing prompts must be listed and either accepted or marked for canonization.\n- New prompt templates must be included for curator, analyst, auditor, executor.\n- New contour prompts must describe properties, fixed_task/workspace and constraints, not local element rules.\nStatus recommendation:\n- SYSTEM_WORKING_PROTOCOL_V2_APPROVED_WITH_REQUIREMENTS.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem921_worker_review.md",
+    "result_json": "governance/codex/results/bem921_worker_review.json"
+  },
+  "created_at": "2026-05-30T17:51:01.262Z"
+}
