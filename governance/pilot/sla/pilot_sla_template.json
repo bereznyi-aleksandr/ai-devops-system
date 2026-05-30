@@ -1,0 +1,22 @@
+{
+  "status": "template_ready",
+  "service_levels": [
+    {
+      "id": "sla_traceability",
+      "promise": "every task has id, owner, status, proof or blocker"
+    },
+    {
+      "id": "sla_no_main_without_pass",
+      "promise": "main workspace receives only PASS artifacts"
+    },
+    {
+      "id": "sla_operator_gate",
+      "promise": "strategic/scope/security/paid-api decisions are gated to operator"
+    },
+    {
+      "id": "sla_feedback_loop",
+      "promise": "product feedback is routed to rule registry candidate flow"
+    }
+  ],
+  "real_values_require_operator": true
+}

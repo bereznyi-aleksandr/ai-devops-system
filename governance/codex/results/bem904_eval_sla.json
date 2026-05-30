@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem904_eval_sla",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM904 evaluation SLA PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/pilot/evaluation/synthetic_pilot_evaluation_profile.json",
+    "governance/pilot/sla/pilot_sla_template.json",
+    "governance/pilot/evaluation/pilot_dashboard.json",
+    "governance/tools/validate_pilot_evaluation_dashboard.py",
+    "governance/reports/BEM904_EVALUATION_SLA.md",
+    "governance/runtime/curator_dispatch/BEM904_EVALUATION_SLA_PASS.md",
+    "governance/codex/proofs/bem904_eval_sla.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem904_eval_sla.md",
+  "completed_at": "2026-05-30T04:26:29Z"
+}

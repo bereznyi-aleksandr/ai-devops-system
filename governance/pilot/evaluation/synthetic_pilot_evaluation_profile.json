@@ -1,0 +1,43 @@
+{
+  "status": "active",
+  "profile": "synthetic_pilot_evaluation_profile",
+  "metrics": [
+    {
+      "id": "cycle_time",
+      "name": "cycle time reduction",
+      "unit": "percent",
+      "target_placeholder": "operator_defined"
+    },
+    {
+      "id": "manual_actions",
+      "name": "manual actions reduction",
+      "unit": "count",
+      "target_placeholder": "operator_defined"
+    },
+    {
+      "id": "defect_rate",
+      "name": "defect rate",
+      "unit": "count",
+      "target_placeholder": "operator_defined"
+    },
+    {
+      "id": "traceability",
+      "name": "traceability coverage",
+      "unit": "percent",
+      "target_placeholder": 100
+    },
+    {
+      "id": "proof_coverage",
+      "name": "proof coverage",
+      "unit": "percent",
+      "target_placeholder": 100
+    },
+    {
+      "id": "operator_gate_hits",
+      "name": "operator gate hits",
+      "unit": "count",
+      "target_placeholder": "operator_defined"
+    }
+  ],
+  "operator_gate": "real target thresholds and business priority are strategic choices"
+}

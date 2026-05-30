@@ -1,0 +1,13 @@
+{
+  "status": "active",
+  "health_source": "governance/dashboard/repository_health.json",
+  "evaluation_profile": "governance/pilot/evaluation/synthetic_pilot_evaluation_profile.json",
+  "sla_template": "governance/pilot/sla/pilot_sla_template.json",
+  "readiness": {
+    "baseline_ready": true,
+    "autonomous_sending_ready": true,
+    "pilot_scaffold_ready": true,
+    "bmc_ready": true,
+    "product_onboarding_ready": true
+  }
+}
