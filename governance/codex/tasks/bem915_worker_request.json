@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem915_worker_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-915 worker request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM915_TELEGRAM_OPERATOR_INTERFACE_PROTOCOL_REQUEST.md with content # BEM-915 TELEGRAM OPERATOR INTERFACE PROTOCOL REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: update the BEM-914 system improvement protocol with a dedicated Telegram Operator Interface layer.\nBase:\n- Operator screenshot: Telegram bot currently sends only hourly reports with 'no changes' and does not provide effective task submission or meaningful Curator/Director/General Director reports.\n- Deno health confirms Telegram webhook service exists, but real operator workflow is insufficient.\n- BEM-914 protocol already covers proof, dispatch, object execution, channel/event log, architecture canon and re-audit.\nRequired additions:\n1. Telegram must become the operator working interface, not just hourly notifications.\n2. Operator must be able to submit tasks through Telegram.\n3. Bot must classify input as routine task, blocker, strategic gate, pilot selection, or status request.\n4. Bot must create a structured task envelope and route it to Curator, Director or General Director.\n5. Operator must receive reports from Curator and, where appropriate, Director/General Director.\n6. Bot must support commands: /status, /task, /approve, /reject, /gate, /report, /help.\n7. Bot must have delivery receipts, correlation IDs, and error states.\n8. Bot must not write to issue #31 unless explicitly allowed by protocol/operator.\n9. Telegram interaction must use existing managed channel, dispatch queue, policy gate and proof policy.\n10. Protocol must include Telegram E2E selftest and acceptance criteria.\nWorker must assess:\n- Is this executable without violating current constraints?\n- Which parts are autonomous?\n- Which parts require operator gate or secrets?\nExpected status: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem915_worker_request.md",
+    "result_json": "governance/codex/results/bem915_worker_request.json"
+  },
+  "created_at": "2026-05-30T06:35:06.430Z"
+}
