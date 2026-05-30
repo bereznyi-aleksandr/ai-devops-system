@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem918_v2_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-918 v2 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-918-v2 completed | 2026-05-30\nUpdated the BEM-918 working roadmap after operator remarks about the seven listed mechanisms/components and Telegram entry/exit route. No repeated Worker review was requested.\nContext proof: governance/runtime/curator_dispatch/BEM918_V2_AGENT_CONTEXT_READ.md\nRepo record: governance/reports/BEM918_V2_FULL_WORKING_SYSTEM_ROADMAP.md\nResult: READY_FOR_OPERATOR_REVIEW. The updated document clarifies component statuses: ACTIVE_CORE, ACTIVE_SUPPORT, LEGACY_COMPATIBILITY, ROUTING_CONFIG, OPERATOR_GATED and ARCHIVE. ACTIVE_CORE includes ai-devops-telegram-curator-webhook, POST / Telegram webhook, /codex-task, /codex-status and codex-runner.yml. /autonomy endpoints are ACTIVE_SUPPORT only through policy gate and trace/proof. /gpt-safe-run/status is LEGACY_COMPATIBILITY and not the primary route; issue #31 writes remain operator-gated. Telegram entry/exit route is confirmed as Operator <-> Telegram webhook <-> EL-CUR-GD-001 <-> OBJ-GD-001 <-> Director/Worker through managed channel. BEM-919 is updated to include component inventory, status assignment and removal/archiving of rudiments.\nLocal operator artifacts: BEM918_v2_full_working_system_roadmap_ru.docx and BEM918_v2_full_working_system_roadmap_ru.zip.\nQA: DOCX rendered to 4 pages; no edge clipping detected.\nNext: operator review of BEM-918-v2, then execution starts with BEM-919 component inventory and SSOT freeze.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem918_v2_context_done.md",
+    "result_json": "governance/codex/results/bem918_v2_context_done.json"
+  },
+  "created_at": "2026-05-30T13:21:49.304Z"
+}
