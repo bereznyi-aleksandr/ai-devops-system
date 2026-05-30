@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem917_curator_response",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-917 curator response",
+  "objective": "Create file governance/audit/mailbox/from_curator/BEM917_UNIFIED_PROTOCOL_TELEGRAM_GD_REPORTS_RESPONSE.md with content # BEM-917 UNIFIED PROTOCOL TELEGRAM GD REPORTS RESPONSE\nStatus: APPROVED_WITH_NOTES\nFindings:\n- Worker approves the BEM-917 update with notes.\n- Telegram must be configured to the General Director by default: OBJ-GD-001 via EL-CUR-GD-001.\n- Telegram is the operator-facing entry and delivery channel at General Director level. GD Curator routes tasks to Director or Worker according to policy gate and classification.\n- Reports must use operator-selected periodicity. Default is 1 hour.\n- Reports must follow the system reporting canon.\nEvidence:\n- governance/audit/mailbox/to_curator/BEM917_UNIFIED_PROTOCOL_TELEGRAM_GD_REPORTS_REQUEST.md\n- governance/audit/internal/results/BEM917_WORKER_TELEGRAM_GD_REPORTS_REVIEW.md\n- governance/reports/BEM916_UNIFIED_SYSTEM_IMPROVEMENT_PROTOCOL.md\nAgreed changes:\n- Update unified protocol, not a separate Telegram protocol.\n- Add Telegram target: OBJ-GD-001 / EL-CUR-GD-001.\n- Add report interval state: default 1h, operator-configurable through /report_interval and /settings.\n- Add canonical Telegram report template with BEM/date/stage/roadmap/checklist/proof/table/next action.\n- Add E2E acceptance criteria for /task, /status, /report_interval and canonical report generation through General Director channel.\nOperator gates:\n- real bot token/secrets, production webhook mutation, schedule trigger activation, always-on daemon and issue #31 writes.\nRecommendation:\n- Submit updated unified protocol BEM-917 to operator for review.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem917_curator_response.md",
+    "result_json": "governance/codex/results/bem917_curator_response.json"
+  },
+  "created_at": "2026-05-30T09:24:25.432Z"
+}
