@@ -238,3 +238,5 @@ Prepared updated system improvement protocol with Telegram Operator Interface la
 Corrected BEM-915 protocol format mistake after operator clarification
 ## BEM-917 completed | 2026-05-30
 Updated unified BEM-916 system improvement protocol after operator remarks about Telegram mechanism
+## BEM-917 completed | 2026-05-30
+Updated BEM-916 unified system improvement protocol according to operator remarks about Telegram configuration, reporting periodicity and report canon
