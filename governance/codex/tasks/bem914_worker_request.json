@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem914_worker_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-914 worker request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM914_SYSTEM_IMPROVEMENT_PROTOCOL_REQUEST.md with content # BEM-914 SYSTEM IMPROVEMENT PROTOCOL REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: agree a system improvement protocol after Claude external audit and BEM-907..BEM-913 remediation.\nBase:\n- Protocol v1.7 accepted roadmap.\n- Claude external audit: CONDITIONAL PASS with critical findings.\n- BEM-907..BEM-913 remediation: REMEDIATION_PARTIAL_PASS.\nRequired protocol goal:\n- Turn deterministic baseline into more real operational system.\n- Prioritize closing remaining gaps honestly.\nMust include phases:\n1. Proof hardening: require CI/Git proof, fix commit_sha null evidence path, define release PASS conditions.\n2. Dispatch runtime hardening: improve dispatch consumer, no schedule trigger without operator, workflow_dispatch first, queued reconciliation.\n3. Object execution hardening: GD/DIR/WRK prompts, deterministic runners, then optional LLM-agent runtime only after operator-approved execution model.\n4. Channel and event log hardening: consumer, message schema, event log completeness, rotation policy.\n5. Architecture canon and plan/fact/gap maintenance.\n6. Product pilot gate: prepare everything autonomously; operator selects real client/segment/objective/metrics.\n7. Re-audit package for Claude.\nWorker must assess:\n- Is this protocol executable without violating rules?\n- What can be done autonomously?\n- What requires operator gate?\n- What status should be recommended?\nReturn status APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem914_worker_request.md",
+    "result_json": "governance/codex/results/bem914_worker_request.json"
+  },
+  "created_at": "2026-05-30T06:11:02.890Z"
+}
