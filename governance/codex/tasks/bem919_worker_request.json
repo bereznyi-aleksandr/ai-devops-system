@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem919_worker_request",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-919 worker request",
+  "objective": "Create file governance/audit/mailbox/to_curator/BEM919_FULL_SYSTEM_WORKING_PROTOCOL_REQUEST.md with content # BEM-919 FULL SYSTEM WORKING PROTOCOL REQUEST\nStatus: SENT_TO_CURATOR\nRoute: External GPT auditor -> Curator -> Worker -> Curator -> external mailbox\nObjective: prepare an updated full-system protocol that analyzes protocol v1.7, real implementation status, Claude audit findings and operator remarks, then defines a practical roadmap to make the whole system working.\nOperator correction:\n- Do not produce another Telegram-only protocol.\n- Telegram is only one part of the full system.\n- The goal is to evolve the whole system to a working state.\nRequired analysis:\n1. Protocol v1.7 intent and what was actually implemented.\n2. What is real working baseline now: registries, rules, architecture canon, dispatch queue, consumers, object prompts/runners, proof policy, pilot scaffold, Telegram/Deno service endpoints.\n3. What remains not fully working: commit_sha proof, real CI proof, always-on/production consumer model, full object lifecycle, complete Telegram operator workflow, report delivery, stale/legacy component cleanup, E2E Telegram proof, Claude re-audit.\n4. Claude audit findings must be included as mandatory gaps, not ignored.\n5. Operator remarks must be included: use existing Telegram mechanism; Telegram routes through General Director OBJ-GD-001 / EL-CUR-GD-001; reports default period 1 hour and follow canon; seven components must be classified as active/support/legacy/gated/archive; no Telegram-only focus.\nRequired protocol output:\n- Unified updated protocol for full system, not standalone Telegram.\n- Component status table.\n- Done / partially done / not done table.\n- Roadmap with BEM tasks, owners, acceptance criteria, proof and operator gates.\n- Clearly separate autonomous work from operator-gated work.\n- State that BEM-923 or equivalent gate covers production token/secrets/webhook/schedule/daemon decisions.\nExpected roadmap themes:\n- BEM-920 component inventory and SSOT freeze.\n- BEM-921 proof and CI/Git release evidence.\n- BEM-922 Telegram operator workflow using existing webhook through General Director.\n- BEM-923 operator gate for production Telegram/secrets/schedule/daemon.\n- BEM-924 dispatch queue and consumer lifecycle.\n- BEM-925 object runner lifecycle GD/DIR/Worker.\n- BEM-926 event log, managed channel and report pipeline.\n- BEM-927 E2E tests from Telegram command to completed task and canonical report.\n- BEM-928 Claude re-audit package.\nWorker must assess coherence and executability.\nExpected status: APPROVED_WITH_NOTES or BLOCKED_WITH_REASON.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem919_worker_request.md",
+    "result_json": "governance/codex/results/bem919_worker_request.json"
+  },
+  "created_at": "2026-05-30T13:42:41.360Z"
+}
