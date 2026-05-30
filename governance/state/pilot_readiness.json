@@ -1,0 +1,24 @@
+{
+  "bem": "BEM-901",
+  "status": "PILOT_SCAFFOLD_READY",
+  "purpose": "prepare business pilot execution layer before operator chooses real segment/client/objective",
+  "operator_gate_required_for": [
+    "real_client",
+    "real_business_segment",
+    "pilot_success_metric",
+    "commercial_priority"
+  ],
+  "can_prepare_without_operator": [
+    "pilot folders",
+    "candidate templates",
+    "technical prerequisites",
+    "measurement schema",
+    "go/no-go checklist"
+  ],
+  "folders": {
+    "intake": "governance/pilot/intake",
+    "canvas": "governance/pilot/canvas",
+    "evaluation": "governance/pilot/evaluation",
+    "evidence": "governance/pilot/evidence"
+  }
+}
