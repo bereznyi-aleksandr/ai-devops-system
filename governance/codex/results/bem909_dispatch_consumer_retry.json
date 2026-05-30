@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem909_dispatch_consumer_retry",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM909 dispatch consumer PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/tools/dispatch_consumer.py",
+    ".github/workflows/governance-dispatch-consumer.yml",
+    "governance/dispatch/dispatch_queue.jsonl",
+    "governance/worker/inbox/WRK-C2/DSP-BEM909-CONSUMER-SELFTEST.json",
+    "governance/state/dispatch_consumer_state.json",
+    "governance/reports/BEM909_DISPATCH_CONSUMER.md",
+    "governance/runtime/curator_dispatch/BEM909_DISPATCH_CONSUMER_PASS.md",
+    "governance/logs/event_log.jsonl",
+    "governance/codex/proofs/bem909_dispatch_consumer_retry.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem909_dispatch_consumer_retry.md",
+  "completed_at": "2026-05-30T05:38:13Z"
+}

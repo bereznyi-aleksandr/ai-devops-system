@@ -1,0 +1,17 @@
+name: Governance Dispatch Consumer
+
+on:
+  workflow_dispatch:
+
+jobs:
+  consume-dispatch-queue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run dispatch consumer
+        run: python governance/tools/dispatch_consumer.py
+      - name: Run dispatch E2E selftest
+        run: python governance/tools/run_dispatch_e2e_selftest.py
