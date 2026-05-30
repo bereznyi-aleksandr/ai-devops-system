@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem917_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-917 protocol record",
+  "objective": "Create file governance/reports/BEM917_UNIFIED_PROTOCOL_TELEGRAM_GD_REPORTS.md with content # BEM-917 UNIFIED PROTOCOL TELEGRAM GD REPORTS\nStatus: UNIFIED_PROTOCOL_APPROVED_WITH_GD_TELEGRAM_AND_CANON_REPORTS\nDate: 2026-05-30\nPurpose: update the unified BEM-916 system improvement protocol with operator remarks about Telegram routing, report interval and canonical report format.\nCorrection scope:\n- BEM-917 does not create a separate Telegram protocol.\n- BEM-917 updates the unified BEM-916 protocol.\n- Telegram Operator Interface remains an integrated phase of the system improvement protocol.\nWorker agreement:\n- Request: governance/audit/mailbox/to_curator/BEM917_UNIFIED_PROTOCOL_TELEGRAM_GD_REPORTS_REQUEST.md\n- Worker review: governance/audit/internal/results/BEM917_WORKER_TELEGRAM_GD_REPORTS_REVIEW.md\n- Curator response: governance/audit/mailbox/from_curator/BEM917_UNIFIED_PROTOCOL_TELEGRAM_GD_REPORTS_RESPONSE.md\nOperator remarks implemented:\n1. Telegram default target is General Director object OBJ-GD-001 through General Director Curator EL-CUR-GD-001.\n2. Reports are delivered with operator-selected periodicity. Default: 1 hour. Operator may change via /report_interval or /settings.\n3. Telegram reports must follow reporting canon: BEM header, date/time UTC+3, stage progress, roadmap progress, checklist with proofs, table with name/description/rationale and next action.\nProtocol notes:\n- Telegram entry point is General Director level. GD Curator classifies and routes routine tasks to Director/Worker through policy gate.\n- Outgoing reports are delivered to operator through General Director channel, even when source content is Curator or Director report.\n- Setting report interval is allowed, but enabling schedule trigger remains an operator gate.\nOperator gates:\n- bot token/secrets;\n- production webhook mutation;\n- schedule trigger activation;\n- issue #31 writes;\n- always-on daemon;\n- real pilot/client/scope/metrics;\n- LLM-agent runtime model.\nLocal operator artifacts:\n- BEM917_unified_system_improvement_protocol_gd_telegram_ru.docx\n- BEM917_unified_system_improvement_protocol_gd_telegram_ru.zip\nQA: DOCX rendered to 3 pages, no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem917_protocol_record.md",
+    "result_json": "governance/codex/results/bem917_protocol_record.json"
+  },
+  "created_at": "2026-05-30T09:28:42.448Z"
+}
