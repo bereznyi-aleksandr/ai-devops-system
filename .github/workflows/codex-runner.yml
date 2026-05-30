@@ -1,4 +1,7 @@
 name: Codex Runner
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 # BEM-526: Python executor v3
 # BEM-645: fixed duplicate permissions key

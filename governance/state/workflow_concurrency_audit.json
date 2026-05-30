@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "core_workflows": [
+    {
+      "path": ".github/workflows/codex-runner.yml",
+      "exists": true,
+      "has_concurrency": true,
+      "patched": true
+    },
+    {
+      "path": ".github/workflows/governance-dispatch-consumer.yml",
+      "exists": true,
+      "has_concurrency": true,
+      "patched": true
+    },
+    {
+      "path": ".github/workflows/governance-validation-ci.yml",
+      "exists": true,
+      "has_concurrency": true,
+      "patched": true
+    }
+  ]
+}

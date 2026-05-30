@@ -1,0 +1,328 @@
+{
+  "status": "active",
+  "version": "1.0",
+  "source": "BEM-920 after Claude APPROVED_WITH_REQUIREMENTS",
+  "required_fields": [
+    "id",
+    "name",
+    "parent_object",
+    "role_type",
+    "prompt_ref",
+    "responsibilities",
+    "inputs",
+    "outputs",
+    "reports_to",
+    "prohibited",
+    "rule_refs",
+    "version"
+  ],
+  "elements": [
+    {
+      "id": "EL-CUR-GD-001",
+      "name": "Curator of General Director",
+      "parent_object": "OBJ-GD-001",
+      "role_type": "curator",
+      "prompt_ref": "governance/prompts/general_director_prompt.md",
+      "responsibilities": [
+        "receive operator input through Telegram route",
+        "filter and route strategic reports",
+        "escalate operator gates",
+        "coordinate Director objects"
+      ],
+      "inputs": [
+        "telegram_operator_envelope",
+        "director_report",
+        "operator_gate_request"
+      ],
+      "outputs": [
+        "general_director_directive",
+        "operator_gate_response",
+        "director_task"
+      ],
+      "reports_to": "operator",
+      "prohibited": [
+        "bypass operator gate",
+        "write issue #31 without permission",
+        "expose secrets"
+      ],
+      "rule_refs": [
+        "RULE-006",
+        "RULE-011",
+        "RULE-012"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "CNT-GD-001",
+      "name": "General Director governance contour",
+      "parent_object": "OBJ-GD-001",
+      "role_type": "internal_contour",
+      "prompt_ref": "governance/prompts/general_director_prompt.md",
+      "responsibilities": [
+        "director governance",
+        "strategic conflict resolution",
+        "global policy routing"
+      ],
+      "inputs": [
+        "director_report",
+        "policy_conflict",
+        "strategic_gate"
+      ],
+      "outputs": [
+        "director_directive",
+        "operator_escalation",
+        "policy_decision"
+      ],
+      "reports_to": "EL-CUR-GD-001",
+      "prohibited": [
+        "low-level implementation",
+        "secret mutation",
+        "schedule trigger change without gate"
+      ],
+      "rule_refs": [
+        "RULE-006",
+        "RULE-009",
+        "RULE-011"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "EL-CUR-DIR-001",
+      "name": "Curator of Director",
+      "parent_object": "OBJ-DIR-001",
+      "role_type": "curator",
+      "prompt_ref": "governance/prompts/director_prompt.md",
+      "responsibilities": [
+        "receive tasks from General Director",
+        "route to Director contours and Worker",
+        "package Director reports"
+      ],
+      "inputs": [
+        "general_director_directive",
+        "worker_report",
+        "rule_candidate"
+      ],
+      "outputs": [
+        "worker_task",
+        "director_report",
+        "rule_update_request"
+      ],
+      "reports_to": "EL-CUR-GD-001",
+      "prohibited": [
+        "bypass General Director for strategic gate",
+        "approve own release proof without CI evidence"
+      ],
+      "rule_refs": [
+        "RULE-006",
+        "RULE-007",
+        "RULE-011"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "CNT-DIR-RULE-001",
+      "name": "Director rules-management contour",
+      "parent_object": "OBJ-DIR-001",
+      "role_type": "internal_contour",
+      "prompt_ref": "governance/prompts/director_prompt.md",
+      "responsibilities": [
+        "maintain rule registry",
+        "deduplicate rule candidates",
+        "version rule updates"
+      ],
+      "inputs": [
+        "incident",
+        "rule_candidate",
+        "claude_audit_requirement"
+      ],
+      "outputs": [
+        "rule_registry_patch",
+        "rule_validation_report"
+      ],
+      "reports_to": "EL-CUR-DIR-001",
+      "prohibited": [
+        "create conflicting duplicate rules",
+        "change operator gates without approval"
+      ],
+      "rule_refs": [
+        "RULE-002",
+        "RULE-007",
+        "RULE-011"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "CNT-DIR-PLAN-001",
+      "name": "Director planning analytics strategic contour",
+      "parent_object": "OBJ-DIR-001",
+      "role_type": "internal_contour",
+      "prompt_ref": "governance/prompts/director_prompt.md",
+      "responsibilities": [
+        "roadmap planning",
+        "plan/fact/gap analytics",
+        "strategic report preparation"
+      ],
+      "inputs": [
+        "readiness_state",
+        "audit_findings",
+        "roadmap_progress"
+      ],
+      "outputs": [
+        "planning_report",
+        "roadmap_update",
+        "operator_gate_brief"
+      ],
+      "reports_to": "EL-CUR-DIR-001",
+      "prohibited": [
+        "select real pilot without operator",
+        "declare PASS without proof"
+      ],
+      "rule_refs": [
+        "RULE-009",
+        "RULE-011",
+        "RULE-012"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "EL-CUR-WRK-001",
+      "name": "Curator of Worker",
+      "parent_object": "OBJ-WRK-001",
+      "role_type": "curator",
+      "prompt_ref": "governance/prompts/worker_prompt.md",
+      "responsibilities": [
+        "receive Director tasks",
+        "assign WRK-C1/WRK-C2/WRK-C3",
+        "collect proofs",
+        "return Worker report"
+      ],
+      "inputs": [
+        "worker_task",
+        "dispatch_item",
+        "contour_result"
+      ],
+      "outputs": [
+        "contour_assignment",
+        "worker_result",
+        "proof_package"
+      ],
+      "reports_to": "EL-CUR-DIR-001",
+      "prohibited": [
+        "write main workspace without PASS",
+        "ignore stale queue"
+      ],
+      "rule_refs": [
+        "RULE-003",
+        "RULE-011",
+        "RULE-012"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "WRK-C1",
+      "name": "Worker contour 1 registry and architecture",
+      "parent_object": "OBJ-WRK-001",
+      "role_type": "worker_contour",
+      "prompt_ref": "governance/prompts/wrk_c1_prompt.md",
+      "responsibilities": [
+        "registries",
+        "architecture canon",
+        "component inventory",
+        "SSOT freeze",
+        "workflow inventory"
+      ],
+      "inputs": [
+        "registry_task",
+        "architecture_task",
+        "inventory_task"
+      ],
+      "outputs": [
+        "registry_patch",
+        "architecture_report",
+        "component_status_matrix"
+      ],
+      "reports_to": "EL-CUR-WRK-001",
+      "prohibited": [
+        "modify rules without WRK-C2 coordination",
+        "mark CI proof PASS without proof"
+      ],
+      "rule_refs": [
+        "RULE-004",
+        "RULE-011"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "WRK-C2",
+      "name": "Worker contour 2 rules communication and channels",
+      "parent_object": "OBJ-WRK-001",
+      "role_type": "worker_contour",
+      "prompt_ref": "governance/prompts/wrk_c2_prompt.md",
+      "responsibilities": [
+        "rule registry",
+        "managed channel",
+        "Telegram envelope mapping",
+        "policy gate",
+        "message schemas"
+      ],
+      "inputs": [
+        "rule_task",
+        "channel_task",
+        "telegram_mapping_task"
+      ],
+      "outputs": [
+        "rule_patch",
+        "channel_schema",
+        "telegram_mapping",
+        "policy_report"
+      ],
+      "reports_to": "EL-CUR-WRK-001",
+      "prohibited": [
+        "bypass EL-CUR-GD-001 route for Telegram",
+        "write secrets into files"
+      ],
+      "rule_refs": [
+        "RULE-006",
+        "RULE-007",
+        "RULE-011"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "WRK-C3",
+      "name": "Worker contour 3 implementation testing product",
+      "parent_object": "OBJ-WRK-001",
+      "role_type": "worker_contour",
+      "prompt_ref": "governance/prompts/wrk_c3_prompt.md",
+      "responsibilities": [
+        "implementation scripts",
+        "testing workspace",
+        "E2E tests",
+        "product onboarding",
+        "report packaging"
+      ],
+      "inputs": [
+        "implementation_task",
+        "testing_task",
+        "product_task"
+      ],
+      "outputs": [
+        "tool_patch",
+        "test_report",
+        "product_template",
+        "e2e_proof"
+      ],
+      "reports_to": "EL-CUR-WRK-001",
+      "prohibited": [
+        "production webhook mutation without BEM-923 gate",
+        "treat mock Telegram PASS as production PASS"
+      ],
+      "rule_refs": [
+        "RULE-005",
+        "RULE-008",
+        "RULE-011"
+      ],
+      "version": "1.0"
+    }
+  ]
+}
