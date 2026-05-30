@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem918_v2_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-918 v2 record",
+  "objective": "Create file governance/reports/BEM918_V2_FULL_WORKING_SYSTEM_ROADMAP.md with content # BEM-918-v2 FULL WORKING SYSTEM ROADMAP UPDATE\nStatus: READY_FOR_OPERATOR_REVIEW\nDate: 2026-05-30\nPurpose: update the BEM-918 working roadmap after operator remarks about the seven listed mechanisms/components and Telegram entry/exit route.\nOperator remarks addressed:\n- The previous document listed seven mechanisms without clearly marking which are core, support, legacy/rudiment, routing configuration or operator-gated.\n- The updated document must clarify which components will actually be used in the new implementation and which are not primary.\n- The updated document must confirm whether General Director and its Curator are the Telegram information entry/exit point.\nCorrections included:\n1. Component status model added: ACTIVE_CORE, ACTIVE_SUPPORT, LEGACY_COMPATIBILITY, ROUTING_CONFIG, OPERATOR_GATED, ARCHIVE.\n2. ACTIVE_CORE: ai-devops-telegram-curator-webhook, POST / Telegram webhook, /codex-task and /codex-status, codex-runner.yml.\n3. ACTIVE_SUPPORT: /autonomy endpoints, only through policy gate and trace/proof.\n4. LEGACY_COMPATIBILITY: /gpt-safe-run and /gpt-safe-status, not primary path; issue #31 writes remain operator-gated.\n5. ROUTING_CONFIG: Telegram target OBJ-GD-001 / EL-CUR-GD-001.\n6. Telegram entry and exit route confirmed: Operator <-> Telegram webhook <-> EL-CUR-GD-001 <-> OBJ-GD-001 <-> Director/Worker through managed channel.\n7. BEM-919 is updated to include component status inventory and removal/archiving of rudiments.\nNo repeated Worker review was requested by operator for this document revision.\nLocal operator artifacts:\n- BEM918_v2_full_working_system_roadmap_ru.docx\n- BEM918_v2_full_working_system_roadmap_ru.zip\nQA: DOCX rendered to 4 pages, no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem918_v2_record.md",
+    "result_json": "governance/codex/results/bem918_v2_record.json"
+  },
+  "created_at": "2026-05-30T13:20:25.349Z"
+}
