@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem923_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-923 protocol record",
+  "objective": "Create file governance/reports/BEM923_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL.md with content # BEM-923 SYSTEM PROTOCOL V3 PROVIDER MODEL\nStatus: SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_APPROVED_WITH_REQUIREMENTS\nDate: 2026-05-30\nPurpose: new full-system protocol version for evolving the system to working state, correcting BEM-921 by adding provider execution model for internal contours.\nCorrection applied:\n- This is a full-system protocol, not Telegram-only.\n- BEM-921 logical contour model is kept but expanded with provider execution layer.\n- Internal contour is not only Analyst/Auditor/Executor; it is logical roles plus provider assignment, failover policy, GitHub Actions/runner activation, exchange files, event log and proof.\nPrimary provider contour:\n- Analyst: GPT Analyst.\n- Auditor: Claude Auditor.\n- Executor: Claude Executor.\nReserve provider contour:\n- Claude Auditor fallback: GPT-Codex/Codex Auditor.\n- Claude Executor fallback: GPT-Codex/Codex Executor.\n- Analyst remains GPT unless future policy changes it.\nProvider model requirements:\n- Prompt describes logical role; provider policy selects runtime provider.\n- GitHub Actions/codex-runner/webhook/dispatch consumer are activation/proof mechanisms, not roles.\n- Exchange files and event logs must carry logical_role, provider_id, provider_mode, fallback_used, fallback_reason, runner_ref and proof_ref.\nRequired registries:\n- governance/state/providers_registry.json.\n- governance/state/contour_provider_policy.json.\n- governance/state/provider_failover_policy.json.\n- governance/state/elements_registry.json.\n- governance/state/contours_registry.json.\nRoadmap update:\n- BEM-920: elements/contours/prompts plus provider registry skeleton.\n- BEM-921: proof hardening and non-null CI/Git SHA.\n- BEM-922: Telegram input schema and General Director routing.\n- BEM-923: operator production gate.\n- BEM-924: dispatch lifecycle with provider-aware auto-trigger.\n- BEM-925: provider-aware object/contour execution lifecycle.\n- BEM-926: managed channel/event/report pipeline with provider fields.\n- BEM-927: E2E selftest including primary and reserve provider scenarios.\n- BEM-928: Claude re-audit package with provider evidence.\nWorker agreement:\n- Request: governance/audit/mailbox/to_curator/BEM923_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_REQUEST.md\n- Worker review: governance/audit/internal/results/BEM923_WORKER_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_REVIEW.md\n- Curator response: governance/audit/mailbox/from_curator/BEM923_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_RESPONSE.md\nLocal operator artifacts:\n- BEM923_system_protocol_v3_provider_model_ru.docx\n- BEM923_system_protocol_v3_provider_model_ru.zip\nQA: DOCX rendered to 4 pages; no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem923_protocol_record.md",
+    "result_json": "governance/codex/results/bem923_protocol_record.json"
+  },
+  "created_at": "2026-05-30T18:34:27.283Z"
+}
