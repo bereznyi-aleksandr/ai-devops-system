@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem914_worker_review",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-914 worker review",
+  "objective": "Create file governance/audit/internal/results/BEM914_WORKER_SYSTEM_IMPROVEMENT_PROTOCOL_REVIEW.md with content # BEM-914 WORKER SYSTEM IMPROVEMENT PROTOCOL REVIEW\nStatus: WORKER_REVIEW_READY\nDecision: APPROVED_WITH_NOTES\nFindings:\n- The improvement protocol is necessary and valid after Claude CONDITIONAL PASS.\n- BEM-907..BEM-913 reduced the gaps but did not fully eliminate them. The next protocol must distinguish completed remediation from remaining operationalization work.\n- The highest priority is independent proof: CI/Git proof must become release gate, because commit_sha null remains a real audit weakness.\n- The second priority is a real dispatch lifecycle: queued -> delivered -> processing -> result -> proof -> completed/operator_gate, with deterministic consumer and no stale queued records.\n- The third priority is object execution: GD, Director and Worker now have prompts/runners, but full agent behavior requires an explicit operator-approved execution model.\n- The fourth priority is architecture canon: every release must update plan/fact/gap and readiness state.\n- The fifth priority is pilot readiness: all synthetic preparation can continue autonomously; real pilot selection remains operator gate.\nAutonomous scope:\n- Implement deterministic scripts, validators, workflows using workflow_dispatch, state files, proof packages, dashboards, report packaging, and re-audit bundles.\nOperator gate:\n- Always-on daemon, schedule triggers, paid API, secrets, issue #31 writes, real pilot/client/scope selection, and LLM-agent runtime model.\nRecommendation:\n- Approve protocol with notes.\n- Status should be PROTOCOL_APPROVED_WITH_OPERATOR_GATES.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem914_worker_review.md",
+    "result_json": "governance/codex/results/bem914_worker_review.json"
+  },
+  "created_at": "2026-05-30T06:12:18.057Z"
+}
