@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem914_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-914 protocol record",
+  "objective": "Create file governance/reports/BEM914_SYSTEM_IMPROVEMENT_PROTOCOL.md with content # BEM-914 SYSTEM IMPROVEMENT PROTOCOL\nStatus: PROTOCOL_APPROVED_WITH_OPERATOR_GATES\nDate: 2026-05-30\nPurpose: protocol of system improvements after Claude audit and BEM-907..BEM-913 remediation.\nWorker agreement:\n- Request: governance/audit/mailbox/to_curator/BEM914_SYSTEM_IMPROVEMENT_PROTOCOL_REQUEST.md\n- Worker review: governance/audit/internal/results/BEM914_WORKER_SYSTEM_IMPROVEMENT_PROTOCOL_REVIEW.md\n- Curator response: governance/audit/mailbox/from_curator/BEM914_SYSTEM_IMPROVEMENT_PROTOCOL_RESPONSE.md\nProtocol phases:\n1. Proof hardening: CI/Git proof, release-proof manifest, SHA/Actions run evidence.\n2. Dispatch lifecycle hardening: no stale queued records, queue invariant validation, consumer workflow_dispatch.\n3. Object execution hardening: GD/DIR/WRK deterministic runners and optional operator-gated LLM runtime.\n4. Channel and event log hardening: message schema, consumer, event log completeness, rotation.\n5. Architecture canon maintenance: plan/fact/gap freshness.\n6. Re-audit package for Claude.\nOperator gates:\n- always-on daemon or schedule trigger;\n- paid API or secrets;\n- issue #31 writes;\n- real pilot/client/scope/metric selection;\n- LLM-agent runtime execution model.\nLocal operator artifacts:\n- BEM914_protocol_system_improvements_ru.docx\n- BEM914_protocol_system_improvements_ru.zip\nQA: DOCX rendered to 6 pages, no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem914_protocol_record.md",
+    "result_json": "governance/codex/results/bem914_protocol_record.json"
+  },
+  "created_at": "2026-05-30T06:17:29.861Z"
+}
