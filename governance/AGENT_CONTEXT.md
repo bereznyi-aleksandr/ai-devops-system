@@ -200,3 +200,5 @@ Dispatch contour implemented after BEM-889 READY baseline
 Worker contour inbox delivery implemented
 ## BEM-892 completed | 2026-05-30
 Worker contour task processing implemented
+## BEM-893 completed | 2026-05-30
+End-to-end dispatch selftest implemented and passed
