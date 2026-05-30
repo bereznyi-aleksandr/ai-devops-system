@@ -1,0 +1,11 @@
+{
+  "status": "active",
+  "targets": [
+    "governance/logs/event_log.jsonl",
+    "governance/messages/managed_channel_messages.jsonl",
+    "governance/dispatch/dispatch_queue.jsonl"
+  ],
+  "rotation_rule": "archive when file exceeds 1 MB or before major release package",
+  "archive_path": "governance/logs/archive/<name>_<YYYYMMDD_HHMM>.jsonl",
+  "no_schedule_trigger": "rotation is manual/workflow_dispatch only unless operator approves schedule"
+}

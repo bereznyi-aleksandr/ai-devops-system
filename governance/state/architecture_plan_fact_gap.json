@@ -1,0 +1,40 @@
+{
+  "status": "active",
+  "rows": [
+    {
+      "area": "Objects GD/DIR/WRK",
+      "plan": "objects have defined roles, elements and exchange rules",
+      "fact": "objects_registry plus prompts and object_runner exist",
+      "gap": "runner is deterministic local/CI runner, not LLM agent runtime yet",
+      "status": "partial_real"
+    },
+    {
+      "area": "Worker contours",
+      "plan": "WRK-C1/C2/C3 execute roadmap in parallel",
+      "fact": "inbox/result flow and dispatch queue exist with E2E proof",
+      "gap": "consumer is deterministic script; no always-on daemon",
+      "status": "partial_real"
+    },
+    {
+      "area": "Managed channel",
+      "plan": "curator-to-curator exchange",
+      "fact": "message envelope, JSONL log and consumer workflow exist",
+      "gap": "workflow_dispatch/manual CI runner, not continuous service",
+      "status": "partial_real"
+    },
+    {
+      "area": "Proof",
+      "plan": "PASS requires evidence",
+      "fact": "proof files and deterministic tools exist",
+      "gap": "commit_sha from codex-status remains null until Git/CI proof policy is enforced",
+      "status": "open_gap"
+    },
+    {
+      "area": "Pilot",
+      "plan": "prepare pilot then gate operator for real target",
+      "fact": "pilot scaffold/BMC/onboarding/evaluation/SLA exist",
+      "gap": "real segment/client/objective requires operator",
+      "status": "correct_gate"
+    }
+  ]
+}
