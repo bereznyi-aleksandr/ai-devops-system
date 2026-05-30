@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem891_worker_inboxes",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-891 worker inboxes",
+  "objective": "Run script:\n\"\"\"\nfor p in ['governance/dispatch','governance/worker/inbox/WRK-C1','governance/worker/inbox/WRK-C2','governance/worker/inbox/WRK-C3','governance/tools','governance/reports','governance/runtime/curator_dispatch']:\n    Path(p).mkdir(parents=True, exist_ok=True)\nqueue_path = Path('governance/dispatch/dispatch_queue.jsonl')\nitems = [json.loads(x) for x in queue_path.read_text(encoding='utf-8').splitlines() if x.strip()] if queue_path.exists() else []\ndelivered = []\nerrors = []\nfor item in items:\n    contour = item.get('target_contour')\n    if contour not in ['WRK-C1','WRK-C2','WRK-C3']:\n        errors.append(item.get('dispatch_id','unknown') + ': invalid target contour')\n        continue\n    item['status'] = 'delivered'\n    item['delivered_at_utc3'] = '2026-05-30T06:46:00+03:00'\n    inbox_file = Path('governance/worker/inbox') / contour / (item.get('dispatch_id','dispatch') + '.json')\n    inbox_file.write_text(json.dumps(item, ensure_ascii=False, indent=2), encoding='utf-8')\n    delivered.append(str(inbox_file))\nqueue_path.write_text('\\n'.join(json.dumps(i, ensure_ascii=False) for i in items) + ('\\n' if items else ''), encoding='utf-8')\n\nlifecycle = {'status':'active','worker':'OBJ-WRK-001','contours':['WRK-C1','WRK-C2','WRK-C3'],'delivery_rule':'dispatch queue item is delivered to governance/worker/inbox/<contour>/<dispatch_id>.json','delivered_count':len(delivered),'errors':errors}\nPath('governance/state/worker_contour_lifecycle.json').write_text(json.dumps(lifecycle, ensure_ascii=False, indent=2), encoding='utf-8')\n\ntool = '''# BEM-891 worker inbox delivery validator\nimport json\nfrom pathlib import Path\nqueue = Path(\"governance/dispatch/dispatch_queue.jsonl\")\nerrors = []\nitems = [json.loads(x) for x in queue.read_text(encoding=\"utf-8\").splitlines() if x.strip()]\nfor item in items:\n    contour = item.get(\"target_contour\")\n    inbox = Path(\"governance/worker/inbox\") / contour / (item.get(\"dispatch_id\") + \".json\")\n    if item.get(\"status\") != \"delivered\":\n        errors.append(f\"{item.get('dispatch_id')}: not delivered\")\n    if not inbox.exists():\n        errors.append(f\"{item.get('dispatch_id')}: inbox file missing\")\nprint(\"PASS\" if not errors else \"FAIL\")\nfor err in errors:\n    print(err)\nraise SystemExit(0 if not errors else 1)\n'''\nPath('governance/tools/validate_worker_inboxes.py').write_text(tool, encoding='utf-8')\nstatus = 'PASS' if not errors and delivered else 'FAIL'\nPath('governance/reports/BEM891_WORKER_INBOX_DELIVERY.md').write_text('# BEM-891 Worker contour inbox delivery\\n\\nStatus: ' + status + '\\n\\nDelivered: ' + str(len(delivered)) + '\\n\\nErrors: ' + (', '.join(errors) if errors else 'none') + '\\n', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM891_WORKER_INBOX_DELIVERY_' + status + '.md')\nmarker.write_text('# BEM-891 worker inbox delivery proof\\nStatus: ' + status + '\\nDelivered: ' + str(len(delivered)) + '\\nErrors: ' + (', '.join(errors) if errors else 'none') + '\\n', encoding='utf-8')\nchanged_files.extend(['governance/dispatch/dispatch_queue.jsonl','governance/state/worker_contour_lifecycle.json','governance/tools/validate_worker_inboxes.py','governance/reports/BEM891_WORKER_INBOX_DELIVERY.md',str(marker)] + delivered)\nops_applied.append('BEM891 worker inbox delivery ' + status)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem891_worker_inboxes.md",
+    "result_json": "governance/codex/results/bem891_worker_inboxes.json"
+  },
+  "created_at": "2026-05-30T03:46:39.933Z"
+}
