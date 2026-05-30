@@ -1,0 +1,38 @@
+{
+  "status": "active",
+  "name": "task_dispatch_contour",
+  "purpose": "send accepted tasks from task registry/backlog to Worker internal contours through managed channel",
+  "inputs": [
+    "governance/state/task_registry.json",
+    "governance/backlog/BEM882_EXECUTABLE_BACKLOG.json"
+  ],
+  "outputs": [
+    "governance/dispatch/dispatch_queue.jsonl",
+    "governance/messages/managed_channel_messages.jsonl"
+  ],
+  "routing": {
+    "WRK-C1": [
+      "registry",
+      "architecture",
+      "schema"
+    ],
+    "WRK-C2": [
+      "rule",
+      "channel",
+      "message",
+      "communication"
+    ],
+    "WRK-C3": [
+      "workspace",
+      "product",
+      "testing",
+      "selftest",
+      "implementation"
+    ]
+  },
+  "rules": [
+    "RULE-006",
+    "RULE-011",
+    "RULE-012"
+  ]
+}

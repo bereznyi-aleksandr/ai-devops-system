@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem890_dispatch_contour",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM890 dispatch contour PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/state/dispatch_contour.json",
+    "governance/dispatch/dispatch_queue.jsonl",
+    "governance/messages/managed_channel_messages.jsonl",
+    "governance/tools/validate_dispatch_contour.py",
+    "governance/reports/BEM890_DISPATCH_CONTOUR.md",
+    "governance/runtime/curator_dispatch/BEM890_DISPATCH_CONTOUR_PASS.md",
+    "governance/codex/proofs/bem890_dispatch_contour.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem890_dispatch_contour.md",
+  "completed_at": "2026-05-30T03:44:27Z"
+}
