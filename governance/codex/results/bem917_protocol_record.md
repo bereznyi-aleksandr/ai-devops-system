@@ -5,8 +5,8 @@
 | Trace | bem917_protocol_record |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | create:governance/reports/BEM917_UNIFIED_PROTOCOL_TELEGRAM_GD_REPORTS.md |
+| Operations | create:governance/reports/BEM917_UNIFIED_PROTOCOL_V2.md |
 | Commit SHA | none |
-| Completed | 2026-05-30T09:28:51Z |
+| Completed | 2026-05-30T09:29:36Z |
 
 ### Completed successfully.
