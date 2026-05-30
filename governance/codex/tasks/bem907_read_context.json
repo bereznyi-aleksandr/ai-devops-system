@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem907_read_context",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-907 read context",
+  "objective": "Run script:\n\"\"\"\nctx = Path('governance/AGENT_CONTEXT.md')\ntext = ctx.read_text(encoding='utf-8', errors='ignore') if ctx.exists() else ''\nkeys = []\nfor line in text.splitlines():\n    low = line.lower()\n    if any(tok in low for tok in ['bem-899','bem-900','bem-905','bem-906','autonomous','operator_gate','ready','claude','audit']):\n        keys.append(line)\nmarker = Path('governance/runtime/curator_dispatch/BEM907_AGENT_CONTEXT_READ.md')\nmarker.parent.mkdir(parents=True, exist_ok=True)\nmarker.write_text('# BEM-907 AGENT_CONTEXT read\\nStatus: READ\\nContext exists: ' + str(ctx.exists()) + '\\n\\nKey lines:\\n' + '\\n'.join(keys[-260:]) + '\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM907 read AGENT_CONTEXT key lines')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem907_read_context.md",
+    "result_json": "governance/codex/results/bem907_read_context.json"
+  },
+  "created_at": "2026-05-30T05:32:02.796Z"
+}
