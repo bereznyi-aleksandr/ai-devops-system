@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem923_worker_review",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-923 worker review",
+  "objective": "Create file governance/audit/internal/results/BEM923_WORKER_SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_REVIEW.md with content # BEM-923 WORKER SYSTEM PROTOCOL V3 PROVIDER MODEL REVIEW\nStatus: WORKER_REVIEW_READY\nDecision: APPROVED_WITH_NOTES\nFindings:\n- Operator correction is valid. BEM-921 described logical role mechanics but missed the provider execution layer.\n- The full working protocol must include logical role, provider role, activation mechanism, exchange file, event log and proof for every step.\n- Primary internal contour must be represented as GPT Analyst, Claude Auditor and Claude Executor.\n- Reserve contour must replace Claude Auditor/Executor with GPT-Codex/Codex when Claude limits or availability prevent use.\n- The analyst role may remain GPT in both primary and reserve unless a specific future policy changes it.\n- The prompt describes role behavior. The provider policy decides which provider executes the role at runtime.\n- GitHub Actions/codex-runner/webhook are mechanisms, not roles. They must write trace/proof/event records and carry provider_id and logical_role in envelopes.\n- The internal contour algorithm from BEM-921 remains correct but must be enriched with provider mapping at every transition.\nRequired registries:\n- governance/state/providers_registry.json: provider IDs, provider type, capabilities, limits, status.\n- governance/state/contour_provider_policy.json: primary/fallback provider per logical role and contour.\n- governance/state/provider_failover_policy.json: conditions and recording rules for provider switching.\n- governance/state/elements_registry.json and governance/state/contours_registry.json must include provider policy refs.\nRequired envelope fields:\n- logical_role, provider_id, provider_mode, contour_id, fallback_used, fallback_reason, runner_ref, event_ref, proof_ref.\nRequired roadmap update:\n- BEM-920: elements/contours/prompts plus provider registry skeleton.\n- BEM-921: proof hardening and non-null CI/Git SHA.\n- BEM-922: Telegram input schema and GD routing.\n- BEM-923: operator production gate.\n- BEM-924: dispatch lifecycle with provider-aware auto-trigger.\n- BEM-925: provider-aware object/contour execution lifecycle.\n- BEM-926: managed channel/event/report pipeline with provider fields.\n- BEM-927: E2E selftest including primary and reserve provider scenarios.\n- BEM-928: Claude re-audit package with provider evidence.\nStatus recommendation:\n- SYSTEM_PROTOCOL_V3_PROVIDER_MODEL_APPROVED_WITH_REQUIREMENTS.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem923_worker_review.md",
+    "result_json": "governance/codex/results/bem923_worker_review.json"
+  },
+  "created_at": "2026-05-30T18:28:04.776Z"
+}
