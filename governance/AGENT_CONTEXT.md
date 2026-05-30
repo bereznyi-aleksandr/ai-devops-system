@@ -236,3 +236,5 @@ Prepared system improvement protocol after Claude external audit and BEM-907
 Prepared updated system improvement protocol with Telegram Operator Interface layer after operator reported that Telegram bot channel is not working as a real operator interface
 ## BEM-916 completed | 2026-05-30
 Corrected BEM-915 protocol format mistake after operator clarification
+## BEM-917 completed | 2026-05-30
+Updated unified BEM-916 system improvement protocol after operator remarks about Telegram mechanism
