@@ -232,3 +232,5 @@ Prepared detailed external audit report for Claude about protocol v1
 Claude external audit remediation validation completed
 ## BEM-914 completed | 2026-05-30
 Prepared system improvement protocol after Claude external audit and BEM-907
+## BEM-915 completed | 2026-05-30
+Prepared updated system improvement protocol with Telegram Operator Interface layer after operator reported that Telegram bot channel is not working as a real operator interface
