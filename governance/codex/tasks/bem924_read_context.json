@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem924_read_context",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-924 read context",
+  "objective": "Run script:\n\"\"\"\nctx = Path('governance/AGENT_CONTEXT.md')\ntext = ctx.read_text(encoding='utf-8', errors='ignore') if ctx.exists() else ''\nkeys=[]\nfor line in text.splitlines():\n    low=line.lower()\n    if any(tok in low for tok in ['bem-920','bem-921','bem-922','bem-923','provider','claude','telegram','elements','contours','prompts','proof','consumer','roadmap','next']):\n        keys.append(line)\nPath('governance/runtime/curator_dispatch').mkdir(parents=True, exist_ok=True)\nmarker=Path('governance/runtime/curator_dispatch/BEM924_AGENT_CONTEXT_READ.md')\nmarker.write_text('# BEM-924 AGENT_CONTEXT read\\nStatus: READ\\nContext exists: '+str(ctx.exists())+'\\n\\nKey lines:\\n'+'\\n'.join(keys[-500:])+'\\n', encoding='utf-8')\nchanged_files.append(str(marker))\nops_applied.append('BEM924 read AGENT_CONTEXT')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem924_read_context.md",
+    "result_json": "governance/codex/results/bem924_read_context.json"
+  },
+  "created_at": "2026-05-30T20:00:45.097Z"
+}
