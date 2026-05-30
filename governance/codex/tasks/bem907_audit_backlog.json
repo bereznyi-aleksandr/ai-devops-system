@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem907_audit_backlog",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-907 audit backlog",
+  "objective": "Run script:\n\"\"\"\nPath('governance/audit/claude').mkdir(parents=True, exist_ok=True)\nPath('governance/backlog').mkdir(parents=True, exist_ok=True)\nPath('governance/reports').mkdir(parents=True, exist_ok=True)\nPath('governance/runtime/curator_dispatch').mkdir(parents=True, exist_ok=True)\n\nfindings = [\n  {'id':'CA-CRIT-001','severity':'critical','title':'Objects are JSON records, not executable agents','response':'accepted','bem':'BEM-909/BEM-910'},\n  {'id':'CA-CRIT-002','severity':'critical','title':'commit_sha null / independent proof weakness','response':'accepted','bem':'BEM-912'},\n  {'id':'CA-CRIT-003','severity':'critical','title':'Managed channel has no consumer','response':'accepted','bem':'BEM-909'},\n  {'id':'CA-HIGH-001','severity':'high','title':'GPT executed and validated same artifacts','response':'accepted','bem':'BEM-912'},\n  {'id':'CA-HIGH-002','severity':'high','title':'task_registry owner mismatch P1-DIR-RULE-001','response':'accepted','bem':'BEM-908'},\n  {'id':'CA-HIGH-003','severity':'high','title':'dispatch queue has queued DSP-BEM-896-001','response':'accepted','bem':'BEM-908'},\n  {'id':'CA-HIGH-004','severity':'high','title':'missing canonical architecture plan/fact/gap file','response':'accepted','bem':'BEM-911'},\n  {'id':'CA-MED-001','severity':'medium','title':'pilot scaffold uses placeholders','response':'accepted_with_gate','bem':'BEM-905 operator gate'},\n  {'id':'CA-MED-002','severity':'medium','title':'event log too small/not complete','response':'accepted','bem':'BEM-911'},\n  {'id':'CA-MED-003','severity':'medium','title':'autonomy log rotation strategy unclear','response':'accepted','bem':'BEM-911'},\n  {'id':'CA-MED-004','severity':'medium','title':'no GD/DIR prompts','response':'accepted','bem':'BEM-910'}\n]\nbacklog = {'status':'active','source':'Claude external audit after BEM-906','items':findings}\nPath('governance/backlog/BEM907_CLAUDE_AUDIT_REMEDIATION_BACKLOG.json').write_text(json.dumps(backlog, ensure_ascii=False, indent=2), encoding='utf-8')\nmd = '# BEM-907 Claude audit remediation backlog\\n\\nStatus: active\\n\\nAll critical/high findings are accepted and converted to remediation work.\\n\\n'\nfor f in findings:\n    md += '| ' + f['id'] + ' | ' + f['severity'] + ' | ' + f['title'] + ' | ' + f['response'] + ' | ' + f['bem'] + ' |\\n'\nPath('governance/audit/claude/BEM907_CLAUDE_AUDIT_REMEDIATION_BACKLOG.md').write_text(md, encoding='utf-8')\nPath('governance/reports/BEM907_CLAUDE_AUDIT_RESPONSE.md').write_text('# BEM-907 Claude audit response\\n\\nStatus: REMEDIATION_STARTED\\n\\nVerdict accepted: CONDITIONAL PASS.\\n\\nThe remediation will continue without operator until a genuine gate is reached.\\n', encoding='utf-8')\nmarker = Path('governance/runtime/curator_dispatch/BEM907_CLAUDE_AUDIT_BACKLOG_READY.md')\nmarker.write_text('# BEM-907 Claude audit backlog proof\\nStatus: READY\\nFindings accepted: ' + str(len(findings)) + '\\n', encoding='utf-8')\nchanged_files.extend(['governance/backlog/BEM907_CLAUDE_AUDIT_REMEDIATION_BACKLOG.json','governance/audit/claude/BEM907_CLAUDE_AUDIT_REMEDIATION_BACKLOG.md','governance/reports/BEM907_CLAUDE_AUDIT_RESPONSE.md',str(marker)])\nops_applied.append('BEM907 Claude audit remediation backlog ready')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem907_audit_backlog.md",
+    "result_json": "governance/codex/results/bem907_audit_backlog.json"
+  },
+  "created_at": "2026-05-30T05:34:02.992Z"
+}
