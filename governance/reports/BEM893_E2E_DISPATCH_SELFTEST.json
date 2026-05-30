@@ -1,0 +1,77 @@
+{
+  "bem": "BEM-893",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "dispatch queue exists",
+      "ok": true,
+      "detail": "governance/dispatch/dispatch_queue.jsonl"
+    },
+    {
+      "name": "dispatch queue has items",
+      "ok": true,
+      "detail": "items=3"
+    },
+    {
+      "name": "all dispatch items completed",
+      "ok": true,
+      "detail": "statuses=completed,completed,completed"
+    },
+    {
+      "name": "WRK-C1 inbox exists",
+      "ok": true,
+      "detail": "inbox=1"
+    },
+    {
+      "name": "WRK-C1 result exists",
+      "ok": true,
+      "detail": "results=1"
+    },
+    {
+      "name": "WRK-C2 inbox exists",
+      "ok": true,
+      "detail": "inbox=1"
+    },
+    {
+      "name": "WRK-C2 result exists",
+      "ok": true,
+      "detail": "results=1"
+    },
+    {
+      "name": "WRK-C3 inbox exists",
+      "ok": true,
+      "detail": "inbox=1"
+    },
+    {
+      "name": "WRK-C3 result exists",
+      "ok": true,
+      "detail": "results=1"
+    },
+    {
+      "name": "managed channel log exists",
+      "ok": true,
+      "detail": "governance/messages/managed_channel_messages.jsonl"
+    },
+    {
+      "name": "managed channel has task and result messages",
+      "ok": true,
+      "detail": "messages=8"
+    },
+    {
+      "name": "proof exists governance/runtime/curator_dispatch/BEM890_DISPATCH_CONTOUR_PASS.md",
+      "ok": true,
+      "detail": "governance/runtime/curator_dispatch/BEM890_DISPATCH_CONTOUR_PASS.md"
+    },
+    {
+      "name": "proof exists governance/runtime/curator_dispatch/BEM891_WORKER_INBOX_DELIVERY_PASS.md",
+      "ok": true,
+      "detail": "governance/runtime/curator_dispatch/BEM891_WORKER_INBOX_DELIVERY_PASS.md"
+    },
+    {
+      "name": "proof exists governance/runtime/curator_dispatch/BEM892_CONTOUR_PROCESSING_PASS.md",
+      "ok": true,
+      "detail": "governance/runtime/curator_dispatch/BEM892_CONTOUR_PROCESSING_PASS.md"
+    }
+  ],
+  "meaning": "dispatching contour can send tasks, deliver to worker contours, process them, and return results"
+}

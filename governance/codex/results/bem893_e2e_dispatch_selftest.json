@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem893_e2e_dispatch_selftest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM893 E2E dispatch selftest PASS",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/BEM893_E2E_DISPATCH_SELFTEST.json",
+    "governance/reports/BEM893_E2E_DISPATCH_SELFTEST.md",
+    "governance/tools/run_dispatch_e2e_selftest.py",
+    "governance/runtime/curator_dispatch/BEM893_E2E_DISPATCH_SELFTEST_PASS.md",
+    "governance/audit/mailbox/from_curator/BEM893_DISPATCH_SELFTEST_RESPONSE.md",
+    "governance/codex/proofs/bem893_e2e_dispatch_selftest.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem893_e2e_dispatch_selftest.md",
+  "completed_at": "2026-05-30T03:51:25Z"
+}
