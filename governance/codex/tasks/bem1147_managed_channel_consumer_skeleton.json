@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1147_managed_channel_consumer_skeleton",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1147 managed consumer",
+  "objective": "Create file governance/runners/managed_channel_consumer.py with content import json\nfrom pathlib import Path\n\nSCHEMA_PATH = Path(\"governance/channels/managed_channel_schema.json\")\n\n\ndef load_schema():\n    return json.loads(SCHEMA_PATH.read_text(encoding=\"utf-8\"))\n\n\ndef validate_message(message):\n    schema = load_schema()\n    required = set(schema.get(\"message_required_fields\", []))\n    missing = sorted(required - set(message))\n    if missing:\n        return False, [f\"missing fields: {missing}\"]\n    proof_policy = message.get(\"proof_policy\", {})\n    errors = []\n    if proof_policy.get(\"contains_secret\") is True:\n        errors.append(\"message contains secret\")\n    if proof_policy.get(\"template_only\") is True and proof_policy.get(\"claims_release_proof\") is True:\n        errors.append(\"template cannot claim release proof\")\n    return not errors, errors\n\n\ndef consume(message_path):\n    message = json.loads(Path(message_path).read_text(encoding=\"utf-8\"))\n    ok, errors = validate_message(message)\n    return {\"ok\": ok, \"errors\": errors, \"message_id\": message.get(\"message_id\")}\n\nif __name__ == \"__main__\":\n    import sys\n    if len(sys.argv) != 2:\n        print(\"usage: managed_channel_consumer.py <message.json>\")\n        raise SystemExit(2)\n    result = consume(sys.argv[1])\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result[\"ok\"] else 1)\nCreate file governance/reports/BEM1147_MANAGED_CHANNEL_CONSUMER_SKELETON.md with content BEM-1147 | MANAGED CHANNEL CONSUMER SKELETON | 2026-05-31 | 22:08 (UTC+3)\n\nЭтап: Managed channel consumer skeleton — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1146 completed with SHA `253c5783624a2e404e29e1bd4ea2f54f958b6a77`.\n✅ Created `governance/runners/managed_channel_consumer.py`.\n✅ Consumer validates message required fields from managed channel schema.\n✅ Consumer rejects secrets and template-only release proof claims.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Managed channel consumer skeleton — 1/1 (100%) | First managed channel runner implemented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1148 implement contour_lifecycle_runner skeleton | Continue real protocol implementation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1147 | MANAGED CHANNEL CONSUMER SKELETON | 2026-05-31 | 22:08 (UTC+3)\n- BEM-1146 completed with SHA 253c5783624a2e404e29e1bd4ea2f54f958b6a77.\n- Created managed channel consumer skeleton.\n- Release PASS not issued.\n- Next action: BEM-1148 implement contour_lifecycle_runner skeleton.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1147_managed_channel_consumer_skeleton.md",
+    "result_json": "governance/codex/results/bem1147_managed_channel_consumer_skeleton.json"
+  },
+  "created_at": "2026-05-31T19:10:09.820Z"
+}
