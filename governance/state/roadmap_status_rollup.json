@@ -1,32 +1,17 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "date": "2026-05-31",
   "roadmap": "BEM-931",
   "blocks_total": 14,
-  "blocks_foundation_completed": 12,
-  "percent_foundation_completed": 85,
-  "completed_blocks": [
-    {"block":"A", "bem":"BEM-932", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM932_BLOCK_A_PASS.md"},
-    {"block":"B", "bem":"BEM-933", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM933_BLOCK_B_FOUNDATION_PASS.md"},
-    {"block":"C", "bem":"BEM-934", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM934_BLOCK_C_PROMPTS_PASS.md"},
-    {"block":"D", "bem":"BEM-935", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM935_BLOCK_D_SCHEMAS_PASS.md"},
-    {"block":"E", "bem":"BEM-936", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM936_BLOCK_E_CONSUMER_PASS.md"},
-    {"block":"F", "bem":"BEM-937", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM937_BLOCK_F_DISPATCH_PASS.md"},
-    {"block":"G", "bem":"BEM-938", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM938_BLOCK_G_RUNNERS_PASS.md"},
-    {"block":"H", "bem":"BEM-939", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM939_BLOCK_H_TELEGRAM_PASS.md"},
-    {"block":"I", "bem":"BEM-940", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM940_BLOCK_I_PROOF_PASS.md"},
-    {"block":"J", "bem":"BEM-941", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM941_BLOCK_J_E2E_PASS.md"},
-    {"block":"K", "bem":"BEM-942", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM942_BLOCK_K_GATES_PASS.md"},
-    {"block":"L", "bem":"BEM-943", "status":"PASS_BY_FILES", "proof":"governance/reports/BEM943_BLOCK_L_AUDIT_PASS.md"}
-  ],
-  "remaining_blocks": [
-    {"block":"M", "bem":"BEM-944", "status":"IN_PROGRESS", "purpose":"validation harness and roadmap rollup"},
-    {"block":"N", "bem":"BEM-945", "status":"PENDING", "purpose":"release decision, final consolidation, next gates"}
-  ],
-  "known_blockers": [
-    "commit_sha is null: release PASS forbidden",
-    "production Telegram status remains null until operator gate",
-    "live LLM runtime remains operator-gated",
-    "external Claude re-audit not yet performed after implementation"
+  "blocks_foundation_completed": 14,
+  "percent_foundation_completed": 100,
+  "foundation_status": "CONDITIONAL_FOUNDATION_PASS",
+  "release_status": "BLOCKED",
+  "completed_blocks": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N"],
+  "release_blockers": [
+    "commit_sha is null",
+    "production Telegram status is null",
+    "live LLM runtime is operator-gated",
+    "external Claude re-audit after implementation is required"
   ]
 }
