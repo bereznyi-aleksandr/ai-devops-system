@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1011_external_proof_receipt_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/gates/BEM1011_EXTERNAL_PROOF_RECEIPT_DIRECTORY_POLICY.json",
+    "create:governance/proofs/external/telegram/.gitkeep",
+    "create:governance/proofs/external/runtime/.gitkeep",
+    "create:governance/proofs/external/claude/.gitkeep",
+    "create:governance/reports/BEM1011_EXTERNAL_PROOF_RECEIPT_DIRECTORY_POLICY.md",
+    "append:governance/AGENT_CONTEXT.md",
+    "create_dir:governance/proofs/external/telegram",
+    "create_dir:governance/proofs/external/runtime",
+    "create_dir:governance/proofs/external/claude"
+  ],
+  "changed_files": [
+    "governance/gates/BEM1011_EXTERNAL_PROOF_RECEIPT_DIRECTORY_POLICY.json",
+    "governance/proofs/external/telegram/.gitkeep",
+    "governance/proofs/external/runtime/.gitkeep",
+    "governance/proofs/external/claude/.gitkeep",
+    "governance/reports/BEM1011_EXTERNAL_PROOF_RECEIPT_DIRECTORY_POLICY.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/proofs/external/telegram/.gitkeep",
+    "governance/proofs/external/runtime/.gitkeep",
+    "governance/proofs/external/claude/.gitkeep",
+    "governance/codex/proofs/bem1011_external_proof_receipt_policy.txt"
+  ],
+  "commit_sha": "939190782aa8d1afff0df798416f87839aa4df81",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1011_external_proof_receipt_policy.md",
+  "completed_at": "2026-05-31T13:36:06Z"
+}
