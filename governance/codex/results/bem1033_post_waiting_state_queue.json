@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1033_post_waiting_state_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1033_post_waiting_state_queue.json",
+    "create:governance/reports/BEM1033_POST_WAITING_STATE_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1033_post_waiting_state_queue.json",
+    "governance/reports/BEM1033_POST_WAITING_STATE_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1033_post_waiting_state_queue.txt"
+  ],
+  "commit_sha": "023cdc7c6c65658cff67324d6fdd06263cc88071",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1033_post_waiting_state_queue.md",
+  "completed_at": "2026-05-31T14:14:48Z"
+}
