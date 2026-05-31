@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1005_claude_audit_result_intake_schema",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1005 Claude result schema",
+  "objective": "Create file governance/audit/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.json with content {\n  \"bem_id\": \"BEM-1005\",\n  \"created_at_utc3\": \"2026-05-31 | 16:21 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External Claude audit result intake schema\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"schema\": {\n    \"required_fields\": [\"audit_id\", \"auditor\", \"timestamp_utc3\", \"audited_evidence_refs\", \"decision\", \"findings\", \"blockers\", \"proof_ref\"],\n    \"allowed_decisions\": [\"APPROVED\", \"PASS\", \"CONDITIONAL\", \"FAIL\", \"BLOCKED\"],\n    \"forbidden_decisions_from_gpt\": [\"APPROVED\", \"PASS\"],\n    \"self_claim_forbidden\": true,\n    \"release_pass_requires\": [\"external_claude_APPROVED_or_PASS\", \"production_telegram_receipt\", \"live_runtime_receipt\", \"non_null_sha\"]\n  },\n  \"remaining_blockers\": [\"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1006 create validator for external Claude audit result intake\"\n}\nCreate file governance/reports/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.md with content BEM-1005 | EXTERNAL CLAUDE AUDIT RESULT INTAKE SCHEMA | 2026-05-31 | 16:21 (UTC+3)\n\nЭтап: External Claude audit result intake schema — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created `governance/audit/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.json`.\n✅ Defined allowed external audit decisions.\n✅ Explicitly forbids GPT self-claim APPROVED/PASS.\n✅ Release PASS prerequisites are explicit in schema.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ external_claude_reaudit remains blocker until external Claude result exists.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External Claude audit result intake schema — 1/1 (100%) | Schema file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1006 create validator for external Claude audit result intake | Continue audit closure chain |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1005 | EXTERNAL CLAUDE AUDIT RESULT INTAKE SCHEMA | 2026-05-31 | 16:21 (UTC+3)\n- Created `governance/audit/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.json`.\n- Created `governance/reports/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.md`.\n- External Claude audit result intake schema completed: 1/1 (100%).\n- GPT self-claim APPROVED/PASS is forbidden.\n- Release PASS not issued. Remaining blocker: external_claude_reaudit.\n- Next action: BEM-1006 create validator for external Claude audit result intake.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1005_claude_audit_result_intake_schema.md",
+    "result_json": "governance/codex/results/bem1005_claude_audit_result_intake_schema.json"
+  },
+  "created_at": "2026-05-31T13:23:05.349Z"
+}
