@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1016_post_snapshot_continuity_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1016_post_snapshot_continuity_queue.json",
+    "create:governance/reports/BEM1016_POST_SNAPSHOT_CONTINUITY_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1016_post_snapshot_continuity_queue.json",
+    "governance/reports/BEM1016_POST_SNAPSHOT_CONTINUITY_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1016_post_snapshot_continuity_queue.txt"
+  ],
+  "commit_sha": "3111dfc4d8c1b43c1ee210055b5c6aa646d737ff",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1016_post_snapshot_continuity_queue.md",
+  "completed_at": "2026-05-31T13:49:26Z"
+}
