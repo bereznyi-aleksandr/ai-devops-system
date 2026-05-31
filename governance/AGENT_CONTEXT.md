@@ -270,3 +270,5 @@ Prepared rebuilt final system evolution protocol based on yesterday's work and o
 Prepared corrected full-system protocol v4 after operator rejected BEM-925 for treating objects as if they had prompts and for insufficient detail
 ## BEM-928 completed | 2026-05-31
 Prepared DOCX/ZIP analytical report based on dialogue descriptions, organized by themes with problem, discussion, accepted decision and protocol implications
+## BEM-930 completed | 2026-05-31
+Prepared unified general working-system protocol with full detail after operator clarified that a separate appendix/report is insufficient
