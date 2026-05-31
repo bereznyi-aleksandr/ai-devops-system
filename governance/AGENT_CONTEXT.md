@@ -404,3 +404,11 @@ Created Claude re-audit checklist, evidence index, audit bundle manifest and val
 Result: BLOCK_L_AUDIT_BASELINE_PASS. This is foundation evidence, not external audit PASS.
 Next: Block M validation harness and roadmap status rollup.
 No issue comments.
+
+
+## BEM-944 completed | 2026-05-31
+Implemented Block M validation harness and roadmap status rollup after BEM-943.
+Created validate_foundation_all, roadmap_status_rollup and roadmap status report.
+Result: BLOCK_M_VALIDATION_HARNESS_PASS. This is foundation validation harness, not release PASS.
+Next: Block N final consolidation, release decision draft and operator/Claude re-audit handoff.
+No issue comments.

@@ -4,15 +4,9 @@
 |---|---|
 | Trace | bem944_block_m_validation |
 | Executor | Python v3 (ubuntu-latest) |
-| Status | failed |
-| Operations | none |
+| Status | completed |
+| Operations | BEM-944 Block M validation artifacts created, custom_script |
 | Commit SHA | none |
-| Completed | 2026-05-31T09:36:55Z |
+| Completed | 2026-05-31T09:37:08Z |
 
-### Blocker
-```json
-{
-  "code": "EXEC_FAILED",
-  "message": "Script blocked: subprocess"
-}
-```
+### Completed successfully.

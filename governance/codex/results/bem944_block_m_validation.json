@@ -2,16 +2,21 @@
   "schema_version": 1,
   "trace_id": "bem944_block_m_validation",
   "executor": "python-v3",
-  "status": "failed",
-  "operations_applied": [],
+  "status": "completed",
+  "operations_applied": [
+    "BEM-944 Block M validation artifacts created",
+    "custom_script"
+  ],
   "changed_files": [
+    "governance/validators/validate_foundation_all.py",
+    "governance/state/roadmap_status_rollup.json",
+    "governance/reports/BEM944_ROADMAP_STATUS.md",
+    "governance/reports/BEM944_BLOCK_M_VALIDATION_PASS.md",
+    "governance/AGENT_CONTEXT.md",
     "governance/codex/proofs/bem944_block_m_validation.txt"
   ],
   "commit_sha": null,
-  "blocker": {
-    "code": "EXEC_FAILED",
-    "message": "Script blocked: subprocess"
-  },
+  "blocker": null,
   "report_path": "governance/codex/results/bem944_block_m_validation.md",
-  "completed_at": "2026-05-31T09:36:55Z"
+  "completed_at": "2026-05-31T09:37:08Z"
 }
