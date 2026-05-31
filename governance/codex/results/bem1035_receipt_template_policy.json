@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1035_receipt_template_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/RECEIPT_TEMPLATE_VALIDATION_POLICY.json",
+    "create:governance/reports/BEM1035_RECEIPT_TEMPLATE_VALIDATION_POLICY.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/RECEIPT_TEMPLATE_VALIDATION_POLICY.json",
+    "governance/reports/BEM1035_RECEIPT_TEMPLATE_VALIDATION_POLICY.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1035_receipt_template_policy.txt"
+  ],
+  "commit_sha": "8b314ed24487d49ff3ff922772bacf4d159a8d45",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1035_receipt_template_policy.md",
+  "completed_at": "2026-05-31T14:30:59Z"
+}
