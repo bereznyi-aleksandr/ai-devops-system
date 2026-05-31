@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1181_ci_execution_capture_plan",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1181 CI capture plan",
+  "objective": "Create file governance/runtime/BEM1181_CI_EXECUTION_CAPTURE_PLAN.json with content {\"bem_id\":\"BEM-1181\",\"created_at_utc3\":\"2026-05-31 | 23:03 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"CI execution capture plan\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1180\",\"latest_proof_sha\":\"d64b562a7d90abe111e9681782a02359f503a88d\",\"capture_targets\":[\"governance/validators/run_bem931_validator_suite.py\",\"governance/tests/run_bem931_runner_hardening_tests.py\",\"governance/tests/run_bem931_mock_e2e.py\"],\"output_policy\":\"write deterministic JSON result, no secrets, no release PASS\",\"next_action\":\"BEM-1182 create CI capture runner\"}\nCreate file governance/reports/BEM1181_CI_EXECUTION_CAPTURE_PLAN.md with content BEM-1181 | CI EXECUTION CAPTURE PLAN | 2026-05-31 | 23:03 (UTC+3)\n\nЭтап: CI execution capture plan — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1180 completed with SHA `d64b562a7d90abe111e9681782a02359f503a88d`.\n✅ Created `governance/runtime/BEM1181_CI_EXECUTION_CAPTURE_PLAN.json`.\n✅ Capture targets include validator suite, runner hardening tests and mock E2E.\n✅ Output policy forbids secrets and Release PASS.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | CI execution capture plan — 1/1 (100%) | Capture plan created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1182 create CI capture runner | Continue execution evidence chain |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1181 | CI EXECUTION CAPTURE PLAN | 2026-05-31 | 23:03 (UTC+3)\n- BEM-1180 completed with SHA d64b562a7d90abe111e9681782a02359f503a88d.\n- Created CI execution capture plan.\n- Release PASS not issued.\n- Next action: BEM-1182 create CI capture runner.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1181_ci_execution_capture_plan.md",
+    "result_json": "governance/codex/results/bem1181_ci_execution_capture_plan.json"
+  },
+  "created_at": "2026-05-31T20:05:01.695Z"
+}
