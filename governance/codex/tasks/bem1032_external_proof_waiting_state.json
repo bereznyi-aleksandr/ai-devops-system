@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1032_external_proof_waiting_state",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1032 waiting state",
+  "objective": "Create file governance/reports/BEM1032_EXTERNAL_PROOF_WAITING_STATE.md with content BEM-1032 | EXTERNAL PROOF WAITING-STATE REPORT | 2026-05-31 | 17:11 (UTC+3)\n\nЭтап: External proof waiting-state report — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1031 completed with SHA `6d0a24a0f6a36db3d078f8f47c88febd4bc0ec67`.\n✅ Receipt scanner exists: `governance/validators/scan_external_receipt_directories.py`.\n✅ Receipt dashboard exists: `governance/proofs/external/EXTERNAL_RECEIPT_STATUS_DASHBOARD.json`.\n✅ Receipt intake checklist exists: `governance/proofs/external/PROOF_INTAKE_CHECKLIST.md`.\n✅ Release decision validator exists: `governance/validators/validate_release_decision.py`.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ production_telegram_gate waits for real audited production receipt.\n⚠️ live_llm_runtime_gate waits for real approved runtime receipt.\n⚠️ external_claude_reaudit waits for real external Claude result.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External proof waiting-state report — 1/1 (100%) | Waiting-state report created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1033 create post-waiting-state continuity queue | Continue roadmap without stopping |\n\nNo issue comments.\nCreate file governance/state/bem1032_external_proof_waiting_state.json with content {\n  \"bem_id\": \"BEM-1032\",\n  \"created_at_utc3\": \"2026-05-31 | 17:11 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External proof waiting-state report\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"waiting_for\": [\"production_telegram_receipt\", \"live_runtime_receipt\", \"external_claude_audit_result\"],\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1033 create post-waiting-state continuity queue\"\n}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1032 | EXTERNAL PROOF WAITING-STATE REPORT | 2026-05-31 | 17:11 (UTC+3)\n- BEM-1031 completed with SHA 6d0a24a0f6a36db3d078f8f47c88febd4bc0ec67.\n- Created `governance/reports/BEM1032_EXTERNAL_PROOF_WAITING_STATE.md`.\n- Created `governance/state/bem1032_external_proof_waiting_state.json`.\n- External proof waiting-state report completed: 1/1 (100%).\n- Release PASS not issued; waiting for production Telegram receipt, live runtime receipt and external Claude audit result.\n- Next action: BEM-1033 create post-waiting-state continuity queue.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1032_external_proof_waiting_state.md",
+    "result_json": "governance/codex/results/bem1032_external_proof_waiting_state.json"
+  },
+  "created_at": "2026-05-31T14:13:07.625Z"
+}
