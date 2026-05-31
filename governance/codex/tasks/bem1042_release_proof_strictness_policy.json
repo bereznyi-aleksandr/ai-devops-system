@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1042_release_proof_strictness_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1042 strictness policy",
+  "objective": "Create file governance/gates/BEM1042_RELEASE_PROOF_STRICTNESS_POLICY.json with content {\n  \"bem_id\": \"BEM-1042\",\n  \"created_at_utc3\": \"2026-05-31 | 17:46 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Release proof strictness policy\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1041\",\n  \"latest_proof_sha\": \"7fe8d2f0914ca8702eb9c3e5e13649f7c21ac67c\",\n  \"policy\": {\n    \"validated_external_receipts_required\": true,\n    \"templates_do_not_count\": true,\n    \"mock_fixtures_do_not_count\": true,\n    \"self_claims_do_not_count\": true,\n    \"non_null_sha_required_but_not_sufficient\": true,\n    \"release_pass_requires_all_blockers_closed_by_validated_external_receipts\": true\n  },\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1043 receipt blockers audit summary\"\n}\nCreate file governance/reports/BEM1042_RELEASE_PROOF_STRICTNESS_POLICY.md with content BEM-1042 | RELEASE PROOF STRICTNESS POLICY | 2026-05-31 | 17:46 (UTC+3)\n\nЭтап: Release proof strictness policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1041 completed with SHA `7fe8d2f0914ca8702eb9c3e5e13649f7c21ac67c`.\n✅ Created `governance/gates/BEM1042_RELEASE_PROOF_STRICTNESS_POLICY.json`.\n✅ Policy states templates, mocks and self-claims do not count as release proof.\n✅ Policy states non-null SHA is required but not sufficient.\n✅ Policy requires all blockers to close only by validated external receipts.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Real external receipts are not present yet.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Release proof strictness policy — 1/1 (100%) | Strictness policy created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1043 receipt blockers audit summary | Continue release proof hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1042 | RELEASE PROOF STRICTNESS POLICY | 2026-05-31 | 17:46 (UTC+3)\n- BEM-1041 completed with SHA 7fe8d2f0914ca8702eb9c3e5e13649f7c21ac67c.\n- Created `governance/gates/BEM1042_RELEASE_PROOF_STRICTNESS_POLICY.json`.\n- Created `governance/reports/BEM1042_RELEASE_PROOF_STRICTNESS_POLICY.md`.\n- Release proof strictness policy completed: 1/1 (100%).\n- Templates, mocks and self-claims do not count as release proof; non-null SHA is required but not sufficient.\n- Release PASS not issued.\n- Next action: BEM-1043 receipt blockers audit summary.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1042_release_proof_strictness_policy.md",
+    "result_json": "governance/codex/results/bem1042_release_proof_strictness_policy.json"
+  },
+  "created_at": "2026-05-31T14:47:27.976Z"
+}
