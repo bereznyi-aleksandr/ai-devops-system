@@ -1,4 +1,4 @@
 # BEM-928 DIALOGUE ANALYTICS REPORT
-Status: ANALYTICAL_DIALOGUE_REPORT_READY
+Status: DIALOGUE_ANALYTICS_REPORT_READY
 Date: 2026-05-31
-Purpose: structured analytical report based on operator request to summarize the dialogues by themes, problems, decisions and implications for the final working-system protocol
+Purpose: analytical report based on yesterday's dialogue descriptions, organized by themes with problem, discussion, accepted decisions and protocol implications
