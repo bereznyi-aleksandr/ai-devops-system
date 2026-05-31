@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1165_post_dry_run_continuity_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1165_post_dry_run_continuity_queue.json",
+    "create:governance/reports/BEM1165_POST_DRY_RUN_CONTINUITY_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1165_post_dry_run_continuity_queue.json",
+    "governance/reports/BEM1165_POST_DRY_RUN_CONTINUITY_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1165_post_dry_run_continuity_queue.txt"
+  ],
+  "commit_sha": "681e498adcadc4bc577e7616185874031d7e3252",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1165_post_dry_run_continuity_queue.md",
+  "completed_at": "2026-05-31T19:36:05Z"
+}
