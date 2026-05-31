@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1097_external_proof_intake_handoff_refresh",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1097 intake handoff",
+  "objective": "Create file governance/proofs/external/EXTERNAL_PROOF_INTAKE_HANDOFF_REFRESH.md with content BEM-1097 | EXTERNAL PROOF INTAKE HANDOFF REFRESH | 2026-05-31 | 19:06 (UTC+3)\n\nЭтап: External proof intake handoff refresh — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1096 completed with SHA `383c054df4d6730e4e4918e911ef67931b5ad92c`.\n✅ External proof blocker dashboard final refresh exists.\n✅ Handoff refreshed for future validated external proofs.\n✅ Handoff forbids secrets, placeholders in real receipts, self-claims and auto-close.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Validated external Telegram/runtime/Claude proofs remain missing.\n❌ Release PASS is not issued.\n\n## Intake targets\n| Proof | Directory | Validator |\n|---|---|---|\n| Validated Telegram production receipt | `governance/proofs/external/telegram/` | `governance/validators/validate_telegram_production_receipt.py` |\n| Validated live runtime receipt | `governance/proofs/external/runtime/` | `governance/validators/validate_live_runtime_receipt.py` |\n| Validated Claude audit result | `governance/proofs/external/claude/` | `governance/validators/validate_external_claude_audit_result.py` |\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External proof intake handoff refresh — 1/1 (100%) | Handoff refreshed |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1098 roadmap continuity checkpoint after BEM-1097 | Continue without stopping |\n\nNo issue comments.\nCreate file governance/state/bem1097_external_proof_intake_handoff_refresh.json with content {\n  \"bem_id\": \"BEM-1097\",\n  \"created_at_utc3\": \"2026-05-31 | 19:06 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External proof intake handoff refresh\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1096\",\n  \"latest_proof_sha\": \"383c054df4d6730e4e4918e911ef67931b5ad92c\",\n  \"handoff_path\": \"governance/proofs/external/EXTERNAL_PROOF_INTAKE_HANDOFF_REFRESH.md\",\n  \"remaining_blockers\": [\"validated_external_telegram_production_receipt_missing\", \"validated_external_live_runtime_receipt_missing\", \"validated_external_claude_audit_result_missing\"],\n  \"next_action\": \"BEM-1098 roadmap continuity checkpoint after BEM-1097\"\n}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1097 | EXTERNAL PROOF INTAKE HANDOFF REFRESH | 2026-05-31 | 19:06 (UTC+3)\n- BEM-1096 completed with SHA 383c054df4d6730e4e4918e911ef67931b5ad92c.\n- Created `governance/proofs/external/EXTERNAL_PROOF_INTAKE_HANDOFF_REFRESH.md`.\n- Created `governance/state/bem1097_external_proof_intake_handoff_refresh.json`.\n- External proof intake handoff refresh completed: 1/1 (100%).\n- Release PASS not issued.\n- Next action: BEM-1098 roadmap continuity checkpoint after BEM-1097.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1097_external_proof_intake_handoff_refresh.md",
+    "result_json": "governance/codex/results/bem1097_external_proof_intake_handoff_refresh.json"
+  },
+  "created_at": "2026-05-31T17:35:50.148Z"
+}
