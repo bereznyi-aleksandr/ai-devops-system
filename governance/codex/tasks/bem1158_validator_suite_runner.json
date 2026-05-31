@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1158_validator_suite_runner",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1158 validator runner",
+  "objective": "Create file governance/validators/run_bem931_validator_suite.py with content import json\nimport subprocess\nimport sys\nfrom pathlib import Path\n\nINDEX = Path(\"governance/validators/bem931_validator_suite_index.json\")\n\n\ndef run_cmd(path):\n    proc = subprocess.run([sys.executable, path], text=True, capture_output=True)\n    return {\"path\": path, \"returncode\": proc.returncode, \"stdout\": proc.stdout.strip(), \"stderr\": proc.stderr.strip(), \"ok\": proc.returncode == 0}\n\n\ndef run_suite():\n    data = json.loads(INDEX.read_text(encoding=\"utf-8\"))\n    results = []\n    for validator in data.get(\"validators\", []):\n        results.append(run_cmd(validator))\n    mock = data.get(\"mock_e2e\")\n    if mock:\n        results.append(run_cmd(mock))\n    return {\"ok\": all(item[\"ok\"] for item in results), \"results\": results, \"release_pass\": False}\n\nif __name__ == \"__main__\":\n    result = run_suite()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1158_VALIDATOR_SUITE_RUNNER.md with content BEM-1158 | VALIDATOR SUITE RUNNER | 2026-05-31 | 22:24 (UTC+3)\n\nЭтап: Validator suite runner — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1157 completed with SHA `119e4a3446f094afc6237b32d4d17d1bfdbc796a`.\n✅ Created `governance/validators/run_bem931_validator_suite.py`.\n✅ Runner executes indexed validators and mock E2E.\n⚠️ Runner result is not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Validator suite runner — 1/1 (100%) | Validator runner created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1159 record validator suite expected result | Continue verification without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1158 | VALIDATOR SUITE RUNNER | 2026-05-31 | 22:24 (UTC+3)\n- BEM-1157 completed with SHA 119e4a3446f094afc6237b32d4d17d1bfdbc796a.\n- Created validator suite runner.\n- Release PASS not issued.\n- Next action: BEM-1159 record validator suite expected result.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1158_validator_suite_runner.md",
+    "result_json": "governance/codex/results/bem1158_validator_suite_runner.json"
+  },
+  "created_at": "2026-05-31T19:26:01.240Z"
+}
