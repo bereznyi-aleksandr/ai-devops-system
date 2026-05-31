@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem998_validator_execution_harness",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-998 validator harness",
+  "objective": "Create file governance/validators/run_receipt_validators.py with content import json\nfrom pathlib import Path\n\nfrom validate_telegram_production_receipt import validate_receipt as validate_telegram\nfrom validate_live_runtime_receipt import validate_receipt as validate_runtime\n\nCASES = [\n    {\n        \"name\": \"telegram_mock_receipt\",\n        \"validator\": validate_telegram,\n        \"fixture\": Path(\"governance/tests/fixtures/telegram_production_receipt_sample.json\")\n    },\n    {\n        \"name\": \"live_runtime_mock_receipt\",\n        \"validator\": validate_runtime,\n        \"fixture\": Path(\"governance/tests/fixtures/live_runtime_receipt_sample.json\")\n    }\n]\n\n\ndef main():\n    results = []\n    for case in CASES:\n        if not case[\"fixture\"].exists():\n            results.append({\"name\": case[\"name\"], \"ok\": False, \"errors\": [{\"code\": \"fixture_missing\", \"path\": str(case[\"fixture\"])}]})\n            continue\n        payload = json.loads(case[\"fixture\"].read_text(encoding=\"utf-8\"))\n        result = case[\"validator\"](payload)\n        result[\"name\"] = case[\"name\"]\n        result[\"fixture\"] = str(case[\"fixture\"])\n        results.append(result)\n    summary = {\"ok\": all(r[\"ok\"] for r in results), \"results\": results}\n    out = Path(\"governance/reports/BEM998_RECEIPT_VALIDATORS_HARNESS_RESULT.json\")\n    out.parent.mkdir(parents=True, exist_ok=True)\n    out.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + \"\\n\", encoding=\"utf-8\")\n    return 0 if summary[\"ok\"] else 1\n\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/reports/BEM998_VALIDATOR_EXECUTION_HARNESS.md with content BEM-998 | VALIDATOR EXECUTION HARNESS | 2026-05-31 | 16:10 (UTC+3)\n\nЭтап: Validator execution harness — 1/2 (50%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created `governance/validators/run_receipt_validators.py`.\n✅ Harness covers Telegram mock receipt validator.\n✅ Harness covers live runtime mock receipt validator.\n✅ Harness writes result JSON to `governance/reports/BEM998_RECEIPT_VALIDATORS_HARNESS_RESULT.json` when executed.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Harness creation is not the same as real production receipt proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Validator execution harness — 1/2 (50%) | Harness file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-999 record harness execution expectation and audit evidence manifest | Continue executable proof chain |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-998 | VALIDATOR EXECUTION HARNESS | 2026-05-31 | 16:10 (UTC+3)\n- Created `governance/validators/run_receipt_validators.py`.\n- Created `governance/reports/BEM998_VALIDATOR_EXECUTION_HARNESS.md`.\n- Validator execution harness stage: 1/2 (50%).\n- Release PASS not issued. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-999 record harness execution expectation and audit evidence manifest.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem998_validator_execution_harness.md",
+    "result_json": "governance/codex/results/bem998_validator_execution_harness.json"
+  },
+  "created_at": "2026-05-31T13:11:40.552Z"
+}
