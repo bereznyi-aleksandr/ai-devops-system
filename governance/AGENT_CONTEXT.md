@@ -463,3 +463,5 @@ No issue comments.
 -
 ### BEM-980 | REPORT CANON CORRECTION | 2026-05-31 | 15:27 (UTC+3)
 - Corrected report canon after operator objection
+### BEM-981 | OPERATOR-SAFE PRODUCTION CHECKLIST | 2026-05-31 | 15:40 (UTC+3)
+-
