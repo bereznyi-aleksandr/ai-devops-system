@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1015_release_readiness_no_pass_snapshot",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1015_release_readiness_no_pass_snapshot.json",
+    "create:governance/reports/BEM1015_RELEASE_READINESS_NO_PASS_SNAPSHOT.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1015_release_readiness_no_pass_snapshot.json",
+    "governance/reports/BEM1015_RELEASE_READINESS_NO_PASS_SNAPSHOT.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1015_release_readiness_no_pass_snapshot.txt"
+  ],
+  "commit_sha": "4a6647dc0ac162b0a2401cda5ee104cf939e4965",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1015_release_readiness_no_pass_snapshot.md",
+  "completed_at": "2026-05-31T13:47:53Z"
+}
