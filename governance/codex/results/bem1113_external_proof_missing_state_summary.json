@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1113_external_proof_missing_state_summary",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1113_EXTERNAL_PROOF_MISSING_STATE_AUDIT_SUMMARY.md",
+    "create:governance/state/bem1113_external_proof_missing_state_summary.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1113_EXTERNAL_PROOF_MISSING_STATE_AUDIT_SUMMARY.md",
+    "governance/state/bem1113_external_proof_missing_state_summary.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1113_external_proof_missing_state_summary.txt"
+  ],
+  "commit_sha": "cb251136bc1777e2ef57172ff3774478d4bebc2b",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1113_external_proof_missing_state_summary.md",
+  "completed_at": "2026-05-31T17:57:14Z"
+}
