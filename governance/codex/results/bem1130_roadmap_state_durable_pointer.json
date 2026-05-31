@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1130_roadmap_state_durable_pointer",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/ROADMAP_STATE_DURABLE_POINTER.json",
+    "create:governance/reports/BEM1130_ROADMAP_STATE_DURABLE_POINTER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/ROADMAP_STATE_DURABLE_POINTER.json",
+    "governance/reports/BEM1130_ROADMAP_STATE_DURABLE_POINTER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1130_roadmap_state_durable_pointer.txt"
+  ],
+  "commit_sha": "dcd78276695f5023e9c93a6dd5b26e74f09f0536",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1130_roadmap_state_durable_pointer.md",
+  "completed_at": "2026-05-31T18:25:47Z"
+}
