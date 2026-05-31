@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem926_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-926 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-926 completed | 2026-05-31\nPrepared corrected full-system protocol v4 after operator rejected BEM-925 for treating objects as if they had prompts and for insufficient detail.\nContext proof: governance/runtime/curator_dispatch/BEM926_CONTEXT_REFRESH.md\nWorker review: governance/audit/internal/results/BEM926_WORKER_DEEP_PROTOCOL_REVIEW.md\nRepo protocol record: governance/reports/BEM926_FINAL_WORKING_SYSTEM_PROTOCOL_V4.md\nResult: DRAFT_FOR_OPERATOR_REVIEW_AFTER_DEEP_REWORK. Key correction: objects General Director, Director and Worker are not LLM agents and do not have prompts; they have object passports, rules, functions, channels, curators, internal contours, reports and Definition of Done. Prompts exist only for LLM-executed roles/providers and operational handlers. Document is Russian-first, detailed by roadmap substeps 1.1..8.2, and explicitly creates GD/DIR/WRK objects with passports, registry refs, curators, contours and tests. It preserves accepted decisions: workspace belongs to internal contour; no local individual element rules; vertical links curator-to-curator; internal contour algorithm Curator -> Analyst -> Auditor -> Executor -> Auditor with revision via Analyst; horizontal links Auditor A -> Analyst B; provider model GPT Analyst + Claude Auditor + Claude Executor with GPT-Codex/Codex fallback. Claude's 13 requirements are mapped to roadmap steps and release blockers.\nLocal operator artifacts: BEM926_final_working_system_protocol_v4_ru.docx and BEM926_final_working_system_protocol_v4_ru.zip.\nQA: DOCX rendered to 9 pages; no edge clipping detected.\nNext: operator review of BEM-926 v4.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem926_context_done.md",
+    "result_json": "governance/codex/results/bem926_context_done.json"
+  },
+  "created_at": "2026-05-31T05:33:56.967Z"
+}
