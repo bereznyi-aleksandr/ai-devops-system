@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1183_ci_capture_result_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runtime/BEM1183_CI_CAPTURE_RESULT_POLICY.json",
+    "create:governance/reports/BEM1183_CI_CAPTURE_RESULT_POLICY.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runtime/BEM1183_CI_CAPTURE_RESULT_POLICY.json",
+    "governance/reports/BEM1183_CI_CAPTURE_RESULT_POLICY.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1183_ci_capture_result_policy.txt"
+  ],
+  "commit_sha": "6ec58362096fb1fa771c07e7ae49368bb83af8c1",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1183_ci_capture_result_policy.md",
+  "completed_at": "2026-05-31T20:08:03Z"
+}
