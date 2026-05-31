@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1155_mock_e2e_fixture_runner",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1155 mock E2E",
+  "objective": "Create file governance/tests/fixtures/bem931_mock_e2e_message.json with content {\"message_id\":\"bem1155_mock_msg_001\",\"created_at_utc3\":\"2026-05-31 | 22:20 (UTC+3)\",\"source_object\":\"operator\",\"target_object\":\"GD\",\"contour\":\"C1\",\"role\":\"general_director\",\"payload\":{\"text\":\"mock objective for BEM-931 E2E\"},\"proof_policy\":{\"contains_secret\":false,\"template_only\":false,\"claims_release_proof\":false}}\nCreate file governance/tests/run_bem931_mock_e2e.py with content import json\nfrom pathlib import Path\nimport sys\n\nsys.path.insert(0, str(Path.cwd()))\nfrom governance.runners.managed_channel_consumer import validate_message\nfrom governance.runners.contour_lifecycle_runner import advance\n\n\ndef run():\n    message = json.loads(Path(\"governance/tests/fixtures/bem931_mock_e2e_message.json\").read_text(encoding=\"utf-8\"))\n    ok, errors = validate_message(message)\n    if not ok:\n        return {\"ok\": False, \"stage\": \"managed_channel\", \"errors\": errors}\n    state = {\"state\": \"queued\"}\n    for next_state in [\"analyst_proposal\", \"auditor_precheck\", \"worker_execution\", \"auditor_postcheck\"]:\n        result = advance(state, next_state)\n        if not result.get(\"ok\"):\n            return {\"ok\": False, \"stage\": next_state, \"errors\": [result.get(\"error\")]}\n        state = result[\"state\"]\n    result = advance(state, \"completed\", proof=\"mock_e2e_proof_not_release_proof\")\n    if not result.get(\"ok\"):\n        return {\"ok\": False, \"stage\": \"completed\", \"errors\": [result.get(\"error\")]}\n    return {\"ok\": True, \"mode\": \"mock_e2e\", \"release_pass\": False}\n\nif __name__ == \"__main__\":\n    result = run()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1155_MOCK_E2E_FIXTURE_RUNNER.md with content BEM-1155 | MOCK E2E FIXTURE RUNNER | 2026-05-31 | 22:20 (UTC+3)\n\nЭтап: Mock E2E fixture runner — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1154 completed with SHA `711a967bf54dcd3e1d7d64fbd9d4ff4685ad5dce`.\n✅ Created `governance/tests/fixtures/bem931_mock_e2e_message.json`.\n✅ Created `governance/tests/run_bem931_mock_e2e.py`.\n✅ Mock E2E is explicitly not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Mock E2E fixture runner — 1/1 (100%) | Mock contour flow test implemented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1156 create BEM-931 implementation audit index | Continue real protocol implementation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1155 | MOCK E2E FIXTURE RUNNER | 2026-05-31 | 22:20 (UTC+3)\n- BEM-1154 completed with SHA 711a967bf54dcd3e1d7d64fbd9d4ff4685ad5dce.\n- Created mock E2E fixture and runner.\n- Release PASS not issued.\n- Next action: BEM-1156 create BEM-931 implementation audit index.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1155_mock_e2e_fixture_runner.md",
+    "result_json": "governance/codex/results/bem1155_mock_e2e_fixture_runner.json"
+  },
+  "created_at": "2026-05-31T19:21:47.842Z"
+}
