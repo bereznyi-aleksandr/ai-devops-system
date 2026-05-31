@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem962_commit_sha_fallback_patch_safe",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "bem962_commit_sha_fallback_target_not_found_or_already_applied",
+    "custom_script",
+    "create:governance/reports/BEM962_SAFE_COMMIT_SHA_FALLBACK_PATCH.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM962_SAFE_COMMIT_SHA_FALLBACK_PATCH.md",
+    "governance/codex/proofs/bem962_commit_sha_fallback_patch_safe.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem962_commit_sha_fallback_patch_safe.md",
+  "completed_at": "2026-05-31T11:59:50Z"
+}
