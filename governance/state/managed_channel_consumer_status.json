@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "status": "created",
+  "initial_trigger_mode": "workflow_dispatch",
+  "consumer": "governance/runners/managed_channel_consumer.py",
+  "event_writer": "governance/runners/event_writer.py",
+  "dead_letter": "governance/state/channel_dead_letters.jsonl",
+  "processed_log": "governance/state/managed_channel_processed.jsonl"
+}

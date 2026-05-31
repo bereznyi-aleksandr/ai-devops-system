@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem936_block_e_fix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-936 Block E managed channel mechanics artifacts created",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runners/event_writer.py",
+    "governance/runners/managed_channel_consumer.py",
+    "governance/state/channel_dead_letters.jsonl",
+    "governance/state/managed_channel_processed.jsonl",
+    "governance/tests/test_managed_channel_consumer.py",
+    "governance/state/managed_channel_consumer_status.json",
+    "governance/validators/validate_block_e_channel.py",
+    "governance/reports/BEM936_BLOCK_E_CHANNEL_PASS.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem936_block_e_fix.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem936_block_e_fix.md",
+  "completed_at": "2026-05-31T09:26:25Z"
+}

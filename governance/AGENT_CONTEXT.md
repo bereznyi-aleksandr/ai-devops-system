@@ -348,3 +348,11 @@ Created object_lifecycle_runner, curator_router, contour_lifecycle_runner, role_
 Result: BLOCK_G_RUNNERS_PASS. This is deterministic runner foundation only, not live LLM runtime PASS and not release PASS.
 Next: Block H Telegram envelope, mapping, report period config and report templates.
 No issue comments.
+
+
+## BEM-936 completed | 2026-05-31
+Implemented Block E managed channel mechanics after BEM-935.
+Created event_writer, managed_channel_consumer, dead-letter log, processed log, consumer status, static selftest and validator.
+Result: BLOCK_E_CHANNEL_MECHANICS_PASS. This is mechanics baseline, not release PASS.
+Next: Block F dispatch lifecycle and provider-aware dispatch consumer.
+No issue comments.

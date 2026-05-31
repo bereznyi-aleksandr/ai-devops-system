@@ -1,77 +1,78 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import json
-from datetime import datetime, timezone
+import time
+from pathlib import Path
 
 CHANNEL = Path('governance/state/managed_channel_messages.jsonl')
 DEAD = Path('governance/state/channel_dead_letters.jsonl')
-PROCESSED = Path('governance/state/managed_channel_processed.jsonl')
+OUT = Path('governance/state/managed_channel_processed.jsonl')
 EVENT_LOG = Path('governance/logs/event_log.jsonl')
-SCHEMA = Path('governance/state/managed_channel_schema.json')
 
-
-def load_schema():
-    if SCHEMA.exists():
-        return json.loads(SCHEMA.read_text(encoding='utf-8'))
-    return {'route_types': {}, 'required_fields': []}
-
+ALLOWED_ROUTE_TYPES = {
+  'vertical_curator_to_curator',
+  'contour_input',
+  'proposal',
+  'proposal_revision',
+  'execution_approval',
+  'execution_result',
+  'result_revision',
+  'contour_output',
+  'horizontal_verified_data_transfer',
+  'horizontal_verified_data_query'
+}
 
 def append_jsonl(path, obj):
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open('a', encoding='utf-8') as f:
-        f.write(json.dumps(obj, ensure_ascii=False) + '
-')
+    with path.open('a', encoding='utf-8') as fh:
+        fh.write(json.dumps(obj, ensure_ascii=False) + '\n')
 
+def write_event(trace_id, event_type, source, target, proof_ref):
+    append_jsonl(EVENT_LOG, {
+      'event_id':'EVT-' + str(int(time.time() * 1000)),
+      'trace_id': trace_id,
+      'created_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+      'event_type': event_type,
+      'source': source,
+      'target': target,
+      'status': 'completed',
+      'proof_ref': proof_ref
+    })
 
-def validate_message(msg, schema):
-    missing = [k for k in schema.get('required_fields', []) if k not in msg]
+def validate_message(msg):
+    required = ['message_id','trace_id','source','target','route_type','payload']
+    missing = [k for k in required if k not in msg]
     if missing:
-        return False, 'missing_fields:' + ','.join(missing)
-    route_type = msg.get('route_type')
-    if route_type not in schema.get('route_types', {}):
-        return False, 'unknown_route_type:' + str(route_type)
+        return False, 'missing:' + ','.join(missing)
+    if msg.get('route_type') not in ALLOWED_ROUTE_TYPES:
+        return False, 'invalid_route_type:' + str(msg.get('route_type'))
     return True, 'ok'
 
-
-def process_message(msg, schema):
-    ok, reason = validate_message(msg, schema)
-    now = datetime.now(timezone.utc).isoformat()
-    if not ok:
-        dead = {'created_at': now, 'reason': reason, 'message': msg}
-        append_jsonl(DEAD, dead)
-        return {'status': 'dead_letter', 'reason': reason, 'message_id': msg.get('message_id')}
-    event = {
-        'event_id': 'evt-' + str(msg.get('message_id')),
-        'trace_id': msg.get('trace_id'),
-        'created_at': now,
-        'event_type': msg.get('route_type'),
-        'source': msg.get('source'),
-        'target': msg.get('target'),
-        'status': 'completed',
-        'proof_ref': msg.get('proof_ref') or 'managed_channel_consumer'
-    }
-    append_jsonl(EVENT_LOG, event)
-    processed = {'processed_at': now, 'message_id': msg.get('message_id'), 'trace_id': msg.get('trace_id'), 'route_type': msg.get('route_type'), 'event_ref': event['event_id']}
-    append_jsonl(PROCESSED, processed)
-    return {'status': 'completed', 'message_id': msg.get('message_id'), 'event_ref': event['event_id']}
-
-
-def run_once():
-    schema = load_schema()
-    results = []
+def process_once():
     if not CHANNEL.exists():
-        return {'processed': 0, 'results': []}
+        return {'processed':0,'dead':0,'reason':'channel_missing'}
+    processed = 0
+    dead = 0
     for line in CHANNEL.read_text(encoding='utf-8', errors='ignore').splitlines():
         if not line.strip():
             continue
         try:
             msg = json.loads(line)
-        except Exception as e:
-            append_jsonl(DEAD, {'created_at': datetime.now(timezone.utc).isoformat(), 'reason': 'invalid_json', 'line': line})
-            results.append({'status': 'dead_letter', 'reason': 'invalid_json'})
+        except Exception as exc:
+            append_jsonl(DEAD, {'raw': line, 'error': 'json_parse_error', 'detail': str(exc)})
+            dead += 1
             continue
-        results.append(process_message(msg, schema))
-    return {'processed': len(results), 'results': results}
+        ok, reason = validate_message(msg)
+        if not ok:
+            msg['dead_reason'] = reason
+            append_jsonl(DEAD, msg)
+            dead += 1
+            continue
+        msg['processed_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+        msg['status'] = 'completed'
+        append_jsonl(OUT, msg)
+        write_event(msg['trace_id'], msg['route_type'], msg['source'], msg['target'], msg.get('proof_ref','managed_channel_consumer'))
+        processed += 1
+    return {'processed': processed, 'dead': dead}
 
 if __name__ == '__main__':
-    print(json.dumps(run_once(), ensure_ascii=False))
+    print(json.dumps(process_once(), ensure_ascii=False))
