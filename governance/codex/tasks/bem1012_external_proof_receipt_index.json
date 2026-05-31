@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1012_external_proof_receipt_index",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1012 proof receipt index",
+  "objective": "Create file governance/proofs/external/EXTERNAL_PROOF_RECEIPT_INDEX.json with content {\n  \"bem_id\": \"BEM-1012\",\n  \"created_at_utc3\": \"2026-05-31 | 16:36 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External proof receipt index\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"receipt_slots\": [\n    {\"slot\": \"production_telegram_receipt\", \"directory\": \"governance/proofs/external/telegram/\", \"status\": \"blocked_missing_real_receipt\", \"validator\": \"governance/validators/validate_telegram_production_receipt.py\", \"schema\": \"governance/gates/BEM987_TELEGRAM_PRODUCTION_PROOF_REQUEST_SCHEMA.json\"},\n    {\"slot\": \"live_runtime_receipt\", \"directory\": \"governance/proofs/external/runtime/\", \"status\": \"blocked_missing_real_receipt\", \"validator\": \"governance/validators/validate_live_runtime_receipt.py\", \"schema\": \"governance/gates/BEM988_LIVE_RUNTIME_PROOF_ENVELOPE_SCHEMA.json\"},\n    {\"slot\": \"external_claude_audit_result\", \"directory\": \"governance/proofs/external/claude/\", \"status\": \"blocked_missing_external_result\", \"validator\": \"governance/validators/validate_external_claude_audit_result.py\", \"schema\": \"governance/audit/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.json\"}\n  ],\n  \"forbidden\": [\"secret_values\", \"tokens\", \"api_keys\", \"PAT\", \"raw_credentials\", \"issue_31_write\", \"self_claim_release_pass\"],\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1013 release decision validator\"\n}\nCreate file governance/reports/BEM1012_EXTERNAL_PROOF_RECEIPT_INDEX.md with content BEM-1012 | EXTERNAL PROOF RECEIPT INDEX | 2026-05-31 | 16:36 (UTC+3)\n\nЭтап: External proof receipt index — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1011 completed with SHA `939190782aa8d1afff0df798416f87839aa4df81`.\n✅ Created `governance/proofs/external/EXTERNAL_PROOF_RECEIPT_INDEX.json`.\n✅ Indexed Telegram, runtime and external Claude receipt slots.\n✅ Each receipt slot points to schema and validator.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Real external receipts are not present yet.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External proof receipt index — 1/1 (100%) | Index file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1013 release decision validator | Continue proof-gate infrastructure |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1012 | EXTERNAL PROOF RECEIPT INDEX | 2026-05-31 | 16:36 (UTC+3)\n- BEM-1011 completed with SHA 939190782aa8d1afff0df798416f87839aa4df81.\n- Created `governance/proofs/external/EXTERNAL_PROOF_RECEIPT_INDEX.json`.\n- Created `governance/reports/BEM1012_EXTERNAL_PROOF_RECEIPT_INDEX.md`.\n- External proof receipt index completed: 1/1 (100%).\n- Real external receipts remain missing; release PASS not issued.\n- Next action: BEM-1013 release decision validator.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1012_external_proof_receipt_index.md",
+    "result_json": "governance/codex/results/bem1012_external_proof_receipt_index.json"
+  },
+  "created_at": "2026-05-31T13:43:07.934Z"
+}
