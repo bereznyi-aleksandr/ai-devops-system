@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "purpose": "Provider-aware dispatch queue lifecycle.",
+  "required_fields": ["dispatch_id", "trace_id", "created_at", "target_object", "target_contour", "logical_role", "provider_id", "status", "payload", "proof_ref"],
+  "statuses": ["queued", "validated", "delivered", "processing", "result_submitted", "proof_collected", "completed", "operator_gate", "failed", "dead_letter"],
+  "transitions": {
+    "queued": ["validated", "operator_gate", "dead_letter"],
+    "validated": ["delivered", "operator_gate"],
+    "delivered": ["processing", "failed"],
+    "processing": ["result_submitted", "operator_gate", "failed"],
+    "result_submitted": ["proof_collected", "failed"],
+    "proof_collected": ["completed", "failed"],
+    "completed": [],
+    "operator_gate": [],
+    "failed": [],
+    "dead_letter": []
+  },
+  "provider_fields": ["logical_role", "provider_id", "provider_mode", "fallback_used", "fallback_reason"]
+}

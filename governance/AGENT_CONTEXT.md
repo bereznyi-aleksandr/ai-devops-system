@@ -332,3 +332,11 @@ Created managed_channel_schema, contour_lifecycle_schema, event_log_schema, elem
 Result: BLOCK_D_SCHEMAS_PASS. This is foundation only, not release PASS.
 Next: Block E managed channel consumer, event writer and dead-letter handling.
 No issue comments.
+
+
+## BEM-937 completed | 2026-05-31
+Implemented Block F dispatch lifecycle after BEM-936.
+Created dispatch_lifecycle_schema, dispatch_trigger_policy, provider-aware dispatch_queue item, dispatch_consumer, validator and pass report.
+Result: BLOCK_F_DISPATCH_PASS. This is foundation only, not release PASS.
+Next: Block G object lifecycle runner, curator router, contour lifecycle runner and role report writer.
+No issue comments.
