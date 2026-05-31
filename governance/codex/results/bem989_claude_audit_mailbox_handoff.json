@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem989_claude_audit_mailbox_handoff",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/BEM989_EXTERNAL_CLAUDE_AUDIT_MAILBOX_HANDOFF.md",
+    "create:governance/audit/BEM989_EXTERNAL_CLAUDE_AUDIT_MAILBOX_HANDOFF.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/BEM989_EXTERNAL_CLAUDE_AUDIT_MAILBOX_HANDOFF.md",
+    "governance/audit/BEM989_EXTERNAL_CLAUDE_AUDIT_MAILBOX_HANDOFF.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem989_claude_audit_mailbox_handoff.txt"
+  ],
+  "commit_sha": "ea25e84c968d2088cc22c0f63b973fe6bef0050e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem989_claude_audit_mailbox_handoff.md",
+  "completed_at": "2026-05-31T12:55:52Z"
+}
