@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1097_external_proof_intake_handoff_refresh",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/EXTERNAL_PROOF_INTAKE_HANDOFF_REFRESH.md",
+    "create:governance/state/bem1097_external_proof_intake_handoff_refresh.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/EXTERNAL_PROOF_INTAKE_HANDOFF_REFRESH.md",
+    "governance/state/bem1097_external_proof_intake_handoff_refresh.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1097_external_proof_intake_handoff_refresh.txt"
+  ],
+  "commit_sha": "ad77e00b7130b2d0ac8e67fc755ecea29197bd12",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1097_external_proof_intake_handoff_refresh.md",
+  "completed_at": "2026-05-31T17:36:00Z"
+}
