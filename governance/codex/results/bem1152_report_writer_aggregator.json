@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1152_report_writer_aggregator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/role_report_writer.py",
+    "create:governance/runners/object_report_aggregator.py",
+    "create:governance/reports/BEM1152_REPORT_WRITER_AGGREGATOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/role_report_writer.py",
+    "governance/runners/object_report_aggregator.py",
+    "governance/reports/BEM1152_REPORT_WRITER_AGGREGATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1152_report_writer_aggregator.txt"
+  ],
+  "commit_sha": "0db360c5f2c0e04a0470bbde7aba0c3a2848f934",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1152_report_writer_aggregator.md",
+  "completed_at": "2026-05-31T19:17:34Z"
+}
