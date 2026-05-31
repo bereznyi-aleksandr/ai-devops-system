@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1036_release_blocker_no_pass_checkpoint",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1036 NO PASS checkpoint",
+  "objective": "Create file governance/reports/BEM1036_RELEASE_BLOCKER_NO_PASS_CHECKPOINT.md with content BEM-1036 | RELEASE BLOCKER NO-PASS CHECKPOINT | 2026-05-31 | 17:31 (UTC+3)\n\nЭтап: Release blocker no-pass checkpoint — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1035 completed with SHA `8b314ed24487d49ff3ff922772bacf4d159a8d45`.\n✅ Receipt templates exist and are explicitly marked as not proof.\n✅ Receipt template validation policy exists.\n✅ Receipt monitor status, policy and handoff exist.\n✅ Release decision validator exists and rejects RELEASE_PASS without verified external receipts.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ production_telegram_gate remains blocked: real audited production receipt missing.\n⚠️ live_llm_runtime_gate remains blocked: real approved runtime receipt missing.\n⚠️ external_claude_reaudit remains blocked: real external Claude result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Release blocker no-pass checkpoint — 1/1 (100%) | Checkpoint created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Решение | NO_RELEASE_PASS | Required external receipts/results are still missing |\n| Следующее действие | BEM-1037 create post-BEM1036 continuity queue | Roadmap continues after checkpoint |\n\nNo issue comments.\nCreate file governance/state/bem1036_release_blocker_no_pass_checkpoint.json with content {\n  \"bem_id\": \"BEM-1036\",\n  \"created_at_utc3\": \"2026-05-31 | 17:31 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Release blocker no-pass checkpoint\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"decision\": \"NO_RELEASE_PASS\",\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1035\",\n  \"latest_proof_sha\": \"8b314ed24487d49ff3ff922772bacf4d159a8d45\",\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1037 create post-BEM1036 continuity queue\"\n}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1036 | RELEASE BLOCKER NO-PASS CHECKPOINT | 2026-05-31 | 17:31 (UTC+3)\n- BEM-1035 completed with SHA 8b314ed24487d49ff3ff922772bacf4d159a8d45.\n- Created `governance/reports/BEM1036_RELEASE_BLOCKER_NO_PASS_CHECKPOINT.md`.\n- Created `governance/state/bem1036_release_blocker_no_pass_checkpoint.json`.\n- Release blocker no-pass checkpoint completed: 1/1 (100%).\n- Decision remains NO_RELEASE_PASS. Real production/runtime/Claude receipts remain missing.\n- Next action: BEM-1037 create post-BEM1036 continuity queue.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1036_release_blocker_no_pass_checkpoint.md",
+    "result_json": "governance/codex/results/bem1036_release_blocker_no_pass_checkpoint.json"
+  },
+  "created_at": "2026-05-31T14:32:25.112Z"
+}
