@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem972_exact_assignment_patch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-972 exact assignment patch",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\ntext = p.read_text()\nold = \"commit_sha = os.environ.get('COMMIT_SHA', '')\"\nnew = \"commit_sha = os.environ.get('COMMIT_SHA', '') or os.environ.get('GITHUB_SHA', '')\"\nfound = old in text\nif found:\n    p.write_text(text.replace(old, new, 1))\n    changed_files.append(str(p))\n    ops_applied.append('bem972_exact_assignment_patch')\nelse:\n    ops_applied.append('bem972_assignment_not_found')\ndiag = Path('governance/reports/BEM972_EXACT_ASSIGNMENT_PATCH_DIAG.txt')\ndiag.parent.mkdir(parents=True, exist_ok=True)\ndiag.write_text('found_assignment=' + str(found) + '\\nold=' + old + '\\nnew=' + new + '\\n')\nchanged_files.append(str(diag))\n\"\"\"\nCreate file governance/reports/BEM972_EXACT_ASSIGNMENT_PATCH.md with content BEM-972 | EXACT ASSIGNMENT PATCH | 2026-05-31 | 15:14 (UTC+3)\n\nЭтап: 22/23 (96%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Uses exact checkout snippet from BEM-971.\n⚠️ If found_assignment=true and workflow appears in changed_files, BEM-973 verifies non-null SHA.\n❌ No release PASS.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Exact target | commit_sha = os.environ.get('COMMIT_SHA', '') | BEM-971 checkout snippet |\n| Patch | fallback to GITHUB_SHA | Deno status needs non-null SHA |\n| Следующее действие | BEM-973 verification probe | proof-driven |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem972_exact_assignment_patch.md",
+    "result_json": "governance/codex/results/bem972_exact_assignment_patch.json"
+  },
+  "created_at": "2026-05-31T12:15:45.833Z"
+}
