@@ -459,3 +459,5 @@ No issue comments.
 -
 ### BEM-978 | RELEASE DECISION NO_PASS | 2026-05-31 | 15:23 (UTC+3)
 - Claude re-audit preparation stage completed: 3/3 (100%)
+### BEM-979 | PRODUCTION GATES REGISTER | 2026-05-31 | 15:25 (UTC+3)
+-
