@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem945_block_n_handoff",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-945 Block N final handoff artifacts created",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/BEM945_FINAL_FOUNDATION_HANDOFF.md",
+    "governance/state/operator_gate_boundary.json",
+    "governance/state/roadmap_status_final.json",
+    "governance/audit/BEM945_EXTERNAL_AUDIT_HANDOFF.md",
+    "governance/validators/validate_block_n_handoff.py",
+    "governance/reports/BEM945_BLOCK_N_HANDOFF_PASS.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem945_block_n_handoff.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem945_block_n_handoff.md",
+  "completed_at": "2026-05-31T09:38:49Z"
+}
