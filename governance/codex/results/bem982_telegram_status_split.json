@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem982_telegram_status_split",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem982_telegram_production_gate_status.json",
+    "create:governance/reports/BEM982_TELEGRAM_STATUS_SPLIT.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem982_telegram_production_gate_status.json",
+    "governance/reports/BEM982_TELEGRAM_STATUS_SPLIT.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem982_telegram_status_split.txt"
+  ],
+  "commit_sha": "e0d75b912f1deffc56a898d767344119c0bc40d6",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem982_telegram_status_split.md",
+  "completed_at": "2026-05-31T12:43:41Z"
+}

@@ -465,3 +465,5 @@ No issue comments.
 - Corrected report canon after operator objection
 ### BEM-981 | OPERATOR-SAFE PRODUCTION CHECKLIST | 2026-05-31 | 15:40 (UTC+3)
 -
+### BEM-982 | TELEGRAM STATUS SPLIT | 2026-05-31 | 15:42 (UTC+3)
+-
