@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem961_commit_sha_fallback_patch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-961 commit SHA fallback patch",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\ntext = p.read_text()\nold = \"commit_sha = os.environ.get('COMMIT_SHA', '')\"\nnew = \"commit_sha = os.environ.get('COMMIT_SHA', '') or os.environ.get('GITHUB_SHA', '')\"\nif old not in text:\n    raise Exception('target commit_sha line not found')\ntext = text.replace(old, new, 1)\np.write_text(text)\nchanged_files.append(str(p))\nops_applied.append('bem961_commit_sha_fallback_patch')\n\"\"\"\nCreate file governance/reports/BEM961_COMMIT_SHA_FALLBACK_PATCH.md with content BEM-961 | COMMIT SHA FALLBACK PATCH | 2026-05-31 | 14:56 (UTC+3)\n\nЭтап: 11/12 (92%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Patch target: Write result files now uses COMMIT_SHA or GITHUB_SHA fallback.\n✅ Purpose: stop Deno status from returning commit_sha=null when changed_files exist.\n⚠️ GITHUB_SHA fallback is remote workflow SHA, not full release proof by itself.\n❌ Release PASS remains blocked until remote content SHA, production Telegram, live LLM runtime and Claude re-audit gates pass.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Runner path | .github/workflows/codex-runner.yml Write result files | commit_sha was read before commit/push and stayed null |\n| Safe fallback | GITHUB_SHA is non-null workflow commit SHA | better proof than null; still not release PASS |\n| Следующее действие | BEM-962 run create-file verification to confirm Deno returns non-null commit_sha | verify patch by new task status |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem961_commit_sha_fallback_patch.md",
+    "result_json": "governance/codex/results/bem961_commit_sha_fallback_patch.json"
+  },
+  "created_at": "2026-05-31T11:58:07.606Z"
+}
