@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1150_provider_activation_failover",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1150 provider runners",
+  "objective": "Create file governance/runners/provider_activation.py with content import json\nfrom pathlib import Path\n\nREGISTRY = Path(\"governance/providers/providers_registry.json\")\nPOLICY = Path(\"governance/providers/contour_provider_policy.json\")\n\n\ndef provider_for_contour(contour):\n    providers = {p[\"id\"]: p for p in json.loads(REGISTRY.read_text(encoding=\"utf-8\")).get(\"providers\", [])}\n    policies = json.loads(POLICY.read_text(encoding=\"utf-8\")).get(\"policies\", [])\n    for item in policies:\n        if item.get(\"contour\") == contour:\n            primary = item.get(\"primary\")\n            return {\"ok\": primary in providers, \"contour\": contour, \"provider\": primary, \"provider_meta\": providers.get(primary)}\n    return {\"ok\": False, \"error\": \"contour policy missing\"}\n\nif __name__ == \"__main__\":\n    import sys\n    result = provider_for_contour(sys.argv[1] if len(sys.argv) > 1 else \"\")\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/runners/provider_failover.py with content import json\nfrom pathlib import Path\n\nPOLICY = Path(\"governance/providers/contour_provider_policy.json\")\n\n\ndef failover_for_contour(contour, mode):\n    policies = json.loads(POLICY.read_text(encoding=\"utf-8\")).get(\"policies\", [])\n    for item in policies:\n        if item.get(\"contour\") == contour:\n            fallback = item.get(\"fallback\")\n            allowed = item.get(\"fallback_allowed_only_for\")\n            if fallback == \"mock\" and mode != allowed:\n                return {\"ok\": False, \"error\": \"mock fallback allowed only for mock_e2e\"}\n            return {\"ok\": True, \"contour\": contour, \"fallback\": fallback}\n    return {\"ok\": False, \"error\": \"contour policy missing\"}\n\nif __name__ == \"__main__\":\n    import sys\n    contour = sys.argv[1] if len(sys.argv) > 1 else \"\"\n    mode = sys.argv[2] if len(sys.argv) > 2 else \"\"\n    result = failover_for_contour(contour, mode)\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1150_PROVIDER_ACTIVATION_FAILOVER.md with content BEM-1150 | PROVIDER ACTIVATION FAILOVER | 2026-05-31 | 22:13 (UTC+3)\n\nЭтап: Provider activation failover — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1149 completed with SHA `0e76d43492bbde71e73f5006f646c32512a5a2da`.\n✅ Created `governance/runners/provider_activation.py`.\n✅ Created `governance/runners/provider_failover.py`.\n✅ Mock fallback is restricted to mock_e2e mode.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Provider activation failover — 1/1 (100%) | Provider runners implemented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1151 implement curator_router skeleton | Continue real protocol implementation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1150 | PROVIDER ACTIVATION FAILOVER | 2026-05-31 | 22:13 (UTC+3)\n- BEM-1149 completed with SHA 0e76d43492bbde71e73f5006f646c32512a5a2da.\n- Created provider activation and failover runners.\n- Release PASS not issued.\n- Next action: BEM-1151 implement curator_router skeleton.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1150_provider_activation_failover.md",
+    "result_json": "governance/codex/results/bem1150_provider_activation_failover.json"
+  },
+  "created_at": "2026-05-31T19:14:33.475Z"
+}
