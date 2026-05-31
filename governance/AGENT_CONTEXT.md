@@ -266,3 +266,5 @@ Prepared final unified working-system protocol after operator rejected fragmente
 Prepared final unified working-system protocol after operator rejected fragmented BEM-919
 ## BEM-925 completed | 2026-05-31
 Prepared rebuilt final system evolution protocol based on yesterday's work and operator corrections after BEM-924 was rejected as still fragmented
+## BEM-926 completed | 2026-05-31
+Prepared corrected full-system protocol v4 after operator rejected BEM-925 for treating objects as if they had prompts and for insufficient detail
