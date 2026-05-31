@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1096_external_proof_blocker_dashboard_refresh",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/EXTERNAL_PROOF_BLOCKER_DASHBOARD_FINAL_REFRESH.json",
+    "create:governance/reports/BEM1096_EXTERNAL_PROOF_BLOCKER_DASHBOARD_FINAL_REFRESH.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/EXTERNAL_PROOF_BLOCKER_DASHBOARD_FINAL_REFRESH.json",
+    "governance/reports/BEM1096_EXTERNAL_PROOF_BLOCKER_DASHBOARD_FINAL_REFRESH.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1096_external_proof_blocker_dashboard_refresh.txt"
+  ],
+  "commit_sha": "383c054df4d6730e4e4918e911ef67931b5ad92c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1096_external_proof_blocker_dashboard_refresh.md",
+  "completed_at": "2026-05-31T17:34:36Z"
+}
