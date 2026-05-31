@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1184_post_ci_capture_seed",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1184_post_ci_capture_seed.json",
+    "create:governance/reports/BEM1184_POST_CI_CAPTURE_SEED.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1184_post_ci_capture_seed.json",
+    "governance/reports/BEM1184_POST_CI_CAPTURE_SEED.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1184_post_ci_capture_seed.txt"
+  ],
+  "commit_sha": "10814a222822c9f4ff93c7bade79a4f3783db402",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1184_post_ci_capture_seed.md",
+  "completed_at": "2026-05-31T20:09:25Z"
+}
