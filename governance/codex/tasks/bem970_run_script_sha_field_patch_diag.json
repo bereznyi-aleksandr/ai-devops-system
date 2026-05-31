@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem970_run_script_sha_field_patch_diag",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-970 SHA script patch diag",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\ntext = p.read_text()\nold = \"'commit_sha': commit_sha or None\"\nnew = \"'commit_sha': (commit_sha or os.environ.get('GITHUB_SHA') or None)\"\nfound = old in text\nif found:\n    text = text.replace(old, new, 1)\n    p.write_text(text)\n    changed_files.append(str(p))\n    ops_applied.append('bem970_sha_field_replaced')\nelse:\n    ops_applied.append('bem970_sha_field_target_not_found')\ndiag = Path('governance/reports/BEM970_SHA_FIELD_PATCH_DIAG.txt')\ndiag.parent.mkdir(parents=True, exist_ok=True)\ndiag.write_text('target_found=' + str(found) + '\\n')\nchanged_files.append(str(diag))\n\"\"\"\nCreate file governance/reports/BEM970_RUN_SCRIPT_SHA_FIELD_PATCH_DIAG.md with content BEM-970 | RUN SCRIPT SHA FIELD PATCH DIAG | 2026-05-31 | 15:11 (UTC+3)\n\nЭтап: 20/21 (95%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Uses Run script because Pattern 9 cannot safely match quoted Python dict keys.\n✅ Writes diagnostic target_found=true/false.\n⚠️ If workflow changed, next BEM-971 verifies non-null SHA.\n❌ No release PASS.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Root cause | Pattern 9 regex closes on inner quote and can fake changed_files without actual replacement | BEM-968 changed_files but raw workflow still old |\n| Patch method | Run script with quote-safe Python replacement | avoids Pattern 9 limitation |\n| Следующее действие | BEM-971 verification probe | proof before status upgrade |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem970_run_script_sha_field_patch_diag.md",
+    "result_json": "governance/codex/results/bem970_run_script_sha_field_patch_diag.json"
+  },
+  "created_at": "2026-05-31T12:12:29.195Z"
+}
