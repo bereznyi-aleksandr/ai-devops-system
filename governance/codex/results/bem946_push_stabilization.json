@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem946_push_stabilization",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-946 push stabilization artifacts created",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/BEM946_PUSH_FAILURE_DIAGNOSIS.md",
+    "governance/state/push_conflict_policy.json",
+    "governance/runners/git_push_with_retry.sh",
+    ".github/workflows/codex-runner.yml",
+    "governance/reports/BEM946_PUSH_STABILIZATION_PASS.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem946_push_stabilization.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem946_push_stabilization.md",
+  "completed_at": "2026-05-31T09:43:00Z"
+}

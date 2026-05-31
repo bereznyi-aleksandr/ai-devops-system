@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "status": "ACTIVE",
+  "problem": "GitHub Actions runner may commit locally but fail to push when remote main changed concurrently.",
+  "rules": [
+    {"id":"local_sha_not_release_proof", "severity":"critical", "rule":"Local commit SHA is not release proof until pushed or verified on remote."},
+    {"id":"push_retry_required", "severity":"critical", "rule":"Runner must retry push after fetch/rebase on non-fast-forward rejection."},
+    {"id":"workflow_failure_overrides_completed_summary", "severity":"critical", "rule":"If GitHub job status is failed, runner summary status=completed is not accepted as PASS."},
+    {"id":"remote_sha_verification_required", "severity":"high", "rule":"After push, proof must verify remote HEAD or record that verification is pending."}
+  ],
+  "recommended_push_algorithm": [
+    "git fetch origin main",
+    "git pull --rebase origin main or git rebase origin/main",
+    "git push origin HEAD:main",
+    "retry up to 3 times on non-fast-forward"
+  ]
+}

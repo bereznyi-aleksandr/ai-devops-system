@@ -428,3 +428,12 @@ Created foundation execution summary, release decision draft, operator handoff, 
 Result: CONDITIONAL_FOUNDATION_PASS for BEM-931 foundation roadmap. Release PASS remains BLOCKED because commit_sha is null, production Telegram is not verified, live LLM runtime is operator-gated and external Claude re-audit is required.
 Next: external Claude re-audit and CI/Git SHA proof resolution.
 No issue comments.
+
+
+## BEM-946 in progress/completed | 2026-05-31
+Operator provided GitHub Actions screenshots showing Codex Runner failed after local completed summary because git push was rejected: remote main had work not present locally.
+Decision: workflow failure overrides local completed summary. Local SHA is not release proof if push failed.
+Implemented push conflict policy and safe push helper with fetch/rebase/retry.
+Created BEM946_PUSH_FAILURE_DIAGNOSIS, push_conflict_policy and git_push_with_retry helper.
+Next: verify BEM-946 task result and then re-run/fix final proof if needed.
+No issue comments.
