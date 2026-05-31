@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem964_replace_commit_sha_line",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-964 replace SHA line",
+  "objective": "Replace in .github/workflows/codex-runner.yml line containing \"commit_sha = os.environ.get('COMMIT_SHA', '')\" with \"commit_sha = os.environ.get('COMMIT_SHA', '') or os.environ.get('GITHUB_SHA', '')\"\nCreate file governance/reports/BEM964_REPLACE_COMMIT_SHA_LINE.md with content BEM-964 | REPLACE COMMIT SHA LINE | 2026-05-31 | 15:01 (UTC+3)\n\nЭтап: 14/15 (93%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Uses executor pattern 9 Replace line, not Run script.\n✅ Target: Write result files commit_sha assignment.\n⚠️ Expected next probe: Deno commit_sha should become non-null by GITHUB_SHA fallback.\n❌ Release PASS remains blocked because fallback SHA is not full release proof and external gates remain.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Previous issue | Run script target replace did not change workflow | BEM-962 changed_files did not include workflow |\n| New method | Pattern 9 direct replace | confirmed executor patterns work |\n| Следующее действие | BEM-965 create-file probe to verify non-null commit_sha | proof before any status upgrade |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem964_replace_commit_sha_line.md",
+    "result_json": "governance/codex/results/bem964_replace_commit_sha_line.json"
+  },
+  "created_at": "2026-05-31T12:02:46.013Z"
+}
