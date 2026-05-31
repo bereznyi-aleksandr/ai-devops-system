@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem928_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-928 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-928 completed | 2026-05-31\nPrepared DOCX/ZIP analytical report based on dialogue descriptions, organized by themes with problem, discussion, accepted decision and protocol implications.\nContext proof: governance/runtime/curator_dispatch/BEM928_CONTEXT_READ.md\nRepo report record: governance/reports/BEM928_DIALOGUE_ANALYTICS_REPORT.md\nResult: DIALOGUE_ANALYTICS_REPORT_READY. This is not a new implementation protocol; it is an analytical report of the dialogues and decisions. It captures major topics: managing contour, object passports vs prompts, objects/elements/contours, internal contour algorithm, vertical/horizontal links, rule registry and experience registry, Telegram/ChatGPT operator fronts, existing Telegram/Deno mechanism, provider model, GitHub Actions/runners as activation/proof mechanisms, Claude requirements, proof gaps, E2E mock/production split and roadmap expectations.\nLocal operator artifacts: BEM928_dialogue_analytics_report_ru.docx and BEM928_dialogue_analytics_report_ru.zip.\nQA: DOCX rendered to 8 pages; no edge clipping detected.\nNext: operator review of BEM-928 analytical report.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem928_context_done.md",
+    "result_json": "governance/codex/results/bem928_context_done.json"
+  },
+  "created_at": "2026-05-31T06:16:54.780Z"
+}
