@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1035_receipt_template_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1035 template policy",
+  "objective": "Create file governance/proofs/external/RECEIPT_TEMPLATE_VALIDATION_POLICY.json with content {\n  \"bem_id\": \"BEM-1035\",\n  \"created_at_utc3\": \"2026-05-31 | 17:29 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Receipt template validation policy\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1034\",\n  \"latest_proof_sha\": \"80169e97d04cfd099787cf5c597bf4612276c8bf\",\n  \"policy\": {\n    \"templates_are_proof\": false,\n    \"template_only_true_blocks_release\": true,\n    \"real_receipt_must_set_template_only_false_or_omit\": true,\n    \"real_receipt_must_pass_validator\": true,\n    \"real_receipt_must_not_contain_placeholders\": true,\n    \"real_receipt_must_not_contain_secrets\": true\n  },\n  \"template_paths\": [\n    \"governance/proofs/external/telegram/telegram_receipt_template.json\",\n    \"governance/proofs/external/runtime/live_runtime_receipt_template.json\",\n    \"governance/proofs/external/claude/external_claude_audit_result_template.json\"\n  ],\n  \"next_action\": \"BEM-1036 release blocker no-pass checkpoint\"\n}\nCreate file governance/reports/BEM1035_RECEIPT_TEMPLATE_VALIDATION_POLICY.md with content BEM-1035 | RECEIPT TEMPLATE VALIDATION POLICY | 2026-05-31 | 17:29 (UTC+3)\n\nЭтап: Receipt template validation policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1034 completed with SHA `80169e97d04cfd099787cf5c597bf4612276c8bf`.\n✅ Created `governance/proofs/external/RECEIPT_TEMPLATE_VALIDATION_POLICY.json`.\n✅ Policy states templates are not proof.\n✅ Policy states `template_only=true` blocks release.\n✅ Policy requires real receipts to pass validators and contain no placeholders or secrets.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Real external receipts are not present yet.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt template validation policy — 1/1 (100%) | Policy file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1036 release blocker no-pass checkpoint | Continue without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1035 | RECEIPT TEMPLATE VALIDATION POLICY | 2026-05-31 | 17:29 (UTC+3)\n- BEM-1034 completed with SHA 80169e97d04cfd099787cf5c597bf4612276c8bf.\n- Created `governance/proofs/external/RECEIPT_TEMPLATE_VALIDATION_POLICY.json`.\n- Created `governance/reports/BEM1035_RECEIPT_TEMPLATE_VALIDATION_POLICY.md`.\n- Receipt template validation policy completed: 1/1 (100%).\n- Templates are not proof; release PASS not issued.\n- Next action: BEM-1036 release blocker no-pass checkpoint.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1035_receipt_template_policy.md",
+    "result_json": "governance/codex/results/bem1035_receipt_template_policy.json"
+  },
+  "created_at": "2026-05-31T14:30:50.721Z"
+}
