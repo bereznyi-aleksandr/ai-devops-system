@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1034_receipt_blocker_automation_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1034 blocker policy",
+  "objective": "Create file governance/gates/BEM1034_RECEIPT_BLOCKER_AUTOMATION_POLICY.json with content {\n  \"bem_id\": \"BEM-1034\",\n  \"created_at_utc3\": \"2026-05-31 | 17:14 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Receipt blocker automation policy\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"policy\": {\n    \"when_receipt_directory_empty\": \"keep_gate_blocked\",\n    \"when_receipt_present_unvalidated\": \"proof_received_pending_validation\",\n    \"when_receipt_validation_fails\": \"blocked_invalid_external_proof\",\n    \"when_receipt_validation_passes\": \"proof_validated_pending_release_decision\",\n    \"release_pass_source\": \"validate_release_decision.py only\"\n  },\n  \"applies_to\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"forbidden\": [\"self_claim_release_pass\", \"secret_value_write\", \"issue_31_write\"],\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1035 release no-pass validator policy\"\n}\nCreate file governance/reports/BEM1034_RECEIPT_BLOCKER_AUTOMATION_POLICY.md with content BEM-1034 | RECEIPT BLOCKER AUTOMATION POLICY | 2026-05-31 | 17:14 (UTC+3)\n\nЭтап: Receipt blocker automation policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1033 completed with SHA `023cdc7c6c65658cff67324d6fdd06263cc88071`.\n✅ Created `governance/gates/BEM1034_RECEIPT_BLOCKER_AUTOMATION_POLICY.json`.\n✅ Defined blocked/pending/invalid/validated states for receipt slots.\n✅ Release PASS source restricted to `validate_release_decision.py`.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Real external receipts are still absent.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt blocker automation policy — 1/1 (100%) | Policy file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1035 release no-pass validator policy | Continue blocked-state automation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1034 | RECEIPT BLOCKER AUTOMATION POLICY | 2026-05-31 | 17:14 (UTC+3)\n- BEM-1033 completed with SHA 023cdc7c6c65658cff67324d6fdd06263cc88071.\n- Created `governance/gates/BEM1034_RECEIPT_BLOCKER_AUTOMATION_POLICY.json`.\n- Created `governance/reports/BEM1034_RECEIPT_BLOCKER_AUTOMATION_POLICY.md`.\n- Receipt blocker automation policy completed: 1/1 (100%).\n- Release PASS not issued; real external receipts remain missing.\n- Next action: BEM-1035 release no-pass validator policy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1034_receipt_blocker_automation_policy.md",
+    "result_json": "governance/codex/results/bem1034_receipt_blocker_automation_policy.json"
+  },
+  "created_at": "2026-05-31T14:16:10.231Z"
+}
