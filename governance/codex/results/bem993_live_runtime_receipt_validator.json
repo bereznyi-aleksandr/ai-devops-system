@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem993_live_runtime_receipt_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_live_runtime_receipt.py",
+    "create:governance/tests/fixtures/live_runtime_receipt_sample.json",
+    "create:governance/reports/BEM993_LIVE_RUNTIME_RECEIPT_VALIDATOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_live_runtime_receipt.py",
+    "governance/tests/fixtures/live_runtime_receipt_sample.json",
+    "governance/reports/BEM993_LIVE_RUNTIME_RECEIPT_VALIDATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem993_live_runtime_receipt_validator.txt"
+  ],
+  "commit_sha": "87a3032f0b33be73be5a35b6428813f79db3f263",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem993_live_runtime_receipt_validator.md",
+  "completed_at": "2026-05-31T13:03:16Z"
+}

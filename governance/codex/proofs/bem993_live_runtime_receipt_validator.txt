@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem993_live_runtime_receipt_validator
+task_type: code_patch
+executed_at: 2026-05-31T13:03:16Z
+ops_applied: create:governance/validators/validate_live_runtime_receipt.py, create:governance/tests/fixtures/live_runtime_receipt_sample.json, create:governance/reports/BEM993_LIVE_RUNTIME_RECEIPT_VALIDATOR.md, append:governance/AGENT_CONTEXT.md
+changed_files: governance/validators/validate_live_runtime_receipt.py, governance/tests/fixtures/live_runtime_receipt_sample.json, governance/reports/BEM993_LIVE_RUNTIME_RECEIPT_VALIDATOR.md, governance/AGENT_CONTEXT.md
+errors: none
