@@ -370,7 +370,7 @@ jobs:
 
           task_found  = os.environ.get('TASK_FOUND',  'false') == 'true'
           exec_status = os.environ.get('EXEC_STATUS', 'blocked')
-          commit_sha  = os.environ.get('COMMIT_SHA',  '')
+          commit_sha = os.environ.get('COMMIT_SHA', '') or os.environ.get('GITHUB_SHA', '')
           changed_raw = os.environ.get('CHANGED_FILES', '')
           ops_raw     = os.environ.get('OPS_APPLIED', '')
           exec_errors = os.environ.get('EXEC_ERRORS', '')

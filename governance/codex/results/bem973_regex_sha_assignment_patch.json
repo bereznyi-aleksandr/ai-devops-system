@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem973_regex_sha_assignment_patch",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "bem973_regex_sha_assignment_patch",
+    "custom_script",
+    "create:governance/reports/BEM973_REGEX_SHA_ASSIGNMENT_PATCH.md"
+  ],
+  "changed_files": [
+    ".github/workflows/codex-runner.yml",
+    "governance/reports/BEM973_REGEX_SHA_ASSIGNMENT_PATCH_DIAG.txt",
+    "governance/reports/BEM973_REGEX_SHA_ASSIGNMENT_PATCH.md",
+    "governance/codex/proofs/bem973_regex_sha_assignment_patch.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem973_regex_sha_assignment_patch.md",
+  "completed_at": "2026-05-31T12:17:27Z"
+}
