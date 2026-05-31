@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem942_block_k_gates",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-942 Block K operator gates artifacts created",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/gates/production_operator_gate.json",
+    "governance/gates/secret_names.md",
+    "governance/gates/issue31_write_policy.md",
+    "governance/gates/schedule_daemon_gate.md",
+    "governance/gates/telegram_production_gate.md",
+    "governance/gates/llm_runtime_gate.md",
+    "governance/validators/validate_block_k_gates.py",
+    "governance/reports/BEM942_BLOCK_K_GATES_PASS.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem942_block_k_gates.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem942_block_k_gates.md",
+  "completed_at": "2026-05-31T09:33:03Z"
+}

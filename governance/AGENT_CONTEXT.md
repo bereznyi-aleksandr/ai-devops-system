@@ -388,3 +388,11 @@ Created E2E mock test files, provider failover E2E, managed channel E2E, canonic
 Result: BLOCK_J_E2E_FOUNDATION_PASS. This is not production PASS.
 Next: Block K operator gates and production gate records.
 No issue comments.
+
+
+## BEM-942 completed | 2026-05-31
+Implemented Block K operator gates after BEM-941.
+Created production_operator_gate, secret_names, issue31 write policy, schedule/daemon gate, Telegram production gate, live LLM runtime gate and validator.
+Result: BLOCK_K_OPERATOR_GATES_PASS. Operator approvals are still required for production actions.
+Next: Block L Claude re-audit checklist, evidence index and audit bundle baseline.
+No issue comments.

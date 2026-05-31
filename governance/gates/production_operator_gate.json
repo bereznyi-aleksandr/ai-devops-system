@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "status": "OPERATOR_REQUIRED",
+  "purpose": "Production actions that require operator approval.",
+  "gates": [
+    {"id":"telegram_production_webhook", "status":"operator_required", "reason":"Real webhook/secrets affect production channel."},
+    {"id":"schedule_or_daemon", "status":"operator_required", "reason":"Persistent automation requires explicit approval."},
+    {"id":"paid_api_or_live_llm_runtime", "status":"operator_required", "reason":"Paid or external provider runtime cannot be enabled autonomously."},
+    {"id":"issue31_write", "status":"operator_required", "reason":"Contract forbids issue #31 writes without permission."},
+    {"id":"real_pilot", "status":"operator_required", "reason":"Real client/pilot scope must be chosen by operator."}
+  ]
+}
