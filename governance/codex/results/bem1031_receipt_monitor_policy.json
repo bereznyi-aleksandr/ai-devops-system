@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1031_receipt_monitor_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/RECEIPT_MONITOR_POLICY.json",
+    "create:governance/reports/BEM1031_RECEIPT_MONITOR_POLICY.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/RECEIPT_MONITOR_POLICY.json",
+    "governance/reports/BEM1031_RECEIPT_MONITOR_POLICY.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1031_receipt_monitor_policy.txt"
+  ],
+  "commit_sha": "aecf7243869f9fd88fa586317159b6ca2eb2f5c4",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1031_receipt_monitor_policy.md",
+  "completed_at": "2026-05-31T14:24:16Z"
+}
