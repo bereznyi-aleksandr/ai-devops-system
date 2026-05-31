@@ -461,3 +461,5 @@ No issue comments.
 - Claude re-audit preparation stage completed: 3/3 (100%)
 ### BEM-979 | PRODUCTION GATES REGISTER | 2026-05-31 | 15:25 (UTC+3)
 -
+### BEM-980 | REPORT CANON CORRECTION | 2026-05-31 | 15:27 (UTC+3)
+- Corrected report canon after operator objection
