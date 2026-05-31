@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem974_sha_non_null_after_regex_patch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-974 SHA verify",
+  "objective": "Create file governance/reports/BEM974_SHA_NON_NULL_AFTER_REGEX_PATCH.md with content BEM-974 | SHA NON-NULL AFTER REGEX PATCH | 2026-05-31 | 15:17 (UTC+3)\n\nЭтап: 24/25 (96%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: remote SHA verification in progress, other gates 0/3\n\nЧек-лист:\n✅ Probe after BEM-973 regex patch replace_count=1.\n⚠️ Success criterion: Deno getCodexStatus commit_sha non-null.\n⚠️ Non-null SHA closes only null-SHA reporting defect, not production Telegram/live LLM/Claude audit gates.\n❌ No release PASS.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Patch proof | BEM-973 diagnostic replace_count=1 | workflow result writer changed |\n| Probe | This create-file task | should use patched workflow |\n| Следующее действие | BEM-975 canonical report and AGENT_CONTEXT update | record verified result |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem974_sha_non_null_after_regex_patch.md",
+    "result_json": "governance/codex/results/bem974_sha_non_null_after_regex_patch.json"
+  },
+  "created_at": "2026-05-31T12:18:48.148Z"
+}
