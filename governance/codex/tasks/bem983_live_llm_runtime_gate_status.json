@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem983_live_llm_runtime_gate_status",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-983 live LLM gate",
+  "objective": "Create file governance/gates/BEM983_LIVE_LLM_RUNTIME_GATE_STATUS.json with content {\n  \"bem_id\": \"BEM-983\",\n  \"created_at_utc3\": \"2026-05-31 | 15:43 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Live LLM runtime gate tracking\", \"completed\": 1, \"total\": 2, \"percent\": 50},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"live_llm_runtime_gate\": {\n    \"status\": \"blocked\",\n    \"reason\": \"approved live runtime execution proof not present\",\n    \"paid_api_used\": false,\n    \"codex_cli_used\": false,\n    \"openai_api_key_required_in_files\": false,\n    \"secrets_written\": false,\n    \"allowed_proof\": \"operator-approved runtime receipt or mock-only proof without paid API\"\n  },\n  \"release_pass\": false,\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-984 create external Claude re-audit pending status and evidence index\"\n}\nCreate file governance/reports/BEM983_LIVE_LLM_RUNTIME_GATE_STATUS.md with content BEM-983 | LIVE LLM RUNTIME GATE STATUS | 2026-05-31 | 15:43 (UTC+3)\n\nЭтап: Live LLM runtime gate tracking — 1/2 (50%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created `governance/gates/BEM983_LIVE_LLM_RUNTIME_GATE_STATUS.json`.\n✅ Live LLM runtime gate is tracked as blocked until approved runtime proof exists.\n✅ No paid API, Codex CLI, OpenAI API key, token or secret value was used or written.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Live LLM runtime gate tracking — 1/2 (50%) | Gate status file created; runtime proof still absent |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Live LLM runtime | blocked | No approved runtime receipt exists |\n| Следующее действие | BEM-984 create external Claude re-audit pending status and evidence index | Next blocker must be tracked with evidence |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-983 | LIVE LLM RUNTIME GATE STATUS | 2026-05-31 | 15:43 (UTC+3)\n- Created `governance/gates/BEM983_LIVE_LLM_RUNTIME_GATE_STATUS.json`.\n- Created `governance/reports/BEM983_LIVE_LLM_RUNTIME_GATE_STATUS.md`.\n- Live LLM runtime gate tracking stage: 1/2 (50%).\n- No paid API, Codex CLI, OpenAI API key, token or secret value was used or written.\n- Release status remains NO_RELEASE_PASS. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-984 create external Claude re-audit pending status and evidence index.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem983_live_llm_runtime_gate_status.md",
+    "result_json": "governance/codex/results/bem983_live_llm_runtime_gate_status.json"
+  },
+  "created_at": "2026-05-31T12:45:00.474Z"
+}
