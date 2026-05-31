@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1005_claude_audit_result_intake_schema",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.json",
+    "create:governance/reports/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.json",
+    "governance/reports/BEM1005_EXTERNAL_CLAUDE_AUDIT_RESULT_INTAKE_SCHEMA.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1005_claude_audit_result_intake_schema.txt"
+  ],
+  "commit_sha": "626483b1127c150c21cf4c9ab5b0157e69daf18c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1005_claude_audit_result_intake_schema.md",
+  "completed_at": "2026-05-31T13:23:15Z"
+}
