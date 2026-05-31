@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1148_contour_lifecycle_runner_skeleton",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1148 lifecycle runner",
+  "objective": "Create file governance/runners/contour_lifecycle_runner.py with content import json\nfrom pathlib import Path\n\nSCHEMA_PATH = Path(\"governance/contours/contour_lifecycle_schema.json\")\n\n\ndef load_schema():\n    return json.loads(SCHEMA_PATH.read_text(encoding=\"utf-8\"))\n\n\ndef allowed_transition(current_state, next_state):\n    schema = load_schema()\n    transitions = {tuple(item) for item in schema.get(\"required_transitions\", [])}\n    return (current_state, next_state) in transitions\n\n\ndef advance(state_doc, next_state, proof=None):\n    current = state_doc.get(\"state\")\n    if not allowed_transition(current, next_state):\n        return {\"ok\": False, \"error\": f\"transition not allowed: {current}->{next_state}\"}\n    if next_state == \"completed\" and not proof:\n        return {\"ok\": False, \"error\": \"proof required for completed\"}\n    updated = dict(state_doc)\n    updated[\"state\"] = next_state\n    if proof:\n        updated[\"proof\"] = proof\n    return {\"ok\": True, \"state\": updated}\n\nif __name__ == \"__main__\":\n    import sys\n    if len(sys.argv) != 4:\n        print(\"usage: contour_lifecycle_runner.py <state.json> <next_state> <proof_or_dash>\")\n        raise SystemExit(2)\n    state = json.loads(Path(sys.argv[1]).read_text(encoding=\"utf-8\"))\n    proof = None if sys.argv[3] == \"-\" else sys.argv[3]\n    result = advance(state, sys.argv[2], proof)\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1148_CONTOUR_LIFECYCLE_RUNNER_SKELETON.md with content BEM-1148 | CONTOUR LIFECYCLE RUNNER SKELETON | 2026-05-31 | 22:10 (UTC+3)\n\nЭтап: Contour lifecycle runner skeleton — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1147 completed with SHA `2f2d6781700a4bf321f9c7a4be962339a20fdf41`.\n✅ Created `governance/runners/contour_lifecycle_runner.py`.\n✅ Runner enforces lifecycle transitions.\n✅ Runner requires proof before completed state.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Contour lifecycle runner skeleton — 1/1 (100%) | Key contour runner implemented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1149 implement object_lifecycle_runner skeleton | Continue real protocol implementation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1148 | CONTOUR LIFECYCLE RUNNER SKELETON | 2026-05-31 | 22:10 (UTC+3)\n- BEM-1147 completed with SHA 2f2d6781700a4bf321f9c7a4be962339a20fdf41.\n- Created contour lifecycle runner skeleton.\n- Release PASS not issued.\n- Next action: BEM-1149 implement object_lifecycle_runner skeleton.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1148_contour_lifecycle_runner_skeleton.md",
+    "result_json": "governance/codex/results/bem1148_contour_lifecycle_runner_skeleton.json"
+  },
+  "created_at": "2026-05-31T19:11:40.965Z"
+}
