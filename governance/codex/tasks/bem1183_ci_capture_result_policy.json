@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1183_ci_capture_result_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1183 capture policy",
+  "objective": "Create file governance/runtime/BEM1183_CI_CAPTURE_RESULT_POLICY.json with content {\"bem_id\":\"BEM-1183\",\"created_at_utc3\":\"2026-05-31 | 23:06 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"CI capture result policy\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1182\",\"latest_proof_sha\":\"cc6417bf36d12c6ec762ba393187dcaee33a6d72\",\"policy\":{\"capture_result_file\":\"governance/runtime/BEM1182_CI_EXECUTION_CAPTURE_RESULT.json\",\"can_confirm\":\"repo-level deterministic validators and mock flows\",\"cannot_confirm\":[\"production Telegram\",\"live LLM runtime\",\"external Claude re-audit\",\"Release PASS\"]},\"next_action\":\"BEM-1184 post-ci-capture roadmap seed\"}\nCreate file governance/reports/BEM1183_CI_CAPTURE_RESULT_POLICY.md with content BEM-1183 | CI CAPTURE RESULT POLICY | 2026-05-31 | 23:06 (UTC+3)\n\nЭтап: CI capture result policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1182 completed with SHA `cc6417bf36d12c6ec762ba393187dcaee33a6d72`.\n✅ Created `governance/runtime/BEM1183_CI_CAPTURE_RESULT_POLICY.json`.\n✅ Policy separates deterministic repo checks from production/external proof.\n⚠️ CI capture cannot confirm production Telegram/live LLM/external Claude.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | CI capture result policy — 1/1 (100%) | Capture policy created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1184 post-ci-capture roadmap seed | Continue without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1183 | CI CAPTURE RESULT POLICY | 2026-05-31 | 23:06 (UTC+3)\n- BEM-1182 completed with SHA cc6417bf36d12c6ec762ba393187dcaee33a6d72.\n- Created CI capture result policy.\n- Release PASS not issued.\n- Next action: BEM-1184 post-ci-capture roadmap seed.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1183_ci_capture_result_policy.md",
+    "result_json": "governance/codex/results/bem1183_ci_capture_result_policy.json"
+  },
+  "created_at": "2026-05-31T20:07:53.312Z"
+}
