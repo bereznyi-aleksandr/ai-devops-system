@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem955_append_agent_context",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-955 append agent context",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n### BEM-955 | AGENT CONTEXT UPDATE AFTER EXECUTOR PROBE | 2026-05-31 | 13:23 (UTC+3)\n- BEM-948: Claude remarks response task completed in runner, but commit_sha=null.\n- BEM-949: remote SHA/artifact gate task completed in runner, but commit_sha=null.\n- BEM-950: force evidence task completed in runner, but commit_sha=null.\n- BEM-951: executor path repair diagnosis task completed in runner, but commit_sha=null.\n- BEM-952: minimal Create file probe proved simple executor pattern creates requested changed_files, but commit_sha remains null.\n- BEM-953: canonical report created at governance/reports/BEM953_CANONICAL_STATUS_AFTER_PROBE.md, but commit_sha remains null.\n- BEM-954: machine status JSON created at governance/state/bem954_status_json_after_probe.json, but commit_sha remains null.\n- Current stage count: 6/7 executor/proof repair tasks completed; release gates 0/4.\n- BEM-931 foundation count remains 14/14, but release PASS is NOT issued.\n- Active blockers: remote_non_null_sha, production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-956 repair result commit_sha reporting/push proof path using the confirmed simple executor pattern; no issue comments; no release PASS.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem955_append_agent_context.md",
+    "result_json": "governance/codex/results/bem955_append_agent_context.json"
+  },
+  "created_at": "2026-05-31T10:25:02.328Z"
+}
