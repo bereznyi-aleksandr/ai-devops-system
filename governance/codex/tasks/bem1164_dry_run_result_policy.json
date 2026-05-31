@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1164_dry_run_result_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1164 dry-run policy",
+  "objective": "Create file governance/runtime/BEM1164_DRY_RUN_RESULT_POLICY.json with content {\"bem_id\":\"BEM-1164\",\"created_at_utc3\":\"2026-05-31 | 22:33 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Dry-run result policy\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1163\",\"latest_proof_sha\":\"9198035af1644191d76140cfddbc7bd478519b69\",\"policy\":{\"dry_run_can_confirm\":\"validator_and_mock_e2e_consistency\",\"dry_run_cannot_confirm\":[\"production_telegram\",\"live_llm_runtime\",\"external_claude_reaudit\",\"release_pass\"],\"result_file\":\"governance/runtime/BEM1163_DRY_RUN_EXECUTION_RECORD.json\"},\"next_action\":\"BEM-1165 create post-dry-run continuity queue\"}\nCreate file governance/reports/BEM1164_DRY_RUN_RESULT_POLICY.md with content BEM-1164 | DRY-RUN RESULT POLICY | 2026-05-31 | 22:33 (UTC+3)\n\nЭтап: Dry-run result policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1163 completed with SHA `9198035af1644191d76140cfddbc7bd478519b69`.\n✅ Created `governance/runtime/BEM1164_DRY_RUN_RESULT_POLICY.json`.\n✅ Policy separates dry-run consistency from release proof.\n⚠️ Dry-run cannot close production Telegram/runtime/Claude blockers.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Dry-run result policy — 1/1 (100%) | Dry-run proof boundary created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1165 create post-dry-run continuity queue | Continue without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1164 | DRY-RUN RESULT POLICY | 2026-05-31 | 22:33 (UTC+3)\n- BEM-1163 completed with SHA 9198035af1644191d76140cfddbc7bd478519b69.\n- Created dry-run result policy.\n- Release PASS not issued.\n- Next action: BEM-1165 create post-dry-run continuity queue.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1164_dry_run_result_policy.md",
+    "result_json": "governance/codex/results/bem1164_dry_run_result_policy.json"
+  },
+  "created_at": "2026-05-31T19:34:29.453Z"
+}
