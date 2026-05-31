@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem931_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-931 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-931 completed | 2026-05-31\nPrepared final implementation protocol with maximum-detail roadmap based on BEM-930 unified detailed analytics report.\nContext proof: governance/runtime/curator_dispatch/BEM931_CONTEXT_READ.md\nRepo protocol record: governance/reports/BEM931_FINAL_IMPLEMENTATION_PROTOCOL.md\nResult: FINAL_IMPLEMENTATION_PROTOCOL_DRAFT_READY. Document includes mandatory protocol basis, target working state, current gap diagnosis, entities to create, registry/schema file list, full link matrix, internal contour algorithm, prompt pack and contracts without object prompts, provider model, maximum-detail implementation roadmap, Claude requirements mapping, Definition of Done and release criteria, and final protocol quality checklist. Roadmap includes 14 implementation blocks and 103 detailed substeps. Each substep includes action, artifact/file, check, proof and gate.\nLocal operator artifacts: BEM931_final_implementation_protocol_ru.docx and BEM931_final_implementation_protocol_ru.zip.\nQA: DOCX rendered to 5 pages; no edge clipping detected.\nNext: operator review of BEM-931 final implementation protocol.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem931_context_done.md",
+    "result_json": "governance/codex/results/bem931_context_done.json"
+  },
+  "created_at": "2026-05-31T07:23:47.401Z"
+}
