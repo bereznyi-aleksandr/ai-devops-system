@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1115_missing_external_proof_wait_pointer",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/MISSING_EXTERNAL_PROOF_WAIT_STATE_POINTER.json",
+    "create:governance/reports/BEM1115_MISSING_EXTERNAL_PROOF_WAIT_STATE_POINTER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/MISSING_EXTERNAL_PROOF_WAIT_STATE_POINTER.json",
+    "governance/reports/BEM1115_MISSING_EXTERNAL_PROOF_WAIT_STATE_POINTER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1115_missing_external_proof_wait_pointer.txt"
+  ],
+  "commit_sha": "064ea6df34acd1632b1f97bacee079eae83d1961",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1115_missing_external_proof_wait_pointer.md",
+  "completed_at": "2026-05-31T18:00:05Z"
+}
