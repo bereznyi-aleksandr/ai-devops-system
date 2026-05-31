@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1182_ci_capture_runner",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runtime/ci_execution_capture_runner.py",
+    "create:governance/reports/BEM1182_CI_CAPTURE_RUNNER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runtime/ci_execution_capture_runner.py",
+    "governance/reports/BEM1182_CI_CAPTURE_RUNNER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1182_ci_capture_runner.txt"
+  ],
+  "commit_sha": "cc6417bf36d12c6ec762ba393187dcaee33a6d72",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1182_ci_capture_runner.md",
+  "completed_at": "2026-05-31T20:06:42Z"
+}
