@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1069_placeholder_rejection_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/PLACEHOLDER_REJECTION_POLICY.json",
+    "create:governance/reports/BEM1069_VALIDATOR_PLACEHOLDER_REJECTION_POLICY.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/PLACEHOLDER_REJECTION_POLICY.json",
+    "governance/reports/BEM1069_VALIDATOR_PLACEHOLDER_REJECTION_POLICY.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1069_placeholder_rejection_policy.txt"
+  ],
+  "commit_sha": "a9ad07d97a09d725241d620bcac1c86ea26956ba",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1069_placeholder_rejection_policy.md",
+  "completed_at": "2026-05-31T15:30:19Z"
+}
