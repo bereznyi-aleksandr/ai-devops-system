@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem930_report_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-930 unified analytics",
+  "objective": "Create file governance/reports/BEM930_UNIFIED_DETAILED_ANALYTICS_REPORT.md with content # BEM-930 UNIFIED DETAILED ANALYTICS REPORT\nStatus: UNIFIED_DETAILED_ANALYTICS_REPORT_READY\nDate: 2026-05-31\nPurpose: unified overall analytics report with both high-level overview and detailed layers, after operator clarified that BEM-929 was too high-level and that a single complete report was required.\nCorrection applied:\n- This is one unified overall report, not an appendix and not a separate detail addendum.\n- The report includes both summary and detailed analysis.\n- It captures decisions, links, prompts/contracts, object passports, provider model, registries, roadmap and quality checklist.\nKey included sections:\n- Executive summary.\n- Mistakes of previous versions and mandatory corrections.\n- Chronological map of thematic dialogues.\n- Object passport structure for GD/DIR/WRK; no object prompts.\n- Elements, roles and rule inheritance.\n- Full link matrix: operator input, curator-to-curator vertical links, curator-to-analyst input, analyst-to-auditor proposal, auditor-to-executor approval, executor-to-auditor result, auditor-to-curator output, auditor A to analyst B horizontal transfer, runner activation and failover.\n- Internal contour algorithm details.\n- LLM role prompts and provider/handler contracts.\n- Provider model and required registries.\n- Detailed roadmap derived from decisions.\n- Final protocol QA checklist.\nMajor decisions preserved:\n- Objects have passports, not prompts.\n- Workspace belongs to internal contour.\n- Curator is object-level element.\n- Internal contour algorithm is Analyst -> Auditor -> Executor -> Auditor with revision through Analyst.\n- Vertical link is Curator -> Curator.\n- Horizontal link is Auditor A -> Analyst B.\n- Provider model: GPT Analyst, Claude Auditor, Claude Executor, fallback GPT-Codex/Codex.\n- Telegram is operator front, not system center.\n- Claude requirements are release blockers.\nLocal operator artifacts:\n- BEM930_unified_detailed_analytics_report_ru.docx\n- BEM930_unified_detailed_analytics_report_ru.zip\nQA: DOCX rendered to 5 pages; no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem930_report_record.md",
+    "result_json": "governance/codex/results/bem930_report_record.json"
+  },
+  "created_at": "2026-05-31T07:05:55.769Z"
+}
