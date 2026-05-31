@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1023_proof_intake_checklist",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1023 proof checklist",
+  "objective": "Create file governance/proofs/external/PROOF_INTAKE_CHECKLIST.md with content # BEM-1023 | Proof intake checklist\n\nCreated: 2026-05-31 | 16:58 (UTC+3)\n\n## Stage\nЭтап: Proof intake checklist — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n## Checklist\n\n✅ Receipt must have a schema reference.\n✅ Receipt must have a validator reference.\n✅ Receipt must not contain secret values, tokens, API keys, PATs or raw credentials.\n✅ Receipt must not rely on issue #31 writes.\n✅ Receipt must not self-claim Release PASS.\n✅ Release decision must pass `governance/validators/validate_release_decision.py`.\n⚠️ Missing external receipt keeps the corresponding gate blocked.\n❌ Release PASS is not issued by this checklist.\n\n## Intake table\n\n| Proof type | Directory | Validator | Required before release |\n|---|---|---|---|\n| Production Telegram receipt | `governance/proofs/external/telegram/` | `governance/validators/validate_telegram_production_receipt.py` | Yes |\n| Live runtime receipt | `governance/proofs/external/runtime/` | `governance/validators/validate_live_runtime_receipt.py` | Yes |\n| External Claude audit result | `governance/proofs/external/claude/` | `governance/validators/validate_external_claude_audit_result.py` | Yes |\n\nNo issue comments.\nCreate file governance/reports/BEM1023_PROOF_INTAKE_CHECKLIST.md with content BEM-1023 | PROOF INTAKE CHECKLIST | 2026-05-31 | 16:58 (UTC+3)\n\nЭтап: Proof intake checklist — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1022 completed with SHA `489afba8cda29cbfdd2c0273d97ff5934e8543cc`.\n✅ Created `governance/proofs/external/PROOF_INTAKE_CHECKLIST.md`.\n✅ Checklist requires schema, validator and no secrets.\n✅ Checklist forbids issue #31 writes and self-claim Release PASS.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Checklist is not real external receipt proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Proof intake checklist — 1/1 (100%) | Checklist created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1024 no-pass release decision refresh | Refresh decision after proof intake hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1023 | PROOF INTAKE CHECKLIST | 2026-05-31 | 16:58 (UTC+3)\n- BEM-1022 completed with SHA 489afba8cda29cbfdd2c0273d97ff5934e8543cc.\n- Created `governance/proofs/external/PROOF_INTAKE_CHECKLIST.md`.\n- Created `governance/reports/BEM1023_PROOF_INTAKE_CHECKLIST.md`.\n- Proof intake checklist completed: 1/1 (100%).\n- Release PASS not issued.\n- Next action: BEM-1024 no-pass release decision refresh.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1023_proof_intake_checklist.md",
+    "result_json": "governance/codex/results/bem1023_proof_intake_checklist.json"
+  },
+  "created_at": "2026-05-31T13:59:59.481Z"
+}
