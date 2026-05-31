@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem990_audit_mailbox_status",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/BEM990_AUDIT_MAILBOX_STATUS.json",
+    "create:governance/reports/BEM990_AUDIT_MAILBOX_STATUS.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/BEM990_AUDIT_MAILBOX_STATUS.json",
+    "governance/reports/BEM990_AUDIT_MAILBOX_STATUS.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem990_audit_mailbox_status.txt"
+  ],
+  "commit_sha": "ce4c74a7c69bde42b5066b9cd61f59efe1619f14",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem990_audit_mailbox_status.md",
+  "completed_at": "2026-05-31T12:57:30Z"
+}
