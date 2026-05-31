@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem930_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-930 unified protocol",
+  "objective": "Create file governance/reports/BEM930_UNIFIED_WORKING_SYSTEM_PROTOCOL_FULL_DETAIL.md with content # BEM-930 UNIFIED WORKING SYSTEM PROTOCOL FULL DETAIL\nStatus: FINAL_UNIFIED_WORKING_SYSTEM_PROTOCOL_WITH_FULL_DETAIL_READY\nDate: 2026-05-31\nPurpose: unified general protocol with both high-level architecture and full detail, after operator clarified that an appendix/report is insufficient.\nCorrection applied:\n- This is not a separate appendix and not an analytical-only report.\n- This is a single common protocol with full detail.\n- It includes top-level architecture and detailed implementation sections.\n- Objects GD/DIR/WRK have passports, rules, functions, curators, contours, channels and DoD; they do not have prompts.\n- Prompts exist only for LLM-executed roles, providers and operational handlers.\nIncluded sections:\n- Corrected mistakes from previous protocols.\n- Definition of working state.\n- Object passports for GD/DIR/WRK.\n- Elements and rule inheritance.\n- Internal contours, static/dynamic/temporary testing and workspaces.\n- Full connection matrix: vertical curator-to-curator links, internal contour links, horizontal contour-to-contour links, runner/provider/proof links.\n- Internal contour state machine: Curator -> Analyst -> Auditor -> Executor -> Auditor -> Curator with revision through Analyst.\n- Provider model: GPT Analyst, Claude Auditor, Claude Executor, fallback GPT-Codex/Codex.\n- Rules, experience and LLM role prompts.\n- Prompt pack and operational contracts: curator, analyst, auditor, executor, GPT analyst provider, Claude auditor, Claude executor, Codex fallback, Telegram handler, dispatch consumer, managed channel consumer, report generator.\n- Telegram, ChatGPT and existing Deno/GitHub mechanisms.\n- SSOT registries and schemas.\n- Claude requirements as release blockers.\n- Detailed roadmap steps 1.1..8.2 with files, acceptance criteria, proof and gates.\n- Operator gates and release criteria.\n- QA matrix of things not to lose.\nLocal operator artifacts:\n- BEM930_unified_working_system_protocol_full_detail_ru.docx\n- BEM930_unified_working_system_protocol_full_detail_ru.zip\nQA: DOCX rendered to 6 pages; no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem930_protocol_record.md",
+    "result_json": "governance/codex/results/bem930_protocol_record.json"
+  },
+  "created_at": "2026-05-31T06:56:19.195Z"
+}
