@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1004_live_runtime_proof_placeholder_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1004 runtime policy",
+  "objective": "Create file governance/gates/BEM1004_LIVE_RUNTIME_PROOF_PLACEHOLDER_POLICY.json with content {\n  \"bem_id\": \"BEM-1004\",\n  \"created_at_utc3\": \"2026-05-31 | 16:20 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Live runtime proof placeholder policy\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"live_llm_runtime_gate\": {\n    \"status\": \"blocked\",\n    \"required_approved_receipt\": true,\n    \"accepted_receipt_schema\": \"governance/gates/BEM988_LIVE_RUNTIME_PROOF_ENVELOPE_SCHEMA.json\",\n    \"validator\": \"governance/validators/validate_live_runtime_receipt.py\",\n    \"self_claim_forbidden\": true,\n    \"paid_api_forbidden_without_operator_gate\": true,\n    \"codex_cli_forbidden\": true,\n    \"secret_values_forbidden\": true\n  },\n  \"remaining_blockers\": [\"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1005 external Claude audit result intake schema\"\n}\nCreate file governance/reports/BEM1004_LIVE_RUNTIME_PROOF_PLACEHOLDER_POLICY.md with content BEM-1004 | LIVE RUNTIME PROOF PLACEHOLDER POLICY | 2026-05-31 | 16:20 (UTC+3)\n\nЭтап: Live runtime proof placeholder policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created `governance/gates/BEM1004_LIVE_RUNTIME_PROOF_PLACEHOLDER_POLICY.json`.\n✅ Required approved live runtime receipt is explicit.\n✅ Self-claim, paid API without operator gate, Codex CLI and secret values are forbidden.\n✅ Linked schema and validator for live runtime proof.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ live_llm_runtime_gate remains blocked until real approved runtime receipt exists.\n⚠️ external_claude_reaudit remains blocker.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Live runtime proof placeholder policy — 1/1 (100%) | Policy file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1005 external Claude audit result intake schema | Continue post-foundation queue |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1004 | LIVE RUNTIME PROOF PLACEHOLDER POLICY | 2026-05-31 | 16:20 (UTC+3)\n- Created `governance/gates/BEM1004_LIVE_RUNTIME_PROOF_PLACEHOLDER_POLICY.json`.\n- Created `governance/reports/BEM1004_LIVE_RUNTIME_PROOF_PLACEHOLDER_POLICY.md`.\n- Live runtime proof placeholder policy completed: 1/1 (100%).\n- Self-claim, paid API without operator gate, Codex CLI and secret values are forbidden.\n- Release PASS not issued. Remaining blockers: live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-1005 external Claude audit result intake schema.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1004_live_runtime_proof_placeholder_policy.md",
+    "result_json": "governance/codex/results/bem1004_live_runtime_proof_placeholder_policy.json"
+  },
+  "created_at": "2026-05-31T13:21:26.125Z"
+}
