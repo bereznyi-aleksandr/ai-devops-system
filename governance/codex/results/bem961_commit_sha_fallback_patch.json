@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem961_commit_sha_fallback_patch",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [
+    "create:governance/reports/BEM961_COMMIT_SHA_FALLBACK_PATCH.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM961_COMMIT_SHA_FALLBACK_PATCH.md",
+    "governance/codex/proofs/bem961_commit_sha_fallback_patch.txt"
+  ],
+  "commit_sha": null,
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'Exception' is not defined"
+  },
+  "report_path": "governance/codex/results/bem961_commit_sha_fallback_patch.md",
+  "completed_at": "2026-05-31T11:58:18Z"
+}
