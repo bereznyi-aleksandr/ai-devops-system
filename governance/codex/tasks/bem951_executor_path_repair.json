@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem951_executor_path_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-951 executor path repair",
+  "objective": "BEM-951 | Repair codex-runner executor path. Diagnose why BEM-948, BEM-949 and BEM-950 completed with changed_files only governance/codex/proofs/*.txt and commit_sha=null despite code_patch objectives requesting repository files. Inspect .github/workflows/codex-runner.yml and governance/codex/PYTHON_EXECUTOR_GUIDE.md. Create governance/reports/BEM951_EXECUTOR_PATH_REPAIR.md documenting root cause and exact patch. If safe, patch codex-runner.yml so Python executor Run script tasks can create requested repository files, git add all changed governance files, commit, safe push, and write non-null commit_sha to governance/codex/results/<trace_id>.json. Add or update a minimal selftest task/report path if existing conventions support it. Never write issue #31. No schedule triggers. No secrets. No release PASS. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem951_executor_path_repair.md",
+    "result_json": "governance/codex/results/bem951_executor_path_repair.json"
+  },
+  "created_at": "2026-05-31T10:18:43.434Z"
+}
