@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1030_receipt_directory_scanner",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1030 receipt scanner",
+  "objective": "Create file governance/validators/scan_external_receipt_directories.py with content import json\nfrom pathlib import Path\n\nRECEIPT_DIRS = {\n    \"production_telegram_gate\": Path(\"governance/proofs/external/telegram\"),\n    \"live_llm_runtime_gate\": Path(\"governance/proofs/external/runtime\"),\n    \"external_claude_reaudit\": Path(\"governance/proofs/external/claude\"),\n}\nIGNORED_NAMES = {\".gitkeep\", \"README.md\"}\nFORBIDDEN_PATTERNS = [\"token\", \"secret\", \"api_key\", \"pat\", \"raw_credentials\"]\n\n\ndef scan():\n    slots = []\n    for gate, directory in RECEIPT_DIRS.items():\n        files = []\n        if directory.exists():\n            for path in sorted(directory.iterdir()):\n                if path.name in IGNORED_NAMES:\n                    continue\n                files.append(str(path))\n        status = \"receipt_present_pending_validation\" if files else \"blocked_missing_real_receipt\"\n        slots.append({\"gate\": gate, \"directory\": str(directory), \"status\": status, \"files\": files})\n    return {\"ok\": True, \"slots\": slots, \"forbidden_patterns\": FORBIDDEN_PATTERNS}\n\n\ndef main():\n    out = Path(\"governance/reports/BEM1030_EXTERNAL_RECEIPT_DIRECTORY_SCAN_RESULT.json\")\n    out.parent.mkdir(parents=True, exist_ok=True)\n    out.write_text(json.dumps(scan(), ensure_ascii=False, indent=2) + \"\\n\", encoding=\"utf-8\")\n    return 0\n\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/reports/BEM1030_RECEIPT_DIRECTORY_SCANNER.md with content BEM-1030 | RECEIPT DIRECTORY SCANNER SKELETON | 2026-05-31 | 17:08 (UTC+3)\n\nЭтап: Receipt directory scanner skeleton — 1/2 (50%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1029 completed with SHA `40750e77c6b99ce38b996acd1c057ded1e5b909f`.\n✅ Created `governance/validators/scan_external_receipt_directories.py`.\n✅ Scanner lists external receipt directories without using secrets.\n✅ Scanner ignores `.gitkeep` and README placeholders.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Scanner creation is not real external receipt proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt directory scanner skeleton — 1/2 (50%) | Scanner file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1031 receipt scanner status snapshot | Record current missing-receipts status |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1030 | RECEIPT DIRECTORY SCANNER SKELETON | 2026-05-31 | 17:08 (UTC+3)\n- BEM-1029 completed with SHA 40750e77c6b99ce38b996acd1c057ded1e5b909f.\n- Created `governance/validators/scan_external_receipt_directories.py`.\n- Created `governance/reports/BEM1030_RECEIPT_DIRECTORY_SCANNER.md`.\n- Receipt directory scanner skeleton stage: 1/2 (50%).\n- Release PASS not issued.\n- Next action: BEM-1031 receipt scanner status snapshot.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1030_receipt_directory_scanner.md",
+    "result_json": "governance/codex/results/bem1030_receipt_directory_scanner.json"
+  },
+  "created_at": "2026-05-31T14:10:10.224Z"
+}
