@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem994_live_runtime_validator_selftest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM994_LIVE_RUNTIME_VALIDATOR_SELFTEST_RESULT.md",
+    "create:governance/state/bem994_live_runtime_validator_selftest_result.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM994_LIVE_RUNTIME_VALIDATOR_SELFTEST_RESULT.md",
+    "governance/state/bem994_live_runtime_validator_selftest_result.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem994_live_runtime_validator_selftest.txt"
+  ],
+  "commit_sha": "eb4b58f6bd1cbd5e82811e9a350418d51dec1c56",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem994_live_runtime_validator_selftest.md",
+  "completed_at": "2026-05-31T13:04:57Z"
+}
