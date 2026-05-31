@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem958_runner_sha_capture_plan",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-958 runner SHA plan",
+  "objective": "Create file governance/reports/BEM958_RUNNER_SHA_CAPTURE_PLAN.md with content BEM-958 | RUNNER SHA CAPTURE PLAN | 2026-05-31 | 14:22 (UTC+3)\n\nЭтап: 8/9 (89%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ BEM-952 proved Create file executor pattern works.\n✅ BEM-953/BEM-954/BEM-955 created report JSON and AGENT_CONTEXT entries.\n⚠️ BEM-948..957 still show commit_sha=null in Deno status.\n❌ Long createCodexTaskPost for direct workflow patch did not return confirmation and task was not found, so it is not counted.\n❌ Release PASS remains blocked.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Current defect | Result JSON/reporting returns commit_sha=null after successful changed_files creation | BEM-952..955 changed_files exist but commit_sha null |\n| Safe process correction | Use confirmed short createCodexTask channel for state files; avoid unconfirmed long POST as proof | Deno status for unconfirmed BEM-958 was not_found |\n| Next patch | BEM-959 will patch codex-runner.yml using a narrow Create file/Replace pattern only after confirmed trace creation | Prevent silent lost tasks |\n| Release status | NO_RELEASE_PASS | remote_non_null_sha and external gates remain |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem958_runner_sha_capture_plan.md",
+    "result_json": "governance/codex/results/bem958_runner_sha_capture_plan.json"
+  },
+  "created_at": "2026-05-31T11:52:21.072Z"
+}
