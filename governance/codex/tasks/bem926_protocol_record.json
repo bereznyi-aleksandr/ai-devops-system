@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem926_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-926 protocol record",
+  "objective": "Create file governance/reports/BEM926_FINAL_WORKING_SYSTEM_PROTOCOL_V4.md with content # BEM-926 FINAL WORKING SYSTEM PROTOCOL V4\nStatus: DRAFT_FOR_OPERATOR_REVIEW_AFTER_DEEP_REWORK\nDate: 2026-05-31\nPurpose: corrected full-system protocol after operator rejected BEM-925 for treating objects as if they had prompts and for insufficient detail.\nKey corrections:\n- Objects General Director, Director and Worker are not LLM agents and do not have prompts.\n- Objects have passports, rules, functions, channels, curators, internal contours, reports and Definition of Done.\n- Prompts exist only for LLM-executed roles/providers and operational handlers.\n- Language is Russian-first; English terms only as technical identifiers.\n- Roadmap is detailed into substeps, not vague phases.\n- Explicitly includes creation/implementation of General Director, Director and Worker as repository objects: passports, registry refs, channels, curators, contours and tests.\n- Preserves yesterday's accepted decisions: workspace belongs to internal contour; no local individual element rules by default; vertical links are curator-to-curator; internal contour algorithm is Curator -> Analyst -> Auditor -> Executor -> Auditor with revision through Analyst; horizontal links are Auditor A -> Analyst B; provider model primary GPT Analyst + Claude Auditor + Claude Executor with GPT-Codex/Codex fallback for Claude roles.\n- Claude's 13 requirements are mapped to roadmap steps and release blockers.\nDocument contents:\n- Corrected mistakes table.\n- Definition of working system.\n- Current state fact/partial/missing table.\n- Object passports and object creation requirements.\n- Elements and contours.\n- Detailed link mechanics.\n- Provider model and failover.\n- Operator fronts and real repository mechanisms.\n- Telegram/ChatGPT channels.\n- Rule inheritance and prompt model.\n- Prompt pack only for LLM roles/providers/handlers.\n- SSOT registries.\n- Detailed roadmap substeps 1.1..8.2.\n- Claude requirements mapping.\n- Operator gates and Definition of Done.\nLocal operator artifacts:\n- BEM926_final_working_system_protocol_v4_ru.docx\n- BEM926_final_working_system_protocol_v4_ru.zip\nQA: DOCX rendered to 9 pages; no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem926_protocol_record.md",
+    "result_json": "governance/codex/results/bem926_protocol_record.json"
+  },
+  "created_at": "2026-05-31T05:32:17.973Z"
+}
