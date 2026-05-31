@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem971_commit_sha_snippet_diag",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-971 SHA snippet diag",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\ntext = p.read_text()\nidx = text.find('commit_sha')\nif idx < 0:\n    snippet = 'commit_sha_not_found'\nelse:\n    start = idx - 250\n    if start < 0:\n        start = 0\n    end = idx + 700\n    snippet = text[start:end]\ndiag = Path('governance/reports/BEM971_COMMIT_SHA_SNIPPET_DIAG.txt')\ndiag.parent.mkdir(parents=True, exist_ok=True)\ndiag.write_text('idx=' + str(idx) + '\\n---SNIPPET---\\n' + snippet + '\\n---END---\\n')\nchanged_files.append(str(diag))\nops_applied.append('bem971_commit_sha_snippet_diag')\n\"\"\"\nCreate file governance/reports/BEM971_COMMIT_SHA_SNIPPET_DIAG.md with content BEM-971 | COMMIT SHA SNIPPET DIAG | 2026-05-31 | 15:12 (UTC+3)\n\nЭтап: 21/22 (95%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Writes actual checkout snippet around commit_sha.\n⚠️ Next patch must use exact text from BEM971_COMMIT_SHA_SNIPPET_DIAG.txt.\n❌ No release PASS.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Why needed | BEM-970 target_found=False while web view suggested target existed | need exact checkout proof |\n| Следующее действие | BEM-972 exact patch from snippet | stop guessing |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem971_commit_sha_snippet_diag.md",
+    "result_json": "governance/codex/results/bem971_commit_sha_snippet_diag.json"
+  },
+  "created_at": "2026-05-31T12:14:05.585Z"
+}
