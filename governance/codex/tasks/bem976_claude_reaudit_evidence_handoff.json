@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem976_claude_reaudit_evidence_handoff",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-976 Claude evidence",
+  "objective": "Create file governance/reports/BEM976_CLAUDE_REAUDIT_EVIDENCE_HANDOFF.md with content BEM-976 | CLAUDE RE-AUDIT EVIDENCE HANDOFF | 2026-05-31 | 15:20 (UTC+3)\n\nЭтап: Claude re-audit gate preparation — 1/3 (33%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 1/4 (25%)\n\nЧек-лист:\n✅ Remote SHA reporting proof restored: BEM-974 commit_sha=151d547af01babee4575ec837379c4ef7ebfe8bd.\n✅ Canonical SHA gate report committed: BEM-975 commit_sha=cfc6e771f31dc49787ec16259228f01298f46b3c.\n✅ BEM-866 unstaged rebase screenshot issue addressed by staging governance/runtime/curator_dispatch/.\n✅ BEM-973 diagnostic replace_count=1 for commit_sha fallback patch.\n⚠️ Claude must re-audit evidence without trusting self-claims.\n⚠️ Production Telegram and live LLM runtime remain operator/runtime gates.\n❌ Release PASS is not issued.\n\n## Evidence index for Claude\n| Evidence | Path | Expected check |\n|---|---|---|\n| SHA gate canonical report | governance/reports/BEM975_CANONICAL_SHA_GATE_REPORT.md | Confirms 25/25 runner repair stage and non-null SHA proof |\n| Non-null SHA probe | governance/reports/BEM974_SHA_NON_NULL_AFTER_REGEX_PATCH.md | Verify probe exists and Deno status SHA is non-null |\n| Regex patch diagnostic | governance/reports/BEM973_REGEX_SHA_ASSIGNMENT_PATCH_DIAG.txt | Must contain replace_count=1 |\n| BEM-866 rebase fix report | governance/reports/BEM960_FIX_BEM866_UNSTAGED_REBASE.md | Confirms screenshot root cause fix |\n| BEM-931 Claude remarks response chain | governance/reports/BEM958_RUNNER_SHA_CAPTURE_PLAN.md through BEM975 | Verify no release PASS was claimed before SHA proof |\n| Current AGENT_CONTEXT | governance/AGENT_CONTEXT.md | Must record remaining blockers |\n\n## Release gate status\n| Gate | Status | Proof |\n|---|---|---|\n| remote_non_null_sha | CLOSED | BEM-974 SHA 151d547af01babee4575ec837379c4ef7ebfe8bd; BEM-975 SHA cfc6e771f31dc49787ec16259228f01298f46b3c |\n| production_telegram_gate | BLOCKED | operator/runtime gate not passed |\n| live_llm_runtime_gate | BLOCKED | live API/runtime gate not passed |\n| external_claude_reaudit | PENDING | this handoff prepared for audit |\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Следующее действие | BEM-977 create machine-readable Claude re-audit status JSON | Audit gate needs state file, not only prose |\n\nNo issue comments.\nCreate file governance/state/bem976_claude_reaudit_evidence_handoff.json with content {\n  \"bem_id\": \"BEM-976\",\n  \"created_at_utc3\": \"2026-05-31 | 15:20 (UTC+3)\",\n  \"stage\": {\"completed\": 1, \"total\": 3, \"percent\": 33},\n  \"bem931_foundation\": {\"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_gates\": {\"completed\": 1, \"total\": 4, \"percent\": 25},\n  \"closed_gates\": [\"remote_non_null_sha\"],\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"proof_sha\": \"cfc6e771f31dc49787ec16259228f01298f46b3c\",\n  \"release_pass\": false,\n  \"next_action\": \"BEM-977 create Claude re-audit status JSON and checklist\"\n}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem976_claude_reaudit_evidence_handoff.md",
+    "result_json": "governance/codex/results/bem976_claude_reaudit_evidence_handoff.json"
+  },
+  "created_at": "2026-05-31T12:21:52.609Z"
+}
