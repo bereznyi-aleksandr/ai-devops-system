@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1137_durable_mirror_audit_checkpoint",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1137_DURABLE_MIRROR_AUDIT_CHECKPOINT.md",
+    "create:governance/state/bem1137_durable_mirror_audit_checkpoint.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1137_DURABLE_MIRROR_AUDIT_CHECKPOINT.md",
+    "governance/state/bem1137_durable_mirror_audit_checkpoint.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1137_durable_mirror_audit_checkpoint.txt"
+  ],
+  "commit_sha": "562aa72dde57d332a1c6514aea85a9deab79ccf9",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1137_durable_mirror_audit_checkpoint.md",
+  "completed_at": "2026-05-31T18:36:55Z"
+}
