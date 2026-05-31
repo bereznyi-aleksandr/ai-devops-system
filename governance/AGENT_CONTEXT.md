@@ -444,3 +444,10 @@ Recorded post-push reverify after operator screenshots showed BEM-945 GitHub job
 Created BEM947_POST_PUSH_REVERIFY, post_push_reverify_status and operator screenshot response.
 Result: POST_PUSH_REVERIFY_RECORDED. Foundation remains 14/14 by files, but release PASS remains false until remote/non-null SHA, production Telegram gate, live LLM gate and external re-audit.
 No issue comments.
+
+
+## BEM-946 in progress | 2026-05-31
+Operator screenshot confirmed Codex Runner push rejection: remote main advanced and local runner push was rejected.
+Correction: treat BEM-932..945 as local/workflow artifacts until remote proof exists. Create push rejected diagnosis, push retry plan and remote proof policy.
+Next: patch codex-runner.yml push step with fetch/rebase/retry and rehydrate foundation files after push fix.
+No issue comments.

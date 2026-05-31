@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "status": "ACTIVE",
+  "rules": [
+    {"id":"local_commit_not_remote_pass", "severity":"critical", "rule":"A local runner commit SHA is not remote repo PASS unless push succeeded or remote verification confirms it."},
+    {"id":"push_rejected_blocks_repo_claim", "severity":"critical", "rule":"If push is rejected, changed files must be reported as local/workflow artifacts, not repo artifacts."},
+    {"id":"remote_pass_requires_sha", "severity":"critical", "rule":"Remote PASS requires non-null commit SHA that exists on origin/main or CI proof."},
+    {"id":"retry_required_on_fetch_first", "severity":"high", "rule":"On fetch-first push rejection, runner must fetch, rebase and retry push."
+    }
+  ]
+}

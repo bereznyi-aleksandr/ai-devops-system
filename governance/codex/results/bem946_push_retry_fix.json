@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem946_push_retry_fix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-946 push rejected diagnosis and remote proof policy created",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/BEM946_PUSH_REJECTED_DIAGNOSIS.md",
+    "governance/reports/BEM946_PUSH_RETRY_FIX_PLAN.md",
+    "governance/state/remote_proof_policy.json",
+    "governance/reports/BEM946_PUSH_RETRY_FIX_PASS.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem946_push_retry_fix.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem946_push_retry_fix.md",
+  "completed_at": "2026-05-31T09:45:44Z"
+}
