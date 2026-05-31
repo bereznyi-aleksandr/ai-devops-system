@@ -10,7 +10,7 @@
     "proposal_revision": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["analyst"], "description": "Auditor returns proposal for revision."},
     "execution_approval": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["executor"], "description": "Auditor sends approved proposal to Executor."},
     "execution_result": {"allowed_source_roles": ["executor"], "allowed_target_roles": ["auditor"], "description": "Executor sends result to Auditor."},
-    "result_revision": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["analyst"], "description": "Auditor asks Analyst to prepare correction plan."},
+    "result_revision": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["analyst"], "description": "Auditor asks Analyst to correct result."},
     "contour_output": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["curator"], "description": "Auditor releases validated result to Curator."},
     "horizontal_verified_data_transfer": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["analyst"], "description": "Auditor A transfers verified data to Analyst B."},
     "horizontal_verified_data_query": {"allowed_source_roles": ["analyst"], "allowed_target_roles": ["auditor"], "description": "Analyst B asks Auditor A for verified data."}

@@ -324,3 +324,11 @@ Created managed_channel_schema, contour_lifecycle_schema, event_log_schema, elem
 Result: BLOCK_D_SCHEMAS_PASS. This is foundation only, not release PASS.
 Next: Block E managed channel consumer, event writer and dead-letter handling.
 No issue comments.
+
+
+## BEM-935 completed | 2026-05-31
+Implemented Block D schemas after BEM-934.
+Created managed_channel_schema, contour_lifecycle_schema, event_log_schema, elements prompt migration report and schema validator.
+Result: BLOCK_D_SCHEMAS_PASS. This is foundation only, not release PASS.
+Next: Block E managed channel consumer, event writer and dead-letter handling.
+No issue comments.
