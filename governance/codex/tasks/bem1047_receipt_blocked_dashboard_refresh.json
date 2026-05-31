@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1047_receipt_blocked_dashboard_refresh",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1047 dashboard refresh",
+  "objective": "Create file governance/proofs/external/EXTERNAL_RECEIPT_BLOCKED_STATE_DASHBOARD.json with content {\n  \"bem_id\": \"BEM-1047\",\n  \"created_at_utc3\": \"2026-05-31 | 17:53 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External receipt blocked-state dashboard refresh\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1046\",\n  \"latest_proof_sha\": \"0649dd8e62ffd44fdfcb9cbb4deae57d21f75e74\",\n  \"strict_policy_ref\": \"governance/gates/BEM1042_RELEASE_PROOF_STRICTNESS_POLICY.json\",\n  \"zero_secret_policy_ref\": \"governance/proofs/external/ZERO_SECRET_SCAN_POLICY.json\",\n  \"slots\": [\n    {\"slot\": \"production_telegram_gate\", \"status\": \"blocked_missing_validated_external_receipt\", \"template_not_proof\": true},\n    {\"slot\": \"live_llm_runtime_gate\", \"status\": \"blocked_missing_validated_external_receipt\", \"template_not_proof\": true},\n    {\"slot\": \"external_claude_reaudit\", \"status\": \"blocked_missing_validated_external_result\", \"template_not_proof\": true}\n  ],\n  \"next_action\": \"BEM-1048 continuity checkpoint after strict release proof policy\"\n}\nCreate file governance/reports/BEM1047_EXTERNAL_RECEIPT_BLOCKED_STATE_DASHBOARD_REFRESH.md with content BEM-1047 | EXTERNAL RECEIPT BLOCKED-STATE DASHBOARD REFRESH | 2026-05-31 | 17:53 (UTC+3)\n\nЭтап: External receipt blocked-state dashboard refresh — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1046 completed with SHA `0649dd8e62ffd44fdfcb9cbb4deae57d21f75e74`.\n✅ Created `governance/proofs/external/EXTERNAL_RECEIPT_BLOCKED_STATE_DASHBOARD.json`.\n✅ Dashboard references strict release proof policy.\n✅ Dashboard references zero-secret scan policy.\n✅ All external receipt slots remain blocked until validated external proof exists.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External receipt blocked-state dashboard refresh — 1/1 (100%) | Dashboard refreshed |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1048 continuity checkpoint after strict release proof policy | Continue proof hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1047 | EXTERNAL RECEIPT BLOCKED-STATE DASHBOARD REFRESH | 2026-05-31 | 17:53 (UTC+3)\n- BEM-1046 completed with SHA 0649dd8e62ffd44fdfcb9cbb4deae57d21f75e74.\n- Created `governance/proofs/external/EXTERNAL_RECEIPT_BLOCKED_STATE_DASHBOARD.json`.\n- Created `governance/reports/BEM1047_EXTERNAL_RECEIPT_BLOCKED_STATE_DASHBOARD_REFRESH.md`.\n- External receipt blocked-state dashboard refresh completed: 1/1 (100%).\n- Release PASS not issued.\n- Next action: BEM-1048 continuity checkpoint after strict release proof policy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1047_receipt_blocked_dashboard_refresh.md",
+    "result_json": "governance/codex/results/bem1047_receipt_blocked_dashboard_refresh.json"
+  },
+  "created_at": "2026-05-31T14:55:19.565Z"
+}
