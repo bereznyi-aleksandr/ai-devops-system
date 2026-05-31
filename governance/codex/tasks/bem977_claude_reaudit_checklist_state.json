@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem977_claude_reaudit_checklist_state",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-977 Claude checklist",
+  "objective": "Create file governance/audit/BEM977_CLAUDE_REAUDIT_CHECKLIST.json with content {\n  \"bem_id\": \"BEM-977\",\n  \"created_at_utc3\": \"2026-05-31 | 15:22 (UTC+3)\",\n  \"purpose\": \"External Claude re-audit checklist after BEM-931 foundation and BEM-974 non-null SHA repair\",\n  \"release_pass\": false,\n  \"stage\": {\"completed\": 2, \"total\": 3, \"percent\": 67},\n  \"roadmap\": {\"bem931_foundation_completed\": 14, \"bem931_foundation_total\": 14, \"release_gates_closed\": 1, \"release_gates_total\": 4},\n  \"required_checks\": [\n    {\"id\": \"CHK-001\", \"name\": \"Verify BEM-931 foundation artifacts\", \"evidence\": \"governance/reports/BEM976_CLAUDE_REAUDIT_EVIDENCE_HANDOFF.md\", \"expected\": \"14/14 foundation retained\"},\n    {\"id\": \"CHK-002\", \"name\": \"Verify screenshot push/rebase issue addressed\", \"evidence\": \"governance/reports/BEM960_FIX_BEM866_UNSTAGED_REBASE.md\", \"expected\": \"BEM-866 stages governance/runtime/curator_dispatch/\"},\n    {\"id\": \"CHK-003\", \"name\": \"Verify commit_sha no longer null\", \"evidence\": \"governance/reports/BEM975_CANONICAL_SHA_GATE_REPORT.md\", \"expected\": \"BEM-974 SHA 151d547af01babee4575ec837379c4ef7ebfe8bd and BEM-975 SHA cfc6e771f31dc49787ec16259228f01298f46b3c\"},\n    {\"id\": \"CHK-004\", \"name\": \"Verify no premature release PASS\", \"evidence\": \"governance/reports/BEM975_CANONICAL_SHA_GATE_REPORT.md\", \"expected\": \"release_pass=false\"},\n    {\"id\": \"CHK-005\", \"name\": \"Verify remaining gates\", \"evidence\": \"governance/state/bem976_claude_reaudit_evidence_handoff.json\", \"expected\": \"production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit remain blockers\"}\n  ],\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-978 create release decision draft as CONDITIONAL/NO_RELEASE_PASS pending external audit and production gates\"\n}\nCreate file governance/reports/BEM977_CLAUDE_REAUDIT_CHECKLIST_STATUS.md with content BEM-977 | CLAUDE RE-AUDIT CHECKLIST STATUS | 2026-05-31 | 15:22 (UTC+3)\n\nЭтап: Claude re-audit gate preparation — 2/3 (67%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 1/4 (25%)\n\nЧек-лист:\n✅ Created machine-readable checklist: governance/audit/BEM977_CLAUDE_REAUDIT_CHECKLIST.json.\n✅ Evidence handoff exists: governance/reports/BEM976_CLAUDE_REAUDIT_EVIDENCE_HANDOFF.md.\n✅ Non-null SHA proof exists: BEM-974 and BEM-975 Deno statuses.\n⚠️ external_claude_reaudit remains pending.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Следующее действие | BEM-978 release decision draft with NO_RELEASE_PASS | prevents accidental PASS before remaining gates |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-977 | CLAUDE RE-AUDIT CHECKLIST STATE | 2026-05-31 | 15:22 (UTC+3)\n- Created `governance/audit/BEM977_CLAUDE_REAUDIT_CHECKLIST.json`.\n- Created `governance/reports/BEM977_CLAUDE_REAUDIT_CHECKLIST_STATUS.md`.\n- Claude re-audit preparation stage: 2/3 (67%).\n- BEM-931 foundation: 14/14 (100%). Release gates: 1/4 (25%).\n- Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-978 release decision draft with NO_RELEASE_PASS.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem977_claude_reaudit_checklist_state.md",
+    "result_json": "governance/codex/results/bem977_claude_reaudit_checklist_state.json"
+  },
+  "created_at": "2026-05-31T12:23:23.570Z"
+}
