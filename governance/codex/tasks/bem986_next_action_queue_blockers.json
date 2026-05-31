@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem986_next_action_queue_blockers",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-986 blocker queue",
+  "objective": "Create file governance/state/bem986_next_action_queue_blockers.json with content {\n  \"bem_id\": \"BEM-986\",\n  \"created_at_utc3\": \"2026-05-31 | 15:49 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Next-action queue for remaining blockers\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"queue\": [\n    {\"order\": 1, \"blocker\": \"production_telegram_gate\", \"next_bem\": \"BEM-987\", \"action\": \"Create production Telegram proof request schema without secrets and without asking operator to press buttons\", \"forbidden\": [\"secret_values\", \"tokens\", \"issue_31_write\"]},\n    {\"order\": 2, \"blocker\": \"live_llm_runtime_gate\", \"next_bem\": \"BEM-988\", \"action\": \"Create live runtime proof envelope schema without paid API use\", \"forbidden\": [\"OpenAI_API_KEY\", \"Codex CLI\", \"paid API\"]},\n    {\"order\": 3, \"blocker\": \"external_claude_reaudit\", \"next_bem\": \"BEM-989\", \"action\": \"Create external Claude audit mailbox handoff package referencing BEM-976/BEM-977/BEM-985 evidence\", \"forbidden\": [\"self_claim_APPROVED\", \"release_PASS\"]}\n  ],\n  \"report_canon\": \"Header contains only Этап and Дорожная карта. Reports do not stop roadmap.\",\n  \"next_action\": \"BEM-987 production Telegram proof request schema without secrets\"\n}\nCreate file governance/reports/BEM986_NEXT_ACTION_QUEUE_BLOCKERS.md with content BEM-986 | NEXT-ACTION QUEUE FOR BLOCKERS | 2026-05-31 | 15:49 (UTC+3)\n\nЭтап: Next-action queue for remaining blockers — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created `governance/state/bem986_next_action_queue_blockers.json`.\n✅ Ordered next actions for production_telegram_gate, live_llm_runtime_gate and external_claude_reaudit.\n✅ No secrets, tokens, paid API, Codex CLI, issue #31 write or release PASS introduced.\n✅ Report canon respected.\n⚠️ Remaining blockers are tracked, not closed.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Next-action queue for remaining blockers — 1/1 (100%) | Queue state file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-987 production Telegram proof request schema without secrets | First queued blocker action |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-986 | NEXT-ACTION QUEUE FOR BLOCKERS | 2026-05-31 | 15:49 (UTC+3)\n- Created `governance/state/bem986_next_action_queue_blockers.json`.\n- Created `governance/reports/BEM986_NEXT_ACTION_QUEUE_BLOCKERS.md`.\n- Next-action queue completed: 1/1 (100%).\n- Queue order: BEM-987 production Telegram proof request schema; BEM-988 live runtime proof envelope; BEM-989 external Claude audit mailbox handoff.\n- No secrets, tokens, paid API, Codex CLI, issue #31 write or release PASS introduced.\n- Next action: BEM-987 production Telegram proof request schema without secrets.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem986_next_action_queue_blockers.md",
+    "result_json": "governance/codex/results/bem986_next_action_queue_blockers.json"
+  },
+  "created_at": "2026-05-31T12:50:38.493Z"
+}
