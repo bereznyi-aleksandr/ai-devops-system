@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1047_receipt_blocked_dashboard_refresh",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/EXTERNAL_RECEIPT_BLOCKED_STATE_DASHBOARD.json",
+    "create:governance/reports/BEM1047_EXTERNAL_RECEIPT_BLOCKED_STATE_DASHBOARD_REFRESH.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/EXTERNAL_RECEIPT_BLOCKED_STATE_DASHBOARD.json",
+    "governance/reports/BEM1047_EXTERNAL_RECEIPT_BLOCKED_STATE_DASHBOARD_REFRESH.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1047_receipt_blocked_dashboard_refresh.txt"
+  ],
+  "commit_sha": "5385786cc915b04c01a80fddeb009ae1a88486ab",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1047_receipt_blocked_dashboard_refresh.md",
+  "completed_at": "2026-05-31T14:55:31Z"
+}
