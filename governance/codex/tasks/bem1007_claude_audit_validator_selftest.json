@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1007_claude_audit_validator_selftest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1007 Claude validator selftest",
+  "objective": "Create file governance/reports/BEM1007_EXTERNAL_CLAUDE_AUDIT_VALIDATOR_SELFTEST_RESULT.md with content BEM-1007 | EXTERNAL CLAUDE AUDIT VALIDATOR SELFTEST RESULT | 2026-05-31 | 16:28 (UTC+3)\n\nЭтап: External Claude audit result validator — 2/2 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1006 created `governance/validators/validate_external_claude_audit_result.py`.\n✅ BEM-1006 created sample fixture `governance/tests/fixtures/external_claude_audit_result_sample.json`.\n✅ BEM-1006 completed with SHA `ea13fa45f1eb6fa13944099ab769028acd5eac88`.\n✅ Selftest expectation recorded: sample decision is BLOCKED and does not self-claim APPROVED/PASS.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ external_claude_reaudit remains pending until real external Claude result exists.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External Claude audit result validator — 2/2 (100%) | Validator and selftest result recorded |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1008 create external audit intake index | Keep audit intake artifacts discoverable |\n\nNo issue comments.\nCreate file governance/state/bem1007_claude_audit_validator_selftest_result.json with content {\n  \"bem_id\": \"BEM-1007\",\n  \"created_at_utc3\": \"2026-05-31 | 16:28 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External Claude audit result validator\", \"completed\": 2, \"total\": 2, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"validator\": \"governance/validators/validate_external_claude_audit_result.py\",\n  \"fixture\": \"governance/tests/fixtures/external_claude_audit_result_sample.json\",\n  \"fixture_decision\": \"BLOCKED\",\n  \"release_pass\": false,\n  \"remaining_blockers\": [\"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1008 create external audit intake index\"\n}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1007 | EXTERNAL CLAUDE AUDIT VALIDATOR SELFTEST RESULT | 2026-05-31 | 16:28 (UTC+3)\n- BEM-1006 completed with SHA ea13fa45f1eb6fa13944099ab769028acd5eac88.\n- Created `governance/reports/BEM1007_EXTERNAL_CLAUDE_AUDIT_VALIDATOR_SELFTEST_RESULT.md`.\n- Created `governance/state/bem1007_claude_audit_validator_selftest_result.json`.\n- External Claude audit result validator stage completed: 2/2 (100%).\n- Release PASS not issued. Remaining blocker: external_claude_reaudit.\n- Next action: BEM-1008 create external audit intake index.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1007_claude_audit_validator_selftest.md",
+    "result_json": "governance/codex/results/bem1007_claude_audit_validator_selftest.json"
+  },
+  "created_at": "2026-05-31T13:29:40.716Z"
+}
