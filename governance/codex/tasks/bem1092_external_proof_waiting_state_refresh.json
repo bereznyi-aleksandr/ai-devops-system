@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1092_external_proof_waiting_state_refresh",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1092 waiting state refresh",
+  "objective": "Create file governance/proofs/external/EXTERNAL_PROOF_INTAKE_WAITING_STATE_REFRESH.json with content {\n  \"bem_id\": \"BEM-1092\",\n  \"created_at_utc3\": \"2026-05-31 | 19:01 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External proof intake waiting state refresh\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1091\",\n  \"latest_proof_sha\": \"550b616af5b050860a8bd9a045540bd3a2e434aa\",\n  \"waiting_for\": [\n    {\"proof\": \"validated_external_telegram_production_receipt\", \"status\": \"missing\", \"directory\": \"governance/proofs/external/telegram/\"},\n    {\"proof\": \"validated_external_live_runtime_receipt\", \"status\": \"missing\", \"directory\": \"governance/proofs/external/runtime/\"},\n    {\"proof\": \"validated_external_claude_audit_result\", \"status\": \"missing\", \"directory\": \"governance/proofs/external/claude/\"}\n  ],\n  \"auto_close_allowed\": false,\n  \"next_action\": \"BEM-1093 external proof intake audit checklist refresh\"\n}\nCreate file governance/reports/BEM1092_EXTERNAL_PROOF_INTAKE_WAITING_STATE_REFRESH.md with content BEM-1092 | EXTERNAL PROOF INTAKE WAITING STATE REFRESH | 2026-05-31 | 19:01 (UTC+3)\n\nЭтап: External proof intake waiting state refresh — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1091 completed with SHA `550b616af5b050860a8bd9a045540bd3a2e434aa`.\n✅ Created `governance/proofs/external/EXTERNAL_PROOF_INTAKE_WAITING_STATE_REFRESH.json`.\n✅ Waiting state tracks Telegram, runtime and Claude proof directories.\n✅ Auto-close remains forbidden.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Validated external proofs remain missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External proof intake waiting state refresh — 1/1 (100%) | Waiting state refreshed |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1093 external proof intake audit checklist refresh | Continue without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1092 | EXTERNAL PROOF INTAKE WAITING STATE REFRESH | 2026-05-31 | 19:01 (UTC+3)\n- BEM-1091 completed with SHA 550b616af5b050860a8bd9a045540bd3a2e434aa.\n- Created `governance/proofs/external/EXTERNAL_PROOF_INTAKE_WAITING_STATE_REFRESH.json`.\n- Created `governance/reports/BEM1092_EXTERNAL_PROOF_INTAKE_WAITING_STATE_REFRESH.md`.\n- Waiting state refresh completed: 1/1 (100%).\n- Release PASS not issued.\n- Next action: BEM-1093 external proof intake audit checklist refresh.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1092_external_proof_waiting_state_refresh.md",
+    "result_json": "governance/codex/results/bem1092_external_proof_waiting_state_refresh.json"
+  },
+  "created_at": "2026-05-31T16:25:34.755Z"
+}
