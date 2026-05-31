@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "status": "FOUNDATION_EVIDENCE_INDEX_READY",
+  "evidence": [
+    {"bem":"BEM-932", "title":"Block A foundation", "proof":"governance/reports/BEM932_BLOCK_A_PASS.md"},
+    {"bem":"BEM-933", "title":"Block B object/contour/provider foundation", "proof":"governance/reports/BEM933_BLOCK_B_FOUNDATION_PASS.md"},
+    {"bem":"BEM-934", "title":"Block C prompt pack", "proof":"governance/reports/BEM934_BLOCK_C_PROMPTS_PASS.md"},
+    {"bem":"BEM-935", "title":"Block D schemas", "proof":"governance/reports/BEM935_BLOCK_D_SCHEMAS_PASS.md"},
+    {"bem":"BEM-936", "title":"Block E managed channel consumer", "proof":"governance/reports/BEM936_BLOCK_E_CONSUMER_PASS.md"},
+    {"bem":"BEM-937", "title":"Block F dispatch lifecycle", "proof":"governance/reports/BEM937_BLOCK_F_DISPATCH_PASS.md"},
+    {"bem":"BEM-938", "title":"Block G runners", "proof":"governance/reports/BEM938_BLOCK_G_RUNNERS_PASS.md"},
+    {"bem":"BEM-939", "title":"Block H Telegram/reporting", "proof":"governance/reports/BEM939_BLOCK_H_TELEGRAM_PASS.md"},
+    {"bem":"BEM-940", "title":"Block I proof hardening", "proof":"governance/reports/BEM940_BLOCK_I_PROOF_PASS.md"},
+    {"bem":"BEM-941", "title":"Block J E2E foundation", "proof":"governance/reports/BEM941_BLOCK_J_E2E_PASS.md"},
+    {"bem":"BEM-942", "title":"Block K operator gates", "proof":"governance/reports/BEM942_BLOCK_K_GATES_PASS.md"}
+  ],
+  "known_limitations": [
+    "commit_sha is null, therefore release PASS is not available",
+    "production Telegram status is null until operator gate",
+    "live LLM runtime is operator-gated",
+    "this is foundation evidence, not full production evidence"
+  ]
+}

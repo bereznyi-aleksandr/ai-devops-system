@@ -396,3 +396,11 @@ Created production_operator_gate, secret_names, issue31 write policy, schedule/d
 Result: BLOCK_K_OPERATOR_GATES_PASS. Operator approvals are still required for production actions.
 Next: Block L Claude re-audit checklist, evidence index and audit bundle baseline.
 No issue comments.
+
+
+## BEM-943 completed | 2026-05-31
+Implemented Block L audit baseline after BEM-942.
+Created Claude re-audit checklist, evidence index, audit bundle manifest and validator.
+Result: BLOCK_L_AUDIT_BASELINE_PASS. This is foundation evidence, not external audit PASS.
+Next: Block M validation harness and roadmap status rollup.
+No issue comments.
