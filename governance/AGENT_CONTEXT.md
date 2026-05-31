@@ -453,3 +453,5 @@ Next: patch codex-runner.yml push step with fetch/rebase/retry and rehydrate fou
 No issue comments.
 ### BEM-955 | AGENT CONTEXT UPDATE AFTER EXECUTOR PROBE | 2026-05-31 | 13:23 (UTC+3)
 - BEM-948: Claude remarks response task completed in
+### BEM-975 | CANONICAL SHA GATE REPORT | 2026-05-31 | 15:18 (UTC+3)
+- Completed
