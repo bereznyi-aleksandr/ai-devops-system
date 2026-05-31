@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem999_audit_evidence_manifest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/BEM999_AUDIT_EVIDENCE_MANIFEST.json",
+    "create:governance/reports/BEM999_AUDIT_EVIDENCE_MANIFEST.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/BEM999_AUDIT_EVIDENCE_MANIFEST.json",
+    "governance/reports/BEM999_AUDIT_EVIDENCE_MANIFEST.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem999_audit_evidence_manifest.txt"
+  ],
+  "commit_sha": "cd8b516616d158b16d762eef02bfd5102d1ac0fe",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem999_audit_evidence_manifest.md",
+  "completed_at": "2026-05-31T13:13:30Z"
+}
