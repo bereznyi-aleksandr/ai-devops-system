@@ -465,7 +465,7 @@ jobs:
           git rev-parse HEAD > governance/runtime/curator_dispatch/BEM866_CURRENT_HEAD_SHA.txt
           git status --short > governance/runtime/curator_dispatch/BEM866_GIT_STATUS_SHORT.txt
           git diff --name-only HEAD > governance/runtime/curator_dispatch/BEM866_GIT_DIFF_NAME_ONLY.txt || true
-          git add governance/runtime/curator_dispatch/BEM866_CURRENT_HEAD_SHA.txt governance/runtime/curator_dispatch/BEM866_GIT_STATUS_SHORT.txt governance/runtime/curator_dispatch/BEM866_GIT_DIFF_NAME_ONLY.txt || true
+          git add governance/runtime/curator_dispatch/ || true
           if ! git diff --cached --quiet; then
             git config user.name "ai-devops-system"
             git config user.email "actions@users.noreply.github.com"
