@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1125_ledger_latest_state_pointer",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1125 ledger pointer",
+  "objective": "Create file governance/state/LEDGER_LATEST_STATE_POINTER.json with content {\n  \"bem_id\": \"BEM-1125\",\n  \"created_at_utc3\": \"2026-05-31 | 19:34 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Ledger latest-state pointer\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1124\",\n  \"latest_proof_sha\": \"f4f3193d53a8ee8c138f5901046b103bb3d8716e\",\n  \"ledger_ref\": \"governance/state/EXTERNAL_PROOF_BLOCKER_LEDGER.json\",\n  \"ledger_audit_ref\": \"governance/state/bem1123_external_proof_blocker_ledger_audit.json\",\n  \"continuity_seed_ref\": \"governance/state/bem1124_post_ledger_continuity_seed.json\",\n  \"summary\": \"External proof blocker ledger exists; all three required external proofs remain missing; release remains NO_PASS locked.\",\n  \"next_action\": \"BEM-1126 no-pass continuity summary\"\n}\nCreate file governance/reports/BEM1125_LEDGER_LATEST_STATE_POINTER.md with content BEM-1125 | LEDGER LATEST-STATE POINTER | 2026-05-31 | 19:34 (UTC+3)\n\nЭтап: Ledger latest-state pointer — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1124 completed with SHA `f4f3193d53a8ee8c138f5901046b103bb3d8716e`.\n✅ Created `governance/state/LEDGER_LATEST_STATE_POINTER.json`.\n✅ Pointer references blocker ledger and ledger audit.\n✅ Pointer preserves next action.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Validated external Telegram/runtime/Claude proofs remain missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Ledger latest-state pointer — 1/1 (100%) | Pointer created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1126 no-pass continuity summary | Continue without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1125 | LEDGER LATEST-STATE POINTER | 2026-05-31 | 19:34 (UTC+3)\n- BEM-1124 completed with SHA f4f3193d53a8ee8c138f5901046b103bb3d8716e.\n- Created `governance/state/LEDGER_LATEST_STATE_POINTER.json`.\n- Created `governance/reports/BEM1125_LEDGER_LATEST_STATE_POINTER.md`.\n- Ledger latest-state pointer completed: 1/1 (100%).\n- Release PASS not issued.\n- Next action: BEM-1126 no-pass continuity summary.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1125_ledger_latest_state_pointer.md",
+    "result_json": "governance/codex/results/bem1125_ledger_latest_state_pointer.json"
+  },
+  "created_at": "2026-05-31T18:12:50.334Z"
+}
