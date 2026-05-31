@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1030_receipt_monitor_status",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1030 receipt monitor status",
+  "objective": "Create file governance/proofs/external/RECEIPT_MONITOR_STATUS.json with content {\n  \"bem_id\": \"BEM-1030\",\n  \"created_at_utc3\": \"2026-05-31 | 17:20 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Receipt monitor status file\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1029\",\n  \"latest_proof_sha\": \"48938e813b1cdb9d2773b970dd44f3a629d55e88\",\n  \"monitored_slots\": [\n    {\"slot\": \"production_telegram_gate\", \"directory\": \"governance/proofs/external/telegram/\", \"current_status\": \"blocked_missing_real_receipt\", \"auto_close_allowed\": false},\n    {\"slot\": \"live_llm_runtime_gate\", \"directory\": \"governance/proofs/external/runtime/\", \"current_status\": \"blocked_missing_real_receipt\", \"auto_close_allowed\": false},\n    {\"slot\": \"external_claude_reaudit\", \"directory\": \"governance/proofs/external/claude/\", \"current_status\": \"blocked_missing_external_result\", \"auto_close_allowed\": false}\n  ],\n  \"forbidden\": [\"secret_values\", \"tokens\", \"api_keys\", \"PAT\", \"raw_credentials\", \"issue_31_write\", \"self_claim_release_pass\"],\n  \"next_action\": \"BEM-1031 receipt monitor policy\"\n}\nCreate file governance/reports/BEM1030_RECEIPT_MONITOR_STATUS.md with content BEM-1030 | RECEIPT MONITOR STATUS | 2026-05-31 | 17:20 (UTC+3)\n\nЭтап: Receipt monitor status file — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1029 completed with SHA `48938e813b1cdb9d2773b970dd44f3a629d55e88`.\n✅ Created `governance/proofs/external/RECEIPT_MONITOR_STATUS.json`.\n✅ Monitored Telegram, runtime and Claude external receipt slots.\n✅ Auto-close is forbidden for all receipt blockers.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Real external receipts are not present yet.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt monitor status file — 1/1 (100%) | Monitor status file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1031 receipt monitor policy | Continue monitoring controls |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1030 | RECEIPT MONITOR STATUS | 2026-05-31 | 17:20 (UTC+3)\n- BEM-1029 completed with SHA 48938e813b1cdb9d2773b970dd44f3a629d55e88.\n- Created `governance/proofs/external/RECEIPT_MONITOR_STATUS.json`.\n- Created `governance/reports/BEM1030_RECEIPT_MONITOR_STATUS.md`.\n- Receipt monitor status file completed: 1/1 (100%).\n- Auto-close is forbidden for production/runtime/Claude blockers.\n- Release PASS not issued.\n- Next action: BEM-1031 receipt monitor policy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1030_receipt_monitor_status.md",
+    "result_json": "governance/codex/results/bem1030_receipt_monitor_status.json"
+  },
+  "created_at": "2026-05-31T14:22:24.529Z"
+}
