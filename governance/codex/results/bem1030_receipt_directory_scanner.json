@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1030_receipt_directory_scanner",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/scan_external_receipt_directories.py",
+    "create:governance/reports/BEM1030_RECEIPT_DIRECTORY_SCANNER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/scan_external_receipt_directories.py",
+    "governance/reports/BEM1030_RECEIPT_DIRECTORY_SCANNER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1030_receipt_directory_scanner.txt"
+  ],
+  "commit_sha": "4e1df6f62bc122d7ef824b6b4a58ab38ae2a7b1a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1030_receipt_directory_scanner.md",
+  "completed_at": "2026-05-31T14:10:20Z"
+}
