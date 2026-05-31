@@ -340,3 +340,11 @@ Created dispatch_lifecycle_schema, dispatch_trigger_policy, provider-aware dispa
 Result: BLOCK_F_DISPATCH_PASS. This is foundation only, not release PASS.
 Next: Block G object lifecycle runner, curator router, contour lifecycle runner and role report writer.
 No issue comments.
+
+
+## BEM-938 completed | 2026-05-31
+Implemented Block G runners after BEM-937.
+Created object_lifecycle_runner, curator_router, contour_lifecycle_runner, role_report_writer, object_report_aggregator, testing_contour_assignment and validator.
+Result: BLOCK_G_RUNNERS_PASS. This is deterministic runner foundation only, not live LLM runtime PASS and not release PASS.
+Next: Block H Telegram envelope, mapping, report period config and report templates.
+No issue comments.
