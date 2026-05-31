@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1187_post_external_audit_handoff_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1187_post_external_audit_handoff_queue.json",
+    "create:governance/reports/BEM1187_POST_EXTERNAL_AUDIT_HANDOFF_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1187_post_external_audit_handoff_queue.json",
+    "governance/reports/BEM1187_POST_EXTERNAL_AUDIT_HANDOFF_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1187_post_external_audit_handoff_queue.txt"
+  ],
+  "commit_sha": "88d91bc40bd2e11d7f3fcb8fbf75a91502c5fe56",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1187_post_external_audit_handoff_queue.md",
+  "completed_at": "2026-05-31T20:13:32Z"
+}
