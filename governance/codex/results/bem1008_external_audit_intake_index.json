@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1008_external_audit_intake_index",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/external_audit_intake_index.json",
+    "create:governance/reports/BEM1008_EXTERNAL_AUDIT_INTAKE_INDEX.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/external_audit_intake_index.json",
+    "governance/reports/BEM1008_EXTERNAL_AUDIT_INTAKE_INDEX.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1008_external_audit_intake_index.txt"
+  ],
+  "commit_sha": "583984e3245277481a4d246fe8284c72630b5f3e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1008_external_audit_intake_index.md",
+  "completed_at": "2026-05-31T13:31:28Z"
+}
