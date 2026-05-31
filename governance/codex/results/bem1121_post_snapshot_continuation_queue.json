@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1121_post_snapshot_continuation_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1121_post_snapshot_continuation_queue.json",
+    "create:governance/reports/BEM1121_POST_SNAPSHOT_CONTINUATION_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1121_post_snapshot_continuation_queue.json",
+    "governance/reports/BEM1121_POST_SNAPSHOT_CONTINUATION_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1121_post_snapshot_continuation_queue.txt"
+  ],
+  "commit_sha": "abaae17e8a5f7adab14d1d7b36fbf111e8b8fbe8",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1121_post_snapshot_continuation_queue.md",
+  "completed_at": "2026-05-31T18:07:50Z"
+}
