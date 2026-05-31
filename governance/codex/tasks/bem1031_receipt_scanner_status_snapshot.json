@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1031_receipt_scanner_status_snapshot",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1031 scanner status",
+  "objective": "Create file governance/state/bem1031_receipt_scanner_status_snapshot.json with content {\n  \"bem_id\": \"BEM-1031\",\n  \"created_at_utc3\": \"2026-05-31 | 17:10 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Receipt scanner status snapshot\", \"completed\": 2, \"total\": 2, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"scanner\": \"governance/validators/scan_external_receipt_directories.py\",\n  \"last_completed_bem\": \"BEM-1030\",\n  \"last_proof_sha\": \"4e1df6f62bc122d7ef824b6b4a58ab38ae2a7b1a\",\n  \"expected_current_slots\": [\n    {\"gate\": \"production_telegram_gate\", \"status\": \"blocked_missing_real_receipt\"},\n    {\"gate\": \"live_llm_runtime_gate\", \"status\": \"blocked_missing_real_receipt\"},\n    {\"gate\": \"external_claude_reaudit\", \"status\": \"blocked_missing_real_receipt\"}\n  ],\n  \"real_external_receipts_present\": false,\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1032 external proof waiting-state report\"\n}\nCreate file governance/reports/BEM1031_RECEIPT_SCANNER_STATUS_SNAPSHOT.md with content BEM-1031 | RECEIPT SCANNER STATUS SNAPSHOT | 2026-05-31 | 17:10 (UTC+3)\n\nЭтап: Receipt directory scanner skeleton — 2/2 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1030 completed with SHA `4e1df6f62bc122d7ef824b6b4a58ab38ae2a7b1a`.\n✅ Created `governance/state/bem1031_receipt_scanner_status_snapshot.json`.\n✅ Scanner path recorded: `governance/validators/scan_external_receipt_directories.py`.\n✅ Current expected state recorded: no real external receipts present.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ production_telegram_gate, live_llm_runtime_gate and external_claude_reaudit remain blocked until real receipts/results exist.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt directory scanner skeleton — 2/2 (100%) | Snapshot file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1032 external proof waiting-state report | Continue canonical blocked-state reporting |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1031 | RECEIPT SCANNER STATUS SNAPSHOT | 2026-05-31 | 17:10 (UTC+3)\n- BEM-1030 completed with SHA 4e1df6f62bc122d7ef824b6b4a58ab38ae2a7b1a.\n- Created `governance/state/bem1031_receipt_scanner_status_snapshot.json`.\n- Created `governance/reports/BEM1031_RECEIPT_SCANNER_STATUS_SNAPSHOT.md`.\n- Receipt directory scanner skeleton stage completed: 2/2 (100%).\n- Real external receipts remain absent; release PASS not issued.\n- Next action: BEM-1032 external proof waiting-state report.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1031_receipt_scanner_status_snapshot.md",
+    "result_json": "governance/codex/results/bem1031_receipt_scanner_status_snapshot.json"
+  },
+  "created_at": "2026-05-31T14:11:42.298Z"
+}
