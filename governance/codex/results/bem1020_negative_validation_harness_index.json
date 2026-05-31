@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1020_negative_validation_harness_index",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/negative_validation_harness_index.json",
+    "create:governance/reports/BEM1020_NEGATIVE_VALIDATION_HARNESS_INDEX.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/negative_validation_harness_index.json",
+    "governance/reports/BEM1020_NEGATIVE_VALIDATION_HARNESS_INDEX.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1020_negative_validation_harness_index.txt"
+  ],
+  "commit_sha": "d142bace0fe7d9d3bbbe07e1d6f60126c4bda6b2",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1020_negative_validation_harness_index.md",
+  "completed_at": "2026-05-31T13:55:45Z"
+}
