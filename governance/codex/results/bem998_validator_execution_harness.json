@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem998_validator_execution_harness",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/run_receipt_validators.py",
+    "create:governance/reports/BEM998_VALIDATOR_EXECUTION_HARNESS.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/run_receipt_validators.py",
+    "governance/reports/BEM998_VALIDATOR_EXECUTION_HARNESS.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem998_validator_execution_harness.txt"
+  ],
+  "commit_sha": "4dcfb44a0ffbcf0316337a3d1ba5e593c0f42b44",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem998_validator_execution_harness.md",
+  "completed_at": "2026-05-31T13:11:52Z"
+}
