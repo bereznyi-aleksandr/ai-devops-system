@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1017_receipt_validator_negative_fixtures",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tests/fixtures/telegram_production_receipt_negative_secret.json",
+    "create:governance/tests/fixtures/live_runtime_receipt_negative_paid_api.json",
+    "create:governance/tests/fixtures/external_claude_audit_result_negative_self_claim.json",
+    "create:governance/reports/BEM1017_RECEIPT_VALIDATOR_NEGATIVE_FIXTURES.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tests/fixtures/telegram_production_receipt_negative_secret.json",
+    "governance/tests/fixtures/live_runtime_receipt_negative_paid_api.json",
+    "governance/tests/fixtures/external_claude_audit_result_negative_self_claim.json",
+    "governance/reports/BEM1017_RECEIPT_VALIDATOR_NEGATIVE_FIXTURES.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1017_receipt_validator_negative_fixtures.txt"
+  ],
+  "commit_sha": "8219a365436c8567bd5599bdb58aa5de7ad82559",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1017_receipt_validator_negative_fixtures.md",
+  "completed_at": "2026-05-31T13:51:00Z"
+}
