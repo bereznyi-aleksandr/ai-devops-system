@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1070_placeholder_negative_fixtures",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tests/fixtures/telegram_production_receipt_negative_placeholder.json",
+    "create:governance/tests/fixtures/live_runtime_receipt_negative_placeholder.json",
+    "create:governance/tests/fixtures/external_claude_audit_result_negative_placeholder.json",
+    "create:governance/reports/BEM1070_VALIDATOR_PLACEHOLDER_NEGATIVE_FIXTURES.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tests/fixtures/telegram_production_receipt_negative_placeholder.json",
+    "governance/tests/fixtures/live_runtime_receipt_negative_placeholder.json",
+    "governance/tests/fixtures/external_claude_audit_result_negative_placeholder.json",
+    "governance/reports/BEM1070_VALIDATOR_PLACEHOLDER_NEGATIVE_FIXTURES.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1070_placeholder_negative_fixtures.txt"
+  ],
+  "commit_sha": "93f3ee999a2ba0928121fd3cef55767cb87deae6",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1070_placeholder_negative_fixtures.md",
+  "completed_at": "2026-05-31T15:31:44Z"
+}
