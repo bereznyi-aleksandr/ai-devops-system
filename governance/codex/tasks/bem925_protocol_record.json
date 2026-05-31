@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem925_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-925 protocol record",
+  "objective": "Create file governance/reports/BEM925_FINAL_SYSTEM_EVOLUTION_PROTOCOL.md with content # BEM-925 FINAL SYSTEM EVOLUTION PROTOCOL\nStatus: DRAFT_FOR_OPERATOR_REVIEW\nDate: 2026-05-31\nPurpose: rebuilt final protocol as a structured, full-system document based on yesterday's work, Claude audit requirements, BEM-907..BEM-913 remediation, BEM-919..BEM-924 drafts, and operator corrections.\nCorrection applied:\n- This version is not Telegram-only, provider-only, prompt-only, or a short summary.\n- It is a structured system map and implementation roadmap: current diagnosis, canonical model, objects/elements/contours/fronts, internal contour algorithm, provider model, workspace/channel model, rule inheritance, dynamic prompts, SSOT registries, prompt pack, implementation roadmap, Claude requirements mapping, operator gates and Definition of Done.\nKey content included:\n- Fact/partial/not-working table for current state.\n- Fronts: operator, governance, contour execution, provider, automation, data/proof, audit.\n- Objects: GD, Director, Worker.\n- Elements: Curator, Analyst, Auditor, Executor.\n- Contours: static/dynamic, workspace belongs to contour.\n- Correct internal contour algorithm: Curator -> Analyst -> Auditor -> Executor -> Auditor, with revision cycles through Analyst until auditor-approved result.\n- Vertical links: curator-to-curator.\n- Horizontal links: Auditor A -> Analyst B, or Analyst B requests verified data from Auditor A.\n- Provider model: GPT Analyst, Claude Auditor, Claude Executor; fallback GPT-Codex/Codex for Claude roles on limit/unavailable.\n- Telegram and ChatGPT as operator interface fronts; Telegram main route through GD Curator, optional registered curator routes.\n- SSOT registries: elements, contours, providers, provider policy, failover policy, rules, experience, telegram input envelope, managed channel schema, release proof manifest, report period config.\n- Prompt pack with content drafts for objects, roles, provider contract, dispatch consumer, managed channel consumer, Telegram input handler.\n- Roadmap BEM-925..BEM-934 and Claude requirement mapping.\nLocal operator artifacts:\n- BEM925_final_system_evolution_protocol_ru.docx\n- BEM925_final_system_evolution_protocol_ru.zip\nQA: DOCX rendered to 7 pages; no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem925_protocol_record.md",
+    "result_json": "governance/codex/results/bem925_protocol_record.json"
+  },
+  "created_at": "2026-05-31T05:03:07.237Z"
+}
