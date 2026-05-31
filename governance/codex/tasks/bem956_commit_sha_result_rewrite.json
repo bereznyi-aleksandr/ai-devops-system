@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem956_commit_sha_result_rewrite",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-956 commit sha rewrite",
+  "objective": "Create file governance/reports/BEM956_COMMIT_SHA_RESULT_REWRITE.md with content BEM-956 | COMMIT SHA RESULT REWRITE DIAGNOSIS | 2026-05-31 | 13:26 (UTC+3)\n\nЭтап: 7/8 (88%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ BEM-952 proved simple Create file executor pattern works.\n✅ BEM-953 created canonical report.\n✅ BEM-954 created status JSON.\n✅ BEM-955 updated AGENT_CONTEXT.md.\n⚠️ Deno status still reports commit_sha=null for BEM-948..955.\n❌ Release PASS remains blocked.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Root cause candidate | Result/status may be written before successful remote SHA proof is captured | changed_files are created, but commit_sha remains null |\n| Safe next action | Patch result reporting path only after confirming exact workflow structure | Avoid corrupting codex-runner while push conflict exists |\n| Release status | NO_RELEASE_PASS | commit_sha=null and external gates remain |\n| Следующее действие | BEM-957 create narrow runner inspection report, then patch only confirmed lines | Prevent speculative workflow edit |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem956_commit_sha_result_rewrite.md",
+    "result_json": "governance/codex/results/bem956_commit_sha_result_rewrite.json"
+  },
+  "created_at": "2026-05-31T11:19:07.215Z"
+}
