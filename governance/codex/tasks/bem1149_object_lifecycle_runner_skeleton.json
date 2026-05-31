@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1149_object_lifecycle_runner_skeleton",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1149 object runner",
+  "objective": "Create file governance/runners/object_lifecycle_runner.py with content import json\nfrom pathlib import Path\n\nPASSPORTS_PATH = Path(\"governance/objects/object_passports.json\")\n\n\ndef load_passports():\n    data = json.loads(PASSPORTS_PATH.read_text(encoding=\"utf-8\"))\n    return {item[\"id\"]: item for item in data.get(\"objects\", [])}\n\n\ndef validate_object_action(object_id, action):\n    passports = load_passports()\n    if object_id not in passports:\n        return {\"ok\": False, \"error\": \"unknown object\"}\n    passport = passports[object_id]\n    allowed = set(passport.get(\"responsibilities\", []))\n    if action not in allowed:\n        return {\"ok\": False, \"error\": f\"action not allowed for {object_id}: {action}\"}\n    return {\"ok\": True, \"object_id\": object_id, \"action\": action}\n\nif __name__ == \"__main__\":\n    import sys\n    if len(sys.argv) != 3:\n        print(\"usage: object_lifecycle_runner.py <object_id> <action>\")\n        raise SystemExit(2)\n    result = validate_object_action(sys.argv[1], sys.argv[2])\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1149_OBJECT_LIFECYCLE_RUNNER_SKELETON.md with content BEM-1149 | OBJECT LIFECYCLE RUNNER SKELETON | 2026-05-31 | 22:11 (UTC+3)\n\nЭтап: Object lifecycle runner skeleton — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1148 completed with SHA `7d2cb51404c0235b48412b82716985a7db07ea89`.\n✅ Created `governance/runners/object_lifecycle_runner.py`.\n✅ Runner loads object passports.\n✅ Runner validates actions against object responsibilities.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Object lifecycle runner skeleton — 1/1 (100%) | Object lifecycle runner implemented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1150 implement provider_activation and provider_failover runners | Continue real protocol implementation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1149 | OBJECT LIFECYCLE RUNNER SKELETON | 2026-05-31 | 22:11 (UTC+3)\n- BEM-1148 completed with SHA 7d2cb51404c0235b48412b82716985a7db07ea89.\n- Created object lifecycle runner skeleton.\n- Release PASS not issued.\n- Next action: BEM-1150 implement provider_activation and provider_failover runners.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1149_object_lifecycle_runner_skeleton.md",
+    "result_json": "governance/codex/results/bem1149_object_lifecycle_runner_skeleton.json"
+  },
+  "created_at": "2026-05-31T19:13:08.615Z"
+}
