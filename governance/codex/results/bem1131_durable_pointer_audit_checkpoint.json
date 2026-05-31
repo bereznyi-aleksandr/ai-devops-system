@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1131_durable_pointer_audit_checkpoint",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1131_DURABLE_POINTER_AUDIT_CHECKPOINT.md",
+    "create:governance/state/bem1131_durable_pointer_audit_checkpoint.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1131_DURABLE_POINTER_AUDIT_CHECKPOINT.md",
+    "governance/state/bem1131_durable_pointer_audit_checkpoint.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1131_durable_pointer_audit_checkpoint.txt"
+  ],
+  "commit_sha": "b42a2bfee4717c861313c4b46b4ad5fa2d4f8583",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1131_durable_pointer_audit_checkpoint.md",
+  "completed_at": "2026-05-31T18:27:04Z"
+}
