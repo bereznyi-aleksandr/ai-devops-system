@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1029_real_receipt_monitoring_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1029_real_receipt_monitoring_queue.json",
+    "create:governance/reports/BEM1029_REAL_RECEIPT_MONITORING_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1029_real_receipt_monitoring_queue.json",
+    "governance/reports/BEM1029_REAL_RECEIPT_MONITORING_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1029_real_receipt_monitoring_queue.txt"
+  ],
+  "commit_sha": "40750e77c6b99ce38b996acd1c057ded1e5b909f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1029_real_receipt_monitoring_queue.md",
+  "completed_at": "2026-05-31T14:08:53Z"
+}
