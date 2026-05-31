@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem957_runner_inspection_report",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-957 runner inspection",
+  "objective": "BEM-957 | Runner inspection before commit_sha patch. Inspect .github/workflows/codex-runner.yml and any safe push helper referenced by it. Create file governance/reports/BEM957_RUNNER_INSPECTION_REPORT.md containing: 1) exact order of steps from Execute task through Write result files through Commit and push everything; 2) where result JSON is written relative to git commit and push; 3) where commit_sha is assigned or not assigned; 4) whether unstaged changes before rebase can still cause safe push failure; 5) minimal next patch recommendation. Include canonical counts: Этап 8/9 (89%), BEM-931 foundation 14/14 (100%), release gates 0/4. No release PASS. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem957_runner_inspection_report.md",
+    "result_json": "governance/codex/results/bem957_runner_inspection_report.json"
+  },
+  "created_at": "2026-05-31T11:20:42.091Z"
+}
