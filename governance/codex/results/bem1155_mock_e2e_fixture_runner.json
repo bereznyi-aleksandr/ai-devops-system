@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1155_mock_e2e_fixture_runner",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tests/fixtures/bem931_mock_e2e_message.json",
+    "create:governance/tests/run_bem931_mock_e2e.py",
+    "create:governance/reports/BEM1155_MOCK_E2E_FIXTURE_RUNNER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tests/fixtures/bem931_mock_e2e_message.json",
+    "governance/tests/run_bem931_mock_e2e.py",
+    "governance/reports/BEM1155_MOCK_E2E_FIXTURE_RUNNER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1155_mock_e2e_fixture_runner.txt"
+  ],
+  "commit_sha": "bcbd711f84303b81d44288a50d416e42613dea59",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1155_mock_e2e_fixture_runner.md",
+  "completed_at": "2026-05-31T19:21:58Z"
+}
