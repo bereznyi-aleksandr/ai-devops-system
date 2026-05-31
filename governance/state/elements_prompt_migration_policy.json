@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "purpose": "Migrate existing prompt_ref paths to canonical templates/providers without losing current legacy prompts.",
+  "legacy_prompt_refs_allowed_as_reference": true,
+  "canonical_prompt_refs": {
+    "curator": "governance/prompts/templates/curator_template.md",
+    "analyst": "governance/prompts/templates/analyst_template.md",
+    "auditor": "governance/prompts/templates/auditor_template.md",
+    "executor": "governance/prompts/templates/executor_template.md"
+  },
+  "migration_rule": "Elements should reference canonical role templates by role_type. Existing wrk_c1/wrk_c2/wrk_c3 prompts may remain as legacy contour overlays until contour overlay registry is created.",
+  "next_required_step": "Update elements_registry prompt_ref to canonical role templates after validating current schema and role_type fields."
+}
