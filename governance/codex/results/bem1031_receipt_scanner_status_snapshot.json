@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1031_receipt_scanner_status_snapshot",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1031_receipt_scanner_status_snapshot.json",
+    "create:governance/reports/BEM1031_RECEIPT_SCANNER_STATUS_SNAPSHOT.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1031_receipt_scanner_status_snapshot.json",
+    "governance/reports/BEM1031_RECEIPT_SCANNER_STATUS_SNAPSHOT.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1031_receipt_scanner_status_snapshot.txt"
+  ],
+  "commit_sha": "6d0a24a0f6a36db3d078f8f47c88febd4bc0ec67",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1031_receipt_scanner_status_snapshot.md",
+  "completed_at": "2026-05-31T14:11:52Z"
+}
