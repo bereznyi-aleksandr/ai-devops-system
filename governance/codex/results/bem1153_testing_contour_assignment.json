@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1153_testing_contour_assignment",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/testing_contour_assignment.py",
+    "create:governance/testing/testing_contour_assignment_policy.json",
+    "create:governance/reports/BEM1153_TESTING_CONTOUR_ASSIGNMENT.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/testing_contour_assignment.py",
+    "governance/testing/testing_contour_assignment_policy.json",
+    "governance/reports/BEM1153_TESTING_CONTOUR_ASSIGNMENT.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1153_testing_contour_assignment.txt"
+  ],
+  "commit_sha": "a80c4487c2bae364ef21e03c5e59806ddf273cf0",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1153_testing_contour_assignment.md",
+  "completed_at": "2026-05-31T19:18:58Z"
+}
