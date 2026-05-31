@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1006_claude_audit_result_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_external_claude_audit_result.py",
+    "create:governance/tests/fixtures/external_claude_audit_result_sample.json",
+    "create:governance/reports/BEM1006_EXTERNAL_CLAUDE_AUDIT_RESULT_VALIDATOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_external_claude_audit_result.py",
+    "governance/tests/fixtures/external_claude_audit_result_sample.json",
+    "governance/reports/BEM1006_EXTERNAL_CLAUDE_AUDIT_RESULT_VALIDATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1006_claude_audit_result_validator.txt"
+  ],
+  "commit_sha": "ea13fa45f1eb6fa13944099ab769028acd5eac88",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1006_claude_audit_result_validator.md",
+  "completed_at": "2026-05-31T13:28:19Z"
+}
