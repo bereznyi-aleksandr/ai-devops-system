@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1026_external_receipt_status_dashboard",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1026 receipt dashboard",
+  "objective": "Create file governance/proofs/external/EXTERNAL_RECEIPT_STATUS_DASHBOARD.json with content {\n  \"bem_id\": \"BEM-1026\",\n  \"created_at_utc3\": \"2026-05-31 | 17:03 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External receipt status dashboard\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"slots\": [\n    {\"slot\": \"production_telegram_gate\", \"receipt_dir\": \"governance/proofs/external/telegram/\", \"status\": \"blocked_missing_real_receipt\", \"validator\": \"governance/validators/validate_telegram_production_receipt.py\"},\n    {\"slot\": \"live_llm_runtime_gate\", \"receipt_dir\": \"governance/proofs/external/runtime/\", \"status\": \"blocked_missing_real_receipt\", \"validator\": \"governance/validators/validate_live_runtime_receipt.py\"},\n    {\"slot\": \"external_claude_reaudit\", \"receipt_dir\": \"governance/proofs/external/claude/\", \"status\": \"blocked_missing_external_result\", \"validator\": \"governance/validators/validate_external_claude_audit_result.py\"}\n  ],\n  \"last_completed_bem\": \"BEM-1025\",\n  \"last_proof_sha\": \"0abd9c4edcaf0c404894c367e2cd5714b220e6b6\",\n  \"next_action\": \"BEM-1027 receipt evidence manifest extension\"\n}\nCreate file governance/reports/BEM1026_EXTERNAL_RECEIPT_STATUS_DASHBOARD.md with content BEM-1026 | EXTERNAL RECEIPT STATUS DASHBOARD | 2026-05-31 | 17:03 (UTC+3)\n\nЭтап: External receipt status dashboard — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1025 completed with SHA `0abd9c4edcaf0c404894c367e2cd5714b220e6b6`.\n✅ Created `governance/proofs/external/EXTERNAL_RECEIPT_STATUS_DASHBOARD.json`.\n✅ Dashboard tracks production Telegram, live runtime and external Claude receipt slots.\n✅ Each slot points to receipt directory and validator.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Real external receipts are not present yet.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External receipt status dashboard — 1/1 (100%) | Dashboard created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1027 receipt evidence manifest extension | Continue evidence indexing |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1026 | EXTERNAL RECEIPT STATUS DASHBOARD | 2026-05-31 | 17:03 (UTC+3)\n- BEM-1025 completed with SHA 0abd9c4edcaf0c404894c367e2cd5714b220e6b6.\n- Created `governance/proofs/external/EXTERNAL_RECEIPT_STATUS_DASHBOARD.json`.\n- Created `governance/reports/BEM1026_EXTERNAL_RECEIPT_STATUS_DASHBOARD.md`.\n- External receipt status dashboard completed: 1/1 (100%).\n- Release PASS not issued; real external receipts remain missing.\n- Next action: BEM-1027 receipt evidence manifest extension.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1026_external_receipt_status_dashboard.md",
+    "result_json": "governance/codex/results/bem1026_external_receipt_status_dashboard.json"
+  },
+  "created_at": "2026-05-31T14:04:21.077Z"
+}
