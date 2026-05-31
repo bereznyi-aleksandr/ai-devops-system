@@ -487,3 +487,5 @@ No issue comments.
 - BEM-991 completed with SHA e44b987413ca9990005aa4dbfb7405d5c5d48c9a
 ### BEM-993 | LIVE
 ### BEM-994 | LIVE
+### BEM-995 | RECEIPT VALIDATOR INDEX | 2026-05-31 | 16:05 (UTC+3)
+-

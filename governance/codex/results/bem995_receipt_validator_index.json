@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem995_receipt_validator_index",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/receipt_validators_index.json",
+    "create:governance/reports/BEM995_RECEIPT_VALIDATOR_INDEX.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/receipt_validators_index.json",
+    "governance/reports/BEM995_RECEIPT_VALIDATOR_INDEX.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem995_receipt_validator_index.txt"
+  ],
+  "commit_sha": "ef5257a8a21bc00569f275177ae39edb5abde5b9",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem995_receipt_validator_index.md",
+  "completed_at": "2026-05-31T13:06:36Z"
+}
