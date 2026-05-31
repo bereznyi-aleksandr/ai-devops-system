@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem975_canonical_sha_gate_report",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-975 canonical SHA gate",
+  "objective": "Create file governance/reports/BEM975_CANONICAL_SHA_GATE_REPORT.md with content BEM-975 | CANONICAL SHA GATE REPORT | 2026-05-31 | 15:18 (UTC+3)\n\nЭтап: 25/25 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 1/4 (25%)\n\nЧек-лист:\n✅ BEM-960 fixed BEM-866 unstaged rebase failure by staging governance/runtime/curator_dispatch/.\n✅ BEM-973 patched codex-runner result writer via regex; diagnostic replace_count=1.\n✅ BEM-974 verified Deno status returns non-null commit_sha=151d547af01babee4575ec837379c4ef7ebfe8bd.\n✅ Remote SHA reporting gate is now closed for runner status proof.\n⚠️ This is not release PASS because production Telegram, live LLM runtime and external Claude re-audit remain blockers.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Stage completed | 25/25 runner repair/probe/report tasks completed | BEM-948 through BEM-975 chain |\n| Roadmap foundation | 14/14 foundation blocks retained | BEM-947 operator context and BEM-931 foundation status |\n| Release gates | 1/4 closed | remote_non_null_sha closed; production Telegram, live LLM runtime, external Claude re-audit remain |\n| Proof SHA | 151d547af01babee4575ec837379c4ef7ebfe8bd | BEM-974 getCodexStatus commit_sha non-null |\n| Следующее действие | BEM-976 prepare Claude re-audit evidence handoff using BEM-948/BEM-975 reports | Next mandatory release gate after SHA proof |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-975 | CANONICAL SHA GATE REPORT | 2026-05-31 | 15:18 (UTC+3)\n- Completed runner repair/probe stage: 25/25.\n- BEM-974 returned non-null commit_sha: 151d547af01babee4575ec837379c4ef7ebfe8bd.\n- Remote SHA reporting gate is closed for runner status proof.\n- Release gates now: 1/4 closed. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- No release PASS issued.\n- Next action: BEM-976 prepare Claude re-audit evidence handoff using BEM-948/BEM-975 reports.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem975_canonical_sha_gate_report.md",
+    "result_json": "governance/codex/results/bem975_canonical_sha_gate_report.json"
+  },
+  "created_at": "2026-05-31T12:20:20.659Z"
+}
