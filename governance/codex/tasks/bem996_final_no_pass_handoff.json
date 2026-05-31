@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem996_final_no_pass_handoff",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-996 no-pass handoff",
+  "objective": "Create file governance/reports/BEM996_FINAL_NO_PASS_HANDOFF.md with content BEM-996 | FINAL NO-PASS HANDOFF WITH VALIDATORS INDEX | 2026-05-31 | 16:06 (UTC+3)\n\nЭтап: Final no-pass handoff — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created final no-pass handoff with validators index.\n✅ Referenced Telegram receipt validator index: `governance/validators/receipt_validators_index.json`.\n✅ Referenced Claude audit mailbox: `governance/audit/BEM989_EXTERNAL_CLAUDE_AUDIT_MAILBOX_HANDOFF.json`.\n✅ Referenced audit mailbox status: `governance/audit/BEM990_AUDIT_MAILBOX_STATUS.json`.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ production_telegram_gate remains blocked until real audited production receipt exists.\n⚠️ live_llm_runtime_gate remains blocked until real approved runtime receipt exists.\n⚠️ external_claude_reaudit remains pending until external Claude APPROVED/PASS.\n❌ Release PASS is not issued.\n\n## Handoff evidence\n| Evidence | Path |\n|---|---|\n| Validator index | governance/validators/receipt_validators_index.json |\n| Telegram validator | governance/validators/validate_telegram_production_receipt.py |\n| Runtime validator | governance/validators/validate_live_runtime_receipt.py |\n| Claude audit mailbox | governance/audit/BEM989_EXTERNAL_CLAUDE_AUDIT_MAILBOX_HANDOFF.json |\n| Audit mailbox status | governance/audit/BEM990_AUDIT_MAILBOX_STATUS.json |\n| Blocker dashboard | governance/reports/BEM985_BLOCKER_DASHBOARD_CANONICAL.md |\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Final no-pass handoff — 1/1 (100%) | Handoff file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-997 create next roadmap seed for post-BEM996 work | Roadmap must not stop after handoff |\n\nNo issue comments.\nCreate file governance/state/bem996_final_no_pass_handoff.json with content {\n  \"bem_id\": \"BEM-996\",\n  \"created_at_utc3\": \"2026-05-31 | 16:06 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Final no-pass handoff\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"evidence_paths\": [\n    \"governance/validators/receipt_validators_index.json\",\n    \"governance/validators/validate_telegram_production_receipt.py\",\n    \"governance/validators/validate_live_runtime_receipt.py\",\n    \"governance/audit/BEM989_EXTERNAL_CLAUDE_AUDIT_MAILBOX_HANDOFF.json\",\n    \"governance/audit/BEM990_AUDIT_MAILBOX_STATUS.json\",\n    \"governance/reports/BEM985_BLOCKER_DASHBOARD_CANONICAL.md\"\n  ],\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-997 create next roadmap seed for post-BEM996 work\"\n}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-996 | FINAL NO-PASS HANDOFF | 2026-05-31 | 16:06 (UTC+3)\n- Created `governance/reports/BEM996_FINAL_NO_PASS_HANDOFF.md`.\n- Created `governance/state/bem996_final_no_pass_handoff.json`.\n- Final no-pass handoff completed: 1/1 (100%).\n- Release PASS not issued. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-997 create next roadmap seed for post-BEM996 work.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem996_final_no_pass_handoff.md",
+    "result_json": "governance/codex/results/bem996_final_no_pass_handoff.json"
+  },
+  "created_at": "2026-05-31T13:08:13.968Z"
+}
