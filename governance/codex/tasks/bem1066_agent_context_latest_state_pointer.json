@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1066_agent_context_latest_state_pointer",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1066 latest-state pointer",
+  "objective": "Create file governance/state/LATEST_PROOF_INFRA_STATE_POINTER.json with content {\n  \"bem_id\": \"BEM-1066\",\n  \"created_at_utc3\": \"2026-05-31 | 18:32 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"AGENT_CONTEXT latest-state pointer\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1065\",\n  \"latest_proof_sha\": \"724d9889e975954c19f697ff76855b5131b8e1aa\",\n  \"current_state\": \"strict_no_pass_locked_until_validated_external_proofs\",\n  \"proof_infra_summary\": \"Proof waiting room, receipt infrastructure, strict proof policy and NO-PASS lock exist. Real external Telegram/runtime/Claude proofs are still missing.\",\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1067 proof infra no-pass operator summary\"\n}\nCreate file governance/reports/BEM1066_AGENT_CONTEXT_LATEST_STATE_POINTER.md with content BEM-1066 | AGENT_CONTEXT LATEST-STATE POINTER | 2026-05-31 | 18:32 (UTC+3)\n\nЭтап: AGENT_CONTEXT latest-state pointer — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1065 completed with SHA `724d9889e975954c19f697ff76855b5131b8e1aa`.\n✅ Created `governance/state/LATEST_PROOF_INFRA_STATE_POINTER.json`.\n✅ Pointer records strict NO-PASS lock state.\n✅ Pointer records remaining blockers and next action.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Pointer is state metadata, not external proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | AGENT_CONTEXT latest-state pointer — 1/1 (100%) | Latest-state pointer created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1067 proof infra no-pass operator summary | Continue operator-facing canon chain |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1066 | AGENT_CONTEXT LATEST-STATE POINTER | 2026-05-31 | 18:32 (UTC+3)\n- BEM-1065 completed with SHA 724d9889e975954c19f697ff76855b5131b8e1aa.\n- Created `governance/state/LATEST_PROOF_INFRA_STATE_POINTER.json`.\n- Created `governance/reports/BEM1066_AGENT_CONTEXT_LATEST_STATE_POINTER.md`.\n- Latest state: strict NO-PASS locked until validated external Telegram/runtime/Claude proofs exist.\n- Release PASS not issued.\n- Next action: BEM-1067 proof infra no-pass operator summary.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1066_agent_context_latest_state_pointer.md",
+    "result_json": "governance/codex/results/bem1066_agent_context_latest_state_pointer.json"
+  },
+  "created_at": "2026-05-31T15:34:08.994Z"
+}
