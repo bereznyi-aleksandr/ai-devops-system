@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem930_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-930 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-930 completed | 2026-05-31\nPrepared unified general working-system protocol with full detail after operator clarified that a separate appendix/report is insufficient.\nContext proof: governance/runtime/curator_dispatch/BEM930_CONTEXT_READ.md\nRepo protocol record: governance/reports/BEM930_UNIFIED_WORKING_SYSTEM_PROTOCOL_FULL_DETAIL.md\nResult: FINAL_UNIFIED_WORKING_SYSTEM_PROTOCOL_WITH_FULL_DETAIL_READY. This is a single common protocol, not an appendix and not an analytical-only report. It includes top-level architecture and detailed implementation sections. Objects GD/DIR/WRK have passports, rules, functions, curators, contours, channels and DoD; they do not have prompts. Prompts exist only for LLM-executed roles, providers and operational handlers. The protocol includes full connection matrix: vertical curator-to-curator links, internal contour links, horizontal contour-to-contour links and runner/provider/proof links. It includes internal contour state machine Curator -> Analyst -> Auditor -> Executor -> Auditor -> Curator with revision through Analyst. Provider model: GPT Analyst, Claude Auditor, Claude Executor, fallback GPT-Codex/Codex. Prompt pack includes curator, analyst, auditor, executor, GPT analyst provider, Claude auditor, Claude executor, Codex fallback, Telegram handler, dispatch consumer, managed channel consumer and report generator. Roadmap steps 1.1..8.2 include files, acceptance criteria, proof and gates.\nLocal operator artifacts: BEM930_unified_working_system_protocol_full_detail_ru.docx and BEM930_unified_working_system_protocol_full_detail_ru.zip.\nQA: DOCX rendered to 6 pages; no edge clipping detected.\nNext: operator review of BEM-930 unified protocol.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem930_context_done.md",
+    "result_json": "governance/codex/results/bem930_context_done.json"
+  },
+  "created_at": "2026-05-31T06:57:49.054Z"
+}
