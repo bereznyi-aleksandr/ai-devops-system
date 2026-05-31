@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem959_atomic_runner_patch_checklist",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-959 atomic runner patch checklist",
+  "objective": "Create file governance/reports/BEM959_ATOMIC_RUNNER_PATCH_CHECKLIST.md with content BEM-959 | ATOMIC RUNNER PATCH CHECKLIST | 2026-05-31 | 14:52 (UTC+3)\n\nЭтап: 9/10 (90%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ BEM-952 proved simple Create file executor pattern works.\n✅ BEM-953 canonical status report created.\n✅ BEM-954 status JSON created.\n✅ BEM-955 AGENT_CONTEXT updated.\n✅ BEM-958 runner SHA capture plan created through confirmed short channel.\n⚠️ BEM-948..958 all still return commit_sha=null in Deno status.\n❌ Release PASS remains blocked.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Defect | Deno result commit_sha remains null even when changed_files include requested files | BEM-952, BEM-953, BEM-954, BEM-955, BEM-958 |\n| Patch rule | Do not use unconfirmed createCodexTaskPost as proof | BEM-956/BEM-958 long POST had no confirmation and trace not_found |\n| Atomic patch requirement | Patch must update codex result JSON after git commit SHA exists and before final status is consumed | release proof requires non-null SHA |\n| Safe push requirement | Patch must not leave unstaged changes before git pull --rebase --autostash | screenshot showed rebase failed because unstaged changes existed |\n| Next action | BEM-960: use simple Insert/Replace pattern against codex-runner.yml with one small change only | Keep runner repair controlled and reversible |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem959_atomic_runner_patch_checklist.md",
+    "result_json": "governance/codex/results/bem959_atomic_runner_patch_checklist.json"
+  },
+  "created_at": "2026-05-31T11:54:07.402Z"
+}
