@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1153_testing_contour_assignment",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1153 testing assignment",
+  "objective": "Create file governance/runners/testing_contour_assignment.py with content import json\n\nDEFAULT_ASSIGNMENT = {\"mock_e2e\": \"C1\", \"validator_tests\": \"C2\", \"release_proof_tests\": \"C3\"}\n\n\ndef assign(test_type):\n    contour = DEFAULT_ASSIGNMENT.get(test_type)\n    if not contour:\n        return {\"ok\": False, \"error\": \"unknown test_type\"}\n    return {\"ok\": True, \"test_type\": test_type, \"contour\": contour}\n\nif __name__ == \"__main__\":\n    import sys\n    result = assign(sys.argv[1] if len(sys.argv) > 1 else \"\")\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/testing/testing_contour_assignment_policy.json with content {\"bem_id\":\"BEM-1153\",\"assignments\":{\"mock_e2e\":\"C1\",\"validator_tests\":\"C2\",\"release_proof_tests\":\"C3\"},\"rule\":\"Testing contour assignment must not change release proof requirements.\",\"release_pass\":false}\nCreate file governance/reports/BEM1153_TESTING_CONTOUR_ASSIGNMENT.md with content BEM-1153 | TESTING CONTOUR ASSIGNMENT | 2026-05-31 | 22:17 (UTC+3)\n\nЭтап: Testing contour assignment — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1152 completed with SHA `0db360c5f2c0e04a0470bbde7aba0c3a2848f934`.\n✅ Created `governance/runners/testing_contour_assignment.py`.\n✅ Created `governance/testing/testing_contour_assignment_policy.json`.\n✅ Test assignment does not change release proof requirements.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Testing contour assignment — 1/1 (100%) | Testing assignment runner implemented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1154 implement Telegram envelope schema and mapping | Continue real protocol implementation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1153 | TESTING CONTOUR ASSIGNMENT | 2026-05-31 | 22:17 (UTC+3)\n- BEM-1152 completed with SHA 0db360c5f2c0e04a0470bbde7aba0c3a2848f934.\n- Created testing contour assignment runner and policy.\n- Release PASS not issued.\n- Next action: BEM-1154 implement Telegram envelope schema and mapping.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1153_testing_contour_assignment.md",
+    "result_json": "governance/codex/results/bem1153_testing_contour_assignment.json"
+  },
+  "created_at": "2026-05-31T19:18:47.973Z"
+}
