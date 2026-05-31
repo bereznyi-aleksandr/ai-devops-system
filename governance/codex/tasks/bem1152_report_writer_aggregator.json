@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1152_report_writer_aggregator",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1152 report runners",
+  "objective": "Create file governance/runners/role_report_writer.py with content import json\nfrom pathlib import Path\n\n\ndef write_report(output_path, report):\n    required = {\"bem_id\", \"role\", \"status\", \"summary\", \"proof\"}\n    missing = sorted(required - set(report))\n    if missing:\n        return {\"ok\": False, \"error\": f\"missing fields: {missing}\"}\n    Path(output_path).parent.mkdir(parents=True, exist_ok=True)\n    Path(output_path).write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding=\"utf-8\")\n    return {\"ok\": True, \"path\": output_path}\n\nif __name__ == \"__main__\":\n    import sys\n    if len(sys.argv) != 3:\n        print(\"usage: role_report_writer.py <report.json> <output.json>\")\n        raise SystemExit(2)\n    report = json.loads(Path(sys.argv[1]).read_text(encoding=\"utf-8\"))\n    result = write_report(sys.argv[2], report)\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/runners/object_report_aggregator.py with content import json\nfrom pathlib import Path\n\n\ndef aggregate(report_paths):\n    reports = []\n    errors = []\n    for path in report_paths:\n        p = Path(path)\n        if not p.exists():\n            errors.append(f\"missing report {path}\")\n            continue\n        reports.append(json.loads(p.read_text(encoding=\"utf-8\")))\n    return {\"ok\": not errors, \"errors\": errors, \"count\": len(reports), \"reports\": reports}\n\nif __name__ == \"__main__\":\n    import sys\n    result = aggregate(sys.argv[1:])\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1152_REPORT_WRITER_AGGREGATOR.md with content BEM-1152 | REPORT WRITER AGGREGATOR | 2026-05-31 | 22:16 (UTC+3)\n\nЭтап: Report writer aggregator — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1151 completed with SHA `54c00efe30caac425ac727b6ad0f88d8d6443cb8`.\n✅ Created `governance/runners/role_report_writer.py`.\n✅ Created `governance/runners/object_report_aggregator.py`.\n✅ Reports require proof field.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Report writer aggregator — 1/1 (100%) | Report runners implemented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1153 implement testing_contour_assignment | Continue real protocol implementation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1152 | REPORT WRITER AGGREGATOR | 2026-05-31 | 22:16 (UTC+3)\n- BEM-1151 completed with SHA 54c00efe30caac425ac727b6ad0f88d8d6443cb8.\n- Created role report writer and object report aggregator.\n- Release PASS not issued.\n- Next action: BEM-1153 implement testing_contour_assignment.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1152_report_writer_aggregator.md",
+    "result_json": "governance/codex/results/bem1152_report_writer_aggregator.json"
+  },
+  "created_at": "2026-05-31T19:17:25.789Z"
+}
