@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1035_release_no_pass_validator_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/gates/BEM1035_RELEASE_NO_PASS_VALIDATOR_POLICY.json",
+    "create:governance/reports/BEM1035_RELEASE_NO_PASS_VALIDATOR_POLICY.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/gates/BEM1035_RELEASE_NO_PASS_VALIDATOR_POLICY.json",
+    "governance/reports/BEM1035_RELEASE_NO_PASS_VALIDATOR_POLICY.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1035_release_no_pass_validator_policy.txt"
+  ],
+  "commit_sha": "53df8332dadfd8c81be0a8aabefa8a87f045053d",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1035_release_no_pass_validator_policy.md",
+  "completed_at": "2026-05-31T14:17:51Z"
+}
