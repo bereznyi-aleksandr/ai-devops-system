@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1034_external_receipt_sample_templates",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1034 receipt templates",
+  "objective": "Create file governance/proofs/external/telegram/telegram_receipt_template.json with content {\n  \"template_only\": true,\n  \"proof_type\": \"production_telegram_webhook_receipt\",\n  \"trace_id\": \"REPLACE_WITH_EXTERNAL_TRACE_ID\",\n  \"timestamp_utc3\": \"YYYY-MM-DD | HH:MM (UTC+3)\",\n  \"webhook_route\": \"REPLACE_WITH_ROUTE_REF_NOT_SECRET\",\n  \"telegram_envelope_ref\": \"REPLACE_WITH_ENVELOPE_REF\",\n  \"managed_channel_ref\": \"REPLACE_WITH_MANAGED_CHANNEL_REF\",\n  \"target_curator\": \"EL-CUR-GD-001\",\n  \"receipt_status\": \"REPLACE_WITH_EXTERNAL_STATUS\",\n  \"proof_ref\": \"REPLACE_WITH_AUDITABLE_PROOF_REF\"\n}\nCreate file governance/proofs/external/runtime/live_runtime_receipt_template.json with content {\n  \"template_only\": true,\n  \"proof_type\": \"approved_live_runtime_execution_receipt\",\n  \"trace_id\": \"REPLACE_WITH_EXTERNAL_TRACE_ID\",\n  \"timestamp_utc3\": \"YYYY-MM-DD | HH:MM (UTC+3)\",\n  \"logical_role\": \"REPLACE_WITH_ROLE\",\n  \"provider_id\": \"REPLACE_WITH_PROVIDER_ID\",\n  \"provider_mode\": \"REPLACE_WITH_PROVIDER_MODE\",\n  \"runtime_ref\": \"REPLACE_WITH_RUNTIME_REF\",\n  \"approval_ref\": \"REPLACE_WITH_APPROVAL_REF\",\n  \"execution_receipt_ref\": \"REPLACE_WITH_EXECUTION_RECEIPT_REF\",\n  \"audit_ref\": \"REPLACE_WITH_AUDIT_REF\",\n  \"paid_api_used\": false,\n  \"actions\": []\n}\nCreate file governance/proofs/external/claude/external_claude_audit_result_template.json with content {\n  \"template_only\": true,\n  \"audit_id\": \"REPLACE_WITH_EXTERNAL_AUDIT_ID\",\n  \"auditor\": \"external_claude\",\n  \"timestamp_utc3\": \"YYYY-MM-DD | HH:MM (UTC+3)\",\n  \"audited_evidence_refs\": [\"REPLACE_WITH_EVIDENCE_REF\"],\n  \"decision\": \"BLOCKED\",\n  \"findings\": [],\n  \"blockers\": [\"REPLACE_WITH_BLOCKER_OR_REMOVE_IF_APPROVED\"],\n  \"proof_ref\": \"REPLACE_WITH_EXTERNAL_AUDIT_PROOF_REF\"\n}\nCreate file governance/reports/BEM1034_EXTERNAL_RECEIPT_SAMPLE_TEMPLATES.md with content BEM-1034 | EXTERNAL RECEIPT SAMPLE TEMPLATES | 2026-05-31 | 17:27 (UTC+3)\n\nЭтап: External proof receipt sample templates — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1033 completed with SHA `00764c8864f9dc285b7b85380ec599da87b4c539`.\n✅ Created Telegram receipt template.\n✅ Created live runtime receipt template.\n✅ Created external Claude audit result template.\n✅ Templates contain placeholders only and no secret values.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Templates are not real external receipt proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External proof receipt sample templates — 1/1 (100%) | Templates created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1035 receipt template validation policy | Continue external proof intake preparation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1034 | EXTERNAL RECEIPT SAMPLE TEMPLATES | 2026-05-31 | 17:27 (UTC+3)\n- BEM-1033 completed with SHA 00764c8864f9dc285b7b85380ec599da87b4c539.\n- Created external receipt templates for Telegram, runtime and Claude audit result.\n- Created `governance/reports/BEM1034_EXTERNAL_RECEIPT_SAMPLE_TEMPLATES.md`.\n- External receipt sample templates completed: 1/1 (100%).\n- Templates are not proof; release PASS not issued.\n- Next action: BEM-1035 receipt template validation policy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1034_external_receipt_sample_templates.md",
+    "result_json": "governance/codex/results/bem1034_external_receipt_sample_templates.json"
+  },
+  "created_at": "2026-05-31T14:29:13.087Z"
+}
