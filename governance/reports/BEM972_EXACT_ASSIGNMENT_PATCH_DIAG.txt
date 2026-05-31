@@ -1,0 +1,3 @@
+found_assignment=False
+old=commit_sha = os.environ.get('COMMIT_SHA', '')
+new=commit_sha = os.environ.get('COMMIT_SHA', '') or os.environ.get('GITHUB_SHA', '')
