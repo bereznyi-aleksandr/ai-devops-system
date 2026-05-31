@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1122_external_proof_blocker_ledger",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1122 blocker ledger",
+  "objective": "Create file governance/state/EXTERNAL_PROOF_BLOCKER_LEDGER.json with content {\n  \"bem_id\": \"BEM-1122\",\n  \"created_at_utc3\": \"2026-05-31 | 19:31 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External proof blocker ledger\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1121\",\n  \"latest_proof_sha\": \"abaae17e8a5f7adab14d1d7b36fbf111e8b8fbe8\",\n  \"ledger\": [\n    {\"blocker\": \"validated_external_telegram_production_receipt_missing\", \"required_file_area\": \"governance/proofs/external/telegram/\", \"validator\": \"governance/validators/validate_telegram_production_receipt.py\", \"status\": \"missing\"},\n    {\"blocker\": \"validated_external_live_runtime_receipt_missing\", \"required_file_area\": \"governance/proofs/external/runtime/\", \"validator\": \"governance/validators/validate_live_runtime_receipt.py\", \"status\": \"missing\"},\n    {\"blocker\": \"validated_external_claude_audit_result_missing\", \"required_file_area\": \"governance/proofs/external/claude/\", \"validator\": \"governance/validators/validate_external_claude_audit_result.py\", \"status\": \"missing\"}\n  ],\n  \"next_action\": \"BEM-1123 external proof blocker ledger audit\"\n}\nCreate file governance/reports/BEM1122_EXTERNAL_PROOF_BLOCKER_LEDGER.md with content BEM-1122 | EXTERNAL PROOF BLOCKER LEDGER | 2026-05-31 | 19:31 (UTC+3)\n\nЭтап: External proof blocker ledger — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1121 completed with SHA `abaae17e8a5f7adab14d1d7b36fbf111e8b8fbe8`.\n✅ Created `governance/state/EXTERNAL_PROOF_BLOCKER_LEDGER.json`.\n✅ Ledger lists Telegram, runtime and Claude external proof blockers.\n✅ Each blocker maps to directory and validator.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ All ledger entries remain missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External proof blocker ledger — 1/1 (100%) | Ledger created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1123 external proof blocker ledger audit | Continue without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1122 | EXTERNAL PROOF BLOCKER LEDGER | 2026-05-31 | 19:31 (UTC+3)\n- BEM-1121 completed with SHA abaae17e8a5f7adab14d1d7b36fbf111e8b8fbe8.\n- Created `governance/state/EXTERNAL_PROOF_BLOCKER_LEDGER.json`.\n- Created `governance/reports/BEM1122_EXTERNAL_PROOF_BLOCKER_LEDGER.md`.\n- External proof blocker ledger completed: 1/1 (100%).\n- Release PASS not issued.\n- Next action: BEM-1123 external proof blocker ledger audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1122_external_proof_blocker_ledger.md",
+    "result_json": "governance/codex/results/bem1122_external_proof_blocker_ledger.json"
+  },
+  "created_at": "2026-05-31T18:08:58.168Z"
+}
