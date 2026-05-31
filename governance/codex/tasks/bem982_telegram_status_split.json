@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem982_telegram_status_split",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-982 Telegram status split",
+  "objective": "Create file governance/state/bem982_telegram_production_gate_status.json with content {\n  \"bem_id\": \"BEM-982\",\n  \"created_at_utc3\": \"2026-05-31 | 15:42 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Telegram production gate status split\", \"completed\": 1, \"total\": 2, \"percent\": 50},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"telegram\": {\n    \"mock_status\": \"tracked\",\n    \"production_status\": \"blocked\",\n    \"production_blocker\": \"production webhook receipt not present\",\n    \"secrets_written\": false,\n    \"secret_values_required_in_files\": false\n  },\n  \"release_pass\": false,\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-983 create live LLM runtime gate status without paid API or secrets\"\n}\nCreate file governance/reports/BEM982_TELEGRAM_STATUS_SPLIT.md with content BEM-982 | TELEGRAM STATUS SPLIT | 2026-05-31 | 15:42 (UTC+3)\n\nЭтап: Telegram production gate status split — 1/2 (50%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created `governance/state/bem982_telegram_production_gate_status.json`.\n✅ Telegram `mock_status` and `production_status` are separated.\n✅ `production_status` remains blocked until production webhook receipt exists.\n✅ No secrets or token values written.\n✅ Report canon respected: no separate fake progress metric in header.\n⚠️ Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Telegram production gate status split — 1/2 (50%) | Status file created; runtime proof still absent |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Telegram production | blocked | No production webhook receipt proof exists |\n| Следующее действие | BEM-983 create live LLM runtime gate status without paid API or secrets | Next blocker must be tracked safely |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-982 | TELEGRAM STATUS SPLIT | 2026-05-31 | 15:42 (UTC+3)\n- Created `governance/state/bem982_telegram_production_gate_status.json`.\n- Created `governance/reports/BEM982_TELEGRAM_STATUS_SPLIT.md`.\n- Telegram status split stage: 1/2 (50%).\n- `mock_status` and `production_status` are separated.\n- `production_status` remains blocked; no secrets written.\n- Release status remains NO_RELEASE_PASS. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-983 create live LLM runtime gate status without paid API or secrets.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem982_telegram_status_split.md",
+    "result_json": "governance/codex/results/bem982_telegram_status_split.json"
+  },
+  "created_at": "2026-05-31T12:43:31.320Z"
+}
