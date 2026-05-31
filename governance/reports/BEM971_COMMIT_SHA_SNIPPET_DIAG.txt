@@ -1,0 +1,24 @@
+idx=16817
+---SNIPPET---
+e('%Y-%m-%dT%H:%M:%SZ')
+          trace = os.environ.get('TRACE_ID') or os.environ['INPUT_TRACE_ID']
+
+          task_found  = os.environ.get('TASK_FOUND',  'false') == 'true'
+          exec_status = os.environ.get('EXEC_STATUS', 'blocked')
+          commit_sha  = os.environ.get('COMMIT_SHA',  '')
+          changed_raw = os.environ.get('CHANGED_FILES', '')
+          ops_raw     = os.environ.get('OPS_APPLIED', '')
+          exec_errors = os.environ.get('EXEC_ERRORS', '')
+          changed     = [f for f in changed_raw.split(',') if f]
+          ops         = [o for o in ops_raw.split(',') if o]
+
+          if not task_found:
+              status  = 'blocked'
+              blocker = {'code': 'TASK_FILE_NOT_FOUND', 'message': 'Task file not found.'}
+          elif exec_status == 'completed':
+              status  = 'completed'
+              blocker = None
+          else:
+              status  = exec_status
+              blocker = {'code': 'E
+---END---
