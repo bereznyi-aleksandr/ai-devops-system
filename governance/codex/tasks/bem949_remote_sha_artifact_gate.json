@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem949_remote_sha_artifact_gate",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "BEM-949 remote SHA artifact gate",
+  "objective": "BEM-949 | Remote SHA and BEM-948 artifact gate. Inspect repo after BEM-948. Verify existence of governance/reports/BEM948_CLAUDE_REMARKS_RESPONSE.md, governance/state/bem948_claude_remarks_status.json, governance/AGENT_CONTEXT.md BEM-948 entry, and governance/codex/results/bem948_claude_remarks_response.md. Capture local HEAD and remote origin/main SHA if available using git metadata already present in runner environment. Create governance/reports/BEM949_REMOTE_SHA_ARTIFACT_GATE.md with stage counts, BEM-931 foundation count 14/14, release gates remote_non_null_sha/prod_telegram/live_llm/claude_reaudit, artifact matrix, and verdict NO_RELEASE_PASS if any proof is missing or commit_sha is null. Create governance/state/bem949_remote_sha_artifact_gate.json with release_pass=false and blockers. Update governance/AGENT_CONTEXT.md with BEM-949 next action. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem949_remote_sha_artifact_gate.md",
+    "result_json": "governance/codex/results/bem949_remote_sha_artifact_gate.json"
+  },
+  "created_at": "2026-05-31T10:15:33.392Z"
+}
