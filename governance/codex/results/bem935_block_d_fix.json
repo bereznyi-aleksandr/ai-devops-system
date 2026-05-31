@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem935_block_d_fix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "BEM-935 Block D schema artifacts created with safe wording",
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/reports/BEM935_ELEMENTS_PROMPT_MIGRATION.md",
+    "governance/state/managed_channel_schema.json",
+    "governance/state/contour_lifecycle_schema.json",
+    "governance/state/event_log_schema.json",
+    "governance/validators/validate_block_d_schemas.py",
+    "governance/reports/BEM935_BLOCK_D_SCHEMAS_PASS.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem935_block_d_fix.txt"
+  ],
+  "commit_sha": null,
+  "blocker": null,
+  "report_path": "governance/codex/results/bem935_block_d_fix.md",
+  "completed_at": "2026-05-31T09:19:13Z"
+}

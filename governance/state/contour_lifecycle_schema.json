@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "purpose": "Canonical internal contour lifecycle.",
+  "statuses": [
+    {"status":"input_received", "sender":"curator", "receiver":"analyst", "next":["proposal_prepared", "clarification_needed"]},
+    {"status":"proposal_prepared", "sender":"analyst", "receiver":"auditor", "next":["proposal_under_audit"]},
+    {"status":"proposal_under_audit", "sender":"auditor", "receiver":"auditor", "next":["proposal_approved", "proposal_rejected"]},
+    {"status":"proposal_rejected", "sender":"auditor", "receiver":"analyst", "next":["proposal_prepared"]},
+    {"status":"proposal_approved", "sender":"auditor", "receiver":"executor", "next":["execution_started"]},
+    {"status":"execution_started", "sender":"executor", "receiver":"executor", "next":["execution_result_submitted", "execution_blocked"]},
+    {"status":"execution_result_submitted", "sender":"executor", "receiver":"auditor", "next":["result_under_audit"]},
+    {"status":"result_under_audit", "sender":"auditor", "receiver":"auditor", "next":["result_approved", "result_rejected", "blocker_confirmed"]},
+    {"status":"result_rejected", "sender":"auditor", "receiver":"analyst", "next":["proposal_prepared"]},
+    {"status":"result_approved", "sender":"auditor", "receiver":"curator", "next":["contour_result_ready"]},
+    {"status":"contour_result_ready", "sender":"auditor", "receiver":"curator", "next":["vertical_report_sent", "horizontal_verified_data_transfer", "completed"]}
+  ],
+  "hard_rules": [
+    "Executor cannot start without proposal_approved.",
+    "Contour cannot output result without result_approved.",
+    "Revisions go through Analyst.",
+    "Horizontal transfer uses verified data only."
+  ]
+}

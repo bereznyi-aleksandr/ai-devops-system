@@ -300,3 +300,11 @@ Created canonical role templates, provider contracts, handler contracts, element
 Result: BLOCK_C_PROMPTS_PASS. This is foundation only, not release PASS.
 Next: Block D elements_registry migration + managed_channel_schema + contour_lifecycle_schema.
 No issue comments.
+
+
+## BEM-935 completed | 2026-05-31
+Implemented Block D schemas after BEM-934.
+Created managed_channel_schema, contour_lifecycle_schema, event_log_schema, elements prompt migration report and schema validator.
+Result: BLOCK_D_SCHEMAS_PASS. This is foundation only, not release PASS.
+Next: Block E managed channel consumer, event writer and dead-letter handling.
+No issue comments.

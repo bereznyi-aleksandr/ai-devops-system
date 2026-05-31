@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "purpose": "Schema for managed internal communication between curators and contours.",
+  "required_fields": ["message_id", "trace_id", "created_at", "source", "target", "route_type", "payload", "status", "proof_ref"],
+  "route_types": {
+    "vertical_curator_to_curator": {"allowed_source_roles": ["curator"], "allowed_target_roles": ["curator"], "description": "Vertical object communication GD-DIR-WRK."},
+    "contour_input": {"allowed_source_roles": ["curator"], "allowed_target_roles": ["analyst"], "description": "Curator sends input to Analyst of selected contour."},
+    "proposal": {"allowed_source_roles": ["analyst"], "allowed_target_roles": ["auditor"], "description": "Analyst submits proposal to Auditor."},
+    "proposal_revision": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["analyst"], "description": "Auditor returns proposal for revision."},
+    "execution_approval": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["executor"], "description": "Auditor sends approved proposal to Executor."},
+    "execution_result": {"allowed_source_roles": ["executor"], "allowed_target_roles": ["auditor"], "description": "Executor sends result to Auditor."},
+    "result_revision": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["analyst"], "description": "Auditor asks Analyst to prepare correction."},
+    "contour_output": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["curator"], "description": "Auditor releases validated result to Curator."},
+    "horizontal_verified_data_transfer": {"allowed_source_roles": ["auditor"], "allowed_target_roles": ["analyst"], "description": "Auditor A transfers verified data to Analyst B."},
+    "horizontal_verified_data_query": {"allowed_source_roles": ["analyst"], "allowed_target_roles": ["auditor"], "description": "Analyst B asks Auditor A for verified data."}
+  },
+  "status_values": ["queued", "delivered", "processing", "completed", "rejected", "operator_gate", "dead_letter"],
+  "proof_required": true
+}

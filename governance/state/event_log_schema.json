@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "required_fields": ["event_id", "trace_id", "created_at", "event_type", "source", "target", "status", "proof_ref"],
+  "recommended_fields": ["object_id", "contour_id", "logical_role", "provider_id", "fallback_used", "fallback_reason", "experience_refs_loaded", "anti_patterns_checked", "lessons_applied"],
+  "event_types": [
+    "operator_input_received",
+    "telegram_envelope_created",
+    "vertical_task_sent",
+    "vertical_task_assigned",
+    "contour_input_created",
+    "proposal_submitted",
+    "proposal_rejected",
+    "proposal_approved",
+    "execution_result_submitted",
+    "result_rejected",
+    "result_approved",
+    "contour_result_ready",
+    "horizontal_verified_data_transfer",
+    "horizontal_verified_data_query",
+    "vertical_result_returned",
+    "vertical_report_sent",
+    "operator_report_sent",
+    "role_activation_requested",
+    "provider_failover_used",
+    "operator_gate"
+  ]
+}
