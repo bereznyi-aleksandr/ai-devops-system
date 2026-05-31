@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "initial_mode": "workflow_dispatch",
+  "allowed_modes": ["workflow_dispatch", "repository_dispatch", "push_path_filter", "schedule_operator_gated"],
+  "repository_dispatch": {"event_type": "managed-channel-message-added", "requires_operator_approval": true},
+  "push_path_filter": {"paths": ["governance/state/managed_channel_messages.jsonl"], "requires_operator_approval": true},
+  "schedule": {"requires_operator_approval": true},
+  "concurrency_group": "managed-channel-consumer",
+  "proof_required": ["actions_run_id", "processed_message_id", "event_log_ref"]
+}

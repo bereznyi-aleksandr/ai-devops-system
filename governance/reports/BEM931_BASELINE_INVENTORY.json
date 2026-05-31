@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "source": "Claude external audit BEM-930+BEM-931",
+  "existing_confirmed": [
+    "governance/state/elements_registry.json",
+    "governance/prompts/wrk_c1_prompt.md",
+    "governance/prompts/wrk_c2_prompt.md",
+    "governance/prompts/wrk_c3_prompt.md",
+    "governance/prompts/general_director_prompt.md",
+    "governance/prompts/director_prompt.md",
+    "governance/prompts/curator_prompt.md",
+    "governance/prompts/auditor_prompt.md",
+    "governance/prompts/analyst_prompt.md",
+    ".github/workflows/governance-dispatch-consumer.yml",
+    "governance/runners/object_runner.py",
+    "scripts/provider_failover.py"
+  ],
+  "missing_critical": [
+    "governance/state/object_passports.json",
+    "governance/state/contours_registry.json",
+    "governance/state/providers_registry.json",
+    "governance/state/contour_provider_policy.json",
+    "governance/state/experience_registry.json",
+    "governance/state/managed_channel_schema.json",
+    "governance/state/contour_lifecycle_schema.json",
+    "governance/state/release_proof_manifest.json",
+    "governance/validators/* content",
+    "governance/gates/* content",
+    "governance/prompts/templates/* content",
+    "governance/prompts/providers/* content",
+    "governance/prompts/handlers/* content"
+  ],
+  "conclusion": "Repository is critically behind BEM-931. Start from Block A foundation."
+}

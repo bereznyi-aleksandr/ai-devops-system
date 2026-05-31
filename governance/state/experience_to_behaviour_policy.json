@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "purpose": "Make experience_registry active, not passive.",
+  "analyst_must_read": "Relevant lessons before preparing proposal.",
+  "auditor_must_check": "Proposal/result against anti_patterns and prior errors.",
+  "executor_must_read": "Approved proposal plus execution warnings before execution.",
+  "event_fields": ["experience_refs_loaded", "anti_patterns_checked", "lessons_applied"],
+  "rejection_rule": "If applicable experience refs were not checked, auditor rejects proposal."
+}

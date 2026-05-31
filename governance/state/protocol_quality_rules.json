@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "owner": "OPERATOR/GD",
+  "purpose": "Prevent repeated protocol/design errors",
+  "rules": [
+    {"id":"no_object_prompts","severity":"critical","rule":"Objects GD/DIR/WRK must have passports, never prompts."},
+    {"id":"no_telegram_only_protocol","severity":"critical","rule":"Telegram is an operator front, not the system center."},
+    {"id":"no_provider_only_protocol","severity":"high","rule":"Provider model is part of contour lifecycle."},
+    {"id":"no_abstract_links","severity":"critical","rule":"Every link must state sender, receiver, payload, event and proof."},
+    {"id":"no_release_pass_without_sha","severity":"critical","rule":"Release PASS requires non-null CI/Git SHA."},
+    {"id":"no_mock_as_production","severity":"critical","rule":"mock_status and production_status must be separate."},
+    {"id":"no_local_element_rules_by_default","severity":"high","rule":"Elements inherit role/object/contour rules; no local rules by default."},
+    {"id":"no_workspace_on_element","severity":"high","rule":"Workspace belongs to internal contour, not element."},
+    {"id":"russian_first","severity":"medium","rule":"Prose in Russian; English only technical identifiers."},
+    {"id":"roadmap_requires_depends_on","severity":"critical","rule":"Every roadmap step must have depends_on or explicit phase-order dependency."}
+  ]
+}

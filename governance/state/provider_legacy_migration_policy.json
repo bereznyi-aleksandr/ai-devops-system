@@ -1,0 +1,8 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "legacy_files": ["scripts/provider_failover.py", "governance/policies/provider_failover_policy.json"],
+  "target_files": ["governance/state/providers_registry.json", "governance/state/contour_provider_policy.json", "governance/state/provider_failover_policy.json", "governance/runners/provider_activation.py", "governance/runners/provider_failover.py"],
+  "migration_rule": "Legacy files may be read for reference but are not canonical SSOT after new governance/state provider files exist.",
+  "canonical_after_migration": "governance/state/* provider files"
+}
