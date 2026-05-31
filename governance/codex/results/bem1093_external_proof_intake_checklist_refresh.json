@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1093_external_proof_intake_checklist_refresh",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/EXTERNAL_PROOF_INTAKE_AUDIT_CHECKLIST_REFRESH.md",
+    "create:governance/state/bem1093_external_proof_intake_checklist_refresh.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/EXTERNAL_PROOF_INTAKE_AUDIT_CHECKLIST_REFRESH.md",
+    "governance/state/bem1093_external_proof_intake_checklist_refresh.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1093_external_proof_intake_checklist_refresh.txt"
+  ],
+  "commit_sha": "1ed916388d3a61f0a4069270355f0d3ea9658f04",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1093_external_proof_intake_checklist_refresh.md",
+  "completed_at": "2026-05-31T16:27:22Z"
+}
