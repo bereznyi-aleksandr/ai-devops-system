@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1123_external_proof_blocker_ledger_audit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1123_EXTERNAL_PROOF_BLOCKER_LEDGER_AUDIT.md",
+    "create:governance/state/bem1123_external_proof_blocker_ledger_audit.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1123_EXTERNAL_PROOF_BLOCKER_LEDGER_AUDIT.md",
+    "governance/state/bem1123_external_proof_blocker_ledger_audit.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1123_external_proof_blocker_ledger_audit.txt"
+  ],
+  "commit_sha": "a6794ed504941e3f516d4eb92749e85b49215760",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1123_external_proof_blocker_ledger_audit.md",
+  "completed_at": "2026-05-31T18:10:25Z"
+}
