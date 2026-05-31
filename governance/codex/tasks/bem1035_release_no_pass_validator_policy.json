@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1035_release_no_pass_validator_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1035 no-pass policy",
+  "objective": "Create file governance/gates/BEM1035_RELEASE_NO_PASS_VALIDATOR_POLICY.json with content {\n  \"bem_id\": \"BEM-1035\",\n  \"created_at_utc3\": \"2026-05-31 | 17:16 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Release no-pass validator policy\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"policy\": {\n    \"validator\": \"governance/validators/validate_release_decision.py\",\n    \"default_decision_when_external_receipts_missing\": \"NO_RELEASE_PASS\",\n    \"release_pass_requires\": [\n      \"production_telegram_receipt:verified_external_proof_present\",\n      \"live_runtime_receipt:verified_external_proof_present\",\n      \"external_claude_audit_result:verified_external_proof_present\",\n      \"non_null_sha:true\"\n    ],\n    \"self_claim_forbidden\": true\n  },\n  \"last_completed_bem\": \"BEM-1034\",\n  \"last_proof_sha\": \"b93db68f2058238dd00d0fa91669d76fd0de9362\",\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1036 continuity report after blocker automation\"\n}\nCreate file governance/reports/BEM1035_RELEASE_NO_PASS_VALIDATOR_POLICY.md with content BEM-1035 | RELEASE NO-PASS VALIDATOR POLICY | 2026-05-31 | 17:16 (UTC+3)\n\nЭтап: Release no-pass validator policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1034 completed with SHA `b93db68f2058238dd00d0fa91669d76fd0de9362`.\n✅ Created `governance/gates/BEM1035_RELEASE_NO_PASS_VALIDATOR_POLICY.json`.\n✅ Default decision remains NO_RELEASE_PASS while external receipts are missing.\n✅ Release PASS requires verified external proofs and non-null SHA.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Real external receipts are still absent.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Release no-pass validator policy — 1/1 (100%) | Policy file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1036 continuity report after blocker automation | Continue roadmap without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1035 | RELEASE NO-PASS VALIDATOR POLICY | 2026-05-31 | 17:16 (UTC+3)\n- BEM-1034 completed with SHA b93db68f2058238dd00d0fa91669d76fd0de9362.\n- Created `governance/gates/BEM1035_RELEASE_NO_PASS_VALIDATOR_POLICY.json`.\n- Created `governance/reports/BEM1035_RELEASE_NO_PASS_VALIDATOR_POLICY.md`.\n- Release no-pass validator policy completed: 1/1 (100%).\n- Release PASS not issued; verified external proofs are still missing.\n- Next action: BEM-1036 continuity report after blocker automation.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1035_release_no_pass_validator_policy.md",
+    "result_json": "governance/codex/results/bem1035_release_no_pass_validator_policy.json"
+  },
+  "created_at": "2026-05-31T14:17:41.291Z"
+}
