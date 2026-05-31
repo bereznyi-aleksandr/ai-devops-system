@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1043_receipt_blockers_audit_summary",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1043_RECEIPT_BLOCKERS_AUDIT_SUMMARY.md",
+    "create:governance/state/bem1043_receipt_blockers_audit_summary.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1043_RECEIPT_BLOCKERS_AUDIT_SUMMARY.md",
+    "governance/state/bem1043_receipt_blockers_audit_summary.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1043_receipt_blockers_audit_summary.txt"
+  ],
+  "commit_sha": "5812887cb52aaf7244c5530d6f4cea9b692bfebd",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1043_receipt_blockers_audit_summary.md",
+  "completed_at": "2026-05-31T14:49:09Z"
+}
