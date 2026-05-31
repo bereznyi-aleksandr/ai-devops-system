@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem960_fix_bem866_unstaged_rebase",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-960 fix unstaged rebase",
+  "objective": "Replace in .github/workflows/codex-runner.yml line containing 'git add governance/runtime/curator_dispatch/BEM866_CURRENT_HEAD_SHA.txt governance/runtime/curator_dispatch/BEM866_GIT_STATUS_SHORT.txt governance/runtime/curator_dispatch/BEM866_GIT_DIFF_NAME_ONLY.txt || true' with 'git add governance/runtime/curator_dispatch/ || true'\nCreate file governance/reports/BEM960_FIX_BEM866_UNSTAGED_REBASE.md with content BEM-960 | FIX BEM-866 UNSTAGED REBASE | 2026-05-31 | 14:54 (UTC+3)\n\nЭтап: 10/11 (91%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Applied narrow runner patch target: BEM-866 evidence step stages all governance/runtime/curator_dispatch files.\n✅ Addresses screenshot failure: git pull --rebase failed because unstaged changes existed after BEM-866 commit.\n⚠️ commit_sha may still be null until result reporting path is patched separately.\n❌ Release PASS remains blocked.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Patched area | .github/workflows/codex-runner.yml BEM-866 evidence step | screenshot showed unstaged changes before rebase |\n| Why all dispatch files | BEM-867 heartbeat/log can be created before BEM-866 commit and remain unstaged | prevents rebase abort |\n| Scope | One-line staging patch only | minimal reversible fix |\n| Следующее действие | BEM-961 patch result commit_sha reporting after commit | separate defect from unstaged rebase |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem960_fix_bem866_unstaged_rebase.md",
+    "result_json": "governance/codex/results/bem960_fix_bem866_unstaged_rebase.json"
+  },
+  "created_at": "2026-05-31T11:56:22.374Z"
+}
