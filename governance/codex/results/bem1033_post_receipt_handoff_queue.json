@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1033_post_receipt_handoff_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1033_post_receipt_handoff_queue.json",
+    "create:governance/reports/BEM1033_POST_RECEIPT_HANDOFF_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1033_post_receipt_handoff_queue.json",
+    "governance/reports/BEM1033_POST_RECEIPT_HANDOFF_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1033_post_receipt_handoff_queue.txt"
+  ],
+  "commit_sha": "00764c8864f9dc285b7b85380ec599da87b4c539",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1033_post_receipt_handoff_queue.md",
+  "completed_at": "2026-05-31T14:27:42Z"
+}
