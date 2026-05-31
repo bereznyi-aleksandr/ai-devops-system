@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1032_receipt_monitor_handoff",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/RECEIPT_MONITOR_HANDOFF.md",
+    "create:governance/reports/BEM1032_RECEIPT_MONITOR_HANDOFF.md",
+    "create:governance/state/bem1032_receipt_monitor_handoff.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/RECEIPT_MONITOR_HANDOFF.md",
+    "governance/reports/BEM1032_RECEIPT_MONITOR_HANDOFF.md",
+    "governance/state/bem1032_receipt_monitor_handoff.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1032_receipt_monitor_handoff.txt"
+  ],
+  "commit_sha": "6addc3a50dfd4b08e6018d04e660632cff04f771",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1032_receipt_monitor_handoff.md",
+  "completed_at": "2026-05-31T14:25:59Z"
+}
