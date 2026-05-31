@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem925_context_done",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-925 context done",
+  "objective": "Append to governance/AGENT_CONTEXT.md: \n\n## BEM-925 completed | 2026-05-31\nPrepared rebuilt final system evolution protocol based on yesterday's work and operator corrections after BEM-924 was rejected as still fragmented.\nContext proof: governance/runtime/curator_dispatch/BEM925_CONTEXT_REFRESH.md\nRepo protocol record: governance/reports/BEM925_FINAL_SYSTEM_EVOLUTION_PROTOCOL.md\nResult: DRAFT_FOR_OPERATOR_REVIEW. Document is a structured full-system protocol, not Telegram-only/provider-only/prompt-only. It includes current diagnosis, canonical model, fronts, objects/elements/contours, internal contour algorithm, provider model, workspace/channel model, rule inheritance, dynamic prompts, SSOT registries, prompt pack, implementation roadmap, Claude requirements mapping, operator gates and Definition of Done. Roadmap covers BEM-925 SSOT foundation through BEM-934 continuous improvement loop.\nLocal operator artifacts: BEM925_final_system_evolution_protocol_ru.docx and BEM925_final_system_evolution_protocol_ru.zip.\nQA: DOCX rendered to 7 pages; no edge clipping detected.\nNext: operator review of BEM-925 draft.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem925_context_done.md",
+    "result_json": "governance/codex/results/bem925_context_done.json"
+  },
+  "created_at": "2026-05-31T05:04:52.753Z"
+}
