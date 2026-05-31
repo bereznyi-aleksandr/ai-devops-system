@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "status": "POST_PUSH_REVERIFY_RECORDED",
+  "reason": "Operator screenshots showed push failure despite local completed summary.",
+  "push_conflict_fixed_by": "BEM-946",
+  "foundation_blocks": "14/14",
+  "foundation_percent": 100,
+  "release_pass": false,
+  "release_blockers": [
+    "commit_sha proof still requires verified remote/non-null CI SHA",
+    "production Telegram remains operator-gated",
+    "live LLM runtime remains operator-gated",
+    "external Claude re-audit remains pending"
+  ],
+  "proof_policy": "workflow failure overrides local completed summary"
+}

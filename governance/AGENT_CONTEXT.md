@@ -437,3 +437,10 @@ Implemented push conflict policy and safe push helper with fetch/rebase/retry.
 Created BEM946_PUSH_FAILURE_DIAGNOSIS, push_conflict_policy and git_push_with_retry helper.
 Next: verify BEM-946 task result and then re-run/fix final proof if needed.
 No issue comments.
+
+
+## BEM-947 completed | 2026-05-31
+Recorded post-push reverify after operator screenshots showed BEM-945 GitHub job failed on push despite local completed summary.
+Created BEM947_POST_PUSH_REVERIFY, post_push_reverify_status and operator screenshot response.
+Result: POST_PUSH_REVERIFY_RECORDED. Foundation remains 14/14 by files, but release PASS remains false until remote/non-null SHA, production Telegram gate, live LLM gate and external re-audit.
+No issue comments.
