@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1018_release_pass_negative_fixture",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tests/fixtures/release_decision_negative_release_pass_missing_receipts.json",
+    "create:governance/reports/BEM1018_RELEASE_PASS_NEGATIVE_FIXTURE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tests/fixtures/release_decision_negative_release_pass_missing_receipts.json",
+    "governance/reports/BEM1018_RELEASE_PASS_NEGATIVE_FIXTURE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1018_release_pass_negative_fixture.txt"
+  ],
+  "commit_sha": "4eef7d9bbfde06931987fe921d30da34a280c4f5",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1018_release_pass_negative_fixture.md",
+  "completed_at": "2026-05-31T13:52:31Z"
+}
