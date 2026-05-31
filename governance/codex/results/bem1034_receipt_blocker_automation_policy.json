@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1034_receipt_blocker_automation_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/gates/BEM1034_RECEIPT_BLOCKER_AUTOMATION_POLICY.json",
+    "create:governance/reports/BEM1034_RECEIPT_BLOCKER_AUTOMATION_POLICY.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/gates/BEM1034_RECEIPT_BLOCKER_AUTOMATION_POLICY.json",
+    "governance/reports/BEM1034_RECEIPT_BLOCKER_AUTOMATION_POLICY.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1034_receipt_blocker_automation_policy.txt"
+  ],
+  "commit_sha": "b93db68f2058238dd00d0fa91669d76fd0de9362",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1034_receipt_blocker_automation_policy.md",
+  "completed_at": "2026-05-31T14:16:20Z"
+}
