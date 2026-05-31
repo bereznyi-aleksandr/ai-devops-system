@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem991_telegram_receipt_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_telegram_production_receipt.py",
+    "create:governance/tests/fixtures/telegram_production_receipt_sample.json",
+    "create:governance/reports/BEM991_TELEGRAM_RECEIPT_VALIDATOR.md",
+    "append:governance/AGENT_CONTEXT.md",
+    "create_dir:governance/tests/fixtures"
+  ],
+  "changed_files": [
+    "governance/validators/validate_telegram_production_receipt.py",
+    "governance/tests/fixtures/telegram_production_receipt_sample.json",
+    "governance/reports/BEM991_TELEGRAM_RECEIPT_VALIDATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/tests/fixtures/.gitkeep",
+    "governance/codex/proofs/bem991_telegram_receipt_validator.txt"
+  ],
+  "commit_sha": "e44b987413ca9990005aa4dbfb7405d5c5d48c9a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem991_telegram_receipt_validator.md",
+  "completed_at": "2026-05-31T12:59:01Z"
+}
