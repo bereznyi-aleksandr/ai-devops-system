@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem973_regex_sha_assignment_patch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-973 regex SHA patch",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\ntext = p.read_text()\npattern = r\"commit_sha\\s*=\\s*os\\.environ\\.get\\('COMMIT_SHA',\\s*''\\)\"\nreplacement = \"commit_sha = os.environ.get('COMMIT_SHA', '') or os.environ.get('GITHUB_SHA', '')\"\nnew_text, count = re.subn(pattern, replacement, text, count=1)\nif count:\n    p.write_text(new_text)\n    changed_files.append(str(p))\n    ops_applied.append('bem973_regex_sha_assignment_patch')\nelse:\n    ops_applied.append('bem973_regex_no_match')\ndiag = Path('governance/reports/BEM973_REGEX_SHA_ASSIGNMENT_PATCH_DIAG.txt')\ndiag.parent.mkdir(parents=True, exist_ok=True)\ndiag.write_text('replace_count=' + str(count) + '\\npattern=' + pattern + '\\n')\nchanged_files.append(str(diag))\n\"\"\"\nCreate file governance/reports/BEM973_REGEX_SHA_ASSIGNMENT_PATCH.md with content BEM-973 | REGEX SHA ASSIGNMENT PATCH | 2026-05-31 | 15:16 (UTC+3)\n\nЭтап: 23/24 (96%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Uses regex because exact string compare failed despite visible snippet.\n⚠️ If replace_count=1, next BEM-974 verifies non-null SHA.\n❌ No release PASS.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Failed exact compare | BEM-972 found_assignment=false | hidden formatting or normalized display |\n| Patch method | re.subn tolerant to whitespace | safer for minified workflow text |\n| Следующее действие | BEM-974 verification probe | proof required |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem973_regex_sha_assignment_patch.md",
+    "result_json": "governance/codex/results/bem973_regex_sha_assignment_patch.json"
+  },
+  "created_at": "2026-05-31T12:17:17.310Z"
+}
