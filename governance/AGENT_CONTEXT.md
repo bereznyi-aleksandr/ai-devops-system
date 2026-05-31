@@ -867,3 +867,4 @@ No issue comments.
 ### BEM-1175 |
 ### BEM-1176 |
 ### BEM-1177 | POST-
+### BEM-1178 | VALIDATOR SUITE ADD
