@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1173_runner_hardening_gap_list",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1173 runner gaps",
+  "objective": "Create file governance/reports/BEM1173_RUNNER_HARDENING_GAP_LIST.md with content BEM-1173 | RUNNER HARDENING GAP LIST | 2026-05-31 | 22:50 (UTC+3)\n\nЭтап: Runner hardening gap list — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1172 completed with SHA `66b188431dae931a78b866d2e16e52ebf4261e2e`.\n✅ Runner hardening gap list created.\n⚠️ Gap: runners are skeleton-level and need fixture-based tests.\n⚠️ Gap: managed_channel_consumer needs positive and negative fixtures.\n⚠️ Gap: contour_lifecycle_runner needs transition fixtures.\n⚠️ Gap: provider runners need fallback denial fixtures.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Runner hardening gap list — 1/1 (100%) | Gap list created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1174 runner hardening first patch | Add fixture coverage for runners |\n\nNo issue comments.\nCreate file governance/state/bem1173_runner_hardening_gap_list.json with content {\"bem_id\":\"BEM-1173\",\"created_at_utc3\":\"2026-05-31 | 22:50 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Runner hardening gap list\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1172\",\"latest_proof_sha\":\"66b188431dae931a78b866d2e16e52ebf4261e2e\",\"gaps\":[\"managed_channel_consumer_fixture_tests\",\"contour_lifecycle_transition_fixture_tests\",\"provider_failover_denial_fixture_tests\",\"object_lifecycle_action_fixture_tests\"],\"next_action\":\"BEM-1174 runner hardening first patch\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1173 | RUNNER HARDENING GAP LIST | 2026-05-31 | 22:50 (UTC+3)\n- BEM-1172 completed with SHA 66b188431dae931a78b866d2e16e52ebf4261e2e.\n- Created runner hardening gap list.\n- Release PASS not issued.\n- Next action: BEM-1174 runner hardening first patch.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1173_runner_hardening_gap_list.md",
+    "result_json": "governance/codex/results/bem1173_runner_hardening_gap_list.json"
+  },
+  "created_at": "2026-05-31T19:52:42.857Z"
+}
