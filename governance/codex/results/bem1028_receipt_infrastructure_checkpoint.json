@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1028_receipt_infrastructure_checkpoint",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1028_RECEIPT_INFRASTRUCTURE_CHECKPOINT.md",
+    "create:governance/state/bem1028_receipt_infrastructure_checkpoint.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1028_RECEIPT_INFRASTRUCTURE_CHECKPOINT.md",
+    "governance/state/bem1028_receipt_infrastructure_checkpoint.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1028_receipt_infrastructure_checkpoint.txt"
+  ],
+  "commit_sha": "36ccff140507510f4d16076b40f1aea6074d2196",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1028_receipt_infrastructure_checkpoint.md",
+  "completed_at": "2026-05-31T14:07:27Z"
+}
