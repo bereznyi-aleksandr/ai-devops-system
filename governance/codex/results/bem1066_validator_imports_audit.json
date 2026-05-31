@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1066_validator_imports_audit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1066_VALIDATOR_IMPORTS_AUDIT.md",
+    "create:governance/state/bem1066_validator_imports_audit.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1066_VALIDATOR_IMPORTS_AUDIT.md",
+    "governance/state/bem1066_validator_imports_audit.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1066_validator_imports_audit.txt"
+  ],
+  "commit_sha": "4a9ee6f19fdec0e167bf46f62420ea93e5d89eb5",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1066_validator_imports_audit.md",
+  "completed_at": "2026-05-31T15:25:00Z"
+}
