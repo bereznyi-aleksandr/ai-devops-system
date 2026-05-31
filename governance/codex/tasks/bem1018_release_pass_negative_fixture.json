@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1018_release_pass_negative_fixture",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1018 release negative",
+  "objective": "Create file governance/tests/fixtures/release_decision_negative_release_pass_missing_receipts.json with content {\n  \"decision\": \"RELEASE_PASS\",\n  \"non_null_sha\": true,\n  \"receipt_slots\": [\n    {\"slot\": \"production_telegram_receipt\", \"status\": \"blocked_missing_real_receipt\"},\n    {\"slot\": \"live_runtime_receipt\", \"status\": \"blocked_missing_real_receipt\"},\n    {\"slot\": \"external_claude_audit_result\", \"status\": \"blocked_missing_external_result\"}\n  ]\n}\nCreate file governance/reports/BEM1018_RELEASE_PASS_NEGATIVE_FIXTURE.md with content BEM-1018 | RELEASE PASS NEGATIVE FIXTURE | 2026-05-31 | 16:51 (UTC+3)\n\nЭтап: Release PASS negative fixture — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1017 completed with SHA `8219a365436c8567bd5599bdb58aa5de7ad82559`.\n✅ Created `governance/tests/fixtures/release_decision_negative_release_pass_missing_receipts.json`.\n✅ Fixture intentionally claims RELEASE_PASS while required external receipt slots remain blocked.\n✅ This fixture is expected to be rejected by `governance/validators/validate_release_decision.py`.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Negative fixture is not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Release PASS negative fixture — 1/1 (100%) | Negative fixture created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1019 validator negative selftest status | Record expected rejection results |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1018 | RELEASE PASS NEGATIVE FIXTURE | 2026-05-31 | 16:51 (UTC+3)\n- BEM-1017 completed with SHA 8219a365436c8567bd5599bdb58aa5de7ad82559.\n- Created `governance/tests/fixtures/release_decision_negative_release_pass_missing_receipts.json`.\n- Created `governance/reports/BEM1018_RELEASE_PASS_NEGATIVE_FIXTURE.md`.\n- Release PASS negative fixture completed: 1/1 (100%).\n- Release PASS not issued.\n- Next action: BEM-1019 validator negative selftest status.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1018_release_pass_negative_fixture.md",
+    "result_json": "governance/codex/results/bem1018_release_pass_negative_fixture.json"
+  },
+  "created_at": "2026-05-31T13:52:21.479Z"
+}
