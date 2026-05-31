@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1174_runner_hardening_first_patch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1174 runner hardening",
+  "objective": "Create file governance/tests/fixtures/managed_channel_message_negative_secret.json with content {\"message_id\":\"neg_secret\",\"created_at_utc3\":\"2026-05-31 | 22:52 (UTC+3)\",\"source_object\":\"operator\",\"target_object\":\"GD\",\"contour\":\"C1\",\"role\":\"general_director\",\"payload\":{\"text\":\"secret test\"},\"proof_policy\":{\"contains_secret\":true,\"template_only\":false,\"claims_release_proof\":false}}\nCreate file governance/tests/fixtures/contour_lifecycle_state_queued.json with content {\"state\":\"queued\"}\nCreate file governance/tests/fixtures/provider_failover_negative_prod.json with content {\"contour\":\"C1\",\"mode\":\"production\"}\nCreate file governance/tests/run_bem931_runner_hardening_tests.py with content import json\nfrom pathlib import Path\nimport sys\n\nsys.path.insert(0, str(Path.cwd()))\nfrom governance.runners.managed_channel_consumer import validate_message\nfrom governance.runners.contour_lifecycle_runner import advance\nfrom governance.runners.provider_failover import failover_for_contour\n\n\ndef run():\n    results = []\n    msg = json.loads(Path(\"governance/tests/fixtures/managed_channel_message_negative_secret.json\").read_text(encoding=\"utf-8\"))\n    ok, errors = validate_message(msg)\n    results.append({\"test\":\"managed_channel_reject_secret\",\"ok\": ok is False and bool(errors), \"errors\": errors})\n    state = json.loads(Path(\"governance/tests/fixtures/contour_lifecycle_state_queued.json\").read_text(encoding=\"utf-8\"))\n    bad = advance(state, \"completed\", proof=\"premature\")\n    results.append({\"test\":\"lifecycle_reject_invalid_transition\",\"ok\": bad.get(\"ok\") is False, \"result\": bad})\n    fallback = failover_for_contour(\"C1\", \"production\")\n    results.append({\"test\":\"provider_reject_mock_fallback_in_production\",\"ok\": fallback.get(\"ok\") is False, \"result\": fallback})\n    return {\"ok\": all(item[\"ok\"] for item in results), \"release_pass\": False, \"results\": results}\n\nif __name__ == \"__main__\":\n    result = run()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1174_RUNNER_HARDENING_FIRST_PATCH.md with content BEM-1174 | RUNNER HARDENING FIRST PATCH | 2026-05-31 | 22:52 (UTC+3)\n\nЭтап: Runner hardening first patch — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1173 completed with SHA `ed09c184d3f0d40ebd30d3f5642add2ad807184b`.\n✅ Created managed channel negative secret fixture.\n✅ Created contour lifecycle queued fixture.\n✅ Created provider failover negative production fixture.\n✅ Created `governance/tests/run_bem931_runner_hardening_tests.py`.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Runner hardening first patch — 1/1 (100%) | Runner fixture tests implemented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1175 runner hardening audit checkpoint | Continue verification |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1174 | RUNNER HARDENING FIRST PATCH | 2026-05-31 | 22:52 (UTC+3)\n- BEM-1173 completed with SHA ed09c184d3f0d40ebd30d3f5642add2ad807184b.\n- Created runner hardening fixtures and test runner.\n- Release PASS not issued.\n- Next action: BEM-1175 runner hardening audit checkpoint.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1174_runner_hardening_first_patch.md",
+    "result_json": "governance/codex/results/bem1174_runner_hardening_first_patch.json"
+  },
+  "created_at": "2026-05-31T19:54:26.273Z"
+}
