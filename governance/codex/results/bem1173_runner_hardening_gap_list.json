@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1173_runner_hardening_gap_list",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1173_RUNNER_HARDENING_GAP_LIST.md",
+    "create:governance/state/bem1173_runner_hardening_gap_list.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1173_RUNNER_HARDENING_GAP_LIST.md",
+    "governance/state/bem1173_runner_hardening_gap_list.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1173_runner_hardening_gap_list.txt"
+  ],
+  "commit_sha": "ed09c184d3f0d40ebd30d3f5642add2ad807184b",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1173_runner_hardening_gap_list.md",
+  "completed_at": "2026-05-31T19:52:53Z"
+}
