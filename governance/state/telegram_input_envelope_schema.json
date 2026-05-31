@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "purpose": "Schema for operator input from existing Telegram webhook into managed channel.",
+  "required_fields": ["trace_id", "created_at", "source_channel", "operator_id", "chat_id", "command", "payload", "target_curator", "policy_decision", "receipt_status"],
+  "command_values": ["task", "status", "report", "gate", "approve", "reject", "help"],
+  "default_target_curator": "EL-CUR-GD-001",
+  "policy_values": ["allow", "operator_gate", "reject"],
+  "receipt_values": ["queued", "delivered", "failed"]
+}

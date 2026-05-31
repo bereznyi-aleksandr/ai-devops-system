@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "source": "existing Telegram/Deno webhook",
+  "default_route": {
+    "telegram_payload": "operator message",
+    "target_curator": "EL-CUR-GD-001",
+    "managed_route_type": "vertical_curator_to_curator_or_operator_input",
+    "event_type": "telegram_envelope_created"
+  },
+  "field_mapping": {
+    "message.chat.id": "chat_id",
+    "message.from.id": "operator_id",
+    "message.text": "payload.text",
+    "command": "command",
+    "generated_trace_id": "trace_id",
+    "default_target_curator": "target_curator"
+  },
+  "allowed_optional_routes": [
+    {"target_curator": "EL-CUR-DIR-001", "requires_registration": true, "requires_policy_allow": true},
+    {"target_curator": "EL-CUR-WRK-001", "requires_registration": true, "requires_policy_allow": true}
+  ]
+}

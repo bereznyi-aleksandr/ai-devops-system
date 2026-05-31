@@ -356,3 +356,11 @@ Created event_writer, managed_channel_consumer, dead-letter log, processed log, 
 Result: BLOCK_E_CHANNEL_MECHANICS_PASS. This is mechanics baseline, not release PASS.
 Next: Block F dispatch lifecycle and provider-aware dispatch consumer.
 No issue comments.
+
+
+## BEM-939 completed | 2026-05-31
+Implemented Block H Telegram/reporting after BEM-938.
+Created telegram_input_envelope_schema, telegram_to_managed_channel_mapping, report_period_config, canonical report templates, telegram_input_mapper and validator.
+Result: BLOCK_H_TELEGRAM_PASS. This is mock/foundation only, not production Telegram PASS and not release PASS.
+Next: Block I proof and CI hardening: release_proof_manifest, non-null SHA policy, proof validator.
+No issue comments.
