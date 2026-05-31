@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1012_external_proof_receipt_index",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/EXTERNAL_PROOF_RECEIPT_INDEX.json",
+    "create:governance/reports/BEM1012_EXTERNAL_PROOF_RECEIPT_INDEX.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/EXTERNAL_PROOF_RECEIPT_INDEX.json",
+    "governance/reports/BEM1012_EXTERNAL_PROOF_RECEIPT_INDEX.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1012_external_proof_receipt_index.txt"
+  ],
+  "commit_sha": "bce310a5e96de3004b0546042bfdff76609cd201",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1012_external_proof_receipt_index.md",
+  "completed_at": "2026-05-31T13:43:17Z"
+}
