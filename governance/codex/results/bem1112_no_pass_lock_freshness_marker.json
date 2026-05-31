@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1112_no_pass_lock_freshness_marker",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/NO_PASS_LOCK_FRESHNESS_MARKER.json",
+    "create:governance/reports/BEM1112_NO_PASS_LOCK_FRESHNESS_MARKER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/NO_PASS_LOCK_FRESHNESS_MARKER.json",
+    "governance/reports/BEM1112_NO_PASS_LOCK_FRESHNESS_MARKER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1112_no_pass_lock_freshness_marker.txt"
+  ],
+  "commit_sha": "407f33c12bdd4249b70a3e7b7f8a2b5ebdde835a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1112_no_pass_lock_freshness_marker.md",
+  "completed_at": "2026-05-31T17:56:01Z"
+}
