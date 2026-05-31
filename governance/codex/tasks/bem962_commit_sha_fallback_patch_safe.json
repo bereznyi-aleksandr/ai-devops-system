@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem962_commit_sha_fallback_patch_safe",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-962 safe SHA fallback",
+  "objective": "Run script:\n\"\"\"\np = Path('.github/workflows/codex-runner.yml')\ntext = p.read_text()\nold = \"commit_sha = os.environ.get('COMMIT_SHA', '')\"\nnew = \"commit_sha = os.environ.get('COMMIT_SHA', '') or os.environ.get('GITHUB_SHA', '')\"\nif old in text:\n    text = text.replace(old, new, 1)\n    p.write_text(text)\n    changed_files.append(str(p))\n    ops_applied.append('bem962_commit_sha_fallback_patch_applied')\nelse:\n    ops_applied.append('bem962_commit_sha_fallback_target_not_found_or_already_applied')\n\"\"\"\nCreate file governance/reports/BEM962_SAFE_COMMIT_SHA_FALLBACK_PATCH.md with content BEM-962 | SAFE COMMIT SHA FALLBACK PATCH | 2026-05-31 | 14:58 (UTC+3)\n\nЭтап: 12/13 (92%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Re-runs BEM-961 without unsupported Exception builtin.\n✅ Target: .github/workflows/codex-runner.yml Write result files commit_sha line.\n⚠️ Expected next verification: BEM-963 create-file probe should return non-null commit_sha if patch applies.\n❌ Release PASS remains blocked.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Failed predecessor | BEM-961 failed because Exception builtin was not available in executor sandbox | Deno blocker EXEC_FAILED |\n| Safe patch | No raise, no Exception, only replace if target exists | compatible with executor sandbox |\n| Следующее действие | BEM-963 non-null SHA verification probe | proof required before changing release status |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem962_commit_sha_fallback_patch_safe.md",
+    "result_json": "governance/codex/results/bem962_commit_sha_fallback_patch_safe.json"
+  },
+  "created_at": "2026-05-31T11:59:38.704Z"
+}
