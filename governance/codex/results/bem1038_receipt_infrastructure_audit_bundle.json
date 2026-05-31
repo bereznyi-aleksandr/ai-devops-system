@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1038_receipt_infrastructure_audit_bundle",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/BEM1038_RECEIPT_INFRASTRUCTURE_AUDIT_BUNDLE.json",
+    "create:governance/reports/BEM1038_RECEIPT_INFRASTRUCTURE_AUDIT_BUNDLE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/BEM1038_RECEIPT_INFRASTRUCTURE_AUDIT_BUNDLE.json",
+    "governance/reports/BEM1038_RECEIPT_INFRASTRUCTURE_AUDIT_BUNDLE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1038_receipt_infrastructure_audit_bundle.txt"
+  ],
+  "commit_sha": "8b010f0296f63fbc424a4fb147c1dc36b07e1dfd",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1038_receipt_infrastructure_audit_bundle.md",
+  "completed_at": "2026-05-31T14:41:07Z"
+}
