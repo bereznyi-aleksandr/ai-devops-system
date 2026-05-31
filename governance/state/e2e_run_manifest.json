@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "tests": [
+    {"id":"full_system_mock", "path":"governance/tests/test_full_system_mock_e2e.py", "status":"CREATED"},
+    {"id":"provider_failover", "path":"governance/tests/test_provider_failover_e2e.py", "status":"CREATED"},
+    {"id":"managed_channel", "path":"governance/tests/test_managed_channel_e2e.py", "status":"CREATED"},
+    {"id":"canonical_report", "path":"governance/tests/test_canonical_report.py", "status":"CREATED"}
+  ],
+  "production_status": null,
+  "production_gate_required": true
+}
