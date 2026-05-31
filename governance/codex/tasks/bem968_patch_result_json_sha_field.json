@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem968_patch_result_json_sha_field",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-968 patch result SHA field",
+  "objective": "Replace in .github/workflows/codex-runner.yml line containing \"'commit_sha': commit_sha or None\" with \"'commit_sha': (commit_sha or os.environ.get('GITHUB_SHA') or None)\"\nCreate file governance/reports/BEM968_PATCH_RESULT_JSON_SHA_FIELD.md with content BEM-968 | PATCH RESULT JSON SHA FIELD | 2026-05-31 | 15:08 (UTC+3)\n\nЭтап: 18/19 (95%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ External repo check confirms BEM-960 staging fix is present in main.\n✅ Patch target changed from assignment line to result JSON field line.\n⚠️ Expected next probe: result JSON commit_sha should become GITHUB_SHA when COMMIT_SHA is empty.\n❌ Release PASS remains blocked; GITHUB_SHA fallback is proof improvement, not full release approval.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Confirmed existing fix | BEM-866 now stages governance/runtime/curator_dispatch/ | screenshot unstaged rebase issue addressed |\n| Remaining defect | result JSON still uses commit_sha or None | Deno status remains null |\n| New patch | JSON field fallback to GITHUB_SHA | direct impact on getCodexStatus commit_sha field |\n| Следующее действие | BEM-969 verification probe | confirm non-null SHA or escalate runner patch blocker |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem968_patch_result_json_sha_field.md",
+    "result_json": "governance/codex/results/bem968_patch_result_json_sha_field.json"
+  },
+  "created_at": "2026-05-31T12:09:05.003Z"
+}
