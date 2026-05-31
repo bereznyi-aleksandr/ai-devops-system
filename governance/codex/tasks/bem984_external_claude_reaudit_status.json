@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem984_external_claude_reaudit_status",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-984 Claude audit status",
+  "objective": "Create file governance/audit/BEM984_EXTERNAL_CLAUDE_REAUDIT_STATUS.json with content {\n  \"bem_id\": \"BEM-984\",\n  \"created_at_utc3\": \"2026-05-31 | 15:45 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External Claude re-audit tracking\", \"completed\": 1, \"total\": 2, \"percent\": 50},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"external_claude_reaudit\": {\n    \"status\": \"pending\",\n    \"self_claim_allowed\": false,\n    \"required_result\": \"Claude APPROVED or PASS over evidence bundle\",\n    \"evidence_paths\": [\n      \"governance/reports/BEM976_CLAUDE_REAUDIT_EVIDENCE_HANDOFF.md\",\n      \"governance/audit/BEM977_CLAUDE_REAUDIT_CHECKLIST.json\",\n      \"governance/reports/BEM978_RELEASE_DECISION_NO_PASS.md\",\n      \"governance/gates/BEM979_PRODUCTION_GATES_REGISTER.json\",\n      \"governance/gates/BEM981_OPERATOR_SAFE_PRODUCTION_CHECKLIST.md\",\n      \"governance/state/bem982_telegram_production_gate_status.json\",\n      \"governance/gates/BEM983_LIVE_LLM_RUNTIME_GATE_STATUS.json\"\n    ]\n  },\n  \"release_pass\": false,\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-985 consolidate blocker dashboard without adding non-canonical header metrics\"\n}\nCreate file governance/reports/BEM984_EXTERNAL_CLAUDE_REAUDIT_STATUS.md with content BEM-984 | EXTERNAL CLAUDE RE-AUDIT STATUS | 2026-05-31 | 15:45 (UTC+3)\n\nЭтап: External Claude re-audit tracking — 1/2 (50%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created `governance/audit/BEM984_EXTERNAL_CLAUDE_REAUDIT_STATUS.json`.\n✅ External Claude re-audit is tracked as pending.\n✅ Evidence paths for Claude audit are listed.\n✅ Self-claim audit approval is explicitly forbidden.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External Claude re-audit tracking — 1/2 (50%) | Status file created; external approval still absent |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Claude re-audit | pending | Needs external Claude result, not GPT self-claim |\n| Следующее действие | BEM-985 consolidate blocker dashboard without adding non-canonical header metrics | Keep blockers visible without fake progress lines |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-984 | EXTERNAL CLAUDE RE-AUDIT STATUS | 2026-05-31 | 15:45 (UTC+3)\n- Created `governance/audit/BEM984_EXTERNAL_CLAUDE_REAUDIT_STATUS.json`.\n- Created `governance/reports/BEM984_EXTERNAL_CLAUDE_REAUDIT_STATUS.md`.\n- External Claude re-audit tracking stage: 1/2 (50%).\n- Self-claim audit approval is forbidden; external Claude result is required.\n- Release status remains NO_RELEASE_PASS. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-985 consolidate blocker dashboard without adding non-canonical header metrics.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem984_external_claude_reaudit_status.md",
+    "result_json": "governance/codex/results/bem984_external_claude_reaudit_status.json"
+  },
+  "created_at": "2026-05-31T12:46:31.382Z"
+}
