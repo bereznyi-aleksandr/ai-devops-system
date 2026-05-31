@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1003_telegram_proof_placeholder_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/gates/BEM1003_PRODUCTION_TELEGRAM_PROOF_PLACEHOLDER_POLICY.json",
+    "create:governance/reports/BEM1003_PRODUCTION_TELEGRAM_PROOF_PLACEHOLDER_POLICY.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/gates/BEM1003_PRODUCTION_TELEGRAM_PROOF_PLACEHOLDER_POLICY.json",
+    "governance/reports/BEM1003_PRODUCTION_TELEGRAM_PROOF_PLACEHOLDER_POLICY.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1003_telegram_proof_placeholder_policy.txt"
+  ],
+  "commit_sha": "84585714a73b28df8c03639b78dce49bf390a20b",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1003_telegram_proof_placeholder_policy.md",
+  "completed_at": "2026-05-31T13:20:01Z"
+}
