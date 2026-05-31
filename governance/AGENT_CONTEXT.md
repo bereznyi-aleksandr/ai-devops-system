@@ -316,3 +316,11 @@ Created event_writer, managed_channel_consumer, selftest managed channel message
 Result: BLOCK_E_CONSUMER_PASS. This is foundation only, not release PASS.
 Next: Block F dispatch lifecycle and provider-aware queue updates.
 No issue comments.
+
+
+## BEM-935 completed | 2026-05-31
+Implemented Block D schemas after BEM-934.
+Created managed_channel_schema, contour_lifecycle_schema, event_log_schema, elements prompt migration report and schema validator.
+Result: BLOCK_D_SCHEMAS_PASS. This is foundation only, not release PASS.
+Next: Block E managed channel consumer, event writer and dead-letter handling.
+No issue comments.

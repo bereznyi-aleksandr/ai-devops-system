@@ -1,7 +1,7 @@
 # BEM-935 | Block D schemas PASS
 Status: BLOCK_D_SCHEMAS_PASS
 Date: 2026-05-31
-Scope: elements prompt migration, managed channel schema, contour lifecycle schema, event log schema and validator.
+Scope: elements prompt migration policy/application, managed channel schema, contour lifecycle schema, event log schema and validator.
 Created/updated artifacts:
 - governance/reports/BEM935_ELEMENTS_PROMPT_MIGRATION.md
 - governance/state/managed_channel_schema.json
