@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1063_proof_infra_report_canon_check",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1063 report canon check",
+  "objective": "Create file governance/reports/BEM1063_PROOF_INFRA_REPORT_CANON_CHECK.md with content BEM-1063 | PROOF INFRASTRUCTURE OPERATOR REPORT CANON CHECK | 2026-05-31 | 18:18 (UTC+3)\n\nЭтап: Proof infrastructure operator report canon check — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1062 completed with SHA `f07573870d8db62a493ccb56a754792d7082d1ae`.\n✅ Canon check confirms headers must contain only Этап and Дорожная карта.\n✅ Canon check confirms blockers belong in checklist/table, not as a fake progress metric.\n✅ Canon check confirms reports must not stop roadmap.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ production_telegram_gate, live_llm_runtime_gate and external_claude_reaudit remain blockers until validated external proofs exist.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Proof infrastructure operator report canon check — 1/1 (100%) | Canon check created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1064 AGENT_CONTEXT proof infra summary compaction | Keep context readable and continue roadmap |\n\nNo issue comments.\nCreate file governance/state/bem1063_proof_infra_report_canon_check.json with content {\n  \"bem_id\": \"BEM-1063\",\n  \"created_at_utc3\": \"2026-05-31 | 18:18 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Proof infrastructure operator report canon check\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"report_canon\": \"Only Этап and Дорожная карта in header. Blockers in checklist/table. Reports do not stop roadmap.\",\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1062\",\n  \"latest_proof_sha\": \"f07573870d8db62a493ccb56a754792d7082d1ae\",\n  \"next_action\": \"BEM-1064 AGENT_CONTEXT proof infra summary compaction\"\n}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1063 | PROOF INFRA REPORT CANON CHECK | 2026-05-31 | 18:18 (UTC+3)\n- BEM-1062 completed with SHA f07573870d8db62a493ccb56a754792d7082d1ae.\n- Created `governance/reports/BEM1063_PROOF_INFRA_REPORT_CANON_CHECK.md`.\n- Created `governance/state/bem1063_proof_infra_report_canon_check.json`.\n- Report canon check completed: 1/1 (100%).\n- Reports must not stop roadmap.\n- Release PASS not issued.\n- Next action: BEM-1064 AGENT_CONTEXT proof infra summary compaction.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1063_proof_infra_report_canon_check.md",
+    "result_json": "governance/codex/results/bem1063_proof_infra_report_canon_check.json"
+  },
+  "created_at": "2026-05-31T15:20:22.065Z"
+}
