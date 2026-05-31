@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1182_ci_capture_runner",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1182 CI capture runner",
+  "objective": "Create file governance/runtime/ci_execution_capture_runner.py with content import json\nimport subprocess\nimport sys\nfrom pathlib import Path\n\nTARGETS = [\n    \"governance/validators/run_bem931_validator_suite.py\",\n    \"governance/tests/run_bem931_runner_hardening_tests.py\",\n    \"governance/tests/run_bem931_mock_e2e.py\",\n]\n\n\ndef run(output_path=\"governance/runtime/BEM1182_CI_EXECUTION_CAPTURE_RESULT.json\"):\n    results = []\n    for target in TARGETS:\n        proc = subprocess.run([sys.executable, target], text=True, capture_output=True)\n        results.append({\"target\": target, \"returncode\": proc.returncode, \"stdout\": proc.stdout.strip(), \"stderr\": proc.stderr.strip(), \"ok\": proc.returncode == 0})\n    record = {\"bem_id\": \"BEM-1182\", \"release_pass\": False, \"ok\": all(item[\"ok\"] for item in results), \"results\": results}\n    Path(output_path).parent.mkdir(parents=True, exist_ok=True)\n    Path(output_path).write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding=\"utf-8\")\n    return record\n\nif __name__ == \"__main__\":\n    result = run()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1182_CI_CAPTURE_RUNNER.md with content BEM-1182 | CI CAPTURE RUNNER | 2026-05-31 | 23:05 (UTC+3)\n\nЭтап: CI capture runner — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1181 completed with SHA `78018432e56c5837bced9983ee82849b599846c7`.\n✅ Created `governance/runtime/ci_execution_capture_runner.py`.\n✅ Runner captures validator suite, runner hardening tests and mock E2E outputs.\n⚠️ Capture runner does not issue Release PASS.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | CI capture runner — 1/1 (100%) | Capture runner created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1183 CI capture result policy | Continue execution evidence chain |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1182 | CI CAPTURE RUNNER | 2026-05-31 | 23:05 (UTC+3)\n- BEM-1181 completed with SHA 78018432e56c5837bced9983ee82849b599846c7.\n- Created CI execution capture runner.\n- Release PASS not issued.\n- Next action: BEM-1183 CI capture result policy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1182_ci_capture_runner.md",
+    "result_json": "governance/codex/results/bem1182_ci_capture_runner.json"
+  },
+  "created_at": "2026-05-31T20:06:31.089Z"
+}
