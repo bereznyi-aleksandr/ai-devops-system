@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1014_release_validator_selftest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1014 release selftest",
+  "objective": "Create file governance/reports/BEM1014_RELEASE_DECISION_VALIDATOR_SELFTEST_RESULT.md with content BEM-1014 | RELEASE DECISION VALIDATOR SELFTEST RESULT | 2026-05-31 | 16:44 (UTC+3)\n\nЭтап: Release decision validator — 2/2 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1013 created `governance/validators/validate_release_decision.py`.\n✅ BEM-1013 created `governance/tests/fixtures/release_decision_sample_no_pass.json`.\n✅ BEM-1013 completed with SHA `96ed6a8f29b6e7cd7ff591a901a8dec2bf552665`.\n✅ Selftest expectation recorded: NO_RELEASE_PASS fixture is valid while RELEASE_PASS would require verified external receipts.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ production_telegram_gate, live_llm_runtime_gate and external_claude_reaudit remain blocked until real external proofs exist.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Release decision validator — 2/2 (100%) | Validator and selftest result recorded |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1015 create release-readiness no-pass snapshot | Continue roadmap without stopping |\n\nNo issue comments.\nCreate file governance/state/bem1014_release_validator_selftest_result.json with content {\n  \"bem_id\": \"BEM-1014\",\n  \"created_at_utc3\": \"2026-05-31 | 16:44 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Release decision validator\", \"completed\": 2, \"total\": 2, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"validator\": \"governance/validators/validate_release_decision.py\",\n  \"fixture\": \"governance/tests/fixtures/release_decision_sample_no_pass.json\",\n  \"fixture_decision\": \"NO_RELEASE_PASS\",\n  \"release_pass\": false,\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1015 create release-readiness no-pass snapshot\"\n}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1014 | RELEASE DECISION VALIDATOR SELFTEST RESULT | 2026-05-31 | 16:44 (UTC+3)\n- BEM-1013 completed with SHA 96ed6a8f29b6e7cd7ff591a901a8dec2bf552665.\n- Created `governance/reports/BEM1014_RELEASE_DECISION_VALIDATOR_SELFTEST_RESULT.md`.\n- Created `governance/state/bem1014_release_validator_selftest_result.json`.\n- Release decision validator stage completed: 2/2 (100%).\n- Release PASS not issued. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-1015 create release-readiness no-pass snapshot.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1014_release_validator_selftest.md",
+    "result_json": "governance/codex/results/bem1014_release_validator_selftest.json"
+  },
+  "created_at": "2026-05-31T13:46:13.771Z"
+}
