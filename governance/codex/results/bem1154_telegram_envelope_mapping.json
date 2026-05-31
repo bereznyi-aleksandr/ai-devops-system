@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1154_telegram_envelope_mapping",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/telegram/telegram_input_envelope_schema.json",
+    "create:governance/telegram/telegram_to_managed_channel_mapping.json",
+    "create:governance/validators/validate_telegram_mapping.py",
+    "create:governance/reports/BEM1154_TELEGRAM_ENVELOPE_MAPPING.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/telegram/telegram_input_envelope_schema.json",
+    "governance/telegram/telegram_to_managed_channel_mapping.json",
+    "governance/validators/validate_telegram_mapping.py",
+    "governance/reports/BEM1154_TELEGRAM_ENVELOPE_MAPPING.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1154_telegram_envelope_mapping.txt"
+  ],
+  "commit_sha": "711a967bf54dcd3e1d7d64fbd9d4ff4685ad5dce",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1154_telegram_envelope_mapping.md",
+  "completed_at": "2026-05-31T19:20:21Z"
+}
