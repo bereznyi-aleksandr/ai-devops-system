@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1069_placeholder_rejection_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1069 placeholder policy",
+  "objective": "Create file governance/validators/PLACEHOLDER_REJECTION_POLICY.json with content {\n  \"bem_id\": \"BEM-1069\",\n  \"created_at_utc3\": \"2026-05-31 | 18:28 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Validator placeholder rejection policy\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1068\",\n  \"latest_proof_sha\": \"6823a2d5ed165ebc6180473da5bc0378aea46ae9\",\n  \"policy\": {\n    \"real_receipts_must_reject_placeholders\": true,\n    \"placeholder_prefixes\": [\"REPLACE_WITH_\", \"YYYY-MM-DD\", \"mock_only\", \"sample_\", \"negative_fixture\"],\n    \"template_only_true_blocks_release\": true,\n    \"templates_allowed_only_as_templates\": true,\n    \"release_pass_requires_no_placeholders\": true\n  },\n  \"applies_to\": [\n    \"governance/validators/validate_telegram_production_receipt.py\",\n    \"governance/validators/validate_live_runtime_receipt.py\",\n    \"governance/validators/validate_external_claude_audit_result.py\",\n    \"governance/validators/validate_release_decision.py\"\n  ],\n  \"next_action\": \"BEM-1070 validator placeholder negative fixtures\"\n}\nCreate file governance/reports/BEM1069_VALIDATOR_PLACEHOLDER_REJECTION_POLICY.md with content BEM-1069 | VALIDATOR PLACEHOLDER REJECTION POLICY | 2026-05-31 | 18:28 (UTC+3)\n\nЭтап: Validator placeholder rejection policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1068 completed with SHA `6823a2d5ed165ebc6180473da5bc0378aea46ae9`.\n✅ Created `governance/validators/PLACEHOLDER_REJECTION_POLICY.json`.\n✅ Policy requires real receipts to reject placeholders.\n✅ Policy states `template_only=true` blocks release.\n✅ Policy applies to Telegram, runtime, Claude audit and release decision validators.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Policy is not real external proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Validator placeholder rejection policy — 1/1 (100%) | Policy file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1070 validator placeholder negative fixtures | Continue validator hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1069 | VALIDATOR PLACEHOLDER REJECTION POLICY | 2026-05-31 | 18:28 (UTC+3)\n- BEM-1068 completed with SHA 6823a2d5ed165ebc6180473da5bc0378aea46ae9.\n- Created `governance/validators/PLACEHOLDER_REJECTION_POLICY.json`.\n- Created `governance/reports/BEM1069_VALIDATOR_PLACEHOLDER_REJECTION_POLICY.md`.\n- Validator placeholder rejection policy completed: 1/1 (100%).\n- Release PASS not issued.\n- Next action: BEM-1070 validator placeholder negative fixtures.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1069_placeholder_rejection_policy.md",
+    "result_json": "governance/codex/results/bem1069_placeholder_rejection_policy.json"
+  },
+  "created_at": "2026-05-31T15:30:08.674Z"
+}
