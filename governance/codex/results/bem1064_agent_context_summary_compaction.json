@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1064_agent_context_summary_compaction",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1064_AGENT_CONTEXT_PROOF_INFRA_SUMMARY_COMPACTION.md",
+    "create:governance/state/bem1064_agent_context_summary_compaction.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1064_AGENT_CONTEXT_PROOF_INFRA_SUMMARY_COMPACTION.md",
+    "governance/state/bem1064_agent_context_summary_compaction.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1064_agent_context_summary_compaction.txt"
+  ],
+  "commit_sha": "0d1bd4d706f4b4a606562dd68ae4fc13d14d572c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1064_agent_context_summary_compaction.md",
+  "completed_at": "2026-05-31T15:22:04Z"
+}
