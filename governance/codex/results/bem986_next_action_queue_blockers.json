@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem986_next_action_queue_blockers",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem986_next_action_queue_blockers.json",
+    "create:governance/reports/BEM986_NEXT_ACTION_QUEUE_BLOCKERS.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem986_next_action_queue_blockers.json",
+    "governance/reports/BEM986_NEXT_ACTION_QUEUE_BLOCKERS.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem986_next_action_queue_blockers.txt"
+  ],
+  "commit_sha": "f5aa58e855d016aeb257c98851553afbf526021c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem986_next_action_queue_blockers.md",
+  "completed_at": "2026-05-31T12:50:48Z"
+}
