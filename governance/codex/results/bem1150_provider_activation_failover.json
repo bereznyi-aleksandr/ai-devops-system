@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1150_provider_activation_failover",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/provider_activation.py",
+    "create:governance/runners/provider_failover.py",
+    "create:governance/reports/BEM1150_PROVIDER_ACTIVATION_FAILOVER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/provider_activation.py",
+    "governance/runners/provider_failover.py",
+    "governance/reports/BEM1150_PROVIDER_ACTIVATION_FAILOVER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1150_provider_activation_failover.txt"
+  ],
+  "commit_sha": "2388a2c6012725c42ba17e9899ff669ad674a92f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1150_provider_activation_failover.md",
+  "completed_at": "2026-05-31T19:14:44Z"
+}

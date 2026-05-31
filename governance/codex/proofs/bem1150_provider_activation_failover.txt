@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem1150_provider_activation_failover
+task_type: code_patch
+executed_at: 2026-05-31T19:14:44Z
+ops_applied: create:governance/runners/provider_activation.py, create:governance/runners/provider_failover.py, create:governance/reports/BEM1150_PROVIDER_ACTIVATION_FAILOVER.md, append:governance/AGENT_CONTEXT.md
+changed_files: governance/runners/provider_activation.py, governance/runners/provider_failover.py, governance/reports/BEM1150_PROVIDER_ACTIVATION_FAILOVER.md, governance/AGENT_CONTEXT.md
+errors: none
