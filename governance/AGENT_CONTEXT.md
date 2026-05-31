@@ -364,3 +364,11 @@ Created telegram_input_envelope_schema, telegram_to_managed_channel_mapping, rep
 Result: BLOCK_H_TELEGRAM_PASS. This is mock/foundation only, not production Telegram PASS and not release PASS.
 Next: Block I proof and CI hardening: release_proof_manifest, non-null SHA policy, proof validator.
 No issue comments.
+
+
+## BEM-937 completed | 2026-05-31
+Implemented Block F dispatch lifecycle after BEM-936.
+Created provider-aware dispatch_lifecycle_schema, dispatch_consumer, processed/dead-letter logs, status, static test and validator.
+Result: BLOCK_F_DISPATCH_LIFECYCLE_PASS. This is lifecycle baseline, not release PASS.
+Next: Block G object/contour lifecycle runners and report writers.
+No issue comments.

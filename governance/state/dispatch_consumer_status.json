@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "status": "created",
+  "consumer": "governance/runners/dispatch_consumer.py",
+  "lifecycle_schema": "governance/state/dispatch_lifecycle_schema.json",
+  "processed_log": "governance/state/dispatch_processed.jsonl",
+  "dead_letter": "governance/state/dispatch_dead_letters.jsonl",
+  "provider_aware": true,
+  "initial_trigger_mode": "workflow_dispatch"
+}

@@ -1,20 +1,26 @@
 {
   "version": "1.0",
   "date": "2026-05-31",
-  "purpose": "Provider-aware dispatch queue lifecycle.",
-  "required_fields": ["dispatch_id", "trace_id", "created_at", "target_object", "target_contour", "logical_role", "provider_id", "status", "payload", "proof_ref"],
-  "statuses": ["queued", "validated", "delivered", "processing", "result_submitted", "proof_collected", "completed", "operator_gate", "failed", "dead_letter"],
-  "transitions": {
-    "queued": ["validated", "operator_gate", "dead_letter"],
-    "validated": ["delivered", "operator_gate"],
-    "delivered": ["processing", "failed"],
-    "processing": ["result_submitted", "operator_gate", "failed"],
-    "result_submitted": ["proof_collected", "failed"],
-    "proof_collected": ["completed", "failed"],
-    "completed": [],
-    "operator_gate": [],
-    "failed": [],
-    "dead_letter": []
-  },
-  "provider_fields": ["logical_role", "provider_id", "provider_mode", "fallback_used", "fallback_reason"]
+  "purpose": "Provider-aware dispatch lifecycle for governance tasks.",
+  "required_fields": ["dispatch_id", "trace_id", "target_object", "target_contour", "logical_role", "provider_id", "payload", "status", "proof_ref"],
+  "provider_fields": ["provider_id", "provider_mode", "fallback_used", "fallback_reason"],
+  "statuses": [
+    {"status":"queued", "next":["validated", "rejected", "operator_gate"]},
+    {"status":"validated", "next":["provider_selected", "operator_gate"]},
+    {"status":"provider_selected", "next":["delivered", "provider_failover_used"]},
+    {"status":"provider_failover_used", "next":["delivered", "operator_gate"]},
+    {"status":"delivered", "next":["processing", "dead_letter"]},
+    {"status":"processing", "next":["result_submitted", "blocked"]},
+    {"status":"result_submitted", "next":["proof_collected", "result_rejected"]},
+    {"status":"proof_collected", "next":["completed", "operator_gate"]},
+    {"status":"completed", "next":[]},
+    {"status":"operator_gate", "next":[]},
+    {"status":"dead_letter", "next":[]}
+  ],
+  "hard_rules": [
+    "No completed status without proof_ref.",
+    "No provider role execution without provider_id.",
+    "Fallback requires fallback_reason.",
+    "Operator gated items must not be auto-completed."
+  ]
 }
