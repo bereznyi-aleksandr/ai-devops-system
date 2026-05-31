@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem950_force_evidence_files",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-950 force evidence files",
+  "objective": "Run script: \"\"\"\nimport json\nfrom pathlib import Path\nnow_utc3 = '2026-05-31 | 13:15 (UTC+3)'\npaths = [\n'governance/state/object_passports.json','governance/state/elements_registry.json','governance/state/contours_registry.json','governance/state/providers_registry.json','governance/state/contour_provider_policy.json','governance/state/experience_registry.json','governance/state/managed_channel_schema.json','governance/state/contour_lifecycle_schema.json','governance/state/release_proof_manifest.json','governance/validators','governance/runners','governance/prompts/templates','governance/prompts/providers','governance/prompts/handlers','governance/tests','governance/gates','governance/audit']\nchecked = {p: Path(p).exists() for p in paths}\nresolved = sum(1 for v in checked.values() if v)\nblocked = len(checked) - resolved\nPath('governance/reports').mkdir(parents=True, exist_ok=True)\nPath('governance/state').mkdir(parents=True, exist_ok=True)\nreport = '# BEM-950 | FORCE EVIDENCE FILES FOR CLAUDE REMARKS RESPONSE\\n\\nCreated: '+now_utc3+'\\n\\n## Verdict\\nNO_RELEASE_PASS. Foundation evidence is being recorded, but remote/release proof remains blocked because Deno status reported commit_sha=null for BEM-948 and BEM-949.\\n\\n## Stage counts\\n| Scope | Count | Status |\\n|---|---:|---|\\n| BEM-950 actions | 3/4 | Evidence files created; remote SHA still blocked |\\n| BEM-931 foundation blocks | 14/14 | Foundation file families expected/checked |\\n| Release proof gates | 0/4 | remote SHA, production Telegram, live LLM, Claude re-audit remain blockers |\\n\\n## Artifact matrix\\n| Path | Exists |\\n|---|---|\\n' + ''.join('| '+p+' | '+str(v)+' |\\n' for p,v in checked.items()) + '\\n## Policy\\nBEM-932..945 local summaries are not release proof when GitHub push failed. Release PASS requires non-null remote SHA and external audit approval.\\n'\nPath('governance/reports/BEM950_FORCE_EVIDENCE_FILES.md').write_text(report, encoding='utf-8')\nstatus = {'bem_id':'BEM-950','status':'NO_RELEASE_PASS','created_at_utc3':now_utc3,'checked_paths':checked,'resolved_count':resolved,'blocked_count':blocked,'bem931_foundation_blocks':'14/14','release_gates':'0/4','release_pass':False,'blockers':['remote_non_null_sha','production_telegram_gate','live_llm_runtime_gate','external_claude_reaudit']}\nPath('governance/state/bem950_force_evidence_files.json').write_text(json.dumps(status,ensure_ascii=False,indent=2), encoding='utf-8')\nctx = Path('governance/AGENT_CONTEXT.md')\nif ctx.exists():\n    old = ctx.read_text(encoding='utf-8')\n    entry = '\\n\\n### BEM-950 | FORCE EVIDENCE FILES | 2026-05-31 | 13:15 (UTC+3)\\n- Created `governance/reports/BEM950_FORCE_EVIDENCE_FILES.md`.\\n- Created `governance/state/bem950_force_evidence_files.json`.\\n- Release PASS remains blocked: `commit_sha=null`, production Telegram gate, live LLM runtime gate, external Claude re-audit.\\n- Next action: repair codex-runner proof path so status returns non-null remote SHA and changed_files include requested artifacts.\\n'\n    if 'BEM-950 | FORCE EVIDENCE FILES' not in old:\n        ctx.write_text(old + entry, encoding='utf-8')\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem950_force_evidence_files.md",
+    "result_json": "governance/codex/results/bem950_force_evidence_files.json"
+  },
+  "created_at": "2026-05-31T10:17:10.579Z"
+}
