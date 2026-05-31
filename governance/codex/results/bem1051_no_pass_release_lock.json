@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1051_no_pass_release_lock",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/gates/BEM1051_NO_PASS_RELEASE_LOCK.json",
+    "create:governance/reports/BEM1051_NO_PASS_RELEASE_LOCK.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/gates/BEM1051_NO_PASS_RELEASE_LOCK.json",
+    "governance/reports/BEM1051_NO_PASS_RELEASE_LOCK.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1051_no_pass_release_lock.txt"
+  ],
+  "commit_sha": "fb8536b03702b4ae1f77f9e90a5926e6ce83fbda",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1051_no_pass_release_lock.md",
+  "completed_at": "2026-05-31T15:01:48Z"
+}
