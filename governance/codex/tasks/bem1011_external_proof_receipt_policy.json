@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1011_external_proof_receipt_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1011 proof receipt policy",
+  "objective": "Create file governance/gates/BEM1011_EXTERNAL_PROOF_RECEIPT_DIRECTORY_POLICY.json with content {\n  \"bem_id\": \"BEM-1011\",\n  \"created_at_utc3\": \"2026-05-31 | 16:34 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External proof receipt directory policy\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"receipt_directories\": {\n    \"production_telegram_receipts\": \"governance/proofs/external/telegram/\",\n    \"live_runtime_receipts\": \"governance/proofs/external/runtime/\",\n    \"external_claude_audit_results\": \"governance/proofs/external/claude/\"\n  },\n  \"forbidden\": [\"secret_values\", \"tokens\", \"api_keys\", \"PAT\", \"raw_credentials\", \"issue_31_write\", \"self_claim_release_pass\"],\n  \"required_properties\": [\"trace_id\", \"timestamp_utc3\", \"proof_ref\", \"auditor_or_validator_ref\", \"status\"],\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1012 external proof receipt index\"\n}\nCreate dir governance/proofs/external/telegram\nCreate dir governance/proofs/external/runtime\nCreate dir governance/proofs/external/claude\nCreate file governance/proofs/external/telegram/.gitkeep with content \nCreate file governance/proofs/external/runtime/.gitkeep with content \nCreate file governance/proofs/external/claude/.gitkeep with content \nCreate file governance/reports/BEM1011_EXTERNAL_PROOF_RECEIPT_DIRECTORY_POLICY.md with content BEM-1011 | EXTERNAL PROOF RECEIPT DIRECTORY POLICY | 2026-05-31 | 16:34 (UTC+3)\n\nЭтап: External proof receipt directory policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created `governance/gates/BEM1011_EXTERNAL_PROOF_RECEIPT_DIRECTORY_POLICY.json`.\n✅ Created external receipt directories for Telegram, runtime and Claude audit results.\n✅ Forbids secret values, tokens, API keys, PAT, raw credentials, issue #31 write and self-claim release PASS.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Directories are placeholders; real external receipts are not present yet.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External proof receipt directory policy — 1/1 (100%) | Policy and directories created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1012 external proof receipt index | Continue proof-gate infrastructure |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1011 | EXTERNAL PROOF RECEIPT DIRECTORY POLICY | 2026-05-31 | 16:34 (UTC+3)\n- Created `governance/gates/BEM1011_EXTERNAL_PROOF_RECEIPT_DIRECTORY_POLICY.json`.\n- Created external proof directories under `governance/proofs/external/telegram`, `governance/proofs/external/runtime`, `governance/proofs/external/claude`.\n- Created `governance/reports/BEM1011_EXTERNAL_PROOF_RECEIPT_DIRECTORY_POLICY.md`.\n- External proof receipt directory policy completed: 1/1 (100%).\n- Release PASS not issued. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-1012 external proof receipt index.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1011_external_proof_receipt_policy.md",
+    "result_json": "governance/codex/results/bem1011_external_proof_receipt_policy.json"
+  },
+  "created_at": "2026-05-31T13:35:57.459Z"
+}
