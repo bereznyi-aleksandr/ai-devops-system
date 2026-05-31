@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem963_post_bem866_patch_probe",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-963 post BEM866 probe",
+  "objective": "Create file governance/reports/BEM963_POST_BEM866_PATCH_PROBE.md with content BEM-963 | POST BEM-866 PATCH PROBE | 2026-05-31 | 15:00 (UTC+3)\n\nЭтап: 13/14 (93%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Probe after BEM-960 runner unstaged-rebase patch.\n⚠️ Expected: if BEM-960 reached main, BEM-866 evidence step should not fail on unstaged governance/runtime/curator_dispatch files.\n⚠️ commit_sha may still be null until result reporting patch is applied.\n❌ Release PASS remains blocked.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Probe target | codex-runner post-commit BEM-866 evidence path | screenshot showed failure there |\n| Success criteria | changed_files includes this report; no blocker; next screenshot should not show unstaged rebase failure | validates BEM-960 effect |\n| Следующее действие | BEM-964 if probe still has null SHA: patch exact result line using Replace pattern | continue without release PASS |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem963_post_bem866_patch_probe.md",
+    "result_json": "governance/codex/results/bem963_post_bem866_patch_probe.json"
+  },
+  "created_at": "2026-05-31T12:01:13.126Z"
+}
