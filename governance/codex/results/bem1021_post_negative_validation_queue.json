@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1021_post_negative_validation_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1021_post_negative_validation_queue.json",
+    "create:governance/reports/BEM1021_POST_NEGATIVE_VALIDATION_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1021_post_negative_validation_queue.json",
+    "governance/reports/BEM1021_POST_NEGATIVE_VALIDATION_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1021_post_negative_validation_queue.txt"
+  ],
+  "commit_sha": "de44cef38b9f337172383e2b5de02c0e23603ab3",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1021_post_negative_validation_queue.md",
+  "completed_at": "2026-05-31T13:57:14Z"
+}
