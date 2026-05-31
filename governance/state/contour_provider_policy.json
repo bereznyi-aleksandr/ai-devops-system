@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "default_policy": {"analyst":"GPT-ANALYST", "auditor":"CLAUDE-AUDITOR", "executor":"CLAUDE-EXECUTOR", "fallback_for_claude_roles":"GPT-CODEX-FALLBACK"},
+  "policies": [
+    {"policy_id":"POL-GD-STRATEGY","contour_id":"GD-STRATEGY-CNT","logical_roles":{"analyst":{"primary":"GPT-ANALYST"},"auditor":{"primary":"CLAUDE-AUDITOR","fallback":"GPT-CODEX-FALLBACK"},"executor":{"primary":"CLAUDE-EXECUTOR","fallback":"GPT-CODEX-FALLBACK"}}},
+    {"policy_id":"POL-GD-RULES","contour_id":"GD-SYSTEM-RULES-CNT","logical_roles":{"analyst":{"primary":"GPT-ANALYST"},"auditor":{"primary":"CLAUDE-AUDITOR","fallback":"GPT-CODEX-FALLBACK"},"executor":{"primary":"CLAUDE-EXECUTOR","fallback":"GPT-CODEX-FALLBACK"}}},
+    {"policy_id":"POL-DIR-ANALYSIS","contour_id":"DIR-ANALYSIS-CNT","logical_roles":{"analyst":{"primary":"GPT-ANALYST"},"auditor":{"primary":"CLAUDE-AUDITOR","fallback":"GPT-CODEX-FALLBACK"},"executor":{"primary":"CLAUDE-EXECUTOR","fallback":"GPT-CODEX-FALLBACK"}}},
+    {"policy_id":"POL-DIR-RULES","contour_id":"DIR-WORKER-RULES-CNT","logical_roles":{"analyst":{"primary":"GPT-ANALYST"},"auditor":{"primary":"CLAUDE-AUDITOR","fallback":"GPT-CODEX-FALLBACK"},"executor":{"primary":"CLAUDE-EXECUTOR","fallback":"GPT-CODEX-FALLBACK"}}},
+    {"policy_id":"POL-WRK-C1","contour_id":"WRK-C1","logical_roles":{"analyst":{"primary":"GPT-ANALYST"},"auditor":{"primary":"CLAUDE-AUDITOR","fallback":"GPT-CODEX-FALLBACK"},"executor":{"primary":"CLAUDE-EXECUTOR","fallback":"GPT-CODEX-FALLBACK"}}},
+    {"policy_id":"POL-WRK-C2","contour_id":"WRK-C2","logical_roles":{"analyst":{"primary":"GPT-ANALYST"},"auditor":{"primary":"CLAUDE-AUDITOR","fallback":"GPT-CODEX-FALLBACK"},"executor":{"primary":"CLAUDE-EXECUTOR","fallback":"GPT-CODEX-FALLBACK"}}},
+    {"policy_id":"POL-WRK-C3","contour_id":"WRK-C3","logical_roles":{"analyst":{"primary":"GPT-ANALYST"},"auditor":{"primary":"CLAUDE-AUDITOR","fallback":"GPT-CODEX-FALLBACK"},"executor":{"primary":"CLAUDE-EXECUTOR","fallback":"GPT-CODEX-FALLBACK"}}}
+  ]
+}

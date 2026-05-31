@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "rules": [
+    {"condition":"claude_limit_reached","affected_roles":["auditor","executor"],"fallback_provider":"GPT-CODEX-FALLBACK","event":"provider_failover_used","fallback_reason":"claude_limit"},
+    {"condition":"claude_unavailable_or_timeout","affected_roles":["auditor","executor"],"fallback_provider":"GPT-CODEX-FALLBACK","event":"provider_failover_used","fallback_reason":"claude_unavailable"},
+    {"condition":"paid_api_or_secret_required","affected_roles":["any"],"action":"operator_gate","event":"provider_operator_gate"}
+  ],
+  "recovery_rule":"Return to primary provider only after provider_recovered event or operator-approved route."
+}

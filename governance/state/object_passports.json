@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "objects": [
+    {
+      "object_id": "OBJ-GD-001",
+      "name": "Генеральный директор",
+      "purpose": "Верхнеуровневое управление системой, стратегия, системные правила, gate-решения и отчёт оператору.",
+      "curator_element_id": "EL-CUR-GD-001",
+      "internal_contours": ["GD-STRATEGY-CNT", "GD-SYSTEM-RULES-CNT"],
+      "input_channels": ["ChatGPT", "Telegram", "managed_channel"],
+      "output_channels": ["operator_report", "EL-CUR-DIR-001"],
+      "rule_refs": ["system_rules", "object_rules.OBJ-GD-001", "channel_rules"],
+      "report_policy": "canonical_report",
+      "definition_of_done": ["passport_exists", "curator_ref_valid", "contours_ref_valid", "gd_route_selftest_pass"]
+    },
+    {
+      "object_id": "OBJ-DIR-001",
+      "name": "Директор",
+      "purpose": "Анализ задач GD, распределение Работнику, анализ результатов и управление правилами Работников.",
+      "curator_element_id": "EL-CUR-DIR-001",
+      "internal_contours": ["DIR-ANALYSIS-CNT", "DIR-WORKER-RULES-CNT"],
+      "input_channels": ["EL-CUR-GD-001", "Telegram_optional", "managed_channel"],
+      "output_channels": ["EL-CUR-GD-001", "EL-CUR-WRK-001"],
+      "rule_refs": ["system_rules", "object_rules.OBJ-DIR-001", "worker_rules", "channel_rules"],
+      "report_policy": "canonical_report_to_gd",
+      "definition_of_done": ["passport_exists", "curator_ref_valid", "contours_ref_valid", "dir_route_selftest_pass"]
+    },
+    {
+      "object_id": "OBJ-WRK-001",
+      "name": "Работник",
+      "purpose": "Параллельное выполнение задач дорожной карты, тестирование результатов и возврат proof Директору.",
+      "curator_element_id": "EL-CUR-WRK-001",
+      "internal_contours": ["WRK-C1", "WRK-C2", "WRK-C3"],
+      "testing_assignment": {"mode": "temporary", "allowed_contours": ["WRK-C1", "WRK-C2", "WRK-C3"]},
+      "input_channels": ["EL-CUR-DIR-001", "Telegram_optional", "managed_channel"],
+      "output_channels": ["EL-CUR-DIR-001"],
+      "rule_refs": ["system_rules", "object_rules.OBJ-WRK-001", "worker_rules", "channel_rules"],
+      "report_policy": "canonical_report_to_dir",
+      "definition_of_done": ["passport_exists", "curator_ref_valid", "contours_ref_valid", "wrk_execution_selftest_pass"]
+    }
+  ]
+}

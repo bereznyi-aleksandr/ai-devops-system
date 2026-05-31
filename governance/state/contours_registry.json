@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "contours": [
+    {"contour_id":"GD-STRATEGY-CNT","parent_object":"OBJ-GD-001","contour_type":"static","fixed_task":"strategy_and_high_level_analysis","workspace_ref":"governance/workspaces/gd_strategy","elements":{"analyst":"EL-GD-STRATEGY-ANALYST","auditor":"EL-GD-STRATEGY-AUDITOR","executor":"EL-GD-STRATEGY-EXECUTOR"},"provider_policy_ref":"POL-GD-STRATEGY","testing_capable":false},
+    {"contour_id":"GD-SYSTEM-RULES-CNT","parent_object":"OBJ-GD-001","contour_type":"static","fixed_task":"system_rules_management","workspace_ref":"governance/workspaces/gd_system_rules","elements":{"analyst":"EL-GD-RULES-ANALYST","auditor":"EL-GD-RULES-AUDITOR","executor":"EL-GD-RULES-EXECUTOR"},"provider_policy_ref":"POL-GD-RULES","testing_capable":false},
+    {"contour_id":"DIR-ANALYSIS-CNT","parent_object":"OBJ-DIR-001","contour_type":"static","fixed_task":"planning_analysis_and_result_review","workspace_ref":"governance/workspaces/dir_analysis","elements":{"analyst":"EL-DIR-ANALYSIS-ANALYST","auditor":"EL-DIR-ANALYSIS-AUDITOR","executor":"EL-DIR-ANALYSIS-EXECUTOR"},"provider_policy_ref":"POL-DIR-ANALYSIS","testing_capable":false},
+    {"contour_id":"DIR-WORKER-RULES-CNT","parent_object":"OBJ-DIR-001","contour_type":"static","fixed_task":"worker_rules_management","workspace_ref":"governance/workspaces/dir_worker_rules","elements":{"analyst":"EL-DIR-RULES-ANALYST","auditor":"EL-DIR-RULES-AUDITOR","executor":"EL-DIR-RULES-EXECUTOR"},"provider_policy_ref":"POL-DIR-RULES","testing_capable":false},
+    {"contour_id":"WRK-C1","parent_object":"OBJ-WRK-001","contour_type":"dynamic","fixed_task":null,"allowed_task_types":["registry","validator","runner","documentation"],"workspace_ref":"governance/workspaces/wrk_c1","elements":{"analyst":"EL-WRK-C1-ANALYST","auditor":"EL-WRK-C1-AUDITOR","executor":"EL-WRK-C1-EXECUTOR"},"provider_policy_ref":"POL-WRK-C1","testing_capable":true},
+    {"contour_id":"WRK-C2","parent_object":"OBJ-WRK-001","contour_type":"dynamic","fixed_task":null,"allowed_task_types":["telegram","managed_channel","dispatch","e2e"],"workspace_ref":"governance/workspaces/wrk_c2","elements":{"analyst":"EL-WRK-C2-ANALYST","auditor":"EL-WRK-C2-AUDITOR","executor":"EL-WRK-C2-EXECUTOR"},"provider_policy_ref":"POL-WRK-C2","testing_capable":true},
+    {"contour_id":"WRK-C3","parent_object":"OBJ-WRK-001","contour_type":"dynamic","fixed_task":null,"allowed_task_types":["proof","ci","audit_bundle","release"],"workspace_ref":"governance/workspaces/wrk_c3","elements":{"analyst":"EL-WRK-C3-ANALYST","auditor":"EL-WRK-C3-AUDITOR","executor":"EL-WRK-C3-EXECUTOR"},"provider_policy_ref":"POL-WRK-C3","testing_capable":true}
+  ]
+}

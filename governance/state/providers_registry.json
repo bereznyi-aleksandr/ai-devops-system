@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "providers": [
+    {"provider_id":"GPT-ANALYST","provider_type":"GPT","allowed_roles":["analyst"],"capabilities":["analysis","planning","proposal"],"status":"available"},
+    {"provider_id":"CLAUDE-AUDITOR","provider_type":"Claude","allowed_roles":["auditor"],"capabilities":["audit","review","proof_gap_detection"],"status":"operator_dependent"},
+    {"provider_id":"CLAUDE-EXECUTOR","provider_type":"Claude","allowed_roles":["executor"],"capabilities":["code_execution_guidance","patch_review"],"status":"operator_dependent"},
+    {"provider_id":"GPT-CODEX-FALLBACK","provider_type":"GPT-Codex/Codex","allowed_roles":["auditor","executor"],"capabilities":["fallback_audit","fallback_execution","file_patch"],"status":"available_via_codex_runner"}
+  ]
+}
