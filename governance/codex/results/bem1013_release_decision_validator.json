@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1013_release_decision_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_release_decision.py",
+    "create:governance/tests/fixtures/release_decision_sample_no_pass.json",
+    "create:governance/reports/BEM1013_RELEASE_DECISION_VALIDATOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_release_decision.py",
+    "governance/tests/fixtures/release_decision_sample_no_pass.json",
+    "governance/reports/BEM1013_RELEASE_DECISION_VALIDATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1013_release_decision_validator.txt"
+  ],
+  "commit_sha": "96ed6a8f29b6e7cd7ff591a901a8dec2bf552665",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1013_release_decision_validator.md",
+  "completed_at": "2026-05-31T13:44:52Z"
+}
