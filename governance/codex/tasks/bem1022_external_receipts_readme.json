@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1022_external_receipts_readme",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1022 receipts README",
+  "objective": "Create file governance/proofs/external/README.md with content # External proof receipts\n\nBEM-1022 | 2026-05-31 | 16:57 (UTC+3)\n\nPurpose: define safe intake rules for future external proof receipts.\n\n## Directories\n\n| Directory | Receipt type | Status before real receipt |\n|---|---|---|\n| `governance/proofs/external/telegram/` | Production Telegram webhook receipt | blocked |\n| `governance/proofs/external/runtime/` | Approved live runtime execution receipt | blocked |\n| `governance/proofs/external/claude/` | External Claude audit result | blocked |\n\n## Required rules\n\n- Do not store secret values, tokens, PATs, API keys, bot tokens or raw credentials.\n- Do not write issue #31.\n- Do not claim Release PASS from GPT self-claims.\n- Every receipt must reference a validator and schema.\n- Every receipt must be auditable without relying on chat-only statements.\n\n## Validators\n\n| Receipt | Validator |\n|---|---|\n| Production Telegram | `governance/validators/validate_telegram_production_receipt.py` |\n| Live runtime | `governance/validators/validate_live_runtime_receipt.py` |\n| External Claude audit | `governance/validators/validate_external_claude_audit_result.py` |\n| Release decision | `governance/validators/validate_release_decision.py` |\n\nNo Release PASS is issued by this README.\nCreate file governance/reports/BEM1022_EXTERNAL_RECEIPTS_README.md with content BEM-1022 | EXTERNAL RECEIPTS README | 2026-05-31 | 16:57 (UTC+3)\n\nЭтап: External receipts README — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1021 completed with SHA `de44cef38b9f337172383e2b5de02c0e23603ab3`.\n✅ Created `governance/proofs/external/README.md`.\n✅ Documented safe receipt intake rules.\n✅ Listed receipt directories and validators.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ README is not real external receipt proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External receipts README — 1/1 (100%) | README created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1023 proof intake checklist | Continue proof intake hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1022 | EXTERNAL RECEIPTS README | 2026-05-31 | 16:57 (UTC+3)\n- BEM-1021 completed with SHA de44cef38b9f337172383e2b5de02c0e23603ab3.\n- Created `governance/proofs/external/README.md`.\n- Created `governance/reports/BEM1022_EXTERNAL_RECEIPTS_README.md`.\n- External receipts README completed: 1/1 (100%).\n- Release PASS not issued.\n- Next action: BEM-1023 proof intake checklist.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1022_external_receipts_readme.md",
+    "result_json": "governance/codex/results/bem1022_external_receipts_readme.json"
+  },
+  "created_at": "2026-05-31T13:58:33.231Z"
+}
