@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1143_managed_channel_schema_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/channels/managed_channel_schema.json",
+    "create:governance/validators/validate_managed_channel_schema.py",
+    "create:governance/reports/BEM1143_MANAGED_CHANNEL_SCHEMA_VALIDATOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/channels/managed_channel_schema.json",
+    "governance/validators/validate_managed_channel_schema.py",
+    "governance/reports/BEM1143_MANAGED_CHANNEL_SCHEMA_VALIDATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1143_managed_channel_schema_validator.txt"
+  ],
+  "commit_sha": "98dad15b9fe3e92439820444b4f588527635ff29",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1143_managed_channel_schema_validator.md",
+  "completed_at": "2026-05-31T19:04:05Z"
+}
