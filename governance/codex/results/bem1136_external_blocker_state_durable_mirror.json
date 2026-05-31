@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1136_external_blocker_state_durable_mirror",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/EXTERNAL_BLOCKER_STATE_DURABLE_MIRROR.json",
+    "create:governance/reports/BEM1136_EXTERNAL_BLOCKER_STATE_DURABLE_MIRROR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/EXTERNAL_BLOCKER_STATE_DURABLE_MIRROR.json",
+    "governance/reports/BEM1136_EXTERNAL_BLOCKER_STATE_DURABLE_MIRROR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1136_external_blocker_state_durable_mirror.txt"
+  ],
+  "commit_sha": "15f9195b8779e78e135b6b720cec81a72ea5e7bb",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1136_external_blocker_state_durable_mirror.md",
+  "completed_at": "2026-05-31T18:35:29Z"
+}
