@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1092_external_proof_waiting_state_refresh",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/EXTERNAL_PROOF_INTAKE_WAITING_STATE_REFRESH.json",
+    "create:governance/reports/BEM1092_EXTERNAL_PROOF_INTAKE_WAITING_STATE_REFRESH.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/EXTERNAL_PROOF_INTAKE_WAITING_STATE_REFRESH.json",
+    "governance/reports/BEM1092_EXTERNAL_PROOF_INTAKE_WAITING_STATE_REFRESH.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1092_external_proof_waiting_state_refresh.txt"
+  ],
+  "commit_sha": "5ee951e0ca86910cbac3e7145fea10c0506a6c60",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1092_external_proof_waiting_state_refresh.md",
+  "completed_at": "2026-05-31T16:25:45Z"
+}
