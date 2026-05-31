@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem990_audit_mailbox_status",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-990 audit status",
+  "objective": "Create file governance/audit/BEM990_AUDIT_MAILBOX_STATUS.json with content {\n  \"bem_id\": \"BEM-990\",\n  \"created_at_utc3\": \"2026-05-31 | 15:56 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"External Claude audit mailbox handoff\", \"completed\": 2, \"total\": 2, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-989\",\n  \"latest_proof_sha\": \"ea25e84c968d2088cc22c0f63b973fe6bef0050e\",\n  \"audit_mailbox_ready\": true,\n  \"external_approval_present\": false,\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-991 create production Telegram receipt validator skeleton without secrets\"\n}\nCreate file governance/reports/BEM990_AUDIT_MAILBOX_STATUS.md with content BEM-990 | AUDIT MAILBOX STATUS | 2026-05-31 | 15:56 (UTC+3)\n\nЭтап: External Claude audit mailbox handoff — 2/2 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Created `governance/audit/BEM990_AUDIT_MAILBOX_STATUS.json`.\n✅ External Claude audit mailbox handoff stage completed.\n✅ Latest proof from BEM-989: `ea25e84c968d2088cc22c0f63b973fe6bef0050e`.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ external approval is not present yet.\n⚠️ production_telegram_gate and live_llm_runtime_gate remain blocked until proof receipts exist.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External Claude audit mailbox handoff — 2/2 (100%) | Status JSON created after handoff package |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-991 create production Telegram receipt validator skeleton without secrets | Move from schema to validator for proof receipts |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-990 | AUDIT MAILBOX STATUS | 2026-05-31 | 15:56 (UTC+3)\n- Created `governance/audit/BEM990_AUDIT_MAILBOX_STATUS.json`.\n- Created `governance/reports/BEM990_AUDIT_MAILBOX_STATUS.md`.\n- External Claude audit mailbox handoff completed: 2/2 (100%).\n- Latest proof SHA from BEM-989: ea25e84c968d2088cc22c0f63b973fe6bef0050e.\n- Release PASS not issued. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-991 create production Telegram receipt validator skeleton without secrets.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem990_audit_mailbox_status.md",
+    "result_json": "governance/codex/results/bem990_audit_mailbox_status.json"
+  },
+  "created_at": "2026-05-31T12:57:20.012Z"
+}
