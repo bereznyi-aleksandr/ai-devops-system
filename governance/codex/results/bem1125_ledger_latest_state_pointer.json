@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1125_ledger_latest_state_pointer",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/LEDGER_LATEST_STATE_POINTER.json",
+    "create:governance/reports/BEM1125_LEDGER_LATEST_STATE_POINTER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/LEDGER_LATEST_STATE_POINTER.json",
+    "governance/reports/BEM1125_LEDGER_LATEST_STATE_POINTER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1125_ledger_latest_state_pointer.txt"
+  ],
+  "commit_sha": "fbce435a13b62ba72d0f7eff5619c5bd3ad89a8c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1125_ledger_latest_state_pointer.md",
+  "completed_at": "2026-05-31T18:13:01Z"
+}
