@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1143_managed_channel_schema_validator",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1143 managed channel schema",
+  "objective": "Create file governance/channels/managed_channel_schema.json with content {\"bem_id\":\"BEM-1143\",\"version\":\"1.0\",\"message_required_fields\":[\"message_id\",\"created_at_utc3\",\"source_object\",\"target_object\",\"contour\",\"role\",\"payload\",\"proof_policy\"],\"proof_policy\":{\"no_secrets\":true,\"templates_not_proof\":true,\"mock_not_release_proof\":true},\"allowed_roles\":[\"general_director\",\"director\",\"curator\",\"analyst\",\"auditor\",\"worker\"],\"release_pass\":false}\nCreate file governance/validators/validate_managed_channel_schema.py with content import json\nfrom pathlib import Path\n\nREQUIRED_SCHEMA_KEYS = {\"message_required_fields\", \"proof_policy\", \"allowed_roles\"}\nREQUIRED_MESSAGE_FIELDS = {\"message_id\", \"created_at_utc3\", \"source_object\", \"target_object\", \"contour\", \"role\", \"payload\", \"proof_policy\"}\n\n\ndef validate(path=\"governance/channels/managed_channel_schema.json\"):\n    data = json.loads(Path(path).read_text(encoding=\"utf-8\"))\n    errors = []\n    missing = REQUIRED_SCHEMA_KEYS - set(data)\n    if missing:\n        errors.append(f\"schema missing {sorted(missing)}\")\n    fields = set(data.get(\"message_required_fields\", []))\n    missing_fields = REQUIRED_MESSAGE_FIELDS - fields\n    if missing_fields:\n        errors.append(f\"message fields missing {sorted(missing_fields)}\")\n    proof = data.get(\"proof_policy\", {})\n    for key in [\"no_secrets\", \"templates_not_proof\", \"mock_not_release_proof\"]:\n        if proof.get(key) is not True:\n            errors.append(f\"proof_policy.{key} must be true\")\n    return errors\n\nif __name__ == \"__main__\":\n    errs = validate()\n    if errs:\n        print(\"FAIL\")\n        for err in errs:\n            print(err)\n        raise SystemExit(1)\n    print(\"PASS managed_channel_schema\")\nCreate file governance/reports/BEM1143_MANAGED_CHANNEL_SCHEMA_VALIDATOR.md with content BEM-1143 | MANAGED CHANNEL SCHEMA VALIDATOR | 2026-05-31 | 22:02 (UTC+3)\n\nЭтап: Managed channel schema validator — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1142 completed with SHA `823901df6577f3eec02e51822aa01b44adf9ee87`.\n✅ Created `governance/channels/managed_channel_schema.json`.\n✅ Created `governance/validators/validate_managed_channel_schema.py`.\n✅ Proof policy forbids secrets and release proof from templates/mocks.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Managed channel schema validator — 1/1 (100%) | Core managed channel schema implemented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1144 implement contour lifecycle schema and validator | Continue real protocol implementation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1143 | MANAGED CHANNEL SCHEMA VALIDATOR | 2026-05-31 | 22:02 (UTC+3)\n- BEM-1142 completed with SHA 823901df6577f3eec02e51822aa01b44adf9ee87.\n- Created managed channel schema and validator.\n- Release PASS not issued.\n- Next action: BEM-1144 implement contour lifecycle schema and validator.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1143_managed_channel_schema_validator.md",
+    "result_json": "governance/codex/results/bem1143_managed_channel_schema_validator.json"
+  },
+  "created_at": "2026-05-31T19:03:54.228Z"
+}
