@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1168_post_dry_run_audit_handoff",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/BEM1168_POST_DRY_RUN_AUDIT_HANDOFF.md",
+    "create:governance/audit/BEM1168_POST_DRY_RUN_AUDIT_HANDOFF.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/BEM1168_POST_DRY_RUN_AUDIT_HANDOFF.md",
+    "governance/audit/BEM1168_POST_DRY_RUN_AUDIT_HANDOFF.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1168_post_dry_run_audit_handoff.txt"
+  ],
+  "commit_sha": "372b9306c3a81f10ac5be6335e69ed12bf7815d4",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1168_post_dry_run_audit_handoff.md",
+  "completed_at": "2026-05-31T19:40:15Z"
+}
