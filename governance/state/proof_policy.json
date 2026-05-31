@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "rules": [
+    {"id":"release_pass_requires_sha", "severity":"critical", "condition":"release_status == release_pass", "required":"commit_sha non-null"},
+    {"id":"pass_requires_proof_ref", "severity":"critical", "condition":"status contains PASS", "required":"proof_ref exists"},
+    {"id":"mock_not_production", "severity":"critical", "condition":"mock_status == PASS", "required":"production_status remains separate"},
+    {"id":"self_claim_not_release_proof", "severity":"critical", "condition":"proof_source == self_claim", "required":"external CI/Git/validator proof"}
+  ]
+}

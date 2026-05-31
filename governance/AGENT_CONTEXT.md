@@ -372,3 +372,11 @@ Created provider-aware dispatch_lifecycle_schema, dispatch_consumer, processed/d
 Result: BLOCK_F_DISPATCH_LIFECYCLE_PASS. This is lifecycle baseline, not release PASS.
 Next: Block G object/contour lifecycle runners and report writers.
 No issue comments.
+
+
+## BEM-940 completed | 2026-05-31
+Implemented Block I proof hardening after BEM-939.
+Created release_proof_manifest_schema, release_proof_manifest draft, proof_policy, validate_release_proof and proof_manifest_updater.
+Result: BLOCK_I_PROOF_HARDENING_PASS. commit_sha remains null, therefore this is not release PASS.
+Next: Block J E2E mock tests and production status split.
+No issue comments.

@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "release_status": "draft",
+  "commit_sha": null,
+  "actions_run_id": null,
+  "validation_statuses": {
+    "block_a_foundation": "PASS_BY_FILES",
+    "block_b_foundation": "PASS_BY_FILES",
+    "block_c_prompts": "PASS_BY_FILES",
+    "block_d_schemas": "PASS_BY_FILES",
+    "block_e_consumer": "PASS_BY_FILES",
+    "block_f_dispatch": "PASS_BY_FILES",
+    "block_g_runners": "PASS_BY_FILES",
+    "block_h_telegram_foundation": "PASS_BY_FILES",
+    "release_sha_gate": "BLOCKED_COMMIT_SHA_NULL"
+  },
+  "proof_refs": [
+    "governance/reports/BEM932_BLOCK_A_PASS.md",
+    "governance/reports/BEM933_BLOCK_B_FOUNDATION_PASS.md",
+    "governance/reports/BEM934_BLOCK_C_PROMPTS_PASS.md",
+    "governance/reports/BEM935_BLOCK_D_SCHEMAS_PASS.md",
+    "governance/reports/BEM936_BLOCK_E_CONSUMER_PASS.md",
+    "governance/reports/BEM937_BLOCK_F_DISPATCH_PASS.md",
+    "governance/reports/BEM938_BLOCK_G_RUNNERS_PASS.md",
+    "governance/reports/BEM939_BLOCK_H_TELEGRAM_PASS.md"
+  ],
+  "blockers": [
+    "commit_sha is null; release PASS is not allowed until CI/Git SHA is captured",
+    "production Telegram status is not proven",
+    "full E2E and Claude re-audit are not completed"
+  ]
+}

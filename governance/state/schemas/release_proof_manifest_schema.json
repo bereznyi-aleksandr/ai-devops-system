@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "date": "2026-05-31",
+  "required_fields": ["version", "date", "release_status", "commit_sha", "actions_run_id", "validation_statuses", "proof_refs", "blockers"],
+  "release_status_values": ["draft", "working_baseline_pass", "conditional_pass", "release_pass", "failed"],
+  "hard_rules": [
+    "release_status=release_pass requires commit_sha to be non-null and non-empty",
+    "release_status=release_pass requires blockers to be empty",
+    "release_status=release_pass requires all validation_statuses to be PASS",
+    "mock_status must not be used as production_status"
+  ]
+}
