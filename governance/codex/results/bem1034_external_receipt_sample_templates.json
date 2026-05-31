@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1034_external_receipt_sample_templates",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/telegram_receipt_template.json",
+    "create:governance/proofs/external/runtime/live_runtime_receipt_template.json",
+    "create:governance/proofs/external/claude/external_claude_audit_result_template.json",
+    "create:governance/reports/BEM1034_EXTERNAL_RECEIPT_SAMPLE_TEMPLATES.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/telegram_receipt_template.json",
+    "governance/proofs/external/runtime/live_runtime_receipt_template.json",
+    "governance/proofs/external/claude/external_claude_audit_result_template.json",
+    "governance/reports/BEM1034_EXTERNAL_RECEIPT_SAMPLE_TEMPLATES.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1034_external_receipt_sample_templates.txt"
+  ],
+  "commit_sha": "80169e97d04cfd099787cf5c597bf4612276c8bf",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1034_external_receipt_sample_templates.md",
+  "completed_at": "2026-05-31T14:29:23Z"
+}
