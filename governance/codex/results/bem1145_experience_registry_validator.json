@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1145_experience_registry_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/experience/experience_registry.json",
+    "create:governance/validators/validate_experience_registry.py",
+    "create:governance/reports/BEM1145_EXPERIENCE_REGISTRY_VALIDATOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/experience/experience_registry.json",
+    "governance/validators/validate_experience_registry.py",
+    "governance/reports/BEM1145_EXPERIENCE_REGISTRY_VALIDATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1145_experience_registry_validator.txt"
+  ],
+  "commit_sha": "44fb424f1d84c1e59c7b77f7073239c86a2940b9",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1145_experience_registry_validator.md",
+  "completed_at": "2026-05-31T19:07:14Z"
+}
