@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1146_release_proof_manifest_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/release/release_proof_manifest.json",
+    "create:governance/validators/validate_release_proof_manifest.py",
+    "create:governance/reports/BEM1146_RELEASE_PROOF_MANIFEST_VALIDATOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/release/release_proof_manifest.json",
+    "governance/validators/validate_release_proof_manifest.py",
+    "governance/reports/BEM1146_RELEASE_PROOF_MANIFEST_VALIDATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1146_release_proof_manifest_validator.txt"
+  ],
+  "commit_sha": "253c5783624a2e404e29e1bd4ea2f54f958b6a77",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1146_release_proof_manifest_validator.md",
+  "completed_at": "2026-05-31T19:08:45Z"
+}
