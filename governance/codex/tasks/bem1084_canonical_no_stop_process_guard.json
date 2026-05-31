@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1084_canonical_no_stop_process_guard",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1084 no-stop guard",
+  "objective": "Create file governance/state/BEM1084_CANONICAL_NO_STOP_PROCESS_GUARD.json with content {\n  \"bem_id\": \"BEM-1084\",\n  \"created_at_utc3\": \"2026-05-31 | 18:54 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Canonical no-stop process guard\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1083\",\n  \"latest_proof_sha\": \"bb94009240e3eb2ca6fb5d9c3818c9a628dbc579\",\n  \"guard_rules\": [\n    \"Do not end a turn with report only when next_action exists\",\n    \"After getCodexStatus completed, immediately create next BEM if next_action exists\",\n    \"Do not wait for operator after a canonical report\",\n    \"If final report is necessary, it must still name an already-dispatched next task or create handoff on limit\"\n  ],\n  \"contract_ref\": \"AUDITOR_CONTRACT.md section 3 and section 11\",\n  \"next_action\": \"BEM-1085 next roadmap seed after process guard\"\n}\nCreate file governance/reports/BEM1084_CANONICAL_NO_STOP_PROCESS_GUARD.md with content BEM-1084 | CANONICAL NO-STOP PROCESS GUARD | 2026-05-31 | 18:54 (UTC+3)\n\nЭтап: Canonical no-stop process guard — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1083 completed with SHA `bb94009240e3eb2ca6fb5d9c3818c9a628dbc579`.\n✅ Created `governance/state/BEM1084_CANONICAL_NO_STOP_PROCESS_GUARD.json`.\n✅ Guard says: do not end a turn with report only when next_action exists.\n✅ Guard says: after completed status, immediately create next BEM if next_action exists.\n✅ Guard says: do not wait for operator after canonical report.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ This is a process guard, not external proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Canonical no-stop process guard — 1/1 (100%) | Guard file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1085 next roadmap seed after process guard | Continue without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1084 | CANONICAL NO-STOP PROCESS GUARD | 2026-05-31 | 18:54 (UTC+3)\n- BEM-1083 completed with SHA bb94009240e3eb2ca6fb5d9c3818c9a628dbc579.\n- Created `governance/state/BEM1084_CANONICAL_NO_STOP_PROCESS_GUARD.json`.\n- Created `governance/reports/BEM1084_CANONICAL_NO_STOP_PROCESS_GUARD.md`.\n- Guard: never end with report-only when next_action exists.\n- Release PASS not issued.\n- Next action: BEM-1085 next roadmap seed after process guard.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1084_canonical_no_stop_process_guard.md",
+    "result_json": "governance/codex/results/bem1084_canonical_no_stop_process_guard.json"
+  },
+  "created_at": "2026-05-31T16:15:01.050Z"
+}
