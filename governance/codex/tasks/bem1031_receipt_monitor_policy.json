@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1031_receipt_monitor_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1031 receipt monitor policy",
+  "objective": "Create file governance/proofs/external/RECEIPT_MONITOR_POLICY.json with content {\n  \"bem_id\": \"BEM-1031\",\n  \"created_at_utc3\": \"2026-05-31 | 17:22 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Receipt monitor policy\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1030\",\n  \"latest_proof_sha\": \"ec8ec1fb29f19c52819fa2424b22c2d9ae0364dd\",\n  \"policy\": {\n    \"monitoring_mode\": \"read_only_status_tracking\",\n    \"auto_close_blockers\": false,\n    \"auto_release_pass\": false,\n    \"secret_scan_required\": true,\n    \"validator_required\": true,\n    \"external_audit_required\": true\n  },\n  \"forbidden\": [\"secret_values\", \"tokens\", \"api_keys\", \"PAT\", \"raw_credentials\", \"issue_31_write\", \"self_claim_release_pass\", \"auto_close_without_external_receipt\"],\n  \"next_action\": \"BEM-1032 receipt monitor handoff\"\n}\nCreate file governance/reports/BEM1031_RECEIPT_MONITOR_POLICY.md with content BEM-1031 | RECEIPT MONITOR POLICY | 2026-05-31 | 17:22 (UTC+3)\n\nЭтап: Receipt monitor policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1030 completed with SHA `ec8ec1fb29f19c52819fa2424b22c2d9ae0364dd`.\n✅ Created `governance/proofs/external/RECEIPT_MONITOR_POLICY.json`.\n✅ Monitoring mode is read-only status tracking.\n✅ Auto-close and auto-release PASS are forbidden.\n✅ Validator and external audit are required for real receipts.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Real external receipts are not present yet.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt monitor policy — 1/1 (100%) | Monitor policy file created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1032 receipt monitor handoff | Continue monitoring controls |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1031 | RECEIPT MONITOR POLICY | 2026-05-31 | 17:22 (UTC+3)\n- BEM-1030 completed with SHA ec8ec1fb29f19c52819fa2424b22c2d9ae0364dd.\n- Created `governance/proofs/external/RECEIPT_MONITOR_POLICY.json`.\n- Created `governance/reports/BEM1031_RECEIPT_MONITOR_POLICY.md`.\n- Receipt monitor policy completed: 1/1 (100%).\n- Auto-close and auto-release PASS are forbidden.\n- Release PASS not issued.\n- Next action: BEM-1032 receipt monitor handoff.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1031_receipt_monitor_policy.md",
+    "result_json": "governance/codex/results/bem1031_receipt_monitor_policy.json"
+  },
+  "created_at": "2026-05-31T14:24:07.568Z"
+}
