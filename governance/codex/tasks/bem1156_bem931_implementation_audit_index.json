@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1156_bem931_implementation_audit_index",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1156 BEM-931 audit index",
+  "objective": "Create file governance/audit/BEM1156_BEM931_IMPLEMENTATION_AUDIT_INDEX.json with content {\"bem_id\":\"BEM-1156\",\"created_at_utc3\":\"2026-05-31 | 22:21 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"BEM-931 implementation audit index\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"implemented_refs\":[\"governance/objects/object_passports.json\",\"governance/contours/contours_registry.json\",\"governance/providers/providers_registry.json\",\"governance/providers/contour_provider_policy.json\",\"governance/channels/managed_channel_schema.json\",\"governance/contours/contour_lifecycle_schema.json\",\"governance/experience/experience_registry.json\",\"governance/release/release_proof_manifest.json\",\"governance/runners/managed_channel_consumer.py\",\"governance/runners/contour_lifecycle_runner.py\",\"governance/runners/object_lifecycle_runner.py\",\"governance/runners/provider_activation.py\",\"governance/runners/provider_failover.py\",\"governance/runners/curator_router.py\",\"governance/runners/role_report_writer.py\",\"governance/runners/object_report_aggregator.py\",\"governance/runners/testing_contour_assignment.py\",\"governance/tests/run_bem931_mock_e2e.py\"],\"remaining_blockers\":[\"real_external_telegram_receipt\",\"real_external_runtime_receipt\",\"external_claude_reaudit\"],\"next_action\":\"BEM-1157 run/record validator suite index\"}\nCreate file governance/reports/BEM1156_BEM931_IMPLEMENTATION_AUDIT_INDEX.md with content BEM-1156 | BEM-931 IMPLEMENTATION AUDIT INDEX | 2026-05-31 | 22:21 (UTC+3)\n\nЭтап: BEM-931 implementation audit index — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1155 completed with SHA `bcbd711f84303b81d44288a50d416e42613dea59`.\n✅ Indexed object passports, contours, providers, channels, lifecycle, experience and release proof manifest.\n✅ Indexed managed channel, contour, object, provider, curator and report runners.\n✅ Indexed mock E2E runner.\n⚠️ Real external Telegram/runtime/Claude proofs remain missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | BEM-931 implementation audit index — 1/1 (100%) | Implementation index created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Existing foundation status |\n| Следующее действие | BEM-1157 run/record validator suite index | Continue verification without stopping |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1156 | BEM-931 IMPLEMENTATION AUDIT INDEX | 2026-05-31 | 22:21 (UTC+3)\n- BEM-1155 completed with SHA bcbd711f84303b81d44288a50d416e42613dea59.\n- Created BEM-931 implementation audit index.\n- Release PASS not issued.\n- Next action: BEM-1157 run/record validator suite index.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1156_bem931_implementation_audit_index.md",
+    "result_json": "governance/codex/results/bem1156_bem931_implementation_audit_index.json"
+  },
+  "created_at": "2026-05-31T19:23:10.997Z"
+}
