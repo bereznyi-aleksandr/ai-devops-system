@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1120_operator_canonical_status_snapshot",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1120_OPERATOR_CANONICAL_STATUS_SNAPSHOT.md",
+    "create:governance/state/bem1120_operator_canonical_status_snapshot.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1120_OPERATOR_CANONICAL_STATUS_SNAPSHOT.md",
+    "governance/state/bem1120_operator_canonical_status_snapshot.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1120_operator_canonical_status_snapshot.txt"
+  ],
+  "commit_sha": "d39bd77f416ddb4258ad2d7b4a398e9aa408ba44",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1120_operator_canonical_status_snapshot.md",
+  "completed_at": "2026-05-31T18:06:34Z"
+}
