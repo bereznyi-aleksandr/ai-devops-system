@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1140_object_passports_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/objects/object_passports.json",
+    "create:governance/validators/validate_object_passports.py",
+    "create:governance/reports/BEM1140_OBJECT_PASSPORTS_VALIDATOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/objects/object_passports.json",
+    "governance/validators/validate_object_passports.py",
+    "governance/reports/BEM1140_OBJECT_PASSPORTS_VALIDATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1140_object_passports_validator.txt"
+  ],
+  "commit_sha": "8e7d854fa99f1f3c3d70a4d947d356ba4506bde3",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1140_object_passports_validator.md",
+  "completed_at": "2026-05-31T18:42:40Z"
+}
