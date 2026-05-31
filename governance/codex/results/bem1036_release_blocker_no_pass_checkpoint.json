@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1036_release_blocker_no_pass_checkpoint",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1036_RELEASE_BLOCKER_NO_PASS_CHECKPOINT.md",
+    "create:governance/state/bem1036_release_blocker_no_pass_checkpoint.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1036_RELEASE_BLOCKER_NO_PASS_CHECKPOINT.md",
+    "governance/state/bem1036_release_blocker_no_pass_checkpoint.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1036_release_blocker_no_pass_checkpoint.txt"
+  ],
+  "commit_sha": "e77e5df67566163b6351d9a3684f8dcc99bd4939",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1036_release_blocker_no_pass_checkpoint.md",
+  "completed_at": "2026-05-31T14:32:35Z"
+}
