@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1038_receipt_infrastructure_audit_bundle",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1038 receipt audit bundle",
+  "objective": "Create file governance/audit/BEM1038_RECEIPT_INFRASTRUCTURE_AUDIT_BUNDLE.json with content {\n  \"bem_id\": \"BEM-1038\",\n  \"created_at_utc3\": \"2026-05-31 | 17:34 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"name\": \"Receipt infrastructure audit bundle\", \"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"release_pass\": false,\n  \"latest_completed_bem\": \"BEM-1037\",\n  \"latest_proof_sha\": \"35773c521fa0266b33ec8cda2034ff178aa2ec9e\",\n  \"bundle_paths\": [\n    \"governance/proofs/external/README.md\",\n    \"governance/proofs/external/PROOF_INTAKE_CHECKLIST.md\",\n    \"governance/proofs/external/EXTERNAL_PROOF_RECEIPT_INDEX.json\",\n    \"governance/proofs/external/EXTERNAL_RECEIPT_STATUS_DASHBOARD.json\",\n    \"governance/proofs/external/RECEIPT_MONITOR_STATUS.json\",\n    \"governance/proofs/external/RECEIPT_MONITOR_POLICY.json\",\n    \"governance/proofs/external/RECEIPT_MONITOR_HANDOFF.md\",\n    \"governance/proofs/external/RECEIPT_TEMPLATE_VALIDATION_POLICY.json\",\n    \"governance/validators/validate_release_decision.py\",\n    \"governance/validators/negative_validation_harness_index.json\",\n    \"governance/reports/BEM1036_RELEASE_BLOCKER_NO_PASS_CHECKPOINT.md\"\n  ],\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"next_action\": \"BEM-1039 receipt infrastructure audit checklist\"\n}\nCreate file governance/reports/BEM1038_RECEIPT_INFRASTRUCTURE_AUDIT_BUNDLE.md with content BEM-1038 | RECEIPT INFRASTRUCTURE AUDIT BUNDLE | 2026-05-31 | 17:34 (UTC+3)\n\nЭтап: Receipt infrastructure audit bundle — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1037 completed with SHA `35773c521fa0266b33ec8cda2034ff178aa2ec9e`.\n✅ Created `governance/audit/BEM1038_RECEIPT_INFRASTRUCTURE_AUDIT_BUNDLE.json`.\n✅ Bundled receipt README, checklist, index, dashboard, monitor status, monitor policy and handoff.\n✅ Bundled release decision validator and negative validation index.\n✅ Report canon respected: only Этап and Дорожная карта in header.\n⚠️ Bundle is audit infrastructure, not real external receipt proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt infrastructure audit bundle — 1/1 (100%) | Audit bundle created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-1039 receipt infrastructure audit checklist | Continue audit hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1038 | RECEIPT INFRASTRUCTURE AUDIT BUNDLE | 2026-05-31 | 17:34 (UTC+3)\n- BEM-1037 completed with SHA 35773c521fa0266b33ec8cda2034ff178aa2ec9e.\n- Created `governance/audit/BEM1038_RECEIPT_INFRASTRUCTURE_AUDIT_BUNDLE.json`.\n- Created `governance/reports/BEM1038_RECEIPT_INFRASTRUCTURE_AUDIT_BUNDLE.md`.\n- Receipt infrastructure audit bundle completed: 1/1 (100%).\n- Release PASS not issued; real external receipts remain missing.\n- Next action: BEM-1039 receipt infrastructure audit checklist.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1038_receipt_infrastructure_audit_bundle.md",
+    "result_json": "governance/codex/results/bem1038_receipt_infrastructure_audit_bundle.json"
+  },
+  "created_at": "2026-05-31T14:40:56.769Z"
+}
