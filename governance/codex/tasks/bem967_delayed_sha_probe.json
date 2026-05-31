@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem967_delayed_sha_probe",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-967 delayed SHA probe",
+  "objective": "Create file governance/reports/BEM967_DELAYED_SHA_PROBE.md with content BEM-967 | DELAYED SHA PROBE | 2026-05-31 | 15:06 (UTC+3)\n\nЭтап: 17/18 (94%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: 0/4 (0%)\n\nЧек-лист:\n✅ Delayed verification after BEM-964 commit_sha writer patch attempt.\n⚠️ Success criterion: Deno getCodexStatus returns non-null commit_sha.\n❌ No release PASS unless non-null SHA and external gates are closed.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Probe | One more create-file task after workflow patch cycle | verify active runner version |\n| Next if fail | BEM-968 create runner patch handoff with exact raw workflow evidence and blockers | avoid pretending PASS |\n| Следующее действие | Check status, then continue with BEM-968 if commit_sha remains null | proof-driven roadmap |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem967_delayed_sha_probe.md",
+    "result_json": "governance/codex/results/bem967_delayed_sha_probe.json"
+  },
+  "created_at": "2026-05-31T12:07:20.814Z"
+}
