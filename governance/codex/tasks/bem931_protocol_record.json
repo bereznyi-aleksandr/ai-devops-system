@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem931_protocol_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-931 final protocol",
+  "objective": "Create file governance/reports/BEM931_FINAL_IMPLEMENTATION_PROTOCOL.md with content # BEM-931 FINAL IMPLEMENTATION PROTOCOL\nStatus: FINAL_IMPLEMENTATION_PROTOCOL_DRAFT_READY\nDate: 2026-05-31\nPurpose: final protocol with detailed implementation roadmap, prepared on the basis of BEM-930 unified detailed analytics report.\nBasis:\n- governance/reports/BEM930_UNIFIED_DETAILED_ANALYTICS_REPORT.md\n- governance/runtime/curator_dispatch/BEM931_CONTEXT_READ.md\nCore corrections preserved:\n- Objects GD/DIR/WRK have passports, not prompts.\n- Prompts belong only to LLM roles, providers and operational handlers.\n- Curator is object-level element.\n- Workspace belongs to internal contour.\n- Vertical link is Curator -> Curator.\n- Internal contour input is Curator -> Analyst.\n- Internal contour algorithm is Analyst -> Auditor -> Executor -> Auditor, with revisions through Analyst.\n- Final contour output is Auditor -> Curator.\n- Horizontal link is Auditor A -> Analyst B or Analyst B requests verified data from Auditor A.\n- Provider model is GPT Analyst, Claude Auditor, Claude Executor, fallback GPT-Codex/Codex for Claude roles.\n- Telegram is operator front, not system center.\n- Release PASS requires non-null CI/Git SHA.\n- Claude requirements are release blockers.\nDocument contents:\n- Mandatory basis of protocol.\n- Target working state.\n- Current gap diagnosis.\n- Entities to create.\n- Registries and schemas file list.\n- Full link matrix.\n- Internal contour algorithm.\n- Prompt pack and contracts without object prompts.\n- Provider model.\n- Maximum-detail implementation roadmap.\n- Claude requirements mapping.\n- Definition of Done and release criteria.\n- Final protocol quality checklist.\nRoadmap:\n- 14 implementation blocks.\n- 103 detailed substeps.\n- Each substep includes action, artifact/file, check, proof and gate.\nLocal operator artifacts:\n- BEM931_final_implementation_protocol_ru.docx\n- BEM931_final_implementation_protocol_ru.zip\nQA: DOCX rendered to 5 pages; no edge clipping detected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem931_protocol_record.md",
+    "result_json": "governance/codex/results/bem931_protocol_record.json"
+  },
+  "created_at": "2026-05-31T07:22:20.195Z"
+}
