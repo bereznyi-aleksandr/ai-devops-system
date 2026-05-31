@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem969_result_sha_field_probe",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-969 SHA field probe",
+  "objective": "Create file governance/reports/BEM969_RESULT_SHA_FIELD_PROBE.md with content BEM-969 | RESULT SHA FIELD PROBE | 2026-05-31 | 15:09 (UTC+3)\n\nЭтап: 19/20 (95%)\nДорожная карта BEM-931 foundation: 14/14 (100%); release gates: remote SHA verification in progress, other gates 0/3\n\nЧек-лист:\n✅ Probe after BEM-968 result JSON field patch.\n⚠️ Success criterion: getCodexStatus commit_sha non-null.\n⚠️ Non-null GITHUB_SHA fallback still does not close production Telegram, live LLM runtime or external Claude re-audit gates.\n❌ No release PASS.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Probe target | result JSON commit_sha field | BEM-968 replaced commit_sha field expression |\n| Expected | commit_sha non-null | release proof requires SHA not null |\n| Следующее действие | BEM-970 canonical report with verified outcome | keep roadmap moving |\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem969_result_sha_field_probe.md",
+    "result_json": "governance/codex/results/bem969_result_sha_field_probe.json"
+  },
+  "created_at": "2026-05-31T12:10:30.030Z"
+}
