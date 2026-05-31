@@ -542,3 +542,5 @@ No issue comments.
 - BEM-1020 completed with SHA d142bace0fe7d9d3bbbe07e1d6f60126c4bda6b2
 ### BEM-1022 | EXTERNAL RECEIPTS README | 2026-05-31 | 16:57 (UTC+3)
 - BEM-1021 completed with SHA de44cef38b9f337172383e2b5de02c0e23603ab3
+### BEM-1023 | PROOF INTAKE CHECKLIST | 2026-05-31 | 16:58 (UTC+3)
+- BEM-1022 completed with SHA 489afba8cda29cbfdd2c0273d97ff5934e8543cc
