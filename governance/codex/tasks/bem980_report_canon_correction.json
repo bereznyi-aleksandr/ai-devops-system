@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem980_report_canon_correction",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-980 report canon correction",
+  "objective": "Create file governance/reports/BEM980_REPORT_CANON_CORRECTION.md with content BEM-980 | REPORT CANON CORRECTION | 2026-05-31 | 15:27 (UTC+3)\n\nЭтап: 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Corrected reporting rule: the header must contain only canonical Stage and Roadmap progress.\n✅ Removed separate 'Release gates' progress line from the report canon.\n✅ Remaining release blockers must be listed only as blockers in the checklist/table, not as a separate progress metric.\n✅ Current release status remains NO_RELEASE_PASS.\n⚠️ Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n❌ Do not report 'Release gates: X/Y' in future canonical headers.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Ошибка | Added a non-canonical header line 'Release gates: 1/4' | User explicitly rejected this as not part of the canon |\n| Исправление | Keep release blockers in checklist/table only | Canon requires Этап and Дорожная карта, then checklist and table |\n| Текущий этап | 1/1 (100%) | Reporting correction completed |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Current AGENT_CONTEXT foundation status |\n| Следующее действие | BEM-981 create operator-safe production gate checklist without adding fake progress metrics | Continue roadmap without stopping |\n\nNo issue comments.\nCreate file governance/state/bem980_report_canon_correction.json with content {\n  \"bem_id\": \"BEM-980\",\n  \"created_at_utc3\": \"2026-05-31 | 15:27 (UTC+3)\",\n  \"status\": \"completed\",\n  \"stage\": {\"completed\": 1, \"total\": 1, \"percent\": 100},\n  \"roadmap\": {\"name\": \"BEM-931 foundation\", \"completed\": 14, \"total\": 14, \"percent\": 100},\n  \"reporting_rule\": \"Do not add Release gates as a separate header progress metric. List release blockers in checklist/table only.\",\n  \"remaining_blockers\": [\"production_telegram_gate\", \"live_llm_runtime_gate\", \"external_claude_reaudit\"],\n  \"release_pass\": false,\n  \"next_action\": \"BEM-981 operator-safe production gate checklist without fake progress metrics\"\n}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-980 | REPORT CANON CORRECTION | 2026-05-31 | 15:27 (UTC+3)\n- Corrected report canon after operator objection.\n- Do not use separate `Release gates: X/Y` header line in future reports.\n- Canonical header keeps `Этап` and `Дорожная карта`; release blockers are listed in checklist/table only.\n- Created `governance/reports/BEM980_REPORT_CANON_CORRECTION.md`.\n- Created `governance/state/bem980_report_canon_correction.json`.\n- Current roadmap: BEM-931 foundation 14/14 (100%).\n- Current release status: NO_RELEASE_PASS. Remaining blockers: production_telegram_gate, live_llm_runtime_gate, external_claude_reaudit.\n- Next action: BEM-981 operator-safe production gate checklist without fake progress metrics.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem980_report_canon_correction.md",
+    "result_json": "governance/codex/results/bem980_report_canon_correction.json"
+  },
+  "created_at": "2026-05-31T12:39:04.831Z"
+}
