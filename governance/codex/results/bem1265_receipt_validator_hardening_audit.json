@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1265_receipt_validator_hardening_audit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1265_RECEIPT_VALIDATOR_HARDENING_AUDIT.md",
+    "create:governance/state/bem1265_receipt_validator_hardening_audit.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1265_RECEIPT_VALIDATOR_HARDENING_AUDIT.md",
+    "governance/state/bem1265_receipt_validator_hardening_audit.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1265_receipt_validator_hardening_audit.txt"
+  ],
+  "commit_sha": "22ef90aea077d31075965ad0aeee98c3009f0631",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1265_receipt_validator_hardening_audit.md",
+  "completed_at": "2026-06-01T05:09:18Z"
+}
