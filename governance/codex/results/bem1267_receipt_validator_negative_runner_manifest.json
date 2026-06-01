@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1267_receipt_validator_negative_runner_manifest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/bem931_receipt_negative_runner_manifest.json",
+    "create:governance/reports/BEM1267_RECEIPT_VALIDATOR_NEGATIVE_RUNNER_MANIFEST.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/bem931_receipt_negative_runner_manifest.json",
+    "governance/reports/BEM1267_RECEIPT_VALIDATOR_NEGATIVE_RUNNER_MANIFEST.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1267_receipt_validator_negative_runner_manifest.txt"
+  ],
+  "commit_sha": "dd39905a2ea2c905b7ae69b403855ce94a06c5ac",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1267_receipt_validator_negative_runner_manifest.md",
+  "completed_at": "2026-06-01T05:12:30Z"
+}
