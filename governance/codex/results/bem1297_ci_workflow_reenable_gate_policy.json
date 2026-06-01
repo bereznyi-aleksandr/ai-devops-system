@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1297_ci_workflow_reenable_gate_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/policies/ci_workflow_reenable_gate_policy.json",
+    "create:governance/reports/BEM1297_CI_WORKFLOW_REENABLE_GATE_POLICY.md",
+    "create:governance/state/bem1297_ci_workflow_reenable_gate_policy.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/policies/ci_workflow_reenable_gate_policy.json",
+    "governance/reports/BEM1297_CI_WORKFLOW_REENABLE_GATE_POLICY.md",
+    "governance/state/bem1297_ci_workflow_reenable_gate_policy.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1297_ci_workflow_reenable_gate_policy.txt"
+  ],
+  "commit_sha": "434643b0cea665ce578c5b3ddd1af6b33b5f6112",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1297_ci_workflow_reenable_gate_policy.md",
+  "completed_at": "2026-06-01T10:50:31Z"
+}
