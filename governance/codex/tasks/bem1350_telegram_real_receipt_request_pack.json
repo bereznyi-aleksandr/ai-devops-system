@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1350_telegram_real_receipt_request_pack",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1350 Telegram receipt request",
+  "objective": "Create file governance/proofs/external/telegram/PRODUCTION_TELEGRAM_REAL_RECEIPT_REQUEST_PACK.md with content BEM-1350 | PRODUCTION TELEGRAM REAL RECEIPT REQUEST PACK | 2026-06-01 | 16:32 (UTC+3)\n\nЭтап: Production Telegram real receipt request pack — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Item | Required value | Notes |\n|---|---|---|\n| Required output | `governance/proofs/external/telegram/production_receipt.json` | Real receipt only |\n| Environment | `production_telegram` | Mock/fixture forbidden |\n| Source | `telegram` | Channel-specific proof |\n| Delivery result | `pass` | Only after actual operator-visible delivery |\n| Secret scan | `secret_scan_pass=true` | No token/API key/password in repository |\n| Release claim | `release_pass=false` | Telegram receipt alone is not release proof |\n\n| Required evidence | Description |\n|---|---|\n| Redacted output ref | Path to redacted proof artifact with no secrets |\n| Operator-visible result | What operator actually saw in Telegram |\n| Commit SHA | Repository SHA that produced/sent the message |\n\nЧек-лист:\n✅ BEM-1349 completed with SHA `38237f50e272083e864994d8d7c3f5cfc45d098e`.\n✅ Request pack created for first real external receipt.\n✅ Pack does not create or fake `production_receipt.json`.\n⚠️ Actual production Telegram receipt is still missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until safe re-enable gate.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Production Telegram real receipt request pack — 1/1 (100%) | First real external receipt request is specified |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; Telegram receipt must be acquired externally/live |\n| Следующее действие | BEM-1351 live runtime real receipt request pack | Prepare second real external receipt request |\n\nNo issue comments.\nCreate file governance/state/bem1350_telegram_real_receipt_request_pack.json with content {\"bem_id\":\"BEM-1350\",\"created_at_utc3\":\"2026-06-01 | 16:32 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Production Telegram real receipt request pack\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1349\",\"latest_proof_sha\":\"38237f50e272083e864994d8d7c3f5cfc45d098e\",\"required_real_receipt\":\"governance/proofs/external/telegram/production_receipt.json\",\"next_action\":\"BEM-1351 live runtime real receipt request pack\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1350 | PRODUCTION TELEGRAM REAL RECEIPT REQUEST PACK | 2026-06-01 | 16:32 (UTC+3)\n- BEM-1349 completed with SHA 38237f50e272083e864994d8d7c3f5cfc45d098e.\n- Created production Telegram real receipt request pack.\n- Release PASS not issued.\n- Next action: BEM-1351 live runtime real receipt request pack.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1350_telegram_real_receipt_request_pack.md",
+    "result_json": "governance/codex/results/bem1350_telegram_real_receipt_request_pack.json"
+  },
+  "created_at": "2026-06-01T15:32:59.343Z"
+}
