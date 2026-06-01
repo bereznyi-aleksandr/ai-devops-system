@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1290b_neutralize_invalid_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/reports/BEM1290B_NEUTRALIZE_INVALID_WORKFLOW.md",
+    "create:governance/state/bem1290b_neutralize_invalid_workflow.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/reports/BEM1290B_NEUTRALIZE_INVALID_WORKFLOW.md",
+    "governance/state/bem1290b_neutralize_invalid_workflow.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1290b_neutralize_invalid_workflow.txt"
+  ],
+  "commit_sha": "867e86664a6bf21bb390346bef18445695b64d0d",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1290b_neutralize_invalid_workflow.md",
+  "completed_at": "2026-06-01T10:35:34Z"
+}
