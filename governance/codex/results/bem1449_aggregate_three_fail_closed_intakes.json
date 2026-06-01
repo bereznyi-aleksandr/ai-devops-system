@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1449_aggregate_three_fail_closed_intakes",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/AGGREGATE_THREE_FAIL_CLOSED_RECEIPT_INTAKES.json",
+    "create:governance/reports/BEM1449_AGGREGATE_THREE_FAIL_CLOSED_RECEIPT_INTAKES.md",
+    "create:governance/state/bem1449_aggregate_three_fail_closed_intakes.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/AGGREGATE_THREE_FAIL_CLOSED_RECEIPT_INTAKES.json",
+    "governance/reports/BEM1449_AGGREGATE_THREE_FAIL_CLOSED_RECEIPT_INTAKES.md",
+    "governance/state/bem1449_aggregate_three_fail_closed_intakes.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1449_aggregate_three_fail_closed_intakes.txt"
+  ],
+  "commit_sha": "f07af9df43dfb8a0838406e061b4a0b653bb37d2",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1449_aggregate_three_fail_closed_intakes.md",
+  "completed_at": "2026-06-01T17:04:33Z"
+}
