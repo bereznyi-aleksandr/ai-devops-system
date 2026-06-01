@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1198_release_decision_validator_update",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_release_decision.py",
+    "create:governance/reports/BEM1198_RELEASE_DECISION_VALIDATOR_UPDATE.md",
+    "create:governance/state/bem1198_release_decision_validator_update.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_release_decision.py",
+    "governance/reports/BEM1198_RELEASE_DECISION_VALIDATOR_UPDATE.md",
+    "governance/state/bem1198_release_decision_validator_update.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1198_release_decision_validator_update.txt"
+  ],
+  "commit_sha": "1d385b8bcaf7016e41f8a76c6c267cf1172de34c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1198_release_decision_validator_update.md",
+  "completed_at": "2026-06-01T03:11:11Z"
+}
