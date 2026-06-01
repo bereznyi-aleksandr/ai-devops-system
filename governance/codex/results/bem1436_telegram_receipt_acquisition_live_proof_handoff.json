@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1436_telegram_receipt_acquisition_live_proof_handoff",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tasks/pending/BEM1436_PRODUCTION_TELEGRAM_RECEIPT_ACQUISITION_LIVE_PROOF_HANDOFF.md",
+    "create:governance/state/bem1436_telegram_receipt_acquisition_live_proof_handoff.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tasks/pending/BEM1436_PRODUCTION_TELEGRAM_RECEIPT_ACQUISITION_LIVE_PROOF_HANDOFF.md",
+    "governance/state/bem1436_telegram_receipt_acquisition_live_proof_handoff.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1436_telegram_receipt_acquisition_live_proof_handoff.txt"
+  ],
+  "commit_sha": "71bd1a1b776b6e48d8cb6aaddfaaadc90a3bff59",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1436_telegram_receipt_acquisition_live_proof_handoff.md",
+  "completed_at": "2026-06-01T16:52:40Z"
+}
