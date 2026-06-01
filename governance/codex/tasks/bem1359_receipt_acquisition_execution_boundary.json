@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1359_receipt_acquisition_execution_boundary",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1359 receipt execution boundary",
+  "objective": "Create file governance/reports/BEM1359_RECEIPT_ACQUISITION_EXECUTION_BOUNDARY.md with content BEM-1359 | RECEIPT ACQUISITION EXECUTION BOUNDARY | 2026-06-01 | 17:42 (UTC+3)\n\nЭтап: Receipt acquisition execution boundary — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nThis boundary separates repository preparation from external/live execution.\n\n| Area | Repo-side can do | Repo-side cannot honestly do |\n|---|---|---|\n| Production Telegram | Define receipt contract, gate, request pack, validators | Fake a production Telegram delivery receipt |\n| Live Runtime | Define receipt contract, gate, request pack, validators | Fake a live runtime execution receipt |\n| External Claude | Define audit contract, handoff, validators | Self-claim an external Claude audit receipt |\n| CI Workflow | Prepare safe activation/rollback templates | Claim GitHub acceptance without accepted run |\n\nЧек-лист:\n⚠️ BEM-1358 may still be queued and must not be counted without SHA.\n✅ Boundary created to prevent fake external/live proof.\n✅ Boundary states exact limit: real receipts require external/live acquisition.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until explicit safe activation and GitHub acceptance proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt acquisition execution boundary — 1/1 (100%) | Boundary prevents false claim that repo-prep equals real proof |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; release requires external/live proof |\n| Следующее действие | BEM-1360 final continuity guard for no-report-stop | Prevent stopping after canonical reports |\n\nNo issue comments.\nCreate file governance/state/bem1359_receipt_acquisition_execution_boundary.json with content {\"bem_id\":\"BEM-1359\",\"created_at_utc3\":\"2026-06-01 | 17:42 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Receipt acquisition execution boundary\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"note\":\"BEM-1358 was queued at dispatch time and is not counted without SHA\",\"next_action\":\"BEM-1360 final continuity guard for no-report-stop\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1359 | RECEIPT ACQUISITION EXECUTION BOUNDARY | 2026-06-01 | 17:42 (UTC+3)\n- Created receipt acquisition execution boundary.\n- BEM-1358 was queued at dispatch time and is not counted without SHA.\n- Release PASS not issued.\n- Next action: BEM-1360 final continuity guard for no-report-stop.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1359_receipt_acquisition_execution_boundary.md",
+    "result_json": "governance/codex/results/bem1359_receipt_acquisition_execution_boundary.json"
+  },
+  "created_at": "2026-06-01T15:43:31.870Z"
+}
