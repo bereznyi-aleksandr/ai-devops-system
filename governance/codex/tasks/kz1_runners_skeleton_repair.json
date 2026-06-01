@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_skeleton_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 runners repair",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Apply Claude KZ-1/TZ-1 only: repair truncated/no-op runner skeletons, not reports. Inspect runner-like Python files under governance, scripts, runtime, runners, excluding archive/codex/cache dirs. For runner-like files missing def main(), missing __main__, syntax-broken, or <=5 nonblank lines, replace with safe STUB_RUNNABLE skeleton that imports, exposes main(), prints structured JSON, release_pass=false, and does not claim functional proof. Add executable test tests/governance/test_kz1_runners_skeleton.py verifying runner-like files parse and have main/__main__. Update AGENT_CONTEXT with one concise KZ-1 entry and next action KZ-2 SSOT duplicates. Do not create BEM reports, proof-by-report, Release PASS, issue comments, schedule triggers, or codex/proofs-only success. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_runners_skeleton_repair.md",
+    "result_json": "governance/codex/results/kz1_runners_skeleton_repair.json"
+  },
+  "created_at": "2026-06-01T19:19:38.859Z"
+}
