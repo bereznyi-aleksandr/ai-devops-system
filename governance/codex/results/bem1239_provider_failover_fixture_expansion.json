@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1239_provider_failover_fixture_expansion",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tests/fixtures/provider_failover_positive_mock_e2e.json",
+    "create:governance/tests/fixtures/provider_activation_positive_c1.json",
+    "create:governance/tests/run_provider_policy_fixture_tests.py",
+    "create:governance/reports/BEM1239_PROVIDER_FAILOVER_FIXTURE_EXPANSION.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tests/fixtures/provider_failover_positive_mock_e2e.json",
+    "governance/tests/fixtures/provider_activation_positive_c1.json",
+    "governance/tests/run_provider_policy_fixture_tests.py",
+    "governance/reports/BEM1239_PROVIDER_FAILOVER_FIXTURE_EXPANSION.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1239_provider_failover_fixture_expansion.txt"
+  ],
+  "commit_sha": "76a2a9efc30516a81ffc8c38877d806e152cb4b1",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1239_provider_failover_fixture_expansion.md",
+  "completed_at": "2026-06-01T04:14:42Z"
+}
