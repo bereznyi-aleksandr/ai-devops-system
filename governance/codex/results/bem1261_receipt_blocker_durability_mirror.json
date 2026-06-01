@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1261_receipt_blocker_durability_mirror",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1261_receipt_blocker_durability_mirror.json",
+    "create:governance/reports/BEM1261_RECEIPT_BLOCKER_DURABILITY_MIRROR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1261_receipt_blocker_durability_mirror.json",
+    "governance/reports/BEM1261_RECEIPT_BLOCKER_DURABILITY_MIRROR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1261_receipt_blocker_durability_mirror.txt"
+  ],
+  "commit_sha": "83a568fd532c5255e1801cfd2d5c7e818e5254fe",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1261_receipt_blocker_durability_mirror.md",
+  "completed_at": "2026-06-01T05:02:45Z"
+}
