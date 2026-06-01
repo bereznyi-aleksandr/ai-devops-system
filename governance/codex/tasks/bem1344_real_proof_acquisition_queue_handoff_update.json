@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1344_real_proof_acquisition_queue_handoff_update",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1344 proof queue handoff",
+  "objective": "Create file governance/tasks/pending/BEM1344_REAL_PROOF_ACQUISITION_QUEUE_HANDOFF_UPDATE.md with content BEM-1344 | REAL-PROOF ACQUISITION QUEUE HANDOFF UPDATE | 2026-06-01 | 15:37 (UTC+3)\n\nЭтап: Real-proof acquisition queue handoff update — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Order | Workstream | Required artifact | Status | Notes |\n|---:|---|---|---|---|\n| 1 | Production Telegram | `governance/proofs/external/telegram/production_receipt.json` | Missing | Must be real production delivery receipt |\n| 2 | Live Runtime | `governance/proofs/external/runtime/live_runtime_receipt.json` | Missing | Must be live runtime execution receipt |\n| 3 | External Claude Audit | `governance/proofs/external/claude/external_claude_audit_result.json` | Missing | Must be external Claude audit receipt |\n| 4 | CI workflow re-enable | `.github/workflows/governance-validation-ci.yml` | Disabled | Restore only through safe gate and GitHub acceptance proof |\n\n| Guardrail | Rule |\n|---|---|\n| No fake receipts | Placeholder/mock/readiness files are not proof |\n| No old screenshot proof | Old failed workflow screenshots are blocker evidence only |\n| No proof-only execution | Proof-only commits are not runtime proof |\n| No Release PASS | PASS remains blocked until all real receipts and validators pass |\n\nЧек-лист:\n✅ BEM-1343 completed with SHA `6d2b32814119ee43e43bde1a1a524569a0bc08ee`.\n✅ Updated pending handoff for real-proof acquisition queue.\n✅ Queue prioritizes real receipts over status loops.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until safe re-enable gate.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Real-proof acquisition queue handoff update — 1/1 (100%) | Next queue is focused on real proof acquisition |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; real receipts are required next |\n| Следующее действие | BEM-1345 production Telegram receipt schema hardening final check | Harden first receipt schema before acquisition |\n\nNo issue comments.\nCreate file governance/state/bem1344_real_proof_acquisition_queue_handoff_update.json with content {\"bem_id\":\"BEM-1344\",\"created_at_utc3\":\"2026-06-01 | 15:37 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Real-proof acquisition queue handoff update\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1343\",\"latest_proof_sha\":\"6d2b32814119ee43e43bde1a1a524569a0bc08ee\",\"next_action\":\"BEM-1345 production Telegram receipt schema hardening final check\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1344 | REAL-PROOF ACQUISITION QUEUE HANDOFF UPDATE | 2026-06-01 | 15:37 (UTC+3)\n- BEM-1343 completed with SHA 6d2b32814119ee43e43bde1a1a524569a0bc08ee.\n- Updated real-proof acquisition queue handoff.\n- Release PASS not issued.\n- Next action: BEM-1345 production Telegram receipt schema hardening final check.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1344_real_proof_acquisition_queue_handoff_update.md",
+    "result_json": "governance/codex/results/bem1344_real_proof_acquisition_queue_handoff_update.json"
+  },
+  "created_at": "2026-06-01T14:39:43.969Z"
+}
