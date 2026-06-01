@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1286a_fix_ci_yaml_exact",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/reports/BEM1286_FIX_GOVERNANCE_VALIDATION_CI_YAML.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/reports/BEM1286_FIX_GOVERNANCE_VALIDATION_CI_YAML.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1286a_fix_ci_yaml_exact.txt"
+  ],
+  "commit_sha": "be1f1a2fd3e90acbe86b13377d4b6012a9322f78",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1286a_fix_ci_yaml_exact.md",
+  "completed_at": "2026-06-01T09:51:45Z"
+}

@@ -1068,3 +1068,5 @@ No issue comments.
 - BEM-1284B completed with SHA 5b3cc4a6457b4bc6fc9bfc52e91642d94819cf0e
 ### BEM-1285 | CI E2E CAPTURE | 2026-06-01 | 12:41 (UTC+3)
 - BEM-1284D completed with SHA 77f1566f61d4e543c5e793d43c869d2822cae173
+### BEM-1286 | FIX GOVERNANCE VALIDATION CI YAML | 2026-06-01 | 12:49 (UTC+3)
+- BEM-1285 completed with SHA ab6e77ef4bceeb2ae3f2bd64fdba79185c62c77c
