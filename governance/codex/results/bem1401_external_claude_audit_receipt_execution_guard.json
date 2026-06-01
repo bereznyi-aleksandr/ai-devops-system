@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1401_external_claude_audit_receipt_execution_guard",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_ACQUISITION_EXECUTION_GUARD.json",
+    "create:governance/reports/BEM1401_EXTERNAL_CLAUDE_AUDIT_RECEIPT_ACQUISITION_EXECUTION_GUARD.md",
+    "create:governance/state/bem1401_external_claude_audit_receipt_execution_guard.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_ACQUISITION_EXECUTION_GUARD.json",
+    "governance/reports/BEM1401_EXTERNAL_CLAUDE_AUDIT_RECEIPT_ACQUISITION_EXECUTION_GUARD.md",
+    "governance/state/bem1401_external_claude_audit_receipt_execution_guard.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1401_external_claude_audit_receipt_execution_guard.txt"
+  ],
+  "commit_sha": "e85b600fed86e5ab6d2b1d575325428665fbc6a0",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1401_external_claude_audit_receipt_execution_guard.md",
+  "completed_at": "2026-06-01T16:22:04Z"
+}
