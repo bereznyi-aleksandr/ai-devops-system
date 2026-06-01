@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1234_next_operator_status_checkpoint",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1234_NEXT_OPERATOR_STATUS_CHECKPOINT.md",
+    "create:governance/state/bem1234_next_operator_status_checkpoint.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1234_NEXT_OPERATOR_STATUS_CHECKPOINT.md",
+    "governance/state/bem1234_next_operator_status_checkpoint.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1234_next_operator_status_checkpoint.txt"
+  ],
+  "commit_sha": "72346b7fd8f5f29b01916d8e03c46f0718e33a65",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1234_next_operator_status_checkpoint.md",
+  "completed_at": "2026-06-01T04:06:05Z"
+}
