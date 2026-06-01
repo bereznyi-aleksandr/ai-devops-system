@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz3_cleanup_status_loop_noise",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-3 cleanup status-loop",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Apply Claude audit KZ-3: cleanup status-loop noise, not proof and not Release PASS. Create archive governance/archive/claude_kz3_status_loop_cleanup/. Move prep/status/guard/readiness/blocker/report artifacts for erroneous BEM-1319..BEM-1426 loop into archive preserving paths when safe. Archive old governance/codex task/result records only if clearly older than 30 days. Do not move runtime code, validators, runners, object_passports, registries, receipt contracts, real receipts, generated workflow candidate, or AGENT_CONTEXT.md. Write governance/archive/claude_kz3_status_loop_cleanup/CLEANUP_MANIFEST.md listing moved/skipped paths and stating archived artifacts are not proof. Append one concise AGENT_CONTEXT entry: KZ-3 cleanup done, no Release PASS, next action KZ-1 runners skeleton repair. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz3_cleanup_status_loop_noise.md",
+    "result_json": "governance/codex/results/kz3_cleanup_status_loop_noise.json"
+  },
+  "created_at": "2026-06-01T17:30:03.998Z"
+}
