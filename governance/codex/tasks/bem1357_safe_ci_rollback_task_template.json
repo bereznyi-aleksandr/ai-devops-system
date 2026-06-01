@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1357_safe_ci_rollback_task_template",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1357 CI rollback template",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_ROLLBACK_TASK_TEMPLATE.md with content BEM-1357 | SAFE CI ROLLBACK TASK TEMPLATE | 2026-06-01 | 17:41 (UTC+3)\n\nЭтап: Safe CI rollback task template — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nThis is a rollback template only. It is used if an explicit workflow activation BEM is rejected by GitHub Actions.\n\n| Trigger | Rollback action | Acceptance |\n|---|---|---|\n| GitHub Actions reports invalid workflow syntax | Move `.github/workflows/governance-validation-ci.yml` to `governance/workflows_disabled/governance-validation-ci.yml.rejected` | Active invalid workflow absent |\n| Active workflow is empty/comment-only | Delete active workflow | No invalid workflow in active path |\n| Schedule trigger detected | Delete/move active workflow | No forbidden schedule trigger |\n| Workflow claims Release PASS | Delete/move active workflow and record blocker | No false release proof |\n| No acceptance proof | Keep release gate locked | `release_pass=false` |\n\nЧек-лист:\n✅ BEM-1356 completed with SHA `c362159c2154e2c1556091a296f84dc7d2c007dc`.\n✅ Rollback task template created.\n✅ Template does not activate workflow.\n✅ Template preserves Release PASS block.\n⚠️ Active governance-validation workflow remains disabled until explicit activation BEM.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI rollback task template — 1/1 (100%) | Rollback procedure documented before activation |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; CI activation still gated |\n| Следующее действие | BEM-1358 real-proof external blockers final operator queue | Keep queue aligned to real external blockers |\n\nNo issue comments.\nCreate file governance/state/bem1357_safe_ci_rollback_task_template.json with content {\"bem_id\":\"BEM-1357\",\"created_at_utc3\":\"2026-06-01 | 17:41 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI rollback task template\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1356\",\"latest_proof_sha\":\"c362159c2154e2c1556091a296f84dc7d2c007dc\",\"next_action\":\"BEM-1358 real-proof external blockers final operator queue\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1357 | SAFE CI ROLLBACK TASK TEMPLATE | 2026-06-01 | 17:41 (UTC+3)\n- BEM-1356 completed with SHA c362159c2154e2c1556091a296f84dc7d2c007dc.\n- Created safe CI rollback task template.\n- Release PASS not issued.\n- Next action: BEM-1358 real-proof external blockers final operator queue.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1357_safe_ci_rollback_task_template.md",
+    "result_json": "governance/codex/results/bem1357_safe_ci_rollback_task_template.json"
+  },
+  "created_at": "2026-06-01T15:42:07.169Z"
+}
