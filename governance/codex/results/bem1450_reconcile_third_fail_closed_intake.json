@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1450_reconcile_third_fail_closed_intake",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1450_RECONCILE_THIRD_FAIL_CLOSED_INTAKE_AND_AGGREGATE.md",
+    "create:governance/state/bem1450_reconcile_third_fail_closed_intake.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1450_RECONCILE_THIRD_FAIL_CLOSED_INTAKE_AND_AGGREGATE.md",
+    "governance/state/bem1450_reconcile_third_fail_closed_intake.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1450_reconcile_third_fail_closed_intake.txt"
+  ],
+  "commit_sha": "9aefb2fea64ef793175dee24f6ab5087f27368ac",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1450_reconcile_third_fail_closed_intake.md",
+  "completed_at": "2026-06-01T17:05:55Z"
+}
