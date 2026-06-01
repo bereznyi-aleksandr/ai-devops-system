@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1245_expanded_fixture_capture_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1245 fixture capture policy",
+  "objective": "Create file governance/runtime/BEM1245_EXPANDED_FIXTURE_CAPTURE_POLICY.json with content {\"bem_id\":\"BEM-1245\",\"created_at_utc3\":\"2026-06-01 | 07:34 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Expanded fixture capture policy\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1244\",\"latest_proof_sha\":\"e77fd4e360ace3444fae314023a69c94728f1dfa\",\"policy\":{\"capture_result_file\":\"governance/runtime/BEM1244_EXPANDED_FIXTURE_CAPTURE_RESULT.json\",\"can_confirm\":\"expanded fixture runner behavior\",\"cannot_confirm\":[\"production Telegram receipt\",\"live runtime receipt\",\"external Claude audit result\",\"Release PASS\"]},\"next_action\":\"BEM-1246 expanded fixture capture audit\"}\nCreate file governance/reports/BEM1245_EXPANDED_FIXTURE_CAPTURE_POLICY.md with content BEM-1245 | EXPANDED FIXTURE CAPTURE POLICY | 2026-06-01 | 07:34 (UTC+3)\n\nЭтап: Expanded fixture capture policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1244 completed with SHA `e77fd4e360ace3444fae314023a69c94728f1dfa`.\n✅ Created `governance/runtime/BEM1245_EXPANDED_FIXTURE_CAPTURE_POLICY.json`.\n✅ Policy separates fixture behavior proof from external/live proof.\n⚠️ Fixture capture cannot confirm production Telegram, live runtime or external Claude audit.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Expanded fixture capture policy — 1/1 (100%) | Fixture capture boundary defined |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; release proof still missing |\n| Следующее действие | BEM-1246 expanded fixture capture audit | Continue verification chain |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1245 | EXPANDED FIXTURE CAPTURE POLICY | 2026-06-01 | 07:34 (UTC+3)\n- BEM-1244 completed with SHA e77fd4e360ace3444fae314023a69c94728f1dfa.\n- Created expanded fixture capture policy.\n- Release PASS not issued.\n- Next action: BEM-1246 expanded fixture capture audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1245_expanded_fixture_capture_policy.md",
+    "result_json": "governance/codex/results/bem1245_expanded_fixture_capture_policy.json"
+  },
+  "created_at": "2026-06-01T04:35:39.340Z"
+}
