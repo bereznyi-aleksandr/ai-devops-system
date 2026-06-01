@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1202_proof_receipt_missing_state_final_index",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1202 missing proof index",
+  "objective": "Create file governance/state/bem1202_proof_receipt_missing_state_final_index.json with content {\"bem_id\":\"BEM-1202\",\"created_at_utc3\":\"2026-06-01 | 06:15 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Proof receipt missing-state final index\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1201\",\"latest_proof_sha\":\"90e2cdde4f47c2f73c538c19df7d3f8f398bb24a\",\"missing_receipts\":[{\"id\":\"production_telegram_receipt\",\"expected_path\":\"governance/proofs/external/telegram/production_receipt.json\",\"validator\":\"governance/validators/validate_telegram_production_receipt.py\"},{\"id\":\"live_runtime_receipt\",\"expected_path\":\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"validator\":\"governance/validators/validate_live_runtime_receipt.py\"},{\"id\":\"external_claude_audit_result\",\"expected_path\":\"governance/proofs/external/claude/external_claude_audit_result.json\",\"validator\":\"governance/validators/validate_external_claude_audit_result.py\"}],\"next_action\":\"BEM-1203 release validator fail-closed audit\"}\nCreate file governance/reports/BEM1202_PROOF_RECEIPT_MISSING_STATE_FINAL_INDEX.md with content BEM-1202 | PROOF RECEIPT MISSING-STATE FINAL INDEX | 2026-06-01 | 06:15 (UTC+3)\n\nЭтап: Proof receipt missing-state final index — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1201 completed with SHA `90e2cdde4f47c2f73c538c19df7d3f8f398bb24a`.\n✅ Created `governance/state/bem1202_proof_receipt_missing_state_final_index.json`.\n✅ Missing receipt paths are mapped to validators.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Proof receipt missing-state final index — 1/1 (100%) | Missing-state index created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; receipts missing |\n| Следующее действие | BEM-1203 release validator fail-closed audit | Verify release validator stays blocked |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1202 | PROOF RECEIPT MISSING-STATE FINAL INDEX | 2026-06-01 | 06:15 (UTC+3)\n- BEM-1201 completed with SHA 90e2cdde4f47c2f73c538c19df7d3f8f398bb24a.\n- Created proof receipt missing-state final index.\n- Release PASS not issued.\n- Next action: BEM-1203 release validator fail-closed audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1202_proof_receipt_missing_state_final_index.md",
+    "result_json": "governance/codex/results/bem1202_proof_receipt_missing_state_final_index.json"
+  },
+  "created_at": "2026-06-01T03:16:34.551Z"
+}
