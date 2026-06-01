@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1290a_delete_invalid_active_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1290A_DELETE_INVALID_ACTIVE_WORKFLOW.md",
+    "create:governance/state/bem1290a_delete_invalid_active_workflow.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1290A_DELETE_INVALID_ACTIVE_WORKFLOW.md",
+    "governance/state/bem1290a_delete_invalid_active_workflow.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1290a_delete_invalid_active_workflow.txt"
+  ],
+  "commit_sha": "dd05374fb3450f8237a2225156cf10ea39945c5e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1290a_delete_invalid_active_workflow.md",
+  "completed_at": "2026-06-01T10:33:21Z"
+}
