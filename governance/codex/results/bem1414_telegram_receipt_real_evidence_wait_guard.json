@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1414_telegram_receipt_real_evidence_wait_guard",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.json",
+    "create:governance/reports/BEM1414_PRODUCTION_TELEGRAM_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.md",
+    "create:governance/state/bem1414_telegram_receipt_real_evidence_wait_guard.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.json",
+    "governance/reports/BEM1414_PRODUCTION_TELEGRAM_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.md",
+    "governance/state/bem1414_telegram_receipt_real_evidence_wait_guard.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1414_telegram_receipt_real_evidence_wait_guard.txt"
+  ],
+  "commit_sha": "2d35a83c4e2617901a61e6e13fbfc34611268e91",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1414_telegram_receipt_real_evidence_wait_guard.md",
+  "completed_at": "2026-06-01T16:32:49Z"
+}
