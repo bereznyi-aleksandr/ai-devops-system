@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1306_external_claude_audit_contract",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RESULT_CONTRACT.json",
+    "create:governance/tests/fixtures/claude_audit_contract_positive.json",
+    "create:governance/tests/fixtures/claude_audit_contract_negative_self_claim.json",
+    "create:governance/tests/run_external_claude_audit_contract_tests.py",
+    "create:governance/reports/BEM1306_EXTERNAL_CLAUDE_AUDIT_CONTRACT.md",
+    "create:governance/state/bem1306_external_claude_audit_contract.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RESULT_CONTRACT.json",
+    "governance/tests/fixtures/claude_audit_contract_positive.json",
+    "governance/tests/fixtures/claude_audit_contract_negative_self_claim.json",
+    "governance/tests/run_external_claude_audit_contract_tests.py",
+    "governance/reports/BEM1306_EXTERNAL_CLAUDE_AUDIT_CONTRACT.md",
+    "governance/state/bem1306_external_claude_audit_contract.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1306_external_claude_audit_contract.txt"
+  ],
+  "commit_sha": "05e243f344c46eb013b551de94690bab57c2955c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1306_external_claude_audit_contract.md",
+  "completed_at": "2026-06-01T11:58:50Z"
+}
