@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1221_runtime_capture_hardening_audit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1221_RUNTIME_CAPTURE_HARDENING_AUDIT.md",
+    "create:governance/state/bem1221_runtime_capture_hardening_audit.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1221_RUNTIME_CAPTURE_HARDENING_AUDIT.md",
+    "governance/state/bem1221_runtime_capture_hardening_audit.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1221_runtime_capture_hardening_audit.txt"
+  ],
+  "commit_sha": "0c91c34d5d80287a7e6e2583cd46c4333060d975",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1221_runtime_capture_hardening_audit.md",
+  "completed_at": "2026-06-01T03:43:00Z"
+}
