@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1428_telegram_receipt_evidence_checklist",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_EVIDENCE_CHECKLIST_FOR_ACTUAL_ACQUISITION.md",
+    "create:governance/state/bem1428_telegram_receipt_evidence_checklist.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_EVIDENCE_CHECKLIST_FOR_ACTUAL_ACQUISITION.md",
+    "governance/state/bem1428_telegram_receipt_evidence_checklist.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1428_telegram_receipt_evidence_checklist.txt"
+  ],
+  "commit_sha": "4bfd075cfe2acbb2691bfec0cccf4f1bd7b0175c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1428_telegram_receipt_evidence_checklist.md",
+  "completed_at": "2026-06-01T16:45:29Z"
+}
