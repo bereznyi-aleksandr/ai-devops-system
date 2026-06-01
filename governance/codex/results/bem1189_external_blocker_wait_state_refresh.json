@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1189_external_blocker_wait_state_refresh",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1189_external_blocker_wait_state_refresh.json",
+    "create:governance/reports/BEM1189_EXTERNAL_BLOCKER_WAIT_STATE_REFRESH.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1189_external_blocker_wait_state_refresh.json",
+    "governance/reports/BEM1189_EXTERNAL_BLOCKER_WAIT_STATE_REFRESH.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1189_external_blocker_wait_state_refresh.txt"
+  ],
+  "commit_sha": "eafebadd4c6497b64e026bb61805daec4a0cc040",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1189_external_blocker_wait_state_refresh.md",
+  "completed_at": "2026-06-01T02:58:16Z"
+}
