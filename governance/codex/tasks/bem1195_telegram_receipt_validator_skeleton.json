@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1195_telegram_receipt_validator_skeleton",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1195 Telegram validator",
+  "objective": "Create file governance/validators/validate_telegram_production_receipt.py with content import json\nfrom pathlib import Path\n\nCONTRACT = Path(\"governance/telegram/BEM1194_TELEGRAM_PRODUCTION_RECEIPT_CONTRACT.json\")\n\n\ndef validate(path):\n    contract = json.loads(CONTRACT.read_text(encoding=\"utf-8\"))\n    receipt = json.loads(Path(path).read_text(encoding=\"utf-8\"))\n    errors = []\n    for field in contract.get(\"required_receipt_fields\", []):\n        if field not in receipt:\n            errors.append(f\"missing field {field}\")\n    for key, expected in contract.get(\"required_values\", {}).items():\n        if receipt.get(key) != expected:\n            errors.append(f\"{key} must be {expected!r}\")\n    text = json.dumps(receipt, ensure_ascii=False).lower()\n    for forbidden in contract.get(\"forbidden\", []):\n        if forbidden.lower() in text:\n            errors.append(f\"forbidden token found: {forbidden}\")\n    return errors\n\nif __name__ == \"__main__\":\n    import sys\n    if len(sys.argv) != 2:\n        print(\"usage: validate_telegram_production_receipt.py <receipt.json>\")\n        raise SystemExit(2)\n    errs = validate(sys.argv[1])\n    if errs:\n        print(\"FAIL\")\n        for err in errs:\n            print(err)\n        raise SystemExit(1)\n    print(\"PASS telegram_production_receipt\")\nCreate file governance/reports/BEM1195_TELEGRAM_PRODUCTION_RECEIPT_VALIDATOR.md with content BEM-1195 | TELEGRAM PRODUCTION RECEIPT VALIDATOR | 2026-06-01 | 06:05 (UTC+3)\n\nЭтап: Telegram production receipt validator — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1194 completed with SHA `8c1f1494146998a92a90c35a96cf6a9d607ffe8e`.\n✅ Created `governance/validators/validate_telegram_production_receipt.py`.\n✅ Validator checks required Telegram receipt fields and required values.\n✅ Validator checks forbidden secret/mock/self-claim classes.\n⚠️ Actual production Telegram receipt is still missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Telegram production receipt validator — 1/1 (100%) | Telegram receipt validator created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; Telegram receipt missing |\n| Следующее действие | BEM-1196 external Claude audit result contract | Continue external proof validator chain |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1195 | TELEGRAM PRODUCTION RECEIPT VALIDATOR | 2026-06-01 | 06:05 (UTC+3)\n- BEM-1194 completed with SHA 8c1f1494146998a92a90c35a96cf6a9d607ffe8e.\n- Created Telegram production receipt validator skeleton.\n- Release PASS not issued.\n- Next action: BEM-1196 external Claude audit result contract.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1195_telegram_receipt_validator_skeleton.md",
+    "result_json": "governance/codex/results/bem1195_telegram_receipt_validator_skeleton.json"
+  },
+  "created_at": "2026-06-01T03:06:47.548Z"
+}
