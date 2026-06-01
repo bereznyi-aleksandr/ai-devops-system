@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1423_first_real_receipt_lane_missing_proof_stopline",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/FIRST_REAL_RECEIPT_LANE_MISSING_PROOF_STOPLINE.json",
+    "create:governance/reports/BEM1423_FIRST_REAL_RECEIPT_LANE_MISSING_PROOF_STOPLINE.md",
+    "create:governance/state/bem1423_first_real_receipt_lane_missing_proof_stopline.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/FIRST_REAL_RECEIPT_LANE_MISSING_PROOF_STOPLINE.json",
+    "governance/reports/BEM1423_FIRST_REAL_RECEIPT_LANE_MISSING_PROOF_STOPLINE.md",
+    "governance/state/bem1423_first_real_receipt_lane_missing_proof_stopline.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1423_first_real_receipt_lane_missing_proof_stopline.txt"
+  ],
+  "commit_sha": "2e44b1df84ad00fc2bae5398c7fe1b01ace87e84",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1423_first_real_receipt_lane_missing_proof_stopline.md",
+  "completed_at": "2026-06-01T16:40:46Z"
+}
