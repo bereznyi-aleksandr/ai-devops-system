@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1388_live_runtime_receipt_missing_hard_blocker",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_MISSING_HARD_BLOCKER.json",
+    "create:governance/reports/BEM1388_LIVE_RUNTIME_RECEIPT_MISSING_HARD_BLOCKER.md",
+    "create:governance/state/bem1388_live_runtime_receipt_missing_hard_blocker.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_MISSING_HARD_BLOCKER.json",
+    "governance/reports/BEM1388_LIVE_RUNTIME_RECEIPT_MISSING_HARD_BLOCKER.md",
+    "governance/state/bem1388_live_runtime_receipt_missing_hard_blocker.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1388_live_runtime_receipt_missing_hard_blocker.txt"
+  ],
+  "commit_sha": "8b916d3446ed7f42cd11ed0a425ef97bcbfe48c7",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1388_live_runtime_receipt_missing_hard_blocker.md",
+  "completed_at": "2026-06-01T16:10:50Z"
+}
