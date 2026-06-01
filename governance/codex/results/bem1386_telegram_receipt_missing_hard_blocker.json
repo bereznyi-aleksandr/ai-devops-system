@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1386_telegram_receipt_missing_hard_blocker",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_MISSING_HARD_BLOCKER.json",
+    "create:governance/reports/BEM1386_PRODUCTION_TELEGRAM_RECEIPT_MISSING_HARD_BLOCKER.md",
+    "create:governance/state/bem1386_telegram_receipt_missing_hard_blocker.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_MISSING_HARD_BLOCKER.json",
+    "governance/reports/BEM1386_PRODUCTION_TELEGRAM_RECEIPT_MISSING_HARD_BLOCKER.md",
+    "governance/state/bem1386_telegram_receipt_missing_hard_blocker.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1386_telegram_receipt_missing_hard_blocker.txt"
+  ],
+  "commit_sha": "7c6c361199885b33e9e92803b552aa4072282771",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1386_telegram_receipt_missing_hard_blocker.md",
+  "completed_at": "2026-06-01T16:07:49Z"
+}
