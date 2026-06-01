@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1253_unified_capture_readiness_mirror",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1253_unified_capture_readiness_mirror.json",
+    "create:governance/reports/BEM1253_UNIFIED_CAPTURE_READINESS_MIRROR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1253_unified_capture_readiness_mirror.json",
+    "governance/reports/BEM1253_UNIFIED_CAPTURE_READINESS_MIRROR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1253_unified_capture_readiness_mirror.txt"
+  ],
+  "commit_sha": "5de9543008a0399f0b95c9a3c7cb1619722ea97c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1253_unified_capture_readiness_mirror.md",
+  "completed_at": "2026-06-01T04:48:38Z"
+}
