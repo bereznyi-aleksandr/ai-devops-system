@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1219_runtime_capture_runner_input_contract",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1219 capture input contract",
+  "objective": "Create file governance/runtime/BEM1219_RUNTIME_CAPTURE_RUNNER_INPUT_CONTRACT.json with content {\"bem_id\":\"BEM-1219\",\"created_at_utc3\":\"2026-06-01 | 06:38 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Runtime capture runner input contract\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1218\",\"latest_proof_sha\":\"daf3e03805741124991e4781749870f21a271733\",\"required_input_fields\":[\"run_id\",\"created_at_utc3\",\"targets\",\"output_path\",\"redaction_required\",\"release_pass_allowed\"],\"required_values\":{\"redaction_required\":true,\"release_pass_allowed\":false},\"forbidden\":[\"raw_secret\",\"token\",\"password\",\"api_key\",\"release_pass_true\"],\"next_action\":\"BEM-1220 runtime capture runner hardening\"}\nCreate file governance/reports/BEM1219_RUNTIME_CAPTURE_RUNNER_INPUT_CONTRACT.md with content BEM-1219 | RUNTIME CAPTURE RUNNER INPUT CONTRACT | 2026-06-01 | 06:38 (UTC+3)\n\nЭтап: Runtime capture runner input contract — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1218 completed with SHA `daf3e03805741124991e4781749870f21a271733`.\n✅ Created `governance/runtime/BEM1219_RUNTIME_CAPTURE_RUNNER_INPUT_CONTRACT.json`.\n✅ Contract requires redaction and forbids release PASS from capture runner input.\n⚠️ This is runtime capture hardening, not production proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Runtime capture runner input contract — 1/1 (100%) | Runtime capture input format defined |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; runtime hardening continues |\n| Следующее действие | BEM-1220 runtime capture runner hardening | Harden capture runner input validation |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1219 | RUNTIME CAPTURE RUNNER INPUT CONTRACT | 2026-06-01 | 06:38 (UTC+3)\n- BEM-1218 completed with SHA daf3e03805741124991e4781749870f21a271733.\n- Created runtime capture runner input contract.\n- Release PASS not issued.\n- Next action: BEM-1220 runtime capture runner hardening.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1219_runtime_capture_runner_input_contract.md",
+    "result_json": "governance/codex/results/bem1219_runtime_capture_runner_input_contract.json"
+  },
+  "created_at": "2026-06-01T03:40:07.419Z"
+}
