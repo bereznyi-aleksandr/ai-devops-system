@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1453_canonical_final_blocker_index_report",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1453_CANONICAL_FINAL_BLOCKER_INDEX_REPORT_CONTINUE.md",
+    "create:governance/state/bem1453_canonical_final_blocker_index_report.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1453_CANONICAL_FINAL_BLOCKER_INDEX_REPORT_CONTINUE.md",
+    "governance/state/bem1453_canonical_final_blocker_index_report.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1453_canonical_final_blocker_index_report.txt"
+  ],
+  "commit_sha": "cb80b601430fc12890c74bbd490bbcfba286a9f4",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1453_canonical_final_blocker_index_report.md",
+  "completed_at": "2026-06-01T17:08:21Z"
+}
