@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1436_telegram_receipt_acquisition_live_proof_handoff",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1436 Telegram live proof handoff",
+  "objective": "Create file governance/tasks/pending/BEM1436_PRODUCTION_TELEGRAM_RECEIPT_ACQUISITION_LIVE_PROOF_HANDOFF.md with content BEM-1436 | PRODUCTION TELEGRAM RECEIPT ACQUISITION LIVE-PROOF HANDOFF | 2026-06-01 | 18:51 (UTC+3)\n\nЭтап: Production Telegram receipt acquisition live-proof handoff — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Required live proof | Required output | Status |\n|---|---|---|\n| Real production Telegram delivery evidence | `governance/proofs/external/telegram/production_receipt.json` | Missing |\n\n| Handoff rule | Meaning |\n|---|---|\n| No fake receipt | Do not write `production_receipt.json` without real delivery evidence |\n| No secret leakage | Redact tokens/API keys/passwords before commit |\n| No Release PASS | Telegram receipt alone does not release system |\n| Validate after receipt | Run intake and anti-placeholder validators after real receipt exists |\n\nЧек-лист:\n✅ BEM-1435 completed with SHA `870f0095621ca8e1ada9ce3ad887b5c3b11b5d0e`.\n✅ Live-proof handoff created for production Telegram receipt acquisition.\n✅ Handoff does not create or fake receipt.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ CI activation acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Production Telegram receipt acquisition live-proof handoff — 1/1 (100%) | First live-proof handoff created without fake receipt |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; live Telegram evidence still required |\n| Следующее действие | BEM-1437 production Telegram receipt missing external-input boundary | Keep boundary explicit while awaiting real external input |\n\nNo issue comments.\nCreate file governance/state/bem1436_telegram_receipt_acquisition_live_proof_handoff.json with content {\"bem_id\":\"BEM-1436\",\"created_at_utc3\":\"2026-06-01 | 18:51 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Production Telegram receipt acquisition live-proof handoff\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1435\",\"latest_proof_sha\":\"870f0095621ca8e1ada9ce3ad887b5c3b11b5d0e\",\"next_action\":\"BEM-1437 production Telegram receipt missing external-input boundary\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1436 | PRODUCTION TELEGRAM RECEIPT ACQUISITION LIVE-PROOF HANDOFF | 2026-06-01 | 18:51 (UTC+3)\n- BEM-1435 completed with SHA 870f0095621ca8e1ada9ce3ad887b5c3b11b5d0e.\n- Created production Telegram receipt acquisition live-proof handoff.\n- Release PASS not issued.\n- Next action: BEM-1437 production Telegram receipt missing external-input boundary.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1436_telegram_receipt_acquisition_live_proof_handoff.md",
+    "result_json": "governance/codex/results/bem1436_telegram_receipt_acquisition_live_proof_handoff.json"
+  },
+  "created_at": "2026-06-01T16:52:26.262Z"
+}
