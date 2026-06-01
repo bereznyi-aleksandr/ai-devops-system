@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1289_ci_acceptance_verification_marker",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1289 CI acceptance marker",
+  "objective": "Create file governance/reports/BEM1289_CI_ACCEPTANCE_VERIFICATION_MARKER.md with content BEM-1289 | CI ACCEPTANCE VERIFICATION MARKER | 2026-06-01 | 12:59 (UTC+3)\n\nЭтап: CI acceptance verification marker — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1288 completed with SHA `1bf8fd97a415149c263bda0faea176fe199d2bde`.\n✅ Workflow was reduced to ultra-minimal GitHub Actions syntax.\n⚠️ This marker does not prove GitHub Actions accepted the workflow.\n⚠️ Need external/GitHub run proof showing workflow no longer fails at syntax stage.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | CI acceptance verification marker — 1/1 (100%) | Acceptance proof still must come from GitHub Actions run |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI acceptance proof pending |\n| Следующее действие | BEM-1290 local workflow syntax de-risk note | Continue de-risking without claiming CI PASS |\n\nNo issue comments.\nCreate file governance/state/bem1289_ci_acceptance_verification_marker.json with content {\"bem_id\":\"BEM-1289\",\"created_at_utc3\":\"2026-06-01 | 12:59 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"CI acceptance verification marker\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1288\",\"latest_proof_sha\":\"1bf8fd97a415149c263bda0faea176fe199d2bde\",\"ci_acceptance\":\"pending_external_github_actions_run_proof\",\"next_action\":\"BEM-1290 local workflow syntax de-risk note\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1289 | CI ACCEPTANCE VERIFICATION MARKER | 2026-06-01 | 12:59 (UTC+3)\n- BEM-1288 completed with SHA 1bf8fd97a415149c263bda0faea176fe199d2bde.\n- CI acceptance proof remains pending external GitHub Actions run.\n- Release PASS not issued.\n- Next action: BEM-1290 local workflow syntax de-risk note.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1289_ci_acceptance_verification_marker.md",
+    "result_json": "governance/codex/results/bem1289_ci_acceptance_verification_marker.json"
+  },
+  "created_at": "2026-06-01T10:28:45.735Z"
+}
