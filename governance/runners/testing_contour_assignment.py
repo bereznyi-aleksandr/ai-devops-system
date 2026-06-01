@@ -1,7 +1,11 @@
 import json
 
-DEFAULT_ASSIGNMENT = {"mock_e2e": "C1", "validator_tests": "C2", "release_proof_tests": "C3"}
+
+def assign(test_id="bem1284", preferred="C1"):
+    contour = preferred if preferred in {"C1", "C2", "C3"} else "C1"
+    return {"ok": True, "release_pass": False, "test_id": test_id, "contour": contour}
 
 
-def assign(test_type):
-    contour = DEFAULT_ASSIGNMENT
+def main():
+    result = assign()
+    print(json

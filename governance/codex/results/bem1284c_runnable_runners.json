@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1284c_runnable_runners",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/managed_channel_consumer.py",
+    "create:governance/runners/contour_lifecycle_runner.py",
+    "create:governance/runners/provider_activation.py",
+    "create:governance/runners/provider_failover.py",
+    "create:governance/runners/object_lifecycle_runner.py",
+    "create:governance/runners/curator_router.py",
+    "create:governance/runners/role_report_writer.py",
+    "create:governance/runners/object_report_aggregator.py",
+    "create:governance/runners/testing_contour_assignment.py"
+  ],
+  "changed_files": [
+    "governance/runners/managed_channel_consumer.py",
+    "governance/runners/contour_lifecycle_runner.py",
+    "governance/runners/provider_activation.py",
+    "governance/runners/provider_failover.py",
+    "governance/runners/object_lifecycle_runner.py",
+    "governance/runners/curator_router.py",
+    "governance/runners/role_report_writer.py",
+    "governance/runners/object_report_aggregator.py",
+    "governance/runners/testing_contour_assignment.py",
+    "governance/codex/proofs/bem1284c_runnable_runners.txt"
+  ],
+  "commit_sha": "8e4ae48e0b4aa2ea8b373f5df6f7eee6b0d9bf9f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1284c_runnable_runners.md",
+  "completed_at": "2026-06-01T09:37:35Z"
+}

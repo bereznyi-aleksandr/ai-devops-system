@@ -1,4 +1,7 @@
 import json
-from pathlib import Path
 
-REGISTRY = Path("governance/providers/providers_registry
+PRIMARY = {"C1":"gpt", "C2":"gpt", "C3":"gpt"}
+
+
+def provider_for_contour(contour):
+    provider = PRIMARY
