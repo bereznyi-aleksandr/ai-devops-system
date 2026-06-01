@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1301_executor_capability_boundary",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1301 executor boundary",
+  "objective": "Create file governance/runtime/BEM1301_EXECUTOR_CAPABILITY_BOUNDARY.json with content {\"bem_id\":\"BEM-1301\",\"created_at_utc3\":\"2026-06-01 | 13:56 (UTC+3)\",\"release_pass\":false,\"finding\":\"Deno codex write channel applies Create file and Move file patterns but current Run script/selftest payload did not create requested runtime/report files; it only produced codex proof file.\",\"accepted_write_patterns\":[\"Create file\",\"Move file\",\"Append to\"],\"not_accepted_as_execution_proof\":[\"Run script without changed runtime result file\",\"commit that changes only governance/codex/proofs\"],\"impact\":\"Cannot claim local execution proof from BEM-1300. Must use GitHub Actions acceptance or a repaired execution runner for runtime proof.\",\"next_action\":\"BEM-1302 execution proof path repair plan\"}\nCreate file governance/reports/BEM1301_EXECUTOR_CAPABILITY_BOUNDARY.md with content BEM-1301 | EXECUTOR CAPABILITY BOUNDARY | 2026-06-01 | 13:56 (UTC+3)\n\nЭтап: Executor capability boundary — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1299 completed with SHA `07b5cecd90e6786d9e683463073bcea5593c8d12`.\n⚠️ BEM-1300 produced SHA `39275a7ecb010d931b9ff12fcf98314bc72cc9e9`, but only changed `governance/codex/proofs/...txt`.\n⚠️ Therefore BEM-1300 is not accepted as execution proof.\n✅ Boundary recorded: `Create file`/`Move file` are accepted; `Run script` is not accepted unless it creates requested runtime/report files.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Executor capability boundary — 1/1 (100%) | Prevents false proof from proof-only commits |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; execution proof path still needs repair |\n| Следующее действие | BEM-1302 execution proof path repair plan | Restore real execution proof path before re-enabling CI |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1301 | EXECUTOR CAPABILITY BOUNDARY | 2026-06-01 | 13:56 (UTC+3)\n- BEM-1300 was not accepted because it changed only codex proof file.\n- Recorded executor boundary: proof-only commits are not execution proof.\n- Release PASS not issued.\n- Next action: BEM-1302 execution proof path repair plan.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1301_executor_capability_boundary.md",
+    "result_json": "governance/codex/results/bem1301_executor_capability_boundary.json"
+  },
+  "created_at": "2026-06-01T10:58:12.232Z"
+}
