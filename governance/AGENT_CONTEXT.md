@@ -937,3 +937,5 @@ No issue comments.
 - BEM-1213 completed with SHA cbaac2abf7f8efbdbce4fd71b32d3b039dce3f33
 ### BEM-1215 | POST-EXTENSION ROADMAP SEED | 2026-06-01 | 06:33 (UTC+3)
 - BEM-1214 completed with SHA ecbb6f08f543e23b35a25a508fe0b5896c66ce73
+### BEM-1216 | VALIDATOR SUITE UNIFIED MANIFEST | 2026-06-01 | 06:34 (UTC+3)
+- BEM-1215 completed with SHA e95fbf5335231aca3e6bb8b4baef964058d87ec7

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1216_validator_suite_unified_manifest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/bem931_validator_suite_unified_manifest.json",
+    "create:governance/reports/BEM1216_VALIDATOR_SUITE_UNIFIED_MANIFEST.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/bem931_validator_suite_unified_manifest.json",
+    "governance/reports/BEM1216_VALIDATOR_SUITE_UNIFIED_MANIFEST.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1216_validator_suite_unified_manifest.txt"
+  ],
+  "commit_sha": "2216bada3d266725f29a0bcffad4b571f569f2d7",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1216_validator_suite_unified_manifest.md",
+  "completed_at": "2026-06-01T03:36:10Z"
+}
