@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1227_receipt_validator_readiness_audit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1227_RECEIPT_VALIDATOR_READINESS_AUDIT.md",
+    "create:governance/state/bem1227_receipt_validator_readiness_audit.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1227_RECEIPT_VALIDATOR_READINESS_AUDIT.md",
+    "governance/state/bem1227_receipt_validator_readiness_audit.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1227_receipt_validator_readiness_audit.txt"
+  ],
+  "commit_sha": "ca61451e7e4c7a28b419bb9dc559cb8a693aca54",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1227_receipt_validator_readiness_audit.md",
+  "completed_at": "2026-06-01T03:51:11Z"
+}
