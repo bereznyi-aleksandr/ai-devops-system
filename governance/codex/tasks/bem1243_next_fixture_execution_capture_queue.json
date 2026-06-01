@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1243_next_fixture_execution_capture_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1243 fixture capture queue",
+  "objective": "Create file governance/state/bem1243_next_fixture_execution_capture_queue.json with content {\"bem_id\":\"BEM-1243\",\"created_at_utc3\":\"2026-06-01 | 07:30 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Next fixture execution capture queue\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1242\",\"latest_proof_sha\":\"48643d556482f312556f964b82673f1f3b92633d\",\"queue\":[{\"order\":1,\"bem\":\"BEM-1244\",\"title\":\"Expanded fixture capture runner\"},{\"order\":2,\"bem\":\"BEM-1245\",\"title\":\"Expanded fixture capture policy\"},{\"order\":3,\"bem\":\"BEM-1246\",\"title\":\"Expanded fixture capture audit\"}],\"remaining_blockers\":[\"production_telegram_receipt_missing\",\"live_runtime_receipt_missing\",\"external_claude_audit_result_missing\"],\"next_action\":\"BEM-1244 expanded fixture capture runner\"}\nCreate file governance/reports/BEM1243_NEXT_FIXTURE_EXECUTION_CAPTURE_QUEUE.md with content BEM-1243 | NEXT FIXTURE EXECUTION CAPTURE QUEUE | 2026-06-01 | 07:30 (UTC+3)\n\nЭтап: Next fixture execution capture queue — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1242 completed with SHA `48643d556482f312556f964b82673f1f3b92633d`.\n✅ Created `governance/state/bem1243_next_fixture_execution_capture_queue.json`.\n✅ Queued BEM-1244, BEM-1245 and BEM-1246.\n⚠️ Fixture execution capture is not Release PASS.\n⚠️ External receipt blockers remain open.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Next fixture execution capture queue — 1/1 (100%) | Capture queue created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; hardening continues |\n| Следующее действие | BEM-1244 expanded fixture capture runner | Continue executable fixture hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1243 | NEXT FIXTURE EXECUTION CAPTURE QUEUE | 2026-06-01 | 07:30 (UTC+3)\n- BEM-1242 completed with SHA 48643d556482f312556f964b82673f1f3b92633d.\n- Created next fixture execution capture queue.\n- Release PASS not issued.\n- Next action: BEM-1244 expanded fixture capture runner.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1243_next_fixture_execution_capture_queue.md",
+    "result_json": "governance/codex/results/bem1243_next_fixture_execution_capture_queue.json"
+  },
+  "created_at": "2026-06-01T04:32:18.533Z"
+}
