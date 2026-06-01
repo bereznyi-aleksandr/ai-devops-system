@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1252_receipt_path_existence_monitor",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1252_receipt_path_existence_monitor.json",
+    "create:governance/reports/BEM1252_RECEIPT_PATH_EXISTENCE_MONITOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1252_receipt_path_existence_monitor.json",
+    "governance/reports/BEM1252_RECEIPT_PATH_EXISTENCE_MONITOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1252_receipt_path_existence_monitor.txt"
+  ],
+  "commit_sha": "687ba827d04dce24ff2075b54f09a9f635a51c67",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1252_receipt_path_existence_monitor.md",
+  "completed_at": "2026-06-01T04:46:57Z"
+}
