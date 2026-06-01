@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1253_unified_capture_readiness_mirror",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1253 readiness mirror",
+  "objective": "Create file governance/state/bem1253_unified_capture_readiness_mirror.json with content {\"bem_id\":\"BEM-1253\",\"created_at_utc3\":\"2026-06-01 | 07:47 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Unified capture readiness mirror\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1252\",\"latest_proof_sha\":\"687ba827d04dce24ff2075b54f09a9f635a51c67\",\"unified_capture_runner\":\"governance/runtime/unified_validation_capture_runner.py\",\"unified_capture_policy\":\"governance/runtime/BEM1249_UNIFIED_CAPTURE_RUNNER_POLICY.json\",\"readiness\":\"ready_for_repo_validation_capture_not_release_proof\",\"missing\":[\"production_telegram_receipt\",\"live_runtime_receipt\",\"external_claude_audit_result\"],\"next_action\":\"BEM-1254 next implementation status rollup\"}\nCreate file governance/reports/BEM1253_UNIFIED_CAPTURE_READINESS_MIRROR.md with content BEM-1253 | UNIFIED CAPTURE READINESS MIRROR | 2026-06-01 | 07:47 (UTC+3)\n\nЭтап: Unified capture readiness mirror — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1252 completed with SHA `687ba827d04dce24ff2075b54f09a9f635a51c67`.\n✅ Created `governance/state/bem1253_unified_capture_readiness_mirror.json`.\n✅ Unified capture runner and policy are referenced.\n✅ Readiness is limited to repo validation capture, not release proof.\n⚠️ External receipts remain missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Unified capture readiness mirror — 1/1 (100%) | Readiness mirror created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; external receipts missing |\n| Следующее действие | BEM-1254 next implementation status rollup | Continue operator-visible status rollup |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1253 | UNIFIED CAPTURE READINESS MIRROR | 2026-06-01 | 07:47 (UTC+3)\n- BEM-1252 completed with SHA 687ba827d04dce24ff2075b54f09a9f635a51c67.\n- Created unified capture readiness mirror.\n- Release PASS not issued.\n- Next action: BEM-1254 next implementation status rollup.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1253_unified_capture_readiness_mirror.md",
+    "result_json": "governance/codex/results/bem1253_unified_capture_readiness_mirror.json"
+  },
+  "created_at": "2026-06-01T04:48:28.892Z"
+}
