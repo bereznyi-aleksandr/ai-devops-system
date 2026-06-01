@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1437_telegram_receipt_missing_external_input_boundary",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_MISSING_EXTERNAL_INPUT_BOUNDARY.json",
+    "create:governance/reports/BEM1437_PRODUCTION_TELEGRAM_RECEIPT_MISSING_EXTERNAL_INPUT_BOUNDARY.md",
+    "create:governance/state/bem1437_telegram_receipt_missing_external_input_boundary.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_MISSING_EXTERNAL_INPUT_BOUNDARY.json",
+    "governance/reports/BEM1437_PRODUCTION_TELEGRAM_RECEIPT_MISSING_EXTERNAL_INPUT_BOUNDARY.md",
+    "governance/state/bem1437_telegram_receipt_missing_external_input_boundary.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1437_telegram_receipt_missing_external_input_boundary.txt"
+  ],
+  "commit_sha": "349a6d3dbf2cf20399464f70408ebf5c976912c4",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1437_telegram_receipt_missing_external_input_boundary.md",
+  "completed_at": "2026-06-01T16:53:22Z"
+}
