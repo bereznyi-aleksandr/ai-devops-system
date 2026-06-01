@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1302_execution_proof_path_repair_plan",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runtime/BEM1302_EXECUTION_PROOF_PATH_REPAIR_PLAN.json",
+    "create:governance/reports/BEM1302_EXECUTION_PROOF_PATH_REPAIR_PLAN.md",
+    "create:governance/state/bem1302_execution_proof_path_repair_plan.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runtime/BEM1302_EXECUTION_PROOF_PATH_REPAIR_PLAN.json",
+    "governance/reports/BEM1302_EXECUTION_PROOF_PATH_REPAIR_PLAN.md",
+    "governance/state/bem1302_execution_proof_path_repair_plan.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1302_execution_proof_path_repair_plan.txt"
+  ],
+  "commit_sha": "f99991e5c3b5e07074051d912785e4a88d6b75bc",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1302_execution_proof_path_repair_plan.md",
+  "completed_at": "2026-06-01T11:00:34Z"
+}
