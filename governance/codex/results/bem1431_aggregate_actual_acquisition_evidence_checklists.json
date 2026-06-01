@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1431_aggregate_actual_acquisition_evidence_checklists",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/AGGREGATE_ACTUAL_ACQUISITION_EVIDENCE_CHECKLISTS.json",
+    "create:governance/reports/BEM1431_AGGREGATE_ACTUAL_ACQUISITION_EVIDENCE_CHECKLISTS.md",
+    "create:governance/state/bem1431_aggregate_actual_acquisition_evidence_checklists.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/AGGREGATE_ACTUAL_ACQUISITION_EVIDENCE_CHECKLISTS.json",
+    "governance/reports/BEM1431_AGGREGATE_ACTUAL_ACQUISITION_EVIDENCE_CHECKLISTS.md",
+    "governance/state/bem1431_aggregate_actual_acquisition_evidence_checklists.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1431_aggregate_actual_acquisition_evidence_checklists.txt"
+  ],
+  "commit_sha": "c299ecf1b67b6d4416d82f7396edd0b185087e52",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1431_aggregate_actual_acquisition_evidence_checklists.md",
+  "completed_at": "2026-06-01T16:48:19Z"
+}
