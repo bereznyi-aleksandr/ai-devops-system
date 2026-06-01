@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1327_claude_audit_receipt_intake_readiness_pack",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_INTAKE_READINESS_PACK.md",
+    "create:governance/state/bem1327_claude_audit_receipt_intake_readiness_pack.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_INTAKE_READINESS_PACK.md",
+    "governance/state/bem1327_claude_audit_receipt_intake_readiness_pack.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1327_claude_audit_receipt_intake_readiness_pack.txt"
+  ],
+  "commit_sha": "e7332d4770bede5a5f0f77e1ca0dc816b151d5ba",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1327_claude_audit_receipt_intake_readiness_pack.md",
+  "completed_at": "2026-06-01T13:00:43Z"
+}
