@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1286_fix_governance_validation_ci_yaml",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1286 fix CI YAML",
+  "objective": "Fix the invalid GitHub Actions workflow shown by operator screenshot. Replace .github/workflows/governance-validation-ci.yml with a valid workflow YAML. Use quoted 'on' key. Ensure jobs.validate has runs-on, steps, checkout, setup-python, and run steps. Include no schedule triggers. Create governance/reports/BEM1286_FIX_GOVERNANCE_VALIDATION_CI_YAML.md with canonical report: BEM-1286 | FIX GOVERNANCE VALIDATION CI YAML | 2026-06-01 | 12:45 (UTC+3). Stage: CI workflow YAML repair — 1/1 (100%). Roadmap BEM-931 foundation: 14/14 (100%). Checklist must mention BEM-1285 SHA ab6e77ef4bceeb2ae3f2bd64fdba79185c62c77c, invalid workflow screenshot, fixed workflow syntax, no schedule triggers, Release PASS not issued. Append concise BEM-1286 entry to governance/AGENT_CONTEXT.md with next action: BEM-1287 CI run verification after workflow syntax repair. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1286_fix_governance_validation_ci_yaml.md",
+    "result_json": "governance/codex/results/bem1286_fix_governance_validation_ci_yaml.json"
+  },
+  "created_at": "2026-06-01T09:49:05.423Z"
+}
