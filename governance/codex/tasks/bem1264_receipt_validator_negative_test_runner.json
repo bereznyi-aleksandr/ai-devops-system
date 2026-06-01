@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1264_receipt_validator_negative_test_runner",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1264 receipt negative runner",
+  "objective": "Create file governance/tests/run_receipt_validator_negative_tests.py with content import json\nfrom pathlib import Path\nimport sys\n\nsys.path.insert(0, str(Path.cwd()))\nfrom governance.validators.validate_telegram_production_receipt import validate as validate_telegram\nfrom governance.validators.validate_live_runtime_receipt import validate as validate_runtime\nfrom governance.validators.validate_external_claude_audit_result import validate as validate_claude\n\nTESTS = [\n    (\"telegram_reject_secret\", validate_telegram, \"governance/tests/fixtures/telegram_receipt_negative_secret.json\"),\n    (\"runtime_reject_mock_as_live\", validate_runtime, \"governance/tests/fixtures/runtime_receipt_negative_mock_as_live.json\"),\n    (\"claude_reject_self_claim\", validate_claude, \"governance/tests/fixtures/claude_audit_negative_self_claim.json\"),\n]\n\n\ndef run():\n    results = []\n    for name, fn, path in TESTS:\n        errors = fn(path)\n        results.append({\"test\": name, \"ok\": bool(errors), \"errors\": errors})\n    return {\"ok\": all(item[\"ok\"] for item in results), \"release_pass\": False, \"results\": results}\n\nif __name__ == \"__main__\":\n    result = run()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1264_RECEIPT_VALIDATOR_NEGATIVE_TEST_RUNNER.md with content BEM-1264 | RECEIPT VALIDATOR NEGATIVE TEST RUNNER | 2026-06-01 | 08:06 (UTC+3)\n\nЭтап: Receipt validator negative test runner — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1263 completed with SHA `c57cb8b040aab4cf4d384ed952d94c1e2d74a58b`.\n✅ Created `governance/tests/run_receipt_validator_negative_tests.py`.\n✅ Runner expects validators to reject secret, mock-as-live and GPT-self-claim fixtures.\n⚠️ Negative validator tests are not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt validator negative test runner — 1/1 (100%) | Negative receipt validator runner created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; validator hardening continues |\n| Следующее действие | BEM-1265 receipt validator hardening audit | Continue validator hardening audit |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1264 | RECEIPT VALIDATOR NEGATIVE TEST RUNNER | 2026-06-01 | 08:06 (UTC+3)\n- BEM-1263 completed with SHA c57cb8b040aab4cf4d384ed952d94c1e2d74a58b.\n- Created receipt validator negative test runner.\n- Release PASS not issued.\n- Next action: BEM-1265 receipt validator hardening audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1264_receipt_validator_negative_test_runner.md",
+    "result_json": "governance/codex/results/bem1264_receipt_validator_negative_test_runner.json"
+  },
+  "created_at": "2026-06-01T05:07:34.380Z"
+}
