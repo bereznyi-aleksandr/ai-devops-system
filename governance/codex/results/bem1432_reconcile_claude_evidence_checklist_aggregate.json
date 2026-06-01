@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1432_reconcile_claude_evidence_checklist_aggregate",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1432_RECONCILE_CLAUDE_EVIDENCE_CHECKLIST_AGGREGATE.md",
+    "create:governance/state/bem1432_reconcile_claude_evidence_checklist_aggregate.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1432_RECONCILE_CLAUDE_EVIDENCE_CHECKLIST_AGGREGATE.md",
+    "governance/state/bem1432_reconcile_claude_evidence_checklist_aggregate.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1432_reconcile_claude_evidence_checklist_aggregate.txt"
+  ],
+  "commit_sha": "c82e44c71acda12cf3f931478195369e70dbaa29",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1432_reconcile_claude_evidence_checklist_aggregate.md",
+  "completed_at": "2026-06-01T16:49:26Z"
+}
