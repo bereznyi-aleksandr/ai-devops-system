@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1410_safe_ci_active_workflow_restore_gonogo",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflows_disabled/SAFE_CI_ACTIVE_WORKFLOW_RESTORE_EXPLICIT_GO_NOGO_RECORD.md",
+    "create:governance/state/bem1410_safe_ci_active_workflow_restore_gonogo.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/workflows_disabled/SAFE_CI_ACTIVE_WORKFLOW_RESTORE_EXPLICIT_GO_NOGO_RECORD.md",
+    "governance/state/bem1410_safe_ci_active_workflow_restore_gonogo.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1410_safe_ci_active_workflow_restore_gonogo.txt"
+  ],
+  "commit_sha": "178c27a3c0927b4d2a743efd8375342597043d8b",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1410_safe_ci_active_workflow_restore_gonogo.md",
+  "completed_at": "2026-06-01T16:29:29Z"
+}
