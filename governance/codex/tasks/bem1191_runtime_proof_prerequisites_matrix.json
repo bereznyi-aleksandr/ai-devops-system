@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1191_runtime_proof_prerequisites_matrix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1191 runtime prerequisites",
+  "objective": "Create file governance/runtime/BEM1191_RUNTIME_PROOF_PREREQUISITES_MATRIX.json with content {\"bem_id\":\"BEM-1191\",\"created_at_utc3\":\"2026-06-01 | 05:59 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Runtime proof prerequisites matrix\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1190\",\"latest_proof_sha\":\"b5e58633921d29db832049877e368dd545720bbe\",\"prerequisites\":[{\"id\":\"repo_core_artifacts\",\"status\":\"present\",\"proof\":\"BEM-1185 audit bundle\"},{\"id\":\"validator_suite\",\"status\":\"present\",\"proof\":\"BEM-1158 runner\"},{\"id\":\"runner_hardening_tests\",\"status\":\"present\",\"proof\":\"BEM-1174 tests\"},{\"id\":\"dry_run_capture\",\"status\":\"present\",\"proof\":\"BEM-1182 capture runner\"},{\"id\":\"production_telegram_receipt\",\"status\":\"missing\",\"proof\":null},{\"id\":\"live_runtime_receipt\",\"status\":\"missing\",\"proof\":null},{\"id\":\"external_claude_reaudit\",\"status\":\"missing\",\"proof\":null}],\"next_action\":\"BEM-1192 runtime proof capture contract\"}\nCreate file governance/reports/BEM1191_RUNTIME_PROOF_PREREQUISITES_MATRIX.md with content BEM-1191 | RUNTIME PROOF PREREQUISITES MATRIX | 2026-06-01 | 05:59 (UTC+3)\n\nЭтап: Runtime proof prerequisites matrix — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1190 completed with SHA `b5e58633921d29db832049877e368dd545720bbe`.\n✅ Created `governance/runtime/BEM1191_RUNTIME_PROOF_PREREQUISITES_MATRIX.json`.\n✅ Matrix separates present repo/runtime-prep prerequisites from missing external/live receipts.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude re-audit missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Runtime proof prerequisites matrix — 1/1 (100%) | Prerequisites matrix created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; runtime proof blockers remain |\n| Следующее действие | BEM-1192 runtime proof capture contract | Define accepted runtime proof format |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1191 | RUNTIME PROOF PREREQUISITES MATRIX | 2026-06-01 | 05:59 (UTC+3)\n- BEM-1190 completed with SHA b5e58633921d29db832049877e368dd545720bbe.\n- Created runtime proof prerequisites matrix.\n- Release PASS not issued.\n- Next action: BEM-1192 runtime proof capture contract.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1191_runtime_proof_prerequisites_matrix.md",
+    "result_json": "governance/codex/results/bem1191_runtime_proof_prerequisites_matrix.json"
+  },
+  "created_at": "2026-06-01T03:01:03.759Z"
+}
