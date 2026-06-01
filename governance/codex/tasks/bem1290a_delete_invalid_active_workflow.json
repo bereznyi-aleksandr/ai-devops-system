@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1290a_delete_invalid_active_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1290A delete invalid workflow",
+  "objective": "Delete file .github/workflows/governance-validation-ci.yml\nCreate file governance/reports/BEM1290A_DELETE_INVALID_ACTIVE_WORKFLOW.md with content BEM-1290A | DELETE INVALID ACTIVE WORKFLOW | 2026-06-01 | 13:31 (UTC+3)\n\nЭтап: Delete invalid active workflow — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Operator screenshot confirmed `.github/workflows/governance-validation-ci.yml` still breaks GitHub Actions at line 1.\n✅ Active invalid workflow must be removed from `.github/workflows/`.\n✅ No replacement active workflow is created in this task.\n✅ No schedule triggers added.\n⚠️ Governance CI acceptance remains pending until a validated workflow-generation strategy exists.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Delete invalid active workflow — 1/1 (100%) | Active broken workflow removed from GitHub Actions path |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI workflow must be rebuilt safely later |\n| Следующее действие | BEM-1291 offline workflow generation and validation strategy | Recreate workflow only after syntax-safe generation and validation |\n\nNo issue comments.\nCreate file governance/state/bem1290a_delete_invalid_active_workflow.json with content {\"bem_id\":\"BEM-1290A\",\"created_at_utc3\":\"2026-06-01 | 13:31 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Delete invalid active workflow\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"action\":\"delete active invalid .github/workflows/governance-validation-ci.yml\",\"next_action\":\"BEM-1291 offline workflow generation and validation strategy\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1290A | DELETE INVALID ACTIVE WORKFLOW | 2026-06-01 | 13:31 (UTC+3)\n- Operator screenshot confirmed active governance-validation-ci.yml still invalid.\n- Deleted active invalid workflow from `.github/workflows/`.\n- Release PASS not issued.\n- Next action: BEM-1291 offline workflow generation and validation strategy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1290a_delete_invalid_active_workflow.md",
+    "result_json": "governance/codex/results/bem1290a_delete_invalid_active_workflow.json"
+  },
+  "created_at": "2026-06-01T10:33:08.540Z"
+}
