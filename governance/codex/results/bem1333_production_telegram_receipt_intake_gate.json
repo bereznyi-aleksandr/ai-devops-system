@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1333_production_telegram_receipt_intake_gate",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_INTAKE_GATE.json",
+    "create:governance/reports/BEM1333_PRODUCTION_TELEGRAM_RECEIPT_INTAKE_GATE.md",
+    "create:governance/state/bem1333_production_telegram_receipt_intake_gate.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_INTAKE_GATE.json",
+    "governance/reports/BEM1333_PRODUCTION_TELEGRAM_RECEIPT_INTAKE_GATE.md",
+    "governance/state/bem1333_production_telegram_receipt_intake_gate.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1333_production_telegram_receipt_intake_gate.txt"
+  ],
+  "commit_sha": "9771ae332162e46570ba2aefbdc14be8df9b04e5",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1333_production_telegram_receipt_intake_gate.md",
+  "completed_at": "2026-06-01T13:12:59Z"
+}
