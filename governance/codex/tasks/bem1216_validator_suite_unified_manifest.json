@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1216_validator_suite_unified_manifest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1216 unified manifest",
+  "objective": "Create file governance/validators/bem931_validator_suite_unified_manifest.json with content {\"bem_id\":\"BEM-1216\",\"created_at_utc3\":\"2026-06-01 | 06:34 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Validator suite unified manifest\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1215\",\"latest_proof_sha\":\"e95fbf5335231aca3e6bb8b4baef964058d87ec7\",\"manifests\":[\"governance/validators/bem931_validator_suite_index.json\",\"governance/validators/bem931_validator_suite_hardening_extension.json\",\"governance/validators/bem931_validator_suite_integrity_extension.json\",\"governance/validators/final_external_proof_validator_index.json\"],\"runners\":[\"governance/validators/run_bem931_validator_suite.py\",\"governance/tests/run_bem931_runner_hardening_tests.py\",\"governance/runtime/ci_execution_capture_runner.py\"],\"next_action\":\"BEM-1217 unified manifest audit\"}\nCreate file governance/reports/BEM1216_VALIDATOR_SUITE_UNIFIED_MANIFEST.md with content BEM-1216 | VALIDATOR SUITE UNIFIED MANIFEST | 2026-06-01 | 06:34 (UTC+3)\n\nЭтап: Validator suite unified manifest — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1215 completed with SHA `e95fbf5335231aca3e6bb8b4baef964058d87ec7`.\n✅ Created `governance/validators/bem931_validator_suite_unified_manifest.json`.\n✅ Unified manifest references base suite, hardening extension, integrity extension and external proof validator index.\n✅ Unified manifest references validator, hardening and CI capture runners.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Validator suite unified manifest — 1/1 (100%) | Unified suite manifest created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; validation consolidation continues |\n| Следующее действие | BEM-1217 unified manifest audit | Continue validation hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1216 | VALIDATOR SUITE UNIFIED MANIFEST | 2026-06-01 | 06:34 (UTC+3)\n- BEM-1215 completed with SHA e95fbf5335231aca3e6bb8b4baef964058d87ec7.\n- Created validator suite unified manifest.\n- Release PASS not issued.\n- Next action: BEM-1217 unified manifest audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1216_validator_suite_unified_manifest.md",
+    "result_json": "governance/codex/results/bem1216_validator_suite_unified_manifest.json"
+  },
+  "created_at": "2026-06-01T03:36:01.255Z"
+}
