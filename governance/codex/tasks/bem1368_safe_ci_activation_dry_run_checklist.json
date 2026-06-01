@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1368_safe_ci_activation_dry_run_checklist",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1368 CI dry-run checklist",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_ACTIVATION_DRY_RUN_CHECKLIST.md with content BEM-1368 | SAFE CI ACTIVATION DRY-RUN CHECKLIST | 2026-06-01 | 17:50 (UTC+3)\n\nЭтап: Safe CI activation dry-run checklist — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Check | Expected value | Result before activation |\n|---|---|---|\n| Candidate path | `governance/workflows_disabled/governance-validation-ci.generated.yml` | Must exist before activation |\n| Active target | `.github/workflows/governance-validation-ci.yml` | Must remain absent until explicit activation |\n| Rollback target | `governance/workflows_disabled/governance-validation-ci.yml.rejected` | Must be available |\n| Schedule trigger | Forbidden | Must be absent |\n| Comment-only workflow | Forbidden | Must not be used |\n| Empty workflow | Forbidden | Must not be used |\n| Release PASS claim | Forbidden | Must not be present |\n| GitHub acceptance | Required after activation | Cannot be pre-claimed |\n\nЧек-лист:\n⚠️ BEM-1367 may still be queued and is not counted without SHA.\n✅ Dry-run checklist created.\n✅ Checklist keeps active workflow disabled until explicit activation.\n✅ Checklist requires GitHub acceptance after activation.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until explicit safe activation and GitHub acceptance proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI activation dry-run checklist — 1/1 (100%) | Dry-run checklist prepared without active workflow restore |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; active workflow remains gated |\n| Следующее действие | BEM-1369 reconcile queued safe CI dry-run tasks | Reconcile queued tasks without stopping |\n\nNo issue comments.\nCreate file governance/state/bem1368_safe_ci_activation_dry_run_checklist.json with content {\"bem_id\":\"BEM-1368\",\"created_at_utc3\":\"2026-06-01 | 17:50 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI activation dry-run checklist\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"queued_not_counted\":[\"BEM-1367\"],\"next_action\":\"BEM-1369 reconcile queued safe CI dry-run tasks\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1368 | SAFE CI ACTIVATION DRY-RUN CHECKLIST | 2026-06-01 | 17:50 (UTC+3)\n- Created safe CI activation dry-run checklist without activating workflow.\n- BEM-1367 was queued at observation time and is not counted without SHA.\n- Release PASS not issued.\n- Next action: BEM-1369 reconcile queued safe CI dry-run tasks.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1368_safe_ci_activation_dry_run_checklist.md",
+    "result_json": "governance/codex/results/bem1368_safe_ci_activation_dry_run_checklist.json"
+  },
+  "created_at": "2026-06-01T15:52:07.457Z"
+}
