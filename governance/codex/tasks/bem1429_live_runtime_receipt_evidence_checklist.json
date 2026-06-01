@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1429_live_runtime_receipt_evidence_checklist",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1429 runtime evidence checklist",
+  "objective": "Create file governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_EVIDENCE_CHECKLIST_FOR_ACTUAL_ACQUISITION.md with content BEM-1429 | LIVE RUNTIME RECEIPT EVIDENCE CHECKLIST FOR ACTUAL ACQUISITION | 2026-06-01 | 18:45 (UTC+3)\n\nЭтап: Live runtime receipt evidence checklist for actual acquisition — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Evidence item | Required | Notes |\n|---|---|---|\n| Real live runtime execution | Yes | Must be actual execution, not mock/dry-run-only |\n| Command or entrypoint | Yes | Reproducible execution reference |\n| Commit SHA that was run | Yes | Non-null repository SHA |\n| Redacted output reference | Yes | No secrets/tokens/API keys/passwords |\n| Receipt path | Yes | `governance/proofs/external/runtime/live_runtime_receipt.json` |\n| Validators | Yes | Intake and anti-placeholder validators must pass |\n| Release PASS claim | No | `release_pass=false` until all release inputs exist |\n\nЧек-лист:\n✅ BEM-1428 completed with SHA `4bfd075cfe2acbb2691bfec0cccf4f1bd7b0175c`.\n✅ Live runtime actual acquisition evidence checklist created.\n✅ Checklist does not create or fake receipt.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ CI activation acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Live runtime receipt evidence checklist for actual acquisition — 1/1 (100%) | Actual runtime acquisition requirements are explicit |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; real runtime evidence still required |\n| Следующее действие | BEM-1430 external Claude audit evidence checklist for actual acquisition | Continue third real evidence checklist |\n\nNo issue comments.\nCreate file governance/state/bem1429_live_runtime_receipt_evidence_checklist.json with content {\"bem_id\":\"BEM-1429\",\"created_at_utc3\":\"2026-06-01 | 18:45 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Live runtime receipt evidence checklist for actual acquisition\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1428\",\"latest_proof_sha\":\"4bfd075cfe2acbb2691bfec0cccf4f1bd7b0175c\",\"next_action\":\"BEM-1430 external Claude audit evidence checklist for actual acquisition\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1429 | LIVE RUNTIME RECEIPT EVIDENCE CHECKLIST FOR ACTUAL ACQUISITION | 2026-06-01 | 18:45 (UTC+3)\n- BEM-1428 completed with SHA 4bfd075cfe2acbb2691bfec0cccf4f1bd7b0175c.\n- Created live runtime receipt evidence checklist for actual acquisition.\n- Release PASS not issued.\n- Next action: BEM-1430 external Claude audit evidence checklist for actual acquisition.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1429_live_runtime_receipt_evidence_checklist.md",
+    "result_json": "governance/codex/results/bem1429_live_runtime_receipt_evidence_checklist.json"
+  },
+  "created_at": "2026-06-01T16:46:31.317Z"
+}
