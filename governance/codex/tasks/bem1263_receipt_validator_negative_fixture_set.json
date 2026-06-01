@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1263_receipt_validator_negative_fixture_set",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1263 receipt negative fixtures",
+  "objective": "Create file governance/tests/fixtures/telegram_receipt_negative_secret.json with content {\"receipt_id\":\"neg_telegram_secret\",\"captured_at_utc3\":\"2026-06-01 | 08:04 (UTC+3)\",\"source\":\"telegram\",\"environment\":\"production_telegram\",\"bot_runtime\":\"redacted\",\"message_delivery_result\":\"pass\",\"redacted_output_ref\":\"governance/proofs/redacted/telegram.txt\",\"secret_scan_pass\":true,\"commit_sha\":\"fixture_sha\",\"forbidden\":\"bot_token\"}\nCreate file governance/tests/fixtures/runtime_receipt_negative_mock_as_live.json with content {\"receipt_id\":\"neg_runtime_mock\",\"captured_at_utc3\":\"2026-06-01 | 08:04 (UTC+3)\",\"environment\":\"live_runtime\",\"command_or_entrypoint\":\"fixture\",\"commit_sha\":\"fixture_sha\",\"result\":\"pass\",\"redacted_output_ref\":\"governance/proofs/redacted/runtime.txt\",\"secret_scan_pass\":true,\"operator_or_external_source\":\"fixture\",\"note\":\"mock_as_live\"}\nCreate file governance/tests/fixtures/claude_audit_negative_self_claim.json with content {\"audit_id\":\"neg_claude_self_claim\",\"auditor\":\"external_claude\",\"captured_at_utc3\":\"2026-06-01 | 08:04 (UTC+3)\",\"scope\":\"fixture\",\"reviewed_commit_sha\":\"fixture_sha\",\"verdict\":\"accepted\",\"findings\":[],\"release_recommendation\":\"no_pass\",\"source_ref\":\"fixture\",\"note\":\"gpt_self_claim\"}\nCreate file governance/reports/BEM1263_RECEIPT_VALIDATOR_NEGATIVE_FIXTURE_SET.md with content BEM-1263 | RECEIPT VALIDATOR NEGATIVE FIXTURE SET | 2026-06-01 | 08:04 (UTC+3)\n\nЭтап: Receipt validator negative fixture set — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1262 completed with SHA `6158d0b86e2f3f8f6618b7b41078c6b0c43fc4ff`.\n✅ Created Telegram negative secret fixture.\n✅ Created runtime mock-as-live negative fixture.\n✅ Created Claude GPT-self-claim negative fixture.\n⚠️ Negative fixtures are not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt validator negative fixture set — 1/1 (100%) | Negative receipt fixtures created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; validator hardening continues |\n| Следующее действие | BEM-1264 receipt validator negative test runner | Add runner for negative validator coverage |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1263 | RECEIPT VALIDATOR NEGATIVE FIXTURE SET | 2026-06-01 | 08:04 (UTC+3)\n- BEM-1262 completed with SHA 6158d0b86e2f3f8f6618b7b41078c6b0c43fc4ff.\n- Created receipt validator negative fixture set.\n- Release PASS not issued.\n- Next action: BEM-1264 receipt validator negative test runner.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1263_receipt_validator_negative_fixture_set.md",
+    "result_json": "governance/codex/results/bem1263_receipt_validator_negative_fixture_set.json"
+  },
+  "created_at": "2026-06-01T05:05:58.010Z"
+}
