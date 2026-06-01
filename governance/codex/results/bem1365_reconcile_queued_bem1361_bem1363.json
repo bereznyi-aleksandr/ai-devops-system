@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1365_reconcile_queued_bem1361_bem1363",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1365_RECONCILE_QUEUED_BEM1361_BEM1363.md",
+    "create:governance/state/bem1365_reconcile_queued_bem1361_bem1363.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1365_RECONCILE_QUEUED_BEM1361_BEM1363.md",
+    "governance/state/bem1365_reconcile_queued_bem1361_bem1363.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1365_reconcile_queued_bem1361_bem1363.txt"
+  ],
+  "commit_sha": "d9d844c035ebc0f515a865dd7878117a0e637cd2",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1365_reconcile_queued_bem1361_bem1363.md",
+  "completed_at": "2026-06-01T15:51:07Z"
+}
