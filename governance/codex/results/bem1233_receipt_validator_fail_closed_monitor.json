@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1233_receipt_validator_fail_closed_monitor",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1233_RECEIPT_VALIDATOR_FAIL_CLOSED_MONITOR.md",
+    "create:governance/state/bem1233_receipt_validator_fail_closed_monitor.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1233_RECEIPT_VALIDATOR_FAIL_CLOSED_MONITOR.md",
+    "governance/state/bem1233_receipt_validator_fail_closed_monitor.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1233_receipt_validator_fail_closed_monitor.txt"
+  ],
+  "commit_sha": "57ba292abf8dfd719844074e06d79d3087047fea",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1233_receipt_validator_fail_closed_monitor.md",
+  "completed_at": "2026-06-01T04:04:17Z"
+}
