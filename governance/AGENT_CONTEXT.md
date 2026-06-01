@@ -1072,3 +1072,5 @@ No issue comments.
 - BEM-1285 completed with SHA ab6e77ef4bceeb2ae3f2bd64fdba79185c62c77c
 ### BEM-1286B | MINIMAL VALID CI YAML | 2026-06-01 | 12:53 (UTC+3)
 - Operator screenshot confirmed CI workflow still invalid after BEM-1286A
+### BEM-1287 | WORKFLOW YAML GUARD | 2026-06-01 | 12:56 (UTC+3)
+- BEM-1286B completed with SHA ce6eb035f8ded22f72f8eda0b3cef18183d2e2a9

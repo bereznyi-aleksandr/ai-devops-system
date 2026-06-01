@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1287_workflow_yaml_guard",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_governance_workflow_yaml.py",
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/reports/BEM1287_WORKFLOW_YAML_GUARD.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_governance_workflow_yaml.py",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/reports/BEM1287_WORKFLOW_YAML_GUARD.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1287_workflow_yaml_guard.txt"
+  ],
+  "commit_sha": "4635525361d6e7192541bdca953ac24ee866d2ec",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1287_workflow_yaml_guard.md",
+  "completed_at": "2026-06-01T10:24:22Z"
+}
