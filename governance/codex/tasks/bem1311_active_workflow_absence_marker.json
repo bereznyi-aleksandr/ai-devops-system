@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1311_active_workflow_absence_marker",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1311 workflow absence marker",
+  "objective": "Create file governance/state/bem1311_active_workflow_absence_marker.json with content {\"bem_id\":\"BEM-1311\",\"created_at_utc3\":\"2026-06-01 | 14:16 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Active workflow absence verification marker\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1310\",\"latest_proof_sha\":\"cb6ed2f4055c9957b0905656d57f77d9c2b20581\",\"expected_active_file\":\".github/workflows/governance-validation-ci.yml\",\"expected_state\":\"absent_until_reenable_gate\",\"next_action\":\"BEM-1312 production telegram receipt placeholder guard\"}\nCreate file governance/reports/BEM1311_ACTIVE_WORKFLOW_ABSENCE_MARKER.md with content BEM-1311 | ACTIVE WORKFLOW ABSENCE VERIFICATION MARKER | 2026-06-01 | 14:16 (UTC+3)\n\nЭтап: Active workflow absence verification marker — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1310 completed with SHA `cb6ed2f4055c9957b0905656d57f77d9c2b20581`.\n✅ Active broken `governance-validation-ci.yml` was moved out in BEM-1293.\n✅ Marker records expected state: active workflow absent until re-enable gate.\n⚠️ This marker is not external GitHub UI proof.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Active workflow absence verification marker — 1/1 (100%) | Active workflow absence state recorded |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; re-enable pending |\n| Следующее действие | BEM-1312 production telegram receipt placeholder guard | Prevent fake Telegram receipt from becoming proof |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1311 | ACTIVE WORKFLOW ABSENCE VERIFICATION MARKER | 2026-06-01 | 14:16 (UTC+3)\n- BEM-1310 completed with SHA cb6ed2f4055c9957b0905656d57f77d9c2b20581.\n- Recorded active governance workflow expected absent until re-enable gate.\n- Release PASS not issued.\n- Next action: BEM-1312 production telegram receipt placeholder guard.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1311_active_workflow_absence_marker.md",
+    "result_json": "governance/codex/results/bem1311_active_workflow_absence_marker.json"
+  },
+  "created_at": "2026-06-01T12:10:35.009Z"
+}
