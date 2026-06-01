@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1323_real_receipt_blockers_dashboard",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/REAL_RECEIPT_BLOCKERS_DASHBOARD.json",
+    "create:governance/reports/BEM1323_REAL_RECEIPT_BLOCKERS_DASHBOARD.md",
+    "create:governance/state/bem1323_real_receipt_blockers_dashboard.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/REAL_RECEIPT_BLOCKERS_DASHBOARD.json",
+    "governance/reports/BEM1323_REAL_RECEIPT_BLOCKERS_DASHBOARD.md",
+    "governance/state/bem1323_real_receipt_blockers_dashboard.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1323_real_receipt_blockers_dashboard.txt"
+  ],
+  "commit_sha": "cd095a9ded18ea83be4b37adcc5cdcb45a1ad687",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1323_real_receipt_blockers_dashboard.md",
+  "completed_at": "2026-06-01T12:51:42Z"
+}
