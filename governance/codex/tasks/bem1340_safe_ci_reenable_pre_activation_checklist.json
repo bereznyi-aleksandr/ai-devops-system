@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1340_safe_ci_reenable_pre_activation_checklist",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1340 CI pre-activation checklist",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_REENABLE_PRE_ACTIVATION_CHECKLIST.md with content BEM-1340 | SAFE CI RE-ENABLE PRE-ACTIVATION CHECKLIST | 2026-06-01 | 15:27 (UTC+3)\n\nЭтап: Safe CI re-enable pre-activation checklist — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Check | Required state | Why |\n|---|---|---|\n| Active workflow | `.github/workflows/governance-validation-ci.yml` absent | Prevent repeat GitHub syntax blocker |\n| Candidate workflow | `governance/workflows_disabled/governance-validation-ci.generated.yml` exists | Candidate must be staged outside active path |\n| Generator | `governance/tools/generate_governance_validation_workflow.py` exists | Workflow must be generated consistently |\n| Generator test | `governance/tests/run_workflow_generator_test.py` exists | Candidate must be checked before activation |\n| Schedule triggers | Forbidden | Contract prohibits schedule triggers except curator-hourly-report |\n| Comment-only workflow | Forbidden | GitHub treats comment-only `.yml` in workflows path as invalid |\n| Release PASS | Forbidden | CI syntax acceptance is not release proof |\n\nЧек-лист:\n✅ BEM-1339 completed with SHA `37ebbfa1311238c7a5fb3f638f7195597948e628`.\n✅ Pre-activation checklist created outside active workflow path.\n✅ Checklist blocks active restore unless candidate and generator path are present.\n✅ Checklist explicitly forbids comment-only workflow and schedule triggers.\n⚠️ Active governance-validation workflow remains disabled until explicit activation task.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI re-enable pre-activation checklist — 1/1 (100%) | Pre-activation checks documented |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; CI activation still gated |\n| Следующее действие | BEM-1341 safe CI activation decision record | Record decision boundary before any active workflow restore |\n\nNo issue comments.\nCreate file governance/state/bem1340_safe_ci_reenable_pre_activation_checklist.json with content {\"bem_id\":\"BEM-1340\",\"created_at_utc3\":\"2026-06-01 | 15:27 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI re-enable pre-activation checklist\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1339\",\"latest_proof_sha\":\"37ebbfa1311238c7a5fb3f638f7195597948e628\",\"next_action\":\"BEM-1341 safe CI activation decision record\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1340 | SAFE CI RE-ENABLE PRE-ACTIVATION CHECKLIST | 2026-06-01 | 15:27 (UTC+3)\n- BEM-1339 completed with SHA 37ebbfa1311238c7a5fb3f638f7195597948e628.\n- Created safe CI re-enable pre-activation checklist.\n- Release PASS not issued.\n- Next action: BEM-1341 safe CI activation decision record.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1340_safe_ci_reenable_pre_activation_checklist.md",
+    "result_json": "governance/codex/results/bem1340_safe_ci_reenable_pre_activation_checklist.json"
+  },
+  "created_at": "2026-06-01T14:29:48.001Z"
+}
