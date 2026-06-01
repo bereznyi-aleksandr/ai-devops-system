@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1343_ci_reenable_go_nogo_matrix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflows_disabled/SAFE_CI_REENABLE_GO_NOGO_MATRIX.md",
+    "create:governance/state/bem1343_ci_reenable_go_nogo_matrix.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/workflows_disabled/SAFE_CI_REENABLE_GO_NOGO_MATRIX.md",
+    "governance/state/bem1343_ci_reenable_go_nogo_matrix.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1343_ci_reenable_go_nogo_matrix.txt"
+  ],
+  "commit_sha": "6d2b32814119ee43e43bde1a1a524569a0bc08ee",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1343_ci_reenable_go_nogo_matrix.md",
+  "completed_at": "2026-06-01T14:37:30Z"
+}
