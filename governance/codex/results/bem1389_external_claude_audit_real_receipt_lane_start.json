@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1389_external_claude_audit_real_receipt_lane_start",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_REAL_RECEIPT_LANE_START.md",
+    "create:governance/state/bem1389_external_claude_audit_real_receipt_lane_start.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_REAL_RECEIPT_LANE_START.md",
+    "governance/state/bem1389_external_claude_audit_real_receipt_lane_start.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1389_external_claude_audit_real_receipt_lane_start.txt"
+  ],
+  "commit_sha": "eefe2be414e787903830953f9a0f2560c4dabde9",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1389_external_claude_audit_real_receipt_lane_start.md",
+  "completed_at": "2026-06-01T16:11:39Z"
+}
