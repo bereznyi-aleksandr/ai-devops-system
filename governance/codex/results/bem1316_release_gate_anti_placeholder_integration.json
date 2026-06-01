@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1316_release_gate_anti_placeholder_integration",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_release_decision_with_receipt_and_placeholder_bundles.py",
+    "create:governance/release/release_decision_gate_with_receipt_and_placeholder_bundles.json",
+    "create:governance/reports/BEM1316_RELEASE_GATE_ANTI_PLACEHOLDER_INTEGRATION.md",
+    "create:governance/state/bem1316_release_gate_anti_placeholder_integration.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_release_decision_with_receipt_and_placeholder_bundles.py",
+    "governance/release/release_decision_gate_with_receipt_and_placeholder_bundles.json",
+    "governance/reports/BEM1316_RELEASE_GATE_ANTI_PLACEHOLDER_INTEGRATION.md",
+    "governance/state/bem1316_release_gate_anti_placeholder_integration.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1316_release_gate_anti_placeholder_integration.txt"
+  ],
+  "commit_sha": "938722c108a71f91e7958970ce3cbdfbace9e567",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1316_release_gate_anti_placeholder_integration.md",
+  "completed_at": "2026-06-01T12:36:19Z"
+}
