@@ -1272,3 +1272,5 @@ No issue comments.
 - Aggregated three hard blockers: Telegram, live
 ### BEM-1393 | FINAL CURRENT BLOCKER CANONICAL REPORT CONTINUE | 2026-06-01 | 18:14 (UTC+3)
 - BEM-1392 completed with SHA eaafe15928979aa26a5f56e6fdfff4b1e11102ee
+### BEM-1394 | RECONCILE BEM-1391 AND LOCK NEXT LANE | 2026-06-01 | 18:15 (UTC+3)
+- Reconciled BEM-1391 SHA 2c9e0e7afa3103836cd128096d84a818d5545080
