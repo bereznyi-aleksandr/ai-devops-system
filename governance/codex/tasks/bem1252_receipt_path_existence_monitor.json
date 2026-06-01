@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1252_receipt_path_existence_monitor",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1252 receipt path monitor",
+  "objective": "Create file governance/state/bem1252_receipt_path_existence_monitor.json with content {\"bem_id\":\"BEM-1252\",\"created_at_utc3\":\"2026-06-01 | 07:45 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Receipt path existence monitor\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1251\",\"latest_proof_sha\":\"7336699a6fe84fb63aa9f30162618ad1ee0fd42d\",\"expected_receipt_paths\":[{\"path\":\"governance/proofs/external/telegram/production_receipt.json\",\"status\":\"expected_missing_until_external_receipt_arrives\"},{\"path\":\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"status\":\"expected_missing_until_external_receipt_arrives\"},{\"path\":\"governance/proofs/external/claude/external_claude_audit_result.json\",\"status\":\"expected_missing_until_external_receipt_arrives\"}],\"next_action\":\"BEM-1253 unified capture readiness mirror\"}\nCreate file governance/reports/BEM1252_RECEIPT_PATH_EXISTENCE_MONITOR.md with content BEM-1252 | RECEIPT PATH EXISTENCE MONITOR | 2026-06-01 | 07:45 (UTC+3)\n\nЭтап: Receipt path existence monitor — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1251 completed with SHA `7336699a6fe84fb63aa9f30162618ad1ee0fd42d`.\n✅ Created `governance/state/bem1252_receipt_path_existence_monitor.json`.\n✅ Expected receipt paths for Telegram, runtime and Claude are tracked.\n⚠️ Receipt paths remain expected-missing until external receipts arrive.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt path existence monitor — 1/1 (100%) | Receipt path monitor created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; receipts missing |\n| Следующее действие | BEM-1253 unified capture readiness mirror | Continue readiness mirroring |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1252 | RECEIPT PATH EXISTENCE MONITOR | 2026-06-01 | 07:45 (UTC+3)\n- BEM-1251 completed with SHA 7336699a6fe84fb63aa9f30162618ad1ee0fd42d.\n- Created receipt path existence monitor.\n- Release PASS not issued.\n- Next action: BEM-1253 unified capture readiness mirror.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1252_receipt_path_existence_monitor.md",
+    "result_json": "governance/codex/results/bem1252_receipt_path_existence_monitor.json"
+  },
+  "created_at": "2026-06-01T04:46:48.162Z"
+}
