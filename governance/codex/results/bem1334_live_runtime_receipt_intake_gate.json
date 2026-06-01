@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1334_live_runtime_receipt_intake_gate",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_INTAKE_GATE.json",
+    "create:governance/reports/BEM1334_LIVE_RUNTIME_RECEIPT_INTAKE_GATE.md",
+    "create:governance/state/bem1334_live_runtime_receipt_intake_gate.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_INTAKE_GATE.json",
+    "governance/reports/BEM1334_LIVE_RUNTIME_RECEIPT_INTAKE_GATE.md",
+    "governance/state/bem1334_live_runtime_receipt_intake_gate.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1334_live_runtime_receipt_intake_gate.txt"
+  ],
+  "commit_sha": "ea5071dc892a87be37b0e32bda855e38de65feb5",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1334_live_runtime_receipt_intake_gate.md",
+  "completed_at": "2026-06-01T13:15:14Z"
+}
