@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1210_contour_registry_integrity_hardening",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1210 contour integrity",
+  "objective": "Create file governance/validators/validate_contour_registry_integrity.py with content import json\nfrom pathlib import Path\n\nCONTOURS = Path(\"governance/contours/contours_registry.json\")\nPASSPORTS = Path(\"governance/objects/object_passports.json\")\nEXPECTED_ALGORITHM = [\"analyst_proposal\", \"auditor_precheck\", \"worker_execution\", \"auditor_postcheck\"]\n\n\ndef validate():\n    contours = json.loads(CONTOURS.read_text(encoding=\"utf-8\")).get(\"contours\", [])\n    objects = {item.get(\"id\") for item in json.loads(PASSPORTS.read_text(encoding=\"utf-8\")).get(\"objects\", [])}\n    errors = []\n    expected_ids = {\"C1\", \"C2\", \"C3\"}\n    ids = {item.get(\"id\") for item in contours}\n    missing = sorted(expected_ids - ids)\n    if missing:\n        errors.append(f\"missing contours: {missing}\")\n    for item in contours:\n        cid = item.get(\"id\", \"UNKNOWN\")\n        if item.get(\"director\") not in objects:\n            errors.append(f\"{cid}: director object missing\")\n        if item.get(\"curator\") not in objects:\n            errors.append(f\"{cid}: curator object missing\")\n        if item.get(\"algorithm\") != EXPECTED_ALGORITHM:\n            errors.append(f\"{cid}: invalid algorithm\")\n        roles = set(item.get(\"roles\", []))\n        if roles != {\"analyst\", \"auditor\", \"worker\"}:\n            errors.append(f\"{cid}: roles must be analyst/auditor/worker\")\n    return errors\n\nif __name__ == \"__main__\":\n    errs = validate()\n    if errs:\n        print(\"FAIL\")\n        for err in errs:\n            print(err)\n        raise SystemExit(1)\n    print(\"PASS contour_registry_integrity\")\nCreate file governance/reports/BEM1210_CONTOUR_REGISTRY_INTEGRITY_HARDENING.md with content BEM-1210 | CONTOUR REGISTRY INTEGRITY HARDENING | 2026-06-01 | 06:26 (UTC+3)\n\nЭтап: Contour registry integrity hardening — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1209 completed with SHA `5d457dc1bbfffb34e631cfc6ddb3ab43aee77429`.\n✅ Created `governance/validators/validate_contour_registry_integrity.py`.\n✅ Validator checks C1/C2/C3, director/curator links, roles and canonical contour algorithm.\n⚠️ This is integrity hardening, not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Contour registry integrity hardening — 1/1 (100%) | Contour integrity validator created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; hardening continues |\n| Следующее действие | BEM-1211 provider policy integrity hardening | Continue integrity hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1210 | CONTOUR REGISTRY INTEGRITY HARDENING | 2026-06-01 | 06:26 (UTC+3)\n- BEM-1209 completed with SHA 5d457dc1bbfffb34e631cfc6ddb3ab43aee77429.\n- Created contour registry integrity validator.\n- Release PASS not issued.\n- Next action: BEM-1211 provider policy integrity hardening.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1210_contour_registry_integrity_hardening.md",
+    "result_json": "governance/codex/results/bem1210_contour_registry_integrity_hardening.json"
+  },
+  "created_at": "2026-06-01T03:27:43.080Z"
+}
