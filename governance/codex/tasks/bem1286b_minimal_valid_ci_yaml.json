@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1286b_minimal_valid_ci_yaml",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1286B minimal CI YAML",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: Governance Validation CI\n\non:\n  push:\n  pull_request:\n\njobs:\n  governance_validation:\n    name: Governance validation\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Setup Python\n        uses: actions/setup-python@v5\n        with:\n          python-version: \"3.11\"\n      - name: Validate foundation\n        run: python governance/validators/validate_foundation_all.py\n      - name: Run minimal governance loop\n        run: python governance/tests/run_bem1284_minimal_governance_loop.py\n      - name: Run CI E2E capture\n        run: python governance/tests/run_bem1285_ci_e2e_capture.py\nCreate file governance/reports/BEM1286B_MINIMAL_VALID_CI_YAML.md with content BEM-1286B | MINIMAL VALID CI YAML | 2026-06-01 | 12:53 (UTC+3)\n\nЭтап: CI workflow YAML syntax repair — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Operator screenshot confirmed GitHub still rejects `.github/workflows/governance-validation-ci.yml`.\n✅ Replaced workflow with minimal standard GitHub Actions syntax.\n✅ Removed quoted `on` key and artifact upload until syntax is accepted.\n✅ No schedule triggers added.\n⚠️ Next proof must be GitHub Actions accepting the workflow and executing jobs.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | CI workflow YAML syntax repair — 1/1 (100%) | Minimal workflow syntax restored |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI proof pending |\n| Следующее действие | BEM-1287 CI run verification | Verify workflow is accepted by GitHub Actions |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1286B | MINIMAL VALID CI YAML | 2026-06-01 | 12:53 (UTC+3)\n- Operator screenshot confirmed CI workflow still invalid after BEM-1286A.\n- Replaced workflow with minimal standard GitHub Actions syntax and no schedule triggers.\n- Release PASS not issued.\n- Next action: BEM-1287 CI run verification.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1286b_minimal_valid_ci_yaml.md",
+    "result_json": "governance/codex/results/bem1286b_minimal_valid_ci_yaml.json"
+  },
+  "created_at": "2026-06-01T09:54:47.997Z"
+}
