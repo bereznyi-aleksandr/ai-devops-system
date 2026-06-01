@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1230_final_no_pass_status_mirror",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1230_final_no_pass_status_mirror.json",
+    "create:governance/reports/BEM1230_FINAL_NO_PASS_STATUS_MIRROR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1230_final_no_pass_status_mirror.json",
+    "governance/reports/BEM1230_FINAL_NO_PASS_STATUS_MIRROR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1230_final_no_pass_status_mirror.txt"
+  ],
+  "commit_sha": "0e570f68cfc124af4f49f83af927e28c4af89b8b",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1230_final_no_pass_status_mirror.md",
+  "completed_at": "2026-06-01T03:55:30Z"
+}
