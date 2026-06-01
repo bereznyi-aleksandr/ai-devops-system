@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1322_release_decision_preflight_after_receipts",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/release/RELEASE_DECISION_PREFLIGHT_AFTER_RECEIPTS.md",
+    "create:governance/state/bem1322_release_decision_preflight_after_receipts.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/release/RELEASE_DECISION_PREFLIGHT_AFTER_RECEIPTS.md",
+    "governance/state/bem1322_release_decision_preflight_after_receipts.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1322_release_decision_preflight_after_receipts.txt"
+  ],
+  "commit_sha": "ce3ceb25c7a258b60866cee555b341098f15957b",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1322_release_decision_preflight_after_receipts.md",
+  "completed_at": "2026-06-01T12:49:41Z"
+}
