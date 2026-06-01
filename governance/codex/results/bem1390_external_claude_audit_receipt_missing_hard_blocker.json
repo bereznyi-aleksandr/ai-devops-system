@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1390_external_claude_audit_receipt_missing_hard_blocker",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_MISSING_HARD_BLOCKER.json",
+    "create:governance/reports/BEM1390_EXTERNAL_CLAUDE_AUDIT_RECEIPT_MISSING_HARD_BLOCKER.md",
+    "create:governance/state/bem1390_external_claude_audit_receipt_missing_hard_blocker.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_MISSING_HARD_BLOCKER.json",
+    "governance/reports/BEM1390_EXTERNAL_CLAUDE_AUDIT_RECEIPT_MISSING_HARD_BLOCKER.md",
+    "governance/state/bem1390_external_claude_audit_receipt_missing_hard_blocker.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1390_external_claude_audit_receipt_missing_hard_blocker.txt"
+  ],
+  "commit_sha": "b77d70e9af907c142916c66d309db1eab0952dba",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1390_external_claude_audit_receipt_missing_hard_blocker.md",
+  "completed_at": "2026-06-01T16:12:15Z"
+}
