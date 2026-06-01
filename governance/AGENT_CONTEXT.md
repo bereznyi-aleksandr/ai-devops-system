@@ -1316,3 +1316,5 @@ No issue comments.
 - BEM-1415 completed with SHA bc6a8d04f245344db6daae8f8872ac3417c2400f
 ### BEM-1417 | AGGREGATE REAL EVIDENCE WAIT-STATE GUARDS | 2026-06-01 | 18:33 (UTC+3)
 - Aggregated real evidence wait-state guards
+### BEM-1418 | RECONCILE WAIT-STATE QUEUED GUARDS | 2026-06-01 | 18:35 (UTC+3)
+- Reconciled BEM-1414 SHA 2d35a83c4e2617901a61e6e13fbfc34611268e91
