@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1406_safe_ci_candidate_validation_checklist",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflows_disabled/SAFE_CI_ACTIVATION_GATE_CANDIDATE_VALIDATION_CHECKLIST.md",
+    "create:governance/state/bem1406_safe_ci_candidate_validation_checklist.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/workflows_disabled/SAFE_CI_ACTIVATION_GATE_CANDIDATE_VALIDATION_CHECKLIST.md",
+    "governance/state/bem1406_safe_ci_candidate_validation_checklist.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1406_safe_ci_candidate_validation_checklist.txt"
+  ],
+  "commit_sha": "c55883bb580c32a70e830033247871f0467b5eb0",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1406_safe_ci_candidate_validation_checklist.md",
+  "completed_at": "2026-06-01T16:26:14Z"
+}
