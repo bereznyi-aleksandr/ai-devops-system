@@ -1,0 +1,6 @@
+name: governance-validation-ci
+on:
+  push:
+  pull_request:
+jobs:
+  validation:
