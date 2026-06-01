@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1339_safe_ci_reenable_candidate_manifest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1339 CI candidate manifest",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_REENABLE_CANDIDATE_MANIFEST.json with content {\"bem_id\":\"BEM-1339\",\"created_at_utc3\":\"2026-06-01 | 15:25 (UTC+3)\",\"release_pass\":false,\"candidate_name\":\"governance-validation-ci.generated.yml\",\"candidate_path\":\"governance/workflows_disabled/governance-validation-ci.generated.yml\",\"active_target_path\":\".github/workflows/governance-validation-ci.yml\",\"activation_status\":\"not_activated\",\"required_pre_activation_checks\":[\"active workflow absent\",\"generator exists\",\"generator test exists\",\"no schedule triggers\",\"no comment-only workflow\",\"no empty workflow\",\"no Release PASS claim\"],\"required_post_activation_proof\":[\"GitHub Actions accepts workflow syntax\",\"GitHub Actions starts validation job\",\"no old failed screenshot used as proof\"],\"rollback_if_rejected\":\"move or delete active workflow immediately; keep Release PASS blocked\",\"next_action\":\"BEM-1340 safe CI re-enable pre-activation checklist\"}\nCreate file governance/reports/BEM1339_SAFE_CI_REENABLE_CANDIDATE_MANIFEST.md with content BEM-1339 | SAFE CI RE-ENABLE CANDIDATE MANIFEST | 2026-06-01 | 15:25 (UTC+3)\n\nЭтап: Safe CI re-enable candidate manifest — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1338 completed with SHA `402b08d98fa80197daea9e4131a6bad2650703ca`.\n✅ Created `governance/workflows_disabled/SAFE_CI_REENABLE_CANDIDATE_MANIFEST.json`.\n✅ Manifest keeps candidate workflow outside active `.github/workflows/` path.\n✅ Manifest requires pre-activation checks and post-activation GitHub Actions acceptance proof.\n✅ Manifest defines rollback if GitHub rejects workflow.\n⚠️ Active governance-validation workflow remains disabled.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI re-enable candidate manifest — 1/1 (100%) | Candidate activation is documented but not performed |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; CI restore must remain gated |\n| Следующее действие | BEM-1340 safe CI re-enable pre-activation checklist | Verify conditions before any active workflow restore |\n\nNo issue comments.\nCreate file governance/state/bem1339_safe_ci_reenable_candidate_manifest.json with content {\"bem_id\":\"BEM-1339\",\"created_at_utc3\":\"2026-06-01 | 15:25 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI re-enable candidate manifest\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1338\",\"latest_proof_sha\":\"402b08d98fa80197daea9e4131a6bad2650703ca\",\"next_action\":\"BEM-1340 safe CI re-enable pre-activation checklist\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1339 | SAFE CI RE-ENABLE CANDIDATE MANIFEST | 2026-06-01 | 15:25 (UTC+3)\n- BEM-1338 completed with SHA 402b08d98fa80197daea9e4131a6bad2650703ca.\n- Created safe CI re-enable candidate manifest outside active workflow path.\n- Release PASS not issued.\n- Next action: BEM-1340 safe CI re-enable pre-activation checklist.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1339_safe_ci_reenable_candidate_manifest.md",
+    "result_json": "governance/codex/results/bem1339_safe_ci_reenable_candidate_manifest.json"
+  },
+  "created_at": "2026-06-01T14:27:17.390Z"
+}
