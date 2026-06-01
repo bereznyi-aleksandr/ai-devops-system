@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1356_safe_ci_activation_explicit_task_template",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1356 CI activation template",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_ACTIVATION_EXPLICIT_TASK_TEMPLATE.md with content BEM-1356 | SAFE CI ACTIVATION EXPLICIT TASK TEMPLATE | 2026-06-01 | 17:40 (UTC+3)\n\nЭтап: Safe CI activation explicit task template — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nThis is a template only. It must not activate `.github/workflows/governance-validation-ci.yml` by itself.\n\n| Step | Action | Acceptance |\n|---:|---|---|\n| 1 | Confirm active workflow is absent | `.github/workflows/governance-validation-ci.yml` does not exist |\n| 2 | Confirm generated candidate exists | `governance/workflows_disabled/governance-validation-ci.generated.yml` exists |\n| 3 | Confirm no forbidden snippets | No schedule, cron, Release PASS, comment-only or empty workflow |\n| 4 | Copy candidate to active path in a dedicated activation BEM | Active workflow created only once and intentionally |\n| 5 | Monitor GitHub Actions acceptance | Workflow syntax accepted and job graph generated |\n| 6 | Roll back if rejected | Move/delete active workflow immediately |\n\nЧек-лист:\n✅ BEM-1354 completed with SHA `579e8c75a4cefa61a71920ce72158a7d066b8642`.\n⚠️ BEM-1355 may still be queued and is not counted as completed unless SHA exists.\n✅ Explicit activation template created.\n✅ Template does not activate workflow.\n⚠️ Active governance-validation workflow remains disabled until explicit activation BEM.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI activation explicit task template — 1/1 (100%) | Activation procedure documented without activating workflow |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; CI activation still gated |\n| Следующее действие | BEM-1357 safe CI rollback task template | Prepare rollback template before any activation |\n\nNo issue comments.\nCreate file governance/state/bem1356_safe_ci_activation_explicit_task_template.json with content {\"bem_id\":\"BEM-1356\",\"created_at_utc3\":\"2026-06-01 | 17:40 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI activation explicit task template\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1354\",\"latest_proof_sha\":\"579e8c75a4cefa61a71920ce72158a7d066b8642\",\"note\":\"BEM-1355 was queued at dispatch time and must not be counted without SHA\",\"next_action\":\"BEM-1357 safe CI rollback task template\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1356 | SAFE CI ACTIVATION EXPLICIT TASK TEMPLATE | 2026-06-01 | 17:40 (UTC+3)\n- BEM-1354 completed with SHA 579e8c75a4cefa61a71920ce72158a7d066b8642.\n- Created explicit safe CI activation task template without activating workflow.\n- BEM-1355 was queued at dispatch time and is not counted without SHA.\n- Release PASS not issued.\n- Next action: BEM-1357 safe CI rollback task template.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1356_safe_ci_activation_explicit_task_template.md",
+    "result_json": "governance/codex/results/bem1356_safe_ci_activation_explicit_task_template.json"
+  },
+  "created_at": "2026-06-01T15:41:11.035Z"
+}
