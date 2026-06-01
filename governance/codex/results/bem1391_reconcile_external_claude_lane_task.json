@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1391_reconcile_external_claude_lane_task",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1391_RECONCILE_EXTERNAL_CLAUDE_LANE_TASK.md",
+    "create:governance/state/bem1391_reconcile_external_claude_lane_task.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1391_RECONCILE_EXTERNAL_CLAUDE_LANE_TASK.md",
+    "governance/state/bem1391_reconcile_external_claude_lane_task.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1391_reconcile_external_claude_lane_task.txt"
+  ],
+  "commit_sha": "2c9e0e7afa3103836cd128096d84a818d5545080",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1391_reconcile_external_claude_lane_task.md",
+  "completed_at": "2026-06-01T16:13:28Z"
+}
