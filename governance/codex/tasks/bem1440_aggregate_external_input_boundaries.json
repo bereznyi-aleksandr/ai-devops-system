@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1440_aggregate_external_input_boundaries",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1440 aggregate input boundaries",
+  "objective": "Create file governance/state/AGGREGATE_EXTERNAL_INPUT_BOUNDARIES.json with content {\"bem_id\":\"BEM-1440\",\"created_at_utc3\":\"2026-06-01 | 18:55 (UTC+3)\",\"release_pass\":false,\"boundaries\":[{\"lane\":\"production_telegram\",\"boundary\":\"governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_MISSING_EXTERNAL_INPUT_BOUNDARY.json\",\"required_input\":\"real production Telegram delivery evidence\",\"status\":\"waiting_external_input\"},{\"lane\":\"live_runtime\",\"boundary\":\"governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_MISSING_EXTERNAL_INPUT_BOUNDARY.json\",\"required_input\":\"real live runtime execution evidence\",\"status\":\"waiting_external_live_input\"},{\"lane\":\"external_claude_audit\",\"boundary\":\"governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_MISSING_EXTERNAL_INPUT_BOUNDARY.json\",\"required_input\":\"real external Claude audit evidence\",\"status\":\"waiting_external_audit_input\"}],\"rule\":\"Repository-side preparation cannot substitute for external/live evidence.\",\"next_action\":\"BEM-1441 reconcile BEM-1438 and boundary aggregate\"}\nCreate file governance/reports/BEM1440_AGGREGATE_EXTERNAL_INPUT_BOUNDARIES.md with content BEM-1440 | AGGREGATE EXTERNAL-INPUT BOUNDARIES | 2026-06-01 | 18:55 (UTC+3)\n\nЭтап: Aggregate external-input boundaries — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1437 completed with SHA `349a6d3dbf2cf20399464f70408ebf5c976912c4`.\n⚠️ BEM-1438 may still be queued and is not counted without SHA.\n✅ BEM-1439 completed with SHA `d320f97c05ff3ab1d5cf1d553d6c3f39c9e73fda`.\n✅ Created `governance/state/AGGREGATE_EXTERNAL_INPUT_BOUNDARIES.json`.\n✅ External/live input boundaries aggregated.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ CI activation acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Aggregate external-input boundaries — 1/1 (100%) | Boundaries aggregated without fake proof |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; external/live evidence still required |\n| Следующее действие | BEM-1441 reconcile BEM-1438 and boundary aggregate | Reconcile queued runtime boundary when SHA appears |\n\nNo issue comments.\nCreate file governance/state/bem1440_aggregate_external_input_boundaries.json with content {\"bem_id\":\"BEM-1440\",\"created_at_utc3\":\"2026-06-01 | 18:55 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Aggregate external-input boundaries\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"known_completed\":{\"BEM-1437\":\"349a6d3dbf2cf20399464f70408ebf5c976912c4\",\"BEM-1439\":\"d320f97c05ff3ab1d5cf1d553d6c3f39c9e73fda\"},\"queued_not_counted\":[\"BEM-1438\"],\"next_action\":\"BEM-1441 reconcile BEM-1438 and boundary aggregate\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1440 | AGGREGATE EXTERNAL-INPUT BOUNDARIES | 2026-06-01 | 18:55 (UTC+3)\n- Aggregated external/live input boundaries.\n- BEM-1438 was queued at observation time and is not counted without SHA.\n- Release PASS not issued.\n- Next action: BEM-1441 reconcile BEM-1438 and boundary aggregate.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1440_aggregate_external_input_boundaries.md",
+    "result_json": "governance/codex/results/bem1440_aggregate_external_input_boundaries.json"
+  },
+  "created_at": "2026-06-01T16:56:06.754Z"
+}
