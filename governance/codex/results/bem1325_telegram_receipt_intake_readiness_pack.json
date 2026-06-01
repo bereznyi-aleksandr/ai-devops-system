@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1325_telegram_receipt_intake_readiness_pack",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_INTAKE_READINESS_PACK.md",
+    "create:governance/state/bem1325_telegram_receipt_intake_readiness_pack.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_INTAKE_READINESS_PACK.md",
+    "governance/state/bem1325_telegram_receipt_intake_readiness_pack.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1325_telegram_receipt_intake_readiness_pack.txt"
+  ],
+  "commit_sha": "93d3324ae479402cf89902e85585574577377d84",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1325_telegram_receipt_intake_readiness_pack.md",
+  "completed_at": "2026-06-01T12:56:25Z"
+}
