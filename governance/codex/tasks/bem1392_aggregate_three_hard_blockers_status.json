@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1392_aggregate_three_hard_blockers_status",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1392 aggregate blockers",
+  "objective": "Create file governance/state/AGGREGATE_THREE_HARD_BLOCKERS_STATUS.json with content {\"bem_id\":\"BEM-1392\",\"created_at_utc3\":\"2026-06-01 | 18:12 (UTC+3)\",\"release_pass\":false,\"hard_blockers\":[{\"id\":\"production_telegram_receipt_missing\",\"required_path\":\"governance/proofs/external/telegram/production_receipt.json\",\"status\":\"open\",\"hard_blocker_record\":\"governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_MISSING_HARD_BLOCKER.json\"},{\"id\":\"live_runtime_receipt_missing\",\"required_path\":\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"status\":\"open\",\"hard_blocker_record\":\"governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_MISSING_HARD_BLOCKER.json\"},{\"id\":\"external_claude_audit_result_missing\",\"required_path\":\"governance/proofs/external/claude/external_claude_audit_result.json\",\"status\":\"open\",\"hard_blocker_record\":\"governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_MISSING_HARD_BLOCKER.json\"}],\"repo_side_ready\":true,\"allowed_resolution\":\"provide real external/live receipts and pass validators\",\"not_release_pass\":true,\"next_action\":\"BEM-1393 final current blocker canonical report continue\"}\nCreate file governance/reports/BEM1392_AGGREGATE_THREE_HARD_BLOCKERS_STATUS.md with content BEM-1392 | AGGREGATE THREE HARD BLOCKERS STATUS | 2026-06-01 | 18:12 (UTC+3)\n\nЭтап: Aggregate three hard blockers status — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n⚠️ BEM-1391 may still be queued and is not counted without SHA.\n✅ Created `governance/state/AGGREGATE_THREE_HARD_BLOCKERS_STATUS.json`.\n✅ Aggregated Telegram, live runtime and external Claude hard blockers.\n✅ All three blockers remain open because real receipts are missing.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until explicit safe activation and GitHub acceptance proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Aggregate three hard blockers status — 1/1 (100%) | Three hard blockers are aggregated in one status file |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; all release receipts still missing |\n| Следующее действие | BEM-1393 final current blocker canonical report continue | Canonical report plus immediate continuation |\n\nNo issue comments.\nCreate file governance/state/bem1392_aggregate_three_hard_blockers_status.json with content {\"bem_id\":\"BEM-1392\",\"created_at_utc3\":\"2026-06-01 | 18:12 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Aggregate three hard blockers status\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"queued_not_counted\":[\"BEM-1391\"],\"next_action\":\"BEM-1393 final current blocker canonical report continue\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1392 | AGGREGATE THREE HARD BLOCKERS STATUS | 2026-06-01 | 18:12 (UTC+3)\n- Aggregated three hard blockers: Telegram, live runtime, external Claude receipts missing.\n- BEM-1391 was queued at observation time and is not counted without SHA.\n- Release PASS not issued.\n- Next action: BEM-1393 final current blocker canonical report continue.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1392_aggregate_three_hard_blockers_status.md",
+    "result_json": "governance/codex/results/bem1392_aggregate_three_hard_blockers_status.json"
+  },
+  "created_at": "2026-06-01T16:13:47.277Z"
+}
