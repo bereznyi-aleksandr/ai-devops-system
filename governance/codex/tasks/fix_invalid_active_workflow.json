@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "fix_invalid_active_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Fix invalid active workflow",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Fix concrete GitHub Actions failure: if .github/workflows/governance-validation-ci.yml exists and contains archived placeholder text such as ARCHIVED, Moved to:, or At:, move it to governance/archive/invalid_active_workflows/governance-validation-ci.yml.invalid preserving content. Ensure .github/workflows/governance-validation-ci.yml is absent after move. Do not create a new active workflow. Do not claim Release PASS. Create governance/archive/invalid_active_workflows/MANIFEST.md with moved path and reason. Append one concise AGENT_CONTEXT entry: invalid active governance workflow archived; next action KZ-1 runners skeleton repair. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/fix_invalid_active_workflow.md",
+    "result_json": "governance/codex/results/fix_invalid_active_workflow.json"
+  },
+  "created_at": "2026-06-01T17:35:57.187Z"
+}
