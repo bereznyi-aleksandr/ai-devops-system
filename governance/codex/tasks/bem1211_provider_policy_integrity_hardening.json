@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1211_provider_policy_integrity_hardening",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1211 provider integrity",
+  "objective": "Create file governance/validators/validate_provider_policy_integrity.py with content import json\nfrom pathlib import Path\n\nREGISTRY = Path(\"governance/providers/providers_registry.json\")\nPOLICY = Path(\"governance/providers/contour_provider_policy.json\")\n\n\ndef validate():\n    registry = json.loads(REGISTRY.read_text(encoding=\"utf-8\"))\n    policy = json.loads(POLICY.read_text(encoding=\"utf-8\"))\n    errors = []\n    providers = {item.get(\"id\"): item for item in registry.get(\"providers\", [])}\n    for required in [\"gpt\", \"claude_external\", \"mock\"]:\n        if required not in providers:\n            errors.append(f\"missing provider {required}\")\n    for pid, meta in providers.items():\n        if meta.get(\"secrets_in_repo\") is not False:\n            errors.append(f\"{pid}: secrets_in_repo must be false\")\n    contours = {item.get(\"contour\") for item in policy.get(\"policies\", [])}\n    if contours != {\"C1\", \"C2\", \"C3\"}:\n        errors.append(f\"provider policies must cover C1/C2/C3, got {sorted(contours)}\")\n    for item in policy.get(\"policies\", []):\n        if item.get(\"primary\") == \"mock\":\n            errors.append(f\"{item.get('contour')}: mock cannot be primary\")\n        if item.get(\"fallback\") == \"mock\" and item.get(\"fallback_allowed_only_for\") != \"mock_e2e\":\n            errors.append(f\"{item.get('contour')}: mock fallback must be mock_e2e only\")\n    return errors\n\nif __name__ == \"__main__\":\n    errs = validate()\n    if errs:\n        print(\"FAIL\")\n        for err in errs:\n            print(err)\n        raise SystemExit(1)\n    print(\"PASS provider_policy_integrity\")\nCreate file governance/reports/BEM1211_PROVIDER_POLICY_INTEGRITY_HARDENING.md with content BEM-1211 | PROVIDER POLICY INTEGRITY HARDENING | 2026-06-01 | 06:28 (UTC+3)\n\nЭтап: Provider policy integrity hardening — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1210 completed with SHA `85f9983e58eb1b8a3c092877c6059b668bc2f972`.\n✅ Created `governance/validators/validate_provider_policy_integrity.py`.\n✅ Validator checks provider coverage, no secrets in repo, all contours covered and mock restrictions.\n⚠️ This is integrity hardening, not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Provider policy integrity hardening — 1/1 (100%) | Provider integrity validator created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; hardening continues |\n| Следующее действие | BEM-1212 post-integrity-hardening checkpoint | Continue hardening audit |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1211 | PROVIDER POLICY INTEGRITY HARDENING | 2026-06-01 | 06:28 (UTC+3)\n- BEM-1210 completed with SHA 85f9983e58eb1b8a3c092877c6059b668bc2f972.\n- Created provider policy integrity validator.\n- Release PASS not issued.\n- Next action: BEM-1212 post-integrity-hardening checkpoint.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1211_provider_policy_integrity_hardening.md",
+    "result_json": "governance/codex/results/bem1211_provider_policy_integrity_hardening.json"
+  },
+  "created_at": "2026-06-01T03:29:09.079Z"
+}
