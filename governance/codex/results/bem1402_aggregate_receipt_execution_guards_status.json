@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1402_aggregate_receipt_execution_guards_status",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/AGGREGATE_RECEIPT_EXECUTION_GUARDS_STATUS.json",
+    "create:governance/reports/BEM1402_AGGREGATE_RECEIPT_EXECUTION_GUARDS_STATUS.md",
+    "create:governance/state/bem1402_aggregate_receipt_execution_guards_status.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/AGGREGATE_RECEIPT_EXECUTION_GUARDS_STATUS.json",
+    "governance/reports/BEM1402_AGGREGATE_RECEIPT_EXECUTION_GUARDS_STATUS.md",
+    "governance/state/bem1402_aggregate_receipt_execution_guards_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1402_aggregate_receipt_execution_guards_status.txt"
+  ],
+  "commit_sha": "ad862d5501768298f85916071b2b3e303d6cafeb",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1402_aggregate_receipt_execution_guards_status.md",
+  "completed_at": "2026-06-01T16:22:53Z"
+}
