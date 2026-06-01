@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1424_safe_ci_activation_candidate_evidence_pack",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1424 CI candidate evidence",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_ACTIVATION_EXPLICIT_ACTIVATION_CANDIDATE_EVIDENCE_PACK.md with content BEM-1424 | SAFE CI ACTIVATION EXPLICIT ACTIVATION CANDIDATE EVIDENCE PACK | 2026-06-01 | 19:12 (UTC+3)\n\nЭтап: Safe CI activation explicit activation candidate evidence pack — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nThis pack prepares the evidence required before an explicit active workflow restore. It does not create `.github/workflows/governance-validation-ci.yml`.\n\n| Evidence item | Required state | Status |\n|---|---|---|\n| Candidate workflow | `governance/workflows_disabled/governance-validation-ci.generated.yml` | Required before activation |\n| Candidate validation checklist | `governance/workflows_disabled/SAFE_CI_ACTIVATION_GATE_CANDIDATE_VALIDATION_CHECKLIST.md` | Exists |\n| Go/no-go record | `governance/workflows_disabled/SAFE_CI_ACTIVE_WORKFLOW_RESTORE_EXPLICIT_GO_NOGO_RECORD.md` | Exists |\n| Activation boundary | `governance/workflows_disabled/EXPLICIT_CI_ACTIVATION_TASK_BOUNDARY.md` | Exists |\n| Rollback plan | `governance/workflows_disabled/SAFE_CI_ROLLBACK_TASK_TEMPLATE.md` | Exists |\n| Post-push proof | GitHub Actions acceptance proof | Missing |\n\nЧек-лист:\n✅ BEM-1423 completed with SHA `5024a21297e09aee42920f2405398346e7e8c988`.\n✅ Candidate evidence pack created.\n✅ Pack does not activate active workflow.\n✅ GitHub Actions acceptance proof remains missing until explicit activation.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ CI activation acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI activation explicit activation candidate evidence pack — 1/1 (100%) | Evidence pack prepared without active workflow restore |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; CI acceptance still requires explicit activation |\n| Следующее действие | BEM-1425 safe CI activation explicit restore blocker record | Record blocker before any active restore |\n\nNo issue comments.\nCreate file governance/state/bem1424_safe_ci_activation_candidate_evidence_pack.json with content {\"bem_id\":\"BEM-1424\",\"created_at_utc3\":\"2026-06-01 | 19:12 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI activation explicit activation candidate evidence pack\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1423\",\"latest_proof_sha\":\"5024a21297e09aee42920f2405398346e7e8c988\",\"next_action\":\"BEM-1425 safe CI activation explicit restore blocker record\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1424 | SAFE CI ACTIVATION EXPLICIT ACTIVATION CANDIDATE EVIDENCE PACK | 2026-06-01 | 19:12 (UTC+3)\n- BEM-1423 completed with SHA 5024a21297e09aee42920f2405398346e7e8c988.\n- Created safe CI activation candidate evidence pack without active workflow restore.\n- Release PASS not issued.\n- Next action: BEM-1425 safe CI activation explicit restore blocker record.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1424_safe_ci_activation_candidate_evidence_pack.md",
+    "result_json": "governance/codex/results/bem1424_safe_ci_activation_candidate_evidence_pack.json"
+  },
+  "created_at": "2026-06-01T17:13:20.006Z"
+}
