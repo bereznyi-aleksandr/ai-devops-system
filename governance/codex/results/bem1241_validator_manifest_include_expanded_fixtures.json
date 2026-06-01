@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1241_validator_manifest_include_expanded_fixtures",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/bem931_expanded_fixture_manifest.json",
+    "create:governance/reports/BEM1241_VALIDATOR_MANIFEST_INCLUDE_EXPANDED_FIXTURES.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/bem931_expanded_fixture_manifest.json",
+    "governance/reports/BEM1241_VALIDATOR_MANIFEST_INCLUDE_EXPANDED_FIXTURES.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1241_validator_manifest_include_expanded_fixtures.txt"
+  ],
+  "commit_sha": "66625ebed92570ebf470904d507d61ece717f094",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1241_validator_manifest_include_expanded_fixtures.md",
+  "completed_at": "2026-06-01T04:18:10Z"
+}
