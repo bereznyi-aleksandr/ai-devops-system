@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1297_ci_workflow_reenable_gate_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1297 re-enable policy",
+  "objective": "Create file governance/policies/ci_workflow_reenable_gate_policy.json with content {\"bem_id\":\"BEM-1297\",\"created_at_utc3\":\"2026-06-01 | 13:48 (UTC+3)\",\"release_pass\":false,\"policy\":\"governance validation workflow may be restored to .github/workflows only through explicit re-enable gate\",\"requirements\":[\"active governance-validation-ci.yml absent before gate\",\"disabled template exists\",\"workflow generator test passes\",\"no schedule triggers\",\"no release_pass true claims\",\"operator or external proof that GitHub Actions accepts restored workflow after gate\"],\"forbidden\":[\"comment-only yml in .github/workflows\",\"empty yml in .github/workflows\",\"schedule triggers\",\"Release PASS from workflow syntax only\"],\"next_action\":\"BEM-1298 local validation bundle for workflow re-enable\"}\nCreate file governance/reports/BEM1297_CI_WORKFLOW_REENABLE_GATE_POLICY.md with content BEM-1297 | CI WORKFLOW RE-ENABLE GATE POLICY | 2026-06-01 | 13:48 (UTC+3)\n\nЭтап: CI workflow re-enable gate policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1296 completed with SHA `21b61f854f1ae3e1409bf86169ad123fdd13358f`.\n✅ Created `governance/policies/ci_workflow_reenable_gate_policy.json`.\n✅ Policy forbids comment-only/empty `.yml` files in `.github/workflows/`.\n✅ Policy forbids schedule triggers and Release PASS from workflow syntax only.\n✅ Re-enable requires explicit gate and GitHub Actions acceptance proof.\n⚠️ Governance validation CI remains disabled until re-enable gate.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | CI workflow re-enable gate policy — 1/1 (100%) | Safe policy created before restoring active workflow |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; active CI re-enable pending |\n| Следующее действие | BEM-1298 local validation bundle for workflow re-enable | Bundle local validators before active workflow restore |\n\nNo issue comments.\nCreate file governance/state/bem1297_ci_workflow_reenable_gate_policy.json with content {\"bem_id\":\"BEM-1297\",\"created_at_utc3\":\"2026-06-01 | 13:48 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"CI workflow re-enable gate policy\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1296\",\"latest_proof_sha\":\"21b61f854f1ae3e1409bf86169ad123fdd13358f\",\"next_action\":\"BEM-1298 local validation bundle for workflow re-enable\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1297 | CI WORKFLOW RE-ENABLE GATE POLICY | 2026-06-01 | 13:48 (UTC+3)\n- BEM-1296 completed with SHA 21b61f854f1ae3e1409bf86169ad123fdd13358f.\n- Created CI workflow re-enable gate policy.\n- Release PASS not issued.\n- Next action: BEM-1298 local validation bundle for workflow re-enable.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1297_ci_workflow_reenable_gate_policy.md",
+    "result_json": "governance/codex/results/bem1297_ci_workflow_reenable_gate_policy.json"
+  },
+  "created_at": "2026-06-01T10:50:19.744Z"
+}
