@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1290_disable_invalid_governance_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1290_DISABLE_INVALID_GOVERNANCE_WORKFLOW.md",
+    "create:governance/state/bem1290_disable_invalid_governance_workflow.json",
+    "move:.github/workflows/governance-validation-ci.yml->governance/workflows_disabled/governance-validation-ci",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1290_DISABLE_INVALID_GOVERNANCE_WORKFLOW.md",
+    "governance/state/bem1290_disable_invalid_governance_workflow.json",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/workflows_disabled/governance-validation-ci",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1290_disable_invalid_governance_workflow.txt"
+  ],
+  "commit_sha": "a318a9d778b7dd63f1e677965383fe271400bcf3",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1290_disable_invalid_governance_workflow.md",
+  "completed_at": "2026-06-01T10:31:04Z"
+}
