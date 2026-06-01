@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1205_live_proof_intake_directory_guard",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1205 intake guard",
+  "objective": "Create file governance/proofs/external/README_LIVE_PROOF_INTAKE_GUARD.md with content BEM-1205 | LIVE-PROOF INTAKE DIRECTORY GUARD | 2026-06-01 | 06:19 (UTC+3)\n\nЭтап: Live-proof intake directory guard — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1204 completed with SHA `ccaa4ca0ae47a69b6f5025ec2bb064dfa85fd98a`.\n✅ Live proof intake paths are documented.\n✅ Receipts must be redacted and validator-compatible.\n✅ Raw secrets, bot tokens, passwords, API keys and mock-as-live are forbidden.\n⚠️ Receipt files are not created by this guard.\n❌ Release PASS is not issued.\n\n## Expected receipt paths\n| Receipt | Path | Validator |\n|---|---|---|\n| Production Telegram receipt | `governance/proofs/external/telegram/production_receipt.json` | `governance/validators/validate_telegram_production_receipt.py` |\n| Live runtime receipt | `governance/proofs/external/runtime/live_runtime_receipt.json` | `governance/validators/validate_live_runtime_receipt.py` |\n| External Claude audit result | `governance/proofs/external/claude/external_claude_audit_result.json` | `governance/validators/validate_external_claude_audit_result.py` |\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Live-proof intake directory guard — 1/1 (100%) | Guard documented |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; receipts missing |\n| Следующее действие | BEM-1206 live-proof intake README | Continue safe intake documentation |\n\nNo issue comments.\nCreate file governance/state/bem1205_live_proof_intake_directory_guard.json with content {\"bem_id\":\"BEM-1205\",\"created_at_utc3\":\"2026-06-01 | 06:19 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Live-proof intake directory guard\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1204\",\"latest_proof_sha\":\"ccaa4ca0ae47a69b6f5025ec2bb064dfa85fd98a\",\"expected_paths\":[\"governance/proofs/external/telegram/production_receipt.json\",\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"governance/proofs/external/claude/external_claude_audit_result.json\"],\"next_action\":\"BEM-1206 live-proof intake README\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1205 | LIVE-PROOF INTAKE DIRECTORY GUARD | 2026-06-01 | 06:19 (UTC+3)\n- BEM-1204 completed with SHA ccaa4ca0ae47a69b6f5025ec2bb064dfa85fd98a.\n- Created live-proof intake directory guard.\n- Release PASS not issued.\n- Next action: BEM-1206 live-proof intake README.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1205_live_proof_intake_directory_guard.md",
+    "result_json": "governance/codex/results/bem1205_live_proof_intake_directory_guard.json"
+  },
+  "created_at": "2026-06-01T03:20:47.265Z"
+}
