@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1209_object_passport_integrity_hardening",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_object_passport_integrity.py",
+    "create:governance/reports/BEM1209_OBJECT_PASSPORT_INTEGRITY_HARDENING.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_object_passport_integrity.py",
+    "governance/reports/BEM1209_OBJECT_PASSPORT_INTEGRITY_HARDENING.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1209_object_passport_integrity_hardening.txt"
+  ],
+  "commit_sha": "5d457dc1bbfffb34e631cfc6ddb3ab43aee77429",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1209_object_passport_integrity_hardening.md",
+  "completed_at": "2026-06-01T03:26:27Z"
+}
