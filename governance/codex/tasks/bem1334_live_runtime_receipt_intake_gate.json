@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1334_live_runtime_receipt_intake_gate",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1334 runtime intake gate",
+  "objective": "Create file governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_INTAKE_GATE.json with content {\"bem_id\":\"BEM-1334\",\"created_at_utc3\":\"2026-06-01 | 15:13 (UTC+3)\",\"release_pass\":false,\"gate\":\"LiveRuntimeReceiptIntake\",\"required_input\":\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"required_validators\":[\"governance/runtime/external_receipt_intake.py\",\"governance/validators/validate_live_runtime_receipt.py\",\"governance/validators/validate_live_runtime_receipt_not_placeholder.py\"],\"required_tests\":[\"governance/tests/run_live_runtime_receipt_contract_tests.py\",\"governance/tests/run_live_runtime_receipt_placeholder_guard_tests.py\"],\"acceptance\":\"gate can pass only after real live runtime receipt exists and all validators accept it\",\"current_status\":\"blocked_missing_real_receipt\",\"forbidden\":[\"placeholder receipt\",\"fixture receipt\",\"mock receipt\",\"dry_run_only receipt\",\"readiness pack as receipt\",\"release_pass true\"]}\nCreate file governance/reports/BEM1334_LIVE_RUNTIME_RECEIPT_INTAKE_GATE.md with content BEM-1334 | LIVE RUNTIME RECEIPT INTAKE GATE | 2026-06-01 | 15:13 (UTC+3)\n\nЭтап: Live runtime receipt intake gate file — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1333 completed with SHA `9771ae332162e46570ba2aefbdc14be8df9b04e5`.\n✅ Created `governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_INTAKE_GATE.json`.\n✅ Gate points to required real live runtime receipt path and validators.\n✅ Gate rejects placeholder/fixture/mock/dry-run/readiness-pack receipts and release_pass=true.\n⚠️ Actual live runtime receipt is still missing.\n⚠️ Production Telegram receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Live runtime receipt intake gate file — 1/1 (100%) | Live runtime receipt gate made explicit and fail-closed |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; second real receipt still required |\n| Следующее действие | BEM-1335 external Claude audit receipt intake gate file | Create third explicit real receipt gate |\n\nNo issue comments.\nCreate file governance/state/bem1334_live_runtime_receipt_intake_gate.json with content {\"bem_id\":\"BEM-1334\",\"created_at_utc3\":\"2026-06-01 | 15:13 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Live runtime receipt intake gate file\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1333\",\"latest_proof_sha\":\"9771ae332162e46570ba2aefbdc14be8df9b04e5\",\"next_action\":\"BEM-1335 external Claude audit receipt intake gate file\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1334 | LIVE RUNTIME RECEIPT INTAKE GATE | 2026-06-01 | 15:13 (UTC+3)\n- BEM-1333 completed with SHA 9771ae332162e46570ba2aefbdc14be8df9b04e5.\n- Created live runtime receipt intake gate.\n- Release PASS not issued.\n- Next action: BEM-1335 external Claude audit receipt intake gate file.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1334_live_runtime_receipt_intake_gate.md",
+    "result_json": "governance/codex/results/bem1334_live_runtime_receipt_intake_gate.json"
+  },
+  "created_at": "2026-06-01T13:15:02.002Z"
+}
