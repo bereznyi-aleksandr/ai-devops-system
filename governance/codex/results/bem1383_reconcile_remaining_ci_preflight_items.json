@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1383_reconcile_remaining_ci_preflight_items",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1383_RECONCILE_REMAINING_CI_PREFLIGHT_ITEMS.md",
+    "create:governance/state/bem1383_reconcile_remaining_ci_preflight_items.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1383_RECONCILE_REMAINING_CI_PREFLIGHT_ITEMS.md",
+    "governance/state/bem1383_reconcile_remaining_ci_preflight_items.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1383_reconcile_remaining_ci_preflight_items.txt"
+  ],
+  "commit_sha": "c0e00984ad475a088564d91b0c6052d36a08cf7e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1383_reconcile_remaining_ci_preflight_items.md",
+  "completed_at": "2026-06-01T16:05:26Z"
+}
