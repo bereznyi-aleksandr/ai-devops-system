@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1197_external_claude_audit_result_validator",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1197 Claude validator",
+  "objective": "Create file governance/validators/validate_external_claude_audit_result.py with content import json\nfrom pathlib import Path\n\nCONTRACT = Path(\"governance/audit/BEM1196_EXTERNAL_CLAUDE_AUDIT_RESULT_CONTRACT.json\")\n\n\ndef validate(path):\n    contract = json.loads(CONTRACT.read_text(encoding=\"utf-8\"))\n    result = json.loads(Path(path).read_text(encoding=\"utf-8\"))\n    errors = []\n    for field in contract.get(\"required_result_fields\", []):\n        if field not in result:\n            errors.append(f\"missing field {field}\")\n    for key, expected in contract.get(\"required_values\", {}).items():\n        actual = result.get(key)\n        if key == \"verdict\":\n            allowed = {\"accepted\", \"accepted_with_findings\", expected}\n            if actual not in allowed:\n                errors.append(f\"{key} must be accepted or accepted_with_findings\")\n        elif actual != expected:\n            errors.append(f\"{key} must be {expected!r}\")\n    text = json.dumps(result, ensure_ascii=False).lower()\n    for forbidden in contract.get(\"forbidden\", []):\n        if forbidden.lower() in text:\n            errors.append(f\"forbidden token found: {forbidden}\")\n    return errors\n\nif __name__ == \"__main__\":\n    import sys\n    if len(sys.argv) != 2:\n        print(\"usage: validate_external_claude_audit_result.py <audit_result.json>\")\n        raise SystemExit(2)\n    errs = validate(sys.argv[1])\n    if errs:\n        print(\"FAIL\")\n        for err in errs:\n            print(err)\n        raise SystemExit(1)\n    print(\"PASS external_claude_audit_result\")\nCreate file governance/reports/BEM1197_EXTERNAL_CLAUDE_AUDIT_RESULT_VALIDATOR.md with content BEM-1197 | EXTERNAL CLAUDE AUDIT RESULT VALIDATOR | 2026-06-01 | 06:08 (UTC+3)\n\nЭтап: External Claude audit result validator — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1196 completed with SHA `12a7dc9661969adb7907e6ce8ded94fbfc8d2901`.\n✅ Created `governance/validators/validate_external_claude_audit_result.py`.\n✅ Validator checks required external Claude audit fields and required values.\n✅ Validator rejects GPT self-claim, proxy claim, mock audit and unreviewed commit tokens.\n⚠️ Actual external Claude re-audit result is still missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External Claude audit result validator — 1/1 (100%) | External audit result validator created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; external audit result missing |\n| Следующее действие | BEM-1198 release decision validator update | Connect receipt validators to release decision boundary |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1197 | EXTERNAL CLAUDE AUDIT RESULT VALIDATOR | 2026-06-01 | 06:08 (UTC+3)\n- BEM-1196 completed with SHA 12a7dc9661969adb7907e6ce8ded94fbfc8d2901.\n- Created external Claude audit result validator skeleton.\n- Release PASS not issued.\n- Next action: BEM-1198 release decision validator update.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1197_external_claude_audit_result_validator.md",
+    "result_json": "governance/codex/results/bem1197_external_claude_audit_result_validator.json"
+  },
+  "created_at": "2026-06-01T03:09:37.577Z"
+}
