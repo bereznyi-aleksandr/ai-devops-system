@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1444_first_ext_input_placeholder_ban",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1444 placeholder ban",
+  "objective": "Create file governance/proofs/external/telegram/FIRST_EXTERNAL_INPUT_RECEIPT_INTAKE_PLACEHOLDER_PROHIBITION.json with content {\"bem_id\":\"BEM-1444\",\"created_at_utc3\":\"2026-06-01 | 18:59 (UTC+3)\",\"release_pass\":false,\"prohibition\":\"The first external input receipt path must not accept placeholder, mock, sample, fixture, readiness-only, report-only, or screenshot-only data.\",\"target_receipt\":\"governance/proofs/external/telegram/production_receipt.json\",\"must_contain_real_evidence\":true,\"required_environment\":\"production_telegram\",\"required_source\":\"telegram\",\"required_delivery_result\":\"pass_after_real_delivery_only\",\"next_action\":\"BEM-1445 first external input receipt intake fail-closed status\"}\nCreate file governance/reports/BEM1444_FIRST_EXTERNAL_INPUT_RECEIPT_INTAKE_PLACEHOLDER_PROHIBITION.md with content BEM-1444 | FIRST EXTERNAL INPUT RECEIPT INTAKE PLACEHOLDER PROHIBITION | 2026-06-01 | 18:59 (UTC+3)\n\nЭтап: First external input receipt intake placeholder prohibition — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1443 completed with SHA `bf5659a45f05930453f4509c881873a2852ab711`.\n✅ Created `governance/proofs/external/telegram/FIRST_EXTERNAL_INPUT_RECEIPT_INTAKE_PLACEHOLDER_PROHIBITION.json`.\n✅ Placeholder/mock/sample/fixture/readiness/report/screenshot-only data are prohibited for the first receipt path.\n✅ Production Telegram receipt remains missing until real delivery evidence exists.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ CI activation acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | First external input receipt intake placeholder prohibition — 1/1 (100%) | First receipt path cannot accept fake evidence |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; real external input still required |\n| Следующее действие | BEM-1445 first external input receipt intake fail-closed status | Record fail-closed status until real receipt exists |\n\nNo issue comments.\nCreate file governance/state/bem1444_first_ext_input_placeholder_ban.json with content {\"bem_id\":\"BEM-1444\",\"created_at_utc3\":\"2026-06-01 | 18:59 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"First external input receipt intake placeholder prohibition\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1443\",\"latest_proof_sha\":\"bf5659a45f05930453f4509c881873a2852ab711\",\"next_action\":\"BEM-1445 first external input receipt intake fail-closed status\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1444 | FIRST EXTERNAL INPUT RECEIPT INTAKE PLACEHOLDER PROHIBITION | 2026-06-01 | 18:59 (UTC+3)\n- BEM-1443 completed with SHA bf5659a45f05930453f4509c881873a2852ab711.\n- Created placeholder prohibition for first external input receipt path.\n- Release PASS not issued.\n- Next action: BEM-1445 first external input receipt intake fail-closed status.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1444_first_ext_input_placeholder_ban.md",
+    "result_json": "governance/codex/results/bem1444_first_ext_input_placeholder_ban.json"
+  },
+  "created_at": "2026-06-01T16:59:57.151Z"
+}
