@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1307_external_receipt_contract_bundle",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tests/run_external_receipt_contract_bundle.py",
+    "create:governance/proofs/external/EXTERNAL_RECEIPT_GATE_BUNDLE.json",
+    "create:governance/reports/BEM1307_EXTERNAL_RECEIPT_CONTRACT_BUNDLE.md",
+    "create:governance/state/bem1307_external_receipt_contract_bundle.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tests/run_external_receipt_contract_bundle.py",
+    "governance/proofs/external/EXTERNAL_RECEIPT_GATE_BUNDLE.json",
+    "governance/reports/BEM1307_EXTERNAL_RECEIPT_CONTRACT_BUNDLE.md",
+    "governance/state/bem1307_external_receipt_contract_bundle.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1307_external_receipt_contract_bundle.txt"
+  ],
+  "commit_sha": "727c11530fce0b79b8baed580f67a48cea9ff25e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1307_external_receipt_contract_bundle.md",
+  "completed_at": "2026-06-01T12:01:17Z"
+}
