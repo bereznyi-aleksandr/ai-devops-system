@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1439_claude_ext_input_boundary",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_MISSING_EXTERNAL_INPUT_BOUNDARY.json",
+    "create:governance/state/bem1439_external_claude_audit_missing_external_input_boundary.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_MISSING_EXTERNAL_INPUT_BOUNDARY.json",
+    "governance/state/bem1439_external_claude_audit_missing_external_input_boundary.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1439_claude_ext_input_boundary.txt"
+  ],
+  "commit_sha": "d320f97c05ff3ab1d5cf1d553d6c3f39c9e73fda",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1439_claude_ext_input_boundary.md",
+  "completed_at": "2026-06-01T16:55:29Z"
+}
