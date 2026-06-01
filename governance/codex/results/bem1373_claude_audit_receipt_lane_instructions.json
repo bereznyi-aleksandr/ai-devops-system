@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1373_claude_audit_receipt_lane_instructions",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_LANE_PLACEHOLDER_FREE_INSTRUCTIONS.md",
+    "create:governance/state/bem1373_claude_audit_receipt_lane_instructions.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_LANE_PLACEHOLDER_FREE_INSTRUCTIONS.md",
+    "governance/state/bem1373_claude_audit_receipt_lane_instructions.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1373_claude_audit_receipt_lane_instructions.txt"
+  ],
+  "commit_sha": "43b365e0d8b64fe2c6c08b14c819b048ec68ff62",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1373_claude_audit_receipt_lane_instructions.md",
+  "completed_at": "2026-06-01T15:56:28Z"
+}
