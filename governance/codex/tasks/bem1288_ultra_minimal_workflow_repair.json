@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1288_ultra_minimal_workflow_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1288 ultra-minimal workflow",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\n\non: [push, pull_request]\n\njobs:\n  validation:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: '3.11'\n      - run: python governance/validators/validate_foundation_all.py\n      - run: python governance/tests/run_bem1284_minimal_governance_loop.py\n      - run: python governance/tests/run_bem1285_ci_e2e_capture.py\nCreate file governance/reports/BEM1288_ULTRA_MINIMAL_WORKFLOW_REPAIR.md with content BEM-1288 | ULTRA-MINIMAL WORKFLOW REPAIR | 2026-06-01 | 12:58 (UTC+3)\n\nЭтап: Ultra-minimal workflow repair — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1287 completed with SHA `4635525361d6e7192541bdca953ac24ee866d2ec`.\n✅ Operator screenshot shows GitHub Actions still rejects governance-validation-ci.yml.\n✅ Workflow rewritten to ultra-minimal GitHub Actions syntax: `on: [push, pull_request]`.\n✅ No schedule triggers added.\n⚠️ Need GitHub Actions acceptance proof after this commit.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Ultra-minimal workflow repair — 1/1 (100%) | Workflow reduced to safest syntax |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI acceptance still pending |\n| Следующее действие | BEM-1289 GitHub Actions acceptance verification | Confirm workflow is accepted by GitHub Actions |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1288 | ULTRA-MINIMAL WORKFLOW REPAIR | 2026-06-01 | 12:58 (UTC+3)\n- BEM-1287 completed with SHA 4635525361d6e7192541bdca953ac24ee866d2ec.\n- Rewrote governance-validation-ci.yml to ultra-minimal syntax after operator screenshot.\n- Release PASS not issued.\n- Next action: BEM-1289 GitHub Actions acceptance verification.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1288_ultra_minimal_workflow_repair.md",
+    "result_json": "governance/codex/results/bem1288_ultra_minimal_workflow_repair.json"
+  },
+  "created_at": "2026-06-01T10:26:53.134Z"
+}
