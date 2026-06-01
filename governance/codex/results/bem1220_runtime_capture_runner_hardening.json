@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1220_runtime_capture_runner_hardening",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runtime/runtime_capture_input_validator.py",
+    "create:governance/reports/BEM1220_RUNTIME_CAPTURE_RUNNER_HARDENING.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runtime/runtime_capture_input_validator.py",
+    "governance/reports/BEM1220_RUNTIME_CAPTURE_RUNNER_HARDENING.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1220_runtime_capture_runner_hardening.txt"
+  ],
+  "commit_sha": "58dcc9cbb3097bed93d94c7f2b0390d92c82e7e5",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1220_runtime_capture_runner_hardening.md",
+  "completed_at": "2026-06-01T03:41:40Z"
+}
