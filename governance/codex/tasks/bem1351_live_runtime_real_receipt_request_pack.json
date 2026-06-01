@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1351_live_runtime_real_receipt_request_pack",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1351 runtime receipt request",
+  "objective": "Create file governance/proofs/external/runtime/LIVE_RUNTIME_REAL_RECEIPT_REQUEST_PACK.md with content BEM-1351 | LIVE RUNTIME REAL RECEIPT REQUEST PACK | 2026-06-01 | 17:33 (UTC+3)\n\nЭтап: Live runtime real receipt request pack — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Item | Required value | Notes |\n|---|---|---|\n| Required output | `governance/proofs/external/runtime/live_runtime_receipt.json` | Real live receipt only |\n| Environment | `live_runtime` | Mock/fixture forbidden |\n| Command/entrypoint | Actual command or runtime entrypoint | Must be reproducible |\n| Result | `pass` | Only after real live execution |\n| Secret scan | `secret_scan_pass=true` | No token/API key/password in repository |\n| Release claim | `release_pass=false` | Runtime receipt alone is not release proof |\n\n| Required evidence | Description |\n|---|---|\n| Redacted output ref | Path to redacted runtime output with no secrets |\n| Operator or external source | Who/what captured the live runtime proof |\n| Commit SHA | Repository SHA that was actually run |\n\nЧек-лист:\n✅ BEM-1350 completed with SHA `00e7358fd6c6cc8a8c7b02a46eb6466f84dd52fa`.\n✅ Request pack created for second real external receipt.\n✅ Pack does not create or fake `live_runtime_receipt.json`.\n⚠️ Actual live runtime receipt is still missing.\n⚠️ Production Telegram receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until safe re-enable gate.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Live runtime real receipt request pack — 1/1 (100%) | Second real external receipt request is specified |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; live runtime receipt must be acquired externally/live |\n| Следующее действие | BEM-1352 external Claude real audit receipt request pack | Prepare third real external receipt request |\n\nNo issue comments.\nCreate file governance/state/bem1351_live_runtime_real_receipt_request_pack.json with content {\"bem_id\":\"BEM-1351\",\"created_at_utc3\":\"2026-06-01 | 17:33 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Live runtime real receipt request pack\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1350\",\"latest_proof_sha\":\"00e7358fd6c6cc8a8c7b02a46eb6466f84dd52fa\",\"required_real_receipt\":\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"next_action\":\"BEM-1352 external Claude real audit receipt request pack\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1351 | LIVE RUNTIME REAL RECEIPT REQUEST PACK | 2026-06-01 | 17:33 (UTC+3)\n- BEM-1350 completed with SHA 00e7358fd6c6cc8a8c7b02a46eb6466f84dd52fa.\n- Created live runtime real receipt request pack.\n- Release PASS not issued.\n- Next action: BEM-1352 external Claude real audit receipt request pack.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1351_live_runtime_real_receipt_request_pack.md",
+    "result_json": "governance/codex/results/bem1351_live_runtime_real_receipt_request_pack.json"
+  },
+  "created_at": "2026-06-01T15:37:26.119Z"
+}
