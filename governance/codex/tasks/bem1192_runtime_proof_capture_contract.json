@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1192_runtime_proof_capture_contract",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1192 runtime proof contract",
+  "objective": "Create file governance/runtime/BEM1192_RUNTIME_PROOF_CAPTURE_CONTRACT.json with content {\"bem_id\":\"BEM-1192\",\"created_at_utc3\":\"2026-06-01 | 06:01 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Runtime proof capture contract\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1191\",\"latest_proof_sha\":\"44b3ad2053b883a4da4bd7a82c5537ce0b8ab5d7\",\"required_runtime_receipt_fields\":[\"receipt_id\",\"captured_at_utc3\",\"environment\",\"command_or_entrypoint\",\"commit_sha\",\"result\",\"redacted_output_ref\",\"secret_scan_pass\",\"operator_or_external_source\"],\"required_values\":{\"environment\":\"live_runtime\",\"result\":\"pass\",\"secret_scan_pass\":true},\"forbidden\":[\"raw_secret\",\"token\",\"password\",\"self_claim_only\",\"mock_as_live\"],\"next_action\":\"BEM-1193 runtime proof validator skeleton\"}\nCreate file governance/reports/BEM1192_RUNTIME_PROOF_CAPTURE_CONTRACT.md with content BEM-1192 | RUNTIME PROOF CAPTURE CONTRACT | 2026-06-01 | 06:01 (UTC+3)\n\nЭтап: Runtime proof capture contract — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1191 completed with SHA `44b3ad2053b883a4da4bd7a82c5537ce0b8ab5d7`.\n✅ Created `governance/runtime/BEM1192_RUNTIME_PROOF_CAPTURE_CONTRACT.json`.\n✅ Contract defines required fields for live runtime receipt.\n✅ Contract forbids raw secrets, self-claims and mock-as-live.\n⚠️ Actual live runtime receipt is still missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Runtime proof capture contract — 1/1 (100%) | Runtime receipt format defined |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; live runtime proof missing |\n| Следующее действие | BEM-1193 runtime proof validator skeleton | Create validator for accepted runtime receipts |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1192 | RUNTIME PROOF CAPTURE CONTRACT | 2026-06-01 | 06:01 (UTC+3)\n- BEM-1191 completed with SHA 44b3ad2053b883a4da4bd7a82c5537ce0b8ab5d7.\n- Created runtime proof capture contract.\n- Release PASS not issued.\n- Next action: BEM-1193 runtime proof validator skeleton.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1192_runtime_proof_capture_contract.md",
+    "result_json": "governance/codex/results/bem1192_runtime_proof_capture_contract.json"
+  },
+  "created_at": "2026-06-01T03:02:29.965Z"
+}
