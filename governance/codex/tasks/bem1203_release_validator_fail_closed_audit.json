@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1203_release_validator_fail_closed_audit",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1203 fail-closed audit",
+  "objective": "Create file governance/reports/BEM1203_RELEASE_VALIDATOR_FAIL_CLOSED_AUDIT.md with content BEM-1203 | RELEASE VALIDATOR FAIL-CLOSED AUDIT | 2026-06-01 | 06:16 (UTC+3)\n\nЭтап: Release validator fail-closed audit — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1202 completed with SHA `97ff1a80dd758d21a907bb763411b1b2ec8ae7b6`.\n✅ Release decision validator exists: `governance/validators/validate_release_decision.py`.\n✅ Missing-state index confirms required receipt paths are absent.\n✅ Expected release validator behavior is FAIL while receipts are absent.\n⚠️ This is fail-closed policy proof, not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Release validator fail-closed audit — 1/1 (100%) | Fail-closed audit created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; release receipts missing |\n| Следующее действие | BEM-1204 next live-proof intake queue | Continue live proof intake preparation |\n\nNo issue comments.\nCreate file governance/state/bem1203_release_validator_fail_closed_audit.json with content {\"bem_id\":\"BEM-1203\",\"created_at_utc3\":\"2026-06-01 | 06:16 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Release validator fail-closed audit\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1202\",\"latest_proof_sha\":\"97ff1a80dd758d21a907bb763411b1b2ec8ae7b6\",\"expected_validator_state\":\"fail_closed_until_external_receipts_exist\",\"next_action\":\"BEM-1204 next live-proof intake queue\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1203 | RELEASE VALIDATOR FAIL-CLOSED AUDIT | 2026-06-01 | 06:16 (UTC+3)\n- BEM-1202 completed with SHA 97ff1a80dd758d21a907bb763411b1b2ec8ae7b6.\n- Created release validator fail-closed audit.\n- Release PASS not issued.\n- Next action: BEM-1204 next live-proof intake queue.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1203_release_validator_fail_closed_audit.md",
+    "result_json": "governance/codex/results/bem1203_release_validator_fail_closed_audit.json"
+  },
+  "created_at": "2026-06-01T03:17:57.716Z"
+}
