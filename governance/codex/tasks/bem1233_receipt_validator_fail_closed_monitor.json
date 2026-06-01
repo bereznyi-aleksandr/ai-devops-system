@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1233_receipt_validator_fail_closed_monitor",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1233 fail-closed monitor",
+  "objective": "Create file governance/reports/BEM1233_RECEIPT_VALIDATOR_FAIL_CLOSED_MONITOR.md with content BEM-1233 | RECEIPT VALIDATOR FAIL-CLOSED MONITOR | 2026-06-01 | 07:02 (UTC+3)\n\nЭтап: Receipt validator fail-closed monitor checkpoint — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1232 completed with SHA `5b0b3ef210eea88b09099f4ba86cf8a39dbf4684`.\n✅ Release decision validator exists and is expected to fail while receipts are missing.\n✅ Telegram, runtime and Claude receipt validators exist.\n⚠️ Receipt files remain missing, so release stays locked.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt validator fail-closed monitor checkpoint — 1/1 (100%) | Fail-closed monitor created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; receipts missing |\n| Следующее действие | BEM-1234 next operator status checkpoint | Continue operator-facing status chain |\n\nNo issue comments.\nCreate file governance/state/bem1233_receipt_validator_fail_closed_monitor.json with content {\"bem_id\":\"BEM-1233\",\"created_at_utc3\":\"2026-06-01 | 07:02 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Receipt validator fail-closed monitor checkpoint\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1232\",\"latest_proof_sha\":\"5b0b3ef210eea88b09099f4ba86cf8a39dbf4684\",\"expected_release_validator_state\":\"fail_closed_until_receipts_exist\",\"next_action\":\"BEM-1234 next operator status checkpoint\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1233 | RECEIPT VALIDATOR FAIL-CLOSED MONITOR | 2026-06-01 | 07:02 (UTC+3)\n- BEM-1232 completed with SHA 5b0b3ef210eea88b09099f4ba86cf8a39dbf4684.\n- Created receipt validator fail-closed monitor.\n- Release PASS not issued.\n- Next action: BEM-1234 next operator status checkpoint.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1233_receipt_validator_fail_closed_monitor.md",
+    "result_json": "governance/codex/results/bem1233_receipt_validator_fail_closed_monitor.json"
+  },
+  "created_at": "2026-06-01T04:04:06.499Z"
+}
