@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1239_provider_failover_fixture_expansion",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1239 provider fixtures",
+  "objective": "Create file governance/tests/fixtures/provider_failover_positive_mock_e2e.json with content {\"contour\":\"C1\",\"mode\":\"mock_e2e\"}\nCreate file governance/tests/fixtures/provider_activation_positive_c1.json with content {\"contour\":\"C1\"}\nCreate file governance/tests/run_provider_policy_fixture_tests.py with content import json\nfrom pathlib import Path\nimport sys\n\nsys.path.insert(0, str(Path.cwd()))\nfrom governance.runners.provider_failover import failover_for_contour\nfrom governance.runners.provider_activation import provider_for_contour\n\n\ndef run():\n    results = []\n    positive_failover = json.loads(Path(\"governance/tests/fixtures/provider_failover_positive_mock_e2e.json\").read_text(encoding=\"utf-8\"))\n    fallback = failover_for_contour(positive_failover[\"contour\"], positive_failover[\"mode\"])\n    results.append({\"test\":\"mock_failover_allowed_for_mock_e2e\",\"ok\": fallback.get(\"ok\") is True, \"result\": fallback})\n    activation = json.loads(Path(\"governance/tests/fixtures/provider_activation_positive_c1.json\").read_text(encoding=\"utf-8\"))\n    provider = provider_for_contour(activation[\"contour\"])\n    results.append({\"test\":\"provider_activation_c1\",\"ok\": provider.get(\"ok\") is True and provider.get(\"provider\") == \"gpt\", \"result\": provider})\n    prod = failover_for_contour(\"C1\", \"production\")\n    results.append({\"test\":\"mock_failover_denied_for_production\",\"ok\": prod.get(\"ok\") is False, \"result\": prod})\n    return {\"ok\": all(item[\"ok\"] for item in results), \"release_pass\": False, \"results\": results}\n\nif __name__ == \"__main__\":\n    result = run()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1239_PROVIDER_FAILOVER_FIXTURE_EXPANSION.md with content BEM-1239 | PROVIDER FAILOVER FIXTURE EXPANSION | 2026-06-01 | 07:13 (UTC+3)\n\nЭтап: Provider failover fixture expansion — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1238 completed with SHA `dcb82a90b1a1c506af4542e52868ec5baf866657`.\n✅ Created provider failover positive mock_e2e fixture.\n✅ Created provider activation positive C1 fixture.\n✅ Created `governance/tests/run_provider_policy_fixture_tests.py`.\n✅ Tests cover mock failover allowed only for mock_e2e and denied for production.\n⚠️ Provider fixtures are not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Provider failover fixture expansion — 1/1 (100%) | Provider fixture tests expanded |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; hardening continues |\n| Следующее действие | BEM-1240 fixture expansion unified audit | Audit expanded fixture coverage |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1239 | PROVIDER FAILOVER FIXTURE EXPANSION | 2026-06-01 | 07:13 (UTC+3)\n- BEM-1238 completed with SHA dcb82a90b1a1c506af4542e52868ec5baf866657.\n- Created provider policy fixture tests.\n- Release PASS not issued.\n- Next action: BEM-1240 fixture expansion unified audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1239_provider_failover_fixture_expansion.md",
+    "result_json": "governance/codex/results/bem1239_provider_failover_fixture_expansion.json"
+  },
+  "created_at": "2026-06-01T04:14:31.272Z"
+}
