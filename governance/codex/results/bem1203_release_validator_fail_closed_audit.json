@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1203_release_validator_fail_closed_audit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1203_RELEASE_VALIDATOR_FAIL_CLOSED_AUDIT.md",
+    "create:governance/state/bem1203_release_validator_fail_closed_audit.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1203_RELEASE_VALIDATOR_FAIL_CLOSED_AUDIT.md",
+    "governance/state/bem1203_release_validator_fail_closed_audit.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1203_release_validator_fail_closed_audit.txt"
+  ],
+  "commit_sha": "289ab0ebb8ee5feaaa40ab8bafbe265236c5e8f3",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1203_release_validator_fail_closed_audit.md",
+  "completed_at": "2026-06-01T03:18:08Z"
+}
