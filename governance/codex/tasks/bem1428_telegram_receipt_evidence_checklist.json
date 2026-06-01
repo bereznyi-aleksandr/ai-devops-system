@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1428_telegram_receipt_evidence_checklist",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1428 Telegram evidence checklist",
+  "objective": "Create file governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_EVIDENCE_CHECKLIST_FOR_ACTUAL_ACQUISITION.md with content BEM-1428 | PRODUCTION TELEGRAM RECEIPT EVIDENCE CHECKLIST FOR ACTUAL ACQUISITION | 2026-06-01 | 18:44 (UTC+3)\n\nЭтап: Production Telegram receipt evidence checklist for actual acquisition — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Evidence item | Required | Notes |\n|---|---|---|\n| Operator-visible Telegram delivery | Yes | Must be real production Telegram delivery |\n| Commit SHA that produced delivery | Yes | Non-null repository SHA |\n| Redacted proof reference | Yes | No secrets/tokens/API keys/passwords |\n| Receipt path | Yes | `governance/proofs/external/telegram/production_receipt.json` |\n| Validators | Yes | Intake and anti-placeholder validators must pass |\n| Release PASS claim | No | `release_pass=false` until all release inputs exist |\n\nЧек-лист:\n✅ BEM-1427 completed with SHA `55f3f5f72c4cfdc03a532d27c4c7c7ffda8152eb`.\n✅ Telegram actual acquisition evidence checklist created.\n✅ Checklist does not create or fake receipt.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ CI activation acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Production Telegram receipt evidence checklist for actual acquisition — 1/1 (100%) | Actual acquisition requirements are explicit |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; real Telegram evidence still required |\n| Следующее действие | BEM-1429 live runtime receipt evidence checklist for actual acquisition | Continue second real evidence checklist |\n\nNo issue comments.\nCreate file governance/state/bem1428_telegram_receipt_evidence_checklist.json with content {\"bem_id\":\"BEM-1428\",\"created_at_utc3\":\"2026-06-01 | 18:44 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Production Telegram receipt evidence checklist for actual acquisition\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1427\",\"latest_proof_sha\":\"55f3f5f72c4cfdc03a532d27c4c7c7ffda8152eb\",\"next_action\":\"BEM-1429 live runtime receipt evidence checklist for actual acquisition\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1428 | PRODUCTION TELEGRAM RECEIPT EVIDENCE CHECKLIST FOR ACTUAL ACQUISITION | 2026-06-01 | 18:44 (UTC+3)\n- BEM-1427 completed with SHA 55f3f5f72c4cfdc03a532d27c4c7c7ffda8152eb.\n- Created production Telegram receipt evidence checklist for actual acquisition.\n- Release PASS not issued.\n- Next action: BEM-1429 live runtime receipt evidence checklist for actual acquisition.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1428_telegram_receipt_evidence_checklist.md",
+    "result_json": "governance/codex/results/bem1428_telegram_receipt_evidence_checklist.json"
+  },
+  "created_at": "2026-06-01T16:45:06.065Z"
+}
