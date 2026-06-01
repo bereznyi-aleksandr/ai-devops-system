@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1232_receipt_missing_state_monitor_checkpoint",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1232 receipt monitor",
+  "objective": "Create file governance/reports/BEM1232_RECEIPT_MISSING_STATE_MONITOR_CHECKPOINT.md with content BEM-1232 | RECEIPT MISSING-STATE MONITOR CHECKPOINT | 2026-06-01 | 07:00 (UTC+3)\n\nЭтап: Receipt missing-state monitor checkpoint — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1231 completed with SHA `c04d3d7017ec44ad68ab8bb638d22160f1aba406`.\n✅ Monitoring queue exists.\n✅ Missing-state remains explicit for Telegram, runtime and Claude receipts.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt missing-state monitor checkpoint — 1/1 (100%) | Missing-state checkpoint created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; external receipts missing |\n| Следующее действие | BEM-1233 receipt validator fail-closed monitor checkpoint | Continue monitoring validator lock |\n\nNo issue comments.\nCreate file governance/state/bem1232_receipt_missing_state_monitor_checkpoint.json with content {\"bem_id\":\"BEM-1232\",\"created_at_utc3\":\"2026-06-01 | 07:00 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Receipt missing-state monitor checkpoint\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1231\",\"latest_proof_sha\":\"c04d3d7017ec44ad68ab8bb638d22160f1aba406\",\"missing_receipts\":[\"production_telegram_receipt\",\"live_runtime_receipt\",\"external_claude_audit_result\"],\"next_action\":\"BEM-1233 receipt validator fail-closed monitor checkpoint\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1232 | RECEIPT MISSING-STATE MONITOR CHECKPOINT | 2026-06-01 | 07:00 (UTC+3)\n- BEM-1231 completed with SHA c04d3d7017ec44ad68ab8bb638d22160f1aba406.\n- Created receipt missing-state monitor checkpoint.\n- Release PASS not issued.\n- Next action: BEM-1233 receipt validator fail-closed monitor checkpoint.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1232_receipt_missing_state_monitor_checkpoint.md",
+    "result_json": "governance/codex/results/bem1232_receipt_missing_state_monitor_checkpoint.json"
+  },
+  "created_at": "2026-06-01T04:02:22.800Z"
+}
