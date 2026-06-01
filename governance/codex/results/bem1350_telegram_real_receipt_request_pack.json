@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1350_telegram_real_receipt_request_pack",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/PRODUCTION_TELEGRAM_REAL_RECEIPT_REQUEST_PACK.md",
+    "create:governance/state/bem1350_telegram_real_receipt_request_pack.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/PRODUCTION_TELEGRAM_REAL_RECEIPT_REQUEST_PACK.md",
+    "governance/state/bem1350_telegram_real_receipt_request_pack.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1350_telegram_real_receipt_request_pack.txt"
+  ],
+  "commit_sha": "00e7358fd6c6cc8a8c7b02a46eb6466f84dd52fa",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1350_telegram_real_receipt_request_pack.md",
+  "completed_at": "2026-06-01T15:33:16Z"
+}
