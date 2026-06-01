@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1198_release_decision_validator_update",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1198 release validator",
+  "objective": "Create file governance/validators/validate_release_decision.py with content import json\nfrom pathlib import Path\n\nREQUIRED_PROOFS = {\n    \"telegram\": (\"governance/proofs/external/telegram/production_receipt.json\", \"governance/validators/validate_telegram_production_receipt.py\"),\n    \"runtime\": (\"governance/proofs/external/runtime/live_runtime_receipt.json\", \"governance/validators/validate_live_runtime_receipt.py\"),\n    \"claude\": (\"governance/proofs/external/claude/external_claude_audit_result.json\", \"governance/validators/validate_external_claude_audit_result.py\"),\n}\n\n\ndef validate_decision():\n    errors = []\n    for proof_id, (proof_path, validator_path) in REQUIRED_PROOFS.items():\n        if not Path(proof_path).exists():\n            errors.append(f\"missing required proof: {proof_id} -> {proof_path}\")\n        if not Path(validator_path).exists():\n            errors.append(f\"missing validator: {proof_id} -> {validator_path}\")\n    return errors\n\nif __name__ == \"__main__\":\n    errs = validate_decision()\n    if errs:\n        print(\"FAIL\")\n        for err in errs:\n            print(err)\n        raise SystemExit(1)\n    print(\"PASS release_decision\")\nCreate file governance/reports/BEM1198_RELEASE_DECISION_VALIDATOR_UPDATE.md with content BEM-1198 | RELEASE DECISION VALIDATOR UPDATE | 2026-06-01 | 06:10 (UTC+3)\n\nЭтап: Release decision validator update — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1197 completed with SHA `5c58447d83e0ef47932f107c8d0eec8a72692310`.\n✅ Created `governance/validators/validate_release_decision.py`.\n✅ Release decision validator requires Telegram, runtime and Claude external proof files.\n✅ Validator fails closed when proof files are missing.\n⚠️ Required external proof files are still missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Release decision validator update — 1/1 (100%) | Release decision gate connected to proof validators |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; release proofs missing |\n| Следующее действие | BEM-1199 final external proof validator index | Index final proof validators and open blockers |\n\nNo issue comments.\nCreate file governance/state/bem1198_release_decision_validator_update.json with content {\"bem_id\":\"BEM-1198\",\"created_at_utc3\":\"2026-06-01 | 06:10 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Release decision validator update\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1197\",\"latest_proof_sha\":\"5c58447d83e0ef47932f107c8d0eec8a72692310\",\"validator\":\"governance/validators/validate_release_decision.py\",\"fail_closed\":true,\"next_action\":\"BEM-1199 final external proof validator index\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1198 | RELEASE DECISION VALIDATOR UPDATE | 2026-06-01 | 06:10 (UTC+3)\n- BEM-1197 completed with SHA 5c58447d83e0ef47932f107c8d0eec8a72692310.\n- Created release decision validator.\n- Release PASS not issued.\n- Next action: BEM-1199 final external proof validator index.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1198_release_decision_validator_update.md",
+    "result_json": "governance/codex/results/bem1198_release_decision_validator_update.json"
+  },
+  "created_at": "2026-06-01T03:11:00.908Z"
+}
