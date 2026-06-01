@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1363_real_receipt_write_templates_only",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1363 real receipt write templates",
+  "objective": "Create file governance/proofs/external/REAL_RECEIPT_WRITE_TEMPLATES_ONLY.md with content BEM-1363 | EXPLICIT RECEIPT WRITE TEMPLATES FOR REAL RECEIPTS ONLY | 2026-06-01 | 17:46 (UTC+3)\n\nЭтап: Explicit receipt write templates for real receipts only — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nThese templates are not receipts. They define the exact shape to use only after real external/live proof exists.\n\n| Receipt | Target path | May be written only after |\n|---|---|---|\n| Production Telegram | `governance/proofs/external/telegram/production_receipt.json` | Real production Telegram delivery evidence exists |\n| Live Runtime | `governance/proofs/external/runtime/live_runtime_receipt.json` | Real live runtime execution evidence exists |\n| External Claude Audit | `governance/proofs/external/claude/external_claude_audit_result.json` | Real external Claude audit evidence exists |\n\n| Forbidden before writing | Reason |\n|---|---|\n| placeholder/sample/mock values | Fake proof |\n| readiness pack used as receipt | Not external/live evidence |\n| release_pass=true | Single receipt cannot issue release pass |\n| secrets/tokens | Security violation |\n\nЧек-лист:\n✅ BEM-1362 completed with SHA `8f9d68c10a0375f2df6e94ca38587fc4bcc44ead`.\n✅ Real-only receipt write template index created.\n✅ Templates explicitly do not create receipts.\n✅ Write is forbidden until real external/live proof exists.\n⚠️ BEM-1361 may still be queued and is not counted without SHA.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until explicit safe activation and GitHub acceptance proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Explicit receipt write templates for real receipts only — 1/1 (100%) | Exact write boundary for real receipts defined |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; only real receipts may advance release |\n| Следующее действие | BEM-1364 final operator canonical report with continued next BEM | Report by canon and immediately continue |\n\nNo issue comments.\nCreate file governance/state/bem1363_real_receipt_write_templates_only.json with content {\"bem_id\":\"BEM-1363\",\"created_at_utc3\":\"2026-06-01 | 17:46 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Explicit receipt write templates for real receipts only\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1362\",\"latest_proof_sha\":\"8f9d68c10a0375f2df6e94ca38587fc4bcc44ead\",\"next_action\":\"BEM-1364 final operator canonical report with continued next BEM\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1363 | EXPLICIT RECEIPT WRITE TEMPLATES FOR REAL RECEIPTS ONLY | 2026-06-01 | 17:46 (UTC+3)\n- BEM-1362 completed with SHA 8f9d68c10a0375f2df6e94ca38587fc4bcc44ead.\n- Created real-only receipt write template boundary.\n- Release PASS not issued.\n- Next action: BEM-1364 final operator canonical report with continued next BEM.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1363_real_receipt_write_templates_only.md",
+    "result_json": "governance/codex/results/bem1363_real_receipt_write_templates_only.json"
+  },
+  "created_at": "2026-06-01T15:47:32.413Z"
+}
