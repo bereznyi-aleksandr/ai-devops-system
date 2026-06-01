@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1335_external_claude_audit_receipt_intake_gate",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1335 Claude intake gate",
+  "objective": "Create file governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_INTAKE_GATE.json with content {\"bem_id\":\"BEM-1335\",\"created_at_utc3\":\"2026-06-01 | 15:15 (UTC+3)\",\"release_pass\":false,\"gate\":\"ExternalClaudeAuditReceiptIntake\",\"required_input\":\"governance/proofs/external/claude/external_claude_audit_result.json\",\"required_validators\":[\"governance/runtime/external_receipt_intake.py\",\"governance/validators/validate_external_claude_audit_result.py\",\"governance/validators/validate_external_claude_audit_not_placeholder.py\"],\"required_tests\":[\"governance/tests/run_external_claude_audit_contract_tests.py\",\"governance/tests/run_external_claude_audit_placeholder_guard_tests.py\"],\"acceptance\":\"gate can pass only after real external Claude audit receipt exists and all validators accept it\",\"current_status\":\"blocked_missing_real_receipt\",\"forbidden\":[\"placeholder receipt\",\"fixture receipt\",\"mock receipt\",\"self-claimed audit\",\"fake Claude audit\",\"readiness pack as receipt\",\"release_pass true\"]}\nCreate file governance/reports/BEM1335_EXTERNAL_CLAUDE_AUDIT_RECEIPT_INTAKE_GATE.md with content BEM-1335 | EXTERNAL CLAUDE AUDIT RECEIPT INTAKE GATE | 2026-06-01 | 15:15 (UTC+3)\n\nЭтап: External Claude audit receipt intake gate file — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1334 completed with SHA `ea5071dc892a87be37b0e32bda855e38de65feb5`.\n✅ Created `governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_INTAKE_GATE.json`.\n✅ Gate points to required real external Claude audit receipt path and validators.\n✅ Gate rejects placeholder/fixture/mock/self-claimed/fake-Claude/readiness-pack receipts and release_pass=true.\n⚠️ Actual external Claude audit receipt is still missing.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External Claude audit receipt intake gate file — 1/1 (100%) | External Claude audit receipt gate made explicit and fail-closed |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; third real receipt still required |\n| Следующее действие | BEM-1336 explicit real-receipt acquisition stopline | Mark boundary where repo prep is complete and real external receipts are required |\n\nNo issue comments.\nCreate file governance/state/bem1335_external_claude_audit_receipt_intake_gate.json with content {\"bem_id\":\"BEM-1335\",\"created_at_utc3\":\"2026-06-01 | 15:15 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"External Claude audit receipt intake gate file\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1334\",\"latest_proof_sha\":\"ea5071dc892a87be37b0e32bda855e38de65feb5\",\"next_action\":\"BEM-1336 explicit real-receipt acquisition stopline\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1335 | EXTERNAL CLAUDE AUDIT RECEIPT INTAKE GATE | 2026-06-01 | 15:15 (UTC+3)\n- BEM-1334 completed with SHA ea5071dc892a87be37b0e32bda855e38de65feb5.\n- Created external Claude audit receipt intake gate.\n- Release PASS not issued.\n- Next action: BEM-1336 explicit real-receipt acquisition stopline.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1335_external_claude_audit_receipt_intake_gate.md",
+    "result_json": "governance/codex/results/bem1335_external_claude_audit_receipt_intake_gate.json"
+  },
+  "created_at": "2026-06-01T13:17:06.968Z"
+}
