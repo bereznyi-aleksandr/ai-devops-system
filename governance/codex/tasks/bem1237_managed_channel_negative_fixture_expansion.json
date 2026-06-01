@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1237_managed_channel_negative_fixture_expansion",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1237 channel fixtures",
+  "objective": "Create file governance/tests/fixtures/managed_channel_message_negative_missing_payload.json with content {\"message_id\":\"neg_missing_payload\",\"created_at_utc3\":\"2026-06-01 | 07:09 (UTC+3)\",\"source_object\":\"operator\",\"target_object\":\"GD\",\"contour\":\"C1\",\"role\":\"general_director\",\"proof_policy\":{\"contains_secret\":false,\"template_only\":false,\"claims_release_proof\":false}}\nCreate file governance/tests/fixtures/managed_channel_message_negative_template_claims_release.json with content {\"message_id\":\"neg_template_claims_release\",\"created_at_utc3\":\"2026-06-01 | 07:09 (UTC+3)\",\"source_object\":\"operator\",\"target_object\":\"GD\",\"contour\":\"C1\",\"role\":\"general_director\",\"payload\":{\"text\":\"template claim\"},\"proof_policy\":{\"contains_secret\":false,\"template_only\":true,\"claims_release_proof\":true}}\nCreate file governance/tests/run_managed_channel_negative_tests.py with content import json\nfrom pathlib import Path\nimport sys\n\nsys.path.insert(0, str(Path.cwd()))\nfrom governance.runners.managed_channel_consumer import validate_message\n\nFIXTURES = [\n    (\"missing_payload\", \"governance/tests/fixtures/managed_channel_message_negative_missing_payload.json\"),\n    (\"template_claims_release\", \"governance/tests/fixtures/managed_channel_message_negative_template_claims_release.json\"),\n]\n\n\ndef run():\n    results = []\n    for name, path in FIXTURES:\n        message = json.loads(Path(path).read_text(encoding=\"utf-8\"))\n        ok, errors = validate_message(message)\n        results.append({\"test\": name, \"ok\": ok is False and bool(errors), \"errors\": errors})\n    return {\"ok\": all(item[\"ok\"] for item in results), \"release_pass\": False, \"results\": results}\n\nif __name__ == \"__main__\":\n    result = run()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1237_MANAGED_CHANNEL_NEGATIVE_FIXTURE_EXPANSION.md with content BEM-1237 | MANAGED CHANNEL NEGATIVE FIXTURE EXPANSION | 2026-06-01 | 07:09 (UTC+3)\n\nЭтап: Managed channel negative fixture expansion — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1236 completed with SHA `b6d19f684cb071da4d0f0ee4ba940c5745527758`.\n✅ Created missing-payload negative fixture.\n✅ Created template-claims-release negative fixture.\n✅ Created `governance/tests/run_managed_channel_negative_tests.py`.\n⚠️ Negative fixtures are not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Managed channel negative fixture expansion — 1/1 (100%) | Negative channel tests expanded |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; hardening continues |\n| Следующее действие | BEM-1238 lifecycle transition fixture expansion | Continue hardening fixtures |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1237 | MANAGED CHANNEL NEGATIVE FIXTURE EXPANSION | 2026-06-01 | 07:09 (UTC+3)\n- BEM-1236 completed with SHA b6d19f684cb071da4d0f0ee4ba940c5745527758.\n- Created managed channel negative fixtures and runner.\n- Release PASS not issued.\n- Next action: BEM-1238 lifecycle transition fixture expansion.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1237_managed_channel_negative_fixture_expansion.md",
+    "result_json": "governance/codex/results/bem1237_managed_channel_negative_fixture_expansion.json"
+  },
+  "created_at": "2026-06-01T04:10:58.463Z"
+}
