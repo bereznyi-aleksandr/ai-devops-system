@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1294_active_workflow_absence_guard",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1294 workflow absence guard",
+  "objective": "Create file governance/validators/validate_active_governance_workflow_absent.py with content from pathlib import Path\n\nACTIVE = Path('.github/workflows/governance-validation-ci.yml')\nDISABLED_DIR = Path('governance/workflows_disabled')\n\n\ndef main():\n    errors = []\n    if ACTIVE.exists():\n        errors.append('active governance-validation-ci.yml must remain absent until re-enable gate')\n    if not DISABLED_DIR.exists():\n        errors.append('governance/workflows_disabled directory missing')\n    if errors:\n        print('FAIL active workflow absence guard')\n        for error in errors:\n            print(error)\n        raise SystemExit(1)\n    print('PASS active workflow absence guard')\n\nif __name__ == '__main__':\n    main()\nCreate file governance/reports/BEM1294_ACTIVE_WORKFLOW_ABSENCE_GUARD.md with content BEM-1294 | ACTIVE WORKFLOW ABSENCE GUARD | 2026-06-01 | 13:43 (UTC+3)\n\nЭтап: Active workflow absence guard — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1293 completed with SHA `df9f10c28b086b286b80674855f0b97699db9deb`.\n✅ Created `governance/validators/validate_active_governance_workflow_absent.py`.\n✅ Guard fails if `.github/workflows/governance-validation-ci.yml` returns before re-enable gate.\n✅ No schedule triggers added.\n⚠️ Governance validation CI remains disabled until re-enable workflow is generated and validated safely.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Active workflow absence guard — 1/1 (100%) | Prevents accidental return of invalid active workflow |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI re-enable still pending |\n| Следующее действие | BEM-1295 workflow re-enable design with syntax-safe generator | Rebuild workflow only through validated generator |\n\nNo issue comments.\nCreate file governance/state/bem1294_active_workflow_absence_guard.json with content {\"bem_id\":\"BEM-1294\",\"created_at_utc3\":\"2026-06-01 | 13:43 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Active workflow absence guard\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1293\",\"latest_proof_sha\":\"df9f10c28b086b286b80674855f0b97699db9deb\",\"next_action\":\"BEM-1295 workflow re-enable design with syntax-safe generator\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1294 | ACTIVE WORKFLOW ABSENCE GUARD | 2026-06-01 | 13:43 (UTC+3)\n- BEM-1293 completed with SHA df9f10c28b086b286b80674855f0b97699db9deb.\n- Created active workflow absence guard.\n- Release PASS not issued.\n- Next action: BEM-1295 workflow re-enable design with syntax-safe generator.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1294_active_workflow_absence_guard.md",
+    "result_json": "governance/codex/results/bem1294_active_workflow_absence_guard.json"
+  },
+  "created_at": "2026-06-01T10:44:11.245Z"
+}
