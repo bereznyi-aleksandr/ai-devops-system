@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1329_final_no_fake_proof_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/policies/FINAL_NO_FAKE_PROOF_POLICY.json",
+    "create:governance/reports/BEM1329_FINAL_NO_FAKE_PROOF_POLICY.md",
+    "create:governance/state/bem1329_final_no_fake_proof_policy.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/policies/FINAL_NO_FAKE_PROOF_POLICY.json",
+    "governance/reports/BEM1329_FINAL_NO_FAKE_PROOF_POLICY.md",
+    "governance/state/bem1329_final_no_fake_proof_policy.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1329_final_no_fake_proof_policy.txt"
+  ],
+  "commit_sha": "083843eb705058b78f90398143a7ba9928b38ed7",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1329_final_no_fake_proof_policy.md",
+  "completed_at": "2026-06-01T13:04:52Z"
+}
