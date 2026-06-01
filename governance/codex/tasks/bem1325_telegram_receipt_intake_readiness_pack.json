@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1325_telegram_receipt_intake_readiness_pack",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1325 Telegram intake pack",
+  "objective": "Create file governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_INTAKE_READINESS_PACK.md with content BEM-1325 | PRODUCTION TELEGRAM RECEIPT INTAKE READINESS PACK | 2026-06-01 | 14:53 (UTC+3)\n\nЭтап: Production Telegram receipt intake readiness pack — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Компонент | Путь | Статус | Назначение |\n|---|---|---|---|\n| Contract | `governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_CONTRACT.json` | ready | Defines required receipt fields |\n| Intake | `governance/runtime/external_receipt_intake.py` | ready | Validates and optionally writes receipt |\n| Placeholder guard | `governance/validators/validate_telegram_receipt_not_placeholder.py` | ready | Rejects fake/fixture/sample receipts |\n| Contract tests | `governance/tests/run_telegram_receipt_contract_tests.py` | ready | Positive/negative contract coverage |\n| Placeholder tests | `governance/tests/run_telegram_receipt_placeholder_guard_tests.py` | ready | Fake receipt rejection coverage |\n| Required real receipt | `governance/proofs/external/telegram/production_receipt.json` | missing | Required for Telegram gate |\n\n| Receipt field | Required value / rule |\n|---|---|\n| source | `telegram` |\n| environment | `production_telegram` |\n| message_delivery_result | `pass` only after real delivery |\n| secret_scan_pass | `true` |\n| release_pass | must not be `true` |\n\nЧек-лист:\n✅ BEM-1324 completed with SHA `eed8e99b345562c3bace5ddd5c2cda67fc778d65`.\n✅ Telegram receipt intake readiness pack created.\n✅ Pack does not create or fake production receipt.\n⚠️ Actual production Telegram receipt is still missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Production Telegram receipt intake readiness pack — 1/1 (100%) | Telegram intake is ready without fake proof |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; real Telegram receipt still required |\n| Следующее действие | BEM-1326 live runtime receipt intake readiness pack | Prepare second real-proof intake package |\n\nNo issue comments.\nCreate file governance/state/bem1325_telegram_receipt_intake_readiness_pack.json with content {\"bem_id\":\"BEM-1325\",\"created_at_utc3\":\"2026-06-01 | 14:53 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Production Telegram receipt intake readiness pack\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1324\",\"latest_proof_sha\":\"eed8e99b345562c3bace5ddd5c2cda67fc778d65\",\"required_real_receipt\":\"governance/proofs/external/telegram/production_receipt.json\",\"next_action\":\"BEM-1326 live runtime receipt intake readiness pack\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1325 | PRODUCTION TELEGRAM RECEIPT INTAKE READINESS PACK | 2026-06-01 | 14:53 (UTC+3)\n- BEM-1324 completed with SHA eed8e99b345562c3bace5ddd5c2cda67fc778d65.\n- Created production Telegram receipt intake readiness pack.\n- Release PASS not issued.\n- Next action: BEM-1326 live runtime receipt intake readiness pack.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1325_telegram_receipt_intake_readiness_pack.md",
+    "result_json": "governance/codex/results/bem1325_telegram_receipt_intake_readiness_pack.json"
+  },
+  "created_at": "2026-06-01T12:56:11.942Z"
+}
