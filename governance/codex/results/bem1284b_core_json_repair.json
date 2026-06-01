@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1284b_core_json_repair",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/objects/object_passports.json",
+    "create:governance/release/release_proof_manifest.json",
+    "create:governance/state/BEM1284_SSOT_CANONICAL_PATHS.json"
+  ],
+  "changed_files": [
+    "governance/objects/object_passports.json",
+    "governance/release/release_proof_manifest.json",
+    "governance/state/BEM1284_SSOT_CANONICAL_PATHS.json",
+    "governance/codex/proofs/bem1284b_core_json_repair.txt"
+  ],
+  "commit_sha": "5b3cc4a6457b4bc6fc9bfc52e91642d94819cf0e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1284b_core_json_repair.md",
+  "completed_at": "2026-06-01T09:34:27Z"
+}
