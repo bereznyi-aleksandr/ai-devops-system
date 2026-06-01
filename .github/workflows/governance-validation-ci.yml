@@ -1,34 +1,6 @@
 name: Governance Validation CI
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
 on:
-  workflow_dispatch:
-
+  push:
+  pull_request:
 jobs:
-  governance-validation:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Print commit SHA
-        run: |
-          git rev-parse HEAD
-          git status --short
-      - name: Validate registries
-        run: python governance/tools/validate_registries.py
-      - name: Validate workspace promotion
-        run: python governance/tools/validate_workspace_promotion.py
-      - name: Validate product repository registry
-        run: python governance/tools/validate_product_repository_registry.py
-      - name: Run baseline selftest
-        run: python governance/tools/run_bem880_selftest.py
-      - name: Run dispatch E2E selftest
-        run: python governance/tools/run_dispatch_e2e_selftest.py
-      - name: Check policy gate
-        run: python governance/tools/evaluate_policy_gate.py
-      - name: Check repository health
-        run: python governance/tools/update_repository_health_dashboard.py
+  validate:

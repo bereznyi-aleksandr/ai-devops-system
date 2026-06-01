@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1284d_min_loop_validator_ci",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runtime/minimal_governance_loop_runner.py",
+    "create:governance/tests/run_bem1284_minimal_governance_loop.py",
+    "create:governance/validators/validate_foundation_all.py",
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/reports/BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runtime/minimal_governance_loop_runner.py",
+    "governance/tests/run_bem1284_minimal_governance_loop.py",
+    "governance/validators/validate_foundation_all.py",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/reports/BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1284d_min_loop_validator_ci.txt"
+  ],
+  "commit_sha": "77f1566f61d4e543c5e793d43c869d2822cae173",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1284d_min_loop_validator_ci.md",
+  "completed_at": "2026-06-01T09:40:12Z"
+}
