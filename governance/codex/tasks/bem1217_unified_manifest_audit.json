@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1217_unified_manifest_audit",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1217 manifest audit",
+  "objective": "Create file governance/reports/BEM1217_UNIFIED_MANIFEST_AUDIT.md with content BEM-1217 | UNIFIED MANIFEST AUDIT | 2026-06-01 | 06:36 (UTC+3)\n\nЭтап: Unified manifest audit — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1216 completed with SHA `2216bada3d266725f29a0bcffad4b571f569f2d7`.\n✅ Unified validator suite manifest exists.\n✅ Manifest references base suite, hardening extension, integrity extension and external proof validator index.\n✅ Manifest references validator, hardening and CI capture runners.\n⚠️ Unified manifest audit is not Release PASS.\n⚠️ External proof receipts remain missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Unified manifest audit — 1/1 (100%) | Unified manifest audit created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; receipts missing |\n| Следующее действие | BEM-1218 next runtime-hardening queue | Continue runtime hardening |\n\nNo issue comments.\nCreate file governance/state/bem1217_unified_manifest_audit.json with content {\"bem_id\":\"BEM-1217\",\"created_at_utc3\":\"2026-06-01 | 06:36 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Unified manifest audit\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1216\",\"latest_proof_sha\":\"2216bada3d266725f29a0bcffad4b571f569f2d7\",\"audit_result\":\"unified_manifest_present_receipts_missing\",\"next_action\":\"BEM-1218 next runtime-hardening queue\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1217 | UNIFIED MANIFEST AUDIT | 2026-06-01 | 06:36 (UTC+3)\n- BEM-1216 completed with SHA 2216bada3d266725f29a0bcffad4b571f569f2d7.\n- Created unified manifest audit.\n- Release PASS not issued.\n- Next action: BEM-1218 next runtime-hardening queue.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1217_unified_manifest_audit.md",
+    "result_json": "governance/codex/results/bem1217_unified_manifest_audit.json"
+  },
+  "created_at": "2026-06-01T03:37:21.761Z"
+}
