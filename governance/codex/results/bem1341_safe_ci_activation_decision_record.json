@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1341_safe_ci_activation_decision_record",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflows_disabled/SAFE_CI_ACTIVATION_DECISION_RECORD.json",
+    "create:governance/reports/BEM1341_SAFE_CI_ACTIVATION_DECISION_RECORD.md",
+    "create:governance/state/bem1341_safe_ci_activation_decision_record.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/workflows_disabled/SAFE_CI_ACTIVATION_DECISION_RECORD.json",
+    "governance/reports/BEM1341_SAFE_CI_ACTIVATION_DECISION_RECORD.md",
+    "governance/state/bem1341_safe_ci_activation_decision_record.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1341_safe_ci_activation_decision_record.txt"
+  ],
+  "commit_sha": "d0397945c576e2e0d54ca12f9d2836a409a6803c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1341_safe_ci_activation_decision_record.md",
+  "completed_at": "2026-06-01T14:32:35Z"
+}
