@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1250_unified_capture_audit_checkpoint",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1250 unified capture audit",
+  "objective": "Create file governance/reports/BEM1250_UNIFIED_CAPTURE_AUDIT_CHECKPOINT.md with content BEM-1250 | UNIFIED CAPTURE AUDIT CHECKPOINT | 2026-06-01 | 07:42 (UTC+3)\n\nЭтап: Unified capture audit checkpoint — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1249 completed with SHA `72ff42ecd247ec31323b0b2b479a8541d023ae02`.\n✅ Unified validation capture runner exists.\n✅ Unified capture policy exists.\n✅ Unified capture covers base validators, hardening tests, expanded fixtures and mock E2E.\n⚠️ Unified capture remains non-release proof.\n⚠️ Production Telegram, live runtime and external Claude receipts remain missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Unified capture audit checkpoint — 1/1 (100%) | Unified capture checkpoint created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; external proof missing |\n| Следующее действие | BEM-1251 next proof-monitoring and hardening seed | Continue without stopping |\n\nNo issue comments.\nCreate file governance/state/bem1250_unified_capture_audit_checkpoint.json with content {\"bem_id\":\"BEM-1250\",\"created_at_utc3\":\"2026-06-01 | 07:42 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Unified capture audit checkpoint\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1249\",\"latest_proof_sha\":\"72ff42ecd247ec31323b0b2b479a8541d023ae02\",\"audit_result\":\"unified_capture_ready_not_release_proof_external_receipts_missing\",\"next_action\":\"BEM-1251 next proof-monitoring and hardening seed\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1250 | UNIFIED CAPTURE AUDIT CHECKPOINT | 2026-06-01 | 07:42 (UTC+3)\n- BEM-1249 completed with SHA 72ff42ecd247ec31323b0b2b479a8541d023ae02.\n- Created unified capture audit checkpoint.\n- Release PASS not issued.\n- Next action: BEM-1251 next proof-monitoring and hardening seed.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1250_unified_capture_audit_checkpoint.md",
+    "result_json": "governance/codex/results/bem1250_unified_capture_audit_checkpoint.json"
+  },
+  "created_at": "2026-06-01T04:43:37.338Z"
+}
