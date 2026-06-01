@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1303_external_receipt_intake_pipeline",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runtime/external_receipt_intake.py",
+    "create:governance/tests/run_external_receipt_intake_tests.py",
+    "create:governance/reports/BEM1303_EXTERNAL_RECEIPT_INTAKE_PIPELINE.md",
+    "create:governance/state/bem1303_external_receipt_intake_pipeline.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runtime/external_receipt_intake.py",
+    "governance/tests/run_external_receipt_intake_tests.py",
+    "governance/reports/BEM1303_EXTERNAL_RECEIPT_INTAKE_PIPELINE.md",
+    "governance/state/bem1303_external_receipt_intake_pipeline.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1303_external_receipt_intake_pipeline.txt"
+  ],
+  "commit_sha": "d4af83ff0afc3feb345c81fd00521914c7550e2e",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1303_external_receipt_intake_pipeline.md",
+  "completed_at": "2026-06-01T11:51:42Z"
+}
