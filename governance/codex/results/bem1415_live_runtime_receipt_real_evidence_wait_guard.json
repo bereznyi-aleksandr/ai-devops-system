@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1415_live_runtime_receipt_real_evidence_wait_guard",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.json",
+    "create:governance/reports/BEM1415_LIVE_RUNTIME_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.md",
+    "create:governance/state/bem1415_live_runtime_receipt_real_evidence_wait_guard.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.json",
+    "governance/reports/BEM1415_LIVE_RUNTIME_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.md",
+    "governance/state/bem1415_live_runtime_receipt_real_evidence_wait_guard.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1415_live_runtime_receipt_real_evidence_wait_guard.txt"
+  ],
+  "commit_sha": "bc6a8d04f245344db6daae8f8872ac3417c2400f",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1415_live_runtime_receipt_real_evidence_wait_guard.md",
+  "completed_at": "2026-06-01T16:33:22Z"
+}
