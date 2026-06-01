@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1267_receipt_validator_negative_runner_manifest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1267 negative runner manifest",
+  "objective": "Create file governance/validators/bem931_receipt_negative_runner_manifest.json with content {\"bem_id\":\"BEM-1267\",\"created_at_utc3\":\"2026-06-01 | 08:10 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Receipt validator negative runner manifest\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1266\",\"latest_proof_sha\":\"466261d9d23ef9a34abe580bbe5aaab4b70ecefd\",\"negative_runner\":\"governance/tests/run_receipt_validator_negative_tests.py\",\"negative_fixtures\":[\"governance/tests/fixtures/telegram_receipt_negative_secret.json\",\"governance/tests/fixtures/runtime_receipt_negative_mock_as_live.json\",\"governance/tests/fixtures/claude_audit_negative_self_claim.json\"],\"next_action\":\"BEM-1268 receipt validator negative runner audit\"}\nCreate file governance/reports/BEM1267_RECEIPT_VALIDATOR_NEGATIVE_RUNNER_MANIFEST.md with content BEM-1267 | RECEIPT VALIDATOR NEGATIVE RUNNER MANIFEST | 2026-06-01 | 08:10 (UTC+3)\n\nЭтап: Receipt validator negative runner manifest — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1266 completed with SHA `466261d9d23ef9a34abe580bbe5aaab4b70ecefd`.\n✅ Created `governance/validators/bem931_receipt_negative_runner_manifest.json`.\n✅ Manifest references receipt negative runner and fixtures.\n⚠️ Negative runner manifest is not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt validator negative runner manifest — 1/1 (100%) | Negative runner manifest created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; validator hardening continues |\n| Следующее действие | BEM-1268 receipt validator negative runner audit | Continue hardening audit |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1267 | RECEIPT VALIDATOR NEGATIVE RUNNER MANIFEST | 2026-06-01 | 08:10 (UTC+3)\n- BEM-1266 completed with SHA 466261d9d23ef9a34abe580bbe5aaab4b70ecefd.\n- Created receipt validator negative runner manifest.\n- Release PASS not issued.\n- Next action: BEM-1268 receipt validator negative runner audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1267_receipt_validator_negative_runner_manifest.md",
+    "result_json": "governance/codex/results/bem1267_receipt_validator_negative_runner_manifest.json"
+  },
+  "created_at": "2026-06-01T05:12:19.629Z"
+}
