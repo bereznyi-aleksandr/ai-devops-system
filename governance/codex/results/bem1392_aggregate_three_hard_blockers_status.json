@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1392_aggregate_three_hard_blockers_status",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/AGGREGATE_THREE_HARD_BLOCKERS_STATUS.json",
+    "create:governance/reports/BEM1392_AGGREGATE_THREE_HARD_BLOCKERS_STATUS.md",
+    "create:governance/state/bem1392_aggregate_three_hard_blockers_status.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/AGGREGATE_THREE_HARD_BLOCKERS_STATUS.json",
+    "governance/reports/BEM1392_AGGREGATE_THREE_HARD_BLOCKERS_STATUS.md",
+    "governance/state/bem1392_aggregate_three_hard_blockers_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1392_aggregate_three_hard_blockers_status.txt"
+  ],
+  "commit_sha": "eaafe15928979aa26a5f56e6fdfff4b1e11102ee",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1392_aggregate_three_hard_blockers_status.md",
+  "completed_at": "2026-06-01T16:14:00Z"
+}

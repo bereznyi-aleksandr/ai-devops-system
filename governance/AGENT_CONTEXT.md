@@ -1268,3 +1268,5 @@ No issue comments.
 -
 ### BEM-1391 | RECONCILE EXTERNAL CLAUDE LANE TASK | 2026-06-01 | 18:12 (UTC+3)
 - Reconciled BEM-1389 SHA eefe2be414e787903830953f9a0f2560c4dabde9
+### BEM-1392 | AGGREGATE THREE HARD BLOCKERS STATUS | 2026-06-01 | 18:12 (UTC+3)
+- Aggregated three hard blockers: Telegram, live
