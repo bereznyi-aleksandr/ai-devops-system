@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1265_receipt_validator_hardening_audit",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1265 receipt hardening audit",
+  "objective": "Create file governance/reports/BEM1265_RECEIPT_VALIDATOR_HARDENING_AUDIT.md with content BEM-1265 | RECEIPT VALIDATOR HARDENING AUDIT | 2026-06-01 | 08:07 (UTC+3)\n\nЭтап: Receipt validator hardening audit — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1264 completed with SHA `3ee6c40e272ee26903a4bd8538262e8e7c80efcc`.\n✅ Receipt validator negative fixtures exist.\n✅ Receipt validator negative test runner exists.\n✅ Negative runner expects rejection of secret, mock-as-live and GPT-self-claim fixtures.\n⚠️ Negative tests are not release proof.\n⚠️ Actual production Telegram, live runtime and external Claude receipts remain missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt validator hardening audit — 1/1 (100%) | Receipt validator hardening audited |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; receipt blockers remain |\n| Следующее действие | BEM-1266 next autonomous hardening and monitoring queue | Continue without stopping |\n\nNo issue comments.\nCreate file governance/state/bem1265_receipt_validator_hardening_audit.json with content {\"bem_id\":\"BEM-1265\",\"created_at_utc3\":\"2026-06-01 | 08:07 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Receipt validator hardening audit\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1264\",\"latest_proof_sha\":\"3ee6c40e272ee26903a4bd8538262e8e7c80efcc\",\"audit_result\":\"negative_receipt_validator_coverage_present_receipts_missing\",\"next_action\":\"BEM-1266 next autonomous hardening and monitoring queue\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1265 | RECEIPT VALIDATOR HARDENING AUDIT | 2026-06-01 | 08:07 (UTC+3)\n- BEM-1264 completed with SHA 3ee6c40e272ee26903a4bd8538262e8e7c80efcc.\n- Created receipt validator hardening audit.\n- Release PASS not issued.\n- Next action: BEM-1266 next autonomous hardening and monitoring queue.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1265_receipt_validator_hardening_audit.md",
+    "result_json": "governance/codex/results/bem1265_receipt_validator_hardening_audit.json"
+  },
+  "created_at": "2026-06-01T05:09:06.355Z"
+}
