@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1371_telegram_receipt_lane_instructions",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1371 Telegram lane instructions",
+  "objective": "Create file governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_LANE_PLACEHOLDER_FREE_INSTRUCTIONS.md with content BEM-1371 | PRODUCTION TELEGRAM REAL RECEIPT LANE PLACEHOLDER-FREE INSTRUCTIONS | 2026-06-01 | 17:53 (UTC+3)\n\nЭтап: Production Telegram real receipt lane instructions — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Step | Instruction | Forbidden |\n|---:|---|---|\n| 1 | Use only real production Telegram delivery evidence | mock, sample, placeholder |\n| 2 | Redact any sensitive output before committing | token, api_key, password, secret |\n| 3 | Write receipt only to `governance/proofs/external/telegram/production_receipt.json` | any alternate proof path as release input |\n| 4 | Set `source=telegram` and `environment=production_telegram` | test, fixture, dry_run |\n| 5 | Set `release_pass=false` | release_pass=true |\n| 6 | Run intake and placeholder validators after receipt exists | claiming pass before validators |\n\nЧек-лист:\n⚠️ BEM-1370 may still be queued and is not counted without SHA.\n✅ Placeholder-free lane instructions created for production Telegram receipt.\n✅ Instructions do not create or fake receipt.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until explicit safe activation and GitHub acceptance proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Production Telegram real receipt lane instructions — 1/1 (100%) | First real receipt lane can proceed without placeholder proof |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; Telegram real receipt still required |\n| Следующее действие | BEM-1372 live runtime real receipt lane placeholder-free instructions | Continue second allowed receipt lane |\n\nNo issue comments.\nCreate file governance/state/bem1371_telegram_receipt_lane_instructions.json with content {\"bem_id\":\"BEM-1371\",\"created_at_utc3\":\"2026-06-01 | 17:53 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Production Telegram real receipt lane instructions\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"queued_not_counted\":[\"BEM-1370\"],\"next_action\":\"BEM-1372 live runtime real receipt lane placeholder-free instructions\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1371 | PRODUCTION TELEGRAM REAL RECEIPT LANE INSTRUCTIONS | 2026-06-01 | 17:53 (UTC+3)\n- Created placeholder-free instructions for production Telegram real receipt lane.\n- BEM-1370 was queued at observation time and is not counted without SHA.\n- Release PASS not issued.\n- Next action: BEM-1372 live runtime real receipt lane placeholder-free instructions.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1371_telegram_receipt_lane_instructions.md",
+    "result_json": "governance/codex/results/bem1371_telegram_receipt_lane_instructions.json"
+  },
+  "created_at": "2026-06-01T15:54:43.828Z"
+}
