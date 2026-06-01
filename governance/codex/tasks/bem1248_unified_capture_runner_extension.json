@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1248_unified_capture_runner_extension",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1248 unified capture",
+  "objective": "Create file governance/runtime/unified_validation_capture_runner.py with content import json\nimport subprocess\nimport sys\nfrom pathlib import Path\n\nTARGETS = [\n    \"governance/validators/run_bem931_validator_suite.py\",\n    \"governance/tests/run_bem931_runner_hardening_tests.py\",\n    \"governance/tests/run_managed_channel_negative_tests.py\",\n    \"governance/tests/run_lifecycle_transition_tests.py\",\n    \"governance/tests/run_provider_policy_fixture_tests.py\",\n    \"governance/tests/run_bem931_mock_e2e.py\",\n]\n\n\ndef run(output_path=\"governance/runtime/BEM1248_UNIFIED_VALIDATION_CAPTURE_RESULT.json\"):\n    results = []\n    for target in TARGETS:\n        proc = subprocess.run([sys.executable, target], text=True, capture_output=True)\n        results.append({\"target\": target, \"returncode\": proc.returncode, \"stdout\": proc.stdout.strip(), \"stderr\": proc.stderr.strip(), \"ok\": proc.returncode == 0})\n    record = {\"bem_id\": \"BEM-1248\", \"release_pass\": False, \"unified_capture\": True, \"ok\": all(item[\"ok\"] for item in results), \"results\": results}\n    Path(output_path).parent.mkdir(parents=True, exist_ok=True)\n    Path(output_path).write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding=\"utf-8\")\n    return record\n\nif __name__ == \"__main__\":\n    result = run()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get(\"ok\") else 1)\nCreate file governance/reports/BEM1248_UNIFIED_CAPTURE_RUNNER_EXTENSION.md with content BEM-1248 | UNIFIED CAPTURE RUNNER EXTENSION | 2026-06-01 | 07:39 (UTC+3)\n\nЭтап: Unified capture runner extension — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1247 completed with SHA `ab8ee593d4d5dff778e8e3199ad61aeee9ec435b`.\n✅ Created `governance/runtime/unified_validation_capture_runner.py`.\n✅ Unified runner covers validator suite, hardening tests, expanded fixtures and mock E2E.\n⚠️ Unified capture is not Release PASS.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Unified capture runner extension — 1/1 (100%) | Unified capture runner created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; validation hardening continues |\n| Следующее действие | BEM-1249 unified capture runner policy | Define unified capture proof boundary |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1248 | UNIFIED CAPTURE RUNNER EXTENSION | 2026-06-01 | 07:39 (UTC+3)\n- BEM-1247 completed with SHA ab8ee593d4d5dff778e8e3199ad61aeee9ec435b.\n- Created unified validation capture runner.\n- Release PASS not issued.\n- Next action: BEM-1249 unified capture runner policy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1248_unified_capture_runner_extension.md",
+    "result_json": "governance/codex/results/bem1248_unified_capture_runner_extension.json"
+  },
+  "created_at": "2026-06-01T04:40:28.843Z"
+}
