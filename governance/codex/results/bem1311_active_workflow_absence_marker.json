@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1311_active_workflow_absence_marker",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1311_active_workflow_absence_marker.json",
+    "create:governance/reports/BEM1311_ACTIVE_WORKFLOW_ABSENCE_MARKER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1311_active_workflow_absence_marker.json",
+    "governance/reports/BEM1311_ACTIVE_WORKFLOW_ABSENCE_MARKER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1311_active_workflow_absence_marker.txt"
+  ],
+  "commit_sha": "11535c3370972dba3a702e4c9f20e6b5f0135e33",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1311_active_workflow_absence_marker.md",
+  "completed_at": "2026-06-01T12:10:48Z"
+}
