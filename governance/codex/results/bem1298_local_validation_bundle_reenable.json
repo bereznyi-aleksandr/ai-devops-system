@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1298_local_validation_bundle_reenable",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tests/run_local_reenable_validation_bundle.py",
+    "create:governance/reports/BEM1298_LOCAL_VALIDATION_BUNDLE_REENABLE.md",
+    "create:governance/state/bem1298_local_validation_bundle_reenable.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tests/run_local_reenable_validation_bundle.py",
+    "governance/reports/BEM1298_LOCAL_VALIDATION_BUNDLE_REENABLE.md",
+    "governance/state/bem1298_local_validation_bundle_reenable.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1298_local_validation_bundle_reenable.txt"
+  ],
+  "commit_sha": "551dfea5bb9312ca6f340e9c7258731695855965",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1298_local_validation_bundle_reenable.md",
+  "completed_at": "2026-06-01T10:52:17Z"
+}
