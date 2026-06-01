@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1284_write_executor_selftest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "selftest",
+  "title": "BEM-1284 write selftest",
+  "objective": "Create file governance/reports/BEM1284_WRITE_EXECUTOR_SELFTEST.md with content BEM-1284 WRITE EXECUTOR SELFTEST | 2026-06-01 | 12:29 (UTC+3)\n\nThis file proves the Deno codex runner can create normal repository files, not only governance/codex/proofs files.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1284_write_executor_selftest.md",
+    "result_json": "governance/codex/results/bem1284_write_executor_selftest.json"
+  },
+  "created_at": "2026-06-01T09:31:38.173Z"
+}
