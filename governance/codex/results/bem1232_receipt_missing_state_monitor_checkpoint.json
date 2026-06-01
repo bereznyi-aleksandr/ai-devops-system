@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1232_receipt_missing_state_monitor_checkpoint",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1232_RECEIPT_MISSING_STATE_MONITOR_CHECKPOINT.md",
+    "create:governance/state/bem1232_receipt_missing_state_monitor_checkpoint.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1232_RECEIPT_MISSING_STATE_MONITOR_CHECKPOINT.md",
+    "governance/state/bem1232_receipt_missing_state_monitor_checkpoint.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1232_receipt_missing_state_monitor_checkpoint.txt"
+  ],
+  "commit_sha": "5b0b3ef210eea88b09099f4ba86cf8a39dbf4684",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1232_receipt_missing_state_monitor_checkpoint.md",
+  "completed_at": "2026-06-01T04:02:32Z"
+}
