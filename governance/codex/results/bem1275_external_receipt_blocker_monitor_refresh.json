@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1275_external_receipt_blocker_monitor_refresh",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1275_external_receipt_blocker_monitor_refresh.json",
+    "create:governance/reports/BEM1275_EXTERNAL_RECEIPT_BLOCKER_MONITOR_REFRESH.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1275_external_receipt_blocker_monitor_refresh.json",
+    "governance/reports/BEM1275_EXTERNAL_RECEIPT_BLOCKER_MONITOR_REFRESH.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1275_external_receipt_blocker_monitor_refresh.txt"
+  ],
+  "commit_sha": "ef3ad4a8eb4f0c5ee2c5dbcd98cb7552fae51ac6",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1275_external_receipt_blocker_monitor_refresh.md",
+  "completed_at": "2026-06-01T05:25:12Z"
+}
