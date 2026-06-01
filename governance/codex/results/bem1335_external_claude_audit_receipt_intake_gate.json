@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1335_external_claude_audit_receipt_intake_gate",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_INTAKE_GATE.json",
+    "create:governance/reports/BEM1335_EXTERNAL_CLAUDE_AUDIT_RECEIPT_INTAKE_GATE.md",
+    "create:governance/state/bem1335_external_claude_audit_receipt_intake_gate.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_RECEIPT_INTAKE_GATE.json",
+    "governance/reports/BEM1335_EXTERNAL_CLAUDE_AUDIT_RECEIPT_INTAKE_GATE.md",
+    "governance/state/bem1335_external_claude_audit_receipt_intake_gate.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1335_external_claude_audit_receipt_intake_gate.txt"
+  ],
+  "commit_sha": "a00af7e319d6f55ab0824d66d0ae1d3d05299794",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1335_external_claude_audit_receipt_intake_gate.md",
+  "completed_at": "2026-06-01T13:17:23Z"
+}
