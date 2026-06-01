@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1329_final_no_fake_proof_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1329 no fake proof policy",
+  "objective": "Create file governance/policies/FINAL_NO_FAKE_PROOF_POLICY.json with content {\"bem_id\":\"BEM-1329\",\"created_at_utc3\":\"2026-06-01 | 15:03 (UTC+3)\",\"release_pass\":false,\"policy\":\"Readiness artifacts, old failed workflow screenshots, proof-only commits, placeholder receipts, mock receipts, fixture outputs, and GPT self-claims are not acceptable release proof.\",\"not_accepted_as_proof\":[\"readiness_pack\",\"acquisition_plan\",\"old_failed_github_actions_screenshot\",\"proof_only_commit\",\"placeholder_receipt\",\"mock_receipt\",\"fixture_only_output\",\"gpt_self_claimed_external_audit\",\"comment_only_workflow_file\"],\"accepted_release_inputs_only\":[\"valid production Telegram receipt at governance/proofs/external/telegram/production_receipt.json\",\"valid live runtime receipt at governance/proofs/external/runtime/live_runtime_receipt.json\",\"valid external Claude audit result at governance/proofs/external/claude/external_claude_audit_result.json\",\"release decision validator passing after all receipts\"],\"current_decision\":\"NO_RELEASE_PASS\",\"next_action\":\"BEM-1330 receipt validators final integration index\"}\nCreate file governance/reports/BEM1329_FINAL_NO_FAKE_PROOF_POLICY.md with content BEM-1329 | FINAL NO-FAKE-PROOF POLICY ENFORCEMENT | 2026-06-01 | 15:03 (UTC+3)\n\nЭтап: Final no-fake-proof policy enforcement — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1328 completed with SHA `5945901a86c6aecac5f061cdd348a15f042c892c`.\n✅ Created `governance/policies/FINAL_NO_FAKE_PROOF_POLICY.json`.\n✅ Policy rejects readiness packs, acquisition plans, old failed workflow screenshots, proof-only commits, placeholder receipts, mock receipts, fixture-only outputs and GPT self-claims as release proof.\n✅ Policy accepts only valid real external receipts and passing release decision validator as release inputs.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until safe re-enable gate.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Final no-fake-proof policy enforcement — 1/1 (100%) | False proof classes explicitly forbidden |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; release remains blocked by missing real receipts |\n| Следующее действие | BEM-1330 receipt validators final integration index | Index all validators and guards for final release preflight |\n\nNo issue comments.\nCreate file governance/state/bem1329_final_no_fake_proof_policy.json with content {\"bem_id\":\"BEM-1329\",\"created_at_utc3\":\"2026-06-01 | 15:03 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Final no-fake-proof policy enforcement\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1328\",\"latest_proof_sha\":\"5945901a86c6aecac5f061cdd348a15f042c892c\",\"next_action\":\"BEM-1330 receipt validators final integration index\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1329 | FINAL NO-FAKE-PROOF POLICY ENFORCEMENT | 2026-06-01 | 15:03 (UTC+3)\n- BEM-1328 completed with SHA 5945901a86c6aecac5f061cdd348a15f042c892c.\n- Created final no-fake-proof policy.\n- Release PASS not issued.\n- Next action: BEM-1330 receipt validators final integration index.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1329_final_no_fake_proof_policy.md",
+    "result_json": "governance/codex/results/bem1329_final_no_fake_proof_policy.json"
+  },
+  "created_at": "2026-06-01T13:04:40.560Z"
+}
