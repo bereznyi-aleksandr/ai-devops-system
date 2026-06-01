@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1256_unified_capture_result_placeholder_guard",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1256 capture result guard",
+  "objective": "Create file governance/runtime/BEM1256_UNIFIED_CAPTURE_RESULT_PLACEHOLDER_GUARD.json with content {\"bem_id\":\"BEM-1256\",\"created_at_utc3\":\"2026-06-01 | 07:52 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Unified capture result placeholder guard\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1255\",\"latest_proof_sha\":\"4853781959bbdf6ee87d13f20ec5b5ec858ab3d3\",\"guard\":{\"expected_result_file\":\"governance/runtime/BEM1248_UNIFIED_VALIDATION_CAPTURE_RESULT.json\",\"placeholder_is_not_pass\":true,\"forbidden\":[\"release_pass_true\",\"production_claim\",\"live_runtime_claim\",\"external_claude_claim\"]},\"next_action\":\"BEM-1257 unified capture result validator\"}\nCreate file governance/reports/BEM1256_UNIFIED_CAPTURE_RESULT_PLACEHOLDER_GUARD.md with content BEM-1256 | UNIFIED CAPTURE RESULT PLACEHOLDER GUARD | 2026-06-01 | 07:52 (UTC+3)\n\nЭтап: Unified capture result placeholder guard — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1255 completed with SHA `4853781959bbdf6ee87d13f20ec5b5ec858ab3d3`.\n✅ Created `governance/runtime/BEM1256_UNIFIED_CAPTURE_RESULT_PLACEHOLDER_GUARD.json`.\n✅ Guard states placeholder is not PASS.\n✅ Guard forbids release/live/external claims in unified capture placeholder.\n⚠️ External receipt blockers remain open.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Unified capture result placeholder guard — 1/1 (100%) | Placeholder guard created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; hardening continues |\n| Следующее действие | BEM-1257 unified capture result validator | Continue capture validation hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1256 | UNIFIED CAPTURE RESULT PLACEHOLDER GUARD | 2026-06-01 | 07:52 (UTC+3)\n- BEM-1255 completed with SHA 4853781959bbdf6ee87d13f20ec5b5ec858ab3d3.\n- Created unified capture result placeholder guard.\n- Release PASS not issued.\n- Next action: BEM-1257 unified capture result validator.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1256_unified_capture_result_placeholder_guard.md",
+    "result_json": "governance/codex/results/bem1256_unified_capture_result_placeholder_guard.json"
+  },
+  "created_at": "2026-06-01T04:54:09.755Z"
+}
