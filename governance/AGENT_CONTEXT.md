@@ -915,3 +915,5 @@ No issue comments.
 - BEM-1202 completed with SHA 97ff1a80dd758d21a907bb763411b1b2ec8ae7b6
 ### BEM-1204 | NEXT LIVE-PROOF INTAKE QUEUE | 2026-06-01 | 06:18 (UTC+3)
 - BEM-1203 completed with SHA 289ab0ebb8ee5feaaa40ab8bafbe265236c5e8f3
+### BEM-1205 | LIVE-PROOF INTAKE DIRECTORY GUARD | 2026-06-01 | 06:19 (UTC+3)
+- BEM-1204 completed with SHA ccaa4ca0ae47a69b6f5025ec2bb064dfa85fd98a
