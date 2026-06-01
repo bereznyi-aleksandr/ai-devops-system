@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1426_final_allowed_lane_execution_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/FINAL_ALLOWED_LANE_EXECUTION_QUEUE.json",
+    "create:governance/reports/BEM1426_FINAL_ALLOWED_LANE_EXECUTION_QUEUE.md",
+    "create:governance/state/bem1426_final_allowed_lane_execution_queue.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/FINAL_ALLOWED_LANE_EXECUTION_QUEUE.json",
+    "governance/reports/BEM1426_FINAL_ALLOWED_LANE_EXECUTION_QUEUE.md",
+    "governance/state/bem1426_final_allowed_lane_execution_queue.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1426_final_allowed_lane_execution_queue.txt"
+  ],
+  "commit_sha": "5126af5fb0ee4b854a388025d08bed44a3406279",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1426_final_allowed_lane_execution_queue.md",
+  "completed_at": "2026-06-01T16:43:35Z"
+}
