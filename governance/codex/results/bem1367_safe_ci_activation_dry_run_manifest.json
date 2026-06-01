@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1367_safe_ci_activation_dry_run_manifest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflows_disabled/SAFE_CI_ACTIVATION_DRY_RUN_MANIFEST.json",
+    "create:governance/reports/BEM1367_SAFE_CI_ACTIVATION_DRY_RUN_MANIFEST.md",
+    "create:governance/state/bem1367_safe_ci_activation_dry_run_manifest.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/workflows_disabled/SAFE_CI_ACTIVATION_DRY_RUN_MANIFEST.json",
+    "governance/reports/BEM1367_SAFE_CI_ACTIVATION_DRY_RUN_MANIFEST.md",
+    "governance/state/bem1367_safe_ci_activation_dry_run_manifest.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1367_safe_ci_activation_dry_run_manifest.txt"
+  ],
+  "commit_sha": "627aedfbf54fe574efe1372245cce1393a96eb57",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1367_safe_ci_activation_dry_run_manifest.md",
+  "completed_at": "2026-06-01T15:51:45Z"
+}
