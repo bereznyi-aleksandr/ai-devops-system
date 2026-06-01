@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1206_live_proof_intake_readme",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1206 intake README",
+  "objective": "Create file governance/proofs/external/LIVE_PROOF_INTAKE_README.md with content BEM-1206 | LIVE-PROOF INTAKE README | 2026-06-01 | 06:20 (UTC+3)\n\nЭтап: Live-proof intake README — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1205 completed with SHA `4063d89cb048b0e2091b4bed8677afa8d9b4ba62`.\n✅ Intake README created.\n✅ Receipt names, validators and forbidden content are documented.\n✅ Release decision remains fail-closed until all receipts validate.\n⚠️ Receipt files are still missing.\n❌ Release PASS is not issued.\n\n## Required receipts\n1. `governance/proofs/external/telegram/production_receipt.json`\n2. `governance/proofs/external/runtime/live_runtime_receipt.json`\n3. `governance/proofs/external/claude/external_claude_audit_result.json`\n\nAll receipts must be redacted, validator-compatible, and must not contain raw secrets, tokens, passwords, API keys, self-claims, or mock-as-live evidence.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Live-proof intake README — 1/1 (100%) | Intake instructions created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; receipts missing |\n| Следующее действие | BEM-1207 post-live-proof-intake checkpoint | Continue without stopping |\n\nNo issue comments.\nCreate file governance/state/bem1206_live_proof_intake_readme.json with content {\"bem_id\":\"BEM-1206\",\"created_at_utc3\":\"2026-06-01 | 06:20 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Live-proof intake README\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1205\",\"latest_proof_sha\":\"4063d89cb048b0e2091b4bed8677afa8d9b4ba62\",\"next_action\":\"BEM-1207 post-live-proof-intake checkpoint\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1206 | LIVE-PROOF INTAKE README | 2026-06-01 | 06:20 (UTC+3)\n- BEM-1205 completed with SHA 4063d89cb048b0e2091b4bed8677afa8d9b4ba62.\n- Created live-proof intake README.\n- Release PASS not issued.\n- Next action: BEM-1207 post-live-proof-intake checkpoint.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1206_live_proof_intake_readme.md",
+    "result_json": "governance/codex/results/bem1206_live_proof_intake_readme.json"
+  },
+  "created_at": "2026-06-01T03:22:11.909Z"
+}
