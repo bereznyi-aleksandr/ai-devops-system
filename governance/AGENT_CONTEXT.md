@@ -1074,3 +1074,5 @@ No issue comments.
 - Operator screenshot confirmed CI workflow still invalid after BEM-1286A
 ### BEM-1287 | WORKFLOW YAML GUARD | 2026-06-01 | 12:56 (UTC+3)
 - BEM-1286B completed with SHA ce6eb035f8ded22f72f8eda0b3cef18183d2e2a9
+### BEM-1288 | ULTRA-MINIMAL WORKFLOW REPAIR | 2026-06-01 | 12:58 (UTC+3)
+- BEM-1287 completed with SHA 4635525361d6e7192541bdca953ac24ee866d2ec

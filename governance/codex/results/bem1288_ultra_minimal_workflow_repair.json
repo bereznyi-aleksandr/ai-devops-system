@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1288_ultra_minimal_workflow_repair",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/reports/BEM1288_ULTRA_MINIMAL_WORKFLOW_REPAIR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/reports/BEM1288_ULTRA_MINIMAL_WORKFLOW_REPAIR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1288_ultra_minimal_workflow_repair.txt"
+  ],
+  "commit_sha": "1bf8fd97a415149c263bda0faea176fe199d2bde",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1288_ultra_minimal_workflow_repair.md",
+  "completed_at": "2026-06-01T10:27:05Z"
+}
