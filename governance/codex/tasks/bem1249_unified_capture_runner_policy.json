@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1249_unified_capture_runner_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1249 unified policy",
+  "objective": "Create file governance/runtime/BEM1249_UNIFIED_CAPTURE_RUNNER_POLICY.json with content {\"bem_id\":\"BEM-1249\",\"created_at_utc3\":\"2026-06-01 | 07:40 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Unified capture runner policy\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1248\",\"latest_proof_sha\":\"4735dd1d565676320e7126f32182b46541806d41\",\"policy\":{\"capture_result_file\":\"governance/runtime/BEM1248_UNIFIED_VALIDATION_CAPTURE_RESULT.json\",\"can_confirm\":\"repo validation, fixture behavior and mock E2E consistency\",\"cannot_confirm\":[\"production Telegram receipt\",\"live runtime receipt\",\"external Claude audit result\",\"Release PASS\"]},\"next_action\":\"BEM-1250 unified capture audit checkpoint\"}\nCreate file governance/reports/BEM1249_UNIFIED_CAPTURE_RUNNER_POLICY.md with content BEM-1249 | UNIFIED CAPTURE RUNNER POLICY | 2026-06-01 | 07:40 (UTC+3)\n\nЭтап: Unified capture runner policy — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1248 completed with SHA `4735dd1d565676320e7126f32182b46541806d41`.\n✅ Created `governance/runtime/BEM1249_UNIFIED_CAPTURE_RUNNER_POLICY.json`.\n✅ Policy separates repo validation and fixture/mock consistency from external/live proof.\n⚠️ Unified capture cannot confirm production Telegram, live runtime or external Claude audit.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Unified capture runner policy — 1/1 (100%) | Unified capture boundary defined |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; release proof still missing |\n| Следующее действие | BEM-1250 unified capture audit checkpoint | Continue validation hardening audit |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1249 | UNIFIED CAPTURE RUNNER POLICY | 2026-06-01 | 07:40 (UTC+3)\n- BEM-1248 completed with SHA 4735dd1d565676320e7126f32182b46541806d41.\n- Created unified capture runner policy.\n- Release PASS not issued.\n- Next action: BEM-1250 unified capture audit checkpoint.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1249_unified_capture_runner_policy.md",
+    "result_json": "governance/codex/results/bem1249_unified_capture_runner_policy.json"
+  },
+  "created_at": "2026-06-01T04:42:03.789Z"
+}
