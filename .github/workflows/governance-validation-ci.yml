@@ -1,6 +1,9 @@
 name: Governance Validation CI
-'on':
+
+on:
   push:
   pull_request:
+
 jobs:
-  validate:
+  governance_validation:
+    name: Governance validation

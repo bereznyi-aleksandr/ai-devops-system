@@ -1070,3 +1070,5 @@ No issue comments.
 - BEM-1284D completed with SHA 77f1566f61d4e543c5e793d43c869d2822cae173
 ### BEM-1286 | FIX GOVERNANCE VALIDATION CI YAML | 2026-06-01 | 12:49 (UTC+3)
 - BEM-1285 completed with SHA ab6e77ef4bceeb2ae3f2bd64fdba79185c62c77c
+### BEM-1286B | MINIMAL VALID CI YAML | 2026-06-01 | 12:53 (UTC+3)
+- Operator screenshot confirmed CI workflow still invalid after BEM-1286A
