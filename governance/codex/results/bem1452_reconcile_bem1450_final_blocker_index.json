@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1452_reconcile_bem1450_final_blocker_index",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/FINAL_RELEASE_BLOCKER_INDEX_AFTER_FAIL_CLOSED_INTAKES.json",
+    "create:governance/reports/BEM1452_RECONCILE_BEM1450_FINAL_RELEASE_BLOCKER_INDEX.md",
+    "create:governance/state/bem1452_reconcile_bem1450_final_blocker_index.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/FINAL_RELEASE_BLOCKER_INDEX_AFTER_FAIL_CLOSED_INTAKES.json",
+    "governance/reports/BEM1452_RECONCILE_BEM1450_FINAL_RELEASE_BLOCKER_INDEX.md",
+    "governance/state/bem1452_reconcile_bem1450_final_blocker_index.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1452_reconcile_bem1450_final_blocker_index.txt"
+  ],
+  "commit_sha": "62c7963ad97551920181cdbb397cec5851ebdd8a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1452_reconcile_bem1450_final_blocker_index.md",
+  "completed_at": "2026-06-01T17:07:44Z"
+}
