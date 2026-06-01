@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1354_receipt_acquisition_blocker_notice",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1354 receipt blocker notice",
+  "objective": "Create file governance/reports/BEM1354_RECEIPT_ACQUISITION_BLOCKER_NOTICE.md with content BEM-1354 | RECEIPT ACQUISITION BLOCKER NOTICE | 2026-06-01 | 17:39 (UTC+3)\n\nЭтап: Receipt acquisition blocker notice — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1353 completed with SHA `081743bbfa7d57ba45d2c5a188d4c1eb9a11255c`.\n✅ Blocker notice created for the current hard limit: real external receipts are missing.\n✅ Notice confirms readiness artifacts are not proof and cannot unlock Release PASS.\n✅ Next work must stay in one of two allowed lanes: real receipt acquisition or safe CI re-enable gate.\n⚠️ Production Telegram receipt missing: `governance/proofs/external/telegram/production_receipt.json`.\n⚠️ Live runtime receipt missing: `governance/proofs/external/runtime/live_runtime_receipt.json`.\n⚠️ External Claude audit result missing: `governance/proofs/external/claude/external_claude_audit_result.json`.\n⚠️ Active governance-validation workflow disabled until safe re-enable gate.\n❌ Release PASS is not issued.\n\n| Lane | Allowed next action | Forbidden |\n|---|---|---|\n| Real receipts | Acquire/write real receipt JSON after external/live proof | Fake receipt, placeholder, mock |\n| CI re-enable | Restore workflow only through safe gate and GitHub acceptance proof | Ad-hoc YAML, comment-only workflow, schedule trigger |\n| Reporting | Only canonical status with proof SHA | Stopping roadmap after report |\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Receipt acquisition blocker notice — 1/1 (100%) | Hard blockers are explicit without stopping development |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; release blocked by missing real receipts |\n| Следующее действие | BEM-1355 safe CI re-enable candidate consistency check | Continue in allowed CI re-enable lane while receipts require external/live action |\n\nNo issue comments.\nCreate file governance/state/bem1354_receipt_acquisition_blocker_notice.json with content {\"bem_id\":\"BEM-1354\",\"created_at_utc3\":\"2026-06-01 | 17:39 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Receipt acquisition blocker notice\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1353\",\"latest_proof_sha\":\"081743bbfa7d57ba45d2c5a188d4c1eb9a11255c\",\"allowed_next_lanes\":[\"real_receipt_acquisition\",\"safe_ci_reenable_gate\"],\"next_action\":\"BEM-1355 safe CI re-enable candidate consistency check\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1354 | RECEIPT ACQUISITION BLOCKER NOTICE | 2026-06-01 | 17:39 (UTC+3)\n- BEM-1353 completed with SHA 081743bbfa7d57ba45d2c5a188d4c1eb9a11255c.\n- Created receipt acquisition blocker notice.\n- Release PASS not issued.\n- Next action: BEM-1355 safe CI re-enable candidate consistency check.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1354_receipt_acquisition_blocker_notice.md",
+    "result_json": "governance/codex/results/bem1354_receipt_acquisition_blocker_notice.json"
+  },
+  "created_at": "2026-06-01T15:39:44.340Z"
+}
