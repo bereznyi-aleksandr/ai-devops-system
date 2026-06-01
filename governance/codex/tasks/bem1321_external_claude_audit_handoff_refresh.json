@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1321_external_claude_audit_handoff_refresh",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1321 Claude handoff refresh",
+  "objective": "Create file governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_HANDOFF_REFRESH.md with content BEM-1321 | EXTERNAL CLAUDE AUDIT INTAKE HANDOFF REFRESH | 2026-06-01 | 14:45 (UTC+3)\n\nЭтап: External Claude audit intake handoff refresh — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Раздел | Что передать внешнему Claude | Почему |\n|---|---|---|\n| Scope | BEM-1284B/C/D, BEM-1303-1316, BEM-1319-1320 | Проверить core loop + receipt gates |\n| Evidence | SHA list and changed files | Проверить, что изменения реально в repo |\n| Known blocker | Active governance-validation workflow disabled | Не считать CI acceptance закрытым |\n| Required verdict | accepted / accepted_with_findings / rejected | Машиночитаемый audit result |\n| Required output | `governance/proofs/external/claude/external_claude_audit_result.json` | ExternalClaude gate receipt |\n| Forbidden | GPT self-claim, fake Claude, release_pass=true direct claim | Защита от ложного PASS |\n\n| Проверочный вопрос Claude | Ожидаемый ответ в audit result |\n|---|---|\n| Runners восстановлены? | Проверить BEM-1284C SHA `8e4ae48e0b4aa2ea8b373f5df6f7eee6b0d9bf9f` |\n| Minimal Governance Loop создан? | Проверить BEM-1284D SHA `77f1566f61d4e543c5e793d43c869d2822cae173` |\n| Receipt gates fail closed? | Проверить BEM-1303-1316 |\n| Fake receipts блокируются? | Проверить anti-placeholder guards BEM-1312-1316 |\n| Можно ли Release PASS? | Нет, пока нет Telegram/live runtime/external audit receipts |\n\nЧек-лист:\n✅ BEM-1320 completed with SHA `6266894dd61a6e2145c24e89ba8918ef246ba311`.\n✅ External Claude audit receipt contract already exists.\n✅ External Claude anti-placeholder guard already exists.\n✅ Handoff refreshed for external Claude audit intake.\n⚠️ Actual external Claude audit result is still missing.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External Claude audit intake handoff refresh — 1/1 (100%) | Third real external proof path prepared |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; external audit proof pending |\n| Следующее действие | BEM-1322 release decision preflight after receipts | Prepare final release decision preflight |\n\nNo issue comments.\nCreate file governance/state/bem1321_external_claude_audit_handoff_refresh.json with content {\"bem_id\":\"BEM-1321\",\"created_at_utc3\":\"2026-06-01 | 14:45 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"External Claude audit intake handoff refresh\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1320\",\"latest_proof_sha\":\"6266894dd61a6e2145c24e89ba8918ef246ba311\",\"required_output\":\"governance/proofs/external/claude/external_claude_audit_result.json\",\"next_action\":\"BEM-1322 release decision preflight after receipts\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1321 | EXTERNAL CLAUDE AUDIT INTAKE HANDOFF REFRESH | 2026-06-01 | 14:45 (UTC+3)\n- BEM-1320 completed with SHA 6266894dd61a6e2145c24e89ba8918ef246ba311.\n- Refreshed external Claude audit intake handoff.\n- Release PASS not issued.\n- Next action: BEM-1322 release decision preflight after receipts.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1321_external_claude_audit_handoff_refresh.md",
+    "result_json": "governance/codex/results/bem1321_external_claude_audit_handoff_refresh.json"
+  },
+  "created_at": "2026-06-01T12:47:27.238Z"
+}
