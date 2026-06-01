@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1417_aggregate_real_evidence_wait_state_guards",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1417 aggregate wait guards",
+  "objective": "Create file governance/state/AGGREGATE_REAL_EVIDENCE_WAIT_STATE_GUARDS.json with content {\"bem_id\":\"BEM-1417\",\"created_at_utc3\":\"2026-06-01 | 18:33 (UTC+3)\",\"release_pass\":false,\"wait_state_guards\":[{\"receipt\":\"production_telegram\",\"guard\":\"governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.json\",\"status\":\"waiting_real_evidence\"},{\"receipt\":\"live_runtime\",\"guard\":\"governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_REAL_EVIDENCE_WAIT_STATE_GUARD.json\",\"status\":\"waiting_real_evidence\"},{\"receipt\":\"external_claude_audit\",\"guard\":\"governance/proofs/external/claude/EXTERNAL_CLAUDE_AUDIT_REAL_EVIDENCE_WAIT_STATE_GUARD.json\",\"status\":\"waiting_real_evidence\"}],\"rule\":\"Real receipts must not be written until real external/live evidence exists.\",\"next_action\":\"BEM-1418 reconcile wait-state queued guards\"}\nCreate file governance/reports/BEM1417_AGGREGATE_REAL_EVIDENCE_WAIT_STATE_GUARDS.md with content BEM-1417 | AGGREGATE REAL EVIDENCE WAIT-STATE GUARDS | 2026-06-01 | 18:33 (UTC+3)\n\nЭтап: Aggregate real evidence wait-state guards — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n⚠️ BEM-1414 may still be queued and is not counted without SHA.\n✅ BEM-1415 completed with SHA `bc6a8d04f245344db6daae8f8872ac3417c2400f`.\n⚠️ BEM-1416 may still be queued and is not counted without SHA.\n✅ Created `governance/state/AGGREGATE_REAL_EVIDENCE_WAIT_STATE_GUARDS.json`.\n✅ Aggregated wait-state guards for three real receipt lanes.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ CI activation acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Aggregate real evidence wait-state guards — 1/1 (100%) | Wait-state guards are aggregated without false receipt writes |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; real evidence still required |\n| Следующее действие | BEM-1418 reconcile wait-state queued guards | Reconcile BEM-1414/BEM-1416 when SHA appears |\n\nNo issue comments.\nCreate file governance/state/bem1417_aggregate_real_evidence_wait_state_guards.json with content {\"bem_id\":\"BEM-1417\",\"created_at_utc3\":\"2026-06-01 | 18:33 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Aggregate real evidence wait-state guards\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"known_completed\":{\"BEM-1415\":\"bc6a8d04f245344db6daae8f8872ac3417c2400f\"},\"queued_not_counted\":[\"BEM-1414\",\"BEM-1416\"],\"next_action\":\"BEM-1418 reconcile wait-state queued guards\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1417 | AGGREGATE REAL EVIDENCE WAIT-STATE GUARDS | 2026-06-01 | 18:33 (UTC+3)\n- Aggregated real evidence wait-state guards.\n- BEM-1414/BEM-1416 were queued at observation time and are not counted without SHA.\n- Release PASS not issued.\n- Next action: BEM-1418 reconcile wait-state queued guards.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1417_aggregate_real_evidence_wait_state_guards.md",
+    "result_json": "governance/codex/results/bem1417_aggregate_real_evidence_wait_state_guards.json"
+  },
+  "created_at": "2026-06-01T16:34:42.834Z"
+}
