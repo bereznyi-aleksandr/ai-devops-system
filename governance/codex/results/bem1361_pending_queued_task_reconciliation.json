@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1361_pending_queued_task_reconciliation",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1361_PENDING_QUEUED_TASK_RECONCILIATION.md",
+    "create:governance/state/bem1361_pending_queued_task_reconciliation.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1361_PENDING_QUEUED_TASK_RECONCILIATION.md",
+    "governance/state/bem1361_pending_queued_task_reconciliation.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1361_pending_queued_task_reconciliation.txt"
+  ],
+  "commit_sha": "fd865b8c3dd0227f68755b3d72803cb904b461bd",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1361_pending_queued_task_reconciliation.md",
+  "completed_at": "2026-06-01T15:46:06Z"
+}
