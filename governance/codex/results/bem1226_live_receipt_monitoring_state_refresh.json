@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1226_live_receipt_monitoring_state_refresh",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1226_live_receipt_monitoring_state_refresh.json",
+    "create:governance/reports/BEM1226_LIVE_RECEIPT_MONITORING_STATE_REFRESH.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1226_live_receipt_monitoring_state_refresh.json",
+    "governance/reports/BEM1226_LIVE_RECEIPT_MONITORING_STATE_REFRESH.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1226_live_receipt_monitoring_state_refresh.txt"
+  ],
+  "commit_sha": "b5022aa87c7a2dabe955f1c4dbf5b9aca711e5ed",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1226_live_receipt_monitoring_state_refresh.md",
+  "completed_at": "2026-06-01T03:49:48Z"
+}
