@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1336_explicit_real_receipt_acquisition_stopline",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/EXPLICIT_REAL_RECEIPT_ACQUISITION_STOPLINE.json",
+    "create:governance/reports/BEM1336_EXPLICIT_REAL_RECEIPT_ACQUISITION_STOPLINE.md",
+    "create:governance/state/bem1336_explicit_real_receipt_acquisition_stopline.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/EXPLICIT_REAL_RECEIPT_ACQUISITION_STOPLINE.json",
+    "governance/reports/BEM1336_EXPLICIT_REAL_RECEIPT_ACQUISITION_STOPLINE.md",
+    "governance/state/bem1336_explicit_real_receipt_acquisition_stopline.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1336_explicit_real_receipt_acquisition_stopline.txt"
+  ],
+  "commit_sha": "3cea2f42db4fa1270688514bb66cd50a0ed75a09",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1336_explicit_real_receipt_acquisition_stopline.md",
+  "completed_at": "2026-06-01T13:19:31Z"
+}
