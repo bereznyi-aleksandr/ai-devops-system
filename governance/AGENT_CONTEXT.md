@@ -1146,3 +1146,4 @@ No issue comments.
 - BEM-1323 completed with SHA cd095a9ded18ea83be4b37adcc5cdcb45a1ad687
 ### BEM-1325 | PRODUCTION TELEGRAM RECEIPT INTAKE READINESS PACK | 2026-06-01 | 14:53 (UTC+3)
 - BEM-1324 completed with SHA eed8e99b345562c3bace5ddd5c2cda67fc778d65
+### BEM-1326 | LIVE
