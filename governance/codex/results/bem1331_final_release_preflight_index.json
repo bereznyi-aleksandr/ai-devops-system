@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1331_final_release_preflight_index",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/release/FINAL_RELEASE_PREFLIGHT_INDEX.json",
+    "create:governance/reports/BEM1331_FINAL_RELEASE_PREFLIGHT_INDEX.md",
+    "create:governance/state/bem1331_final_release_preflight_index.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/release/FINAL_RELEASE_PREFLIGHT_INDEX.json",
+    "governance/reports/BEM1331_FINAL_RELEASE_PREFLIGHT_INDEX.md",
+    "governance/state/bem1331_final_release_preflight_index.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1331_final_release_preflight_index.txt"
+  ],
+  "commit_sha": "46007dade073448a2f94b0503ce5363aadd2fedc",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1331_final_release_preflight_index.md",
+  "completed_at": "2026-06-01T13:09:01Z"
+}
