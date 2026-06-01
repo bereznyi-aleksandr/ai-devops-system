@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1365_reconcile_queued_bem1361_bem1363",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1365 reconcile queued",
+  "objective": "Create file governance/reports/BEM1365_RECONCILE_QUEUED_BEM1361_BEM1363.md with content BEM-1365 | RECONCILE QUEUED BEM-1361 AND BEM-1363 | 2026-06-01 | 17:48 (UTC+3)\n\nЭтап: Reconcile queued BEM-1361 and BEM-1363 — 2/2 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1361 completed with SHA `fd865b8c3dd0227f68755b3d72803cb904b461bd`.\n✅ BEM-1363 completed with SHA `8b85254504925788ceef0e380c8a46b88e3e25f2`.\n✅ BEM-1364 completed with SHA `348c6eca3f918ae2c55d1e7ceadca586c81ba523`.\n✅ Previously queued tasks are reconciled with proof SHA.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until explicit safe activation and GitHub acceptance proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Reconcile queued BEM-1361 and BEM-1363 — 2/2 (100%) | Queued tasks now have proof SHA |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; remaining blockers are external/live proof |\n| Следующее действие | BEM-1366 hard external proof boundary final operator handoff | Keep only real external proof path active |\n\nNo issue comments.\nCreate file governance/state/bem1365_reconcile_queued_bem1361_bem1363.json with content {\"bem_id\":\"BEM-1365\",\"created_at_utc3\":\"2026-06-01 | 17:48 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Reconcile queued BEM-1361 and BEM-1363\",\"completed\":2,\"total\":2,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"reconciled\":[{\"bem\":\"BEM-1361\",\"sha\":\"fd865b8c3dd0227f68755b3d72803cb904b461bd\"},{\"bem\":\"BEM-1363\",\"sha\":\"8b85254504925788ceef0e380c8a46b88e3e25f2\"}],\"latest_completed_bem\":\"BEM-1364\",\"latest_proof_sha\":\"348c6eca3f918ae2c55d1e7ceadca586c81ba523\",\"next_action\":\"BEM-1366 hard external proof boundary final operator handoff\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1365 | RECONCILE QUEUED BEM-1361 AND BEM-1363 | 2026-06-01 | 17:48 (UTC+3)\n- Reconciled BEM-1361 SHA fd865b8c3dd0227f68755b3d72803cb904b461bd.\n- Reconciled BEM-1363 SHA 8b85254504925788ceef0e380c8a46b88e3e25f2.\n- Release PASS not issued.\n- Next action: BEM-1366 hard external proof boundary final operator handoff.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1365_reconcile_queued_bem1361_bem1363.md",
+    "result_json": "governance/codex/results/bem1365_reconcile_queued_bem1361_bem1363.json"
+  },
+  "created_at": "2026-06-01T15:49:45.328Z"
+}
