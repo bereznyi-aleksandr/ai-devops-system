@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1330_receipt_validators_final_integration_index",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/RECEIPT_VALIDATORS_FINAL_INTEGRATION_INDEX.json",
+    "create:governance/reports/BEM1330_RECEIPT_VALIDATORS_FINAL_INTEGRATION_INDEX.md",
+    "create:governance/state/bem1330_receipt_validators_final_integration_index.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/RECEIPT_VALIDATORS_FINAL_INTEGRATION_INDEX.json",
+    "governance/reports/BEM1330_RECEIPT_VALIDATORS_FINAL_INTEGRATION_INDEX.md",
+    "governance/state/bem1330_receipt_validators_final_integration_index.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1330_receipt_validators_final_integration_index.txt"
+  ],
+  "commit_sha": "cf9a2283b75092f36dd2d2219fb5d31104c5292a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1330_receipt_validators_final_integration_index.md",
+  "completed_at": "2026-06-01T13:06:52Z"
+}
