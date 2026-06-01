@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1210_contour_registry_integrity_hardening",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_contour_registry_integrity.py",
+    "create:governance/reports/BEM1210_CONTOUR_REGISTRY_INTEGRITY_HARDENING.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_contour_registry_integrity.py",
+    "governance/reports/BEM1210_CONTOUR_REGISTRY_INTEGRITY_HARDENING.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1210_contour_registry_integrity_hardening.txt"
+  ],
+  "commit_sha": "85f9983e58eb1b8a3c092877c6059b668bc2f972",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1210_contour_registry_integrity_hardening.md",
+  "completed_at": "2026-06-01T03:27:52Z"
+}
