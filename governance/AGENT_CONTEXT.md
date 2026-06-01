@@ -1099,3 +1099,5 @@ No issue comments.
 - BEM-1297 completed with SHA 434643b0cea665ce578c5b3ddd1af6b33b5f6112
 ### BEM-1299 | LOCAL RE-ENABLE BUNDLE CAPTURE | 2026-06-01 | 13:52 (UTC+3)
 - BEM-1298 completed with SHA 551dfea5bb9312ca6f340e9c7258731695855965
+### BEM-1301 | EXECUTOR CAPABILITY BOUNDARY | 2026-06-01 | 13:56 (UTC+3)
+- BEM-1300 was not accepted because it changed only codex proof file
