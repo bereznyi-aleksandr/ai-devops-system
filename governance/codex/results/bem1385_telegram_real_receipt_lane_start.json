@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1385_telegram_real_receipt_lane_start",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/PRODUCTION_TELEGRAM_REAL_RECEIPT_LANE_START.md",
+    "create:governance/state/bem1385_telegram_real_receipt_lane_start.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/PRODUCTION_TELEGRAM_REAL_RECEIPT_LANE_START.md",
+    "governance/state/bem1385_telegram_real_receipt_lane_start.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1385_telegram_real_receipt_lane_start.txt"
+  ],
+  "commit_sha": "73b67360da80610bf5f29aff8bf4dcd54f9c9898",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1385_telegram_real_receipt_lane_start.md",
+  "completed_at": "2026-06-01T16:06:58Z"
+}
