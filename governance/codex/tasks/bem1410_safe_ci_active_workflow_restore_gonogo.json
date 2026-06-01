@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1410_safe_ci_active_workflow_restore_gonogo",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1410 CI restore go/no-go",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_ACTIVE_WORKFLOW_RESTORE_EXPLICIT_GO_NOGO_RECORD.md with content BEM-1410 | SAFE CI ACTIVE WORKFLOW RESTORE EXPLICIT GO/NO-GO RECORD | 2026-06-01 | 18:28 (UTC+3)\n\nЭтап: Safe CI active workflow restore explicit go/no-go record — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Decision point | GO condition | NO-GO condition |\n|---|---|---|\n| Candidate workflow | Candidate exists and passes validation checklist | Candidate missing or unchecked |\n| Active target | Active workflow absent before restore | Invalid active workflow already present |\n| Forbidden triggers | No schedule/cron | Schedule/cron present |\n| Workflow content | Non-empty, not comment-only, has jobs | Empty or comment-only |\n| Release claim | No Release PASS claim | Any release/pass claim from CI syntax |\n| Rollback | Rollback path ready | No rollback path |\n| Acceptance proof | GitHub Actions accepts after restore | No acceptance proof or rejected workflow |\n\nDecision: NO-GO for automatic activation in this BEM. Active workflow remains disabled. Activation requires a separate explicit activation BEM.\n\nЧек-лист:\n✅ BEM-1409 completed with SHA `98723f2fc1fd601bd0506a6973de93b079c9db7a`.\n✅ Go/no-go record created.\n✅ Decision recorded: no automatic activation in this BEM.\n✅ Active workflow remains disabled.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ GitHub Actions acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI active workflow restore explicit go/no-go record — 1/1 (100%) | Explicit no-go prevents ad-hoc workflow activation |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; CI acceptance still requires explicit activation task |\n| Следующее действие | BEM-1411 explicit CI activation task boundary | Define exact activation task boundary without executing it automatically |\n\nNo issue comments.\nCreate file governance/state/bem1410_safe_ci_active_workflow_restore_gonogo.json with content {\"bem_id\":\"BEM-1410\",\"created_at_utc3\":\"2026-06-01 | 18:28 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI active workflow restore explicit go/no-go record\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"decision\":\"NO_GO_AUTOMATIC_ACTIVATION\",\"latest_completed_bem\":\"BEM-1409\",\"latest_proof_sha\":\"98723f2fc1fd601bd0506a6973de93b079c9db7a\",\"next_action\":\"BEM-1411 explicit CI activation task boundary\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1410 | SAFE CI ACTIVE WORKFLOW RESTORE EXPLICIT GO/NO-GO RECORD | 2026-06-01 | 18:28 (UTC+3)\n- BEM-1409 completed with SHA 98723f2fc1fd601bd0506a6973de93b079c9db7a.\n- Created safe CI restore go/no-go record; automatic activation is NO-GO.\n- Release PASS not issued.\n- Next action: BEM-1411 explicit CI activation task boundary.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1410_safe_ci_active_workflow_restore_gonogo.md",
+    "result_json": "governance/codex/results/bem1410_safe_ci_active_workflow_restore_gonogo.json"
+  },
+  "created_at": "2026-06-01T16:29:17.823Z"
+}
