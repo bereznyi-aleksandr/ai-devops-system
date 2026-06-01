@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1314_claude_audit_placeholder_guard",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_external_claude_audit_not_placeholder.py",
+    "create:governance/tests/fixtures/claude_audit_placeholder_guard_negative.json",
+    "create:governance/tests/run_external_claude_audit_placeholder_guard_tests.py",
+    "create:governance/reports/BEM1314_EXTERNAL_CLAUDE_AUDIT_PLACEHOLDER_GUARD.md",
+    "create:governance/state/bem1314_claude_audit_placeholder_guard.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_external_claude_audit_not_placeholder.py",
+    "governance/tests/fixtures/claude_audit_placeholder_guard_negative.json",
+    "governance/tests/run_external_claude_audit_placeholder_guard_tests.py",
+    "governance/reports/BEM1314_EXTERNAL_CLAUDE_AUDIT_PLACEHOLDER_GUARD.md",
+    "governance/state/bem1314_claude_audit_placeholder_guard.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1314_claude_audit_placeholder_guard.txt"
+  ],
+  "commit_sha": "404dc07ebb9796761328164d369220696622c160",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1314_claude_audit_placeholder_guard.md",
+  "completed_at": "2026-06-01T12:31:09Z"
+}
