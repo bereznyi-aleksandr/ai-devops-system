@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1217_unified_manifest_audit",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1217_UNIFIED_MANIFEST_AUDIT.md",
+    "create:governance/state/bem1217_unified_manifest_audit.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1217_UNIFIED_MANIFEST_AUDIT.md",
+    "governance/state/bem1217_unified_manifest_audit.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1217_unified_manifest_audit.txt"
+  ],
+  "commit_sha": "6b093f11447257f556a8714d6e1e372f44705b94",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1217_unified_manifest_audit.md",
+  "completed_at": "2026-06-01T03:37:32Z"
+}
