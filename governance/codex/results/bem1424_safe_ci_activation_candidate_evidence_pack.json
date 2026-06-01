@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1424_safe_ci_activation_candidate_evidence_pack",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflows_disabled/SAFE_CI_ACTIVATION_EXPLICIT_ACTIVATION_CANDIDATE_EVIDENCE_PACK.md",
+    "create:governance/state/bem1424_safe_ci_activation_candidate_evidence_pack.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/workflows_disabled/SAFE_CI_ACTIVATION_EXPLICIT_ACTIVATION_CANDIDATE_EVIDENCE_PACK.md",
+    "governance/state/bem1424_safe_ci_activation_candidate_evidence_pack.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1424_safe_ci_activation_candidate_evidence_pack.txt"
+  ],
+  "commit_sha": "c69ce35e2ebc392c52d509aafe6fe491a9612b2d",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1424_safe_ci_activation_candidate_evidence_pack.md",
+  "completed_at": "2026-06-01T17:13:33Z"
+}
