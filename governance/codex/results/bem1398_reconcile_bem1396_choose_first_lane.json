@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1398_reconcile_bem1396_choose_first_lane",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1398_RECONCILE_BEM1396_CHOOSE_FIRST_ALLOWED_LANE.md",
+    "create:governance/state/bem1398_reconcile_bem1396_choose_first_lane.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1398_RECONCILE_BEM1396_CHOOSE_FIRST_ALLOWED_LANE.md",
+    "governance/state/bem1398_reconcile_bem1396_choose_first_lane.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1398_reconcile_bem1396_choose_first_lane.txt"
+  ],
+  "commit_sha": "eb384f52ee62d3f2e54a8e25d95b4dfc0dc39ef2",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1398_reconcile_bem1396_choose_first_lane.md",
+  "completed_at": "2026-06-01T16:19:56Z"
+}
