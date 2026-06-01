@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1264_receipt_validator_negative_test_runner",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tests/run_receipt_validator_negative_tests.py",
+    "create:governance/reports/BEM1264_RECEIPT_VALIDATOR_NEGATIVE_TEST_RUNNER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tests/run_receipt_validator_negative_tests.py",
+    "governance/reports/BEM1264_RECEIPT_VALIDATOR_NEGATIVE_TEST_RUNNER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1264_receipt_validator_negative_test_runner.txt"
+  ],
+  "commit_sha": "3ee6c40e272ee26903a4bd8538262e8e7c80efcc",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1264_receipt_validator_negative_test_runner.md",
+  "completed_at": "2026-06-01T05:07:45Z"
+}
