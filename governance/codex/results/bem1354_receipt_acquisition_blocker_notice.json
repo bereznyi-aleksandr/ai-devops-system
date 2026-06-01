@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1354_receipt_acquisition_blocker_notice",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1354_RECEIPT_ACQUISITION_BLOCKER_NOTICE.md",
+    "create:governance/state/bem1354_receipt_acquisition_blocker_notice.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1354_RECEIPT_ACQUISITION_BLOCKER_NOTICE.md",
+    "governance/state/bem1354_receipt_acquisition_blocker_notice.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1354_receipt_acquisition_blocker_notice.txt"
+  ],
+  "commit_sha": "579e8c75a4cefa61a71920ce72158a7d066b8642",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1354_receipt_acquisition_blocker_notice.md",
+  "completed_at": "2026-06-01T15:39:59Z"
+}
