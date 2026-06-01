@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1425_safe_ci_activation_restore_blocker_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1425 CI restore blocker",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_ACTIVATION_EXPLICIT_RESTORE_BLOCKER_RECORD.json with content {\"bem_id\":\"BEM-1425\",\"created_at_utc3\":\"2026-06-01 | 19:13 (UTC+3)\",\"release_pass\":false,\"blocker\":\"explicit_ci_activation_restore_not_executed\",\"status\":\"open\",\"reason\":\"Active workflow restore has not been executed and GitHub Actions acceptance proof is missing.\",\"active_target\":\".github/workflows/governance-validation-ci.yml\",\"required_before_close\":[\"explicit activation BEM creates active workflow\",\"workflow is not empty or comment-only\",\"workflow has no schedule trigger\",\"workflow has no Release PASS claim\",\"GitHub Actions accepts workflow after push\",\"rollback is executed if rejected\"],\"not_replaced_by\":[\"candidate evidence pack\",\"dry-run result\",\"preflight checklist\",\"operator report\"],\"next_action\":\"BEM-1426 aggregate current four blocker proofs and missing outputs\"}\nCreate file governance/reports/BEM1425_SAFE_CI_ACTIVATION_EXPLICIT_RESTORE_BLOCKER_RECORD.md with content BEM-1425 | SAFE CI ACTIVATION EXPLICIT RESTORE BLOCKER RECORD | 2026-06-01 | 19:13 (UTC+3)\n\nЭтап: Safe CI activation explicit restore blocker record — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1424 completed with SHA `c69ce35e2ebc392c52d509aafe6fe491a9612b2d`.\n✅ Created `governance/workflows_disabled/SAFE_CI_ACTIVATION_EXPLICIT_RESTORE_BLOCKER_RECORD.json`.\n✅ Blocker records that active workflow restore has not been executed.\n✅ GitHub Actions acceptance proof remains missing.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ CI activation acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI activation explicit restore blocker record — 1/1 (100%) | CI restore blocker recorded without active workflow restore |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; CI acceptance proof still required |\n| Следующее действие | BEM-1426 aggregate current four blocker proofs and missing outputs | Consolidate current proof SHAs and missing outputs |\n\nNo issue comments.\nCreate file governance/state/bem1425_safe_ci_activation_restore_blocker_record.json with content {\"bem_id\":\"BEM-1425\",\"created_at_utc3\":\"2026-06-01 | 19:13 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI activation explicit restore blocker record\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1424\",\"latest_proof_sha\":\"c69ce35e2ebc392c52d509aafe6fe491a9612b2d\",\"next_action\":\"BEM-1426 aggregate current four blocker proofs and missing outputs\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1425 | SAFE CI ACTIVATION EXPLICIT RESTORE BLOCKER RECORD | 2026-06-01 | 19:13 (UTC+3)\n- BEM-1424 completed with SHA c69ce35e2ebc392c52d509aafe6fe491a9612b2d.\n- Created safe CI activation restore blocker record.\n- Release PASS not issued.\n- Next action: BEM-1426 aggregate current four blocker proofs and missing outputs.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1425_safe_ci_activation_restore_blocker_record.md",
+    "result_json": "governance/codex/results/bem1425_safe_ci_activation_restore_blocker_record.json"
+  },
+  "created_at": "2026-06-01T17:14:31.056Z"
+}
