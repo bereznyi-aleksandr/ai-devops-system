@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1241_validator_manifest_include_expanded_fixtures",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1241 manifest fixtures",
+  "objective": "Create file governance/validators/bem931_expanded_fixture_manifest.json with content {\"bem_id\":\"BEM-1241\",\"created_at_utc3\":\"2026-06-01 | 07:16 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Validator manifest include expanded fixtures\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1240\",\"latest_proof_sha\":\"86f317956c0680e956d6cf3edc3e8fa380c93532\",\"expanded_fixture_runners\":[\"governance/tests/run_managed_channel_negative_tests.py\",\"governance/tests/run_lifecycle_transition_tests.py\",\"governance/tests/run_provider_policy_fixture_tests.py\"],\"extends\":\"governance/validators/bem931_validator_suite_unified_manifest.json\",\"next_action\":\"BEM-1242 expanded fixture manifest audit\"}\nCreate file governance/reports/BEM1241_VALIDATOR_MANIFEST_INCLUDE_EXPANDED_FIXTURES.md with content BEM-1241 | VALIDATOR MANIFEST INCLUDE EXPANDED FIXTURES | 2026-06-01 | 07:16 (UTC+3)\n\nЭтап: Validator manifest include expanded fixtures — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1240 completed with SHA `86f317956c0680e956d6cf3edc3e8fa380c93532`.\n✅ Created `governance/validators/bem931_expanded_fixture_manifest.json`.\n✅ Manifest references managed channel, lifecycle and provider expanded fixture runners.\n⚠️ Expanded fixture manifest is not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Validator manifest include expanded fixtures — 1/1 (100%) | Expanded fixture manifest created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; validation hardening continues |\n| Следующее действие | BEM-1242 expanded fixture manifest audit | Continue validation audit |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1241 | VALIDATOR MANIFEST INCLUDE EXPANDED FIXTURES | 2026-06-01 | 07:16 (UTC+3)\n- BEM-1240 completed with SHA 86f317956c0680e956d6cf3edc3e8fa380c93532.\n- Created expanded fixture manifest.\n- Release PASS not issued.\n- Next action: BEM-1242 expanded fixture manifest audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1241_validator_manifest_include_expanded_fixtures.md",
+    "result_json": "governance/codex/results/bem1241_validator_manifest_include_expanded_fixtures.json"
+  },
+  "created_at": "2026-06-01T04:18:00.244Z"
+}
