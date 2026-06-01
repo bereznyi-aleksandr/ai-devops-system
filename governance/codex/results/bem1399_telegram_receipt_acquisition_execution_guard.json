@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1399_telegram_receipt_acquisition_execution_guard",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_ACQUISITION_EXECUTION_GUARD.json",
+    "create:governance/reports/BEM1399_PRODUCTION_TELEGRAM_RECEIPT_ACQUISITION_EXECUTION_GUARD.md",
+    "create:governance/state/bem1399_telegram_receipt_acquisition_execution_guard.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_ACQUISITION_EXECUTION_GUARD.json",
+    "governance/reports/BEM1399_PRODUCTION_TELEGRAM_RECEIPT_ACQUISITION_EXECUTION_GUARD.md",
+    "governance/state/bem1399_telegram_receipt_acquisition_execution_guard.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1399_telegram_receipt_acquisition_execution_guard.txt"
+  ],
+  "commit_sha": "6ccb980099f8a310db228f2bb8aafec6f3aba046",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1399_telegram_receipt_acquisition_execution_guard.md",
+  "completed_at": "2026-06-01T16:20:34Z"
+}
