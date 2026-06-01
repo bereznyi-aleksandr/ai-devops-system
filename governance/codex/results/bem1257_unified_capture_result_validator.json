@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1257_unified_capture_result_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_unified_capture_result.py",
+    "create:governance/reports/BEM1257_UNIFIED_CAPTURE_RESULT_VALIDATOR.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_unified_capture_result.py",
+    "governance/reports/BEM1257_UNIFIED_CAPTURE_RESULT_VALIDATOR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1257_unified_capture_result_validator.txt"
+  ],
+  "commit_sha": "41c6749894e0094f846efa3cc0b0fe2c08c4767a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1257_unified_capture_result_validator.md",
+  "completed_at": "2026-06-01T04:55:59Z"
+}
