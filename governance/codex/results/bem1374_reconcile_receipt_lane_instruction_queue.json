@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1374_reconcile_receipt_lane_instruction_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1374_RECONCILE_RECEIPT_LANE_INSTRUCTION_QUEUE.md",
+    "create:governance/state/bem1374_reconcile_receipt_lane_instruction_queue.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1374_RECONCILE_RECEIPT_LANE_INSTRUCTION_QUEUE.md",
+    "governance/state/bem1374_reconcile_receipt_lane_instruction_queue.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1374_reconcile_receipt_lane_instruction_queue.txt"
+  ],
+  "commit_sha": "3c4c21982a48acae60b99c6017c731274df1a3b8",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1374_reconcile_receipt_lane_instruction_queue.md",
+  "completed_at": "2026-06-01T15:57:08Z"
+}
