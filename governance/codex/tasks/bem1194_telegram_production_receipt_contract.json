@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1194_telegram_production_receipt_contract",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1194 Telegram receipt contract",
+  "objective": "Create file governance/telegram/BEM1194_TELEGRAM_PRODUCTION_RECEIPT_CONTRACT.json with content {\"bem_id\":\"BEM-1194\",\"created_at_utc3\":\"2026-06-01 | 06:04 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Telegram production receipt contract\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1193\",\"latest_proof_sha\":\"5efdc686b5e35183da62eb69c307b8d378d203c7\",\"required_receipt_fields\":[\"receipt_id\",\"captured_at_utc3\",\"source\",\"environment\",\"bot_runtime\",\"message_delivery_result\",\"redacted_output_ref\",\"secret_scan_pass\",\"commit_sha\"],\"required_values\":{\"environment\":\"production_telegram\",\"message_delivery_result\":\"pass\",\"secret_scan_pass\":true},\"forbidden\":[\"bot_token\",\"raw_secret\",\"password\",\"api_key\",\"mock_as_production\",\"self_claim_only\"],\"next_action\":\"BEM-1195 Telegram production receipt validator skeleton\"}\nCreate file governance/reports/BEM1194_TELEGRAM_PRODUCTION_RECEIPT_CONTRACT.md with content BEM-1194 | TELEGRAM PRODUCTION RECEIPT CONTRACT | 2026-06-01 | 06:04 (UTC+3)\n\nЭтап: Telegram production receipt contract — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1193 completed with SHA `5efdc686b5e35183da62eb69c307b8d378d203c7`.\n✅ Created `governance/telegram/BEM1194_TELEGRAM_PRODUCTION_RECEIPT_CONTRACT.json`.\n✅ Contract defines required production Telegram receipt fields.\n✅ Contract forbids bot tokens, raw secrets and mock-as-production.\n⚠️ Actual production Telegram receipt is still missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Telegram production receipt contract — 1/1 (100%) | Telegram receipt format defined |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; Telegram receipt missing |\n| Следующее действие | BEM-1195 Telegram production receipt validator skeleton | Create validator for accepted Telegram receipts |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1194 | TELEGRAM PRODUCTION RECEIPT CONTRACT | 2026-06-01 | 06:04 (UTC+3)\n- BEM-1193 completed with SHA 5efdc686b5e35183da62eb69c307b8d378d203c7.\n- Created Telegram production receipt contract.\n- Release PASS not issued.\n- Next action: BEM-1195 Telegram production receipt validator skeleton.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1194_telegram_production_receipt_contract.md",
+    "result_json": "governance/codex/results/bem1194_telegram_production_receipt_contract.json"
+  },
+  "created_at": "2026-06-01T03:05:23.223Z"
+}
