@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1271_unified_manifest_include_receipt_negative",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1271 manifest receipt negative",
+  "objective": "Create file governance/validators/bem931_unified_manifest_receipt_negative_extension.json with content {\"bem_id\":\"BEM-1271\",\"created_at_utc3\":\"2026-06-01 | 08:17 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Unified validator manifest include receipt negative runner\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1270\",\"latest_proof_sha\":\"45471c4cf343e0f931f90d5e96e87d0e106db36f\",\"extends\":\"governance/validators/bem931_validator_suite_unified_manifest.json\",\"receipt_negative_runner\":\"governance/tests/run_receipt_validator_negative_tests.py\",\"receipt_negative_manifest\":\"governance/validators/bem931_receipt_negative_runner_manifest.json\",\"next_action\":\"BEM-1272 unified validator manifest final audit\"}\nCreate file governance/reports/BEM1271_UNIFIED_MANIFEST_INCLUDE_RECEIPT_NEGATIVE.md with content BEM-1271 | UNIFIED VALIDATOR MANIFEST INCLUDE RECEIPT NEGATIVE RUNNER | 2026-06-01 | 08:17 (UTC+3)\n\nЭтап: Unified validator manifest include receipt negative runner — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1270 completed with SHA `45471c4cf343e0f931f90d5e96e87d0e106db36f`.\n✅ Created `governance/validators/bem931_unified_manifest_receipt_negative_extension.json`.\n✅ Extension references receipt negative runner and manifest.\n⚠️ Receipt negative extension is not release proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Unified validator manifest include receipt negative runner — 1/1 (100%) | Receipt negative runner linked to unified manifest |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; validator hardening continues |\n| Следующее действие | BEM-1272 unified validator manifest final audit | Audit consolidated validator manifest state |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1271 | UNIFIED VALIDATOR MANIFEST INCLUDE RECEIPT NEGATIVE RUNNER | 2026-06-01 | 08:17 (UTC+3)\n- BEM-1270 completed with SHA 45471c4cf343e0f931f90d5e96e87d0e106db36f.\n- Created unified manifest receipt negative extension.\n- Release PASS not issued.\n- Next action: BEM-1272 unified validator manifest final audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1271_unified_manifest_include_receipt_negative.md",
+    "result_json": "governance/codex/results/bem1271_unified_manifest_include_receipt_negative.json"
+  },
+  "created_at": "2026-06-01T05:18:36.629Z"
+}
