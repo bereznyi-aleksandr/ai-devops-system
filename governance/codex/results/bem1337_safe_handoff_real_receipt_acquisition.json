@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1337_safe_handoff_real_receipt_acquisition",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/tasks/pending/BEM1337_SAFE_HANDOFF_REAL_RECEIPT_ACQUISITION.md",
+    "create:governance/reports/BEM1337_SAFE_HANDOFF_REAL_RECEIPT_ACQUISITION.md",
+    "create:governance/state/bem1337_safe_handoff_real_receipt_acquisition.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/tasks/pending/BEM1337_SAFE_HANDOFF_REAL_RECEIPT_ACQUISITION.md",
+    "governance/reports/BEM1337_SAFE_HANDOFF_REAL_RECEIPT_ACQUISITION.md",
+    "governance/state/bem1337_safe_handoff_real_receipt_acquisition.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1337_safe_handoff_real_receipt_acquisition.txt"
+  ],
+  "commit_sha": "fd58d01c66fd45dbebd8e53c9d0dc5cc0ef55f93",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1337_safe_handoff_real_receipt_acquisition.md",
+  "completed_at": "2026-06-01T13:22:03Z"
+}
