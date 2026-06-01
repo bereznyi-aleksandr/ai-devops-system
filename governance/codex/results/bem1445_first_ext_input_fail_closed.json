@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1445_first_ext_input_fail_closed",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/FIRST_EXTERNAL_INPUT_RECEIPT_INTAKE_FAIL_CLOSED_STATUS.json",
+    "create:governance/reports/BEM1445_FIRST_EXTERNAL_INPUT_RECEIPT_INTAKE_FAIL_CLOSED_STATUS.md",
+    "create:governance/state/bem1445_first_ext_input_fail_closed.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/FIRST_EXTERNAL_INPUT_RECEIPT_INTAKE_FAIL_CLOSED_STATUS.json",
+    "governance/reports/BEM1445_FIRST_EXTERNAL_INPUT_RECEIPT_INTAKE_FAIL_CLOSED_STATUS.md",
+    "governance/state/bem1445_first_ext_input_fail_closed.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1445_first_ext_input_fail_closed.txt"
+  ],
+  "commit_sha": "1686f00a60640131da5d00582b18e742af0630aa",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1445_first_ext_input_fail_closed.md",
+  "completed_at": "2026-06-01T17:01:05Z"
+}
