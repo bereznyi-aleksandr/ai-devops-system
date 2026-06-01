@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1290_disable_invalid_governance_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1290 disable invalid workflow",
+  "objective": "Move the still-invalid .github/workflows/governance-validation-ci.yml out of active GitHub Actions workflow path to stop breaking Actions. Do NOT create a new active workflow in this task. Move file .github/workflows/governance-validation-ci.yml to governance/workflows_disabled/governance-validation-ci.yml.disabled. Create file governance/reports/BEM1290_DISABLE_INVALID_GOVERNANCE_WORKFLOW.md with content BEM-1290 | DISABLE INVALID GOVERNANCE WORKFLOW | 2026-06-01 | 13:00 (UTC+3)\n\nЭтап: Disable invalid governance workflow — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Operator screenshot confirmed GitHub Actions still rejects `.github/workflows/governance-validation-ci.yml` after BEM-1288.\n✅ Invalid workflow is moved out of `.github/workflows/` to stop breaking Actions.\n✅ No schedule triggers added.\n⚠️ CI acceptance remains pending; active governance workflow must be recreated only after offline YAML validation strategy is fixed.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Disable invalid governance workflow — 1/1 (100%) | Remove active broken workflow from GitHub Actions path |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI path still pending |\n| Следующее действие | BEM-1291 offline workflow generation and validation strategy | Rebuild workflow only after validating syntax safely |\n\nNo issue comments.\nCreate file governance/state/bem1290_disable_invalid_governance_workflow.json with content {\"bem_id\":\"BEM-1290\",\"created_at_utc3\":\"2026-06-01 | 13:00 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Disable invalid governance workflow\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"action\":\"move invalid governance-validation-ci.yml out of active workflow path\",\"next_action\":\"BEM-1291 offline workflow generation and validation strategy\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1290 | DISABLE INVALID GOVERNANCE WORKFLOW | 2026-06-01 | 13:00 (UTC+3)\n- Operator screenshot confirmed governance-validation-ci.yml still invalid.\n- Moved broken workflow out of active GitHub Actions path.\n- Release PASS not issued.\n- Next action: BEM-1291 offline workflow generation and validation strategy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1290_disable_invalid_governance_workflow.md",
+    "result_json": "governance/codex/results/bem1290_disable_invalid_governance_workflow.json"
+  },
+  "created_at": "2026-06-01T10:30:52.907Z"
+}
