@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1271_unified_manifest_include_receipt_negative",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/bem931_unified_manifest_receipt_negative_extension.json",
+    "create:governance/reports/BEM1271_UNIFIED_MANIFEST_INCLUDE_RECEIPT_NEGATIVE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/bem931_unified_manifest_receipt_negative_extension.json",
+    "governance/reports/BEM1271_UNIFIED_MANIFEST_INCLUDE_RECEIPT_NEGATIVE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1271_unified_manifest_include_receipt_negative.txt"
+  ],
+  "commit_sha": "b6af1aa4c983050c4a5a4889c4d1472b0ec34bf2",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1271_unified_manifest_include_receipt_negative.md",
+  "completed_at": "2026-06-01T05:18:46Z"
+}
