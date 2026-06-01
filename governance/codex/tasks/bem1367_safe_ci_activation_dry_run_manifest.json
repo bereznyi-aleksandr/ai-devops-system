@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1367_safe_ci_activation_dry_run_manifest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1367 CI dry-run manifest",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_ACTIVATION_DRY_RUN_MANIFEST.json with content {\"bem_id\":\"BEM-1367\",\"created_at_utc3\":\"2026-06-01 | 17:50 (UTC+3)\",\"release_pass\":false,\"purpose\":\"Dry-run manifest for safe CI activation without creating active workflow.\",\"dry_run_checks\":[\"candidate workflow path known\",\"active target path known\",\"rollback path known\",\"forbidden snippets known\",\"post-activation GitHub acceptance required\"],\"candidate_path\":\"governance/workflows_disabled/governance-validation-ci.generated.yml\",\"active_target_path\":\".github/workflows/governance-validation-ci.yml\",\"rollback_target_path\":\"governance/workflows_disabled/governance-validation-ci.yml.rejected\",\"forbidden\":[\"schedule:\",\"cron:\",\"Release PASS\",\"release_pass: true\",\"comment-only active workflow\",\"empty active workflow\"],\"dry_run_only\":true,\"next_action\":\"BEM-1368 safe CI activation dry-run checklist\"}\nCreate file governance/reports/BEM1367_SAFE_CI_ACTIVATION_DRY_RUN_MANIFEST.md with content BEM-1367 | SAFE CI ACTIVATION DRY-RUN MANIFEST | 2026-06-01 | 17:50 (UTC+3)\n\nЭтап: Safe CI activation dry-run manifest — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1366 completed with SHA `02cae8527baa458dfedf9787ba94752f8fe9a1b1`.\n✅ Created `governance/workflows_disabled/SAFE_CI_ACTIVATION_DRY_RUN_MANIFEST.json`.\n✅ Dry-run manifest does not create active workflow.\n✅ Manifest records candidate path, active target path, rollback target path and forbidden snippets.\n⚠️ BEM-1365 may still be queued and is not counted without SHA.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until explicit safe activation and GitHub acceptance proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI activation dry-run manifest — 1/1 (100%) | CI activation dry-run data created without activating workflow |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; active workflow remains gated |\n| Следующее действие | BEM-1368 safe CI activation dry-run checklist | Continue dry-run validation without active workflow restore |\n\nNo issue comments.\nCreate file governance/state/bem1367_safe_ci_activation_dry_run_manifest.json with content {\"bem_id\":\"BEM-1367\",\"created_at_utc3\":\"2026-06-01 | 17:50 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI activation dry-run manifest\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1366\",\"latest_proof_sha\":\"02cae8527baa458dfedf9787ba94752f8fe9a1b1\",\"next_action\":\"BEM-1368 safe CI activation dry-run checklist\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1367 | SAFE CI ACTIVATION DRY-RUN MANIFEST | 2026-06-01 | 17:50 (UTC+3)\n- BEM-1366 completed with SHA 02cae8527baa458dfedf9787ba94752f8fe9a1b1.\n- Created safe CI activation dry-run manifest without activating workflow.\n- Release PASS not issued.\n- Next action: BEM-1368 safe CI activation dry-run checklist.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1367_safe_ci_activation_dry_run_manifest.md",
+    "result_json": "governance/codex/results/bem1367_safe_ci_activation_dry_run_manifest.json"
+  },
+  "created_at": "2026-06-01T15:51:29.903Z"
+}
