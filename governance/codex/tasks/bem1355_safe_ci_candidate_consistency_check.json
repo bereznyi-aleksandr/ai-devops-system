@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1355_safe_ci_candidate_consistency_check",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1355 CI candidate consistency",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_REENABLE_CANDIDATE_CONSISTENCY_CHECK.json with content {\"bem_id\":\"BEM-1355\",\"created_at_utc3\":\"2026-06-01 | 17:40 (UTC+3)\",\"release_pass\":false,\"check\":\"safe CI re-enable candidate consistency\",\"required_files\":[\"governance/workflows_disabled/SAFE_CI_REENABLE_CANDIDATE_MANIFEST.json\",\"governance/workflows_disabled/SAFE_CI_REENABLE_PRE_ACTIVATION_CHECKLIST.md\",\"governance/workflows_disabled/SAFE_CI_ACTIVATION_DECISION_RECORD.json\",\"governance/workflows_disabled/SAFE_CI_ACTIVATION_ROLLBACK_PLAN.md\",\"governance/workflows_disabled/SAFE_CI_REENABLE_GO_NOGO_MATRIX.md\"],\"active_workflow_policy\":\".github/workflows/governance-validation-ci.yml must stay absent until explicit activation BEM\",\"forbidden\":[\"ad-hoc YAML activation\",\"comment-only active workflow\",\"empty active workflow\",\"schedule triggers\",\"Release PASS from workflow syntax\"],\"current_status\":\"candidate_consistency_documented_not_activated\",\"next_action\":\"BEM-1356 safe CI activation explicit task template\"}\nCreate file governance/reports/BEM1355_SAFE_CI_REENABLE_CANDIDATE_CONSISTENCY_CHECK.md with content BEM-1355 | SAFE CI RE-ENABLE CANDIDATE CONSISTENCY CHECK | 2026-06-01 | 17:40 (UTC+3)\n\nЭтап: Safe CI re-enable candidate consistency check — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1354 completed with SHA `579e8c75a4cefa61a71920ce72158a7d066b8642`.\n✅ Created `governance/workflows_disabled/SAFE_CI_REENABLE_CANDIDATE_CONSISTENCY_CHECK.json`.\n✅ Consistency check lists manifest, checklist, decision record, rollback plan and go/no-go matrix.\n✅ Active workflow remains not activated.\n⚠️ Active governance-validation workflow disabled until explicit activation BEM.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI re-enable candidate consistency check — 1/1 (100%) | CI re-enable artifacts are indexed before activation |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; CI activation still gated |\n| Следующее действие | BEM-1356 safe CI activation explicit task template | Prepare explicit activation template without executing activation |\n\nNo issue comments.\nCreate file governance/state/bem1355_safe_ci_candidate_consistency_check.json with content {\"bem_id\":\"BEM-1355\",\"created_at_utc3\":\"2026-06-01 | 17:40 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI re-enable candidate consistency check\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1354\",\"latest_proof_sha\":\"579e8c75a4cefa61a71920ce72158a7d066b8642\",\"next_action\":\"BEM-1356 safe CI activation explicit task template\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1355 | SAFE CI RE-ENABLE CANDIDATE CONSISTENCY CHECK | 2026-06-01 | 17:40 (UTC+3)\n- BEM-1354 completed with SHA 579e8c75a4cefa61a71920ce72158a7d066b8642.\n- Created safe CI candidate consistency check.\n- Release PASS not issued.\n- Next action: BEM-1356 safe CI activation explicit task template.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1355_safe_ci_candidate_consistency_check.md",
+    "result_json": "governance/codex/results/bem1355_safe_ci_candidate_consistency_check.json"
+  },
+  "created_at": "2026-06-01T15:40:26.915Z"
+}
