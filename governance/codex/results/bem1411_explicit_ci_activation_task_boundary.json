@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1411_explicit_ci_activation_task_boundary",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflows_disabled/EXPLICIT_CI_ACTIVATION_TASK_BOUNDARY.md",
+    "create:governance/state/bem1411_explicit_ci_activation_task_boundary.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/workflows_disabled/EXPLICIT_CI_ACTIVATION_TASK_BOUNDARY.md",
+    "governance/state/bem1411_explicit_ci_activation_task_boundary.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1411_explicit_ci_activation_task_boundary.txt"
+  ],
+  "commit_sha": "1aca0fd045f55ba31cbd04be4c8cea9dcb9d3aef",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1411_explicit_ci_activation_task_boundary.md",
+  "completed_at": "2026-06-01T16:30:14Z"
+}
