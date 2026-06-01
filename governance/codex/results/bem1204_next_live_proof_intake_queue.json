@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1204_next_live_proof_intake_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1204_next_live_proof_intake_queue.json",
+    "create:governance/reports/BEM1204_NEXT_LIVE_PROOF_INTAKE_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1204_next_live_proof_intake_queue.json",
+    "governance/reports/BEM1204_NEXT_LIVE_PROOF_INTAKE_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1204_next_live_proof_intake_queue.txt"
+  ],
+  "commit_sha": "ccaa4ca0ae47a69b6f5025ec2bb064dfa85fd98a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1204_next_live_proof_intake_queue.md",
+  "completed_at": "2026-06-01T03:19:34Z"
+}
