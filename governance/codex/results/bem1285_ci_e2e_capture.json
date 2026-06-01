@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1285_ci_e2e_capture",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runtime/ci_e2e_capture.py",
+    "create:governance/tests/run_bem1285_ci_e2e_capture.py",
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/reports/BEM1285_CI_E2E_CAPTURE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runtime/ci_e2e_capture.py",
+    "governance/tests/run_bem1285_ci_e2e_capture.py",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/reports/BEM1285_CI_E2E_CAPTURE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1285_ci_e2e_capture.txt"
+  ],
+  "commit_sha": "ab6e77ef4bceeb2ae3f2bd64fdba79185c62c77c",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1285_ci_e2e_capture.md",
+  "completed_at": "2026-06-01T09:44:18Z"
+}
