@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1293_move_invalid_workflow_out",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1293 move invalid workflow",
+  "objective": "Move file .github/workflows/governance-validation-ci.yml to governance/workflows_disabled/governance-validation-ci.yml.disabled\nCreate file governance/reports/BEM1293_MOVE_INVALID_WORKFLOW_OUT.md with content BEM-1293 | MOVE INVALID WORKFLOW OUT | 2026-06-01 | 13:41 (UTC+3)\n\nЭтап: Move invalid workflow out — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1292 completed with SHA `6fa4fe8c0bd908f14426e22d611785fcba61b9f3`.\n✅ Operator screenshots confirmed comment-only `.github/workflows/governance-validation-ci.yml` is still an invalid GitHub Actions workflow.\n✅ Active invalid workflow must be moved out of `.github/workflows/`.\n✅ No replacement active workflow is created in this task.\n✅ No schedule triggers added.\n⚠️ Governance validation CI remains disabled until safe re-enable.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Move invalid workflow out — 1/1 (100%) | Remove invalid workflow from active GitHub Actions path |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI workflow re-enable pending |\n| Следующее действие | BEM-1294 verify active workflow path is clean | Confirm `.github/workflows/governance-validation-ci.yml` no longer exists |\n\nNo issue comments.\nCreate file governance/state/bem1293_move_invalid_workflow_out.json with content {\"bem_id\":\"BEM-1293\",\"created_at_utc3\":\"2026-06-01 | 13:41 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Move invalid workflow out\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"action\":\"move invalid workflow out of .github/workflows\",\"next_action\":\"BEM-1294 verify active workflow path is clean\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1293 | MOVE INVALID WORKFLOW OUT | 2026-06-01 | 13:41 (UTC+3)\n- BEM-1292 completed with SHA 6fa4fe8c0bd908f14426e22d611785fcba61b9f3.\n- Moved invalid governance-validation-ci.yml out of active GitHub Actions path.\n- Release PASS not issued.\n- Next action: BEM-1294 verify active workflow path is clean.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1293_move_invalid_workflow_out.md",
+    "result_json": "governance/codex/results/bem1293_move_invalid_workflow_out.json"
+  },
+  "created_at": "2026-06-01T10:42:18.244Z"
+}
