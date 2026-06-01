@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1300_run_local_reenable_bundle_capture",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "selftest",
+  "title": "BEM-1300 run bundle capture",
+  "objective": "Run script: \"\"\"\nimport subprocess, sys, json\nfrom pathlib import Path\nproc = subprocess.run([sys.executable, 'governance/runtime/local_reenable_bundle_capture.py'], text=True, capture_output=True)\nrecord = {\n  'bem_id': 'BEM-1300',\n  'release_pass': False,\n  'command': 'python governance/runtime/local_reenable_bundle_capture.py',\n  'returncode': proc.returncode,\n  'ok': proc.returncode == 0,\n  'stdout': proc.stdout,\n  'stderr': proc.stderr,\n  'next_action': 'BEM-1301 decide active workflow re-enable only if capture ok'\n}\nPath('governance/runtime/BEM1300_RUN_LOCAL_REENABLE_BUNDLE_CAPTURE_RESULT.json').parent.mkdir(parents=True, exist_ok=True)\nPath('governance/runtime/BEM1300_RUN_LOCAL_REENABLE_BUNDLE_CAPTURE_RESULT.json').write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding='utf-8')\nPath('governance/reports/BEM1300_RUN_LOCAL_REENABLE_BUNDLE_CAPTURE.md').write_text('BEM-1300 | RUN LOCAL RE-ENABLE BUNDLE CAPTURE | 2026-06-01 | 13:54 (UTC+3)\\n\\nЭтап: Run local re-enable bundle capture — 1/1 (100%)\\nДорожная карта BEM-931 foundation: 14/14 (100%)\\n\\nЧек-лист:\\n✅ BEM-1299 completed with SHA `07b5cecd90e6786d9e683463073bcea5593c8d12`.\\n✅ Local re-enable bundle capture executed.\\n✅ Result written to `governance/runtime/BEM1300_RUN_LOCAL_REENABLE_BUNDLE_CAPTURE_RESULT.json`.\\n⚠️ Active governance CI workflow remains disabled unless capture ok is true and re-enable gate is explicit.\\n❌ Release PASS is not issued.\\n\\n| Наименование | Описание | Обоснование |\\n|---|---|---|\\n| Текущий этап | Run local re-enable bundle capture — 1/1 (100%) | Local proof capture executed |\\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI re-enable decision pending |\\n| Следующее действие | BEM-1301 decide active workflow re-enable only if capture ok | Avoid returning broken workflow |\\n', encoding='utf-8')\nwith Path('governance/AGENT_CONTEXT.md').open('a', encoding='utf-8') as f:\n    f.write('\\n\\n### BEM-1300 | RUN LOCAL RE-ENABLE BUNDLE CAPTURE | 2026-06-01 | 13:54 (UTC+3)\\n- BEM-1299 completed with SHA 07b5cecd90e6786d9e683463073bcea5593c8d12.\\n- Ran local re-enable bundle capture and wrote result JSON.\\n- Release PASS not issued.\\n- Next action: BEM-1301 decide active workflow re-enable only if capture ok.\\n')\nif proc.returncode != 0:\n    raise SystemExit(1)\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1300_run_local_reenable_bundle_capture.md",
+    "result_json": "governance/codex/results/bem1300_run_local_reenable_bundle_capture.json"
+  },
+  "created_at": "2026-06-01T10:56:16.400Z"
+}
