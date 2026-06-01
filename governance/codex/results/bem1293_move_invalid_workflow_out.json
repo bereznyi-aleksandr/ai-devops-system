@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1293_move_invalid_workflow_out",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/BEM1293_MOVE_INVALID_WORKFLOW_OUT.md",
+    "create:governance/state/bem1293_move_invalid_workflow_out.json",
+    "move:.github/workflows/governance-validation-ci.yml->governance/workflows_disabled/governance-validation-ci",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/BEM1293_MOVE_INVALID_WORKFLOW_OUT.md",
+    "governance/state/bem1293_move_invalid_workflow_out.json",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/workflows_disabled/governance-validation-ci",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1293_move_invalid_workflow_out.txt"
+  ],
+  "commit_sha": "df9f10c28b086b286b80674855f0b97699db9deb",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1293_move_invalid_workflow_out.md",
+  "completed_at": "2026-06-01T10:42:30Z"
+}

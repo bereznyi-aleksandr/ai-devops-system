@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: bem1293_move_invalid_workflow_out
+task_type: code_patch
+executed_at: 2026-06-01T10:42:30Z
+ops_applied: create:governance/reports/BEM1293_MOVE_INVALID_WORKFLOW_OUT.md, create:governance/state/bem1293_move_invalid_workflow_out.json, move:.github/workflows/governance-validation-ci.yml->governance/workflows_disabled/governance-validation-ci, append:governance/AGENT_CONTEXT.md
+changed_files: governance/reports/BEM1293_MOVE_INVALID_WORKFLOW_OUT.md, governance/state/bem1293_move_invalid_workflow_out.json, .github/workflows/governance-validation-ci.yml, governance/workflows_disabled/governance-validation-ci, governance/AGENT_CONTEXT.md
+errors: none
