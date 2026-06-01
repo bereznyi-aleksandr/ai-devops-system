@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1298_local_validation_bundle_reenable",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1298 validation bundle",
+  "objective": "Create file governance/tests/run_local_reenable_validation_bundle.py with content import subprocess\nimport sys\n\nTARGETS = [\n    'governance/validators/validate_active_governance_workflow_absent.py',\n    'governance/validators/validate_disabled_workflow_template.py',\n    'governance/tests/run_workflow_generator_test.py',\n    'governance/validators/validate_foundation_all.py',\n    'governance/tests/run_bem1284_minimal_governance_loop.py',\n    'governance/tests/run_bem1285_ci_e2e_capture.py',\n]\n\n\ndef main():\n    results = []\n    for target in TARGETS:\n        proc = subprocess.run([sys.executable, target], text=True, capture_output=True)\n        results.append({'target': target, 'returncode': proc.returncode, 'ok': proc.returncode == 0, 'stdout': proc.stdout.strip(), 'stderr': proc.stderr.strip()})\n    ok = all(item['ok'] for item in results)\n    for item in results:\n        print(f\"{item['target']}: {'PASS' if item['ok'] else 'FAIL'}\")\n        if not item['ok']:\n            print(item['stdout'])\n            print(item['stderr'])\n    raise SystemExit(0 if ok else 1)\n\nif __name__ == '__main__':\n    main()\nCreate file governance/reports/BEM1298_LOCAL_VALIDATION_BUNDLE_REENABLE.md with content BEM-1298 | LOCAL VALIDATION BUNDLE FOR WORKFLOW RE-ENABLE | 2026-06-01 | 13:50 (UTC+3)\n\nЭтап: Local validation bundle for workflow re-enable — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1297 completed with SHA `434643b0cea665ce578c5b3ddd1af6b33b5f6112`.\n✅ Created `governance/tests/run_local_reenable_validation_bundle.py`.\n✅ Bundle includes active workflow absence guard.\n✅ Bundle includes disabled template validator and generator test.\n✅ Bundle includes foundation validator, Minimal Governance Loop, and CI E2E capture.\n⚠️ Active governance CI workflow remains disabled until bundle passes and re-enable gate is explicitly executed.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Local validation bundle for workflow re-enable — 1/1 (100%) | Local preflight bundle created before re-enable |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; active CI re-enable pending bundle proof |\n| Следующее действие | BEM-1299 local re-enable bundle capture runner | Capture local bundle output before any workflow restore |\n\nNo issue comments.\nCreate file governance/state/bem1298_local_validation_bundle_reenable.json with content {\"bem_id\":\"BEM-1298\",\"created_at_utc3\":\"2026-06-01 | 13:50 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Local validation bundle for workflow re-enable\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1297\",\"latest_proof_sha\":\"434643b0cea665ce578c5b3ddd1af6b33b5f6112\",\"next_action\":\"BEM-1299 local re-enable bundle capture runner\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1298 | LOCAL VALIDATION BUNDLE FOR WORKFLOW RE-ENABLE | 2026-06-01 | 13:50 (UTC+3)\n- BEM-1297 completed with SHA 434643b0cea665ce578c5b3ddd1af6b33b5f6112.\n- Created local validation bundle for workflow re-enable.\n- Release PASS not issued.\n- Next action: BEM-1299 local re-enable bundle capture runner.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1298_local_validation_bundle_reenable.md",
+    "result_json": "governance/codex/results/bem1298_local_validation_bundle_reenable.json"
+  },
+  "created_at": "2026-06-01T10:52:08.114Z"
+}
