@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1326_live_runtime_receipt_intake_readiness_pack",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1326 runtime intake pack",
+  "objective": "Create file governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_INTAKE_READINESS_PACK.md with content BEM-1326 | LIVE RUNTIME RECEIPT INTAKE READINESS PACK | 2026-06-01 | 14:56 (UTC+3)\n\nЭтап: Live runtime receipt intake readiness pack — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Компонент | Путь | Статус | Назначение |\n|---|---|---|---|\n| Contract | `governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_CONTRACT.json` | ready | Defines required receipt fields |\n| Intake | `governance/runtime/external_receipt_intake.py` | ready | Validates and optionally writes receipt |\n| Placeholder guard | `governance/validators/validate_live_runtime_receipt_not_placeholder.py` | ready | Rejects fake/mock/fixture runtime receipts |\n| Contract tests | `governance/tests/run_live_runtime_receipt_contract_tests.py` | ready | Positive/negative contract coverage |\n| Placeholder tests | `governance/tests/run_live_runtime_receipt_placeholder_guard_tests.py` | ready | Fake runtime proof rejection coverage |\n| Required real receipt | `governance/proofs/external/runtime/live_runtime_receipt.json` | missing | Required for LiveRuntime gate |\n\n| Receipt field | Required value / rule |\n|---|---|\n| environment | `live_runtime` |\n| result | `pass` only after real live execution |\n| command_or_entrypoint | Actual command/entrypoint, not fixture-only |\n| secret_scan_pass | `true` |\n| release_pass | must not be `true` |\n\nЧек-лист:\n✅ BEM-1325 completed with SHA `93d3324ae479402cf89902e85585574577377d84`.\n✅ Live runtime receipt intake readiness pack created.\n✅ Pack does not create or fake live runtime receipt.\n⚠️ Actual live runtime receipt is still missing.\n⚠️ Production Telegram receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Live runtime receipt intake readiness pack — 1/1 (100%) | Runtime intake is ready without fake proof |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; real live runtime receipt still required |\n| Следующее действие | BEM-1327 external Claude audit receipt intake readiness pack | Prepare third real-proof intake package |\n\nNo issue comments.\nCreate file governance/state/bem1326_live_runtime_receipt_intake_readiness_pack.json with content {\"bem_id\":\"BEM-1326\",\"created_at_utc3\":\"2026-06-01 | 14:56 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Live runtime receipt intake readiness pack\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1325\",\"latest_proof_sha\":\"93d3324ae479402cf89902e85585574577377d84\",\"required_real_receipt\":\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"next_action\":\"BEM-1327 external Claude audit receipt intake readiness pack\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1326 | LIVE RUNTIME RECEIPT INTAKE READINESS PACK | 2026-06-01 | 14:56 (UTC+3)\n- BEM-1325 completed with SHA 93d3324ae479402cf89902e85585574577377d84.\n- Created live runtime receipt intake readiness pack.\n- Release PASS not issued.\n- Next action: BEM-1327 external Claude audit receipt intake readiness pack.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1326_live_runtime_receipt_intake_readiness_pack.md",
+    "result_json": "governance/codex/results/bem1326_live_runtime_receipt_intake_readiness_pack.json"
+  },
+  "created_at": "2026-06-01T12:58:15.574Z"
+}
