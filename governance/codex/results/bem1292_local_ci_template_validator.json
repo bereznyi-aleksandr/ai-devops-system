@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1292_local_ci_template_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_disabled_workflow_template.py",
+    "create:governance/reports/BEM1292_LOCAL_CI_TEMPLATE_VALIDATOR.md",
+    "create:governance/state/bem1292_local_ci_template_validator.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_disabled_workflow_template.py",
+    "governance/reports/BEM1292_LOCAL_CI_TEMPLATE_VALIDATOR.md",
+    "governance/state/bem1292_local_ci_template_validator.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1292_local_ci_template_validator.txt"
+  ],
+  "commit_sha": "6fa4fe8c0bd908f14426e22d611785fcba61b9f3",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1292_local_ci_template_validator.md",
+  "completed_at": "2026-06-01T10:39:44Z"
+}
