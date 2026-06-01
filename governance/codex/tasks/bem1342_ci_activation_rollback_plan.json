@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1342_ci_activation_rollback_plan",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1342 CI rollback plan",
+  "objective": "Create file governance/workflows_disabled/SAFE_CI_ACTIVATION_ROLLBACK_PLAN.md with content BEM-1342 | SAFE CI ACTIVATION ROLLBACK PLAN | 2026-06-01 | 15:33 (UTC+3)\n\nЭтап: Safe CI activation rollback plan — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Сценарий | Действие отката | Почему |\n|---|---|---|\n| GitHub rejects restored workflow syntax | Move `.github/workflows/governance-validation-ci.yml` back to `governance/workflows_disabled/governance-validation-ci.yml.rejected` | Prevent repeated Actions failures |\n| Workflow file is comment-only or empty | Delete active workflow immediately | GitHub treats it as invalid workflow |\n| Schedule trigger appears | Remove active workflow and fail gate | Schedule triggers are forbidden by contract |\n| Workflow claims Release PASS | Remove active workflow and fail gate | CI syntax is not release proof |\n| No GitHub acceptance proof after restore | Keep Release PASS blocked | No proof without accepted run |\n\nЧек-лист:\n✅ BEM-1341 completed with SHA `d0397945c576e2e0d54ca12f9d2836a409a6803c`.\n✅ Rollback plan created before any active workflow restore.\n✅ Rollback removes active workflow if GitHub rejects it.\n✅ Rollback keeps Release PASS blocked.\n⚠️ Active governance-validation workflow remains disabled.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Safe CI activation rollback plan — 1/1 (100%) | Rollback path exists before activation attempt |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; CI activation remains gated |\n| Следующее действие | BEM-1343 CI re-enable go/no-go matrix | Define go/no-go criteria before any active workflow restore |\n\nNo issue comments.\nCreate file governance/state/bem1342_ci_activation_rollback_plan.json with content {\"bem_id\":\"BEM-1342\",\"created_at_utc3\":\"2026-06-01 | 15:33 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Safe CI activation rollback plan\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1341\",\"latest_proof_sha\":\"d0397945c576e2e0d54ca12f9d2836a409a6803c\",\"next_action\":\"BEM-1343 CI re-enable go/no-go matrix\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1342 | SAFE CI ACTIVATION ROLLBACK PLAN | 2026-06-01 | 15:33 (UTC+3)\n- BEM-1341 completed with SHA d0397945c576e2e0d54ca12f9d2836a409a6803c.\n- Created safe CI activation rollback plan.\n- Release PASS not issued.\n- Next action: BEM-1343 CI re-enable go/no-go matrix.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1342_ci_activation_rollback_plan.md",
+    "result_json": "governance/codex/results/bem1342_ci_activation_rollback_plan.json"
+  },
+  "created_at": "2026-06-01T14:34:55.953Z"
+}
