@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1299_local_reenable_bundle_capture",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1299 bundle capture",
+  "objective": "Create file governance/runtime/local_reenable_bundle_capture.py with content import json\nimport subprocess\nimport sys\nfrom pathlib import Path\n\nTARGET = 'governance/tests/run_local_reenable_validation_bundle.py'\nOUTPUT = Path('governance/runtime/BEM1299_LOCAL_REENABLE_BUNDLE_CAPTURE_RESULT.json')\n\n\ndef run():\n    proc = subprocess.run([sys.executable, TARGET], text=True, capture_output=True)\n    result = {\n        'bem_id': 'BEM-1299',\n        'target': TARGET,\n        'ok': proc.returncode == 0,\n        'release_pass': False,\n        'active_workflow_reenabled': False,\n        'stdout': proc.stdout.strip(),\n        'stderr': proc.stderr.strip(),\n        'returncode': proc.returncode,\n        'blockers': ['governance_ci_reenable_pending', 'production_telegram_receipt_missing', 'live_runtime_receipt_missing', 'external_claude_audit_result_missing']\n    }\n    OUTPUT.parent.mkdir(parents=True, exist_ok=True)\n    OUTPUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')\n    return result\n\n\ndef main():\n    result = run()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    raise SystemExit(0 if result.get('ok') else 1)\n\nif __name__ == '__main__':\n    main()\nCreate file governance/reports/BEM1299_LOCAL_REENABLE_BUNDLE_CAPTURE.md with content BEM-1299 | LOCAL RE-ENABLE BUNDLE CAPTURE | 2026-06-01 | 13:52 (UTC+3)\n\nЭтап: Local re-enable bundle capture — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1298 completed with SHA `551dfea5bb9312ca6f340e9c7258731695855965`.\n✅ Created `governance/runtime/local_reenable_bundle_capture.py`.\n✅ Capture writes `governance/runtime/BEM1299_LOCAL_REENABLE_BUNDLE_CAPTURE_RESULT.json`.\n✅ Capture keeps `release_pass=false` and `active_workflow_reenabled=false`.\n⚠️ Active governance CI workflow remains disabled until bundle proof and explicit re-enable gate.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Local re-enable bundle capture — 1/1 (100%) | Local bundle capture runner created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; active CI re-enable pending capture proof |\n| Следующее действие | BEM-1300 workflow re-enable decision checkpoint | Decide whether to re-enable workflow only after local bundle capture is proven |\n\nNo issue comments.\nCreate file governance/state/bem1299_local_reenable_bundle_capture.json with content {\"bem_id\":\"BEM-1299\",\"created_at_utc3\":\"2026-06-01 | 13:52 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Local re-enable bundle capture\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1298\",\"latest_proof_sha\":\"551dfea5bb9312ca6f340e9c7258731695855965\",\"next_action\":\"BEM-1300 workflow re-enable decision checkpoint\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1299 | LOCAL RE-ENABLE BUNDLE CAPTURE | 2026-06-01 | 13:52 (UTC+3)\n- BEM-1298 completed with SHA 551dfea5bb9312ca6f340e9c7258731695855965.\n- Created local re-enable bundle capture runner.\n- Release PASS not issued.\n- Next action: BEM-1300 workflow re-enable decision checkpoint.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1299_local_reenable_bundle_capture.md",
+    "result_json": "governance/codex/results/bem1299_local_reenable_bundle_capture.json"
+  },
+  "created_at": "2026-06-01T10:54:04.500Z"
+}
