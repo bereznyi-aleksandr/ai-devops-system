@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1356_safe_ci_activation_explicit_task_template",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflows_disabled/SAFE_CI_ACTIVATION_EXPLICIT_TASK_TEMPLATE.md",
+    "create:governance/state/bem1356_safe_ci_activation_explicit_task_template.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/workflows_disabled/SAFE_CI_ACTIVATION_EXPLICIT_TASK_TEMPLATE.md",
+    "governance/state/bem1356_safe_ci_activation_explicit_task_template.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1356_safe_ci_activation_explicit_task_template.txt"
+  ],
+  "commit_sha": "c362159c2154e2c1556091a296f84dc7d2c007dc",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1356_safe_ci_activation_explicit_task_template.md",
+  "completed_at": "2026-06-01T15:41:25Z"
+}
