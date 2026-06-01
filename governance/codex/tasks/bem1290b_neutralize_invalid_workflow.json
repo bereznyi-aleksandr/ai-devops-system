@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1290b_neutralize_invalid_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1290B neutralize workflow",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content # Disabled by BEM-1290B on 2026-06-01.\n# This file intentionally contains no GitHub Actions workflow definition.\n# Reason: previous generated workflow was rejected by GitHub Actions syntax parser.\n# Recreate active governance validation workflow only after offline syntax-safe generation.\nCreate file governance/reports/BEM1290B_NEUTRALIZE_INVALID_WORKFLOW.md with content BEM-1290B | NEUTRALIZE INVALID GOVERNANCE WORKFLOW | 2026-06-01 | 13:33 (UTC+3)\n\nЭтап: Neutralize invalid governance workflow — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ Operator screenshot confirmed GitHub Actions still rejects `.github/workflows/governance-validation-ci.yml`.\n✅ BEM-1290A did not remove the active workflow file according to changed_files.\n✅ Active workflow is replaced with comment-only disabled content to stop syntax parser failures.\n✅ No schedule triggers added.\n⚠️ Governance CI workflow remains disabled until syntax-safe generation is implemented.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Neutralize invalid governance workflow — 1/1 (100%) | Active invalid workflow neutralized |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI workflow must be rebuilt safely later |\n| Следующее действие | BEM-1291 offline workflow generation and validation strategy | Recreate workflow only after syntax-safe generation and validation |\n\nNo issue comments.\nCreate file governance/state/bem1290b_neutralize_invalid_workflow.json with content {\"bem_id\":\"BEM-1290B\",\"created_at_utc3\":\"2026-06-01 | 13:33 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Neutralize invalid governance workflow\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"action\":\"replace active invalid workflow with comment-only disabled file\",\"next_action\":\"BEM-1291 offline workflow generation and validation strategy\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1290B | NEUTRALIZE INVALID GOVERNANCE WORKFLOW | 2026-06-01 | 13:33 (UTC+3)\n- Operator screenshot confirmed active governance-validation-ci.yml still invalid.\n- Replaced active workflow with comment-only disabled content.\n- Release PASS not issued.\n- Next action: BEM-1291 offline workflow generation and validation strategy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1290b_neutralize_invalid_workflow.md",
+    "result_json": "governance/codex/results/bem1290b_neutralize_invalid_workflow.json"
+  },
+  "created_at": "2026-06-01T10:35:24.811Z"
+}
