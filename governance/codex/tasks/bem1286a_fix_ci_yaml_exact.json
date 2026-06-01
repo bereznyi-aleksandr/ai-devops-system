@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1286a_fix_ci_yaml_exact",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1286A exact CI YAML",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: Governance Validation CI\n'on':\n  push:\n  pull_request:\njobs:\n  validate:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: '3.11'\n      - name: Validate foundation\n        run: python governance/validators/validate_foundation_all.py\n      - name: Run Minimal Governance Loop\n        run: python governance/tests/run_bem1284_minimal_governance_loop.py\n      - name: Run CI E2E capture\n        run: python governance/tests/run_bem1285_ci_e2e_capture.py\n      - name: Upload BEM-1285 capture artifacts\n        uses: actions/upload-artifact@v4\n        with:\n          name: bem1285-ci-e2e-capture\n          path: |\n            governance/runtime/BEM1284_MINIMAL_GOVERNANCE_LOOP_RESULT.json\n            governance/runtime/BEM1285_CI_E2E_CAPTURE_RESULT.json\nCreate file governance/reports/BEM1286_FIX_GOVERNANCE_VALIDATION_CI_YAML.md with content BEM-1286 | FIX GOVERNANCE VALIDATION CI YAML | 2026-06-01 | 12:49 (UTC+3)\n\nЭтап: CI workflow YAML repair — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1285 completed with SHA `ab6e77ef4bceeb2ae3f2bd64fdba79185c62c77c`.\n✅ Operator screenshot showed invalid `.github/workflows/governance-validation-ci.yml`.\n✅ Rewrote workflow with quoted `on` key, valid `jobs.validate.runs-on`, valid steps, and artifact upload.\n✅ No schedule triggers added.\n⚠️ Need next CI run verification after this syntax fix.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | CI workflow YAML repair — 1/1 (100%) | Workflow syntax repaired |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; CI proof still pending |\n| Следующее действие | BEM-1287 CI run verification after workflow syntax repair | Confirm GitHub Actions accepts and runs workflow |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1286 | FIX GOVERNANCE VALIDATION CI YAML | 2026-06-01 | 12:49 (UTC+3)\n- BEM-1285 completed with SHA ab6e77ef4bceeb2ae3f2bd64fdba79185c62c77c.\n- Fixed governance-validation-ci.yml syntax after operator screenshot.\n- Release PASS not issued.\n- Next action: BEM-1287 CI run verification after workflow syntax repair.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1286a_fix_ci_yaml_exact.md",
+    "result_json": "governance/codex/results/bem1286a_fix_ci_yaml_exact.json"
+  },
+  "created_at": "2026-06-01T09:51:33.351Z"
+}
