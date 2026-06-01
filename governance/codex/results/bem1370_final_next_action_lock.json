@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1370_final_next_action_lock",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/FINAL_NEXT_ACTION_LOCK_EXTERNAL_RECEIPTS_OR_CI.json",
+    "create:governance/reports/BEM1370_FINAL_NEXT_ACTION_LOCK.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/FINAL_NEXT_ACTION_LOCK_EXTERNAL_RECEIPTS_OR_CI.json",
+    "governance/reports/BEM1370_FINAL_NEXT_ACTION_LOCK.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1370_final_next_action_lock.txt"
+  ],
+  "commit_sha": "207af6ed09a0c1b178b4947daee1e3e1574097fc",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1370_final_next_action_lock.md",
+  "completed_at": "2026-06-01T15:54:20Z"
+}
