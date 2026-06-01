@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1320_live_runtime_receipt_acquisition_plan",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1320 runtime receipt plan",
+  "objective": "Create file governance/proofs/external/runtime/LIVE_RUNTIME_RECEIPT_ACQUISITION_PLAN.md with content BEM-1320 | LIVE RUNTIME RECEIPT ACQUISITION PLAN | 2026-06-01 | 14:43 (UTC+3)\n\nЭтап: Live runtime receipt acquisition plan — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Шаг | Действие | Вход | Выход | Критерий принятия |\n|---:|---|---|---|---|\n| 1 | Выбрать проверяемый commit SHA | Latest accepted repository SHA | Runtime target SHA | SHA не null |\n| 2 | Запустить Minimal Governance Loop в live runtime | Real runtime environment | Runtime output | Не mock/fixture-only |\n| 3 | Сохранить redacted runtime output | Live runtime stdout/stderr | Redacted output ref | Нет секретов |\n| 4 | Сформировать receipt JSON | Runtime output + commit SHA | `governance/proofs/external/runtime/live_runtime_receipt.json` | Все поля контракта заполнены |\n| 5 | Прогнать validators | receipt intake + placeholder guard | LiveRuntime gate accepted | Не Release PASS сам по себе |\n\n| Требуемое поле | Описание | Причина |\n|---|---|---|\n| receipt_id | Уникальный ID receipt | Аудиторская трассировка |\n| environment | Должно быть `live_runtime` | Не mock/fixture |\n| command_or_entrypoint | Команда или entrypoint запуска | Повторяемость проверки |\n| commit_sha | Проверяемый SHA репозитория | Привязка к версии кода |\n| result | Должно быть `pass` | Результат live запуска |\n| secret_scan_pass | `true` | Безопасность |\n| redacted_output_ref | Путь к редактированному proof | Не хранить секреты |\n| operator_or_external_source | Источник proof | Внешняя проверяемость |\n\nЧек-лист:\n✅ BEM-1319 completed with SHA `cb95aa1defff5132e692bd19d982a7f55c50134d`.\n✅ Live runtime receipt contract already exists.\n✅ Live runtime anti-placeholder guard already exists.\n✅ Acquisition plan created for the second real external proof.\n⚠️ Actual live runtime receipt is still missing.\n⚠️ Production Telegram receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Live runtime receipt acquisition plan — 1/1 (100%) | Second real external proof path defined |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; live runtime proof pending |\n| Следующее действие | BEM-1321 external Claude audit intake handoff refresh | Prepare third real external proof path |\n\nNo issue comments.\nCreate file governance/state/bem1320_live_runtime_receipt_acquisition_plan.json with content {\"bem_id\":\"BEM-1320\",\"created_at_utc3\":\"2026-06-01 | 14:43 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Live runtime receipt acquisition plan\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1319\",\"latest_proof_sha\":\"cb95aa1defff5132e692bd19d982a7f55c50134d\",\"required_output\":\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"next_action\":\"BEM-1321 external Claude audit intake handoff refresh\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1320 | LIVE RUNTIME RECEIPT ACQUISITION PLAN | 2026-06-01 | 14:43 (UTC+3)\n- BEM-1319 completed with SHA cb95aa1defff5132e692bd19d982a7f55c50134d.\n- Created live runtime receipt acquisition plan.\n- Release PASS not issued.\n- Next action: BEM-1321 external Claude audit intake handoff refresh.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1320_live_runtime_receipt_acquisition_plan.md",
+    "result_json": "governance/codex/results/bem1320_live_runtime_receipt_acquisition_plan.json"
+  },
+  "created_at": "2026-06-01T12:45:15.697Z"
+}
