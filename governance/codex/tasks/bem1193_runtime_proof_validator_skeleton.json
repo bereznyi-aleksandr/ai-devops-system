@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1193_runtime_proof_validator_skeleton",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1193 runtime validator",
+  "objective": "Create file governance/validators/validate_live_runtime_receipt.py with content import json\nfrom pathlib import Path\n\nCONTRACT = Path(\"governance/runtime/BEM1192_RUNTIME_PROOF_CAPTURE_CONTRACT.json\")\n\n\ndef validate(path):\n    contract = json.loads(CONTRACT.read_text(encoding=\"utf-8\"))\n    receipt = json.loads(Path(path).read_text(encoding=\"utf-8\"))\n    errors = []\n    for field in contract.get(\"required_runtime_receipt_fields\", []):\n        if field not in receipt:\n            errors.append(f\"missing field {field}\")\n    required_values = contract.get(\"required_values\", {})\n    for key, expected in required_values.items():\n        if receipt.get(key) != expected:\n            errors.append(f\"{key} must be {expected!r}\")\n    text = json.dumps(receipt, ensure_ascii=False).lower()\n    for forbidden in contract.get(\"forbidden\", []):\n        if forbidden.lower() in text:\n            errors.append(f\"forbidden token found: {forbidden}\")\n    return errors\n\nif __name__ == \"__main__\":\n    import sys\n    if len(sys.argv) != 2:\n        print(\"usage: validate_live_runtime_receipt.py <receipt.json>\")\n        raise SystemExit(2)\n    errs = validate(sys.argv[1])\n    if errs:\n        print(\"FAIL\")\n        for err in errs:\n            print(err)\n        raise SystemExit(1)\n    print(\"PASS live_runtime_receipt\")\nCreate file governance/reports/BEM1193_RUNTIME_PROOF_VALIDATOR_SKELETON.md with content BEM-1193 | RUNTIME PROOF VALIDATOR SKELETON | 2026-06-01 | 06:02 (UTC+3)\n\nЭтап: Runtime proof validator skeleton — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1192 completed with SHA `b89458e58c45c248e803c9430198a5532edb4568`.\n✅ Created `governance/validators/validate_live_runtime_receipt.py`.\n✅ Validator checks required runtime receipt fields and required values.\n✅ Validator checks forbidden proof classes from capture contract.\n⚠️ Actual live runtime receipt is still missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Runtime proof validator skeleton — 1/1 (100%) | Runtime receipt validator created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; live receipt missing |\n| Следующее действие | BEM-1194 Telegram production receipt contract | Continue external proof validator chain |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1193 | RUNTIME PROOF VALIDATOR SKELETON | 2026-06-01 | 06:02 (UTC+3)\n- BEM-1192 completed with SHA b89458e58c45c248e803c9430198a5532edb4568.\n- Created live runtime receipt validator skeleton.\n- Release PASS not issued.\n- Next action: BEM-1194 Telegram production receipt contract.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1193_runtime_proof_validator_skeleton.md",
+    "result_json": "governance/codex/results/bem1193_runtime_proof_validator_skeleton.json"
+  },
+  "created_at": "2026-06-01T03:03:55.877Z"
+}
