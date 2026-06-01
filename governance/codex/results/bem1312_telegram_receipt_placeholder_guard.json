@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1312_telegram_receipt_placeholder_guard",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_telegram_receipt_not_placeholder.py",
+    "create:governance/tests/fixtures/telegram_receipt_placeholder_guard_negative.json",
+    "create:governance/tests/run_telegram_receipt_placeholder_guard_tests.py",
+    "create:governance/reports/BEM1312_TELEGRAM_RECEIPT_PLACEHOLDER_GUARD.md",
+    "create:governance/state/bem1312_telegram_receipt_placeholder_guard.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_telegram_receipt_not_placeholder.py",
+    "governance/tests/fixtures/telegram_receipt_placeholder_guard_negative.json",
+    "governance/tests/run_telegram_receipt_placeholder_guard_tests.py",
+    "governance/reports/BEM1312_TELEGRAM_RECEIPT_PLACEHOLDER_GUARD.md",
+    "governance/state/bem1312_telegram_receipt_placeholder_guard.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1312_telegram_receipt_placeholder_guard.txt"
+  ],
+  "commit_sha": "65a74e0faad77d2284f99557caf8548a1edcf84a",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1312_telegram_receipt_placeholder_guard.md",
+  "completed_at": "2026-06-01T12:13:21Z"
+}
