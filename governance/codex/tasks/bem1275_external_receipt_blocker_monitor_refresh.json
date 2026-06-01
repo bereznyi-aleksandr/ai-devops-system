@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1275_external_receipt_blocker_monitor_refresh",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1275 blocker monitor",
+  "objective": "Create file governance/state/bem1275_external_receipt_blocker_monitor_refresh.json with content {\"bem_id\":\"BEM-1275\",\"created_at_utc3\":\"2026-06-01 | 08:23 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"External receipt blocker monitor refresh\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1274\",\"latest_proof_sha\":\"d5a1662eb45939fcb6a9895c7e213e634f53e4c6\",\"blockers\":[{\"id\":\"production_telegram_receipt_missing\",\"expected_path\":\"governance/proofs/external/telegram/production_receipt.json\",\"validator\":\"governance/validators/validate_telegram_production_receipt.py\",\"status\":\"open\"},{\"id\":\"live_runtime_receipt_missing\",\"expected_path\":\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"validator\":\"governance/validators/validate_live_runtime_receipt.py\",\"status\":\"open\"},{\"id\":\"external_claude_audit_result_missing\",\"expected_path\":\"governance/proofs/external/claude/external_claude_audit_result.json\",\"validator\":\"governance/validators/validate_external_claude_audit_result.py\",\"status\":\"open\"}],\"next_action\":\"BEM-1276 next safe hardening queue\"}\nCreate file governance/reports/BEM1275_EXTERNAL_RECEIPT_BLOCKER_MONITOR_REFRESH.md with content BEM-1275 | EXTERNAL RECEIPT BLOCKER MONITOR REFRESH | 2026-06-01 | 08:23 (UTC+3)\n\nЭтап: External receipt blocker monitor refresh — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1274 completed with SHA `d5a1662eb45939fcb6a9895c7e213e634f53e4c6`.\n✅ Created `governance/state/bem1275_external_receipt_blocker_monitor_refresh.json`.\n✅ Production Telegram, live runtime and external Claude blockers are mapped to paths and validators.\n⚠️ All three blockers remain open.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | External receipt blocker monitor refresh — 1/1 (100%) | Blocker monitor refreshed |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; external receipts missing |\n| Следующее действие | BEM-1276 next safe hardening queue | Continue safe repo hardening |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1275 | EXTERNAL RECEIPT BLOCKER MONITOR REFRESH | 2026-06-01 | 08:23 (UTC+3)\n- BEM-1274 completed with SHA d5a1662eb45939fcb6a9895c7e213e634f53e4c6.\n- Created external receipt blocker monitor refresh.\n- Release PASS not issued.\n- Next action: BEM-1276 next safe hardening queue.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1275_external_receipt_blocker_monitor_refresh.md",
+    "result_json": "governance/codex/results/bem1275_external_receipt_blocker_monitor_refresh.json"
+  },
+  "created_at": "2026-06-01T05:25:01.654Z"
+}
