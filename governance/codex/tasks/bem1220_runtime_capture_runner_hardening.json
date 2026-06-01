@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1220_runtime_capture_runner_hardening",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1220 capture hardening",
+  "objective": "Create file governance/runtime/runtime_capture_input_validator.py with content import json\nfrom pathlib import Path\n\nCONTRACT = Path(\"governance/runtime/BEM1219_RUNTIME_CAPTURE_RUNNER_INPUT_CONTRACT.json\")\n\n\ndef validate(path):\n    contract = json.loads(CONTRACT.read_text(encoding=\"utf-8\"))\n    data = json.loads(Path(path).read_text(encoding=\"utf-8\"))\n    errors = []\n    for field in contract.get(\"required_input_fields\", []):\n        if field not in data:\n            errors.append(f\"missing field {field}\")\n    for key, expected in contract.get(\"required_values\", {}).items():\n        if data.get(key) != expected:\n            errors.append(f\"{key} must be {expected!r}\")\n    text = json.dumps(data, ensure_ascii=False).lower()\n    for forbidden in contract.get(\"forbidden\", []):\n        if forbidden.lower() in text:\n            errors.append(f\"forbidden token found: {forbidden}\")\n    return errors\n\nif __name__ == \"__main__\":\n    import sys\n    if len(sys.argv) != 2:\n        print(\"usage: runtime_capture_input_validator.py <input.json>\")\n        raise SystemExit(2)\n    errs = validate(sys.argv[1])\n    if errs:\n        print(\"FAIL\")\n        for err in errs:\n            print(err)\n        raise SystemExit(1)\n    print(\"PASS runtime_capture_input\")\nCreate file governance/reports/BEM1220_RUNTIME_CAPTURE_RUNNER_HARDENING.md with content BEM-1220 | RUNTIME CAPTURE RUNNER HARDENING | 2026-06-01 | 06:40 (UTC+3)\n\nЭтап: Runtime capture runner hardening — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1219 completed with SHA `96ec98760fc61f725bc659c4210be7fecae417fa`.\n✅ Created `governance/runtime/runtime_capture_input_validator.py`.\n✅ Validator checks runtime capture input contract required fields and values.\n✅ Validator rejects forbidden secret/release-pass tokens.\n⚠️ This is capture hardening, not live runtime proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Runtime capture runner hardening — 1/1 (100%) | Capture input validator created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; runtime hardening continues |\n| Следующее действие | BEM-1221 runtime capture hardening audit | Continue hardening audit |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1220 | RUNTIME CAPTURE RUNNER HARDENING | 2026-06-01 | 06:40 (UTC+3)\n- BEM-1219 completed with SHA 96ec98760fc61f725bc659c4210be7fecae417fa.\n- Created runtime capture input validator.\n- Release PASS not issued.\n- Next action: BEM-1221 runtime capture hardening audit.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1220_runtime_capture_runner_hardening.md",
+    "result_json": "governance/codex/results/bem1220_runtime_capture_runner_hardening.json"
+  },
+  "created_at": "2026-06-01T03:41:29.004Z"
+}
