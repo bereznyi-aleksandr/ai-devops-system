@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1449_aggregate_three_fail_closed_intakes",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1449 aggregate intakes",
+  "objective": "Create file governance/state/AGGREGATE_THREE_FAIL_CLOSED_RECEIPT_INTAKES.json with content {\"bem_id\":\"BEM-1449\",\"created_at_utc3\":\"2026-06-01 | 19:04 (UTC+3)\",\"release_pass\":false,\"fail_closed_intakes\":[{\"receipt\":\"production_telegram\",\"status\":\"fail_closed_until_real_receipt_exists\",\"target\":\"governance/proofs/external/telegram/production_receipt.json\"},{\"receipt\":\"live_runtime\",\"status\":\"fail_closed_until_real_runtime_receipt_exists\",\"target\":\"governance/proofs/external/runtime/live_runtime_receipt.json\"},{\"receipt\":\"external_claude_audit\",\"status\":\"queued_or_pending_fail_closed_status\",\"target\":\"governance/proofs/external/claude/external_claude_audit_result.json\"}],\"rule\":\"No receipt intake accepts placeholders or self-claims as proof.\",\"next_action\":\"BEM-1450 reconcile third fail-closed intake and aggregate\"}\nCreate file governance/reports/BEM1449_AGGREGATE_THREE_FAIL_CLOSED_RECEIPT_INTAKES.md with content BEM-1449 | AGGREGATE THREE FAIL-CLOSED RECEIPT INTAKES | 2026-06-01 | 19:04 (UTC+3)\n\nЭтап: Aggregate three fail-closed receipt intakes — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1445 completed with SHA `1686f00a60640131da5d00582b18e742af0630aa`.\n✅ BEM-1447 completed with SHA `711c8b4d14587436ba1e42ef8250180aff1688c0`.\n⚠️ BEM-1448 may still be queued and is not counted without SHA.\n✅ Created `governance/state/AGGREGATE_THREE_FAIL_CLOSED_RECEIPT_INTAKES.json`.\n✅ Fail-closed receipt intake statuses aggregated without false proof.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ CI activation acceptance proof missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Aggregate three fail-closed receipt intakes — 1/1 (100%) | Fail-closed intake statuses aggregated without claiming queued completion |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; real receipts still missing |\n| Следующее действие | BEM-1450 reconcile third fail-closed intake and aggregate | Reconcile BEM-1448 when SHA appears |\n\nNo issue comments.\nCreate file governance/state/bem1449_aggregate_three_fail_closed_intakes.json with content {\"bem_id\":\"BEM-1449\",\"created_at_utc3\":\"2026-06-01 | 19:04 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Aggregate three fail-closed receipt intakes\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"known_completed\":{\"BEM-1445\":\"1686f00a60640131da5d00582b18e742af0630aa\",\"BEM-1447\":\"711c8b4d14587436ba1e42ef8250180aff1688c0\"},\"queued_not_counted\":[\"BEM-1448\"],\"next_action\":\"BEM-1450 reconcile third fail-closed intake and aggregate\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1449 | AGGREGATE THREE FAIL-CLOSED RECEIPT INTAKES | 2026-06-01 | 19:04 (UTC+3)\n- Aggregated three fail-closed receipt intakes.\n- BEM-1448 was queued at observation time and is not counted without SHA.\n- Release PASS not issued.\n- Next action: BEM-1450 reconcile third fail-closed intake and aggregate.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1449_aggregate_three_fail_closed_intakes.md",
+    "result_json": "governance/codex/results/bem1449_aggregate_three_fail_closed_intakes.json"
+  },
+  "created_at": "2026-06-01T17:04:18.657Z"
+}
