@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1284_min_loop_gate2_short",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1284 minimal loop",
+  "objective": "Implement BEM-1284: stop status-only loop and build Minimal Governance Loop Gate 2. Create full valid governance/objects/object_passports.json and governance/release/release_proof_manifest.json. Create governance/state/BEM1284_SSOT_CANONICAL_PATHS.json. Repair governance/runners/*.py so every runner parses, imports, has main(), and deterministic JSON stub logic with release_pass=false. Create governance/runtime/minimal_governance_loop_runner.py that runs deterministic local operator->GD->DIR/CUR->analyst->auditor precheck->worker->auditor postcheck->report->operator loop and writes governance/runtime/BEM1284_MINIMAL_GOVERNANCE_LOOP_RESULT.json with ok=true, release_pass=false, gate_2_minimal_local_e2e=true only when all local steps pass. Create governance/tests/run_bem1284_minimal_governance_loop.py. Create governance/validators/validate_foundation_all.py validating passports, release manifest, runners parse/import, minimal loop exists, and no false receipt/release claim. Create or update .github/workflows/governance-validation-ci.yml to run validate_foundation_all.py and run_bem1284_minimal_governance_loop.py on push and pull_request only, no schedule. Create governance/reports/BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2.md in canonical report format with stage task counts, roadmap BEM-931 foundation 14/14, fixes, blockers, no Release PASS. Append BEM-1284 entry to governance/AGENT_CONTEXT.md. Acceptance: py_compile all runners and new files; validator passes; minimal loop test passes; result JSON has release_pass=false and gate_2_minimal_local_e2e=true. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1284_min_loop_gate2_short.md",
+    "result_json": "governance/codex/results/bem1284_min_loop_gate2_short.json"
+  },
+  "created_at": "2026-06-01T09:24:22.656Z"
+}
