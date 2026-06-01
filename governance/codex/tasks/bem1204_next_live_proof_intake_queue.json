@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1204_next_live_proof_intake_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1204 live proof queue",
+  "objective": "Create file governance/state/bem1204_next_live_proof_intake_queue.json with content {\"bem_id\":\"BEM-1204\",\"created_at_utc3\":\"2026-06-01 | 06:18 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Next live-proof intake queue\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1203\",\"latest_proof_sha\":\"289ab0ebb8ee5feaaa40ab8bafbe265236c5e8f3\",\"queue\":[{\"order\":1,\"bem\":\"BEM-1205\",\"title\":\"Live-proof intake directory guard\"},{\"order\":2,\"bem\":\"BEM-1206\",\"title\":\"Live-proof intake README\"},{\"order\":3,\"bem\":\"BEM-1207\",\"title\":\"Post-live-proof-intake checkpoint\"}],\"remaining_blockers\":[\"production_telegram_receipt_missing\",\"live_runtime_receipt_missing\",\"external_claude_audit_result_missing\"],\"next_action\":\"BEM-1205 live-proof intake directory guard\"}\nCreate file governance/reports/BEM1204_NEXT_LIVE_PROOF_INTAKE_QUEUE.md with content BEM-1204 | NEXT LIVE-PROOF INTAKE QUEUE | 2026-06-01 | 06:18 (UTC+3)\n\nЭтап: Next live-proof intake queue — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1203 completed with SHA `289ab0ebb8ee5feaaa40ab8bafbe265236c5e8f3`.\n✅ Created `governance/state/bem1204_next_live_proof_intake_queue.json`.\n✅ Queued BEM-1205, BEM-1206 and BEM-1207.\n⚠️ Production Telegram, live runtime and external Claude proof receipts remain missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Next live-proof intake queue — 1/1 (100%) | Live proof intake queue created |\n| Дорожная карта | BEM-931 foundation 14/14 (100%) | Foundation complete; live receipts missing |\n| Следующее действие | BEM-1205 live-proof intake directory guard | Prepare safe receipt intake paths |\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1204 | NEXT LIVE-PROOF INTAKE QUEUE | 2026-06-01 | 06:18 (UTC+3)\n- BEM-1203 completed with SHA 289ab0ebb8ee5feaaa40ab8bafbe265236c5e8f3.\n- Created next live-proof intake queue.\n- Release PASS not issued.\n- Next action: BEM-1205 live-proof intake directory guard.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1204_next_live_proof_intake_queue.md",
+    "result_json": "governance/codex/results/bem1204_next_live_proof_intake_queue.json"
+  },
+  "created_at": "2026-06-01T03:19:23.012Z"
+}
