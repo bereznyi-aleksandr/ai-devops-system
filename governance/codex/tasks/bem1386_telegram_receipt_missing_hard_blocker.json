@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1386_telegram_receipt_missing_hard_blocker",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1386 Telegram hard blocker",
+  "objective": "Create file governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_MISSING_HARD_BLOCKER.json with content {\"bem_id\":\"BEM-1386\",\"created_at_utc3\":\"2026-06-01 | 18:07 (UTC+3)\",\"release_pass\":false,\"blocker\":\"production_telegram_receipt_missing\",\"required_path\":\"governance/proofs/external/telegram/production_receipt.json\",\"status\":\"open\",\"reason\":\"No real production Telegram delivery receipt exists in repository.\",\"repo_side_ready\":true,\"cannot_be_replaced_by\":[\"request pack\",\"lane start\",\"readiness file\",\"screenshot of old failed workflow\",\"proof-only commit\",\"placeholder receipt\"],\"allowed_resolution\":\"write real production_receipt.json only after real production Telegram delivery evidence exists and validators pass\",\"next_action\":\"BEM-1387 live runtime real receipt acquisition lane start\"}\nCreate file governance/reports/BEM1386_PRODUCTION_TELEGRAM_RECEIPT_MISSING_HARD_BLOCKER.md with content BEM-1386 | PRODUCTION TELEGRAM RECEIPT MISSING HARD BLOCKER | 2026-06-01 | 18:07 (UTC+3)\n\nЭтап: Production Telegram receipt missing hard blocker record — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\nЧек-лист:\n✅ BEM-1385 completed with SHA `73b67360da80610bf5f29aff8bf4dcd54f9c9898`.\n✅ Created `governance/proofs/external/telegram/PRODUCTION_TELEGRAM_RECEIPT_MISSING_HARD_BLOCKER.json`.\n✅ Blocker states real production Telegram receipt is missing and cannot be replaced by readiness artifacts.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n⚠️ Active governance-validation workflow disabled until explicit safe activation and GitHub acceptance proof.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Production Telegram receipt missing hard blocker record — 1/1 (100%) | First hard blocker recorded explicitly |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; real Telegram proof required |\n| Следующее действие | BEM-1387 live runtime real receipt acquisition lane start | Move to second real-proof lane without fake receipt |\n\nNo issue comments.\nCreate file governance/state/bem1386_telegram_receipt_missing_hard_blocker.json with content {\"bem_id\":\"BEM-1386\",\"created_at_utc3\":\"2026-06-01 | 18:07 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Production Telegram receipt missing hard blocker record\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1385\",\"latest_proof_sha\":\"73b67360da80610bf5f29aff8bf4dcd54f9c9898\",\"next_action\":\"BEM-1387 live runtime real receipt acquisition lane start\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1386 | PRODUCTION TELEGRAM RECEIPT MISSING HARD BLOCKER | 2026-06-01 | 18:07 (UTC+3)\n- BEM-1385 completed with SHA 73b67360da80610bf5f29aff8bf4dcd54f9c9898.\n- Created production Telegram receipt missing hard blocker record.\n- Release PASS not issued.\n- Next action: BEM-1387 live runtime real receipt acquisition lane start.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1386_telegram_receipt_missing_hard_blocker.md",
+    "result_json": "governance/codex/results/bem1386_telegram_receipt_missing_hard_blocker.json"
+  },
+  "created_at": "2026-06-01T16:07:37.071Z"
+}
