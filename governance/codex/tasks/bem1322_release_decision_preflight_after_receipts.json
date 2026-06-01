@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1322_release_decision_preflight_after_receipts",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "BEM-1322 release preflight",
+  "objective": "Create file governance/release/RELEASE_DECISION_PREFLIGHT_AFTER_RECEIPTS.md with content BEM-1322 | RELEASE DECISION PREFLIGHT AFTER RECEIPTS | 2026-06-01 | 14:47 (UTC+3)\n\nЭтап: Release decision preflight after receipts — 1/1 (100%)\nДорожная карта BEM-931 foundation: 14/14 (100%)\n\n| Preflight шаг | Команда / проверка | PASS если | FAIL если |\n|---:|---|---|---|\n| 1 | Check production Telegram receipt path | `production_receipt.json` exists and passes intake + placeholder guard | Missing, placeholder, secret, wrong environment |\n| 2 | Check live runtime receipt path | `live_runtime_receipt.json` exists and passes intake + placeholder guard | Missing, mock, fixture, wrong environment |\n| 3 | Check external Claude audit receipt path | `external_claude_audit_result.json` exists and passes intake + placeholder guard | Missing, self-claim, fake Claude, release_pass=true |\n| 4 | Check receipt contract bundle | `EXTERNAL_RECEIPT_GATE_BUNDLE.json` exists and release_pass=false | Missing or claims release pass |\n| 5 | Check anti-placeholder bundle | `EXTERNAL_RECEIPT_ANTI_PLACEHOLDER_BUNDLE.json` exists and release_pass=false | Missing or claims release pass |\n| 6 | Run release decision validator | validator returns ok=true | Any blocker remains |\n\n| Release decision rule | Значение |\n|---|---|\n| Foundation complete | 14/14 |\n| Local loop | Required but not sufficient |\n| CI acceptance | Helpful, but not sufficient after workflow incidents |\n| External receipts | Mandatory |\n| Release PASS | Only after all mandatory receipts and validators pass |\n\nЧек-лист:\n✅ BEM-1321 completed with SHA `3c7b28a7e8207fdd752026285f0a206b6b0ec9b5`.\n✅ Preflight table created for final release decision after receipts.\n✅ Release decision remains fail-closed until all external receipts exist and validate.\n⚠️ Production Telegram receipt missing.\n⚠️ Live runtime receipt missing.\n⚠️ External Claude audit result missing.\n❌ Release PASS is not issued.\n\n| Наименование | Описание | Обоснование |\n|---|---|---|\n| Текущий этап | Release decision preflight after receipts — 1/1 (100%) | Final preflight defined for after real receipts exist |\n| Дорожная карта | BEM-931 foundation: 14/14 (100%) | Foundation complete; release depends on external receipts |\n| Следующее действие | BEM-1323 real receipt blockers dashboard | Keep exact blockers visible without creating fake proof |\n\nNo issue comments.\nCreate file governance/state/bem1322_release_decision_preflight_after_receipts.json with content {\"bem_id\":\"BEM-1322\",\"created_at_utc3\":\"2026-06-01 | 14:47 (UTC+3)\",\"status\":\"completed\",\"stage\":{\"name\":\"Release decision preflight after receipts\",\"completed\":1,\"total\":1,\"percent\":100},\"roadmap\":{\"name\":\"BEM-931 foundation\",\"completed\":14,\"total\":14,\"percent\":100},\"release_pass\":false,\"latest_completed_bem\":\"BEM-1321\",\"latest_proof_sha\":\"3c7b28a7e8207fdd752026285f0a206b6b0ec9b5\",\"next_action\":\"BEM-1323 real receipt blockers dashboard\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### BEM-1322 | RELEASE DECISION PREFLIGHT AFTER RECEIPTS | 2026-06-01 | 14:47 (UTC+3)\n- BEM-1321 completed with SHA 3c7b28a7e8207fdd752026285f0a206b6b0ec9b5.\n- Created release decision preflight for after receipts exist.\n- Release PASS not issued.\n- Next action: BEM-1323 real receipt blockers dashboard.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/bem1322_release_decision_preflight_after_receipts.md",
+    "result_json": "governance/codex/results/bem1322_release_decision_preflight_after_receipts.json"
+  },
+  "created_at": "2026-06-01T12:49:27.632Z"
+}
