@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1211_provider_policy_integrity_hardening",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_provider_policy_integrity.py",
+    "create:governance/reports/BEM1211_PROVIDER_POLICY_INTEGRITY_HARDENING.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_provider_policy_integrity.py",
+    "governance/reports/BEM1211_PROVIDER_POLICY_INTEGRITY_HARDENING.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1211_provider_policy_integrity_hardening.txt"
+  ],
+  "commit_sha": "d44982242fd2b949d6292e43dc9fc3b14e34d466",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1211_provider_policy_integrity_hardening.md",
+  "completed_at": "2026-06-01T03:29:18Z"
+}
