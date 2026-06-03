@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz6_readiness_levels",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-6 readiness levels",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/state/readiness_levels.json with content {\"version\":\"1.0\",\"release_pass\":false,\"levels\":{\"FILE_EXISTS\":{\"order\":1,\"meaning\":\"Artifact exists but may be incomplete or non-executable\",\"proof\":\"file path exists\"},\"STUB_RUNNABLE\":{\"order\":2,\"meaning\":\"Artifact imports/runs deterministically but is not functional proof\",\"proof\":\"main() and __main__ runnable with release_pass=false\"},\"FUNCTIONAL\":{\"order\":3,\"meaning\":\"Artifact performs intended local function with deterministic test proof\",\"proof\":\"local test/e2e proof\"},\"CI_VERIFIED\":{\"order\":4,\"meaning\":\"Artifact is validated by accepted CI run\",\"proof\":\"GitHub Actions run accepted and validator passes\"}},\"forbidden\":{\"release_pass_from_file_exists\":true,\"release_pass_from_stub_runnable\":true},\"next_action\":\"KZ-3 codex status-loop cleanup\"}\nCreate file governance/validators/validate_readiness_levels.py with content #!/usr/bin/env python3\nfrom __future__ import annotations\nimport json\nfrom pathlib import Path\n\ndef main()->int:\n    path=Path('governance/state/readiness_levels.json')\n    data=json.loads(path.read_text(encoding='utf-8'))\n    required=['FILE_EXISTS','STUB_RUNNABLE','FUNCTIONAL','CI_VERIFIED']\n    missing=[x for x in required if x not in data.get('levels',{})]\n    if missing:\n        print('missing readiness levels: '+', '.join(missing)); return 1\n    if data.get('release_pass') is not False:\n        print('release_pass must be false'); return 1\n    print('PASS: readiness levels defined')\n    return 0\nif __name__=='__main__': raise SystemExit(main())\n\nCreate file governance/state/tz6_readiness_levels_status.json with content {\"stage\":\"TZ-6\",\"status\":\"readiness_levels_defined\",\"release_pass\":false,\"validator\":\"governance/validators/validate_readiness_levels.py\",\"next_action\":\"KZ-3 codex status-loop cleanup\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-6 | READINESS LEVELS DEFINED | 2026-06-03 | 13:44 (UTC+3)\n- Defined FILE_EXISTS / STUB_RUNNABLE / FUNCTIONAL / CI_VERIFIED readiness levels.\n- Added validate_readiness_levels.py.\n- No Release PASS. Next action: KZ-3 codex status-loop cleanup.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz6_readiness_levels.md",
+    "result_json": "governance/codex/results/tz6_readiness_levels.json"
+  },
+  "created_at": "2026-06-03T11:43:10.027Z"
+}
