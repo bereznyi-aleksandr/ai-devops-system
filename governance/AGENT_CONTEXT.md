@@ -1457,3 +1457,5 @@ No issue comments.
 -
 ### KZ-2 | SSOT CANONICAL REFS BATCH 1 | 2026-06-03 | 10:17 (UTC+3)
 -
+### KZ-2 | SSOT DUPLICATE PATH INVENTORY | 2026-06-03 | 10:18 (UTC+3)
+- Added duplicate path inventory policy for KZ-2
