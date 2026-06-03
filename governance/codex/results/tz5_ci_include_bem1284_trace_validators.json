@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz5_ci_include_bem1284_trace_validators",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/state/tz5_ci_bem1284_trace_status.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/state/tz5_ci_bem1284_trace_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz5_ci_include_bem1284_trace_validators.txt"
+  ],
+  "commit_sha": "bb2b58d515550fd7fce86199ff60f148771b5f0a",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz5_ci_include_bem1284_trace_validators.md",
+  "completed_at": "2026-06-03T11:57:27Z"
+}
