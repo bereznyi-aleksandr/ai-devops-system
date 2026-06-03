@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz3_codex_status_loop_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-3 codex cleanup policy",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create dir governance/archive/codex_status_loop\nCreate file governance/state/codex_status_loop_policy.json with content {\"stage\":\"KZ-3\",\"release_pass\":false,\"policy\":\"governance/codex logs are technical execution records, not PASS proof\",\"archive_rule\":\"archive governance/codex records older than 30 days when timestamp is safely known\",\"pass_rule\":\"PASS must be based on state/runtime proof, validators, receipts, and non-null commit SHA where required; not codex task logs\",\"status\":\"policy_recorded\",\"next_action\":\"TZ-8 legacy provider conflict cleanup\"}\nCreate file governance/archive/codex_status_loop/MANIFEST.md with content # KZ-3 codex/status-loop cleanup\n\ngovernance/codex task/result/proof logs are not PASS proof. Older records must be archived only when age is safely known. This manifest is the archive anchor for KZ-3 cleanup.\n\nNo Release PASS.\n\nCreate file governance/state/kz3_codex_status_loop_status.json with content {\"stage\":\"KZ-3\",\"status\":\"policy_recorded_archive_anchor_created\",\"release_pass\":false,\"next_action\":\"TZ-8 legacy provider conflict cleanup\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-3 | CODEX STATUS-LOOP POLICY | 2026-06-03 | 13:45 (UTC+3)\n- Recorded policy that governance/codex logs are not PASS proof.\n- Created archive anchor governance/archive/codex_status_loop/MANIFEST.md.\n- No Release PASS. Next action: TZ-8 legacy provider conflict cleanup.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz3_codex_status_loop_policy.md",
+    "result_json": "governance/codex/results/kz3_codex_status_loop_policy.json"
+  },
+  "created_at": "2026-06-03T11:45:13.675Z"
+}
