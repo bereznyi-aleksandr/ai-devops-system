@@ -1451,3 +1451,4 @@ No issue comments.
 ### RM-00 | OPEN WRITE PROBE | 2026-06-03 | 10:23 (UTC+3)
 - Probed direct open-write after Create/Replace content corruption.
 - No Release PASS. Continue KZ-1 if raw verifies.
+### KZ-1 |
