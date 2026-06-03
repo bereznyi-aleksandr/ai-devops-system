@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_ssot_canonical_refs_batch1",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2 canonical refs batch1",
+  "objective": "Create file governance/state/KZ2_SSOT_CANONICAL_REFS.json with content {\"kz\":\"KZ-2\",\"created_at_utc3\":\"2026-06-03 | 10:17 (UTC+3)\",\"release_pass\":false,\"canonical_refs\":{\"contours_registry\":\"governance/registries/contours_registry.json\",\"object_passports\":\"governance/registries/object_passports.json\",\"providers_registry\":\"governance/registries/providers_registry.json\",\"contour_provider_policy\":\"governance/policies/contour_provider_policy.json\",\"provider_failover_policy\":\"governance/policies/provider_failover_policy.json\",\"managed_channel_schema\":\"governance/schemas/managed_channel_schema.json\",\"telegram_input_envelope_schema\":\"governance/schemas/telegram_input_envelope_schema.json\",\"telegram_to_managed_channel_mapping\":\"governance/mappings/telegram_to_managed_channel_mapping.json\"},\"non_canonical_policy\":\"archive duplicate copies only after exact path inventory; update refs to canonical path; do not delete unknown files blindly\",\"next_action\":\"kz2_ssot_duplicate_path_inventory\"}\nCreate file governance/registries/SSOT_CANONICAL_PATHS.json with content {\"version\":\"1.0\",\"release_pass\":false,\"canonical_paths\":{\"contours_registry\":\"governance/registries/contours_registry.json\",\"object_passports\":\"governance/registries/object_passports.json\",\"providers_registry\":\"governance/registries/providers_registry.json\",\"contour_provider_policy\":\"governance/policies/contour_provider_policy.json\",\"provider_failover_policy\":\"governance/policies/provider_failover_policy.json\",\"managed_channel_schema\":\"governance/schemas/managed_channel_schema.json\",\"telegram_input_envelope_schema\":\"governance/schemas/telegram_input_envelope_schema.json\",\"telegram_to_managed_channel_mapping\":\"governance/mappings/telegram_to_managed_channel_mapping.json\"}}\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-2 | SSOT CANONICAL REFS BATCH 1 | 2026-06-03 | 10:17 (UTC+3)\n- Created canonical refs for 8 duplicated SSOT artifacts.\n- No Release PASS. Next action: duplicate path inventory and archive non-canonical copies.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2_ssot_canonical_refs_batch1.md",
+    "result_json": "governance/codex/results/kz2_ssot_canonical_refs_batch1.json"
+  },
+  "created_at": "2026-06-03T17:15:39.128Z"
+}
