@@ -1445,3 +1445,5 @@ No issue comments.
 ### RM-00 |
 ### KZ-1 | ONE-LINE EXECUTABLE
 ### KZ-1 |
+### KZ-1 | MINIMAL DEF PROBE | 2026-06-03 | 10:22 (UTC+3)
+- Probed minimal one-line def main skeleton after

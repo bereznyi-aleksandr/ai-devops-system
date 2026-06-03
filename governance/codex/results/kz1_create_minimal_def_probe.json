@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_create_minimal_def_probe",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/analyst_stage_runner.py",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/analyst_stage_runner.py",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz1_create_minimal_def_probe.txt"
+  ],
+  "commit_sha": "2d2ebf09455f913ec14b3116e5b69cbf0f63b052",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz1_create_minimal_def_probe.md",
+  "completed_at": "2026-06-03T15:38:36Z"
+}
