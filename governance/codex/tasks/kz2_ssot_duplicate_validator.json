@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_ssot_duplicate_validator",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2 SSOT duplicate validator",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/validators/validate_ssot_no_duplicates.py with content #!/usr/bin/env python3\nfrom __future__ import annotations\nfrom pathlib import Path\n\nARTIFACTS=['contours_registry.json','object_passports.json','providers_registry.json','contour_provider_policy.json','provider_failover_policy.json','managed_channel_schema.json','telegram_input_envelope_schema.json','telegram_to_managed_channel_mapping.json']\nCANONICAL_DIR=Path('governance/state')\nSKIP_PARTS={'.git','archive','__pycache__','node_modules'}\n\ndef main()->int:\n    errors=[]\n    for name in ARTIFACTS:\n        matches=[]\n        for path in Path('governance').rglob(name):\n            if any(part in SKIP_PARTS for part in path.parts):\n                continue\n            matches.append(path)\n        canonical=CANONICAL_DIR/name\n        if canonical not in matches:\n            errors.append(f'{name}: canonical missing at {canonical}')\n        noncanonical=[str(p) for p in matches if p!=canonical]\n        if noncanonical:\n            errors.append(f'{name}: non-canonical duplicates: '+', '.join(noncanonical))\n    if errors:\n        print('\\n'.join(errors))\n        return 1\n    print('PASS: no active SSOT duplicates for tracked artifacts')\n    return 0\n\nif __name__=='__main__':\n    raise SystemExit(main())\n\nCreate file governance/state/kz2_ssot_validator_status.json with content {\"stage\":\"KZ-2\",\"status\":\"validator_created\",\"validator\":\"governance/validators/validate_ssot_no_duplicates.py\",\"release_pass\":false,\"next_action\":\"KZ-2 archive duplicate copies and update refs until validator passes\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-2 | SSOT DUPLICATE VALIDATOR CREATED | 2026-06-03 | 13:41 (UTC+3)\n- Created governance/validators/validate_ssot_no_duplicates.py for 8 Claude duplicate artifacts.\n- No Release PASS.\n- Next action: archive duplicate copies and update refs until validator passes.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2_ssot_duplicate_validator.md",
+    "result_json": "governance/codex/results/kz2_ssot_duplicate_validator.json"
+  },
+  "created_at": "2026-06-03T11:36:41.533Z"
+}
