@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00b_fail_closed_proof_only_success",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-00B fail proof-only success",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Implement RM-00B from updated roadmap: runner/results must fail closed when code_patch changes only governance/codex/proofs/*.txt or no target files. Find codex runner/result writer/Python executor logic. Change it so proof-only code_patch is status=blocked with blocker, not completed. Add/update executable selftest if present to verify proof-only changed_files is blocked and target changed_files is completed. Update AGENT_CONTEXT concise entry: RM-00B done/blocked, no Release PASS, next action RM-01 revoke false Gate 2 PASS. No reports, no proof-by-report, no issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00b_fail_closed_proof_only_success.md",
+    "result_json": "governance/codex/results/rm00b_fail_closed_proof_only_success.json"
+  },
+  "created_at": "2026-06-03T10:28:01.081Z"
+}
