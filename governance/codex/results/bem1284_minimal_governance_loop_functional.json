@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "bem1284_minimal_governance_loop_functional",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/minimal_governance_loop_runner.py",
+    "create:tests/governance/test_bem1284_minimal_governance_loop.py",
+    "create:governance/state/bem1284_minimal_governance_loop_status.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/minimal_governance_loop_runner.py",
+    "tests/governance/test_bem1284_minimal_governance_loop.py",
+    "governance/state/bem1284_minimal_governance_loop_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/bem1284_minimal_governance_loop_functional.txt"
+  ],
+  "commit_sha": "f6530cecf592beeed940b76a86d093aac1e05e69",
+  "blocker": null,
+  "report_path": "governance/codex/results/bem1284_minimal_governance_loop_functional.md",
+  "completed_at": "2026-06-03T11:49:26Z"
+}

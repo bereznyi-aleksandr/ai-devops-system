@@ -1414,3 +1414,5 @@ No issue comments.
 - Recorded policy that governance/codex logs are not PASS proof
 ### TZ-8 | LEGACY PROVIDER CONFLICT CLEANUP | 2026-06-03 | 13:46 (UTC+3)
 - Archived scripts/provider_failover
+### BEM-1284 | MINIMAL GOVERNANCE LOOP FUNCTIONAL LOCAL E2E | 2026-06-03 | 13:47 (UTC+3)
+- Implemented deterministic Minimal Governance Loop
