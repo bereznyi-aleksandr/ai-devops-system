@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz9_load_experience_runtime_binding",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-9 load experience",
+  "objective": "Create file governance/runtime/experience_loader.py with content #!/usr/bin/env python3\nimport json\nfrom pathlib import Path\n\ndef load_experience(path: str = \"governance/registries/experience_registry.json\") -> dict:\n    p = Path(path)\n    if not p.exists():\n        return {\"status\":\"missing\",\"path\":path,\"items\":[]}\n    data = json.loads(p.read_text(encoding=\"utf-8\"))\n    if isinstance(data, dict):\n        return {\"status\":\"loaded\",\"path\":path,\"data\":data}\n    return {\"status\":\"loaded\",\"path\":path,\"data\":{\"items\":data}}\n\nif __name__ == \"__main__\":\n    print(json.dumps(load_experience(), ensure_ascii=False, sort_keys=True))\nCreate file governance/runners/analyst_experience_stage_runner.py with content #!/usr/bin/env python3\nimport json\nfrom governance.runtime.experience_loader import load_experience\n\nRUNNER_ID = \"analyst_experience_stage_runner\"\nREADINESS_LEVEL = \"FUNCTIONAL\"\n\ndef main() -> int:\n    experience = load_experience()\n    print(json.dumps({\"runner_id\":RUNNER_ID,\"readiness_level\":READINESS_LEVEL,\"status\":\"experience_loaded\",\"release_pass\":False,\"experience_status\":experience.get(\"status\")}, ensure_ascii=False, sort_keys=True))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/auditor_experience_stage_runner.py with content #!/usr/bin/env python3\nimport json\nfrom governance.runtime.experience_loader import load_experience\n\nRUNNER_ID = \"auditor_experience_stage_runner\"\nREADINESS_LEVEL = \"FUNCTIONAL\"\n\ndef main() -> int:\n    experience = load_experience()\n    print(json.dumps({\"runner_id\":RUNNER_ID,\"readiness_level\":READINESS_LEVEL,\"status\":\"experience_loaded\",\"release_pass\":False,\"experience_status\":experience.get(\"status\")}, ensure_ascii=False, sort_keys=True))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file tests/governance/test_tz9_load_experience.py with content import subprocess\nimport sys\n\ndef test_analyst_experience_runner_executes():\n    subprocess.run([sys.executable, \"governance/runners/analyst_experience_stage_runner.py\"], check=True, capture_output=True, text=True)\n\ndef test_auditor_experience_runner_executes():\n    subprocess.run([sys.executable, \"governance/runners/auditor_experience_stage_runner.py\"], check=True, capture_output=True, text=True)\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-9 | LOAD EXPERIENCE RUNTIME BINDING | 2026-06-03 | 10:30 (UTC+3)\n- Added governance/runtime/experience_loader.py.\n- Bound analyst/auditor experience runners to load_experience().\n- No Release PASS. Next action: TZ-10 real last_run trace normalization.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz9_load_experience_runtime_binding.md",
+    "result_json": "governance/codex/results/tz9_load_experience_runtime_binding.json"
+  },
+  "created_at": "2026-06-03T17:58:28.932Z"
+}
