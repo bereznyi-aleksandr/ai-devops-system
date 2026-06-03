@@ -1,1 +1,7 @@
-# Disabled by BEM-1290B on 2026-06-01
+name: governance-validation-ci
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate-foundation:

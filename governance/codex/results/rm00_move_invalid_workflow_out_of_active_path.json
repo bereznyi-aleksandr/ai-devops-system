@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_move_invalid_workflow_out_of_active_path",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "move:.github/workflows/governance-validation-ci.yml->governance/workflows_disabled/governance-validation-ci",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/workflows_disabled/governance-validation-ci",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_move_invalid_workflow_out_of_active_path.txt"
+  ],
+  "commit_sha": "9e92919588a93795d11f0b8b36ce5e9897359504",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_move_invalid_workflow_out_of_active_path.md",
+  "completed_at": "2026-06-03T18:25:10Z"
+}

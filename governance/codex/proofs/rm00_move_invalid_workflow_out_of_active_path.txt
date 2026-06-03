@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: rm00_move_invalid_workflow_out_of_active_path
+task_type: code_patch
+executed_at: 2026-06-03T18:25:10Z
+ops_applied: move:.github/workflows/governance-validation-ci.yml->governance/workflows_disabled/governance-validation-ci, append:governance/AGENT_CONTEXT.md
+changed_files: .github/workflows/governance-validation-ci.yml, governance/workflows_disabled/governance-validation-ci, governance/AGENT_CONTEXT.md
+errors: none
