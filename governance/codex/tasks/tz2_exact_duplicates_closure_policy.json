@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_exact_duplicates_closure_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-2 exact duplicates closure",
+  "objective": "Create file governance/state/TZ2_EXACT_DUPLICATES_CLOSURE_POLICY.json with content {\"tz\":\"TZ-2\",\"created_at_utc3\":\"2026-06-03 | 10:34 (UTC+3)\",\"release_pass\":false,\"status\":\"closure_policy_ready_but_exact_archive_requires_repo_inventory\",\"completed\":{\"canonical_plan\":\"13e50272320e6d27a2ccfc0b5005e83418102d89\",\"canonical_refs\":\"2bace3ba6677dd2b33aea9a84b043dc12c2d4775\",\"inventory_policy\":\"010906e1058895ce6e3b6b972348a94a7757ffdc\",\"archive_manifest\":\"44ada8b86bdbc4d556022fefda06e13961c762cf\"},\"open\":\"exact non-canonical duplicate files must be archived only after executable path discovery\",\"next_action\":\"create executable duplicate discovery validator\"}\nCreate file governance/validators/validate_ssot_canonical_paths.py with content #!/usr/bin/env python3\nimport json\nfrom pathlib import Path\n\nCANONICAL = Path(\"governance/registries/SSOT_CANONICAL_PATHS.json\")\n\ndef main() -> int:\n    data = json.loads(CANONICAL.read_text(encoding=\"utf-8\"))\n    paths = data.get(\"canonical_paths\", {})\n    missing = [p for p in paths.values() if not Path(p).exists()]\n    if missing:\n        raise SystemExit(\"missing canonical paths: \" + \", \".join(missing))\n    print(json.dumps({\"status\":\"ok\",\"canonical_count\":len(paths),\"release_pass\":False}, ensure_ascii=False))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-2 | EXACT DUPLICATES CLOSURE POLICY | 2026-06-03 | 10:34 (UTC+3)\n- Added exact duplicate closure policy and canonical path validator.\n- No Release PASS. Next action: run/verify SSOT canonical paths, then continue remaining release blockers.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_exact_duplicates_closure_policy.md",
+    "result_json": "governance/codex/results/tz2_exact_duplicates_closure_policy.json"
+  },
+  "created_at": "2026-06-03T18:08:54.047Z"
+}
