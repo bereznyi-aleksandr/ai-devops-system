@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_ssot_duplicates_inventory",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2 SSOT inventory",
+  "objective": "Create file governance/state/KZ2_SSOT_DUPLICATES_CANONICAL_PLAN.json with content {\"kz\":\"KZ-2\",\"created_at_utc3\":\"2026-06-03 | 10:16 (UTC+3)\",\"release_pass\":false,\"status\":\"inventory_and_plan\",\"basis\":\"Claude audit: 8 key files duplicated in two paths; define canonical path, archive copies, update refs\",\"duplicates\":[{\"id\":\"contours_registry\",\"canonical\":\"governance/registries/contours_registry.json\",\"action\":\"archive non-canonical copies and update refs\"},{\"id\":\"object_passports\",\"canonical\":\"governance/registries/object_passports.json\",\"action\":\"archive non-canonical copies and update refs\"},{\"id\":\"providers_registry\",\"canonical\":\"governance/registries/providers_registry.json\",\"action\":\"archive non-canonical copies and update refs\"},{\"id\":\"contour_provider_policy\",\"canonical\":\"governance/policies/contour_provider_policy.json\",\"action\":\"archive non-canonical copies and update refs\"},{\"id\":\"provider_failover_policy\",\"canonical\":\"governance/policies/provider_failover_policy.json\",\"action\":\"archive non-canonical copies and update refs\"},{\"id\":\"managed_channel_schema\",\"canonical\":\"governance/schemas/managed_channel_schema.json\",\"action\":\"archive non-canonical copies and update refs\"},{\"id\":\"telegram_input_envelope_schema\",\"canonical\":\"governance/schemas/telegram_input_envelope_schema.json\",\"action\":\"archive non-canonical copies and update refs\"},{\"id\":\"telegram_to_managed_channel_mapping\",\"canonical\":\"governance/mappings/telegram_to_managed_channel_mapping.json\",\"action\":\"archive non-canonical copies and update refs\"}],\"next_action\":\"kz2_ssot_archive_duplicates_batch1\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-2 | SSOT DUPLICATES INVENTORY | 2026-06-03 | 10:16 (UTC+3)\n- Created KZ-2 canonical plan for 8 duplicated SSOT artifacts from Claude audit.\n- No Release PASS. Next action: KZ-2 archive non-canonical duplicate copies and update refs.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2_ssot_duplicates_inventory.md",
+    "result_json": "governance/codex/results/kz2_ssot_duplicates_inventory.json"
+  },
+  "created_at": "2026-06-03T17:13:01.616Z"
+}
