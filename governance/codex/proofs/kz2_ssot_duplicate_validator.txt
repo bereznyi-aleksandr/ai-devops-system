@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: kz2_ssot_duplicate_validator
+task_type: code_patch
+executed_at: 2026-06-03T11:36:53Z
+ops_applied: create:governance/validators/validate_ssot_no_duplicates.py, create:governance/state/kz2_ssot_validator_status.json, append:governance/AGENT_CONTEXT.md
+changed_files: governance/validators/validate_ssot_no_duplicates.py, governance/state/kz2_ssot_validator_status.json, governance/AGENT_CONTEXT.md
+errors: none

@@ -1403,3 +1403,4 @@ No issue comments.
 ### KZ-1 | 14
 ### KZ-2 | SSOT CANONICAL PATHS DEFINED | 2026-06-03 | 13:40 (UTC+3)
 - Defined canonical governance/state paths for 8 duplicate SSOT artifacts
+### KZ-2 | SSOT DUPLICATE VALIDATOR

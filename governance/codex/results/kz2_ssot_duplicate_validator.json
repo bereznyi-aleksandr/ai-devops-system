@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_ssot_duplicate_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_ssot_no_duplicates.py",
+    "create:governance/state/kz2_ssot_validator_status.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_ssot_no_duplicates.py",
+    "governance/state/kz2_ssot_validator_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz2_ssot_duplicate_validator.txt"
+  ],
+  "commit_sha": "953ef1b126f9992b7775beb06a1241d0d494adfe",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz2_ssot_duplicate_validator.md",
+  "completed_at": "2026-06-03T11:36:53Z"
+}
