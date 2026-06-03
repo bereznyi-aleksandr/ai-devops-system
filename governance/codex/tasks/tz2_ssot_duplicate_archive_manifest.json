@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_ssot_duplicate_archive_manifest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-2 SSOT archive manifest",
+  "objective": "Create file governance/state/TZ2_SSOT_DUPLICATE_CLEANUP_STATUS.json with content {\"tz\":\"TZ-2\",\"created_at_utc3\":\"2026-06-03 | 10:25 (UTC+3)\",\"release_pass\":false,\"status\":\"partial_until_exact_duplicate_paths_archived\",\"completed_parts\":[{\"name\":\"canonical_plan\",\"sha\":\"13e50272320e6d27a2ccfc0b5005e83418102d89\"},{\"name\":\"canonical_refs\",\"sha\":\"2bace3ba6677dd2b33aea9a84b043dc12c2d4775\"},{\"name\":\"duplicate_inventory_policy\",\"sha\":\"010906e1058895ce6e3b6b972348a94a7757ffdc\"}],\"open_parts\":[\"archive exact non-canonical duplicate files\",\"update all refs from duplicate paths to canonical paths\"],\"canonical_paths_file\":\"governance/registries/SSOT_CANONICAL_PATHS.json\",\"next_action\":\"TZ-2 exact duplicate archive batch after path discovery\"}\nCreate file governance/archive/ssot_duplicates/README.md with content # TZ-2 SSOT duplicates archive\n\nStatus: partial. This directory is reserved for exact non-canonical duplicate SSOT copies after path discovery.\n\nCanonical paths are recorded in `governance/registries/SSOT_CANONICAL_PATHS.json`.\n\nRelease PASS: false.\n\nNext action: archive exact non-canonical duplicate files and update refs.\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-2 | SSOT DUPLICATE CLEANUP STATUS | 2026-06-03 | 10:25 (UTC+3)\n- TZ-2 remains partial: canonical paths and inventory are recorded, archive target prepared.\n- Open: exact non-canonical duplicates must be archived and refs updated.\n- No Release PASS. Next action: TZ-2 exact duplicate archive batch.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_ssot_duplicate_archive_manifest.md",
+    "result_json": "governance/codex/results/tz2_ssot_duplicate_archive_manifest.json"
+  },
+  "created_at": "2026-06-03T17:45:34.494Z"
+}
