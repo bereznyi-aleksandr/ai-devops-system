@@ -1465,3 +1465,5 @@ No issue comments.
 - Added readiness levels FILE_EXISTS/STUB_
 ### KZ-7 | CODEX STATUS-LOOP CLEANUP POLICY | 2026-06-03 | 10:23 (UTC+3)
 - Added policy that governance/codex logs are not proof and proof-only code_patch is not success
+### TZ-8 | LEGACY PROVIDER CONFLICT CLOSURE | 2026-06-03 | 10:24 (UTC+3)
+- Recorded canonical provider failover policy and legacy conflict closure rule
