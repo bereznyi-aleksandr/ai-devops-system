@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate5_live_runtime_receipt_lane",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/GATE5_LIVE_RUNTIME_RECEIPT_LANE.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/GATE5_LIVE_RUNTIME_RECEIPT_LANE.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/gate5_live_runtime_receipt_lane.txt"
+  ],
+  "commit_sha": "287ff1419b394b159fbb3bfcac991d5f4462f97c",
+  "blocker": null,
+  "report_path": "governance/codex/results/gate5_live_runtime_receipt_lane.md",
+  "completed_at": "2026-06-03T18:27:15Z"
+}
