@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_ssot_canonical_paths",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2 SSOT canonical paths",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/state/ssot_canonical_paths.json with content {\"stage\":\"KZ-2\",\"status\":\"canonical_paths_defined\",\"release_pass\":false,\"canonical_paths\":{\"contours_registry\":\"governance/state/contours_registry.json\",\"object_passports\":\"governance/state/object_passports.json\",\"providers_registry\":\"governance/state/providers_registry.json\",\"contour_provider_policy\":\"governance/state/contour_provider_policy.json\",\"provider_failover_policy\":\"governance/state/provider_failover_policy.json\",\"managed_channel_schema\":\"governance/state/managed_channel_schema.json\",\"telegram_input_envelope_schema\":\"governance/state/telegram_input_envelope_schema.json\",\"telegram_to_managed_channel_mapping\":\"governance/state/telegram_to_managed_channel_mapping.json\"},\"duplicate_policy\":\"non-canonical copies must be archived and refs updated before KZ-2 PASS\",\"next_action\":\"KZ-2 archive duplicate copies and update refs\"}\nCreate file governance/state/kz2_ssot_duplicate_cleanup_plan.json with content {\"stage\":\"KZ-2\",\"release_pass\":false,\"duplicates_from_claude\":[\"contours_registry\",\"object_passports\",\"providers_registry\",\"contour_provider_policy\",\"provider_failover_policy\",\"managed_channel_schema\",\"telegram_input_envelope_schema\",\"telegram_to_managed_channel_mapping\"],\"acceptance\":\"one canonical path per artifact, non-canonical copies archived, refs updated\",\"next_action\":\"archive duplicate copies\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-2 | SSOT CANONICAL PATHS DEFINED | 2026-06-03 | 13:40 (UTC+3)\n- Defined canonical governance/state paths for 8 duplicate SSOT artifacts.\n- No Release PASS.\n- Next action: archive duplicate copies and update refs.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2_ssot_canonical_paths.md",
+    "result_json": "governance/codex/results/kz2_ssot_canonical_paths.json"
+  },
+  "created_at": "2026-06-03T11:34:19.545Z"
+}
