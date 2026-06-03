@@ -1,13 +1,1 @@
-name: governance-validation-ci
-Append to
-workflow_dispatch:
-Append to
-permissions:
-Append to
-Append to
-validate-foundation:
-Append to
-runs-on: ubuntu-latest
-Append to
-- name: Disabled until explicit activation
-Append to
+name: governance-validation-ci\n\non:\n  workflow_dispatch:\n\npermissions:\n  contents: read\n\njobs:\n  validate-foundation:\n    name: Disabled governance validation placeholder\n

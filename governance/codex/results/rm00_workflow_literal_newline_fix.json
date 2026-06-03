@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_workflow_literal_newline_fix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_workflow_literal_newline_fix.txt"
+  ],
+  "commit_sha": "a34abd8b89631ea185f418021ee8f5a2e2a7f427",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_workflow_literal_newline_fix.md",
+  "completed_at": "2026-06-03T15:23:55Z"
+}
