@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gates456_receipt_schemas_validators",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Gates 4-6 receipt validators",
+  "objective": "Create file governance/schemas/external_receipt_schema.json with content {\"version\":\"1.0\",\"release_pass\":false,\"required_fields\":[\"gate\",\"receipt_type\",\"source\",\"captured_at_utc\",\"status\",\"evidence_ref\",\"commit_sha\"],\"allowed_gates\":[\"Gate 4\",\"Gate 5\",\"Gate 6\"],\"allowed_receipt_types\":[\"telegram_production\",\"live_runtime\",\"external_claude_audit\"],\"rules\":[\"receipt must not be placeholder\",\"commit_sha must be non-null for release decision\",\"status must be real_pass or real_fail or blocked\"]}\nCreate file governance/validators/validate_external_receipts.py with content #!/usr/bin/env python3\nimport json\nfrom pathlib import Path\n\nREQUIRED = [\"gate\", \"receipt_type\", \"source\", \"captured_at_utc\", \"status\", \"evidence_ref\", \"commit_sha\"]\nRECEIPTS = [\n    Path(\"governance/proofs/external/telegram/production_receipt.json\"),\n    Path(\"governance/proofs/external/runtime/live_runtime_receipt.json\"),\n    Path(\"governance/proofs/external/claude/external_claude_audit_result.json\"),\n]\n\ndef validate_one(path: Path) -> dict:\n    if not path.exists():\n        return {\"path\": str(path), \"status\": \"missing\"}\n    data = json.loads(path.read_text(encoding=\"utf-8\"))\n    missing = [x for x in REQUIRED if x not in data]\n    if missing:\n        return {\"path\": str(path), \"status\": \"invalid\", \"missing\": missing}\n    if data.get(\"commit_sha\") in (None, \"\", \"null\"):\n        return {\"path\": str(path), \"status\": \"invalid\", \"missing\": [\"non_null_commit_sha\"]}\n    return {\"path\": str(path), \"status\": \"valid\"}\n\ndef main() -> int:\n    results = [validate_one(p) for p in RECEIPTS]\n    print(json.dumps({\"release_pass\": False, \"results\": results}, ensure_ascii=False, indent=2))\n    if any(r[\"status\"] != \"valid\" for r in results):\n        raise SystemExit(1)\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### GATES 4-6 | RECEIPT SCHEMAS AND VALIDATOR | 2026-06-03 | 10:47 (UTC+3)\n- Added external receipt schema and validator for Telegram, live runtime and Claude audit receipts.\n- No fake receipts. No Release PASS. Next action: verify validator files, then current roadmap completion status.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gates456_receipt_schemas_validators.md",
+    "result_json": "governance/codex/results/gates456_receipt_schemas_validators.json"
+  },
+  "created_at": "2026-06-03T18:45:42.391Z"
+}
