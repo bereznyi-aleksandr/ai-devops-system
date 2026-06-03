@@ -1483,3 +1483,5 @@ No issue comments.
 ### TZ-10 | REAL LAST_
 ### RM-00 | CI SAFE SINGLE JOB YAML | 2026-06-03 | 10:33 (UTC+3)
 - Rewrote governance-validation-ci
+### TZ-2 | EXACT DUPLICATES CLOSURE POLICY | 2026-06-03 | 10:34 (UTC+3)
+- Added exact duplicate closure policy and canonical path validator

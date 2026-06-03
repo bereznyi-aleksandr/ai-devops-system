@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_exact_duplicates_closure_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/TZ2_EXACT_DUPLICATES_CLOSURE_POLICY.json",
+    "create:governance/validators/validate_ssot_canonical_paths.py",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/TZ2_EXACT_DUPLICATES_CLOSURE_POLICY.json",
+    "governance/validators/validate_ssot_canonical_paths.py",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz2_exact_duplicates_closure_policy.txt"
+  ],
+  "commit_sha": "9841d418e2308ade337a9f2f5e8473cd4db2a6b9",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz2_exact_duplicates_closure_policy.md",
+  "completed_at": "2026-06-03T18:09:08Z"
+}
