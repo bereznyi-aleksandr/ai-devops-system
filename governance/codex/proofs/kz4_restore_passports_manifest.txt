@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: kz4_restore_passports_manifest
+task_type: code_patch
+executed_at: 2026-06-03T11:41:19Z
+ops_applied: create:governance/state/object_passports.json, create:governance/state/release_proof_manifest.json, create:governance/state/kz4_passports_manifest_restore_status.json, append:governance/AGENT_CONTEXT.md
+changed_files: governance/state/object_passports.json, governance/state/release_proof_manifest.json, governance/state/kz4_passports_manifest_restore_status.json, governance/AGENT_CONTEXT.md
+errors: none

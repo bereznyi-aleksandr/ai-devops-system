@@ -1406,3 +1406,5 @@ No issue comments.
 ### KZ-2 | SSOT DUPLICATE VALIDATOR
 ### KZ-2 | KNOWN DUPLICATE PATHS ARCHIVED | 2026-06-03 | 13:42 (UTC+3)
 - Attempted archive of known non-canonical duplicate paths for 8 SSOT artifacts
+### KZ-4 | OBJECT PASSPORTS AND RELEASE MANIFEST RESTORED | 2026-06-03 | 13:43 (UTC+3)
+- Restored governance/state/object_passports
