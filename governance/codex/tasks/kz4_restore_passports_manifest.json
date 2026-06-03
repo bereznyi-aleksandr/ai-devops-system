@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz4_restore_passports_manifest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-4 restore passports manifest",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/state/object_passports.json with content {\"version\":\"1.0\",\"release_pass\":false,\"objects\":[{\"object_id\":\"OBJ-GD-001\",\"object_type\":\"GENERAL_DIRECTOR\",\"purpose\":\"Strategic governance and system-level routing\",\"curator_element_id\":\"EL-CUR-GD-001\",\"internal_contours\":[\"GD-STRATEGY-CNT\",\"GD-SYSTEM-RULES-CNT\"],\"input_channels\":[\"chatgpt_operator_input\",\"telegram_input\"],\"output_channels\":[\"vertical_task_to_dir\",\"operator_report\"],\"rule_refs\":[\"governance/state/rule_registry.json\"],\"report_policy\":\"canonical_operator_report\",\"definition_of_done\":[\"route operator input\",\"delegate to DIR curator\",\"receive verified vertical report\"]},{\"object_id\":\"OBJ-DIR-001\",\"object_type\":\"DIRECTOR\",\"purpose\":\"Analysis coordination and worker rule authority\",\"curator_element_id\":\"EL-CUR-DIR-001\",\"internal_contours\":[\"DIR-ANALYSIS-CNT\",\"DIR-WORKER-RULES-CNT\"],\"input_channels\":[\"vertical_task_from_gd\"],\"output_channels\":[\"vertical_task_to_wrk\",\"vertical_report_to_gd\"],\"rule_refs\":[\"governance/state/rule_registry.json\"],\"report_policy\":\"vertical_report_to_gd\",\"definition_of_done\":[\"decompose strategic task\",\"assign worker task\",\"return verified result to GD\"]},{\"object_id\":\"OBJ-WRK-001\",\"object_type\":\"WORKER\",\"purpose\":\"Execution of assigned work items and proof return\",\"curator_element_id\":\"EL-CUR-WRK-001\",\"internal_contours\":[\"WRK-C1\",\"WRK-C2\",\"WRK-C3\"],\"input_channels\":[\"vertical_task_from_dir\"],\"output_channels\":[\"execution_result_to_dir\"],\"rule_refs\":[\"governance/state/rule_registry.json\"],\"report_policy\":\"execution_result_with_proof\",\"definition_of_done\":[\"execute approved task\",\"submit result proof\",\"support rework loop\"]}]}\nCreate file governance/state/release_proof_manifest.json with content {\"version\":\"1.0\",\"release_pass\":false,\"commit_sha\":null,\"release_pass_allowed\":false,\"required_for_release_pass\":[\"Gate 2 Minimal local E2E PASS\",\"Gate 3 CI E2E capture PASS\",\"Gate 4 production Telegram receipt\",\"Gate 5 live runtime receipt\",\"Gate 6 external Claude audit PASS\",\"non_null_commit_sha\"],\"validations\":[{\"validator\":\"governance/validators/validate_no_truncated_python.py\",\"required\":true},{\"validator\":\"governance/validators/validate_ssot_no_duplicates.py\",\"required\":true}],\"proof_refs\":[],\"blockers\":[\"Gate 2 not passed\",\"production receipts missing\",\"live runtime receipt missing\",\"external Claude audit missing\",\"commit_sha is null by design until release decision\"]}\nCreate file governance/state/kz4_passports_manifest_restore_status.json with content {\"stage\":\"KZ-4\",\"status\":\"object_passports_and_release_manifest_restored\",\"release_pass\":false,\"files\":[\"governance/state/object_passports.json\",\"governance/state/release_proof_manifest.json\"],\"next_action\":\"TЗ-6 readiness levels\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-4 | OBJECT PASSPORTS AND RELEASE MANIFEST RESTORED | 2026-06-03 | 13:43 (UTC+3)\n- Restored governance/state/object_passports.json with GD/DIR/WRK passports.\n- Restored governance/state/release_proof_manifest.json with release blockers and commit_sha policy.\n- No Release PASS. Next action: TZ-6 readiness levels.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz4_restore_passports_manifest.md",
+    "result_json": "governance/codex/results/kz4_restore_passports_manifest.json"
+  },
+  "created_at": "2026-06-03T11:41:08.101Z"
+}
