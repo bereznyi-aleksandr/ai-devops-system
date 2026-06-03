@@ -1408,3 +1408,5 @@ No issue comments.
 - Attempted archive of known non-canonical duplicate paths for 8 SSOT artifacts
 ### KZ-4 | OBJECT PASSPORTS AND RELEASE MANIFEST RESTORED | 2026-06-03 | 13:43 (UTC+3)
 - Restored governance/state/object_passports
+### TZ-6 | READINESS LEVELS DEFINED | 2026-06-03 | 13:44 (UTC+3)
+- Defined FILE_EXISTS / STUB_
