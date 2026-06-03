@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm01_revoke_false_gate2_pass",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-01 revoke Gate2 PASS",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/state/bem1284_gate2_status.json with content {\"stage\":\"RM-01\",\"gate\":\"Gate 2 Minimal local E2E\",\"status\":\"IN_PROGRESS\",\"progress\":\"0/8 (0%)\",\"release_pass\":false,\"false_pass_revoked\":true,\"reason\":\"Gate 2 is not passed until minimal_governance_loop_runner.py produces a real deterministic local E2E trace and tests pass. Report/status files are not proof.\",\"blocked_by\":[\"RM-02 truncated Python fail-closed validator\",\"KZ-1 runners skeleton repair\",\"KZ-2 SSOT duplicate cleanup\",\"KZ-4 object_passports and release_proof_manifest restore\",\"KZ-5 BEM-1284 Minimal Governance Loop implementation\"],\"latest_executor_probe_sha\":\"4ba8a767e50e8125767a1585d66c969a779adf08\",\"next_action\":\"RM-02 truncated Python fail-closed validator\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-01 | FALSE GATE 2 PASS REVOKED | 2026-06-03 | 13:34 (UTC+3)\n- Gate 2 status fixed as IN_PROGRESS / 0% in governance/state/bem1284_gate2_status.json.\n- Release PASS remains false.\n- Next action: RM-02 truncated Python fail-closed validator.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm01_revoke_false_gate2_pass.md",
+    "result_json": "governance/codex/results/rm01_revoke_false_gate2_pass.json"
+  },
+  "created_at": "2026-06-03T11:19:34.964Z"
+}
