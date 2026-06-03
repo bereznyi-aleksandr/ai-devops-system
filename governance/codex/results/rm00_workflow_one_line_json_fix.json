@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_workflow_one_line_json_fix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_workflow_one_line_json_fix.txt"
+  ],
+  "commit_sha": "45b56fa9171da25669a788090ae7da2195188338",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_workflow_one_line_json_fix.md",
+  "completed_at": "2026-06-03T15:26:28Z"
+}
