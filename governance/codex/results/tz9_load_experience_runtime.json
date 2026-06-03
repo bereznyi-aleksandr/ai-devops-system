@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz9_load_experience_runtime",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runtime/experience_loader.py",
+    "create:governance/runners/analyst_experience_stage_runner.py",
+    "create:governance/runners/auditor_experience_stage_runner.py",
+    "create:governance/state/tz9_load_experience_status.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runtime/experience_loader.py",
+    "governance/runners/analyst_experience_stage_runner.py",
+    "governance/runners/auditor_experience_stage_runner.py",
+    "governance/state/tz9_load_experience_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz9_load_experience_runtime.txt"
+  ],
+  "commit_sha": "bd48434f6e0d0c91052fcd158c1a4d4c980d83fa",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz9_load_experience_runtime.md",
+  "completed_at": "2026-06-03T11:53:28Z"
+}

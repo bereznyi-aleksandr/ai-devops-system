@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: tz9_load_experience_runtime
+task_type: code_patch
+executed_at: 2026-06-03T11:53:28Z
+ops_applied: create:governance/runtime/experience_loader.py, create:governance/runners/analyst_experience_stage_runner.py, create:governance/runners/auditor_experience_stage_runner.py, create:governance/state/tz9_load_experience_status.json, append:governance/AGENT_CONTEXT.md
+changed_files: governance/runtime/experience_loader.py, governance/runners/analyst_experience_stage_runner.py, governance/runners/auditor_experience_stage_runner.py, governance/state/tz9_load_experience_status.json, governance/AGENT_CONTEXT.md
+errors: none
