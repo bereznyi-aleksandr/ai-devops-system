@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: kz6_readiness_levels_schema
+task_type: code_patch
+executed_at: 2026-06-03T17:24:48Z
+ops_applied: create:governance/state/READINESS_LEVELS_SCHEMA.json, create:governance/validators/validate_readiness_levels.py, append:governance/AGENT_CONTEXT.md
+changed_files: governance/state/READINESS_LEVELS_SCHEMA.json, governance/validators/validate_readiness_levels.py, governance/AGENT_CONTEXT.md
+errors: none

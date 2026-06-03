@@ -1461,3 +1461,5 @@ No issue comments.
 - Added duplicate path inventory policy for KZ-2
 ### KZ-3 | PASSPORTS AND RELEASE MANIFEST RESTORE | 2026-06-03 | 10:20 (UTC+3)
 - Restored governance/registries/object_passports
+### KZ-6 | READINESS LEVELS SCHEMA | 2026-06-03 | 10:21 (UTC+3)
+- Added readiness levels FILE_EXISTS/STUB_

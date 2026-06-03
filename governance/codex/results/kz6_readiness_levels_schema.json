@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz6_readiness_levels_schema",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/READINESS_LEVELS_SCHEMA.json",
+    "create:governance/validators/validate_readiness_levels.py",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/READINESS_LEVELS_SCHEMA.json",
+    "governance/validators/validate_readiness_levels.py",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz6_readiness_levels_schema.txt"
+  ],
+  "commit_sha": "84543128dee09b29ee253037b54456de3e2f6081",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz6_readiness_levels_schema.md",
+  "completed_at": "2026-06-03T17:24:48Z"
+}
