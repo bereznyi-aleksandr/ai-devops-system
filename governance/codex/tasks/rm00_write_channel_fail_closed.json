@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_write_channel_fail_closed",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-00 fail-closed executor",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Repair codex runner/Python executor fail-closed behavior. For code_patch tasks, status must be blocked when changed_files is empty or contains only governance/codex/proofs/*.txt. completed is allowed only when at least one non-proof target file changes. Ensure file operation patterns from governance/codex/PYTHON_EXECUTOR_GUIDE.md are executed, not replaced by proof-file creation. Add executable selftest for proof-only rejection and one safe temp file operation. Update AGENT_CONTEXT with concise RM-00 entry and next action KZ-1 runners skeleton repair. Do not create BEM reports. No Release PASS. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00_write_channel_fail_closed.md",
+    "result_json": "governance/codex/results/rm00_write_channel_fail_closed.json"
+  },
+  "created_at": "2026-06-03T14:39:01.587Z"
+}
