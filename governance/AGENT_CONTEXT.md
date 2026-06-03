@@ -1491,3 +1491,5 @@ No issue comments.
 - Rewrote governance-validation-ci
 ### RELEASE BLOCKERS | RECEIPTS STATUS | 2026-06-03 | 10:37 (UTC+3)
 - Recorded remaining release blockers: production Telegram receipt, live
+### RM-00 | CI STANDARD YAML REPAIR | 2026-06-03 | 10:38 (UTC+3)
+- Rewrote governance-validation-ci
