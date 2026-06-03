@@ -4,8 +4,8 @@
   "created_by": "chatgpt_external_contour",
   "target_executor": "gpt_codex",
   "task_type": "code_patch",
-  "title": "RM-00 delete invalid workflow",
-  "objective": "Delete file .github/workflows/governance-validation-ci.yml\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-00 | DELETE INVALID ACTIVE WORKFLOW | 2026-06-03 | 10:19 (UTC+3)\n- Deleted invalid active governance-validation-ci workflow after line-break write-channel proved unsafe.\n- No Release PASS. Next action: KZ-1 valid runner skeletons and later explicit CI activation with valid file creation channel.\n\nNo issue comments.",
+  "title": "RM-00 delete invalid active workflow",
+  "objective": "Delete file .github/workflows/governance-validation-ci.yml\nCreate file governance/workflows_disabled/governance-validation-ci.disabled.md with content # governance-validation-ci disabled\n\nDisabled because active .github/workflows/governance-validation-ci.yml repeatedly caused GitHub Actions YAML parse failures.\n\nRelease PASS: false.\n\nNext action: continue Gate 4/Gate 5 receipt acquisition lanes without fake proof.\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-00 | DELETE INVALID ACTIVE WORKFLOW | 2026-06-03 | 10:46 (UTC+3)\n- Deleted invalid active .github/workflows/governance-validation-ci.yml to stop GitHub Actions YAML parse failures.\n- Added disabled workflow note under governance/workflows_disabled.\n- No Release PASS. Next action: Gate 4/Gate 5 real receipt acquisition lanes.\n\nNo issue comments.",
   "constraints": [
     "no issue comments",
     "no schedule triggers",
@@ -16,5 +16,5 @@
     "result_md": "governance/codex/results/rm00_delete_invalid_active_workflow.md",
     "result_json": "governance/codex/results/rm00_delete_invalid_active_workflow.json"
   },
-  "created_at": "2026-06-03T15:29:04.245Z"
+  "created_at": "2026-06-03T18:43:32.152Z"
 }
