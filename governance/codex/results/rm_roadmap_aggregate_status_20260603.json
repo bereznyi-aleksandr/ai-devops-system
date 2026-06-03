@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm_roadmap_aggregate_status_20260603",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/roadmap_governance_contour_status_20260603.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/roadmap_governance_contour_status_20260603.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm_roadmap_aggregate_status_20260603.txt"
+  ],
+  "commit_sha": "af53c8cb36d1815e5097ff080cde2ee849c72634",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm_roadmap_aggregate_status_20260603.md",
+  "completed_at": "2026-06-03T12:01:27Z"
+}
