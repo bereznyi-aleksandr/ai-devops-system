@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz3_passports_manifest_restore_v2",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-3 restore passports manifest",
+  "objective": "Create file governance/registries/object_passports.json with content {\"version\":\"1.0\",\"bem_id\":\"KZ-3\",\"release_pass\":false,\"created_at_utc3\":\"2026-06-03 | 10:20 (UTC+3)\",\"readiness_levels\":[\"FILE_EXISTS\",\"STUB_RUNNABLE\",\"FUNCTIONAL\",\"CI_VERIFIED\"],\"objects\":{\"GD\":{\"id\":\"GD\",\"name\":\"Governance Director\",\"role\":\"top_level_governance_decision_router\",\"readiness_level\":\"FILE_EXISTS\",\"required_runner\":\"governance/runners/gd_curator_runner.py\",\"required_state\":\"governance/state\"},\"DIR\":{\"id\":\"DIR\",\"name\":\"Director Contour\",\"role\":\"direction_planning_and_coordination\",\"readiness_level\":\"FILE_EXISTS\",\"required_runner\":\"governance/runners/dir_curator_runner.py\",\"required_state\":\"governance/state\"},\"WRK\":{\"id\":\"WRK\",\"name\":\"Worker Contour\",\"role\":\"execution_and_feedback_loop\",\"readiness_level\":\"FILE_EXISTS\",\"required_runner\":\"governance/runners/wrk_curator_runner.py\",\"required_state\":\"governance/state\"}},\"commit_sha_policy\":{\"release_pass_requires_non_null_commit_sha\":true,\"current_commit_sha\":null}}\nCreate file governance/release/release_proof_manifest.json with content {\"version\":\"1.0\",\"bem_id\":\"KZ-3\",\"release_pass\":false,\"created_at_utc3\":\"2026-06-03 | 10:20 (UTC+3)\",\"gates\":{\"gate1_foundation\":{\"status\":\"available\",\"required\":\"foundation artifacts exist and validate\"},\"gate2_minimal_local_e2e\":{\"status\":\"not_started\",\"required\":\"BEM-1284 minimal governance loop local E2E trace\"},\"gate3_ci_e2e\":{\"status\":\"not_started\",\"required\":\"CI/codex-runner deterministic loop result\"},\"gate4_telegram\":{\"status\":\"not_started\",\"required\":\"production Telegram receipt\"},\"gate5_live_runtime\":{\"status\":\"not_started\",\"required\":\"live runtime receipt\"},\"gate6_external_claude\":{\"status\":\"not_started\",\"required\":\"external Claude audit result\"},\"gate7_release_decision\":{\"status\":\"blocked\",\"required\":\"all gates and receipts plus non-null commit_sha\"}},\"required_receipts\":[\"governance/proofs/external/telegram/production_receipt.json\",\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"governance/proofs/external/claude/external_claude_audit_result.json\"],\"commit_sha_policy\":{\"release_pass_requires_non_null_commit_sha\":true,\"current_commit_sha\":null}}\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-3 | PASSPORTS AND RELEASE MANIFEST RESTORE | 2026-06-03 | 10:20 (UTC+3)\n- Restored governance/registries/object_passports.json with GD/DIR/WRK objects and readiness levels.\n- Restored governance/release/release_proof_manifest.json with gates and receipt requirements.\n- No Release PASS. Next action: KZ-3 verification then KZ-6 readiness levels / KZ-7 cleanup.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz3_passports_manifest_restore_v2.md",
+    "result_json": "governance/codex/results/kz3_passports_manifest_restore_v2.json"
+  },
+  "created_at": "2026-06-03T17:22:04.521Z"
+}
