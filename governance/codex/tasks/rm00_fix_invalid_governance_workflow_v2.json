@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_fix_invalid_governance_workflow_v2",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-00 fix invalid workflow v2",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Fix concrete blocker from operator screenshot: active .github/workflows/governance-validation-ci.yml is invalid YAML and GitHub Actions fails on push with Unexpected value ''. Replace the full content of .github/workflows/governance-validation-ci.yml with a valid disabled workflow that has only workflow_dispatch trigger, no push, no pull_request, no schedule, no cron. Keep permissions contents: read. Add one simple job validate-foundation that runs on ubuntu-latest and echoes disabled until explicit activation. This repair is not Release PASS and not proof. Do not create reports. Update AGENT_CONTEXT with concise RM-00 workflow repair entry and next action: repair write-channel fail-closed if proof-only persists, then KZ-1 runners skeleton repair. Acceptance: changed_files must include .github/workflows/governance-validation-ci.yml. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00_fix_invalid_governance_workflow_v2.md",
+    "result_json": "governance/codex/results/rm00_fix_invalid_governance_workflow_v2.json"
+  },
+  "created_at": "2026-06-03T14:45:15.622Z"
+}
