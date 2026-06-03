@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_ssot_duplicate_path_inventory",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2 duplicate path inventory",
+  "objective": "Create file governance/state/KZ2_SSOT_DUPLICATE_PATH_INVENTORY.md with content KZ-2 | SSOT DUPLICATE PATH INVENTORY | 2026-06-03 | 10:18 (UTC+3)\n\nЭтап: KZ-2 duplicate path inventory — 1/1 (100%)\nДорожная карта Claude: 2/10 partial\n\n| Artifact | Canonical path | Non-canonical duplicate policy |\n|---|---|---|\n| contours_registry | governance/registries/contours_registry.json | Archive exact duplicate copies only after path match |\n| object_passports | governance/registries/object_passports.json | Archive exact duplicate copies only after path match |\n| providers_registry | governance/registries/providers_registry.json | Archive exact duplicate copies only after path match |\n| contour_provider_policy | governance/policies/contour_provider_policy.json | Archive exact duplicate copies only after path match |\n| provider_failover_policy | governance/policies/provider_failover_policy.json | Archive exact duplicate copies only after path match |\n| managed_channel_schema | governance/schemas/managed_channel_schema.json | Archive exact duplicate copies only after path match |\n| telegram_input_envelope_schema | governance/schemas/telegram_input_envelope_schema.json | Archive exact duplicate copies only after path match |\n| telegram_to_managed_channel_mapping | governance/mappings/telegram_to_managed_channel_mapping.json | Archive exact duplicate copies only after path match |\n\nRule: do not delete blindly; use Move file only for known non-canonical copies discovered by exact path inventory. Release PASS remains false.\n\nNo issue comments.\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-2 | SSOT DUPLICATE PATH INVENTORY | 2026-06-03 | 10:18 (UTC+3)\n- Added duplicate path inventory policy for KZ-2.\n- No Release PASS. Next action: archive exact non-canonical duplicates when paths are identified.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2_ssot_duplicate_path_inventory.md",
+    "result_json": "governance/codex/results/kz2_ssot_duplicate_path_inventory.json"
+  },
+  "created_at": "2026-06-03T17:18:07.268Z"
+}
