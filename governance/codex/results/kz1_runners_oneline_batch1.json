@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_oneline_batch1",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/analyst_experience_stage_runner.py",
+    "create:governance/runners/analyst_stage_runner.py",
+    "create:governance/runners/auditor_experience_stage_runner.py",
+    "create:governance/runners/auditor_stage_runner.py",
+    "create:governance/runners/contour_lifecycle_runner.py",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/analyst_experience_stage_runner.py",
+    "governance/runners/analyst_stage_runner.py",
+    "governance/runners/auditor_experience_stage_runner.py",
+    "governance/runners/auditor_stage_runner.py",
+    "governance/runners/contour_lifecycle_runner.py",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz1_runners_oneline_batch1.txt"
+  ],
+  "commit_sha": "d73a44c32f439632c5f32d0ae2ad5930c4c8489c",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz1_runners_oneline_batch1.md",
+  "completed_at": "2026-06-03T15:33:20Z"
+}

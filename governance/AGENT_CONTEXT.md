@@ -1443,3 +1443,4 @@ No issue comments.
 ### RM-00 | WORKFLOW ONE-LINE JSON/YAML FIX | 2026-06-03 | 10:18 (UTC+3)
 - Rewrote governance-validation-ci
 ### RM-00 |
+### KZ-1 | ONE-LINE EXECUTABLE
