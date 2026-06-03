@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_create_remaining_runner_skeletons_exact",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/dispatch_consumer_runner.py",
+    "create:governance/runners/managed_channel_consumer_runner.py",
+    "create:governance/runners/telegram_input_handler_runner.py",
+    "create:governance/runners/provider_failover_runner.py",
+    "create:governance/runners/foundation_validator_runner.py",
+    "create:governance/runners/operator_report_runner.py",
+    "create:governance/runners/experience_loader_runner.py",
+    "create:governance/state/kz1_14_runner_skeletons_status.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/dispatch_consumer_runner.py",
+    "governance/runners/managed_channel_consumer_runner.py",
+    "governance/runners/telegram_input_handler_runner.py",
+    "governance/runners/provider_failover_runner.py",
+    "governance/runners/foundation_validator_runner.py",
+    "governance/runners/operator_report_runner.py",
+    "governance/runners/experience_loader_runner.py",
+    "governance/state/kz1_14_runner_skeletons_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz1_create_remaining_runner_skeletons_exact.txt"
+  ],
+  "commit_sha": "80c7e405bf1e84896e32a6b653daaacf2dbf831b",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz1_create_remaining_runner_skeletons_exact.md",
+  "completed_at": "2026-06-03T11:32:07Z"
+}

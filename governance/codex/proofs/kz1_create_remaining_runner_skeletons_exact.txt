@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: kz1_create_remaining_runner_skeletons_exact
+task_type: code_patch
+executed_at: 2026-06-03T11:32:07Z
+ops_applied: create:governance/runners/dispatch_consumer_runner.py, create:governance/runners/managed_channel_consumer_runner.py, create:governance/runners/telegram_input_handler_runner.py, create:governance/runners/provider_failover_runner.py, create:governance/runners/foundation_validator_runner.py, create:governance/runners/operator_report_runner.py, create:governance/runners/experience_loader_runner.py, create:governance/state/kz1_14_runner_skeletons_status.json, append:governance/AGENT_CONTEXT.md
+changed_files: governance/runners/dispatch_consumer_runner.py, governance/runners/managed_channel_consumer_runner.py, governance/runners/telegram_input_handler_runner.py, governance/runners/provider_failover_runner.py, governance/runners/foundation_validator_runner.py, governance/runners/operator_report_runner.py, governance/runners/experience_loader_runner.py, governance/state/kz1_14_runner_skeletons_status.json, governance/AGENT_CONTEXT.md
+errors: none
