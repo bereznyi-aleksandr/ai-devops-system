@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00c_executor_create_file_probe",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-00C executor create probe",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/state/rm00c_executor_create_file_probe.json with content {\"stage\":\"RM-00C\",\"purpose\":\"executor create-file probe\",\"release_pass\":false,\"expected_changed_file\":\"governance/state/rm00c_executor_create_file_probe.json\",\"next_action\":\"RM-00D if target file changed; repair executor if proof-only\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-00C | EXECUTOR CREATE FILE PROBE | 2026-06-03 | 13:33 (UTC+3)\n- Tested exact Python executor create-file pattern.\n- No Release PASS.\n- Next action depends on changed_files: if target file changed then RM-01; if proof-only then repair executor.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00c_executor_create_file_probe.md",
+    "result_json": "governance/codex/results/rm00c_executor_create_file_probe.json"
+  },
+  "created_at": "2026-06-03T11:16:55.545Z"
+}
