@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rg_release_blockers_receipts_status",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Release blockers receipts status",
+  "objective": "Create file governance/state/RELEASE_BLOCKERS_RECEIPTS_STATUS.json with content {\"created_at_utc3\":\"2026-06-03 | 10:37 (UTC+3)\",\"release_pass\":false,\"working_contour_status\":\"functional_stub_local_e2e_present\",\"release_blockers\":[{\"gate\":\"Gate 4\",\"name\":\"Telegram integration\",\"status\":\"blocked_missing_production_receipt\",\"required\":\"governance/proofs/external/telegram/production_receipt.json\"},{\"gate\":\"Gate 5\",\"name\":\"Live runtime\",\"status\":\"blocked_missing_live_runtime_receipt\",\"required\":\"governance/proofs/external/runtime/live_runtime_receipt.json\"},{\"gate\":\"Gate 6\",\"name\":\"External Claude audit\",\"status\":\"blocked_missing_external_audit_result\",\"required\":\"governance/proofs/external/claude/external_claude_audit_result.json\"}],\"next_action\":\"prepare production receipt acquisition lane without fake proof\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RELEASE BLOCKERS | RECEIPTS STATUS | 2026-06-03 | 10:37 (UTC+3)\n- Recorded remaining release blockers: production Telegram receipt, live runtime receipt, external Claude audit result.\n- No Release PASS. Next action: production receipt acquisition lane without fake proof.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rg_release_blockers_receipts_status.md",
+    "result_json": "governance/codex/results/rg_release_blockers_receipts_status.json"
+  },
+  "created_at": "2026-06-03T18:15:56.781Z"
+}
