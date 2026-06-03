@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm_roadmap_aggregate_status_20260603",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM roadmap aggregate status",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/state/roadmap_governance_contour_status_20260603.json with content {\"updated_at_utc3\":\"2026-06-03 | 13:53 (UTC+3)\",\"release_pass\":false,\"roadmap\":{\"completed_or_partially_completed\":[{\"id\":\"RM-00C\",\"status\":\"completed\",\"sha\":\"4ba8a767e50e8125767a1585d66c969a779adf08\"},{\"id\":\"RM-01\",\"status\":\"completed\",\"sha\":\"bf2ac241ba7e6941034cd55808ce41f043ffe0e5\"},{\"id\":\"RM-02\",\"status\":\"completed\",\"sha\":\"50d747c4a5f8c836057ea171e2e27511adccc161\"},{\"id\":\"KZ-1\",\"status\":\"partial_to_complete_target_files_created\",\"sha_latest\":\"80c7e405bf1e84896e32a6b653daaacf2dbf831b\"},{\"id\":\"KZ-2\",\"status\":\"partial_canonical_paths_validator_archive_attempt\",\"sha_latest\":\"953ef1b126f9992b7775beb06a1241d0d494adfe\"},{\"id\":\"KZ-4/TZ-3\",\"status\":\"completed\",\"sha\":\"1d179c8b8c47c3509cec93d146190e57ea4c1218\"},{\"id\":\"TZ-6\",\"status\":\"completed\",\"sha\":\"761c2fcd393763e292ac75f0fc837d700f3699e2\"},{\"id\":\"KZ-3/TZ-7\",\"status\":\"partial_policy_anchor\",\"sha\":\"5f00d6e8779ce633bcaff0e108bb029fbe4f3833\"},{\"id\":\"TZ-8\",\"status\":\"completed\",\"sha\":\"15d62b2ec7e84e98e0a4657376ee66dd7e29afb6\"},{\"id\":\"BEM-1284\",\"status\":\"functional_local_e2e_implemented\",\"sha\":\"f6530cecf592beeed940b76a86d093aac1e05e69\"},{\"id\":\"TZ-5\",\"status\":\"ci_workflow_updated\",\"sha_latest\":\"bb2b58d515550fd7fce86199ff60f148771b5f0a\"},{\"id\":\"TZ-9\",\"status\":\"completed\",\"sha\":\"bd48434f6e0d0c91052fcd158c1a4d4c980d83fa\"},{\"id\":\"TZ-10\",\"status\":\"completed\",\"sha_latest\":\"142eb3e6c5d2d5e2b4d4eb58d5020290643b9f65\"}],\"open_blockers\":[\"KZ-2 requires validator-confirmed no active duplicates\",\"KZ-3 requires age-based archival of old governance/codex records when safely identifiable\",\"Gate 3 requires CI run acceptance proof\",\"Gates 4-6 require production Telegram, live runtime, and external Claude receipts\"]},\"next_action\":\"KZ-2 validator-confirmed duplicate cleanup\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM | ROADMAP AGGREGATE STATUS | 2026-06-03 | 13:53 (UTC+3)\n- Created aggregate roadmap status state file.\n- Release PASS remains false.\n- Next action: KZ-2 validator-confirmed duplicate cleanup.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm_roadmap_aggregate_status_20260603.md",
+    "result_json": "governance/codex/results/rm_roadmap_aggregate_status_20260603.json"
+  },
+  "created_at": "2026-06-03T12:01:14.171Z"
+}
