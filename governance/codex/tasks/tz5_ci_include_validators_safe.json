@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz5_ci_include_validators_safe",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-5 include validators safe",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\n\n'on':\n  workflow_dispatch:\n\njobs:\n  validate_foundation:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: '3.11'\n      - run: python governance/validators/validate_readiness_levels.py\n      - run: python governance/validators/validate_pass_sources.py\n      - run: python governance/validators/validate_ssot_canonical_paths.py\n      - run: python governance/runners/minimal_governance_loop_runner.py\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-5 | CI INCLUDE VALIDATORS SAFE | 2026-06-03 | 10:35 (UTC+3)\n- Added readiness/pass/SSOT validators and BEM-1284 runner to workflow_dispatch-only CI.\n- No push/pull_request/schedule triggers. No Release PASS.\n- Next action: verify workflow changed, then final roadmap status and remaining release gates.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz5_ci_include_validators_safe.md",
+    "result_json": "governance/codex/results/tz5_ci_include_validators_safe.json"
+  },
+  "created_at": "2026-06-03T18:10:54.516Z"
+}
