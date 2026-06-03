@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm01_revoke_false_gate2_pass",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/bem1284_gate2_status.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/bem1284_gate2_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm01_revoke_false_gate2_pass.txt"
+  ],
+  "commit_sha": "bf2ac241ba7e6941034cd55808ce41f043ffe0e5",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm01_revoke_false_gate2_pass.md",
+  "completed_at": "2026-06-03T11:19:47Z"
+}
