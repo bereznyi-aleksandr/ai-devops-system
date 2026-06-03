@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz10_real_last_run_trace",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-10 real last_run trace",
+  "objective": "Create file governance/state/OBJ-GD-001_last_run.json with content {\"trace_id\":\"bem1284_minimal_local_e2e\",\"created_at_utc3\":\"2026-06-03 | 10:32 (UTC+3)\",\"action\":\"minimal_governance_loop\",\"result\":\"functional_stub_e2e_trace\",\"release_pass\":false,\"route\":[\"GD\",\"DIR\",\"ANALYST\",\"AUDITOR_PRE\",\"WRK\",\"AUDITOR_POST\"],\"roles\":{\"GD\":\"route_task\",\"DIR\":\"plan_minimal_execution\",\"ANALYST\":\"analyze_input\",\"AUDITOR_PRE\":\"pre_execution_audit\",\"WRK\":\"execute_stub\",\"AUDITOR_POST\":\"post_execution_audit\"},\"readiness_level\":\"FUNCTIONAL\",\"commit_sha_policy\":\"release pass requires non-null sha and external receipts\"}\nCreate file governance/state/TZ10_LAST_RUN_TRACE_POLICY.json with content {\"tz\":\"TZ-10\",\"created_at_utc3\":\"2026-06-03 | 10:32 (UTC+3)\",\"release_pass\":false,\"policy\":\"OBJ-*_last_run.json must contain real trace_id, route, roles and result, not action:status placeholder\",\"current_trace\":\"governance/state/OBJ-GD-001_last_run.json\",\"next_action\":\"final status summary and remaining blockers\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-10 | REAL LAST_RUN TRACE | 2026-06-03 | 10:32 (UTC+3)\n- Replaced OBJ-GD-001_last_run.json with real minimal governance loop trace fields.\n- Added TZ10 last_run trace policy.\n- No Release PASS. Next action: final status summary and remaining blockers.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz10_real_last_run_trace.md",
+    "result_json": "governance/codex/results/tz10_real_last_run_trace.json"
+  },
+  "created_at": "2026-06-03T18:02:55.420Z"
+}
