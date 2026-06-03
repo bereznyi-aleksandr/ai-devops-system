@@ -1424,3 +1424,5 @@ No issue comments.
 ### TZ-10 | BEM-1284 LAST_
 ### RM | ROADMAP AGGREGATE STATUS | 2026-06-03 | 13:53 (UTC+3)
 -
+### RM-00 | INVALID GOVERNANCE WORKFLOW OVERWRITE | 2026-06-03 | 10:05 (UTC+3)
+- Active invalid governance-validation workflow overwritten with valid workflow_dispatch-only YAML

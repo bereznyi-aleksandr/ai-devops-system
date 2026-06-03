@@ -1,10 +1,6 @@
 name: governance-validation-ci
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -12,3 +8,4 @@ permissions:
 
 jobs:
   validate-foundation:
+    name: Disabled governance validation placeholder

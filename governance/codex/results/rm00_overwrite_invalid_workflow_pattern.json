@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_overwrite_invalid_workflow_pattern",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_overwrite_invalid_workflow_pattern.txt"
+  ],
+  "commit_sha": "de866dcaa959b9c441ac8d8be9965074caa67b9b",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_overwrite_invalid_workflow_pattern.md",
+  "completed_at": "2026-06-03T14:54:32Z"
+}
