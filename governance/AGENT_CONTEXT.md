@@ -1481,3 +1481,5 @@ No issue comments.
 ### RM-00 | CI MINIMAL YAML REPAIR | 2026-06-03 | 10:31 (UTC+3)
 - Rewrote active governance-validation workflow to minimal YAML: workflow_dispatch only, one echo step
 ### TZ-10 | REAL LAST_
+### RM-00 | CI SAFE SINGLE JOB YAML | 2026-06-03 | 10:33 (UTC+3)
+- Rewrote governance-validation-ci

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_ci_safe_single_job_yaml",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_ci_safe_single_job_yaml.txt"
+  ],
+  "commit_sha": "f7ed1efa880c1d5d24574f800934afb434df0413",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_ci_safe_single_job_yaml.md",
+  "completed_at": "2026-06-03T18:07:07Z"
+}
