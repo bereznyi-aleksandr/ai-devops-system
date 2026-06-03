@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz6_readiness_levels_schema",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-6 readiness levels",
+  "objective": "Create file governance/state/READINESS_LEVELS_SCHEMA.json with content {\"version\":\"1.0\",\"created_at_utc3\":\"2026-06-03 | 10:21 (UTC+3)\",\"release_pass\":false,\"levels\":{\"FILE_EXISTS\":{\"order\":1,\"meaning\":\"artifact exists but is not runnable proof\"},\"STUB_RUNNABLE\":{\"order\":2,\"meaning\":\"artifact has runnable main/__main__ stub but is not functional proof\"},\"FUNCTIONAL\":{\"order\":3,\"meaning\":\"artifact performs intended local function with deterministic trace\"},\"CI_VERIFIED\":{\"order\":4,\"meaning\":\"artifact/function is verified by CI without schedule trigger\"}},\"rules\":[\"Release PASS cannot be based on FILE_EXISTS or STUB_RUNNABLE\",\"Gate 2 requires FUNCTIONAL minimal local E2E\",\"Gate 3 requires CI_VERIFIED E2E capture\"]}\nCreate file governance/validators/validate_readiness_levels.py with content #!/usr/bin/env python3\nimport json\nfrom pathlib import Path\n\nREQUIRED = [\"FILE_EXISTS\", \"STUB_RUNNABLE\", \"FUNCTIONAL\", \"CI_VERIFIED\"]\n\ndef main() -> int:\n    path = Path(\"governance/state/READINESS_LEVELS_SCHEMA.json\")\n    data = json.loads(path.read_text(encoding=\"utf-8\"))\n    levels = data.get(\"levels\", {})\n    missing = [x for x in REQUIRED if x not in levels]\n    if missing:\n        raise SystemExit(\"missing readiness levels: \" + \", \".join(missing))\n    print(json.dumps({\"status\":\"ok\",\"levels\":REQUIRED,\"release_pass\":False}, ensure_ascii=False))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-6 | READINESS LEVELS SCHEMA | 2026-06-03 | 10:21 (UTC+3)\n- Added readiness levels FILE_EXISTS/STUB_RUNNABLE/FUNCTIONAL/CI_VERIFIED.\n- Added validator governance/validators/validate_readiness_levels.py.\n- No Release PASS. Next action: KZ-7 codex/status-loop cleanup policy.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz6_readiness_levels_schema.md",
+    "result_json": "governance/codex/results/kz6_readiness_levels_schema.json"
+  },
+  "created_at": "2026-06-03T17:24:32.400Z"
+}
