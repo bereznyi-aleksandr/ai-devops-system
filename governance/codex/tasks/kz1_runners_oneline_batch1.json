@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_oneline_batch1",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 one-line batch 1",
+  "objective": "Create file governance/runners/analyst_experience_stage_runner.py with content RUNNER_ID=\"analyst_experience_stage_runner\"; READINESS_LEVEL=\"STUB_RUNNABLE\"; exec(\"def main():\\n print('{\\\"runner_id\\\":\\\"analyst_experience_stage_runner\\\",\\\"readiness_level\\\":\\\"STUB_RUNNABLE\\\",\\\"status\\\":\\\"stub_runnable\\\",\\\"release_pass\\\":false}')\\n return 0\"); __name__==\"__main__\" and main()\nCreate file governance/runners/analyst_stage_runner.py with content RUNNER_ID=\"analyst_stage_runner\"; READINESS_LEVEL=\"STUB_RUNNABLE\"; exec(\"def main():\\n print('{\\\"runner_id\\\":\\\"analyst_stage_runner\\\",\\\"readiness_level\\\":\\\"STUB_RUNNABLE\\\",\\\"status\\\":\\\"stub_runnable\\\",\\\"release_pass\\\":false}')\\n return 0\"); __name__==\"__main__\" and main()\nCreate file governance/runners/auditor_experience_stage_runner.py with content RUNNER_ID=\"auditor_experience_stage_runner\"; READINESS_LEVEL=\"STUB_RUNNABLE\"; exec(\"def main():\\n print('{\\\"runner_id\\\":\\\"auditor_experience_stage_runner\\\",\\\"readiness_level\\\":\\\"STUB_RUNNABLE\\\",\\\"status\\\":\\\"stub_runnable\\\",\\\"release_pass\\\":false}')\\n return 0\"); __name__==\"__main__\" and main()\nCreate file governance/runners/auditor_stage_runner.py with content RUNNER_ID=\"auditor_stage_runner\"; READINESS_LEVEL=\"STUB_RUNNABLE\"; exec(\"def main():\\n print('{\\\"runner_id\\\":\\\"auditor_stage_runner\\\",\\\"readiness_level\\\":\\\"STUB_RUNNABLE\\\",\\\"status\\\":\\\"stub_runnable\\\",\\\"release_pass\\\":false}')\\n return 0\"); __name__==\"__main__\" and main()\nCreate file governance/runners/contour_lifecycle_runner.py with content RUNNER_ID=\"contour_lifecycle_runner\"; READINESS_LEVEL=\"STUB_RUNNABLE\"; exec(\"def main():\\n print('{\\\"runner_id\\\":\\\"contour_lifecycle_runner\\\",\\\"readiness_level\\\":\\\"STUB_RUNNABLE\\\",\\\"status\\\":\\\"stub_runnable\\\",\\\"release_pass\\\":false}')\\n return 0\"); __name__==\"__main__\" and main()\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-1 | ONE-LINE EXECUTABLE RUNNER SKELETON BATCH 1 | 2026-06-03 | 10:20 (UTC+3)\n- Repaired first 5 runners with one-line executable skeleton because executor collapses file newlines.\n- No Release PASS. Continue KZ-1 one-line batches.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_runners_oneline_batch1.md",
+    "result_json": "governance/codex/results/kz1_runners_oneline_batch1.json"
+  },
+  "created_at": "2026-06-03T15:33:02.019Z"
+}
