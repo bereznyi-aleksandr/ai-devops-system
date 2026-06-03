@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_createfile_batch5",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/operator_report_runner.py",
+    "create:governance/runners/proof_manifest_updater.py",
+    "create:governance/runners/provider_activation.py",
+    "create:governance/runners/provider_failover.py",
+    "create:governance/runners/provider_failover_runner.py",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/operator_report_runner.py",
+    "governance/runners/proof_manifest_updater.py",
+    "governance/runners/provider_activation.py",
+    "governance/runners/provider_failover.py",
+    "governance/runners/provider_failover_runner.py",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz1_runners_createfile_batch5.txt"
+  ],
+  "commit_sha": "dbbb8cc52c2199ffa1dffb474fea7e9535269f68",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz1_runners_createfile_batch5.md",
+  "completed_at": "2026-06-03T15:14:52Z"
+}
