@@ -1,8 +1,5 @@
 name: governance-validation-ci
-'on':
+on:
   workflow_dispatch:
-permissions:
-  contents: read
 jobs:
   validate-foundation:
-    name: Validate governance foundation

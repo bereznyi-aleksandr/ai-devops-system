@@ -1478,3 +1478,5 @@ No issue comments.
 ### TZ-5 | CI VALIDATORS WORKFLOW_DISPATCH | 2026-06-03 | 10:29 (UTC+3)
 - Connected readiness/pass-source validators and BEM-1284
 ### TZ-9 | LOAD EXPERIENCE
+### RM-00 | CI MINIMAL YAML REPAIR | 2026-06-03 | 10:31 (UTC+3)
+- Rewrote active governance-validation workflow to minimal YAML: workflow_dispatch only, one echo step
