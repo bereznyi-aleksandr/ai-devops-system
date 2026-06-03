@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_workflow_line_by_line_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-00 workflow line fix",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\nAppend to .github/workflows/governance-validation-ci.yml: \nAppend to .github/workflows/governance-validation-ci.yml: on:\nAppend to .github/workflows/governance-validation-ci.yml:   workflow_dispatch:\nAppend to .github/workflows/governance-validation-ci.yml: \nAppend to .github/workflows/governance-validation-ci.yml: permissions:\nAppend to .github/workflows/governance-validation-ci.yml:   contents: read\nAppend to .github/workflows/governance-validation-ci.yml: \nAppend to .github/workflows/governance-validation-ci.yml: jobs:\nAppend to .github/workflows/governance-validation-ci.yml:   validate-foundation:\nAppend to .github/workflows/governance-validation-ci.yml:     name: Disabled governance validation placeholder\nAppend to .github/workflows/governance-validation-ci.yml:     runs-on: ubuntu-latest\nAppend to .github/workflows/governance-validation-ci.yml:     steps:\nAppend to .github/workflows/governance-validation-ci.yml:       - name: Disabled until explicit activation\nAppend to .github/workflows/governance-validation-ci.yml:         run: echo governance-validation-ci disabled until explicit activation\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-00 | WORKFLOW LINE-BY-LINE FIX | 2026-06-03 | 10:16 (UTC+3)\n- Rewrote governance-validation-ci.yml line-by-line because Create file flattened multiline YAML.\n- No Release PASS. Next action: KZ-1 line-by-line runner skeleton repair.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00_workflow_line_by_line_fix.md",
+    "result_json": "governance/codex/results/rm00_workflow_line_by_line_fix.json"
+  },
+  "created_at": "2026-06-03T15:21:01.476Z"
+}
