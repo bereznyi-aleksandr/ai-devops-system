@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate6_external_claude_audit_receipt_lane",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/GATE6_EXTERNAL_CLAUDE_AUDIT_RECEIPT_LANE.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/GATE6_EXTERNAL_CLAUDE_AUDIT_RECEIPT_LANE.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/gate6_external_claude_audit_receipt_lane.txt"
+  ],
+  "commit_sha": "12890a8a672da1f379ef704eabe479f8871d152e",
+  "blocker": null,
+  "report_path": "governance/codex/results/gate6_external_claude_audit_receipt_lane.md",
+  "completed_at": "2026-06-03T18:29:14Z"
+}
