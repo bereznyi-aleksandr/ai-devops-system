@@ -1447,3 +1447,7 @@ No issue comments.
 ### KZ-1 |
 ### KZ-1 | MINIMAL DEF PROBE | 2026-06-03 | 10:22 (UTC+3)
 - Probed minimal one-line def main skeleton after
+
+### RM-00 | OPEN WRITE PROBE | 2026-06-03 | 10:23 (UTC+3)
+- Probed direct open-write after Create/Replace content corruption.
+- No Release PASS. Continue KZ-1 if raw verifies.
