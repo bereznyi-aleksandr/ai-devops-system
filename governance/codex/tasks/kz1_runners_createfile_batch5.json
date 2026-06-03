@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_createfile_batch5",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 runners batch 5",
+  "objective": "Create file governance/runners/operator_report_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"operator_report_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"operator_report_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/proof_manifest_updater.py with content #!/usr/bin/env python3\nRUNNER_ID = \"proof_manifest_updater\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"proof_manifest_updater\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/provider_activation.py with content #!/usr/bin/env python3\nRUNNER_ID = \"provider_activation\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"provider_activation\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/provider_failover.py with content #!/usr/bin/env python3\nRUNNER_ID = \"provider_failover\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"provider_failover\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/provider_failover_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"provider_failover_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"provider_failover_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-1 | RUNNERS SKELETON REPAIR BATCH 5 | 2026-06-03 | 10:14 (UTC+3)\n- Repaired next 5 governance/runners files to STUB_RUNNABLE skeletons using Create file patterns.\n- No Release PASS. Continue KZ-1 batch 6.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_runners_createfile_batch5.md",
+    "result_json": "governance/codex/results/kz1_runners_createfile_batch5.json"
+  },
+  "created_at": "2026-06-03T15:14:34.229Z"
+}
