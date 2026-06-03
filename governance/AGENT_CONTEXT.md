@@ -1453,3 +1453,5 @@ No issue comments.
 - No Release PASS. Continue KZ-1 if raw verifies.
 ### KZ-1 |
 ### KZ-1 |
+### KZ-2 | SSOT DUPLICATES INVENTORY | 2026-06-03 | 10:16 (UTC+3)
+-
