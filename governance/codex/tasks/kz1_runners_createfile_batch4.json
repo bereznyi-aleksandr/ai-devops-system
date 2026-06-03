@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_createfile_batch4",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 runners batch 4",
+  "objective": "Create file governance/runners/managed_channel_consumer_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"managed_channel_consumer_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"managed_channel_consumer_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/minimal_governance_loop_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"minimal_governance_loop_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"minimal_governance_loop_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/object_lifecycle_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"object_lifecycle_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"object_lifecycle_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/object_report_aggregator.py with content #!/usr/bin/env python3\nRUNNER_ID = \"object_report_aggregator\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"object_report_aggregator\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/object_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"object_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"object_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-1 | RUNNERS SKELETON REPAIR BATCH 4 | 2026-06-03 | 10:13 (UTC+3)\n- Repaired next 5 governance/runners files to STUB_RUNNABLE skeletons using Create file patterns.\n- No Release PASS. Continue KZ-1 batch 5.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_runners_createfile_batch4.md",
+    "result_json": "governance/codex/results/kz1_runners_createfile_batch4.json"
+  },
+  "created_at": "2026-06-03T15:12:06.018Z"
+}
