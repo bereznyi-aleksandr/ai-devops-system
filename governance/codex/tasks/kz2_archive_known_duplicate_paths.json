@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_archive_known_duplicate_paths",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2 archive duplicate paths",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create dir governance/archive/ssot_duplicates_20260603\nMove file governance/registries/contours_registry.json to governance/archive/ssot_duplicates_20260603/registries_contours_registry.json\nMove file governance/objects/object_passports.json to governance/archive/ssot_duplicates_20260603/objects_object_passports.json\nMove file governance/registries/providers_registry.json to governance/archive/ssot_duplicates_20260603/registries_providers_registry.json\nMove file governance/policies/contour_provider_policy.json to governance/archive/ssot_duplicates_20260603/policies_contour_provider_policy.json\nMove file governance/policies/provider_failover_policy.json to governance/archive/ssot_duplicates_20260603/policies_provider_failover_policy.json\nMove file governance/schemas/managed_channel_schema.json to governance/archive/ssot_duplicates_20260603/schemas_managed_channel_schema.json\nMove file governance/schemas/telegram_input_envelope_schema.json to governance/archive/ssot_duplicates_20260603/schemas_telegram_input_envelope_schema.json\nMove file governance/mappings/telegram_to_managed_channel_mapping.json to governance/archive/ssot_duplicates_20260603/mappings_telegram_to_managed_channel_mapping.json\nCreate file governance/archive/ssot_duplicates_20260603/MANIFEST.md with content # KZ-2 SSOT duplicate archive\n\nCanonical path for the eight Claude-identified SSOT artifacts is governance/state/*.json. Non-canonical duplicate copies were moved here when present. Missing move sources mean the duplicate path was not present under that guessed location and must be rechecked by validator.\n\nNo Release PASS.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-2 | KNOWN DUPLICATE PATHS ARCHIVED | 2026-06-03 | 13:42 (UTC+3)\n- Attempted archive of known non-canonical duplicate paths for 8 SSOT artifacts.\n- Canonical paths remain governance/state/*.json.\n- No Release PASS. Next action: run/verify SSOT validator, then KZ-4 passports + manifest restore.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2_archive_known_duplicate_paths.md",
+    "result_json": "governance/codex/results/kz2_archive_known_duplicate_paths.json"
+  },
+  "created_at": "2026-06-03T11:38:55.873Z"
+}
