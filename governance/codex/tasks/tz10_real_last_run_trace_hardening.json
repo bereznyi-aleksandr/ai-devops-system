@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz10_real_last_run_trace_hardening",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-10 real last_run trace",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/validators/validate_last_run_real_trace.py with content #!/usr/bin/env python3\nfrom __future__ import annotations\nimport json\nfrom pathlib import Path\n\nREQUIRED=['trace_id','readiness_level','status','events']\nFORBIDDEN_ACTIONS={'status','deterministic status action'}\n\ndef main()->int:\n    path=Path('governance/state/OBJ-GD-001_last_run.json')\n    if not path.exists():\n        print('missing OBJ-GD-001_last_run.json'); return 1\n    data=json.loads(path.read_text(encoding='utf-8'))\n    missing=[key for key in REQUIRED if key not in data]\n    if missing:\n        print('missing fields: '+', '.join(missing)); return 1\n    if data.get('action') in FORBIDDEN_ACTIONS or data.get('result') in FORBIDDEN_ACTIONS:\n        print('status stub is forbidden'); return 1\n    if not isinstance(data.get('events'),list) or len(data['events'])<5:\n        print('events trace too short'); return 1\n    print('PASS: last_run contains real trace shape')\n    return 0\nif __name__=='__main__': raise SystemExit(main())\n\nCreate file governance/state/tz10_last_run_trace_status.json with content {\"stage\":\"TZ-10\",\"status\":\"last_run_trace_validator_added\",\"release_pass\":false,\"validator\":\"governance/validators/validate_last_run_real_trace.py\",\"trace_output\":\"governance/state/OBJ-GD-001_last_run.json\",\"next_action\":\"RM-progress aggregate status\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-10 | REAL LAST_RUN TRACE HARDENING | 2026-06-03 | 13:50 (UTC+3)\n- Added validate_last_run_real_trace.py to reject status stubs and require real trace shape.\n- No Release PASS. Next action: RM-progress aggregate status.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz10_real_last_run_trace_hardening.md",
+    "result_json": "governance/codex/results/tz10_real_last_run_trace_hardening.json"
+  },
+  "created_at": "2026-06-03T11:55:13.118Z"
+}
