@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm02_truncated_python_validator",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-02 truncated py validator",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/validators/validate_no_truncated_python.py with content #!/usr/bin/env python3\nfrom __future__ import annotations\nimport ast\nfrom pathlib import Path\n\nSKIP_PARTS={'.git','__pycache__','.venv','venv','node_modules','archive'}\nSCAN_ROOTS=[Path('governance/runners'),Path('governance/validators'),Path('scripts'),Path('runtime'),Path('runners')]\n\ndef is_skipped(path:Path)->bool:\n    return any(part in SKIP_PARTS for part in path.parts) or 'governance/codex' in str(path)\n\ndef validate_file(path:Path)->list[str]:\n    errors=[]\n    text=path.read_text(encoding='utf-8',errors='replace')\n    nonblank=[line for line in text.splitlines() if line.strip()]\n    if len(text.encode('utf-8'))<50 or len(nonblank)<=4:\n        errors.append(f'{path}: truncated python file')\n    try:\n        tree=ast.parse(text)\n    except SyntaxError as exc:\n        errors.append(f'{path}: SyntaxError {exc}')\n        return errors\n    is_runner='runner' in path.name.lower() or 'governance/runners' in str(path)\n    if is_runner:\n        has_main=any(isinstance(node,ast.FunctionDef) and node.name=='main' for node in tree.body)\n        if not has_main:\n            errors.append(f'{path}: runner missing def main()')\n        if '__main__' not in text:\n            errors.append(f'{path}: runner missing __main__ entrypoint')\n    return errors\n\ndef main()->int:\n    checked=[]; errors=[]\n    for root in SCAN_ROOTS:\n        if not root.exists():\n            continue\n        for path in root.rglob('*.py'):\n            if is_skipped(path):\n                continue\n            checked.append(str(path))\n            errors.extend(validate_file(path))\n    if not checked:\n        print('BLOCKED: no python files checked')\n        return 2\n    if errors:\n        print('\\n'.join(errors))\n        return 1\n    print(f'PASS: checked {len(checked)} python files')\n    return 0\n\nif __name__=='__main__':\n    raise SystemExit(main())\n\nCreate file governance/state/rm02_truncated_python_validator.json with content {\"stage\":\"RM-02\",\"status\":\"validator_created\",\"validator\":\"governance/validators/validate_no_truncated_python.py\",\"release_pass\":false,\"next_action\":\"KZ-1 runners skeleton repair\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-02 | TRUNCATED PYTHON FAIL-CLOSED VALIDATOR | 2026-06-03 | 13:35 (UTC+3)\n- Created governance/validators/validate_no_truncated_python.py.\n- Validator fails on <50 bytes, <=4 nonblank lines, SyntaxError, runner missing main/__main__.\n- No Release PASS. Next action: KZ-1 runners skeleton repair.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm02_truncated_python_validator.md",
+    "result_json": "governance/codex/results/rm02_truncated_python_validator.json"
+  },
+  "created_at": "2026-06-03T11:22:08.714Z"
+}
