@@ -1501,3 +1501,5 @@ No issue comments.
 ### GATE 5 | LIVE
 ### GATE 6 | EXTERNAL CLAUDE AUDIT RECEIPT LANE | 2026-06-03 | 10:43 (UTC+3)
 - Recorded Gate 6 external Claude audit receipt lane and missing external audit result blocker
+### RM-00 | ASSERT NO ACTIVE GOVERNANCE WORKFLOW | 2026-06-03 | 10:44 (UTC+3)
+- Recorded expected absence of

@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: rm00_assert_no_active_gov_workflow
+task_type: code_patch
+executed_at: 2026-06-03T18:31:21Z
+ops_applied: create:governance/state/RM00_ACTIVE_WORKFLOW_STATUS.json, append:governance/AGENT_CONTEXT.md
+changed_files: governance/state/RM00_ACTIVE_WORKFLOW_STATUS.json, governance/AGENT_CONTEXT.md
+errors: none

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_assert_no_active_gov_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/RM00_ACTIVE_WORKFLOW_STATUS.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/RM00_ACTIVE_WORKFLOW_STATUS.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_assert_no_active_gov_workflow.txt"
+  ],
+  "commit_sha": "0dac482ddde25800fc5b8fb3a7e8f4931d1be121",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_assert_no_active_gov_workflow.md",
+  "completed_at": "2026-06-03T18:31:22Z"
+}
