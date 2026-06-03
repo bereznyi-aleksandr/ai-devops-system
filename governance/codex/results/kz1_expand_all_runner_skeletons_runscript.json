@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_expand_all_runner_skeletons_runscript",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/kz1_expand_all_runner_skeletons_runscript.txt"
+  ],
+  "commit_sha": "7655ee5e390c7859ff032ac9d0862775d7e734ff",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: __import__ not found"
+  },
+  "report_path": "governance/codex/results/kz1_expand_all_runner_skeletons_runscript.md",
+  "completed_at": "2026-06-03T11:27:21Z"
+}
