@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate4_production_receipt_acquisition_lane",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/GATE4_PRODUCTION_RECEIPT_ACQUISITION_LANE.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/GATE4_PRODUCTION_RECEIPT_ACQUISITION_LANE.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/gate4_production_receipt_acquisition_lane.txt"
+  ],
+  "commit_sha": "1a3c18403807b1936d738c915a83369f47a563cf",
+  "blocker": null,
+  "report_path": "governance/codex/results/gate4_production_receipt_acquisition_lane.md",
+  "completed_at": "2026-06-03T18:22:46Z"
+}
