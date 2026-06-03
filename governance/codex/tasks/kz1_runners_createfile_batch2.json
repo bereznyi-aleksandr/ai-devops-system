@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_createfile_batch2",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 runners batch 2",
+  "objective": "Create file governance/runners/curator_router.py with content #!/usr/bin/env python3\nRUNNER_ID = \"curator_router\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"curator_router\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/dir_curator_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"dir_curator_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"dir_curator_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/dispatch_consumer.py with content #!/usr/bin/env python3\nRUNNER_ID = \"dispatch_consumer\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"dispatch_consumer\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/dispatch_consumer_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"dispatch_consumer_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"dispatch_consumer_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/event_writer.py with content #!/usr/bin/env python3\nRUNNER_ID = \"event_writer\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"event_writer\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-1 | RUNNERS SKELETON REPAIR BATCH 2 | 2026-06-03 | 10:11 (UTC+3)\n- Repaired next 5 governance/runners files to STUB_RUNNABLE skeletons using Create file patterns.\n- No Release PASS. Continue KZ-1 batch 3.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_runners_createfile_batch2.md",
+    "result_json": "governance/codex/results/kz1_runners_createfile_batch2.json"
+  },
+  "created_at": "2026-06-03T15:07:34.665Z"
+}
