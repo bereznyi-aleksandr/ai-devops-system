@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_replace_probe_analyst_stage",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 replace probe",
+  "objective": "Replace in governance/runners/analyst_stage_runner.py line containing '#!/usr/bin/env' with 'def main() -> int: print(\"STUB_RUNNABLE analyst_stage_runner\"); return 0 # __main__'\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-1 | REPLACE PROBE ANALYST STAGE | 2026-06-03 | 10:21 (UTC+3)\n- Probed Replace pattern for one-line runner repair after Create file content truncation.\n- No Release PASS. Continue KZ-1 if raw verifies.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_replace_probe_analyst_stage.md",
+    "result_json": "governance/codex/results/kz1_replace_probe_analyst_stage.json"
+  },
+  "created_at": "2026-06-03T15:35:40.738Z"
+}
