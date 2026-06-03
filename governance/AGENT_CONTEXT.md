@@ -1475,3 +1475,5 @@ No issue comments.
 - Rewrote active governance-validation workflow as quoted-on valid YAML with workflow_dispatch only
 ### TZ-4/BEM-1284 | MINIMAL GOVERNANCE LOOP | 2026-06-03 | 10:28 (UTC+3)
 - Implemented minimal_governance_loop_
+### TZ-5 | CI VALIDATORS WORKFLOW_DISPATCH | 2026-06-03 | 10:29 (UTC+3)
+- Connected readiness/pass-source validators and BEM-1284

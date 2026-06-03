@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz5_ci_validators_workflow_dispatch",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz5_ci_validators_workflow_dispatch.txt"
+  ],
+  "commit_sha": "70b69037780e83782101fe7720fa2d2adf60430c",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz5_ci_validators_workflow_dispatch.md",
+  "completed_at": "2026-06-03T17:56:34Z"
+}
