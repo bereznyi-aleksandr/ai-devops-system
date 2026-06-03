@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_skeleton_repair_v2",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/kz1_runners_skeleton_repair_v2.txt"
+  ],
+  "commit_sha": "0f0f605aa3386cd5e08a52b2fc740f7c7474a40e",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: unterminated triple-quoted string literal (detected at line 11) (<string>, line 11)"
+  },
+  "report_path": "governance/codex/results/kz1_runners_skeleton_repair_v2.md",
+  "completed_at": "2026-06-03T14:56:46Z"
+}
