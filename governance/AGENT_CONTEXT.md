@@ -1410,3 +1410,5 @@ No issue comments.
 - Restored governance/state/object_passports
 ### TZ-6 | READINESS LEVELS DEFINED | 2026-06-03 | 13:44 (UTC+3)
 - Defined FILE_EXISTS / STUB_
+### KZ-3 | CODEX STATUS-LOOP POLICY | 2026-06-03 | 13:45 (UTC+3)
+- Recorded policy that governance/codex logs are not PASS proof

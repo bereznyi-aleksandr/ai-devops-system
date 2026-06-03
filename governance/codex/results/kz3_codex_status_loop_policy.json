@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz3_codex_status_loop_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/codex_status_loop_policy.json",
+    "create:governance/archive/codex_status_loop/MANIFEST.md",
+    "create:governance/state/kz3_codex_status_loop_status.json",
+    "append:governance/AGENT_CONTEXT.md",
+    "create_dir:governance/archive/codex_status_loop"
+  ],
+  "changed_files": [
+    "governance/state/codex_status_loop_policy.json",
+    "governance/archive/codex_status_loop/MANIFEST.md",
+    "governance/state/kz3_codex_status_loop_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/archive/codex_status_loop/.gitkeep",
+    "governance/codex/proofs/kz3_codex_status_loop_policy.txt"
+  ],
+  "commit_sha": "5f00d6e8779ce633bcaff0e108bb029fbe4f3833",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz3_codex_status_loop_policy.md",
+  "completed_at": "2026-06-03T11:45:27Z"
+}
