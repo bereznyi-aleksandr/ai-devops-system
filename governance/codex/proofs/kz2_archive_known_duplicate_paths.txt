@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: kz2_archive_known_duplicate_paths
+task_type: code_patch
+executed_at: 2026-06-03T11:39:09Z
+ops_applied: create:governance/archive/ssot_duplicates_20260603/MANIFEST.md, move:governance/objects/object_passports.json->governance/archive/ssot_duplicates_20260603/objects_object_passports, move:governance/policies/provider_failover_policy.json->governance/archive/ssot_duplicates_20260603/policies_provider_failover_policy, append:governance/AGENT_CONTEXT.md, create_dir:governance/archive/ssot_duplicates_20260603
+changed_files: governance/archive/ssot_duplicates_20260603/MANIFEST.md, governance/objects/object_passports.json, governance/archive/ssot_duplicates_20260603/objects_object_passports, governance/policies/provider_failover_policy.json, governance/archive/ssot_duplicates_20260603/policies_provider_failover_policy, governance/AGENT_CONTEXT.md, governance/archive/ssot_duplicates_20260603/.gitkeep
+errors: none

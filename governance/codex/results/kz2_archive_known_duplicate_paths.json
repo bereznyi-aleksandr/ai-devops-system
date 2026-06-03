@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_archive_known_duplicate_paths",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/archive/ssot_duplicates_20260603/MANIFEST.md",
+    "move:governance/objects/object_passports.json->governance/archive/ssot_duplicates_20260603/objects_object_passports",
+    "move:governance/policies/provider_failover_policy.json->governance/archive/ssot_duplicates_20260603/policies_provider_failover_policy",
+    "append:governance/AGENT_CONTEXT.md",
+    "create_dir:governance/archive/ssot_duplicates_20260603"
+  ],
+  "changed_files": [
+    "governance/archive/ssot_duplicates_20260603/MANIFEST.md",
+    "governance/objects/object_passports.json",
+    "governance/archive/ssot_duplicates_20260603/objects_object_passports",
+    "governance/policies/provider_failover_policy.json",
+    "governance/archive/ssot_duplicates_20260603/policies_provider_failover_policy",
+    "governance/AGENT_CONTEXT.md",
+    "governance/archive/ssot_duplicates_20260603/.gitkeep",
+    "governance/codex/proofs/kz2_archive_known_duplicate_paths.txt"
+  ],
+  "commit_sha": "705b8b4cbf270a0647d8fc4b400fa0a428efdae3",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz2_archive_known_duplicate_paths.md",
+  "completed_at": "2026-06-03T11:39:09Z"
+}
