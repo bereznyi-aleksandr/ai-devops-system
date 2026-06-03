@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_skeleton_repair_v4",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 runners repair v4",
+  "objective": "Create dir tests/governance\nRun script:\n\"\"\"\nfiles=['analyst_experience_stage_runner.py','analyst_stage_runner.py','auditor_experience_stage_runner.py','auditor_stage_runner.py','contour_lifecycle_runner.py','curator_router.py','dir_curator_runner.py','dispatch_consumer.py','dispatch_consumer_runner.py','event_writer.py','executor_stage_runner.py','experience_loader_runner.py','foundation_validator_runner.py','gd_curator_runner.py','managed_channel_consumer.py','managed_channel_consumer_runner.py','minimal_governance_loop_runner.py','object_lifecycle_runner.py','object_report_aggregator.py','object_runner.py','operator_report_runner.py','proof_manifest_updater.py','provider_activation.py','provider_failover.py','provider_failover_runner.py','role_report_writer.py','telegram_input_handler_runner.py','telegram_input_mapper.py','testing_contour_assignment.py','wrk_curator_runner.py']\nskeleton='#!/usr/bin/env python3\\nfrom __future__ import annotations\\n\\nimport json\\nfrom datetime import datetime, timezone\\nfrom typing import Any\\n\\nRUNNER_ID = \"__RUNNER_ID__\"\\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\\n\\ndef build_result() -> dict[str, Any]:\\n    return {\"runner_id\": RUNNER_ID, \"readiness_level\": READINESS_LEVEL, \"status\": \"stub_runnable\", \"release_pass\": False, \"timestamp_utc\": datetime.now(timezone.utc).isoformat()}\\n\\ndef main() -> int:\\n    print(json.dumps(build_result(), ensure_ascii=False, sort_keys=True))\\n    return 0\\n\\nif __name__ == \"__main__\":\\n    raise SystemExit(main())\\n'\nchanged=[]\nfor name in files:\n    path='governance/runners/'+name\n    body=skeleton.replace('__RUNNER_ID__', name[:-3])\n    open(path,'w',encoding='utf-8').write(body)\n    changed.append(path)\ntest='import ast\\nfrom pathlib import Path\\n\\ndef test_governance_runners_have_main_and_entrypoint():\\n    runners=sorted(Path(\"governance/runners\").glob(\"*.py\"))\\n    assert runners, \"governance/runners has no python files\"\\n    broken=[]\\n    for path in runners:\\n        text=path.read_text(encoding=\"utf-8\", errors=\"replace\")\\n        try:\\n            tree=ast.parse(text)\\n        except SyntaxError as exc:\\n            broken.append(f\"{path}: SyntaxError {exc}\")\\n            continue\\n        has_main=any(isinstance(n, ast.FunctionDef) and n.name==\"main\" for n in tree.body)\\n        has_entry=\"__main__\" in text\\n        if not has_main or not has_entry:\\n            broken.append(f\"{path}: missing main/__main__\")\\n    assert not broken, \"\\\\n\".join(broken)\\n'\nopen('tests/governance/test_kz1_runners_skeleton.py','w',encoding='utf-8').write(test)\nchanged.append('tests/governance/test_kz1_runners_skeleton.py')\nopen('governance/AGENT_CONTEXT.md','a',encoding='utf-8').write('\\n### KZ-1 | RUNNERS SKELETON REPAIR | 2026-06-03 | 10:09 (UTC+3)\\n- Overwrote governance/runners/*.py with STUB_RUNNABLE skeletons using no-import script.\\n- Added tests/governance/test_kz1_runners_skeleton.py.\\n- No Release PASS. Next action: KZ-2 SSOT duplicates cleanup.\\n')\nchanged.append('governance/AGENT_CONTEXT.md')\nprint('\\n'.join(changed))\n\"\"\"\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_runners_skeleton_repair_v4.md",
+    "result_json": "governance/codex/results/kz1_runners_skeleton_repair_v4.json"
+  },
+  "created_at": "2026-06-03T15:03:03.599Z"
+}
