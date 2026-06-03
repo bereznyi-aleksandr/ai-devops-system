@@ -1,1 +1,8 @@
-{"name":"governance-validation-ci","on":{"workflow_dispatch":{}},"permissions":{"contents":"read"},"jobs":{"validate-foundation":{"name":"Disabled governance validation placeholder",
+name: governance-validation-ci
+'on':
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-foundation:
+    name: Disabled governance validation placeholder

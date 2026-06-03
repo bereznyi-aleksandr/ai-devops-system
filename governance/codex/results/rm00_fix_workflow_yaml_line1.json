@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_fix_workflow_yaml_line1",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_fix_workflow_yaml_line1.txt"
+  ],
+  "commit_sha": "da64c0c0d9ef10faea86dbbc701963a990305fcc",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_fix_workflow_yaml_line1.md",
+  "completed_at": "2026-06-03T17:52:01Z"
+}
