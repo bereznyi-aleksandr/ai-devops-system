@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz5_ci_validators_workflow_dispatch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-5 CI validators",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\n'on':\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n  validate-foundation:\n    name: Validate governance foundation\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Setup Python\n        uses: actions/setup-python@v5\n        with:\n          python-version: '3.11'\n      - name: Validate readiness levels\n        run: python governance/validators/validate_readiness_levels.py\n      - name: Validate pass sources\n        run: python governance/validators/validate_pass_sources.py\n      - name: Validate BEM-1284 minimal loop\n        run: python governance/runners/minimal_governance_loop_runner.py\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-5 | CI VALIDATORS WORKFLOW_DISPATCH | 2026-06-03 | 10:29 (UTC+3)\n- Connected readiness/pass-source validators and BEM-1284 runner to workflow_dispatch-only CI.\n- No schedule, no push, no pull_request, no Release PASS.\n- Next action: TZ-9 load_experience runtime binding.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz5_ci_validators_workflow_dispatch.md",
+    "result_json": "governance/codex/results/tz5_ci_validators_workflow_dispatch.json"
+  },
+  "created_at": "2026-06-03T17:56:16.104Z"
+}
