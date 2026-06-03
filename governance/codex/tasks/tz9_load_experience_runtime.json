@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz9_load_experience_runtime",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-9 load experience runtime",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/runtime/experience_loader.py with content #!/usr/bin/env python3\nfrom __future__ import annotations\nimport json\nfrom pathlib import Path\nfrom typing import Any\n\nEXPERIENCE_REGISTRY=Path('governance/state/experience_registry.json')\n\ndef load_experience(scope:str|None=None)->list[dict[str,Any]]:\n    if not EXPERIENCE_REGISTRY.exists():\n        return []\n    data=json.loads(EXPERIENCE_REGISTRY.read_text(encoding='utf-8'))\n    lessons=data.get('lessons',data if isinstance(data,list) else [])\n    if scope is None:\n        return lessons if isinstance(lessons,list) else []\n    return [item for item in lessons if isinstance(item,dict) and (item.get('scope')==scope or scope in item.get('applies_to',[]))]\n\nif __name__=='__main__':\n    print(json.dumps({'experience_count':len(load_experience()),'release_pass':False},ensure_ascii=False,sort_keys=True))\n\nCreate file governance/runners/analyst_experience_stage_runner.py with content #!/usr/bin/env python3\nfrom __future__ import annotations\nimport json\nfrom governance.runtime.experience_loader import load_experience\nRUNNER_ID='analyst_experience_stage_runner'\nREADINESS_LEVEL='STUB_RUNNABLE'\ndef main()->int:\n    lessons=load_experience('analyst')\n    print(json.dumps({'runner_id':RUNNER_ID,'readiness_level':READINESS_LEVEL,'experience_loaded':True,'experience_count':len(lessons),'release_pass':False},ensure_ascii=False,sort_keys=True))\n    return 0\nif __name__=='__main__': raise SystemExit(main())\n\nCreate file governance/runners/auditor_experience_stage_runner.py with content #!/usr/bin/env python3\nfrom __future__ import annotations\nimport json\nfrom governance.runtime.experience_loader import load_experience\nRUNNER_ID='auditor_experience_stage_runner'\nREADINESS_LEVEL='STUB_RUNNABLE'\ndef main()->int:\n    lessons=load_experience('auditor')\n    print(json.dumps({'runner_id':RUNNER_ID,'readiness_level':READINESS_LEVEL,'experience_loaded':True,'experience_count':len(lessons),'release_pass':False},ensure_ascii=False,sort_keys=True))\n    return 0\nif __name__=='__main__': raise SystemExit(main())\n\nCreate file governance/state/tz9_load_experience_status.json with content {\"stage\":\"TZ-9\",\"status\":\"load_experience_runtime_added\",\"release_pass\":false,\"files\":[\"governance/runtime/experience_loader.py\",\"governance/runners/analyst_experience_stage_runner.py\",\"governance/runners/auditor_experience_stage_runner.py\"],\"next_action\":\"TZ-10 real last_run trace hardening\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-9 | LOAD EXPERIENCE RUNTIME INTEGRATION | 2026-06-03 | 13:49 (UTC+3)\n- Added governance/runtime/experience_loader.py.\n- Added analyst/auditor experience stage runners.\n- No Release PASS. Next action: TZ-10 real last_run trace hardening.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz9_load_experience_runtime.md",
+    "result_json": "governance/codex/results/tz9_load_experience_runtime.json"
+  },
+  "created_at": "2026-06-03T11:53:16.264Z"
+}
