@@ -1467,3 +1467,5 @@ No issue comments.
 - Added policy that governance/codex logs are not proof and proof-only code_patch is not success
 ### TZ-8 | LEGACY PROVIDER CONFLICT CLOSURE | 2026-06-03 | 10:24 (UTC+3)
 - Recorded canonical provider failover policy and legacy conflict closure rule
+### TZ-2 | SSOT DUPLICATE CLEANUP STATUS | 2026-06-03 | 10:25 (UTC+3)
+- TZ-2 remains partial: canonical paths and inventory are recorded, archive target prepared

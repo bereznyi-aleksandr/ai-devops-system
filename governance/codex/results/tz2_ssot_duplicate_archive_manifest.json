@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_ssot_duplicate_archive_manifest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/TZ2_SSOT_DUPLICATE_CLEANUP_STATUS.json",
+    "create:governance/archive/ssot_duplicates/README.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/TZ2_SSOT_DUPLICATE_CLEANUP_STATUS.json",
+    "governance/archive/ssot_duplicates/README.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz2_ssot_duplicate_archive_manifest.txt"
+  ],
+  "commit_sha": "44ada8b86bdbc4d556022fefda06e13961c762cf",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz2_ssot_duplicate_archive_manifest.md",
+  "completed_at": "2026-06-03T17:45:54Z"
+}
