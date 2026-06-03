@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz7_codex_status_loop_cleanup_policy",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-7 codex cleanup policy",
+  "objective": "Create file governance/state/KZ7_CODEX_STATUS_LOOP_CLEANUP_POLICY.json with content {\"kz\":\"KZ-7\",\"created_at_utc3\":\"2026-06-03 | 10:23 (UTC+3)\",\"release_pass\":false,\"problem\":\"Claude audit: governance/codex status-loop logs are not proof and must not be used for PASS.\",\"policy\":{\"codex_logs_are_proof\":false,\"release_pass_sources\":[\"state files with real runtime trace\",\"validated receipts\",\"CI verified validator output\",\"external Claude audit result\"],\"archive_rule\":\"archive governance/codex records older than 30 days when exact file age/path is available\",\"proof_only_commit_policy\":\"code_patch with only governance/codex/proofs/*.txt changed is not task success\"},\"next_action\":\"KZ-8 legacy provider conflict closure\"}\nCreate file governance/validators/validate_pass_sources.py with content #!/usr/bin/env python3\nimport json\nfrom pathlib import Path\n\ndef main() -> int:\n    path = Path(\"governance/state/KZ7_CODEX_STATUS_LOOP_CLEANUP_POLICY.json\")\n    data = json.loads(path.read_text(encoding=\"utf-8\"))\n    policy = data.get(\"policy\", {})\n    if policy.get(\"codex_logs_are_proof\") is not False:\n        raise SystemExit(\"codex logs must not be proof\")\n    if \"validated receipts\" not in policy.get(\"release_pass_sources\", []):\n        raise SystemExit(\"validated receipts source missing\")\n    print(json.dumps({\"status\":\"ok\",\"release_pass\":False,\"codex_logs_are_proof\":False}, ensure_ascii=False))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-7 | CODEX STATUS-LOOP CLEANUP POLICY | 2026-06-03 | 10:23 (UTC+3)\n- Added policy that governance/codex logs are not proof and proof-only code_patch is not success.\n- Added validator governance/validators/validate_pass_sources.py.\n- No Release PASS. Next action: KZ-8 legacy provider conflict closure.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz7_codex_status_loop_cleanup_policy.md",
+    "result_json": "governance/codex/results/kz7_codex_status_loop_cleanup_policy.json"
+  },
+  "created_at": "2026-06-03T17:27:08.651Z"
+}
