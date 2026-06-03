@@ -1398,3 +1398,4 @@ No issue comments.
 ### RM-01 | FALSE GATE 2 PASS REVOKED | 2026-06-03 | 13:34 (UTC+3)
 - Gate 2 status fixed as IN_PROGRESS / 0% in governance/state/bem1284_gate2_status
 ### RM-02 | T
+### KZ-1 |

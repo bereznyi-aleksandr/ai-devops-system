@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_restore_runner_skeletons_exact",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/minimal_governance_loop_runner.py",
+    "create:tests/governance/test_kz1_minimal_runner_skeleton.py",
+    "create:governance/state/kz1_runner_skeleton_repair.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/minimal_governance_loop_runner.py",
+    "tests/governance/test_kz1_minimal_runner_skeleton.py",
+    "governance/state/kz1_runner_skeleton_repair.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz1_restore_runner_skeletons_exact.txt"
+  ],
+  "commit_sha": "e1e55c1cb718f436d2c11dc55f0d8b30d2e8398a",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz1_restore_runner_skeletons_exact.md",
+  "completed_at": "2026-06-03T11:24:49Z"
+}
