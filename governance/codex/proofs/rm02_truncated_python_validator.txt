@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: rm02_truncated_python_validator
+task_type: code_patch
+executed_at: 2026-06-03T11:22:22Z
+ops_applied: create:governance/validators/validate_no_truncated_python.py, create:governance/state/rm02_truncated_python_validator.json, append:governance/AGENT_CONTEXT.md
+changed_files: governance/validators/validate_no_truncated_python.py, governance/state/rm02_truncated_python_validator.json, governance/AGENT_CONTEXT.md
+errors: none

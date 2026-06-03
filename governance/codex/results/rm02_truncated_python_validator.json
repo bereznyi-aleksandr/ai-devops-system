@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm02_truncated_python_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_no_truncated_python.py",
+    "create:governance/state/rm02_truncated_python_validator.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_no_truncated_python.py",
+    "governance/state/rm02_truncated_python_validator.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm02_truncated_python_validator.txt"
+  ],
+  "commit_sha": "50d747c4a5f8c836057ea171e2e27511adccc161",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm02_truncated_python_validator.md",
+  "completed_at": "2026-06-03T11:22:22Z"
+}
