@@ -1473,3 +1473,5 @@ No issue comments.
 - TZ-2 archive is blocked until exact non-canonical duplicate paths are known
 ### RM-00 | FIX WORKFLOW YAML LINE 1 | 2026-06-03 | 10:27 (UTC+3)
 - Rewrote active governance-validation workflow as quoted-on valid YAML with workflow_dispatch only
+### TZ-4/BEM-1284 | MINIMAL GOVERNANCE LOOP | 2026-06-03 | 10:28 (UTC+3)
+- Implemented minimal_governance_loop_
