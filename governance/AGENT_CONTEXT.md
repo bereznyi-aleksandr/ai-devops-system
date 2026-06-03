@@ -1489,3 +1489,5 @@ No issue comments.
 - Added readiness/pass/SSOT validators and BEM-1284
 ### RM-00 | CI JSON WORKFLOW REPAIR | 2026-06-03 | 10:36 (UTC+3)
 - Rewrote governance-validation-ci
+### RELEASE BLOCKERS | RECEIPTS STATUS | 2026-06-03 | 10:37 (UTC+3)
+- Recorded remaining release blockers: production Telegram receipt, live

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rg_release_blockers_receipts_status",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/RELEASE_BLOCKERS_RECEIPTS_STATUS.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/RELEASE_BLOCKERS_RECEIPTS_STATUS.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rg_release_blockers_receipts_status.txt"
+  ],
+  "commit_sha": "bee12f28c4ecc156070a4fa8a73261915df74142",
+  "blocker": null,
+  "report_path": "governance/codex/results/rg_release_blockers_receipts_status.md",
+  "completed_at": "2026-06-03T18:16:15Z"
+}
