@@ -1421,3 +1421,4 @@ No issue comments.
 ### TZ-9 | LOAD EXPERIENCE
 ### TZ-10 | REAL LAST_
 ### TZ-5 | CI
+### TZ-10 | BEM-1284 LAST_
