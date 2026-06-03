@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz5_ci_validators_integration",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-5 CI validators",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\n\non:\n  push:\n    branches: [ main ]\n  pull_request:\n    branches: [ main ]\n  workflow_dispatch:\n\npermissions:\n  contents: read\n\njobs:\n  validate-foundation:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Setup Python\n        uses: actions/setup-python@v5\n        with:\n          python-version: '3.11'\n      - name: Run foundation validator if present\n        run: |\n          if [ -f governance/validators/validate_foundation_all.py ]; then python governance/validators/validate_foundation_all.py; else echo 'validate_foundation_all.py missing - skipped until implemented'; fi\n      - name: Run no-truncated-python validator\n        run: python governance/validators/validate_no_truncated_python.py\n      - name: Run SSOT duplicate validator\n        run: python governance/validators/validate_ssot_no_duplicates.py\n      - name: Run readiness levels validator\n        run: python governance/validators/validate_readiness_levels.py\n\nCreate file governance/state/tz5_ci_validators_status.json with content {\"stage\":\"TZ-5\",\"status\":\"ci_validators_integrated\",\"workflow\":\".github/workflows/governance-validation-ci.yml\",\"schedule_trigger\":false,\"release_pass\":false,\"next_action\":\"TZ-9 load_experience runtime integration\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-5 | CI VALIDATORS INTEGRATED | 2026-06-03 | 13:48 (UTC+3)\n- Updated .github/workflows/governance-validation-ci.yml to run validators on push/main, pull_request/main and workflow_dispatch.\n- No schedule trigger. No Release PASS.\n- Next action: TZ-9 load_experience runtime integration.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz5_ci_validators_integration.md",
+    "result_json": "governance/codex/results/tz5_ci_validators_integration.json"
+  },
+  "created_at": "2026-06-03T11:51:20.794Z"
+}
