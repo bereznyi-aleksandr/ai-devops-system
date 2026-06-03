@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "gates456_receipt_schemas_validators",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/schemas/external_receipt_schema.json",
+    "create:governance/validators/validate_external_receipts.py",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/schemas/external_receipt_schema.json",
+    "governance/validators/validate_external_receipts.py",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/gates456_receipt_schemas_validators.txt"
+  ],
+  "commit_sha": "9bf3ff37c6a383972c232d747f3f1164dc00491d",
+  "blocker": null,
+  "report_path": "governance/codex/results/gates456_receipt_schemas_validators.md",
+  "completed_at": "2026-06-03T18:45:59Z"
+}

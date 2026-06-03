@@ -1506,3 +1506,5 @@ No issue comments.
 ### GATE 6 | EXTERNAL CLAUDE AUDIT PACKET | 2026-06-03 | 10:45 (UTC+3)
 - Prepared current external Claude audit packet with completed evidence and open blockers
 ### RM-00 |
+### GATES 4-6 | RECEIPT SCHEMAS AND VALIDATOR | 2026-06-03 | 10:47 (UTC+3)
+- Added external receipt schema and validator for Telegram, live
