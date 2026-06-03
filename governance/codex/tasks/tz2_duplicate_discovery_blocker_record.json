@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_duplicate_discovery_blocker_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ2 discovery blocker record",
+  "objective": "Create file governance/state/TZ2_DISCOVERY_EXEC_BLOCKER.json with content {\"created_at_utc3\":\"2026-06-03 | 10:51 (UTC+3)\",\"release_pass\":false,\"blocked_trace\":\"tz2_run_duplicate_discovery\",\"blocked_sha\":\"258df3019335b343c31010976f7e8c37061e382f\",\"blocker\":\"Deno/Python executor blocked exec(); discovery script exists but was not executed by runner\",\"next_action\":\"use safe non-exec file-operation path or external verified inventory before moving duplicate files\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ2 | DISCOVERY EXEC BLOCKER RECORD | 2026-06-03 | 10:51 (UTC+3)\n- Recorded exec() blocker for duplicate discovery run.\n- No Release PASS. Next action: safe non-exec inventory or external verified inventory before moving duplicates.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_duplicate_discovery_blocker_record.md",
+    "result_json": "governance/codex/results/tz2_duplicate_discovery_blocker_record.json"
+  },
+  "created_at": "2026-06-03T19:14:05.908Z"
+}
