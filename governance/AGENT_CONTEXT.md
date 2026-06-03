@@ -1469,3 +1469,5 @@ No issue comments.
 - Recorded canonical provider failover policy and legacy conflict closure rule
 ### TZ-2 | SSOT DUPLICATE CLEANUP STATUS | 2026-06-03 | 10:25 (UTC+3)
 - TZ-2 remains partial: canonical paths and inventory are recorded, archive target prepared
+### TZ-2 | EXACT DUPLICATE ARCHIVE BATCH | 2026-06-03 | 10:26 (UTC+3)
+- TZ-2 archive is blocked until exact non-canonical duplicate paths are known

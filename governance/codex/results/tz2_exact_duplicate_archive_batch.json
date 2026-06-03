@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_exact_duplicate_archive_batch",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/TZ2_EXACT_DUPLICATE_ARCHIVE_BATCH.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/TZ2_EXACT_DUPLICATE_ARCHIVE_BATCH.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz2_exact_duplicate_archive_batch.txt"
+  ],
+  "commit_sha": "450c66dee2cdc432be24d70c4a9a23e276d8c6f2",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz2_exact_duplicate_archive_batch.md",
+  "completed_at": "2026-06-03T17:48:18Z"
+}
