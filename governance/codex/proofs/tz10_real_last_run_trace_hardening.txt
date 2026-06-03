@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: tz10_real_last_run_trace_hardening
+task_type: code_patch
+executed_at: 2026-06-03T11:55:25Z
+ops_applied: create:governance/validators/validate_last_run_real_trace.py, create:governance/state/tz10_last_run_trace_status.json, append:governance/AGENT_CONTEXT.md
+changed_files: governance/validators/validate_last_run_real_trace.py, governance/state/tz10_last_run_trace_status.json, governance/AGENT_CONTEXT.md
+errors: none

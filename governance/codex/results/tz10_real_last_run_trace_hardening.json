@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz10_real_last_run_trace_hardening",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_last_run_real_trace.py",
+    "create:governance/state/tz10_last_run_trace_status.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_last_run_real_trace.py",
+    "governance/state/tz10_last_run_trace_status.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz10_real_last_run_trace_hardening.txt"
+  ],
+  "commit_sha": "c532be6cb41c4a0e7b6c0c6cc0ac0e0e63926048",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz10_real_last_run_trace_hardening.md",
+  "completed_at": "2026-06-03T11:55:25Z"
+}
