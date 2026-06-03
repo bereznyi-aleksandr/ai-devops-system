@@ -1,16 +1,14 @@
-name: Governance Validation CI
-
-# DISABLED — restored to valid YAML by Claude external audit 2026-06-01
-# Previous content was plain text (Moved to / At) causing GitHub Actions syntax failures on every push.
-# Original SHA: 685613255aef16b0d02aa8b52606728dcf526189
-# To re-enable: implement validators in CI per BEM-1284..BEM-1285 roadmap.
+name: governance-validation-ci
 
 on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  disabled:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Disabled
-        run: echo "Governance Validation CI is disabled. Enable after BEM-1285 implementation."
+  validate-foundation:
