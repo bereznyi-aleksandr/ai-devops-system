@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_run_duplicate_discovery",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz2_run_duplicate_discovery.txt"
+  ],
+  "commit_sha": "258df3019335b343c31010976f7e8c37061e382f",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: exec("
+  },
+  "report_path": "governance/codex/results/tz2_run_duplicate_discovery.md",
+  "completed_at": "2026-06-03T19:12:20Z"
+}
