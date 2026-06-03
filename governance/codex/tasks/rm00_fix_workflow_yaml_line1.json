@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_fix_workflow_yaml_line1",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-00 fix workflow YAML line1",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\n'on':\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n  validate-foundation:\n    name: Disabled governance validation placeholder\n    runs-on: ubuntu-latest\n    steps:\n      - name: Disabled until explicit activation\n        run: echo governance-validation-ci-disabled\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-00 | FIX WORKFLOW YAML LINE 1 | 2026-06-03 | 10:27 (UTC+3)\n- Rewrote active governance-validation workflow as quoted-on valid YAML with workflow_dispatch only.\n- No Release PASS. Next action: verify workflow changed_files, then continue TZ-2/TZ-4 roadmap.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00_fix_workflow_yaml_line1.md",
+    "result_json": "governance/codex/results/rm00_fix_workflow_yaml_line1.json"
+  },
+  "created_at": "2026-06-03T17:51:47.031Z"
+}
