@@ -1485,3 +1485,5 @@ No issue comments.
 - Rewrote governance-validation-ci
 ### TZ-2 | EXACT DUPLICATES CLOSURE POLICY | 2026-06-03 | 10:34 (UTC+3)
 - Added exact duplicate closure policy and canonical path validator
+### TZ-5 | CI INCLUDE VALIDATORS SAFE | 2026-06-03 | 10:35 (UTC+3)
+- Added readiness/pass/SSOT validators and BEM-1284

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz5_ci_include_validators_safe",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz5_ci_include_validators_safe.txt"
+  ],
+  "commit_sha": "c50624dab757cc57e2831262ed4b2b8d1899f49b",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz5_ci_include_validators_safe.md",
+  "completed_at": "2026-06-03T18:11:16Z"
+}
