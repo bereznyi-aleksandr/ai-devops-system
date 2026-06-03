@@ -1412,3 +1412,5 @@ No issue comments.
 - Defined FILE_EXISTS / STUB_
 ### KZ-3 | CODEX STATUS-LOOP POLICY | 2026-06-03 | 13:45 (UTC+3)
 - Recorded policy that governance/codex logs are not PASS proof
+### TZ-8 | LEGACY PROVIDER CONFLICT CLEANUP | 2026-06-03 | 13:46 (UTC+3)
+- Archived scripts/provider_failover

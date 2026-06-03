@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz8_legacy_provider_conflict_cleanup",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/archive/legacy_provider_conflict_20260603/MANIFEST.md",
+    "create:governance/state/tz8_legacy_provider_conflict_status.json",
+    "move:scripts/provider_failover.py->governance/archive/legacy_provider_conflict_20260603/provider_failover",
+    "append:governance/AGENT_CONTEXT.md",
+    "create_dir:governance/archive/legacy_provider_conflict_20260603"
+  ],
+  "changed_files": [
+    "governance/archive/legacy_provider_conflict_20260603/MANIFEST.md",
+    "governance/state/tz8_legacy_provider_conflict_status.json",
+    "scripts/provider_failover.py",
+    "governance/archive/legacy_provider_conflict_20260603/provider_failover",
+    "governance/AGENT_CONTEXT.md",
+    "governance/archive/legacy_provider_conflict_20260603/.gitkeep",
+    "governance/codex/proofs/tz8_legacy_provider_conflict_cleanup.txt"
+  ],
+  "commit_sha": "15d62b2ec7e84e98e0a4657376ee66dd7e29afb6",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz8_legacy_provider_conflict_cleanup.md",
+  "completed_at": "2026-06-03T11:47:19Z"
+}
