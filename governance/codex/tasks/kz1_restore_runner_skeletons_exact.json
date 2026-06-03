@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_restore_runner_skeletons_exact",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 restore runners exact",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create file governance/runners/minimal_governance_loop_runner.py with content #!/usr/bin/env python3\nfrom __future__ import annotations\nimport json\nfrom datetime import datetime, timezone\nfrom typing import Any\n\nREADINESS_LEVEL='STUB_RUNNABLE'\n\ndef build_trace()->dict[str,Any]:\n    trace_id='bem1284-local-stub-trace'\n    return {'trace_id':trace_id,'runner':'minimal_governance_loop_runner','readiness_level':READINESS_LEVEL,'status':'stub_runnable','release_pass':False,'events':[{'step':1,'role':'GD_CURATOR','event':'input_received'},{'step':2,'role':'ANALYST','event':'proposal_prepared'},{'step':3,'role':'AUDITOR','event':'proposal_under_audit'},{'step':4,'role':'EXECUTOR','event':'execution_stubbed'},{'step':5,'role':'AUDITOR','event':'result_under_audit'}],'timestamp_utc':datetime.now(timezone.utc).isoformat(),'notes':['KZ-1 restores runnable skeleton only.','Not FUNCTIONAL proof.','Not Gate 2 PASS.']}\n\ndef main()->int:\n    print(json.dumps(build_trace(),ensure_ascii=False,sort_keys=True))\n    return 0\n\nif __name__=='__main__':\n    raise SystemExit(main())\n\nCreate file tests/governance/test_kz1_minimal_runner_skeleton.py with content import json\nimport subprocess\nimport sys\nfrom pathlib import Path\n\n\ndef test_minimal_governance_loop_runner_stub_runs():\n    path=Path('governance/runners/minimal_governance_loop_runner.py')\n    assert path.exists()\n    result=subprocess.run([sys.executable,str(path)],capture_output=True,text=True,check=True)\n    payload=json.loads(result.stdout)\n    assert payload['readiness_level']=='STUB_RUNNABLE'\n    assert payload['release_pass'] is False\n    assert payload['status']=='stub_runnable'\n    assert payload['events']\n\nCreate file governance/state/kz1_runner_skeleton_repair.json with content {\"stage\":\"KZ-1\",\"status\":\"partial_stub_created\",\"runner\":\"governance/runners/minimal_governance_loop_runner.py\",\"test\":\"tests/governance/test_kz1_minimal_runner_skeleton.py\",\"readiness_level\":\"STUB_RUNNABLE\",\"release_pass\":false,\"next_action\":\"KZ-1 expand remaining 14 runner skeletons or KZ-2 after validator confirms\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-1 | RUNNERS SKELETON REPAIR START | 2026-06-03 | 13:36 (UTC+3)\n- Created runnable STUB_RUNNABLE minimal_governance_loop_runner.py and executable test.\n- No Gate 2 PASS and no Release PASS.\n- Next action: validate/expand remaining runner skeletons, then KZ-2 SSOT duplicates.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_restore_runner_skeletons_exact.md",
+    "result_json": "governance/codex/results/kz1_restore_runner_skeletons_exact.json"
+  },
+  "created_at": "2026-06-03T11:24:37.948Z"
+}
