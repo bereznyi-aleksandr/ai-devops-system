@@ -1487,3 +1487,5 @@ No issue comments.
 - Added exact duplicate closure policy and canonical path validator
 ### TZ-5 | CI INCLUDE VALIDATORS SAFE | 2026-06-03 | 10:35 (UTC+3)
 - Added readiness/pass/SSOT validators and BEM-1284
+### RM-00 | CI JSON WORKFLOW REPAIR | 2026-06-03 | 10:36 (UTC+3)
+- Rewrote governance-validation-ci
