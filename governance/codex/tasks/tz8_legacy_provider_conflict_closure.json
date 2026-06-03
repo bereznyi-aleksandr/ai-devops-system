@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz8_legacy_provider_conflict_closure",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-8 legacy provider closure",
+  "objective": "Create file governance/state/TZ8_LEGACY_PROVIDER_CONFLICT_CLOSURE.json with content {\"tz\":\"TZ-8\",\"created_at_utc3\":\"2026-06-03 | 10:24 (UTC+3)\",\"release_pass\":false,\"problem\":\"Claude audit: legacy provider_failover.py and new provider_failover_policy coexist, causing provider conflict.\",\"canonical_policy\":\"governance/policies/provider_failover_policy.json\",\"canonical_runner\":\"governance/runners/provider_failover_runner.py\",\"legacy_files\":[\"scripts/provider_failover.py\"],\"closure_policy\":\"legacy scripts/provider_failover.py must be archived or migrated after exact path validation; new refs must use canonical policy and runner\",\"next_action\":\"TZ-4 BEM-1284 Minimal Governance Loop runner\"}\nCreate file governance/policies/provider_failover_legacy_closure_policy.json with content {\"version\":\"1.0\",\"release_pass\":false,\"canonical_policy\":\"governance/policies/provider_failover_policy.json\",\"legacy_path\":\"scripts/provider_failover.py\",\"status\":\"closure_policy_recorded\",\"rule\":\"new runtime references must use governance/policies/provider_failover_policy.json and governance/runners/provider_failover_runner.py\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-8 | LEGACY PROVIDER CONFLICT CLOSURE | 2026-06-03 | 10:24 (UTC+3)\n- Recorded canonical provider failover policy and legacy conflict closure rule.\n- No Release PASS. Next action: TZ-4/BEM-1284 Minimal Governance Loop runner.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz8_legacy_provider_conflict_closure.md",
+    "result_json": "governance/codex/results/tz8_legacy_provider_conflict_closure.json"
+  },
+  "created_at": "2026-06-03T17:29:41.789Z"
+}
