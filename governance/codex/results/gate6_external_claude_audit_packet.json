@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate6_external_claude_audit_packet",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/GATE6_EXTERNAL_CLAUDE_AUDIT_PACKET.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/GATE6_EXTERNAL_CLAUDE_AUDIT_PACKET.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/gate6_external_claude_audit_packet.txt"
+  ],
+  "commit_sha": "edb871cb9c66242915345a483371b2d734e33283",
+  "blocker": null,
+  "report_path": "governance/codex/results/gate6_external_claude_audit_packet.md",
+  "completed_at": "2026-06-03T18:33:22Z"
+}
