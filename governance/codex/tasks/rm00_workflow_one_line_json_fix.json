@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_workflow_one_line_json_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-00 workflow one-line JSON",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content {\"name\":\"governance-validation-ci\",\"on\":{\"workflow_dispatch\":{}},\"permissions\":{\"contents\":\"read\"},\"jobs\":{\"validate-foundation\":{\"name\":\"Disabled governance validation placeholder\",\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"name\":\"Disabled until explicit activation\",\"run\":\"echo governance-validation-ci disabled until explicit activation\"}]}}}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-00 | WORKFLOW ONE-LINE JSON/YAML FIX | 2026-06-03 | 10:18 (UTC+3)\n- Rewrote governance-validation-ci.yml as one-line JSON/YAML flow mapping because executor collapses line breaks.\n- No Release PASS. Next action: verify workflow acceptance, then KZ-1 valid skeleton files.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00_workflow_one_line_json_fix.md",
+    "result_json": "governance/codex/results/rm00_workflow_one_line_json_fix.json"
+  },
+  "created_at": "2026-06-03T15:26:12.581Z"
+}
