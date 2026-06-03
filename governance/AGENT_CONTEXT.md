@@ -1399,3 +1399,4 @@ No issue comments.
 - Gate 2 status fixed as IN_PROGRESS / 0% in governance/state/bem1284_gate2_status
 ### RM-02 | T
 ### KZ-1 |
+### KZ-1 | CORE

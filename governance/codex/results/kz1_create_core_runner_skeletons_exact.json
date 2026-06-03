@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_create_core_runner_skeletons_exact",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/gd_curator_runner.py",
+    "create:governance/runners/dir_curator_runner.py",
+    "create:governance/runners/wrk_curator_runner.py",
+    "create:governance/runners/analyst_stage_runner.py",
+    "create:governance/runners/auditor_stage_runner.py",
+    "create:governance/runners/executor_stage_runner.py",
+    "create:governance/state/kz1_core_runner_skeletons.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/gd_curator_runner.py",
+    "governance/runners/dir_curator_runner.py",
+    "governance/runners/wrk_curator_runner.py",
+    "governance/runners/analyst_stage_runner.py",
+    "governance/runners/auditor_stage_runner.py",
+    "governance/runners/executor_stage_runner.py",
+    "governance/state/kz1_core_runner_skeletons.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz1_create_core_runner_skeletons_exact.txt"
+  ],
+  "commit_sha": "a2cbded678a560ef43f915a3b344162e0e47872b",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz1_create_core_runner_skeletons_exact.md",
+  "completed_at": "2026-06-03T11:29:44Z"
+}
