@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_replace_probe_analyst_stage",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "append:governance/AGENT_CONTEXT.md",
+    "replace_line:governance/runners/analyst_stage_runner.py"
+  ],
+  "changed_files": [
+    "governance/AGENT_CONTEXT.md",
+    "governance/runners/analyst_stage_runner.py",
+    "governance/codex/proofs/kz1_replace_probe_analyst_stage.txt"
+  ],
+  "commit_sha": "12b581bdedf5f08ffb2bbca5a4a3528f849ccd42",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz1_replace_probe_analyst_stage.md",
+  "completed_at": "2026-06-03T15:35:57Z"
+}
