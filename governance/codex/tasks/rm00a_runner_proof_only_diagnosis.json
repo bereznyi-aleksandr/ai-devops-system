@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00a_runner_proof_only_diagnosis",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "RM-00A runner diagnosis",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Diagnose why code_patch tasks complete with only governance/codex/proofs/<trace>.txt. Locate runner/executor/result-writer files responsible for changed_files and completed status. Produce a precise blocker result with target files to edit and minimal patch plan. Do not claim Release PASS. Do not create roadmap reports. No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00a_runner_proof_only_diagnosis.md",
+    "result_json": "governance/codex/results/rm00a_runner_proof_only_diagnosis.json"
+  },
+  "created_at": "2026-06-03T10:31:57.572Z"
+}
