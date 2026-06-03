@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz8_legacy_provider_conflict_cleanup",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-8 legacy provider cleanup",
+  "objective": "Read governance/AGENT_CONTEXT.md first. Create dir governance/archive/legacy_provider_conflict_20260603\nMove file scripts/provider_failover.py to governance/archive/legacy_provider_conflict_20260603/provider_failover.py\nCreate file governance/archive/legacy_provider_conflict_20260603/MANIFEST.md with content # TZ-8 legacy provider conflict cleanup\n\nLegacy provider failover script was archived to keep canonical failover policy under governance/state/provider_failover_policy.json. This is not Release PASS.\n\nCreate file governance/state/tz8_legacy_provider_conflict_status.json with content {\"stage\":\"TZ-8\",\"status\":\"legacy_provider_failover_archived_if_present\",\"release_pass\":false,\"canonical_policy\":\"governance/state/provider_failover_policy.json\",\"next_action\":\"BEM-1284 Minimal Governance Loop\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-8 | LEGACY PROVIDER CONFLICT CLEANUP | 2026-06-03 | 13:46 (UTC+3)\n- Archived scripts/provider_failover.py if present.\n- Canonical failover policy remains governance/state/provider_failover_policy.json.\n- No Release PASS. Next action: BEM-1284 Minimal Governance Loop.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz8_legacy_provider_conflict_cleanup.md",
+    "result_json": "governance/codex/results/tz8_legacy_provider_conflict_cleanup.json"
+  },
+  "created_at": "2026-06-03T11:47:07.245Z"
+}
