@@ -5,8 +5,8 @@
 | Trace | rm00_delete_invalid_active_workflow |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | append:governance/AGENT_CONTEXT.md |
-| Commit SHA | 3b2f2563a0d2bd8bf390eed3cbcb27cbbe14c089 |
-| Completed | 2026-06-03T15:29:22Z |
+| Operations | create:governance/workflows_disabled/governance-validation-ci.disabled.md, append:governance/AGENT_CONTEXT.md |
+| Commit SHA | e8b131eff33b37d29cdeff2580a08695dfd35396 |
+| Completed | 2026-06-03T18:43:50Z |
 
 ### Completed successfully.
