@@ -1513,3 +1513,5 @@ No issue comments.
 ### TZ2 | DUPLICATE PATH DISCOVERY INVENTORY | 2026-06-03 | 10:49 (UTC+3)
 - Added executable duplicate path discovery script for SSOT artifacts
 ### TZ2 |
+### TZ2 | DISCOVERY EXEC BLOCKER RECORD | 2026-06-03 | 10:51 (UTC+3)
+- Recorded exec() blocker for duplicate discovery
