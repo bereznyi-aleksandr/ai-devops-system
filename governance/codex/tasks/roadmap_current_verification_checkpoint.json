@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "roadmap_current_verification_checkpoint",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Roadmap verification checkpoint",
+  "objective": "Create file governance/state/ROADMAP_CURRENT_VERIFICATION_CHECKPOINT.json with content {\"created_at_utc3\":\"2026-06-03 | 10:48 (UTC+3)\",\"release_pass\":false,\"completed_items\":{\"RM00_workflow_move_out\":\"9e92919588a93795d11f0b8b36ce5e9897359504\",\"TZ1_runners_batches\":[\"a264b11cbb64d7d599e98b14be9c420efc4b048e\",\"5f495f230b91c3c5f376d53abf7e956395c2769a\",\"27f7cb7833e4d6302fc00fba426878d11228dc2a\",\"71367644835cc1a7e3ae6c1787914a4264123f06\",\"9e45f010cd384719383692ec770aa204db137402\",\"dce2c31aa4cf02046fd5c860b8eec3692e6dc1c5\"],\"TZ3_passports_manifest\":\"664b46afea59368ce3ad98498da0d3f9a056d1ba\",\"TZ4_BEM1284_minimal_loop\":\"33769f56caeb15afc19103133ce61eda242501dd\",\"TZ6_readiness_levels\":\"84543128dee09b29ee253037b54456de3e2f6081\",\"TZ7_codex_policy\":\"63d059091d1677f915d125615eb2725c53bb2899\",\"TZ8_provider_conflict\":\"3cd5e6ef7c75bcd1c942d6f00681e701be9e7fe5\",\"TZ9_load_experience\":\"ee24eeb82d616d770c927d64f962a7e7659cfed8\",\"TZ10_last_run_trace\":\"30e0f9251fc92aebbc7fdc160622a136af499c8a\",\"Gates456_receipt_validators\":\"9bf3ff37c6a383972c232d747f3f1164dc00491d\"},\"open_blockers\":[\"TZ2 exact non-canonical duplicate archive requires executable repository path inventory\",\"Gate4 production Telegram receipt missing\",\"Gate5 live runtime receipt missing\",\"Gate6 external Claude audit result missing\",\"active workflow deletion not confirmed in changed_files, repeated Actions screenshots show old invalid run history\"],\"next_action\":\"TZ2 executable duplicate path discovery manifest, then Gate4/Gate5 real receipt acquisition without fake proof\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### ROADMAP | CURRENT VERIFICATION CHECKPOINT | 2026-06-03 | 10:48 (UTC+3)\n- Recorded current roadmap verification checkpoint with completed SHA list and open blockers.\n- No Release PASS. Next action: TZ2 executable duplicate path discovery manifest, then Gate4/Gate5 real receipts.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/roadmap_current_verification_checkpoint.md",
+    "result_json": "governance/codex/results/roadmap_current_verification_checkpoint.json"
+  },
+  "created_at": "2026-06-03T19:08:00.126Z"
+}
