@@ -1,14 +1,19 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
 import json
+from datetime import datetime, timezone
+from typing import Any
 
+RUNNER_ID = "provider_failover"
+READINESS_LEVEL = "STUB_RUNNABLE"
 
-def failover_for_contour(contour, mode):
-    if contour not in {"C1", "C2", "C3"}:
-        return {"ok": False, "release_pass": False, "error": "unknown contour"}
-    if mode == "mock_e2e":
-        return {"ok": True, "release_pass": False, "contour": contour, "fallback": "mock"}
-    return {"ok": False, "release_pass": False, "error": "mock fallback denied outside mock_e2e"}
+def build_result() -> dict[str, Any]:
+    return {"runner_id": RUNNER_ID, "readiness_level": READINESS_LEVEL, "status": "stub_runnable", "release_pass": False, "timestamp_utc": datetime.now(timezone.utc).isoformat()}
 
+def main() -> int:
+    print(json.dumps(build_result(), ensure_ascii=False, sort_keys=True))
+    return 0
 
-def main():
-    result = failover_for_contour("C1", "mock_e2e")
-    print(json
+if __name__ == "__main__":
+    raise SystemExit(main())

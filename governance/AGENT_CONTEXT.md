@@ -1426,3 +1426,8 @@ No issue comments.
 -
 ### RM-00 | INVALID GOVERNANCE WORKFLOW OVERWRITE | 2026-06-03 | 10:05 (UTC+3)
 - Active invalid governance-validation workflow overwritten with valid workflow_dispatch-only YAML
+
+### KZ-1 | RUNNERS SKELETON REPAIR | 2026-06-03 | 10:09 (UTC+3)
+- Overwrote governance/runners/*.py with STUB_RUNNABLE skeletons using no-import script.
+- Added tests/governance/test_kz1_runners_skeleton.py.
+- No Release PASS. Next action: KZ-2 SSOT duplicates cleanup.

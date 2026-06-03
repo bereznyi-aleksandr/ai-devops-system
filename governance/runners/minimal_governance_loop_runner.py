@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
-READINESS_LEVEL='FUNCTIONAL'
-TRACE_ID='bem1284-minimal-local-e2e'
+RUNNER_ID = "minimal_governance_loop_runner"
+READINESS_LEVEL = "STUB_RUNNABLE"
 
-def event(step:int, role:str, status:str, payload:dict[str,Any])->dict[str,Any]:
-    return {'step':step,'role':role,'status':status,'payload':payload}
+def build_result() -> dict[str, Any]:
+    return {"runner_id": RUNNER_ID, "readiness_level": READINESS_LEVEL, "status": "stub_runnable", "release_pass": False, "timestamp_utc": datetime.now(timezone.utc).isoformat()}
 
-def
+def main() -> int:
+    print(json.dumps(build_result(), ensure_ascii=False, sort_keys=True))
+    return 0
+
+if __name__ == "__main__":
+    raise SystemExit(main())

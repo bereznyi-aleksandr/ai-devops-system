@@ -1,11 +1,19 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
 import json
+from datetime import datetime, timezone
+from typing import Any
 
+RUNNER_ID = "testing_contour_assignment"
+READINESS_LEVEL = "STUB_RUNNABLE"
 
-def assign(test_id="bem1284", preferred="C1"):
-    contour = preferred if preferred in {"C1", "C2", "C3"} else "C1"
-    return {"ok": True, "release_pass": False, "test_id": test_id, "contour": contour}
+def build_result() -> dict[str, Any]:
+    return {"runner_id": RUNNER_ID, "readiness_level": READINESS_LEVEL, "status": "stub_runnable", "release_pass": False, "timestamp_utc": datetime.now(timezone.utc).isoformat()}
 
+def main() -> int:
+    print(json.dumps(build_result(), ensure_ascii=False, sort_keys=True))
+    return 0
 
-def main():
-    result = assign()
-    print(json
+if __name__ == "__main__":
+    raise SystemExit(main())

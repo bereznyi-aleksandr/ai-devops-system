@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import json
-import time
-from pathlib import Path
+from datetime import datetime, timezone
+from typing import Any
 
-EVENT_LOG = Path('governance/logs/event_log.jsonl')
+RUNNER_ID = "event_writer"
+READINESS_LEVEL = "STUB_RUNNABLE"
 
-def write_event(event):
-    EVENT_LOG.parent.mkdir(parents=True, exist_ok=True)
-    item = dict(event)
-    item.setdefault('created_at', time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
-    item.setdefault('status', 'completed')
-    if 'event_id' not in item:
-        item['event_id'] = 'EVT-' + str(int(time.time() * 1000))
-    with EVENT_LOG.open('a', encoding='utf-8') as fh:
-        fh.write(json.dumps(item, ensure_ascii=False) + '\n')
-    return item
+def build_result() -> dict[str, Any]:
+    return {"runner_id": RUNNER_ID, "readiness_level": READINESS_LEVEL, "status": "stub_runnable", "release_pass": False, "timestamp_utc": datetime.now(timezone.utc).isoformat()}
 
-if __name__ == '__main__':
-    write_event({'trace_id':'selftest','event_type':'event_writer_selftest','source':'event_writer','target':'event_log','proof_ref':'stdout'})
-    print('event_writer PASS')
+def main() -> int:
+    print(json.dumps(build_result(), ensure_ascii=False, sort_keys=True))
+    return 0
+
+if __name__ == "__main__":
+    raise SystemExit(main())

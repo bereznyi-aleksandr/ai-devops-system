@@ -1,12 +1,19 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
 import json
+from datetime import datetime, timezone
+from typing import Any
 
+RUNNER_ID = "curator_router"
+READINESS_LEVEL = "STUB_RUNNABLE"
 
-def route(contour):
-    if contour not in {"C1", "C2", "C3"}:
-        return {"ok": False, "release_pass": False, "error": "unknown contour"}
-    return {"ok": True, "release_pass": False, "contour": contour, "director": f"DIR-{contour}", "curator": f"CUR-{contour}", "worker": f"WRK-{contour}"}
+def build_result() -> dict[str, Any]:
+    return {"runner_id": RUNNER_ID, "readiness_level": READINESS_LEVEL, "status": "stub_runnable", "release_pass": False, "timestamp_utc": datetime.now(timezone.utc).isoformat()}
 
+def main() -> int:
+    print(json.dumps(build_result(), ensure_ascii=False, sort_keys=True))
+    return 0
 
-def main():
-    result = route("C1")
-    print(json
+if __name__ == "__main__":
+    raise SystemExit(main())

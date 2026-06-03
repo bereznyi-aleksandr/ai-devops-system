@@ -1,28 +1,19 @@
 #!/usr/bin/env python3
-from pathlib import Path
+from __future__ import annotations
+
 import json
 from datetime import datetime, timezone
+from typing import Any
 
-MANIFEST = Path('governance/state/release_proof_manifest.json')
+RUNNER_ID = "proof_manifest_updater"
+READINESS_LEVEL = "STUB_RUNNABLE"
 
+def build_result() -> dict[str, Any]:
+    return {"runner_id": RUNNER_ID, "readiness_level": READINESS_LEVEL, "status": "stub_runnable", "release_pass": False, "timestamp_utc": datetime.now(timezone.utc).isoformat()}
 
-def load_manifest():
-    if MANIFEST.exists():
-        return json.loads(MANIFEST.read_text(encoding='utf-8'))
-    return {'version': '1.0', 'release_status': 'draft', 'commit_sha': None, 'actions_run_id': None, 'validation_statuses': {}, 'proof_refs': [], 'blockers': []}
+def main() -> int:
+    print(json.dumps(build_result(), ensure_ascii=False, sort_keys=True))
+    return 0
 
-
-def add_proof(block_id, status, proof_ref):
-    m = load_manifest()
-    m['date'] = datetime.now(timezone.utc).date().isoformat()
-    m.setdefault('validation_statuses', {})[block_id] = status
-    m.setdefault('proof_refs', [])
-    if proof_ref not in m['proof_refs']:
-        m['proof_refs'].append(proof_ref)
-    MANIFEST.parent.mkdir(parents=True, exist_ok=True)
-    MANIFEST.write_text(json.dumps(m, ensure_ascii=False, indent=2) + '
-', encoding='utf-8')
-    return m
-
-if __name__ == '__main__':
-    print(json.dumps(add_proof('proof_manifest_updater_selftest','PASS','governance/state/release_proof_manifest.json'), ensure_ascii=False))
+if __name__ == "__main__":
+    raise SystemExit(main())
