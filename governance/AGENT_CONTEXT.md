@@ -1510,3 +1510,5 @@ No issue comments.
 - Added external receipt schema and validator for Telegram, live
 ### ROADMAP | CURRENT VERIFICATION CHECKPOINT | 2026-06-03 | 10:48 (UTC+3)
 - Recorded current roadmap verification checkpoint with completed SHA list and open blockers
+### TZ2 | DUPLICATE PATH DISCOVERY INVENTORY | 2026-06-03 | 10:49 (UTC+3)
+- Added executable duplicate path discovery script for SSOT artifacts

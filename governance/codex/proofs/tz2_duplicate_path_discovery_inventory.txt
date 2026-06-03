@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: tz2_duplicate_path_discovery_inventory
+task_type: code_patch
+executed_at: 2026-06-03T19:10:19Z
+ops_applied: create:governance/validators/discover_ssot_duplicate_paths.py, create:governance/state/TZ2_DUPLICATE_DISCOVERY_NEXT_ACTION.json, append:governance/AGENT_CONTEXT.md
+changed_files: governance/validators/discover_ssot_duplicate_paths.py, governance/state/TZ2_DUPLICATE_DISCOVERY_NEXT_ACTION.json, governance/AGENT_CONTEXT.md
+errors: none

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_duplicate_path_discovery_inventory",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/discover_ssot_duplicate_paths.py",
+    "create:governance/state/TZ2_DUPLICATE_DISCOVERY_NEXT_ACTION.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/discover_ssot_duplicate_paths.py",
+    "governance/state/TZ2_DUPLICATE_DISCOVERY_NEXT_ACTION.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz2_duplicate_path_discovery_inventory.txt"
+  ],
+  "commit_sha": "d769dcdefcd3b3ff6e84ca9d147d1ab82c2a959b",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz2_duplicate_path_discovery_inventory.md",
+  "completed_at": "2026-06-03T19:10:19Z"
+}
