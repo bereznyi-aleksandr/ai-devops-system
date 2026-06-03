@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_createfile_batch1",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 runners batch 1",
+  "objective": "Create file governance/runners/analyst_experience_stage_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"analyst_experience_stage_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"analyst_experience_stage_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/analyst_stage_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"analyst_stage_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"analyst_stage_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/auditor_experience_stage_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"auditor_experience_stage_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"auditor_experience_stage_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/auditor_stage_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"auditor_stage_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"auditor_stage_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/runners/contour_lifecycle_runner.py with content #!/usr/bin/env python3\nRUNNER_ID = \"contour_lifecycle_runner\"\nREADINESS_LEVEL = \"STUB_RUNNABLE\"\ndef main() -> int:\n    print('{\"runner_id\":\"contour_lifecycle_runner\",\"readiness_level\":\"STUB_RUNNABLE\",\"status\":\"stub_runnable\",\"release_pass\":false}')\n    return 0\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### KZ-1 | RUNNERS SKELETON REPAIR BATCH 1 | 2026-06-03 | 10:10 (UTC+3)\n- Repaired first 5 governance/runners files to STUB_RUNNABLE skeletons using Create file patterns.\n- No Release PASS. Continue KZ-1 batch 2.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_runners_createfile_batch1.md",
+    "result_json": "governance/codex/results/kz1_runners_createfile_batch1.json"
+  },
+  "created_at": "2026-06-03T15:05:22.862Z"
+}
