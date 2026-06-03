@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_duplicate_path_discovery_inventory",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ2 duplicate path discovery",
+  "objective": "Create file governance/validators/discover_ssot_duplicate_paths.py with content #!/usr/bin/env python3\nfrom pathlib import Path\nimport json\n\nTARGET_NAMES = [\n    \"contours_registry.json\",\n    \"object_passports.json\",\n    \"providers_registry.json\",\n    \"contour_provider_policy.json\",\n    \"provider_failover_policy.json\",\n    \"managed_channel_schema.json\",\n    \"telegram_input_envelope_schema.json\",\n    \"telegram_to_managed_channel_mapping.json\",\n]\nCANONICAL = {\n    \"contours_registry.json\": \"governance/registries/contours_registry.json\",\n    \"object_passports.json\": \"governance/registries/object_passports.json\",\n    \"providers_registry.json\": \"governance/registries/providers_registry.json\",\n    \"contour_provider_policy.json\": \"governance/policies/contour_provider_policy.json\",\n    \"provider_failover_policy.json\": \"governance/policies/provider_failover_policy.json\",\n    \"managed_channel_schema.json\": \"governance/schemas/managed_channel_schema.json\",\n    \"telegram_input_envelope_schema.json\": \"governance/schemas/telegram_input_envelope_schema.json\",\n    \"telegram_to_managed_channel_mapping.json\": \"governance/mappings/telegram_to_managed_channel_mapping.json\",\n}\n\ndef main() -> int:\n    found = {}\n    for name in TARGET_NAMES:\n        paths = sorted(str(p) for p in Path(\"governance\").rglob(name) if \"archive\" not in p.parts and \"codex\" not in p.parts)\n        found[name] = {\"canonical\": CANONICAL[name], \"all_paths\": paths, \"non_canonical\": [p for p in paths if p != CANONICAL[name]]}\n    out = Path(\"governance/state/TZ2_DISCOVERED_SSOT_DUPLICATE_PATHS.json\")\n    out.write_text(json.dumps({\"release_pass\": False, \"duplicates\": found}, ensure_ascii=False, indent=2) + \"\\n\", encoding=\"utf-8\")\n    print(json.dumps({\"status\":\"ok\",\"output\":str(out),\"release_pass\":False}, ensure_ascii=False))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file governance/state/TZ2_DUPLICATE_DISCOVERY_NEXT_ACTION.json with content {\"created_at_utc3\":\"2026-06-03 | 10:49 (UTC+3)\",\"release_pass\":false,\"next_action\":\"run governance/validators/discover_ssot_duplicate_paths.py and archive exact non-canonical duplicates from generated state file\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ2 | DUPLICATE PATH DISCOVERY INVENTORY | 2026-06-03 | 10:49 (UTC+3)\n- Added executable duplicate path discovery script for SSOT artifacts.\n- No Release PASS. Next action: run discovery and archive exact non-canonical duplicates.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_duplicate_path_discovery_inventory.md",
+    "result_json": "governance/codex/results/tz2_duplicate_path_discovery_inventory.json"
+  },
+  "created_at": "2026-06-03T19:10:04.613Z"
+}
