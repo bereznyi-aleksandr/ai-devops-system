@@ -1493,3 +1493,5 @@ No issue comments.
 - Recorded remaining release blockers: production Telegram receipt, live
 ### RM-00 | CI STANDARD YAML REPAIR | 2026-06-03 | 10:38 (UTC+3)
 - Rewrote governance-validation-ci
+### RM-00 | NEUTRALIZE INVALID ACTIVE WORKFLOW | 2026-06-03 | 10:39 (UTC+3)
+- Rewrote governance-validation-ci

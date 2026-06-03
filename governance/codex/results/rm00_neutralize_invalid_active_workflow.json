@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_neutralize_invalid_active_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_neutralize_invalid_active_workflow.txt"
+  ],
+  "commit_sha": "c2e7bb2434759cc284970ca00e2db62357f34097",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_neutralize_invalid_active_workflow.md",
+  "completed_at": "2026-06-03T18:20:47Z"
+}
