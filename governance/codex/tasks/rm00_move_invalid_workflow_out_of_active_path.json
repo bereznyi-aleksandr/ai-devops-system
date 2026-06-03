@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_move_invalid_workflow_out_of_active_path",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-00 move invalid workflow",
+  "objective": "Move file .github/workflows/governance-validation-ci.yml to governance/workflows_disabled/governance-validation-ci.yml.disabled_by_rm00\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-00 | MOVE INVALID WORKFLOW OUT OF ACTIVE PATH | 2026-06-03 | 10:41 (UTC+3)\n- Moved invalid governance-validation-ci.yml out of .github/workflows active path to stop GitHub Actions YAML parse failures.\n- No Release PASS. Next action: Gate 5 live runtime receipt lane.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00_move_invalid_workflow_out_of_active_path.md",
+    "result_json": "governance/codex/results/rm00_move_invalid_workflow_out_of_active_path.json"
+  },
+  "created_at": "2026-06-03T18:24:52.556Z"
+}
