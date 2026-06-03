@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz7_codex_status_loop_cleanup_policy",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/KZ7_CODEX_STATUS_LOOP_CLEANUP_POLICY.json",
+    "create:governance/validators/validate_pass_sources.py",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/KZ7_CODEX_STATUS_LOOP_CLEANUP_POLICY.json",
+    "governance/validators/validate_pass_sources.py",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz7_codex_status_loop_cleanup_policy.txt"
+  ],
+  "commit_sha": "63d059091d1677f915d125615eb2725c53bb2899",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz7_codex_status_loop_cleanup_policy.md",
+  "completed_at": "2026-06-03T17:27:23Z"
+}

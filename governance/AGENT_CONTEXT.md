@@ -1463,3 +1463,5 @@ No issue comments.
 - Restored governance/registries/object_passports
 ### KZ-6 | READINESS LEVELS SCHEMA | 2026-06-03 | 10:21 (UTC+3)
 - Added readiness levels FILE_EXISTS/STUB_
+### KZ-7 | CODEX STATUS-LOOP CLEANUP POLICY | 2026-06-03 | 10:23 (UTC+3)
+- Added policy that governance/codex logs are not proof and proof-only code_patch is not success
