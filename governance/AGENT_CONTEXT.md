@@ -1459,3 +1459,5 @@ No issue comments.
 -
 ### KZ-2 | SSOT DUPLICATE PATH INVENTORY | 2026-06-03 | 10:18 (UTC+3)
 - Added duplicate path inventory policy for KZ-2
+### KZ-3 | PASSPORTS AND RELEASE MANIFEST RESTORE | 2026-06-03 | 10:20 (UTC+3)
+- Restored governance/registries/object_passports

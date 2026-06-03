@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz3_passports_manifest_restore_v2",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/registries/object_passports.json",
+    "create:governance/release/release_proof_manifest.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/registries/object_passports.json",
+    "governance/release/release_proof_manifest.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz3_passports_manifest_restore_v2.txt"
+  ],
+  "commit_sha": "664b46afea59368ce3ad98498da0d3f9a056d1ba",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz3_passports_manifest_restore_v2.md",
+  "completed_at": "2026-06-03T17:22:19Z"
+}
