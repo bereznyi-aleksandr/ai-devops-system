@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate6_external_claude_audit_receipt_lane",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Gate 6 Claude audit lane",
+  "objective": "Create file governance/state/GATE6_EXTERNAL_CLAUDE_AUDIT_RECEIPT_LANE.json with content {\"gate\":\"Gate 6\",\"created_at_utc3\":\"2026-06-03 | 10:43 (UTC+3)\",\"release_pass\":false,\"status\":\"blocked_missing_external_claude_audit_result\",\"required_output\":\"governance/proofs/external/claude/external_claude_audit_result.json\",\"allowed_next_actions\":[\"prepare audit packet from current state\",\"send to external Claude\",\"capture real audit result\"],\"forbidden\":[\"fake audit result\",\"self-issued audit PASS\",\"Release PASS without external audit result\"],\"next_action\":\"current roadmap completion summary\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### GATE 6 | EXTERNAL CLAUDE AUDIT RECEIPT LANE | 2026-06-03 | 10:43 (UTC+3)\n- Recorded Gate 6 external Claude audit receipt lane and missing external audit result blocker.\n- No fake audit result. No Release PASS. Next action: current roadmap completion summary.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gate6_external_claude_audit_receipt_lane.md",
+    "result_json": "governance/codex/results/gate6_external_claude_audit_receipt_lane.json"
+  },
+  "created_at": "2026-06-03T18:28:56.180Z"
+}
