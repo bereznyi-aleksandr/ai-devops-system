@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_exact_duplicate_archive_batch",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ-2 exact duplicate archive",
+  "objective": "Create file governance/state/TZ2_EXACT_DUPLICATE_ARCHIVE_BATCH.json with content {\"tz\":\"TZ-2\",\"created_at_utc3\":\"2026-06-03 | 10:26 (UTC+3)\",\"release_pass\":false,\"status\":\"blocked_until_exact_duplicate_paths_known\",\"reason\":\"Archive/delete cannot be done safely without exact non-canonical duplicate paths. Canonical refs are already recorded; next step requires repository path discovery by executable inventory.\",\"last_sha\":\"44ada8b86bdbc4d556022fefda06e13961c762cf\",\"next_action\":\"run executable inventory to list duplicate paths, then move exact non-canonical copies\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ-2 | EXACT DUPLICATE ARCHIVE BATCH | 2026-06-03 | 10:26 (UTC+3)\n- TZ-2 archive is blocked until exact non-canonical duplicate paths are known.\n- No Release PASS. Next action: executable duplicate path inventory.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_exact_duplicate_archive_batch.md",
+    "result_json": "governance/codex/results/tz2_exact_duplicate_archive_batch.json"
+  },
+  "created_at": "2026-06-03T17:48:01.530Z"
+}
