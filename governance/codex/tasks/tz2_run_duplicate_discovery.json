@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_run_duplicate_discovery",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ2 run duplicate discovery",
+  "objective": "Run script:\n\"\"\"\nexec(open('governance/validators/discover_ssot_duplicate_paths.py', encoding='utf-8').read())\n\"\"\"\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ2 | RUN DUPLICATE DISCOVERY | 2026-06-03 | 10:50 (UTC+3)\n- Ran SSOT duplicate discovery script to generate governance/state/TZ2_DISCOVERED_SSOT_DUPLICATE_PATHS.json.\n- No Release PASS. Next action: archive exact non-canonical duplicates from discovery output.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_run_duplicate_discovery.md",
+    "result_json": "governance/codex/results/tz2_run_duplicate_discovery.json"
+  },
+  "created_at": "2026-06-03T19:12:00.137Z"
+}
