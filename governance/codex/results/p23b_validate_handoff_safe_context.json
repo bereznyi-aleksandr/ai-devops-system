@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p23b_validate_handoff_safe_context",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P23B_VALIDATE_HANDOFF_SAFE_CONTEXT.json",
+    "create:governance/reports/P23B_VALIDATE_HANDOFF_SAFE_CONTEXT.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P23B_VALIDATE_HANDOFF_SAFE_CONTEXT.json",
+    "governance/reports/P23B_VALIDATE_HANDOFF_SAFE_CONTEXT.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p23b_validate_handoff_safe_context.txt"
+  ],
+  "commit_sha": "51fbfbf01fb47696a1d35af77a0316d840bf58ce",
+  "blocker": null,
+  "report_path": "governance/codex/results/p23b_validate_handoff_safe_context.md",
+  "completed_at": "2026-06-04T10:30:23Z"
+}
