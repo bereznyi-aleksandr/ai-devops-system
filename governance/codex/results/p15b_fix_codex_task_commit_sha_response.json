@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "p15b_fix_codex_task_commit_sha_response",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/p15b_fix_codex_task_commit_sha_response.txt"
+  ],
+  "commit_sha": "f4d0eea5d3cad9def153aaf11897fe0d4bd0dbe4",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'Exception' is not defined"
+  },
+  "report_path": "governance/codex/results/p15b_fix_codex_task_commit_sha_response.md",
+  "completed_at": "2026-06-04T10:05:35Z"
+}
