@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f8_verify_workflow_parse_clean_repair",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/RM00F8_WORKFLOW_PARSE_CLEAN.json",
+    "create:governance/reports/RM00F8_WORKFLOW_PARSE_CLEAN.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/RM00F8_WORKFLOW_PARSE_CLEAN.json",
+    "governance/reports/RM00F8_WORKFLOW_PARSE_CLEAN.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00f8_verify_workflow_parse_clean_repair.txt"
+  ],
+  "commit_sha": "1d2bae650691e4a960a3276181cb97fc6c72480b",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00f8_verify_workflow_parse_clean_repair.md",
+  "completed_at": "2026-06-04T05:20:27Z"
+}
