@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04_repair_governance_workflow_yaml_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM04 repair workflow proof-only",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content {\"name\":\"governance-validation-ci\",\"on\":{\"workflow_dispatch\":{},\"pull_request\":{\"paths\":[\"governance/**\",\".github/workflows/governance-validation-ci.yml\"]},\"push\":{\"paths\":[\"governance/**\",\".github/workflows/governance-validation-ci.yml\"]}},\"permissions\":{\"contents\":\"read\"},\"jobs\":{\"validate-governance-contour\":{\"name\":\"Validate governance contour\",\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"name\":\"Checkout\",\"uses\":\"actions/checkout@v4\"},{\"name\":\"Validate governance contour\",\"run\":\"python governance/validation/validate_governance_contour.py\"}]}}}\nCreate file governance/state/RM04_REPAIR_GOVERNANCE_WORKFLOW_YAML.json with content {\"id\":\"RM04\",\"trace_id\":\"rm04_repair_governance_workflow_yaml_repair\",\"status\":\"completed\",\"release_pass\":false,\"problem\":\"GitHub Actions screenshot showed active governance-validation-ci.yml invalid after RM02/RM03\",\"change\":\"rewrote workflow as single-line JSON/YAML flow mapping to avoid executor multiline corruption\",\"next\":\"RM04B verify repaired workflow evidence\"}\nCreate file governance/reports/RM04_REPAIR_GOVERNANCE_WORKFLOW_YAML.md with content # RM04 | Repair governance workflow YAML\nStatus: completed. Problem: GitHub Actions showed .github/workflows/governance-validation-ci.yml invalid. Change: active workflow rewritten as single-line JSON/YAML flow mapping with jobs block, paths arrays, push, pull_request, and workflow_dispatch. Release PASS remains false until verification. Next: RM04B verify repaired workflow evidence.\nAppend to governance/AGENT_CONTEXT.md: \n## RM04 completed | 2026-06-04\nRepaired active governance-validation-ci.yml after invalid workflow screenshot. Used single-line JSON/YAML flow mapping to avoid executor multiline YAML corruption. Release PASS false until verification. Next: RM04B verify repaired workflow evidence.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm04_repair_governance_workflow_yaml_repair.md",
+    "result_json": "governance/codex/results/rm04_repair_governance_workflow_yaml_repair.json"
+  },
+  "created_at": "2026-06-04T07:31:42.666Z"
+}
