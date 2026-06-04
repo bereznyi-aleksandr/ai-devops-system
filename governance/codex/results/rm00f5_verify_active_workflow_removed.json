@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f5_verify_active_workflow_removed",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/RM00F5_ACTIVE_WORKFLOW_REMOVAL_VERIFICATION.json",
+    "create:governance/audit/RM00F5_ACTIVE_WORKFLOW_REMOVAL_VERIFICATION.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/RM00F5_ACTIVE_WORKFLOW_REMOVAL_VERIFICATION.json",
+    "governance/audit/RM00F5_ACTIVE_WORKFLOW_REMOVAL_VERIFICATION.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00f5_verify_active_workflow_removed.txt"
+  ],
+  "commit_sha": "17ddb54dc858c0991565c0919371fbe06e07dd93",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00f5_verify_active_workflow_removed.md",
+  "completed_at": "2026-06-04T04:50:36Z"
+}
