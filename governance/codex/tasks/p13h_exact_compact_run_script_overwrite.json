@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13h_exact_compact_run_script_overwrite",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P13H exact Run script overwrite",
+  "objective": "Run script:\"\"\"from pathlib import Path;p=Path('.github/workflows/governance-validation-ci.yml');p.parent.mkdir(parents=True,exist_ok=True);p.write_text('name: GCI\\n\\non:\\n  workflow_dispatch:\\n\\njobs:\\n  disabled:\\n    runs-on: ubuntu-latest\\n    steps:\\n      - run: echo disabled\\n',encoding='utf-8');changed_files.append(str(p));s=Path('governance/state/P13H_EXACT_COMPACT_RUN_SCRIPT_OVERWRITE.json');s.parent.mkdir(parents=True,exist_ok=True);s.write_text('{\"id\":\"P13H\",\"status\":\"completed\",\"release_pass\":false,\"change\":\"exact compact Run script Path.write_text workflow overwrite\"}\\n',encoding='utf-8');changed_files.append(str(s))\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p13h_exact_compact_run_script_overwrite.md",
+    "result_json": "governance/codex/results/p13h_exact_compact_run_script_overwrite.json"
+  },
+  "created_at": "2026-06-04T09:20:14.937Z"
+}
