@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p10_non_null_evidence_context_autoupdate_hardening",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P10 evidence context hardening",
+  "objective": "Create file governance/state/P10_NON_NULL_EVIDENCE_CONTEXT_AUTOUPDATE_HARDENING.json with content {\"id\":\"P10\",\"trace_id\":\"p10_non_null_evidence_context_autoupdate_hardening\",\"status\":\"completed\",\"release_pass\":true,\"purpose\":\"stabilization after governance workflow repair\",\"requirements\":{\"non_null_sha_required\":true,\"proof_only_commit_is_failure\":true,\"stage_progress\":\"1/1 per BEM or RM execution unit\",\"roadmap_progress\":\"separate chain counter\",\"agent_context_update_required\":true,\"issue_comments_allowed\":false,\"manual_operator_confirmation_allowed\":false},\"validated_chain\":[{\"id\":\"RM04\",\"sha\":\"212dc1ac70c21b4125f9d94c5401b54097997100\"},{\"id\":\"RM04B\",\"sha\":\"2ca18d50a2cb9b545e760a05a77d99ab8d4fdc07\"},{\"id\":\"RM03B\",\"sha\":\"dd82d753580e86ab11e5d67fba298a88c2bc067f\"},{\"id\":\"RM04C\",\"sha\":\"32d5c4779ac3fc86f1b27d2130570ac1b6461a54\"},{\"id\":\"RM05\",\"sha\":\"ecef0b94aefbf13cbb02176d13891b61bcf5984c\"}],\"next\":\"P11 active workflow post-repair run evidence\"}\nCreate file governance/reports/P10_NON_NULL_EVIDENCE_CONTEXT_AUTOUPDATE_HARDENING.md with content # P10 | Non-null evidence and AGENT_CONTEXT autoupdate hardening\nStatus: completed\nDate: 2026-06-04\n\n## Purpose\nStabilize the governance contour after RM04/RM04B/RM03B/RM04C/RM05 workflow repair chain.\n\n## Hardening rules recorded\n- PASS requires a non-null commit SHA.\n- proof-only commits are failures and require repair.\n- Stage progress is 1/1 per BEM/RM execution unit.\n- Roadmap progress is counted separately across the roadmap chain.\n- AGENT_CONTEXT.md update is required for every completed step.\n- Issue comments and manual operator confirmation are prohibited for routine development.\n\n## Current status\nRepository-side governance contour evidence is repaired and SHA-backed through RM05. Historical failed GitHub Actions runs remain historical and do not prove current head failure.\n\n## Next\nP11 active workflow post-repair run evidence.\nAppend to governance/AGENT_CONTEXT.md: \n## P10 completed | 2026-06-04\nNon-null evidence and AGENT_CONTEXT autoupdate hardening recorded. PASS requires non-null SHA; proof-only is failure; stage progress is 1/1 per execution unit; roadmap progress is separate; issue comments and manual operator confirmation remain prohibited. Next: P11 active workflow post-repair run evidence.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p10_non_null_evidence_context_autoupdate_hardening.md",
+    "result_json": "governance/codex/results/p10_non_null_evidence_context_autoupdate_hardening.json"
+  },
+  "created_at": "2026-06-04T07:48:48.381Z"
+}
