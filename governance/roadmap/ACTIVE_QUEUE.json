@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:58:00Z",
+  "updated_at": "2026-06-04T16:01:00Z",
   "source": "Claude External Audit — GATE-3 PASS, Gates 4-6 waiting operator",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -27,11 +27,15 @@
     {
       "id": "GATE-4",
       "title": "Production Telegram receipt",
-      "status": "WAITING_OPERATOR",
+      "status": "IN_PROGRESS",
       "priority": 1,
       "detail": "Требуется реальный Telegram receipt от бота оператора. GPT не может выполнить без operator action.",
       "blocked_for_gpt": true,
-      "operator_action_required": "Отправить тестовое сообщение боту и подтвердить receipt"
+      "operator_action_required": "Отправить тестовое сообщение боту и подтвердить receipt",
+      "bot_username": "@BarberStaffBot",
+      "operator_screenshot_received": true,
+      "proof_status": "identity_known_response_not_yet_recorded",
+      "updated_at": "2026-06-04T16:01:00Z"
     },
     {
       "id": "GATE-5",
@@ -39,7 +43,9 @@
       "status": "WAITING_OPERATOR",
       "priority": 2,
       "blocked_for_gpt": true,
-      "depends_on": ["GATE-4"]
+      "depends_on": [
+        "GATE-4"
+      ]
     },
     {
       "id": "GATE-6",
@@ -47,9 +53,11 @@
       "status": "WAITING_CLAUDE",
       "priority": 3,
       "blocked_for_gpt": true,
-      "depends_on": ["GATE-5"]
+      "depends_on": [
+        "GATE-5"
+      ]
     }
   ],
-  "queue_state": "WAITING_OPERATOR",
-  "next_action": "Gates 4-6 require operator action. GPT waits — do not invent tasks."
+  "queue_state": "HAS_PENDING_OPERATOR_RECEIPT",
+  "next_action": "record Telegram response receipt when available; do not mark Gate 4 PASS from bot profile screenshot alone"
 }
