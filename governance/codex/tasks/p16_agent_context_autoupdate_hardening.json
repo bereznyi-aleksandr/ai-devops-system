@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p16_agent_context_autoupdate_hardening",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P16 AGENT_CONTEXT hardening",
+  "objective": "Create file governance/state/P16_AGENT_CONTEXT_AUTOUPDATE_HARDENING.json with content {\"id\":\"P16\",\"trace_id\":\"p16_agent_context_autoupdate_hardening\",\"status\":\"completed\",\"release_pass\":false,\"purpose\":\"make AGENT_CONTEXT update rule explicit after P15C\",\"requirements\":{\"agent_context_update_required_for_each_step\":true,\"next_step_required\":true,\"no_stop_after_report\":true,\"workflow_lock_respected\":true,\"workflow_files_touched\":false},\"previous_step\":{\"id\":\"P15C\",\"sha\":\"e541548831450e1460ebf58b7c934e099a6dbc46\"},\"next\":\"P16B AGENT_CONTEXT hardening validation evidence\"}\nCreate file governance/reports/P16_AGENT_CONTEXT_AUTOUPDATE_HARDENING.md with content # P16 | AGENT_CONTEXT autoupdate hardening\nStatus: completed\nDate: 2026-06-04\n\n## Purpose\nRecord the operational rule that every completed roadmap step must update AGENT_CONTEXT.md, include the next step, and must not stop roadmap execution after reporting.\n\n## Rules\n- Every BEM/RM/P/KZ step must append a dated AGENT_CONTEXT.md note.\n- The note must include status, SHA-backed evidence, workflow lock status, and next step.\n- Roadmap must continue after every intermediate report.\n- `.github/workflows/*.yml` remains locked for GPT executor.\n\n## Previous evidence\nP15C SHA e541548831450e1460ebf58b7c934e099a6dbc46 completed codex-task commit_sha response evidence.\n\n## Next\nP16B AGENT_CONTEXT hardening validation evidence.\nAppend to governance/AGENT_CONTEXT.md: \n## P16 completed | 2026-06-04\nAGENT_CONTEXT autoupdate hardening recorded. Every roadmap step must append dated AGENT_CONTEXT note with status, SHA-backed evidence, workflow lock status, and next step. Roadmap must not stop after reports. Workflow lock respected: no .github/workflows files touched. Next: P16B AGENT_CONTEXT hardening validation evidence.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p16_agent_context_autoupdate_hardening.md",
+    "result_json": "governance/codex/results/p16_agent_context_autoupdate_hardening.json"
+  },
+  "created_at": "2026-06-04T10:12:23.011Z"
+}
