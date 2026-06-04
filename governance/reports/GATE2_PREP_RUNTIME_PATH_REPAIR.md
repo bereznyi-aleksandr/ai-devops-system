@@ -1,0 +1,1 @@
+# GATE-2-PREP runtime path repair. Status: completed. Created governance/runtime/minimal_governance_loop_runner.py with deterministic trace, run_minimal_loop and def main. Workflow lock respected.
