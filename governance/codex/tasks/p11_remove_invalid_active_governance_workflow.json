@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p11_remove_invalid_active_governance_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P11 remove invalid workflow",
+  "objective": "Delete file .github/workflows/governance-validation-ci.yml\nCreate file governance/workflows_disabled/governance-validation-ci.disabled.yml.txt with content Disabled governance-validation-ci active workflow after repeated GitHub Actions YAML parse failures shown by operator screenshots. Active parser path .github/workflows/governance-validation-ci.yml is removed. Intended validation contract remains documented in governance reports and must be restored only through a safe writer that preserves YAML indentation.\nCreate file governance/state/P11_REMOVE_INVALID_ACTIVE_GOVERNANCE_WORKFLOW.json with content {\"id\":\"P11\",\"trace_id\":\"p11_remove_invalid_active_governance_workflow\",\"status\":\"completed\",\"release_pass\":false,\"problem\":\"GitHub Actions screenshots showed governance-validation-ci.yml remained invalid after RM04B JSON/YAML attempt\",\"change\":\"removed invalid active workflow file from .github/workflows and archived intent outside active parser path\",\"active_parser_clean_goal\":true,\"next\":\"P11B verify invalid active workflow removed\"}\nCreate file governance/reports/P11_REMOVE_INVALID_ACTIVE_GOVERNANCE_WORKFLOW.md with content # P11 | Remove invalid active governance workflow\nStatus: completed\nDate: 2026-06-04\n\n## Finding\nOperator screenshots showed that the active .github/workflows/governance-validation-ci.yml file was still invalid after RM04B. Therefore RM04/RM04B/RM03B/RM04C/RM05 cannot be treated as final working-state proof for the Actions parser.\n\n## Change\nThe invalid active workflow file was removed from .github/workflows. The intended validation contract is archived outside the active parser path until a safe YAML writer is available.\n\n## Gate decision\nRelease PASS is false. The immediate goal is active parser cleanliness, not restored validation CI.\n\n## Next\nP11B verify invalid active workflow removed.\nAppend to governance/AGENT_CONTEXT.md: \n## P11 completed | 2026-06-04\nRemoved invalid active .github/workflows/governance-validation-ci.yml after repeated GitHub Actions YAML parse failures shown in operator screenshots. Release PASS false until active parser cleanliness and validation restoration are proven. Next: P11B verify invalid active workflow removed.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p11_remove_invalid_active_governance_workflow.md",
+    "result_json": "governance/codex/results/p11_remove_invalid_active_governance_workflow.json"
+  },
+  "created_at": "2026-06-04T07:51:08.844Z"
+}
