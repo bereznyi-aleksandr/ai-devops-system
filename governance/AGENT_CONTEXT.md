@@ -1583,3 +1583,5 @@ No issue comments.
 - Added continuous-mode guard state to prevent report-only stops
 ### RM16 | AUTONOMOUS BACKLOG EXHAUSTED MARKER | 2026-06-04 | 06:28 (UTC+3)
 - Marked autonomous backlog exhausted except real external inputs and verified TZ2 inventory
+### RM17 | EXTERNAL INPUT PENDING QUEUE STATE | 2026-06-04 | 06:29 (UTC+3)
+-
