@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_exact_duplicate_path_diagnosis",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "TZ2 exact duplicate paths",
+  "objective": "Create file governance/state/TZ2_EXACT_DUPLICATE_PATH_DIAGNOSIS_REQUEST.json with content {\"created_at_utc3\":\"2026-06-04 | 06:04 (UTC+3)\",\"release_pass\":false,\"task\":\"diagnose exact non-canonical duplicate paths for SSOT artifacts\",\"canonical_paths\":[\"governance/registries/contours_registry.json\",\"governance/registries/object_passports.json\",\"governance/registries/providers_registry.json\",\"governance/policies/contour_provider_policy.json\",\"governance/policies/provider_failover_policy.json\",\"governance/schemas/managed_channel_schema.json\",\"governance/schemas/telegram_input_envelope_schema.json\",\"governance/mappings/telegram_to_managed_channel_mapping.json\"],\"required_output\":\"governance/state/TZ2_EXACT_DUPLICATE_PATH_DIAGNOSIS.json\",\"rule\":\"do not move files until exact non-canonical paths are listed\"}\nCreate file governance/state/TZ2_EXACT_DUPLICATE_PATH_DIAGNOSIS.json with content {\"created_at_utc3\":\"2026-06-04 | 06:04 (UTC+3)\",\"release_pass\":false,\"status\":\"diagnosis_requested_no_repo_listing_available_in_executor_pattern\",\"exact_non_canonical_paths\":[],\"blocker\":\"executor pattern can create/update/move known paths but cannot safely enumerate unknown duplicate paths without an executed repository scan\",\"next_action\":\"repair executor inventory capability or provide verified path inventory from repo state before Move file operations\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ2 | EXACT DUPLICATE PATH DIAGNOSIS | 2026-06-04 | 06:04 (UTC+3)\n- Requested exact duplicate path diagnosis and recorded fail-closed empty path state.\n- No Release PASS. Next action: repair inventory capability or verified path inventory before Move file operations.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_exact_duplicate_path_diagnosis.md",
+    "result_json": "governance/codex/results/tz2_exact_duplicate_path_diagnosis.json"
+  },
+  "created_at": "2026-06-04T03:34:00.663Z"
+}
