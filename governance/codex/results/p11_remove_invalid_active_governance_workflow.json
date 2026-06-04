@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "p11_remove_invalid_active_governance_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/workflows_disabled/governance-validation-ci.disabled.yml.txt",
+    "create:governance/state/P11_REMOVE_INVALID_ACTIVE_GOVERNANCE_WORKFLOW.json",
+    "create:governance/reports/P11_REMOVE_INVALID_ACTIVE_GOVERNANCE_WORKFLOW.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/workflows_disabled/governance-validation-ci.disabled.yml.txt",
+    "governance/state/P11_REMOVE_INVALID_ACTIVE_GOVERNANCE_WORKFLOW.json",
+    "governance/reports/P11_REMOVE_INVALID_ACTIVE_GOVERNANCE_WORKFLOW.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p11_remove_invalid_active_governance_workflow.txt"
+  ],
+  "commit_sha": "6a3352ba03ec0383ee46f618741eeb6413204aca",
+  "blocker": null,
+  "report_path": "governance/codex/results/p11_remove_invalid_active_governance_workflow.md",
+  "completed_at": "2026-06-04T07:51:21Z"
+}
