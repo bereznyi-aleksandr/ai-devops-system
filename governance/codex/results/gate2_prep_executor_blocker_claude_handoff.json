@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_executor_blocker_claude_handoff",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit_mailbox/gpt_to_claude/GATE2_PREP_RUNTIME_DIRECT_FIX_REQUEST.md",
+    "create:governance/state/GATE2_PREP_EXECUTOR_BLOCKER_CLAUDE_HANDOFF.json",
+    "create:governance/reports/GATE2_PREP_EXECUTOR_BLOCKER_CLAUDE_HANDOFF.md"
+  ],
+  "changed_files": [
+    "governance/audit_mailbox/gpt_to_claude/GATE2_PREP_RUNTIME_DIRECT_FIX_REQUEST.md",
+    "governance/state/GATE2_PREP_EXECUTOR_BLOCKER_CLAUDE_HANDOFF.json",
+    "governance/reports/GATE2_PREP_EXECUTOR_BLOCKER_CLAUDE_HANDOFF.md",
+    "governance/codex/proofs/gate2_prep_executor_blocker_claude_handoff.txt"
+  ],
+  "commit_sha": "ed5d9b04b7df1493f456befb9da3133bb76a6ea8",
+  "blocker": null,
+  "report_path": "governance/codex/results/gate2_prep_executor_blocker_claude_handoff.md",
+  "completed_at": "2026-06-04T15:39:43Z"
+}
