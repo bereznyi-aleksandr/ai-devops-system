@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm08_release_receipt_placeholder_ban",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/RM08_RELEASE_RECEIPT_PLACEHOLDER_BAN.json",
+    "create:governance/audit/RECEIPT_PLACEHOLDER_BAN.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/RM08_RELEASE_RECEIPT_PLACEHOLDER_BAN.json",
+    "governance/audit/RECEIPT_PLACEHOLDER_BAN.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm08_release_receipt_placeholder_ban.txt"
+  ],
+  "commit_sha": "dd8a510e24f7f9c343842bd8fb07c2f3a8aa1da8",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm08_release_receipt_placeholder_ban.md",
+  "completed_at": "2026-06-04T04:10:26Z"
+}
