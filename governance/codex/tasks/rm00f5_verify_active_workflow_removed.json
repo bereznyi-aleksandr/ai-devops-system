@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f5_verify_active_workflow_removed",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM00F5 workflow removed",
+  "objective": "Create file governance/state/RM00F5_ACTIVE_WORKFLOW_REMOVAL_VERIFICATION.json with content {\"created_at_utc3\":\"2026-06-04 | 06:38 (UTC+3)\",\"release_pass\":false,\"previous_fix_sha\":\"c860e31a781c053e3024316ea2a0fcf74353ab26\",\"evidence\":\"changed_files included .github/workflows/governance-validation-ci.yml and governance/workflows_disabled/governance-validation-ci, meaning active workflow was moved out of .github/workflows by executor\",\"remaining_risk\":\"GitHub UI can still show old failed runs created before the move; only a new run after c860e31 proves current state\",\"next_action\":\"RM00F6 create workflow-blocker post-fix monitor state\"}\nCreate file governance/audit/RM00F5_ACTIVE_WORKFLOW_REMOVAL_VERIFICATION.md with content # RM00F5 active workflow removal verification\n\nCreated: 2026-06-04 | 06:38 (UTC+3)\nRelease PASS: false\n\nEvidence: RM00F4 SHA c860e31a781c053e3024316ea2a0fcf74353ab26 changed `.github/workflows/governance-validation-ci.yml` and moved content to `governance/workflows_disabled/governance-validation-ci`.\n\nRisk: GitHub UI may still display old failed runs from before the move. Current-state verification requires observing a new run after RM00F4.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM00F5 | ACTIVE WORKFLOW REMOVAL VERIFICATION | 2026-06-04 | 06:38 (UTC+3)\n- Recorded RM00F4 evidence that active invalid workflow was moved out of .github/workflows.\n- No Release PASS. Next action: RM00F6 workflow-blocker post-fix monitor state.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00f5_verify_active_workflow_removed.md",
+    "result_json": "governance/codex/results/rm00f5_verify_active_workflow_removed.json"
+  },
+  "created_at": "2026-06-04T04:50:26.971Z"
+}
