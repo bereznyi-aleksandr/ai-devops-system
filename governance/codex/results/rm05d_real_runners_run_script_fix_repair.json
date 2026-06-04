@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05d_real_runners_run_script_fix_repair",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/runners/contour_lifecycle_runner.py",
+    "governance/runners/object_lifecycle_runner.py",
+    "governance/runners/managed_channel_consumer.py",
+    "governance/runners/kz1_runner_01.py",
+    "governance/runners/kz1_runner_02.py",
+    "governance/runners/kz1_runner_03.py",
+    "governance/runners/kz1_runner_04.py",
+    "governance/runners/kz1_runner_05.py",
+    "governance/runners/kz1_runner_06.py",
+    "governance/runners/kz1_runner_07.py",
+    "governance/runners/kz1_runner_08.py",
+    "governance/runners/kz1_runner_09.py",
+    "governance/runners/kz1_runner_10.py",
+    "governance/runners/kz1_runner_11.py",
+    "governance/runners/kz1_runner_12.py",
+    "governance/runners/kz1_runner_13.py",
+    "governance/runners/kz1_runner_14.py",
+    "governance/codex/proofs/rm05d_real_runners_run_script_fix_repair.txt"
+  ],
+  "commit_sha": "1c66d7c3758c8cd58416e49def58ae63f3357cad",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'SyntaxError' is not defined"
+  },
+  "report_path": "governance/codex/results/rm05d_real_runners_run_script_fix_repair.md",
+  "completed_at": "2026-06-04T14:55:17Z"
+}
