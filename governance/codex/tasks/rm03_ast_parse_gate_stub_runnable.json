@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm03_ast_parse_gate_stub_runnable",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-03 ast.parse gate",
+  "objective": "Create file governance/validation/stub_runnable_ast_gate.py with content import ast,json;from pathlib import Path;files=[str(p) for p in Path('governance').rglob('*.py')];[ast.parse(Path(f).read_text(encoding='utf-8')) for f in files];print(json.dumps({\"status\":\"PASS\",\"ast_parse_gate\":True,\"files\":files,\"release_pass\":False},ensure_ascii=False))\nCreate file governance/state/RM03_AST_PARSE_GATE_STUB_RUNNABLE.json with content {\"id\":\"RM-03\",\"trace_id\":\"rm03_ast_parse_gate_stub_runnable\",\"status\":\"completed\",\"release_pass\":false,\"validator\":\"governance/validation/stub_runnable_ast_gate.py\",\"rule\":\"STUB_RUNNABLE may be recorded only after ast.parse succeeds\",\"workflow_files_touched\":false,\"next\":\"RM-03B record RM-03 result and activate RM-04\"}\nCreate file governance/reports/RM03_AST_PARSE_GATE_STUB_RUNNABLE.md with content # RM-03 | ast.parse gate before STUB_RUNNABLE\nStatus: completed\nDate: 2026-06-04\n\nRule implemented: STUB_RUNNABLE may be recorded only after ast.parse succeeds. Validator: governance/validation/stub_runnable_ast_gate.py. Workflow lock respected: no .github/workflows files touched. Next: RM-03B record RM-03 result and activate RM-04.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm03_ast_parse_gate_stub_runnable.md",
+    "result_json": "governance/codex/results/rm03_ast_parse_gate_stub_runnable.json"
+  },
+  "created_at": "2026-06-04T11:31:49.230Z"
+}
