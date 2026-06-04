@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_runtime_move_create_repair",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runtime/minimal_governance_loop_runner.py",
+    "create:governance/state/gate2_minimal_loop_runtime_status.json",
+    "create:governance/state/GATE2_PREP_RUNTIME_MOVE_CREATE_REPAIR.json",
+    "create:governance/reports/GATE2_PREP_RUNTIME_MOVE_CREATE_REPAIR.md",
+    "move:governance/runtime/minimal_governance_loop_runner.py->governance/archive/minimal_governance_loop_runner_invalid_collapsed_2026-06-04"
+  ],
+  "changed_files": [
+    "governance/runtime/minimal_governance_loop_runner.py",
+    "governance/state/gate2_minimal_loop_runtime_status.json",
+    "governance/state/GATE2_PREP_RUNTIME_MOVE_CREATE_REPAIR.json",
+    "governance/reports/GATE2_PREP_RUNTIME_MOVE_CREATE_REPAIR.md",
+    "governance/runtime/minimal_governance_loop_runner.py",
+    "governance/archive/minimal_governance_loop_runner_invalid_collapsed_2026-06-04",
+    "governance/codex/proofs/gate2_prep_runtime_move_create_repair.txt"
+  ],
+  "commit_sha": "67ebf42780fa1d120fbc5b328237cb5e4ecfaf4c",
+  "blocker": null,
+  "report_path": "governance/codex/results/gate2_prep_runtime_move_create_repair.md",
+  "completed_at": "2026-06-04T15:36:38Z"
+}
