@@ -2,7 +2,6 @@ name: Governance Validation CI
 
 # DISABLED — valid stub. Enable after BEM-1285 implementation.
 # Fixed by Claude MCP 2026-06-04 (P12J handoff from GPT executor)
-# Previous content was corrupted by multiple append operations.
 
 on:
   workflow_dispatch:
@@ -13,3 +12,4 @@ jobs:
     steps:
       - name: Disabled
         run: echo "Governance Validation CI disabled. Enable after BEM-1285."
+{"name":"Governance Validation CI","on":{"workflow_dispatch":{}},"jobs":{"disabled":{"

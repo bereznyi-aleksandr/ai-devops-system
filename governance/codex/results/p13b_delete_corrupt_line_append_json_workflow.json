@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13b_delete_corrupt_line_append_json_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P13B_DELETE_CORRUPT_LINE_APPEND_JSON_WORKFLOW.json",
+    "append:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md",
+    "delete_line:.github/workflows/governance-validation-ci.yml"
+  ],
+  "changed_files": [
+    "governance/state/P13B_DELETE_CORRUPT_LINE_APPEND_JSON_WORKFLOW.json",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/codex/proofs/p13b_delete_corrupt_line_append_json_workflow.txt"
+  ],
+  "commit_sha": "1ee1b15bec7ab9b23bf4e0f8a99e61552030a1bc",
+  "blocker": null,
+  "report_path": "governance/codex/results/p13b_delete_corrupt_line_append_json_workflow.md",
+  "completed_at": "2026-06-04T08:29:37Z"
+}
