@@ -1,4 +1,4 @@
-{
+name: GCI
 
 on:
   workflow_dispatch:
@@ -7,5 +7,4 @@ jobs:
   disabled:
     runs-on: ubuntu-latest
     steps:
-      - name: Disabled
-{"name":"GCI","on":{"workflow_dispatch":{}},"jobs":{"disabled":{"
+      - run: echo disabled

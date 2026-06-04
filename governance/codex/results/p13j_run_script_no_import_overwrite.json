@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13j_run_script_no_import_overwrite",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/state/P13J_RUN_SCRIPT_NO_IMPORT_OVERWRITE.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p13j_run_script_no_import_overwrite.txt"
+  ],
+  "commit_sha": "c6c9c7ef81df887a80f9bd7e119ecf21c55103db",
+  "blocker": null,
+  "report_path": "governance/codex/results/p13j_run_script_no_import_overwrite.md",
+  "completed_at": "2026-06-04T09:22:10Z"
+}
