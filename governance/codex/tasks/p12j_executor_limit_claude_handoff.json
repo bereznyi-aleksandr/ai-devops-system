@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12j_executor_limit_claude_handoff",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P12J Claude handoff workflow fix",
+  "objective": "Create file governance/audit_mailbox/gpt_to_claude/P12J_WORKFLOW_DIRECT_FIX_REQUEST.md with content P12J request: Active .github/workflows/governance-validation-ci.yml remains invalid because Python executor patterns cannot safely delete or rewrite multiline workflow YAML. Required direct GitHub MCP action by Claude: replace the file with valid minimal workflow_dispatch-only YAML or remove the file completely without leaving an ARCHIVED marker. Current invalid evidence includes commits 45e9bcaa419d1c9310bda388fa392457be8727a9, 3de17cd7f2ec96c189e3d7bd07c82fa35b0a9117, 3d382793817af7fa9392ab0e02cb52d554cce5f1 and 0927e389d48d8abcd66f6cc66f698e8ec8aab902. No issue comments.\nCreate file governance/state/P12J_EXECUTOR_LIMIT_CLAUDE_HANDOFF.json with content {\"id\":\"P12J\",\"trace_id\":\"p12j_executor_limit_claude_handoff\",\"status\":\"completed\",\"release_pass\":false,\"blocker\":\"Python executor patterns cannot safely remove or multiline-rewrite .github/workflows/governance-validation-ci.yml; Delete and Move leave ARCHIVED marker; Create and Append collapse YAML; Replace is unsafe for JSON/YAML flow content\",\"action\":\"created Claude audit mailbox direct-fix request\",\"next\":\"wait for Claude direct MCP fix or implement safe executor write primitive\"}\nCreate file governance/reports/P12J_EXECUTOR_LIMIT_CLAUDE_HANDOFF.md with content # P12J | Executor limit and Claude handoff. Status: completed. Finding: active governance-validation-ci.yml remains invalid after multiple executor-only repairs. Root cause: current executor primitives cannot safely delete an active workflow file or write multiline YAML; Delete/Move leave ARCHIVED markers, Create/Append collapse YAML, Replace is unsafe for flow mappings. Action: created governance/audit_mailbox/gpt_to_claude/P12J_WORKFLOW_DIRECT_FIX_REQUEST.md for Claude direct MCP repair. Release PASS false.\nAppend to governance/AGENT_CONTEXT.md: \n## P12J completed | 2026-06-04\nExecutor limitation diagnosed for active workflow repair. Current GPT/Deno executor patterns cannot safely remove or rewrite .github/workflows/governance-validation-ci.yml. Claude direct MCP fix requested through audit mailbox. Release PASS false. Next: wait for Claude direct MCP fix or implement safe executor write primitive.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p12j_executor_limit_claude_handoff.md",
+    "result_json": "governance/codex/results/p12j_executor_limit_claude_handoff.json"
+  },
+  "created_at": "2026-06-04T08:13:11.054Z"
+}
