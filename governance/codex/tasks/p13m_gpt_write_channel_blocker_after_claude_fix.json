@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13m_gpt_write_channel_blocker_after_claude_fix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P13M GPT workflow blocker",
+  "objective": "Create file governance/state/P13M_GPT_WRITE_CHANNEL_BLOCKER_AFTER_CLAUDE_FIX.json with content {\"id\":\"P13M\",\"trace_id\":\"p13m_gpt_write_channel_blocker_after_claude_fix\",\"status\":\"completed\",\"release_pass\":false,\"blocker\":\"After Claude MCP fix, GPT/Deno executor attempts P13-P13L re-corrupted active governance-validation-ci.yml. Current GPT write channel cannot safely maintain active workflow YAML through Create/Append/Replace; Run script works only when exact newline syntax is used but latest remote workflow still requires direct verification and likely direct repair.\",\"evidence\":{\"claude_fix_sha\":\"3f13b16e03eec5ff6ce39c3420685fac3c7305cb\",\"p13j_custom_script_ops\":\"custom_script applied but remote workflow still invalid by raw verification\",\"p13l_sha_reported\":\"14f4a1a10b3dfca8a86eacf33f5eb5ba51e1c963\"},\"next\":\"pause GPT modifications to active workflow file; continue only non-workflow roadmap tasks or wait for direct safe repair of active workflow\"}\nCreate file governance/reports/P13M_GPT_WRITE_CHANNEL_BLOCKER_AFTER_CLAUDE_FIX.md with content # P13M | GPT write-channel blocker after Claude fix\nStatus: completed\nDate: 2026-06-04\n\n## Finding\nClaude MCP direct fix SHA `3f13b16e03eec5ff6ce39c3420685fac3c7305cb` repaired the active workflow. Subsequent GPT/Deno executor repair attempts re-touched `.github/workflows/governance-validation-ci.yml` and remote raw verification still shows invalid one-line workflow content.\n\n## Blocker\nGPT must not continue modifying the active workflow file through unsafe executor primitives. The safe approach is direct full-file rewrite by a channel that preserves exact bytes, or executor implementation repair before touching `.github/workflows/*.yml` again.\n\n## Gate status\nRelease PASS is false. Deno/Codex contour remains able to create tasks and commits, but the active governance workflow file is not proven clean after GPT attempts.\n\n## Next\nContinue non-workflow roadmap tasks only, or wait for direct safe workflow repair.\nAppend to governance/AGENT_CONTEXT.md: \n## P13M completed | 2026-06-04\nRecorded GPT write-channel blocker after Claude fix: GPT/Deno executor attempts re-corrupted active governance-validation-ci.yml; do not touch active workflow through unsafe primitives. Release PASS false. Next: continue non-workflow roadmap tasks only, or wait for direct safe workflow repair.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p13m_gpt_write_channel_blocker_after_claude_fix.md",
+    "result_json": "governance/codex/results/p13m_gpt_write_channel_blocker_after_claude_fix.json"
+  },
+  "created_at": "2026-06-04T09:25:40.636Z"
+}
