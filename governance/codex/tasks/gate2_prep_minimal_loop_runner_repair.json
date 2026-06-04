@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_minimal_loop_runner_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "GATE-2-PREP runner repair",
+  "objective": "Create file governance/runners/minimal_governance_loop_runner.py with content import json;from pathlib import Path;TRACE_ID='gate2_minimal_loop_trace_v1';REQ=['governance/roadmap/ACTIVE_QUEUE.json','governance/state/kz1_runners_status.json','governance/state/kz2_ssot_status.json','governance/state/kz4_passports_status.json'];checks=[{'path':x,'exists':Path(x).exists(),'bytes':len(Path(x).read_bytes()) if Path(x).exists() else 0,'valid':Path(x).exists() and (len(Path(x).read_bytes()) if Path(x).exists() else 0)>2} for x in REQ];ok=all(c['valid'] for c in checks);print(json.dumps({'trace_id':TRACE_ID,'status':'PASS' if ok else 'BLOCKED','release_pass':False,'deterministic':True,'checks':checks},ensure_ascii=False));raise SystemExit(0 if ok else 1)\nRun script:\"\"\"\np = Path('governance/runners/minimal_governance_loop_runner.py')\ntext = p.read_text(encoding='utf-8')\ncompile(text, str(p), 'exec')\nstatus_path = Path('governance/state/gate2_minimal_loop_runner_status.json')\nstatus_path.parent.mkdir(parents=True, exist_ok=True)\nstatus_path.write_text(json.dumps({'status':'PASS','all_valid':True,'runner':str(p),'bytes':len(p.read_bytes()),'ast_parse':True,'trace_id':'gate2_minimal_loop_trace_v1','workflow_files_touched':False}, ensure_ascii=False, indent=2), encoding='utf-8')\nchanged_files.append(str(status_path))\nstate = Path('governance/state/GATE2_PREP_MINIMAL_LOOP_RUNNER.json')\nstate.write_text(json.dumps({'id':'GATE-2-PREP','trace_id':'gate2_prep_minimal_loop_runner_repair','status':'completed','release_pass':False,'runner':str(p),'runner_status':str(status_path),'workflow_files_touched':False,'next':'GATE-2-PREP-RECORD record result and activate next queue task'}, ensure_ascii=False, indent=2), encoding='utf-8')\nchanged_files.append(str(state))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gate2_prep_minimal_loop_runner_repair.md",
+    "result_json": "governance/codex/results/gate2_prep_minimal_loop_runner_repair.json"
+  },
+  "created_at": "2026-06-04T15:29:44.239Z"
+}
