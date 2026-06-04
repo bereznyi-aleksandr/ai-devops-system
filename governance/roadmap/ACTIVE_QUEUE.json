@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:14:00Z",
+  "updated_at": "2026-06-04T15:15:00Z",
   "source": "Claude External Audit — KZ-2 partial, KZ-4 not done",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -27,7 +27,7 @@
     {
       "id": "KZ-4",
       "title": "Восстановить object_passports.json и release_proof_manifest.json",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 2,
       "depends_on": [
         "KZ-2"
@@ -35,9 +35,12 @@
       "touch_workflows": false,
       "detail": "Оба файла усечены. Записать полное содержимое через Run script с Path.write_text().",
       "example_objective": "Run script:\n\"\"\"\nimport json\nfrom pathlib import Path\n\npassports = {\"version\": \"1.0\", \"date\": \"2026-06-04\", \"objects\": [{\"id\": \"OBJ-GD-001\", \"type\": \"general_director\", \"elements\": [\"EL-CUR-GD-001\", \"CNT-GD-001\"]}, {\"id\": \"OBJ-DIR-001\", \"type\": \"director\", \"elements\": [\"EL-CUR-DIR-001\"]}, {\"id\": \"OBJ-WRK-001\", \"type\": \"worker\", \"elements\": [\"WRK-C1\", \"WRK-C2\", \"WRK-C3\"]}]}\nPath('governance/objects/object_passports.json').write_text(json.dumps(passports, indent=2))\nchanged_files.append('governance/objects/object_passports.json')\n\nmanifest = {\"version\": \"1.0\", \"date\": \"2026-06-04\", \"commit_sha\": None, \"release_pass\": False, \"note\": \"commit_sha=null until CI verified gate\"}\nPath('governance/release/release_proof_manifest.json').write_text(json.dumps(manifest, indent=2))\nchanged_files.append('governance/release/release_proof_manifest.json')\n\nPath('governance/state/kz4_passports_status.json').write_text(json.dumps({\"status\": \"PASS\", \"restored\": True}, indent=2))\nchanged_files.append('governance/state/kz4_passports_status.json')\n\"\"\"\nNo issue comments.",
-      "proof_required": "governance/state/kz4_passports_status.json с restored=true И оба файла > 100 байт И валидный JSON"
+      "proof_required": "governance/state/kz4_passports_status.json с restored=true И оба файла > 100 байт И валидный JSON",
+      "sha": "08f859bd74bb6a898b34ca1d7794a7251b6c7085",
+      "completed_at": "2026-06-04T15:13:38Z",
+      "passports_manifest_repaired": true
     }
   ],
-  "queue_state": "HAS_PENDING_TASKS",
-  "next_action": "execute first PENDING task: KZ-4"
+  "queue_state": "EMPTY_NO_PENDING_TASKS",
+  "next_action": "await operator or Claude to add next tasks; do not invent tasks"
 }

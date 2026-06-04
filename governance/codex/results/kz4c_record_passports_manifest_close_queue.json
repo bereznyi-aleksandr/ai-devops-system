@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz4c_record_passports_manifest_close_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/roadmap/ACTIVE_QUEUE.json",
+    "governance/logs/execution_log.jsonl",
+    "governance/state/KZ4C_RECORD_PASSPORTS_MANIFEST_CLOSE_QUEUE.json",
+    "governance/reports/KZ4C_RECORD_PASSPORTS_MANIFEST_CLOSE_QUEUE.md",
+    "governance/codex/proofs/kz4c_record_passports_manifest_close_queue.txt"
+  ],
+  "commit_sha": "6633c2dd66872cc2643e4228e6664190dbc2bf7a",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz4c_record_passports_manifest_close_queue.md",
+  "completed_at": "2026-06-04T15:14:16Z"
+}
