@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05d_status_validation_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-05D status validation repair",
+  "objective": "Run script:\n\"\"\"\nNL = '\\n'\nbase = Path('governance/runners')\nrunner_names = ['contour_lifecycle_runner', 'object_lifecycle_runner', 'managed_channel_consumer']\nfor i in range(1, 15):\n    runner_names.append('kz1_runner_' + str(i).zfill(2))\npaths = [str(base / (name + '.py')) for name in runner_names]\nchecks = []\nall_valid = True\nfor item in paths:\n    p = Path(item)\n    exists = p.exists()\n    text = p.read_text(encoding='utf-8') if exists else ''\n    size = len(p.read_bytes()) if exists else 0\n    parsed = False\n    if exists:\n        try:\n            compile(text, str(p), 'exec')\n            parsed = True\n        except:\n            parsed = False\n    valid = exists and size > 50 and parsed and 'def main' in text and '__main__' in text\n    if not valid:\n        all_valid = False\n    checks.append({'path': item, 'exists': exists, 'bytes': size, 'ast_parse': parsed, 'has_main': 'def main' in text, 'has_dunder_main': '__main__' in text, 'valid': valid})\nstatus_path = Path('governance/state/kz1_runners_status.json')\nstatus_path.parent.mkdir(parents=True, exist_ok=True)\nstatus_obj = {'status': 'PASS' if all_valid else 'BLOCKED', 'all_valid': all_valid, 'runner_count': len(paths), 'min_bytes_rule': 50, 'ast_parse_required': True, 'checks': checks, 'workflow_files_touched': False}\nstatus_path.write_text(json.dumps(status_obj, ensure_ascii=False, indent=2) + NL, encoding='utf-8')\nchanged_files.append(str(status_path))\nstate = Path('governance/state/RM05D_REAL_RUNNERS_RUN_SCRIPT_FIX.json')\nstate_obj = {'id': 'RM-05D', 'trace_id': 'rm05d_status_validation_repair', 'status': 'completed' if all_valid else 'blocked', 'release_pass': False, 'runner_write_sha': '1c66d7c3758c8cd58416e49def58ae63f3357cad', 'all_valid': all_valid, 'runner_status': str(status_path), 'runner_count': len(paths), 'workflow_files_touched': False, 'next': 'RM-05E record RM-05D result in ACTIVE_QUEUE and execution_log'}\nstate.write_text(json.dumps(state_obj, ensure_ascii=False, indent=2) + NL, encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/RM05D_REAL_RUNNERS_RUN_SCRIPT_FIX.md')\nreport_lines = ['# RM-05D | Real runners Run script fix', 'Status: ' + ('completed' if all_valid else 'blocked'), 'Date: 2026-06-04', '', '## Result', 'Validated runner rewrite SHA 1c66d7c3758c8cd58416e49def58ae63f3357cad.', '', '## Validation', 'Every runner must be >50 bytes, compile/ast-parse clean, contain def main, and contain __main__.', '', 'Runner status: governance/state/kz1_runners_status.json', '', 'Workflow lock respected. No .github/workflows files touched.', '', 'Next: RM-05E record RM-05D result in ACTIVE_QUEUE and execution_log.']\nreport.write_text(NL.join(report_lines) + NL, encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm05d_status_validation_repair.md",
+    "result_json": "governance/codex/results/rm05d_status_validation_repair.json"
+  },
+  "created_at": "2026-06-04T14:55:44.244Z"
+}
