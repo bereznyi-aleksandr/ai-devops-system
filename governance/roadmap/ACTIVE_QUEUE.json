@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T11:32:00Z",
+  "updated_at": "2026-06-04T11:35:00Z",
   "source": "Updated Roadmap / Claude audit pre-KZ-1 block",
   "max_active_tasks": 7,
   "policy": {
@@ -25,18 +25,20 @@
     {
       "id": "RM-02",
       "title": "Fail-closed для усечённых .py (len < 50 байт → BLOCKED)",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": 2,
       "depends_on": [
         "RM-01"
       ],
       "criteria": "Python runner/file validation blocks truncated .py files shorter than 50 bytes",
-      "touch_workflows": false
+      "touch_workflows": false,
+      "sha": "e2a382ea6b283cc62ef5a621f36098f3efef46b8",
+      "completed_at": "2026-06-04T11:30:32Z"
     },
     {
       "id": "RM-03",
       "title": "ast.parse gate перед фиксацией STUB_RUNNABLE",
-      "status": "WAITING_DEPENDS",
+      "status": "PENDING",
       "priority": 3,
       "depends_on": [
         "RM-01",
