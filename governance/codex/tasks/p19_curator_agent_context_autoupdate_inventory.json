@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p19_curator_agent_context_autoupdate_inventory",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "P19 curator context inventory",
+  "objective": "Run script:\n\"\"\"\nroots = [Path('governance'), Path('scripts'), Path('tools')]\nfindings = []\nfor root in roots:\n    if not root.exists():\n        continue\n    for path in root.rglob('*'):\n        if not path.is_file():\n            continue\n        if path.suffix.lower() not in ['.py', '.js', '.ts', '.json', '.md']:\n            continue\n        text = path.read_text(encoding='utf-8', errors='ignore')\n        if 'AGENT_CONTEXT' in text or 'curator-hourly' in text or 'hourly' in text:\n            findings.append(str(path))\nstate = Path('governance/state/P19_CURATOR_AGENT_CONTEXT_AUTOUPDATE_INVENTORY.json')\nstate.parent.mkdir(parents=True, exist_ok=True)\nstate.write_text(json.dumps({'id':'P19','trace_id':'p19_curator_agent_context_autoupdate_inventory','status':'completed','release_pass':False,'finding_count':len(findings),'findings':findings[:100],'workflow_files_touched':False,'next':'P19B curator AGENT_CONTEXT autoupdate plan'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/P19_CURATOR_AGENT_CONTEXT_AUTOUPDATE_INVENTORY.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nreport.write_text('# P19 | Curator AGENT_CONTEXT autoupdate inventory\\nStatus: completed\\nDate: 2026-06-04\\n\\nCandidate files mentioning AGENT_CONTEXT, curator-hourly or hourly:\\n\\n' + '\\n'.join('- ' + f for f in findings[:100]) + '\\n\\nWorkflow lock respected; no .github/workflows files touched.\\n\\nNext: P19B curator AGENT_CONTEXT autoupdate plan.\\n', encoding='utf-8')\nchanged_files.append(str(report))\nctx = Path('governance/AGENT_CONTEXT.md')\nif ctx.exists():\n    ctx.write_text(ctx.read_text(encoding='utf-8').rstrip() + '\\n## P19 completed | 2026-06-04\\nCurator AGENT_CONTEXT autoupdate inventory completed. Candidate count: ' + str(len(findings)) + '. Workflow lock respected: no .github/workflows files touched. Next: P19B curator AGENT_CONTEXT autoupdate plan.\\n', encoding='utf-8')\n    changed_files.append(str(ctx))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p19_curator_agent_context_autoupdate_inventory.md",
+    "result_json": "governance/codex/results/p19_curator_agent_context_autoupdate_inventory.json"
+  },
+  "created_at": "2026-06-04T10:17:02.671Z"
+}
