@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p24_continuous_execution_gap_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P24 execution gap record",
+  "objective": "Create file governance/state/P24_CONTINUOUS_EXECUTION_GAP_RECORD.json with content {\"id\":\"P24\",\"trace_id\":\"p24_continuous_execution_gap_record\",\"status\":\"completed\",\"release_pass\":false,\"finding\":\"GPT stopped after P23B despite next non-workflow roadmap task being known; this violates anti-stop contract and P17/P17B guard\",\"correction\":\"record gap and continue immediately with non-workflow roadmap tasks\",\"workflow_files_touched\":false,\"previous_step\":{\"id\":\"P23B\",\"sha\":\"51fbfbf01fb47696a1d35af77a0316d840bf58ce\"},\"next\":\"P24B validate continuous execution gap record\"}\nCreate file governance/reports/P24_CONTINUOUS_EXECUTION_GAP_RECORD.md with content # P24 | Continuous execution gap record\nStatus: completed\nDate: 2026-06-04\n\n## Finding\nGPT stopped after P23B even though AGENT_CONTEXT contained a next non-workflow roadmap instruction. This violates the anti-stop contract and the repository-backed P17/P17B guard.\n\n## Correction\nThe gap is recorded as SHA-backed evidence and roadmap execution continues immediately in non-workflow scope.\n\n## Lock\nWorkflow lock respected. No `.github/workflows/*.yml` files touched.\n\n## Next\nP24B validate continuous execution gap record.\nAppend to governance/AGENT_CONTEXT.md: \n## P24 completed | 2026-06-04\nContinuous execution gap recorded: GPT stopped after P23B despite known next non-workflow roadmap task. Workflow lock respected: no .github/workflows files touched. Next: P24B validate continuous execution gap record.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p24_continuous_execution_gap_record.md",
+    "result_json": "governance/codex/results/p24_continuous_execution_gap_record.json"
+  },
+  "created_at": "2026-06-04T10:32:18.181Z"
+}
