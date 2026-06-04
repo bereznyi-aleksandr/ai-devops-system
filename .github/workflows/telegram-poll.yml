@@ -1,9 +1,114 @@
-# DISABLED
-name: DISABLED
+name: Telegram Long Poll
+
 on:
+  schedule:
+    - cron: '* * * * *'  # every minute
   workflow_dispatch:
+
+concurrency:
+  group: telegram-poll
+  cancel-in-progress: true
+
 jobs:
-  disabled:
+  poll:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
-      - run: echo "DISABLED"
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Poll Telegram and write to inbox
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ALLOWED_CHAT_ID: ${{ secrets.ALLOWED_CHAT_ID }}
+        run: |
+          python3 << 'PYEOF'
+          import os, json, urllib.request, urllib.error
+          from pathlib import Path
+
+          token      = os.environ["TELEGRAM_BOT_TOKEN"]
+          allowed_id = os.environ.get("ALLOWED_CHAT_ID", "601442777")
+          offset_file = Path("governance/telegram/poll_offset.txt")
+          inbox_file  = Path("governance/telegram/inbox.jsonl")
+
+          # Read last offset
+          offset = 0
+          if offset_file.exists():
+              try:
+                  offset = int(offset_file.read_text().strip())
+              except:
+                  offset = 0
+
+          # Get updates from Telegram
+          url = f"https://api.telegram.org/bot{token}/getUpdates?offset={offset}&limit=100&timeout=0"
+          try:
+              with urllib.request.urlopen(url, timeout=10) as resp:
+                  data = json.loads(resp.read())
+          except Exception as e:
+              print(f"Telegram API error: {e}")
+              exit(0)
+
+          if not data.get("ok"):
+              print(f"Telegram error: {data}")
+              exit(0)
+
+          updates = data.get("result", [])
+          if not updates:
+              print("No new messages")
+              exit(0)
+
+          # Filter messages from allowed chat
+          new_entries = []
+          max_update_id = offset
+          for upd in updates:
+              uid = upd["update_id"]
+              max_update_id = max(max_update_id, uid)
+              msg = upd.get("message")
+              if not msg:
+                  continue
+              chat_id = str(msg["chat"]["id"])
+              if chat_id != allowed_id:
+                  print(f"Skipped message from chat {chat_id}")
+                  continue
+              entry = {
+                  "ts":         msg.get("date"),
+                  "update_id":  uid,
+                  "chat_id":    chat_id,
+                  "message_id": str(msg["message_id"]),
+                  "text":       msg.get("text", ""),
+                  "source":     "telegram_poll"
+              }
+              new_entries.append(entry)
+              print(f"Message: {entry['text'][:80]}")
+
+          if not new_entries:
+              # Still update offset to avoid reprocessing
+              offset_file.parent.mkdir(parents=True, exist_ok=True)
+              offset_file.write_text(str(max_update_id + 1))
+              print("No messages from allowed chat, offset updated")
+              exit(0)
+
+          # Append to inbox
+          inbox_file.parent.mkdir(parents=True, exist_ok=True)
+          with inbox_file.open("a") as f:
+              for entry in new_entries:
+                  f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+          # Update offset
+          offset_file.write_text(str(max_update_id + 1))
+
+          print(f"Written {len(new_entries)} messages to inbox")
+          PYEOF
+
+      - name: Commit inbox updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/telegram/inbox.jsonl governance/telegram/poll_offset.txt
+          git diff --staged --quiet && echo "Nothing to commit" || \
+            git commit -m "telegram: poll update $(date -u +%Y-%m-%dT%H:%M:%SZ)" && \
+            git push
