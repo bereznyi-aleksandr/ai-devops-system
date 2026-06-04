@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f9_disabled_workflows_inventory",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/RM00F9_DISABLED_WORKFLOWS_INVENTORY.json",
+    "create:governance/reports/RM00F9_DISABLED_WORKFLOWS_INVENTORY.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/RM00F9_DISABLED_WORKFLOWS_INVENTORY.json",
+    "governance/reports/RM00F9_DISABLED_WORKFLOWS_INVENTORY.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00f9_disabled_workflows_inventory.txt"
+  ],
+  "commit_sha": "96ba884a556e36e441d3aa92fd3e6449f39ba03d",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00f9_disabled_workflows_inventory.md",
+  "completed_at": "2026-06-04T05:22:21Z"
+}

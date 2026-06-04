@@ -1603,3 +1603,5 @@ Fixed active governance-validation-ci workflow placeholder to valid workflow_dis
 Roadmap status and remediation report
 ## RM00F8 completed | 2026-06-04
 Workflow parse-clean evidence recorded after RM00F6 SHA 0ad59153a727f34befea0c2b9002aebfd9f13ae0
+## RM00F9 completed | 2026-06-04
+Disabled workflows inventory recorded
