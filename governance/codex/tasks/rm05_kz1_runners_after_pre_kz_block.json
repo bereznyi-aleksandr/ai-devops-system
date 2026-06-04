@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05_kz1_runners_after_pre_kz_block",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-05 KZ-1 runners",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'RM-05':\n        task['status'] = 'IN_PROGRESS'\nqueue['updated_at'] = '2026-06-04T11:38:00Z'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nbase = Path('governance/runners')\nbase.mkdir(parents=True, exist_ok=True)\nrunners = []\nrepaired = []\nfor i in range(1, 15):\n    p = base / ('kz1_runner_' + str(i).zfill(2) + '.py')\n    runners.append(str(p))\n    required = \"RUNNER_ID='kz1_runner_\" + str(i).zfill(2) + \"'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\\n\"\n    if (not p.exists()) or len(p.read_bytes()) < 50:\n        p.write_text(required, encoding='utf-8')\n        changed_files.append(str(p))\n        repaired.append(str(p))\nmanifest = Path('governance/runners/KZ1_RUNNER_MANIFEST.json')\nmanifest.write_text(json.dumps({'id':'RM-05','runner_count':14,'runners':runners,'pre_kz_dependencies_done':['RM-01','RM-02','RM-03','RM-04'],'workflow_files_touched':False}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(manifest))\nstate = Path('governance/state/RM05_KZ1_RUNNERS_AFTER_PRE_KZ_BLOCK.json')\nstate.write_text(json.dumps({'id':'RM-05','trace_id':'rm05_kz1_runners_after_pre_kz_block','status':'completed','release_pass':False,'runner_count':14,'runners':runners,'repaired':repaired,'pre_kz_dependencies':['RM-01','RM-02','RM-03','RM-04'],'workflow_files_touched':False,'next':'RM-05B record RM-05 result and close queue'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/RM05_KZ1_RUNNERS_AFTER_PRE_KZ_BLOCK.md')\nreport.write_text('# RM-05 | KZ-1 runners skeleton repair after pre-KZ block\\nStatus: completed\\nDate: 2026-06-04\\n\\n## Dependencies\\nRM-01..RM-04 are complete, so KZ-1 runner skeleton scope can be validated in the updated roadmap order.\\n\\n## Result\\n14 runner skeleton files are present under governance/runners and listed in governance/runners/KZ1_RUNNER_MANIFEST.json. Repaired files: ' + json.dumps(repaired, ensure_ascii=False) + '\\n\\n## Workflow lock\\nRespected. No .github/workflows files touched.\\n\\n## Next\\nRM-05B record RM-05 result and close queue.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm05_kz1_runners_after_pre_kz_block.md",
+    "result_json": "governance/codex/results/rm05_kz1_runners_after_pre_kz_block.json"
+  },
+  "created_at": "2026-06-04T11:34:49.728Z"
+}
