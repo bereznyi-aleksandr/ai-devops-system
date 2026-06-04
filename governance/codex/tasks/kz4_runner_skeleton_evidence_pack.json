@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz4_runner_skeleton_evidence_pack",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-4 runner evidence pack",
+  "objective": "Create file governance/reports/KZ4_RUNNER_SKELETON_EVIDENCE_PACK.md with content # KZ-4 | Runner skeleton evidence pack\nStatus: completed\nDate: 2026-06-04\n\n## Scope\nKZ-1 runner skeleton repair after workflow lock.\n\n## Evidence chain\n- P14 workflow lock rules: 3d8e1a6a3fac1bb9767caaa05e20b5aaa56e1b46\n- KZ-1 runner skeleton repair: 5968ef5eceb78918fe4ee0d32aa1dfa0b47eadfa\n- KZ-1B runner skeleton validation: e4c41a00945da7988fbc72bc958a5f15a25024d8\n- KZ-2 runner manifest: 4456f81f1db6923a0820e6dfc98aeaa249843fd0\n- KZ-3 runner manifest validation evidence: 921ee46b89151bf2bc370a24481242069b361a46\n\n## Result\n14 runner skeleton files are present under governance/runners and listed by manifest. No .github/workflows files were touched in KZ-1 through KZ-4.\n\n## Gate decision\nKZ runner skeleton scope is PASS. Workflow lock remains active.\nCreate file governance/state/KZ4_RUNNER_SKELETON_EVIDENCE_PACK.json with content {\"id\":\"KZ-4\",\"trace_id\":\"kz4_runner_skeleton_evidence_pack\",\"status\":\"completed\",\"release_pass\":true,\"scope\":\"KZ runner skeleton repair\",\"workflow_lock_respected\":true,\"evidence_chain\":[{\"id\":\"P14\",\"sha\":\"3d8e1a6a3fac1bb9767caaa05e20b5aaa56e1b46\"},{\"id\":\"KZ-1\",\"sha\":\"5968ef5eceb78918fe4ee0d32aa1dfa0b47eadfa\"},{\"id\":\"KZ-1B\",\"sha\":\"e4c41a00945da7988fbc72bc958a5f15a25024d8\"},{\"id\":\"KZ-2\",\"sha\":\"4456f81f1db6923a0820e6dfc98aeaa249843fd0\"},{\"id\":\"KZ-3\",\"sha\":\"921ee46b89151bf2bc370a24481242069b361a46\"}],\"next\":\"read AGENT_CONTEXT.md for next non-workflow roadmap task\"}\nAppend to governance/AGENT_CONTEXT.md: \n## KZ-4 completed | 2026-06-04\nKZ runner skeleton evidence pack completed. PASS for KZ runner skeleton scope. Evidence chain: P14 3d8e1a6a3fac1bb9767caaa05e20b5aaa56e1b46; KZ-1 5968ef5eceb78918fe4ee0d32aa1dfa0b47eadfa; KZ-1B e4c41a00945da7988fbc72bc958a5f15a25024d8; KZ-2 4456f81f1db6923a0820e6dfc98aeaa249843fd0; KZ-3 921ee46b89151bf2bc370a24481242069b361a46. Workflow lock remains active. Next: read AGENT_CONTEXT.md for next non-workflow roadmap task.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz4_runner_skeleton_evidence_pack.md",
+    "result_json": "governance/codex/results/kz4_runner_skeleton_evidence_pack.json"
+  },
+  "created_at": "2026-06-04T10:02:15.439Z"
+}
