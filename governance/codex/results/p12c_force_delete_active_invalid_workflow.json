@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12c_force_delete_active_invalid_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P12C_FORCE_DELETE_ACTIVE_INVALID_WORKFLOW.json",
+    "create:governance/reports/P12C_FORCE_DELETE_ACTIVE_INVALID_WORKFLOW.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P12C_FORCE_DELETE_ACTIVE_INVALID_WORKFLOW.json",
+    "governance/reports/P12C_FORCE_DELETE_ACTIVE_INVALID_WORKFLOW.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p12c_force_delete_active_invalid_workflow.txt"
+  ],
+  "commit_sha": "880887757b58b5b532f803d06938be3b8f548390",
+  "blocker": null,
+  "report_path": "governance/codex/results/p12c_force_delete_active_invalid_workflow.md",
+  "completed_at": "2026-06-04T07:59:11Z"
+}
