@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05e_record_real_runner_fix_close_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-05E record real fix",
+  "objective": "Run script:\n\"\"\"\nNL = '\\n'\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'RM-05':\n        task['status'] = 'DONE'\n        task['sha'] = '571ed3db3cb321889e9234e29a47d0c369cd7b12'\n        task['runner_write_sha'] = '1c66d7c3758c8cd58416e49def58ae63f3357cad'\n        task['validation_sha'] = '571ed3db3cb321889e9234e29a47d0c369cd7b12'\n        task['completed_at'] = '2026-06-04T14:55:59Z'\n        task['audit_reopen_resolved'] = True\nqueue['updated_at'] = '2026-06-04T14:57:00Z'\nqueue['queue_state'] = 'EMPTY_NO_PENDING_TASKS'\nqueue['next_action'] = 'await operator or Claude to add next tasks; do not invent tasks'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + NL, encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nlog_path.parent.mkdir(parents=True, exist_ok=True)\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nlines = [\n    json.dumps({'date':'2026-06-04T14:55:17Z','id':'RM-05D-WRITE','trace_id':'rm05d_real_runners_run_script_fix_repair','sha':'1c66d7c3758c8cd58416e49def58ae63f3357cad','status':'runner_files_written_but_status_task_failed_on_validation_exception','workflow_files_touched':False}, ensure_ascii=False),\n    json.dumps({'date':'2026-06-04T14:55:59Z','id':'RM-05D','trace_id':'rm05d_status_validation_repair','sha':'571ed3db3cb321889e9234e29a47d0c369cd7b12','status':'done','all_valid':True,'workflow_files_touched':False}, ensure_ascii=False)\n]\nfor line in lines:\n    if line not in existing:\n        existing += line + NL\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/RM05E_RECORD_REAL_RUNNER_FIX_CLOSE_QUEUE.json')\nstate_obj = {'id':'RM-05E','trace_id':'rm05e_record_real_runner_fix_close_queue','status':'completed','release_pass':True,'recorded_step':'RM-05D','runner_write_sha':'1c66d7c3758c8cd58416e49def58ae63f3357cad','validation_sha':'571ed3db3cb321889e9234e29a47d0c369cd7b12','queue_state':'EMPTY_NO_PENDING_TASKS','workflow_files_touched':False,'next':'ACTIVE_QUEUE empty; do not invent tasks'}\nstate.write_text(json.dumps(state_obj, ensure_ascii=False, indent=2) + NL, encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/RM05E_RECORD_REAL_RUNNER_FIX_CLOSE_QUEUE.md')\nreport_lines = ['# RM-05E | Record real runner fix and close queue', 'Status: completed', 'Date: 2026-06-04', '', 'RM-05D runner files were written in SHA 1c66d7c3758c8cd58416e49def58ae63f3357cad. RM-05D validation/status was completed in SHA 571ed3db3cb321889e9234e29a47d0c369cd7b12.', '', 'ACTIVE_QUEUE has no PENDING tasks. Workflow lock respected. No .github/workflows files touched.', '', 'Next: queue empty; do not invent tasks.']\nreport.write_text(NL.join(report_lines) + NL, encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm05e_record_real_runner_fix_close_queue.md",
+    "result_json": "governance/codex/results/rm05e_record_real_runner_fix_close_queue.json"
+  },
+  "created_at": "2026-06-04T14:56:42.745Z"
+}
