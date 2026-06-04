@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm01_working_baseline_aggregate_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_working_baseline_aggregate.py",
+    "create:tests/governance/test_working_baseline_aggregate_validator.py",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_working_baseline_aggregate.py",
+    "tests/governance/test_working_baseline_aggregate_validator.py",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm01_working_baseline_aggregate_validator.txt"
+  ],
+  "commit_sha": "9eadfe93a8237db187f5fe4429597e8ee0778a2d",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm01_working_baseline_aggregate_validator.md",
+  "completed_at": "2026-06-04T03:53:07Z"
+}

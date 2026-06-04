@@ -1549,3 +1549,5 @@ No issue comments.
 - Recorded current working-baseline checkpoint and remaining blockers
 ### OPERATOR | CONCISE HANDOFF SUMMARY | 2026-06-04 | 06:11 (UTC+3)
 -
+### RM01 | WORKING BASELINE AGGREGATE VALIDATOR | 2026-06-04 | 06:12 (UTC+3)
+- Added aggregate validator for working-baseline files and test
