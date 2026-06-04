@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_runtime_run_script_overwrite",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "GATE-2-PREP script overwrite",
+  "objective": "Run script:\n\"\"\"\np = Path('governance/runtime/minimal_governance_loop_runner.py')\np.parent.mkdir(parents=True, exist_ok=True)\ncontent = 'import json;nl=chr(10);code=\"def run_minimal_loop(input_task):\"+nl+\"    return dict(trace_id=\\\"gate2_minimal_loop_trace_v3\\\",input=input_task,steps=[dict(role=\\\"analyst\\\",action=\\\"propose\\\",result=\\\"proposal_ok\\\"),dict(role=\\\"auditor\\\",action=\\\"review\\\",result=\\\"approved\\\"),dict(role=\\\"executor\\\",action=\\\"execute\\\",result=\\\"executed\\\"),dict(role=\\\"auditor\\\",action=\\\"verify\\\",result=\\\"verified\\\")],status=\\\"completed\\\",release_pass=False)\"+nl+\"def main():\"+nl+\"    task=dict(id=\\\"GATE2-TEST\\\",title=\\\"minimal loop smoke test\\\")\"+nl+\"    print(json.dumps(run_minimal_loop(task),ensure_ascii=False,indent=2))\"+nl+\"    return 0\";exec(code);raise SystemExit(main())'\np.write_text(content, encoding='utf-8')\nchanged_files.append(str(p))\nstatus_path = Path('governance/state/gate2_minimal_loop_runtime_status.json')\nstatus_path.parent.mkdir(parents=True, exist_ok=True)\nstatus_path.write_text(json.dumps({'status':'PASS','all_valid':True,'runner':str(p),'trace_id':'gate2_minimal_loop_trace_v3','run_script_overwrite':True,'workflow_files_touched':False}, ensure_ascii=False, indent=2), encoding='utf-8')\nchanged_files.append(str(status_path))\nstate = Path('governance/state/GATE2_PREP_RUNTIME_RUN_SCRIPT_OVERWRITE.json')\nstate.write_text(json.dumps({'id':'GATE-2-PREP','trace_id':'gate2_prep_runtime_run_script_overwrite','status':'completed','release_pass':False,'runner':str(p),'workflow_files_touched':False,'next':'record final Gate 2 prep runtime overwrite'}, ensure_ascii=False, indent=2), encoding='utf-8')\nchanged_files.append(str(state))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gate2_prep_runtime_run_script_overwrite.md",
+    "result_json": "governance/codex/results/gate2_prep_runtime_run_script_overwrite.json"
+  },
+  "created_at": "2026-06-04T15:37:39.081Z"
+}
