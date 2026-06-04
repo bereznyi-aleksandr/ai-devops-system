@@ -26,6 +26,7 @@ jobs:
         run: |
           python3 << 'PYEOF'
           import os, json, urllib.request, urllib.error, base64
+          from datetime import datetime, timezone
 
           token      = os.environ["TELEGRAM_BOT_TOKEN"]
           gh_token   = os.environ["GITHUB_TOKEN"]
@@ -67,7 +68,21 @@ jobs:
               except urllib.error.HTTPError as e:
                   return None, e.code
 
-          # Read offset from GitHub
+          def tg_send(chat_id, text):
+              body = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}).encode()
+              req = urllib.request.Request(
+                  f"https://api.telegram.org/bot{token}/sendMessage",
+                  data=body,
+                  headers={"Content-Type": "application/json"}
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=10) as r:
+                      return json.loads(r.read())
+              except Exception as e:
+                  print(f"Telegram send error: {e}")
+                  return None
+
+          # Read offset
           offset_data, status = gh_get(f"/repos/{repo}/contents/governance/telegram/poll_offset.txt")
           offset = 0
           offset_sha = None
@@ -151,4 +166,13 @@ jobs:
               new_inbox, f"telegram: {len(new_entries)} new message(s)", inbox_sha
           )
           print(f"Inbox updated: {len(new_entries)} messages (status {s})")
+
+          # Reply to operator
+          now = datetime.now(timezone.utc).strftime("%H:%M UTC")
+          for entry in new_entries:
+              text = entry["text"]
+              reply = f"📥 *{now}* | Принято в контур\n`{text[:100]}`"
+              tg_send(entry["chat_id"], reply)
+              print(f"Replied to message: {text[:50]}")
+
           PYEOF
