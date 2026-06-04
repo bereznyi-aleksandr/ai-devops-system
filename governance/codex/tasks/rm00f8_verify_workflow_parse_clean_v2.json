@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f8_verify_workflow_parse_clean_v2",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM00F8 verify workflow parse clean",
+  "objective": "Run script:\"\"\"\nfrom pathlib import Path\nimport json\nfrom datetime import datetime, timezone\np=Path('.github/workflows/governance-validation-ci.yml')\nt=p.read_text(encoding='utf-8') if p.exists() else ''\nchecks={'exists':p.exists(),'no_archive_marker':'Moved to:' not in t and 'At:' not in t,'has_name':t.startswith('name: governance-validation-ci'),'manual_only':'workflow_dispatch:' in t and all(x not in t for x in ['push:','pull_request:','schedule:']),'has_jobs':'jobs:' in t and 'runs-on:' in t,'disabled_placeholder':'disabled-placeholder' in t or 'Disabled governance validation placeholder' in t}\npassed=all(checks.values())\nPath('governance/state').mkdir(parents=True,exist_ok=True)\nPath('governance/reports').mkdir(parents=True,exist_ok=True)\nPath('governance/state/RM00F8_WORKFLOW_PARSE_CLEAN.json').write_text(json.dumps({'id':'RM00F8','trace_id':'rm00f8_verify_workflow_parse_clean_v2','status':'completed' if passed else 'blocked','utc_completed_at':datetime.now(timezone.utc).isoformat(),'checks':checks,'release_pass':False,'next':'RM00F9 reconcile disabled workflows inventory' if passed else 'RM00F8 repair'},ensure_ascii=False,indent=2)+'\\n',encoding='utf-8')\nrows='\\n'.join(f'- {k}: {v}' for k,v in checks.items())\nPath('governance/reports/RM00F8_WORKFLOW_PARSE_CLEAN.md').write_text('# RM00F8 | Workflow parse clean verification\\n\\nStatus: '+('completed' if passed else 'blocked')+'\\n\\n## Checks\\n'+rows+'\\n\\nRelease PASS remains false.\\n',encoding='utf-8')\nctx=Path('governance/AGENT_CONTEXT.md')\nif ctx.exists():\n    s=ctx.read_text(encoding='utf-8')\n    m='## RM00F8 completed | 2026-06-04'\n    if m not in s:\n        ctx.write_text(s.rstrip()+'\\n'+m+'\\nWorkflow parse-clean verification status: '+('completed' if passed else 'blocked')+'. Release PASS remains false. Next: '+('RM00F9 reconcile disabled workflows inventory' if passed else 'RM00F8 repair')+'. No issue comments.\\n',encoding='utf-8')\nchanged_files.extend(['governance/state/RM00F8_WORKFLOW_PARSE_CLEAN.json','governance/reports/RM00F8_WORKFLOW_PARSE_CLEAN.md','governance/AGENT_CONTEXT.md'])\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00f8_verify_workflow_parse_clean_v2.md",
+    "result_json": "governance/codex/results/rm00f8_verify_workflow_parse_clean_v2.json"
+  },
+  "created_at": "2026-06-04T05:18:24.131Z"
+}
