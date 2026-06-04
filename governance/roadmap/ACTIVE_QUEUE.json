@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T11:36:00Z",
+  "updated_at": "2026-06-04T11:37:00Z",
   "source": "Updated Roadmap / Claude audit pre-KZ-1 block",
   "max_active_tasks": 7,
   "policy": {
@@ -52,7 +52,7 @@
     {
       "id": "RM-04",
       "title": "Консистентность PASS/диагноза",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": 4,
       "depends_on": [
         "RM-01",
@@ -60,12 +60,14 @@
         "RM-03"
       ],
       "criteria": "PASS state and diagnostic reports are consistent and SHA-backed",
-      "touch_workflows": false
+      "touch_workflows": false,
+      "sha": "62cf5625e287f9d4b77f4ffd259ecd9e1972cb13",
+      "completed_at": "2026-06-04T11:33:28Z"
     },
     {
       "id": "RM-05",
       "title": "KZ-1 runners skeleton repair",
-      "status": "WAITING_DEPENDS",
+      "status": "PENDING",
       "priority": 5,
       "depends_on": [
         "RM-01",
