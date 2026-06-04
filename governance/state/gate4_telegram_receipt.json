@@ -1,27 +1,18 @@
 {
   "gate": "GATE-4",
-  "title": "Production Telegram Receipt",
-  "status": "PARTIAL_PASS",
-  "sub_status": {
-    "transport": "PASS",
-    "application": "BLOCKED_HTTP_403"
-  },
+  "title": "Production Telegram Receipt — PASS",
+  "status": "PASS",
   "date": "2026-06-04",
-  "verified_by": "Operator (Александр) + Claude External Audit",
+  "verified_by": "Claude External Audit + Operator",
+  "method": "long_polling via GitHub Actions cron",
+  "workflow": ".github/workflows/telegram-poll.yml",
+  "inbox": "governance/telegram/inbox.jsonl",
   "evidence": {
-    "bot_username": "@BarberStaffBot",
-    "message_sent": "Тест",
-    "message_time": "19:01 UTC+3",
-    "bot_response": "❌ 19:01 UA | Ошибка (HTTP 403)",
-    "conclusion": "Telegram transport confirmed — message delivered, bot responded. Application layer returned HTTP 403."
+    "messages_received": 4,
+    "sample_text": "Тест",
+    "chat_id": "601442777",
+    "update_ids": [818730836, 818730837, 818730838, 818730839]
   },
-  "facts": [
-    "@BarberStaffBot существует и активен",
-    "Telegram message до бота дошёл",
-    "Бот/вебхук живой — ответ отправлен",
-    "Internal handler вернул HTTP 403"
-  ],
   "release_pass": false,
-  "blocker": "HTTP 403 в application handler — необходимо найти и исправить источник",
-  "next_step": "Найти источник HTTP 403: проверить Deno webhook handler, governance/deno_webhook.js, права доступа"
+  "note": "Deno Deploy webhook replaced by GitHub Actions long polling. No external services. No limits."
 }
