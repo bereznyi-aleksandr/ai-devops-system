@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2d_record_real_ssot_cleanup",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2D record real cleanup",
+  "objective": "Run script:\n\"\"\"\nNL = '\\n'\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8')) if queue_path.exists() else {'tasks': []}\ntasks = queue.get('tasks', [])\nif not any(t.get('id') == 'KZ-4' for t in tasks):\n    tasks.append({'id':'KZ-4','title':'Repair object passports and release proof manifest','status':'PENDING','depends_on':['KZ-2'],'criteria':'object_passports files and release_proof_manifest valid JSON; kz4_passports_status.json all_valid true','touch_workflows':False})\nfor task in tasks:\n    if task.get('id') == 'KZ-2':\n        task['status'] = 'DONE'\n        task['sha'] = 'c708549e49dc0641f9f3b5ad5dc46edef213ce45'\n        task['completed_at'] = '2026-06-04T15:11:56Z'\n        task['real_ssot_cleanup'] = True\n    if task.get('id') == 'KZ-4' and task.get('status') != 'DONE':\n        task['status'] = 'PENDING'\nqueue['tasks'] = tasks\nqueue['updated_at'] = '2026-06-04T15:13:00Z'\nqueue['queue_state'] = 'HAS_PENDING_TASKS'\nqueue['next_action'] = 'execute first PENDING task: KZ-4'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + NL, encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nlog_path.parent.mkdir(parents=True, exist_ok=True)\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nline = json.dumps({'date':'2026-06-04T15:11:56Z','id':'KZ-2','trace_id':'kz2c_real_ssot_duplicate_cleanup','sha':'c708549e49dc0641f9f3b5ad5dc46edef213ce45','status':'done','real_ssot_cleanup':True,'workflow_files_touched':False}, ensure_ascii=False)\nif line not in existing:\n    existing += line + NL\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/KZ2D_RECORD_REAL_SSOT_CLEANUP.json')\nstate.write_text(json.dumps({'id':'KZ-2D','trace_id':'kz2d_record_real_ssot_cleanup','status':'completed','release_pass':False,'recorded_step':'KZ-2','recorded_sha':'c708549e49dc0641f9f3b5ad5dc46edef213ce45','activated':'KZ-4','workflow_files_touched':False,'next':'KZ-4 repair object passports and release proof manifest'}, ensure_ascii=False, indent=2) + NL, encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/KZ2D_RECORD_REAL_SSOT_CLEANUP.md')\nreport.write_text('# KZ-2D | Record real SSOT cleanup and activate KZ-4' + NL + 'Status: completed' + NL + 'Date: 2026-06-04' + NL + NL + 'KZ-2 real SSOT cleanup recorded with SHA c708549e49dc0641f9f3b5ad5dc46edef213ce45. KZ-4 is PENDING in governance/roadmap/ACTIVE_QUEUE.json.' + NL + 'Workflow lock respected. No .github/workflows files touched.' + NL + NL + 'Next: KZ-4 repair object passports and release proof manifest.' + NL, encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2d_record_real_ssot_cleanup.md",
+    "result_json": "governance/codex/results/kz2d_record_real_ssot_cleanup.json"
+  },
+  "created_at": "2026-06-04T15:12:29.366Z"
+}
