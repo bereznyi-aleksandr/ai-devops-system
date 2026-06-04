@@ -1597,3 +1597,5 @@ No issue comments.
 - Overwrote
 ### RM00F5 | ACTIVE WORKFLOW REMOVAL VERIFICATION | 2026-06-04 | 06:38 (UTC+3)
 - Recorded RM00F4 evidence that active invalid workflow was
+## RM00F6 completed | 2026-06-04
+Fixed active governance-validation-ci workflow placeholder to valid workflow_dispatch-only YAML

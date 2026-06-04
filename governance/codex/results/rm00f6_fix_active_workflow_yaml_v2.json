@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f6_fix_active_workflow_yaml_v2",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/state/RM00F6_WORKFLOW_PLACEHOLDER_FIX.json",
+    "create:governance/reports/RM00F6_WORKFLOW_PLACEHOLDER_FIX.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/state/RM00F6_WORKFLOW_PLACEHOLDER_FIX.json",
+    "governance/reports/RM00F6_WORKFLOW_PLACEHOLDER_FIX.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00f6_fix_active_workflow_yaml_v2.txt"
+  ],
+  "commit_sha": "0ad59153a727f34befea0c2b9002aebfd9f13ae0",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00f6_fix_active_workflow_yaml_v2.md",
+  "completed_at": "2026-06-04T05:11:03Z"
+}
