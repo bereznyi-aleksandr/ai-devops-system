@@ -1,1 +1,163 @@
-{"status":"PASS","all_valid":true,
+{
+  "status": "BLOCKED",
+  "all_valid": false,
+  "runner_count": 17,
+  "min_bytes_rule": 50,
+  "ast_parse_required": true,
+  "checks": [
+    {
+      "path": "governance/runners/contour_lifecycle_runner.py",
+      "exists": true,
+      "bytes": 235,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/object_lifecycle_runner.py",
+      "exists": true,
+      "bytes": 234,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/managed_channel_consumer.py",
+      "exists": true,
+      "bytes": 235,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_01.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_02.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_03.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_04.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_05.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_06.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_07.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_08.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_09.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_10.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_11.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_12.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_13.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    },
+    {
+      "path": "governance/runners/kz1_runner_14.py",
+      "exists": true,
+      "bytes": 224,
+      "ast_parse": false,
+      "has_main": true,
+      "has_dunder_main": true,
+      "valid": false
+    }
+  ],
+  "workflow_files_touched": false
+}
