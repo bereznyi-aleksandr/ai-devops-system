@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:20:00Z",
+  "updated_at": "2026-06-04T15:13:00Z",
   "source": "Claude External Audit — KZ-2 partial, KZ-4 not done",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -12,14 +12,17 @@
     {
       "id": "KZ-2",
       "title": "Устранить 8 SSOT-дублей — конкретные пути",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 1,
       "audit_note": "GPT архивировал codex-артефакты, а не SSOT-дубли. contours_registry.json и object_passports.json всё ещё существуют в двух путях.",
       "touch_workflows": false,
       "detail": "Удалить или переместить в archive ДУБЛИ из governance/contours/, governance/providers/, governance/objects/state-copies. Canonical path = governance/state/. Конкретные дубли: governance/contours/contours_registry.json (дубль governance/state/contours_registry.json), governance/providers/providers_registry.json (дубль governance/state/providers_registry.json), governance/providers/contour_provider_policy.json, governance/channels/managed_channel_schema.json, governance/telegram/telegram_input_envelope_schema.json, governance/telegram/telegram_to_managed_channel_mapping.json. Использовать Run script с shutil.move() или Path.unlink() для дублей. Canonical в governance/state/ оставить.",
       "example_objective": "Run script:\n\"\"\"\nimport shutil\nfrom pathlib import Path\n\nduplicates = [\n    'governance/contours/contours_registry.json',\n    'governance/providers/providers_registry.json',\n    'governance/providers/contour_provider_policy.json',\n]\narchive = Path('governance/archive/ssot_duplicates_real_2026-06-04')\narchive.mkdir(parents=True, exist_ok=True)\nfor dup in duplicates:\n    p = Path(dup)\n    if p.exists():\n        dest = archive / p.name\n        shutil.move(str(p), str(dest))\n        changed_files.append(str(dest))\n\"\"\"\nNo issue comments.",
       "proof_required": "governance/state/kz2_real_ssot_status.json с duplicates_remaining=0 и список конкретных файлов",
-      "audit_reopened_sha": "4d93026f"
+      "audit_reopened_sha": "4d93026f",
+      "sha": "c708549e49dc0641f9f3b5ad5dc46edef213ce45",
+      "completed_at": "2026-06-04T15:11:56Z",
+      "real_ssot_cleanup": true
     },
     {
       "id": "KZ-4",
@@ -35,6 +38,6 @@
       "proof_required": "governance/state/kz4_passports_status.json с restored=true И оба файла > 100 байт И валидный JSON"
     }
   ],
-  "queue_state": "HAS_ACTIVE_TASKS",
-  "next_action": "Execute KZ-2 with exact duplicate paths listed in detail and example_objective"
+  "queue_state": "HAS_PENDING_TASKS",
+  "next_action": "execute first PENDING task: KZ-4"
 }
