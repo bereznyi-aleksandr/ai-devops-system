@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_runtime_path_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "GATE-2-PREP runtime path repair",
+  "objective": "Run script:\n\"\"\"\nNL = '\\n'\nruntime_dir = Path('governance/runtime')\nruntime_dir.mkdir(parents=True, exist_ok=True)\np = runtime_dir / 'minimal_governance_loop_runner.py'\nlines = [\n'#!/usr/bin/env python3',\n'import json',\n'',\n'TRACE_ID = \"gate2_minimal_loop_trace_v1\"',\n'',\n'def run_minimal_loop(input_task):',\n'    trace = {',\n'        \"trace_id\": TRACE_ID,',\n'        \"input\": input_task,',\n'        \"steps\": [',\n'            {\"role\": \"analyst\", \"action\": \"propose\", \"result\": \"proposal_ok\"},',\n'            {\"role\": \"auditor\", \"action\": \"review\", \"result\": \"approved\"},',\n'            {\"role\": \"executor\", \"action\": \"execute\", \"result\": \"executed\"},',\n'            {\"role\": \"auditor\", \"action\": \"verify\", \"result\": \"verified\"}',\n'        ],',\n'        \"status\": \"completed\",',\n'        \"release_pass\": False',\n'    }',\n'    return trace',\n'',\n'def main():',\n'    task = {\"id\": \"GATE2-TEST\", \"title\": \"minimal loop smoke test\"}',\n'    result = run_minimal_loop(task)',\n'    print(json.dumps(result, ensure_ascii=False, indent=2))',\n'    return 0',\n'',\n'if __name__ == \"__main__\":',\n'    raise SystemExit(main())'\n]\np.write_text(NL.join(lines) + NL, encoding='utf-8')\nchanged_files.append(str(p))\ntext = p.read_text(encoding='utf-8')\nvalid = len(p.read_bytes()) > 100 and 'def run_minimal_loop' in text and 'def main' in text and 'gate2_minimal_loop_trace_v1' in text\nstatus_path = Path('governance/state/gate2_minimal_loop_runtime_status.json')\nstatus_path.parent.mkdir(parents=True, exist_ok=True)\nstatus_path.write_text(json.dumps({'status':'PASS' if valid else 'BLOCKED','all_valid':valid,'runner':str(p),'bytes':len(p.read_bytes()),'contains_run_minimal_loop':'def run_minimal_loop' in text,'contains_main':'def main' in text,'trace_id':'gate2_minimal_loop_trace_v1','workflow_files_touched':False}, ensure_ascii=False, indent=2), encoding='utf-8')\nchanged_files.append(str(status_path))\nstate = Path('governance/state/GATE2_PREP_RUNTIME_PATH_REPAIR.json')\nstate.write_text(json.dumps({'id':'GATE-2-PREP','trace_id':'gate2_prep_runtime_path_repair','status':'completed' if valid else 'blocked','release_pass':False,'runtime_runner':str(p),'runtime_status':str(status_path),'workflow_files_touched':False,'next':'record runtime path repair and keep queue empty'}, ensure_ascii=False, indent=2), encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/GATE2_PREP_RUNTIME_PATH_REPAIR.md')\nreport.write_text('# GATE-2-PREP runtime path repair. Status: ' + ('completed' if valid else 'blocked') + '. Created governance/runtime/minimal_governance_loop_runner.py with deterministic trace, run_minimal_loop and def main. Workflow lock respected.', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gate2_prep_runtime_path_repair.md",
+    "result_json": "governance/codex/results/gate2_prep_runtime_path_repair.json"
+  },
+  "created_at": "2026-06-04T15:32:51.749Z"
+}
