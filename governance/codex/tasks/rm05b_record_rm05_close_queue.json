@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05b_record_rm05_close_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-05B record close queue",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'RM-05':\n        task['status'] = 'DONE'\n        task['sha'] = 'a645ffcc415722d8224dd9247d7130eb604031cf'\n        task['completed_at'] = '2026-06-04T11:35:01Z'\nqueue['updated_at'] = '2026-06-04T11:39:00Z'\nqueue['queue_state'] = 'EMPTY_NO_PENDING_TASKS'\nqueue['next_action'] = 'await operator or Claude to add next tasks; do not invent tasks'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nlines = [\njson.dumps({'date':'2026-06-04T11:27:19Z','id':'RM-01','trace_id':'rm01_revoke_false_pass_bem1284_gate2','sha':'0d801ea289ed0a6d580506d7772e598959a06fcb','status':'done','workflow_files_touched':False}, ensure_ascii=False),\njson.dumps({'date':'2026-06-04T11:30:32Z','id':'RM-02','trace_id':'rm02_fail_closed_truncated_py_pattern','sha':'e2a382ea6b283cc62ef5a621f36098f3efef46b8','status':'done','workflow_files_touched':False}, ensure_ascii=False),\njson.dumps({'date':'2026-06-04T11:31:59Z','id':'RM-03','trace_id':'rm03_ast_parse_gate_stub_runnable','sha':'08070e58697a4399c1884b601c23522ba4ec9299','status':'done','workflow_files_touched':False}, ensure_ascii=False),\njson.dumps({'date':'2026-06-04T11:33:28Z','id':'RM-04','trace_id':'rm04_pass_diagnostic_consistency','sha':'62cf5625e287f9d4b77f4ffd259ecd9e1972cb13','status':'done','workflow_files_touched':False}, ensure_ascii=False),\njson.dumps({'date':'2026-06-04T11:35:01Z','id':'RM-05','trace_id':'rm05_kz1_runners_after_pre_kz_block','sha':'a645ffcc415722d8224dd9247d7130eb604031cf','status':'done','workflow_files_touched':False}, ensure_ascii=False)\n]\nfor line in lines:\n    if line not in existing:\n        existing += line + '\\n'\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/RM05B_RECORD_RM05_CLOSE_QUEUE.json')\nstate.write_text(json.dumps({'id':'RM-05B','trace_id':'rm05b_record_rm05_close_queue','status':'completed','release_pass':True,'recorded_steps':['RM-01','RM-02','RM-03','RM-04','RM-05'],'queue_state':'EMPTY_NO_PENDING_TASKS','workflow_files_touched':False,'next':'ACTIVE_QUEUE empty; do not invent tasks'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/RM05B_RECORD_RM05_CLOSE_QUEUE.md')\nreport.write_text('# RM-05B | Record RM-05 and close queue\\nStatus: completed\\nDate: 2026-06-04\\n\\nRM-01..RM-05 are DONE in governance/roadmap/ACTIVE_QUEUE.json and recorded in governance/logs/execution_log.jsonl. Queue state is EMPTY_NO_PENDING_TASKS. Per three-file model, GPT must not invent new tasks when the queue is empty.\\n\\nWorkflow lock respected. No .github/workflows files touched.\\n\\nNext: await operator or Claude to add next tasks.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm05b_record_rm05_close_queue.md",
+    "result_json": "governance/codex/results/rm05b_record_rm05_close_queue.json"
+  },
+  "created_at": "2026-06-04T11:35:40.474Z"
+}
