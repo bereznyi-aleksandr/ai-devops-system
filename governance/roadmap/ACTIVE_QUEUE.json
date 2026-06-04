@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:07:00Z",
+  "updated_at": "2026-06-04T15:08:00Z",
   "source": "Claude External Audit — RM-05 CLOSED, KZ-2 and KZ-4 next",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -36,16 +36,19 @@
     {
       "id": "KZ-4",
       "title": "Восстановить object_passports.json и release_proof_manifest.json",
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "priority": 3,
       "depends_on": [
         "KZ-2"
       ],
       "touch_workflows": false,
       "detail": "governance/objects/object_passports.json — паспорта GD/DIR/WRK с полями id, type, elements, prompt_ref. governance/release/release_proof_manifest.json — все поля включая commit_sha: null (не усечён).",
-      "proof_required": "governance/state/kz4_passports_status.json с restored=true"
+      "proof_required": "governance/state/kz4_passports_status.json с restored=true",
+      "sha": "57b663d98632b36a782f74f4c542247914fba3db",
+      "completed_at": "2026-06-04T15:06:21Z",
+      "active_duplicate_group_count": 2
     }
   ],
-  "queue_state": "HAS_PENDING_TASKS",
-  "next_action": "execute first PENDING task: KZ-4"
+  "queue_state": "BLOCKED_ON_KZ4",
+  "next_action": "repair active SSOT duplicate groups"
 }
