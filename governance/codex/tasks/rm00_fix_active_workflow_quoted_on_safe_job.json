@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_fix_active_workflow_quoted_on_safe_job",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-00 quoted on workflow",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\n\"on\":\n  workflow_dispatch: {}\npermissions:\n  contents: read\njobs:\n  validate_foundation:\n    name: Disabled governance validation\n    runs-on: ubuntu-latest\n    steps:\n      - name: noop\n        run: echo ok\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM-00 | FIX ACTIVE WORKFLOW QUOTED ON SAFE JOB | 2026-06-04 | 06:02 (UTC+3)\n- Rewrote active governance-validation-ci.yml with quoted on and underscore job id.\n- workflow_dispatch only, no push, no pull_request, no schedule.\n- No Release PASS. Next action: verify changed_files and continue release-gate validation.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00_fix_active_workflow_quoted_on_safe_job.md",
+    "result_json": "governance/codex/results/rm00_fix_active_workflow_quoted_on_safe_job.json"
+  },
+  "created_at": "2026-06-04T03:03:46.025Z"
+}
