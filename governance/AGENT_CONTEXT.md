@@ -1532,3 +1532,5 @@ No issue comments.
 - Recorded fail-closed release readiness checkpoint after workflow repair and Gate 4/5/6 collectors
 ### OPERATOR | CURRENT STATUS PACKET | 2026-06-04 | 06:07 (UTC+3)
 -
+### TZ2 | NO-EXEC DUPLICATE INVENTORY PROTOCOL | 2026-06-04 | 06:03 (UTC+3)
+- Continued roadmap after stop-violation: TZ2 duplicate inventory
