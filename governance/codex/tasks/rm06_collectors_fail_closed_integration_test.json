@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm06_collectors_fail_closed_integration_test",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM06 collectors fail-closed test",
+  "objective": "Create file tests/governance/test_collectors_fail_closed_integration.py with content import subprocess\nimport sys\n\nCOLLECTORS = [\n    \"governance/runners/telegram_production_receipt_collector.py\",\n    \"governance/runners/live_runtime_receipt_collector.py\",\n    \"governance/runners/external_claude_audit_result_collector.py\",\n]\n\ndef test_all_external_receipt_collectors_fail_closed_without_env():\n    for path in COLLECTORS:\n        result = subprocess.run([sys.executable, path], capture_output=True, text=True)\n        assert result.returncode == 2, path\n        assert \"release_pass\" in result.stdout\n        assert \"blocked_missing_real\" in result.stdout\nCreate file governance/state/RM06_COLLECTORS_FAIL_CLOSED_INTEGRATION_TEST.json with content {\"created_at_utc3\":\"2026-06-04 | 06:18 (UTC+3)\",\"release_pass\":false,\"test\":\"tests/governance/test_collectors_fail_closed_integration.py\",\"scope\":[\"Gate 4 Telegram collector\",\"Gate 5 live runtime collector\",\"Gate 6 external Claude collector\"],\"expected\":\"all collectors fail closed without real environment inputs\",\"next_action\":\"RM07 external receipt directory structure hardening\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM06 | COLLECTORS FAIL-CLOSED INTEGRATION TEST | 2026-06-04 | 06:18 (UTC+3)\n- Added integration test verifying Gate 4/5/6 collectors fail closed without real inputs.\n- No Release PASS. Next action: RM07 external receipt directory structure hardening.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm06_collectors_fail_closed_integration_test.md",
+    "result_json": "governance/codex/results/rm06_collectors_fail_closed_integration_test.json"
+  },
+  "created_at": "2026-06-04T04:06:00.378Z"
+}
