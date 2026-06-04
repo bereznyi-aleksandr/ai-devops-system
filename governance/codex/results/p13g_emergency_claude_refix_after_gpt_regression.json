@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13g_emergency_claude_refix_after_gpt_regression",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit_mailbox/gpt_to_claude/P13G_EMERGENCY_REFIX_GOVERNANCE_WORKFLOW.md",
+    "create:governance/state/P13G_EMERGENCY_CLAUDE_REFIX_AFTER_GPT_REGRESSION.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit_mailbox/gpt_to_claude/P13G_EMERGENCY_REFIX_GOVERNANCE_WORKFLOW.md",
+    "governance/state/P13G_EMERGENCY_CLAUDE_REFIX_AFTER_GPT_REGRESSION.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p13g_emergency_claude_refix_after_gpt_regression.txt"
+  ],
+  "commit_sha": "5b847e83fff65cfd143b1160150874c06a9b0fce",
+  "blocker": null,
+  "report_path": "governance/codex/results/p13g_emergency_claude_refix_after_gpt_regression.md",
+  "completed_at": "2026-06-04T08:34:36Z"
+}
