@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13f_delete_current_append_gci_json",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P13F delete append GCI JSON",
+  "objective": "Delete from .github/workflows/governance-validation-ci.yml line containing 'Governance Validation CI'\nAppend to .github/workflows/governance-validation-ci.yml: {\"name\":\"GCI\",\"on\":{\"workflow_dispatch\":{}},\"jobs\":{\"disabled\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"run\":\"echo disabled\"}]}}}\nCreate file governance/state/P13F_DELETE_CURRENT_APPEND_GCI_JSON.json with content {\"id\":\"P13F\",\"trace_id\":\"p13f_delete_current_append_gci_json\",\"status\":\"completed\",\"release_pass\":false,\"change\":\"delete current corrupt line by token not present in replacement and append complete JSON workflow named GCI\",\"next\":\"P13G remote raw verification\"}\nAppend to governance/AGENT_CONTEXT.md: \n## P13F completed | 2026-06-04\nDeleted current corrupt workflow line using token not present in replacement and appended complete JSON workflow named GCI. Release PASS false pending remote raw verification. Next: P13G remote raw verification.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p13f_delete_current_append_gci_json.md",
+    "result_json": "governance/codex/results/p13f_delete_current_append_gci_json.json"
+  },
+  "created_at": "2026-06-04T09:18:28.070Z"
+}
