@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13i_run_script_newline_safe_overwrite",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/p13i_run_script_newline_safe_overwrite.txt"
+  ],
+  "commit_sha": "c9a45609792df091954a80f58abe7f797f060a7a",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: __import__ not found"
+  },
+  "report_path": "governance/codex/results/p13i_run_script_newline_safe_overwrite.md",
+  "completed_at": "2026-06-04T09:21:32Z"
+}
