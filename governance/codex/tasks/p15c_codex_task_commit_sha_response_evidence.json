@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p15c_codex_task_commit_sha_response_evidence",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P15C SHA response evidence",
+  "objective": "Create file governance/state/P15C_CODEX_TASK_COMMIT_SHA_RESPONSE_EVIDENCE.json with content {\"id\":\"P15C\",\"trace_id\":\"p15c_codex_task_commit_sha_response_evidence\",\"status\":\"completed\",\"release_pass\":true,\"p15_inventory_sha\":\"7fb8d0e928611aa93dad9710266e3036c09674d2\",\"p15b_fix_sha\":\"8f4158cecdee0c14c8b0ca6014a72a0184c3bd00\",\"evidence\":\"governance/deno_webhook.js patched to return commit_sha and task_file_commit_sha for /codex-task write result\",\"workflow_lock_respected\":true,\"next\":\"AGENT_CONTEXT auto-update hardening\"}\nCreate file governance/reports/P15C_CODEX_TASK_COMMIT_SHA_RESPONSE_EVIDENCE.md with content # P15C | codex-task commit_sha response evidence\nStatus: completed\nDate: 2026-06-04\n\n## Evidence chain\n- P15 inventory: 7fb8d0e928611aa93dad9710266e3036c09674d2\n- P15B fix: 8f4158cecdee0c14c8b0ca6014a72a0184c3bd00\n\n## Result\n`governance/deno_webhook.js` now has a detailed GitHub file update helper for `/codex-task`; the response includes `commit_sha` and `task_file_commit_sha` for the task-file write commit.\n\n## Lock\nWorkflow lock respected. No `.github/workflows/*.yml` files touched.\n\n## Next\nAGENT_CONTEXT auto-update hardening.\nAppend to governance/AGENT_CONTEXT.md: \n## P15C completed | 2026-06-04\ncodex-task commit_sha response evidence completed. P15 inventory SHA 7fb8d0e928611aa93dad9710266e3036c09674d2; P15B fix SHA 8f4158cecdee0c14c8b0ca6014a72a0184c3bd00. Workflow lock respected. Next: AGENT_CONTEXT auto-update hardening.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p15c_codex_task_commit_sha_response_evidence.md",
+    "result_json": "governance/codex/results/p15c_codex_task_commit_sha_response_evidence.json"
+  },
+  "created_at": "2026-06-04T10:07:00.603Z"
+}
