@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12m_record_claude_mcp_fix_and_unblock",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P12M record Claude MCP fix",
+  "objective": "Create file governance/state/P12M_RECORD_CLAUDE_MCP_FIX_AND_UNBLOCK.json with content {\"id\":\"P12M\",\"trace_id\":\"p12m_record_claude_mcp_fix_and_unblock\",\"status\":\"completed\",\"release_pass\":false,\"claude_mcp_fix_sha\":\"3f13b16e03eec5ff6ce39c3420685fac3c7305cb\",\"blocker_removed\":\"workflow YAML repaired directly by Claude MCP; active workflow is workflow_dispatch only\",\"root_cause\":\"Python executor Append/Replace patterns are unsafe for multiline YAML full-file rewrites; use Run script Path.write_text for YAML replacement\",\"next\":\"P13 verify post-Claude workflow parser cleanliness\"}\nCreate file governance/reports/P12M_RECORD_CLAUDE_MCP_FIX_AND_UNBLOCK.md with content # P12M | Record Claude MCP workflow fix and unblock\nStatus: completed\nDate: 2026-06-04\n\n## Claude direct fix\nClaude repaired `.github/workflows/governance-validation-ci.yml` directly through MCP.\n\nSHA: `3f13b16e03eec5ff6ce39c3420685fac3c7305cb`\n\n## Result\nThe workflow blocker is removed at repository level: the file is valid YAML, `workflow_dispatch` only, and does not auto-run on push or pull_request.\n\n## Root cause recorded\nPython executor `Append to` and `Replace in` patterns are unsafe for multiline YAML full-file replacement. Correct executor approach for YAML is `Run script` with `Path.write_text()` full overwrite.\n\n## Gate status\nRelease PASS remains false until post-Claude verification evidence is recorded.\n\n## Next\nP13 verify post-Claude workflow parser cleanliness.\nAppend to governance/AGENT_CONTEXT.md: \n## P12M completed | 2026-06-04\nRecorded Claude MCP direct workflow fix SHA 3f13b16e03eec5ff6ce39c3420685fac3c7305cb and removed P12J blocker. Root cause: Append/Replace unsafe for multiline YAML; use Run script Path.write_text full overwrite. Release PASS false until post-Claude verification. Next: P13 verify post-Claude workflow parser cleanliness.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p12m_record_claude_mcp_fix_and_unblock.md",
+    "result_json": "governance/codex/results/p12m_record_claude_mcp_fix_and_unblock.json"
+  },
+  "created_at": "2026-06-04T08:27:48.058Z"
+}
