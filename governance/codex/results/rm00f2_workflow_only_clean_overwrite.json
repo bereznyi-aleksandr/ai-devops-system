@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f2_workflow_only_clean_overwrite",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/codex/proofs/rm00f2_workflow_only_clean_overwrite.txt"
+  ],
+  "commit_sha": "675a0b7d0e3da9e68e180ac4f49cd6dfc755111b",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00f2_workflow_only_clean_overwrite.md",
+  "completed_at": "2026-06-04T04:43:51Z"
+}
