@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz3_runner_manifest_validation_evidence",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/KZ3_RUNNER_MANIFEST_VALIDATION_EVIDENCE.json",
+    "create:governance/reports/KZ3_RUNNER_MANIFEST_VALIDATION_EVIDENCE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/KZ3_RUNNER_MANIFEST_VALIDATION_EVIDENCE.json",
+    "governance/reports/KZ3_RUNNER_MANIFEST_VALIDATION_EVIDENCE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz3_runner_manifest_validation_evidence.txt"
+  ],
+  "commit_sha": "921ee46b89151bf2bc370a24481242069b361a46",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz3_runner_manifest_validation_evidence.md",
+  "completed_at": "2026-06-04T10:01:41Z"
+}
