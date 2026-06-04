@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm19_no_stop_execution_cursor",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM19 no-stop cursor",
+  "objective": "Create file governance/state/RM19_NO_STOP_EXECUTION_CURSOR.json with content {\"created_at_utc3\":\"2026-06-04 | 06:31 (UTC+3)\",\"release_pass\":false,\"cursor\":\"RM19\",\"last_completed\":\"RM18\",\"last_completed_sha\":\"19d3310922aedb5c85f61d1922d04b645c95b62e\",\"mode\":\"no_stop_progress_reporting\",\"next_action\":\"RM20 remaining-blockers immutable register\"}\nCreate file governance/audit/NO_STOP_EXECUTION_CURSOR.md with content # No-stop execution cursor\n\nCreated: 2026-06-04 | 06:31 (UTC+3)\nRelease PASS: false\n\nCurrent cursor: RM19.\nLast completed: RM18, SHA 19d3310922aedb5c85f61d1922d04b645c95b62e.\n\nNext: RM20 remaining-blockers immutable register.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM19 | NO-STOP EXECUTION CURSOR | 2026-06-04 | 06:31 (UTC+3)\n- Created no-stop execution cursor for visible progress tracking.\n- No Release PASS. Next action: RM20 remaining-blockers immutable register.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm19_no_stop_execution_cursor.md",
+    "result_json": "governance/codex/results/rm19_no_stop_execution_cursor.json"
+  },
+  "created_at": "2026-06-04T04:34:54.525Z"
+}
