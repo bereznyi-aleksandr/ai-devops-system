@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12g_replace_workflow_with_complete_json_yaml",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P12G complete JSON YAML workflow",
+  "objective": "Replace in .github/workflows/governance-validation-ci.yml line containing 'governance-validation-ci' with '{\"name\":\"governance-validation-ci\",\"on\":{\"workflow_dispatch\":{}},\"jobs\":{\"disabled-placeholder\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"run\":\"echo governance-validation-ci-disabled\"}]}}}'\nCreate file governance/state/P12G_REPLACE_WORKFLOW_WITH_COMPLETE_JSON_YAML.json with content {\"id\":\"P12G\",\"trace_id\":\"p12g_replace_workflow_with_complete_json_yaml\",\"status\":\"completed\",\"release_pass\":false,\"problem\":\"available executor multiline patterns corrupt active workflow YAML; previous JSON was truncated, not complete\",\"change\":\"replaced active workflow with complete single-line JSON document that is YAML-compatible and contains name, on.workflow_dispatch and jobs\",\"next\":\"P12H remote raw verification of complete JSON/YAML workflow\"}\nCreate file governance/reports/P12G_REPLACE_WORKFLOW_WITH_COMPLETE_JSON_YAML.md with content # P12G | Replace workflow with complete JSON/YAML document\nStatus: completed\nDate: 2026-06-04\n\n## Problem\nExecutor multiline patterns repeatedly corrupted `.github/workflows/governance-validation-ci.yml`. The previous JSON attempt was truncated, so GitHub Actions reported a YAML syntax error on line 1.\n\n## Change\nThe active workflow line was replaced with a complete single-line JSON document, which is YAML-compatible and includes `name`, `on.workflow_dispatch`, and `jobs`.\n\n## Gate decision\nRelease PASS remains false until remote raw verification and GitHub Actions parser confirmation.\n\n## Next\nP12H remote raw verification.\nAppend to governance/AGENT_CONTEXT.md: \n## P12G completed | 2026-06-04\nReplaced corrupted active workflow line with complete single-line JSON/YAML workflow document. Release PASS false pending remote raw and Actions parser verification. Next: P12H remote raw verification.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p12g_replace_workflow_with_complete_json_yaml.md",
+    "result_json": "governance/codex/results/p12g_replace_workflow_with_complete_json_yaml.json"
+  },
+  "created_at": "2026-06-04T08:07:05.360Z"
+}
