@@ -1664,3 +1664,5 @@ Runner skeleton validation status: blocked. Missing=[]; Invalid=['governance/run
 ## KZ-2 completed | 2026-06-04
 Governance
 ## KZ-3 completed | 2026-06-04
+## KZ-4 completed | 2026-06-04
+KZ
