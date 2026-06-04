@@ -1,1 +1,27 @@
-{"version":2,"updated_at":"2026-06-04T14:25:00Z","source":"Updated Roadmap / Claude audit pre-KZ-1 block","max_active_tasks":7,"queue_state":"EMPTY_NO_PENDING_TASKS","next_action":"await operator or Claude to add next tasks; do not invent tasks","policy":{"source_of_next_task":"first task with status PENDING in governance/roadmap/ACTIVE_QUEUE
+{
+  "version": 2,
+  "updated_at": "2026-06-04T14:30:00Z",
+  "source": "Claude External Audit — RM-05 reopened SECOND TIME",
+  "policy": {
+    "source_of_next_task": "first IN_PROGRESS or PENDING task",
+    "workflow_yml_locked_for_gpt": true,
+    "do_not_invent_tasks_when_empty": true,
+    "write_execution_log_after_status": true
+  },
+  "tasks": [
+    {
+      "id": "RM-05",
+      "title": "KZ-1 runners skeleton repair — REOPENED SECOND TIME",
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "depends_on": ["RM-01", "RM-02", "RM-03", "RM-04"],
+      "audit_note": "REOPENED SECOND TIME by Claude 2026-06-04. contour_lifecycle_runner.py = 1 byte (empty, SHA unchanged). object_lifecycle_runner.py = 22 bytes (shebang only). kz1_runners_status.json truncated (invalid JSON). Previous DONE was false PASS AGAIN.",
+      "touch_workflows": false,
+      "mandatory_objective_pattern": "MUST use Run script with Path.write_text() for each runner. See example_objective below.",
+      "example_objective": "Run script:\n\"\"\"\nfrom pathlib import Path\n\nrunners = [\n    'governance/runners/contour_lifecycle_runner.py',\n    'governance/runners/object_lifecycle_runner.py',\n    'governance/runners/managed_channel_consumer.py',\n    'governance/runners/object_runner.py',\n    'governance/runners/provider_failover.py',\n    'governance/runners/role_report_writer.py',\n    'governance/runners/curator_router.py',\n]\n\nstub = '''#!/usr/bin/env python3\n\\ndef main():\\n    return {\"status\": \"stub\", \"runner\": __file__}\\n\\nif __name__ == \"__main__\":\\n    import json\\n    print(json.dumps(main()))\\n'''\n\nfor r in runners:\n    p = Path(r)\n    p.parent.mkdir(parents=True, exist_ok=True)\n    p.write_text(stub)\n    changed_files.append(str(p))\n    assert len(p.read_bytes()) > 50, f'{r} too short'\n    import ast; ast.parse(p.read_text())\n\nchanged_files.append('governance/state/kz1_runners_status.json')\nPath('governance/state/kz1_runners_status.json').write_text('{\"status\": \"PASS\", \"all_valid\": true, \"count\": ' + str(len(runners)) + '}')\n\"\"\"\nNo issue comments.",
+      "proof_required": "governance/state/kz1_runners_status.json valid JSON с all_valid=true AND каждый runner > 80 байт AND ast.parse OK"
+    }
+  ],
+  "queue_state": "HAS_ACTIVE_TASKS",
+  "next_action": "Execute RM-05 using Run script with Path.write_text() — see example_objective in task"
+}
