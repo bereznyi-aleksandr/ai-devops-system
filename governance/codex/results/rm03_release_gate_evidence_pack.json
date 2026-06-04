@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm03_release_gate_evidence_pack",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/RM03_RELEASE_GATE_EVIDENCE_PACK.md",
+    "create:governance/state/RM03_RELEASE_GATE_EVIDENCE_PACK.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/RM03_RELEASE_GATE_EVIDENCE_PACK.md",
+    "governance/state/RM03_RELEASE_GATE_EVIDENCE_PACK.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm03_release_gate_evidence_pack.txt"
+  ],
+  "commit_sha": "46de22c3c239c21a93a96a1e94ca30816a24a280",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm03_release_gate_evidence_pack.md",
+  "completed_at": "2026-06-04T07:26:39Z"
+}
