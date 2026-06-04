@@ -1585,3 +1585,5 @@ No issue comments.
 - Marked autonomous backlog exhausted except real external inputs and verified TZ2 inventory
 ### RM17 | EXTERNAL INPUT PENDING QUEUE STATE | 2026-06-04 | 06:29 (UTC+3)
 -
+### RM18 | VISIBLE PROGRESS LEDGER FOR OPERATOR | 2026-06-04 | 06:30 (UTC+3)
+-

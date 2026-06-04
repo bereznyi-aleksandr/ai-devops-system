@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm18_visible_progress_ledger_operator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/VISIBLE_PROGRESS_LEDGER_OPERATOR.md",
+    "create:governance/state/RM18_VISIBLE_PROGRESS_LEDGER_OPERATOR.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/VISIBLE_PROGRESS_LEDGER_OPERATOR.md",
+    "governance/state/RM18_VISIBLE_PROGRESS_LEDGER_OPERATOR.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm18_visible_progress_ledger_operator.txt"
+  ],
+  "commit_sha": "19d3310922aedb5c85f61d1922d04b645c95b62e",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm18_visible_progress_ledger_operator.md",
+  "completed_at": "2026-06-04T04:33:05Z"
+}
