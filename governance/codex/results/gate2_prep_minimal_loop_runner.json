@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_minimal_loop_runner",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/gate2_prep_minimal_loop_runner.txt"
+  ],
+  "commit_sha": "9fa12f2da19923ec0575c0058408b77d35106049",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: unterminated string literal (detected at line 16) (<string>, line 16)"
+  },
+  "report_path": "governance/codex/results/gate2_prep_minimal_loop_runner.md",
+  "completed_at": "2026-06-04T15:28:45Z"
+}
