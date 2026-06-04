@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12i_delete_corrupt_token_append_min_flow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P12I_DELETE_CORRUPT_TOKEN_APPEND_MIN_FLOW.json",
+    "create:governance/reports/P12I_DELETE_CORRUPT_TOKEN_APPEND_MIN_FLOW.md",
+    "append:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md",
+    "delete_line:.github/workflows/governance-validation-ci.yml"
+  ],
+  "changed_files": [
+    "governance/state/P12I_DELETE_CORRUPT_TOKEN_APPEND_MIN_FLOW.json",
+    "governance/reports/P12I_DELETE_CORRUPT_TOKEN_APPEND_MIN_FLOW.md",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/codex/proofs/p12i_delete_corrupt_token_append_min_flow.txt"
+  ],
+  "commit_sha": "0927e389d48d8abcd66f6cc66f698e8ec8aab902",
+  "blocker": null,
+  "report_path": "governance/codex/results/p12i_delete_corrupt_token_append_min_flow.md",
+  "completed_at": "2026-06-04T08:11:12Z"
+}

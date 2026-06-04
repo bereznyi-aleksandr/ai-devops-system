@@ -1,16 +1,14 @@
 name: {
 on:'
-Insert in
 on:
   workflow_dispatch:
 jobs:'
-Insert in
 jobs:
   disabled-placeholder:
 runs-on: ubuntu-latest'
-Insert in
 name: {
 on:
   workflow_dispatch:
 jobs:
   disabled-placeholder:
+{name: gci, on: {workflow_dispatch: {}}, jobs: {noop: {
