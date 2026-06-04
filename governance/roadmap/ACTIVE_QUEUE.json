@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T11:31:00Z",
+  "updated_at": "2026-06-04T11:32:00Z",
   "source": "Updated Roadmap / Claude audit pre-KZ-1 block",
   "max_active_tasks": 7,
   "policy": {
@@ -14,16 +14,18 @@
     {
       "id": "RM-01",
       "title": "Отозвать ложный PASS из BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2.md",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 1,
       "depends_on": [],
       "criteria": "False PASS revoked in gate report/state; release_pass=false until evidence is corrected",
-      "touch_workflows": false
+      "touch_workflows": false,
+      "sha": "0d801ea289ed0a6d580506d7772e598959a06fcb",
+      "completed_at": "2026-06-04T11:27:19Z"
     },
     {
       "id": "RM-02",
       "title": "Fail-closed для усечённых .py (len < 50 байт → BLOCKED)",
-      "status": "WAITING_DEPENDS",
+      "status": "PENDING",
       "priority": 2,
       "depends_on": [
         "RM-01"
