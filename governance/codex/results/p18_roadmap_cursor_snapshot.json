@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p18_roadmap_cursor_snapshot",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P18_ROADMAP_CURSOR_SNAPSHOT.json",
+    "create:governance/reports/P18_ROADMAP_CURSOR_SNAPSHOT.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P18_ROADMAP_CURSOR_SNAPSHOT.json",
+    "governance/reports/P18_ROADMAP_CURSOR_SNAPSHOT.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p18_roadmap_cursor_snapshot.txt"
+  ],
+  "commit_sha": "b642ff948cd9e2fb1c196a586077d66ad5036260",
+  "blocker": null,
+  "report_path": "governance/codex/results/p18_roadmap_cursor_snapshot.md",
+  "completed_at": "2026-06-04T10:15:37Z"
+}

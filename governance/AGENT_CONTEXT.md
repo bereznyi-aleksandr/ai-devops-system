@@ -1680,3 +1680,5 @@ AGENT_CONTEXT hardening validation completed
 Session continuity anti-stop guard recorded
 ## P17B completed | 2026-06-04
 Anti-stop guard validation completed
+## P18 completed | 2026-06-04
+Roadmap cursor snapshot recorded
