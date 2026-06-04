@@ -1543,3 +1543,5 @@ No issue comments.
 - Closed current TZ2 inventory attempt as blocked by executor import restrictions
 ### GATES 4-6 | RECEIPT INPUT CONTRACT HARDENING | 2026-06-04 | 06:08 (UTC+3)
 - Hardened real receipt input contract for Gate 4/5/6 collectors
+### RELEASE | VALIDATOR EVIDENCE PACKET | 2026-06-04 | 06:09 (UTC+3)
+-
