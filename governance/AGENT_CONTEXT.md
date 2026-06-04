@@ -1694,3 +1694,5 @@ Curator AGENT_CONTEXT autoupdate specification
 Curator AGENT_CONTEXT autoupdate spec validation completed
 ## P20 completed | 2026-06-04
 Next roadmap discovery from AGENT_CONTEXT completed. Workflow lock respected: no .github/workflows files touched. Next: P20B roadmap discovery validation.
+## P20B completed | 2026-06-04
+Roadmap discovery validation completed

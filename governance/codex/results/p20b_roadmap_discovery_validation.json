@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p20b_roadmap_discovery_validation",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P20B_ROADMAP_DISCOVERY_VALIDATION.json",
+    "create:governance/reports/P20B_ROADMAP_DISCOVERY_VALIDATION.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P20B_ROADMAP_DISCOVERY_VALIDATION.json",
+    "governance/reports/P20B_ROADMAP_DISCOVERY_VALIDATION.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p20b_roadmap_discovery_validation.txt"
+  ],
+  "commit_sha": "b5f5249e45880ebd05971376e3e756110fdfa1df",
+  "blocker": null,
+  "report_path": "governance/codex/results/p20b_roadmap_discovery_validation.md",
+  "completed_at": "2026-06-04T10:25:56Z"
+}
