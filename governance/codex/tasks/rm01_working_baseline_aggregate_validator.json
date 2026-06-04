@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm01_working_baseline_aggregate_validator",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM01 baseline aggregate validator",
+  "objective": "Create file governance/validators/validate_working_baseline_aggregate.py with content #!/usr/bin/env python3\nimport json\nfrom pathlib import Path\n\nREQUIRED_FILES = [\n    \"governance/runners/minimal_governance_loop_runner.py\",\n    \"governance/state/READINESS_LEVELS_SCHEMA.json\",\n    \"governance/validators/validate_readiness_levels.py\",\n    \"governance/validators/validate_pass_sources.py\",\n    \"governance/validators/validate_release_gates.py\",\n    \"governance/runners/telegram_production_receipt_collector.py\",\n    \"governance/runners/live_runtime_receipt_collector.py\",\n    \"governance/runners/external_claude_audit_result_collector.py\",\n    \"governance/state/WORKING_BASELINE_STATUS_CHECKPOINT_FINAL.json\"\n]\n\ndef main() -> int:\n    missing = [path for path in REQUIRED_FILES if not Path(path).exists()]\n    result = {\"status\":\"ok\" if not missing else \"blocked_missing_files\", \"missing\": missing, \"release_pass\": False}\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    return 0 if not missing else 2\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file tests/governance/test_working_baseline_aggregate_validator.py with content import subprocess\nimport sys\n\ndef test_working_baseline_aggregate_validator_executes():\n    result = subprocess.run([sys.executable, \"governance/validators/validate_working_baseline_aggregate.py\"], capture_output=True, text=True)\n    assert result.returncode in (0, 2)\n    assert \"release_pass\" in result.stdout\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM01 | WORKING BASELINE AGGREGATE VALIDATOR | 2026-06-04 | 06:12 (UTC+3)\n- Added aggregate validator for working-baseline files and test.\n- No Release PASS. Next action: verify aggregate validator result, then tighten release blocker state.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm01_working_baseline_aggregate_validator.md",
+    "result_json": "governance/codex/results/rm01_working_baseline_aggregate_validator.json"
+  },
+  "created_at": "2026-06-04T03:52:56.298Z"
+}
