@@ -1,0 +1,11 @@
+{
+  "id": "GATE-4-FIX-V2-DEPLOY",
+  "trace_id": "gate4_fix_v2_deploy_pending_record",
+  "status": "waiting_deploy",
+  "release_pass": false,
+  "patched_sha": "8cba218e7a842e7f8baf7d0a145b0e7978a0e93f",
+  "live_health_version": "4.9",
+  "expected_health_version": "4.10",
+  "workflow_files_touched": false,
+  "next": "wait for Deno Deploy, then Telegram receipt test"
+}

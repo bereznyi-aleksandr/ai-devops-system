@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T16:23:00Z",
+  "updated_at": "2026-06-04T16:24:00Z",
   "source": "Claude External Audit — replace GitHub Issues with inbox.jsonl",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -31,15 +31,17 @@
     {
       "id": "GATE-4-TEST-V2",
       "title": "Test Telegram inbox receipt after Deno deploy",
-      "status": "WAITING_OPERATOR_TELEGRAM_MESSAGE",
+      "status": "WAITING_DENO_DEPLOY",
       "priority": 1,
       "depends_on": [
         "GATE-4-FIX-V2"
       ],
       "criteria": "Operator sends Telegram message; bot responds inbox success; governance/telegram/inbox.jsonl contains appended JSON line",
-      "touch_workflows": false
+      "touch_workflows": false,
+      "blocker": "Live Deno health still reports version 4.9 after repo patch; wait for Deno Deploy to pick up 8cba218e7a842e7f8baf7d0a145b0e7978a0e93f or redeploy manually",
+      "test_instruction": "Send Telegram test only after health version is 4.10 or deployment confirms latest commit"
     }
   ],
-  "queue_state": "WAITING_OPERATOR_TELEGRAM_MESSAGE",
-  "next_action": "after Deno Deploy picks up patch, operator sends test message to @BarberStaffBot"
+  "queue_state": "WAITING_DENO_DEPLOY",
+  "next_action": "wait for Deno Deploy to update to webhook v4.10, then operator sends Telegram test to @BarberStaffBot"
 }
