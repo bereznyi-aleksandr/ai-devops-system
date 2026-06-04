@@ -1610,3 +1610,5 @@ Governance validation contract restored as fail-closed workflow and Python valid
 ## RM02 completed | 2026-06-04
 ## RM03 completed | 2026-06-04
 Release gate evidence pack completed for governance contour roadmap scope RM00F4-RM03
+## RM04 completed | 2026-06-04
+Repaired active governance-validation-ci
