@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f_hard_fix_invalid_active_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM00F hard fix workflow",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\non:\n  workflow_dispatch:\njobs:\n  noop:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\nCreate file governance/state/RM00F_HARD_FIX_INVALID_ACTIVE_WORKFLOW.json with content {\"created_at_utc3\":\"2026-06-04 | 06:34 (UTC+3)\",\"release_pass\":false,\"problem\":\"GitHub Actions reports .github/workflows/governance-validation-ci.yml YAML syntax error at line 1.\",\"fix\":\"overwrite active workflow with minimal valid workflow_dispatch-only YAML\",\"next_action\":\"RM00G workflow hard-fix verification marker\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM00F | HARD FIX INVALID ACTIVE WORKFLOW | 2026-06-04 | 06:34 (UTC+3)\n- Overwrote .github/workflows/governance-validation-ci.yml with minimal workflow_dispatch-only noop workflow.\n- No Release PASS. Next action: RM00G workflow hard-fix verification marker.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00f_hard_fix_invalid_active_workflow.md",
+    "result_json": "governance/codex/results/rm00f_hard_fix_invalid_active_workflow.json"
+  },
+  "created_at": "2026-06-04T04:41:19.638Z"
+}
