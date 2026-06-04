@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "external_receipt_acquisition_handoff",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "External receipt handoff",
+  "objective": "Create file governance/audit/EXTERNAL_RECEIPT_ACQUISITION_HANDOFF.md with content # External Receipt Acquisition Handoff\n\nCreated: 2026-06-04 | 05:58 (UTC+3)\nRelease PASS: false\n\n## Required real receipts\n\n1. Gate 4 Telegram production receipt\n- Target file: governance/proofs/external/telegram/production_receipt.json\n- Collector: governance/runners/telegram_production_receipt_collector.py\n- Required env: TELEGRAM_RECEIPT_SOURCE, TELEGRAM_EVIDENCE_REF, TELEGRAM_COMMIT_SHA\n\n2. Gate 5 live runtime receipt\n- Target file: governance/proofs/external/runtime/live_runtime_receipt.json\n- Collector: governance/runners/live_runtime_receipt_collector.py\n- Required env: LIVE_RUNTIME_SOURCE, LIVE_RUNTIME_EVIDENCE_REF, LIVE_RUNTIME_COMMIT_SHA\n\n3. Gate 6 external Claude audit result\n- Target file: governance/proofs/external/claude/external_claude_audit_result.json\n- Collector: governance/runners/external_claude_audit_result_collector.py\n- Required env: CLAUDE_AUDIT_SOURCE, CLAUDE_AUDIT_EVIDENCE_REF, CLAUDE_AUDIT_COMMIT_SHA, CLAUDE_AUDIT_VERDICT\n\n## Validator\n- governance/validators/validate_release_gates.py\n\n## Forbidden\n- fake receipt\n- placeholder receipt\n- self-issued external audit PASS\n- Release PASS before all real receipts exist\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### EXTERNAL RECEIPT ACQUISITION HANDOFF | 2026-06-04 | 05:58 (UTC+3)\n- Prepared handoff packet for real Gate 4/5/6 receipt acquisition.\n- No Release PASS. Next action: wait for real external receipt inputs, then validate release gates.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/external_receipt_acquisition_handoff.md",
+    "result_json": "governance/codex/results/external_receipt_acquisition_handoff.json"
+  },
+  "created_at": "2026-06-04T02:59:48.612Z"
+}
