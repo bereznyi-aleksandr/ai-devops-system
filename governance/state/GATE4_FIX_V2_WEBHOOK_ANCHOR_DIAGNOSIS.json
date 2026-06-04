@@ -1,0 +1,17 @@
+{
+  "id": "GATE-4-FIX-V2-DIAG",
+  "trace_id": "gate4_fix_v2_webhook_anchor_diagnosis",
+  "status": "completed",
+  "file_exists": true,
+  "bytes": 33368,
+  "findings": {
+    "const curatorComment = `@curator": 29934,
+    "postGitHubComment(pat, curatorComment)": 30189,
+    "TELEGRAM-INBOX": -1,
+    "governance/telegram/inbox.jsonl": -1,
+    "POST / — TELEGRAM WEBHOOK": 28999
+  },
+  "snippet_tail": "Id = body.trace_id || (\"post_\" + Date.now());\n    const dispatchStatus = await triggerRepositoryDispatch(pat, \"autonomy-engine\", {\n      mode, trace_id: traceId, add_internal_tasks: body.add_internal_tasks || false,\n      source: \"deno_post_autonomy\", timestamp: new Date().toISOString()\n    });\n    const ok = dispatchStatus === 204;\n    return corsJson({ ok, mode, trace_id: traceId, dispatch_status: dispatchStatus }, ok ? 200 : 500);\n  }\n\n  // ─── POST / — TELEGRAM WEBHOOK ────────────────────────────────────────────\n  if (method === \"POST\" && url.pathname === \"/\") {\n    if (telegramSecret) {\n      const secretHeader = req.headers.get(\"x-telegram-bot-api-secret-token\");\n      if (secretHeader !== telegramSecret) return new Response(\"Forbidden\", { status: 403 });\n    }\n    let body; try { body = await req.json(); } catch { return new Response(\"Bad Request\", { status: 400 }); }\n    const message = body?.message;\n    if (!message) return new Response(\"OK\");\n    const chatId    = String(message.chat?.id);\n    const messageId = String(message.message_id);\n    const text      = (message.text || \"\").trim();\n    if (chatId !== ALLOWED_CHAT_ID) return new Response(\"Forbidden\", { status: 403 });\n    const now = new Date().toLocaleTimeString(\"uk-UA\", { timeZone: \"Europe/Kiev\", hour: \"2-digit\", minute: \"2-digit\" });\n    const dedupeKey = `telegram:${chatId}:${messageId}`;\n    const curatorComment = `@curator\\n\\nTYPE: OPERATOR_TO_CURATOR\\nSOURCE: telegram\\nDEDUP_KEY: ${dedupeKey}\\n\\n\\`\\`\\`json\\n{\\n  \"chat_id\": \"${chatId}\",\\n  \"message_id\": \"${messageId}\",\\n  \"text\": ${JSON.stringify(text)}\\n}\\n\\`\\`\\``;\n    const status = await postGitHubComment(pat, curatorComment);\n    if (status === 201) { await sendTelegram(token, chatId, `📨 *${now} UA* | Отправлено куратору:\\n_${text.slice(0, 100)}_`); }\n    else { await sendTelegram(token, chatId, `❌ *${now} UA* | Ошибка (HTTP ${status})`); }\n    return new Response(\"OK\");\n  }\n\n  return corsJson({ ok: false, error: \"Not Found\" }, 404);\n});\n",
+  "workflow_files_touched": false,
+  "next": "GATE-4-FIX-V2 patch using detected anchors"
+}
