@@ -1607,3 +1607,4 @@ Workflow parse-clean evidence recorded after RM00F6 SHA 0ad59153a727f34befea0c2b
 Disabled workflows inventory recorded
 ## RM01 completed | 2026-06-04
 Governance validation contract restored as fail-closed workflow and Python validator
+## RM02 completed | 2026-06-04

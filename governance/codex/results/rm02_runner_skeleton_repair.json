@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm02_runner_skeleton_repair",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/__init__.py",
+    "create:governance/runners/runner_skeleton.py",
+    "create:governance/validation/validate_runner_skeleton.py",
+    "create:governance/state/RM02_RUNNER_SKELETON_REPAIR.json",
+    "create:governance/reports/RM02_RUNNER_SKELETON_REPAIR.md",
+    "append:governance/AGENT_CONTEXT.md",
+    "create_dir:governance/runners"
+  ],
+  "changed_files": [
+    "governance/runners/__init__.py",
+    "governance/runners/runner_skeleton.py",
+    "governance/validation/validate_runner_skeleton.py",
+    "governance/state/RM02_RUNNER_SKELETON_REPAIR.json",
+    "governance/reports/RM02_RUNNER_SKELETON_REPAIR.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/runners/.gitkeep",
+    "governance/codex/proofs/rm02_runner_skeleton_repair.txt"
+  ],
+  "commit_sha": "429b86945a053c89e421abb345e00f6ee6d33780",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm02_runner_skeleton_repair.md",
+  "completed_at": "2026-06-04T07:24:22Z"
+}
