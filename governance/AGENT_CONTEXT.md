@@ -1659,3 +1659,5 @@ Recorded GPT write-channel blocker after Claude fix: GPT/Deno executor attempts 
 ## P14 completed | 2026-06-04
 Workflow blocker lifted again by Claude
 ## KZ-1 completed | 2026-06-04
+## KZ-1B completed | 2026-06-04
+Runner skeleton validation status: blocked. Missing=[]; Invalid=['governance/runners/kz1_runner_01.py', 'governance/runners/kz1_runner_02.py', 'governance/runners/kz1_runner_03.py', 'governance/runners/kz1_runner_04.py', 'governance/runners/kz1_runner_05.py', 'governance/runners/kz1_runner_06.py', 'governance/runners/kz1_runner_07.py', 'governance/runners/kz1_runner_08.py', 'governance/runners/kz1_runner_09.py', 'governance/runners/kz1_runner_10.py', 'governance/runners/kz1_runner_11.py', 'governance/runners/kz1_runner_12.py', 'governance/runners/kz1_runner_13.py', 'governance/runners/kz1_runner_14.py']. Workflow lock respected. Next: KZ-2 governance runner manifest.

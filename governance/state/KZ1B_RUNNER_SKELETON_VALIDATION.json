@@ -1,0 +1,25 @@
+{
+  "id": "KZ-1B",
+  "trace_id": "kz1b_runner_skeleton_validation",
+  "status": "blocked",
+  "release_pass": false,
+  "missing": [],
+  "invalid": [
+    "governance/runners/kz1_runner_01.py",
+    "governance/runners/kz1_runner_02.py",
+    "governance/runners/kz1_runner_03.py",
+    "governance/runners/kz1_runner_04.py",
+    "governance/runners/kz1_runner_05.py",
+    "governance/runners/kz1_runner_06.py",
+    "governance/runners/kz1_runner_07.py",
+    "governance/runners/kz1_runner_08.py",
+    "governance/runners/kz1_runner_09.py",
+    "governance/runners/kz1_runner_10.py",
+    "governance/runners/kz1_runner_11.py",
+    "governance/runners/kz1_runner_12.py",
+    "governance/runners/kz1_runner_13.py",
+    "governance/runners/kz1_runner_14.py"
+  ],
+  "workflow_files_touched": false,
+  "next": "KZ-1 repair missing or invalid runners"
+}
