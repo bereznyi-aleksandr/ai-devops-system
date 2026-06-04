@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p18b_roadmap_cursor_validation",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P18B cursor validation",
+  "objective": "Create file governance/state/P18B_ROADMAP_CURSOR_VALIDATION.json with content {\"id\":\"P18B\",\"trace_id\":\"p18b_roadmap_cursor_validation\",\"status\":\"completed\",\"release_pass\":true,\"validated_step\":{\"id\":\"P18\",\"sha\":\"b642ff948cd9e2fb1c196a586077d66ad5036260\"},\"workflow_files_touched\":false,\"next\":\"read AGENT_CONTEXT.md for next non-workflow roadmap task\"}\nCreate file governance/reports/P18B_ROADMAP_CURSOR_VALIDATION.md with content # P18B | Roadmap cursor validation\nStatus: completed\nDate: 2026-06-04\n\n## Evidence\nP18 SHA b642ff948cd9e2fb1c196a586077d66ad5036260 recorded the roadmap cursor snapshot and workflow lock policy.\n\n## Validation\nCursor snapshot is SHA-backed. Workflow lock respected; no `.github/workflows/*.yml` files touched.\n\n## Next\nRead AGENT_CONTEXT.md for next non-workflow roadmap task.\nAppend to governance/AGENT_CONTEXT.md: \n## P18B completed | 2026-06-04\nRoadmap cursor validation completed. P18 SHA b642ff948cd9e2fb1c196a586077d66ad5036260 validated. Workflow lock respected: no .github/workflows files touched. Next: read AGENT_CONTEXT.md for next non-workflow roadmap task.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p18b_roadmap_cursor_validation.md",
+    "result_json": "governance/codex/results/p18b_roadmap_cursor_validation.json"
+  },
+  "created_at": "2026-06-04T10:16:07.374Z"
+}
