@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: p12h_delete_append_flow_yaml_workflow
+task_type: code_patch
+executed_at: 2026-06-04T08:09:11Z
+ops_applied: create:governance/state/P12H_DELETE_APPEND_FLOW_YAML_WORKFLOW.json, create:governance/reports/P12H_DELETE_APPEND_FLOW_YAML_WORKFLOW.md, append:.github/workflows/governance-validation-ci.yml, append:governance/AGENT_CONTEXT.md, delete_line:.github/workflows/governance-validation-ci.yml
+changed_files: governance/state/P12H_DELETE_APPEND_FLOW_YAML_WORKFLOW.json, governance/reports/P12H_DELETE_APPEND_FLOW_YAML_WORKFLOW.md, .github/workflows/governance-validation-ci.yml, governance/AGENT_CONTEXT.md, .github/workflows/governance-validation-ci.yml
+errors: none
