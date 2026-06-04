@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm02_fail_closed_truncated_py_pattern",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-02 fail-closed pattern",
+  "objective": "Create file governance/validation/python_file_integrity_gate.py with content import sys,json;from pathlib import Path;short=[{'path':str(p),'bytes':len(p.read_bytes()),'status':'BLOCKED'} for p in Path('governance').rglob('*.py') if len(p.read_bytes())<50];print(json.dumps({'status':'BLOCKED' if short else 'PASS','min_bytes':50,'short_files':short,'release_pass':False},ensure_ascii=False));sys.exit(1 if short else 0)\nCreate file governance/state/RM02_FAIL_CLOSED_TRUNCATED_PY.json with content {\"id\":\"RM-02\",\"trace_id\":\"rm02_fail_closed_truncated_py_pattern\",\"status\":\"completed\",\"release_pass\":false,\"validator\":\"governance/validation/python_file_integrity_gate.py\",\"rule\":\"any .py file shorter than 50 bytes is BLOCKED\",\"workflow_files_touched\":false,\"next\":\"RM-02B record RM-02 result and activate RM-03\"}\nCreate file governance/reports/RM02_FAIL_CLOSED_TRUNCATED_PY.md with content # RM-02 | Fail-closed for truncated Python files\nStatus: completed\nDate: 2026-06-04\n\nRule implemented: any .py file shorter than 50 bytes is BLOCKED and must not be counted as runnable. Validator: governance/validation/python_file_integrity_gate.py. Workflow lock respected: no .github/workflows files touched. Next: RM-02B record RM-02 result and activate RM-03.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm02_fail_closed_truncated_py_pattern.md",
+    "result_json": "governance/codex/results/rm02_fail_closed_truncated_py_pattern.json"
+  },
+  "created_at": "2026-06-04T11:30:19.417Z"
+}
