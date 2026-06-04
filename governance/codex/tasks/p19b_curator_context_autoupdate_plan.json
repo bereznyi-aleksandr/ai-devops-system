@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p19b_curator_context_autoupdate_plan",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P19B context autoupdate plan",
+  "objective": "Create file governance/state/P19B_CURATOR_CONTEXT_AUTOUPDATE_PLAN.json with content {\"id\":\"P19B\",\"trace_id\":\"p19b_curator_context_autoupdate_plan\",\"status\":\"completed\",\"release_pass\":false,\"previous_step\":{\"id\":\"P19\",\"sha\":\"3018294a68f53dd77927476969cb62d70ce1eed5\"},\"plan\":{\"goal\":\"curator-hourly should refresh AGENT_CONTEXT.md from latest SHA-backed state without touching workflow files\",\"constraints\":[\"do not edit .github/workflows/*.yml through GPT executor\",\"do not use issue comments\",\"do not require operator relay\",\"preserve workflow_write_lock\"],\"implementation_next\":\"P19C create curator context update specification\"},\"workflow_files_touched\":false,\"next\":\"P19C curator context update specification\"}\nCreate file governance/reports/P19B_CURATOR_CONTEXT_AUTOUPDATE_PLAN.md with content # P19B | Curator AGENT_CONTEXT autoupdate plan\nStatus: completed\nDate: 2026-06-04\n\n## Goal\nDefine the safe plan for AGENT_CONTEXT auto-update: curator-hourly or its support code should refresh AGENT_CONTEXT.md from latest SHA-backed state while respecting workflow lock.\n\n## Constraints\n- GPT executor must not touch `.github/workflows/*.yml`.\n- No issue comments.\n- No operator relay for routine updates.\n- Preserve `governance/state/workflow_write_lock.json` rule.\n\n## Previous evidence\nP19 SHA 3018294a68f53dd77927476969cb62d70ce1eed5 produced the inventory.\n\n## Next\nP19C curator context update specification.\nAppend to governance/AGENT_CONTEXT.md: \n## P19B completed | 2026-06-04\nCurator AGENT_CONTEXT autoupdate plan recorded. Goal: curator support code refreshes AGENT_CONTEXT.md from latest SHA-backed state while respecting workflow lock. Workflow lock respected: no .github/workflows files touched. Next: P19C curator context update specification.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p19b_curator_context_autoupdate_plan.md",
+    "result_json": "governance/codex/results/p19b_curator_context_autoupdate_plan.json"
+  },
+  "created_at": "2026-06-04T10:17:46.222Z"
+}
