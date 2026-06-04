@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T11:35:00Z",
+  "updated_at": "2026-06-04T11:36:00Z",
   "source": "Updated Roadmap / Claude audit pre-KZ-1 block",
   "max_active_tasks": 7,
   "policy": {
@@ -38,19 +38,21 @@
     {
       "id": "RM-03",
       "title": "ast.parse gate перед фиксацией STUB_RUNNABLE",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": 3,
       "depends_on": [
         "RM-01",
         "RM-02"
       ],
       "criteria": "STUB_RUNNABLE can be recorded only after ast.parse succeeds",
-      "touch_workflows": false
+      "touch_workflows": false,
+      "sha": "08070e58697a4399c1884b601c23522ba4ec9299",
+      "completed_at": "2026-06-04T11:31:59Z"
     },
     {
       "id": "RM-04",
       "title": "Консистентность PASS/диагноза",
-      "status": "WAITING_DEPENDS",
+      "status": "PENDING",
       "priority": 4,
       "depends_on": [
         "RM-01",
