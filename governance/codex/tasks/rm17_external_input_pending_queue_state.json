@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm17_external_input_pending_queue_state",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM17 external input queue",
+  "objective": "Create file governance/state/RM17_EXTERNAL_INPUT_PENDING_QUEUE_STATE.json with content {\"created_at_utc3\":\"2026-06-04 | 06:29 (UTC+3)\",\"release_pass\":false,\"queue_status\":\"waiting_for_real_external_inputs\",\"pending_items\":[{\"id\":\"GATE4_REAL_TELEGRAM_RECEIPT\",\"status\":\"pending_real_input\",\"collector\":\"governance/runners/telegram_production_receipt_collector.py\"},{\"id\":\"GATE5_REAL_LIVE_RUNTIME_RECEIPT\",\"status\":\"pending_real_input\",\"collector\":\"governance/runners/live_runtime_receipt_collector.py\"},{\"id\":\"GATE6_REAL_EXTERNAL_CLAUDE_AUDIT\",\"status\":\"pending_real_input\",\"collector\":\"governance/runners/external_claude_audit_result_collector.py\"},{\"id\":\"TZ2_VERIFIED_DUPLICATE_INVENTORY\",\"status\":\"pending_verified_inventory\",\"validator\":\"governance/validators/inventory_capability_contract.py\"}],\"next_action\":\"RM18 visible progress ledger for operator\"}\nCreate file governance/audit/EXTERNAL_INPUT_PENDING_QUEUE_STATE.md with content # External input pending queue state\n\nCreated: 2026-06-04 | 06:29 (UTC+3)\nRelease PASS: false\n\nPending real inputs:\n1. Gate 4 Telegram production receipt.\n2. Gate 5 live runtime receipt.\n3. Gate 6 external Claude audit result.\n4. TZ2 verified duplicate inventory.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM17 | EXTERNAL INPUT PENDING QUEUE STATE | 2026-06-04 | 06:29 (UTC+3)\n- Created external-input pending queue state for remaining non-autonomous blockers.\n- No Release PASS. Next action: RM18 visible progress ledger for operator.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm17_external_input_pending_queue_state.md",
+    "result_json": "governance/codex/results/rm17_external_input_pending_queue_state.json"
+  },
+  "created_at": "2026-06-04T04:30:38.820Z"
+}
