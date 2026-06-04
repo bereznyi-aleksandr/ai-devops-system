@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12g_replace_workflow_with_complete_json_yaml",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P12G_REPLACE_WORKFLOW_WITH_COMPLETE_JSON_YAML.json",
+    "create:governance/reports/P12G_REPLACE_WORKFLOW_WITH_COMPLETE_JSON_YAML.md",
+    "append:governance/AGENT_CONTEXT.md",
+    "replace_line:.github/workflows/governance-validation-ci.yml"
+  ],
+  "changed_files": [
+    "governance/state/P12G_REPLACE_WORKFLOW_WITH_COMPLETE_JSON_YAML.json",
+    "governance/reports/P12G_REPLACE_WORKFLOW_WITH_COMPLETE_JSON_YAML.md",
+    "governance/AGENT_CONTEXT.md",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/codex/proofs/p12g_replace_workflow_with_complete_json_yaml.txt"
+  ],
+  "commit_sha": "3de17cd7f2ec96c189e3d7bd07c82fa35b0a9117",
+  "blocker": null,
+  "report_path": "governance/codex/results/p12g_replace_workflow_with_complete_json_yaml.md",
+  "completed_at": "2026-06-04T08:07:19Z"
+}

@@ -1,4 +1,4 @@
-name: governance-validation-ci
+name: {
 on:'
 Insert in
 on:
@@ -9,7 +9,7 @@ jobs:
   disabled-placeholder:
 runs-on: ubuntu-latest'
 Insert in
-name: governance-validation-ci
+name: {
 on:
   workflow_dispatch:
 jobs:
