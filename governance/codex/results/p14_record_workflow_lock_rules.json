@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "p14_record_workflow_lock_rules",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P14_RECORD_WORKFLOW_LOCK_RULES.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P14_RECORD_WORKFLOW_LOCK_RULES.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p14_record_workflow_lock_rules.txt"
+  ],
+  "commit_sha": "3d8e1a6a3fac1bb9767caaa05e20b5aaa56e1b46",
+  "blocker": null,
+  "report_path": "governance/codex/results/p14_record_workflow_lock_rules.md",
+  "completed_at": "2026-06-04T09:57:11Z"
+}
