@@ -1579,3 +1579,5 @@ No issue comments.
 -
 ### RM14 | POST-RECEIPT VALIDATION UPKEEP BACKLOG | 2026-06-04 | 06:26 (UTC+3)
 -
+### RM15 | FINAL CONTINUOUS-MODE GUARD STATE | 2026-06-04 | 06:27 (UTC+3)
+- Added continuous-mode guard state to prevent report-only stops
