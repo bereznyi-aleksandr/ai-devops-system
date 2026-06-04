@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: rm06_collectors_fail_closed_integration_test
+task_type: code_patch
+executed_at: 2026-06-04T04:06:11Z
+ops_applied: create:tests/governance/test_collectors_fail_closed_integration.py, create:governance/state/RM06_COLLECTORS_FAIL_CLOSED_INTEGRATION_TEST.json, append:governance/AGENT_CONTEXT.md
+changed_files: tests/governance/test_collectors_fail_closed_integration.py, governance/state/RM06_COLLECTORS_FAIL_CLOSED_INTEGRATION_TEST.json, governance/AGENT_CONTEXT.md
+errors: none

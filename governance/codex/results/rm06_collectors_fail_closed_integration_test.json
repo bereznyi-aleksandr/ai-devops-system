@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm06_collectors_fail_closed_integration_test",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:tests/governance/test_collectors_fail_closed_integration.py",
+    "create:governance/state/RM06_COLLECTORS_FAIL_CLOSED_INTEGRATION_TEST.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "tests/governance/test_collectors_fail_closed_integration.py",
+    "governance/state/RM06_COLLECTORS_FAIL_CLOSED_INTEGRATION_TEST.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm06_collectors_fail_closed_integration_test.txt"
+  ],
+  "commit_sha": "d8b21b4aa9f33bab2a9ffeb446ea7067cad64b3d",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm06_collectors_fail_closed_integration_test.md",
+  "completed_at": "2026-06-04T04:06:11Z"
+}

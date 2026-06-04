@@ -1561,3 +1561,5 @@ No issue comments.
 - Added validator suite manifest for working baseline and fail-closed release gating
 ### RM05 | FINAL VALIDATOR SUITE REPORT | 2026-06-04 | 06:17 (UTC+3)
 -
+### RM06 | COLLECTORS FAIL-CLOSED INTEGRATION TEST | 2026-06-04 | 06:18 (UTC+3)
+- Added integration test verifying Gate 4/5/6 collectors fail closed without real inputs
