@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm11_current_state_final_audit_packet",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/CURRENT_STATE_FINAL_AUDIT_PACKET.md",
+    "create:governance/state/RM11_CURRENT_STATE_FINAL_AUDIT_PACKET.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/CURRENT_STATE_FINAL_AUDIT_PACKET.md",
+    "governance/state/RM11_CURRENT_STATE_FINAL_AUDIT_PACKET.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm11_current_state_final_audit_packet.txt"
+  ],
+  "commit_sha": "d656fe49a463e236bf4f221528242e2a8798ca7e",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm11_current_state_final_audit_packet.md",
+  "completed_at": "2026-06-04T04:18:04Z"
+}
