@@ -1536,3 +1536,5 @@ No issue comments.
 - Continued roadmap after stop-violation: TZ2 duplicate inventory
 ### TZ2 | EXACT DUPLICATE PATH DIAGNOSIS | 2026-06-04 | 06:04 (UTC+3)
 - Requested exact duplicate path diagnosis and recorded fail-closed empty path state
+### RM00 | INVENTORY CAPABILITY REPAIR | 2026-06-04 | 06:05 (UTC+3)
+- Added inventory capability contract for TZ2 duplicate path discovery without exec()

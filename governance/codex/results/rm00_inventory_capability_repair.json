@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_inventory_capability_repair",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/inventory_capability_contract.py",
+    "create:governance/state/RM00_INVENTORY_CAPABILITY_REPAIR.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/inventory_capability_contract.py",
+    "governance/state/RM00_INVENTORY_CAPABILITY_REPAIR.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_inventory_capability_repair.txt"
+  ],
+  "commit_sha": "5add65571a476c230159057b8023c379c56983ae",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_inventory_capability_repair.md",
+  "completed_at": "2026-06-04T03:36:33Z"
+}
