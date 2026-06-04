@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm07_external_receipt_dirs_hardening",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/proofs/external/telegram/.gitkeep",
+    "create:governance/proofs/external/runtime/.gitkeep",
+    "create:governance/proofs/external/claude/.gitkeep",
+    "create:governance/state/RM07_EXTERNAL_RECEIPT_DIRS_HARDENING.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/proofs/external/telegram/.gitkeep",
+    "governance/proofs/external/runtime/.gitkeep",
+    "governance/proofs/external/claude/.gitkeep",
+    "governance/state/RM07_EXTERNAL_RECEIPT_DIRS_HARDENING.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm07_external_receipt_dirs_hardening.txt"
+  ],
+  "commit_sha": "ab76a0be0a597ffc15de2618e5a6fe0588d783ad",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm07_external_receipt_dirs_hardening.md",
+  "completed_at": "2026-06-04T04:08:12Z"
+}

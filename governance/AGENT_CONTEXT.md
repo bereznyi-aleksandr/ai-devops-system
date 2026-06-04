@@ -1563,3 +1563,5 @@ No issue comments.
 -
 ### RM06 | COLLECTORS FAIL-CLOSED INTEGRATION TEST | 2026-06-04 | 06:18 (UTC+3)
 - Added integration test verifying Gate 4/5/6 collectors fail closed without real inputs
+### RM07 | EXTERNAL RECEIPT DIRECTORY STRUCTURE HARDENING | 2026-06-04 | 06:19 (UTC+3)
+- Ensured external receipt directories exist via
