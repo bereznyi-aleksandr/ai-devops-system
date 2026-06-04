@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13b_delete_corrupt_line_append_json_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P13B append JSON workflow",
+  "objective": "Delete from .github/workflows/governance-validation-ci.yml line containing 'Previous content was corrupted'\nAppend to .github/workflows/governance-validation-ci.yml: {\"name\":\"Governance Validation CI\",\"on\":{\"workflow_dispatch\":{}},\"jobs\":{\"disabled\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"run\":\"echo disabled\"}]}}}\nCreate file governance/state/P13B_DELETE_CORRUPT_LINE_APPEND_JSON_WORKFLOW.json with content {\"id\":\"P13B\",\"trace_id\":\"p13b_delete_corrupt_line_append_json_workflow\",\"status\":\"completed\",\"release_pass\":false,\"change\":\"deleted corrupted single-line workflow and appended complete JSON workflow document\",\"next\":\"P13C verify raw workflow content\"}\nAppend to governance/AGENT_CONTEXT.md: \n## P13B completed | 2026-06-04\nDeleted corrupted single-line workflow and appended complete JSON workflow document. Release PASS false pending raw verification. Next: P13C verify raw workflow content.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p13b_delete_corrupt_line_append_json_workflow.md",
+    "result_json": "governance/codex/results/p13b_delete_corrupt_line_append_json_workflow.json"
+  },
+  "created_at": "2026-06-04T08:29:23.349Z"
+}
