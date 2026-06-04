@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05d_real_runners_run_script_fix",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/rm05d_real_runners_run_script_fix.txt"
+  ],
+  "commit_sha": "e1a7e47ce0b8cc6bf6705d75625e27ba11642082",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'chr' is not defined"
+  },
+  "report_path": "governance/codex/results/rm05d_real_runners_run_script_fix.md",
+  "completed_at": "2026-06-04T14:54:28Z"
+}
