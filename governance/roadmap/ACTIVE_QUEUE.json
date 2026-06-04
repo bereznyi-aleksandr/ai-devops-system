@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T16:05:00Z",
-  "source": "Claude External Audit — GATE-3 PASS, Gates 4-6 waiting operator",
+  "updated_at": "2026-06-04T16:20:00Z",
+  "source": "Claude External Audit — Telegram HTTP 403 root cause found",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
     "workflow_yml_locked_for_gpt": true,
@@ -10,72 +10,16 @@
   },
   "tasks": [
     {
-      "id": "GATE-2",
-      "title": "Minimal Local E2E PASS",
-      "status": "DONE",
-      "sha": "be50d6ebdb6134cfb78e9f24a7e929310fbacc58",
-      "proof": "governance/state/gate2_proof.json"
-    },
-    {
-      "id": "GATE-3",
-      "title": "CI E2E Capture PASS",
-      "status": "BLOCKED",
-      "ci_run_id": "26963047653",
-      "ci_run_sha": "c6d830bab33f8269e9030c52248df9ac0428c3c7",
-      "proof": "governance/state/gate3_ci_proof.json",
-      "blocker": "GitHub Actions minimal-loop-e2e Commit CI proof failed because remote contains work not present locally; push rejected as non-fast-forward after concurrent repo updates",
-      "blocked_at": "2026-06-04T16:05:00Z",
-      "workflow_files_touched_by_gpt": false
-    },
-    {
-      "id": "GATE-4",
-      "title": "Production Telegram receipt",
-      "status": "WAITING_TELEGRAM_RECEIPT",
+      "id": "GATE-4-FIX",
+      "title": "Fix Telegram HTTP 403 — update GITHUB_ISSUE 31→32 in deno_webhook.js",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "detail": "Требуется реальный Telegram receipt от бота оператора. GPT не может выполнить без operator action.",
-      "blocked_for_gpt": true,
-      "operator_action_required": "Отправить тестовое сообщение боту и подтвердить receipt",
-      "bot_username": "@BarberStaffBot",
-      "operator_screenshot_received": true,
-      "proof_status": "identity_known_response_not_yet_recorded",
-      "updated_at": "2026-06-04T16:01:00Z",
-      "identity_evidence_sha": "f4890faa002f8755c6f7803c097d157560d96af6",
-      "gate_pass": false,
-      "next_required_evidence": "real Telegram message receipt/response proof"
-    },
-    {
-      "id": "GATE-5",
-      "title": "Live LLM runtime receipt",
-      "status": "WAITING_OPERATOR",
-      "priority": 2,
-      "blocked_for_gpt": true,
-      "depends_on": [
-        "GATE-4"
-      ]
-    },
-    {
-      "id": "GATE-6",
-      "title": "External Claude audit receipt",
-      "status": "WAITING_CLAUDE",
-      "priority": 3,
-      "blocked_for_gpt": true,
-      "depends_on": [
-        "GATE-5"
-      ]
-    },
-    {
-      "id": "GATE-3-PUSH-RACE-FIX",
-      "title": "Fix CI proof push race / non-fast-forward capture",
-      "status": "BLOCKED_FOR_CLAUDE",
-      "priority": 1,
-      "depends_on": [
-        "GATE-3"
-      ],
-      "criteria": "Workflow captures gate3_ci_proof.json despite concurrent pushes, using pull --rebase/retry or artifact/dispatch proof path",
-      "touch_workflows": true,
-      "owner": "Claude MCP"
+      "touch_workflows": false,
+      "audit_note": "Root cause confirmed: issue #31 reached 2500 comment limit. GitHub blocks new comments with 403. Issue #32 created by Claude. Need to patch deno_webhook.js: GITHUB_ISSUE = 31 → 32.",
+      "example_objective": "Run script:\n\"\"\"\nfrom pathlib import Path\n\np = Path('governance/deno_webhook.js')\ncontent = p.read_text()\nassert 'GITHUB_ISSUE  = 31' in content, 'Pattern not found'\nnew_content = content.replace(\n    'const GITHUB_ISSUE  = 31;',\n    'const GITHUB_ISSUE  = 32; // migrated from #31 — reached 2500 comment limit 2026-06-04'\n).replace(\n    '// Версия: v4.9 | BEM-487',\n    '// Версия: v5.0 | BEM-487 + issue#32 migration 2026-06-04'\n)\nassert 'GITHUB_ISSUE  = 32' in new_content, 'Replacement failed'\np.write_text(new_content)\nchanged_files.append('governance/deno_webhook.js')\nprint('Patched: GITHUB_ISSUE 31 -> 32')\n\"\"\"\nNo issue comments.",
+      "proof_required": "governance/deno_webhook.js содержит GITHUB_ISSUE = 32 (проверить через getCodexStatus changed_files)"
     }
   ],
-  "queue_state": "BLOCKED_ON_CLAUDE_WORKFLOW_PUSH_RACE_FIX",
-  "next_action": "Claude MCP must repair CI proof capture race handling; GPT executor must not touch .github/workflows/*.yml"
+  "queue_state": "HAS_ACTIVE_TASKS",
+  "next_action": "Execute GATE-4-FIX using exact example_objective — patch deno_webhook.js"
 }
