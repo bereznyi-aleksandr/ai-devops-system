@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f4_move_active_workflow_to_txt",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM00F4 move workflow txt",
+  "objective": "Move file .github/workflows/governance-validation-ci.yml to governance/workflows_disabled/governance-validation-ci.yml.disabled.txt\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00f4_move_active_workflow_to_txt.md",
+    "result_json": "governance/codex/results/rm00f4_move_active_workflow_to_txt.json"
+  },
+  "created_at": "2026-06-04T04:48:03.308Z"
+}
