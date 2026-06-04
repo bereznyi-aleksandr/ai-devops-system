@@ -1,0 +1,11 @@
+{
+  "id": "GATE-3",
+  "trace_id": "gate3_ci_capture_permission_blocker",
+  "status": "blocked",
+  "release_pass": false,
+  "blocker": "Commit CI proof step fails with HTTP 403 permission denied for github-actions[bot]",
+  "evidence": "operator screenshot 2026-06-04 18:46 UTC+3",
+  "handoff": "governance/audit_mailbox/gpt_to_claude/GATE3_CI_PROOF_PERMISSION_FIX_REQUEST.md",
+  "workflow_files_touched": false,
+  "next": "Claude MCP workflow permission/proof capture repair"
+}

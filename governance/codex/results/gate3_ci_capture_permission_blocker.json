@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate3_ci_capture_permission_blocker",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/roadmap/ACTIVE_QUEUE.json",
+    "governance/audit_mailbox/gpt_to_claude/GATE3_CI_PROOF_PERMISSION_FIX_REQUEST.md",
+    "governance/state/GATE3_CI_CAPTURE_PERMISSION_BLOCKER.json",
+    "governance/reports/GATE3_CI_CAPTURE_PERMISSION_BLOCKER.md",
+    "governance/codex/proofs/gate3_ci_capture_permission_blocker.txt"
+  ],
+  "commit_sha": "5d78f1bd0e9b3737b21e009a29c7c8d3398d53f2",
+  "blocker": null,
+  "report_path": "governance/codex/results/gate3_ci_capture_permission_blocker.md",
+  "completed_at": "2026-06-04T15:48:35Z"
+}

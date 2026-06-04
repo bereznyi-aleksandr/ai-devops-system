@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:42:00Z",
+  "updated_at": "2026-06-04T15:47:00Z",
   "source": "Claude External Audit — GATE-2 PASS, GATE-3 next",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -21,15 +21,30 @@
     {
       "id": "GATE-3-PREP",
       "title": "Gate 3: CI E2E Capture — подключить validators к CI",
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "priority": 1,
       "touch_workflows": false,
       "detail": "governance-validation-ci.yml сейчас disabled stub (on: workflow_dispatch only). Нужно: добавить step который запускает governance/runtime/minimal_governance_loop_runner.py и проверяет что output содержит status=completed. Файл LOCKED для GPT executor. Задачу выполняет Claude MCP.",
       "operator_note": "GATE-3 требует изменения .github/workflows/governance-validation-ci.yml — это LOCKED для GPT. Claude выполнит напрямую при следующем запросе.",
       "blocked_for_gpt": true,
-      "proof_required": "governance/state/gate3_ci_proof.json с ci_run_sha и status=PASS"
+      "proof_required": "governance/state/gate3_ci_proof.json с ci_run_sha и status=PASS",
+      "blocker": "GitHub Actions minimal-loop-e2e fails at Commit CI proof: github-actions[bot] cannot push, HTTP 403 permission denied",
+      "blocked_at": "2026-06-04T15:47:00Z",
+      "workflow_files_touched_by_gpt": false
+    },
+    {
+      "id": "GATE-3-PERMISSION-FIX",
+      "title": "Fix CI proof commit permissions via Claude MCP workflow/settings repair",
+      "status": "BLOCKED_FOR_CLAUDE",
+      "priority": 1,
+      "depends_on": [
+        "GATE-3-CI-CAPTURE"
+      ],
+      "criteria": "GitHub Actions can write governance/state/gate3_ci_proof.json or alternative proof capture path is implemented",
+      "touch_workflows": true,
+      "owner": "Claude MCP"
     }
   ],
-  "queue_state": "HAS_ACTIVE_TASKS",
-  "next_action": "GATE-3 workflow change — locked for GPT, requires Claude MCP direct action"
+  "queue_state": "BLOCKED_ON_CLAUDE_WORKFLOW_PERMISSION_FIX",
+  "next_action": "Claude MCP must repair workflow permissions or CI proof capture; GPT executor must not touch .github/workflows/*.yml"
 }
