@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_governance_runner_manifest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/runners/KZ1_RUNNER_MANIFEST.json",
+    "create:governance/state/KZ2_GOVERNANCE_RUNNER_MANIFEST.json",
+    "create:governance/reports/KZ2_GOVERNANCE_RUNNER_MANIFEST.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/runners/KZ1_RUNNER_MANIFEST.json",
+    "governance/state/KZ2_GOVERNANCE_RUNNER_MANIFEST.json",
+    "governance/reports/KZ2_GOVERNANCE_RUNNER_MANIFEST.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/kz2_governance_runner_manifest.txt"
+  ],
+  "commit_sha": "4456f81f1db6923a0820e6dfc98aeaa249843fd0",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz2_governance_runner_manifest.md",
+  "completed_at": "2026-06-04T10:00:56Z"
+}
