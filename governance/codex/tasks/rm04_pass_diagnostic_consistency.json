@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04_pass_diagnostic_consistency",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-04 PASS diagnostic consistency",
+  "objective": "Create file governance/validation/pass_diagnostic_consistency_gate.py with content import json;from pathlib import Path;target=Path('governance/reports/BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2.md');text=target.read_text(encoding='utf-8') if target.exists() else '';ok=('RM-01 FALSE PASS REVOCATION' in text and 'Release PASS: false' in text);print(json.dumps({'status':'PASS' if ok else 'BLOCKED','target':str(target),'false_pass_revoked':ok,'release_pass':False},ensure_ascii=False));raise SystemExit(0 if ok else 1)\nCreate file governance/state/RM04_PASS_DIAGNOSTIC_CONSISTENCY.json with content {\"id\":\"RM-04\",\"trace_id\":\"rm04_pass_diagnostic_consistency\",\"status\":\"completed\",\"release_pass\":false,\"validator\":\"governance/validation/pass_diagnostic_consistency_gate.py\",\"rule\":\"PASS and diagnostic reports must agree; revoked false PASS keeps release_pass=false\",\"workflow_files_touched\":false,\"next\":\"RM-04B record RM-04 result and activate RM-05\"}\nCreate file governance/reports/RM04_PASS_DIAGNOSTIC_CONSISTENCY.md with content # RM-04 | PASS / diagnostic consistency\nStatus: completed\nDate: 2026-06-04\n\nRule implemented: PASS and diagnostic reports must agree. BEM1284 false PASS was revoked by RM-01, so release_pass remains false until pre-KZ blockers are done. Validator: governance/validation/pass_diagnostic_consistency_gate.py. Workflow lock respected: no .github/workflows files touched. Next: RM-04B record RM-04 result and activate RM-05.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm04_pass_diagnostic_consistency.md",
+    "result_json": "governance/codex/results/rm04_pass_diagnostic_consistency.json"
+  },
+  "created_at": "2026-06-04T11:33:18.374Z"
+}
