@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "release_validator_evidence_packet",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Release validator evidence packet",
+  "objective": "Create file governance/audit/RELEASE_VALIDATOR_EVIDENCE_PACKET.md with content # Release validator evidence packet\n\nCreated: 2026-06-04 | 06:09 (UTC+3)\nRelease PASS: false\n\n## Validator\n- governance/validators/validate_release_gates.py\n- SHA: 59bc23c9bba967112919e10e657610ca4c7b94e9\n\n## Required real receipts before PASS\n- governance/proofs/external/telegram/production_receipt.json\n- governance/proofs/external/runtime/live_runtime_receipt.json\n- governance/proofs/external/claude/external_claude_audit_result.json\n\n## Collectors\n- governance/runners/telegram_production_receipt_collector.py\n- governance/runners/live_runtime_receipt_collector.py\n- governance/runners/external_claude_audit_result_collector.py\n\n## Current status\nCollectors and validator exist. Real receipts are still missing. Release PASS remains blocked.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### RELEASE | VALIDATOR EVIDENCE PACKET | 2026-06-04 | 06:09 (UTC+3)\n- Created release validator evidence packet for Gate 4/5/6 receipt validation.\n- No Release PASS. Next action: final working-baseline status checkpoint with open blockers.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/release_validator_evidence_packet.md",
+    "result_json": "governance/codex/results/release_validator_evidence_packet.json"
+  },
+  "created_at": "2026-06-04T03:45:46.916Z"
+}
