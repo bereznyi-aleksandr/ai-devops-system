@@ -1,0 +1,20 @@
+{
+  "gate": "GATE-2",
+  "title": "Minimal Local E2E PASS",
+  "status": "PASS",
+  "date": "2026-06-04",
+  "verified_by": "Claude External Audit MCP",
+  "runner": "governance/runtime/minimal_governance_loop_runner.py",
+  "runner_sha": "be50d6ebdb6134cfb78e9f24a7e929310fbacc58",
+  "runner_bytes": 967,
+  "ast_parse": true,
+  "execution_result": {
+    "trace_id": "gate2_minimal_loop_trace_v1",
+    "steps": ["analyst:propose", "auditor:review", "executor:execute", "auditor:verify"],
+    "status": "completed",
+    "release_pass": false
+  },
+  "release_pass": false,
+  "note": "Gate 2 is local deterministic E2E only. Production release_pass requires Gates 4-6.",
+  "next_gate": "GATE-3: CI E2E Capture"
+}
