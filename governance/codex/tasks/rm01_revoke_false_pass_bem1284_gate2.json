@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm01_revoke_false_pass_bem1284_gate2",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-01 revoke false PASS",
+  "objective": "Run script:\n\"\"\"\nroot = Path('governance')\nqueue_path = root / 'roadmap' / 'ACTIVE_QUEUE.json'\nqueue = json.loads(queue_path.read_text(encoding='utf-8')) if queue_path.exists() else {'tasks': []}\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'RM-01':\n        task['status'] = 'IN_PROGRESS'\nqueue['updated_at'] = '2026-06-04T11:31:00Z'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nmatches = []\nfor p in root.rglob('*'):\n    if p.is_file() and 'BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2' in p.name:\n        matches.append(p)\nmodified = []\nrevocation = '\\n\\n## RM-01 FALSE PASS REVOCATION | 2026-06-04\\nStatus: PASS_REVOKED\\nReason: Claude audit found pre-KZ-1 blockers and ACTIVE_QUEUE mismatch; previous PASS is invalid until RM-01..RM-04 complete.\\nRelease PASS: false\\n'\nfor p in matches:\n    text = p.read_text(encoding='utf-8', errors='ignore')\n    if 'RM-01 FALSE PASS REVOCATION' not in text:\n        text = text.replace('release_pass: true', 'release_pass: false')\n        text = text.replace('Release PASS: true', 'Release PASS: false')\n        text = text.replace('PASS: true', 'PASS: false')\n        text = text.replace('✅ PASS', '❌ PASS_REVOKED')\n        text = text.rstrip() + revocation + '\\n'\n        p.write_text(text, encoding='utf-8')\n        changed_files.append(str(p))\n        modified.append(str(p))\nstate = root / 'state' / 'RM01_REVOKE_FALSE_PASS_BEM1284_GATE2.json'\nstate.parent.mkdir(parents=True, exist_ok=True)\nstatus = 'completed' if modified else 'blocked'\nstate.write_text(json.dumps({'id':'RM-01','trace_id':'rm01_revoke_false_pass_bem1284_gate2','status':status,'release_pass':False,'target_pattern':'BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2','matches':[str(p) for p in matches],'modified':modified,'workflow_files_touched':False,'next':'RM-01B record RM-01 result and activate RM-02' if modified else 'RM-01 repair target path'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = root / 'reports' / 'RM01_REVOKE_FALSE_PASS_BEM1284_GATE2.md'\nreport.parent.mkdir(parents=True, exist_ok=True)\nreport.write_text('# RM-01 | Revoke false PASS from BEM1284 gate2\\nStatus: ' + status + '\\nDate: 2026-06-04\\n\\n## Target search\\nPattern: BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2\\nMatches: ' + json.dumps([str(p) for p in matches], ensure_ascii=False) + '\\nModified: ' + json.dumps(modified, ensure_ascii=False) + '\\n\\n## Decision\\nPrevious PASS is revoked until RM-01..RM-04 pre-KZ blockers are complete. Release PASS is false.\\n\\n## Workflow lock\\nRespected. No `.github/workflows/*.yml` files touched.\\n\\n## Next\\n' + ('RM-01B record RM-01 result and activate RM-02.' if modified else 'RM-01 repair target path.') + '\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm01_revoke_false_pass_bem1284_gate2.md",
+    "result_json": "governance/codex/results/rm01_revoke_false_pass_bem1284_gate2.json"
+  },
+  "created_at": "2026-06-04T11:27:08.534Z"
+}
