@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p20b_roadmap_discovery_validation",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P20B discovery validation",
+  "objective": "Create file governance/state/P20B_ROADMAP_DISCOVERY_VALIDATION.json with content {\"id\":\"P20B\",\"trace_id\":\"p20b_roadmap_discovery_validation\",\"status\":\"completed\",\"release_pass\":true,\"validated_step\":{\"id\":\"P20\",\"sha\":\"389a3290d1d925ca8e19799e53299264953c6419\"},\"workflow_files_touched\":false,\"next\":\"P21 non-workflow roadmap backlog consolidation\"}\nCreate file governance/reports/P20B_ROADMAP_DISCOVERY_VALIDATION.md with content # P20B | Roadmap discovery validation\nStatus: completed\nDate: 2026-06-04\n\n## Evidence\nP20 SHA 389a3290d1d925ca8e19799e53299264953c6419 scanned AGENT_CONTEXT.md and created a SHA-backed roadmap discovery report.\n\n## Validation\nRoadmap discovery evidence exists. Workflow lock respected; no `.github/workflows/*.yml` files touched.\n\n## Next\nP21 non-workflow roadmap backlog consolidation.\nAppend to governance/AGENT_CONTEXT.md: \n## P20B completed | 2026-06-04\nRoadmap discovery validation completed. P20 SHA 389a3290d1d925ca8e19799e53299264953c6419 validated. Workflow lock respected: no .github/workflows files touched. Next: P21 non-workflow roadmap backlog consolidation.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p20b_roadmap_discovery_validation.md",
+    "result_json": "governance/codex/results/p20b_roadmap_discovery_validation.json"
+  },
+  "created_at": "2026-06-04T10:25:45.542Z"
+}
