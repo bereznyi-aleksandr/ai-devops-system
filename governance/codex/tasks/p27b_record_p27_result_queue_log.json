@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p27b_record_p27_result_queue_log",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P27B record P27 result",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'P26B':\n        task['status'] = 'DONE'\n        task['sha'] = 'dd0850cce54105d2a7e301c2135c5bb247d1c00d'\n        task['completed_at'] = '2026-06-04T11:14:57Z'\n    if task.get('id') == 'P27':\n        task['status'] = 'DONE'\n        task['sha'] = '94b73379c3160c01d636f087388f895d5141238b'\n        task['completed_at'] = '2026-06-04T11:15:39Z'\n    if task.get('id') == 'P27B':\n        task['status'] = 'IN_PROGRESS'\nqueue['updated_at'] = '2026-06-04T11:17:00Z'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nlines = [json.dumps({'date':'2026-06-04T11:14:57Z','id':'P26B','trace_id':'p26b_record_p26_result_queue_log','sha':'dd0850cce54105d2a7e301c2135c5bb247d1c00d','status':'done','workflow_files_touched':False}, ensure_ascii=False), json.dumps({'date':'2026-06-04T11:15:39Z','id':'P27','trace_id':'p27_real_roadmap_execution_audit','sha':'94b73379c3160c01d636f087388f895d5141238b','status':'done','workflow_files_touched':False}, ensure_ascii=False)]\nfor line in lines:\n    if line not in existing:\n        existing += line + '\\n'\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/P27B_RECORD_P27_RESULT_QUEUE_LOG.json')\nstate.write_text(json.dumps({'id':'P27B','trace_id':'p27b_record_p27_result_queue_log','status':'completed','release_pass':False,'recorded_steps':['P26B','P27'],'workflow_files_touched':False,'next':'P28 consolidate current queue status report'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/P27B_RECORD_P27_RESULT_QUEUE_LOG.md')\nreport.write_text('# P27B | Record P27 result in queue and log\\nStatus: completed\\nDate: 2026-06-04\\n\\nRecorded P26B and P27 SHA evidence in ACTIVE_QUEUE.json and execution_log.jsonl. Workflow lock respected.\\n\\nNext: P28 consolidate current queue status report.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p27b_record_p27_result_queue_log.md",
+    "result_json": "governance/codex/results/p27b_record_p27_result_queue_log.json"
+  },
+  "created_at": "2026-06-04T11:16:09.129Z"
+}
