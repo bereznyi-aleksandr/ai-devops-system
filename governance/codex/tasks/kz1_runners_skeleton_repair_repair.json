@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz1_runners_skeleton_repair_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-1 runner skeleton repair",
+  "objective": "Create file governance/runners/kz1_runner_01.py with content RUNNER_ID='kz1_runner_01'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_02.py with content RUNNER_ID='kz1_runner_02'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_03.py with content RUNNER_ID='kz1_runner_03'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_04.py with content RUNNER_ID='kz1_runner_04'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_05.py with content RUNNER_ID='kz1_runner_05'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_06.py with content RUNNER_ID='kz1_runner_06'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_07.py with content RUNNER_ID='kz1_runner_07'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_08.py with content RUNNER_ID='kz1_runner_08'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_09.py with content RUNNER_ID='kz1_runner_09'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_10.py with content RUNNER_ID='kz1_runner_10'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_11.py with content RUNNER_ID='kz1_runner_11'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_12.py with content RUNNER_ID='kz1_runner_12'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_13.py with content RUNNER_ID='kz1_runner_13'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/runners/kz1_runner_14.py with content RUNNER_ID='kz1_runner_14'; print({'runner':RUNNER_ID,'status':'ok','release_pass':False})\nCreate file governance/state/KZ1_RUNNERS_SKELETON_REPAIR.json with content {\"id\":\"KZ-1\",\"trace_id\":\"kz1_runners_skeleton_repair_repair\",\"status\":\"completed\",\"release_pass\":false,\"runner_count\":14,\"workflow_files_touched\":false,\"next\":\"KZ-1B runner skeleton validation\"}\nCreate file governance/reports/KZ1_RUNNERS_SKELETON_REPAIR.md with content # KZ-1 | Runners skeleton repair\nStatus: completed. Created 14 deterministic runnable Python runner skeletons under governance/runners. No .github/workflows files touched. Next: KZ-1B runner skeleton validation.\nAppend to governance/AGENT_CONTEXT.md: \n## KZ-1 completed | 2026-06-04\nCreated 14 deterministic runnable Python runner skeletons under governance/runners. Workflow lock respected: no .github/workflows files touched. Release PASS false pending validation. Next: KZ-1B runner skeleton validation.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz1_runners_skeleton_repair_repair.md",
+    "result_json": "governance/codex/results/kz1_runners_skeleton_repair_repair.json"
+  },
+  "created_at": "2026-06-04T09:59:05.399Z"
+}
