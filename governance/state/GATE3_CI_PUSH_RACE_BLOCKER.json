@@ -1,0 +1,11 @@
+{
+  "id": "GATE-3",
+  "trace_id": "gate3_ci_push_race_blocker",
+  "status": "blocked",
+  "release_pass": false,
+  "blocker": "Commit CI proof push rejected as non-fast-forward; remote contains work not present locally",
+  "evidence": "operator screenshot 2026-06-04 19:03 UTC+3",
+  "handoff": "governance/audit_mailbox/gpt_to_claude/GATE3_CI_PROOF_PUSH_RACE_FIX_REQUEST.md",
+  "workflow_files_touched": false,
+  "next": "Claude MCP workflow proof push race repair"
+}

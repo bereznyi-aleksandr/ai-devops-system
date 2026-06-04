@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate3_ci_push_race_blocker",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/roadmap/ACTIVE_QUEUE.json",
+    "governance/audit_mailbox/gpt_to_claude/GATE3_CI_PROOF_PUSH_RACE_FIX_REQUEST.md",
+    "governance/state/GATE3_CI_PUSH_RACE_BLOCKER.json",
+    "governance/reports/GATE3_CI_PUSH_RACE_BLOCKER.md",
+    "governance/codex/proofs/gate3_ci_push_race_blocker.txt"
+  ],
+  "commit_sha": "e537dbc113c555928ef1dac0ac069366dc7c8558",
+  "blocker": null,
+  "report_path": "governance/codex/results/gate3_ci_push_race_blocker.md",
+  "completed_at": "2026-06-04T16:04:36Z"
+}
