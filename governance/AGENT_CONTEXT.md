@@ -1555,3 +1555,5 @@ No issue comments.
 - Hardened release blocker state and no-fake-release-pass validator
 ### RM03 | NO FAKE PROOF GUARD VALIDATOR | 2026-06-04 | 06:14 (UTC+3)
 - Added no-fake-proof guard validator and test
+### RM03R | NO FAKE PROOF GUARD SYNTAX REPAIR | 2026-06-04 | 06:15 (UTC+3)
+- Rewrote no-fake-proof guard as syntax-safe Python
