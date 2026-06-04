@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p20_next_roadmap_discovery_from_context",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "P20 roadmap discovery",
+  "objective": "Run script:\n\"\"\"\nctx = Path('governance/AGENT_CONTEXT.md')\ntext = ctx.read_text(encoding='utf-8') if ctx.exists() else ''\nlines = [line for line in text.splitlines() if 'Next:' in line or 'Следующая' in line or 'next' in line.lower()]\nlast_lines = lines[-20:]\nstate = Path('governance/state/P20_NEXT_ROADMAP_DISCOVERY_FROM_CONTEXT.json')\nstate.parent.mkdir(parents=True, exist_ok=True)\nstate.write_text(json.dumps({'id':'P20','trace_id':'p20_next_roadmap_discovery_from_context','status':'completed','release_pass':False,'agent_context_exists':ctx.exists(),'candidate_next_lines':last_lines,'workflow_files_touched':False,'next':'P20B roadmap discovery validation'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/P20_NEXT_ROADMAP_DISCOVERY_FROM_CONTEXT.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nreport.write_text('# P20 | Next roadmap discovery from AGENT_CONTEXT\\nStatus: completed\\nDate: 2026-06-04\\n\\nAGENT_CONTEXT.md scanned for next-task markers. Workflow lock respected; no .github/workflows files touched.\\n\\n## Candidate next lines\\n' + '\\n'.join('- ' + line for line in last_lines) + '\\n\\nNext: P20B roadmap discovery validation.\\n', encoding='utf-8')\nchanged_files.append(str(report))\nif ctx.exists():\n    ctx.write_text(text.rstrip() + '\\n## P20 completed | 2026-06-04\\nNext roadmap discovery from AGENT_CONTEXT completed. Workflow lock respected: no .github/workflows files touched. Next: P20B roadmap discovery validation.\\n', encoding='utf-8')\n    changed_files.append(str(ctx))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p20_next_roadmap_discovery_from_context.md",
+    "result_json": "governance/codex/results/p20_next_roadmap_discovery_from_context.json"
+  },
+  "created_at": "2026-06-04T10:25:04.712Z"
+}
