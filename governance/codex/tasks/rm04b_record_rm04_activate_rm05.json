@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04b_record_rm04_activate_rm05",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-04B record RM-04",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'RM-04':\n        task['status'] = 'DONE'\n        task['sha'] = '62cf5625e287f9d4b77f4ffd259ecd9e1972cb13'\n        task['completed_at'] = '2026-06-04T11:33:28Z'\n    if task.get('id') == 'RM-05':\n        task['status'] = 'PENDING'\nqueue['updated_at'] = '2026-06-04T11:37:00Z'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nline = json.dumps({'date':'2026-06-04T11:33:28Z','id':'RM-04','trace_id':'rm04_pass_diagnostic_consistency','sha':'62cf5625e287f9d4b77f4ffd259ecd9e1972cb13','status':'done','workflow_files_touched':False}, ensure_ascii=False)\nif line not in existing:\n    existing += line + '\\n'\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/RM04B_RECORD_RM04_ACTIVATE_RM05.json')\nstate.write_text(json.dumps({'id':'RM-04B','trace_id':'rm04b_record_rm04_activate_rm05','status':'completed','release_pass':False,'recorded_step':'RM-04','recorded_sha':'62cf5625e287f9d4b77f4ffd259ecd9e1972cb13','activated':'RM-05','workflow_files_touched':False,'next':'RM-05 KZ-1 runners skeleton repair after pre-KZ blockers'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/RM04B_RECORD_RM04_ACTIVATE_RM05.md')\nreport.write_text('# RM-04B | Record RM-04 and activate RM-05\\nStatus: completed\\nDate: 2026-06-04\\n\\nRM-04 recorded as DONE with SHA 62cf5625e287f9d4b77f4ffd259ecd9e1972cb13. RM-05 set to PENDING in governance/roadmap/ACTIVE_QUEUE.json. Workflow lock respected.\\n\\nNext: RM-05 KZ-1 runners skeleton repair after pre-KZ blockers.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm04b_record_rm04_activate_rm05.md",
+    "result_json": "governance/codex/results/rm04b_record_rm04_activate_rm05.json"
+  },
+  "created_at": "2026-06-04T11:34:00.264Z"
+}
