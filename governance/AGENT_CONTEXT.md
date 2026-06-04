@@ -1666,3 +1666,5 @@ Governance
 ## KZ-3 completed | 2026-06-04
 ## KZ-4 completed | 2026-06-04
 KZ
+## P15 completed | 2026-06-04
+commit_sha null inventory completed. Candidate file count: 3253. Workflow lock respected. Next: P15B commit_sha null remediation plan.
