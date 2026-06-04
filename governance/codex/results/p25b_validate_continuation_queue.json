@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p25b_validate_continuation_queue",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P25B_VALIDATE_CONTINUATION_QUEUE.json",
+    "create:governance/reports/P25B_VALIDATE_CONTINUATION_QUEUE.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P25B_VALIDATE_CONTINUATION_QUEUE.json",
+    "governance/reports/P25B_VALIDATE_CONTINUATION_QUEUE.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p25b_validate_continuation_queue.txt"
+  ],
+  "commit_sha": "f9d0867851337c02d6dee7ba19d1e86597d5ea6e",
+  "blocker": null,
+  "report_path": "governance/codex/results/p25b_validate_continuation_queue.md",
+  "completed_at": "2026-06-04T10:34:34Z"
+}
