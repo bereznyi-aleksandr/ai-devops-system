@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm02_fail_closed_truncated_py_pattern",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validation/python_file_integrity_gate.py",
+    "create:governance/state/RM02_FAIL_CLOSED_TRUNCATED_PY.json",
+    "create:governance/reports/RM02_FAIL_CLOSED_TRUNCATED_PY.md"
+  ],
+  "changed_files": [
+    "governance/validation/python_file_integrity_gate.py",
+    "governance/state/RM02_FAIL_CLOSED_TRUNCATED_PY.json",
+    "governance/reports/RM02_FAIL_CLOSED_TRUNCATED_PY.md",
+    "governance/codex/proofs/rm02_fail_closed_truncated_py_pattern.txt"
+  ],
+  "commit_sha": "e2a382ea6b283cc62ef5a621f36098f3efef46b8",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm02_fail_closed_truncated_py_pattern.md",
+  "completed_at": "2026-06-04T11:30:32Z"
+}
