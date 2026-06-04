@@ -1,5 +1,5 @@
 // Deno Deploy Webhook — AI DevOps System
-// Версия: v4.9 | BEM-487
+// Версия: v4.10 | GATE-4-FIX-V2
 // Изменения:
 //   - BEM-487: POST/GET /codex-task — create task file + dispatch codex-runner.yml
 //   - BEM-487: GET /codex-status — read codex result files
@@ -491,7 +491,7 @@ Deno.serve(async (req) => {
   if (method === "GET" && url.pathname === "/") {
     return corsJson({
       ok: true, service: "ai-devops-telegram-curator-webhook",
-      repo: GITHUB_REPO, issue: GITHUB_ISSUE, version: "4.9",
+      repo: GITHUB_REPO, issue: GITHUB_ISSUE, version: "4.10",
       pat_present:                !!pat,
       pat_source:                 "AI_SYSTEM_GITHUB_PAT",
       ai_system_github_pat_present: !!pat,
@@ -672,11 +672,17 @@ Deno.serve(async (req) => {
     if (chatId !== ALLOWED_CHAT_ID) return new Response("Forbidden", { status: 403 });
     const now = new Date().toLocaleTimeString("uk-UA", { timeZone: "Europe/Kiev", hour: "2-digit", minute: "2-digit" });
     const dedupeKey = `telegram:${chatId}:${messageId}`;
-    const curatorComment = `@curator\n\nTYPE: OPERATOR_TO_CURATOR\nSOURCE: telegram\nDEDUP_KEY: ${dedupeKey}\n\n\`\`\`json\n{\n  "chat_id": "${chatId}",\n  "message_id": "${messageId}",\n  "text": ${JSON.stringify(text)}\n}\n\`\`\``;
-    const status = await postGitHubComment(pat, curatorComment);
-    if (status === 201) { await sendTelegram(token, chatId, `📨 *${now} UA* | Отправлено куратору:\n_${text.slice(0, 100)}_`); }
-    else { await sendTelegram(token, chatId, `❌ *${now} UA* | Ошибка (HTTP ${status})`); }
-    return new Response("OK");
+    const inboxPath = "governance/telegram/inbox.jsonl";
+ const inboxFd = await getFileContents(pat, inboxPath);
+ let inboxRaw = "";
+ const inboxSha = inboxFd?.sha;
+ if (inboxFd?.content) { inboxRaw = decodeURIComponent(escape(atob(inboxFd.content.replace(/\n/g, "")))); }
+ const inboxRecord = { ts: new Date().toISOString(), type: "OPERATOR_TO_CURATOR", source: "telegram", dedupe_key: dedupeKey, chat_id: chatId, message_id: messageId, text };
+ const inboxNext = inboxRaw + JSON.stringify(inboxRecord) + "\n";
+ const status = await updateFileContents(pat, inboxPath, inboxNext, `TELEGRAM-INBOX: append ${dedupeKey}`, inboxSha);
+ if (status === 200 || status === 201) { await sendTelegram(token, chatId, `📨 *${now} UA* | Записано в inbox:\n_${text.slice(0, 100)}_`); }
+ else { await sendTelegram(token, chatId, `❌ *${now} UA* | Inbox write error (HTTP ${status})`); }
+ return new Response("OK");
   }
 
   return corsJson({ ok: false, error: "Not Found" }, 404);

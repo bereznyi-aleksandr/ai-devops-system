@@ -1,0 +1,12 @@
+{
+  "id": "GATE-4-FIX-V2",
+  "trace_id": "gate4_fix_v2_telegram_inbox_patch_anchor",
+  "status": "completed",
+  "release_pass": false,
+  "patched": true,
+  "anchor_start": 29942,
+  "anchor_end": 30460,
+  "change": "Telegram webhook appends operator messages to governance/telegram/inbox.jsonl via updateFileContents instead of GitHub issue comments",
+  "workflow_files_touched": false,
+  "next": "record result and test Telegram receipt after Deno deploy"
+}
