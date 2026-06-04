@@ -2,10 +2,7 @@ name: governance-validation-ci
 
 on:
   workflow_dispatch:
-
-permissions:
-  contents: read
-
-jobs:
-  disabled-placeholder:
-    name: Disabled governance validation placeholder
+  pull_request:
+    paths:
+      - 'governance/**'
+      -

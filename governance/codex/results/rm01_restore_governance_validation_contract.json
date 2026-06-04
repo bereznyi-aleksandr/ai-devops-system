@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm01_restore_governance_validation_contract",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validation/validate_governance_contour.py",
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/reports/RM01_RESTORE_GOVERNANCE_VALIDATION_CONTRACT.md",
+    "create:governance/state/RM01_RESTORE_GOVERNANCE_VALIDATION_CONTRACT.json",
+    "append:governance/AGENT_CONTEXT.md",
+    "create_dir:governance/validation"
+  ],
+  "changed_files": [
+    "governance/validation/validate_governance_contour.py",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/reports/RM01_RESTORE_GOVERNANCE_VALIDATION_CONTRACT.md",
+    "governance/state/RM01_RESTORE_GOVERNANCE_VALIDATION_CONTRACT.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/validation/.gitkeep",
+    "governance/codex/proofs/rm01_restore_governance_validation_contract.txt"
+  ],
+  "commit_sha": "1e48d369bb3f0b3864d9a8ac4080957d24638168",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm01_restore_governance_validation_contract.md",
+  "completed_at": "2026-06-04T05:24:18Z"
+}
