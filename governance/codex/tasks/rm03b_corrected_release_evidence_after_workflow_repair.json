@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm03b_corrected_release_evidence_after_workflow_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM03B corrected evidence pack",
+  "objective": "Create file governance/reports/RM03B_CORRECTED_RELEASE_GATE_EVIDENCE_AFTER_WORKFLOW_REPAIR.md with content # RM03B | Corrected release gate evidence after workflow repair\nStatus: completed\nDate: 2026-06-04\n\n## Correction\nPrevious RM03 evidence was premature because GitHub Actions screenshot showed .github/workflows/governance-validation-ci.yml invalid after RM02. RM04 repaired the workflow file, and RM04B recorded verification evidence.\n\n## Corrected SHA chain\n- RM00F4: c860e31a781c053e3024316ea2a0fcf74353ab26\n- RM00F5: 17ddb54dc858c0991565c0919371fbe06e07dd93\n- RM00F6: 0ad59153a727f34befea0c2b9002aebfd9f13ae0\n- RM00F7: e9914234f0d47f93ade331588bfbbc57b2941dc4\n- RM00F8: 1d2bae650691e4a960a3276181cb97fc6c72480b\n- RM00F9: 96ba884a556e36e441d3aa92fd3e6449f39ba03d\n- RM01: 1e48d369bb3f0b3864d9a8ac4080957d24638168\n- RM02: 429b86945a053c89e421abb345e00f6ee6d33780\n- RM03 premature pack: 46de22c3c239c21a93a96a1e94ca30816a24a280\n- RM04 workflow repair: 212dc1ac70c21b4125f9d94c5401b54097997100\n- RM04B repair evidence: 2ca18d50a2cb9b545e760a05a77d99ab8d4fdc07\n\n## Gate decision\nCorrected governance contour evidence is PASS only for repository evidence after RM04/RM04B repair. It supersedes premature RM03 PASS. External GitHub Actions UI should be checked by subsequent workflow run evidence if available, but the repository-side invalid YAML defect has been corrected.\nCreate file governance/state/RM03B_CORRECTED_RELEASE_GATE_EVIDENCE_AFTER_WORKFLOW_REPAIR.json with content {\"id\":\"RM03B\",\"trace_id\":\"rm03b_corrected_release_evidence_after_workflow_repair\",\"status\":\"completed\",\"release_pass\":true,\"supersedes\":\"RM03 premature PASS before workflow UI failure screenshot\",\"corrective_chain\":[{\"id\":\"RM04\",\"sha\":\"212dc1ac70c21b4125f9d94c5401b54097997100\"},{\"id\":\"RM04B\",\"sha\":\"2ca18d50a2cb9b545e760a05a77d99ab8d4fdc07\"}],\"next\":\"continue next roadmap phase from AGENT_CONTEXT.md\"}\nAppend to governance/AGENT_CONTEXT.md: \n## RM03B completed | 2026-06-04\nCorrected release gate evidence after workflow repair. RM03 premature PASS superseded because GitHub Actions screenshot exposed invalid workflow YAML. Corrective evidence: RM04 212dc1ac70c21b4125f9d94c5401b54097997100; RM04B 2ca18d50a2cb9b545e760a05a77d99ab8d4fdc07. Next: continue next roadmap phase from AGENT_CONTEXT.md.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm03b_corrected_release_evidence_after_workflow_repair.md",
+    "result_json": "governance/codex/results/rm03b_corrected_release_evidence_after_workflow_repair.json"
+  },
+  "created_at": "2026-06-04T07:35:48.549Z"
+}
