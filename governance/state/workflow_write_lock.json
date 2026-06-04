@@ -1,0 +1,10 @@
+{
+  "lock": "ACTIVE",
+  "locked_paths": [".github/workflows/"],
+  "reason": "Python executor patterns (Append/Replace) corrupt multiline YAML. Repeated attempts broke governance-validation-ci.yml twice after Claude MCP fixes.",
+  "rule": "GPT executor MUST NOT write to .github/workflows/*.yml. Only Claude MCP direct write is permitted.",
+  "correct_pattern_for_yml": "Run script with Path.write_text() full overwrite — but still forbidden for active workflows without Claude audit approval.",
+  "current_clean_sha": "9fb7a743d2be16e28b40efe6879d8923203b69fd",
+  "locked_by": "Claude External Audit",
+  "date": "2026-06-04"
+}
