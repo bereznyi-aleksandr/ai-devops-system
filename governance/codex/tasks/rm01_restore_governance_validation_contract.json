@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm01_restore_governance_validation_contract",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM01 restore validation contract",
+  "objective": "Create dir governance/validation\nCreate file governance/validation/validate_governance_contour.py with content import json\nfrom pathlib import Path\n\nREQUIRED_PATHS = [\n    'governance/AGENT_CONTEXT.md',\n    'governance/state/RM00F8_WORKFLOW_PARSE_CLEAN.json',\n    'governance/state/RM00F9_DISABLED_WORKFLOWS_INVENTORY.json',\n]\n\ndef main():\n    missing = [p for p in REQUIRED_PATHS if not Path(p).exists()]\n    result = {\n        'status': 'pass' if not missing else 'fail',\n        'missing': missing,\n        'release_pass': False,\n        'note': 'Governance contour validation is fail-closed; release PASS requires RM03 evidence pack.'\n    }\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    if missing:\n        raise SystemExit(1)\n\nif __name__ == '__main__':\n    main()\nCreate file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\n\non:\n  workflow_dispatch:\n  pull_request:\n    paths:\n      - 'governance/**'\n      - '.github/workflows/governance-validation-ci.yml'\n  push:\n    paths:\n      - 'governance/**'\n      - '.github/workflows/governance-validation-ci.yml'\n\npermissions:\n  contents: read\n\njobs:\n  validate-governance-contour:\n    name: Validate governance contour\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Validate governance contour\n        run: python governance/validation/validate_governance_contour.py\nCreate file governance/reports/RM01_RESTORE_GOVERNANCE_VALIDATION_CONTRACT.md with content # RM01 | Restore governance validation contract\n\nStatus: completed\n\n## Change\nCreated governance/validation/validate_governance_contour.py and restored .github/workflows/governance-validation-ci.yml as valid fail-closed CI for governance paths.\n\n## Contract\nThe workflow runs on workflow_dispatch, pull_request, and push for governance/workflow path changes. It fails when required governance evidence files are missing.\n\n## Release status\nRelease PASS remains false until RM03 evidence pack.\n\n## Next\nRM02 runner skeleton repair.\nCreate file governance/state/RM01_RESTORE_GOVERNANCE_VALIDATION_CONTRACT.json with content {\"id\":\"RM01\",\"trace_id\":\"rm01_restore_governance_validation_contract\",\"status\":\"completed\",\"release_pass\":false,\"validator\":\"governance/validation/validate_governance_contour.py\",\"workflow\":\".github/workflows/governance-validation-ci.yml\",\"previous_step\":{\"id\":\"RM00F9\",\"sha\":\"96ba884a556e36e441d3aa92fd3e6449f39ba03d\"},\"next\":\"RM02 runner skeleton repair\"}\nAppend to governance/AGENT_CONTEXT.md: \n## RM01 completed | 2026-06-04\nGovernance validation contract restored as fail-closed workflow and Python validator. Release PASS remains false. Next: RM02 runner skeleton repair.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm01_restore_governance_validation_contract.md",
+    "result_json": "governance/codex/results/rm01_restore_governance_validation_contract.json"
+  },
+  "created_at": "2026-06-04T05:24:07.271Z"
+}
