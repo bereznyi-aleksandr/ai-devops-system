@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_record_result_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "GATE-2-PREP record repair",
+  "objective": "Run script:\n\"\"\"\nrunner_sha = '85b6c437bc372ab18c575ea30ab2015b882dcf5e'\nrunner = Path('governance/runners/minimal_governance_loop_runner.py')\ntext = runner.read_text(encoding='utf-8') if runner.exists() else ''\nvalid = runner.exists() and len(runner.read_bytes()) > 50 and 'gate2_minimal_loop_trace_v1' in text and 'json' in text and 'Path' in text\nstatus_path = Path('governance/state/gate2_minimal_loop_runner_status.json')\nstatus_path.parent.mkdir(parents=True, exist_ok=True)\nstatus_path.write_text(json.dumps({'status':'PASS' if valid else 'BLOCKED','all_valid':valid,'runner':str(runner),'bytes':len(runner.read_bytes()) if runner.exists() else 0,'static_parse_proxy':valid,'trace_id':'gate2_minimal_loop_trace_v1','runner_sha':runner_sha,'workflow_files_touched':False}, ensure_ascii=False, indent=2), encoding='utf-8')\nchanged_files.append(str(status_path))\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8')) if queue_path.exists() else {'tasks': []}\ndone_ids = [task.get('id') for task in queue.get('tasks', []) if task.get('status') == 'DONE']\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'GATE-2-PREP':\n        task['status'] = 'DONE' if valid else 'BLOCKED'\n        task['sha'] = runner_sha\n        task['completed_at'] = '2026-06-04T15:30:00Z'\n    if task.get('status') == 'WAITING_DEPENDS':\n        deps = task.get('depends_on', [])\n        if all(d in done_ids or d == 'GATE-2-PREP' for d in deps):\n            task['status'] = 'PENDING'\npending = [task.get('id') for task in queue.get('tasks', []) if task.get('status') == 'PENDING']\nqueue['updated_at'] = '2026-06-04T15:32:00Z'\nqueue['queue_state'] = 'HAS_PENDING_TASKS' if pending else 'EMPTY_NO_PENDING_TASKS'\nqueue['next_action'] = ('execute first PENDING task: ' + pending[0]) if pending else 'await operator or Claude to add next tasks; do not invent tasks'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2), encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nlog_path.parent.mkdir(parents=True, exist_ok=True)\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nline = json.dumps({'date':'2026-06-04T15:30:00Z','id':'GATE-2-PREP','trace_id':'gate2_prep_minimal_loop_runner_repair','sha':runner_sha,'status':'done' if valid else 'blocked','workflow_files_touched':False}, ensure_ascii=False)\nif line not in existing:\n    existing = existing + line\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/GATE2_PREP_RECORD_RESULT.json')\nstate.write_text(json.dumps({'id':'GATE-2-PREP-RECORD','trace_id':'gate2_prep_record_result_repair','status':'completed' if valid else 'blocked','release_pass':False,'recorded_step':'GATE-2-PREP','recorded_sha':runner_sha,'next_pending':pending[0] if pending else None,'workflow_files_touched':False}, ensure_ascii=False, indent=2), encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/GATE2_PREP_RECORD_RESULT.md')\nreport.write_text('# GATE-2-PREP record result. Status: ' + ('completed' if valid else 'blocked') + '. Runner SHA: ' + runner_sha + '. Next pending: ' + (pending[0] if pending else 'none') + '. Workflow lock respected.', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gate2_prep_record_result_repair.md",
+    "result_json": "governance/codex/results/gate2_prep_record_result_repair.json"
+  },
+  "created_at": "2026-06-04T15:31:51.141Z"
+}
