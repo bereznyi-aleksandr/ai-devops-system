@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12j_executor_limit_claude_handoff",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit_mailbox/gpt_to_claude/P12J_WORKFLOW_DIRECT_FIX_REQUEST.md",
+    "create:governance/state/P12J_EXECUTOR_LIMIT_CLAUDE_HANDOFF.json",
+    "create:governance/reports/P12J_EXECUTOR_LIMIT_CLAUDE_HANDOFF.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit_mailbox/gpt_to_claude/P12J_WORKFLOW_DIRECT_FIX_REQUEST.md",
+    "governance/state/P12J_EXECUTOR_LIMIT_CLAUDE_HANDOFF.json",
+    "governance/reports/P12J_EXECUTOR_LIMIT_CLAUDE_HANDOFF.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p12j_executor_limit_claude_handoff.txt"
+  ],
+  "commit_sha": "7c53e1f88ffdb5a9718fabf611a80d778a3f68f0",
+  "blocker": null,
+  "report_path": "governance/codex/results/p12j_executor_limit_claude_handoff.md",
+  "completed_at": "2026-06-04T08:13:24Z"
+}
