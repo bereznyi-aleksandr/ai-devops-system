@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04_repair_governance_workflow_yaml",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM04 repair workflow YAML",
+  "objective": "Run script:\"\"\"\nfrom pathlib import Path\nimport json\nfrom datetime import datetime, timezone\nchanged=[]\nworkflow=Path('.github/workflows/governance-validation-ci.yml')\nworkflow.parent.mkdir(parents=True,exist_ok=True)\nworkflow.write_text('''name: governance-validation-ci\n\non:\n  workflow_dispatch:\n  pull_request:\n    paths:\n      - governance/**\n      - .github/workflows/governance-validation-ci.yml\n  push:\n    paths:\n      - governance/**\n      - .github/workflows/governance-validation-ci.yml\n\npermissions:\n  contents: read\n\njobs:\n  validate-governance-contour:\n    name: Validate governance contour\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Validate governance contour\n        run: python governance/validation/validate_governance_contour.py\n''',encoding='utf-8')\nchanged.append(str(workflow))\nstate=Path('governance/state/RM04_REPAIR_GOVERNANCE_WORKFLOW_YAML.json')\nstate.parent.mkdir(parents=True,exist_ok=True)\nstate.write_text(json.dumps({'id':'RM04','trace_id':'rm04_repair_governance_workflow_yaml','status':'completed','release_pass':False,'problem':'RM02/RM03 screenshots show active governance-validation-ci.yml invalid after YAML content pattern handling','change':'rewrote workflow with explicit valid YAML, no empty path list items, jobs block present','utc_completed_at':datetime.now(timezone.utc).isoformat(),'next':'RM04B verify repaired workflow evidence'},ensure_ascii=False,indent=2)+'\\n',encoding='utf-8')\nchanged.append(str(state))\nreport=Path('governance/reports/RM04_REPAIR_GOVERNANCE_WORKFLOW_YAML.md')\nreport.parent.mkdir(parents=True,exist_ok=True)\nreport.write_text('# RM04 | Repair governance workflow YAML\\n\\nStatus: completed\\n\\n## Problem\\nGitHub Actions showed `.github/workflows/governance-validation-ci.yml` as invalid: malformed `paths` content and missing required jobs parsing.\\n\\n## Change\\nThe active workflow was rewritten as valid YAML with workflow_dispatch, pull_request and push triggers, non-empty paths entries, permissions, and validate-governance-contour job.\\n\\n## Release status\\nRelease PASS is revoked/false until repaired workflow evidence is verified.\\n\\n## Next\\nRM04B verify repaired workflow evidence.\\n',encoding='utf-8')\nchanged.append(str(report))\nctx=Path('governance/AGENT_CONTEXT.md')\nif ctx.exists():\n    s=ctx.read_text(encoding='utf-8')\n    marker='## RM04 completed | 2026-06-04'\n    if marker not in s:\n        ctx.write_text(s.rstrip()+'\\n'+marker+'\\nRepaired active governance-validation-ci.yml after GitHub Actions invalid workflow screenshot. Release PASS revoked/false until verification. Next: RM04B verify repaired workflow evidence. No issue comments.\\n',encoding='utf-8')\n        changed.append(str(ctx))\nfor item in changed:\n    changed_files.append(item)\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm04_repair_governance_workflow_yaml.md",
+    "result_json": "governance/codex/results/rm04_repair_governance_workflow_yaml.json"
+  },
+  "created_at": "2026-06-04T07:29:33.722Z"
+}
