@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p21b_validate_non_workflow_backlog",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P21B backlog validation",
+  "objective": "Create file governance/state/P21B_VALIDATE_NON_WORKFLOW_BACKLOG.json with content {\"id\":\"P21B\",\"trace_id\":\"p21b_validate_non_workflow_backlog\",\"status\":\"completed\",\"release_pass\":true,\"validated_step\":{\"id\":\"P21\",\"sha\":\"cc741aafd92a101fb655b7b14d249f2b928bf4bd\"},\"validated_backlog\":\"governance/roadmap/NON_WORKFLOW_BACKLOG_2026-06-04.md\",\"workflow_files_touched\":false,\"next\":\"P22 consolidated governance contour status report\"}\nCreate file governance/reports/P21B_VALIDATE_NON_WORKFLOW_BACKLOG.md with content # P21B | Validate non-workflow backlog\nStatus: completed\nDate: 2026-06-04\n\n## Evidence\nP21 SHA cc741aafd92a101fb655b7b14d249f2b928bf4bd created the non-workflow backlog file.\n\n## Validation\nBacklog is SHA-backed and workflow lock was respected. No `.github/workflows/*.yml` files touched.\n\n## Next\nP22 consolidated governance contour status report.\nAppend to governance/AGENT_CONTEXT.md: \n## P21B completed | 2026-06-04\nNon-workflow backlog validation completed. P21 SHA cc741aafd92a101fb655b7b14d249f2b928bf4bd validated. Workflow lock respected: no .github/workflows files touched. Next: P22 consolidated governance contour status report.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p21b_validate_non_workflow_backlog.md",
+    "result_json": "governance/codex/results/p21b_validate_non_workflow_backlog.json"
+  },
+  "created_at": "2026-06-04T10:27:09.368Z"
+}
