@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "p19c_curator_context_update_spec",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/specs/CURATOR_AGENT_CONTEXT_AUTOUPDATE_SPEC.md",
+    "create:governance/state/P19C_CURATOR_CONTEXT_UPDATE_SPEC.json",
+    "create:governance/reports/P19C_CURATOR_CONTEXT_UPDATE_SPEC.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/specs/CURATOR_AGENT_CONTEXT_AUTOUPDATE_SPEC.md",
+    "governance/state/P19C_CURATOR_CONTEXT_UPDATE_SPEC.json",
+    "governance/reports/P19C_CURATOR_CONTEXT_UPDATE_SPEC.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p19c_curator_context_update_spec.txt"
+  ],
+  "commit_sha": "b4f4de1de364c0c28a36ed4ee8e98c80b1cdb805",
+  "blocker": null,
+  "report_path": "governance/codex/results/p19c_curator_context_update_spec.md",
+  "completed_at": "2026-06-04T10:18:39Z"
+}
