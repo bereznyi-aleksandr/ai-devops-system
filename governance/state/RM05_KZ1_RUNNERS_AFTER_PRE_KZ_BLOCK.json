@@ -1,0 +1,47 @@
+{
+  "id": "RM-05",
+  "trace_id": "rm05_kz1_runners_after_pre_kz_block",
+  "status": "completed",
+  "release_pass": false,
+  "runner_count": 14,
+  "runners": [
+    "governance/runners/kz1_runner_01.py",
+    "governance/runners/kz1_runner_02.py",
+    "governance/runners/kz1_runner_03.py",
+    "governance/runners/kz1_runner_04.py",
+    "governance/runners/kz1_runner_05.py",
+    "governance/runners/kz1_runner_06.py",
+    "governance/runners/kz1_runner_07.py",
+    "governance/runners/kz1_runner_08.py",
+    "governance/runners/kz1_runner_09.py",
+    "governance/runners/kz1_runner_10.py",
+    "governance/runners/kz1_runner_11.py",
+    "governance/runners/kz1_runner_12.py",
+    "governance/runners/kz1_runner_13.py",
+    "governance/runners/kz1_runner_14.py"
+  ],
+  "repaired": [
+    "governance/runners/kz1_runner_01.py",
+    "governance/runners/kz1_runner_02.py",
+    "governance/runners/kz1_runner_03.py",
+    "governance/runners/kz1_runner_04.py",
+    "governance/runners/kz1_runner_05.py",
+    "governance/runners/kz1_runner_06.py",
+    "governance/runners/kz1_runner_07.py",
+    "governance/runners/kz1_runner_08.py",
+    "governance/runners/kz1_runner_09.py",
+    "governance/runners/kz1_runner_10.py",
+    "governance/runners/kz1_runner_11.py",
+    "governance/runners/kz1_runner_12.py",
+    "governance/runners/kz1_runner_13.py",
+    "governance/runners/kz1_runner_14.py"
+  ],
+  "pre_kz_dependencies": [
+    "RM-01",
+    "RM-02",
+    "RM-03",
+    "RM-04"
+  ],
+  "workflow_files_touched": false,
+  "next": "RM-05B record RM-05 result and close queue"
+}
