@@ -1,0 +1,1 @@
+# External Receipt Acquisition Handoff

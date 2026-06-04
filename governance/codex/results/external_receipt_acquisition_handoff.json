@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "external_receipt_acquisition_handoff",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/EXTERNAL_RECEIPT_ACQUISITION_HANDOFF.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/EXTERNAL_RECEIPT_ACQUISITION_HANDOFF.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/external_receipt_acquisition_handoff.txt"
+  ],
+  "commit_sha": "63cb266d4cb1824f5dfc38f9be75d624c4db1cca",
+  "blocker": null,
+  "report_path": "governance/codex/results/external_receipt_acquisition_handoff.md",
+  "completed_at": "2026-06-04T02:59:58Z"
+}
