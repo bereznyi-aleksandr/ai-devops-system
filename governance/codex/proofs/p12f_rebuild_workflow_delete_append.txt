@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: p12f_rebuild_workflow_delete_append
+task_type: code_patch
+executed_at: 2026-06-04T08:05:01Z
+ops_applied: create:governance/state/P12F_REBUILD_WORKFLOW_DELETE_APPEND.json, create:governance/reports/P12F_REBUILD_WORKFLOW_DELETE_APPEND.md, append:.github/workflows/governance-validation-ci.yml, append:governance/AGENT_CONTEXT.md, delete_line:.github/workflows/governance-validation-ci.yml
+changed_files: governance/state/P12F_REBUILD_WORKFLOW_DELETE_APPEND.json, governance/reports/P12F_REBUILD_WORKFLOW_DELETE_APPEND.md, .github/workflows/governance-validation-ci.yml, governance/AGENT_CONTEXT.md, .github/workflows/governance-validation-ci.yml
+errors: none

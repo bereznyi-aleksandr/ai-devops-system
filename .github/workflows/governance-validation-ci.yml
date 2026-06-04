@@ -9,3 +9,8 @@ jobs:
   disabled-placeholder:
 runs-on: ubuntu-latest'
 Insert in
+name: governance-validation-ci
+on:
+  workflow_dispatch:
+jobs:
+  disabled-placeholder:
