@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm02_release_blocker_state_hardening",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM02 release blocker state",
+  "objective": "Create file governance/state/RELEASE_BLOCKER_STATE_HARDENED.json with content {\"created_at_utc3\":\"2026-06-04 | 06:13 (UTC+3)\",\"release_pass\":false,\"working_baseline_validator_sha\":\"9eadfe93a8237db187f5fe4429597e8ee0778a2d\",\"hard_blockers\":{\"gate4_telegram_receipt\":\"missing_real_receipt\",\"gate5_live_runtime_receipt\":\"missing_real_receipt\",\"gate6_external_claude_audit\":\"missing_real_result\",\"tz2_exact_duplicate_archive\":\"blocked_until_verified_inventory\"},\"release_rule\":\"Release PASS is forbidden until validate_release_gates.py returns success with real Gate 4/5/6 receipts and non-null commit_sha.\",\"next_action\":\"RM03 create no-fake-proof guard validator\"}\nCreate file governance/validators/validate_no_fake_release_pass.py with content #!/usr/bin/env python3\nimport json\nfrom pathlib import Path\n\nBLOCKER = Path(\"governance/state/RELEASE_BLOCKER_STATE_HARDENED.json\")\n\ndef main() -> int:\n    data = json.loads(BLOCKER.read_text(encoding=\"utf-8\"))\n    if data.get(\"release_pass\") is not False:\n        raise SystemExit(\"release_pass must remain false while blockers exist\")\n    blockers = data.get(\"hard_blockers\", {})\n    if not blockers:\n        raise SystemExit(\"hard_blockers missing\")\n    print(json.dumps({\"status\":\"ok\",\"release_pass\":False,\"blockers\":blockers}, ensure_ascii=False))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM02 | RELEASE BLOCKER STATE HARDENING | 2026-06-04 | 06:13 (UTC+3)\n- Hardened release blocker state and no-fake-release-pass validator.\n- No Release PASS. Next action: RM03 no-fake-proof guard validator.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm02_release_blocker_state_hardening.md",
+    "result_json": "governance/codex/results/rm02_release_blocker_state_hardening.json"
+  },
+  "created_at": "2026-06-04T03:55:07.131Z"
+}
