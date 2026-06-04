@@ -1557,3 +1557,5 @@ No issue comments.
 - Added no-fake-proof guard validator and test
 ### RM03R | NO FAKE PROOF GUARD SYNTAX REPAIR | 2026-06-04 | 06:15 (UTC+3)
 - Rewrote no-fake-proof guard as syntax-safe Python
+### RM04 | VALIDATOR SUITE MANIFEST | 2026-06-04 | 06:16 (UTC+3)
+- Added validator suite manifest for working baseline and fail-closed release gating
