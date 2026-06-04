@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p22_consolidated_governance_contour_status",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P22 contour status report",
+  "objective": "Create file governance/reports/P22_CONSOLIDATED_GOVERNANCE_CONTOUR_STATUS.md with content # P22 | Consolidated governance contour status\nStatus: completed\nDate: 2026-06-04\n\n## Current status\n- Deno/Codex development contour is operational.\n- Workflow blocker was lifted externally; `.github/workflows/*.yml` is locked for GPT executor.\n- KZ runner skeleton scope completed and evidence-packed.\n- P15-P21 non-workflow hardening chain completed with SHA-backed evidence.\n\n## Recent evidence chain\n- P14 workflow lock rules: 3d8e1a6a3fac1bb9767caaa05e20b5aaa56e1b46\n- KZ-4 runner evidence pack: 245795909c39eb052f2554fda24fdcb1a57a4c31\n- P15C commit_sha response evidence: e541548831450e1460ebf58b7c934e099a6dbc46\n- P16B AGENT_CONTEXT hardening validation: aa77f627d65ab98cfa9693e515269df3fc1ce3e1\n- P17B anti-stop guard validation: bbb332d8049d4c58adc5c8ba8ed248fdf635a832\n- P19D curator context spec validation: 3cd4d4e0676bdbad3fd36e8dd0914782bd1f65c0\n- P21B non-workflow backlog validation: 88314f1faa4fc3e32a06aca21205714d6cb7512d\n\n## Lock\nGPT executor must not edit `.github/workflows/*.yml`. Workflow-related work requires Claude handoff via audit mailbox.\n\n## Next\nP22B consolidated governance contour status validation.\nCreate file governance/state/P22_CONSOLIDATED_GOVERNANCE_CONTOUR_STATUS.json with content {\"id\":\"P22\",\"trace_id\":\"p22_consolidated_governance_contour_status\",\"status\":\"completed\",\"release_pass\":false,\"workflow_lock_active\":true,\"workflow_files_touched\":false,\"previous_step\":{\"id\":\"P21B\",\"sha\":\"88314f1faa4fc3e32a06aca21205714d6cb7512d\"},\"next\":\"P22B consolidated governance contour status validation\"}\nAppend to governance/AGENT_CONTEXT.md: \n## P22 completed | 2026-06-04\nConsolidated governance contour status report created. Deno/Codex contour operational; workflow lock active; KZ and P15-P21 hardening evidence summarized. Workflow lock respected: no .github/workflows files touched. Next: P22B consolidated governance contour status validation.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p22_consolidated_governance_contour_status.md",
+    "result_json": "governance/codex/results/p22_consolidated_governance_contour_status.json"
+  },
+  "created_at": "2026-06-04T10:27:56.505Z"
+}
