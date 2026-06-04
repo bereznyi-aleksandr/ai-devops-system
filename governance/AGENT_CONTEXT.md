@@ -1551,3 +1551,5 @@ No issue comments.
 -
 ### RM01 | WORKING BASELINE AGGREGATE VALIDATOR | 2026-06-04 | 06:12 (UTC+3)
 - Added aggregate validator for working-baseline files and test
+### RM02 | RELEASE BLOCKER STATE HARDENING | 2026-06-04 | 06:13 (UTC+3)
+- Hardened release blocker state and no-fake-release-pass validator
