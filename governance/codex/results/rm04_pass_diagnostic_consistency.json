@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04_pass_diagnostic_consistency",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validation/pass_diagnostic_consistency_gate.py",
+    "create:governance/state/RM04_PASS_DIAGNOSTIC_CONSISTENCY.json",
+    "create:governance/reports/RM04_PASS_DIAGNOSTIC_CONSISTENCY.md"
+  ],
+  "changed_files": [
+    "governance/validation/pass_diagnostic_consistency_gate.py",
+    "governance/state/RM04_PASS_DIAGNOSTIC_CONSISTENCY.json",
+    "governance/reports/RM04_PASS_DIAGNOSTIC_CONSISTENCY.md",
+    "governance/codex/proofs/rm04_pass_diagnostic_consistency.txt"
+  ],
+  "commit_sha": "62cf5625e287f9d4b77f4ffd259ecd9e1972cb13",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm04_pass_diagnostic_consistency.md",
+  "completed_at": "2026-06-04T11:33:28Z"
+}
