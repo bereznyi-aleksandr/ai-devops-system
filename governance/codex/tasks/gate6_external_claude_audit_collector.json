@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate6_external_claude_audit_collector",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Gate 6 Claude audit collector",
+  "objective": "Create file governance/runners/external_claude_audit_result_collector.py with content #!/usr/bin/env python3\nimport json\nimport os\nfrom datetime import datetime, timezone\nfrom pathlib import Path\n\nOUT = Path(\"governance/proofs/external/claude/external_claude_audit_result.json\")\nREQUIRED_ENV = [\"CLAUDE_AUDIT_SOURCE\", \"CLAUDE_AUDIT_EVIDENCE_REF\", \"CLAUDE_AUDIT_COMMIT_SHA\", \"CLAUDE_AUDIT_VERDICT\"]\nALLOWED_VERDICTS = {\"PASS\", \"CONDITIONAL_PASS\", \"FAIL\"}\n\ndef main() -> int:\n    missing = [name for name in REQUIRED_ENV if not os.getenv(name)]\n    if missing:\n        print(json.dumps({\"status\":\"blocked_missing_real_external_claude_audit_input\",\"missing\":missing,\"release_pass\":False}, ensure_ascii=False))\n        return 2\n    verdict = os.environ[\"CLAUDE_AUDIT_VERDICT\"]\n    if verdict not in ALLOWED_VERDICTS:\n        print(json.dumps({\"status\":\"blocked_invalid_verdict\",\"verdict\":verdict,\"release_pass\":False}, ensure_ascii=False))\n        return 2\n    OUT.parent.mkdir(parents=True, exist_ok=True)\n    receipt = {\"gate\":\"Gate 6\",\"receipt_type\":\"external_claude_audit\",\"source\":os.environ[\"CLAUDE_AUDIT_SOURCE\"],\"captured_at_utc\":datetime.now(timezone.utc).isoformat(),\"status\":\"real_pass\" if verdict == \"PASS\" else \"real_fail\",\"verdict\":verdict,\"evidence_ref\":os.environ[\"CLAUDE_AUDIT_EVIDENCE_REF\"],\"commit_sha\":os.environ[\"CLAUDE_AUDIT_COMMIT_SHA\"],\"release_pass\":False}\n    OUT.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + \"\\n\", encoding=\"utf-8\")\n    print(json.dumps({\"status\":\"audit_result_written\",\"path\":str(OUT),\"release_pass\":False}, ensure_ascii=False))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file tests/governance/test_gate6_external_claude_audit_collector.py with content import subprocess\nimport sys\n\ndef test_gate6_collector_fails_closed_without_real_env():\n    result = subprocess.run([sys.executable, \"governance/runners/external_claude_audit_result_collector.py\"], capture_output=True, text=True)\n    assert result.returncode == 2\n    assert \"blocked_missing_real_external_claude_audit_input\" in result.stdout\nAppend to governance/AGENT_CONTEXT.md: \n\n### GATE 6 | EXTERNAL CLAUDE AUDIT RESULT COLLECTOR | 2026-06-04 | 05:49 (UTC+3)\n- Added fail-closed external Claude audit result collector and test.\n- No fake audit result. No Release PASS. Next action: final release gate validator wiring.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gate6_external_claude_audit_collector.md",
+    "result_json": "governance/codex/results/gate6_external_claude_audit_collector.json"
+  },
+  "created_at": "2026-06-04T02:51:56.122Z"
+}
