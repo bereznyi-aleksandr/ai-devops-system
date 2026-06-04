@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p19d_curator_context_spec_validation",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P19D spec validation",
+  "objective": "Create file governance/state/P19D_CURATOR_CONTEXT_SPEC_VALIDATION.json with content {\"id\":\"P19D\",\"trace_id\":\"p19d_curator_context_spec_validation\",\"status\":\"completed\",\"release_pass\":true,\"validated_step\":{\"id\":\"P19C\",\"sha\":\"b4f4de1de364c0c28a36ed4ee8e98c80b1cdb805\"},\"validated_spec\":\"governance/specs/CURATOR_AGENT_CONTEXT_AUTOUPDATE_SPEC.md\",\"workflow_files_touched\":false,\"next\":\"P20 next roadmap discovery from AGENT_CONTEXT\"}\nCreate file governance/reports/P19D_CURATOR_CONTEXT_SPEC_VALIDATION.md with content # P19D | Curator context spec validation\nStatus: completed\nDate: 2026-06-04\n\n## Evidence\nP19C SHA b4f4de1de364c0c28a36ed4ee8e98c80b1cdb805 created the curator AGENT_CONTEXT autoupdate specification.\n\n## Validation\nSpec is present and SHA-backed. Workflow lock respected; no `.github/workflows/*.yml` files touched.\n\n## Gate decision\nP19 curator AGENT_CONTEXT autoupdate specification scope PASS.\n\n## Next\nP20 next roadmap discovery from AGENT_CONTEXT.\nAppend to governance/AGENT_CONTEXT.md: \n## P19D completed | 2026-06-04\nCurator AGENT_CONTEXT autoupdate spec validation completed. P19C SHA b4f4de1de364c0c28a36ed4ee8e98c80b1cdb805 validated. Workflow lock respected: no .github/workflows files touched. Next: P20 next roadmap discovery from AGENT_CONTEXT.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p19d_curator_context_spec_validation.md",
+    "result_json": "governance/codex/results/p19d_curator_context_spec_validation.json"
+  },
+  "created_at": "2026-06-04T10:19:09.325Z"
+}
