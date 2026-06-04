@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f3_delete_active_invalid_workflow_only",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM00F3 delete workflow only",
+  "objective": "Delete file .github/workflows/governance-validation-ci.yml\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00f3_delete_active_invalid_workflow_only.md",
+    "result_json": "governance/codex/results/rm00f3_delete_active_invalid_workflow_only.json"
+  },
+  "created_at": "2026-06-04T04:45:54.093Z"
+}
