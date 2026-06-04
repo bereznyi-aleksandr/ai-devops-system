@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p18_roadmap_cursor_snapshot",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P18 roadmap cursor snapshot",
+  "objective": "Create file governance/state/P18_ROADMAP_CURSOR_SNAPSHOT.json with content {\"id\":\"P18\",\"trace_id\":\"p18_roadmap_cursor_snapshot\",\"status\":\"completed\",\"release_pass\":false,\"cursor\":{\"last_completed\":\"P17B\",\"last_completed_sha\":\"bbb332d8049d4c58adc5c8ba8ed248fdf635a832\",\"workflow_lock\":\"active\",\"next_policy\":\"read AGENT_CONTEXT.md for next non-workflow roadmap task; do not touch .github/workflows/*.yml through GPT executor\"},\"workflow_files_touched\":false,\"next\":\"P18B roadmap cursor validation\"}\nCreate file governance/reports/P18_ROADMAP_CURSOR_SNAPSHOT.md with content # P18 | Roadmap cursor snapshot\nStatus: completed\nDate: 2026-06-04\n\n## Cursor\nLast completed step: P17B anti-stop guard validation.\nSHA: bbb332d8049d4c58adc5c8ba8ed248fdf635a832.\n\n## Policy\nWorkflow lock is active. GPT executor must not touch `.github/workflows/*.yml`. Next routine work must be selected from AGENT_CONTEXT.md and stay in non-workflow scope unless handed off to Claude.\n\n## Next\nP18B roadmap cursor validation.\nAppend to governance/AGENT_CONTEXT.md: \n## P18 completed | 2026-06-04\nRoadmap cursor snapshot recorded. Last completed P17B SHA bbb332d8049d4c58adc5c8ba8ed248fdf635a832. Workflow lock active. Next: P18B roadmap cursor validation, then read AGENT_CONTEXT.md for next non-workflow roadmap task.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p18_roadmap_cursor_snapshot.md",
+    "result_json": "governance/codex/results/p18_roadmap_cursor_snapshot.json"
+  },
+  "created_at": "2026-06-04T10:15:25.780Z"
+}
