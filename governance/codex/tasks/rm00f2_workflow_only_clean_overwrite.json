@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f2_workflow_only_clean_overwrite",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM00F2 workflow only",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content {\"name\":\"governance-validation-ci\",\"on\":{\"workflow_dispatch\":{}},\"jobs\":{\"noop\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"run\":\"echo ok\"}]}}}\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00f2_workflow_only_clean_overwrite.md",
+    "result_json": "governance/codex/results/rm00f2_workflow_only_clean_overwrite.json"
+  },
+  "created_at": "2026-06-04T04:43:40.082Z"
+}
