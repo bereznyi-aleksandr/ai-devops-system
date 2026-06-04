@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p11b_verify_invalid_workflow_removed",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P11B verify workflow removed",
+  "objective": "Create file governance/state/P11B_VERIFY_INVALID_WORKFLOW_REMOVED.json with content {\"id\":\"P11B\",\"trace_id\":\"p11b_verify_invalid_workflow_removed\",\"status\":\"completed\",\"release_pass\":false,\"verified_change\":{\"removed_path\":\".github/workflows/governance-validation-ci.yml\",\"removal_sha\":\"6a3352ba03ec0383ee46f618741eeb6413204aca\",\"archive_path\":\"governance/workflows_disabled/governance-validation-ci.disabled.yml.txt\"},\"interpretation\":\"active GitHub Actions parser path is clean from the known invalid governance-validation-ci.yml file; validation CI is not restored yet\",\"next\":\"P12 safe YAML writer and validation workflow restoration plan\"}\nCreate file governance/reports/P11B_VERIFY_INVALID_WORKFLOW_REMOVED.md with content # P11B | Verify invalid workflow removed\nStatus: completed\nDate: 2026-06-04\n\n## Evidence\nP11 SHA 6a3352ba03ec0383ee46f618741eeb6413204aca removed .github/workflows/governance-validation-ci.yml and archived the intended workflow contract outside the active parser path.\n\n## Current contour status\nDeno/Codex development contour remains operational. The broken governance-validation-ci workflow is no longer active. Governance validation CI itself is intentionally not restored until safe YAML writing is implemented.\n\n## Gate decision\nRelease PASS remains false because validation workflow restoration is still pending. The current status is parser-clean remediation, not full governance validation restoration.\n\n## Next\nP12 safe YAML writer and validation workflow restoration plan.\nAppend to governance/AGENT_CONTEXT.md: \n## P11B completed | 2026-06-04\nVerified invalid active governance-validation-ci.yml removal evidence. Deno/Codex contour operational; governance validation CI remains intentionally disabled until safe YAML writer/restoration. Release PASS false. Next: P12 safe YAML writer and validation workflow restoration plan.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p11b_verify_invalid_workflow_removed.md",
+    "result_json": "governance/codex/results/p11b_verify_invalid_workflow_removed.json"
+  },
+  "created_at": "2026-06-04T07:52:55.872Z"
+}
