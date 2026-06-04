@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "all_valid": true,
+  "checks": [
+    {
+      "path": "governance/objects/object_passports.json",
+      "exists": true,
+      "bytes": 545,
+      "json_parse": true,
+      "valid": true
+    },
+    {
+      "path": "governance/state/object_passports.json",
+      "exists": true,
+      "bytes": 545,
+      "json_parse": true,
+      "valid": true
+    },
+    {
+      "path": "governance/release/release_proof_manifest.json",
+      "exists": true,
+      "bytes": 534,
+      "json_parse": true,
+      "valid": true
+    }
+  ],
+  "workflow_files_touched": false
+}

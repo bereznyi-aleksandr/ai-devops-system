@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:13:00Z",
+  "updated_at": "2026-06-04T15:14:00Z",
   "source": "Claude External Audit — KZ-2 partial, KZ-4 not done",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -27,7 +27,7 @@
     {
       "id": "KZ-4",
       "title": "Восстановить object_passports.json и release_proof_manifest.json",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 2,
       "depends_on": [
         "KZ-2"

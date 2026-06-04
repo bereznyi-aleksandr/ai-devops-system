@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz4_repair_passports_manifest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/roadmap/ACTIVE_QUEUE.json",
+    "governance/objects/object_passports.json",
+    "governance/state/object_passports.json",
+    "governance/release/release_proof_manifest.json",
+    "governance/state/kz4_passports_status.json",
+    "governance/state/KZ4_REPAIR_PASSPORTS_MANIFEST.json",
+    "governance/reports/KZ4_REPAIR_PASSPORTS_MANIFEST.md",
+    "governance/codex/proofs/kz4_repair_passports_manifest.txt"
+  ],
+  "commit_sha": "08f859bd74bb6a898b34ca1d7794a7251b6c7085",
+  "blocker": null,
+  "report_path": "governance/codex/results/kz4_repair_passports_manifest.md",
+  "completed_at": "2026-06-04T15:13:38Z"
+}

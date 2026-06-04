@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "updated_at": "2026-06-04T15:14:00Z",
+  "status": "active",
+  "release_pass": false,
+  "workflow_files_touched": false,
+  "evidence": [
+    {
+      "id": "KZ-2",
+      "sha": "c708549e49dc0641f9f3b5ad5dc46edef213ce45"
+    },
+    {
+      "id": "KZ-2D",
+      "sha": "2fec562f121449b6d964fa471755a9e7586dc5b4"
+    },
+    {
+      "id": "KZ-4",
+      "trace_id": "kz4_repair_passports_manifest"
+    }
+  ],
+  "files": [
+    "governance/objects/object_passports.json",
+    "governance/state/object_passports.json"
+  ]
+}
