@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "release_readiness_fail_closed_checkpoint",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Release readiness fail-closed",
+  "objective": "Create file governance/state/RELEASE_READINESS_FAIL_CLOSED_CHECKPOINT.json with content {\"created_at_utc3\":\"2026-06-04 | 06:05 (UTC+3)\",\"release_pass\":false,\"working_baseline\":\"present_but_not_release_ready\",\"latest_workflow_repair_sha\":\"97ff2425254149bd86d7246314d71d9bbed717ef\",\"completed_collectors\":{\"gate4_telegram\":\"74325ae95d9bc1b41d305b9a899b4fa6e8e6b2a4\",\"gate5_live_runtime\":\"260af0c6995306024e47df2ce2d750d2679448cb\",\"gate6_external_claude\":\"ceae78262c0f873514c80b471cc02e1af936d297\"},\"validator_sha\":\"59bc23c9bba967112919e10e657610ca4c7b94e9\",\"open_blockers\":[\"real Telegram production receipt file missing\",\"real live runtime receipt file missing\",\"real external Claude audit result file missing\",\"TZ2 exact duplicate archive still requires verified inventory output\"],\"rule\":\"do not issue Release PASS until all real receipts exist and validate\",\"next_action\":\"create operator-facing current status packet with exact blockers and no PASS\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RELEASE | READINESS FAIL-CLOSED CHECKPOINT | 2026-06-04 | 06:05 (UTC+3)\n- Recorded fail-closed release readiness checkpoint after workflow repair and Gate 4/5/6 collectors.\n- Release PASS remains blocked by missing real receipts and TZ2 exact duplicate archive verification.\n- Next action: operator-facing current status packet with exact blockers.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/release_readiness_fail_closed_checkpoint.md",
+    "result_json": "governance/codex/results/release_readiness_fail_closed_checkpoint.json"
+  },
+  "created_at": "2026-06-04T03:06:52.824Z"
+}
