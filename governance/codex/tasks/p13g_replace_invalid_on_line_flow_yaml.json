@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13g_replace_invalid_on_line_flow_yaml",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P13G replace invalid on line",
+  "objective": "Replace in .github/workflows/governance-validation-ci.yml line containing '{ on:' with '{name: GCI, \"on\": {workflow_dispatch: {}}, jobs: {disabled: {runs-on: ubuntu-latest, steps: [{run: echo disabled}]}}}'\nCreate file governance/state/P13G_REPLACE_INVALID_ON_LINE_FLOW_YAML.json with content {\"id\":\"P13G\",\"trace_id\":\"p13g_replace_invalid_on_line_flow_yaml\",\"status\":\"completed\",\"release_pass\":false,\"problem\":\"raw P13F workflow still invalid single-line collapsed YAML\",\"change\":\"replace invalid line containing { on: with valid single-line flow YAML and quoted on key\",\"next\":\"P13H remote raw verification\"}\nAppend to governance/AGENT_CONTEXT.md: \n## P13G completed | 2026-06-04\nReplaced invalid active workflow line containing { on: with single-line flow YAML using quoted on key. Release PASS false pending remote raw verification. Next: P13H remote raw verification.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p13g_replace_invalid_on_line_flow_yaml.md",
+    "result_json": "governance/codex/results/p13g_replace_invalid_on_line_flow_yaml.json"
+  },
+  "created_at": "2026-06-04T09:19:27.334Z"
+}
