@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12e_line_patch_active_workflow_valid_yaml",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P12E line patch workflow YAML",
+  "objective": "Replace in .github/workflows/governance-validation-ci.yml line containing '# ARCHIVED' with 'name: governance-validation-ci'\nInsert in .github/workflows/governance-validation-ci.yml after line containing 'name: governance-validation-ci': 'on:'\nInsert in .github/workflows/governance-validation-ci.yml after line containing 'on:': '  workflow_dispatch:'\nInsert in .github/workflows/governance-validation-ci.yml after line containing '  workflow_dispatch:': 'jobs:'\nInsert in .github/workflows/governance-validation-ci.yml after line containing 'jobs:': '  disabled-placeholder:'\nInsert in .github/workflows/governance-validation-ci.yml after line containing '  disabled-placeholder:': '    runs-on: ubuntu-latest'\nInsert in .github/workflows/governance-validation-ci.yml after line containing '    runs-on: ubuntu-latest': '    steps:'\nInsert in .github/workflows/governance-validation-ci.yml after line containing '    steps:': '      - name: noop'\nInsert in .github/workflows/governance-validation-ci.yml after line containing '      - name: noop': '        run: echo governance-validation-ci-disabled'\nCreate file governance/state/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.json with content {\"id\":\"P12E\",\"trace_id\":\"p12e_line_patch_active_workflow_valid_yaml\",\"status\":\"completed\",\"release_pass\":false,\"problem\":\"Create file did not overwrite existing ARCHIVED marker in active workflow path\",\"change\":\"patched active workflow line-by-line into minimal valid workflow_dispatch-only YAML\",\"next\":\"P12F remote raw verification of line-patched active workflow\"}\nCreate file governance/reports/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.md with content # P12E | Line patch active workflow into valid YAML\nStatus: completed\nDate: 2026-06-04\n\n## Problem\n`Create file` did not overwrite the existing ARCHIVED marker in `.github/workflows/governance-validation-ci.yml`.\n\n## Change\nThe active workflow was patched line-by-line using executor Replace/Insert patterns into minimal valid `workflow_dispatch`-only YAML.\n\n## Next\nP12F remote raw verification.\nAppend to governance/AGENT_CONTEXT.md: \n## P12E completed | 2026-06-04\nLine-patched .github/workflows/governance-validation-ci.yml from ARCHIVED marker to minimal valid workflow_dispatch-only YAML. Release PASS false pending remote raw verification. Next: P12F remote raw verification.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p12e_line_patch_active_workflow_valid_yaml.md",
+    "result_json": "governance/codex/results/p12e_line_patch_active_workflow_valid_yaml.json"
+  },
+  "created_at": "2026-06-04T08:02:53.604Z"
+}
