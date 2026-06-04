@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12h_delete_append_flow_yaml_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P12H append flow YAML workflow",
+  "objective": "Delete from .github/workflows/governance-validation-ci.yml line containing 'governance-validation-ci'\nAppend to .github/workflows/governance-validation-ci.yml: {name: governance-validation-ci, on: {workflow_dispatch: {}}, jobs: {disabled-placeholder: {runs-on: ubuntu-latest, steps: [{run: echo governance-validation-ci-disabled}]}}}\nCreate file governance/state/P12H_DELETE_APPEND_FLOW_YAML_WORKFLOW.json with content {\"id\":\"P12H\",\"trace_id\":\"p12h_delete_append_flow_yaml_workflow\",\"status\":\"completed\",\"release_pass\":false,\"problem\":\"replacement with JSON did not clear corrupted active workflow line\",\"change\":\"deleted line containing governance-validation-ci and appended single-line YAML flow mapping workflow\",\"next\":\"P12I remote raw verification\"}\nCreate file governance/reports/P12H_DELETE_APPEND_FLOW_YAML_WORKFLOW.md with content # P12H | Delete corrupted line and append flow YAML workflow\nStatus: completed\nDate: 2026-06-04\n\n## Problem\nP12G did not clear the corrupted active workflow line.\n\n## Change\nDeleted the line containing `governance-validation-ci` and appended a single-line YAML flow mapping workflow with `workflow_dispatch` and one placeholder job.\n\n## Next\nP12I remote raw verification.\nAppend to governance/AGENT_CONTEXT.md: \n## P12H completed | 2026-06-04\nDeleted corrupted active workflow line and appended single-line YAML flow mapping workflow. Release PASS false pending remote raw and Actions parser verification. Next: P12I remote raw verification.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p12h_delete_append_flow_yaml_workflow.md",
+    "result_json": "governance/codex/results/p12h_delete_append_flow_yaml_workflow.json"
+  },
+  "created_at": "2026-06-04T08:08:58.992Z"
+}
