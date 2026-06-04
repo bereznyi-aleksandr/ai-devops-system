@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm08_release_receipt_placeholder_ban",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM08 receipt placeholder ban",
+  "objective": "Create file governance/state/RM08_RELEASE_RECEIPT_PLACEHOLDER_BAN.json with content {\"created_at_utc3\":\"2026-06-04 | 06:20 (UTC+3)\",\"release_pass\":false,\"ban\":[\"production_receipt.json placeholder\",\"live_runtime_receipt.json placeholder\",\"external_claude_audit_result.json placeholder\",\"self-issued external audit result\",\"release_pass true without validate_release_gates success\"],\"allowed\":[\".gitkeep in receipt directories\",\"fail-closed collector scripts\",\"real receipt JSON created from required environment inputs\"],\"next_action\":\"RM09 receipt collector usage tests manifest\"}\nCreate file governance/audit/RECEIPT_PLACEHOLDER_BAN.md with content # Receipt placeholder ban\n\nCreated: 2026-06-04 | 06:20 (UTC+3)\nRelease PASS: false\n\nFake or placeholder Gate 4/5/6 receipts are forbidden.\nOnly real collector-generated receipts with non-null commit_sha are valid.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM08 | RELEASE RECEIPT PLACEHOLDER BAN | 2026-06-04 | 06:20 (UTC+3)\n- Added explicit ban on fake/placeholder release receipts.\n- No Release PASS. Next action: RM09 receipt collector usage tests manifest.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm08_release_receipt_placeholder_ban.md",
+    "result_json": "governance/codex/results/rm08_release_receipt_placeholder_ban.json"
+  },
+  "created_at": "2026-06-04T04:10:14.055Z"
+}
