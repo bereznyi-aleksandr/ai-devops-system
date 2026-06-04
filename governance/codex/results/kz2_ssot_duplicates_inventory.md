@@ -5,8 +5,8 @@
 | Trace | kz2_ssot_duplicates_inventory |
 | Executor | Python v3 (ubuntu-latest) |
 | Status | completed |
-| Operations | create:governance/state/KZ2_SSOT_DUPLICATES_CANONICAL_PLAN.json, append:governance/AGENT_CONTEXT.md |
-| Commit SHA | 13e50272320e6d27a2ccfc0b5005e83418102d89 |
-| Completed | 2026-06-03T17:13:17Z |
+| Operations | custom_script |
+| Commit SHA | 93ed838d8e885069ea634154f3ee240b5170c70e |
+| Completed | 2026-06-04T15:04:07Z |
 
 ### Completed successfully.

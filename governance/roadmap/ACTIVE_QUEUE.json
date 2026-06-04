@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:00:00Z",
+  "updated_at": "2026-06-04T15:10:00Z",
   "source": "Claude External Audit — RM-05 CLOSED, KZ-2 and KZ-4 next",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -23,7 +23,9 @@
       "title": "Устранить 8 SSOT-дублей",
       "status": "IN_PROGRESS",
       "priority": 2,
-      "depends_on": ["RM-05"],
+      "depends_on": [
+        "RM-05"
+      ],
       "touch_workflows": false,
       "detail": "Canonical paths в governance/state/. Дубли переместить в governance/archive/ssot_duplicates_2026-06-04/. Файлы: contours_registry.json, object_passports.json, providers_registry.json, contour_provider_policy.json, provider_failover_policy.json, managed_channel_schema.json, telegram_input_envelope_schema.json, telegram_to_managed_channel_mapping.json. Использовать Run script с Path.rename() или shutil.move().",
       "proof_required": "governance/state/kz2_ssot_status.json с duplicates_remaining=0 и список canonical_paths"
@@ -33,7 +35,9 @@
       "title": "Восстановить object_passports.json и release_proof_manifest.json",
       "status": "PENDING",
       "priority": 3,
-      "depends_on": ["KZ-2"],
+      "depends_on": [
+        "KZ-2"
+      ],
       "touch_workflows": false,
       "detail": "governance/objects/object_passports.json — паспорта GD/DIR/WRK с полями id, type, elements, prompt_ref. governance/release/release_proof_manifest.json — все поля включая commit_sha: null (не усечён).",
       "proof_required": "governance/state/kz4_passports_status.json с restored=true"

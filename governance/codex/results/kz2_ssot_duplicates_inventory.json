@@ -4,16 +4,16 @@
   "executor": "python-v3",
   "status": "completed",
   "operations_applied": [
-    "create:governance/state/KZ2_SSOT_DUPLICATES_CANONICAL_PLAN.json",
-    "append:governance/AGENT_CONTEXT.md"
+    "custom_script"
   ],
   "changed_files": [
-    "governance/state/KZ2_SSOT_DUPLICATES_CANONICAL_PLAN.json",
-    "governance/AGENT_CONTEXT.md",
+    "governance/roadmap/ACTIVE_QUEUE.json",
+    "governance/state/KZ2_SSOT_DUPLICATES_INVENTORY.json",
+    "governance/reports/KZ2_SSOT_DUPLICATES_INVENTORY.md",
     "governance/codex/proofs/kz2_ssot_duplicates_inventory.txt"
   ],
-  "commit_sha": "13e50272320e6d27a2ccfc0b5005e83418102d89",
+  "commit_sha": "93ed838d8e885069ea634154f3ee240b5170c70e",
   "blocker": null,
   "report_path": "governance/codex/results/kz2_ssot_duplicates_inventory.md",
-  "completed_at": "2026-06-03T17:13:17Z"
+  "completed_at": "2026-06-04T15:04:07Z"
 }
