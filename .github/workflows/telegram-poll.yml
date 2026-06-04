@@ -12,17 +12,16 @@ concurrency:
 jobs:
   poll:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 2
     permissions:
       contents: write
 
     steps:
-      - name: Poll Telegram, call LLM, reply to operator
+      - name: Poll Telegram, write inbox, dispatch to GPT Curator
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           ALLOWED_CHAT_ID: "601442777"
           REPO: "bereznyi-aleksandr/ai-devops-system"
         run: |
@@ -32,19 +31,15 @@ jobs:
 
           token      = os.environ["TELEGRAM_BOT_TOKEN"]
           gh_token   = os.environ["GITHUB_TOKEN"]
+          gh_pat     = os.environ["GH_PAT"]
           allowed_id = os.environ["ALLOWED_CHAT_ID"]
           repo       = os.environ["REPO"]
-          anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
-          openai_key    = os.environ.get("OPENAI_API_KEY", "")
           api        = "https://api.github.com"
 
-          # ──────────────────────────────────────────────
-          # GitHub helpers
-          # ──────────────────────────────────────────────
-          def gh_get(path):
+          def gh_get(path, token_=None):
               req = urllib.request.Request(
                   f"{api}{path}",
-                  headers={"Authorization": f"Bearer {gh_token}",
+                  headers={"Authorization": f"Bearer {token_ or gh_token}",
                            "Accept": "application/vnd.github+json",
                            "User-Agent": "telegram-poll-action"}
               )
@@ -75,15 +70,11 @@ jobs:
               except urllib.error.HTTPError as e:
                   return None, e.code
 
-          # ──────────────────────────────────────────────
-          # Telegram helper
-          # ──────────────────────────────────────────────
           def tg_send(chat_id, text):
-              body = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}).encode()
+              body = json.dumps({"chat_id": chat_id, "text": text}).encode()
               req = urllib.request.Request(
                   f"https://api.telegram.org/bot{token}/sendMessage",
-                  data=body,
-                  headers={"Content-Type": "application/json"}
+                  data=body, headers={"Content-Type": "application/json"}
               )
               try:
                   with urllib.request.urlopen(req, timeout=10) as r:
@@ -92,64 +83,35 @@ jobs:
                   print(f"Telegram send error: {e}")
                   return None
 
-          # ──────────────────────────────────────────────
-          # LLM call — Anthropic first, fallback OpenAI
-          # ──────────────────────────────────────────────
-          def call_llm(user_text):
-              # Try Anthropic
-              if anthropic_key:
-                  try:
-                      body = json.dumps({
-                          "model": "claude-haiku-4-5-20251001",
-                          "max_tokens": 512,
-                          "system": "Ты — автономный AI-агент системы BEM-221. Отвечай оператору кратко и по делу на русском языке. Ты получаешь команды через Telegram и можешь отвечать на вопросы о статусе системы, задачах и репозитории.",
-                          "messages": [{"role": "user", "content": user_text}]
-                      }).encode()
-                      req = urllib.request.Request(
-                          "https://api.anthropic.com/v1/messages",
-                          data=body,
-                          headers={
-                              "x-api-key": anthropic_key,
-                              "anthropic-version": "2023-06-01",
-                              "content-type": "application/json"
-                          }
-                      )
-                      with urllib.request.urlopen(req, timeout=30) as r:
-                          resp = json.loads(r.read())
-                          return resp["content"][0]["text"], "anthropic"
-                  except Exception as e:
-                      print(f"Anthropic error: {e}")
+          def dispatch_curator(trace_id, task_text):
+              """Вызвать gpt-hosted-roles.yml с role=curator через workflow_dispatch."""
+              body = json.dumps({
+                  "ref": "main",
+                  "inputs": {
+                      "role": "curator",
+                      "provider": "gpt",
+                      "trace_id": trace_id,
+                      "task_type": "telegram_operator_message",
+                      "task": task_text
+                  }
+              }).encode()
+              req = urllib.request.Request(
+                  f"{api}/repos/{repo}/actions/workflows/gpt-hosted-roles.yml/dispatches",
+                  data=body, method="POST",
+                  headers={"Authorization": f"Bearer {gh_pat}",
+                           "Accept": "application/vnd.github+json",
+                           "Content-Type": "application/json",
+                           "User-Agent": "telegram-poll-action"}
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=10) as r:
+                      print(f"Curator dispatched: HTTP {r.status}")
+                      return True
+              except urllib.error.HTTPError as e:
+                  print(f"Curator dispatch error: {e.code} {e.read()[:200]}")
+                  return False
 
-              # Fallback: OpenAI
-              if openai_key:
-                  try:
-                      body = json.dumps({
-                          "model": "gpt-4o-mini",
-                          "max_tokens": 512,
-                          "messages": [
-                              {"role": "system", "content": "Ты — автономный AI-агент системы BEM-221. Отвечай оператору кратко и по делу на русском языке."},
-                              {"role": "user", "content": user_text}
-                          ]
-                      }).encode()
-                      req = urllib.request.Request(
-                          "https://api.openai.com/v1/chat/completions",
-                          data=body,
-                          headers={
-                              "Authorization": f"Bearer {openai_key}",
-                              "Content-Type": "application/json"
-                          }
-                      )
-                      with urllib.request.urlopen(req, timeout=30) as r:
-                          resp = json.loads(r.read())
-                          return resp["choices"][0]["message"]["content"], "openai"
-                  except Exception as e:
-                      print(f"OpenAI error: {e}")
-
-              return None, None
-
-          # ──────────────────────────────────────────────
-          # Read offset
-          # ──────────────────────────────────────────────
+          # ── Читать offset ──
           offset_data, status = gh_get(f"/repos/{repo}/contents/governance/telegram/poll_offset.txt")
           offset = 0
           offset_sha = None
@@ -161,9 +123,7 @@ jobs:
               except:
                   pass
 
-          # ──────────────────────────────────────────────
-          # Poll Telegram
-          # ──────────────────────────────────────────────
+          # ── Poll Telegram ──
           url = f"https://api.telegram.org/bot{token}/getUpdates?offset={offset}&limit=100&timeout=0"
           try:
               with urllib.request.urlopen(url, timeout=10) as r:
@@ -204,7 +164,7 @@ jobs:
 
           new_offset = str(max_uid + 1)
 
-          # Update offset
+          # ── Обновить offset ──
           _, s = gh_put(
               f"/repos/{repo}/contents/governance/telegram/poll_offset.txt",
               new_offset, f"telegram: offset {new_offset}", offset_sha
@@ -215,9 +175,7 @@ jobs:
               print("No messages from allowed chat")
               exit(0)
 
-          # ──────────────────────────────────────────────
-          # Append to inbox.jsonl
-          # ──────────────────────────────────────────────
+          # ── Записать в inbox.jsonl ──
           inbox_data, status = gh_get(f"/repos/{repo}/contents/governance/telegram/inbox.jsonl")
           inbox_content = ""
           inbox_sha = None
@@ -229,98 +187,21 @@ jobs:
                   pass
 
           new_lines = "\n".join(json.dumps(e, ensure_ascii=False) for e in new_entries) + "\n"
-          new_inbox = inbox_content + new_lines
-
           _, s = gh_put(
               f"/repos/{repo}/contents/governance/telegram/inbox.jsonl",
-              new_inbox, f"telegram: {len(new_entries)} new message(s)", inbox_sha
+              inbox_content + new_lines,
+              f"telegram: {len(new_entries)} new message(s)", inbox_sha
           )
-          print(f"Inbox updated: {len(new_entries)} messages (status {s})")
+          print(f"Inbox updated (status {s})")
 
-          # ──────────────────────────────────────────────
-          # LLM processing + outbox + Telegram reply
-          # ──────────────────────────────────────────────
-          outbox_data, _ = gh_get(f"/repos/{repo}/contents/governance/telegram/outbox.jsonl")
-          outbox_content = ""
-          outbox_sha = None
-          if outbox_data:
-              try:
-                  outbox_content = base64.b64decode(outbox_data["content"].replace("\n","")).decode()
-                  outbox_sha = outbox_data["sha"]
-              except:
-                  pass
-
-          now_iso = datetime.now(timezone.utc).isoformat()
-          now_str = datetime.now(timezone.utc).strftime("%H:%M UTC")
-          last_llm_response = None
-          last_provider = None
-          telegram_sent = False
-
-          new_outbox_lines = []
-          for entry in new_entries:
-              user_text = entry["text"]
-              print(f"Calling LLM for: {user_text[:60]}")
-              llm_reply, provider = call_llm(user_text)
-
-              outbox_entry = {
-                  "ts": now_iso,
-                  "update_id": entry["update_id"],
-                  "chat_id": entry["chat_id"],
-                  "user_text": user_text,
-                  "llm_response": llm_reply,
-                  "provider": provider,
-                  "telegram_sent": False
-              }
-
-              if llm_reply:
-                  last_llm_response = llm_reply
-                  last_provider = provider
-                  reply_text = f"🤖 *BEM-221 [{provider}]*\n\n{llm_reply}"
-                  result = tg_send(entry["chat_id"], reply_text)
-                  if result and result.get("ok"):
-                      outbox_entry["telegram_sent"] = True
-                      telegram_sent = True
-                      print(f"LLM reply sent via {provider}")
-                  else:
-                      print(f"Failed to send LLM reply")
+          # ── Диспатч Куратора на каждое сообщение ──
+          now_iso = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+          for i, entry in enumerate(new_entries):
+              trace_id = f"tg_{entry['update_id']}_{now_iso}"
+              dispatched = dispatch_curator(trace_id, entry["text"])
+              if dispatched:
+                  tg_send(entry["chat_id"], f"⏳ Передано куратору (trace: {trace_id})")
               else:
-                  # No LLM available — send simple acknowledgement
-                  now = datetime.now(timezone.utc).strftime("%H:%M UTC")
-                  tg_send(entry["chat_id"], f"📥 *{now}* | Принято в контур\n`{user_text[:100]}`")
-                  print("No LLM available, sent plain ack")
-
-              new_outbox_lines.append(json.dumps(outbox_entry, ensure_ascii=False))
-
-          # Write outbox
-          if new_outbox_lines:
-              new_outbox = outbox_content + "\n".join(new_outbox_lines) + "\n"
-              _, s = gh_put(
-                  f"/repos/{repo}/contents/governance/telegram/outbox.jsonl",
-                  new_outbox, f"gate5: llm responses for {len(new_outbox_lines)} message(s)", outbox_sha
-              )
-              print(f"Outbox updated (status {s})")
-
-          # ──────────────────────────────────────────────
-          # Write GATE-5 proof receipt
-          # ──────────────────────────────────────────────
-          if last_llm_response and telegram_sent:
-              receipt = {
-                  "gate": "GATE-5",
-                  "status": "PASS",
-                  "ts": now_iso,
-                  "provider": last_provider,
-                  "llm_response_preview": last_llm_response[:200],
-                  "telegram_sent": True,
-                  "messages_processed": len(new_entries)
-              }
-              receipt_data, _ = gh_get(f"/repos/{repo}/contents/governance/state/gate5_runtime_receipt.json")
-              receipt_sha = receipt_data["sha"] if receipt_data else None
-              _, s = gh_put(
-                  f"/repos/{repo}/contents/governance/state/gate5_runtime_receipt.json",
-                  json.dumps(receipt, indent=2, ensure_ascii=False),
-                  "GATE-5 PASS: LLM runtime receipt",
-                  receipt_sha
-              )
-              print(f"GATE-5 receipt written (status {s})")
+                  tg_send(entry["chat_id"], "⚠️ Ошибка диспатча куратора")
 
           PYEOF
