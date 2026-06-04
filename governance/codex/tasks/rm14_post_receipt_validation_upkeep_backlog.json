@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm14_post_receipt_validation_upkeep_backlog",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM14 post-receipt backlog",
+  "objective": "Create file governance/state/RM14_POST_RECEIPT_VALIDATION_UPKEEP_BACKLOG.json with content {\"created_at_utc3\":\"2026-06-04 | 06:26 (UTC+3)\",\"release_pass\":false,\"current_status\":\"working_baseline_completed_release_locked\",\"backlog\":[{\"id\":\"POST-G4\",\"title\":\"Run Telegram production receipt collector with real inputs\",\"blocked_by\":\"missing real TELEGRAM_* env inputs\"},{\"id\":\"POST-G5\",\"title\":\"Run live runtime receipt collector with real inputs\",\"blocked_by\":\"missing real LIVE_RUNTIME_* env inputs\"},{\"id\":\"POST-G6\",\"title\":\"Run external Claude audit collector with real inputs\",\"blocked_by\":\"missing real CLAUDE_AUDIT_* env inputs\"},{\"id\":\"POST-VAL\",\"title\":\"Run validate_release_gates.py after all receipts exist\",\"blocked_by\":\"Gate 4/5/6 receipts missing\"},{\"id\":\"POST-TZ2\",\"title\":\"Archive exact non-canonical SSOT duplicates\",\"blocked_by\":\"verified repository inventory output missing\"}],\"next_action\":\"RM15 final continuous-mode guard state\"}\nCreate file governance/audit/POST_RECEIPT_VALIDATION_UPKEEP_BACKLOG.md with content # Post-receipt validation upkeep backlog\n\nCreated: 2026-06-04 | 06:26 (UTC+3)\nRelease PASS: false\n\nWorking baseline is complete. Release remains locked.\n\nBacklog:\n1. Run Gate 4 Telegram collector with real inputs.\n2. Run Gate 5 live runtime collector with real inputs.\n3. Run Gate 6 external Claude audit collector with real inputs.\n4. Run validate_release_gates.py after all receipts exist.\n5. Archive TZ2 exact non-canonical duplicates after verified inventory output.\n\nNo fake receipts. No Release PASS.\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM14 | POST-RECEIPT VALIDATION UPKEEP BACKLOG | 2026-06-04 | 06:26 (UTC+3)\n- Created post-receipt validation upkeep backlog.\n- No Release PASS. Next action: RM15 final continuous-mode guard state.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm14_post_receipt_validation_upkeep_backlog.md",
+    "result_json": "governance/codex/results/rm14_post_receipt_validation_upkeep_backlog.json"
+  },
+  "created_at": "2026-06-04T04:24:22.422Z"
+}
