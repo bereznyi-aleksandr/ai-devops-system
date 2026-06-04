@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p25_non_workflow_roadmap_continuation_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P25 continuation queue",
+  "objective": "Create file governance/roadmap/NON_WORKFLOW_CONTINUATION_QUEUE_2026-06-04.md with content # Non-workflow continuation queue | 2026-06-04\n\n## Active constraints\n- `.github/workflows/*.yml` locked for GPT executor.\n- No issue comments.\n- No operator confirmation for routine steps.\n- Every completed step must have SHA-backed state/report/AGENT_CONTEXT update.\n\n## Queue\n1. P25B validate continuation queue.\n2. P26 audit state/report parity for recent non-workflow chain.\n3. P26B validate parity audit.\n4. P27 evidence index refresh for governance contour.\n5. P27B validate evidence index refresh.\nCreate file governance/state/P25_NON_WORKFLOW_ROADMAP_CONTINUATION_QUEUE.json with content {\"id\":\"P25\",\"trace_id\":\"p25_non_workflow_roadmap_continuation_queue\",\"status\":\"completed\",\"release_pass\":false,\"workflow_files_touched\":false,\"previous_step\":{\"id\":\"P24B\",\"sha\":\"5d11023f1c18aea66a3ae78a22da5ad859833678\"},\"next\":\"P25B validate continuation queue\"}\nCreate file governance/reports/P25_NON_WORKFLOW_ROADMAP_CONTINUATION_QUEUE.md with content # P25 | Non-workflow roadmap continuation queue\nStatus: completed\nDate: 2026-06-04\n\nCreated continuation queue for safe non-workflow tasks. Workflow lock respected; no `.github/workflows/*.yml` files touched.\n\nNext: P25B validate continuation queue.\nAppend to governance/AGENT_CONTEXT.md: \n## P25 completed | 2026-06-04\nNon-workflow roadmap continuation queue created at governance/roadmap/NON_WORKFLOW_CONTINUATION_QUEUE_2026-06-04.md. Workflow lock respected: no .github/workflows files touched. Next: P25B validate continuation queue.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p25_non_workflow_roadmap_continuation_queue.md",
+    "result_json": "governance/codex/results/p25_non_workflow_roadmap_continuation_queue.json"
+  },
+  "created_at": "2026-06-04T10:33:42.846Z"
+}
