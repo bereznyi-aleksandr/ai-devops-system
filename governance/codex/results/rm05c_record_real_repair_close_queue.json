@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05c_record_real_repair_close_queue",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/roadmap/ACTIVE_QUEUE.json",
+    "governance/logs/execution_log.jsonl",
+    "governance/codex/proofs/rm05c_record_real_repair_close_queue.txt"
+  ],
+  "commit_sha": "76f3139c71cddc507a8c1352f896428498806ae3",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: Expecting property name enclosed in double quotes: line 2 column 1 (char 35)"
+  },
+  "report_path": "governance/codex/results/rm05c_record_real_repair_close_queue.md",
+  "completed_at": "2026-06-04T14:24:19Z"
+}

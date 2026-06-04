@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T11:45:00Z",
+  "updated_at": "2026-06-04T14:24:00Z",
   "source": "Claude External Audit — RM-05 reopened",
   "max_active_tasks": 7,
   "policy": {
@@ -14,20 +14,30 @@
     {
       "id": "RM-05",
       "title": "KZ-1 runners skeleton repair — REOPENED",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 1,
-      "depends_on": ["RM-01", "RM-02", "RM-03", "RM-04"],
+      "depends_on": [
+        "RM-01",
+        "RM-02",
+        "RM-03",
+        "RM-04"
+      ],
       "detail": "Восстановить ВСЕ файлы в governance/runners/*.py. Каждый файл должен содержать: def main() + stub return + if __name__=='__main__': main(). Минимум 80 байт. После записи КАЖДОГО файла — проверить python3 -m ast. Создать governance/state/kz1_runners_status.json с полем all_valid=true только когда ВСЕ файлы проходят ast.parse.",
       "touch_workflows": false,
       "proof_required": "governance/state/kz1_runners_status.json с all_valid=true И каждый runner > 50 байт И ast.parse OK",
-      "audit_note": "REOPENED by Claude audit 2026-06-04: contour_lifecycle_runner.py = 1 byte (empty), kz1_runners_status.json missing. Previous DONE was false PASS."
+      "audit_note": "REOPENED by Claude audit 2026-06-04: contour_lifecycle_runner.py = 1 byte (empty), kz1_runners_status.json missing. Previous DONE was false PASS.",
+      "sha": "1e7b445f549724fb6e31a48e6deec4e75573a54b",
+      "completed_at": "2026-06-04T14:23:20Z",
+      "audit_reopen_resolved": true
     },
     {
       "id": "KZ-2",
       "title": "Устранить 8 SSOT-дублей",
       "status": "PENDING",
       "priority": 2,
-      "depends_on": ["RM-05"],
+      "depends_on": [
+        "RM-05"
+      ],
       "detail": "Canonical paths в governance/state/. Дубли переместить в governance/archive/ssot_duplicates_2026-06-04/. Список: contours_registry, object_passports, providers_registry, contour_provider_policy, provider_failover_policy, managed_channel_schema, telegram_input_envelope_schema, telegram_to_managed_channel_mapping.",
       "touch_workflows": false,
       "proof_required": "governance/state/kz2_ssot_status.json с duplicates_remaining=0"
@@ -37,12 +47,14 @@
       "title": "Восстановить object_passports.json и release_proof_manifest.json",
       "status": "PENDING",
       "priority": 3,
-      "depends_on": ["KZ-2"],
+      "depends_on": [
+        "KZ-2"
+      ],
       "detail": "Оба файла усечены. governance/objects/object_passports.json — паспорта GD/DIR/WRK. governance/release/release_proof_manifest.json — все поля включая commit_sha policy.",
       "touch_workflows": false,
       "proof_required": "governance/state/kz4_passports_status.json с restored=true"
     }
   ],
-  "queue_state": "HAS_ACTIVE_TASKS",
-  "next_action": "Execute RM-05 — runners skeleton repair with ast.parse verification"
+  "queue_state": "EMPTY_NO_PENDING_TASKS",
+  "next_action": "await operator or Claude to add next tasks; do not invent tasks"
 }
