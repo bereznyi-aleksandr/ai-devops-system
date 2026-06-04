@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f9_disabled_workflows_inventory",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM00F9 disabled workflows inventory",
+  "objective": "Create file governance/state/RM00F9_DISABLED_WORKFLOWS_INVENTORY.json with content {\"id\":\"RM00F9\",\"trace_id\":\"rm00f9_disabled_workflows_inventory\",\"status\":\"completed\",\"release_pass\":false,\"inventory_policy\":{\"active_workflows_dir\":\".github/workflows\",\"disabled_workflows_dir\":\"governance/workflows_disabled\",\"active_yml_must_be_valid\":true,\"archive_markers_in_active_yml_allowed\":false},\"known_items\":[{\"source\":\".github/workflows/governance-validation-ci.yml\",\"state\":\"active placeholder\",\"required_property\":\"valid workflow_dispatch-only YAML\"},{\"source\":\"governance/workflows_disabled/governance-validation-ci\",\"state\":\"disabled archive target\",\"required_property\":\"outside GitHub Actions active parser path\"}],\"previous_step\":{\"id\":\"RM00F8\",\"sha\":\"1d2bae650691e4a960a3276181cb97fc6c72480b\"},\"next\":\"RM01 restore governance validation contract\"}\nCreate file governance/reports/RM00F9_DISABLED_WORKFLOWS_INVENTORY.md with content # RM00F9 | Disabled workflows inventory\n\nStatus: completed\n\n## Policy\nActive GitHub Actions parser path is .github/workflows. Disabled or archived workflow material must not remain as invalid .yml syntax in that active path.\n\n## Inventory\n- .github/workflows/governance-validation-ci.yml: active disabled placeholder, valid workflow_dispatch-only YAML after RM00F6.\n- governance/workflows_disabled/governance-validation-ci: disabled archive target outside active parser path.\n\n## Finding\nThe governance contour can continue only while disabled workflow material stays outside active parser paths and active .yml files remain valid YAML.\n\n## Release status\nRelease PASS remains false.\n\n## Next\nRM01 restore governance validation contract.\nAppend to governance/AGENT_CONTEXT.md: \n## RM00F9 completed | 2026-06-04\nDisabled workflows inventory recorded. Active parser path policy: no archive/plain-text markers in .github/workflows .yml files. Release PASS remains false. Next: RM01 restore governance validation contract.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00f9_disabled_workflows_inventory.md",
+    "result_json": "governance/codex/results/rm00f9_disabled_workflows_inventory.json"
+  },
+  "created_at": "2026-06-04T05:22:11.743Z"
+}
