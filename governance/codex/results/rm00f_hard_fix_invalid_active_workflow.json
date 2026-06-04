@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f_hard_fix_invalid_active_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/state/RM00F_HARD_FIX_INVALID_ACTIVE_WORKFLOW.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/state/RM00F_HARD_FIX_INVALID_ACTIVE_WORKFLOW.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00f_hard_fix_invalid_active_workflow.txt"
+  ],
+  "commit_sha": "d882ad3aaaf9f646bb80dd13fdd70a06d09d8b3b",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00f_hard_fix_invalid_active_workflow.md",
+  "completed_at": "2026-06-04T04:41:30Z"
+}

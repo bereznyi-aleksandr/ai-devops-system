@@ -1,8 +1,5 @@
 name: governance-validation-ci
-"on":
-  workflow_dispatch: {}
-permissions:
-  contents: read
+on:
+  workflow_dispatch:
 jobs:
-  validate_foundation:
-    name: Disabled governance validation
+  noop:
