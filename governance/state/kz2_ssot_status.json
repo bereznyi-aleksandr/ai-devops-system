@@ -1,119 +1,80 @@
 {
   "status": "PASS",
   "all_valid": true,
-  "duplicate_groups_before": 7,
-  "duplicates_moved": 20,
+  "target_names": [
+    "contours_registry.json",
+    "object_passports.json",
+    "providers_registry.json",
+    "managed_channels_registry.json",
+    "channels_registry.json",
+    "objects_registry.json",
+    "release_proof_manifest.json",
+    "ssot_canonical_paths.json"
+  ],
+  "found_before": {
+    "contours_registry.json": [
+      "governance/state/contours_registry.json",
+      "governance/contours/contours_registry.json"
+    ],
+    "object_passports.json": [
+      "governance/objects/object_passports.json",
+      "governance/state/object_passports.json",
+      "governance/registries/object_passports.json"
+    ],
+    "providers_registry.json": [
+      "governance/state/providers_registry.json",
+      "governance/providers/providers_registry.json"
+    ],
+    "managed_channels_registry.json": [],
+    "channels_registry.json": [],
+    "objects_registry.json": [
+      "governance/state/objects_registry.json"
+    ],
+    "release_proof_manifest.json": [
+      "governance/state/release_proof_manifest.json",
+      "governance/release/release_proof_manifest.json"
+    ],
+    "ssot_canonical_paths.json": []
+  },
   "kept": [
-    "governance/codex/proofs/kz2_ssot_duplicate_path_inventory.txt",
-    "governance/registries/SSOT_CANONICAL_PATHS.json",
-    "governance/codex/proofs/kz2_ssot_canonical_paths.txt",
-    "governance/codex/proofs/tz2_ssot_duplicate_archive_manifest.txt",
-    "governance/codex/proofs/kz2_ssot_duplicates_inventory.txt",
-    "governance/codex/proofs/kz2_ssot_canonical_refs_batch1.txt",
-    "governance/codex/proofs/kz2_ssot_duplicate_validator.txt"
+    "governance/state/contours_registry.json",
+    "governance/state/object_passports.json",
+    "governance/state/providers_registry.json",
+    "governance/state/objects_registry.json",
+    "governance/state/release_proof_manifest.json"
   ],
   "moved": [
     {
-      "from": "governance/codex/results/kz2_ssot_duplicate_path_inventory.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_duplicate_path_inventory.json",
-      "group": "kz2_ssot_path_inventory"
+      "from": "governance/contours/contours_registry.json",
+      "to": "governance/archive/real_ssot_duplicates_2026-06-04/contours_registry.json",
+      "kept": "governance/state/contours_registry.json",
+      "name": "contours_registry.json"
     },
     {
-      "from": "governance/codex/results/kz2_ssot_duplicate_path_inventory.md",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_duplicate_path_inventory.md",
-      "group": "kz2_ssot_path_inventory"
+      "from": "governance/objects/object_passports.json",
+      "to": "governance/archive/real_ssot_duplicates_2026-06-04/object_passports.json",
+      "kept": "governance/state/object_passports.json",
+      "name": "object_passports.json"
     },
     {
-      "from": "governance/codex/tasks/kz2_ssot_duplicate_path_inventory.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_duplicate_path_inventory_1.json",
-      "group": "kz2_ssot_path_inventory"
+      "from": "governance/registries/object_passports.json",
+      "to": "governance/archive/real_ssot_duplicates_2026-06-04/object_passports_1.json",
+      "kept": "governance/state/object_passports.json",
+      "name": "object_passports.json"
     },
     {
-      "from": "governance/state/KZ2_SSOT_DUPLICATE_PATH_INVENTORY.md",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/KZ2_SSOT_DUPLICATE_PATH_INVENTORY.md",
-      "group": "kz2_ssot_path_inventory"
+      "from": "governance/providers/providers_registry.json",
+      "to": "governance/archive/real_ssot_duplicates_2026-06-04/providers_registry.json",
+      "kept": "governance/state/providers_registry.json",
+      "name": "providers_registry.json"
     },
     {
-      "from": "governance/state/ssot_canonical_paths.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/ssot_canonical_paths.json",
-      "group": "ssot_canonical_paths"
-    },
-    {
-      "from": "governance/codex/results/kz2_ssot_canonical_paths.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_canonical_paths.json",
-      "group": "kz2_ssot_canonical_paths"
-    },
-    {
-      "from": "governance/codex/results/kz2_ssot_canonical_paths.md",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_canonical_paths.md",
-      "group": "kz2_ssot_canonical_paths"
-    },
-    {
-      "from": "governance/codex/tasks/kz2_ssot_canonical_paths.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_canonical_paths_1.json",
-      "group": "kz2_ssot_canonical_paths"
-    },
-    {
-      "from": "governance/codex/results/tz2_ssot_duplicate_archive_manifest.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/tz2_ssot_duplicate_archive_manifest.json",
-      "group": "tz2_ssot_archive_manifest"
-    },
-    {
-      "from": "governance/codex/results/tz2_ssot_duplicate_archive_manifest.md",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/tz2_ssot_duplicate_archive_manifest.md",
-      "group": "tz2_ssot_archive_manifest"
-    },
-    {
-      "from": "governance/codex/tasks/tz2_ssot_duplicate_archive_manifest.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/tz2_ssot_duplicate_archive_manifest_1.json",
-      "group": "tz2_ssot_archive_manifest"
-    },
-    {
-      "from": "governance/codex/results/kz2_ssot_duplicates_inventory.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_duplicates_inventory.json",
-      "group": "kz2_ssots_inventory"
-    },
-    {
-      "from": "governance/codex/results/kz2_ssot_duplicates_inventory.md",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_duplicates_inventory.md",
-      "group": "kz2_ssots_inventory"
-    },
-    {
-      "from": "governance/codex/tasks/kz2_ssot_duplicates_inventory.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_duplicates_inventory_1.json",
-      "group": "kz2_ssots_inventory"
-    },
-    {
-      "from": "governance/codex/results/kz2_ssot_canonical_refs_batch1.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_canonical_refs_batch1.json",
-      "group": "kz2_ssot_canonical_refs_batch1"
-    },
-    {
-      "from": "governance/codex/results/kz2_ssot_canonical_refs_batch1.md",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_canonical_refs_batch1.md",
-      "group": "kz2_ssot_canonical_refs_batch1"
-    },
-    {
-      "from": "governance/codex/tasks/kz2_ssot_canonical_refs_batch1.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_canonical_refs_batch1_1.json",
-      "group": "kz2_ssot_canonical_refs_batch1"
-    },
-    {
-      "from": "governance/codex/results/kz2_ssot_duplicate_validator.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_duplicate_validator.json",
-      "group": "kz2_ssot_validator"
-    },
-    {
-      "from": "governance/codex/results/kz2_ssot_duplicate_validator.md",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_duplicate_validator.md",
-      "group": "kz2_ssot_validator"
-    },
-    {
-      "from": "governance/codex/tasks/kz2_ssot_duplicate_validator.json",
-      "to": "governance/archive/ssot_duplicates_2026-06-04/kz2_ssot_duplicate_validator_1.json",
-      "group": "kz2_ssot_validator"
+      "from": "governance/release/release_proof_manifest.json",
+      "to": "governance/archive/real_ssot_duplicates_2026-06-04/release_proof_manifest.json",
+      "kept": "governance/state/release_proof_manifest.json",
+      "name": "release_proof_manifest.json"
     }
   ],
-  "archive_root": "governance/archive/ssot_duplicates_2026-06-04",
+  "remaining_duplicates": {},
   "workflow_files_touched": false
 }

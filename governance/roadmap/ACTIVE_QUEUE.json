@@ -18,14 +18,17 @@
       "touch_workflows": false,
       "detail": "Удалить или переместить в archive ДУБЛИ из governance/contours/, governance/providers/, governance/objects/state-copies. Canonical path = governance/state/. Конкретные дубли: governance/contours/contours_registry.json (дубль governance/state/contours_registry.json), governance/providers/providers_registry.json (дубль governance/state/providers_registry.json), governance/providers/contour_provider_policy.json, governance/channels/managed_channel_schema.json, governance/telegram/telegram_input_envelope_schema.json, governance/telegram/telegram_to_managed_channel_mapping.json. Использовать Run script с shutil.move() или Path.unlink() для дублей. Canonical в governance/state/ оставить.",
       "example_objective": "Run script:\n\"\"\"\nimport shutil\nfrom pathlib import Path\n\nduplicates = [\n    'governance/contours/contours_registry.json',\n    'governance/providers/providers_registry.json',\n    'governance/providers/contour_provider_policy.json',\n]\narchive = Path('governance/archive/ssot_duplicates_real_2026-06-04')\narchive.mkdir(parents=True, exist_ok=True)\nfor dup in duplicates:\n    p = Path(dup)\n    if p.exists():\n        dest = archive / p.name\n        shutil.move(str(p), str(dest))\n        changed_files.append(str(dest))\n\"\"\"\nNo issue comments.",
-      "proof_required": "governance/state/kz2_real_ssot_status.json с duplicates_remaining=0 и список конкретных файлов"
+      "proof_required": "governance/state/kz2_real_ssot_status.json с duplicates_remaining=0 и список конкретных файлов",
+      "audit_reopened_sha": "4d93026f"
     },
     {
       "id": "KZ-4",
       "title": "Восстановить object_passports.json и release_proof_manifest.json",
       "status": "PENDING",
       "priority": 2,
-      "depends_on": ["KZ-2"],
+      "depends_on": [
+        "KZ-2"
+      ],
       "touch_workflows": false,
       "detail": "Оба файла усечены. Записать полное содержимое через Run script с Path.write_text().",
       "example_objective": "Run script:\n\"\"\"\nimport json\nfrom pathlib import Path\n\npassports = {\"version\": \"1.0\", \"date\": \"2026-06-04\", \"objects\": [{\"id\": \"OBJ-GD-001\", \"type\": \"general_director\", \"elements\": [\"EL-CUR-GD-001\", \"CNT-GD-001\"]}, {\"id\": \"OBJ-DIR-001\", \"type\": \"director\", \"elements\": [\"EL-CUR-DIR-001\"]}, {\"id\": \"OBJ-WRK-001\", \"type\": \"worker\", \"elements\": [\"WRK-C1\", \"WRK-C2\", \"WRK-C3\"]}]}\nPath('governance/objects/object_passports.json').write_text(json.dumps(passports, indent=2))\nchanged_files.append('governance/objects/object_passports.json')\n\nmanifest = {\"version\": \"1.0\", \"date\": \"2026-06-04\", \"commit_sha\": None, \"release_pass\": False, \"note\": \"commit_sha=null until CI verified gate\"}\nPath('governance/release/release_proof_manifest.json').write_text(json.dumps(manifest, indent=2))\nchanged_files.append('governance/release/release_proof_manifest.json')\n\nPath('governance/state/kz4_passports_status.json').write_text(json.dumps({\"status\": \"PASS\", \"restored\": True}, indent=2))\nchanged_files.append('governance/state/kz4_passports_status.json')\n\"\"\"\nNo issue comments.",
