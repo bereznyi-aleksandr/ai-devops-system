@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate4_fix_v2_deploy_pending_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "GATE-4-FIX-V2 deploy pending",
+  "objective": "Run script:\n\"\"\"\nNL = \"\\n\"\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8')) if queue_path.exists() else {'tasks': []}\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'GATE-4-TEST-V2':\n        task['status'] = 'WAITING_DENO_DEPLOY'\n        task['blocker'] = 'Live Deno health still reports version 4.9 after repo patch; wait for Deno Deploy to pick up 8cba218e7a842e7f8baf7d0a145b0e7978a0e93f or redeploy manually'\n        task['test_instruction'] = 'Send Telegram test only after health version is 4.10 or deployment confirms latest commit'\nqueue['updated_at'] = '2026-06-04T16:24:00Z'\nqueue['queue_state'] = 'WAITING_DENO_DEPLOY'\nqueue['next_action'] = 'wait for Deno Deploy to update to webhook v4.10, then operator sends Telegram test to @BarberStaffBot'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + NL, encoding='utf-8')\nchanged_files.append(str(queue_path))\nstate = Path('governance/state/GATE4_FIX_V2_DEPLOY_PENDING_RECORD.json')\nstate.write_text(json.dumps({'id':'GATE-4-FIX-V2-DEPLOY','trace_id':'gate4_fix_v2_deploy_pending_record','status':'waiting_deploy','release_pass':False,'patched_sha':'8cba218e7a842e7f8baf7d0a145b0e7978a0e93f','live_health_version':'4.9','expected_health_version':'4.10','workflow_files_touched':False,'next':'wait for Deno Deploy, then Telegram receipt test'}, ensure_ascii=False, indent=2) + NL, encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/GATE4_FIX_V2_DEPLOY_PENDING_RECORD.md')\nreport.write_text('# GATE-4-FIX-V2 | Deploy pending record' + NL + 'Status: waiting_deploy' + NL + 'Date: 2026-06-04' + NL + NL + 'Webhook patch is committed, but live Deno health still reports version 4.9. Telegram test must wait until Deno Deploy serves version 4.10 or latest commit is confirmed deployed.' + NL + NL + 'Patched SHA: 8cba218e7a842e7f8baf7d0a145b0e7978a0e93f' + NL + 'Record SHA source: c949c24d42cf364a1c2e1142ec7c8d1218b7be48' + NL + 'Workflow lock respected. No .github/workflows files touched.' + NL, encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gate4_fix_v2_deploy_pending_record.md",
+    "result_json": "governance/codex/results/gate4_fix_v2_deploy_pending_record.json"
+  },
+  "created_at": "2026-06-04T16:21:53.204Z"
+}
