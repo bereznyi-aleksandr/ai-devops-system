@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12c_force_delete_active_invalid_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P12C force delete workflow",
+  "objective": "Delete file .github/workflows/governance-validation-ci.yml\nCreate file governance/state/P12C_FORCE_DELETE_ACTIVE_INVALID_WORKFLOW.json with content {\"id\":\"P12C\",\"trace_id\":\"p12c_force_delete_active_invalid_workflow\",\"status\":\"completed\",\"release_pass\":false,\"problem\":\"P12 move did not remove invalid active workflow from .github/workflows on remote SHA 0f322569d56c3b5eb24ef66f3fad747fcfc96f01\",\"change\":\"force delete active invalid workflow file using executor Delete file pattern\",\"next\":\"P12D verify 404/no active workflow file\"}\nCreate file governance/reports/P12C_FORCE_DELETE_ACTIVE_INVALID_WORKFLOW.md with content # P12C | Force delete active invalid workflow\nStatus: completed\nDate: 2026-06-04\n\n## Problem\nP12 did not remove the invalid active workflow from `.github/workflows` on remote SHA `0f322569d56c3b5eb24ef66f3fad747fcfc96f01`.\n\n## Change\nForced deletion of `.github/workflows/governance-validation-ci.yml` through the executor Delete file pattern.\n\n## Gate decision\nRelease PASS remains false until remote verification confirms the active parser path no longer contains this invalid file.\n\n## Next\nP12D verify 404/no active workflow file.\nAppend to governance/AGENT_CONTEXT.md: \n## P12C completed | 2026-06-04\nForced Delete file for .github/workflows/governance-validation-ci.yml after P12 remote verification showed file still present. Release PASS false. Next: P12D verify remote absence.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p12c_force_delete_active_invalid_workflow.md",
+    "result_json": "governance/codex/results/p12c_force_delete_active_invalid_workflow.json"
+  },
+  "created_at": "2026-06-04T07:58:59.920Z"
+}
