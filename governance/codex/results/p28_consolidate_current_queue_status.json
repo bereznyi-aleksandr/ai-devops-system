@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "p28_consolidate_current_queue_status",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/ACTIVE_QUEUE.json",
+    "governance/state/P28_CONSOLIDATE_CURRENT_QUEUE_STATUS.json",
+    "governance/reports/P28_CONSOLIDATE_CURRENT_QUEUE_STATUS.md",
+    "governance/codex/proofs/p28_consolidate_current_queue_status.txt"
+  ],
+  "commit_sha": "4a6357f744d861d5cdaa4fa3efec57d1914ce4db",
+  "blocker": null,
+  "report_path": "governance/codex/results/p28_consolidate_current_queue_status.md",
+  "completed_at": "2026-06-04T11:17:02Z"
+}

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-06-04T11:17:00Z",
+  "updated_at": "2026-06-04T11:18:00Z",
   "max_active_tasks": 7,
   "policy": {
     "source_of_next_task": "first PENDING item in tasks",
@@ -39,14 +39,14 @@
     {
       "id": "P27B",
       "title": "Record P27 result in ACTIVE_QUEUE and execution_log",
-      "status": "IN_PROGRESS",
+      "status": "DONE_PENDING_SHA_RECORD",
       "criteria": "P27 status updated with SHA and execution_log receives P27 line",
       "touch_workflows": false
     },
     {
       "id": "P28",
       "title": "Consolidate current queue status report",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "criteria": "Create compact report from ACTIVE_QUEUE only, no invented tasks",
       "touch_workflows": false
     }
