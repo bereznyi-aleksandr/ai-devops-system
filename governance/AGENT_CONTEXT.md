@@ -1668,3 +1668,5 @@ Governance
 KZ
 ## P15 completed | 2026-06-04
 commit_sha null inventory completed. Candidate file count: 3253. Workflow lock respected. Next: P15B commit_sha null remediation plan.
+## P15B completed | 2026-06-04
+Patched governance/deno_webhook.js so /codex-task returns commit_sha/task_file_commit_sha from GitHub contents API response. Workflow lock respected. Next: P15C codex-task commit_sha response evidence.

@@ -1,0 +1,10 @@
+{
+  "id": "P15B",
+  "trace_id": "p15b_fix_codex_task_commit_sha_response_repair",
+  "status": "completed",
+  "release_pass": false,
+  "changed": "governance/deno_webhook.js",
+  "workflow_files_touched": false,
+  "fix": "/codex-task now returns commit_sha and task_file_commit_sha from GitHub contents API response",
+  "next": "P15C codex-task commit_sha response evidence"
+}
