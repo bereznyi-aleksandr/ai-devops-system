@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p19c_curator_context_update_spec",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P19C context update spec",
+  "objective": "Create file governance/specs/CURATOR_AGENT_CONTEXT_AUTOUPDATE_SPEC.md with content # Curator AGENT_CONTEXT autoupdate specification\nStatus: active\nDate: 2026-06-04\n\n## Purpose\nProvide a non-workflow specification for automatic AGENT_CONTEXT.md updates by curator support logic.\n\n## Inputs\n- Latest completed state files under `governance/state/`.\n- Latest result files under `governance/codex/results/`.\n- Workflow lock file `governance/state/workflow_write_lock.json`.\n\n## Output\nA dated AGENT_CONTEXT.md append-only update containing: last completed step, SHA evidence, workflow lock status, next roadmap task, and blockers.\n\n## Rules\n- Never edit `.github/workflows/*.yml` from GPT executor.\n- Never write issue comments.\n- Never emit PASS without SHA evidence.\n- Treat proof-only commits as failed work requiring repair.\n- Continue roadmap after reporting.\n\n## Next\nP19D curator context update spec validation.\nCreate file governance/state/P19C_CURATOR_CONTEXT_UPDATE_SPEC.json with content {\"id\":\"P19C\",\"trace_id\":\"p19c_curator_context_update_spec\",\"status\":\"completed\",\"release_pass\":false,\"spec\":\"governance/specs/CURATOR_AGENT_CONTEXT_AUTOUPDATE_SPEC.md\",\"previous_step\":{\"id\":\"P19B\",\"sha\":\"ce54ce298493fb999623e536779e0540a749da24\"},\"workflow_files_touched\":false,\"next\":\"P19D curator context update spec validation\"}\nCreate file governance/reports/P19C_CURATOR_CONTEXT_UPDATE_SPEC.md with content # P19C | Curator context update specification\nStatus: completed\nDate: 2026-06-04\n\nCreated `governance/specs/CURATOR_AGENT_CONTEXT_AUTOUPDATE_SPEC.md` for safe AGENT_CONTEXT append-only update behavior. Workflow lock respected; no `.github/workflows/*.yml` files touched.\n\nNext: P19D curator context update spec validation.\nAppend to governance/AGENT_CONTEXT.md: \n## P19C completed | 2026-06-04\nCurator AGENT_CONTEXT autoupdate specification created at governance/specs/CURATOR_AGENT_CONTEXT_AUTOUPDATE_SPEC.md. Workflow lock respected: no .github/workflows files touched. Next: P19D curator context update spec validation.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p19c_curator_context_update_spec.md",
+    "result_json": "governance/codex/results/p19c_curator_context_update_spec.json"
+  },
+  "created_at": "2026-06-04T10:18:29.205Z"
+}
