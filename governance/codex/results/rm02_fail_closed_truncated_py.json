@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm02_fail_closed_truncated_py",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/rm02_fail_closed_truncated_py.txt"
+  ],
+  "commit_sha": "8935e3ba9d22405f8dd53692b7c7811c0919fe0b",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: unterminated triple-quoted string literal (detected at line 22) (<string>, line 22)"
+  },
+  "report_path": "governance/codex/results/rm02_fail_closed_truncated_py.md",
+  "completed_at": "2026-06-04T11:28:51Z"
+}
