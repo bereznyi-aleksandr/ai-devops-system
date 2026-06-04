@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f6_fix_active_workflow_yaml_v2",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM00F6 fix workflow YAML",
+  "objective": "Create file .github/workflows/governance-validation-ci.yml with content name: governance-validation-ci\n\non:\n  workflow_dispatch:\n\npermissions:\n  contents: read\n\njobs:\n  disabled-placeholder:\n    name: Disabled governance validation placeholder\n    runs-on: ubuntu-latest\n    steps:\n      - name: Explain disabled state\n        run: echo \"governance-validation-ci disabled pending governance contour roadmap repair\"\nCreate file governance/state/RM00F6_WORKFLOW_PLACEHOLDER_FIX.json with content {\"id\":\"RM00F6\",\"trace_id\":\"rm00f6_fix_active_workflow_yaml_v2\",\"title\":\"Fix active governance-validation-ci workflow YAML placeholder\",\"status\":\"completed\",\"release_pass\":false,\"previous_confirmed_step\":{\"id\":\"RM00F5\",\"sha\":\"17ddb54dc858c0991565c0919371fbe06e07dd93\"},\"next\":\"RM00F7 roadmap status and updated remediation report\"}\nCreate file governance/reports/RM00F6_WORKFLOW_PLACEHOLDER_FIX.md with content # RM00F6 | Workflow placeholder YAML fix\n\nStatus: completed\n\nProblem: active .github/workflows/governance-validation-ci.yml contained archive/plain-text marker parsed by GitHub Actions as invalid YAML.\n\nChange: active file is valid YAML, manual workflow_dispatch only, disabled placeholder job only.\n\nGate effect: not Release PASS; only removes workflow syntax noise.\n\nNext: RM00F7 roadmap status and updated remediation report.\nAppend to governance/AGENT_CONTEXT.md: \n## RM00F6 completed | 2026-06-04\nFixed active governance-validation-ci workflow placeholder to valid workflow_dispatch-only YAML. Release PASS remains false. Next: RM00F7 roadmap status and updated remediation report.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00f6_fix_active_workflow_yaml_v2.md",
+    "result_json": "governance/codex/results/rm00f6_fix_active_workflow_yaml_v2.json"
+  },
+  "created_at": "2026-06-04T05:10:52.448Z"
+}
