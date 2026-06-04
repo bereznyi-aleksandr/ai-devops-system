@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm07_external_receipt_dirs_hardening",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM07 receipt dirs hardening",
+  "objective": "Create file governance/proofs/external/telegram/.gitkeep with content \nCreate file governance/proofs/external/runtime/.gitkeep with content \nCreate file governance/proofs/external/claude/.gitkeep with content \nCreate file governance/state/RM07_EXTERNAL_RECEIPT_DIRS_HARDENING.json with content {\"created_at_utc3\":\"2026-06-04 | 06:19 (UTC+3)\",\"release_pass\":false,\"directories\":[\"governance/proofs/external/telegram\",\"governance/proofs/external/runtime\",\"governance/proofs/external/claude\"],\"purpose\":\"ensure real receipt target directories exist without creating fake receipts\",\"next_action\":\"RM08 release receipt placeholder ban manifest\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM07 | EXTERNAL RECEIPT DIRECTORY STRUCTURE HARDENING | 2026-06-04 | 06:19 (UTC+3)\n- Ensured external receipt directories exist via .gitkeep only.\n- No fake receipts. No Release PASS. Next action: RM08 release receipt placeholder ban manifest.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm07_external_receipt_dirs_hardening.md",
+    "result_json": "governance/codex/results/rm07_external_receipt_dirs_hardening.json"
+  },
+  "created_at": "2026-06-04T04:08:00.028Z"
+}
