@@ -9,11 +9,17 @@ concurrency:
   group: governance-validation-ci-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: write
+
 jobs:
   minimal-loop-e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -21,48 +27,48 @@ jobs:
           python-version: '3.11'
 
       - name: Run minimal governance loop
-        id: loop
         run: |
           python governance/runtime/minimal_governance_loop_runner.py | tee /tmp/loop_output.json
-          echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          cat /tmp/loop_output.json
 
       - name: Verify output
         run: |
           python3 -c "
-          import json, sys
+          import json
           with open('/tmp/loop_output.json') as f:
               result = json.load(f)
           assert result['status'] == 'completed', f'Expected completed, got {result[\"status\"]}'
           assert len(result['steps']) == 4, f'Expected 4 steps, got {len(result[\"steps\"])}'
           assert result['release_pass'] == False, 'release_pass must be False'
           print('GATE-3 VERIFICATION PASS')
-          print(f'trace_id: {result[\"trace_id\"]}')
-          print(f'steps: {[s[\"role\"] + \":\" + s[\"result\"] for s in result[\"steps\"]]}')
+          print('trace_id:', result['trace_id'])
           "
 
       - name: Write CI proof
         run: |
           python3 -c "
-          import json, os
+          import json
           from pathlib import Path
           proof = {
               'gate': 'GATE-3',
               'status': 'PASS',
               'ci_run_id': '${{ github.run_id }}',
               'ci_run_sha': '${{ github.sha }}',
+              'ci_workflow': 'governance-validation-ci.yml',
               'runner': 'governance/runtime/minimal_governance_loop_runner.py',
               'verified': True,
               'release_pass': False,
-              'note': 'CI E2E Capture — Gate 3'
+              'note': 'CI E2E Capture — Gate 3. Production release_pass requires Gates 4-6.'
           }
           Path('governance/state/gate3_ci_proof.json').write_text(json.dumps(proof, indent=2))
           print('gate3_ci_proof.json written')
           "
 
-      - name: Commit CI proof
+      - name: Commit and push CI proof
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/gate3_ci_proof.json
-          git diff --staged --quiet || git commit -m "ci: gate3_ci_proof.json — GATE-3 PASS sha ${{ github.sha }}"
-          git push
+          git diff --staged --quiet && echo "No changes to commit" || \
+            git commit -m "ci: gate3_ci_proof.json PASS sha=${{ github.sha }} run=${{ github.run_id }}" && \
+            git push
