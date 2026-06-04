@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05c_record_real_repair_close_queue_repair",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/roadmap/ACTIVE_QUEUE.json",
+    "create:governance/state/kz1_runners_status.json",
+    "create:governance/state/RM05C_RECORD_REAL_REPAIR_CLOSE_QUEUE.json",
+    "create:governance/reports/RM05C_RECORD_REAL_REPAIR_CLOSE_QUEUE.md",
+    "append:governance/logs/execution_log.jsonl"
+  ],
+  "changed_files": [
+    "governance/roadmap/ACTIVE_QUEUE.json",
+    "governance/state/kz1_runners_status.json",
+    "governance/state/RM05C_RECORD_REAL_REPAIR_CLOSE_QUEUE.json",
+    "governance/reports/RM05C_RECORD_REAL_REPAIR_CLOSE_QUEUE.md",
+    "governance/logs/execution_log.jsonl",
+    "governance/codex/proofs/rm05c_record_real_repair_close_queue_repair.txt"
+  ],
+  "commit_sha": "50c97fe32addf61935be475d5443517a9fe4103b",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm05c_record_real_repair_close_queue_repair.md",
+  "completed_at": "2026-06-04T14:25:20Z"
+}
