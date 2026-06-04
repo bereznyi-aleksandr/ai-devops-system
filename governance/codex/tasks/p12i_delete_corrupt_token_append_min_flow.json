@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12i_delete_corrupt_token_append_min_flow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P12I minimal flow YAML",
+  "objective": "Delete from .github/workflows/governance-validation-ci.yml line containing 'Insert in'\nAppend to .github/workflows/governance-validation-ci.yml: {name: gci, on: {workflow_dispatch: {}}, jobs: {noop: {runs-on: ubuntu-latest, steps: [{run: echo ok}]}}}\nCreate file governance/state/P12I_DELETE_CORRUPT_TOKEN_APPEND_MIN_FLOW.json with content {\"id\":\"P12I\",\"trace_id\":\"p12i_delete_corrupt_token_append_min_flow\",\"status\":\"completed\",\"release_pass\":false,\"problem\":\"delete pattern removed any appended line containing governance-validation-ci when using same token\",\"change\":\"deleted corrupted line by Insert-in token and appended minimal flow YAML without governance-validation-ci token\",\"next\":\"P12J remote raw verification\"}\nCreate file governance/reports/P12I_DELETE_CORRUPT_TOKEN_APPEND_MIN_FLOW.md with content # P12I | Minimal flow YAML without deleted token\nStatus: completed\nDate: 2026-06-04\n\n## Problem\nThe delete pattern removed any appended line containing the same `governance-validation-ci` token. The active file remained corrupted.\n\n## Change\nDeleted the corrupted line using the `Insert in` artifact token and appended a minimal flow-style workflow that avoids the deleted token.\n\n## Next\nP12J remote raw verification.\nAppend to governance/AGENT_CONTEXT.md: \n## P12I completed | 2026-06-04\nDeleted active workflow corruption by Insert-in token and appended minimal flow YAML without the deleted token. Release PASS false pending remote raw and Actions parser verification. Next: P12J remote raw verification.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p12i_delete_corrupt_token_append_min_flow.md",
+    "result_json": "governance/codex/results/p12i_delete_corrupt_token_append_min_flow.json"
+  },
+  "created_at": "2026-06-04T08:10:59.364Z"
+}
