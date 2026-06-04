@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: p12e_line_patch_active_workflow_valid_yaml
+task_type: code_patch
+executed_at: 2026-06-04T08:03:05Z
+ops_applied: create:governance/state/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.json, create:governance/reports/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.md, append:governance/AGENT_CONTEXT.md, replace_line:.github/workflows/governance-validation-ci.yml, insert_after:.github/workflows/governance-validation-ci.yml, insert_after:.github/workflows/governance-validation-ci.yml, insert_after:.github/workflows/governance-validation-ci.yml, insert_after:.github/workflows/governance-validation-ci.yml
+changed_files: governance/state/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.json, governance/reports/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.md, governance/AGENT_CONTEXT.md, .github/workflows/governance-validation-ci.yml, .github/workflows/governance-validation-ci.yml, .github/workflows/governance-validation-ci.yml, .github/workflows/governance-validation-ci.yml, .github/workflows/governance-validation-ci.yml
+errors: none

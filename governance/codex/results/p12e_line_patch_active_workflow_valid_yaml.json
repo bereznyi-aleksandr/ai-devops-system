@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12e_line_patch_active_workflow_valid_yaml",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.json",
+    "create:governance/reports/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.md",
+    "append:governance/AGENT_CONTEXT.md",
+    "replace_line:.github/workflows/governance-validation-ci.yml",
+    "insert_after:.github/workflows/governance-validation-ci.yml",
+    "insert_after:.github/workflows/governance-validation-ci.yml",
+    "insert_after:.github/workflows/governance-validation-ci.yml",
+    "insert_after:.github/workflows/governance-validation-ci.yml"
+  ],
+  "changed_files": [
+    "governance/state/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.json",
+    "governance/reports/P12E_LINE_PATCH_ACTIVE_WORKFLOW_VALID_YAML.md",
+    "governance/AGENT_CONTEXT.md",
+    ".github/workflows/governance-validation-ci.yml",
+    ".github/workflows/governance-validation-ci.yml",
+    ".github/workflows/governance-validation-ci.yml",
+    ".github/workflows/governance-validation-ci.yml",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/codex/proofs/p12e_line_patch_active_workflow_valid_yaml.txt"
+  ],
+  "commit_sha": "6ce759a71b46753e77eb17125cba25bff4318807",
+  "blocker": null,
+  "report_path": "governance/codex/results/p12e_line_patch_active_workflow_valid_yaml.md",
+  "completed_at": "2026-06-04T08:03:05Z"
+}
