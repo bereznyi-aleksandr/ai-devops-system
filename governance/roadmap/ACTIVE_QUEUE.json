@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:10:00Z",
+  "updated_at": "2026-06-04T15:06:00Z",
   "source": "Claude External Audit — RM-05 CLOSED, KZ-2 and KZ-4 next",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -21,14 +21,17 @@
     {
       "id": "KZ-2",
       "title": "Устранить 8 SSOT-дублей",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 2,
       "depends_on": [
         "RM-05"
       ],
       "touch_workflows": false,
       "detail": "Canonical paths в governance/state/. Дубли переместить в governance/archive/ssot_duplicates_2026-06-04/. Файлы: contours_registry.json, object_passports.json, providers_registry.json, contour_provider_policy.json, provider_failover_policy.json, managed_channel_schema.json, telegram_input_envelope_schema.json, telegram_to_managed_channel_mapping.json. Использовать Run script с Path.rename() или shutil.move().",
-      "proof_required": "governance/state/kz2_ssot_status.json с duplicates_remaining=0 и список canonical_paths"
+      "proof_required": "governance/state/kz2_ssot_status.json с duplicates_remaining=0 и список canonical_paths",
+      "sha": "f8b05038f90935ae6d9d1efc3dadf116589a444b",
+      "inventory_sha": "93ed838d8e885069ea634154f3ee240b5170c70e",
+      "completed_at": "2026-06-04T15:04:50Z"
     },
     {
       "id": "KZ-4",
@@ -43,6 +46,6 @@
       "proof_required": "governance/state/kz4_passports_status.json с restored=true"
     }
   ],
-  "queue_state": "HAS_ACTIVE_TASKS",
-  "next_action": "Execute KZ-2 — SSOT duplicates cleanup using Run script with shutil or Path.rename"
+  "queue_state": "HAS_PENDING_TASKS",
+  "next_action": "execute first PENDING task: KZ-4"
 }
