@@ -12,97 +12,141 @@ concurrency:
 jobs:
   poll:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     timeout-minutes: 2
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Poll Telegram and write to inbox
+      - name: Poll Telegram and write to inbox via GitHub API
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ALLOWED_CHAT_ID: "601442777"
+          REPO: "bereznyi-aleksandr/ai-devops-system"
         run: |
           python3 << 'PYEOF'
-          import os, json, urllib.request
-          from pathlib import Path
+          import os, json, urllib.request, urllib.error, base64
 
           token      = os.environ["TELEGRAM_BOT_TOKEN"]
-          allowed_id = os.environ.get("ALLOWED_CHAT_ID", "601442777")
-          offset_file = Path("governance/telegram/poll_offset.txt")
-          inbox_file  = Path("governance/telegram/inbox.jsonl")
+          gh_token   = os.environ["GITHUB_TOKEN"]
+          allowed_id = os.environ["ALLOWED_CHAT_ID"]
+          repo       = os.environ["REPO"]
+          api        = "https://api.github.com"
 
-          offset = 0
-          if offset_file.exists():
+          def gh_get(path):
+              req = urllib.request.Request(
+                  f"{api}{path}",
+                  headers={"Authorization": f"Bearer {gh_token}",
+                           "Accept": "application/vnd.github+json",
+                           "User-Agent": "telegram-poll-action"}
+              )
               try:
-                  offset = int(offset_file.read_text().strip())
-              except:
-                  offset = 0
+                  with urllib.request.urlopen(req, timeout=10) as r:
+                      return json.loads(r.read()), r.status
+              except urllib.error.HTTPError as e:
+                  return None, e.code
 
+          def gh_put(path, content_str, message, sha=None):
+              body = {
+                  "message": message,
+                  "content": base64.b64encode(content_str.encode()).decode()
+              }
+              if sha:
+                  body["sha"] = sha
+              data = json.dumps(body).encode()
+              req = urllib.request.Request(
+                  f"{api}{path}", data=data, method="PUT",
+                  headers={"Authorization": f"Bearer {gh_token}",
+                           "Accept": "application/vnd.github+json",
+                           "Content-Type": "application/json",
+                           "User-Agent": "telegram-poll-action"}
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=10) as r:
+                      return json.loads(r.read()), r.status
+              except urllib.error.HTTPError as e:
+                  return None, e.code
+
+          # Read offset from GitHub
+          offset_data, status = gh_get(f"/repos/{repo}/contents/governance/telegram/poll_offset.txt")
+          offset = 0
+          offset_sha = None
+          if status == 200 and offset_data:
+              try:
+                  raw = base64.b64decode(offset_data["content"].replace("\n","")).decode()
+                  offset = int(raw.strip())
+                  offset_sha = offset_data["sha"]
+              except:
+                  pass
+
+          # Poll Telegram
           url = f"https://api.telegram.org/bot{token}/getUpdates?offset={offset}&limit=100&timeout=0"
           try:
-              with urllib.request.urlopen(url, timeout=10) as resp:
-                  data = json.loads(resp.read())
+              with urllib.request.urlopen(url, timeout=10) as r:
+                  data = json.loads(r.read())
           except Exception as e:
-              print(f"Telegram API error: {e}")
+              print(f"Telegram error: {e}")
               exit(0)
 
           if not data.get("ok"):
-              print(f"Telegram error: {data}")
+              print(f"Telegram not ok: {data}")
               exit(0)
 
           updates = data.get("result", [])
           if not updates:
-              print("No new updates")
+              print("No updates")
               exit(0)
 
           new_entries = []
-          max_update_id = offset - 1
+          max_uid = offset - 1
           for upd in updates:
               uid = upd["update_id"]
-              if uid >= max_update_id:
-                  max_update_id = uid
+              if uid > max_uid:
+                  max_uid = uid
               msg = upd.get("message")
               if not msg:
                   continue
-              chat_id = str(msg["chat"]["id"])
-              if chat_id != allowed_id:
+              if str(msg["chat"]["id"]) != allowed_id:
                   continue
-              entry = {
+              new_entries.append({
                   "ts": msg.get("date"),
                   "update_id": uid,
-                  "chat_id": chat_id,
+                  "chat_id": str(msg["chat"]["id"]),
                   "message_id": str(msg["message_id"]),
                   "text": msg.get("text", ""),
                   "source": "telegram_poll"
-              }
-              new_entries.append(entry)
-              print(f"New message: {entry['text'][:80]}")
+              })
+              print(f"Message: {msg.get('text','')[:80]}")
 
-          inbox_file.parent.mkdir(parents=True, exist_ok=True)
-          offset_file.write_text(str(max_update_id + 1))
+          new_offset = str(max_uid + 1)
 
-          if new_entries:
-              with inbox_file.open("a") as f:
-                  for entry in new_entries:
-                      f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-              print(f"Written {len(new_entries)} messages")
-          else:
+          # Write offset
+          _, s = gh_put(
+              f"/repos/{repo}/contents/governance/telegram/poll_offset.txt",
+              new_offset, f"telegram: offset {new_offset}", offset_sha
+          )
+          print(f"Offset updated: {new_offset} (status {s})")
+
+          if not new_entries:
               print("No messages from allowed chat")
-          PYEOF
+              exit(0)
 
-      - name: Commit if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add governance/telegram/inbox.jsonl governance/telegram/poll_offset.txt
-          if git diff --staged --quiet; then
-            echo "Nothing to commit"
-          else
-            git pull --rebase origin main
-            git commit -m "telegram: poll $(date -u +%H:%M:%SZ)"
-            git push
-          fi
+          # Read current inbox
+          inbox_data, status = gh_get(f"/repos/{repo}/contents/governance/telegram/inbox.jsonl")
+          inbox_content = ""
+          inbox_sha = None
+          if status == 200 and inbox_data:
+              try:
+                  inbox_content = base64.b64decode(inbox_data["content"].replace("\n","")).decode()
+                  inbox_sha = inbox_data["sha"]
+              except:
+                  pass
+
+          # Append new entries
+          new_lines = "\n".join(json.dumps(e, ensure_ascii=False) for e in new_entries) + "\n"
+          new_inbox = inbox_content + new_lines
+
+          _, s = gh_put(
+              f"/repos/{repo}/contents/governance/telegram/inbox.jsonl",
+              new_inbox, f"telegram: {len(new_entries)} new message(s)", inbox_sha
+          )
+          print(f"Inbox updated: {len(new_entries)} messages (status {s})")
+          PYEOF
