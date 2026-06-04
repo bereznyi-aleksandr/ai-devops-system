@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-06-04T11:15:00Z",
+  "updated_at": "2026-06-04T11:16:00Z",
   "max_active_tasks": 7,
   "policy": {
     "source_of_next_task": "first PENDING item in tasks",
@@ -21,14 +21,14 @@
     {
       "id": "P26B",
       "title": "Record P26 result in ACTIVE_QUEUE and execution_log",
-      "status": "IN_PROGRESS",
+      "status": "DONE_PENDING_SHA_RECORD",
       "criteria": "P26 status updated with SHA and execution_log receives P26 line",
       "touch_workflows": false
     },
     {
       "id": "P27",
       "title": "Real roadmap execution audit from state and reports",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "criteria": "Create audit comparing completed state files, reports and queue status",
       "touch_workflows": false
     },
