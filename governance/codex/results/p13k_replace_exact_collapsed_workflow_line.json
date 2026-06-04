@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13k_replace_exact_collapsed_workflow_line",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P13K_REPLACE_EXACT_COLLAPSED_WORKFLOW_LINE.json",
+    "append:governance/AGENT_CONTEXT.md",
+    "replace_line:.github/workflows/governance-validation-ci.yml"
+  ],
+  "changed_files": [
+    "governance/state/P13K_REPLACE_EXACT_COLLAPSED_WORKFLOW_LINE.json",
+    "governance/AGENT_CONTEXT.md",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/codex/proofs/p13k_replace_exact_collapsed_workflow_line.txt"
+  ],
+  "commit_sha": "66fce20922fd6da7bdbf38f207be1acd37304473",
+  "blocker": null,
+  "report_path": "governance/codex/results/p13k_replace_exact_collapsed_workflow_line.md",
+  "completed_at": "2026-06-04T09:23:38Z"
+}
