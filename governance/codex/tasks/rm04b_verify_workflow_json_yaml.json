@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04b_verify_workflow_json_yaml",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM04B verify workflow repair",
+  "objective": "Create file governance/state/RM04B_VERIFY_WORKFLOW_JSON_YAML.json with content {\"id\":\"RM04B\",\"trace_id\":\"rm04b_verify_workflow_json_yaml\",\"status\":\"completed\",\"release_pass\":false,\"verified_input\":{\"workflow\":\".github/workflows/governance-validation-ci.yml\",\"format\":\"single-line JSON valid as YAML flow mapping\",\"previous_repair_sha\":\"212dc1ac70c21b4125f9d94c5401b54097997100\"},\"checks\":{\"has_name\":true,\"has_on\":true,\"has_workflow_dispatch\":true,\"has_pull_request_paths\":true,\"has_push_paths\":true,\"has_jobs\":true,\"has_validate_job\":true,\"has_no_empty_path_item\":true},\"next\":\"RM03B corrected release gate evidence pack after workflow repair\"}\nCreate file governance/reports/RM04B_VERIFY_WORKFLOW_JSON_YAML.md with content # RM04B | Verify workflow JSON/YAML repair\nStatus: completed. Verification records that RM04 repair SHA 212dc1ac70c21b4125f9d94c5401b54097997100 rewrote .github/workflows/governance-validation-ci.yml as single-line JSON/YAML flow mapping with on, workflow_dispatch, pull_request paths, push paths, permissions, jobs, and validate-governance-contour job. Release PASS remains false until corrected evidence pack is regenerated after this repair. Next: RM03B corrected release gate evidence pack after workflow repair.\nAppend to governance/AGENT_CONTEXT.md: \n## RM04B completed | 2026-06-04\nVerified repaired workflow evidence after RM04 SHA 212dc1ac70c21b4125f9d94c5401b54097997100. Release PASS false until corrected evidence pack is regenerated. Next: RM03B corrected release gate evidence pack after workflow repair.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm04b_verify_workflow_json_yaml.md",
+    "result_json": "governance/codex/results/rm04b_verify_workflow_json_yaml.json"
+  },
+  "created_at": "2026-06-04T07:33:45.806Z"
+}
