@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate4_fix_v2_telegram_inbox_patch_repair",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/gate4_fix_v2_telegram_inbox_patch_repair.txt"
+  ],
+  "commit_sha": "316ee439b09d3182b5f4c01ef18ebee01607b70b",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'Exception' is not defined"
+  },
+  "report_path": "governance/codex/results/gate4_fix_v2_telegram_inbox_patch_repair.md",
+  "completed_at": "2026-06-04T16:18:41Z"
+}
