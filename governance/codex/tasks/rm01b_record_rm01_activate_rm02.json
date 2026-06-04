@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm01b_record_rm01_activate_rm02",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-01B record RM-01",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'RM-01':\n        task['status'] = 'DONE'\n        task['sha'] = '0d801ea289ed0a6d580506d7772e598959a06fcb'\n        task['completed_at'] = '2026-06-04T11:27:19Z'\n    if task.get('id') == 'RM-02':\n        task['status'] = 'PENDING'\nqueue['updated_at'] = '2026-06-04T11:32:00Z'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nlog_path.parent.mkdir(parents=True, exist_ok=True)\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nline = json.dumps({'date':'2026-06-04T11:27:19Z','id':'RM-01','trace_id':'rm01_revoke_false_pass_bem1284_gate2','sha':'0d801ea289ed0a6d580506d7772e598959a06fcb','status':'done','workflow_files_touched':False}, ensure_ascii=False)\nif line not in existing:\n    existing += line + '\\n'\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/RM01B_RECORD_RM01_ACTIVATE_RM02.json')\nstate.write_text(json.dumps({'id':'RM-01B','trace_id':'rm01b_record_rm01_activate_rm02','status':'completed','release_pass':False,'recorded_step':'RM-01','recorded_sha':'0d801ea289ed0a6d580506d7772e598959a06fcb','activated':'RM-02','workflow_files_touched':False,'next':'RM-02 fail-closed truncated py'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/RM01B_RECORD_RM01_ACTIVATE_RM02.md')\nreport.write_text('# RM-01B | Record RM-01 and activate RM-02\\nStatus: completed\\nDate: 2026-06-04\\n\\nRM-01 recorded as DONE with SHA 0d801ea289ed0a6d580506d7772e598959a06fcb. RM-02 set to PENDING in governance/roadmap/ACTIVE_QUEUE.json. Workflow lock respected.\\n\\nNext: RM-02 fail-closed truncated py.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm01b_record_rm01_activate_rm02.md",
+    "result_json": "governance/codex/results/rm01b_record_rm01_activate_rm02.json"
+  },
+  "created_at": "2026-06-04T11:27:48.537Z"
+}
