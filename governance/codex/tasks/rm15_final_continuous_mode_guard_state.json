@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm15_final_continuous_mode_guard_state",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM15 continuous guard",
+  "objective": "Create file governance/state/RM15_FINAL_CONTINUOUS_MODE_GUARD_STATE.json with content {\"created_at_utc3\":\"2026-06-04 | 06:27 (UTC+3)\",\"release_pass\":false,\"purpose\":\"Prevent future stop loops: every checkpoint must lead to a concrete next Deno task unless all autonomous backlog is exhausted or external real inputs are required.\",\"must_continue_when\":[\"report created\",\"blocker found\",\"proof-only result found\",\"operator silent\",\"Claude pending\"],\"must_not_do\":[\"end with next step text only\",\"ask operator to confirm routine action\",\"issue Release PASS without receipts\",\"move duplicate files without verified inventory\"],\"current_boundary\":\"autonomous backlog exhausted except external real receipts and verified inventory inputs\",\"next_action\":\"RM16 current autonomous backlog exhausted marker\"}\nCreate file governance/audit/FINAL_CONTINUOUS_MODE_GUARD_STATE.md with content # Final continuous-mode guard state\n\nCreated: 2026-06-04 | 06:27 (UTC+3)\nRelease PASS: false\n\nEvery checkpoint must lead to a concrete Deno task unless the remaining work requires real external inputs.\n\nCurrent boundary: autonomous backlog is exhausted except for real Gate 4/5/6 receipt inputs and verified TZ2 inventory.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM15 | FINAL CONTINUOUS-MODE GUARD STATE | 2026-06-04 | 06:27 (UTC+3)\n- Added continuous-mode guard state to prevent report-only stops.\n- No Release PASS. Next action: RM16 current autonomous backlog exhausted marker.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm15_final_continuous_mode_guard_state.md",
+    "result_json": "governance/codex/results/rm15_final_continuous_mode_guard_state.json"
+  },
+  "created_at": "2026-06-04T04:26:22.863Z"
+}
