@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p22_consolidated_governance_contour_status",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/P22_CONSOLIDATED_GOVERNANCE_CONTOUR_STATUS.md",
+    "create:governance/state/P22_CONSOLIDATED_GOVERNANCE_CONTOUR_STATUS.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/P22_CONSOLIDATED_GOVERNANCE_CONTOUR_STATUS.md",
+    "governance/state/P22_CONSOLIDATED_GOVERNANCE_CONTOUR_STATUS.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p22_consolidated_governance_contour_status.txt"
+  ],
+  "commit_sha": "fbbaaef1bb55c8f51d01e9f220777bfef24d9f62",
+  "blocker": null,
+  "report_path": "governance/codex/results/p22_consolidated_governance_contour_status.md",
+  "completed_at": "2026-06-04T10:28:09Z"
+}
