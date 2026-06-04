@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p28b_record_p28_result_and_queue_empty",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P28B record P28 and queue empty",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\ntasks = queue.get('tasks', [])\nif not any(t.get('id') == 'P28B' for t in tasks):\n    tasks.append({'id':'P28B','title':'Record P28 result and queue empty state','status':'IN_PROGRESS','criteria':'P27B and P28 logged; no PENDING tasks remain; await operator or Claude queue refill','touch_workflows':False})\nfor task in tasks:\n    if task.get('id') == 'P27B':\n        task['status'] = 'DONE'\n        task['sha'] = '7bf1800b826c8fab8cb3837c0dac89f81eb0a002'\n        task['completed_at'] = '2026-06-04T11:16:20Z'\n    if task.get('id') == 'P28':\n        task['status'] = 'DONE'\n        task['sha'] = '4a6357f744d861d5cdaa4fa3efec57d1914ce4db'\n        task['completed_at'] = '2026-06-04T11:17:02Z'\n    if task.get('id') == 'P28B':\n        task['status'] = 'DONE_PENDING_SHA_RECORD'\nqueue['tasks'] = tasks\nqueue['updated_at'] = '2026-06-04T11:19:00Z'\nqueue['queue_state'] = 'EMPTY_AFTER_P28B_PENDING_ITS_OWN_SHA_RECORD'\nqueue['next_action'] = 'await operator or Claude to add next ACTIVE_QUEUE tasks; do not invent tasks'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nlines = [json.dumps({'date':'2026-06-04T11:16:20Z','id':'P27B','trace_id':'p27b_record_p27_result_queue_log','sha':'7bf1800b826c8fab8cb3837c0dac89f81eb0a002','status':'done','workflow_files_touched':False}, ensure_ascii=False), json.dumps({'date':'2026-06-04T11:17:02Z','id':'P28','trace_id':'p28_consolidate_current_queue_status','sha':'4a6357f744d861d5cdaa4fa3efec57d1914ce4db','status':'done','workflow_files_touched':False}, ensure_ascii=False)]\nfor line in lines:\n    if line not in existing:\n        existing += line + '\\n'\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/P28B_RECORD_P28_RESULT_AND_QUEUE_EMPTY.json')\nstate.write_text(json.dumps({'id':'P28B','trace_id':'p28b_record_p28_result_and_queue_empty','status':'completed','release_pass':True,'recorded_steps':['P27B','P28'],'queue_state':'empty_after_p28b_except_own_sha_record','workflow_files_touched':False,'next':'await ACTIVE_QUEUE refill; do not invent tasks'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/P28B_RECORD_P28_RESULT_AND_QUEUE_EMPTY.md')\nreport.write_text('# P28B | Record P28 result and queue empty\\nStatus: completed\\nDate: 2026-06-04\\n\\nRecorded P27B and P28 SHA evidence in ACTIVE_QUEUE.json and execution_log.jsonl. ACTIVE_QUEUE has no PENDING tasks after this step; only P28B own SHA remains to be recorded by a future queue refill/session. Per the three-file protocol, GPT must not invent new tasks when queue is empty.\\n\\nWorkflow lock respected. No .github/workflows files touched.\\n\\nNext: await operator or Claude to add next ACTIVE_QUEUE tasks.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p28b_record_p28_result_and_queue_empty.md",
+    "result_json": "governance/codex/results/p28b_record_p28_result_and_queue_empty.json"
+  },
+  "created_at": "2026-06-04T11:17:48.737Z"
+}
