@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12f_rebuild_workflow_delete_append",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P12F rebuild workflow append",
+  "objective": "Delete from .github/workflows/governance-validation-ci.yml line containing 'name: governance-validation-ci on:'\nAppend to .github/workflows/governance-validation-ci.yml: name: governance-validation-ci\non:\n  workflow_dispatch:\njobs:\n  disabled-placeholder:\n    runs-on: ubuntu-latest\n    steps:\n      - name: noop\n        run: echo governance-validation-ci-disabled\nCreate file governance/state/P12F_REBUILD_WORKFLOW_DELETE_APPEND.json with content {\"id\":\"P12F\",\"trace_id\":\"p12f_rebuild_workflow_delete_append\",\"status\":\"completed\",\"release_pass\":false,\"problem\":\"line patch collapsed workflow YAML into a single invalid line\",\"change\":\"deleted collapsed line and appended minimal valid workflow YAML\",\"next\":\"P12G remote raw verification\"}\nCreate file governance/reports/P12F_REBUILD_WORKFLOW_DELETE_APPEND.md with content # P12F | Rebuild workflow using delete plus append\nStatus: completed\nDate: 2026-06-04\n\n## Problem\nP12E collapsed inserted workflow lines into a single invalid YAML line.\n\n## Change\nDeleted the collapsed line and appended the minimal workflow content using executor Append pattern.\n\n## Next\nP12G remote raw verification.\nAppend to governance/AGENT_CONTEXT.md: \n## P12F completed | 2026-06-04\nDeleted collapsed active workflow line and appended minimal valid workflow content. Release PASS false pending raw verification. Next: P12G remote raw verification.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p12f_rebuild_workflow_delete_append.md",
+    "result_json": "governance/codex/results/p12f_rebuild_workflow_delete_append.json"
+  },
+  "created_at": "2026-06-04T08:04:46.360Z"
+}
