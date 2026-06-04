@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p26b_record_p26_result_queue_log",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P26B record P26 result",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'P26':\n        task['status'] = 'DONE'\n        task['sha'] = 'fa40ee24cbf3b1200727a02934df9e1d1c659a33'\n        task['completed_at'] = '2026-06-04T11:14:12Z'\n    if task.get('id') == 'P26B':\n        task['status'] = 'IN_PROGRESS'\nqueue['updated_at'] = '2026-06-04T11:15:00Z'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nlog_path.parent.mkdir(parents=True, exist_ok=True)\nline = json.dumps({'date':'2026-06-04T11:14:12Z','id':'P26','trace_id':'p26_three_file_model_migration_repair','sha':'fa40ee24cbf3b1200727a02934df9e1d1c659a33','status':'done','workflow_files_touched':False}, ensure_ascii=False)\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nif line not in existing:\n    log_path.write_text(existing + line + '\\n', encoding='utf-8')\n    changed_files.append(str(log_path))\nstate = Path('governance/state/P26B_RECORD_P26_RESULT_QUEUE_LOG.json')\nstate.parent.mkdir(parents=True, exist_ok=True)\nstate.write_text(json.dumps({'id':'P26B','trace_id':'p26b_record_p26_result_queue_log','status':'completed','release_pass':False,'recorded_step':'P26','recorded_sha':'fa40ee24cbf3b1200727a02934df9e1d1c659a33','workflow_files_touched':False,'next':'P27 real roadmap execution audit from state and reports'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/P26B_RECORD_P26_RESULT_QUEUE_LOG.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nreport.write_text('# P26B | Record P26 result in queue and log\\nStatus: completed\\nDate: 2026-06-04\\n\\nP26 marked DONE in ACTIVE_QUEUE.json and execution_log.jsonl received one P26 record with SHA fa40ee24cbf3b1200727a02934df9e1d1c659a33. Workflow lock respected.\\n\\nNext: P27 real roadmap execution audit from state and reports.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p26b_record_p26_result_queue_log.md",
+    "result_json": "governance/codex/results/p26b_record_p26_result_queue_log.json"
+  },
+  "created_at": "2026-06-04T11:14:44.919Z"
+}
