@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p10_non_null_evidence_context_autoupdate_hardening",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P10_NON_NULL_EVIDENCE_CONTEXT_AUTOUPDATE_HARDENING.json",
+    "create:governance/reports/P10_NON_NULL_EVIDENCE_CONTEXT_AUTOUPDATE_HARDENING.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P10_NON_NULL_EVIDENCE_CONTEXT_AUTOUPDATE_HARDENING.json",
+    "governance/reports/P10_NON_NULL_EVIDENCE_CONTEXT_AUTOUPDATE_HARDENING.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p10_non_null_evidence_context_autoupdate_hardening.txt"
+  ],
+  "commit_sha": "40a6ed4ffea9862e9ab20f347840e4a96fd140d2",
+  "blocker": null,
+  "report_path": "governance/codex/results/p10_non_null_evidence_context_autoupdate_hardening.md",
+  "completed_at": "2026-06-04T07:49:01Z"
+}
