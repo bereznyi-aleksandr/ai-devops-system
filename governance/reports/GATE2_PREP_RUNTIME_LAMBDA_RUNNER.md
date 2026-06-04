@@ -1,0 +1,1 @@
+# GATE-2-PREP | Lambda runtime runner. Status: completed. Wrote governance/runtime/minimal_governance_loop_runner.py as valid one-line deterministic runner because executor collapses multiline Python writes. Workflow lock respected.

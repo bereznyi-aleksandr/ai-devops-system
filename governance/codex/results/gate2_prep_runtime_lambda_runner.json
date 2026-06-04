@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_runtime_lambda_runner",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "custom_script"
+  ],
+  "changed_files": [
+    "governance/runtime/minimal_governance_loop_runner.py",
+    "governance/state/gate2_minimal_loop_runtime_status.json",
+    "governance/state/GATE2_PREP_RUNTIME_LAMBDA_RUNNER.json",
+    "governance/reports/GATE2_PREP_RUNTIME_LAMBDA_RUNNER.md",
+    "governance/codex/proofs/gate2_prep_runtime_lambda_runner.txt"
+  ],
+  "commit_sha": "7e60ae18f025edb869512ce67bb2bb391341f4fd",
+  "blocker": null,
+  "report_path": "governance/codex/results/gate2_prep_runtime_lambda_runner.md",
+  "completed_at": "2026-06-04T15:38:39Z"
+}

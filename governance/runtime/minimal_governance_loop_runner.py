@@ -1,3 +1,1 @@
-# ARCHIVED
-Moved to: governance/archive/minimal_governance_loop_runner_invalid_collapsed_2026-06-04
-At: 2026-06-04T15:36:38Z
+import json;TRACE_ID="gate2_minimal_loop_trace_v4";run_minimal_loop=lambda input_task:dict(trace_id=TRACE_ID,input=input_task,steps=[dict(role="analyst",action="propose",result="proposal_ok"),dict(role="auditor",action="review",result="approved"),dict(role="executor",action="execute",result="executed"),dict(role="auditor",action="verify",result="verified")],status="completed",release_pass=False);main=lambda:(print(json.dumps(run_minimal_loop(dict(id="GATE2-TEST",title="minimal loop smoke test")),ensure_ascii=False,indent=2)) or 0);raise SystemExit(main())
