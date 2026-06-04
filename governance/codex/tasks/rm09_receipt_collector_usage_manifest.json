@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm09_receipt_collector_usage_manifest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM09 collector usage manifest",
+  "objective": "Create file governance/audit/RECEIPT_COLLECTOR_USAGE_MANIFEST.md with content # Receipt collector usage manifest\n\nCreated: 2026-06-04 | 06:21 (UTC+3)\nRelease PASS: false\n\n## Gate 4\nRun `governance/runners/telegram_production_receipt_collector.py` only with real TELEGRAM_RECEIPT_SOURCE, TELEGRAM_EVIDENCE_REF, TELEGRAM_COMMIT_SHA.\n\n## Gate 5\nRun `governance/runners/live_runtime_receipt_collector.py` only with real LIVE_RUNTIME_SOURCE, LIVE_RUNTIME_EVIDENCE_REF, LIVE_RUNTIME_COMMIT_SHA.\n\n## Gate 6\nRun `governance/runners/external_claude_audit_result_collector.py` only with real CLAUDE_AUDIT_SOURCE, CLAUDE_AUDIT_EVIDENCE_REF, CLAUDE_AUDIT_COMMIT_SHA, CLAUDE_AUDIT_VERDICT.\n\n## Validation\nRun `governance/validators/validate_release_gates.py` after all three receipts exist.\n\nCreate file governance/state/RM09_RECEIPT_COLLECTOR_USAGE_MANIFEST.json with content {\"created_at_utc3\":\"2026-06-04 | 06:21 (UTC+3)\",\"release_pass\":false,\"collectors\":[\"governance/runners/telegram_production_receipt_collector.py\",\"governance/runners/live_runtime_receipt_collector.py\",\"governance/runners/external_claude_audit_result_collector.py\"],\"validator\":\"governance/validators/validate_release_gates.py\",\"next_action\":\"RM10 final autonomous boundary record\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM09 | RECEIPT COLLECTOR USAGE MANIFEST | 2026-06-04 | 06:21 (UTC+3)\n- Added receipt collector usage manifest and state record.\n- No Release PASS. Next action: RM10 final autonomous boundary record.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm09_receipt_collector_usage_manifest.md",
+    "result_json": "governance/codex/results/rm09_receipt_collector_usage_manifest.json"
+  },
+  "created_at": "2026-06-04T04:12:29.632Z"
+}
