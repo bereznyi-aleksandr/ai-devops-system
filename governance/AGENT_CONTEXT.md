@@ -1526,3 +1526,5 @@ No issue comments.
 - Recorded working baseline checkpoint after collectors and release gate validator
 ### EXTERNAL RECEIPT ACQUISITION HANDOFF | 2026-06-04 | 05:58 (UTC+3)
 - Prepared handoff packet for real Gate 4/5/6 receipt acquisition
+### RM-00 | FIX ACTIVE WORKFLOW QUOTED ON SAFE JOB | 2026-06-04 | 06:02 (UTC+3)
+- Rewrote active governance-validation-ci

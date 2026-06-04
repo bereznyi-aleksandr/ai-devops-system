@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00_fix_active_workflow_quoted_on_safe_job",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm00_fix_active_workflow_quoted_on_safe_job.txt"
+  ],
+  "commit_sha": "97ff2425254149bd86d7246314d71d9bbed717ef",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm00_fix_active_workflow_quoted_on_safe_job.md",
+  "completed_at": "2026-06-04T03:03:57Z"
+}
