@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04c_current_workflow_repair_notice",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/reports/RM04C_CURRENT_WORKFLOW_REPAIR_NOTICE.md",
+    "create:governance/state/RM04C_CURRENT_WORKFLOW_REPAIR_NOTICE.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/reports/RM04C_CURRENT_WORKFLOW_REPAIR_NOTICE.md",
+    "governance/state/RM04C_CURRENT_WORKFLOW_REPAIR_NOTICE.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm04c_current_workflow_repair_notice.txt"
+  ],
+  "commit_sha": "32d5c4779ac3fc86f1b27d2130570ac1b6461a54",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm04c_current_workflow_repair_notice.md",
+  "completed_at": "2026-06-04T07:38:18Z"
+}

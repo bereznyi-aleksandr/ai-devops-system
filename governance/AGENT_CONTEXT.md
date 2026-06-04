@@ -1616,3 +1616,5 @@ Repaired active governance-validation-ci
 Verified repaired workflow evidence after RM04 SHA 212dc1ac70c21b4125f9d94c5401b54097997100
 ## RM03B completed | 2026-06-04
 Corrected release gate evidence after workflow repair
+## RM04C completed | 2026-06-04
+Recorded current workflow repair notice: old GitHub Actions failures for RM02 remain historical and do not reflect latest RM04/RM04B/RM03B repair chain
