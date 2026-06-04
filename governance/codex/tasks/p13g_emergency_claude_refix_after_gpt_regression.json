@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13g_emergency_claude_refix_after_gpt_regression",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P13G emergency Claude refix",
+  "objective": "Create file governance/audit_mailbox/gpt_to_claude/P13G_EMERGENCY_REFIX_GOVERNANCE_WORKFLOW.md with content P13G emergency: GPT incorrectly continued after Claude fix and re-broke .github/workflows/governance-validation-ci.yml. Latest damaging GPT SHA: 347d8e33252329785068191fc3678587c8258408. Raw verification shows file is again one-line corrupted YAML and contains leftover JSON fragment. Required Claude action: directly replace .github/workflows/governance-validation-ci.yml via MCP with valid multiline YAML exactly:\n\nname: Governance Validation CI\n\non:\n  workflow_dispatch:\n\njobs:\n  disabled:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Disabled\n        run: echo \"Governance Validation CI disabled. Enable after BEM-1285.\"\n\nAfter direct fix, GPT must not touch the workflow file again through executor until safe writer is proven. No issue comments.\nCreate file governance/state/P13G_EMERGENCY_CLAUDE_REFIX_AFTER_GPT_REGRESSION.json with content {\"id\":\"P13G\",\"trace_id\":\"p13g_emergency_claude_refix_after_gpt_regression\",\"status\":\"completed\",\"release_pass\":false,\"regression_by_gpt_sha\":\"347d8e33252329785068191fc3678587c8258408\",\"problem\":\"GPT continued with Deno executor after Claude fix and re-broke workflow YAML; raw verification shows current active workflow still invalid\",\"action\":\"created emergency Claude refix mailbox request and forbids GPT touching workflow through executor until safe writer is proven\",\"next\":\"Claude direct MCP refix, then GPT only records verification evidence\"}\nAppend to governance/AGENT_CONTEXT.md: \n## P13G completed | 2026-06-04\nEmergency regression recorded: GPT re-broke governance-validation-ci.yml after Claude MCP fix while trying to continue roadmap. Created Claude refix request. GPT must not touch active workflow via executor again until safe writer is proven. Release PASS false. Next: Claude direct MCP refix, then GPT records verification evidence only.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p13g_emergency_claude_refix_after_gpt_regression.md",
+    "result_json": "governance/codex/results/p13g_emergency_claude_refix_after_gpt_regression.json"
+  },
+  "created_at": "2026-06-04T08:34:23.918Z"
+}
