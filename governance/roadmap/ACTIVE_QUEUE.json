@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:08:00Z",
-  "source": "Claude External Audit — RM-05 CLOSED, KZ-2 and KZ-4 next",
+  "updated_at": "2026-06-04T15:20:00Z",
+  "source": "Claude External Audit — KZ-2 partial, KZ-4 not done",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
     "workflow_yml_locked_for_gpt": true,
@@ -10,45 +10,28 @@
   },
   "tasks": [
     {
-      "id": "RM-05",
-      "title": "KZ-1 runners skeleton repair",
-      "status": "DONE",
-      "priority": 1,
-      "sha": "1c66d7c3758c8cd58416e49def58ae63f3357cad",
-      "closed_by": "Claude External Audit MCP 2026-06-04",
-      "note": "Runners verified: def main + __main__ + 224-235 bytes. ast.parse confirmed by Claude independent check. GPT validator had ast_parse bug (false negative). kz1_runners_status.json corrected by Claude MCP SHA 552096ec."
-    },
-    {
       "id": "KZ-2",
-      "title": "Устранить 8 SSOT-дублей",
-      "status": "DONE",
-      "priority": 2,
-      "depends_on": [
-        "RM-05"
-      ],
+      "title": "Устранить 8 SSOT-дублей — конкретные пути",
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "audit_note": "GPT архивировал codex-артефакты, а не SSOT-дубли. contours_registry.json и object_passports.json всё ещё существуют в двух путях.",
       "touch_workflows": false,
-      "detail": "Canonical paths в governance/state/. Дубли переместить в governance/archive/ssot_duplicates_2026-06-04/. Файлы: contours_registry.json, object_passports.json, providers_registry.json, contour_provider_policy.json, provider_failover_policy.json, managed_channel_schema.json, telegram_input_envelope_schema.json, telegram_to_managed_channel_mapping.json. Использовать Run script с Path.rename() или shutil.move().",
-      "proof_required": "governance/state/kz2_ssot_status.json с duplicates_remaining=0 и список canonical_paths",
-      "sha": "f8b05038f90935ae6d9d1efc3dadf116589a444b",
-      "inventory_sha": "93ed838d8e885069ea634154f3ee240b5170c70e",
-      "completed_at": "2026-06-04T15:04:50Z"
+      "detail": "Удалить или переместить в archive ДУБЛИ из governance/contours/, governance/providers/, governance/objects/state-copies. Canonical path = governance/state/. Конкретные дубли: governance/contours/contours_registry.json (дубль governance/state/contours_registry.json), governance/providers/providers_registry.json (дубль governance/state/providers_registry.json), governance/providers/contour_provider_policy.json, governance/channels/managed_channel_schema.json, governance/telegram/telegram_input_envelope_schema.json, governance/telegram/telegram_to_managed_channel_mapping.json. Использовать Run script с shutil.move() или Path.unlink() для дублей. Canonical в governance/state/ оставить.",
+      "example_objective": "Run script:\n\"\"\"\nimport shutil\nfrom pathlib import Path\n\nduplicates = [\n    'governance/contours/contours_registry.json',\n    'governance/providers/providers_registry.json',\n    'governance/providers/contour_provider_policy.json',\n]\narchive = Path('governance/archive/ssot_duplicates_real_2026-06-04')\narchive.mkdir(parents=True, exist_ok=True)\nfor dup in duplicates:\n    p = Path(dup)\n    if p.exists():\n        dest = archive / p.name\n        shutil.move(str(p), str(dest))\n        changed_files.append(str(dest))\n\"\"\"\nNo issue comments.",
+      "proof_required": "governance/state/kz2_real_ssot_status.json с duplicates_remaining=0 и список конкретных файлов"
     },
     {
       "id": "KZ-4",
       "title": "Восстановить object_passports.json и release_proof_manifest.json",
-      "status": "BLOCKED",
-      "priority": 3,
-      "depends_on": [
-        "KZ-2"
-      ],
+      "status": "PENDING",
+      "priority": 2,
+      "depends_on": ["KZ-2"],
       "touch_workflows": false,
-      "detail": "governance/objects/object_passports.json — паспорта GD/DIR/WRK с полями id, type, elements, prompt_ref. governance/release/release_proof_manifest.json — все поля включая commit_sha: null (не усечён).",
-      "proof_required": "governance/state/kz4_passports_status.json с restored=true",
-      "sha": "57b663d98632b36a782f74f4c542247914fba3db",
-      "completed_at": "2026-06-04T15:06:21Z",
-      "active_duplicate_group_count": 2
+      "detail": "Оба файла усечены. Записать полное содержимое через Run script с Path.write_text().",
+      "example_objective": "Run script:\n\"\"\"\nimport json\nfrom pathlib import Path\n\npassports = {\"version\": \"1.0\", \"date\": \"2026-06-04\", \"objects\": [{\"id\": \"OBJ-GD-001\", \"type\": \"general_director\", \"elements\": [\"EL-CUR-GD-001\", \"CNT-GD-001\"]}, {\"id\": \"OBJ-DIR-001\", \"type\": \"director\", \"elements\": [\"EL-CUR-DIR-001\"]}, {\"id\": \"OBJ-WRK-001\", \"type\": \"worker\", \"elements\": [\"WRK-C1\", \"WRK-C2\", \"WRK-C3\"]}]}\nPath('governance/objects/object_passports.json').write_text(json.dumps(passports, indent=2))\nchanged_files.append('governance/objects/object_passports.json')\n\nmanifest = {\"version\": \"1.0\", \"date\": \"2026-06-04\", \"commit_sha\": None, \"release_pass\": False, \"note\": \"commit_sha=null until CI verified gate\"}\nPath('governance/release/release_proof_manifest.json').write_text(json.dumps(manifest, indent=2))\nchanged_files.append('governance/release/release_proof_manifest.json')\n\nPath('governance/state/kz4_passports_status.json').write_text(json.dumps({\"status\": \"PASS\", \"restored\": True}, indent=2))\nchanged_files.append('governance/state/kz4_passports_status.json')\n\"\"\"\nNo issue comments.",
+      "proof_required": "governance/state/kz4_passports_status.json с restored=true И оба файла > 100 байт И валидный JSON"
     }
   ],
-  "queue_state": "BLOCKED_ON_KZ4",
-  "next_action": "repair active SSOT duplicate groups"
+  "queue_state": "HAS_ACTIVE_TASKS",
+  "next_action": "Execute KZ-2 with exact duplicate paths listed in detail and example_objective"
 }
