@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p17_session_continuity_antistop_guard",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P17 anti-stop guard",
+  "objective": "Create file governance/state/P17_SESSION_CONTINUITY_ANTISTOP_GUARD.json with content {\"id\":\"P17\",\"trace_id\":\"p17_session_continuity_antistop_guard\",\"status\":\"completed\",\"release_pass\":false,\"purpose\":\"prevent GPT from stopping after answer when next roadmap task exists\",\"rules\":{\"after_intermediate_report_continue_immediately\":true,\"final_answer_not_allowed_when_next_task_exists\":true,\"operator_confirmation_not_required_for_routine_steps\":true,\"workflow_lock_respected\":true,\"workflow_files_touched\":false},\"previous_step\":{\"id\":\"P16B\",\"sha\":\"aa77f627d65ab98cfa9693e515269df3fc1ce3e1\"},\"next\":\"P17B anti-stop guard validation\"}\nCreate file governance/reports/P17_SESSION_CONTINUITY_ANTISTOP_GUARD.md with content # P17 | Session continuity anti-stop guard\nStatus: completed\nDate: 2026-06-04\n\n## Purpose\nRecord a repository-side anti-stop guard for GPT execution behavior: when a next roadmap task exists, GPT must not treat an explanatory answer as a stopping point.\n\n## Rules\n- Intermediate report does not stop roadmap.\n- A final-style answer is not allowed while the next roadmap task is known.\n- Routine steps do not require operator confirmation.\n- Workflow lock remains active for `.github/workflows/*.yml`.\n\n## Previous evidence\nP16B SHA aa77f627d65ab98cfa9693e515269df3fc1ce3e1 validated AGENT_CONTEXT hardening.\n\n## Next\nP17B anti-stop guard validation.\nAppend to governance/AGENT_CONTEXT.md: \n## P17 completed | 2026-06-04\nSession continuity anti-stop guard recorded. If next roadmap task exists, GPT must not stop after explanatory answer or intermediate report. Routine steps require no operator confirmation. Workflow lock respected: no .github/workflows files touched. Next: P17B anti-stop guard validation.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p17_session_continuity_antistop_guard.md",
+    "result_json": "governance/codex/results/p17_session_continuity_antistop_guard.json"
+  },
+  "created_at": "2026-06-04T10:13:50.225Z"
+}
