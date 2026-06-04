@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p14_record_workflow_lock_rules",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P14 record workflow lock rules",
+  "objective": "Create file governance/state/P14_RECORD_WORKFLOW_LOCK_RULES.json with content {\"id\":\"P14\",\"trace_id\":\"p14_record_workflow_lock_rules\",\"status\":\"completed\",\"release_pass\":true,\"workflow_clean_sha\":\"9fb7a743\",\"workflow_lock_sha\":\"c2cd66b9\",\"rules\":[\".github/workflows/*.yml locked for GPT executor; GPT must not touch active workflow files\",\"workflow-related tasks require Claude handoff through audit mailbox\",\"P13M diagnosis is authoritative: do not touch active workflow through GPT/Deno executor\"],\"next\":\"KZ-1 runners skeleton repair\"}\nAppend to governance/AGENT_CONTEXT.md: \n## P14 completed | 2026-06-04\nWorkflow blocker lifted again by Claude. Clean workflow SHA: 9fb7a743. Workflow write lock SHA: c2cd66b9. Rules: .github/workflows/*.yml locked for GPT executor; workflow-related tasks require Claude handoff via audit mailbox; P13M diagnosis remains authoritative: do not touch active workflow through GPT/Deno executor. Next: KZ-1 runners skeleton repair.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p14_record_workflow_lock_rules.md",
+    "result_json": "governance/codex/results/p14_record_workflow_lock_rules.json"
+  },
+  "created_at": "2026-06-04T09:57:00.597Z"
+}
