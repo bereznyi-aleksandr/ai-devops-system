@@ -1614,3 +1614,5 @@ Release gate evidence pack completed for governance contour roadmap scope RM00F4
 Repaired active governance-validation-ci
 ## RM04B completed | 2026-06-04
 Verified repaired workflow evidence after RM04 SHA 212dc1ac70c21b4125f9d94c5401b54097997100
+## RM03B completed | 2026-06-04
+Corrected release gate evidence after workflow repair
