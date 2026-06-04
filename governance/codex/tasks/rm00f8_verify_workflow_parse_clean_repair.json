@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm00f8_verify_workflow_parse_clean_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM00F8 repair proof-only",
+  "objective": "Create file governance/state/RM00F8_WORKFLOW_PARSE_CLEAN.json with content {\"id\":\"RM00F8\",\"trace_id\":\"rm00f8_verify_workflow_parse_clean_repair\",\"status\":\"completed\",\"checks\":{\"active_workflow_path\":\".github/workflows/governance-validation-ci.yml\",\"expected_name\":\"governance-validation-ci\",\"expected_trigger\":\"workflow_dispatch only\",\"expected_job\":\"disabled-placeholder\",\"archive_marker_allowed\":false},\"release_pass\":false,\"previous_step\":{\"id\":\"RM00F6\",\"sha\":\"0ad59153a727f34befea0c2b9002aebfd9f13ae0\"},\"next\":\"RM00F9 reconcile disabled workflows inventory\"}\nCreate file governance/reports/RM00F8_WORKFLOW_PARSE_CLEAN.md with content # RM00F8 | Workflow parse clean verification\n\nStatus: completed\n\nEvidence base: RM00F6 SHA 0ad59153a727f34befea0c2b9002aebfd9f13ae0 replaced .github/workflows/governance-validation-ci.yml with valid workflow_dispatch-only disabled placeholder YAML.\n\nChecks recorded: active workflow path exists by RM00F6 change set; trigger must be workflow_dispatch only; disabled-placeholder job is intentional; archive/plain-text markers are not allowed in active .yml workflow path.\n\nRelease PASS remains false. This step only records workflow parser-noise remediation evidence.\n\nNext: RM00F9 reconcile disabled workflows inventory.\nAppend to governance/AGENT_CONTEXT.md: \n## RM00F8 completed | 2026-06-04\nWorkflow parse-clean evidence recorded after RM00F6 SHA 0ad59153a727f34befea0c2b9002aebfd9f13ae0. Release PASS remains false. Next: RM00F9 reconcile disabled workflows inventory.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm00f8_verify_workflow_parse_clean_repair.md",
+    "result_json": "governance/codex/results/rm00f8_verify_workflow_parse_clean_repair.json"
+  },
+  "created_at": "2026-06-04T05:20:17.482Z"
+}
