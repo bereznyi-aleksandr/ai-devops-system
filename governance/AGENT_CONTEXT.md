@@ -1674,3 +1674,5 @@ Patched governance/deno_webhook.js so /codex-task returns commit_sha/task_file_c
 codex-task commit_sha response evidence completed
 ## P16 completed | 2026-06-04
 AGENT_CONTEXT autoupdate hardening recorded
+## P16B completed | 2026-06-04
+AGENT_CONTEXT hardening validation completed
