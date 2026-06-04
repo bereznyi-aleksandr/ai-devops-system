@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2b_record_kz2_activate_kz4",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2B record KZ-2",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8')) if queue_path.exists() else {'tasks': []}\ntasks = queue.get('tasks', [])\nif not any(t.get('id') == 'KZ-2' for t in tasks):\n    tasks.append({'id':'KZ-2','title':'Eliminate SSOT duplicates','status':'DONE','priority':1,'touch_workflows':False})\nif not any(t.get('id') == 'KZ-4' for t in tasks):\n    tasks.append({'id':'KZ-4','title':'Next active roadmap task after KZ-2','status':'PENDING','priority':2,'depends_on':['KZ-2'],'criteria':'Execute next queue item provided by updated roadmap','touch_workflows':False})\nfor task in tasks:\n    if task.get('id') == 'KZ-2':\n        task['status'] = 'DONE'\n        task['sha'] = 'f8b05038f90935ae6d9d1efc3dadf116589a444b'\n        task['inventory_sha'] = '93ed838d8e885069ea634154f3ee240b5170c70e'\n        task['completed_at'] = '2026-06-04T15:04:50Z'\n    if task.get('id') == 'KZ-4' and task.get('status') != 'DONE':\n        task['status'] = 'PENDING'\nqueue['tasks'] = tasks\nqueue['updated_at'] = '2026-06-04T15:06:00Z'\nqueue['queue_state'] = 'HAS_PENDING_TASKS'\nqueue['next_action'] = 'execute first PENDING task: KZ-4'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nlog_path.parent.mkdir(parents=True, exist_ok=True)\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nline = json.dumps({'date':'2026-06-04T15:04:50Z','id':'KZ-2','trace_id':'kz2_eliminate_ssot_duplicates','sha':'f8b05038f90935ae6d9d1efc3dadf116589a444b','status':'done','workflow_files_touched':False}, ensure_ascii=False)\nif line not in existing:\n    existing += line + '\\n'\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/KZ2B_RECORD_KZ2_ACTIVATE_KZ4.json')\nstate.write_text(json.dumps({'id':'KZ-2B','trace_id':'kz2b_record_kz2_activate_kz4','status':'completed','release_pass':False,'recorded_step':'KZ-2','recorded_sha':'f8b05038f90935ae6d9d1efc3dadf116589a444b','activated':'KZ-4','workflow_files_touched':False,'next':'KZ-4'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/KZ2B_RECORD_KZ2_ACTIVATE_KZ4.md')\nreport.write_text('# KZ-2B | Record KZ-2 and activate KZ-4\\nStatus: completed\\nDate: 2026-06-04\\n\\nKZ-2 recorded as DONE with SHA f8b05038f90935ae6d9d1efc3dadf116589a444b. KZ-4 is PENDING in governance/roadmap/ACTIVE_QUEUE.json. Workflow lock respected.\\n\\nNext: KZ-4.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2b_record_kz2_activate_kz4.md",
+    "result_json": "governance/codex/results/kz2b_record_kz2_activate_kz4.json"
+  },
+  "created_at": "2026-06-04T15:05:16.540Z"
+}
