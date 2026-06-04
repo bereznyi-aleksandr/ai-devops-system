@@ -1,0 +1,36 @@
+name: Delete Telegram Webhook
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete-webhook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Telegram webhook
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          python3 << 'PYEOF'
+          import os, urllib.request, json
+
+          token = os.environ["TELEGRAM_BOT_TOKEN"]
+
+          # Get current webhook info
+          url = f"https://api.telegram.org/bot{token}/getWebhookInfo"
+          with urllib.request.urlopen(url) as resp:
+              info = json.loads(resp.read())
+          print("Current webhook:", json.dumps(info, indent=2))
+
+          # Delete webhook
+          url = f"https://api.telegram.org/bot{token}/deleteWebhook?drop_pending_updates=false"
+          with urllib.request.urlopen(url) as resp:
+              result = json.loads(resp.read())
+          print("Delete result:", json.dumps(result, indent=2))
+
+          # Verify
+          url = f"https://api.telegram.org/bot{token}/getWebhookInfo"
+          with urllib.request.urlopen(url) as resp:
+              info = json.loads(resp.read())
+          print("After delete:", json.dumps(info, indent=2))
+          PYEOF
