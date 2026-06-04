@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm02_runner_skeleton_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM02 runner skeleton repair",
+  "objective": "Create dir governance/runners\nCreate file governance/runners/__init__.py with content \"\"\"Governance runner utilities.\"\"\"\nCreate file governance/runners/runner_skeleton.py with content import json\nfrom pathlib import Path\n\nREQUIRED_FILES = [\n    'governance/AGENT_CONTEXT.md',\n    'governance/state/RM01_RESTORE_GOVERNANCE_VALIDATION_CONTRACT.json',\n]\n\ndef collect_status():\n    missing = [path for path in REQUIRED_FILES if not Path(path).exists()]\n    return {\n        'status': 'pass' if not missing else 'fail',\n        'missing': missing,\n        'release_pass': False,\n        'note': 'Runner skeleton is deterministic and fail-closed.'\n    }\n\ndef main():\n    result = collect_status()\n    print(json.dumps(result, ensure_ascii=False, indent=2))\n    if result['missing']:\n        raise SystemExit(1)\n\nif __name__ == '__main__':\n    main()\nCreate file governance/validation/validate_runner_skeleton.py with content import json\nimport subprocess\nimport sys\n\n\ndef main():\n    completed = subprocess.run([sys.executable, 'governance/runners/runner_skeleton.py'], check=False, capture_output=True, text=True)\n    print(completed.stdout)\n    if completed.returncode != 0:\n        print(completed.stderr)\n        raise SystemExit(completed.returncode)\n    data = json.loads(completed.stdout)\n    if data.get('status') != 'pass':\n        raise SystemExit(1)\n\nif __name__ == '__main__':\n    main()\nCreate file governance/state/RM02_RUNNER_SKELETON_REPAIR.json with content {\"id\":\"RM02\",\"trace_id\":\"rm02_runner_skeleton_repair\",\"status\":\"completed\",\"release_pass\":false,\"runner\":\"governance/runners/runner_skeleton.py\",\"validator\":\"governance/validation/validate_runner_skeleton.py\",\"previous_step\":{\"id\":\"RM01\",\"sha\":\"1e48d369bb3f0b3864d9a8ac4080957d24638168\"},\"next\":\"RM03 release gate evidence pack\"}\nCreate file governance/reports/RM02_RUNNER_SKELETON_REPAIR.md with content # RM02 | Runner skeleton repair\n\nStatus: completed\n\n## Change\nCreated deterministic fail-closed runner skeleton and validator files under governance/runners and governance/validation.\n\n## Validation contract\nThe runner reports JSON and exits non-zero when required governance files are missing. Release PASS remains false until RM03 evidence pack.\n\n## Next\nRM03 release gate evidence pack.\nAppend to governance/AGENT_CONTEXT.md: \n## RM02 completed | 2026-06-04\nRunner skeleton repaired with deterministic fail-closed Python runner and validator. Release PASS remains false. Next: RM03 release gate evidence pack.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm02_runner_skeleton_repair.md",
+    "result_json": "governance/codex/results/rm02_runner_skeleton_repair.json"
+  },
+  "created_at": "2026-06-04T07:24:10.498Z"
+}
