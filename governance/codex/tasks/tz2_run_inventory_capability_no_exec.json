@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_run_inventory_capability_no_exec",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ2 run inventory no exec",
+  "objective": "Run script:\n\"\"\"\nfrom pathlib import Path\nimport json\nTARGETS = ['contours_registry.json','object_passports.json','providers_registry.json','contour_provider_policy.json','provider_failover_policy.json','managed_channel_schema.json','telegram_input_envelope_schema.json','telegram_to_managed_channel_mapping.json']\nresult = {}\nfor name in TARGETS:\n    paths = []\n    for p in Path('governance').rglob(name):\n        if 'archive' in p.parts or 'codex' in p.parts:\n            continue\n        paths.append(str(p))\n    result[name] = sorted(paths)\nout = Path('governance/state/TZ2_INVENTORY_CAPABILITY_OUTPUT.json')\nout.write_text(json.dumps({'release_pass': False, 'inventory': result}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nprint(str(out))\n\"\"\"\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ2 | RUN INVENTORY CAPABILITY NO EXEC | 2026-06-04 | 06:06 (UTC+3)\n- Ran no-exec inventory capability to write TZ2_INVENTORY_CAPABILITY_OUTPUT.json.\n- No Release PASS. Next action: archive non-canonical duplicates if inventory output exists.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_run_inventory_capability_no_exec.md",
+    "result_json": "governance/codex/results/tz2_run_inventory_capability_no_exec.json"
+  },
+  "created_at": "2026-06-04T03:38:52.322Z"
+}
