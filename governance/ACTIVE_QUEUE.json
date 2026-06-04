@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-06-04T11:18:00Z",
+  "updated_at": "2026-06-04T11:19:00Z",
   "max_active_tasks": 7,
   "policy": {
     "source_of_next_task": "first PENDING item in tasks",
@@ -39,16 +39,29 @@
     {
       "id": "P27B",
       "title": "Record P27 result in ACTIVE_QUEUE and execution_log",
-      "status": "DONE_PENDING_SHA_RECORD",
+      "status": "DONE",
       "criteria": "P27 status updated with SHA and execution_log receives P27 line",
-      "touch_workflows": false
+      "touch_workflows": false,
+      "sha": "7bf1800b826c8fab8cb3837c0dac89f81eb0a002",
+      "completed_at": "2026-06-04T11:16:20Z"
     },
     {
       "id": "P28",
       "title": "Consolidate current queue status report",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "criteria": "Create compact report from ACTIVE_QUEUE only, no invented tasks",
+      "touch_workflows": false,
+      "sha": "4a6357f744d861d5cdaa4fa3efec57d1914ce4db",
+      "completed_at": "2026-06-04T11:17:02Z"
+    },
+    {
+      "id": "P28B",
+      "title": "Record P28 result and queue empty state",
+      "status": "DONE_PENDING_SHA_RECORD",
+      "criteria": "P27B and P28 logged; no PENDING tasks remain; await operator or Claude queue refill",
       "touch_workflows": false
     }
-  ]
+  ],
+  "queue_state": "EMPTY_AFTER_P28B_PENDING_ITS_OWN_SHA_RECORD",
+  "next_action": "await operator or Claude to add next ACTIVE_QUEUE tasks; do not invent tasks"
 }

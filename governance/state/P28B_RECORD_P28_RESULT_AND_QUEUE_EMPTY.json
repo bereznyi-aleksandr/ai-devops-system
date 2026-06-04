@@ -1,0 +1,13 @@
+{
+  "id": "P28B",
+  "trace_id": "p28b_record_p28_result_and_queue_empty",
+  "status": "completed",
+  "release_pass": true,
+  "recorded_steps": [
+    "P27B",
+    "P28"
+  ],
+  "queue_state": "empty_after_p28b_except_own_sha_record",
+  "workflow_files_touched": false,
+  "next": "await ACTIVE_QUEUE refill; do not invent tasks"
+}
