@@ -1567,3 +1567,5 @@ No issue comments.
 - Ensured external receipt directories exist via
 ### RM08 | RELEASE RECEIPT PLACEHOLDER BAN | 2026-06-04 | 06:20 (UTC+3)
 - Added explicit ban on fake/placeholder release receipts
+### RM09 | RECEIPT COLLECTOR USAGE MANIFEST | 2026-06-04 | 06:21 (UTC+3)
+- Added receipt collector usage manifest and state record

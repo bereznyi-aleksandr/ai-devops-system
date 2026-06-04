@@ -1,0 +1,1 @@
+# Receipt collector usage manifest

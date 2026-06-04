@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm09_receipt_collector_usage_manifest",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/audit/RECEIPT_COLLECTOR_USAGE_MANIFEST.md",
+    "create:governance/state/RM09_RECEIPT_COLLECTOR_USAGE_MANIFEST.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/audit/RECEIPT_COLLECTOR_USAGE_MANIFEST.md",
+    "governance/state/RM09_RECEIPT_COLLECTOR_USAGE_MANIFEST.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm09_receipt_collector_usage_manifest.txt"
+  ],
+  "commit_sha": "aba366d83ba2370f672094960e4fabf38680d06e",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm09_receipt_collector_usage_manifest.md",
+  "completed_at": "2026-06-04T04:12:40Z"
+}
