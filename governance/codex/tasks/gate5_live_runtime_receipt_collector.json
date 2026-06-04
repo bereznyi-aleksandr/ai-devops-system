@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate5_live_runtime_receipt_collector",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Gate 5 runtime receipt collector",
+  "objective": "Create file governance/runners/live_runtime_receipt_collector.py with content #!/usr/bin/env python3\nimport json\nimport os\nfrom datetime import datetime, timezone\nfrom pathlib import Path\n\nOUT = Path(\"governance/proofs/external/runtime/live_runtime_receipt.json\")\nREQUIRED_ENV = [\"LIVE_RUNTIME_SOURCE\", \"LIVE_RUNTIME_EVIDENCE_REF\", \"LIVE_RUNTIME_COMMIT_SHA\"]\n\ndef main() -> int:\n    missing = [name for name in REQUIRED_ENV if not os.getenv(name)]\n    if missing:\n        print(json.dumps({\"status\":\"blocked_missing_real_live_runtime_receipt_input\",\"missing\":missing,\"release_pass\":False}, ensure_ascii=False))\n        return 2\n    OUT.parent.mkdir(parents=True, exist_ok=True)\n    receipt = {\"gate\":\"Gate 5\",\"receipt_type\":\"live_runtime\",\"source\":os.environ[\"LIVE_RUNTIME_SOURCE\"],\"captured_at_utc\":datetime.now(timezone.utc).isoformat(),\"status\":\"real_pass\",\"evidence_ref\":os.environ[\"LIVE_RUNTIME_EVIDENCE_REF\"],\"commit_sha\":os.environ[\"LIVE_RUNTIME_COMMIT_SHA\"],\"release_pass\":False}\n    OUT.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + \"\\n\", encoding=\"utf-8\")\n    print(json.dumps({\"status\":\"receipt_written\",\"path\":str(OUT),\"release_pass\":False}, ensure_ascii=False))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file tests/governance/test_gate5_live_runtime_receipt_collector.py with content import subprocess\nimport sys\n\ndef test_gate5_collector_fails_closed_without_real_env():\n    result = subprocess.run([sys.executable, \"governance/runners/live_runtime_receipt_collector.py\"], capture_output=True, text=True)\n    assert result.returncode == 2\n    assert \"blocked_missing_real_live_runtime_receipt_input\" in result.stdout\nAppend to governance/AGENT_CONTEXT.md: \n\n### GATE 5 | LIVE RUNTIME RECEIPT COLLECTOR | 2026-06-04 | 05:38 (UTC+3)\n- Added fail-closed live runtime receipt collector and test.\n- No fake receipt. No Release PASS. Next action: Gate 6 external Claude audit result collector.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gate5_live_runtime_receipt_collector.md",
+    "result_json": "governance/codex/results/gate5_live_runtime_receipt_collector.json"
+  },
+  "created_at": "2026-06-04T02:40:42.721Z"
+}
