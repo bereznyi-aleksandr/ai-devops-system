@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:47:00Z",
-  "source": "Claude External Audit — GATE-2 PASS, GATE-3 next",
+  "updated_at": "2026-06-04T15:58:00Z",
+  "source": "Claude External Audit — GATE-3 PASS, Gates 4-6 waiting operator",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
     "workflow_yml_locked_for_gpt": true,
@@ -14,37 +14,42 @@
       "title": "Minimal Local E2E PASS",
       "status": "DONE",
       "sha": "be50d6ebdb6134cfb78e9f24a7e929310fbacc58",
-      "proof": "governance/state/gate2_proof.json",
-      "closed_by": "Claude External Audit MCP 2026-06-04",
-      "note": "Runner 967 bytes, ast.parse OK, execution returns deterministic 4-step trace."
+      "proof": "governance/state/gate2_proof.json"
     },
     {
-      "id": "GATE-3-PREP",
-      "title": "Gate 3: CI E2E Capture — подключить validators к CI",
-      "status": "BLOCKED",
+      "id": "GATE-3",
+      "title": "CI E2E Capture PASS",
+      "status": "DONE",
+      "ci_run_id": "26963047653",
+      "ci_run_sha": "c6d830bab33f8269e9030c52248df9ac0428c3c7",
+      "proof": "governance/state/gate3_ci_proof.json"
+    },
+    {
+      "id": "GATE-4",
+      "title": "Production Telegram receipt",
+      "status": "WAITING_OPERATOR",
       "priority": 1,
-      "touch_workflows": false,
-      "detail": "governance-validation-ci.yml сейчас disabled stub (on: workflow_dispatch only). Нужно: добавить step который запускает governance/runtime/minimal_governance_loop_runner.py и проверяет что output содержит status=completed. Файл LOCKED для GPT executor. Задачу выполняет Claude MCP.",
-      "operator_note": "GATE-3 требует изменения .github/workflows/governance-validation-ci.yml — это LOCKED для GPT. Claude выполнит напрямую при следующем запросе.",
+      "detail": "Требуется реальный Telegram receipt от бота оператора. GPT не может выполнить без operator action.",
       "blocked_for_gpt": true,
-      "proof_required": "governance/state/gate3_ci_proof.json с ci_run_sha и status=PASS",
-      "blocker": "GitHub Actions minimal-loop-e2e fails at Commit CI proof: github-actions[bot] cannot push, HTTP 403 permission denied",
-      "blocked_at": "2026-06-04T15:47:00Z",
-      "workflow_files_touched_by_gpt": false
+      "operator_action_required": "Отправить тестовое сообщение боту и подтвердить receipt"
     },
     {
-      "id": "GATE-3-PERMISSION-FIX",
-      "title": "Fix CI proof commit permissions via Claude MCP workflow/settings repair",
-      "status": "BLOCKED_FOR_CLAUDE",
-      "priority": 1,
-      "depends_on": [
-        "GATE-3-CI-CAPTURE"
-      ],
-      "criteria": "GitHub Actions can write governance/state/gate3_ci_proof.json or alternative proof capture path is implemented",
-      "touch_workflows": true,
-      "owner": "Claude MCP"
+      "id": "GATE-5",
+      "title": "Live LLM runtime receipt",
+      "status": "WAITING_OPERATOR",
+      "priority": 2,
+      "blocked_for_gpt": true,
+      "depends_on": ["GATE-4"]
+    },
+    {
+      "id": "GATE-6",
+      "title": "External Claude audit receipt",
+      "status": "WAITING_CLAUDE",
+      "priority": 3,
+      "blocked_for_gpt": true,
+      "depends_on": ["GATE-5"]
     }
   ],
-  "queue_state": "BLOCKED_ON_CLAUDE_WORKFLOW_PERMISSION_FIX",
-  "next_action": "Claude MCP must repair workflow permissions or CI proof capture; GPT executor must not touch .github/workflows/*.yml"
+  "queue_state": "WAITING_OPERATOR",
+  "next_action": "Gates 4-6 require operator action. GPT waits — do not invent tasks."
 }
