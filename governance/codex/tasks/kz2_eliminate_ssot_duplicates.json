@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_eliminate_ssot_duplicates",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2 eliminate SSOT duplicates",
+  "objective": "Run script:\n\"\"\"\nstate_in = Path('governance/state/KZ2_SSOT_DUPLICATES_INVENTORY.json')\ninv = json.loads(state_in.read_text(encoding='utf-8')) if state_in.exists() else {'duplicates': {}}\nduplicates = inv.get('duplicates', {})\narchive_root = Path('governance/archive/ssot_duplicates_2026-06-04')\narchive_root.mkdir(parents=True, exist_ok=True)\nkept = []\nmoved = []\nfor key, files in duplicates.items():\n    ordered = sorted(files)\n    if not ordered:\n        continue\n    keep = ordered[0]\n    kept.append(keep)\n    for src in ordered[1:]:\n        p = Path(src)\n        if not p.exists():\n            continue\n        target = archive_root / p.name\n        n = 1\n        while target.exists():\n            target = archive_root / (p.stem + '_' + str(n) + p.suffix)\n            n = n + 1\n        p.rename(target)\n        changed_files.append(str(p))\n        changed_files.append(str(target))\n        moved.append({'from': str(p), 'to': str(target), 'group': key})\nstatus = 'completed' if len(moved) > 0 or len(duplicates) == 0 else 'blocked'\nstatus_obj = {'status':'PASS' if status == 'completed' else 'BLOCKED','all_valid': status == 'completed','duplicate_groups_before': len(duplicates),'duplicates_moved': len(moved),'kept': kept,'moved': moved,'archive_root': str(archive_root),'workflow_files_touched': False}\nstatus_path = Path('governance/state/kz2_ssot_status.json')\nstatus_path.parent.mkdir(parents=True, exist_ok=True)\nstatus_path.write_text(json.dumps(status_obj, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(status_path))\nstate = Path('governance/state/KZ2_ELIMINATE_SSOT_DUPLICATES.json')\nstate.write_text(json.dumps({'id':'KZ-2','trace_id':'kz2_eliminate_ssot_duplicates','status':status,'release_pass':False,'inventory_sha':'93ed838d8e885069ea634154f3ee240b5170c70e','duplicates_moved':len(moved),'kz2_ssot_status':str(status_path),'workflow_files_touched':False,'next':'KZ-2B record KZ-2 result and activate KZ-4'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/KZ2_ELIMINATE_SSOT_DUPLICATES.md')\nreport.write_text('# KZ-2 | Eliminate SSOT duplicates\\nStatus: ' + status + '\\nDate: 2026-06-04\\n\\n## Input\\nInventory SHA: 93ed838d8e885069ea634154f3ee240b5170c70e\\n\\n## Result\\nDuplicate groups before: ' + str(len(duplicates)) + '\\nDuplicates moved: ' + str(len(moved)) + '\\nArchive root: ' + str(archive_root) + '\\n\\n## Status file\\n`governance/state/kz2_ssot_status.json`\\n\\nWorkflow lock respected. No .github/workflows files touched.\\n\\nNext: KZ-2B record KZ-2 result and activate KZ-4.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2_eliminate_ssot_duplicates.md",
+    "result_json": "governance/codex/results/kz2_eliminate_ssot_duplicates.json"
+  },
+  "created_at": "2026-06-04T15:04:35.176Z"
+}
