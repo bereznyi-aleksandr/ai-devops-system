@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p19d_curator_context_spec_validation",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P19D_CURATOR_CONTEXT_SPEC_VALIDATION.json",
+    "create:governance/reports/P19D_CURATOR_CONTEXT_SPEC_VALIDATION.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P19D_CURATOR_CONTEXT_SPEC_VALIDATION.json",
+    "governance/reports/P19D_CURATOR_CONTEXT_SPEC_VALIDATION.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p19d_curator_context_spec_validation.txt"
+  ],
+  "commit_sha": "3cd4d4e0676bdbad3fd36e8dd0914782bd1f65c0",
+  "blocker": null,
+  "report_path": "governance/codex/results/p19d_curator_context_spec_validation.md",
+  "completed_at": "2026-06-04T10:19:19Z"
+}
