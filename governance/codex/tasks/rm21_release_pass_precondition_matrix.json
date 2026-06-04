@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm21_release_pass_precondition_matrix",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM21 PASS preconditions",
+  "objective": "Create file governance/state/RM21_RELEASE_PASS_PRECONDITION_MATRIX.json with content {\"created_at_utc3\":\"2026-06-04 | 06:33 (UTC+3)\",\"release_pass\":false,\"last_completed\":\"RM20\",\"last_completed_sha\":\"885962f8a963510489f436c11f053a7bc0a4fae1\",\"preconditions\":{\"gate4_real_telegram_receipt\":\"required\",\"gate5_real_live_runtime_receipt\":\"required\",\"gate6_external_claude_audit_result\":\"required\",\"validate_release_gates_success\":\"required\",\"non_null_commit_sha_in_all_receipts\":\"required\",\"tz2_duplicate_archive\":\"required_before_full_release_cleanliness\"},\"current_result\":\"blocked\",\"next_action\":\"RM22 validator-to-blocker traceability map\"}\nCreate file governance/audit/RELEASE_PASS_PRECONDITION_MATRIX.md with content # Release PASS precondition matrix\n\nCreated: 2026-06-04 | 06:33 (UTC+3)\nRelease PASS: false\n\nRelease PASS requires:\n1. Gate 4 real Telegram receipt.\n2. Gate 5 real live runtime receipt.\n3. Gate 6 external Claude audit result.\n4. validate_release_gates.py success.\n5. Non-null commit_sha in all receipts.\n6. TZ2 duplicate archive before full release cleanliness.\n\nCurrent result: BLOCKED.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM21 | RELEASE PASS PRECONDITION MATRIX | 2026-06-04 | 06:33 (UTC+3)\n- Created release-pass precondition matrix.\n- No Release PASS. Next action: RM22 validator-to-blocker traceability map.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm21_release_pass_precondition_matrix.md",
+    "result_json": "governance/codex/results/rm21_release_pass_precondition_matrix.json"
+  },
+  "created_at": "2026-06-04T04:38:56.571Z"
+}
