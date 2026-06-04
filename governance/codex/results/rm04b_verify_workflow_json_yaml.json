@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04b_verify_workflow_json_yaml",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/RM04B_VERIFY_WORKFLOW_JSON_YAML.json",
+    "create:governance/reports/RM04B_VERIFY_WORKFLOW_JSON_YAML.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/RM04B_VERIFY_WORKFLOW_JSON_YAML.json",
+    "governance/reports/RM04B_VERIFY_WORKFLOW_JSON_YAML.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm04b_verify_workflow_json_yaml.txt"
+  ],
+  "commit_sha": "2ca18d50a2cb9b545e760a05a77d99ab8d4fdc07",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm04b_verify_workflow_json_yaml.md",
+  "completed_at": "2026-06-04T07:33:56Z"
+}
