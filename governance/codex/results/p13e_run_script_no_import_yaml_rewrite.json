@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13e_run_script_no_import_yaml_rewrite",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/p13e_run_script_no_import_yaml_rewrite.txt"
+  ],
+  "commit_sha": "c1ce05a1685c0d2b685d36bda40828a4d35419de",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: __import__"
+  },
+  "report_path": "governance/codex/results/p13e_run_script_no_import_yaml_rewrite.md",
+  "completed_at": "2026-06-04T08:32:41Z"
+}
