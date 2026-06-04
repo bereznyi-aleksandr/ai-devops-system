@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-06-04T11:14:00Z",
+  "updated_at": "2026-06-04T11:15:00Z",
   "max_active_tasks": 7,
   "policy": {
     "source_of_next_task": "first PENDING item in tasks",
@@ -12,14 +12,16 @@
     {
       "id": "P26",
       "title": "Three-file model migration and roadmap audit",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "criteria": "AGENT_CONTEXT reduced to config, ACTIVE_QUEUE present, execution_log present, roadmap audit report written",
-      "touch_workflows": false
+      "touch_workflows": false,
+      "sha": "fa40ee24cbf3b1200727a02934df9e1d1c659a33",
+      "completed_at": "2026-06-04T11:14:12Z"
     },
     {
       "id": "P26B",
       "title": "Record P26 result in ACTIVE_QUEUE and execution_log",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "criteria": "P26 status updated with SHA and execution_log receives P26 line",
       "touch_workflows": false
     },
