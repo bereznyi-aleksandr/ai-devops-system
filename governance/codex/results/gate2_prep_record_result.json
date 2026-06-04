@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_record_result",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/gate2_prep_record_result.txt"
+  ],
+  "commit_sha": "08b4f5b11f9c09ab6c659e87bb9b6a466a876f88",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: name 'compile' is not defined"
+  },
+  "report_path": "governance/codex/results/gate2_prep_record_result.md",
+  "completed_at": "2026-06-04T15:31:21Z"
+}
