@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05c_record_real_repair_close_queue",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-05C record real repair",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'RM-05':\n        task['status'] = 'DONE'\n        task['sha'] = '1e7b445f549724fb6e31a48e6deec4e75573a54b'\n        task['completed_at'] = '2026-06-04T14:23:20Z'\n        task['audit_reopen_resolved'] = True\nqueue['updated_at'] = '2026-06-04T14:24:00Z'\nqueue['queue_state'] = 'EMPTY_NO_PENDING_TASKS'\nqueue['next_action'] = 'await operator or Claude to add next tasks; do not invent tasks'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nline = json.dumps({'date':'2026-06-04T14:23:20Z','id':'RM-05','trace_id':'rm05_real_runner_repair_pattern','sha':'1e7b445f549724fb6e31a48e6deec4e75573a54b','status':'done','audit_reopen_resolved':True,'workflow_files_touched':False}, ensure_ascii=False)\nif line not in existing:\n    existing += line + '\\n'\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nrunner = Path('governance/runners/contour_lifecycle_runner.py')\nstatus_file = Path('governance/state/kz1_runners_status.json')\nall_valid = False\nif runner.exists() and status_file.exists():\n    status = json.loads(status_file.read_text(encoding='utf-8'))\n    all_valid = len(runner.read_bytes()) > 50 and status.get('all_valid') == True\nstate = Path('governance/state/RM05C_RECORD_REAL_REPAIR_CLOSE_QUEUE.json')\nstate.write_text(json.dumps({'id':'RM-05C','trace_id':'rm05c_record_real_repair_close_queue','status':'completed' if all_valid else 'blocked','release_pass':all_valid,'recorded_step':'RM-05','recorded_sha':'1e7b445f549724fb6e31a48e6deec4e75573a54b','contour_lifecycle_runner_bytes':len(runner.read_bytes()) if runner.exists() else 0,'kz1_runners_status_exists':status_file.exists(),'all_valid':all_valid,'workflow_files_touched':False,'queue_state':'EMPTY_NO_PENDING_TASKS' if all_valid else 'BLOCKED'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/RM05C_RECORD_REAL_REPAIR_CLOSE_QUEUE.md')\nreport.write_text('# RM-05C | Record real RM-05 repair and close queue\\nStatus: ' + ('completed' if all_valid else 'blocked') + '\\nDate: 2026-06-04\\n\\nRM-05 reopened audit defect resolved with SHA 1e7b445f549724fb6e31a48e6deec4e75573a54b. contour_lifecycle_runner.py is non-empty and kz1_runners_status.json exists with all_valid=true. ACTIVE_QUEUE has no PENDING tasks after RM-05. Workflow lock respected.\\n\\nNext: queue empty; do not invent tasks.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm05c_record_real_repair_close_queue.md",
+    "result_json": "governance/codex/results/rm05c_record_real_repair_close_queue.json"
+  },
+  "created_at": "2026-06-04T14:24:02.075Z"
+}
