@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm20_remaining_blockers_immutable_register",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/RM20_REMAINING_BLOCKERS_IMMUTABLE_REGISTER.json",
+    "create:governance/audit/REMAINING_BLOCKERS_IMMUTABLE_REGISTER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/RM20_REMAINING_BLOCKERS_IMMUTABLE_REGISTER.json",
+    "governance/audit/REMAINING_BLOCKERS_IMMUTABLE_REGISTER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm20_remaining_blockers_immutable_register.txt"
+  ],
+  "commit_sha": "885962f8a963510489f436c11f053a7bc0a4fae1",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm20_remaining_blockers_immutable_register.md",
+  "completed_at": "2026-06-04T04:37:08Z"
+}
