@@ -1581,3 +1581,5 @@ No issue comments.
 -
 ### RM15 | FINAL CONTINUOUS-MODE GUARD STATE | 2026-06-04 | 06:27 (UTC+3)
 - Added continuous-mode guard state to prevent report-only stops
+### RM16 | AUTONOMOUS BACKLOG EXHAUSTED MARKER | 2026-06-04 | 06:28 (UTC+3)
+- Marked autonomous backlog exhausted except real external inputs and verified TZ2 inventory
