@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_runtime_run_script_overwrite",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/gate2_prep_runtime_run_script_overwrite.txt"
+  ],
+  "commit_sha": "4461a8e63b6ffc40533bebe4eb13f6f79baea1e4",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script blocked: exec("
+  },
+  "report_path": "governance/codex/results/gate2_prep_runtime_run_script_overwrite.md",
+  "completed_at": "2026-06-04T15:37:53Z"
+}
