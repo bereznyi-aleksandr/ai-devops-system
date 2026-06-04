@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz4_ssot_post_cleanup_validation",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "KZ-4 SSOT validation",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8')) if queue_path.exists() else {'tasks': []}\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'KZ-4':\n        task['status'] = 'IN_PROGRESS'\nqueue['updated_at'] = '2026-06-04T15:07:00Z'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nstatus_path = Path('governance/state/kz2_ssot_status.json')\nstatus = json.loads(status_path.read_text(encoding='utf-8')) if status_path.exists() else {}\nitems = []\nfor p in Path('governance').rglob('*'):\n    if not p.is_file():\n        continue\n    s = str(p).lower()\n    if '/archive/' in s or '/codex/' in s:\n        continue\n    if 'ssot' in s or 'single_source' in s or 'source_of_truth' in s:\n        items.append(str(p))\ngroups = {}\nfor item in items:\n    p = Path(item)\n    key = p.stem.lower().replace('_copy','').replace('-copy','').replace('_backup','').replace('-backup','').replace('_duplicate','').replace('-duplicate','')\n    groups.setdefault(key, []).append(item)\nactive_duplicates = {k:v for k,v in groups.items() if len(v) > 1}\nvalid = status_path.exists() and status.get('all_valid') == True and len(active_duplicates) == 0\nstate = Path('governance/state/KZ4_SSOT_POST_CLEANUP_VALIDATION.json')\nstate.write_text(json.dumps({'id':'KZ-4','trace_id':'kz4_ssot_post_cleanup_validation','status':'completed' if valid else 'blocked','release_pass':False,'kz2_status_exists':status_path.exists(),'kz2_all_valid':status.get('all_valid'), 'active_duplicate_group_count':len(active_duplicates),'active_duplicates':active_duplicates,'workflow_files_touched':False,'next':'KZ-4B record KZ-4 and close queue' if valid else 'KZ-2 repair active duplicates'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/KZ4_SSOT_POST_CLEANUP_VALIDATION.md')\nreport.write_text('# KZ-4 | SSOT post-cleanup validation\\nStatus: ' + ('completed' if valid else 'blocked') + '\\nDate: 2026-06-04\\n\\n## Validation\\nKZ-2 status exists: ' + str(status_path.exists()) + '\\nKZ-2 all_valid: ' + str(status.get('all_valid')) + '\\nActive duplicate groups outside archive/codex: ' + str(len(active_duplicates)) + '\\n\\nActive duplicates:\\n' + json.dumps(active_duplicates, ensure_ascii=False, indent=2) + '\\n\\nWorkflow lock respected. No .github/workflows files touched.\\n\\nNext: ' + ('KZ-4B record KZ-4 and close queue.' if valid else 'KZ-2 repair active duplicates.') + '\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz4_ssot_post_cleanup_validation.md",
+    "result_json": "governance/codex/results/kz4_ssot_post_cleanup_validation.json"
+  },
+  "created_at": "2026-06-04T15:06:08.617Z"
+}
