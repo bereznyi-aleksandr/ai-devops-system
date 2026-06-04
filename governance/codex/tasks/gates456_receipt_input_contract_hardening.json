@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gates456_receipt_input_contract_hardening",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Gates 4-6 input contract",
+  "objective": "Create file governance/state/GATES456_RECEIPT_INPUT_CONTRACT_HARDENING.json with content {\"created_at_utc3\":\"2026-06-04 | 06:08 (UTC+3)\",\"release_pass\":false,\"purpose\":\"Harden real receipt acquisition inputs after fail-closed collectors were created.\",\"required_inputs\":{\"gate4_telegram\":[\"TELEGRAM_RECEIPT_SOURCE\",\"TELEGRAM_EVIDENCE_REF\",\"TELEGRAM_COMMIT_SHA\"],\"gate5_live_runtime\":[\"LIVE_RUNTIME_SOURCE\",\"LIVE_RUNTIME_EVIDENCE_REF\",\"LIVE_RUNTIME_COMMIT_SHA\"],\"gate6_external_claude\":[\"CLAUDE_AUDIT_SOURCE\",\"CLAUDE_AUDIT_EVIDENCE_REF\",\"CLAUDE_AUDIT_COMMIT_SHA\",\"CLAUDE_AUDIT_VERDICT\"]},\"forbidden\":[\"placeholder receipts\",\"fake receipts\",\"self-issued external audit pass\",\"release pass before validator accepts all real receipts\"],\"next_action\":\"release validator evidence packet for external receipt run\"}\nCreate file governance/audit/GATES456_REAL_RECEIPT_INPUT_CONTRACT.md with content # Gates 4-6 real receipt input contract\n\nCreated: 2026-06-04 | 06:08 (UTC+3)\nRelease PASS: false\n\nGate 4 requires TELEGRAM_RECEIPT_SOURCE, TELEGRAM_EVIDENCE_REF, TELEGRAM_COMMIT_SHA.\nGate 5 requires LIVE_RUNTIME_SOURCE, LIVE_RUNTIME_EVIDENCE_REF, LIVE_RUNTIME_COMMIT_SHA.\nGate 6 requires CLAUDE_AUDIT_SOURCE, CLAUDE_AUDIT_EVIDENCE_REF, CLAUDE_AUDIT_COMMIT_SHA, CLAUDE_AUDIT_VERDICT.\n\nCollectors fail closed when real inputs are missing.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### GATES 4-6 | RECEIPT INPUT CONTRACT HARDENING | 2026-06-04 | 06:08 (UTC+3)\n- Hardened real receipt input contract for Gate 4/5/6 collectors.\n- No Release PASS. Next action: release validator evidence packet for external receipt run.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gates456_receipt_input_contract_hardening.md",
+    "result_json": "governance/codex/results/gates456_receipt_input_contract_hardening.json"
+  },
+  "created_at": "2026-06-04T03:43:24.802Z"
+}
