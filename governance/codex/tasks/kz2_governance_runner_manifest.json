@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "kz2_governance_runner_manifest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "KZ-2 runner manifest",
+  "objective": "Create file governance/runners/KZ1_RUNNER_MANIFEST.json with content {\"id\":\"KZ-2\",\"trace_id\":\"kz2_governance_runner_manifest\",\"status\":\"completed\",\"runner_count\":14,\"workflow_files_touched\":false,\"runners\":[\"governance/runners/kz1_runner_01.py\",\"governance/runners/kz1_runner_02.py\",\"governance/runners/kz1_runner_03.py\",\"governance/runners/kz1_runner_04.py\",\"governance/runners/kz1_runner_05.py\",\"governance/runners/kz1_runner_06.py\",\"governance/runners/kz1_runner_07.py\",\"governance/runners/kz1_runner_08.py\",\"governance/runners/kz1_runner_09.py\",\"governance/runners/kz1_runner_10.py\",\"governance/runners/kz1_runner_11.py\",\"governance/runners/kz1_runner_12.py\",\"governance/runners/kz1_runner_13.py\",\"governance/runners/kz1_runner_14.py\"],\"previous_step\":{\"id\":\"KZ-1B\",\"sha\":\"e4c41a00945da7988fbc72bc958a5f15a25024d8\"},\"next\":\"KZ-3 runner manifest validation evidence\"}\nCreate file governance/state/KZ2_GOVERNANCE_RUNNER_MANIFEST.json with content {\"id\":\"KZ-2\",\"trace_id\":\"kz2_governance_runner_manifest\",\"status\":\"completed\",\"release_pass\":false,\"manifest\":\"governance/runners/KZ1_RUNNER_MANIFEST.json\",\"workflow_files_touched\":false,\"next\":\"KZ-3 runner manifest validation evidence\"}\nCreate file governance/reports/KZ2_GOVERNANCE_RUNNER_MANIFEST.md with content # KZ-2 | Governance runner manifest\nStatus: completed. Runner manifest created for 14 KZ-1 runner skeleton files. Workflow lock respected: no .github/workflows files touched. Next: KZ-3 runner manifest validation evidence.\nAppend to governance/AGENT_CONTEXT.md: \n## KZ-2 completed | 2026-06-04\nGovernance runner manifest created for 14 KZ-1 runner skeleton files. Workflow lock respected: no .github/workflows files touched. Release PASS false pending manifest validation evidence. Next: KZ-3 runner manifest validation evidence.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/kz2_governance_runner_manifest.md",
+    "result_json": "governance/codex/results/kz2_governance_runner_manifest.json"
+  },
+  "created_at": "2026-06-04T10:00:45.187Z"
+}
