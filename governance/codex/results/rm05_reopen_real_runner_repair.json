@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm05_reopen_real_runner_repair",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/rm05_reopen_real_runner_repair.txt"
+  ],
+  "commit_sha": "c0e90e1a1628a25557b874bde391d28519375b1e",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: unterminated string literal (detected at line 17) (<string>, line 17)"
+  },
+  "report_path": "governance/codex/results/rm05_reopen_real_runner_repair.md",
+  "completed_at": "2026-06-04T14:22:25Z"
+}
