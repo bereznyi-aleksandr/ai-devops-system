@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p24b_validate_execution_gap_record",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P24B_VALIDATE_EXECUTION_GAP_RECORD.json",
+    "create:governance/reports/P24B_VALIDATE_EXECUTION_GAP_RECORD.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P24B_VALIDATE_EXECUTION_GAP_RECORD.json",
+    "governance/reports/P24B_VALIDATE_EXECUTION_GAP_RECORD.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p24b_validate_execution_gap_record.txt"
+  ],
+  "commit_sha": "5d11023f1c18aea66a3ae78a22da5ad859833678",
+  "blocker": null,
+  "report_path": "governance/codex/results/p24b_validate_execution_gap_record.md",
+  "completed_at": "2026-06-04T10:33:13Z"
+}
