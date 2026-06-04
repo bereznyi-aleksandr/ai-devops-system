@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "updated_at": "2026-06-04T11:14:00Z",
+  "max_active_tasks": 7,
+  "policy": {
+    "source_of_next_task": "first PENDING item in tasks",
+    "workflow_yml_locked_for_gpt": true,
+    "do_not_invent_tasks_when_empty": true,
+    "write_execution_log_after_status": true
+  },
+  "tasks": [
+    {
+      "id": "P26",
+      "title": "Three-file model migration and roadmap audit",
+      "status": "IN_PROGRESS",
+      "criteria": "AGENT_CONTEXT reduced to config, ACTIVE_QUEUE present, execution_log present, roadmap audit report written",
+      "touch_workflows": false
+    },
+    {
+      "id": "P26B",
+      "title": "Record P26 result in ACTIVE_QUEUE and execution_log",
+      "status": "PENDING",
+      "criteria": "P26 status updated with SHA and execution_log receives P26 line",
+      "touch_workflows": false
+    },
+    {
+      "id": "P27",
+      "title": "Real roadmap execution audit from state and reports",
+      "status": "PENDING",
+      "criteria": "Create audit comparing completed state files, reports and queue status",
+      "touch_workflows": false
+    },
+    {
+      "id": "P27B",
+      "title": "Record P27 result in ACTIVE_QUEUE and execution_log",
+      "status": "PENDING",
+      "criteria": "P27 status updated with SHA and execution_log receives P27 line",
+      "touch_workflows": false
+    },
+    {
+      "id": "P28",
+      "title": "Consolidate current queue status report",
+      "status": "PENDING",
+      "criteria": "Create compact report from ACTIVE_QUEUE only, no invented tasks",
+      "touch_workflows": false
+    }
+  ]
+}
