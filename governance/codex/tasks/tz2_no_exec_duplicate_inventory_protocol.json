@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_no_exec_duplicate_inventory_protocol",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ2 no-exec duplicate inventory",
+  "objective": "Create file governance/state/TZ2_NO_EXEC_DUPLICATE_INVENTORY_PROTOCOL.json with content {\"created_at_utc3\":\"2026-06-04 | 06:03 (UTC+3)\",\"release_pass\":false,\"reason\":\"Previous TZ2 discovery run was blocked because executor forbids exec(). Continue via no-exec file-operation protocol.\",\"canonical_paths\":{\"contours_registry\":\"governance/registries/contours_registry.json\",\"object_passports\":\"governance/registries/object_passports.json\",\"providers_registry\":\"governance/registries/providers_registry.json\",\"contour_provider_policy\":\"governance/policies/contour_provider_policy.json\",\"provider_failover_policy\":\"governance/policies/provider_failover_policy.json\",\"managed_channel_schema\":\"governance/schemas/managed_channel_schema.json\",\"telegram_input_envelope_schema\":\"governance/schemas/telegram_input_envelope_schema.json\",\"telegram_to_managed_channel_mapping\":\"governance/mappings/telegram_to_managed_channel_mapping.json\"},\"blocked_operation\":\"automatic repository rglob execution by exec()\",\"allowed_operation\":\"explicit Move file only after exact non-canonical path is known\",\"next_action\":\"TZ2 exact path list from repo-safe inventory, then Move file non-canonical duplicates\"}\nCreate file governance/audit/TZ2_NO_EXEC_DUPLICATE_INVENTORY_PROTOCOL.md with content # TZ2 no-exec duplicate inventory protocol\n\nCreated: 2026-06-04 | 06:03 (UTC+3)\nRelease PASS: false\n\nReason: executor blocked `exec()`, so automatic discovery was not executed.\n\nRule: do not delete or move duplicate files blindly. Use `Move file` only after exact non-canonical paths are known.\n\nCanonical paths are recorded in `governance/state/TZ2_NO_EXEC_DUPLICATE_INVENTORY_PROTOCOL.json`.\n\nNext action: exact path list, then archive non-canonical duplicates.\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ2 | NO-EXEC DUPLICATE INVENTORY PROTOCOL | 2026-06-04 | 06:03 (UTC+3)\n- Continued roadmap after stop-violation: TZ2 duplicate inventory moved to no-exec protocol.\n- No Release PASS. Next action: exact path list then Move file non-canonical duplicates.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_no_exec_duplicate_inventory_protocol.md",
+    "result_json": "governance/codex/results/tz2_no_exec_duplicate_inventory_protocol.json"
+  },
+  "created_at": "2026-06-04T03:31:19.155Z"
+}
