@@ -1,0 +1,27 @@
+{
+  "gate": "GATE-4",
+  "title": "Production Telegram Receipt",
+  "status": "PARTIAL_PASS",
+  "sub_status": {
+    "transport": "PASS",
+    "application": "BLOCKED_HTTP_403"
+  },
+  "date": "2026-06-04",
+  "verified_by": "Operator (Александр) + Claude External Audit",
+  "evidence": {
+    "bot_username": "@BarberStaffBot",
+    "message_sent": "Тест",
+    "message_time": "19:01 UTC+3",
+    "bot_response": "❌ 19:01 UA | Ошибка (HTTP 403)",
+    "conclusion": "Telegram transport confirmed — message delivered, bot responded. Application layer returned HTTP 403."
+  },
+  "facts": [
+    "@BarberStaffBot существует и активен",
+    "Telegram message до бота дошёл",
+    "Бот/вебхук живой — ответ отправлен",
+    "Internal handler вернул HTTP 403"
+  ],
+  "release_pass": false,
+  "blocker": "HTTP 403 в application handler — необходимо найти и исправить источник",
+  "next_step": "Найти источник HTTP 403: проверить Deno webhook handler, governance/deno_webhook.js, права доступа"
+}
