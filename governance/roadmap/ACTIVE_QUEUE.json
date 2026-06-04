@@ -1,86 +1,48 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T11:39:00Z",
-  "source": "Updated Roadmap / Claude audit pre-KZ-1 block",
+  "updated_at": "2026-06-04T11:45:00Z",
+  "source": "Claude External Audit — RM-05 reopened",
   "max_active_tasks": 7,
   "policy": {
-    "source_of_next_task": "first task with status PENDING in governance/roadmap/ACTIVE_QUEUE.json",
+    "source_of_next_task": "first task with status IN_PROGRESS or PENDING in governance/roadmap/ACTIVE_QUEUE.json",
     "workflow_yml_locked_for_gpt": true,
     "do_not_invent_tasks_when_empty": true,
     "write_execution_log_after_status": true,
-    "deprecated_duplicate_queue": "governance/ACTIVE_QUEUE.json was used by GPT in P26-P28 and must not be the canonical queue"
+    "deprecated_duplicate_queue": "governance/ACTIVE_QUEUE.json — deprecated, use governance/roadmap/ACTIVE_QUEUE.json"
   },
   "tasks": [
     {
-      "id": "RM-01",
-      "title": "Отозвать ложный PASS из BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2.md",
-      "status": "DONE",
-      "priority": 1,
-      "depends_on": [],
-      "criteria": "False PASS revoked in gate report/state; release_pass=false until evidence is corrected",
-      "touch_workflows": false,
-      "sha": "0d801ea289ed0a6d580506d7772e598959a06fcb",
-      "completed_at": "2026-06-04T11:27:19Z"
-    },
-    {
-      "id": "RM-02",
-      "title": "Fail-closed для усечённых .py (len < 50 байт → BLOCKED)",
-      "status": "DONE",
-      "priority": 2,
-      "depends_on": [
-        "RM-01"
-      ],
-      "criteria": "Python runner/file validation blocks truncated .py files shorter than 50 bytes",
-      "touch_workflows": false,
-      "sha": "e2a382ea6b283cc62ef5a621f36098f3efef46b8",
-      "completed_at": "2026-06-04T11:30:32Z"
-    },
-    {
-      "id": "RM-03",
-      "title": "ast.parse gate перед фиксацией STUB_RUNNABLE",
-      "status": "DONE",
-      "priority": 3,
-      "depends_on": [
-        "RM-01",
-        "RM-02"
-      ],
-      "criteria": "STUB_RUNNABLE can be recorded only after ast.parse succeeds",
-      "touch_workflows": false,
-      "sha": "08070e58697a4399c1884b601c23522ba4ec9299",
-      "completed_at": "2026-06-04T11:31:59Z"
-    },
-    {
-      "id": "RM-04",
-      "title": "Консистентность PASS/диагноза",
-      "status": "DONE",
-      "priority": 4,
-      "depends_on": [
-        "RM-01",
-        "RM-02",
-        "RM-03"
-      ],
-      "criteria": "PASS state and diagnostic reports are consistent and SHA-backed",
-      "touch_workflows": false,
-      "sha": "62cf5625e287f9d4b77f4ffd259ecd9e1972cb13",
-      "completed_at": "2026-06-04T11:33:28Z"
-    },
-    {
       "id": "RM-05",
-      "title": "KZ-1 runners skeleton repair",
-      "status": "DONE",
-      "priority": 5,
-      "depends_on": [
-        "RM-01",
-        "RM-02",
-        "RM-03",
-        "RM-04"
-      ],
-      "criteria": "KZ-1 starts only after RM-01..RM-04 are DONE",
+      "title": "KZ-1 runners skeleton repair — REOPENED",
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "depends_on": ["RM-01", "RM-02", "RM-03", "RM-04"],
+      "detail": "Восстановить ВСЕ файлы в governance/runners/*.py. Каждый файл должен содержать: def main() + stub return + if __name__=='__main__': main(). Минимум 80 байт. После записи КАЖДОГО файла — проверить python3 -m ast. Создать governance/state/kz1_runners_status.json с полем all_valid=true только когда ВСЕ файлы проходят ast.parse.",
       "touch_workflows": false,
-      "sha": "a645ffcc415722d8224dd9247d7130eb604031cf",
-      "completed_at": "2026-06-04T11:35:01Z"
+      "proof_required": "governance/state/kz1_runners_status.json с all_valid=true И каждый runner > 50 байт И ast.parse OK",
+      "audit_note": "REOPENED by Claude audit 2026-06-04: contour_lifecycle_runner.py = 1 byte (empty), kz1_runners_status.json missing. Previous DONE was false PASS."
+    },
+    {
+      "id": "KZ-2",
+      "title": "Устранить 8 SSOT-дублей",
+      "status": "PENDING",
+      "priority": 2,
+      "depends_on": ["RM-05"],
+      "detail": "Canonical paths в governance/state/. Дубли переместить в governance/archive/ssot_duplicates_2026-06-04/. Список: contours_registry, object_passports, providers_registry, contour_provider_policy, provider_failover_policy, managed_channel_schema, telegram_input_envelope_schema, telegram_to_managed_channel_mapping.",
+      "touch_workflows": false,
+      "proof_required": "governance/state/kz2_ssot_status.json с duplicates_remaining=0"
+    },
+    {
+      "id": "KZ-4",
+      "title": "Восстановить object_passports.json и release_proof_manifest.json",
+      "status": "PENDING",
+      "priority": 3,
+      "depends_on": ["KZ-2"],
+      "detail": "Оба файла усечены. governance/objects/object_passports.json — паспорта GD/DIR/WRK. governance/release/release_proof_manifest.json — все поля включая commit_sha policy.",
+      "touch_workflows": false,
+      "proof_required": "governance/state/kz4_passports_status.json с restored=true"
     }
   ],
-  "queue_state": "EMPTY_NO_PENDING_TASKS",
-  "next_action": "await operator or Claude to add next tasks; do not invent tasks"
+  "queue_state": "HAS_ACTIVE_TASKS",
+  "next_action": "Execute RM-05 — runners skeleton repair with ast.parse verification"
 }
