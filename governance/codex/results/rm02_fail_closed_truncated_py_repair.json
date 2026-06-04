@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm02_fail_closed_truncated_py_repair",
+  "executor": "python-v3",
+  "status": "failed",
+  "operations_applied": [],
+  "changed_files": [
+    "governance/codex/proofs/rm02_fail_closed_truncated_py_repair.txt"
+  ],
+  "commit_sha": "76ff2c7ea2f7790ba6ba5cbe68ab9491f7f65cb4",
+  "blocker": {
+    "code": "EXEC_FAILED",
+    "message": "Script error: unterminated string literal (detected at line 23) (<string>, line 23)"
+  },
+  "report_path": "governance/codex/results/rm02_fail_closed_truncated_py_repair.md",
+  "completed_at": "2026-06-04T11:29:35Z"
+}
