@@ -1,0 +1,66 @@
+{
+  "version": "1.0",
+  "updated": "2026-06-04",
+  "updated_by": "Claude External Audit",
+  "description": "Единственный источник текущих задач. GPT читает этот файл чтобы найти следующий шаг. НЕ читать AGENT_CONTEXT в поисках задач.",
+  "rules": {
+    "max_active": 5,
+    "status_values": ["PENDING", "IN_PROGRESS", "BLOCKED", "DONE"],
+    "done_retention_days": 1,
+    "update_method": "Replace line containing task id — NOT append"
+  },
+  "queue": [
+    {
+      "id": "KZ-1",
+      "title": "Восстановить runners до STUB_RUNNABLE",
+      "status": "IN_PROGRESS",
+      "detail": "governance/runners/*.py — каждый файл должен содержать def main() + stub return + if __name__=='__main__': main(). Проверить python3 -m ast после записи.",
+      "blocked_by": null,
+      "proof_path": "governance/state/kz1_runners_status.json"
+    },
+    {
+      "id": "KZ-2",
+      "title": "Устранить 8 SSOT-дублей",
+      "status": "PENDING",
+      "detail": "Canonical paths в governance/state/. Дубли в governance/contours/, governance/providers/ и т.д. — переместить в governance/archive/ssot_duplicates_2026-06-04/",
+      "blocked_by": null,
+      "proof_path": "governance/state/kz2_ssot_status.json"
+    },
+    {
+      "id": "KZ-3",
+      "title": "Архивировать governance/codex/ записи старше 30 дней",
+      "status": "PENDING",
+      "detail": "Переместить governance/codex/proofs/* и governance/codex/results/* старше 2026-05-05 в governance/archive/codex_2026-06-04/",
+      "blocked_by": "KZ-1",
+      "proof_path": "governance/state/kz3_codex_archive_status.json"
+    },
+    {
+      "id": "KZ-4",
+      "title": "Восстановить object_passports.json и release_proof_manifest.json",
+      "status": "PENDING",
+      "detail": "Оба файла усечены. governance/objects/object_passports.json должен содержать паспорта GD/DIR/WRK. governance/release/release_proof_manifest.json должен содержать все обязательные поля.",
+      "blocked_by": "KZ-2",
+      "proof_path": "governance/state/kz4_passports_status.json"
+    }
+  ],
+  "operator_gate": [
+    {
+      "id": "GATE-4",
+      "title": "Production Telegram receipt",
+      "status": "WAITING_OPERATOR",
+      "detail": "Требуется реальный receipt от Telegram бота оператора"
+    },
+    {
+      "id": "GATE-5",
+      "title": "Live LLM runtime receipt",
+      "status": "WAITING_OPERATOR",
+      "detail": "Требуется реальный receipt от live runtime"
+    },
+    {
+      "id": "GATE-6",
+      "title": "External Claude audit receipt",
+      "status": "WAITING_CLAUDE",
+      "detail": "Требуется receipt от Claude после финального аудита"
+    }
+  ]
+}
