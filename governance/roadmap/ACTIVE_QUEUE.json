@@ -1,47 +1,46 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T16:24:00Z",
-  "source": "Claude External Audit — replace GitHub Issues with inbox.jsonl",
+  "updated_at": "2026-06-04T17:50:00Z",
+  "source": "Claude External Audit — session end, Gate 5 next",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
     "workflow_yml_locked_for_gpt": true,
     "do_not_invent_tasks_when_empty": true,
     "write_execution_log_after_status": true
   },
+  "session_summary": {
+    "date": "2026-06-04",
+    "completed": [
+      "RM-01..05: pre-KZ-1 блок",
+      "KZ-2: SSOT дубли устранены",
+      "KZ-4: passports + manifest восстановлены",
+      "Gate 2: minimal governance loop PASS",
+      "Gate 3: CI E2E capture PASS (ci_run_id: 26963047653)",
+      "Gate 4: Telegram polling PASS (inbox.jsonl работает, бот отвечает)",
+      "Telegram: переход с Deno Deploy webhook на GitHub Actions long polling",
+      "telegram-poll.yml: cron каждую минуту, пишет в inbox.jsonl, отвечает оператору"
+    ]
+  },
   "tasks": [
     {
-      "id": "GATE-4-FIX-V2",
-      "title": "Replace GitHub Issues with inbox.jsonl in deno_webhook.js Telegram handler",
-      "status": "DONE",
+      "id": "GATE-5",
+      "title": "Live LLM Runtime — обработка сообщений из inbox через LLM и ответ в Telegram",
+      "status": "IN_PROGRESS",
       "priority": 1,
       "touch_workflows": false,
-      "audit_note": "Issue #31 had 2500 comment limit. Issue #32 is temporary fix. Real fix: Telegram messages append to governance/telegram/inbox.jsonl instead of GitHub issue comments. No more limits.",
-      "example_objective": "Run script:\n\"\"\"\nfrom pathlib import Path\n\np = Path('governance/deno_webhook.js')\ncontent = p.read_text()\n\n# Find and replace the Telegram handler section\nold_handler = '''  // ─── POST / — TELEGRAM WEBHOOK ────────────────────────────────────────────\\n  if (method === \\\"POST\\\" && url.pathname === \\\"/\\\") {\\n    if (telegramSecret) {\\n      const secretHeader = req.headers.get(\\\"x-telegram-bot-api-secret-token\\\");\\n      if (secretHeader !== telegramSecret) return new Response(\\\"Forbidden\\\", { status: 403 });\\n    }\\n    let body; try { body = await req.json(); } catch { return new Response(\\\"Bad Request\\\", { status: 400 }); }\\n    const message = body?.message;\\n    if (!message) return new Response(\\\"OK\\\");\\n    const chatId    = String(message.chat?.id);\\n    const messageId = String(message.message_id);\\n    const text      = (message.text || \\\"\\\").trim();\\n    if (chatId !== ALLOWED_CHAT_ID) return new Response(\\\"Forbidden\\\", { status: 403 });\\n    const now = new Date().toLocaleTimeString(\\\"uk-UA\\\", { timeZone: \\\"Europe/Kiev\\\", hour: \\\"2-digit\\\", minute: \\\"2-digit\\\" });\\n    const dedupeKey = `telegram:${chatId}:${messageId}`;\\n    const curatorComment = `@curator\\\\n\\\\nTYPE: OPERATOR_TO_CURATOR\\\\nSOURCE: telegram\\\\nDEDUP_KEY: ${dedupeKey}\\\\n\\\\n\\\\`\\\\`\\\\`json\\\\n{\\\\n  \\\"chat_id\\\": \\\"${chatId}\\\",\\\\n  \\\"message_id\\\": \\\"${messageId}\\\",\\\\n  \\\"text\\\": ${JSON.stringify(text)}\\\\n}\\\\n\\\\`\\\\`\\\\``;\\n    const status = await postGitHubComment(pat, curatorComment);\\n    if (status === 201) { await sendTelegram(token, chatId, `📨 *${now} UA* | Отправлено куратору:\\\\n_${text.slice(0, 100)}_`); }\\n    else { await sendTelegram(token, chatId, `❌ *${now} UA* | Ошибка (HTTP ${status})`); }\\n    return new Response(\\\"OK\\\");\\n  }'''\n\nnew_handler = '''  // ─── POST / — TELEGRAM WEBHOOK (v5.1 — inbox.jsonl, no issue limit) ────────\n  if (method === \"POST\" && url.pathname === \"/\") {\n    if (telegramSecret) {\n      const secretHeader = req.headers.get(\"x-telegram-bot-api-secret-token\");\n      if (secretHeader !== telegramSecret) return new Response(\"Forbidden\", { status: 403 });\n    }\n    let body; try { body = await req.json(); } catch { return new Response(\"Bad Request\", { status: 400 }); }\n    const message = body?.message;\n    if (!message) return new Response(\"OK\");\n    const chatId    = String(message.chat?.id);\n    const messageId = String(message.message_id);\n    const text      = (message.text || \"\").trim();\n    if (chatId !== ALLOWED_CHAT_ID) return new Response(\"Forbidden\", { status: 403 });\n    const now = new Date().toLocaleTimeString(\"uk-UA\", { timeZone: \"Europe/Kiev\", hour: \"2-digit\", minute: \"2-digit\" });\n    const inboxPath = \"governance/telegram/inbox.jsonl\";\n    const entry = JSON.stringify({ ts: new Date().toISOString(), chat_id: chatId, message_id: messageId, text, source: \"telegram_webhook\" });\n    const inboxFd = await getFileContents(pat, inboxPath);\n    const currentContent = inboxFd?.content ? decodeURIComponent(escape(atob(inboxFd.content.replace(/\\\\n/g, \"\")))) : \"\";\n    const newContent = currentContent + entry + \"\\\\n\";\n    const writeStatus = await updateFileContents(pat, inboxPath, newContent, `telegram: msg from ${chatId} id=${messageId}`, inboxFd?.sha);\n    if (writeStatus === 200 || writeStatus === 201) {\n      await sendTelegram(token, chatId, `📨 *${now} UA* | Отправлено куратору:\\\\n_${text.slice(0, 100)}_`);\n    } else {\n      await sendTelegram(token, chatId, `❌ *${now} UA* | Ошибка записи (HTTP ${writeStatus})`);\n    }\n    return new Response(\"OK\");\n  }'''\n\nif old_handler in content:\n    new_content = content.replace(old_handler, new_handler)\n    # Also update version comment\n    new_content = new_content.replace(\n        '// Версия: v4.9 | BEM-487',\n        '// Версия: v5.1 | inbox.jsonl Telegram handler — no GitHub issue limit'\n    )\n    p.write_text(new_content)\n    changed_files.append('governance/deno_webhook.js')\n    print('SUCCESS: Telegram handler patched to use inbox.jsonl')\nelse:\n    # Fallback: patch just the critical postGitHubComment call in Telegram section\n    print('Exact match not found, trying targeted patch')\n    # Find the comment posting line and replace\n    old_line = '    const status = await postGitHubComment(pat, curatorComment);'\n    if old_line in content:\n        print('Found postGitHubComment line')\n    else:\n        print('ERROR: could not find pattern to replace')\n        raise ValueError('Pattern not found in deno_webhook.js')\n\"\"\"\nNo issue comments.",
-      "proof_required": "governance/deno_webhook.js содержит inbox.jsonl AND не содержит curatorComment в Telegram handler",
-      "changed": [
-        "governance/deno_webhook.js",
-        "governance/telegram/inbox.jsonl"
-      ],
-      "criteria": "Telegram POST handler appends JSONL to governance/telegram/inbox.jsonl using updateFileContents and no longer calls postGitHubComment for operator messages",
-      "sha": "8cba218e7a842e7f8baf7d0a145b0e7978a0e93f",
-      "completed_at": "2026-06-04T16:20:09Z",
-      "deploy_required": true,
-      "test_required": true
+      "detail": "Расширить telegram-poll.yml или создать отдельный workflow: читать новые сообщения из governance/telegram/inbox.jsonl, отправлять в LLM API (ANTHROPIC_API_KEY или OPENAI_API_KEY уже в GitHub Secrets), записывать ответ в governance/telegram/outbox.jsonl, отправлять ответ оператору в Telegram.",
+      "secrets_available": ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN"],
+      "proof_required": "governance/state/gate5_runtime_receipt.json с llm_response и telegram_sent=true"
     },
     {
-      "id": "GATE-4-TEST-V2",
-      "title": "Test Telegram inbox receipt after Deno deploy",
-      "status": "WAITING_DENO_DEPLOY",
-      "priority": 1,
-      "depends_on": [
-        "GATE-4-FIX-V2"
-      ],
-      "criteria": "Operator sends Telegram message; bot responds inbox success; governance/telegram/inbox.jsonl contains appended JSON line",
-      "touch_workflows": false,
-      "blocker": "Live Deno health still reports version 4.9 after repo patch; wait for Deno Deploy to pick up 8cba218e7a842e7f8baf7d0a145b0e7978a0e93f or redeploy manually",
-      "test_instruction": "Send Telegram test only after health version is 4.10 or deployment confirms latest commit"
+      "id": "GATE-6",
+      "title": "External Claude Audit receipt",
+      "status": "PENDING",
+      "priority": 2,
+      "depends_on": ["GATE-5"],
+      "detail": "Claude проводит финальный аудит системы и выдаёт receipt"
     }
   ],
-  "queue_state": "WAITING_DENO_DEPLOY",
-  "next_action": "wait for Deno Deploy to update to webhook v4.10, then operator sends Telegram test to @BarberStaffBot"
+  "queue_state": "HAS_ACTIVE_TASKS",
+  "next_action": "Implement GATE-5: LLM processing of inbox messages"
 }
