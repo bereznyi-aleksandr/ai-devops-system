@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_static_inventory_blocker_closure",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "TZ2 static inventory blocker",
+  "objective": "Create file governance/state/TZ2_STATIC_INVENTORY_BLOCKER_CLOSURE.json with content {\"created_at_utc3\":\"2026-06-04 | 06:07 (UTC+3)\",\"release_pass\":false,\"blocked_sha\":\"69a75f4fa97adda80c3bfc5844221e6443fc1ba6\",\"blocker\":\"Run script inventory cannot import pathlib/json in executor sandbox; __import__ not found\",\"safe_status\":\"no duplicate files moved without exact verified path inventory\",\"canonical_paths_verified_by_policy\":[\"governance/registries/contours_registry.json\",\"governance/registries/object_passports.json\",\"governance/registries/providers_registry.json\",\"governance/policies/contour_provider_policy.json\",\"governance/policies/provider_failover_policy.json\",\"governance/schemas/managed_channel_schema.json\",\"governance/schemas/telegram_input_envelope_schema.json\",\"governance/mappings/telegram_to_managed_channel_mapping.json\"],\"next_action\":\"continue external receipts lane; TZ2 archive remains blocked until repository listing is available\"}\nAppend to governance/AGENT_CONTEXT.md: \n\n### TZ2 | STATIC INVENTORY BLOCKER CLOSURE | 2026-06-04 | 06:07 (UTC+3)\n- Closed current TZ2 inventory attempt as blocked by executor import restrictions.\n- No duplicate files moved without exact verified inventory.\n- No Release PASS. Next action: continue external receipts lane; TZ2 archive waits for repository listing capability.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/tz2_static_inventory_blocker_closure.md",
+    "result_json": "governance/codex/results/tz2_static_inventory_blocker_closure.json"
+  },
+  "created_at": "2026-06-04T03:41:08.884Z"
+}
