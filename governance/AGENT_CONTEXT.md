@@ -1515,3 +1515,5 @@ No issue comments.
 ### TZ2 |
 ### TZ2 | DISCOVERY EXEC BLOCKER RECORD | 2026-06-03 | 10:51 (UTC+3)
 - Recorded exec() blocker for duplicate discovery
+### GATE 4 | TELEGRAM RECEIPT COLLECTOR | 2026-06-03 | 10:52 (UTC+3)
+- Added fail-closed Telegram production receipt collector and test
