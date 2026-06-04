@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13f_run_script_clean_yaml_rewrite",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "custom_script"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/state/P13F_RUN_SCRIPT_CLEAN_YAML_REWRITE.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p13f_run_script_clean_yaml_rewrite.txt"
+  ],
+  "commit_sha": "347d8e33252329785068191fc3678587c8258408",
+  "blocker": null,
+  "report_path": "governance/codex/results/p13f_run_script_clean_yaml_rewrite.md",
+  "completed_at": "2026-06-04T08:33:24Z"
+}

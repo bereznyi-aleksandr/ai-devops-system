@@ -1,0 +1,9 @@
+{
+  "id": "P13F",
+  "trace_id": "p13f_run_script_clean_yaml_rewrite",
+  "status": "completed",
+  "release_pass": false,
+  "root_cause": "Run script requires newline after colon and must avoid blocked tokens inside code strings",
+  "change": "full Path.write_text rewrite of active workflow YAML",
+  "next": "P13G remote raw verification"
+}
