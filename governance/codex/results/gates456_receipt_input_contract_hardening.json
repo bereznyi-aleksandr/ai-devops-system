@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "gates456_receipt_input_contract_hardening",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/GATES456_RECEIPT_INPUT_CONTRACT_HARDENING.json",
+    "create:governance/audit/GATES456_REAL_RECEIPT_INPUT_CONTRACT.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/GATES456_RECEIPT_INPUT_CONTRACT_HARDENING.json",
+    "governance/audit/GATES456_REAL_RECEIPT_INPUT_CONTRACT.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/gates456_receipt_input_contract_hardening.txt"
+  ],
+  "commit_sha": "21c490a3dce87c18ad92774292e67c4fc204035c",
+  "blocker": null,
+  "report_path": "governance/codex/results/gates456_receipt_input_contract_hardening.md",
+  "completed_at": "2026-06-04T03:43:36Z"
+}
