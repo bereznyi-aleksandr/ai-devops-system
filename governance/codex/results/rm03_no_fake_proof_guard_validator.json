@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm03_no_fake_proof_guard_validator",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/validators/validate_no_fake_proof_guard.py",
+    "create:tests/governance/test_no_fake_proof_guard.py",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/validators/validate_no_fake_proof_guard.py",
+    "tests/governance/test_no_fake_proof_guard.py",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm03_no_fake_proof_guard_validator.txt"
+  ],
+  "commit_sha": "d6be37fd4d7e4d5341041dbe612a87df0a179806",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm03_no_fake_proof_guard_validator.md",
+  "completed_at": "2026-06-04T03:57:29Z"
+}

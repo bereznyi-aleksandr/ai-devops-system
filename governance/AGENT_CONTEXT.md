@@ -1553,3 +1553,5 @@ No issue comments.
 - Added aggregate validator for working-baseline files and test
 ### RM02 | RELEASE BLOCKER STATE HARDENING | 2026-06-04 | 06:13 (UTC+3)
 - Hardened release blocker state and no-fake-release-pass validator
+### RM03 | NO FAKE PROOF GUARD VALIDATOR | 2026-06-04 | 06:14 (UTC+3)
+- Added no-fake-proof guard validator and test
