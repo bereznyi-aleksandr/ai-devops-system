@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13f_delete_current_append_gci_json",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P13F_DELETE_CURRENT_APPEND_GCI_JSON.json",
+    "append:.github/workflows/governance-validation-ci.yml",
+    "append:governance/AGENT_CONTEXT.md",
+    "delete_line:.github/workflows/governance-validation-ci.yml"
+  ],
+  "changed_files": [
+    "governance/state/P13F_DELETE_CURRENT_APPEND_GCI_JSON.json",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/AGENT_CONTEXT.md",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/codex/proofs/p13f_delete_current_append_gci_json.txt"
+  ],
+  "commit_sha": "9f542253ceff0d03b4ae9d6bb0c4c48bea3c199c",
+  "blocker": null,
+  "report_path": "governance/codex/results/p13f_delete_current_append_gci_json.md",
+  "completed_at": "2026-06-04T09:18:42Z"
+}
