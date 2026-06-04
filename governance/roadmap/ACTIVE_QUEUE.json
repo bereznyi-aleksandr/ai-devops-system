@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T16:01:00Z",
+  "updated_at": "2026-06-04T16:03:00Z",
   "source": "Claude External Audit — GATE-3 PASS, Gates 4-6 waiting operator",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -27,7 +27,7 @@
     {
       "id": "GATE-4",
       "title": "Production Telegram receipt",
-      "status": "IN_PROGRESS",
+      "status": "WAITING_TELEGRAM_RECEIPT",
       "priority": 1,
       "detail": "Требуется реальный Telegram receipt от бота оператора. GPT не может выполнить без operator action.",
       "blocked_for_gpt": true,
@@ -35,7 +35,10 @@
       "bot_username": "@BarberStaffBot",
       "operator_screenshot_received": true,
       "proof_status": "identity_known_response_not_yet_recorded",
-      "updated_at": "2026-06-04T16:01:00Z"
+      "updated_at": "2026-06-04T16:01:00Z",
+      "identity_evidence_sha": "f4890faa002f8755c6f7803c097d157560d96af6",
+      "gate_pass": false,
+      "next_required_evidence": "real Telegram message receipt/response proof"
     },
     {
       "id": "GATE-5",
@@ -58,6 +61,6 @@
       ]
     }
   ],
-  "queue_state": "HAS_PENDING_OPERATOR_RECEIPT",
-  "next_action": "record Telegram response receipt when available; do not mark Gate 4 PASS from bot profile screenshot alone"
+  "queue_state": "WAITING_TELEGRAM_RECEIPT",
+  "next_action": "operator or live Telegram integration must provide message response receipt; GPT must not mark PASS from profile screenshot"
 }
