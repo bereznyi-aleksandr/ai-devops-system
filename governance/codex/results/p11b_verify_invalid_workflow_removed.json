@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p11b_verify_invalid_workflow_removed",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P11B_VERIFY_INVALID_WORKFLOW_REMOVED.json",
+    "create:governance/reports/P11B_VERIFY_INVALID_WORKFLOW_REMOVED.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P11B_VERIFY_INVALID_WORKFLOW_REMOVED.json",
+    "governance/reports/P11B_VERIFY_INVALID_WORKFLOW_REMOVED.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p11b_verify_invalid_workflow_removed.txt"
+  ],
+  "commit_sha": "04abf50caad4436bbba7e6c3c40b106cf525e8a9",
+  "blocker": null,
+  "report_path": "governance/codex/results/p11b_verify_invalid_workflow_removed.md",
+  "completed_at": "2026-06-04T07:53:06Z"
+}
