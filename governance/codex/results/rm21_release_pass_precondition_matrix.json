@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm21_release_pass_precondition_matrix",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/RM21_RELEASE_PASS_PRECONDITION_MATRIX.json",
+    "create:governance/audit/RELEASE_PASS_PRECONDITION_MATRIX.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/RM21_RELEASE_PASS_PRECONDITION_MATRIX.json",
+    "governance/audit/RELEASE_PASS_PRECONDITION_MATRIX.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/rm21_release_pass_precondition_matrix.txt"
+  ],
+  "commit_sha": "bbb3a3236b6a68ceed417b8666d8183778966982",
+  "blocker": null,
+  "report_path": "governance/codex/results/rm21_release_pass_precondition_matrix.md",
+  "completed_at": "2026-06-04T04:39:08Z"
+}
