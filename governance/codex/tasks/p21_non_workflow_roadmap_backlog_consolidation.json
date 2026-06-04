@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p21_non_workflow_roadmap_backlog_consolidation",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P21 non-workflow backlog",
+  "objective": "Create file governance/roadmap/NON_WORKFLOW_BACKLOG_2026-06-04.md with content # Non-workflow roadmap backlog | 2026-06-04\n\n## Locked area\n`.github/workflows/*.yml` is locked for GPT executor. Workflow tasks require Claude handoff through audit mailbox.\n\n## Completed recent chain\n- P15/P15B/P15C: codex-task commit_sha response evidence.\n- P16/P16B: AGENT_CONTEXT autoupdate hardening.\n- P17/P17B: anti-stop guard.\n- P18/P18B: roadmap cursor snapshot and validation.\n- P19/P19B/P19C/P19D: curator AGENT_CONTEXT autoupdate specification.\n- P20/P20B: next roadmap discovery and validation.\n\n## Next non-workflow backlog\n1. P21B validate non-workflow backlog consolidation.\n2. P22 create consolidated governance contour status report.\n3. P23 prepare handoff-safe next-session context without touching workflows.\nCreate file governance/state/P21_NON_WORKFLOW_ROADMAP_BACKLOG_CONSOLIDATION.json with content {\"id\":\"P21\",\"trace_id\":\"p21_non_workflow_roadmap_backlog_consolidation\",\"status\":\"completed\",\"release_pass\":false,\"workflow_files_touched\":false,\"previous_step\":{\"id\":\"P20B\",\"sha\":\"b5f5249e45880ebd05971376e3e756110fdfa1df\"},\"next\":\"P21B validate non-workflow backlog consolidation\"}\nCreate file governance/reports/P21_NON_WORKFLOW_ROADMAP_BACKLOG_CONSOLIDATION.md with content # P21 | Non-workflow roadmap backlog consolidation\nStatus: completed\nDate: 2026-06-04\n\nCreated non-workflow backlog after P20B. Workflow lock respected; no `.github/workflows/*.yml` files touched.\n\nNext: P21B validate non-workflow backlog consolidation.\nAppend to governance/AGENT_CONTEXT.md: \n## P21 completed | 2026-06-04\nNon-workflow roadmap backlog consolidated at governance/roadmap/NON_WORKFLOW_BACKLOG_2026-06-04.md. Workflow lock respected: no .github/workflows files touched. Next: P21B validate non-workflow backlog consolidation.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p21_non_workflow_roadmap_backlog_consolidation.md",
+    "result_json": "governance/codex/results/p21_non_workflow_roadmap_backlog_consolidation.json"
+  },
+  "created_at": "2026-06-04T10:26:27.370Z"
+}
