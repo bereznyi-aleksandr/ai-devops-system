@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:32:00Z",
+  "updated_at": "2026-06-04T15:34:00Z",
   "source": "Claude External Audit — KZ-2 and KZ-4 CLOSED",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -25,7 +25,9 @@
       "example_objective": "Run script:\n\"\"\"\nimport json\nfrom pathlib import Path\n\nloop_code = '''#!/usr/bin/env python3\nimport json\n\ndef run_minimal_loop(input_task):\n    trace = {\n        \"input\": input_task,\n        \"steps\": [\n            {\"role\": \"analyst\", \"action\": \"propose\", \"result\": \"proposal_ok\"},\n            {\"role\": \"auditor\", \"action\": \"review\", \"result\": \"approved\"},\n            {\"role\": \"executor\", \"action\": \"execute\", \"result\": \"executed\"},\n            {\"role\": \"auditor\", \"action\": \"verify\", \"result\": \"verified\"}\n        ],\n        \"status\": \"completed\",\n        \"release_pass\": False\n    }\n    return trace\n\ndef main():\n    task = {\"id\": \"GATE2-TEST\", \"title\": \"minimal loop smoke test\"}\n    result = run_minimal_loop(task)\n    print(json.dumps(result, indent=2))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n'''\n\np = Path('governance/runtime/minimal_governance_loop_runner.py')\np.write_text(loop_code)\nchanged_files.append(str(p))\nassert len(p.read_bytes()) > 100\nimport ast; ast.parse(p.read_text())\n\"\"\"\nNo issue comments.",
       "proof_required": "governance/runtime/minimal_governance_loop_runner.py > 100 байт, ast.parse OK, содержит run_minimal_loop и def main",
       "sha": "85b6c437bc372ab18c575ea30ab2015b882dcf5e",
-      "completed_at": "2026-06-04T15:30:00Z"
+      "completed_at": "2026-06-04T15:33:07Z",
+      "runtime_sha": "5dcb26cdbb36c21ccd9df7f6e1d9769406ad5c94",
+      "runtime_runner": "governance/runtime/minimal_governance_loop_runner.py"
     }
   ],
   "queue_state": "EMPTY_NO_PENDING_TASKS",
