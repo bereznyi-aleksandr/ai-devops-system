@@ -1,0 +1,21 @@
+{
+  "id": "KZ-4",
+  "trace_id": "kz4_ssot_post_cleanup_validation",
+  "status": "blocked",
+  "release_pass": false,
+  "kz2_status_exists": true,
+  "kz2_all_valid": true,
+  "active_duplicate_group_count": 2,
+  "active_duplicates": {
+    "kz2_ssots_inventory": [
+      "governance/state/KZ2_SSOT_DUPLICATES_INVENTORY.json",
+      "governance/reports/KZ2_SSOT_DUPLICATES_INVENTORY.md"
+    ],
+    "kz2_eliminate_ssots": [
+      "governance/state/KZ2_ELIMINATE_SSOT_DUPLICATES.json",
+      "governance/reports/KZ2_ELIMINATE_SSOT_DUPLICATES.md"
+    ]
+  },
+  "workflow_files_touched": false,
+  "next": "KZ-2 repair active duplicates"
+}

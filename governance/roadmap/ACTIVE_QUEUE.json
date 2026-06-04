@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T15:06:00Z",
+  "updated_at": "2026-06-04T15:07:00Z",
   "source": "Claude External Audit — RM-05 CLOSED, KZ-2 and KZ-4 next",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -36,7 +36,7 @@
     {
       "id": "KZ-4",
       "title": "Восстановить object_passports.json и release_proof_manifest.json",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 3,
       "depends_on": [
         "KZ-2"
