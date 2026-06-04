@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12d_restore_minimal_valid_workflow_placeholder",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:.github/workflows/governance-validation-ci.yml",
+    "create:governance/state/P12D_RESTORE_MINIMAL_VALID_WORKFLOW_PLACEHOLDER.json",
+    "create:governance/reports/P12D_RESTORE_MINIMAL_VALID_WORKFLOW_PLACEHOLDER.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/state/P12D_RESTORE_MINIMAL_VALID_WORKFLOW_PLACEHOLDER.json",
+    "governance/reports/P12D_RESTORE_MINIMAL_VALID_WORKFLOW_PLACEHOLDER.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p12d_restore_minimal_valid_workflow_placeholder.txt"
+  ],
+  "commit_sha": "9890b21ed5f2305aabad630f0f8356b0026308d4",
+  "blocker": null,
+  "report_path": "governance/codex/results/p12d_restore_minimal_valid_workflow_placeholder.md",
+  "completed_at": "2026-06-04T08:01:08Z"
+}
