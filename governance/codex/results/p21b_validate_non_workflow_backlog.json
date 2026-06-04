@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p21b_validate_non_workflow_backlog",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P21B_VALIDATE_NON_WORKFLOW_BACKLOG.json",
+    "create:governance/reports/P21B_VALIDATE_NON_WORKFLOW_BACKLOG.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P21B_VALIDATE_NON_WORKFLOW_BACKLOG.json",
+    "governance/reports/P21B_VALIDATE_NON_WORKFLOW_BACKLOG.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p21b_validate_non_workflow_backlog.txt"
+  ],
+  "commit_sha": "88314f1faa4fc3e32a06aca21205714d6cb7512d",
+  "blocker": null,
+  "report_path": "governance/codex/results/p21b_validate_non_workflow_backlog.md",
+  "completed_at": "2026-06-04T10:27:20Z"
+}
