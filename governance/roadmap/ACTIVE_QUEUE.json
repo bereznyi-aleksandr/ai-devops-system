@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T11:38:00Z",
+  "updated_at": "2026-06-04T11:39:00Z",
   "source": "Updated Roadmap / Claude audit pre-KZ-1 block",
   "max_active_tasks": 7,
   "policy": {
@@ -67,7 +67,7 @@
     {
       "id": "RM-05",
       "title": "KZ-1 runners skeleton repair",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 5,
       "depends_on": [
         "RM-01",
@@ -76,7 +76,11 @@
         "RM-04"
       ],
       "criteria": "KZ-1 starts only after RM-01..RM-04 are DONE",
-      "touch_workflows": false
+      "touch_workflows": false,
+      "sha": "a645ffcc415722d8224dd9247d7130eb604031cf",
+      "completed_at": "2026-06-04T11:35:01Z"
     }
-  ]
+  ],
+  "queue_state": "EMPTY_NO_PENDING_TASKS",
+  "next_action": "await operator or Claude to add next tasks; do not invent tasks"
 }
