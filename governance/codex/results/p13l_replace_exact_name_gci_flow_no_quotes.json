@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13l_replace_exact_name_gci_flow_no_quotes",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P13L_REPLACE_EXACT_NAME_GCI_FLOW_NO_QUOTES.json",
+    "append:governance/AGENT_CONTEXT.md",
+    "replace_line:.github/workflows/governance-validation-ci.yml"
+  ],
+  "changed_files": [
+    "governance/state/P13L_REPLACE_EXACT_NAME_GCI_FLOW_NO_QUOTES.json",
+    "governance/AGENT_CONTEXT.md",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/codex/proofs/p13l_replace_exact_name_gci_flow_no_quotes.txt"
+  ],
+  "commit_sha": "14f4a1a10b3dfca8a86eacf33f5eb5ba51e1c963",
+  "blocker": null,
+  "report_path": "governance/codex/results/p13l_replace_exact_name_gci_flow_no_quotes.md",
+  "completed_at": "2026-06-04T09:24:40Z"
+}
