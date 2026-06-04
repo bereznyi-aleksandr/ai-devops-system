@@ -1639,3 +1639,5 @@ Line-patched
 ## P12I completed | 2026-06-04
 ## P12J completed | 2026-06-04
 Executor limitation diagnosed for active workflow repair
+## P12M completed | 2026-06-04
+Recorded Claude MCP direct workflow fix SHA 3f13b16e03eec5ff6ce39c3420685fac3c7305cb and re

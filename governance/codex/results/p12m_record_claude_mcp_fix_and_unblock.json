@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12m_record_claude_mcp_fix_and_unblock",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P12M_RECORD_CLAUDE_MCP_FIX_AND_UNBLOCK.json",
+    "create:governance/reports/P12M_RECORD_CLAUDE_MCP_FIX_AND_UNBLOCK.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P12M_RECORD_CLAUDE_MCP_FIX_AND_UNBLOCK.json",
+    "governance/reports/P12M_RECORD_CLAUDE_MCP_FIX_AND_UNBLOCK.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p12m_record_claude_mcp_fix_and_unblock.txt"
+  ],
+  "commit_sha": "68918e26d3d57b170b0684148c5abcd65ad3b06a",
+  "blocker": null,
+  "report_path": "governance/codex/results/p12m_record_claude_mcp_fix_and_unblock.md",
+  "completed_at": "2026-06-04T08:27:58Z"
+}
