@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p27_real_roadmap_execution_audit",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "P27 real roadmap audit",
+  "objective": "Run script:\n\"\"\"\nstate_dir = Path('governance/state')\nreport_dir = Path('governance/reports')\nqueue_path = Path('governance/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8')) if queue_path.exists() else {'tasks': []}\nrecent_ids = ['P14','KZ-1','KZ-1B','KZ-2','KZ-3','KZ-4','P15','P15B','P15C','P16','P16B','P17','P17B','P18','P18B','P19','P19B','P19C','P19D','P20','P20B','P21','P21B','P22','P22B','P23','P23B','P24','P24B','P25','P25B','P26','P26B']\nstate_files = [str(p) for p in state_dir.glob('*.json')]\nreport_files = [str(p) for p in report_dir.glob('*.md')]\ncoverage = []\nfor rid in recent_ids:\n    token = rid.replace('-', '').upper()\n    has_state = any(token in Path(p).name.replace('-', '').upper() for p in state_files)\n    has_report = any(token in Path(p).name.replace('-', '').upper() for p in report_files)\n    coverage.append({'id': rid, 'state': has_state, 'report': has_report})\nmissing = [x for x in coverage if not x['state'] or not x['report']]\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'P26B':\n        task['status'] = 'DONE_PENDING_SHA_RECORD'\n    if task.get('id') == 'P27':\n        task['status'] = 'IN_PROGRESS'\nqueue['updated_at'] = '2026-06-04T11:16:00Z'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nstate = Path('governance/state/P27_REAL_ROADMAP_EXECUTION_AUDIT.json')\nstate.write_text(json.dumps({'id':'P27','trace_id':'p27_real_roadmap_execution_audit','status':'completed','release_pass':False,'checked_ids':recent_ids,'coverage':coverage,'missing_or_incomplete':missing,'active_queue_task_count':len(queue.get('tasks', [])),'workflow_files_touched':False,'next':'P27B record P27 result in ACTIVE_QUEUE and execution_log'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/P27_REAL_ROADMAP_EXECUTION_AUDIT.md')\nreport.write_text('# P27 | Real roadmap execution audit\\nStatus: completed\\nDate: 2026-06-04\\n\\n## Scope\\nChecked recent P/KZ chain for state/report parity and ACTIVE_QUEUE status.\\n\\n## Missing or incomplete\\n' + json.dumps(missing, ensure_ascii=False, indent=2) + '\\n\\n## Queue tasks\\n' + json.dumps(queue.get('tasks', []), ensure_ascii=False, indent=2) + '\\n\\nWorkflow lock respected; no .github/workflows files touched.\\n\\nNext: P27B record P27 result in ACTIVE_QUEUE and execution_log.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p27_real_roadmap_execution_audit.md",
+    "result_json": "governance/codex/results/p27_real_roadmap_execution_audit.json"
+  },
+  "created_at": "2026-06-04T11:15:27.334Z"
+}
