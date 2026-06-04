@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04c_current_workflow_repair_notice",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM04C current workflow repair notice",
+  "objective": "Create file governance/reports/RM04C_CURRENT_WORKFLOW_REPAIR_NOTICE.md with content # RM04C | Current workflow repair notice\nStatus: completed\nDate: 2026-06-04\n\n## Operator screenshot finding\nGitHub Actions UI still shows old run failures for commits before the repair, including RM02 commit 429b86945a053c89e421abb345e00f6ee6d33780. That run used the broken .github/workflows/governance-validation-ci.yml content from that commit and remains failed historically.\n\n## Current correction\nRM04 repair SHA 212dc1ac70c21b4125f9d94c5401b54097997100 rewrote the active workflow as single-line JSON/YAML flow mapping to avoid executor multiline YAML corruption. RM04B SHA 2ca18d50a2cb9b545e760a05a77d99ab8d4fdc07 recorded the verification evidence. RM03B SHA dd82d753580e86ab11e5d67fba298a88c2bc067f superseded the premature RM03 evidence pack.\n\n## Rule\nOld failed GitHub Actions runs are not overwritten by later commits. Current validity must be judged from the latest workflow file after RM04/RM04B, not from historical RM02 run UI.\n\n## Next\nRun the next governance contour phase from AGENT_CONTEXT.md and keep release evidence SHA-backed.\nCreate file governance/state/RM04C_CURRENT_WORKFLOW_REPAIR_NOTICE.json with content {\"id\":\"RM04C\",\"trace_id\":\"rm04c_current_workflow_repair_notice\",\"status\":\"completed\",\"release_pass\":true,\"old_failed_run\":\"RM02 commit 429b86945a053c89e421abb345e00f6ee6d33780 remains historical failure\",\"current_repair_chain\":[{\"id\":\"RM04\",\"sha\":\"212dc1ac70c21b4125f9d94c5401b54097997100\"},{\"id\":\"RM04B\",\"sha\":\"2ca18d50a2cb9b545e760a05a77d99ab8d4fdc07\"},{\"id\":\"RM03B\",\"sha\":\"dd82d753580e86ab11e5d67fba298a88c2bc067f\"}],\"next\":\"continue next governance contour phase from AGENT_CONTEXT.md\"}\nAppend to governance/AGENT_CONTEXT.md: \n## RM04C completed | 2026-06-04\nRecorded current workflow repair notice: old GitHub Actions failures for RM02 remain historical and do not reflect latest RM04/RM04B/RM03B repair chain. Next: continue next governance contour phase from AGENT_CONTEXT.md.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm04c_current_workflow_repair_notice.md",
+    "result_json": "governance/codex/results/rm04c_current_workflow_repair_notice.json"
+  },
+  "created_at": "2026-06-04T07:38:05.821Z"
+}
