@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13e_replace_current_line_json_workflow",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P13E_REPLACE_CURRENT_LINE_JSON_WORKFLOW.json",
+    "append:governance/AGENT_CONTEXT.md",
+    "replace_line:.github/workflows/governance-validation-ci.yml"
+  ],
+  "changed_files": [
+    "governance/state/P13E_REPLACE_CURRENT_LINE_JSON_WORKFLOW.json",
+    "governance/AGENT_CONTEXT.md",
+    ".github/workflows/governance-validation-ci.yml",
+    "governance/codex/proofs/p13e_replace_current_line_json_workflow.txt"
+  ],
+  "commit_sha": "a0fb4d2187fa5eedc47cf14e28c2efc4e11cec8c",
+  "blocker": null,
+  "report_path": "governance/codex/results/p13e_replace_current_line_json_workflow.md",
+  "completed_at": "2026-06-04T09:17:53Z"
+}
