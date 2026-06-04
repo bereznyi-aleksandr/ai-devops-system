@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "gate2_prep_executor_blocker_claude_handoff",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "GATE-2-PREP Claude handoff",
+  "objective": "Create file governance/audit_mailbox/gpt_to_claude/GATE2_PREP_RUNTIME_DIRECT_FIX_REQUEST.md with content # GATE-2-PREP direct fix request\nStatus: BLOCKED_FOR_GPT_EXECUTOR\nDate: 2026-06-04\n\nGPT/Deno executor cannot safely restore governance/runtime/minimal_governance_loop_runner.py. Move left an ARCHIVED marker at the active path; Create file does not overwrite it; Run script reports changed_files but raw commit still contains the ARCHIVED marker. Current path must be repaired by Claude MCP direct write.\n\nRequired content: valid runnable Python file at governance/runtime/minimal_governance_loop_runner.py. It must expose run_minimal_loop(input_task), def main(), deterministic trace id gate2_minimal_loop_trace_v1 or later, and local execution should print JSON trace and exit 0. No .github/workflows files.\n\nBad GPT attempts: gate2_prep_minimal_loop_runner_repair 85b6c437bc372ab18c575ea30ab2015b882dcf5e; gate2_prep_runtime_path_repair 5dcb26cdbb36c21ccd9df7f6e1d9769406ad5c94; gate2_prep_runtime_move_create_repair 67ebf42780fa1d120fbc5b328237cb5e4ecfaf4c; gate2_prep_runtime_lambda_runner 7e60ae18f025edb869512ce67bb2bb391341f4fd.\nCreate file governance/state/GATE2_PREP_EXECUTOR_BLOCKER_CLAUDE_HANDOFF.json with content {\"id\":\"GATE-2-PREP\",\"trace_id\":\"gate2_prep_executor_blocker_claude_handoff\",\"status\":\"blocked\",\"release_pass\":false,\"blocker\":\"GPT/Deno executor cannot overwrite governance/runtime/minimal_governance_loop_runner.py after Move left ARCHIVED marker; raw commit still shows archived marker despite Run script changed_files\",\"handoff\":\"governance/audit_mailbox/gpt_to_claude/GATE2_PREP_RUNTIME_DIRECT_FIX_REQUEST.md\",\"workflow_files_touched\":false,\"next\":\"Claude MCP direct repair for governance/runtime/minimal_governance_loop_runner.py\"}\nCreate file governance/reports/GATE2_PREP_EXECUTOR_BLOCKER_CLAUDE_HANDOFF.md with content # GATE-2-PREP | Executor blocker and Claude handoff\nStatus: blocked\nDate: 2026-06-04\n\nGPT/Deno executor cannot safely restore governance/runtime/minimal_governance_loop_runner.py. Raw verification after latest attempt still shows ARCHIVED marker at active runtime path. Created Claude direct-fix request in governance/audit_mailbox/gpt_to_claude/GATE2_PREP_RUNTIME_DIRECT_FIX_REQUEST.md. Workflow lock respected.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/gate2_prep_executor_blocker_claude_handoff.md",
+    "result_json": "governance/codex/results/gate2_prep_executor_blocker_claude_handoff.json"
+  },
+  "created_at": "2026-06-04T15:39:26.683Z"
+}
