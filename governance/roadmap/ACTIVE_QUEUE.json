@@ -1,67 +1,74 @@
 {
-  "version": "2.0",
-  "description": "Единственный источник текущих задач. GPT читает этот файл чтобы найти следующий шаг. Максимум 7 задач одновременно.",
-  "updated": "2026-06-04",
-  "rules": {
-    "max_tasks": 7,
-    "status_values": ["PENDING", "IN_PROGRESS", "BLOCKED", "DONE"],
-    "done_cleanup": "Удалять DONE задачи через 24 часа или переносить в governance/logs/completed_tasks.jsonl",
-    "add_task": "Только оператор, Claude-аудитор или GPT если queue < 5 задач и задача из roadmap",
-    "update_method": "Set field queue[N].status=VALUE — НЕ дописывать новые объекты в конец"
+  "version": 2,
+  "updated_at": "2026-06-04T11:30:00Z",
+  "source": "Updated Roadmap / Claude audit pre-KZ-1 block",
+  "max_active_tasks": 7,
+  "policy": {
+    "source_of_next_task": "first task with status PENDING in governance/roadmap/ACTIVE_QUEUE.json",
+    "workflow_yml_locked_for_gpt": true,
+    "do_not_invent_tasks_when_empty": true,
+    "write_execution_log_after_status": true,
+    "deprecated_duplicate_queue": "governance/ACTIVE_QUEUE.json was used by GPT in P26-P28 and must not be the canonical queue"
   },
-  "queue": [
+  "tasks": [
     {
-      "id": "KZ-1",
-      "title": "Восстановить runners до STUB_RUNNABLE",
-      "status": "IN_PROGRESS",
+      "id": "RM-01",
+      "title": "Отозвать ложный PASS из BEM1284_MINIMAL_GOVERNANCE_LOOP_GATE2.md",
+      "status": "PENDING",
       "priority": 1,
-      "detail": "governance/runners/*.py — каждый файл: def main() + stub return + if __name__=='__main__': main(). После записи проверить ast.parse.",
-      "blocked_by": null,
-      "proof_required": "governance/state/kz1_runners_status.json с полем all_valid=true"
+      "depends_on": [],
+      "criteria": "False PASS revoked in gate report/state; release_pass=false until evidence is corrected",
+      "touch_workflows": false
     },
     {
-      "id": "KZ-2",
-      "title": "Устранить 8 SSOT-дублей",
-      "status": "PENDING",
+      "id": "RM-02",
+      "title": "Fail-closed для усечённых .py (len < 50 байт → BLOCKED)",
+      "status": "WAITING_DEPENDS",
       "priority": 2,
-      "detail": "Canonical paths в governance/state/. Дубли переместить в governance/archive/ssot_duplicates_2026-06-04/. Список дублей: contours_registry, object_passports, providers_registry, contour_provider_policy, provider_failover_policy, managed_channel_schema, telegram_input_envelope_schema, telegram_to_managed_channel_mapping.",
-      "blocked_by": null,
-      "proof_required": "governance/state/kz2_ssot_status.json с полем duplicates_remaining=0"
+      "depends_on": [
+        "RM-01"
+      ],
+      "criteria": "Python runner/file validation blocks truncated .py files shorter than 50 bytes",
+      "touch_workflows": false
     },
     {
-      "id": "KZ-3",
-      "title": "Архивировать governance/codex/ старше 30 дней",
-      "status": "PENDING",
+      "id": "RM-03",
+      "title": "ast.parse gate перед фиксацией STUB_RUNNABLE",
+      "status": "WAITING_DEPENDS",
       "priority": 3,
-      "detail": "Переместить governance/codex/proofs/* и governance/codex/results/* файлы старше 2026-05-05 в governance/archive/codex_2026-06-04/.",
-      "blocked_by": "KZ-1",
-      "proof_required": "governance/state/kz3_codex_archive_status.json с полем archived=true"
+      "depends_on": [
+        "RM-01",
+        "RM-02"
+      ],
+      "criteria": "STUB_RUNNABLE can be recorded only after ast.parse succeeds",
+      "touch_workflows": false
     },
     {
-      "id": "KZ-4",
-      "title": "Восстановить object_passports.json и release_proof_manifest.json",
-      "status": "PENDING",
+      "id": "RM-04",
+      "title": "Консистентность PASS/диагноза",
+      "status": "WAITING_DEPENDS",
       "priority": 4,
-      "detail": "Оба файла усечены. governance/objects/object_passports.json — паспорта GD/DIR/WRK. governance/release/release_proof_manifest.json — все обязательные поля.",
-      "blocked_by": "KZ-2",
-      "proof_required": "governance/state/kz4_passports_status.json с полем restored=true"
-    }
-  ],
-  "operator_gate": [
-    {
-      "id": "GATE-4",
-      "title": "Production Telegram receipt",
-      "status": "WAITING_OPERATOR"
+      "depends_on": [
+        "RM-01",
+        "RM-02",
+        "RM-03"
+      ],
+      "criteria": "PASS state and diagnostic reports are consistent and SHA-backed",
+      "touch_workflows": false
     },
     {
-      "id": "GATE-5",
-      "title": "Live LLM runtime receipt",
-      "status": "WAITING_OPERATOR"
-    },
-    {
-      "id": "GATE-6",
-      "title": "External Claude audit receipt",
-      "status": "WAITING_CLAUDE"
+      "id": "RM-05",
+      "title": "KZ-1 runners skeleton repair",
+      "status": "WAITING_DEPENDS",
+      "priority": 5,
+      "depends_on": [
+        "RM-01",
+        "RM-02",
+        "RM-03",
+        "RM-04"
+      ],
+      "criteria": "KZ-1 starts only after RM-01..RM-04 are DONE",
+      "touch_workflows": false
     }
   ]
 }
