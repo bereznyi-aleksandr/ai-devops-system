@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm12_final_no_pass_lock_record",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM12 no-pass lock",
+  "objective": "Create file governance/state/RM12_FINAL_NO_PASS_LOCK_RECORD.json with content {\"created_at_utc3\":\"2026-06-04 | 06:24 (UTC+3)\",\"release_pass\":false,\"lock_reason\":\"Release PASS is forbidden until real Gate 4/5/6 receipts exist, validate_release_gates.py succeeds, and external Claude audit result is present.\",\"required_files\":[\"governance/proofs/external/telegram/production_receipt.json\",\"governance/proofs/external/runtime/live_runtime_receipt.json\",\"governance/proofs/external/claude/external_claude_audit_result.json\"],\"validators\":[\"governance/validators/validate_release_gates.py\",\"governance/validators/validate_no_fake_release_pass.py\",\"governance/validators/validate_no_fake_proof_guard.py\"],\"latest_audit_packet_sha\":\"d656fe49a463e236bf4f221528242e2a8798ca7e\",\"next_action\":\"RM13 final operator/current-status marker\"}\nCreate file governance/audit/FINAL_NO_PASS_LOCK_RECORD.md with content # Final no-pass lock record\n\nCreated: 2026-06-04 | 06:24 (UTC+3)\nRelease PASS: false\n\nRelease PASS remains locked until real Gate 4, Gate 5 and Gate 6 receipts exist and validators pass.\n\nLatest audit packet SHA: d656fe49a463e236bf4f221528242e2a8798ca7e.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM12 | FINAL NO-PASS LOCK RECORD | 2026-06-04 | 06:24 (UTC+3)\n- Created final no-pass lock record tied to missing real Gate 4/5/6 receipts.\n- No Release PASS. Next action: RM13 final operator/current-status marker.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm12_final_no_pass_lock_record.md",
+    "result_json": "governance/codex/results/rm12_final_no_pass_lock_record.json"
+  },
+  "created_at": "2026-06-04T04:19:57.938Z"
+}
