@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_static_inventory_blocker_closure",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/TZ2_STATIC_INVENTORY_BLOCKER_CLOSURE.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/TZ2_STATIC_INVENTORY_BLOCKER_CLOSURE.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz2_static_inventory_blocker_closure.txt"
+  ],
+  "commit_sha": "a26b7eb7a5d4cb7a536c2c5991baaf5c84a68ddc",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz2_static_inventory_blocker_closure.md",
+  "completed_at": "2026-06-04T03:41:19Z"
+}

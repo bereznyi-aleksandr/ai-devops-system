@@ -1539,3 +1539,5 @@ No issue comments.
 ### RM00 | INVENTORY CAPABILITY REPAIR | 2026-06-04 | 06:05 (UTC+3)
 - Added inventory capability contract for TZ2 duplicate path discovery without exec()
 ### TZ2 |
+### TZ2 | STATIC INVENTORY BLOCKER CLOSURE | 2026-06-04 | 06:07 (UTC+3)
+- Closed current TZ2 inventory attempt as blocked by executor import restrictions
