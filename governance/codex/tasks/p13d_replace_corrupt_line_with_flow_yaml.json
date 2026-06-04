@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p13d_replace_corrupt_line_with_flow_yaml",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P13D replace corrupt line",
+  "objective": "Replace in .github/workflows/governance-validation-ci.yml line containing 'Previous content was corrupted' with '{name: Governance-Validation-CI, \"on\": {workflow_dispatch: {}}, jobs: {disabled: {runs-on: ubuntu-latest, steps: [{run: echo disabled}]}}}'\nCreate file governance/state/P13D_REPLACE_CORRUPT_LINE_WITH_FLOW_YAML.json with content {\"id\":\"P13D\",\"trace_id\":\"p13d_replace_corrupt_line_with_flow_yaml\",\"status\":\"completed\",\"release_pass\":false,\"change\":\"replaced current corrupted one-line workflow with single-line flow YAML using quoted on key\",\"next\":\"P13E remote raw verification\"}\nAppend to governance/AGENT_CONTEXT.md: \n## P13D completed | 2026-06-04\nReplaced corrupted one-line governance workflow with single-line flow YAML using quoted on key. Release PASS false pending remote raw verification. Next: P13E remote raw verification.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p13d_replace_corrupt_line_with_flow_yaml.md",
+    "result_json": "governance/codex/results/p13d_replace_corrupt_line_with_flow_yaml.json"
+  },
+  "created_at": "2026-06-04T09:17:02.173Z"
+}
