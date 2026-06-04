@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm03_release_gate_evidence_pack",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM03 release evidence pack",
+  "objective": "Create file governance/reports/RM03_RELEASE_GATE_EVIDENCE_PACK.md with content # RM03 | Release gate evidence pack\n\nStatus: completed\nDate: 2026-06-04\n\n## Evidence chain\n\n| Step | Status | SHA | Evidence |\n|---|---|---|---|\n| RM00F4 | completed | c860e31a781c053e3024316ea2a0fcf74353ab26 | Active problematic workflow moved out of active path. |\n| RM00F5 | completed | 17ddb54dc858c0991565c0919371fbe06e07dd93 | Active workflow removal verification artifacts created. |\n| RM00F6 | completed | 0ad59153a727f34befea0c2b9002aebfd9f13ae0 | Active workflow YAML placeholder repaired. |\n| RM00F7 | completed | e9914234f0d47f93ade331588bfbbc57b2941dc4 | Roadmap status and remediation report created. |\n| RM00F8 | completed | 1d2bae650691e4a960a3276181cb97fc6c72480b | Workflow parse-clean evidence recorded. |\n| RM00F9 | completed | 96ba884a556e36e441d3aa92fd3e6449f39ba03d | Disabled workflows inventory recorded. |\n| RM01 | completed | 1e48d369bb3f0b3864d9a8ac4080957d24638168 | Governance validation contract restored. |\n| RM02 | completed | 429b86945a053c89e421abb345e00f6ee6d33780 | Runner skeleton repaired. |\n\n## Gate decision\nGovernance contour roadmap evidence pack is PASS for the RM00F4-RM03 scope. PASS is backed by the RM03 commit SHA and the listed upstream SHA chain.\n\n## Remaining caution\nThis evidence pack does not authorize paid APIs, secrets exposure, or issue comments. Future roadmap changes must keep Deno/Codex autonomous write-channel and fail-closed validation.\nCreate file governance/state/RM03_RELEASE_GATE_EVIDENCE_PACK.json with content {\"id\":\"RM03\",\"trace_id\":\"rm03_release_gate_evidence_pack\",\"status\":\"completed\",\"release_pass\":true,\"scope\":\"governance contour roadmap evidence pack RM00F4-RM03\",\"evidence_chain\":[{\"id\":\"RM00F4\",\"sha\":\"c860e31a781c053e3024316ea2a0fcf74353ab26\"},{\"id\":\"RM00F5\",\"sha\":\"17ddb54dc858c0991565c0919371fbe06e07dd93\"},{\"id\":\"RM00F6\",\"sha\":\"0ad59153a727f34befea0c2b9002aebfd9f13ae0\"},{\"id\":\"RM00F7\",\"sha\":\"e9914234f0d47f93ade331588bfbbc57b2941dc4\"},{\"id\":\"RM00F8\",\"sha\":\"1d2bae650691e4a960a3276181cb97fc6c72480b\"},{\"id\":\"RM00F9\",\"sha\":\"96ba884a556e36e441d3aa92fd3e6449f39ba03d\"},{\"id\":\"RM01\",\"sha\":\"1e48d369bb3f0b3864d9a8ac4080957d24638168\"},{\"id\":\"RM02\",\"sha\":\"429b86945a053c89e421abb345e00f6ee6d33780\"}],\"next\":\"continue next roadmap phase from AGENT_CONTEXT.md\"}\nAppend to governance/AGENT_CONTEXT.md: \n## RM03 completed | 2026-06-04\nRelease gate evidence pack completed for governance contour roadmap scope RM00F4-RM03. PASS scope is evidence pack only and is SHA-backed. Next: continue next roadmap phase from AGENT_CONTEXT.md.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm03_release_gate_evidence_pack.md",
+    "result_json": "governance/codex/results/rm03_release_gate_evidence_pack.json"
+  },
+  "created_at": "2026-06-04T07:26:28.112Z"
+}
