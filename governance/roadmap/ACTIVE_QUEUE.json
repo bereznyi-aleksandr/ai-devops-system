@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-06-04T16:22:00Z",
+  "updated_at": "2026-06-04T16:23:00Z",
   "source": "Claude External Audit — replace GitHub Issues with inbox.jsonl",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
@@ -12,7 +12,7 @@
     {
       "id": "GATE-4-FIX-V2",
       "title": "Replace GitHub Issues with inbox.jsonl in deno_webhook.js Telegram handler",
-      "status": "DONE_PENDING_SHA_RECORD",
+      "status": "DONE",
       "priority": 1,
       "touch_workflows": false,
       "audit_note": "Issue #31 had 2500 comment limit. Issue #32 is temporary fix. Real fix: Telegram messages append to governance/telegram/inbox.jsonl instead of GitHub issue comments. No more limits.",
@@ -22,9 +22,24 @@
         "governance/deno_webhook.js",
         "governance/telegram/inbox.jsonl"
       ],
-      "criteria": "Telegram POST handler appends JSONL to governance/telegram/inbox.jsonl using updateFileContents and no longer calls postGitHubComment for operator messages"
+      "criteria": "Telegram POST handler appends JSONL to governance/telegram/inbox.jsonl using updateFileContents and no longer calls postGitHubComment for operator messages",
+      "sha": "8cba218e7a842e7f8baf7d0a145b0e7978a0e93f",
+      "completed_at": "2026-06-04T16:20:09Z",
+      "deploy_required": true,
+      "test_required": true
+    },
+    {
+      "id": "GATE-4-TEST-V2",
+      "title": "Test Telegram inbox receipt after Deno deploy",
+      "status": "WAITING_OPERATOR_TELEGRAM_MESSAGE",
+      "priority": 1,
+      "depends_on": [
+        "GATE-4-FIX-V2"
+      ],
+      "criteria": "Operator sends Telegram message; bot responds inbox success; governance/telegram/inbox.jsonl contains appended JSON line",
+      "touch_workflows": false
     }
   ],
-  "queue_state": "GATE4_FIX_V2_PENDING_SHA_RECORD",
-  "next_action": "record GATE-4-FIX-V2 result, then deploy/test Telegram receipt"
+  "queue_state": "WAITING_OPERATOR_TELEGRAM_MESSAGE",
+  "next_action": "after Deno Deploy picks up patch, operator sends test message to @BarberStaffBot"
 }
