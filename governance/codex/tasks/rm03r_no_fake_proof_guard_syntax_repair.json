@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm03r_no_fake_proof_guard_syntax_repair",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM03R guard syntax repair",
+  "objective": "Create file governance/validators/validate_no_fake_proof_guard.py with content #!/usr/bin/env python3\nimport json\nfrom pathlib import Path\n\nSCAN_DIRS = [Path(\"governance/proofs/external\"), Path(\"governance/state\")]\n\ndef main() -> int:\n    violations = []\n    for base in SCAN_DIRS:\n        if not base.exists():\n            continue\n        for path in base.rglob(\"*.json\"):\n            text = path.read_text(encoding=\"utf-8\", errors=\"replace\")\n            lowered = text.lower().replace(\" \", \"\")\n            if \"release_pass:true\" in lowered or \"\\\"release_pass\\\":true\" in lowered:\n                violations.append(str(path))\n            if \"fakereceipt\" in lowered or \"placeholderreceipt\" in lowered or \"self-issuedexternalauditpass\" in lowered:\n                violations.append(str(path))\n    result = {\"status\":\"ok\" if not violations else \"blocked_fake_proof_markers\", \"violations\": sorted(set(violations)), \"release_pass\": False}\n    print(json.dumps(result, ensure_ascii=False))\n    return 0 if not violations else 2\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM03R | NO FAKE PROOF GUARD SYNTAX REPAIR | 2026-06-04 | 06:15 (UTC+3)\n- Rewrote no-fake-proof guard as syntax-safe Python.\n- No Release PASS. Next action: RM04 validator suite manifest.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm03r_no_fake_proof_guard_syntax_repair.md",
+    "result_json": "governance/codex/results/rm03r_no_fake_proof_guard_syntax_repair.json"
+  },
+  "created_at": "2026-06-04T03:59:29.982Z"
+}
