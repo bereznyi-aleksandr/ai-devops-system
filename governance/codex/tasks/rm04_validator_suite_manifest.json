@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm04_validator_suite_manifest",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM04 validator suite manifest",
+  "objective": "Create file governance/state/VALIDATOR_SUITE_MANIFEST.json with content {\"created_at_utc3\":\"2026-06-04 | 06:16 (UTC+3)\",\"release_pass\":false,\"validators\":[\"governance/validators/validate_readiness_levels.py\",\"governance/validators/validate_pass_sources.py\",\"governance/validators/validate_ssot_canonical_paths.py\",\"governance/validators/validate_release_gates.py\",\"governance/validators/validate_working_baseline_aggregate.py\",\"governance/validators/validate_no_fake_release_pass.py\",\"governance/validators/validate_no_fake_proof_guard.py\"],\"tests\":[\"tests/governance/test_working_baseline_aggregate_validator.py\",\"tests/governance/test_no_fake_proof_guard.py\",\"tests/governance/test_release_gate_validator_fail_closed.py\"],\"rule\":\"Validator suite supports working baseline and fail-closed release; it does not issue Release PASS.\",\"next_action\":\"RM05 final validator suite report file\"}\nCreate file governance/audit/VALIDATOR_SUITE_MANIFEST.md with content # Validator suite manifest\n\nCreated: 2026-06-04 | 06:16 (UTC+3)\nRelease PASS: false\n\nValidators are listed in `governance/state/VALIDATOR_SUITE_MANIFEST.json`.\n\nPurpose: working-baseline validation and fail-closed release gating.\n\nAppend to governance/AGENT_CONTEXT.md: \n\n### RM04 | VALIDATOR SUITE MANIFEST | 2026-06-04 | 06:16 (UTC+3)\n- Added validator suite manifest for working baseline and fail-closed release gating.\n- No Release PASS. Next action: RM05 final validator suite report file.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm04_validator_suite_manifest.md",
+    "result_json": "governance/codex/results/rm04_validator_suite_manifest.json"
+  },
+  "created_at": "2026-06-04T04:01:41.084Z"
+}
