@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p17b_antistop_guard_validation",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P17B_ANTISTOP_GUARD_VALIDATION.json",
+    "create:governance/reports/P17B_ANTISTOP_GUARD_VALIDATION.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P17B_ANTISTOP_GUARD_VALIDATION.json",
+    "governance/reports/P17B_ANTISTOP_GUARD_VALIDATION.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p17b_antistop_guard_validation.txt"
+  ],
+  "commit_sha": "bbb332d8049d4c58adc5c8ba8ed248fdf635a832",
+  "blocker": null,
+  "report_path": "governance/codex/results/p17b_antistop_guard_validation.md",
+  "completed_at": "2026-06-04T10:14:46Z"
+}
