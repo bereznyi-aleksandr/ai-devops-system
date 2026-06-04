@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "release_gate_validator_fail_closed",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "Release gate validator",
+  "objective": "Create file governance/validators/validate_release_gates.py with content #!/usr/bin/env python3\nimport json\nfrom pathlib import Path\n\nREQUIRED = [\n    Path(\"governance/proofs/external/telegram/production_receipt.json\"),\n    Path(\"governance/proofs/external/runtime/live_runtime_receipt.json\"),\n    Path(\"governance/proofs/external/claude/external_claude_audit_result.json\"),\n]\n\ndef main() -> int:\n    missing = [str(p) for p in REQUIRED if not p.exists()]\n    if missing:\n        print(json.dumps({\"status\":\"blocked_missing_release_receipts\",\"missing\":missing,\"release_pass\":False}, ensure_ascii=False, indent=2))\n        return 2\n    invalid = []\n    for p in REQUIRED:\n        data = json.loads(p.read_text(encoding=\"utf-8\"))\n        if not data.get(\"commit_sha\") or data.get(\"status\") not in {\"real_pass\", \"real_fail\"}:\n            invalid.append(str(p))\n    if invalid:\n        print(json.dumps({\"status\":\"blocked_invalid_release_receipts\",\"invalid\":invalid,\"release_pass\":False}, ensure_ascii=False, indent=2))\n        return 2\n    print(json.dumps({\"status\":\"release_gates_ready_for_external_decision\",\"release_pass\":False}, ensure_ascii=False))\n    return 0\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\nCreate file tests/governance/test_release_gate_validator_fail_closed.py with content import subprocess\nimport sys\n\ndef test_release_gate_validator_fails_closed_without_real_receipts():\n    result = subprocess.run([sys.executable, \"governance/validators/validate_release_gates.py\"], capture_output=True, text=True)\n    assert result.returncode == 2\n    assert \"blocked_missing_release_receipts\" in result.stdout\nAppend to governance/AGENT_CONTEXT.md: \n\n### RELEASE | GATE VALIDATOR FAIL-CLOSED | 2026-06-04 | 05:52 (UTC+3)\n- Added fail-closed release gate validator and test.\n- Release PASS remains blocked without real Gate 4/5/6 receipts.\n- Next action: roadmap completion checkpoint.\n\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/release_gate_validator_fail_closed.md",
+    "result_json": "governance/codex/results/release_gate_validator_fail_closed.json"
+  },
+  "created_at": "2026-06-04T02:54:36.571Z"
+}
