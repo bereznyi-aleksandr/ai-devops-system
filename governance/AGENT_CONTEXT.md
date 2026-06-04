@@ -1,13 +1,8 @@
-# AGENT CONTEXT | CANONICAL START STATE
-# Версия: v3.0 | Сброшен: 2026-06-04 | Claude External Audit
-# Полный исторический лог: governance/archive/AGENT_CONTEXT_history_2026-06-04.md
-
----
-
-## ОБЯЗАТЕЛЬНО — читать первым при каждом старте чата
-
-Этот файл — единственный источник истины о состоянии системы.
-Лимит файла: **максимум 100 строк**. Всё старше 7 дней → архив.
+# AGENT CONTEXT | SYSTEM CONFIGURATION
+# Версия: v4.0 | 2026-06-04 | Claude External Audit
+# РОЛЬ ЭТОГО ФАЙЛА: только конфигурация системы. НЕ является источником задач.
+# Источник задач: governance/roadmap/ACTIVE_QUEUE.json
+# Лог выполнения: governance/logs/execution_log.jsonl
 
 ---
 
@@ -18,71 +13,42 @@
 | Deno webhook | ✅ LIVE | /codex-task + /codex-status |
 | codex-runner.yml | ✅ Работает | ubuntu-latest, Python v3 |
 | GitHub MCP (Claude) | ✅ Работает | прямой write без посредника |
-| Python executor v3 | ✅ Работает | 12 паттернов + Run script |
+| Python executor v3 | ✅ Работает | паттерны + Run script |
 | curator-hourly-report | ✅ active | cron 0 * * * * |
-| governance-validation-ci.yml | ✅ VALID | workflow_dispatch only, SHA: 9fb7a743 |
+| governance-validation-ci.yml | ✅ VALID | workflow_dispatch only |
 
 ---
 
-## 2. Активные блокеры (operator gate)
+## 2. Locks и ограничения
 
-| Блокер | Что нужно | От кого |
-|---|---|---|
-| Gate 4 | Production Telegram receipt | Оператор |
-| Gate 5 | Live LLM runtime receipt | Оператор |
-| Gate 6 | External Claude audit receipt | Claude |
-| Release PASS | Все три receipt выше | — |
+| Ограничение | Правило |
+|---|---|
+| .github/workflows/*.yml | LOCKED — только Claude MCP |
+| issue #31 | Запрещено писать |
+| schedule triggers | Только curator-hourly-report.yml |
+| Платные API | Codex CLI / OPENAI_API_KEY — запрещено |
 
 ---
 
-## 3. Workflow lock
+## 3. Протокол GPT ↔ Claude (BEM-858)
+
+| Правило | Статус |
+|---|---|
+| Peer-аудиторы, равноправны | ✅ |
+| Старший субъект — только оператор | ✅ |
+| Техническое разногласие → решают сами | ✅ |
+| Архитектурное разногласие → оператору | ✅ |
+| Claude MCP может вносить прямые fix | ✅ |
+
+---
+
+## 4. Архитектура write-каналов
 
 ```
-❌ .github/workflows/*.yml — LOCKED для GPT executor
-✅ Только Claude MCP может писать в .github/workflows/
-Политика: governance/state/workflow_write_lock.json
-```
-
----
-
-## 4. Следующие задачи (non-workflow, автономные)
-
-| Приоритет | Задача | Статус |
-|---|---|---|
-| 1 | KZ-1: восстановить runners до STUB_RUNNABLE (def main + stub) | ⏳ В работе |
-| 2 | KZ-2: устранить 8 SSOT-дублей | ⏳ Частично |
-| 3 | KZ-3: archivировать governance/codex/ >30 дней | ⏳ Pending |
-| 4 | KZ-4: restore object_passports.json + release_proof_manifest.json | ⏳ Pending |
-
----
-
-## 5. Правила которые нельзя нарушать
-
-```
-❌ Писать в issue #31
-❌ Secrets, PAT, токены в файлах
-❌ schedule triggers (кроме curator-hourly-report.yml)
-❌ PASS без SHA коммита
-❌ Платные API (Codex CLI, OPENAI_API_KEY)
-❌ objective без паттернов executor (только описательный текст)
-❌ .github/workflows/*.yml через GPT executor
-❌ Останавливать roadmap после промежуточного отчёта
+GPT → createCodexTask (Deno) → GitHub Actions → Python executor → commit
+Claude → GitHub MCP → прямой commit
 ```
 
 ---
 
-## 6. Последние действия (последние 7 дней)
-
-| Дата | Задача | SHA |
-|---|---|---|
-| 2026-06-04 | P25B: continuation queue validation | f9d0867 |
-| 2026-06-04 | P14: workflow blocker lifted by Claude | — |
-| 2026-06-04 | workflow lock: governance/state/workflow_write_lock.json | c2cd66b |
-| 2026-06-04 | governance-validation-ci.yml: valid stub | 9fb7a743 |
-| 2026-06-04 | P15B: deno_webhook.js commit_sha patch | — |
-| 2026-06-03 | Claude external audit: BEM-931 замечания | — |
-
----
-
-*Обновляется после каждого завершённого BEM. Лимит: 100 строк.*
-*Архив: governance/archive/AGENT_CONTEXT_history_2026-06-04.md*
+*Этот файл меняется только при изменении архитектуры. Не является логом BEM.*
