@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p23_handoff_safe_next_session_context",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P23 handoff context",
+  "objective": "Create file governance/hand_off/P23_HANDOFF_SAFE_NEXT_SESSION_CONTEXT.md with content # P23 | Handoff-safe next-session context\nStatus: completed\nDate: 2026-06-04\n\n## Start rule\nRead `governance/AGENT_CONTEXT.md` first. Do not touch `.github/workflows/*.yml` through GPT executor.\n\n## Current safe state\n- Workflow lock active; workflow clean state was reported by Claude and locked in repo.\n- GPT executor must use non-workflow tasks only unless workflow work is handed off to Claude via audit mailbox.\n- Deno/Codex write channel is operational.\n- Proof-only commits are failures and require repair.\n- Stage progress is 1/1 per BEM/RM/P/KZ execution unit.\n\n## Recent validated non-workflow chain\nP15C, P16B, P17B, P18B, P19D, P21B, P22B completed with SHA-backed evidence.\n\n## Next\nP23B validate handoff-safe context.\nCreate file governance/state/P23_HANDOFF_SAFE_NEXT_SESSION_CONTEXT.json with content {\"id\":\"P23\",\"trace_id\":\"p23_handoff_safe_next_session_context\",\"status\":\"completed\",\"release_pass\":false,\"workflow_lock_active\":true,\"workflow_files_touched\":false,\"previous_step\":{\"id\":\"P22B\",\"sha\":\"50d7804d529a920d87f7293eea8c88ce7d1c1d9d\"},\"next\":\"P23B validate handoff-safe context\"}\nCreate file governance/reports/P23_HANDOFF_SAFE_NEXT_SESSION_CONTEXT.md with content # P23 | Handoff-safe next-session context\nStatus: completed\nDate: 2026-06-04\n\nCreated handoff-safe context in `governance/hand_off/P23_HANDOFF_SAFE_NEXT_SESSION_CONTEXT.md`. Workflow lock respected; no `.github/workflows/*.yml` files touched.\n\nNext: P23B validate handoff-safe context.\nAppend to governance/AGENT_CONTEXT.md: \n## P23 completed | 2026-06-04\nHandoff-safe next-session context created at governance/hand_off/P23_HANDOFF_SAFE_NEXT_SESSION_CONTEXT.md. Workflow lock active and respected: no .github/workflows files touched. Next: P23B validate handoff-safe context.\nNo issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p23_handoff_safe_next_session_context.md",
+    "result_json": "governance/codex/results/p23_handoff_safe_next_session_context.json"
+  },
+  "created_at": "2026-06-04T10:29:24.792Z"
+}
