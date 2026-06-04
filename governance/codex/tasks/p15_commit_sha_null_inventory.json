@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p15_commit_sha_null_inventory",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "diagnosis",
+  "title": "P15 commit_sha null inventory",
+  "objective": "Run script:\n\"\"\"\npatterns = ['commit_sha', 'commitSha', 'commit sha', 'commit']\nroots = [Path('governance'), Path('tools'), Path('scripts'), Path('tests')]\nfindings = []\nfor root in roots:\n    if not root.exists():\n        continue\n    for path in root.rglob('*'):\n        if not path.is_file():\n            continue\n        if path.suffix.lower() not in ['.py', '.js', '.ts', '.json', '.md', '.yml', '.yaml']:\n            continue\n        text = path.read_text(encoding='utf-8', errors='ignore')\n        if any(p in text for p in patterns):\n            findings.append(str(path))\nstate = Path('governance/state/P15_COMMIT_SHA_NULL_INVENTORY.json')\nstate.parent.mkdir(parents=True, exist_ok=True)\nstate.write_text(json.dumps({'id':'P15','trace_id':'p15_commit_sha_null_inventory','status':'completed','release_pass':False,'finding_count':len(findings),'findings':findings[:100],'workflow_files_touched':False,'next':'P15B commit_sha null remediation plan'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/P15_COMMIT_SHA_NULL_INVENTORY.md')\nreport.parent.mkdir(parents=True, exist_ok=True)\nreport.write_text('# P15 | commit_sha null inventory\\nStatus: completed\\nDate: 2026-06-04\\n\\nFound candidate files containing commit-related fields. Workflow lock respected; no .github/workflows files touched.\\n\\n' + '\\n'.join('- ' + f for f in findings[:100]) + '\\n\\nNext: P15B commit_sha null remediation plan.\\n', encoding='utf-8')\nchanged_files.append(str(report))\nctx = Path('governance/AGENT_CONTEXT.md')\nif ctx.exists():\n    ctx.write_text(ctx.read_text(encoding='utf-8').rstrip() + '\\n## P15 completed | 2026-06-04\\ncommit_sha null inventory completed. Candidate file count: ' + str(len(findings)) + '. Workflow lock respected. Next: P15B commit_sha null remediation plan.\\n', encoding='utf-8')\n    changed_files.append(str(ctx))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p15_commit_sha_null_inventory.md",
+    "result_json": "governance/codex/results/p15_commit_sha_null_inventory.json"
+  },
+  "created_at": "2026-06-04T10:04:06.989Z"
+}
