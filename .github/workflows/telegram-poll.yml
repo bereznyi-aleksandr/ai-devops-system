@@ -13,6 +13,8 @@ jobs:
   poll:
     runs-on: ubuntu-latest
     timeout-minutes: 2
+    permissions:
+      contents: write
 
     steps:
       - name: Poll Telegram and write to inbox via GitHub API
