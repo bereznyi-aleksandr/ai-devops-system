@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "rm03b_record_rm03_activate_rm04",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "RM-03B record RM-03",
+  "objective": "Run script:\n\"\"\"\nqueue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')\nqueue = json.loads(queue_path.read_text(encoding='utf-8'))\nfor task in queue.get('tasks', []):\n    if task.get('id') == 'RM-03':\n        task['status'] = 'DONE'\n        task['sha'] = '08070e58697a4399c1884b601c23522ba4ec9299'\n        task['completed_at'] = '2026-06-04T11:31:59Z'\n    if task.get('id') == 'RM-04':\n        task['status'] = 'PENDING'\nqueue['updated_at'] = '2026-06-04T11:36:00Z'\nqueue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(queue_path))\nlog_path = Path('governance/logs/execution_log.jsonl')\nexisting = log_path.read_text(encoding='utf-8') if log_path.exists() else ''\nline = json.dumps({'date':'2026-06-04T11:31:59Z','id':'RM-03','trace_id':'rm03_ast_parse_gate_stub_runnable','sha':'08070e58697a4399c1884b601c23522ba4ec9299','status':'done','workflow_files_touched':False}, ensure_ascii=False)\nif line not in existing:\n    existing += line + '\\n'\nlog_path.write_text(existing, encoding='utf-8')\nchanged_files.append(str(log_path))\nstate = Path('governance/state/RM03B_RECORD_RM03_ACTIVATE_RM04.json')\nstate.write_text(json.dumps({'id':'RM-03B','trace_id':'rm03b_record_rm03_activate_rm04','status':'completed','release_pass':False,'recorded_step':'RM-03','recorded_sha':'08070e58697a4399c1884b601c23522ba4ec9299','activated':'RM-04','workflow_files_touched':False,'next':'RM-04 consistency of PASS and diagnostics'}, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')\nchanged_files.append(str(state))\nreport = Path('governance/reports/RM03B_RECORD_RM03_ACTIVATE_RM04.md')\nreport.write_text('# RM-03B | Record RM-03 and activate RM-04\\nStatus: completed\\nDate: 2026-06-04\\n\\nRM-03 recorded as DONE with SHA 08070e58697a4399c1884b601c23522ba4ec9299. RM-04 set to PENDING in governance/roadmap/ACTIVE_QUEUE.json. Workflow lock respected.\\n\\nNext: RM-04 consistency of PASS and diagnostics.\\n', encoding='utf-8')\nchanged_files.append(str(report))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/rm03b_record_rm03_activate_rm04.md",
+    "result_json": "governance/codex/results/rm03b_record_rm03_activate_rm04.json"
+  },
+  "created_at": "2026-06-04T11:32:31.802Z"
+}
