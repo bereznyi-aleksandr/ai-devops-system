@@ -1,0 +1,7 @@
+Executor: Python v3 (ubuntu-latest)
+trace_id: p12_move_blank_invalid_workflow_out_active_path
+task_type: code_patch
+executed_at: 2026-06-04T07:57:07Z
+ops_applied: create:governance/state/P12_MOVE_BLANK_INVALID_WORKFLOW_OUT_ACTIVE_PATH.json, create:governance/reports/P12_MOVE_BLANK_INVALID_WORKFLOW_OUT_ACTIVE_PATH.md, move:.github/workflows/governance-validation-ci.yml->governance/workflows_disabled/governance-validation-ci, append:governance/AGENT_CONTEXT.md
+changed_files: governance/state/P12_MOVE_BLANK_INVALID_WORKFLOW_OUT_ACTIVE_PATH.json, governance/reports/P12_MOVE_BLANK_INVALID_WORKFLOW_OUT_ACTIVE_PATH.md, .github/workflows/governance-validation-ci.yml, governance/workflows_disabled/governance-validation-ci, governance/AGENT_CONTEXT.md
+errors: none
