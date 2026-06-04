@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "tz2_exact_duplicate_path_diagnosis",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/TZ2_EXACT_DUPLICATE_PATH_DIAGNOSIS_REQUEST.json",
+    "create:governance/state/TZ2_EXACT_DUPLICATE_PATH_DIAGNOSIS.json",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/TZ2_EXACT_DUPLICATE_PATH_DIAGNOSIS_REQUEST.json",
+    "governance/state/TZ2_EXACT_DUPLICATE_PATH_DIAGNOSIS.json",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/tz2_exact_duplicate_path_diagnosis.txt"
+  ],
+  "commit_sha": "bf9de715479122193ee69facf48eefd98d98d1c8",
+  "blocker": null,
+  "report_path": "governance/codex/results/tz2_exact_duplicate_path_diagnosis.md",
+  "completed_at": "2026-06-04T03:34:12Z"
+}
