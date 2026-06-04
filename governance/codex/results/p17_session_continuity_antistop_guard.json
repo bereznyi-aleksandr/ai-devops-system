@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "trace_id": "p17_session_continuity_antistop_guard",
+  "executor": "python-v3",
+  "status": "completed",
+  "operations_applied": [
+    "create:governance/state/P17_SESSION_CONTINUITY_ANTISTOP_GUARD.json",
+    "create:governance/reports/P17_SESSION_CONTINUITY_ANTISTOP_GUARD.md",
+    "append:governance/AGENT_CONTEXT.md"
+  ],
+  "changed_files": [
+    "governance/state/P17_SESSION_CONTINUITY_ANTISTOP_GUARD.json",
+    "governance/reports/P17_SESSION_CONTINUITY_ANTISTOP_GUARD.md",
+    "governance/AGENT_CONTEXT.md",
+    "governance/codex/proofs/p17_session_continuity_antistop_guard.txt"
+  ],
+  "commit_sha": "c7057ebcda044a2e30bb60a725edda92e4d19f58",
+  "blocker": null,
+  "report_path": "governance/codex/results/p17_session_continuity_antistop_guard.md",
+  "completed_at": "2026-06-04T10:14:00Z"
+}

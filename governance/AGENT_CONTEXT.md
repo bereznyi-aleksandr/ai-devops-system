@@ -1676,3 +1676,5 @@ codex-task commit_sha response evidence completed
 AGENT_CONTEXT autoupdate hardening recorded
 ## P16B completed | 2026-06-04
 AGENT_CONTEXT hardening validation completed
+## P17 completed | 2026-06-04
+Session continuity anti-stop guard recorded
