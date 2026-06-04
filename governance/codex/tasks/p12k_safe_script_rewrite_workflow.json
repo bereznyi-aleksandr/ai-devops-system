@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "trace_id": "p12k_safe_script_rewrite_workflow",
+  "created_by": "chatgpt_external_contour",
+  "target_executor": "gpt_codex",
+  "task_type": "code_patch",
+  "title": "P12K safe script rewrite workflow",
+  "objective": "Run script:\"\"\"from pathlib import Path\np=Path('.github/workflows/governance-validation-ci.yml')\np.parent.mkdir(parents=True,exist_ok=True)\np.write_text('name: Governance Validation CI\\n\\non:\\n  workflow_dispatch:\\n\\njobs:\\n  disabled:\\n    runs-on: ubuntu-latest\\n    steps:\\n      - name: Disabled\\n        run: echo \"Governance Validation CI disabled. Enable after BEM-1285.\"\\n',encoding='utf-8')\nchanged_files.append(str(p))\n\"\"\"No issue comments.",
+  "constraints": [
+    "no issue comments",
+    "no schedule triggers",
+    "minimal patch",
+    "write result files only"
+  ],
+  "expected_outputs": {
+    "result_md": "governance/codex/results/p12k_safe_script_rewrite_workflow.md",
+    "result_json": "governance/codex/results/p12k_safe_script_rewrite_workflow.json"
+  },
+  "created_at": "2026-06-04T08:22:38.789Z"
+}
