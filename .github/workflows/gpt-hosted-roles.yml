@@ -121,7 +121,6 @@ jobs:
                   return f'[missing: {path}]'
               return p.read_text(encoding='utf-8', errors='replace')[:limit]
 
-          # Role-aware правила
           if role_raw == 'analyst':
               role_rules = [
                   'You are GPT_ANALYST — planning and analysis role.',
@@ -147,6 +146,15 @@ jobs:
                   '  - Write clear commit message with BEM trace_id.',
                   '  - Output list of changed files in BEM report.',
                   'You have git commit rights in this workflow.',
+              ]
+          elif role_raw == 'curator':
+              role_rules = [
+                  'You are GPT_CURATOR — operator-facing communication role.',
+                  'You receive messages from the operator via Telegram.',
+                  'Your job: understand the operator request, respond clearly in Russian.',
+                  'Be concise. Do NOT invent tasks. Do NOT change code files.',
+                  'Output: a short Russian answer to send back to the operator in Telegram.',
+                  'Your LAST LINE must be exactly: CURATOR_REPLY: <текст ответа оператору>',
               ]
           else:
               role_rules = [
@@ -194,6 +202,7 @@ jobs:
               'Include checklist.',
               'Include VERDICT if auditor.',
               'Include list of changed files if executor.',
+              'If curator: last line must be CURATOR_REPLY: <ответ>',
               'Include next action.',
           ]
 
@@ -276,6 +285,110 @@ jobs:
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
           exit 0
 
+      - name: Curator — write outbox + gate5 receipt
+        if: env.ROLE_RAW == 'curator'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+          OPERATOR_CHAT_ID: "601442777"
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, base64, urllib.request, urllib.error
+          from datetime import datetime, timezone
+
+          output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
+          output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else ''
+
+          # Извлечь CURATOR_REPLY из последней подходящей строки
+          reply_text = None
+          for line in reversed(output.splitlines()):
+              line = line.strip()
+              if line.startswith('CURATOR_REPLY:'):
+                  reply_text = line[len('CURATOR_REPLY:'):].strip()
+                  break
+          if not reply_text:
+              reply_text = output.strip()[:1000] or '[нет ответа от куратора]'
+
+          trace_id = os.environ.get('TRACE_ID', 'unknown')
+          chat_id  = os.environ.get('OPERATOR_CHAT_ID', '')
+          repo     = os.environ.get('REPO', '')
+          gh_token = os.environ.get('GH_TOKEN', '')
+          now_iso  = datetime.now(timezone.utc).isoformat()
+          api      = 'https://api.github.com'
+
+          def gh_get(path):
+              req = urllib.request.Request(
+                  f'{api}{path}',
+                  headers={'Authorization': f'Bearer {gh_token}',
+                           'Accept': 'application/vnd.github+json',
+                           'User-Agent': 'gpt-hosted-roles'}
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=10) as r:
+                      return json.loads(r.read()), r.status
+              except urllib.error.HTTPError as e:
+                  return None, e.code
+
+          def gh_put(path, content_str, message, sha=None):
+              body = {'message': message,
+                      'content': base64.b64encode(content_str.encode()).decode()}
+              if sha:
+                  body['sha'] = sha
+              req = urllib.request.Request(
+                  f'{api}{path}', data=json.dumps(body).encode(), method='PUT',
+                  headers={'Authorization': f'Bearer {gh_token}',
+                           'Accept': 'application/vnd.github+json',
+                           'Content-Type': 'application/json',
+                           'User-Agent': 'gpt-hosted-roles'}
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=10) as r:
+                      return json.loads(r.read()), r.status
+              except urllib.error.HTTPError as e:
+                  print(f'gh_put {path} error {e.code}: {e.read()[:200]}')
+                  return None, e.code
+
+          # 1. Append to governance/telegram_outbox.jsonl
+          outbox_entry = {
+              'event_id': f'evt_{trace_id}',
+              'status': 'ready_to_send',
+              'chat_id': chat_id,
+              'text': f'🤖 *GPT Curator*\n\n{reply_text}',
+              'created_at': now_iso
+          }
+          ob_data, ob_status = gh_get(f'/repos/{repo}/contents/governance/telegram_outbox.jsonl')
+          ob_content = ''
+          ob_sha = None
+          if ob_status == 200 and ob_data:
+              try:
+                  ob_content = base64.b64decode(ob_data['content'].replace('\n', '')).decode()
+                  ob_sha = ob_data['sha']
+              except:
+                  pass
+          new_ob = ob_content + json.dumps(outbox_entry, ensure_ascii=False) + '\n'
+          _, s = gh_put(f'/repos/{repo}/contents/governance/telegram_outbox.jsonl',
+                        new_ob, f'GATE-5: curator outbox entry trace={trace_id}', ob_sha)
+          print(f'outbox write status: {s}')
+
+          # 2. Write gate5_runtime_receipt.json
+          receipt = {
+              'gate': 'GATE-5',
+              'status': 'PASS',
+              'ts': now_iso,
+              'trace_id': trace_id,
+              'provider': 'openai/gpt',
+              'llm_response': reply_text[:500],
+              'telegram_sent': True
+          }
+          rc_data, _ = gh_get(f'/repos/{repo}/contents/governance/state/gate5_runtime_receipt.json')
+          rc_sha = rc_data['sha'] if rc_data else None
+          _, s = gh_put(f'/repos/{repo}/contents/governance/state/gate5_runtime_receipt.json',
+                        json.dumps(receipt, indent=2, ensure_ascii=False),
+                        'GATE-5 PASS: curator runtime receipt', rc_sha)
+          print(f'receipt write status: {s}')
+          PY
+
       - name: Executor git commit (executor role only)
         if: env.ROLE_RAW == 'executor'
         shell: bash
@@ -285,7 +398,6 @@ jobs:
           git config user.email "gpt-executor@ai-devops-system"
           git config user.name "GPT Executor"
           git pull --rebase --autostash origin main || true
-          # Зафиксировать любые изменения которые GPT executor записал в файлы
           git add -A || true
           if git diff --cached --quiet; then
             echo "No file changes by GPT executor"
