@@ -180,7 +180,6 @@ jobs:
               '',
               '=== ARCHITECTURE ===',
               '- This is algorithmic role FSM execution.',
-              '- External ISA/comment is entrypoint/audit trail only.',
               '- Never reveal secrets.',
               '- Never include literal at-sign role mentions in final report.',
               '',
@@ -215,7 +214,7 @@ jobs:
 
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
 
-      - name: Run hosted role (Gemini Flash, free)
+      - name: Run hosted role (Gemini 2.0 Flash, free)
         shell: bash
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -238,30 +237,40 @@ jobs:
               print('CURATOR_REPLY: Ключ GEMINI_API_KEY не настроен. Добавьте секрет в репозиторий.')
               raise SystemExit(0)
 
-          url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}'
-          payload = {
-              'contents': [{'parts': [{'text': prompt}]}],
-              'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}
-          }
-          req = urllib.request.Request(
-              url, data=json.dumps(payload).encode(),
-              headers={'Content-Type': 'application/json'}, method='POST'
-          )
+          # Пробуем gemini-2.0-flash, fallback на gemini-1.5-flash
+          models = ['gemini-2.0-flash', 'gemini-1.5-flash']
+          text = None
+          model_used = None
 
-          try:
-              with urllib.request.urlopen(req, timeout=60) as r:
-                  data = json.loads(r.read())
-              text = data['candidates'][0]['content']['parts'][0]['text']
-              print('PROVIDER=gemini-1.5-flash')
+          for model in models:
+              url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}'
+              payload = {
+                  'contents': [{'parts': [{'text': prompt}]}],
+                  'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}
+              }
+              req = urllib.request.Request(
+                  url, data=json.dumps(payload).encode(),
+                  headers={'Content-Type': 'application/json'}, method='POST'
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=60) as r:
+                      data = json.loads(r.read())
+                  text = data['candidates'][0]['content']['parts'][0]['text']
+                  model_used = model
+                  break
+              except urllib.error.HTTPError as e:
+                  err_body = e.read().decode('utf-8', errors='replace')
+                  print(f'Model {model} HTTP {e.code}: {err_body[:500]}')
+              except Exception as e:
+                  print(f'Model {model} error: {e}')
+
+          if text:
+              print(f'PROVIDER=gemini/{model_used}')
               print('HOSTED_ROLE_STATUS=OK')
               print(text)
-          except urllib.error.HTTPError as e:
-              print(f'HOSTED_ROLE_STATUS=GEMINI_HTTP_ERROR_{e.code}')
-              print(e.read().decode('utf-8', errors='replace')[:2000])
-              print('CURATOR_REPLY: Ошибка Gemini API. Проверьте ключ GEMINI_API_KEY.')
-          except Exception as e:
-              print(f'HOSTED_ROLE_STATUS=GEMINI_ERROR: {e}')
-              print('CURATOR_REPLY: Сервис временно недоступен. Попробуйте позже.')
+          else:
+              print('HOSTED_ROLE_STATUS=GEMINI_ALL_MODELS_FAILED')
+              print('CURATOR_REPLY: Ошибка Gemini API. Проверьте ключ GEMINI_API_KEY в секретах репозитория.')
           PY
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
           exit 0
@@ -290,7 +299,7 @@ jobs:
           if not reply_text:
               reply_text = output.strip()[:1000] or '[нет ответа от куратора]'
 
-          provider_used = 'gemini-1.5-flash'
+          provider_used = 'gemini/gemini-2.0-flash'
           for line in output.splitlines():
               if line.startswith('PROVIDER='):
                   provider_used = line.split('=', 1)[1].strip()
