@@ -149,12 +149,18 @@ jobs:
               ]
           elif role_raw == 'curator':
               role_rules = [
-                  'You are GPT_CURATOR — operator-facing communication role.',
+                  'You are CURATOR — the main orchestrator and entry/exit point of the BEM governance system.',
                   'You receive messages from the operator via Telegram.',
-                  'Your job: understand the operator request, respond clearly in Russian.',
-                  'Be concise. Do NOT invent tasks. Do NOT change code files.',
-                  'Output: a short Russian answer to send back to the operator in Telegram.',
-                  'Your LAST LINE must be exactly: CURATOR_REPLY: <текст ответа оператору>',
+                  'Your responsibilities:',
+                  '  - Understand operator intent (command, question, status request, task assignment)',
+                  '  - Route tasks to the correct internal contour (analyst/auditor/executor)',
+                  '  - Clean and structure incoming data',
+                  '  - Respond to the operator clearly in Russian',
+                  '  - Never expose internal system details or secrets',
+                  'If the message is a task: acknowledge it and describe what contour will handle it.',
+                  'If the message is a question: answer based on available governance state.',
+                  'If the message is unclear: ask for clarification politely.',
+                  'Your LAST LINE must be exactly: CURATOR_REPLY: <текст ответа оператору на русском>',
               ]
           else:
               role_rules = [
@@ -175,7 +181,6 @@ jobs:
               '=== ARCHITECTURE ===',
               '- This is algorithmic role FSM execution.',
               '- External ISA/comment is entrypoint/audit trail only.',
-              '- Do not call Claude.',
               '- Never reveal secrets.',
               '- Never include literal at-sign role mentions in final report.',
               '',
@@ -184,26 +189,19 @@ jobs:
               body,
               '-----',
               '',
-              '--- governance/policies/role_sequence.json ---',
-              read('governance/policies/role_sequence.json'),
+              '--- governance/AGENT_CONTEXT.md ---',
+              read('governance/AGENT_CONTEXT.md'),
               '',
-              '--- governance/state/role_cycle_state.json ---',
-              read('governance/state/role_cycle_state.json'),
-              '',
-              '--- governance/MASTER_PLAN.md ---',
-              read('governance/MASTER_PLAN.md'),
+              '--- governance/roadmap/ACTIVE_QUEUE.json ---',
+              read('governance/roadmap/ACTIVE_QUEUE.json'),
               '',
               '--- governance/state/routing.json ---',
               read('governance/state/routing.json'),
               '',
               '=== REQUIRED OUTPUT ===',
-              f'Start with: BEM-GPT-{role_raw.upper()} | HOSTED ROLE REPORT',
+              f'Start with: BEM-{role_raw.upper()} | CURATOR REPORT',
               'Compact Russian BEM report.',
-              'Include checklist.',
-              'Include VERDICT if auditor.',
-              'Include list of changed files if executor.',
-              'If curator: last line must be CURATOR_REPLY: <ответ>',
-              'Include next action.',
+              'Last line must be: CURATOR_REPLY: <ответ оператору>',
           ]
 
           Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_role_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
@@ -217,11 +215,11 @@ jobs:
 
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
 
-      - name: Run hosted GPT role
+      - name: Run hosted role (Gemini Flash, free)
         shell: bash
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
         run: |
           set +e
           OUTPUT_FILE="$RUNNER_TEMP/hosted_gpt_role_output.md"
@@ -229,58 +227,75 @@ jobs:
           import json, os, pathlib, urllib.error, urllib.request
 
           prompt = pathlib.Path(os.environ['PROMPT_FILE']).read_text(encoding='utf-8', errors='replace')
-          api_key = os.environ.get('OPENAI_API_KEY', '')
-          model = os.environ.get('OPENAI_MODEL') or 'gpt-4o-mini'
           role = os.environ.get('ROLE', 'GPT_UNKNOWN')
+          trace_id = os.environ.get('TRACE_ID', 'missing')
 
-          print(f'BEM-GPT-HOSTED-ROLE | {role} | RAW_OUTPUT')
-          print(f'MODEL={model}')
-          print(f'TRACE_ID={os.environ.get("TRACE_ID", "missing")}')
-          print(f'CYCLE_ID={os.environ.get("CYCLE_ID", "")}')
+          print(f'BEM-HOSTED-ROLE | {role} | RAW_OUTPUT')
+          print(f'TRACE_ID={trace_id}')
 
-          if not api_key:
-              print('HOSTED_GPT_STATUS=OPENAI_API_KEY_MISSING')
-              raise SystemExit(0)
+          def call_gemini(api_key, prompt):
+              url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
+              payload = {
+                  'contents': [{'parts': [{'text': prompt}]}],
+                  'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}
+              }
+              req = urllib.request.Request(
+                  url, data=json.dumps(payload).encode(),
+                  headers={'Content-Type': 'application/json'}, method='POST'
+              )
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  data = json.loads(r.read())
+              return data['candidates'][0]['content']['parts'][0]['text']
 
-          payload = {
-              'model': model,
-              'input': [
-                  {'role': 'system', 'content': 'You are a hosted GPT role runner. Return compact Russian BEM report. Do not reveal secrets. Do not include literal at-sign mentions.'},
-                  {'role': 'user', 'content': prompt}
-              ],
-              'max_output_tokens': 2000
-          }
+          def call_openai(api_key, prompt):
+              payload = {
+                  'model': 'gpt-4o-mini',
+                  'messages': [
+                      {'role': 'system', 'content': 'You are a BEM governance role runner. Respond in Russian. Never reveal secrets.'},
+                      {'role': 'user', 'content': prompt}
+                  ],
+                  'max_tokens': 2000
+              }
+              req = urllib.request.Request(
+                  'https://api.openai.com/v1/chat/completions',
+                  data=json.dumps(payload).encode(),
+                  headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+                  method='POST'
+              )
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  data = json.loads(r.read())
+              return data['choices'][0]['message']['content']
 
-          req = urllib.request.Request(
-              'https://api.openai.com/v1/responses',
-              data=json.dumps(payload).encode('utf-8'),
-              headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
-              method='POST'
-          )
+          text = None
+          provider_used = None
 
-          try:
-              with urllib.request.urlopen(req, timeout=120) as resp:
-                  data = json.loads(resp.read().decode('utf-8'))
-          except urllib.error.HTTPError as e:
-              print(f'HOSTED_GPT_STATUS=OPENAI_API_HTTP_ERROR_{e.code}')
-              print(e.read().decode('utf-8', errors='replace')[:4000])
-              raise SystemExit(0)
-          except Exception as e:
-              print('HOSTED_GPT_STATUS=OPENAI_API_CALL_FAILED')
-              print(str(e))
-              raise SystemExit(0)
+          # Первый приоритет — Gemini Flash (бесплатный)
+          gemini_key = os.environ.get('GEMINI_API_KEY', '')
+          if gemini_key:
+              try:
+                  text = call_gemini(gemini_key, prompt)
+                  provider_used = 'gemini-1.5-flash'
+                  print(f'PROVIDER={provider_used}')
+              except Exception as e:
+                  print(f'Gemini error: {e}')
 
-          text = data.get('output_text') or ''
+          # Fallback — OpenAI
           if not text:
-              buf = []
-              for item in data.get('output', []):
-                  for content in item.get('content', []):
-                      if content.get('type') in ('output_text', 'text'):
-                          buf.append(content.get('text', ''))
-              text = '\n'.join(buf).strip()
+              openai_key = os.environ.get('OPENAI_API_KEY', '')
+              if openai_key:
+                  try:
+                      text = call_openai(openai_key, prompt)
+                      provider_used = 'openai/gpt-4o-mini'
+                      print(f'PROVIDER={provider_used}')
+                  except Exception as e:
+                      print(f'OpenAI error: {e}')
 
-          print('HOSTED_GPT_STATUS=OK')
-          print(text or '[empty OpenAI response text]')
+          if not text:
+              print('HOSTED_ROLE_STATUS=NO_LLM_AVAILABLE')
+              print('CURATOR_REPLY: Сервис временно недоступен. Попробуйте позже.')
+          else:
+              print('HOSTED_ROLE_STATUS=OK')
+              print(text)
           PY
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
           exit 0
@@ -300,7 +315,6 @@ jobs:
           output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
           output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else ''
 
-          # Извлечь CURATOR_REPLY из последней подходящей строки
           reply_text = None
           for line in reversed(output.splitlines()):
               line = line.strip()
@@ -309,6 +323,13 @@ jobs:
                   break
           if not reply_text:
               reply_text = output.strip()[:1000] or '[нет ответа от куратора]'
+
+          # Определить провайдера из лога
+          provider_used = 'gemini-1.5-flash'
+          for line in output.splitlines():
+              if line.startswith('PROVIDER='):
+                  provider_used = line.split('=', 1)[1].strip()
+                  break
 
           trace_id = os.environ.get('TRACE_ID', 'unknown')
           chat_id  = os.environ.get('OPERATOR_CHAT_ID', '')
@@ -354,7 +375,7 @@ jobs:
               'event_id': f'evt_{trace_id}',
               'status': 'ready_to_send',
               'chat_id': chat_id,
-              'text': f'🤖 *GPT Curator*\n\n{reply_text}',
+              'text': f'🤖 *Curator [{provider_used}]*\n\n{reply_text}',
               'created_at': now_iso
           }
           ob_data, ob_status = gh_get(f'/repos/{repo}/contents/governance/telegram_outbox.jsonl')
@@ -377,7 +398,7 @@ jobs:
               'status': 'PASS',
               'ts': now_iso,
               'trace_id': trace_id,
-              'provider': 'openai/gpt',
+              'provider': provider_used,
               'llm_response': reply_text[:500],
               'telegram_sent': True
           }
@@ -427,7 +448,7 @@ jobs:
           for a, b in [('@curator','curator'),('@gpt_executor','GPT_EXECUTOR'),('@gpt_analyst','GPT_ANALYST'),('@gpt_auditor','GPT_AUDITOR'),('@gpt_curator','GPT_CURATOR')]:
               output = output.replace(a, b)
           role = os.environ.get('ROLE', 'GPT_UNKNOWN')
-          body = f'BEM-GPT-HOSTED-ROLE | RUN RESULT | {role}\n\n' + output[-60000:] + '\n\nANTI_RECURSION: report comments are audit trail only; internal FSM uses workflow_dispatch.'
+          body = f'BEM-HOSTED-ROLE | RUN RESULT | {role}\n\n' + output[-60000:] + '\n\nANTI_RECURSION: report comments are audit trail only; internal FSM uses workflow_dispatch.'
           data = json.dumps({'body': body}).encode('utf-8')
           req = urllib.request.Request(
               f"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments",
@@ -450,14 +471,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           REPO: ${{ github.repository }}
+          ROLE_RAW: ${{ env.ROLE_RAW }}
         run: |
           set -e
           python3 - <<'PY'
           import json, os, urllib.request
 
           cycle_id = os.environ.get('CYCLE_ID', '')
-          if not cycle_id:
-              print('No cycle_id; skip orchestrator advance')
+          role_raw = os.environ.get('ROLE_RAW', '')
+
+          # Не диспатчить оркестратор для curator — он не часть FSM цикла
+          if not cycle_id or role_raw == 'curator':
+              print(f'Skip orchestrator: cycle_id={cycle_id!r} role={role_raw!r}')
               raise SystemExit(0)
 
           role = os.environ.get('ROLE', 'GPT_UNKNOWN').replace('GPT_', '').lower()
@@ -471,7 +496,7 @@ jobs:
                   'cycle_id': cycle_id,
                   'role': role,
                   'status': 'ROLE_DONE',
-                  'note': 'Hosted GPT role completed and posted report.'
+                  'note': 'Hosted role completed.'
               }
           }).encode('utf-8')
 
