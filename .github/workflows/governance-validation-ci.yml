@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   minimal-loop-e2e:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,6 +70,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/gate3_ci_proof.json
-          git diff --staged --quiet && echo "No changes to commit" || \
-            git commit -m "ci: gate3_ci_proof.json PASS sha=${{ github.sha }} run=${{ github.run_id }}" && \
-            git push
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "ci: gate3_ci_proof.json PASS sha=${{ github.sha }} run=${{ github.run_id }} [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && break
+            echo "Retry $i..."
+            sleep $((i * 3))
+          done
