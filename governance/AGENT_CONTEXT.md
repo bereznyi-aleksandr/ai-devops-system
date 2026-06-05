@@ -1,6 +1,6 @@
 # AGENT_CONTEXT.md | canonical configuration
 
-Updated: 2026-06-04
+Updated: 2026-06-05
 Repository: bereznyi-aleksandr/ai-devops-system
 
 ## Role
@@ -10,11 +10,16 @@ Operator is strategic authority only, not routine relay.
 
 ## Startup protocol
 1. Read this AGENT_CONTEXT.md.
-2. Read governance/ACTIVE_QUEUE.json.
-3. Take the first task with status PENDING.
-4. Execute only through Deno /codex-task and Python executor patterns.
-5. After getCodexStatus, update ACTIVE_QUEUE.json and append one JSON line to governance/logs/execution_log.jsonl.
+2. Read governance/roadmap/ACTIVE_QUEUE.json via GitHub API (PAT: AI_SYSTEM_GITHUB_PAT).
+3. Take the first task with status IN_PROGRESS or PENDING.
+4. Execute through GitHub API directly: workflow_dispatch → gpt-hosted-roles.yml (role=executor).
+5. After workflow completes, update ACTIVE_QUEUE.json and append one JSON line to governance/logs/execution_log.jsonl.
 6. Continue to the next PENDING task without waiting for operator confirmation.
+
+## Write channel
+GitHub API only. Use AI_SYSTEM_GITHUB_PAT secret for all write operations.
+Deno /codex-task is deprecated and must not be used.
+No confirmation screens. If a tool requires manual confirmation — do not use it.
 
 ## File roles
 AGENT_CONTEXT.md is configuration only and must stay small.
@@ -35,10 +40,11 @@ No issue comments.
 No secrets or tokens in repository files.
 
 ## Current system status
-Deno/Codex contour is operational.
+GitHub Actions contour is operational.
+Telegram polling active: telegram-poll.yml dispatches to gpt-hosted-roles.yml (role=curator).
+GPT Curator writes responses to governance/telegram_outbox.jsonl (status: ready_to_send).
+telegram-outbox-dispatch.yml delivers responses to operator in Telegram.
 Workflow file is reported clean by Claude and locked.
-KZ runner skeleton scope completed.
-P15-P25 non-workflow hardening chain completed.
 
 ## Current source of tasks
 Use ACTIVE_QUEUE.json only for next routine task selection.
