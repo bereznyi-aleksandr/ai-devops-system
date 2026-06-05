@@ -8,9 +8,9 @@ on:
         required: true
         type: string
       provider:
-        description: 'gpt | claude | codex'
+        description: 'gemini | codex'
         required: false
-        default: 'gpt'
+        default: 'gemini'
         type: string
       trace_id:
         description: 'Trace id'
@@ -90,7 +90,7 @@ jobs:
               cycle_id = os.environ.get('INPUT_CYCLE_ID', '')
               task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
               task = os.environ.get('INPUT_TASK', '')
-              provider = os.environ.get('INPUT_PROVIDER', 'gpt')
+              provider = os.environ.get('INPUT_PROVIDER', 'gemini')
               body = f'WORKFLOW_DISPATCH ROLE={role_raw} PROVIDER={provider} TRACE_ID={trace_id} CYCLE_ID={cycle_id}\n\nTASK:\n{task}'
           else:
               body = json.loads(os.environ.get('COMMENT_BODY_JSON') or '""')
@@ -111,7 +111,7 @@ jobs:
               cycle_id = ''
               task_type = 'legacy_issue_comment'
               task = body
-              provider = 'gpt'
+              provider = 'gemini'
 
           role_raw = role.replace('GPT_', '').lower()
 
@@ -219,7 +219,6 @@ jobs:
         shell: bash
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set +e
           OUTPUT_FILE="$RUNNER_TEMP/hosted_gpt_role_output.md"
@@ -233,69 +232,36 @@ jobs:
           print(f'BEM-HOSTED-ROLE | {role} | RAW_OUTPUT')
           print(f'TRACE_ID={trace_id}')
 
-          def call_gemini(api_key, prompt):
-              url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
-              payload = {
-                  'contents': [{'parts': [{'text': prompt}]}],
-                  'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}
-              }
-              req = urllib.request.Request(
-                  url, data=json.dumps(payload).encode(),
-                  headers={'Content-Type': 'application/json'}, method='POST'
-              )
-              with urllib.request.urlopen(req, timeout=60) as r:
-                  data = json.loads(r.read())
-              return data['candidates'][0]['content']['parts'][0]['text']
-
-          def call_openai(api_key, prompt):
-              payload = {
-                  'model': 'gpt-4o-mini',
-                  'messages': [
-                      {'role': 'system', 'content': 'You are a BEM governance role runner. Respond in Russian. Never reveal secrets.'},
-                      {'role': 'user', 'content': prompt}
-                  ],
-                  'max_tokens': 2000
-              }
-              req = urllib.request.Request(
-                  'https://api.openai.com/v1/chat/completions',
-                  data=json.dumps(payload).encode(),
-                  headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
-                  method='POST'
-              )
-              with urllib.request.urlopen(req, timeout=60) as r:
-                  data = json.loads(r.read())
-              return data['choices'][0]['message']['content']
-
-          text = None
-          provider_used = None
-
-          # Первый приоритет — Gemini Flash (бесплатный)
           gemini_key = os.environ.get('GEMINI_API_KEY', '')
-          if gemini_key:
-              try:
-                  text = call_gemini(gemini_key, prompt)
-                  provider_used = 'gemini-1.5-flash'
-                  print(f'PROVIDER={provider_used}')
-              except Exception as e:
-                  print(f'Gemini error: {e}')
+          if not gemini_key:
+              print('HOSTED_ROLE_STATUS=GEMINI_API_KEY_MISSING')
+              print('CURATOR_REPLY: Ключ GEMINI_API_KEY не настроен. Добавьте секрет в репозиторий.')
+              raise SystemExit(0)
 
-          # Fallback — OpenAI
-          if not text:
-              openai_key = os.environ.get('OPENAI_API_KEY', '')
-              if openai_key:
-                  try:
-                      text = call_openai(openai_key, prompt)
-                      provider_used = 'openai/gpt-4o-mini'
-                      print(f'PROVIDER={provider_used}')
-                  except Exception as e:
-                      print(f'OpenAI error: {e}')
+          url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}'
+          payload = {
+              'contents': [{'parts': [{'text': prompt}]}],
+              'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}
+          }
+          req = urllib.request.Request(
+              url, data=json.dumps(payload).encode(),
+              headers={'Content-Type': 'application/json'}, method='POST'
+          )
 
-          if not text:
-              print('HOSTED_ROLE_STATUS=NO_LLM_AVAILABLE')
-              print('CURATOR_REPLY: Сервис временно недоступен. Попробуйте позже.')
-          else:
+          try:
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  data = json.loads(r.read())
+              text = data['candidates'][0]['content']['parts'][0]['text']
+              print('PROVIDER=gemini-1.5-flash')
               print('HOSTED_ROLE_STATUS=OK')
               print(text)
+          except urllib.error.HTTPError as e:
+              print(f'HOSTED_ROLE_STATUS=GEMINI_HTTP_ERROR_{e.code}')
+              print(e.read().decode('utf-8', errors='replace')[:2000])
+              print('CURATOR_REPLY: Ошибка Gemini API. Проверьте ключ GEMINI_API_KEY.')
+          except Exception as e:
+              print(f'HOSTED_ROLE_STATUS=GEMINI_ERROR: {e}')
+              print('CURATOR_REPLY: Сервис временно недоступен. Попробуйте позже.')
           PY
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
           exit 0
@@ -324,7 +290,6 @@ jobs:
           if not reply_text:
               reply_text = output.strip()[:1000] or '[нет ответа от куратора]'
 
-          # Определить провайдера из лога
           provider_used = 'gemini-1.5-flash'
           for line in output.splitlines():
               if line.startswith('PROVIDER='):
@@ -370,7 +335,6 @@ jobs:
                   print(f'gh_put {path} error {e.code}: {e.read()[:200]}')
                   return None, e.code
 
-          # 1. Append to governance/telegram_outbox.jsonl
           outbox_entry = {
               'event_id': f'evt_{trace_id}',
               'status': 'ready_to_send',
@@ -392,7 +356,6 @@ jobs:
                         new_ob, f'GATE-5: curator outbox entry trace={trace_id}', ob_sha)
           print(f'outbox write status: {s}')
 
-          # 2. Write gate5_runtime_receipt.json
           receipt = {
               'gate': 'GATE-5',
               'status': 'PASS',
@@ -480,7 +443,6 @@ jobs:
           cycle_id = os.environ.get('CYCLE_ID', '')
           role_raw = os.environ.get('ROLE_RAW', '')
 
-          # Не диспатчить оркестратор для curator — он не часть FSM цикла
           if not cycle_id or role_raw == 'curator':
               print(f'Skip orchestrator: cycle_id={cycle_id!r} role={role_raw!r}')
               raise SystemExit(0)
