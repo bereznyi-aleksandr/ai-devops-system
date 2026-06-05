@@ -2,7 +2,7 @@ name: Telegram Long Poll
 
 on:
   schedule:
-    - cron: '* * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 concurrency:
@@ -84,12 +84,11 @@ jobs:
                   return None
 
           def dispatch_curator(trace_id, task_text):
-              """Вызвать gpt-hosted-roles.yml с role=curator через workflow_dispatch."""
               body = json.dumps({
                   "ref": "main",
                   "inputs": {
                       "role": "curator",
-                      "provider": "gpt",
+                      "provider": "gemini",
                       "trace_id": trace_id,
                       "task_type": "telegram_operator_message",
                       "task": task_text
@@ -111,7 +110,7 @@ jobs:
                   print(f"Curator dispatch error: {e.code} {e.read()[:200]}")
                   return False
 
-          # ── Читать offset ──
+          # Читать offset
           offset_data, status = gh_get(f"/repos/{repo}/contents/governance/telegram/poll_offset.txt")
           offset = 0
           offset_sha = None
@@ -123,7 +122,7 @@ jobs:
               except:
                   pass
 
-          # ── Poll Telegram ──
+          # Poll Telegram
           url = f"https://api.telegram.org/bot{token}/getUpdates?offset={offset}&limit=100&timeout=0"
           try:
               with urllib.request.urlopen(url, timeout=10) as r:
@@ -164,7 +163,7 @@ jobs:
 
           new_offset = str(max_uid + 1)
 
-          # ── Обновить offset ──
+          # Обновить offset
           _, s = gh_put(
               f"/repos/{repo}/contents/governance/telegram/poll_offset.txt",
               new_offset, f"telegram: offset {new_offset}", offset_sha
@@ -175,7 +174,7 @@ jobs:
               print("No messages from allowed chat")
               exit(0)
 
-          # ── Записать в inbox.jsonl ──
+          # Записать в inbox.jsonl
           inbox_data, status = gh_get(f"/repos/{repo}/contents/governance/telegram/inbox.jsonl")
           inbox_content = ""
           inbox_sha = None
@@ -194,9 +193,9 @@ jobs:
           )
           print(f"Inbox updated (status {s})")
 
-          # ── Диспатч Куратора на каждое сообщение ──
+          # Диспатч Куратора
           now_iso = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-          for i, entry in enumerate(new_entries):
+          for entry in new_entries:
               trace_id = f"tg_{entry['update_id']}_{now_iso}"
               dispatched = dispatch_curator(trace_id, entry["text"])
               if dispatched:
