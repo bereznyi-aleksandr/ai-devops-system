@@ -1,0 +1,50 @@
+      - name: Run hosted role (Gemini Flash, free)
+        shell: bash
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set +e
+          OUTPUT_FILE="$RUNNER_TEMP/hosted_gpt_role_output.md"
+          python3 - <<'PY' > "$OUTPUT_FILE" 2>&1
+          import json, os, pathlib, urllib.error, urllib.request
+
+          prompt = pathlib.Path(os.environ['PROMPT_FILE']).read_text(encoding='utf-8', errors='replace')
+          role = os.environ.get('ROLE', 'GPT_UNKNOWN')
+          trace_id = os.environ.get('TRACE_ID', 'missing')
+
+          print(f'BEM-HOSTED-ROLE | {role} | RAW_OUTPUT')
+          print(f'TRACE_ID={trace_id}')
+
+          gemini_key = os.environ.get('GEMINI_API_KEY', '')
+          if not gemini_key:
+              print('HOSTED_ROLE_STATUS=GEMINI_API_KEY_MISSING')
+              print('CURATOR_REPLY: Ключ GEMINI_API_KEY не настроен. Добавьте секрет в репозиторий.')
+              raise SystemExit(0)
+
+          url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}'
+          payload = {
+              'contents': [{'parts': [{'text': prompt}]}],
+              'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}
+          }
+          req = urllib.request.Request(
+              url, data=json.dumps(payload).encode(),
+              headers={'Content-Type': 'application/json'}, method='POST'
+          )
+
+          try:
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  data = json.loads(r.read())
+              text = data['candidates'][0]['content']['parts'][0]['text']
+              print('PROVIDER=gemini-1.5-flash')
+              print('HOSTED_ROLE_STATUS=OK')
+              print(text)
+          except urllib.error.HTTPError as e:
+              print(f'HOSTED_ROLE_STATUS=GEMINI_HTTP_ERROR_{e.code}')
+              print(e.read().decode('utf-8', errors='replace')[:2000])
+              print('CURATOR_REPLY: Ошибка Gemini API. Проверьте ключ GEMINI_API_KEY.')
+          except Exception as e:
+              print(f'HOSTED_ROLE_STATUS=GEMINI_ERROR: {e}')
+              print('CURATOR_REPLY: Сервис временно недоступен. Попробуйте позже.')
+          PY
+          echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
+          exit 0
