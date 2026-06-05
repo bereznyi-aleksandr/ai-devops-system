@@ -1,9 +1,9 @@
 {
   "gate": "GATE-5",
   "status": "PASS",
-  "ts": "2026-06-05T10:16:03.630722+00:00",
-  "trace_id": "tg_818730845_20260605T101545Z",
-  "provider": "openai/gpt",
-  "llm_response": "BEM-GPT-HOSTED-ROLE | GPT_CURATOR | RAW_OUTPUT\nMODEL=gpt-4o-mini\nTRACE_ID=tg_818730845_20260605T101545Z\nCYCLE_ID=\nHOSTED_GPT_STATUS=OPENAI_API_HTTP_ERROR_429\n{\n  \"error\": {\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n    \"type\": \"insufficient_quota\",\n    \"param\": null,\n    \"code\": \"insufficient_quota\"\n  }\n}",
+  "ts": "2026-06-05T18:16:25.006510+00:00",
+  "trace_id": "tg_818730846_20260605T181614Z",
+  "provider": "gemini-1.5-flash",
+  "llm_response": "Ошибка Gemini API. Проверьте ключ GEMINI_API_KEY.",
   "telegram_sent": true
 }
