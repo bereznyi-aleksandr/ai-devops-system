@@ -8,9 +8,9 @@ name: GPT Hosted Roles
         required: true
         type: string
       provider:
-        description: 'gemini | codex'
+        description: 'openai | codex'
         required: false
-        default: 'gemini'
+        default: 'openai'
         type: string
       trace_id:
         description: 'Trace id'
@@ -86,10 +86,10 @@ jobs:
           echo "CYCLE_ID=$CYCLE_ID" >> "$GITHUB_ENV"
           echo "TASK_TYPE=$TASK_TYPE" >> "$GITHUB_ENV"
 
-      - name: Run hosted role (Gemini 2.0 Flash, free)
+      - name: Run hosted role (GPT-4o)
         shell: bash
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set +e
           OUTPUT_FILE="$RUNNER_TEMP/hosted_gpt_role_output.md"
@@ -101,37 +101,51 @@ jobs:
           print(f"BEM-HOSTED-ROLE | RAW_OUTPUT")
           print(f"TRACE_ID={trace_id}")
 
-          key = os.environ.get("GEMINI_API_KEY", "")
+          key = os.environ.get("OPENAI_API_KEY", "")
           if not key:
-              print("HOSTED_ROLE_STATUS=GEMINI_API_KEY_MISSING")
-              print("CURATOR_REPLY: Ключ GEMINI_API_KEY не настроен.")
+              print("HOSTED_ROLE_STATUS=OPENAI_API_KEY_MISSING")
+              print("CURATOR_REPLY: Ключ OPENAI_API_KEY не настроен.")
               raise SystemExit(0)
 
-          text = None
-          used = None
-          for model in ["gemini-2.0-flash", "gemini-1.5-flash"]:
-              url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-              payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"maxOutputTokens": 2000, "temperature": 0.3}}
-              req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"}, method="POST")
-              try:
-                  with urllib.request.urlopen(req, timeout=60) as r:
-                      data = json.loads(r.read())
-                      text = data["candidates"][0]["content"]["parts"][0]["text"]
-                      used = model
-                      break
-              except urllib.error.HTTPError as e:
-                  body = e.read().decode("utf-8", errors="replace")
-                  print(f"Model {model} HTTP {e.code}: {body[:1200]}")
-              except Exception as e:
-                  print(f"Model {model} error: {e}")
+          payload = {
+              "model": "gpt-4o",
+              "messages": [
+                  {
+                      "role": "system",
+                      "content": "Ты — Curator, главный оркестратор системы BEM-221. Точка входа и выхода информации. Получаешь сообщения от оператора через Telegram. Отвечаешь по-русски, кратко и по делу. Понимаешь свободный текст, определяешь задачи, маршрутизируешь во внутренний контур. Никогда не раскрываешь секреты. Последняя строка ответа всегда: CURATOR_REPLY: <ответ оператору>"
+                  },
+                  {
+                      "role": "user",
+                      "content": prompt
+                  }
+              ],
+              "max_tokens": 2000,
+              "temperature": 0.3
+          }
 
-          if text:
-              print(f"PROVIDER=gemini/{used}")
-              print("HOSTED_ROLE_STATUS=OK")
-              print(text)
-          else:
-              print("HOSTED_ROLE_STATUS=GEMINI_ALL_MODELS_FAILED")
-              print("CURATOR_REPLY: Ошибка Gemini API. Проверьте ключ GEMINI_API_KEY в секретах репозитория.")
+          req = urllib.request.Request(
+              "https://api.openai.com/v1/chat/completions",
+              data=json.dumps(payload).encode(),
+              headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+              method="POST"
+          )
+
+          try:
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  data = json.loads(r.read())
+                  text = data["choices"][0]["message"]["content"]
+                  print("PROVIDER=openai/gpt-4o")
+                  print("HOSTED_ROLE_STATUS=OK")
+                  print(text)
+          except urllib.error.HTTPError as e:
+              body = e.read().decode("utf-8", errors="replace")
+              print(f"OpenAI HTTP {e.code}: {body[:1200]}")
+              print("HOSTED_ROLE_STATUS=OPENAI_ERROR")
+              print("CURATOR_REPLY: Ошибка OpenAI API. Проверьте ключ и баланс OPENAI_API_KEY.")
+          except Exception as e:
+              print(f"Error: {e}")
+              print("HOSTED_ROLE_STATUS=ERROR")
+              print("CURATOR_REPLY: Сервис временно недоступен.")
           PY
           cat "$OUTPUT_FILE"
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
@@ -150,7 +164,7 @@ jobs:
 
           output = pathlib.Path(os.environ["OUTPUT_FILE"]).read_text(encoding="utf-8", errors="replace")
           reply = None
-          provider = "gemini/gemini-2.0-flash"
+          provider = "openai/gpt-4o"
           for line in output.splitlines():
               if line.startswith("PROVIDER="):
                   provider = line.split("=", 1)[1].strip()
