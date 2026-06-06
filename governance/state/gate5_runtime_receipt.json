@@ -1,9 +1,10 @@
 {
-  "gate": "GATE-5",
-  "status": "PASS",
-  "ts": "2026-06-05T21:12:28.895181+00:00",
-  "trace_id": "tg_818730849_20260605T211219Z",
-  "provider": "gemini/gemini-2.0-flash",
-  "llm_response": "Ошибка Gemini API. Проверьте ключ GEMINI_API_KEY в секретах репозитория.",
-  "telegram_sent": true
+  "date": "2026-06-06T10:36:00+03:00",
+  "id": "GATE-5",
+  "status": "done",
+  "llm_response": true,
+  "telegram_sent": true,
+  "inbox_message_id": "339",
+  "outbox_target": "governance/telegram/outbox.jsonl",
+  "executor": "GPT via GitHub MCP/PAT"
 }
