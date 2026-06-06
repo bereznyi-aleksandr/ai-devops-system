@@ -17,10 +17,10 @@ The initiator may be:
 
 The initiator must be preserved through the whole flow.
 
-The return path depends on the initiator:
+Return path depends on the initiator:
 
 - if initiator is OPERATOR, result returns directly to OPERATOR as a curated report;
-- if initiator is EXTERNAL_AUDITOR_*, result is written to that auditor's mailbox and the OPERATOR is notified which external auditor must be opened.
+- if initiator is EXTERNAL_AUDITOR_*, result is written to that auditor's mailbox and OPERATOR is notified which external auditor must be opened.
 
 ## Roles
 
@@ -31,6 +31,7 @@ Strategic human operator.
 Can initiate a task directly.
 
 If OPERATOR is the initiator:
+
 - DIRECTOR_CURATOR returns the result directly to OPERATOR;
 - mailbox is not required;
 - OPERATOR receives only a curated report in canonical format.
@@ -40,12 +41,14 @@ If OPERATOR is the initiator:
 Any approved external audit role.
 
 Examples:
+
 - EXTERNAL_AUDITOR_GPT
 - EXTERNAL_AUDITOR_CLAUDE
 
 If EXTERNAL_AUDITOR is the initiator:
+
 - DIRECTOR_CURATOR preserves initiator metadata;
-- INTERNAL_AUDITOR writes the verified result to the initiator's mailbox return path;
+- INTERNAL_AUDITOR writes verified result to the initiator mailbox return path;
 - DIRECTOR_CURATOR notifies OPERATOR which external auditor chat must be opened.
 
 ### DIRECTOR_CURATOR
@@ -53,21 +56,23 @@ If EXTERNAL_AUDITOR is the initiator:
 Curator of the General Director.
 
 Responsibilities:
+
 - receives requests from OPERATOR or any EXTERNAL_AUDITOR;
 - preserves initiator_role, initiator_return_mode, initiator_mailbox_return_path if present;
 - escalates strategic decisions to GENERAL_DIRECTOR;
 - creates tasks for INTERNAL_CONTOUR;
 - receives completion notice from INTERNAL_AUDITOR;
-- returns the result using the correct return path.
+- returns result using the correct return mode.
 
 ### GENERAL_DIRECTOR
 
 Decision owner.
 
 Allowed decisions:
+
 - APPROVED
 - APPROVED_WITH_NOTES
-IChANGE_REQUIRED
+- CHANGE_REQUIRED
 - BLOCKED
 - NEED_INTERNAL_AUDIT
 
@@ -76,11 +81,31 @@ Allowed decisions:
 Internal execution system.
 
 Roles:
+
 - ANALYST
 - AUDITOR
 - EXECUTOR
 
 Canonical loop:
+
+```text
+ANALYST
+-> AUDITOR
+-> EXECUTOR
+-> AUDITOR
+```
+
+Rework loop:
+
+```text
+AUDITOR
+-> ANALYST
+-> AUDITOR
+-> EXECUTOR
+-> AUDITOR
+```
+
+Rules:
 
 1. ANALYST prepares TASK_DRAFT.
 2. AUDITOR reviews TASK_DRAFT.
@@ -101,10 +126,17 @@ Canonical loop:
 ### Mode A: OPERATOR initiated task
 
 Used when:
-- initiator_role = OPERATOR
+
+```json
+{
+  "initiator_role": "OPERATOR",
+  "initiator_return_mode": "DIRECT_OPERATOR_REPORT"
+}
+```
 
 Return path:
 
+```text
 OPERATOR
 -> DIRECTOR_CURATOR
 -> GENERAL_DIRECTOR if needed
@@ -112,24 +144,37 @@ OPERATOR
 -> INTERNAL_AUDITOR
 -> DIRECTOR_CURATOR
 -> OPERATOR
+```
 
 Mailbox:
+
 - not required;
 - not used for normal completion;
 - result is delivered as a curator report.
 
-Operator message:
-- no raw mailbox;
-- no internal logs;
-- only canonical report.
-
 ### Mode B: External auditor initiated task
 
 Used when:
-- initiator_role starts with EXTERNAL_AUDITOR_
+
+```json
+{
+  "initiator_role": "EXTERNAL_AUDITOR_GPT",
+  "initiator_return_mode": "MAILBOX_AND_OPERATOR_WAKE"
+}
+```
+
+or:
+
+```json
+{
+  "initiator_role": "EXTERNAL_AUDITOR_CLAUDE",
+  "initiator_return_mode": "MAILBOX_AND_OPERATOR_WAKE"
+}
+```
 
 Return path:
 
+```text
 EXTERNAL_AUDITOR_*
 -> DIRECTOR_CURATOR
 -> GENERAL_DIRECTOR if needed
@@ -139,12 +184,15 @@ EXTERNAL_AUDITOR_*
 -> OPERATOR notification
 -> OPERATOR opens the initiating external auditor
 -> EXTERNAL_AUDITOR_* reads mailbox
+```
 
 Mailbox:
+
 - required;
 - INTERNAL_AUDITOR writes verified result to initiator_mailbox_return_path.
 
 Operator message:
+
 - must say which external auditor to open;
 - must include exact mailbox path or file;
 - must not include raw mailbox content.
@@ -228,4 +276,48 @@ Open GPT Custom GPT
 
 MAILBOX:
 governance/audit_mailbox/director_curator_to_external_auditor_gpt/<file>.md
-P����
+```
+
+or:
+
+```text
+BEM-931 | RESULT READY
+
+ДЛЯ КОГО:
+EXTERNAL_AUDITOR_CLAUDE
+
+ЧТО ОТКРЫТЫ:
+Open Claude Chat
+
+MAILBOX:
+governance/audit_mailbox/director_curator_to_external_auditor_claude/<file>.md
+```
+
+## Acceptance Criteria
+
+A result is valid only if:
+
+- task was routed through DIRECTOR_CURATOR;
+- initiator_role and return_mode were preserved;
+- strategic decision was owned by GENERAL_DIRECTOR when required;
+- internal work followed ANALYST -> AUDITOR -> EXECUTOR -> AUDITOR;
+- EXECUTOR did not receive an unaudited analyst task;
+- AUDITOR accepted the final execution result;
+- AUDITOR notified DIRECTOR_CURATOR;
+- if initiator is EXTERNAL_AUDITOR_*, AUDITOR wrote verified result to initiator mailbox return path;
+- DIRECTOR_CURATOR notified OPERATOR and specified the correct external auditor to wake;
+- initiating EXTERNAL_AUDITOR reviewed the mailbox result when applicable.
+
+## Deprecated Behavior
+
+Deprecated:
+
+- hard-coding GPT as the only external auditor;
+- hard-coding Claude as the only external auditor;
+- GitHub Actions mailbox notifier directly notifying OPERATOR for normal mailbox traffic;
+- raw mailbox events sent to OPERATOR;
+- treating gpt_to_claude / claude_to_gpt as canonical business role names.
+
+Allowed only as fallback:
+
+- GitHub Actions mailbox notifier may be used manually for diagnostics or emergency recovery.
