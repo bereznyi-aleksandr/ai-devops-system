@@ -70,17 +70,44 @@ Forbidden sections:
 Mailbox is for agent-to-agent coordination.
 
 Canonical agent communication loop:
-1. GPT sends message/task through curator.
-2. Curator assigns work to internal contour.
-3. Internal contour completes work.
-4. Auditor writes result to mailbox.
-5. Mailbox watcher detects result.
-6. Watcher wakes hosted GPT role.
-7. Hosted GPT role reads mailbox and continues protocol.
-8. Operator receives only final/periodic clean report if needed.
+1. EXTERNAL_AUDITOR_GPTsends message/task through DIRECTOR_CURATOR.
+2. DIRECTOR_CURATOR distinguishes working task vs strategic approval.
+3. GENERAL_DIRECTOR approves/rejects strategic protocol if required.
+4. DIRECTOR_CURATOR assigns to INTERNAL_CONTOUR.
+5. INTERNAL_ANALYST prepares task for implementation.
+6. INTERNAL_ANALYST sends prepared task to INTERNAL_AUDITOR for pre-execution review.
+7. INTERNAL_AUDITOR approves the task or returns it to ANALYST with CHANGE_REQUIRED.
+8. If pre-execution review is approved, INTERNAL_EXECUTOR receives the task.
+9. INTERNAL_EXECUTOR implements the task.
+10. INTERNAL_EXECUTOR sends result to INTERNAL_AUDITOR.
+11. INTERNAL_AUDITOR approves the result or returns it to ANALYST with CHANGE_REQUIRED.
+12. If result is approved, INTERNAL_AUDITOR writes the verdict to mailbox.
+13. MAILBOX_WATCHER detects the verdict.
+14. EXTERNAL_AUDITOR_GPT is notified to read mailbox through MCP.
+15. Operator receives only final/periodic clean report if needed.
+
+## Internal Contour Review Rule
+
+Analyst does not send tasks directly to Executor.
+
+The only valid internal path is:
+
+If review fails:
+
+Analyst -> Auditor -> Analyst
+
+Then Analyst repairs the task and returns it to Auditor.
+
+If review passes:
+
+Analyst -> Auditor -> Executor -> Auditor
+
+Then Auditor either:
+- approves and writes verdict to mailbox; or
+- returns to Analyst with CHANGE_REQUIRED.
 
 ## Wake Rule
 
-Mailbox watcher should wake the hosted GPT role when there is new mailbox input for GPT.
+Mailbox watcher should wake the external GPT/operator when there is new mailbox input for GPT.
 
-It should not wake operator for normal mailbox traffic.
+It should not wake operator for normal mailbox traffic unless manual custom GPT action is required.
