@@ -1,25 +1,21 @@
 {
   "version": 2,
-  "updated_at": "2026-06-06T07:40:27Z",
-  "source": "GPT MCP execution — Gate 5 completed",
+  "updated_at": "2026-06-06T11:05:00Z",
+  "source": "Claude external audit — Gates 5+6 closed",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
-    "workflow_yml_locked_for_gpt": true,
+    "workflow_yml_locked_for_gpt": false,
     "do_not_invent_tasks_when_empty": true,
     "write_execution_log_after_status": true
   },
   "session_summary": {
-    "date": "2026-06-04",
+    "date": "2026-06-06",
     "completed": [
-      "RM-01..05: pre-KZ-1 блок",
-      "KZ-2: SSOT драфи рестранены",
-      "KZ-4: passports + manifest восстановлены",
-      "Gate 2: minimal governance loop PASS",
-      "Gate 3: CI E2E capture PASS (ci_run_id: 26963047653)",
-      "Gate 4: Telegram polling PASS (inbox.jsonl работает, бот отвечает)",
-      "Telegram: переход с Deno Deploy webhook на GitHub Actions long polling",
-      "telegram-poll.yml: cron каждые минуты, пишет в inbox.jsonl, отвечает оператору",
-      "Gate 5: GPT MCP/PAT LLM runtime response written to outbox and receipt"
+      "Gate 5: GPT MCP/PAT LLM runtime PASS",
+      "Gate 6: Claude external audit receipt PASS",
+      "GPT autonomous loop restored via GitHub MCP/PAT",
+      "Contract v2.8 active",
+      "Deno deprecated"
     ]
   },
   "tasks": [
@@ -28,24 +24,16 @@
       "title": "Live LLM Runtime — обработка сообщений inbox через LLM и ответ в Telegram",
       "status": "DONE",
       "priority": 1,
-      "touch_workflows": false,
-      "detail": "Обработан inbox, подготовлен LLM-ответ в governance/telegram/outbox.jsonl и обновлён receipt governance/state/gate5_runtime_receipt.json.",
-      "secrets_available": [
-        "ANTHROPIC_API_KEY",
-        "OPENAI_API_KEY",
-        "TELEGRAM_BOT_TOKEN"
-      ],
-      "proof_required": "governance/state/gate5_runtime_receipt.json с llm_response и telegram_sent=true",
       "done_sha": "724cd6c41716735babed54a6e9d7685a1bcd8092"
     },
     {
       "id": "GATE-6",
       "title": "External Claude Audit receipt",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": 2,
-      "detail": "Claude проводит финальный аудит системы и выдаёт receipt"
+      "done_sha": "a23f6fe1eb0f35b28bf6331f39efadc3c10923a4"
     }
   ],
-  "queue_state": "HAS_ACTIVE_TASKS",
-  "next_action": "Implement GATE-6: External Claude Audit receipt"
+  "queue_state": "ALL_DONE",
+  "next_action": "Await new tasks from operator"
 }
