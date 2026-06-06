@@ -1,11 +1,9 @@
 {
   "gate": "GATE-5",
   "status": "PASS",
-  "ts": "2026-06-06T14:47:00Z",
-  "trace_id": "tg_818730856_20260606T144651Z",
+  "ts": "2026-06-06T15:30:18.420348+00:00",
+  "trace_id": "operator_hourly_20260606T153002Z",
   "provider": "openai/gpt-4o",
-  "llm_response": "Проверка завершена, все задачи выполнены. Ожидаем новых задач.",
-  "telegram_sent": true,
-  "billing": "openai_active_5usd",
-  "note": "Curator fully operational via OpenAI GPT-4o. Gemini deprecated."
+  "llm_response": "BEM-HOURLY | OPERATOR REPORT | 2026-06-06 | 18:30 (UTC+3)\\n\\nСТАТУС:\\nOK\\n\\nИЗМЕНЕНИЯ ЗА ЧАС:\\n- BEM-931: repair hourly curator report workflow\\n\\nMAILBOX:\\n- новых согласований нет\\n\\nACTIVE_QUEUE:\\n- ALL_DONE\\n\\nРИСКИ:\\n- нет\\n\\nДЕЙСТВИЕ ОПЕРАТОРА:\\nне требуется",
+  "telegram_sent": true
 }
