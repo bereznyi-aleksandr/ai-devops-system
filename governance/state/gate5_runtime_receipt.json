@@ -1,9 +1,11 @@
 {
   "gate": "GATE-5",
   "status": "PASS",
-  "ts": "2026-06-06T14:47:01.513185+00:00",
+  "ts": "2026-06-06T14:47:00Z",
   "trace_id": "tg_818730856_20260606T144651Z",
   "provider": "openai/gpt-4o",
   "llm_response": "Проверка завершена, все задачи выполнены. Ожидаем новых задач.",
-  "telegram_sent": true
+  "telegram_sent": true,
+  "billing": "openai_active_5usd",
+  "note": "Curator fully operational via OpenAI GPT-4o. Gemini deprecated."
 }
