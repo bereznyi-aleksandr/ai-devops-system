@@ -1,0 +1,112 @@
+name: Autonomous Development Loop
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: autonomous-dev-loop
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  loop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Read ACTIVE_QUEUE and dispatch GPT role
+        env:
+          GH_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          gh_pat = os.environ['GH_PAT']
+          repo   = os.environ['REPO']
+          api    = 'https://api.github.com'
+          now    = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+
+          def dispatch(workflow, inputs):
+              body = json.dumps({'ref': 'main', 'inputs': inputs}).encode()
+              req = urllib.request.Request(
+                  f'{api}/repos/{repo}/actions/workflows/{workflow}/dispatches',
+                  data=body, method='POST',
+                  headers={'Authorization': f'Bearer {gh_pat}',
+                           'Accept': 'application/vnd.github+json',
+                           'Content-Type': 'application/json',
+                           'User-Agent': 'autonomous-dev-loop'}
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=10) as r:
+                      print(f'Dispatched {workflow}: HTTP {r.status}')
+                      return True
+              except urllib.error.HTTPError as e:
+                  print(f'Dispatch error {workflow}: {e.code} {e.read()[:200]}')
+                  return False
+
+          # Читаем ACTIVE_QUEUE
+          queue_path = Path('governance/roadmap/ACTIVE_QUEUE.json')
+          if not queue_path.exists():
+              print('ACTIVE_QUEUE.json not found — nothing to do')
+              raise SystemExit(0)
+
+          queue = json.loads(queue_path.read_text())
+          tasks = queue.get('tasks', [])
+
+          # Берём первую IN_PROGRESS или PENDING задачу
+          next_task = None
+          for t in tasks:
+              if t.get('status') in ('IN_PROGRESS', 'PENDING'):
+                  next_task = t
+                  break
+
+          if not next_task:
+              print('ACTIVE_QUEUE empty — nothing to do')
+              raise SystemExit(0)
+
+          task_id    = next_task.get('id', 'unknown')
+          task_title = next_task.get('title', '')
+          task_detail = next_task.get('detail', '')
+          touch_wf   = next_task.get('touch_workflows', False)
+
+          print(f'Next task: {task_id} — {task_title}')
+
+          # Если задача требует изменения workflow — это работа для Claude, не GPT
+          if touch_wf:
+              print(f'Task {task_id} requires workflow changes — locked for GPT. Skipping.')
+              raise SystemExit(0)
+
+          # Формируем trace_id
+          trace_id = f'auto_{task_id}_{now}'
+
+          # Запускаем GPT analyst для анализа задачи
+          task_body = f'TASK_ID: {task_id}\nTITLE: {task_title}\n\nDETAIL:\n{task_detail}'
+
+          dispatched = dispatch('gpt-hosted-roles.yml', {
+              'role': 'analyst',
+              'provider': 'gemini',
+              'trace_id': trace_id,
+              'cycle_id': task_id,
+              'task_type': 'active_queue_task',
+              'task': task_body
+          })
+
+          if dispatched:
+              print(f'GPT analyst dispatched for task {task_id}')
+          else:
+              print(f'Failed to dispatch GPT for task {task_id}')
+          PY
