@@ -1,92 +1,119 @@
-# BEM-931 | Universal Curator / Internal Contour / Mailbox Flow
+# BEM-931 | Canonical Governance Object Model and Routing Flow
 
 Updated: 2026-06-06
-Status: canonical draft
+Status: canonical draft v2.2
 Owner: DIRECTOR_CURATOR
-Applies to: OPERATOR and any EXTERNAL_AUDITOR
+Applies to: OPERATOR, EXTERNAL_AUDITOR_GPT, EXTERNAL_AUDITOR_CLAUDE, GENERAL_DIRECTOR, DIRECTOR, WORKER
 
-## Purpose
+## 1. Correction
 
-This document fixes the universal routing scheme for tasks that enter the Director Curator.
+Previous simplified model was incomplete.
 
-The initiator may be:
+Incorrect current-scope model:
+```text
+OPERATOR / GPT / DIRECTOR_CURATOR / GENERAL_DIRECTOR / INTERNAL_CONTOUR
+```
 
+Correct model:
+```text
+GOVERNANCE_OBJECT has:
+- object_curator
+- internal_contours[]
+- audit gates
+- return path by initiator
+```
+
+Current governance-contour objects:
+- GENERAL_DIRECTOR
+- DIRECTOR
+- WORKER
+
+Do not import old conceptual "board of directors" discussion into the current governance-contour implementation.
+Product-repository directors are future product scope, not current BEM-931 release scope.
+
+## 2. Initiators
+
+Allowed initiators:
 - OPERATOR
 - EXTERNAL_AUDITOR_GPT
-- EXTERNAL_AUDITOR_CLAUDE- any other approved EXTERNAL_AUDITOR_* role
-
-The initiator must be preserved through the whole flow.
-
-Return path depends on the initiator:
-
-- if initiator is OPERATOR, result returns directly to OPERATOR as a curated report;
-- if initiator is EXTERNAL_AUDITOR_*, result is written to that auditor's mailbox and OPERATOR is notified which external auditor must be opened.
-
-## Roles
-
-### OPERATOR
-
-Strategic human operator.
-
-Can initiate a task directly.
-
-If OPERATOR is the initiator:
-
-- DIRECTOR_CURATOR returns the result directly to OPERATOR;
-- mailbox is not required;
-- OPERATOR receives only a curated report in canonical format.
-
-### EXTERNAL_AUDITOR
-
-Any approved external audit role.
-
-Examples:
-
-- EXTERNAL_AUDITOR_GPT
 - EXTERNAL_AUDITOR_CLAUDE
+- approved EXTERNAL_AUDITOR_*
 
-If EXTERNAL_AUDITOR is the initiator:
+Every request to a curator must preserve:
 
-- DIRECTOR_CURATOR preserves initiator metadata;
-- INTERNAL_AUDITOR writes verified result to the initiator mailbox return path;
-- DIRECTOR_CURATOR notifies OPERATOR which external auditor chat must be opened.
+```json
+{
+  "initiator_role": "OPERATOR | EXTERNAL_AUDITOR_GPT | EXTERNAL_AUDITOR_CLAUDE | EXTERNAL_AUDITOR_*",
+  "initiator_return_mode": "DIRECT_OPERATOR_REPORT | MAILBOX_AND_OPERATOR_WAKE",
+  "initiator_chat_required": "none | Open GPT Custom GPT | Open Claude Chat | ...",
+  "initiator_mailbox_return_path": "none | governance/audit_mailbox/<path>/",
+  "initiator_request_id": "BEM-..."
+}
+```
 
-### DIRECTOR_CURATOR
+Requests without initiator metadata are BLOCKED.
 
-Curator of the General Director.
+## 3. Objects
 
-Responsibilities:
+### 3.1 GENERAL_DIRECTOR
 
-- receives requests from OPERATOR or any EXTERNAL_AUDITOR;
-- preserves initiator_role, initiator_return_mode, initiator_mailbox_return_path if present;
-- escalates strategic decisions to GENERAL_DIRECTOR;
-- creates tasks for INTERNAL_CONTOUR;
-- receives completion notice from INTERNAL_AUDITOR;
-- returns result using the correct return mode.
+Mandatory:
+- GD_CURATOR
+- GD internal contours
 
-### GENERAL_DIRECTOR
+Current minimum:
+- GD_DECISION_CONTOUR: strategic decision / final verdict
+- GD_RULES_CONTOUR: protocol, rules, governance policy approval
 
-Decision owner.
-
-Allowed decisions:
-
+Allowed verdicts:
 - APPROVED
 - APPROVED_WITH_NOTES
 - CHANGE_REQUIRED
 - BLOCKED
 - NEED_INTERNAL_AUDIT
+- NEED_DIRECTOR_EXECUTION
 
-### INTERNAL_CONTOUR
+### 3.2 DIRECTOR
 
-Internal execution system.
+Director is not "domain runners + escalation".
+Director is an object.
 
-Roles:
+Mandatory:
+- DIR_CURATOR
+- DIR_RULES_CONTOUR
+- DIR_DECISION_CONTOUR
 
-- ANALYST
-- AUDITOR
-- EXECUTOR
+DIR_RULES_CONTOUR:
+- writes and updates rules;
+- prepares protocol text;
+- updates architecture / policy files.
 
-Canonical loop:
+DIR_DECISION_CONTOUR:
+- makes operational decisions inside Director scope;
+- routes work;
+- escalates to GENERAL_DIRECTOR when needed.
+
+### 3.3 WORKER
+
+Worker is not a single executor role.
+Worker is an object.
+
+Mandatory:
+- WRK_CURATOR
+- internal_contours[]
+
+Worker may have unlimited internal contours.
+Default worker has:
+- WRK_C1
+- WRK_C2
+- WRK_C3
+
+Semantics of WRK_C1 / WRK_C2 / WRK_C3 must come from object_passports and contours_registry.
+Do not hard-code product semantics until registry defines them.
+
+## 4. Internal contour loop
+
+Every internal contour uses:
 
 ```text
 ANALYST
@@ -95,8 +122,14 @@ ANALYST
 -> AUDITOR
 ```
 
-Rework loop:
+Rejected task draft:
+```text
+AUDITOR
+-> ANALYST
+-> AUDITOR
+```
 
+Rejected execution result:
 ```text
 AUDITOR
 -> ANALYST
@@ -106,218 +139,106 @@ AUDITOR
 ```
 
 Rules:
-
 1. ANALYST prepares TASK_DRAFT.
-2. AUDITOR reviews TASK_DRAFT.
-3. If AUDITOR returns CHANGE_REQUIRED, task returns to ANALYST.
-4. If AUDITOR returns BLOCKED, task stops.
-5. If AUDITOR returns APPROVED_FOR_EXECUTION, task goes to EXECUTOR.
-6. EXECUTOR performs only the approved task.
-7. EXECUTOR sends EXECUTION_RESULT to AUDITOR.
-8. AUDITOR reviews EXECUTION_RESULT.
-9. If AUDITOR returns CHANGE_REQUIRED, result goes back to ANALYST with audit remarks.
-10. ANALYST updates the task and sends it again to AUDITOR.
-11. Loop continues until ACCEPTED or BLOCKED.
-12. Only after ACCEPTED, AUDITOR sends completion feedback to DIRECTOR_CURATOR.
-13. Only after ACCEPTED, AUDITOR writes to mailbox if the initiator return mode requires mailbox.
+2. AUDITOR reviews TASK_DRAFT before execution.
+3. EXECUTOR receives only APPROVED_FOR_EXECUTION.
+4. EXECUTOR returns EXECUTION_RESULT to AUDITOR.
+5. If execution result is rejected, it returns to ANALYST for re-planning.
+6. Only after ACCEPTED may AUDITOR notify the owning object curator.
+7. Only after ACCEPTED may AUDITOR write mailbox result if required by initiator_return_mode.
 
-## Universal Return Modes
+## 5. Return modes
 
-### Mode A: OPERATOR initiated task
-
-Used when:
-
-```json
-{
-  "initiator_role": "OPERATOR",
-  "initiator_return_mode": "DIRECT_OPERATOR_REPORT"
-}
-```
-
-Return path:
+### 5.1 OPERATOR initiated task
 
 ```text
 OPERATOR
--> DIRECTOR_CURATOR
--> GENERAL_DIRECTOR if needed
--> INTERNAL_CONTOUR
--> INTERNAL_AUDITOR
--> DIRECTOR_CURATOR
--> OPERATOR
+-> responsible CURATOR
+-> target object CURATOR
+-> selected internal contour
+-> AUDITOR ACCEPTED
+-> target object CURATOR
+-> responsible CURATOR
+-> OPERATOR curated report
 ```
 
 Mailbox:
+- not required.
 
-- not required;
-- not used for normal completion;
-- result is delivered as a curator report.
-
-### Mode B: External auditor initiated task
-
-Used when:
-
-```json
-{
-  "initiator_role": "EXTERNAL_AUDITOR_GPT",
-  "initiator_return_mode": "MAILBOX_AND_OPERATOR_WAKE"
-}
-```
-
-or:
-
-```json
-{
-  "initiator_role": "EXTERNAL_AUDITOR_CLAUDE",
-  "initiator_return_mode": "MAILBOX_AND_OPERATOR_WAKE"
-}
-```
-
-Return path:
+### 5.2 EXTERNAL_AUDITOR initiated task
 
 ```text
 EXTERNAL_AUDITOR_*
--> DIRECTOR_CURATOR
--> GENERAL_DIRECTOR if needed
--> INTERNAL_CONTOUR
--> INTERNAL_AUDITOR
--> DIRECTOR_CURATOR
--> OPERATOR notification
--> OPERATOR opens the initiating external auditor
--> EXTERNAL_AUDITOR_* reads mailbox
+-> responsible CURATOR
+-> target object CURATOR
+-> selected internal contour
+-> AUDITOR ACCEPTED
+-> target object CURATOR
+-> responsible CURATOR
+-> initiating auditor mailbox
+-> OPERATOR wake-up naming exact external auditor
+-> initiating auditor reads mailbox
 ```
 
 Mailbox:
+- required.
 
-- required;
-- INTERNAL_AUDITOR writes verified result to initiator_mailbox_return_path.
+Wake-up must specify:
+- EXTERNAL_AUDITOR_GPT -> open GPT Custom GPT;
+- EXTERNAL_AUDITOR_CLAUDE -> open Claude Chat.
 
-Operator message:
+## 6. Corrected BEM-931 minimal trace
 
-- must say which external auditor to open;
-- must include exact mailbox path or file;
-- must not include raw mailbox content.
-
-## Request Metadata Requirement
-
-Every request to DIRECTOR_CURATOR must include initiator metadata.
-
-For OPERATOR:
-
-```json
-{
-  "initiator_role": "OPERATOR",
-  "initiator_return_mode": "DIRECT_OPERATOR_REPORT",
-  "initiator_chat_required": "none",
-  "initiator_mailbox_return_path": "none",
-  "initiator_request_id": "BEM-931"
-}
-```
-
-For GPT:
-
-```json
-{
-  "initiator_role": "EXTERNAL_AUDITOR_GPT",
-  "initiator_return_mode": "MAILBOX_AND_OPERATOR_WAKE",
-  "initiator_chat_required": "Open GPT Custom GPT",
-  "initiator_mailbox_return_path": "governance/audit_mailbox/director_curator_to_external_auditor_gpt/",
-  "initiator_request_id": "BEM-931"
-}
-```
-
-For Claude:
-
-```json
-{
-  "initiator_role": "EXTERNAL_AUDITOR_CLAUDE",
-  "initiator_return_mode": "MAILBOX_AND_OPERATOR_WAKE",
-  "initiator_chat_required": "Open Claude Chat",
-  "initiator_mailbox_return_path": "governance/audit_mailbox/director_curator_to_external_auditor_claude/",
-  "initiator_request_id": "BEM-931"
-}
-```
-
-## Operator Direct Report Format
-
-For OPERATOR-initiated tasks, DIRECTOR_CURATOR sends only:
-
+Flat trace is not enough:
 ```text
-BEM-HOURLY | OPERATOR REPORT | <timestamp UTC+3>
-
-ЭТАП: 
-X/Y (Z%)
-
-ДОРОЖНАЯ КАРТА:
-X/Y (Z%)
-
-ЧЕК-ЛИСТ:
-[x] <сделано>
-[ ] <не сделано>
-[!] <блокер>
-
-ВОПРОС ОПЕРАТОРУ:
-нет
+GD -> DIR/CUR -> WRK
 ```
 
-If operator decision is required, replace the final line with one concrete question.
-
-## External Auditor Wake Message Format
-
-For EXTERNAL_AUDITOR initiated tasks, DIRECTOR_CURATOR may send a short Telegram notification:
-
+Correct minimal object-contour trace:
 ```text
-BEM-931 | RESULT READY
-
-ДЛЯ КОГО:
-EXTERNAL_AUDITOR_GPT
-
-ЧТО ОТКРЫТЫ:
-Open GPT Custom GPT
-
-MAILBOX:
-governance/audit_mailbox/director_curator_to_external_auditor_gpt/<file>.md
+OPERATOR_OBJECTIVE
+-> GD_OBJECT.GD_CURATOR
+-> GD_DECISION_CONTOUR or GD_RULES_CONTOUR
+-> AUDITOR gate
+-> DIRECTOR_OBJECT.DIR_CURATOR
+-> DIR_RULES_CONTOUR or DIR_DECISION_CONTOUR
+-> AUDITOR gate
+-> WORKER_OBJECT.WRK_CURATOR
+-> selected WRK_C*
+-> AUDITOR gate
+-> result
+-> return path by initiator
 ```
 
-or:
+A shorter test is allowed only if marked MINIMAL_TEST_TRACE and must not claim full object-contour implementation.
 
-```text
-BEM-931 | RESULT READY
+## 7. Forbidden assumptions
 
-ДЛЯ КОГО:
-EXTERNAL_AUDITOR_CLAUDE
+Forbidden:
+- treating GPT as canonical executor of the governance contour;
+- treating Claude as the only external auditor;
+- hard-coding GPT as the only initiator;
+- using mailbox for normal OPERATOR-initiated task completion;
+- implementing board of directors in current BEM-931 scope;
+- importing product-repository directors into current governance repo;
+- sending raw mailbox events to OPERATOR as normal path;
+- letting EXECUTOR receive unaudited Analyst task;
+- treating skeleton runners or mock E2E as Release PASS.
 
-ЧТО ОТКРЫТЫ:
-Open Claude Chat
+## 8. Acceptance criteria
 
-MAILBOX:
-governance/audit_mailbox/director_curator_to_external_auditor_claude/<file>.md
-```
+BEM-931 v2.2 is valid only if:
 
-## Acceptance Criteria
-
-A result is valid only if:
-
-- task was routed through DIRECTOR_CURATOR;
-- initiator_role and return_mode were preserved;
-- strategic decision was owned by GENERAL_DIRECTOR when required;
-- internal work followed ANALYST -> AUDITOR -> EXECUTOR -> AUDITOR;
-- EXECUTOR did not receive an unaudited analyst task;
-- AUDITOR accepted the final execution result;
-- AUDITOR notified DIRECTOR_CURATOR;
-- if initiator is EXTERNAL_AUDITOR_*, AUDITOR wrote verified result to initiator mailbox return path;
-- DIRECTOR_CURATOR notified OPERATOR and specified the correct external auditor to wake;
-- initiating EXTERNAL_AUDITOR reviewed the mailbox result when applicable.
-
-## Deprecated Behavior
-
-Deprecated:
-
-- hard-coding GPT as the only external auditor;
-- hard-coding Claude as the only external auditor;
-- GitHub Actions mailbox notifier directly notifying OPERATOR for normal mailbox traffic;
-- raw mailbox events sent to OPERATOR;
-- treating gpt_to_claude / claude_to_gpt as canonical business role names.
-
-Allowed only as fallback:
-
-- GitHub Actions mailbox notifier may be used manually for diagnostics or emergency recovery.
+1. GENERAL_DIRECTOR, DIRECTOR, WORKER are defined.
+2. Each object has a curator.
+3. Each object has internal_contours[].
+4. Director has DIR_RULES_CONTOUR and DIR_DECISION_CONTOUR.
+5. Worker supports unlimited contours and default WRK_C1 / WRK_C2 / WRK_C3.
+6. Internal contour loop is Analyst -> Auditor -> Executor -> Auditor.
+7. Rework returns through Analyst.
+8. OPERATOR task returns directly to OPERATOR without mailbox.
+9. EXTERNAL_AUDITOR_* task returns to initiating auditor mailbox.
+10. Curator wake-up names the exact external auditor to open.
+11. Current governance contour excludes board-of-directors implementation.
+12. Product-repository directors are future/product scope only.
+13. Release PASS remains forbidden until object-contour E2E and receipts are proven.
