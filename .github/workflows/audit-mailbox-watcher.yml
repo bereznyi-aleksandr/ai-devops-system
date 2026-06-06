@@ -1,10 +1,14 @@
 name: Audit Mailbox Watcher
 
-# BEM-848: removed push trigger — too many concurrent workflows blocking codex-runner
-# Use workflow_dispatch only
+# BEM-931: restored scheduled watch mode.
+# GitHub Actions schedule cannot guarantee every-1-minute cron.
+# To restore minute-level watching, cron starts every 5 minutes
+# and the job performs 5 checks with 60-second sleeps.
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
@@ -20,15 +24,31 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Syntax check watcher
         run: python3 -m py_compile scripts/audit_mailbox_watcher.py
-      - name: Run watcher
+
+      - name: Run watcher once
+        if: github.event_name == 'workflow_dispatch'
         run: python3 scripts/audit_mailbox_watcher.py
+
+      - name: Run watcher minute loop
+        if: github.event_name == 'schedule'
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "BEM-931 mailbox watch tick $i/5"
+            python3 scripts/audit_mailbox_watcher.py
+            if [ "$i" != "5" ]; then
+              sleep 60
+            fi
+          done
+
+
       - name: Commit watcher state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add governance/state/audit_mailbox_watcher_state.json governance/reports/audit_mailbox_watcher_report.md governance/telegram/outbox/audit_mailbox_notification.json
-          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-684 audit mailbox watcher state"
+          git diff --cached --quiet && echo "No changes" || git commit -m "BEM-931 audit mailbox watcher state"
           git pull --rebase --autostash origin main || true
           git push || true
