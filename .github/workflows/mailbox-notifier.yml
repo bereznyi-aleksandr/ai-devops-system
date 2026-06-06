@@ -1,0 +1,84 @@
+name: Mailbox Notifier
+
+on:
+  push:
+    paths:
+      - 'governance/audit_mailbox/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: mailbox-notifier
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect new mailbox files and notify via Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: "601442777"
+        run: |
+          python3 - <<'EOF'
+          import os, json, subprocess, urllib.request, urllib.parse
+
+          TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+          CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
+
+          def tg_send(text):
+              data = urllib.parse.urlencode({
+                  "chat_id": CHAT_ID, "text": text, "parse_mode": "Markdown"
+              }).encode()
+              try:
+                  urllib.request.urlopen(urllib.request.Request(
+                      f"https://api.telegram.org/bot{TOKEN}/sendMessage", data=data))
+              except Exception as e:
+                  print(f"Telegram error: {e}")
+
+          # Получить список файлов изменённых в последнем коммите
+          result = subprocess.run(
+              ["git", "diff", "--name-only", "HEAD~1", "HEAD"],
+              capture_output=True, text=True
+          )
+          changed = result.stdout.strip().splitlines()
+
+          # Фильтр: только файлы в audit_mailbox
+          mailbox_files = [f for f in changed if f.startswith("governance/audit_mailbox/")]
+
+          if not mailbox_files:
+              print("No mailbox files changed")
+              exit(0)
+
+          for filepath in mailbox_files:
+              # Определить направление: claude_to_gpt или gpt_to_claude
+              if "claude_to_gpt" in filepath:
+                  recipient = "GPT"
+                  action = "Открой Custom GPT → прочитай файл через MCP → ответь в mailbox"
+              elif "gpt_to_claude" in filepath:
+                  recipient = "Claude"
+                  action = "Прочитай файл и ответь в governance/audit_mailbox/claude_to_gpt/"
+              else:
+                  recipient = "Оператор"
+                  action = "Проверь mailbox"
+
+              filename = filepath.split("/")[-1]
+
+              msg = (
+                  f"📬 *MAILBOX: сообщение для {recipient}*\n\n"
+                  f"Файл: `{filename}`\n"
+                  f"Путь: `{filepath}`\n\n"
+                  f"*Действие:* {action}\n\n"
+                  f"_Это автоматическое уведомление. Ответ оператора не требуется._"
+              )
+              tg_send(msg)
+              print(f"Notified about: {filepath}")
+
+          EOF
