@@ -1,6 +1,6 @@
 name: GPT Hosted Roles
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       role:
@@ -31,29 +31,16 @@ on:
         required: false
         default: ''
         type: string
-  issue_comment:
-    types: [created]
 
 permissions:
   contents: write
-  issues: write
   actions: write
 
 jobs:
   hosted-gpt-role:
     name: Hosted GPT Role
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.issue.number == 31 &&
-       contains(github.event.comment.body, 'TYPE: CURATOR_TO_ROLE_EXECUTION') &&
-       contains(github.event.comment.body, 'TRACE_ID:') &&
-       (contains(github.event.comment.body, '@gpt_executor') ||
-        contains(github.event.comment.body, '@gpt_analyst') ||
-        contains(github.event.comment.body, '@gpt_auditor') ||
-        contains(github.event.comment.body, '@gpt_curator')))
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -64,154 +51,80 @@ jobs:
       - name: Build hosted role prompt
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
           INPUT_ROLE: ${{ inputs.role }}
           INPUT_PROVIDER: ${{ inputs.provider }}
           INPUT_TRACE_ID: ${{ inputs.trace_id }}
           INPUT_CYCLE_ID: ${{ inputs.cycle_id }}
           INPUT_TASK_TYPE: ${{ inputs.task_type }}
           INPUT_TASK: ${{ inputs.task }}
-          COMMENT_BODY_JSON: ${{ toJson(github.event.comment.body) }}
         run: |
           set -e
           PROMPT_FILE="$RUNNER_TEMP/hosted_gpt_role_prompt.txt"
-
           python3 - <<'PY'
-          import json, os, re
+          import os
           from pathlib import Path
 
-          root = Path('.')
-          event_name = os.environ.get('EVENT_NAME', '')
+          def read(path, limit=12000):
+              p = Path(path)
+              return p.read_text(encoding='utf-8', errors='replace')[:limit] if p.exists() else f'[missing: {path}]'
 
-          if event_name == 'workflow_dispatch':
-              role_raw = os.environ.get('INPUT_ROLE', 'analyst').lower()
-              role = 'GPT_' + role_raw.upper()
-              trace_id = os.environ.get('INPUT_TRACE_ID', 'missing')
-              cycle_id = os.environ.get('INPUT_CYCLE_ID', '')
-              task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
-              task = os.environ.get('INPUT_TASK', '')
-              provider = os.environ.get('INPUT_PROVIDER', 'gemini')
-              body = f'WORKFLOW_DISPATCH ROLE={role_raw} PROVIDER={provider} TRACE_ID={trace_id} CYCLE_ID={cycle_id}\n\nTASK:\n{task}'
-          else:
-              body = json.loads(os.environ.get('COMMENT_BODY_JSON') or '""')
-              if '@gpt_executor' in body:
-                  role = 'GPT_EXECUTOR'
-              elif '@gpt_analyst' in body:
-                  role = 'GPT_ANALYST'
-              elif '@gpt_auditor' in body:
-                  role = 'GPT_AUDITOR'
-              elif '@gpt_curator' in body:
-                  role = 'GPT_CURATOR'
-              else:
-                  role = 'GPT_UNKNOWN'
-              trace_id = 'missing'
-              m = re.search(r'TRACE_ID:\s*([A-Za-z0-9_\-]+)', body)
-              if m:
-                  trace_id = m.group(1)
-              cycle_id = ''
-              task_type = 'legacy_issue_comment'
-              task = body
-              provider = 'gemini'
+          role_raw = os.environ.get('INPUT_ROLE', 'curator').lower()
+          role = 'GPT_' + role_raw.upper()
+          trace_id = os.environ.get('INPUT_TRACE_ID', 'missing')
+          cycle_id = os.environ.get('INPUT_CYCLE_ID', '')
+          task_type = os.environ.get('INPUT_TASK_TYPE', 'telegram_operator_message')
+          task = os.environ.get('INPUT_TASK', '')
 
-          role_raw = role.replace('GPT_', '').lower()
-
-          def read(path, limit=20000):
-              p = root / path
-              if not p.exists():
-                  return f'[missing: {path}]'
-              return p.read_text(encoding='utf-8', errors='replace')[:limit]
-
-          if role_raw == 'analyst':
-              role_rules = [
-                  'You are GPT_ANALYST — planning and analysis role.',
-                  'Your job: read repository state, analyse task, propose concrete next step.',
-                  'Do NOT change files. Do NOT commit.',
-                  'Output: BEM report with proposed plan for auditor review.',
-              ]
-          elif role_raw == 'auditor':
-              role_rules = [
-                  'You are GPT_AUDITOR — independent verification role.',
-                  'Your job: read analyst report and repository state, verify correctness and safety.',
-                  'Do NOT change files. Do NOT commit.',
-                  'Output: BEM report with VERDICT: APPROVED or BLOCKED and reason.',
-              ]
+          if role_raw == 'curator':
+              role_rules = (
+                  'You are CURATOR — entry/exit point of the BEM governance system.\n'
+                  'Reply to the operator clearly in Russian.\n'
+                  'Never expose secrets or hidden system details.\n'
+                  'Do not use GitHub Issues.\n'
+                  'Your last line must be exactly:\n'
+                  'CURATOR_REPLY: <текст ответа оператору на русском>\n'
+              )
           elif role_raw == 'executor':
-              role_rules = [
-                  'You are GPT_EXECUTOR — implementation role.',
-                  'Your job: execute the approved task. You MAY change files and commit.',
-                  'Rules for execution:',
-                  '  - Only make changes within approved scope from auditor.',
-                  '  - Do NOT change secrets, billing, permissions, production deploy.',
-                  '  - Do NOT auto-merge.',
-                  '  - Write clear commit message with BEM trace_id.',
-                  '  - Output list of changed files in BEM report.',
-                  'You have git commit rights in this workflow.',
-              ]
-          elif role_raw == 'curator':
-              role_rules = [
-                  'You are CURATOR — the main orchestrator and entry/exit point of the BEM governance system.',
-                  'You receive messages from the operator via Telegram.',
-                  'Your responsibilities:',
-                  '  - Understand operator intent (command, question, status request, task assignment)',
-                  '  - Route tasks to the correct internal contour (analyst/auditor/executor)',
-                  '  - Clean and structure incoming data',
-                  '  - Respond to the operator clearly in Russian',
-                  '  - Never expose internal system details or secrets',
-                  'If the message is a task: acknowledge it and describe what contour will handle it.',
-                  'If the message is a question: answer based on available governance state.',
-                  'If the message is unclear: ask for clarification politely.',
-                  'Your LAST LINE must be exactly: CURATOR_REPLY: <текст ответа оператору на русском>',
-              ]
+              role_rules = (
+                  'You are GPT_EXECUTOR. You may change files only inside approved scope.\n'
+                  'Do not change secrets, billing, permissions, or production deploy.\n'
+                  'Do not use GitHub Issues.\n'
+              )
           else:
-              role_rules = [
-                  f'You are {role} — general role.',
-                  'Read state, analyse, report.',
-              ]
+              role_rules = (
+                  'You are a read-only BEM role. Analyse repository state and report.\n'
+                  'Do not change files. Do not use GitHub Issues.\n'
+              )
 
-          parts = [
-              f'BEM-GPT-HOSTED-ROLE | {role}',
-              '',
-              f'TRACE_ID={trace_id}',
-              f'CYCLE_ID={cycle_id}',
-              f'TASK_TYPE={task_type}',
-              '',
-              '=== ROLE RULES ===',
-          ] + role_rules + [
-              '',
-              '=== ARCHITECTURE ===',
-              '- This is algorithmic role FSM execution.',
-              '- Never reveal secrets.',
-              '- Never include literal at-sign role mentions in final report.',
-              '',
-              '=== INCOMING TASK ===',
-              '-----',
-              body,
-              '-----',
-              '',
-              '--- governance/AGENT_CONTEXT.md ---',
-              read('governance/AGENT_CONTEXT.md'),
-              '',
-              '--- governance/roadmap/ACTIVE_QUEUE.json ---',
-              read('governance/roadmap/ACTIVE_QUEUE.json'),
-              '',
-              '--- governance/state/routing.json ---',
-              read('governance/state/routing.json'),
-              '',
-              '=== REQUIRED OUTPUT ===',
-              f'Start with: BEM-{role_raw.upper()} | CURATOR REPORT',
-              'Compact Russian BEM report.',
-              'Last line must be: CURATOR_REPLY: <ответ оператору>',
-          ]
+          prompt = f"""BEM-GPT-HOSTED-ROLE | {role}
 
-          Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_role_prompt.txt').write_text('\n'.join(parts), encoding='utf-8')
+          TRACE_ID={trace_id}
+          CYCLE_ID={cycle_id}
+          TASK_TYPE={task_type}
+
+          === ROLE RULES ===
+          {role_rules}
+
+          === INCOMING TASK ===
+          {task}
+
+          === governance/AGENT_CONTEXT.md ===
+          {read("governance/AGENT_CONTEXT.md")}
+
+          === governance/roadmap/ACTIVE_QUEUE.json ===
+          {read("governance/roadmap/ACTIVE_QUEUE.json")}
+
+          === governance/state/routing.json ===
+          {read("governance/state/routing.json")}
+
+          === REQUIRED OUTPUT ===
+          Compact Russian BEM report.
+          Last line for curator must be: CURATOR_REPLY: <ответ оператору>
+          """
+          Path(os.environ['RUNNER_TEMP'], 'hosted_gpt_role_prompt.txt').write_text(prompt, encoding='utf-8')
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
-              f.write(f'ROLE={role}\n')
-              f.write(f'ROLE_RAW={role_raw}\n')
-              f.write(f'TRACE_ID={trace_id}\n')
-              f.write(f'CYCLE_ID={cycle_id}\n')
-              f.write(f'TASK_TYPE={task_type}\n')
+              f.write(f'ROLE={role}\nROLE_RAW={role_raw}\nTRACE_ID={trace_id}\nCYCLE_ID={cycle_id}\nTASK_TYPE={task_type}\n')
           PY
-
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
 
       - name: Run hosted role (Gemini 2.0 Flash, free)
@@ -224,54 +137,45 @@ jobs:
           python3 - <<'PY' > "$OUTPUT_FILE" 2>&1
           import json, os, pathlib, urllib.error, urllib.request
 
-          prompt = pathlib.Path(os.environ['PROMPT_FILE']).read_text(encoding='utf-8', errors='replace')
+          prompt = path"lib.Path(os.environ['PROMPT_FILE']).read_text(encoding='utf-8', errors='replace')
           role = os.environ.get('ROLE', 'GPT_UNKNOWN')
           trace_id = os.environ.get('TRACE_ID', 'missing')
-
           print(f'BEM-HOSTED-ROLE | {role} | RAW_OUTPUT')
           print(f'TRACE_ID={trace_id}')
 
-          gemini_key = os.environ.get('GEMINI_API_KEY', '')
-          if not gemini_key:
+          key = os.environ.get('GEMINI_API_KEY', '')
+          if not key:
               print('HOSTED_ROLE_STATUS=GEMINI_API_KEY_MISSING')
-              print('CURATOR_REPLY: Ключ GEMINI_API_KEY не настроен. Добавьте секрет в репозиторий.')
+              print('CURATOR_REPLY: Ключ GEMINI_API_KEY не настроен.')
               raise SystemExit(0)
 
-          # Пробуем gemini-2.0-flash, fallback на gemini-1.5-flash
-          models = ['gemini-2.0-flash', 'gemini-1.5-flash']
           text = None
-          model_used = None
-
-          for model in models:
-              url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}'
-              payload = {
-                  'contents': [{'parts': [{'text': prompt}]}],
-                  'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}
-              }
-              req = urllib.request.Request(
-                  url, data=json.dumps(payload).encode(),
-                  headers={'Content-Type': 'application/json'}, method='POST'
-              )
+          used = None
+          for model in ['gemini-2.0-flash', 'gemini-1.5-flash']:
+              url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}'
+              payload = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}}
+              req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={'Content-Type': 'application/json'}, method='POST')
               try:
                   with urllib.request.urlopen(req, timeout=60) as r:
                       data = json.loads(r.read())
-                  text = data['candidates'][0]['content']['parts'][0]['text']
-                  model_used = model
-                  break
+                      text = data['candidates'][0]['content']['parts'][0]['text']
+                      used = model
+                      break
               except urllib.error.HTTPError as e:
-                  err_body = e.read().decode('utf-8', errors='replace')
-                  print(f'Model {model} HTTP {e.code}: {err_body[:500]}')
+                  body = e.read().decode('utf-8', errors='replace')
+                  print(f'Model {model} HTTP {e.code}: {body[:1200]}')
               except Exception as e:
                   print(f'Model {model} error: {e}')
 
           if text:
-              print(f'PROVIDER=gemini/{model_used}')
+              print(f'PROVIDER=gemini/{used}')
               print('HOSTED_ROLE_STATUS=OK')
               print(text)
           else:
               print('HOSTED_ROLE_STATUS=GEMINI_ALL_MODELS_FAILED')
               print('CURATOR_REPLY: Ошибка Gemini API. Проверьте ключ GEMINI_API_KEY в секретах репозитория.')
           PY
+          cat "$OUTPUT_FILE"
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
           exit 0
 
@@ -284,59 +188,43 @@ jobs:
           OPERATOR_CHAT_ID: "601442777"
         run: |
           python3 - <<'PY'
-          import json, os, pathlib, base64, urllib.request, urllib.error
+          import base64, json, os, pathlib, urllib.error, urllib.request
           from datetime import datetime, timezone
 
           output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
           output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else ''
-
-          reply_text = None
+          reply = None
           for line in reversed(output.splitlines()):
-              line = line.strip()
-              if line.startswith('CURATOR_REPLY:'):
-                  reply_text = line[len('CURATOR_REPLY:'):].strip()
+              if line.strip().startswith('CURATOR_REPLY:'):
+                  reply = line.split(':', 1)[1].strip()
                   break
-          if not reply_text:
-              reply_text = output.strip()[:1000] or '[нет ответа от куратора]'
+          if not reply:
+              reply = output.strip()[:1000] or '[нет ответа от куратора]'
 
-          provider_used = 'gemini/gemini-2.0-flash'
+          provider = 'gemini/gemini-2.0-flash'
           for line in output.splitlines():
               if line.startswith('PROVIDER='):
-                  provider_used = line.split('=', 1)[1].strip()
-                  break
+                  provider = line.split('=', 1)[1].strip()
 
-          trace_id = os.environ.get('TRACE_ID', 'unknown')
-          chat_id  = os.environ.get('OPERATOR_CHAT_ID', '')
-          repo     = os.environ.get('REPO', '')
-          gh_token = os.environ.get('GH_TOKEN', '')
-          now_iso  = datetime.now(timezone.utc).isoformat()
-          api      = 'https://api.github.com'
+          api = 'https://api.github.com'
+          repo = os.environ['REPO']
+          token = os.environ['GH_TOKEN']
+          trace = os.environ.get('TRACE_ID', 'unknown')
+          now = datetime.now(timezone.utc).isoformat()
 
           def gh_get(path):
-              req = urllib.request.Request(
-                  f'{api}{path}',
-                  headers={'Authorization': f'Bearer {gh_token}',
-                           'Accept': 'application/vnd.github+json',
-                           'User-Agent': 'gpt-hosted-roles'}
-              )
+              req = urllib.request.Request(f'{api}{path}', headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json', 'User-Agent': 'gpt-hosted-roles'})
               try:
                   with urllib.request.urlopen(req, timeout=10) as r:
                       return json.loads(r.read()), r.status
               except urllib.error.HTTPError as e:
                   return None, e.code
 
-          def gh_put(path, content_str, message, sha=None):
-              body = {'message': message,
-                      'content': base64.b64encode(content_str.encode()).decode()}
+          def gh_put(path, text, message, sha=None):
+              body = {'message': message, 'content': base64.b64encode(text.encode()).decode()}
               if sha:
                   body['sha'] = sha
-              req = urllib.request.Request(
-                  f'{api}{path}', data=json.dumps(body).encode(), method='PUT',
-                  headers={'Authorization': f'Bearer {gh_token}',
-                           'Accept': 'application/vnd.github+json',
-                           'Content-Type': 'application/json',
-                           'User-Agent': 'gpt-hosted-roles'}
-              )
+              req = urllib.request.Request(f'{api}{path}', data=json.dumps(body).encode(), method='PUT', headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'gpt-hosted-roles'})
               try:
                   with urllib.request.urlopen(req, timeout=10) as r:
                       return json.loads(r.read()), r.status
@@ -344,49 +232,26 @@ jobs:
                   print(f'gh_put {path} error {e.code}: {e.read()[:200]}')
                   return None, e.code
 
-          outbox_entry = {
-              'event_id': f'evt_{trace_id}',
-              'status': 'ready_to_send',
-              'chat_id': chat_id,
-              'text': f'🤖 *Curator [{provider_used}]*\n\n{reply_text}',
-              'created_at': now_iso
-          }
-          ob_data, ob_status = gh_get(f'/repos/{repo}/contents/governance/telegram_outbox.jsonl')
-          ob_content = ''
-          ob_sha = None
-          if ob_status == 200 and ob_data:
-              try:
-                  ob_content = base64.b64decode(ob_data['content'].replace('\n', '')).decode()
-                  ob_sha = ob_data['sha']
-              except:
-                  pass
-          new_ob = ob_content + json.dumps(outbox_entry, ensure_ascii=False) + '\n'
-          _, s = gh_put(f'/repos/{repo}/contents/governance/telegram_outbox.jsonl',
-                        new_ob, f'GATE-5: curator outbox entry trace={trace_id}', ob_sha)
+          entry = {'event_id': f'evt_{trace}', 'status': 'ready_to_send', 'chat_id': os.environ['OPERATOR_CHAT_ID'], 'text': f'|���
+ *Curator [{provider}]*\n\n{reply}', 'created_at': now}
+          data, status = gh_get(f'/repos/{repo}/contents/governance/telegram_outbox.jsonl')
+          old, sha = '', None
+          if status == 200 and data:
+              old = base64.b64decode(data['content'].replace('\n', '')).decode()
+              sha = data['sha']
+          _, s = gh_put(f'/repos/{repo}/contents/governance/telegram_outbox.jsonl', old + json.dumps(entry, ensure_ascii=False) + '\n', f'curator outbox trace={trace}', sha)
           print(f'outbox write status: {s}')
 
-          receipt = {
-              'gate': 'GATE-5',
-              'status': 'PASS',
-              'ts': now_iso,
-              'trace_id': trace_id,
-              'provider': provider_used,
-              'llm_response': reply_text[:500],
-              'telegram_sent': True
-          }
-          rc_data, _ = gh_get(f'/repos/{repo}/contents/governance/state/gate5_runtime_receipt.json')
-          rc_sha = rc_data['sha'] if rc_data else None
-          _, s = gh_put(f'/repos/{repo}/contents/governance/state/gate5_runtime_receipt.json',
-                        json.dumps(receipt, indent=2, ensure_ascii=False),
-                        'GATE-5 PASS: curator runtime receipt', rc_sha)
+          receipt = {'gate': 'GATE-5', 'status': 'PASS', 'ts': now, 'trace_id': trace, 'provider': provider, 'llm_response': reply[:500], 'telegram_sent': True}
+          data, _ = gh_get(f'/repos/{repo}/contents/governance/state/gate5_runtime_receipt.json')
+          sha = data['sha'] if data else None
+          _, s = gh_put(f'/repos/{repo}/contents/governance/state/gate5_runtime_receipt.json', json.dumps(receipt, indent=2, ensure_ascii=False), 'GATE-5 PASS: curator runtime receipt', sha)
           print(f'receipt write status: {s}')
           PY
 
       - name: Executor git commit (executor role only)
         if: env.ROLE_RAW == 'executor'
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
         run: |
           git config user.email "gpt-executor@ai-devops-system"
           git config user.name "GPT Executor"
@@ -396,92 +261,23 @@ jobs:
             echo "No file changes by GPT executor"
           else
             git commit -m "GPT_EXECUTOR: trace_id=${{ env.TRACE_ID }} cycle_id=${{ env.CYCLE_ID }}"
-            for i in 1 2 3; do
-              git push && break
-              sleep $((i * 2))
-              git pull --rebase --autostash origin main
-            done
+            git push
           fi
 
-      - name: Post hosted GPT role report
-        if: always()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          REPO: ${{ github.repository }}
-          ISSUE_NUMBER: '31'
-        run: |
-          set -e
-          python3 - <<'PY'
-          import json, os, pathlib, urllib.request
-
-          output_path = pathlib.Path(os.environ.get('OUTPUT_FILE', ''))
-          output = output_path.read_text(encoding='utf-8', errors='replace') if output_path.exists() else 'OUTPUT_FILE was not created.'
-          for a, b in [('@curator','curator'),('@gpt_executor','GPT_EXECUTOR'),('@gpt_analyst','GPT_ANALYST'),('@gpt_auditor','GPT_AUDITOR'),('@gpt_curator','GPT_CURATOR')]:
-              output = output.replace(a, b)
-          role = os.environ.get('ROLE', 'GPT_UNKNOWN')
-          body = f'BEM-HOSTED-ROLE | RUN RESULT | {role}\n\n' + output[-60000:] + '\n\nANTI_RECURSION: report comments are audit trail only; internal FSM uses workflow_dispatch.'
-          data = json.dumps({'body': body}).encode('utf-8')
-          req = urllib.request.Request(
-              f"https://api.github.com/repos/{os.environ['REPO']}/issues/{os.environ['ISSUE_NUMBER']}/comments",
-              data=data,
-              headers={
-                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
-                  'Accept': 'application/vnd.github+json',
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'ai-devops-hosted-gpt-roles'
-              },
-              method='POST'
-          )
-          with urllib.request.urlopen(req) as resp:
-              print(resp.status)
-          PY
-
       - name: Advance role orchestrator
-        if: always() && github.event_name == 'workflow_dispatch'
+        if: always() && env.ROLE_RAW != 'curator'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           REPO: ${{ github.repository }}
-          ROLE_RAW: ${{ env.ROLE_RAW }}
         run: |
-          set -e
           python3 - <<'PY'
           import json, os, urllib.request
-
-          cycle_id = os.environ.get('CYCLE_ID', '')
-          role_raw = os.environ.get('ROLE_RAW', '')
-
-          if not cycle_id or role_raw == 'curator':
-              print(f'Skip orchestrator: cycle_id={cycle_id!r} role={role_raw!r}')
+          if not os.environ.get('CYCLE_ID'):
+              print('Skip orchestrator: no cycle_id')
               raise SystemExit(0)
-
-          role = os.environ.get('ROLE', 'GPT_UNKNOWN').replace('GPT_', '').lower()
-          data = json.dumps({
-              'ref': 'main',
-              'inputs': {
-                  'mode': 'advance',
-                  'task_type': os.environ.get('TASK_TYPE', 'default_development'),
-                  'task': '',
-                  'trace_id': os.environ.get('TRACE_ID', ''),
-                  'cycle_id': cycle_id,
-                  'role': role,
-                  'status': 'ROLE_DONE',
-                  'note': 'Hosted role completed.'
-              }
-          }).encode('utf-8')
-
-          req = urllib.request.Request(
-              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/role-orchestrator.yml/dispatches",
-              data=data,
-              headers={
-                  'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
-                  'Accept': 'application/vnd.github+json',
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'ai-devops-hosted-gpt-roles'
-              },
-              method='POST'
-          )
-          with urllib.request.urlopen(req) as resp:
-              print(resp.status)
+          data = json.dumps({'ref': 'main', 'inputs': {'mode': 'advance', 'task_type': os.environ.get('TASK_TYPE', ''), 'task': '', 'trace_id': os.environ.get('TRACE_ID', ''), 'cycle_id': os.environ.get('CYCLE_ID', ''), 'role': os.environ.get('ROLE_RAW', ''), 'status': 'ROLE_DONE', 'note': 'Hosted role completed.'}}).encode()
+          req = urllib.request.Request(f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/role-orchestrator.yml/dispatches", data=data, method='POST', headers='{'Authorization': f"Bearer {os.environ['GH_TOKEN']}", 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'ai-devops-hosted-gpt-roles'})
+          with urllib.request.urlopen(req) as r:
+              print(r.status)
           PY
