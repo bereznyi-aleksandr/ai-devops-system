@@ -55,24 +55,67 @@ DIRECTOR_CURATOR
 
 Not GitHub mailbox watcher.
 
-For external audit tasks, the standard path is:
+## Initiator-Sensitive Return Rule
 
-1. INTERNAL_AUDITOR accepts the result.
-2. INTERNAL_AUDITOR notifies DIRECTOR_CURATOR that the task is complete.
-3. INTERNAL_AUDITOR writes verified result to mailbox for EXTERNAL_AUDITOR_GPT.
-4. DIRECTOR_CURATOR sends a short Telegram notification to OPERATOR:
-   "For external auditor GPT, a result is ready. Open Custom GPT and read mailbox file: <path>."
-5. OPERATOR opens EXTERNAL_AUDITOR_GPT.
-6. EXTERNAL_AUDITOR_GPT reads mailbox via MCP.
+DIRECTOR_CURATOR must preserve who initiated the task.
 
-## GitHub Mailbox Notifier Status
+Allowed initiators:
+- OPERATOR
+- EXTERNAL_AUDITOR_GPT
+- EXTERNAL_AUDITOR_CLAUDE
+- any approved EXTERNAL_AUDITOR_* role
 
-The GitHub Actions mailbox notifier is deprecated for normal operator notifications.
+### If initiator is OPERATOR
 
-Allowed use:
-- manual diagnostic fallback;
-- emergency recovery if DIRECTOR_CURATOR notification is broken.
+Return mode:
 
-Forbidden use:
-- routine operator notification for every mailbox event;
-- raw mailbox spam to operator.
+DIRECT_OPERATOR_REPORT
+
+Rules:
+- no mailbox is required;
+- no external auditor wake-up is required;
+- INTERNAL_AUDITOR notifies DIRECTOR_CURATOR that the task is complete;
+- DIRECTOR_CURATOR sends result directly to OPERATOR;
+- report uses the mandatory operator format.
+
+### If initiator is EXTERNAL_AUDITOR_*
+
+Return mode:
+
+MAILBOX_AND_OPERATOR_WAKE
+
+Rules:
+- INTERNAL_AUDITOR writes verified result to the initiator's mailbox return path;
+- INTERNAL_AUDITOR notifies DIRECTOR_CURATOR that the task is complete;
+- DIRECTOR_CURATOR sends a short Telegram wake-up to OPERATOR;
+- wake-up must say exactly which external auditor must be opened.
+
+Example for GPT:
+
+```text
+BEM-931 | RESULT READY
+
+ДЛЯ КОГО:
+EXTERNAL_AUDITOR_GPT
+
+ЧТО ОТКРЫТЬ:
+Open GPT Custom GPT
+
+MAILBOX:
+governance/audit_mailbox/director_curator_to_external_auditor_gpt/<file>.md
+```
+
+Example for Claude:
+
+```text
+BEM-931 | RESULT READY
+
+ДЛЯ КОГО:
+EXTERNAL_AUDITOR_CLAUDE
+
+ЧТО ОТКРЫТЫ:
+Open Claude Chat
+
+MAILBOX:
+governance/audit_mailbox/director_curator_to_external_auditor_claude/<file>.md
+P����
