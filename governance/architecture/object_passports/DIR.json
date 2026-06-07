@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "object_id": "DIR",
+  "canonical_name": "Директор",
+  "object_type": "governance_object",
+  "curator_id": "DIR.CURATOR",
+  "curator_runner": "governance/runners/dir_curator_runner.py",
+  "rule_owner": "DIR.CURATOR",
+  "parent_object_id": "GD",
+  "child_object_ids": [
+    "WRK"
+  ],
+  "contours": [
+    {
+      "contour_id": "DIR-C1",
+      "canonical_name": "Контур правил директора",
+      "roles": [
+        "ANALYST",
+        "AUDITOR",
+        "EXECUTOR"
+      ],
+      "managed_channel": "governance/channels/DIR-C1.jsonl"
+    },
+    {
+      "contour_id": "DIR-C2",
+      "canonical_name": "Контур решений директора",
+      "roles": [
+        "ANALYST",
+        "AUDITOR",
+        "EXECUTOR"
+      ],
+      "managed_channel": "governance/channels/DIR-C2.jsonl"
+    }
+  ],
+  "runtime_provider": "codex_local",
+  "status": "PENDING_RUNTIME_BINDING"
+}
