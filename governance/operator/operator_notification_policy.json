@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "telegram_canon": {
+    "format": "canonical plaintext",
+    "allowed_content": [
+      "stage_percent",
+      "roadmap_percent",
+      "checklist",
+      "next_step",
+      "operator_question_if_any"
+    ],
+    "forbidden_content": [
+      "raw technical log",
+      "diff",
+      "stdout",
+      "stderr",
+      "stacktrace",
+      "token",
+      "secret"
+    ],
+    "answer_format": [
+      "short_answer",
+      "next_step"
+    ]
+  },
+  "hourly_report": {
+    "title": "BEM-HOURLY | OPERATOR REPORT",
+    "include": [
+      "formed_at",
+      "period",
+      "stage_progress",
+      "roadmap_progress",
+      "changes",
+      "question"
+    ],
+    "question_default": "нет"
+  },
+  "task_report": {
+    "title": "КОНТРАКТ ПРОЧИТАН",
+    "include": [
+      "contract_version",
+      "task_id",
+      "stage_progress",
+      "roadmap_progress",
+      "status",
+      "sha",
+      "next_task"
+    ]
+  }
+}
