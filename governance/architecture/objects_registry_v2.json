@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "registry_id": "objects_registry_v2",
+  "protocol": "BEM-931 v3.6",
+  "objects": [
+    {
+      "object_id": "GD",
+      "passport_path": "governance/architecture/object_passports/GD.json",
+      "curator_id": "GD.CURATOR",
+      "contours": [
+        "GD-C1",
+        "GD-C2"
+      ]
+    },
+    {
+      "object_id": "DIR",
+      "passport_path": "governance/architecture/object_passports/DIR.json",
+      "curator_id": "DIR.CURATOR",
+      "contours": [
+        "DIR-C1",
+        "DIR-C2"
+      ]
+    },
+    {
+      "object_id": "WRK",
+      "passport_path": "governance/architecture/object_passports/WRK.json",
+      "curator_id": "WRK.CURATOR",
+      "contours": [
+        "WRK-C1",
+        "WRK-C2",
+        "WRK-C3"
+      ]
+    }
+  ],
+  "status": "PENDING_RUNTIME_BINDING",
+  "notes": [
+    "WRK-C1, WRK-C2, WRK-C3 are internal worker contours, not role names.",
+    "Each internal contour contains ANALYST, AUDITOR, EXECUTOR roles.",
+    "Legacy WRK.ANALYSIS_CONTOUR/WRK.AUDIT_CONTOUR/WRK.EXECUTION_CONTOUR must not be used as canonical contours."
+  ]
+}
