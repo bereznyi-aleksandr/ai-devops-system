@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updated_at": "2026-06-07T14:14:10Z",
+  "updated_at": "2026-06-07T14:16:20Z",
   "source": "BEM-931 v3.5 approved by operator; roadmap loaded from protocol v3.5",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task without blocked_by",
@@ -12,12 +12,12 @@
     "report_canon": "after every task and stage; no raw logs; no diff; no stdout/stderr in Telegram"
   },
   "progress": {
-    "stage_done": 2,
+    "stage_done": 3,
     "stage_total": 7,
-    "roadmap_done": 5,
+    "roadmap_done": 6,
     "roadmap_total": 12,
-    "percent_stage": 29,
-    "percent_roadmap": 42
+    "percent_stage": 43,
+    "percent_roadmap": 50
   },
   "tasks": [
     {
@@ -65,7 +65,7 @@
     {
       "id": "BEM-931-RM06-VERTICAL-LINKS",
       "title": "RM-06: вертикальные связи и наследование правил",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 3,
       "roadmap_items": [
         "RM-06"
@@ -77,19 +77,19 @@
         "валидатор вертикальных связей проверяет owner/scope/rule_version",
         "нет прямого обхода куратора при вертикальном взаимодействии"
       ],
-      "report_required": true
+      "report_required": true,
+      "done_sha": "552258fc28b8b0393795adf5a84c6dd0b773f309",
+      "done_at": "2026-06-07T14:16:17Z"
     },
     {
       "id": "BEM-931-RM07-HORIZONTAL-EXCHANGE",
-      "title"": "RM-07: горизонтальные связи через curator-mediated exchange",
-      "status": "PENDING",
+      "title": "RM-07: горизонтальные связи через curator-mediated exchange",
+      "status": "IN_PROGRESS",
       "priority": 4,
       "roadmap_items": [
         "RM-07"
       ],
-      "blocked_by": [
-        "BEM-931-RM06-VERTICAL-LINKS"
-      ],
+      "blocked_by": [],
       "acceptance": [
         "создан exchange_registry",
         "каждый обмен содержит initiator_need, curator_route_id, proof_ref, data_version, rule_version",
@@ -168,5 +168,5 @@
     }
   ],
   "queue_state": "ACTIVE",
-  "next_action": "Execute BEM-931-RM06-VERTICAL-LINKS"
+  "next_action": "Execute BEM-931-RM07-HORIZONTAL-EXCHANGE"
 }
