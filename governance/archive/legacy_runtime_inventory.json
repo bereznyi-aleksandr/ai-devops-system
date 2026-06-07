@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "canonical_runtime": "codex-local.yml on self-hosted Codex CLI",
+  "policy": "Gemini API / OpenAI HTTP API / paid hosted runtime are non-canonical and must not be automatic production path.",
+  "items": [
+    {
+      "workflow": ".github/workflows/gpt-hosted-roles.yml",
+      "legacy_signal": [
+        "gpt-hosted"
+      ],
+      "status": "ARCHIVED_DISABLED",
+      "automatic_trigger": false,
+      "replacement": ".github/workflows/codex-local.yml"
+    },
+    {
+      "workflow": ".github/workflows/codex-local.yml",
+      "legacy_signal": [],
+      "status": "CANONICAL_ACTIVE",
+      "automatic_trigger": "workflow_dispatch only",
+      "replacement": null
+    },
+    {
+      "workflow": ".github/workflows/telegram-poll.yml",
+      "legacy_signal": [],
+      "status": "ACTIVE_ENTRYPOINT",
+      "automatic_trigger": "poll/dispatch",
+      "replacement": null
+    },
+    {
+      "workflow": ".github/workflows/operator-hourly-curator-report.yml",
+      "legacy_signal": [],
+      "status": "ACTIVE_ENTRYPOINT",
+      "automatic_trigger": "schedule/dispatch",
+      "replacement": null
+    },
+    {
+      "workflow": ".github/workflows/codex-curator-result-to-telegram-outbox.yml",
+      "legacy_signal": [],
+      "status": "ACTIVE_RETURN_PATH",
+      "automatic_trigger": "workflow_run/dispatch",
+      "replacement": null
+    }
+  ],
+  "assertions": [
+    "No retained legacy item is the canonical curator runtime.",
+    "Deprecated runtime points to codex-local.yml.",
+    "Inventory must be updated when workflow runtime path changes."
+  ]
+}
