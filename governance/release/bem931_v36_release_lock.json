@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.6",
+  "release_gate": "RM-18",
+  "release_status": "BLOCKED",
+  "blocked_until": "PASS of RM-01..RM-17 plus live receipts and external Claude audit",
+  "required_pass": [
+    "RM-01",
+    "RM-02",
+    "RM-03",
+    "RM-04",
+    "RM-05",
+    "RM-06",
+    "RM-07",
+    "RM-08",
+    "RM-09",
+    "RM-10",
+    "RM-11",
+    "RM-12",
+    "RM-13",
+    "RM-14",
+    "RM-15",
+    "RM-16",
+    "RM-17"
+  ],
+  "hard_blockers": [
+    "WORKING_CONTOUR_NOT_READY",
+    "WRK-C1/WRK-C2/WRK-C3 not implemented as live contours",
+    "live Codex Local provider receipts missing",
+    "live Telegram receipts missing",
+    "external Claude audit receipt missing"
+  ]
+}
