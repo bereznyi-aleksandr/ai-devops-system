@@ -1,7 +1,7 @@
 {
-  "version": 7,
-  "updated_at": "2026-06-07T16:12:00Z",
-  "source": "BEM-931 v3.6 detailed working contour roadmap; loaded after Claude audit SHA 13e0abdb",
+  "version": 8,
+  "updated_at": "2026-06-07T16:14:00Z",
+  "source": "BEM-931 v3.6 detailed working contour roadmap; RM-01 completed repo-level after Claude audit SHA 13e0abdb",
   "queue_state": "ACTIVE",
   "system_status": "WORKING_CONTOUR_NOT_READY",
   "policy": {
@@ -17,29 +17,31 @@
     "report_canon": "stage progress = tasks inside current stage; roadmap progress = stages; checklist separate lines"
   },
   "progress": {
-    "stage_done": 0,
+    "stage_done": 1,
     "stage_total": 2,
-    "current_stage_task_done": 0,
+    "current_stage_task_done": 5,
     "current_stage_task_total": 5,
-    "percent_stage": 0,
-    "percent_roadmap": 0
+    "percent_stage": 100,
+    "percent_roadmap": 50
   },
   "tasks": [
     {
       "id": "BEM-931-V36-RM01-WORKING-STATUS-RESET",
       "roadmap_item": "RM-01",
       "title": "Очистка ложного статуса и фиксация WORKING_CONTOUR_NOT_READY",
-      "status": "IN_PROGRESS",
+      "status": "DONE_REPO",
       "priority": 1,
       "blocked_by": [],
-      "stage_total_tasks": 5,
-      "acceptance": [
-        "AGENT_CONTEXT.md обновлён до v2.8 и больше не указывает Gemini/gpt-hosted как активный curator runtime",
-        "WORKING_CONTOUR_NOT_READY зафиксирован machine-readable",
-        "gap report создан",
-        "ACTIVE_QUEUE больше не содержит ложный DONE для working contour",
-        "RM-18 release lock зависит от PASS RM-01..RM-17"
+      "done_sha": "b7850745f5d2633d182e734c84c1246e9285a49a",
+      "artifacts": [
+        "governance/AGENT_CONTEXT.md",
+        "governance/status/bem931_v36_working_contour_status.json",
+        "governance/reports/bem931_v36_gap_report.md",
+        "governance/release/bem931_v36_release_lock.json",
+        "governance/validators/bem931_v36_rm01_status_validate.py"
       ],
+      "stage_total_tasks": 5,
+      "stage_done_tasks": 5,
       "subtasks": [
         {
           "id": "RM-01.01",
@@ -50,22 +52,26 @@
         {
           "id": "RM-01.02",
           "title": "Зафиксировать WORKING_CONTOUR_NOT_READY",
-          "status": "PENDING"
+          "status": "DONE",
+          "sha": "a8f7fd26a505fc586279e6b695dc89ec1175410a"
         },
         {
           "id": "RM-01.03",
           "title": "Создать gap report",
-          "status": "PENDING"
+          "status": "DONE",
+          "sha": "f2048c99401812fb5c8e516f0437a35b1e3a81d3"
         },
         {
           "id": "RM-01.04",
           "title": "Убрать ложный release/pass из ACTIVE_QUEUE",
-          "status": "PENDING"
+          "status": "DONE",
+          "sha": "41f5791b4bd3ebad8b4d4f36211f393f5a568f89"
         },
         {
           "id": "RM-01.05",
           "title": "Заблокировать RM-18 до PASS RM-01..RM-17",
-          "status": "PENDING"
+          "status": "DONE",
+          "sha": "efeefe406212d97ee2d9f7e0a6fc7202e749439a"
         }
       ],
       "report_required": true
@@ -74,10 +80,11 @@
       "id": "BEM-931-V36-RM14-LEGACY-RUNTIME-ARCHIVE",
       "roadmap_item": "RM-14",
       "title": "Архив legacy runtime: Gemini/API/paid hosted",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 2,
       "blocked_by": [],
       "stage_total_tasks": 8,
+      "stage_done_tasks": 0,
       "acceptance": [
         "workflow inventory создан",
         "Gemini/API/paid hosted paths найдены",
@@ -131,5 +138,5 @@
       "report_required": true
     }
   ],
-  "next_action": "Continue RM-01.02 WORKING_CONTOUR_NOT_READY status artifact"
+  "next_action": "Execute RM-14 legacy runtime archive"
 }
