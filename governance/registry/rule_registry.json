@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "rules": [
+    {
+      "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+      "rule_version": "1.0.0",
+      "scope": "system",
+      "owner": "GD.SYSTEM_RULES_CONTOUR",
+      "effective_from": "2026-06-07",
+      "supersedes": [],
+      "status": "active",
+      "links": [
+        "BEM-931 v3.5#7"
+      ],
+      "body": "Куратор ставит задачу аналитику; обратную связь получает от аудитора после ACCEPTED."
+    },
+    {
+      "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+      "rule_version": "1.0.0",
+      "scope": "system",
+      "owner": "GD.SYSTEM_RULES_CONTOUR",
+      "effective_from": "2026-06-07",
+      "supersedes": [],
+      "status": "active",
+      "links": [
+        "BEM-931 v3.5#7"
+      ],
+      "body": "Аналитик готовит задачу; аудитор подтверждает до исполнения; исполнитель выполняет; аудитор принимает результат."
+    },
+    {
+      "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+      "rule_version": "1.0.0",
+      "scope": "system",
+      "owner": "GD.SYSTEM_RULES_CONTOUR",
+      "effective_from": "2026-06-07",
+      "supersedes": [],
+      "status": "active",
+      "links": [
+        "BEM-931 v3.5#8"
+      ],
+      "body": "Горизонтальная связь идёт через куратора и реестр обмена; прямой runtime-канал роль-роль запрещён."
+    },
+    {
+      "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+      "rule_version": "1.0.0",
+      "scope": "system",
+      "owner": "GD.SYSTEM_RULES_CONTOUR",
+      "effective_from": "2026-06-07",
+      "supersedes": [],
+      "status": "active",
+      "links": [
+        "BEM-931 v3.5#RM-08"
+      ],
+      "body": "Ежечасовой отчёт: процент этапа, процент дорожной карты, чек-лист по строкам, вопрос оператору при наличии."
+    },
+    {
+      "rule_id": "RULE.SYSTEM.PAID_API_FORBIDDEN",
+      "rule_version": "1.0.0",
+      "scope": "system",
+      "owner": "GD.SYSTEM_RULES_CONTOUR",
+      "effective_from": "2026-06-07",
+      "supersedes": [],
+      "status": "active",
+      "links": [
+        "BEM-931 v3.5#13"
+      ],
+      "body": "Штатный runtime — Codex Local; Gemini API / OpenAI HTTP API / paid hosted не являются штатным путём."
+    }
+  ]
+}
