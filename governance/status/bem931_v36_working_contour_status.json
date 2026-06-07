@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.6",
+  "created_at": "2026-06-07T16:13:00Z",
+  "system_status": "WORKING_CONTOUR_NOT_READY",
+  "release_status": "BLOCKED",
+  "reason": "BEM-931 v3.5 was closed as documentation/partial repo artifacts; canonical live managing contour is not implemented.",
+  "canonical_runtime": ".github/workflows/codex-local.yml",
+  "canonical_contours_required": [
+    "GD-C1",
+    "GD-C2",
+    "DIR-C1",
+    "DIR-C2",
+    "WRK-C1",
+    "WRK-C2",
+    "WRK-C3"
+  ],
+  "canonical_curators_required": [
+    "GD.CURATOR",
+    "DIR.CURATOR",
+    "WRK.CURATOR"
+  ],
+  "minimum_worker_contours": [
+    "WRK-C1",
+    "WRK-C2",
+    "WRK-C3"
+  ],
+  "required_live_receipts": [
+    "self_hosted_runner_online",
+    "codex_cli_authenticated",
+    "provider_receipt_per_live_role",
+    "telegram_operator_message_id",
+    "live_e2e_trace",
+    "external_claude_audit_receipt"
+  ],
+  "forbidden_to_claim_ready_until": [
+    "all v3.6 RM-01..RM-17 are PASS",
+    "RM-18 release gate is PASS",
+    "legacy Gemini/API/paid hosted paths are disabled",
+    "Claude external audit approves or approves with non-blocking notes"
+  ]
+}
