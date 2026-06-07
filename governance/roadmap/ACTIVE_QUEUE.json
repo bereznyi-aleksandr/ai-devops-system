@@ -34,7 +34,7 @@
       "acceptance": [
         "telegram-poll.yml dispatches curator to codex-local.yml",
         "operator-hourly-curator-report.yml dispatches curator to codex-local.yml",
-        "codex-local.yml writes curator replies to governance/telegram_outbox.jsonl",
+        "codex-curator-result-to-telegram-outbox.yml converts GPT_CURATOR codex results to governance/telegram_outbox.jsonl",
         "gpt-hosted-roles.yml does not call Gemini/OpenAI HTTP API"
       ]
     },
