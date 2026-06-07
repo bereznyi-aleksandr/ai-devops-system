@@ -1,0 +1,33 @@
+name: BEM-931 Working Governance Contour
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/runtime/bem931_working_contour.py'
+      - 'governance/validators/bem931_working_contour_validate.py'
+      - 'governance/validators/bem931_working_contour_negative_validate.py'
+      - 'governance/tests/fixtures/operator_objective_*.json'
+      - '.github/workflows/bem931-working-governance-contour.yml'
+permissions:
+  contents: write
+jobs:
+  working-contour:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+      - name: Run working contour acceptance
+        run: |
+          python3 governance/validators/bem931_working_contour_validate.py
+          python3 governance/validators/bem931_working_contour_negative_validate.py
+      - name: Commit acceptance receipts
+        run: |
+          set -e
+          git config user.email "bem931-working-contour@ai-devops-system"
+          git config user.name "BEM-931 Working Contour"
+          git add governance/traces governance/proofs governance/results governance/reports governance/test_results governance/runtime/state governance/logs/working_contour_execution_log.jsonl governance/experience/experience_registry.json || true
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "BEM-931: capture working governance contour acceptance receipts"
+          git push
