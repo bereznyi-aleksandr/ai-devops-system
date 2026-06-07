@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "cycle": [
+    "error_detected",
+    "auditor_classifies",
+    "experience_record_created",
+    "rule_change_proposed_if_repeated_or_systemic",
+    "auditor_validates_rule_change",
+    "curator_routes_rule_update",
+    "rule_registry_new_rule_version",
+    "dynamic_refs_refresh"
+  ],
+  "records": {
+    "error_log": "governance/experience/error_log.jsonl",
+    "experience_registry": "governance/experience/experience_registry.json",
+    "rule_registry": "governance/registry/rule_registry.json"
+  },
+  "mandatory_fields": [
+    "error_id",
+    "source",
+    "classification",
+    "proof_ref",
+    "rule_version_before",
+    "action",
+    "status"
+  ],
+  "policy": "A repeated/systemic error must produce an auditable experience record and, when rule-impacting, a new rule_version rather than an undocumented prompt change."
+}
