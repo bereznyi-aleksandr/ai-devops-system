@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "objects": [
+    {
+      "object_id": "GD",
+      "name_ru": "Генеральный директор",
+      "name_en": "General Director",
+      "curator_element_id": "GD.CURATOR",
+      "contours": [
+        "GD.DECISION_CONTOUR",
+        "GD.SYSTEM_RULES_CONTOUR"
+      ],
+      "purpose": "Стратегия, системные правила, финальный вердикт."
+    },
+    {
+      "object_id": "DIR",
+      "name_ru": "Директор",
+      "name_en": "Director",
+      "curator_element_id": "DIR.CURATOR",
+      "contours": [
+        "DIR.RULES_CONTOUR",
+        "DIR.DECISION_CONTOUR"
+      ],
+      "purpose": "Правила и решения в зоне директора."
+    },
+    {
+      "object_id": "WRK",
+      "name_ru": "Работник",
+      "name_en": "Worker",
+      "curator_element_id": "WRK.CURATOR",
+      "contours": [
+        "WRK.ANALYSIS_CONTOUR",
+        "WRK.AUDIT_CONTOUR",
+        "WRK.EXECUTION_CONTOUR"
+      ],
+      "contour_policy": "Минимум 3 по умолчанию; расширение до N разрешено паспортом объекта.",
+      "purpose": "Исполнение задач через внутренний цикл."
+    }
+  ]
+}
