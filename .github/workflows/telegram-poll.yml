@@ -9,40 +9,45 @@ concurrency:
   group: telegram-poll
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   poll:
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    permissions:
-      contents: write
-
     steps:
-      - name: Poll Telegram, write inbox, dispatch to GPT Curator
+      - name: Poll Telegram, write inbox, dispatch to Codex Local Curator
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           ALLOWED_CHAT_ID: "601442777"
-          REPO: "bereznyi-aleksandr/ai-devops-system"
+          REPO: ${{ github.repository }}
         run: |
-          python3 << 'PYEOF'
+          python3 <<'PYEOF'
           import os, json, urllib.request, urllib.error, base64
           from datetime import datetime, timezone
 
-          token      = os.environ["TELEGRAM_BOT_TOKEN"]
-          gh_token   = os.environ["GITHUB_TOKEN"]
-          gh_pat     = os.environ["GH_PAT"]
+          token = os.environ["TELEGRAM_BOT_TOKEN"]
+          gh_token = os.environ.get("GITHUB_TOKEN", "")
+          gh_pat = os.environ.get("GH_PAT") or gh_token
           allowed_id = os.environ["ALLOWED_CHAT_ID"]
-          repo       = os.environ["REPO"]
-          api        = "https://api.github.com"
+          repo = os.environ["REPO"]
+          api = "https://api.github.com"
+
+          def gh_headers(token_):
+              return {
+                  "Authorization": f"Bearer {token_}",
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json",
+                  "User-Agent": "telegram-poll-action",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              }
 
           def gh_get(path, token_=None):
-              req = urllib.request.Request(
-                  f"{api}{path}",
-                  headers={"Authorization": f"Bearer {token_ or gh_token}",
-                           "Accept": "application/vnd.github+json",
-                           "User-Agent": "telegram-poll-action"}
-              )
+              req = urllib.request.Request(f"{api}{path}", headers=gh_headers(token_ or gh_token))
               try:
                   with urllib.request.urlopen(req, timeout=10) as r:
                       return json.loads(r.read()), r.status
@@ -52,29 +57,29 @@ jobs:
           def gh_put(path, content_str, message, sha=None):
               body = {
                   "message": message,
-                  "content": base64.b64encode(content_str.encode()).decode()
+                  "content": base64.b64encode(content_str.encode("utf-8")).decode("ascii"),
               }
               if sha:
                   body["sha"] = sha
-              data = json.dumps(body).encode()
               req = urllib.request.Request(
-                  f"{api}{path}", data=data, method="PUT",
-                  headers={"Authorization": f"Bearer {gh_token}",
-                           "Accept": "application/vnd.github+json",
-                           "Content-Type": "application/json",
-                           "User-Agent": "telegram-poll-action"}
+                  f"{api}{path}",
+                  data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+                  method="PUT",
+                  headers=gh_headers(gh_token),
               )
               try:
                   with urllib.request.urlopen(req, timeout=10) as r:
                       return json.loads(r.read()), r.status
               except urllib.error.HTTPError as e:
+                  print(f"gh_put error {e.code}: {e.read()[:300]}")
                   return None, e.code
 
           def tg_send(chat_id, text):
-              body = json.dumps({"chat_id": chat_id, "text": text}).encode()
+              body = json.dumps({"chat_id": chat_id, "text": text}, ensure_ascii=False).encode("utf-8")
               req = urllib.request.Request(
                   f"https://api.telegram.org/bot{token}/sendMessage",
-                  data=body, headers={"Content-Type": "application/json"}
+                  data=body,
+                  headers={"Content-Type": "application/json"},
               )
               try:
                   with urllib.request.urlopen(req, timeout=10) as r:
@@ -84,123 +89,119 @@ jobs:
                   return None
 
           def dispatch_curator(trace_id, task_text):
-              body = json.dumps({
+              payload = {
                   "ref": "main",
                   "inputs": {
                       "role": "curator",
-                      "provider": "gemini",
+                      "provider": "gpt_codex",
                       "trace_id": trace_id,
+                      "cycle_id": "telegram_operator_message",
                       "task_type": "telegram_operator_message",
-                      "task": task_text
-                  }
-              }).encode()
+                      "task": task_text,
+                  },
+              }
               req = urllib.request.Request(
-                  f"{api}/repos/{repo}/actions/workflows/gpt-hosted-roles.yml/dispatches",
-                  data=body, method="POST",
-                  headers={"Authorization": f"Bearer {gh_pat}",
-                           "Accept": "application/vnd.github+json",
-                           "Content-Type": "application/json",
-                           "User-Agent": "telegram-poll-action"}
+                  f"{api}/repos/{repo}/actions/workflows/codex-local.yml/dispatches",
+                  data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                  method="POST",
+                  headers=gh_headers(gh_pat),
               )
               try:
                   with urllib.request.urlopen(req, timeout=10) as r:
-                      print(f"Curator dispatched: HTTP {r.status}")
+                      print(f"Codex Local curator dispatched: HTTP {r.status}")
                       return True
               except urllib.error.HTTPError as e:
-                  print(f"Curator dispatch error: {e.code} {e.read()[:200]}")
+                  print(f"Codex Local curator dispatch error: {e.code} {e.read()[:300]}")
                   return False
 
-          # Читать offset
           offset_data, status = gh_get(f"/repos/{repo}/contents/governance/telegram/poll_offset.txt")
           offset = 0
           offset_sha = None
           if status == 200 and offset_data:
               try:
-                  raw = base64.b64decode(offset_data["content"].replace("\n","")).decode()
+                  raw = base64.b64decode(offset_data["content"].replace("\n", "")).decode("utf-8")
                   offset = int(raw.strip())
                   offset_sha = offset_data["sha"]
-              except:
+              except Exception:
                   pass
 
-          # Poll Telegram
           url = f"https://api.telegram.org/bot{token}/getUpdates?offset={offset}&limit=100&timeout=0"
           try:
               with urllib.request.urlopen(url, timeout=10) as r:
                   data = json.loads(r.read())
           except Exception as e:
               print(f"Telegram error: {e}")
-              exit(0)
+              raise SystemExit(0)
 
           if not data.get("ok"):
               print(f"Telegram not ok: {data}")
-              exit(0)
+              raise SystemExit(0)
 
           updates = data.get("result", [])
           if not updates:
               print("No updates")
-              exit(0)
+              raise SystemExit(0)
 
           new_entries = []
           max_uid = offset - 1
+
           for upd in updates:
               uid = upd["update_id"]
-              if uid > max_uid:
-                  max_uid = uid
+              max_uid = max(max_uid, uid)
               msg = upd.get("message")
               if not msg:
                   continue
               if str(msg["chat"]["id"]) != allowed_id:
                   continue
+              text = msg.get("text", "")
               new_entries.append({
                   "ts": msg.get("date"),
                   "update_id": uid,
                   "chat_id": str(msg["chat"]["id"]),
                   "message_id": str(msg["message_id"]),
-                  "text": msg.get("text", ""),
-                  "source": "telegram_poll"
+                  "text": text,
+                  "source": "telegram_poll",
               })
-              print(f"Message: {msg.get('text','')[:80]}")
+              print(f"Message: {text[:80]}")
 
           new_offset = str(max_uid + 1)
-
-          # Обновить offset
           _, s = gh_put(
               f"/repos/{repo}/contents/governance/telegram/poll_offset.txt",
-              new_offset, f"telegram: offset {new_offset}", offset_sha
+              new_offset,
+              f"telegram: offset {new_offset}",
+              offset_sha,
           )
           print(f"Offset updated: {new_offset} (status {s})")
 
           if not new_entries:
               print("No messages from allowed chat")
-              exit(0)
+              raise SystemExit(0)
 
-          # Записать в inbox.jsonl
           inbox_data, status = gh_get(f"/repos/{repo}/contents/governance/telegram/inbox.jsonl")
           inbox_content = ""
           inbox_sha = None
           if status == 200 and inbox_data:
               try:
-                  inbox_content = base64.b64decode(inbox_data["content"].replace("\n","")).decode()
+                  inbox_content = base64.b64decode(inbox_data["content"].replace("\n", "")).decode("utf-8")
                   inbox_sha = inbox_data["sha"]
-              except:
+              except Exception:
                   pass
 
           new_lines = "\n".join(json.dumps(e, ensure_ascii=False) for e in new_entries) + "\n"
           _, s = gh_put(
               f"/repos/{repo}/contents/governance/telegram/inbox.jsonl",
               inbox_content + new_lines,
-              f"telegram: {len(new_entries)} new message(s)", inbox_sha
+              f"telegram: {len(new_entries)} new message(s)",
+              inbox_sha,
           )
           print(f"Inbox updated (status {s})")
 
-          # Диспатч Куратора
           now_iso = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
           for entry in new_entries:
               trace_id = f"tg_{entry['update_id']}_{now_iso}"
               dispatched = dispatch_curator(trace_id, entry["text"])
               if dispatched:
-                  tg_send(entry["chat_id"], f"⏳ Передано куратору (trace: {trace_id})")
+                  tg_send(entry["chat_id"], f"⏳ Передано куратору Codex Local (trace: {trace_id})")
               else:
-                  tg_send(entry["chat_id"], "⚠️ Ошибка диспатча куратора")
-
+                  tg_send(entry["chat_id"], "⚠️ Ошибка dispatch куратора Codex Local")
           PYEOF
