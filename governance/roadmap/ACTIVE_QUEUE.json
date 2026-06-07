@@ -1,21 +1,22 @@
 {
-  "version": 12,
-  "updated_at": "2026-06-07T19:08:00Z",
+  "version": 13,
+  "updated_at": "2026-06-07T19:31:00Z",
   "queue_state": "ACTIVE",
-  "system_status": "WORKING_CONTOUR_NOT_READY",
+  "system_status": "WORKING_CONTOUR_RELEASE_REPAIR_RUNNING",
   "operator_directive": "STOP_FORBIDDEN_UNTIL_ROADMAP_COMPLETE",
   "policy": {
     "continuous_execution": "report does not stop work; dispatch/repair/redispatch continues",
+    "operator_gate": "operator explicitly forbids pause/stop",
     "done_rule": "DONE only with non-null SHA + artifact + validator/receipt",
-    "release_pass": "BLOCKED until RM15/RM16/RM17 receipts + RM18 PASS + Claude external audit PASS"
+    "release_pass": "BLOCKED until RM15/RM16/RM17 receipts + RM18 PASS + external audit"
   },
   "progress": {
     "stage_done": 2,
     "stage_total": 4,
-    "current_stage": "RM-15/RM-16/RM-17/RM-18 runtime proof chain",
-    "current_stage_task_done": 6,
+    "current_stage": "RM-15/RM-16/RM-17/RM-18 release repair gate",
+    "current_stage_task_done": 7,
     "current_stage_task_total": 8,
-    "percent_stage": 75,
+    "percent_stage": 88,
     "percent_roadmap": 50
   },
   "tasks": [
@@ -26,35 +27,62 @@
     },
     {
       "id": "RM-02",
-      "status": "DISPATCHED_AGGAIN",
-      "remaining": ["Check BEM931-V36-RM02_object_passports_receipt.json"]
+      "status": "REPAIR_GATE_VALIDATES_AND_WRITES_RECEIPT",
+      "remaining": [
+        "Check BEM931-V36-RM02_object_passports_receipt.json"
+      ]
     },
     {
       "id": "RM-04-RUNNERS",
-      "status": "REPAIRED_DISPATCHED_AGAIN",
+      "status": "REPAIRED_VALIDATED_BY_REPAIR_GATE",
       "repair_sha": "f6e1d9282feeab45848f2ce4052c028ff69f10cd",
-      "remaining": ["Check BEM931-V36-RM04_runners_receipt.json"]
+      "remaining": [
+        "Check BEM931-V36-RM04_runners_receipt.json"
+      ]
     },
     {
       "id": "RM-15-E2E",
-      "status": "DISPATCHED_AGAIN",
-      "remaining": ["Check BEM931-V36-RM15_live_e2e_receipt.json"]
+      "status": "REPAIR_GATE_DISPATCHED",
+      "remaining": [
+        "Check BEM931-V36-RM15_live_e2e_receipt.json",
+        "If failed repair workflow/runner and redispatch"
+      ]
     },
     {
       "id": "RM-16-MULTI_CONTOUR",
-      "status": "DISPATCHED_AGAIN",
-      "remaining": ["Check BEM931-V36-RM16_multi_contour_receipt.json"]
+      "status": "REPAIR_GATE_DISPATCHED",
+      "remaining": [
+        "Check BEM931-V36-RM16_multi_contour_receipt.json",
+        "If failed repair workflow/runner and redispatch"
+      ]
     },
     {
       "id": "RM-17-HORIZONTAL_EXCHANGE",
-      "status": "DISPATCHED_AGAIN",
-      "remaining": ["Check BEM931-V36-RM17_horizontal_exchange_receipt.json"]
+      "status": "REPAIR_GATE_DISPATCHED",
+      "remaining": [
+        "Check BEM931-V36-RM17_horizontal_exchange_receipt.json",
+        "If failed repair and redispatch"
+      ]
     },
     {
       "id": "RM-18-RELEASE_GATE",
-      "status": "DISPATCHED_BLOCKED_UNTIL_RECEIPTS",
-      "remaining": ["Check bem931_v36_release_gate.json, redispatch after receipts"]
+      "status": "REPAIR_GATE_DISPATCHED",
+      "remaining": [
+        "Check bem931_v36_release_gate.json PASS",
+        "External Claude audit after PASS"
+      ]
     }
   ],
-  "next_action": "check receipts; if missing repair and redispatch without operator pause"
+  "latest_actions": [
+    {
+      "action": "release repair gate rewritten as self-contained push-triggered workflow",
+      "sha": "c9eabbe6bbdf1a9c7457ae6bc18ecf8c2c946180",
+      "file": ".github/workflows/bem931-v36-release-repair-gate.yml"
+    },
+    {
+      "action": "release repair gate workflow_dispatch accepted",
+      "status": "DISPATCHED"
+    }
+  ],
+  "next_action": "check repair gate receipts; if missing or failed, repair and redispatch without operator pause"
 }
