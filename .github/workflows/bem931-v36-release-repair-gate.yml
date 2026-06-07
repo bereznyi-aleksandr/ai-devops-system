@@ -113,15 +113,9 @@ jobs:
               "receipt_type": "release_repair_live_e2e",
               "trace_id": trace,
               "chain": [
-                  "OPERATOR",
-                  "GD.CURATOR",
-                  "DIR.CURATOR",
-                  "WRK.CURATOR",
-                  "WRK-C1.ANALYST",
-                  "WRK-C1.AUDITOR.pre",
-                  "WRK-C1.EXECUTOR",
-                  "WRK-C1.AUDITOR.post",
-                  "WRK.CURATOR.feedback"
+                  "OPERATOR", "GD.CURATOR", "DIR.CURATOR", "WRK.CURATOR",
+                  "WRK-C1.ANALYST", "WRK-C1.AUDITOR.pre", "WRK-C1.EXECUTOR",
+                  "WRK-C1.AUDITOR.post", "WRK.CURATOR.feedback"
               ],
               "artifacts": required + [str(result_path)],
           }
@@ -151,10 +145,8 @@ jobs:
           for contour in contours:
               trace = f"bem931_v36_rm16_{contour}_{os.environ.get('GITHUB_RUN_ID', 'local')}"
               channel_dir = Path("governance/channels")
-              if channel_dir.exists():
-                  for item in channel_dir.glob("*.jsol"):
-                      item.unlink()
-              channel_dir.mkdir(parents=True, exist_ok=True)
+              for item in channel_dir.glob("*.jsonl"):
+                  item.unlink()
               result_dir = Path("governance/results") / trace
               if result_dir.exists():
                   shutil.rmtree(result_dir)
@@ -168,7 +160,7 @@ jobs:
                   "task": f"BEM-931 v3.6 RM16 live isolated test for {contour}",
                   "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
               }
-              Path("governance/channels/dir_to_wrk.jsonl").write_text(json.dumps({**row}, ensure_ascii=False) + "\n", encoding="utf-8")
+              Path("governance/channels/dir_to_wrk.jsonl").write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
 
               for runner in [
                   "governance/runners/wrk_curator_runner.py",
@@ -242,6 +234,7 @@ jobs:
               "receipt_type": "horizontal_exchange_curator_mediated",
               "registry": str(registry),
               "checks": ["mediator_present", "source_auditor", "receiver_analyst", "proof_ref", "rule_version"],
+              "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
           }
           Path("governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json").write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
@@ -269,7 +262,7 @@ jobs:
               "release_status": status,
               "missing": missing,
               "required": required,
-              "created_at"": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+              "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
           }
           Path("governance/release/bem931_v36_release_gate.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           if missing:
