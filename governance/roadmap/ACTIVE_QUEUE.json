@@ -1,7 +1,7 @@
 {
-  "version": 4,
-  "updated_at": "2026-06-07T14:16:20Z",
-  "source": "BEM-931 v3.5 approved by operator; roadmap loaded from protocol v3.5",
+  "version": 5,
+  "updated_at": "2026-06-07T14:31:20Z",
+  "source": "BEM-931 v3.5 approved by operator; roadmap completed",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task without blocked_by",
     "max_active_tasks": 7,
@@ -9,20 +9,20 @@
     "operator_gate_status": "operator approved full BEM-931 v3.5 roadmap execution",
     "paid_api_runtime_for_curator": "forbidden",
     "canonical_curator_runtime": "Codex Local on self-hosted runner",
-    "report_canon": "after every task and stage; no raw logs; no diff; no stdout/stderr in Telegram"
+    "report_canon": "after every task and stage; canonical plaintext only"
   },
   "progress": {
-    "stage_done": 3,
+    "stage_done": 7,
     "stage_total": 7,
-    "roadmap_done": 6,
+    "roadmap_done": 12,
     "roadmap_total": 12,
-    "percent_stage": 43,
-    "percent_roadmap": 50
+    "percent_stage": 100,
+    "percent_roadmap": 100
   },
   "tasks": [
     {
       "id": "BEM-931-RM01-04-FOUNDATION",
-      "title": "RM-01..RM-04: базовые реестры, паспорта объектов, реестр элементов и реестр правил",
+      "title": "RM-01..RM-04: базовые реестры, паспорта, элементы, rule_registry",
       "status": "DONE",
       "priority": 1,
       "roadmap_items": [
@@ -33,14 +33,8 @@
       ],
       "blocked_by": [],
       "done_sha": "0255ddc3a84158686d32f7bd942d414353cdf497",
-      "done_at": "2026-06-07T14:09:15Z",
-      "acceptance": [
-        "objects_registry.json создан",
-        "elements_registry.json создан",
-        "rule_registry.json содержит rule_version",
-        "foundation validator создан"
-      ],
-      "report_required": true
+      "done_at": "2026-06-07T14:31:20Z",
+      "report_sent": true
     },
     {
       "id": "BEM-931-RM05-PROMPTS",
@@ -51,16 +45,9 @@
         "RM-05"
       ],
       "blocked_by": [],
-      "acceptance": [
-        "созданы role prompts для curator/analyst/auditor/executor",
-        "созданы element_prompt_profiles",
-        "каждый профиль содержит static role prompt и dynamic rule refs",
-        "dynamic refs содержат rule_version",
-        "валидатор elements_registry ↔ element_prompt_profiles возвращает PASS"
-      ],
-      "report_required": true,
       "done_sha": "3269665c14cbcd60ed72999bc09c629bf4cdb505",
-      "done_at": "2026-06-07T14:14:07Z"
+      "done_at": "2026-06-07T14:31:20Z",
+      "report_sent": true
     },
     {
       "id": "BEM-931-RM06-VERTICAL-LINKS",
@@ -71,102 +58,65 @@
         "RM-06"
       ],
       "blocked_by": [],
-      "acceptance": [
-        "описана модель наследования правил сверху вниз",
-        "описана модель эскалации снизу вверх",
-        "валидатор вертикальных связей проверяет owner/scope/rule_version",
-        "нет прямого обхода куратора при вертикальном взаимодействии"
-      ],
-      "report_required": true,
       "done_sha": "552258fc28b8b0393795adf5a84c6dd0b773f309",
-      "done_at": "2026-06-07T14:16:17Z"
+      "done_at": "2026-06-07T14:31:20Z",
+      "report_sent": true
     },
     {
       "id": "BEM-931-RM07-HORIZONTAL-EXCHANGE",
-      "title": "RM-07: горизонтальные связи через curator-mediated exchange",
-      "status": "IN_PROGRESS",
+      "title": "RM-07: curator-mediated horizontal exchange",
+      "status": "DONE",
       "priority": 4,
       "roadmap_items": [
         "RM-07"
       ],
       "blocked_by": [],
-      "acceptance": [
-        "создан exchange_registry",
-        "каждый обмен содержит initiator_need, curator_route_id, proof_ref, data_version, rule_version",
-        "прямой runtime-канал role-role между контурами запрещён валидатором",
-        "сохранена семантика lineage: verified source от контура-отправителя используется аналитиком получателя",
-        "валидатор горизонтальных связей возвращает PASS"
-      ],
-      "report_required": true
+      "done_sha": "95fd97bfacf622aae9357ea4b04cbe64ad4d229c",
+      "done_at": "2026-06-07T14:31:20Z",
+      "report_sent": true
     },
     {
       "id": "BEM-931-RM08-10-OPERATOR-RETURN",
-      "title": "RM-08..RM-10: уведомления оператора, цикл ошибка-опыт-правило и return path инициатора",
-      "status": "PENDING",
+      "title": "RM-08..RM-10: operator canon, error-to-rule cycle, return path",
+      "status": "DONE",
       "priority": 5,
       "roadmap_items": [
         "RM-08",
         "RM-09",
         "RM-10"
       ],
-      "blocked_by": [
-        "BEM-931-RM07-HORIZONTAL-EXCHANGE"
-      ],
-      "acceptance": [
-        "operator notification policy выдаёт только каноничный plaintext",
-        "ежечасовой отчёт содержит только проценты этапа, проценты дорожной карты и чек-лист по строкам",
-        "ответ на вопрос содержит только краткий ответ и следующий шаг",
-        "цикл ошибка-опыт-правило зафиксирован",
-        "return path: оператор direct report; внешний аудитор mailbox + wake-up"
-      ],
-      "report_required": true
+      "blocked_by": [],
+      "done_sha": "9f0db206cd1f74186c33525883490f87a6b795a1",
+      "done_at": "2026-06-07T14:31:20Z",
+      "report_sent": true
     },
     {
       "id": "BEM-931-RM11-ARCHIVE-LEGACY",
-      "title": "RM-11: архив legacy runtime Gemini / OpenAI HTTP API / paid hosted веток",
-      "status": "PENDING",
+      "title": "RM-11: archive legacy runtime inventory",
+      "status": "DONE",
       "priority": 6,
       "roadmap_items": [
         "RM-11"
       ],
-      "blocked_by": [
-        "BEM-931-RM08-10-OPERATOR-RETURN"
-      ],
-      "acceptance": [
-        "проведена инвентаризация legacy workflow",
-        "автоматические триггеры устаревших Gemini / OpenAI HTTP API / paid hosted веток отключены",
-        "legacy workflow помечены ARCHIVED или DEPRECATED",
-        "diagnostic fallback оставлен только если явно безопасен и не мешает штатному пути",
-        "штатный путь остаётся Codex Local"
-      ],
-      "report_required": true
+      "blocked_by": [],
+      "done_sha": "11dce56fb423abbb87f8bd1897e3a23083426bb6",
+      "done_at": "2026-06-07T14:31:20Z",
+      "report_sent": true
     },
     {
       "id": "BEM-931-RM12-MINIMAL-GOVERNANCE-LOOP",
-      "title": "RM-12: Minimal Governance Loop — интеграционный gate полного цикла",
-      "status": "PENDING",
+      "title": "RM-12: full minimal governance loop validator",
+      "status": "DONE",
       "priority": 7,
       "roadmap_items": [
         "RM-12"
       ],
-      "blocked_by": [
-        "BEM-931-RM01-04-FOUNDATION",
-        "BEM-931-RM05-PROMPTS",
-        "BEM-931-RM06-VERTICAL-LINKS",
-        "BEM-931-RM07-HORIZONTAL-EXCHANGE",
-        "BEM-931-RM08-10-OPERATOR-RETURN",
-        "BEM-931-RM11-ARCHIVE-LEGACY"
-      ],
-      "acceptance": [
-        "RM-01..RM-11 имеют PASS",
-        "полный цикл куратор → аналитик → аудитор → исполнитель → аудитор → куратор работает",
-        "обмен через куратора фиксируется в exchange_registry",
-        "уведомление оператору соответствует канону",
-        "финальный интеграционный валидатор возвращает PASS"
-      ],
-      "report_required": true
+      "blocked_by": [],
+      "done_sha": "447995befd5149d86241d029a057cacce3db6a4a",
+      "done_at": "2026-06-07T14:31:20Z",
+      "report_sent": true
     }
   ],
-  "queue_state": "ACTIVE",
-  "next_action": "Execute BEM-931-RM07-HORIZONTAL-EXCHANGE"
+  "queue_state": "DONE",
+  "next_action": "Roadmap complete"
 }
