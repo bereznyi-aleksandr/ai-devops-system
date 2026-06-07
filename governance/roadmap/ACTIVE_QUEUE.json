@@ -1,39 +1,77 @@
 {
-  "version": 2,
-  "updated_at": "2026-06-06T11:05:00Z",
-  "source": "Claude external audit — Gates 5+6 closed",
+  "version": 3,
+  "updated_at": "2026-06-07T11:20:00Z",
+  "source": "BEM-931 v3.3 Claude review + operator directive",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task",
     "workflow_yml_locked_for_gpt": false,
     "do_not_invent_tasks_when_empty": true,
-    "write_execution_log_after_status": true
+    "write_execution_log_after_status": true,
+    "paid_api_runtime_for_curator": "forbidden",
+    "canonical_curator_runtime": "codex-local.yml on self-hosted Codex CLI"
   },
   "session_summary": {
-    "date": "2026-06-06",
+    "date": "2026-06-07",
     "completed": [
-      "Gate 5: GPT MCP/PAT LLM runtime PASS",
-      "Gate 6: Claude external audit receipt PASS",
-      "GPT autonomous loop restored via GitHub MCP/PAT",
-      "Contract v2.8 active",
-      "Deno deprecated"
+      "BEM-931 v3.3 reviewed by Claude: APPROVED_WITH_NOTES",
+      "Telegram operator report readability rule added",
+      "Curator runtime migration initiated: gpt-hosted-roles.yml -> codex-local.yml"
+    ],
+    "claude_notes": [
+      "ZM-1: RM-05 prompts depend on RM-02..RM-04",
+      "ZM-2: cross-validation required between elements_registry and element_prompt_profiles",
+      "ZM-3: horizontal-link trigger must define initiator during RM-07",
+      "ZM-4: RM-12 Minimal Loop depends on all previous tasks",
+      "ZM-5: add rule_version to rule_registry"
     ]
   },
   "tasks": [
     {
-      "id": "GATE-5",
-      "title": "Live LLM Runtime — обработка сообщений inbox через LLM и ответ в Telegram",
-      "status": "DONE",
+      "id": "BEM-931-CURATOR-CODEX",
+      "title": "Switch curator runtime from paid hosted API to codex-local self-hosted Codex CLI",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "done_sha": "724cd6c41716735babed54a6e9d7685a1bcd8092"
+      "acceptance": [
+        "telegram-poll.yml dispatches curator to codex-local.yml",
+        "operator-hourly-curator-report.yml dispatches curator to codex-local.yml",
+        "codex-local.yml writes curator replies to governance/telegram_outbox.jsonl",
+        "gpt-hosted-roles.yml does not call Gemini/OpenAI HTTP API"
+      ]
     },
     {
-      "id": "GATE-6",
-      "title": "External Claude Audit receipt",
-      "status": "DONE",
+      "id": "BEM-931-ARCHIVE-LEGACY-RUNTIMES",
+      "title": "Archive inactive/obsolete paid API and Gemini workflow branches",
+      "status": "PENDING",
       "priority": 2,
-      "done_sha": "a23f6fe1eb0f35b28bf6331f39efadc3c10923a4"
+      "acceptance": [
+        "list all workflows that use Gemini/OpenAI HTTP API/hosted paid runtime",
+        "disable automatic triggers for obsolete workflows",
+        "mark retained emergency workflows as ARCHIVED or DEPRECATED",
+        "ensure obsolete workflows do not interfere with canonical codex-local runtime"
+      ]
+    },
+    {
+      "id": "BEM-931-CLAUDE-NOTES",
+      "title": "Apply Claude non-blocking notes to protocol and roadmap",
+      "status": "PENDING",
+      "priority": 3,
+      "depends_on": [
+        "RM-02",
+        "RM-03",
+        "RM-04",
+        "RM-05",
+        "RM-07",
+        "RM-12"
+      ],
+      "acceptance": [
+        "RM-05 dependency on RM-02..RM-04 is explicit",
+        "elements_registry and element_prompt_profiles cross-validation exists",
+        "RM-07 defines horizontal-link trigger initiator",
+        "RM-12 waits for previous tasks",
+        "rule_registry includes rule_version"
+      ]
     }
   ],
-  "queue_state": "ALL_DONE",
-  "next_action": "Await new tasks from operator"
+  "queue_state": "ACTIVE",
+  "next_action": "Run workflow smoke test after curator runtime switch"
 }
