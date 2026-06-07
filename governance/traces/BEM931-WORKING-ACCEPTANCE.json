@@ -1,0 +1,60 @@
+{
+  "trace_id": "BEM931-WORKING-ACCEPTANCE",
+  "protocol": "BEM-931 v3.5",
+  "created_at": "2026-06-07T14:58:00Z",
+  "actors": [
+    "GD.CURATOR",
+    "DIR.CURATOR",
+    "WRK.ANALYST",
+    "WRK.AUDITOR",
+    "WRK.EXECUTOR"
+  ],
+  "release_pass": false,
+  "release_blockers": [
+    "production_telegram_receipt_required",
+    "live_runtime_receipt_required",
+    "external_claude_audit_receipt_required"
+  ],
+  "input_valid": true,
+  "managed_message_id": "MSG-ACCEPT",
+  "dequeued": true,
+  "gd_route": {
+    "actor_id": "GD.CURATOR",
+    "decision": {
+      "director_curator_id": "DIR.CURATOR",
+      "target_contour_id": "WRK.ANALYSIS_CONTOUR"
+    }
+  },
+  "assignment": {
+    "actor_id": "DIR.CURATOR",
+    "assignments": {
+      "analyst_id": "WRK.ANALYST",
+      "auditor_id": "WRK.AUDITOR",
+      "executor_id": "WRK.EXECUTOR"
+    }
+  },
+  "experience": {
+    "applied_experience_ids": [
+      "EXP.BEM931.NO_STATUS_ONLY"
+    ]
+  },
+  "audit": {
+    "precheck": {
+      "actor_id": "WRK.AUDITOR",
+      "ok": true
+    },
+    "postcheck": {
+      "actor_id": "WRK.AUDITOR",
+      "ok": true
+    }
+  },
+  "execution": {
+    "executor_id": "WRK.EXECUTOR",
+    "ok": true,
+    "artifact_relpath": "governance/results/BEM931-WORKING-ACCEPTANCE/worker_result.json"
+  },
+  "ok": true,
+  "repo_level_pass": true,
+  "operator_report_path": "governance/reports/operator/BEM931-WORKING-ACCEPTANCE.md",
+  "receipt_path": "governance/proofs/BEM931-WORKING-ACCEPTANCE_receipt.json"
+}
