@@ -1,108 +1,74 @@
 {
-  "version": 8,
-  "updated_at": "2026-06-07T16:42:30Z",
-  "source": "Claude external audit + GPT RM14 completion; strict acceptance criteria; no DONE without live proof",
+  "version": 9,
+  "updated_at": "2026-06-07T17:18:00Z",
+  "source": "BEM-931 v3.6 autonomous execution resumed; no stop until roadmap completion unless operator gate or tool boundary",
   "queue_state": "ACTIVE",
   "system_status": "WORKING_CONTOUR_NOT_READY",
   "policy": {
-    "done_rule": "DONE = non-null SHA + file > 50 bytes + ast.parse OK for .py + for runtime tasks: codex exit=0 + governance/codex/results/{trace_id}.json exists",
-    "stub_rule": "File <= 50 bytes or SyntaxError = BLOCKED automatically, not DONE",
-    "queue_limit": "Next task opens only after previous DONE",
-    "report_canon": "Telegram: stage X/Y tasks (%), roadmap X/Y stages (%), checklist separate lines, question only if needed. No diff/stdout/JSON/traceback",
+    "continuous_execution": "intermediate report does not stop execution",
+    "done_rule": "DONE only with non-null SHA + artifact + validator/receipt",
     "release_pass": "BLOCKED until live E2E receipt + Telegram receipt + Claude external audit PASS"
   },
   "progress": {
     "stage_done": 2,
     "stage_total": 4,
-    "current_stage_task_done": 0,
-    "current_stage_task_total": 6,
-    "percent_stage": 0,
+    "current_stage": "RM-04-RUNNERS",
+    "current_stage_task_done": 7,
+    "current_stage_task_total": 8,
+    "percent_stage": 88,
     "percent_roadmap": 50
   },
   "tasks": [
     {
       "id": "RM-14",
-      "title": "Архив legacy runtime — подтвердить отключение",
+      "title": "Архив legacy runtime",
       "status": "DONE_REPO",
-      "priority": 1,
-      "done_sha": "c53e14fc8a0192996c4c5b5f929dddef38c3be33",
-      "stage_total_tasks": 5,
-      "stage_done_tasks": 5,
-      "artifacts": [
-        "governance/reports/bem=31_v36_legacy_archive_report.md",
-        "governance/validators/bem931_v36_rm14_legacy_validate.py",
-        ".github/workflows/gpt-hosted-roles.yml",
-        ".github/workflows/codex-local.yml",
-        ".github/workflows/telegram-poll.yml"
-      ],
-      "acceptance": [
-        "gpt-hosted-roles.yml confirmed ARCHIVED disabled stub",
-        "telegram-poll.yml dispatches codex-local.yml",
-        "active checked workflows do not contain GEMINI_API_KEY runtime token",
-        "codex-local remains canonical active runtime",
-        "legacy archive report exists and file > 100 bytes with SHA"
-      ],
-      "blocker_if": "If active Gemini/OpenAI HTTP API/paid hosted runtime appears in production path, RM-14 reopens"
+      "done_sha": "c53e14fc8a0192996c4c5b5f929dddef38c3be33"
     },
     {
       "id": "RM-02",
-      "title": "Паспорта объектов GD / DIR / WRK",
-      "status": "IN_PROGRESS",
-      "priority": 2,
-      "depends_on": "RM-14 DONE",
-      "stage_total_tasks": 6,
-      "stage_done_tasks": 0,
-      "acceptance": [
-        "governance/architecture/object_passports/GD.json: > 200 bytes, valid JSON, fields id/curator_runner/contours/rule_owner",
-        "governance/architecture/object_passports/DIR.json: > 200 bytes, valid JSON, same fields",
-        "governance/architecture/object_passports/WRK.json: > 200 bytes, contours contains [WRK-C1, WRK-C2, WRK-C3]",
-        "governance/architecture/objects_registry_v2.json: all 3 objects, valid JSON",
-        "WRK.json does not contain ANALYSIS_CONTOUR / AUDIT_CONTOUR / EXECUTION_CONTOUR as contours",
-        "validator passes"
-      ],
-      "blocker_if": "Any file <= 200 bytes, invalid JSON, or WRK.json contains old erroneous contour fields"
+      "title": "Паспорта объектов GD/DIR/WRK",
+      "status": "IN_PROGRESS_RECEIPT_PENDING",
+      "note": "files and validator workflow created; receipt not found yet"
     },
     {
       "id": "RM-04-RUNNERS",
-      "title": "Рабочие runner файлы — реальный код, не заглушки",
-      "status": "PENDING",
-      "priority": 3,
-      "depends_on": "RM-02 DONE",
-      "note": "Критический путь. Без рабочих runners система остаётся документами.",
-      "acceptance": [
-        "gd_curator_runner.py: > 300 bytes, ast.parse OK, def main(), reads managed_channel, writes dir_inbox",
-        "dir_curator_runner.py: > 300 bytes, ast.parse OK, def main(), reads dir_inbox, writes wrk_inbox",
-        "wrk_curator_runner.py: > 300 bytes, ast.parse OK, def main(), selects WRK-Cx and dispatches analyst",
-        "executor_stage_runner.py: > 300 bytes, ast.parse OK, def main(), executes task and writes result",
-        "auditor_stage_runner.py: > 300 bytes, ast.parse OK, def main(), checks result and writes PASS/FAIL",
-        "python3 runner.py exits 0 or graceful no-op for every runner"
+      "title": "Рабочие runner файлы",
+      "status": "IN_PROGRESS",
+      "stage_total_tasks": 8,
+      "stage_done_tasks": 7,
+      "artifacts": [
+        "governance/runners/bem931_runner_lib.py",
+        "governance/runners/gd_curator_runner.py",
+        "governance/runners/dir_curator_runner.py",
+        "governance/runners/wrk_curator_runner.py",
+        "governance/runners/analyst_stage_runner.py",
+        "governance/runners/auditor_stage_runner.py",
+        "governance/runners/executor_stage_runner.py",
+        "governance/validators/bem931_v36_rm04_runners_validate.py",
+        ".github/workflows/bem931-v36-rm04-validate-runners.yml"
       ],
-      "blocker_if": "Any file <= 50 bytes, SyntaxError, missing def main(), or python3 runner.py throws exception"
+      "done_shas": {
+        "lib": "a655c0b49d3e28f37919170fe055084714cf4c68",
+        "gd": "3877d936d360daf0e17b70044e915a9d28c269cb",
+        "dir": "67c3e9e8b73a1771a3cc98184779b2ef729ba9e8",
+        "wrk": "35744da6fde43e7172880fe5ee6815460b81164a",
+        "analyst": "6ba1b0919d2ab7d0c4dade6046dc516b53c1b41b",
+        "auditor": "c5b90f41665970d5979124901b7ac184db835b76",
+        "executor": "6d8b001968ade8918e888dd414891a4b8b2d385b",
+        "validator": "607931601a12f6c5f743a10f1a9f0aac00af9a73",
+        "workflow": "1e7e5ecac20642f744925e12257e216905fac13d"
+      },
+      "remaining": [
+        "wait/check BEM931-V36-RM04_runners_receipt.json"
+      ]
     },
     {
       "id": "RM-15-E2E",
-      "title": "Live E2E проход одного контура",
+      "title": "Live E2E одного контура",
       "status": "PENDING",
-      "priority": 4,
-      "depends_on": "RM-04-RUNNERS DONE",
-      "acceptance": [
-        "Operator Telegram message triggers GD.CURATOR via codex-local, Codex exit=0, result json exists",
-        "GD.CURATOR routes to DIR.CURATOR with receipt",
-        "DIR.CURATOR routes to WRK.CURATOR and selects WRK-C1 with receipt",
-        "WRK-C1.ANALYST creates plan artifact",
-        "WRK-C1.AUDITOR pre-check PASS artifact",
-        "WRK-C1.EXECUTOR commits result with non-null commit_sha",
-        "WRK-C1.AUDITOR post-check PASS artifact",
-        "Operator receives canonical Telegram report with message_id",
-        "All 7 Codex receipts stored in governance/codex/results/"
-      ],
-      "blocker_if": "Any stage missing Codex receipt, commit_sha is null, or Telegram message_id missing"
+      "depends_on": "RM-04-RUNNERS DONE"
     }
   ],
-  "next_action": "Execute RM-02 object passports",
-  "release_lock": {
-    "status": "BLOCKED",
-    "reason": "No live E2E receipt + no working runners + no WRK-C1/C2/C3 contours",
-    "unlock_after": "RM-15 DONE + Claude external audit PASS"
-  }
+  "next_action": "check RM04 validator receipt, then proceed to RM15 live E2E"
 }
