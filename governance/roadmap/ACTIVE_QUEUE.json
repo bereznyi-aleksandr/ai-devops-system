@@ -1,6 +1,6 @@
 {
   "version": 6,
-  "updated_at": "2026-06-07T14:56:20Z",
+  "updated_at": "2026-06-07T15:02:15Z",
   "source": "BEM-931 v3.5 working contour repair after operator rejection of documentation-only closure",
   "queue_state": "DONE",
   "policy": {
@@ -93,5 +93,13 @@
       ]
     }
   ],
-  "next_action": "wait for CI receipt commit or inspect workflow result if needed"
+  "next_action": "wait for CI receipt commit or inspect workflow result if needed",
+  "final_acceptance": {
+    "positive_receipt_sha": "f6f9abddf1be99f8166c4e2aeccf35a7ab76d6bd",
+    "negative_receipt_sha": "28ab723d6315d1f245bca6c81c7c1c2526e7206f",
+    "execution_log_sha": "893850fbe6004d4e69944525853b95a69153b146",
+    "workflow_dispatch": "bem931-working-governance-contour.yml dispatched",
+    "repo_level_status": "PASS",
+    "release_status": "BLOCKED_UNTIL_LIVE_RECEIPTS"
+  }
 }
