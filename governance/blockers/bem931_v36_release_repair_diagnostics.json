@@ -1,0 +1,248 @@
+{
+  "commands": [
+    {
+      "cmd": [
+        "python3",
+        "governance/validators/bem931_v36_rm02_object_passports_validate.py"
+      ],
+      "returncode": 0,
+      "stage": "RM-02",
+      "stderr_tail": "",
+      "stdout_tail": "PASS: BEM-931 v3.6 RM-02 object passports are canonical\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/validators/bem931_v36_rm04_runners_validate.py"
+      ],
+      "returncode": 0,
+      "stage": "RM-04",
+      "stderr_tail": "",
+      "stdout_tail": "PASS: BEM-931 v3.6 RM-04 runner files are executable Python, not stubs\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/gd_curator_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm15_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: routed_to_dir\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/dir_curator_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm15_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: routed_to_wrk\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/wrk_curator_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm15_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: routed_to_WRK-C1_analyst\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/analyst_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm15_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C1_plan_sent_to_auditor\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/auditor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm15_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C1_pre_check_pass\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/executor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm15_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C1_result_sent_to_auditor\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/auditor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm15_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C1_post_check_pass\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/wrk_curator_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C1_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: routed_to_WRK-C1_analyst\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/analyst_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C1_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C1_plan_sent_to_auditor\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/auditor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C1_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C1_pre_check_pass\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/executor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C1_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C1_result_sent_to_auditor\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/auditor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C1_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C1_post_check_pass\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/wrk_curator_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C2_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: routed_to_WRK-C2_analyst\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/analyst_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C2_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C2_plan_sent_to_auditor\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/auditor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C2_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C2_pre_check_pass\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/executor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C2_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C2_result_sent_to_auditor\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/auditor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C2_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C2_post_check_pass\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/wrk_curator_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C3_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: routed_to_WRK-C3_analyst\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/analyst_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C3_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C3_plan_sent_to_auditor\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/auditor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C3_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C3_pre_check_pass\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/executor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C3_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C3_result_sent_to_auditor\n"
+    },
+    {
+      "cmd": [
+        "python3",
+        "governance/runners/auditor_stage_runner.py"
+      ],
+      "returncode": 0,
+      "stage": "bem931_v36_rm16_WRK-C3_27103943910",
+      "stderr_tail": "",
+      "stdout_tail": "RUNNER: WRK-C3_post_check_pass\n"
+    }
+  ],
+  "created_at": "2026-06-07T20:30:24Z",
+  "failures": [],
+  "protocol": "BEM-931 v3.6",
+  "status": "PASS"
+}
