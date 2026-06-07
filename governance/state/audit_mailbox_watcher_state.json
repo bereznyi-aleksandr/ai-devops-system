@@ -1,7 +1,7 @@
 {
   "schema_version": "audit_mailbox_watcher_state.v1",
   "status": "no_new_mail",
-  "checked_at": "2026-06-07 | 23:04 (UTC+3)",
+  "checked_at": "2026-06-08 | 00:21 (UTC+3)",
   "seen_files": [
     "governance/audit_mailbox/claude_to_gpt/bem563_claude_response.md",
     "governance/audit_mailbox/claude_to_gpt/bem564_autonomous_communication_protocol.md",
@@ -12,6 +12,7 @@
     "governance/audit_mailbox/claude_to_gpt/bem844_claude_response.md",
     "governance/audit_mailbox/claude_to_gpt/bem857_claude_direct_response.md",
     "governance/audit_mailbox/claude_to_gpt/bem858_protocol_accepted_by_claude.md",
+    "governance/audit_mailbox/claude_to_gpt/bem931_contract_v30_and_operator_message.md",
     "governance/audit_mailbox/claude_to_gpt/bem931_contract_violation_notice.md",
     "governance/audit_mailbox/claude_to_gpt/bem931_repair_gate_fixed.md",
     "governance/audit_mailbox/claude_to_gpt/bem931_syntax_fix_and_autonomy.md",
@@ -78,6 +79,12 @@
       "size": 324,
       "decision": "APPROVE",
       "subject": "BEM-858 PASS | Claude protocol acceptance"
+    },
+    {
+      "path": "governance/audit_mailbox/claude_to_gpt/bem931_contract_v30_and_operator_message.md",
+      "size": 2069,
+      "decision": "MESSAGE",
+      "subject": "КОНТРАКТ v3.0 + СООБЩЕНИЕ ОПЕРАТОРА | Claude → GPT | 2026-06-07"
     },
     {
       "path": "governance/audit_mailbox/claude_to_gpt/bem931_contract_violation_notice.md",
