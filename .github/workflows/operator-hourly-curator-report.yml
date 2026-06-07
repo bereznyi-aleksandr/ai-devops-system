@@ -1,6 +1,6 @@
 name: Operator Hourly Curator Report
 
-"on":
+on:
   workflow_dispatch:
   schedule:
     - cron: "0 * * * *"
@@ -17,7 +17,7 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch curator hourly report
+      - name: Dispatch Codex Local curator hourly report
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           FALLBACK_GITHUB_TOKEN: ${{ github.token }}
@@ -39,59 +39,48 @@ jobs:
           trace_id = "operator_hourly_" + utc_now.strftime("%Y%m%dT%H%M%SZ")
 
           task = f"""
-ЗАДАЧА: OPERATOR_HOURLY_REPORT
+          ЗАДАЧА: OPERATOR_HOURLY_REPORT
 
-Ты — куратор управляющего контура.
+          Ты — куратор управляющего контура.
 
-Подготовь короткий Telegram-отчёт оператору.
-Формат обязателен: plaintext, читаемый на телефоне, каждый пункт чек-листа на отдельной строке.
+          Подготовь короткий Telegram-отчёт оператору строго в мобильном plaintext-формате.
+          Нельзя склеивать чек-лист в одну строку.
+          Каждый пункт чек-листа должен быть отдельной строкой.
 
-СТРОГО ЗАПРЕЩЕНО:
-- склеивать отчёт в одну строку;
-- писать чек-лист через пробел;
-- добавлять raw mailbox;
-- добавлять repository changes;
-- добавлять risks/logs/stack traces;
-- добавлять внутренние рассуждения.
+          ОБЯЗАТЕЛЬНЫЙ ШАБЛОН:
 
-ОБЯЗАТЕЛЬНЫЙ ШАБЛОН:
+          CURATOR_REPLY:
+          BEM-HOURLY | ОТЧЁТ ОПЕРАТОРУ
+          {utc3.strftime("%Y-%m-%d | %H:%M (UTC+3)")}
 
-BEM-HOURLY | ОТЧЁТ ОПЕРАТОРУ
-{utc3.strftime("%Y-%m-%d | %H:%M (UTC+3)")}
+          ЭТАП:
+          X/Y (Z%)
 
-ЭТАП:
-X/Y (Z%)
+          ДОРОЖНАЯ КАРТА:
+          X/Y (Z%)
 
-ДОРОЖНАЯ КАРТА:
-X/Y (Z%)
+          ЧЕК-ЛИСТ:
+          ✅ <сделано>
+          ⬜ <не сделано>
+          ⛔ <блокер>
 
-ЧЕК-ЛИСТ:
-✅ <сделано>
-⬜ <не сделано>
-⛔ <блокер>
+          ВОПРОС ОПЕРАТОРУ:
+          нет
+          END_CURATOR_REPLY
 
-ВОПРОС ОПЕРАТОРУ:
-нет
-
-ПРАВИЛА:
-- максимум 6 строк в чек-листе;
-- если изменений нет, напиши один пункт: ✅ Изменений за отчётный период нет
-- если есть блокер, отдельная строка должна начинаться с ⛔
-- если нужен оператор, в секции "ВОПРОС ОПЕРАТОРУ" напиши ровно один вопрос;
-- если вопрос не нужен, напиши "нет".
-
-В конце ответа выведи блок:
-
-CURATOR_REPLY:
-<готовый текст Telegram-отчёта с переносами строк>
-END_CURATOR_REPLY
-""".strip()
+          ПРАВИЛА:
+          - Не добавляй raw mailbox.
+          - Не добавляй repository changes.
+          - Не добавляй risks/logs/stack traces.
+          - Не добавляй внутреннее рассуждение.
+          - Если данных нет, честно напиши в чек-листе, что изменений за отчётный период нет.
+          """.strip()
 
           payload = {
               "ref": "main",
               "inputs": {
                   "role": "curator",
-                  "provider": "openai",
+                  "provider": "gpt_codex",
                   "trace_id": trace_id,
                   "cycle_id": "operator_hourly",
                   "task_type": "operator_hourly_report",
@@ -100,8 +89,8 @@ END_CURATOR_REPLY
           }
 
           req = urllib.request.Request(
-              f"https://api.github.com/repos/{repo}/actions/workflows/gpt-hosted-roles.yml/dispatches",
-              data=json.dumps(payload).encode("utf-8"),
+              f"https://api.github.com/repos/{repo}/actions/workflows/codex-local.yml/dispatches",
+              data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
               method="POST",
               headers={
                   "Authorization": f"Bearer {token}",
@@ -112,6 +101,6 @@ END_CURATOR_REPLY
           )
 
           with urllib.request.urlopen(req, timeout=30) as resp:
-              print(f"Dispatched curator hourly report: HTTP {resp.status}")
+              print(f"Dispatched Codex Local curator hourly report: HTTP {resp.status}")
               print(f"trace_id={trace_id}")
           PY
