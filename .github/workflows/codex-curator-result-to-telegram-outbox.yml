@@ -20,13 +20,12 @@ jobs:
   outbox:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
-      - name: Convert curator results to canonical Telegram text
+      - name: Canonicalize curator result
         env:
           OPERATOR_CHAT_ID: "601442777"
         run: |
@@ -36,9 +35,9 @@ jobs:
           from datetime import datetime, timezone, timedelta
 
           results = pathlib.Path("governance/codex/results")
-          state_path = pathlib.Path("governance/state/codex_curator_delivery.json")
+          state_file = pathlib.Path("governance/state/codex_curator_delivery.json")
           outbox = pathlib.Path("governance/telegram_outbox.jsonl")
-          state_path.parent.mkdir(parents=True, exist_ok=True)
+          state_file.parent.mkdir(parents=True, exist_ok=True)
           outbox.parent.mkdir(parents=True, exist_ok=True)
 
           def load_json(path, default):
@@ -51,15 +50,16 @@ jobs:
               return path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""
 
           def strip_plus(text):
-              out = []
+              lines = []
               for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
                   if line.startswith("+") and not line.startswith("+++"):
                       line = line[1:]
-                  out.append(line.rstrip())
-              return "\n".join(out)
+                  lines.append(line.rstrip())
+              return "\n".join(lines)
 
           def compact(text):
-              out, blank = [], False
+              out = []
+              blank = False
               for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
                   line = line.rstrip()
                   if not line.strip():
@@ -71,14 +71,14 @@ jobs:
                       blank = False
               return "\n".join(out).strip()
 
-          def between_markers(text):
-              for candidate in (text, strip_plus(text)):
-                  m = re.search(r"(?ms)^\s*CURATOR_REPLY:\s*\n(.*?)^\s*END_CURATOR_REPLY\s*$", candidate)
+          def marker_block(md):
+              for text in (md, strip_plus(md)):
+                  m = re.search(r"(?ms)^\s*CURATOR_REPLY:\s*\n(.*?)^\s*END_CURATOR_REPLY\s*$", text)
                   if m:
-                      return m.group(1).strip()
+                      return compact(strip_plus(m.group(1)))
               return ""
 
-          def hourly():
+          def hourly_text():
               t = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=3)))
               return "\n".join([
                   "BEM-HOURLY | ОТЧЁТ ОПЕРАТОРУ",
@@ -97,66 +97,37 @@ jobs:
                   "нет",
               ])
 
-          def remove_tech(text):
-              bad = (
-                  "diff --git", "index ", "--- ", "+++ ", "@@", "apply_patch", "patch:",
-                  "exec", "succeeded in", "CODEX_EXIT_CODE", "BEM-CODEX-LOCAL",
-                  "Trace ID:", "Cycle ID:", "## Notes", "- No issue #31", "- Runner:",
-                  "m_operator_message", "Incoming task:", "Files changed:", "Checks run:",
-                  "Commit SHA", "Blocker:", "Result written:", "Commit failed:",
-                  "/home/", "governance/codex/results/",
-              )
-              kept = []
-              for line in strip_plus(text).splitlines():
-                  s = line.strip()
-                  if not s:
-                      kept.append("")
-                  elif any(s.startswith(prefix) for prefix in bad):
-                      continue
-                  elif s in {"codex", "bash", "python", "```", "----", "-----"}:
-                      continue
-                  else:
-                      kept.append(line.rstrip())
-              return compact("\n".join(kept))
-
-          def canonical(reply, trace_id, task_type):
-              if task_type == "operator_hourly_report" or trace_id.startswith("operator_hourly_"):
-                  # Never send Codex logs for hourly reports.
-                  if reply and "ЭТАП:" in reply and "ДОРОЖНАЯ КАРТА:" in reply and "ЧЕК-ЛИСТ:" in reply:
-                      return compact(strip_plus(reply))
-                  return hourly()
-
-              reply = remove_tech(reply)
+          def answer_text(reply):
               if not reply:
                   reply = "ОТВЕТ:\nЗадача обработана. Технический лог скрыт по канону."
               if "СЛЕДУЮЩИЙ ШАГ:" not in reply:
                   reply += "\n\nСЛЕДУЮЩИЙ ШАГ:\nОжидать следующего сообщения."
-              return compact(reply)[:1800]
+              return compact(reply)[:1600]
 
-          state = load_json(state_path, {})
+          state = load_json(state_file, {})
           delivered = set(state.get("delivered_trace_ids", []))
-          sent = []
+          queued = []
 
           if results.exists():
               for jp in sorted(results.glob("*.json")):
                   meta = load_json(jp, {})
                   trace = meta.get("trace_id") or jp.stem
-                  if trace in delivered or meta.get("role") != "GPT_CURATOR":
-                      continue
-                  if meta.get("status") not in ("completed", "failed"):
+                  role = meta.get("role")
+                  status = meta.get("status")
+                  if trace in delivered or role != "GPT_CURATOR" or status not in ("completed", "failed"):
                       continue
 
                   task_type = meta.get("task_type") or ""
                   provider = meta.get("provider", "gpt_codex")
-                  md = read(results / f"{trace}.md")
-                  reply = between_markers(md)
-                  text = canonical(reply, trace, task_type)
+                  reply = marker_block(read(results / (trace + ".md")))
 
-                  if not (task_type == "operator_hourly_report" or trace.startswith("operator_hourly_")):
-                      text = f"🤖 Curator [{provider}]\n{text}"
+                  if task_type == "operator_hourly_report" or trace.startswith("operator_hourly_"):
+                      text = hourly_text()
+                  else:
+                      text = "🤖 Curator [{}]\n{}".format(provider, answer_text(reply))
 
                   entry = {
-                      "event_id": f"evt_codex_curator_{trace}",
+                      "event_id": "evt_codex_curator_" + trace,
                       "status": "ready_to_send",
                       "chat_id": os.environ["OPERATOR_CHAT_ID"],
                       "text": text,
@@ -165,12 +136,12 @@ jobs:
                   with outbox.open("a", encoding="utf-8") as f:
                       f.write(json.dumps(entry, ensure_ascii=False) + "\n")
                   delivered.add(trace)
-                  sent.append(trace)
+                  queued.append(trace)
 
           state["delivered_trace_ids"] = sorted(delivered)
           state["updated_at"] = datetime.now(timezone.utc).isoformat()
-          state_path.write_text(json.dumps(tate, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          print(f"queued={len(sent)}")
+          state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print("queued=" + str(len(queued)))
           PY
 
       - name: Commit outbox state
