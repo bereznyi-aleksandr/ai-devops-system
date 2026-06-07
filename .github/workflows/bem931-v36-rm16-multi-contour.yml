@@ -1,0 +1,67 @@
+name: BEM-931 v3.6 RM16 Multi Contour
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  multi-contour:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Run WRK-C1/C2/C3 chains
+        shell: bash
+        run: |
+          set -e
+          mkdir -p governance/channels governance/proofs
+          Traces_file=governance/proofs/BEM931-V36-RM16_multi_contour_traces.jsonl
+          : > "$Traces_file"
+          for c in WRK-C1 WRK-C2 WRK-C3; do
+            trace="bem931_v36_rm16_${c}_${GITHUB_RUN_ID}"
+            rm -f governance/channels/dir_to_wrk.jsonl governance/channels/wrk_c1_to_analyst.jsonl governance/channels/wrk_c2_to_analyst.jsonl governance/channels/wrk_c3_to_analyst.jsonl governance/channels/wrk_c1_to_auditor_pre.jsonl governance/channels/wrk_c2_to_auditor_pre.jsonl governance/channels/wrk_c3_to_auditor_pre.jsonl governance/channels/wrk_c1_to_executor.jsonl governance/channels/wrk_c2_to_executor.jsonl governance/channels/wrk_c3_to_executor.jsonl governance/channels/wrk_c1_to_auditor_post.jsonl governance/channels/wrk_c2_to_auditor_post.jsonl governance/channels/wrk_c3_to_auditor_post.jsonl governance/channels/wrk_to_curator_feedback.jsonl
+            python3 - <<PY
+          import json, os, time
+          contour = "$c"
+          trace = "${trace}"
+          row = {"trace_id":trace,"status":"pending","from":"DIR.CURATOR","to":"WRK.CURATOR","target_contour":contour,"task":"RM16 multi-contour live test "+contour,"created_at":time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+          with open("governance/channels/dir_to_wrk.jsonl","w",encoding="utf-8") as f: f.write(json.dumps(row,ensure_ascii=False)+"\n")
+          PY
+            python3 governance/runners/wrk_curator_runner.py
+            python3 governance/runners/analyst_stage_runner.py
+            python3 governance/runners/auditor_stage_runner.py
+            python3 governance/runners/executor_stage_runner.py
+            python3 governance/runners/auditor_stage_runner.py
+            python3 - <<PY
+          import json, os
+          from pathlib import Path
+          contour="$c"; trace="${trace}"
+          res=Path("governance/results")/trace/"worker_result.json"
+          feed=Path("governance/channels/wrk_to_curator_feedback.jsonl")
+          assert res.exists() and res.stat().st_size>50
+          assert feed.exists() and "PASS" in feed.read_text(encoding="utf-8")
+          with open("$Traces_file","a",encoding="utf-8") as f: f.write(json.dumps({"contour_id":contour,"trace_id":trace,"status":"PASS"})+"\n")
+          PY
+          done
+      - name: Write RM16 receipt
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          traces = Path("governance/proofs/BEM931-V36-RM16_multi_contour_traces.jsonl")
+          rows=[json.loads(l) for l in traces.read_text().splitlines() if l.strip()]
+          assert [r["contour_id"] for r in rows] == ["WRK-C1", "WRK-C2", "WRK-C3"]
+          Path("governance/proofs/BEM931-V36-RM16_multi_contour_receipt.json").write_text(json.dumps({"protocol":"BEM-931 v3.6","roadmap_item":"RM-16","status":"PASS","traces":rows},indent=2,ensure_ascii=False)+"\n")
+          PY
+      - name: Commit RM16 receipt
+        shell: bash
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add governance/channels governance/results governance/proofs/BEM931-V36-RM16_multi_contour_receipt.json governance/proofs/BEM931-V36-RM16_multi_contour_traces.jsonl
+          git commit -m "BEM-931 RM16: multi contour receipt" || echo "No changes"
+          git push
