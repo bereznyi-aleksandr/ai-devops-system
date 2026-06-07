@@ -1,142 +1,84 @@
 {
-  "version": 8,
-  "updated_at": "2026-06-07T16:14:00Z",
-  "source": "BEM-931 v3.6 detailed working contour roadmap; RM-01 completed repo-level after Claude audit SHA 13e0abdb",
+  "version": 7,
+  "updated_at": "2026-06-07T16:15:00Z",
+  "source": "Claude external audit — жёсткие acceptance criteria, нет DONE без live proof",
   "queue_state": "ACTIVE",
-  "system_status": "WORKING_CONTOUR_NOT_READY",
   "policy": {
-    "acceptance_rule": "DONE only with non-null SHA, result artifact path, validator or receipt, execution log entry, and canonical operator report when required",
-    "documentation_only_closure": "forbidden_for_runtime_tasks",
-    "canonical_runtime": ".github/workflows/codex-local.yml",
-    "forbidden_active_runtimes": [
-      "Gemini API",
-      "OpenAI HTTP API",
-      "paid hosted GPT runtime",
-      "gpt-hosted-roles.yml as active curator runtime"
-    ],
-    "report_canon": "stage progress = tasks inside current stage; roadmap progress = stages; checklist separate lines"
-  },
-  "progress": {
-    "stage_done": 1,
-    "stage_total": 2,
-    "current_stage_task_done": 5,
-    "current_stage_task_total": 5,
-    "percent_stage": 100,
-    "percent_roadmap": 50
+    "done_rule": "DONE = non-null SHA + файл > 50 байт + ast.parse OK для .py + для runtime задач: codex exit=0 + governance/codex/results/{trace_id}.json существует",
+    "stub_rule": "Файл <= 50 байт или SyntaxError = BLOCKED автоматически, не DONE",
+    "queue_limit": "Максимум 5 задач одновременно. Следующая открывается только после DONE предыдущей",
+    "report_canon": "Telegram: этап X/Y (%), дорожная карта X/Y (%), чек-лист строками, вопрос если нужен. Без diff/stdout/JSON/traceback",
+    "release_pass": "BLOCKED до live E2E receipt + Telegram receipt + Claude external audit PASS"
   },
   "tasks": [
     {
-      "id": "BEM-931-V36-RM01-WORKING-STATUS-RESET",
-      "roadmap_item": "RM-01",
-      "title": "Очистка ложного статуса и фиксация WORKING_CONTOUR_NOT_READY",
-      "status": "DONE_REPO",
+      "id": "RM-14",
+      "title": "Архив legacy runtime — подтвердить отключение",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "blocked_by": [],
-      "done_sha": "b7850745f5d2633d182e734c84c1246e9285a49a",
-      "artifacts": [
-        "governance/AGENT_CONTEXT.md",
-        "governance/status/bem931_v36_working_contour_status.json",
-        "governance/reports/bem931_v36_gap_report.md",
-        "governance/release/bem931_v36_release_lock.json",
-        "governance/validators/bem931_v36_rm01_status_validate.py"
+      "acceptance": [
+        "Прочитать gpt-hosted-roles.yml → подтвердить ARCHIVED или if:false",
+        "Grep активных workflows: GEMINI_API_KEY не вызывается ни в одном активном workflow",
+        "Создать governance/reports/bem931_v36_legacy_archive_report.md > 100 байт с SHA",
+        "DONE только если все 3 условия выполнены одновременно"
       ],
-      "stage_total_tasks": 5,
-      "stage_done_tasks": 5,
-      "subtasks": [
-        {
-          "id": "RM-01.01",
-          "title": "Обновить AGENT_CONTEXT.md",
-          "status": "DONE",
-          "sha": "ef6a8551783054fab7793aac616bacf97097f393"
-        },
-        {
-          "id": "RM-01.02",
-          "title": "Зафиксировать WORKING_CONTOUR_NOT_READY",
-          "status": "DONE",
-          "sha": "a8f7fd26a505fc586279e6b695dc89ec1175410a"
-        },
-        {
-          "id": "RM-01.03",
-          "title": "Создать gap report",
-          "status": "DONE",
-          "sha": "f2048c99401812fb5c8e516f0437a35b1e3a81d3"
-        },
-        {
-          "id": "RM-01.04",
-          "title": "Убрать ложный release/pass из ACTIVE_QUEUE",
-          "status": "DONE",
-          "sha": "41f5791b4bd3ebad8b4d4f36211f393f5a568f89"
-        },
-        {
-          "id": "RM-01.05",
-          "title": "Заблокировать RM-18 до PASS RM-01..RM-17",
-          "status": "DONE",
-          "sha": "efeefe406212d97ee2d9f7e0a6fc7202e749439a"
-        }
-      ],
-      "report_required": true
+      "blocker_if": "Файл отчёта <= 100 байт ИЛИ SHA=null ИЛИ grep нашёл активный GEMINI вызов"
     },
     {
-      "id": "BEM-931-V36-RM14-LEGACY-RUNTIME-ARCHIVE",
-      "roadmap_item": "RM-14",
-      "title": "Архив legacy runtime: Gemini/API/paid hosted",
-      "status": "IN_PROGRESS",
+      "id": "RM-02",
+      "title": "Паспорта объектов GD / DIR / WRK",
+      "status": "PENDING",
       "priority": 2,
-      "blocked_by": [],
-      "stage_total_tasks": 8,
-      "stage_done_tasks": 0,
+      "depends_on": "RM-14 DONE",
       "acceptance": [
-        "workflow inventory создан",
-        "Gemini/API/paid hosted paths найдены",
-        "automatic triggers legacy отключены",
-        "gpt-hosted-roles.yml подтверждён как archived disabled stub",
-        "legacy disabled validator создан",
-        "codex-local remains active validator создан"
+        "governance/architecture/object_passports/GD.json: > 200 байт, валидный JSON, поля id/curator_runner/contours/rule_owner",
+        "governance/architecture/object_passports/DIR.json: > 200 байт, валидный JSON, те же поля",
+        "governance/architecture/object_passports/WRK.json: > 200 байт, contours содержит [WRK-C1, WRK-C2, WRK-C3]",
+        "governance/architecture/objects_registry_v2.json: все 3 объекта, валидный JSON",
+        "В WRK.json ОТСУТСТВУЮТ поля ANALYSIS_CONTOUR / AUDIT_CONTOUR / EXECUTION_CONTOUR"
       ],
-      "subtasks": [
-        {
-          "id": "RM-14.01",
-          "title": "Создать workflow inventory",
-          "status": "PENDING"
-        },
-        {
-          "id": "RM-14.02",
-          "title": "Найти Gemini/API/paid hosted paths",
-          "status": "PENDING"
-        },
-        {
-          "id": "RM-14.03",
-          "title": "Отключить automatic triggers legacy",
-          "status": "PENDING"
-        },
-        {
-          "id": "RM-14.04",
-          "title": "Пометить deprecated workflows",
-          "status": "PENDING"
-        },
-        {
-          "id": "RM-14.05",
-          "title": "Проверить gpt-hosted-roles.yml disabled stub",
-          "status": "PENDING"
-        },
-        {
-          "id": "RM-14.06",
-          "title": "Проверить, что Gemini secrets не используются в active runtime",
-          "status": "PENDING"
-        },
-        {
-          "id": "RM-14.07",
-          "title": "Создать legacy disabled validator",
-          "status": "PENDING"
-        },
-        {
-          "id": "RM-14.08",
-          "title": "Создать codex-local regression validator",
-          "status": "PENDING"
-        }
+      "blocker_if": "Любой файл <= 200 байт ИЛИ невалидный JSON ИЛИ WRK.json содержит старые ошибочные контуры"
+    },
+    {
+      "id": "RM-04-RUNNERS",
+      "title": "Рабочие runner файлы — реальный код, не заглушки",
+      "status": "PENDING",
+      "priority": 3,
+      "depends_on": "RM-02 DONE",
+      "note": "ЭТО САМАЯ ВАЖНАЯ ЗАДАЧА. Без рабочих runners всё остальное — документы.",
+      "acceptance": [
+        "gd_curator_runner.py: > 300 байт, ast.parse OK, содержит def main(), читает managed_channel, пишет в dir_inbox",
+        "dir_curator_runner.py: > 300 байт, ast.parse OK, содержит def main(), читает dir_inbox, пишет в wrk_inbox",
+        "wrk_curator_runner.py: > 300 байт, ast.parse OK, содержит def main(), выбирает WRK-Cx, диспатчит analyst",
+        "executor_stage_runner.py: > 300 байт, ast.parse OK, содержит def main(), выполняет задачу, пишет result",
+        "auditor_stage_runner.py: > 300 байт, ast.parse OK, содержит def main(), проверяет result, выдаёт PASS/FAIL",
+        "Для каждого файла: python3 runner.py выполняется без исключений (exit 0 или graceful no-op)"
       ],
-      "report_required": true
+      "blocker_if": "Любой файл <= 50 байт ИЛИ SyntaxError ИЛИ нет def main() ИЛИ python3 runner.py бросает исключение"
+    },
+    {
+      "id": "RM-15-E2E",
+      "title": "Live E2E проход одного контура",
+      "status": "PENDING",
+      "priority": 4,
+      "depends_on": "RM-04-RUNNERS DONE",
+      "acceptance": [
+        "Telegram сообщение от оператора → GD.CURATOR получает задачу (Codex exit=0, governance/codex/results/trace.json)",
+        "DIR.CURATOR назначает WRK контур (Codex exit=0, result файл)",
+        "WRK.CURATOR выбирает WRK-C1 (Codex exit=0, result файл)",
+        "WRK-C1.ANALYST создаёт план (Codex exit=0, artifact файл)",
+        "WRK-C1.AUDITOR проверяет план и даёт PASS (Codex exit=0, audit файл)",
+        "WRK-C1.EXECUTOR выполняет (Codex exit=0, commit_sha не null)",
+        "Оператор получает итоговый отчёт в Telegram (Telegram message_id зафиксирован)",
+        "Все 7 Codex receipts записаны в governance/codex/results/"
+      ],
+      "blocker_if": "Любой из 7 шагов без Codex receipt ИЛИ commit_sha=null ИЛИ нет Telegram message_id"
     }
   ],
-  "next_action": "Execute RM-14 legacy runtime archive"
+  "next_action": "GPT: выполнить RM-14 — прочитать gpt-hosted-roles.yml и создать legacy_archive_report.md",
+  "release_lock": {
+    "status": "BLOCKED",
+    "reason": "Нет live E2E receipt + нет рабочих runners + нет WRK-C1/C2/C3 контуров",
+    "unlock_after": "RM-15 DONE + Claude external audit PASS"
+  }
 }
