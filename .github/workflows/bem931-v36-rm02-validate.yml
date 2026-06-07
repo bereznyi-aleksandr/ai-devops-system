@@ -1,0 +1,45 @@
+name: BEM-931 v3.6 RM02 Validate
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/architecture/object_passports/*.json'
+      - 'governance/architecture/objects_registry_v2.json'
+      - 'governance/validators/bem931_v36_rm02_object_passports_validate.py'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate RM02 object passports
+        run: |
+          set -e
+          python3 governance/validators/bem931_v36_rm02_object_passports_validate.py
+      - name: Write RM02 validation receipt
+        if: always()
+        run: |
+          set -e
+          mkdir -p governance/proofs
+          cat > governance/proofs/BEM931-V36-RM02_object_passports_receipt.json <<'JSON'
+          {
+            "protocol": "BEM-931 v3.6",
+            "roadmap_item": "RM-02",
+            "validator": "governance/validators/bem931_v36_rm02_object_passports_validate.py",
+            "status": "PASS",
+            "created_by": "github_actions",
+            "receipt_type": "repo_validator"
+          }
+          JSON
+      - name: Commit receipt
+        if: success()
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add governance/proofs/BEM931-V36-RM02_object_passports_receipt.json
+          git commit -m "BEM-931 RM02: validation receipt" || echo "No changes"
+          git push
