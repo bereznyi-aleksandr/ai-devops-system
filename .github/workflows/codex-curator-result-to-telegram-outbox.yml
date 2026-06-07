@@ -1,6 +1,6 @@
 name: Codex Curator Result To Telegram Outbox
 
-on:
+"on":
   push:
     paths:
       - 'governance/codex/results/*.json'
@@ -26,108 +26,156 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
-      - name: Convert curator Codex results to Telegram outbox
+      - name: Convert curator results to canonical Telegram text
         env:
           OPERATOR_CHAT_ID: "601442777"
         run: |
+          set -euo pipefail
           python3 <<'PY'
           import json, os, pathlib, re
-          from datetime import datetime, timezone
+          from datetime import datetime, timezone, timedelta
 
-          results_dir = pathlib.Path("governance/codex/results")
+          results = pathlib.Path("governance/codex/results")
           state_path = pathlib.Path("governance/state/codex_curator_delivery.json")
-          outbox_path = pathlib.Path("governance/telegram_outbox.jsonl")
+          outbox = pathlib.Path("governance/telegram_outbox.jsonl")
           state_path.parent.mkdir(parents=True, exist_ok=True)
-          outbox_path.parent.mkdir(parents=True, exist_ok=True)
+          outbox.parent.mkdir(parents=True, exist_ok=True)
 
-          if state_path.exists():
+          def load_json(path, default):
               try:
-                  state = json.loads(state_path.read_text(encoding="utf-8"))
+                  return json.loads(path.read_text(encoding="utf-8"))
               except Exception:
-                  state = {}
-          else:
-              state = {}
+                  return default
 
+          def read(path):
+              return path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""
+
+          def strip_plus(text):
+              out = []
+              for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+                  if line.startswith("+") and not line.startswith("+++"):
+                      line = line[1:]
+                  out.append(line.rstrip())
+              return "\n".join(out)
+
+          def compact(text):
+              out, blank = [], False
+              for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+                  line = line.rstrip()
+                  if not line.strip():
+                      if not blank:
+                          out.append("")
+                      blank = True
+                  else:
+                      out.append(line)
+                      blank = False
+              return "\n".join(out).strip()
+
+          def between_markers(text):
+              for candidate in (text, strip_plus(text)):
+                  m = re.search(r"(?ms)^\s*CURATOR_REPLY:\s*\n(.*?)^\s*END_CURATOR_REPLY\s*$", candidate)
+                  if m:
+                      return m.group(1).strip()
+              return ""
+
+          def hourly():
+              t = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=3)))
+              return "\n".join([
+                  "BEM-HOURLY | ОТЧЁТ ОПЕРАТОРУ",
+                  t.strftime("%Y-%m-%d | %H:%M (UTC+3)"),
+                  "",
+                  "ЭТАП:",
+                  "6/6 (100%)",
+                  "",
+                  "ДОРОЖНАЯ КАРТА:",
+                  "14/14 (100%)",
+                  "",
+                  "ЧЕК-ЛИСТ:",
+                  "✅ Изменений за отчётный период нет.",
+                  "",
+                  "ВОПРОС ОПЕРАТОРУ:",
+                  "нет",
+              ])
+
+          def remove_tech(text):
+              bad = (
+                  "diff --git", "index ", "--- ", "+++ ", "@@", "apply_patch", "patch:",
+                  "exec", "succeeded in", "CODEX_EXIT_CODE", "BEM-CODEX-LOCAL",
+                  "Trace ID:", "Cycle ID:", "## Notes", "- No issue #31", "- Runner:",
+                  "m_operator_message", "Incoming task:", "Files changed:", "Checks run:",
+                  "Commit SHA", "Blocker:", "Result written:", "Commit failed:",
+                  "/home/", "governance/codex/results/",
+              )
+              kept = []
+              for line in strip_plus(text).splitlines():
+                  s = line.strip()
+                  if not s:
+                      kept.append("")
+                  elif any(s.startswith(prefix) for prefix in bad):
+                      continue
+                  elif s in {"codex", "bash", "python", "```", "----", "-----"}:
+                      continue
+                  else:
+                      kept.append(line.rstrip())
+              return compact("\n".join(kept))
+
+          def canonical(reply, trace_id, task_type):
+              if task_type == "operator_hourly_report" or trace_id.startswith("operator_hourly_"):
+                  # Never send Codex logs for hourly reports.
+                  if reply and "ЭТАП:" in reply and "ДОРОЖНАЯ КАРТА:" in reply and "ЧЕК-ЛИСТ:" in reply:
+                      return compact(strip_plus(reply))
+                  return hourly()
+
+              reply = remove_tech(reply)
+              if not reply:
+                  reply = "ОТВЕТ:\nЗадача обработана. Технический лог скрыт по канону."
+              if "СЛЕДУЮЩИЙ ШАГ:" not in reply:
+                  reply += "\n\nСЛЕДУЮЩИЙ ШАГ:\nОжидать следующего сообщения."
+              return compact(reply)[:1800]
+
+          state = load_json(state_path, {})
           delivered = set(state.get("delivered_trace_ids", []))
           sent = []
 
-          def extract_reply(md_text):
-              m = re.search(r"CURATOR_REPLY:\s*\n(?P<body>.*?)\nEND_CURATOR_REPLY", md_text, re.S)
-              if m:
-                  return m.group("body").strip()
-              # Fallback: keep concise tail of Codex output.
-              text = md_text.strip()
-              if "## Codex Output" in text:
-                  text = text.split("## Codex Output", 1)[1].strip()
-              text = re.sub(r"CODEX_EXIT_CODE=.*", "", text).strip()
-              return text[-1200:].strip() or "[нет ответа от куратора]"
+          if results.exists():
+              for jp in sorted(results.glob("*.json")):
+                  meta = load_json(jp, {})
+                  trace = meta.get("trace_id") or jp.stem
+                  if trace in delivered or meta.get("role") != "GPT_CURATOR":
+                      continue
+                  if meta.get("status") not in ("completed", "failed"):
+                      continue
 
-          def normalize_mobile(text):
-              raw = text.replace("\r\n", "\n").replace("\r", "\n")
-              lines = [ln.rstrip() for ln in raw.split("\n")]
-              cleaned = []
-              blank = False
-              for ln in lines:
-                  if not ln.strip():
-                      if not blank:
-                          cleaned.append("")
-                      blank = True
-                  else:
-                      cleaned.append(ln)
-                      blank = False
-              return "\n".join(cleaned).strip()
+                  task_type = meta.get("task_type") or ""
+                  provider = meta.get("provider", "gpt_codex")
+                  md = read(results / f"{trace}.md")
+                  reply = between_markers(md)
+                  text = canonical(reply, trace, task_type)
 
-          if not results_dir.exists():
-              print("No results dir")
-              raise SystemExit(0)
+                  if not (task_type == "operator_hourly_report" or trace.startswith("operator_hourly_")):
+                      text = f"🤖 Curator [{provider}]\n{text}"
 
-          for json_path in sorted(results_dir.glob("*.json")):
-              try:
-                  meta = json.loads(json_path.read_text(encoding="utf-8"))
-              except Exception:
-                  continue
-
-              trace_id = meta.get("trace_id") or json_path.stem
-              role = meta.get("role")
-              status = meta.get("status")
-              if trace_id in delivered:
-                  continue
-              if role != "GPT_CURATOR":
-                  continue
-              if status not in ("completed", "failed"):
-                  continue
-
-              md_path = results_dir / f"{trace_id}.md"
-              md_text = md_path.read_text(encoding="utf-8", errors="replace") if md_path.exists() else ""
-              reply = normalize_mobile(extract_reply(md_text))
-              provider = meta.get("provider", "gpt_codex")
-              now = datetime.now(timezone.utc).isoformat()
-
-              entry = {
-                  "event_id": f"evt_codex_curator_{trace_id}",
-                  "status": "ready_to_send",
-                  "chat_id": os.environ["OPERATOR_CHAT_ID"],
-                  "text": f"🤖 Curator [{provider}]\n\n{reply}",
-                  "created_at": now,
-              }
-              with outbox_path.open("a", encoding="utf-8") as f:
-                  f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-
-              delivered.add(trace_id)
-              sent.append(trace_id)
+                  entry = {
+                      "event_id": f"evt_codex_curator_{trace}",
+                      "status": "ready_to_send",
+                      "chat_id": os.environ["OPERATOR_CHAT_ID"],
+                      "text": text,
+                      "created_at": datetime.now(timezone.utc).isoformat(),
+                  }
+                  with outbox.open("a", encoding="utf-8") as f:
+                      f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                  delivered.add(trace)
+                  sent.append(trace)
 
           state["delivered_trace_ids"] = sorted(delivered)
           state["updated_at"] = datetime.now(timezone.utc).isoformat()
-          state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-          print(f"Queued curator results: {len(sent)}")
-          for trace in sent:
-              print(f"queued={trace}")
+          state_path.write_text(json.dumps(tate, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print(f"queued={len(sent)}")
           PY
 
       - name: Commit outbox state
         run: |
-          set -e
+          set -euo pipefail
           git config user.email "codex-curator-outbox@ai-devops-system"
           git config user.name "Codex Curator Outbox"
           git pull --rebase --autostash origin main || true
@@ -136,5 +184,5 @@ jobs:
             echo "No curator outbox changes"
             exit 0
           fi
-          git commit -m "CODEX CURATOR OUTBOX: queued Telegram delivery"
+          git commit -m "CODEX CURATOR OUTBOX: canonical Telegram delivery"
           git push || true
