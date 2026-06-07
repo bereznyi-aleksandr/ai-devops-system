@@ -1,122 +1,97 @@
 {
-  "version": 5,
-  "updated_at": "2026-06-07T14:31:20Z",
-  "source": "BEM-931 v3.5 approved by operator; roadmap completed",
+  "version": 6,
+  "updated_at": "2026-06-07T14:56:20Z",
+  "source": "BEM-931 v3.5 working contour repair after operator rejection of documentation-only closure",
+  "queue_state": "DONE",
   "policy": {
-    "source_of_next_task": "first IN_PROGRESS or PENDING task without blocked_by",
-    "max_active_tasks": 7,
-    "write_execution_log_after_status": true,
-    "operator_gate_status": "operator approved full BEM-931 v3.5 roadmap execution",
-    "paid_api_runtime_for_curator": "forbidden",
-    "canonical_curator_runtime": "Codex Local on self-hosted runner",
-    "report_canon": "after every task and stage; canonical plaintext only"
+    "acceptance_rule": "task is closed only by confirmed executable result, non-null SHA, receipt/artifact path, and validator",
+    "report_canon": "canonical plaintext only",
+    "release_pass": "blocked until production Telegram receipt, live runtime receipt, and external Claude audit receipt"
   },
   "progress": {
-    "stage_done": 7,
-    "stage_total": 7,
-    "roadmap_done": 12,
-    "roadmap_total": 12,
+    "stage_done": 5,
+    "stage_total": 5,
+    "roadmap_done": 5,
+    "roadmap_total": 5,
     "percent_stage": 100,
     "percent_roadmap": 100
   },
   "tasks": [
     {
-      "id": "BEM-931-RM01-04-FOUNDATION",
-      "title": "RM-01..RM-04: базовые реестры, паспорта, элементы, rule_registry",
+      "id": "BEM-931-WC-01-RUNTIME",
+      "title": "Executable working governance contour runtime",
       "status": "DONE",
-      "priority": 1,
-      "roadmap_items": [
-        "RM-01",
-        "RM-02",
-        "RM-03",
-        "RM-04"
+      "done_sha": "9da245f2f5c71704236d41c6744035145dd25b94",
+      "artifacts": [
+        "governance/runtime/bem931_working_contour.py"
       ],
-      "blocked_by": [],
-      "done_sha": "0255ddc3a84158686d32f7bd942d414353cdf497",
-      "done_at": "2026-06-07T14:31:20Z",
-      "report_sent": true
+      "acceptance": [
+        "operator objective accepted",
+        "managed channel enqueue/dequeue",
+        "GD.CURATOR route",
+        "DIR.CURATOR assignment",
+        "WRK.ANALYST/WRK.AUDITOR/WRK.EXECUTOR in trace",
+        "worker result artifact",
+        "operator report"
+      ]
     },
     {
-      "id": "BEM-931-RM05-PROMPTS",
-      "title": "RM-05: промпты ролей и element_prompt_profiles",
+      "id": "BEM-931-WC-02-FIXTURES",
+      "title": "Positive and negative operator objective fixtures",
       "status": "DONE",
-      "priority": 2,
-      "roadmap_items": [
-        "RM-05"
+      "done_sha": "c96bcf516dcd925f2e27c45a569b8f9a21507d2a",
+      "artifacts": [
+        "governance/tests/fixtures/operator_objective_valid.json",
+        "governance/tests/fixtures/operator_objective_invalid_no_objective.json"
       ],
-      "blocked_by": [],
-      "done_sha": "3269665c14cbcd60ed72999bc09c629bf4cdb505",
-      "done_at": "2026-06-07T14:31:20Z",
-      "report_sent": true
+      "acceptance": [
+        "valid fixture drives E2E",
+        "invalid fixture fails closed"
+      ]
     },
     {
-      "id": "BEM-931-RM06-VERTICAL-LINKS",
-      "title": "RM-06: вертикальные связи и наследование правил",
+      "id": "BEM-931-WC-03-VALIDATORS",
+      "title": "Working contour positive and negative validators",
       "status": "DONE",
-      "priority": 3,
-      "roadmap_items": [
-        "RM-06"
+      "done_sha": "9f5a48bad5c3cc91c26f064d2b2745f10cc44ded",
+      "artifacts": [
+        "governance/validators/bem931_working_contour_validate.py",
+        "governance/validators/bem931_working_contour_negative_validate.py"
       ],
-      "blocked_by": [],
-      "done_sha": "552258fc28b8b0393795adf5a84c6dd0b773f309",
-      "done_at": "2026-06-07T14:31:20Z",
-      "report_sent": true
+      "acceptance": [
+        "positive validator requires repo_level_pass true",
+        "negative validator rejects missing objective",
+        "release_pass remains false until live receipts"
+      ]
     },
     {
-      "id": "BEM-931-RM07-HORIZONTAL-EXCHANGE",
-      "title": "RM-07: curator-mediated horizontal exchange",
+      "id": "BEM-931-WC-04-CI",
+      "title": "GitHub Actions acceptance workflow for working contour",
       "status": "DONE",
-      "priority": 4,
-      "roadmap_items": [
-        "RM-07"
+      "done_sha": "df2921bcb3e3f9fbc9af7e012e4e9836e48021f4",
+      "artifacts": [
+        ".github/workflows/bem931-working-governance-contour.yml"
       ],
-      "blocked_by": [],
-      "done_sha": "95fd97bfacf622aae9357ea4b04cbe64ad4d229c",
-      "done_at": "2026-06-07T14:31:20Z",
-      "report_sent": true
+      "acceptance": [
+        "workflow_dispatch enabled",
+        "push trigger enabled",
+        "commits trace/proof/report/test result receipts"
+      ]
     },
     {
-      "id": "BEM-931-RM08-10-OPERATOR-RETURN",
-      "title": "RM-08..RM-10: operator canon, error-to-rule cycle, return path",
+      "id": "BEM-931-WC-05-ACCEPTANCE-MANIFEST",
+      "title": "Acceptance proof definition",
       "status": "DONE",
-      "priority": 5,
-      "roadmap_items": [
-        "RM-08",
-        "RM-09",
-        "RM-10"
+      "done_sha": "a88955c018d2a88bf05eeb22c61e80f4cb2165ae",
+      "artifacts": [
+        "governance/protocols/bem931_working_contour_acceptance.md"
       ],
-      "blocked_by": [],
-      "done_sha": "9f0db206cd1f74186c33525883490f87a6b795a1",
-      "done_at": "2026-06-07T14:31:20Z",
-      "report_sent": true
-    },
-    {
-      "id": "BEM-931-RM11-ARCHIVE-LEGACY",
-      "title": "RM-11: archive legacy runtime inventory",
-      "status": "DONE",
-      "priority": 6,
-      "roadmap_items": [
-        "RM-11"
-      ],
-      "blocked_by": [],
-      "done_sha": "11dce56fb423abbb87f8bd1897e3a23083426bb6",
-      "done_at": "2026-06-07T14:31:20Z",
-      "report_sent": true
-    },
-    {
-      "id": "BEM-931-RM12-MINIMAL-GOVERNANCE-LOOP",
-      "title": "RM-12: full minimal governance loop validator",
-      "status": "DONE",
-      "priority": 7,
-      "roadmap_items": [
-        "RM-12"
-      ],
-      "blocked_by": [],
-      "done_sha": "447995befd5149d86241d029a057cacce3db6a4a",
-      "done_at": "2026-06-07T14:31:20Z",
-      "report_sent": true
+      "acceptance": [
+        "documentation-only closure explicitly forbidden",
+        "required artifacts listed",
+        "repo-level pass criteria fixed"
+      ]
     }
   ],
-  "queue_state": "DONE",
-  "next_action": "Roadmap complete"
+  "next_action": "wait for CI receipt commit or inspect workflow result if needed"
 }
