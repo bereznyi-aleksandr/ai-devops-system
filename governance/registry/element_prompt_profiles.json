@@ -1,0 +1,256 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "profiles": [
+    {
+      "prompt_profile_id": "PP.GD.CURATOR",
+      "element_id": "GD.CURATOR",
+      "role": "curator",
+      "static_role_prompt_ref": "governance/prompts/roles/curator.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "prompt_profile_id": "PP.GD.ANALYST",
+      "element_id": "GD.ANALYST",
+      "role": "analyst",
+      "static_role_prompt_ref": "governance/prompts/roles/analyst.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "prompt_profile_id": "PP.GD.AUDITOR",
+      "element_id": "GD.AUDITOR",
+      "role": "auditor",
+      "static_role_prompt_ref": "governance/prompts/roles/auditor.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "prompt_profile_id": "PP.DIR.CURATOR",
+      "element_id": "DIR.CURATOR",
+      "role": "curator",
+      "static_role_prompt_ref": "governance/prompts/roles/curator.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "prompt_profile_id": "PP.DIR.ANALYST",
+      "element_id": "DIR.ANALYST",
+      "role": "analyst",
+      "static_role_prompt_ref": "governance/prompts/roles/analyst.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "prompt_profile_id": "PP.DIR.AUDITOR",
+      "element_id": "DIR.AUDITOR",
+      "role": "auditor",
+      "static_role_prompt_ref": "governance/prompts/roles/auditor.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "prompt_profile_id": "PP.WRK.CURATOR",
+      "element_id": "WRK.CURATOR",
+      "role": "curator",
+      "static_role_prompt_ref": "governance/prompts/roles/curator.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "prompt_profile_id": "PP.WRK.ANALYST",
+      "element_id": "WRK.ANALYST",
+      "role": "analyst",
+      "static_role_prompt_ref": "governance/prompts/roles/analyst.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "prompt_profile_id": "PP.WRK.AUDITOR",
+      "element_id": "WRK.AUDITOR",
+      "role": "auditor",
+      "static_role_prompt_ref": "governance/prompts/roles/auditor.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "prompt_profile_id": "PP.WRK.EXECUTOR",
+      "element_id": "WRK.EXECUTOR",
+      "role": "executor",
+      "static_role_prompt_ref": "governance/prompts/roles/executor.md",
+      "dynamic_rule_refs": [
+        {
+          "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+          "rule_version": "1.0.0"
+        },
+        {
+          "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+          "rule_version": "1.0.0"
+        }
+      ],
+      "status": "active"
+    }
+  ]
+}
