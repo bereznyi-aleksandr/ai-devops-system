@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "object_id": "GD",
+  "canonical_name": "Генеральный директор",
+  "object_type": "governance_object",
+  "curator_id": "GD.CURATOR",
+  "curator_runner": "governance/runners/gd_curator_runner.py",
+  "rule_owner": "GD.CURATOR",
+  "parent_object_id": null,
+  "child_object_ids": [
+    "DIR"
+  ],
+  "contours": [
+    {
+      "contour_id": "GD-C1",
+      "canonical_name": "Контур стратегии и решений генерального директора",
+      "roles": [
+        "ANALYST",
+        "AUDITOR",
+        "EXECUTOR"
+      ],
+      "managed_channel": "governance/channels/GD-C1.jsonl"
+    },
+    {
+      "contour_id": "GD-C2",
+      "canonical_name": "Контур системных правил генерального директора",
+      "roles": [
+        "ANALYST",
+        "AUDITOR",
+        "EXECUTOR"
+      ],
+      "managed_channel": "governance/channels/GD-C2.jsonl"
+    }
+  ],
+  "runtime_provider": "codex_local",
+  "status": "PENDING_RUNTIME_BINDING"
+}
