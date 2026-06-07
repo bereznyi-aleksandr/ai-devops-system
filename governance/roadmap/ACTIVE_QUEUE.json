@@ -1,11 +1,11 @@
 {
-  "version": 14,
-  "updated_at": "2026-06-07T19:36:00Z",
+  "version": 15,
+  "updated_at": "2026-06-07T19:42:00Z",
   "queue_state": "ACTIVE",
-  "system_status": "WORKING_CONTOUR_RELEASE_REPAIR_REDISPATCHED",
+  "system_status": "WORKING_CONTOUR_RELEASE_REPAIR_DISPATCHED_NO_STOP",
   "operator_directive": "STOP_FORBIDDEN_UNTIL_ROADMAP_COMPLETE",
   "policy": {
-    "continuous_execution": "report does not stop work; dispatch/repair/redispatch continues",
+    "continuous_execution": "report is not a final stop; continue through dispatch/repair/redispatch",
     "operator_gate": "operator explicitly forbids pause/stop",
     "done_rule": "DONE only with non-null SHA + artifact + validator/receipt",
     "release_pass": "BLOCKED until RM15/RM16/RM17 receipts + RM18 PASS + external audit"
@@ -27,8 +27,13 @@
   },
   "last_actions": [
     {
-      "action": "checked receipts after previous dispatch",
-      "result": "missing"
+      "action": "checked receipts",
+      "result": "receipts missing; release gate blocked"
+    },
+    {
+      "action": "read release repair gate workflow",
+      "file": ".github/workflows/bem931-v36-release-repair-gate.yml",
+      "sha": "8ea6dc07a73d73d08e55c6e70e63cfc57ece3397"
     },
     {
       "action": "redispatched release repair gate",
