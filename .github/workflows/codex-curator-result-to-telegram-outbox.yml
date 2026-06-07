@@ -1,0 +1,140 @@
+name: Codex Curator Result To Telegram Outbox
+
+on:
+  push:
+    paths:
+      - 'governance/codex/results/*.json'
+      - 'governance/codex/results/*.md'
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: codex-curator-result-to-telegram-outbox
+  cancel-in-progress: false
+
+jobs:
+  outbox:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Convert curator Codex results to Telegram outbox
+        env:
+          OPERATOR_CHAT_ID: "601442777"
+        run: |
+          python3 <<'PY'
+          import json, os, pathlib, re
+          from datetime import datetime, timezone
+
+          results_dir = pathlib.Path("governance/codex/results")
+          state_path = pathlib.Path("governance/state/codex_curator_delivery.json")
+          outbox_path = pathlib.Path("governance/telegram_outbox.jsonl")
+          state_path.parent.mkdir(parents=True, exist_ok=True)
+          outbox_path.parent.mkdir(parents=True, exist_ok=True)
+
+          if state_path.exists():
+              try:
+                  state = json.loads(state_path.read_text(encoding="utf-8"))
+              except Exception:
+                  state = {}
+          else:
+              state = {}
+
+          delivered = set(state.get("delivered_trace_ids", []))
+          sent = []
+
+          def extract_reply(md_text):
+              m = re.search(r"CURATOR_REPLY:\s*\n(?P<body>.*?)\nEND_CURATOR_REPLY", md_text, re.S)
+              if m:
+                  return m.group("body").strip()
+              # Fallback: keep concise tail of Codex output.
+              text = md_text.strip()
+              if "## Codex Output" in text:
+                  text = text.split("## Codex Output", 1)[1].strip()
+              text = re.sub(r"CODEX_EXIT_CODE=.*", "", text).strip()
+              return text[-1200:].strip() or "[нет ответа от куратора]"
+
+          def normalize_mobile(text):
+              raw = text.replace("\r\n", "\n").replace("\r", "\n")
+              lines = [ln.rstrip() for ln in raw.split("\n")]
+              cleaned = []
+              blank = False
+              for ln in lines:
+                  if not ln.strip():
+                      if not blank:
+                          cleaned.append("")
+                      blank = True
+                  else:
+                      cleaned.append(ln)
+                      blank = False
+              return "\n".join(cleaned).strip()
+
+          if not results_dir.exists():
+              print("No results dir")
+              raise SystemExit(0)
+
+          for json_path in sorted(results_dir.glob("*.json")):
+              try:
+                  meta = json.loads(json_path.read_text(encoding="utf-8"))
+              except Exception:
+                  continue
+
+              trace_id = meta.get("trace_id") or json_path.stem
+              role = meta.get("role")
+              status = meta.get("status")
+              if trace_id in delivered:
+                  continue
+              if role != "GPT_CURATOR":
+                  continue
+              if status not in ("completed", "failed"):
+                  continue
+
+              md_path = results_dir / f"{trace_id}.md"
+              md_text = md_path.read_text(encoding="utf-8", errors="replace") if md_path.exists() else ""
+              reply = normalize_mobile(extract_reply(md_text))
+              provider = meta.get("provider", "gpt_codex")
+              now = datetime.now(timezone.utc).isoformat()
+
+              entry = {
+                  "event_id": f"evt_codex_curator_{trace_id}",
+                  "status": "ready_to_send",
+                  "chat_id": os.environ["OPERATOR_CHAT_ID"],
+                  "text": f"🤖 Curator [{provider}]\n\n{reply}",
+                  "created_at": now,
+              }
+              with outbox_path.open("a", encoding="utf-8") as f:
+                  f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+              delivered.add(trace_id)
+              sent.append(trace_id)
+
+          state["delivered_trace_ids"] = sorted(delivered)
+          state["updated_at"] = datetime.now(timezone.utc).isoformat()
+          state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          print(f"Queued curator results: {len(sent)}")
+          for trace in sent:
+              print(f"queued={trace}")
+          PY
+
+      - name: Commit outbox state
+        run: |
+          set -e
+          git config user.email "codex-curator-outbox@ai-devops-system"
+          git config user.name "Codex Curator Outbox"
+          git pull --rebase --autostash origin main || true
+          git add governance/telegram_outbox.jsonl governance/state/codex_curator_delivery.json
+          if git diff --cached --quiet; then
+            echo "No curator outbox changes"
+            exit 0
+          fi
+          git commit -m "CODEX CURATOR OUTBOX: queued Telegram delivery"
+          git push || true
