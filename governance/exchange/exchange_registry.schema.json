@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "purpose": "Curator-mediated horizontal exchange between contours without direct role-to-role runtime channel.",
+  "required_fields": [
+    "exchange_id",
+    "initiator_need",
+    "receiver_contour_id",
+    "sender_contour_id",
+    "curator_route_id",
+    "managed_channel_id",
+    "proof_ref",
+    "data_version",
+    "rule_version",
+    "status"
+  ],
+  "fields": {
+    "exchange_id": "stable id for exchange record",
+    "initiator_need": "why the data is requested",
+    "receiver_contour_id": "consumer contour",
+    "sender_contour_id": "producer contour",
+    "curator_route_id": "curator route approving the exchange",
+    "managed_channel_id": "curator-managed channel; not a raw runtime role-to-role link",
+    "proof_ref": "commit/report/reference proving data source",
+    "data_version": "version/hash/timestamp of data",
+    "rule_version": "rule_registry version that authorized exchange",
+    "status": "proposed | approved | active | archived | rejected"
+  },
+  "forbidden": [
+    "direct_role_to_role_runtime_channel",
+    "data_without_proof_ref",
+    "data_without_rule_version",
+    "hidden_contour_dependency"
+  ],
+  "lineage_semantics": "Old sender->receiver audit matrix is lineage-only; runtime exchange must be curator-mediated.",
+  "minimal_record_example": {
+    "exchange_id": "EX.BEM931.WRK.AUDIT_TO_ANALYSIS.001",
+    "initiator_need": "analysis needs prior audit finding",
+    "receiver_contour_id": "WRK.ANALYSIS_CONTOUR",
+    "sender_contour_id": "WRK.AUDIT_CONTOUR",
+    "curator_route_id": "WRK.CURATOR.ROUTE.HORIZONTAL_EXCHANGE",
+    "managed_channel_id": "CURATOR_MANAGED_EXCHANGE",
+    "proof_ref": "commit-or-report-sha",
+    "data_version": "2026-06-07T00:00:00Z",
+    "rule_version": "RULE.SYSTEM.HORIZONTAL_EXCHANGE@1.0.0",
+    "status": "approved"
+  }
+}
