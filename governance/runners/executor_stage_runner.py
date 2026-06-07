@@ -28,22 +28,31 @@ def main() -> str:
     trace_id = task.get("trace_id") or f"exec_{uuid4().hex[:12]}"
     work_dir = ROOT / "governance" / "results" / trace_id
     work_dir.mkdir(parents=True, exist_ok=True)
-    result_path = work_dir / "worker_result.json"
+    prefix = contour_id.lower().replace("-", "_")
     result = {
-        "trace_id": trace_id, "role": role_name, "contour_id": contour_id,
-        "task": task.get("task") or "", "plan_path": task.get("plan_path"),
+        "trace_id": trace_id,
+        "role": role_name,
+        "contour_id": contour_id,
+        "task": task.get("task") or "",
+        "plan_path": task.get("plan_path"),
         "commit_sha": os.environ.get("GITHUB_SHA", "local-no-sha"),
-        "result": "executed_minimal_task", "created_at": now_iso(),
+        "result": "executed_minimal_task",
+        "created_at": now_iso(),
     }
-    result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    result_text = json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    generic_result_path = work_dir / "worker_result.json"
+    contour_result_path = work_dir / f"{prefix}_worker_result.json"
+    generic_result_path.write_text(result_text, encoding="utf-8")
+    contour_result_path.write_text(result_text, encoding="utf-8")
     outbox = channel_name(contour_id, "auditor_post")
     routed = {
         "trace_id": trace_id, "status": "pending", "from": role_name, "to": f"{contour_id}.AUDITOR",
-        "contour_id": contour_id, "phase": "post_check", "result_path": str(result_path.relative_to(ROOT)),
+        "contour_id": contour_id, "phase": "post_check", "result_path": str(generic_result_path.relative_to(ROOT)),
+        "contour_result_path": str(contour_result_path.relative_to(ROOT)),
         "task": task.get("task") or "", "created_at": now_iso(),
     }
     append_jsonl(outbox, routed)
-    write_result("executor_completed", {"**": "", **routed, "status": "completed"})
+    write_result("executor_completed", { **routed, "status": "completed"})
     return f"{contour_id}_result_sent_to_auditor"
 
 if __name__ == "__main__":
