@@ -1,105 +1,135 @@
 {
-  "version": 6,
-  "updated_at": "2026-06-07T15:02:15Z",
-  "source": "BEM-931 v3.5 working contour repair after operator rejection of documentation-only closure",
-  "queue_state": "DONE",
+  "version": 7,
+  "updated_at": "2026-06-07T16:12:00Z",
+  "source": "BEM-931 v3.6 detailed working contour roadmap; loaded after Claude audit SHA 13e0abdb",
+  "queue_state": "ACTIVE",
+  "system_status": "WORKING_CONTOUR_NOT_READY",
   "policy": {
-    "acceptance_rule": "task is closed only by confirmed executable result, non-null SHA, receipt/artifact path, and validator",
-    "report_canon": "canonical plaintext only",
-    "release_pass": "blocked until production Telegram receipt, live runtime receipt, and external Claude audit receipt"
+    "acceptance_rule": "DONE only with non-null SHA, result artifact path, validator or receipt, execution log entry, and canonical operator report when required",
+    "documentation_only_closure": "forbidden_for_runtime_tasks",
+    "canonical_runtime": ".github/workflows/codex-local.yml",
+    "forbidden_active_runtimes": [
+      "Gemini API",
+      "OpenAI HTTP API",
+      "paid hosted GPT runtime",
+      "gpt-hosted-roles.yml as active curator runtime"
+    ],
+    "report_canon": "stage progress = tasks inside current stage; roadmap progress = stages; checklist separate lines"
   },
   "progress": {
-    "stage_done": 5,
-    "stage_total": 5,
-    "roadmap_done": 5,
-    "roadmap_total": 5,
-    "percent_stage": 100,
-    "percent_roadmap": 100
+    "stage_done": 0,
+    "stage_total": 2,
+    "current_stage_task_done": 0,
+    "current_stage_task_total": 5,
+    "percent_stage": 0,
+    "percent_roadmap": 0
   },
   "tasks": [
     {
-      "id": "BEM-931-WC-01-RUNTIME",
-      "title": "Executable working governance contour runtime",
-      "status": "DONE",
-      "done_sha": "9da245f2f5c71704236d41c6744035145dd25b94",
-      "artifacts": [
-        "governance/runtime/bem931_working_contour.py"
-      ],
+      "id": "BEM-931-V36-RM01-WORKING-STATUS-RESET",
+      "roadmap_item": "RM-01",
+      "title": "Очистка ложного статуса и фиксация WORKING_CONTOUR_NOT_READY",
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "blocked_by": [],
+      "stage_total_tasks": 5,
       "acceptance": [
-        "operator objective accepted",
-        "managed channel enqueue/dequeue",
-        "GD.CURATOR route",
-        "DIR.CURATOR assignment",
-        "WRK.ANALYST/WRK.AUDITOR/WRK.EXECUTOR in trace",
-        "worker result artifact",
-        "operator report"
-      ]
+        "AGENT_CONTEXT.md обновлён до v2.8 и больше не указывает Gemini/gpt-hosted как активный curator runtime",
+        "WORKING_CONTOUR_NOT_READY зафиксирован machine-readable",
+        "gap report создан",
+        "ACTIVE_QUEUE больше не содержит ложный DONE для working contour",
+        "RM-18 release lock зависит от PASS RM-01..RM-17"
+      ],
+      "subtasks": [
+        {
+          "id": "RM-01.01",
+          "title": "Обновить AGENT_CONTEXT.md",
+          "status": "DONE",
+          "sha": "ef6a8551783054fab7793aac616bacf97097f393"
+        },
+        {
+          "id": "RM-01.02",
+          "title": "Зафиксировать WORKING_CONTOUR_NOT_READY",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-01.03",
+          "title": "Создать gap report",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-01.04",
+          "title": "Убрать ложный release/pass из ACTIVE_QUEUE",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-01.05",
+          "title": "Заблокировать RM-18 до PASS RM-01..RM-17",
+          "status": "PENDING"
+        }
+      ],
+      "report_required": true
     },
     {
-      "id": "BEM-931-WC-02-FIXTURES",
-      "title": "Positive and negative operator objective fixtures",
-      "status": "DONE",
-      "done_sha": "c96bcf516dcd925f2e27c45a569b8f9a21507d2a",
-      "artifacts": [
-        "governance/tests/fixtures/operator_objective_valid.json",
-        "governance/tests/fixtures/operator_objective_invalid_no_objective.json"
-      ],
+      "id": "BEM-931-V36-RM14-LEGACY-RUNTIME-ARCHIVE",
+      "roadmap_item": "RM-14",
+      "title": "Архив legacy runtime: Gemini/API/paid hosted",
+      "status": "PENDING",
+      "priority": 2,
+      "blocked_by": [],
+      "stage_total_tasks": 8,
       "acceptance": [
-        "valid fixture drives E2E",
-        "invalid fixture fails closed"
-      ]
-    },
-    {
-      "id": "BEM-931-WC-03-VALIDATORS",
-      "title": "Working contour positive and negative validators",
-      "status": "DONE",
-      "done_sha": "9f5a48bad5c3cc91c26f064d2b2745f10cc44ded",
-      "artifacts": [
-        "governance/validators/bem931_working_contour_validate.py",
-        "governance/validators/bem931_working_contour_negative_validate.py"
+        "workflow inventory создан",
+        "Gemini/API/paid hosted paths найдены",
+        "automatic triggers legacy отключены",
+        "gpt-hosted-roles.yml подтверждён как archived disabled stub",
+        "legacy disabled validator создан",
+        "codex-local remains active validator создан"
       ],
-      "acceptance": [
-        "positive validator requires repo_level_pass true",
-        "negative validator rejects missing objective",
-        "release_pass remains false until live receipts"
-      ]
-    },
-    {
-      "id": "BEM-931-WC-04-CI",
-      "title": "GitHub Actions acceptance workflow for working contour",
-      "status": "DONE",
-      "done_sha": "df2921bcb3e3f9fbc9af7e012e4e9836e48021f4",
-      "artifacts": [
-        ".github/workflows/bem931-working-governance-contour.yml"
+      "subtasks": [
+        {
+          "id": "RM-14.01",
+          "title": "Создать workflow inventory",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-14.02",
+          "title": "Найти Gemini/API/paid hosted paths",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-14.03",
+          "title": "Отключить automatic triggers legacy",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-14.04",
+          "title": "Пометить deprecated workflows",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-14.05",
+          "title": "Проверить gpt-hosted-roles.yml disabled stub",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-14.06",
+          "title": "Проверить, что Gemini secrets не используются в active runtime",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-14.07",
+          "title": "Создать legacy disabled validator",
+          "status": "PENDING"
+        },
+        {
+          "id": "RM-14.08",
+          "title": "Создать codex-local regression validator",
+          "status": "PENDING"
+        }
       ],
-      "acceptance": [
-        "workflow_dispatch enabled",
-        "push trigger enabled",
-        "commits trace/proof/report/test result receipts"
-      ]
-    },
-    {
-      "id": "BEM-931-WC-05-ACCEPTANCE-MANIFEST",
-      "title": "Acceptance proof definition",
-      "status": "DONE",
-      "done_sha": "a88955c018d2a88bf05eeb22c61e80f4cb2165ae",
-      "artifacts": [
-        "governance/protocols/bem931_working_contour_acceptance.md"
-      ],
-      "acceptance": [
-        "documentation-only closure explicitly forbidden",
-        "required artifacts listed",
-        "repo-level pass criteria fixed"
-      ]
+      "report_required": true
     }
   ],
-  "next_action": "wait for CI receipt commit or inspect workflow result if needed",
-  "final_acceptance": {
-    "positive_receipt_sha": "f6f9abddf1be99f8166c4e2aeccf35a7ab76d6bd",
-    "negative_receipt_sha": "28ab723d6315d1f245bca6c81c7c1c2526e7206f",
-    "execution_log_sha": "893850fbe6004d4e69944525853b95a69153b146",
-    "workflow_dispatch": "bem931-working-governance-contour.yml dispatched",
-    "repo_level_status": "PASS",
-    "release_status": "BLOCKED_UNTIL_LIVE_RECEIPTS"
-  }
+  "next_action": "Continue RM-01.02 WORKING_CONTOUR_NOT_READY status artifact"
 }
