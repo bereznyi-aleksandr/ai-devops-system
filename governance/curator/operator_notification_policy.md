@@ -1,105 +1,88 @@
-# BEM-931 | Operator Notification Policy
+# BEM-931 | Политика уведомлений оператора (Operator Notification Policy)
 
-Updated: 2026-06-06
-Owner: DIRECTOR_CURATOR
+Updated: 2026-06-07
+Owner: Куратор директора (DIRECTOR_CURATOR)
 Channel: Telegram
-Format: plaintext canon
+Format: plaintext, human-readable, mobile-first
 
-## Mandatory Operator Message Format
+## 1. Главный принцип
 
-Regular operator reports and notifications must contain only:
+Оператор получает не сырой лог и не склеенную строку, а короткий читаемый отчёт.
+
+Запрещено:
+- склеивать весь отчёт в одну строку;
+- писать чек-лист через пробел;
+- добавлять raw mailbox;
+- добавлять repository dump;
+- добавлять risks/logs/stack traces;
+- добавлять внутренние рассуждения.
+
+## 2. Канонический формат обычного отчёта
 
 ```text
-BEM-HOURLY | OPERATOR REPORT | <timestamp UTC+3>
+BEM-HOURLY | ОТЧЁТ ОПЕРАТОРУ
+2026-06-07 | 14:00 (UTC+3)
 
 ЭТАП:
-X/Y (Z%)
+2/2 (100%)
 
 ДОРОЖНАЯ КАРТА:
-X/Y (Z%)
+2/2 (100%)
 
 ЧЕК-ЛИСТ:
-[x] <сделано>
-[ ] <не сделано>
-[!] <блокер>
+✅ Gate 5 — GPT MCP/PAT runtime PASS
+✅ Gate 6 — Claude external audit receipt PASS
+⬜ <не сделано>
+⛔ <блокер>
 
 ВОПРОС ОПЕРАТОРУ:
 нет
 ```
 
-If an operator decision is required, replace the final line with exactly one question:
+## 3. Правила читаемости Telegram
+
+Обязательно:
+- каждая секция начинается с новой строки;
+- после заголовка секции ставится перенос строки;
+- каждый пункт чек-листа находится на отдельной строке;
+- каждый пункт начинается с маркера статуса;
+- между крупными секциями есть пустая строка;
+- общий отчёт желательно держать до 900 символов.
+
+Маркеры:
+- `✅` — сделано / принято / подтверждено;
+- `⬜` — не сделано / ожидает;
+- `⛔` — блокер;
+- `⚠️` — требует внимания, но не блокирует.
+
+## 4. Формат вопроса оператору
+
+Если нужен оператор, последняя секция заменяется на один конкретный вопрос:
 
 ```text
 ВОПРОС ОПЕРАТОРУ:
 <один конкретный вопрос>
 ```
 
-## Forbidden in Operator Reports
-
-Do not include:
-
-- raw mailbox content;
-- mailbox section;
-- repository changes section;
-- risks section;
-- active queue dump;
-- logs;
-- stack traces;
-- internal prompts;
-- detailed internal reasoning.
-
-## Canonical Notification Authority
-
-The primary authority for operator notification is:
+Если вопроса нет:
 
 ```text
-DIRECTOR_CURATOR
+ВОПРОС ОПЕРАТОРУ:
+нет
 ```
 
-Not GitHub mailbox watcher.
+## 5. Инициатор-зависимый возврат
 
-## Initiator-Sensitive Return Rule
+Если инициатор — OPERATOR:
+- mailbox не нужен;
+- результат возвращается оператору напрямую в формате выше.
 
-DIRECTOR_CURATOR must preserve who initiated the task.
+Если инициатор — EXTERNAL_AUDITOR_*:
+- аудитор пишет результат в mailbox инициатора;
+- куратор отправляѵт оператору короткое wake-up сообщение;
+- сообщение должно явно назвать, кого открыть: GPT или Claude.
 
-Allowed initiators:
-
-- OPERATOR
-- EXTERNAL_AUDITOR_GPT
-- EXTERNAL_AUDITOR_CLAUDE- any approved EXTERNAL_AUDITOR_* role
-
-### If initiator is OPERATOR
-
-Return mode:
-
-```text
-DIRECT_OPERATOR_REPORT
-```
-
-Rules:
-
-- no mailbox is required;
-- no external auditor wake-up is required;
-- INTERNAL_AUDITOR notifies DIRECTOR_CURATOR that the task is complete;
-- DIRECTOR_CURATOR sends result directly to OPERATOR;
-- report uses the mandatory operator format.
-
-### If initiator is EXTERNAL_AUDITOR_*
-
-Return mode:
-
-```text
-MAILBOX_AND_OPERATOR_WAKE
-```
-
-Rules:
-
-- INTERNAL_AUDITOR writes verified result to the initiator's mailbox return path;
-- INTERNAL_AUDITOR notifies DIRECTOR_CURATOR that the task is complete;
-- DIRECTOR_CURATOR sends a short Telegram wake-up to OPERATOR;
-- wake-up must say exactly which external auditor must be opened.
-
-Example for GPT:
+## 6. Формат wake-up для внешнего аудитора
 
 ```text
 BEM-931 | RESULT READY
@@ -107,20 +90,21 @@ BEM-931 | RESULT READY
 ДЛЯ КОГО:
 EXTERNAL_AUDITOR_GPT
 
-ЧТО ОТКРЫТЫ:
+ЧТО ОТКРЫТЬ:
 Open GPT Custom GPT
 
 MAILBOX:
 governance/audit_mailbox/director_curator_to_external_auditor_gpt/<file>.md
 ```
 
-Example for Claude:
+или
 
 ```text
 BEM-931 | RESULT READY
 
 ДЛЯ КОГО:
-EXTERNAL_AUDITOR_CLAUDE
+EXTERNAL_AUDITOR_CLAUDE
+
 ЧТО ОТКРЫТЬ:
 Open Claude Chat
 
@@ -128,16 +112,12 @@ MAILBOX:
 governance/audit_mailbox/director_curator_to_external_auditor_claude/<file>.md
 ```
 
-## GitHub Mailbox Notifier Status
+## 7. Authority
 
-The GitHub Actions mailbox notifier is deprecated for normal operator notifications.
+Нормальный источник уведомления оператора:
+- Куратор директора (DIRECTOR_CURATOR).
 
-Allowed use:
+Не нормальный источник:
+- GitHub mailbox watcher.
 
-- manual diagnostic fallback;
-- emergency recovery if DIRECTOR_CURATOR notification is broken.
-
-Forbidden use:
-
-- routine operator notification for every mailbox event;
-- raw mailbox spam to operator.
+GitHub mailbox watcher допускается только как diagnostic fallback / emergency recovery.
