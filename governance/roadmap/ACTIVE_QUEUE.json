@@ -1,77 +1,173 @@
 {
-  "version": 3,
-  "updated_at": "2026-06-07T11:20:00Z",
-  "source": "BEM-931 v3.3 Claude review + operator directive",
+  "version": 4,
+  "updated_at": "2026-06-07T13:45:00Z",
+  "source": "BEM-931 v3.5 approved by operator; roadmap loaded from protocol v3.5",
   "policy": {
-    "source_of_next_task": "first IN_PROGRESS or PENDING task",
-    "workflow_yml_locked_for_gpt": false,
-    "do_not_invent_tasks_when_empty": true,
+    "source_of_next_task": "first IN_PROGRESS or PENDING task without blocked_by",
+    "max_active_tasks": 7,
     "write_execution_log_after_status": true,
+    "operator_gate_status": "operator approved full BEM-931 v3.5 roadmap execution",
     "paid_api_runtime_for_curator": "forbidden",
-    "canonical_curator_runtime": "codex-local.yml on self-hosted Codex CLI"
+    "canonical_curator_runtime": "Codex Local on self-hosted runner",
+    "report_canon": "after every task and stage; no raw logs; no diff; no stdout/stderr in Telegram"
   },
-  "session_summary": {
-    "date": "2026-06-07",
-    "completed": [
-      "BEM-931 v3.3 reviewed by Claude: APPROVED_WITH_NOTES",
-      "Telegram operator report readability rule added",
-      "Curator runtime migration initiated: gpt-hosted-roles.yml -> codex-local.yml"
-    ],
-    "claude_notes": [
-      "ZM-1: RM-05 prompts depend on RM-02..RM-04",
-      "ZM-2: cross-validation required between elements_registry and element_prompt_profiles",
-      "ZM-3: horizontal-link trigger must define initiator during RM-07",
-      "ZM-4: RM-12 Minimal Loop depends on all previous tasks",
-      "ZM-5: add rule_version to rule_registry"
-    ]
+  "progress": {
+    "stage_done": 0,
+    "stage_total": 7,
+    "roadmap_done": 0,
+    "roadmap_total": 12,
+    "percent_stage": 0,
+    "percent_roadmap": 0
   },
   "tasks": [
     {
-      "id": "BEM-931-CURATOR-CODEX",
-      "title": "Switch curator runtime from paid hosted API to codex-local self-hosted Codex CLI",
+      "id": "BEM-931-RM01-04-FOUNDATION",
+      "title": "RM-01..RM-04: базовые реестры, паспорта объектов, реестр элементов и реестр правил",
       "status": "IN_PROGRESS",
       "priority": 1,
-      "acceptance": [
-        "telegram-poll.yml dispatches curator to codex-local.yml",
-        "operator-hourly-curator-report.yml dispatches curator to codex-local.yml",
-        "codex-curator-result-to-telegram-outbox.yml converts GPT_CURATOR codex results to governance/telegram_outbox.jsonl",
-        "gpt-hosted-roles.yml does not call Gemini/OpenAI HTTP API"
-      ]
-    },
-    {
-      "id": "BEM-931-ARCHIVE-LEGACY-RUNTIMES",
-      "title": "Archive inactive/obsolete paid API and Gemini workflow branches",
-      "status": "PENDING",
-      "priority": 2,
-      "acceptance": [
-        "list all workflows that use Gemini/OpenAI HTTP API/hosted paid runtime",
-        "disable automatic triggers for obsolete workflows",
-        "mark retained emergency workflows as ARCHIVED or DEPRECATED",
-        "ensure obsolete workflows do not interfere with canonical codex-local runtime"
-      ]
-    },
-    {
-      "id": "BEM-931-CLAUDE-NOTES",
-      "title": "Apply Claude non-blocking notes to protocol and roadmap",
-      "status": "PENDING",
-      "priority": 3,
-      "depends_on": [
+      "roadmap_items": [
+        "RM-01",
         "RM-02",
         "RM-03",
-        "RM-04",
-        "RM-05",
-        "RM-07",
-        "RM-12"
+        "RM-04"
+      ],
+      "blocked_by": [],
+      "acceptance": [
+        "зозданы или актуализированы базовые реестры управляющего контура",
+        "зафиксированы паспорта объектов GD / DIR / WRK",
+        "зафиксированы элементы объектов: кураторы, аналитики, аудиторы, исполнители",
+        "rule_registry содержит rule_id, rule_version, scope, owner, effective_from, status, links",
+        "валидатор базовых реестров возвращает PASS"
+      ],
+      "report_required": true
+    },
+    {
+      "id": "BEM-931-RM05-PROMPTS",
+      "title": "RM-05: промпты ролей и element_prompt_profiles",
+      "status": "PENDING",
+      "priority": 2,
+      "roadmap_items": [
+        "RM-05"
+      ],
+      "blocked_by": [
+        "BEM-931-RM01-04-FOUNDATION"
       ],
       "acceptance": [
-        "RM-05 dependency on RM-02..RM-04 is explicit",
-        "elements_registry and element_prompt_profiles cross-validation exists",
-        "RM-07 defines horizontal-link trigger initiator",
-        "RM-12 waits for previous tasks",
-        "rule_registry includes rule_version"
-      ]
+        "созданы role prompts для куратора, аналитика, аудитора и исполнителя",
+        "козданы element_prompt_profiles для индивидуальных элементов",
+        "element_prompt_profiles содержат статическую role part и dynamic rule refs",
+        "профили ссылаются на rule_version",
+        "валидатор Іlements_registry ↔ element_prompt_profiles возвращает PASS"
+      ],
+      "report_required": true
+    },
+    {
+      "id": "BEM-931-RM01-VERTICAL-LINKS",
+      "title": "RM-06: вертикальные связи и наследование правил",
+      "status": "PENDING",
+      "priority": 3,
+      "roadmap_items": [
+        "RM-06"
+      ],
+      "blocked_by": [
+        "BEM-931-RM05-PROMPTS"
+      ],
+      "acceptance": [
+        "описана и реализована модель наследования правил сверху вниз",
+        "описана и реализована модель эскалации снизу вверф",
+        "валидатор вертикальных связей проверяет owner, scope и rule_version",
+        "нет прямого обхода куратора при вертикальном взаимодействии"
+      ],
+      "report_required": true
+    },
+    {
+      "id": "BEM-931-RM27-HORIZONTAL-EXCHANGE",
+      "title": "RM-07: горизонтальные связи через curator-mediated exchange",
+      "status": "PENDING",
+      "priority": 4,
+      "roadmap_items": [
+        "RM-07"
+      ],
+      "blocked_by": [
+        "BEM-931-RM06-VERTICAL-LINKS"
+      ],
+      "acceptance": [
+        "создан exchange_registry",
+        "каждый обмен содержит initiator_need, curator_route_id, proof_ref, data_version, rule_version",
+        "прямой runtime-канал роль-role между контурами запрещ�н валидатором",
+        "сохранена семантика: проверенный источник от контура-отправителя используется налитиком получателя",
+        "валидатор горизонтальных связей возвращает PASS"
+      ],
+      "report_required": true
+    },
+    {
+      "id": "BEM-931-RM08-10-OPERATOR-RETURN",
+      "title": "RM-08..RM-10: уведомления оператора, цикл ошибка-опыт-правило и return path инициатора",
+      "status": "PENDING",
+      "priority": 5,
+      "roadmap_items": [
+        "RM-08",
+        "RM-09",
+        "RM-10"
+      ],
+      "blocked_by": [
+        "BEM-931-RM27-HORIZONTAL-EXCHANGE"
+      ],
+      "acceptance": [
+        "operator notification policy выдаёт только каноничный plaintext",
+        "ежечасовой отчет содержит только процентовку этапа, процентовку дорожной карты и чек-лист по строкам",
+        "ответ на вопрос содержит краткий ответ и следующий шаг",
+        "ошибка фиксируется как опыт и при необходимости превращается в правило",
+        "return path: оператор получает direct report; внешний аудитор получает mailbox + wake-up"
+      ],
+      "report_required": true
+    },
+    {
+      "id": "BEM-931-RM11-ARCHIVE-LEGACY",
+      "title": "RM-11: архив legacy runtime Gemini / OpenAI HTTP API / paid hosted веток",
+      "status": "PENDING",
+      "priority": 6,
+      "roadmap_items": [
+        "RM-11"
+      ],
+      "blocked_by": [
+        "BEM-931-RM08-10-OPERATOR-RETURN"
+      ],
+      "acceptance": [
+        "проведена инвентаризация legacy workflow",
+        "автоматические триггеры устаревших Gemini / OpenAI HTTP API / paid hosted веток отключены.,
+        "legacy workflow помечены ARCHIVED или DEPRECATED",
+        "diagnostic fallback оставлен только если явно безопасен и не мешает штатному пути",
+        "штатный путь остается Codex Local"
+      ],
+      "report_required": true
+    },
+    {
+      "id": "BEM-931-RM12-MINIMAL-GOVERNANCE-LOOP",
+      "title": "RM-12: Minimal Governance Loop — интеграционный gate полного цикла",
+      "status": "PENDING",
+      "priority": 7,
+      "roadmap_items": [
+        "RM-12"
+      ],
+      "blocked_by": [
+        "BEM-931-RM01-04-FOUNDATION",
+        "BEM-931-RM05-PROMPTS",
+        "BEM-931-RM01-VERTICAL-LINKS",
+        "BEM-931-RM27-HORIZONTAL-EXCHANGE",
+        "BEM-931-RM08-10-OPERATOR-RETURN",
+        "BEM-931-RM11-ARCHIVE-LEGACY"
+      ],
+      "acceptance": [
+        "RM-01..RM-11 имеют PASS",
+        "полный цикл куратор → аналитик → аудитор → исполнитель → аудитор → куратор работает",
+        "обмен через куратора фиксируется в exchange_registry",
+        "уведомление оператору соответствует канону",
+        "финальный интеграционный валидатор возвращает PASS"
+      ],
+      "report_required": true
     }
   ],
   "queue_state": "ACTIVE",
-  "next_action": "Run workflow smoke test after curator runtime switch"
+  "next_action": "Execute BEM-931-RM01-04-FOUNDATION"
 }
