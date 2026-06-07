@@ -1,21 +1,22 @@
 {
-  "version": 9,
-  "updated_at": "2026-06-07T17:18:00Z",
-  "source": "BEM-931 v3.6 autonomous execution resumed; no stop until roadmap completion unless operator gate or tool boundary",
+  "version": 10,
+  "updated_at": "2026-06-07T17:58:00Z",
+  "source": "Operator explicitly forbade stopping until roadmap completion; autonomous continuation recorded",
   "queue_state": "ACTIVE",
   "system_status": "WORKING_CONTOUR_NOT_READY",
   "policy": {
-    "continuous_execution": "intermediate report does not stop execution",
+    "continuous_execution": "no stop until roadmap completion or objective tool boundary",
+    "operator_gate": "operator forbade pause/stop",
     "done_rule": "DONE only with non-null SHA + artifact + validator/receipt",
     "release_pass": "BLOCKED until live E2E receipt + Telegram receipt + Claude external audit PASS"
   },
   "progress": {
     "stage_done": 2,
     "stage_total": 4,
-    "current_stage": "RM-04-RUNNERS",
-    "current_stage_task_done": 7,
-    "current_stage_task_total": 8,
-    "percent_stage": 88,
+    "current_stage": "RM-16-MULTI_CONTOUR",
+    "current_stage_task_done": 4,
+    "current_stage_task_total": 7,
+    "percent_stage": 57,
     "percent_roadmap": 50
   },
   "tasks": [
@@ -34,41 +35,43 @@
     {
       "id": "RM-04-RUNNERS",
       "title": "Рабочие runner файлы",
-      "status": "IN_PROGRESS",
+      "status": "IN_PROGRESS_RECEIPT_PENDING",
       "stage_total_tasks": 8,
       "stage_done_tasks": 7,
-      "artifacts": [
-        "governance/runners/bem931_runner_lib.py",
-        "governance/runners/gd_curator_runner.py",
-        "governance/runners/dir_curator_runner.py",
-        "governance/runners/wrk_curator_runner.py",
-        "governance/runners/analyst_stage_runner.py",
-        "governance/runners/auditor_stage_runner.py",
-        "governance/runners/executor_stage_runner.py",
-        "governance/validators/bem931_v36_rm04_runners_validate.py",
-        ".github/workflows/bem931-v36-rm04-validate-runners.yml"
-      ],
-      "done_shas": {
-        "lib": "a655c0b49d3e28f37919170fe055084714cf4c68",
-        "gd": "3877d936d360daf0e17b70044e915a9d28c269cb",
-        "dir": "67c3e9e8b73a1771a3cc98184779b2ef729ba9e8",
-        "wrk": "35744da6fde43e7172880fe5ee6815460b81164a",
-        "analyst": "6ba1b0919d2ab7d0c4dade6046dc516b53c1b41b",
-        "auditor": "c5b90f41665970d5979124901b7ac184db835b76",
-        "executor": "6d8b001968ade8918e888dd414891a4b8b2d385b",
-        "validator": "607931601a12f6c5f743a10f1a9f0aac00af9a73",
-        "workflow": "1e7e5ecac20642f744925e12257e216905fac13d"
-      },
       "remaining": [
-        "wait/check BEM931-V36-RM04_runners_receipt.json"
+        "check BEM931-V36-RM04_runners_receipt.json"
       ]
     },
     {
       "id": "RM-15-E2E",
       "title": "Live E2E одного контура",
-      "status": "PENDING",
-      "depends_on": "RM-04-RUNNERS DONE"
+      "status": "IN_PROGRESS",
+      "artifacts": [
+        ".github/workflows/bem931-v36-rm15-live-e2e.yml"
+      ],
+      "remaining": [
+        "check BEM931-V36-RM15_live_e2e_receipt.json"
+      ]
+    },
+    {
+      "id": "RM-16-MULTI_CONTOUR",
+      "title": "Live нескольких контуров WRK-C1/C2/C3",
+      "status": "IN_PROGRESS",
+      "stage_total_tasks": 7,
+      "stage_done_tasks": 4,
+      "artifacts": [
+        "governance/runners/wrk_curator_runner.py",
+        "governance/runners/analyst_stage_runner.py",
+        "governance/runners/auditor_stage_runner.py",
+        "governance/runners/executor_stage_runner.py",
+        ".github/workflows/bem931-v36-rm16-multi-contour.yml"
+      ],
+      "remaining": [
+        "check BEM931-V36-RM16_multi_contour_receipt.json",
+        "after RM16 PASS continue to RM17 horizontal exchange",
+        "after RM17 continue to release gate"
+      ]
     }
   ],
-  "next_action": "check RM04 validator receipt, then proceed to RM15 live E2E"
+  "next_action": "continue checking receipts and executing next RM items without operator pause"
 }
