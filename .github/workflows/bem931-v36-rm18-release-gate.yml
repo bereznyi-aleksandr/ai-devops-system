@@ -1,0 +1,44 @@
+name: BEM-931 v3.6 RM18 Release Gate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evaluate release gate
+        shell: bash
+        run: |
+          set -e
+          mkdir -p governance/release governance/proofs
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          required = {
+              "RM02": "governance/proofs/BEM931-V36-RM02_object_passports_receipt.json",
+              "RM04": "governance/proofs/BEM931-V36-RM04_runners_receipt.json",
+              "RM15": "governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json",
+              "RM16": "governance/proofs/BEM931-V36-RM16_multi_contour_receipt.json",
+              "RM17": "governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json"
+          }
+          missing = [k for k,v in required.items() if not Path(v).exists()]
+          status = "PASS" if not missing else "BLOCKED"
+          result = {"protocol":"BEM-931 v3.6","roadmap_item":"RM-18","release_status":status,"missing":missing,"required":required}
+          Path("governance/release/bem931_v36_release_gate.json").write_text(json.dumps(result, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+          if missing:
+              raise SystemExit("release blocked: " + ",".join(missing))
+          PY
+      - name: Commit release gate result
+        if: always()
+        shell: bash
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add governance/release/bem931_v36_release_gate.json || true
+          git commit -m "BEM-931 RM18: release gate result" || echo "No changes"
+          git push || true
