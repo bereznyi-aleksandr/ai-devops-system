@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "records": [
+    {
+      "exchange_id": "EX.BEM931.AUDIT_FINDING_TO_ANALYSIS",
+      "initiator_need": "analysis requires prior audit finding to avoid repeated failure",
+      "receiver_contour_id": "WRK.ANALYSIS_CONTOUR",
+      "sender_contour_id": "WRK.AUDIT_CONTOUR",
+      "curator_route_id": "WRK.CURATOR.ROUTE.HORIZONTAL_EXCHANGE",
+      "managed_channel_id": "CURATOR_MEDIATED_EXCHANGE",
+      "proof_ref": "governance/logs/execution_log.jsonl",
+      "data_version": "2026-06-07",
+      "rule_version": "RULE.SYSTEM.HORIZONTAL_EXCHANGE@1.0.0",
+      "status": "approved"
+    },
+    {
+      "exchange_id": "EX.BEM931.EXECUTION_RESULT_TO_AUDIT",
+      "initiator_need": "audit requires executor result for acceptance check",
+      "receiver_contour_id": "WRK.AUDIT_CONTOUR",
+      "sender_contour_id": "WRK.EXECUTION_CONTOUR",
+      "curator_route_id": "WRK.CURATOR.ROUTE.HORIZONTAL_EXCHANGE",
+      "manaed_channel_id": "CURATOR_MEDIATED_EXCHANGE",
+      "proof_ref": "governance/codex/results",
+      "data_version": "2026-06-07",
+      "rule_version": "RULE.SYSTEM.HORIZONTAL_EXCHANGE@1.0.0",
+      "status": "approved"
+    }
+  ]
+}
