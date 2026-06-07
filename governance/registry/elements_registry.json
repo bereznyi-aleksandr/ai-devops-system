@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "elements": [
+    {
+      "element_id": "GD.CURATOR",
+      "object_id": "GD",
+      "role": "curator",
+      "contour_id": "GD",
+      "prompt_profile_id": "PP.GD.CURATOR"
+    },
+    {
+      "element_id": "GD.ANALYST",
+      "object_id": "GD",
+      "role": "analyst",
+      "contour_id": "GD.DECISION_CONTOUR",
+      "prompt_profile_id": "PP.GD.ANALYST"
+    },
+    {
+      "element_id": "GD.AUDITOR",
+      "object_id": "GD",
+      "role": "auditor",
+      "contour_id": "GD.SYSTEM_RULES_CONTOUR",
+      "prompt_profile_id": "PP.GD.AUDITOR"
+    },
+    {
+      "element_id": "DIR.CURATOR",
+      "object_id": "DIR",
+      "role": "curator",
+      "contour_id": "DIR",
+      "prompt_profile_id": "PP.DIR.CURATOR"
+    },
+    {
+      "element_id": "DIR.ANALYST",
+      "object_id": "DIR",
+      "role": "analyst",
+      "contour_id": "DIR.RULES_CONTOUR",
+      "prompt_profile_id": "PP.DIR.ANALYST"
+    },
+    {
+      "element_id": "DIR.AUDITOR",
+      "object_id": "DIR",
+      "role": "auditor",
+      "contour_id": "DIR.DECISION_CONTOUR",
+      "prompt_profile_id": "PP.DIR.AUDITOR"
+    },
+    {
+      "element_id": "WRK.CURATOR",
+      "object_id": "WRK",
+      "role": "curator",
+      "contour_id": "WRK",
+      "prompt_profile_id": "PP.WRK.CURATOR"
+    },
+    {
+      "element_id": "WRK.ANALYST",
+      "object_id": "WRK",
+      "role": "analyst",
+      "contour_id": "WRK.ANALYSIS_CONTOUR",
+      "prompt_profile_id": "PP.WRK.ANALYST"
+    },
+    {
+      "element_id": "WRK.AUDITOR",
+      "object_id": "WRK",
+      "role": "auditor",
+      "contour_id": "WRK.AUDIT_CONTOUR",
+      "prompt_profile_id": "PP.WRK.AUDITOR"
+    },
+    {
+      "element_id": "WRK.EXECUTOR",
+      "object_id": "WRK",
+      "role": "executor",
+      "contour_id": "WRK.EXECUTION_CONTOUR",
+      "prompt_profile_id": "PP.WRK.EXECUTOR"
+    }
+  ]
+}
