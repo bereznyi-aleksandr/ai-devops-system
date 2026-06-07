@@ -1,0 +1,50 @@
+name: BEM-931 v3.6 RM04 Validate Runners
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'governance/runners/*.py'
+      - 'governance/validators/bem931_v36_rm04_runners_validate.py'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate RM04 runner files
+        run: |
+          set -e
+          python3 governance/validators/bem931_v36_rm04_runners_validate.py
+          python3 governance/runners/gd_curator_runner.py
+          python3 governance/runners/dir_curator_runner.py
+          python3 governance/runners/wrk_curator_runner.py
+          python3 governance/runners/analyst_stage_runner.py
+          python3 governance/runners/auditor_stage_runner.py
+          python3 governance/runners/executor_stage_runner.py
+      - name: Write RM04 validation receipt
+        if: success()
+        run: |
+          set -e
+          mkdir -p governance/proofs
+          cat > governance/proofs/BEM931-V36-RM04_runners_receipt.json <<'JSON'
+          {
+            "protocol": "BEM-931 v3.6",
+            "roadmap_item": "RM-04-RUNNERS",
+            "validator": "governance/validators/bem931_v36_rm04_runners_validate.py",
+            "status": "PASS",
+            "receipt_type": "repo_validator",
+            "created_by": "github_actions"
+          }
+          JSON
+      - name: Commit receipt
+        if: success()
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add governance/proofs/BEM931-V36-RM04_runners_receipt.json
+          git commit -m "BEM-931 RM04: validation receipt" || echo "No changes"
+          git push
