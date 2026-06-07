@@ -1,45 +1,49 @@
 {
-  "version": 15,
-  "updated_at": "2026-06-07T19:42:00Z",
+  "version": 16,
+  "updated_at": "2026-06-07T20:20:00Z",
   "queue_state": "ACTIVE",
-  "system_status": "WORKING_CONTOUR_RELEASE_REPAIR_DISPATCHED_NO_STOP",
+  "system_status": "WORKING_CONTOUR_AUTONOMOUS_REPAIR_LOOP_REWRITTEN_AND_DISPATCHED",
   "operator_directive": "STOP_FORBIDDEN_UNTIL_ROADMAP_COMPLETE",
   "policy": {
-    "continuous_execution": "report is not a final stop; continue through dispatch/repair/redispatch",
+    "continuous_execution": "report is not a final stop; continue through task_self_assignment",
     "operator_gate": "operator explicitly forbids pause/stop",
-    "done_rule": "DONE only with non-null SHA + artifact + validator/receipt",
-    "release_pass": "BLOCKED until RM15/RM16/RM17 receipts + RM18 PASS + external audit"
+    "done_rule": "DONE only with non-null SHA + artifacts + receipts + release PASS + external audit",
+    "release_pass": "blocked until RM15/RM16/RM17 receipts + RM18 PASS + external audit"
   },
   "progress": {
     "stage_done": 2,
     "stage_total": 4,
-    "current_stage": "RM-15/RM-16/RM-17/RM-18 release repair gate",
+    "current_stage": "RM-15/RM-16/RM-17/RM-18 autonomous repair gate",
     "current_stage_task_done": 7,
     "current_stage_task_total": 8,
     "percent_stage": 88,
     "percent_roadmap": 50
   },
-  "last_check": {
-    "RM15_receipt": "MISSING_404",
-    "RM16_receipt": "MISSING_404",
-    "RM17_receipt": "MISSING_404",
-    "RM18_release_gate": "BLOCKED_MISSING_RM02_RM04_RM15_RM16_RM17"
-  },
   "last_actions": [
     {
-      "action": "checked receipts",
-      "result": "receipts missing; release gate blocked"
-    },
-    {
-      "action": "read release repair gate workflow",
+      "action": "rewrote release repair gate as one autonomous Python loop",
       "file": ".github/workflows/bem931-v36-release-repair-gate.yml",
-      "sha": "8ea6dc07a73d73d08e55c6e70e63cfc57ece3397"
+      "sha": "f208bf929ba30456df9a6841bfee8e706bcd59c4",
+      "reason": "multi-step workflow could skip commit when a repair step failed; new loop always writes diagnostics and commit step always runs"
     },
     {
-      "action": "redispatched release repair gate",
+      "action": "dispatched release repair gate",
       "workflow": "bem931-v36-release-repair-gate.yml",
       "status": "DISPATCH_ACCEPTED"
     }
   ],
-  "next_action": "check repair gate receipts; if still missing, repair workflow/runner and redispatch without operator pause"
+  "receipts_to_check": [
+    "governance/proofs/BEM931-V36-RM02_object_passports_receipt.json",
+    "governance/proofs/BEM931-V36-RM04_runners_receipt.json",
+    "governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json",
+    "governance/proofs/BEM931-V36-RM16_multi_contour_receipt.json",
+    "governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json",
+    "governance/release/bem931_v36_release_gate.json",
+    "governance/blockers/bem931_v36_release_repair_diagnostics.json"
+  ],
+  "next_task": {
+    "id": "RM-18-VERIFY-OR-REPAIR",
+    "action": "check receipts and diagnostics; if release PASS is absent, repair exact workflow/runner error and redispatch without operator pause",
+    "status": "SELF_ASSIGNED_CONTINUE"
+  }
 }
