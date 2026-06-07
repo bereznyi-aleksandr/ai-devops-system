@@ -1,0 +1,26 @@
+{
+  "trace_id": "BEM931-WORKING-NEGATIVE",
+  "protocol": "BEM-931 v3.5",
+  "created_at": "2026-06-07T14:58:00Z",
+  "actors": [
+    "GD.CURATOR",
+    "DIR.CURATOR",
+    "WRK.ANALYST",
+    "WRK.AUDITOR",
+    "WRK.EXECUTOR"
+  ],
+  "release_pass": false,
+  "release_blockers": [
+    "production_telegram_receipt_required",
+    "live_runtime_receipt_required",
+    "external_claude_audit_receipt_required"
+  ],
+  "ok": false,
+  "repo_level_pass": false,
+  "input_valid": false,
+  "errors": [
+    "missing_fields:objective"
+  ],
+  "operator_report_path": "governance/reports/operator/BEM931-WORKING-NEGATIVE.md",
+  "receipt_path": "governance/proofs/BEM931-WORKING-NEGATIVE_receipt.json"
+}
