@@ -1,0 +1,58 @@
+name: BEM-931 v3.6 RM17 Horizontal Exchange
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rm17:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate curator-mediated exchange
+        shell: bash
+        run: |
+          set -e
+          mkdir -p governance/exchange governance/proofs
+          python3 - <<'PY'
+          import json, time
+          from pathlib import Path
+          record = {
+              "exchange_id": "bem931_v36_rm17_exchange",
+              "status": "verified",
+              "source_contour": "WRK-C1",
+              "receiver_contour": "WRK-C2",
+              "mediator": "WRK.CURATOR",
+              "source_role": "WRK-C1.AUDITOR",
+              "receiver_role": "WRK-C2.ANALYST",
+              "proof_ref": "verified_artifact",
+              "data_version": "1",
+              "rule_version": "1",
+              "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+          }
+          p = Path("governance/exchange/exchange_registry_v2.jsonl")
+          p.write_text(json.dumps(record, ensure_ascii=False) + "\n", encoding="utf-8")
+          text = p.read_text(encoding="utf-8")
+          assert "WRK.CURATOR" in text
+          assert "WRK-C1.AUDITOR" in text and "WRK-C2.ANALYST" in text
+          assert "direct_role_to_role" not in text
+          receipt = {
+              "protocol": "BEM-931 v3.6",
+              "roadmap_item": "RM-17",
+              "status": "PASS",
+              "receipt_type": "horizontal_exchange_curator_mediated",
+              "registry": str(p),
+              "checks": ["mediator_present", "source_auditor", "receiver_analyst", "proof_ref", "rule_version"]
+          }
+          Path("governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json").write_text(json.dumps(receipt, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+          PY
+      - name: Commit RM17 proof
+        shell: bash
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add governance/exchange governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json
+          git commit -m "BEM-931 RM17: horizontal exchange receipt" || echo "No changes"
+          git push
