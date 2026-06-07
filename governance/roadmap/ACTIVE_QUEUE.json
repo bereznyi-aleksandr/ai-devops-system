@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updated_at": "2026-06-07T14:10:00Z",
+  "updated_at": "2026-06-07T14:14:10Z",
   "source": "BEM-931 v3.5 approved by operator; roadmap loaded from protocol v3.5",
   "policy": {
     "source_of_next_task": "first IN_PROGRESS or PENDING task without blocked_by",
@@ -12,12 +12,12 @@
     "report_canon": "after every task and stage; no raw logs; no diff; no stdout/stderr in Telegram"
   },
   "progress": {
-    "stage_done": 1,
+    "stage_done": 2,
     "stage_total": 7,
-    "roadmap_done": 4,
+    "roadmap_done": 5,
     "roadmap_total": 12,
-    "percent_stage": 14,
-    "percent_roadmap": 33
+    "percent_stage": 29,
+    "percent_roadmap": 42
   },
   "tasks": [
     {
@@ -45,7 +45,7 @@
     {
       "id": "BEM-931-RM05-PROMPTS",
       "title": "RM-05: промпты ролей и element_prompt_profiles",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 2,
       "roadmap_items": [
         "RM-05"
@@ -58,19 +58,19 @@
         "dynamic refs содержат rule_version",
         "валидатор elements_registry ↔ element_prompt_profiles возвращает PASS"
       ],
-      "report_required": true
+      "report_required": true,
+      "done_sha": "3269665c14cbcd60ed72999bc09c629bf4cdb505",
+      "done_at": "2026-06-07T14:14:07Z"
     },
     {
       "id": "BEM-931-RM06-VERTICAL-LINKS",
       "title": "RM-06: вертикальные связи и наследование правил",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 3,
       "roadmap_items": [
         "RM-06"
       ],
-      "blocked_by": [
-        "BEM-931-RM05-PROMPTS"
-      ],
+      "blocked_by": [],
       "acceptance": [
         "описана модель наследования правил сверху вниз",
         "описана модель эскалации снизу вверх",
@@ -81,7 +81,7 @@
     },
     {
       "id": "BEM-931-RM07-HORIZONTAL-EXCHANGE",
-      "title": "RM-07: горизонтальные связи через curator-mediated exchange",
+      "title"": "RM-07: горизонтальные связи через curator-mediated exchange",
       "status": "PENDING",
       "priority": 4,
       "roadmap_items": [
@@ -168,5 +168,5 @@
     }
   ],
   "queue_state": "ACTIVE",
-  "next_action": "Execute BEM-931-RM05-PROMPTS"
+  "next_action": "Execute BEM-931-RM06-VERTICAL-LINKS"
 }
