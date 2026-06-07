@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "routes": [
+    {
+      "initiator": "operator",
+      "result": "direct_operator_report",
+      "mailbox": false,
+      "wake_up": false
+    },
+    {
+      "initiator": "external_auditor_gpt",
+      "result": "mailbox + operator wake-up",
+      "mailbox": true,
+      "wake_up": true
+    },
+    {
+      "initiator": "external_auditor_claude",
+      "result": "mailbox + operator wake-up",
+      "mailbox": true,
+      "wake_up": true
+    },
+    {
+      "initiator": "curator",
+      "result": "internal contour result to curator",
+      "mailbox": false,
+      "wake_up": false
+    }
+  ],
+  "operator_report_canon": {
+    "hourly": [
+      "stage_percent",
+      "roadmap_percent",
+      "checklist_lines",
+      "operator_question_if_any"
+    ],
+    "answer": [
+      "short_answer",
+      "next_step"
+    ]
+  },
+  "mailbox_paths": [
+    "governance/mailbox/inbox.jsonl",
+    "governance/telegram_outbox.jsonl"
+  ],
+  "safety": "External initiator results are routed via mailbox/wake-up; operator direct report stays canonical and concise."
+}
