@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-931 v3.5",
+  "inheritance": [
+    {
+      "from": "GD.SYSTEM_RULES_CONTOUR",
+      "to": "DIR.RULES_CONTOUR",
+      "rule_scope": "system",
+      "rule_version_required": true
+    },
+    {
+      "from": "DIR.RULES_CONTOUR",
+      "to": "WRK.*",
+      "rule_scope": "director",
+      "rule_version_required": true
+    },
+    {
+      "from": "WRK.CURATOR",
+      "to": "WRK.ANALYST",
+      "rule_scope": "object",
+      "route": "task_intake"
+    },
+    {
+      "from": "WRK.CURATOR",
+      "to": "WRK.AUDITOR",
+      "rule_scope": "object",
+      "route": "audit_feedback"
+    },
+    {
+      "from": "WRK.CURATOR",
+      "to": "WRK.EXECUTOR",
+      "rule_scope": "object",
+      "route": "approved_execution_only"
+    }
+  ],
+  "escalation": [
+    {
+      "from": "WRK.AUDITOR",
+      "to": "WRK.CURATOR",
+      "condition": "accepted_result_or_blocker"
+    },
+    {
+      "from": "WRK.CURATOR",
+      "to": "DIR.CURATOR",
+      "condition": "director_level_decision_or_rule_needed"
+    },
+    {
+      "from": "DIR.CURATOR",
+      "to": "GD.CURATOR",
+      "condition": "system_level_conflict_or_strategy_needed"
+    }
+  ],
+  "forbidden": [
+    "curator_to_executor_without_analyst_and_auditor",
+    "direct_role_to_role_between_objects",
+    "vertical_transfer_without_rule_version"
+  ],
+  "validator_rule": "No vertical transfer may bypass curator intake or auditor acceptance."
+}
