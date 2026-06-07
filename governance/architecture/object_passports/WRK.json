@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "object_id": "WRK",
+  "canonical_name": "Работник",
+  "object_type": "governance_object",
+  "curator_id": "WRK.CURATOR",
+  "curator_runner": "governance/runners/wrk_curator_runner.py",
+  "rule_owner": "WRK.CURATOR",
+  "parent_object_id": "DIR",
+  "child_object_ids": [],
+  "contours": [
+    {
+      "contour_id": "WRK-C1",
+      "canonical_name": "Первый внутренний контур работника",
+      "roles": [
+        "ANALYST",
+        "AUDITOR",
+        "EXECUTOR"
+      ],
+      "managed_channel": "governance/channels/WRK-C1.jsonl"
+    },
+    {
+      "contour_id": "WRK-C2",
+      "canonical_name": "Второй внутренний контур работника",
+      "roles": [
+        "ANALYST",
+        "AUDITOR",
+        "EXECUTOR"
+      ],
+      "managed_channel": "governance/channels/WRK-C2.jsonl"
+    },
+    {
+      "contour_id": "WRK-C3",
+      "canonical_name": "Третий внутренний контур работника",
+      "roles": [
+        "ANALYST",
+        "AUDITOR",
+        "EXECUTOR"
+      ],
+      "managed_channel": "governance/channels/WRK-C3.jsonl"
+    }
+  ],
+  "extension_policy": {
+    "minimum_contours": 3,
+    "can_extend_to_n": true,
+    "next_contour_pattern": "WRK-C{N}"
+  },
+  "runtime_provider": "codex_local",
+  "status": "PENDING_RUNTIME_BINDING"
+}
