@@ -41,6 +41,7 @@ jobs:
     name: Hosted GPT Role
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -69,7 +70,14 @@ jobs:
             echo "- Answer in Russian."
             echo "- Never expose secrets."
             echo "- GitHub Issues are forbidden."
-            echo "- If role is curator, last line must be: CURATOR_REPLY: <ответ оператору>"
+            echo "- Telegram operator reports must be plaintext and mobile-readable."
+            echo "- Never collapse checklist into one line."
+            echo "- Every checklist item must be on its own line."
+            echo "- If role is curator, output the final operator message in this exact block:"
+            echo "  CURATOR_REPLY:"
+            echo "  <message with real line breaks>"
+            echo "  END_CURATOR_REPLY"
+            echo "- Do not put the whole report on the same line as CURATOR_REPLY."
             echo
             echo "TASK:"
             printf '%s\n' "$TASK"
@@ -80,6 +88,7 @@ jobs:
             echo "ACTIVE_QUEUE:"
             cat governance/roadmap/ACTIVE_QUEUE.json 2>/dev/null || true
           } > "$PROMPT_FILE"
+
           echo "PROMPT_FILE=$PROMPT_FILE" >> "$GITHUB_ENV"
           echo "ROLE_RAW=$ROLE_RAW" >> "$GITHUB_ENV"
           echo "TRACE_ID=$TRACE_ID" >> "$GITHUB_ENV"
@@ -98,13 +107,16 @@ jobs:
 
           prompt = pathlib.Path(os.environ["PROMPT_FILE"]).read_text(encoding="utf-8", errors="replace")
           trace_id = os.environ.get("TRACE_ID", "missing")
-          print(f"BEM-HOSTED-ROLE | RAW_OUTPUT")
+
+          print("BEM-HOSTED-ROLE | RAW_OUTPUT")
           print(f"TRACE_ID={trace_id}")
 
           key = os.environ.get("OPENAI_API_KEY", "")
           if not key:
               print("HOSTED_ROLE_STATUS=OPENAI_API_KEY_MISSING")
-              print("CURATOR_REPLY: Ключ OPENAI_API_KEY не настроен.")
+              print("CURATOR_REPLY:")
+              print("Ключ OPENAI_API_KEY не настроен.")
+              print("END_CURATOR_REPLY")
               raise SystemExit(0)
 
           payload = {
@@ -112,22 +124,26 @@ jobs:
               "messages": [
                   {
                       "role": "system",
-                      "content": "Ты — Curator, главный оркестратор системы BEM-221. Точка входа и выхода информации. Получаешь сообщения от оператора через Telegram. Отвечаешь по-русски, кратко и по делу. Понимаешь свободный текст, определяешь задачи, маршрутизируешь во внутренний контур. Никогда не раскрываешь секреты. Последняя строка ответа всегда: CURATOR_REPLY: <ответ оператору>"
+                      "content": (
+                          "Ты — Curator, главный оркестратор системы BEM. "
+                          "Отвечай по делу, по-русски, без раскрытия секретов. "
+                          "Для Telegram-отчётов оператора используй только plaintext. "
+                          "Сохраняй реальные переносы строк. "
+                          "Не склеивай чек-лист в одну строку. "
+                          "Если нужен ответ оператору, помести его в блок CURATOR_REPLY / END_CURATOR_REPLY."
+                      ),
                   },
-                  {
-                      "role": "user",
-                      "content": prompt
-                  }
+                  {"role": "user", "content": prompt},
               ],
               "max_tokens": 2000,
-              "temperature": 0.3
+              "temperature": 0.2,
           }
 
           req = urllib.request.Request(
               "https://api.openai.com/v1/chat/completions",
-              data=json.dumps(payload).encode(),
+              data=json.dumps(payload).encode("utf-8"),
               headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-              method="POST"
+              method="POST",
           )
 
           try:
@@ -141,11 +157,15 @@ jobs:
               body = e.read().decode("utf-8", errors="replace")
               print(f"OpenAI HTTP {e.code}: {body[:1200]}")
               print("HOSTED_ROLE_STATUS=OPENAI_ERROR")
-              print("CURATOR_REPLY: Ошибка OpenAI API. Проверьте ключ и баланс OPENAI_API_KEY.")
+              print("CURATOR_REPLY:")
+              print("Ошибка OpenAI API. Проверьте ключ и баланс OPENAI_API_KEY.")
+              print("END_CURATOR_REPLY")
           except Exception as e:
               print(f"Error: {e}")
               print("HOSTED_ROLE_STATUS=ERROR")
-              print("CURATOR_REPLY: Сервис временно недоступен.")
+              print("CURATOR_REPLY:")
+              print("Сервис временно недоступен.")
+              print("END_CURATOR_REPLY")
           PY
           cat "$OUTPUT_FILE"
           echo "OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
@@ -163,29 +183,71 @@ jobs:
           from datetime import datetime, timezone
 
           output = pathlib.Path(os.environ["OUTPUT_FILE"]).read_text(encoding="utf-8", errors="replace")
-          reply = None
-          provider = "openai/gpt-4o"
-          for line in output.splitlines():
-              if line.startswith("PROVIDER="):
-                  provider = line.split("=", 1)[1].strip()
-          for line in reversed(output.splitlines()):
-              if line.strip().startswith("CURATOR_REPLY:"):
-                  reply = line.split(":", 1)[1].strip()
-                  break
-          if not reply:
-              reply = output.strip()[:1000] or "[нет ответа от куратора]"
+
+          def extract_provider(text):
+              provider = "openai/gpt-4o"
+              for line in text.splitlines():
+                  if line.startswith("PROVIDER="):
+                      provider = line.split("=", 1)[1].strip()
+              return provider
+
+          def extract_reply(text):
+              lines = text.splitlines()
+
+              # Preferred multiline block.
+              for i, line in enumerate(lines):
+                  if line.strip() == "CURATOR_REPLY:":
+                      block = []
+                      for nxt in lines[i + 1:]:
+                          if nxt.strip() == "END_CURATOR_REPLY":
+                              break
+                          block.append(nxt.rstrip())
+                      reply = "\n".join(block).strip()
+                      if reply:
+                          return reply
+
+              # Backward compatibility: one-line marker.
+              for line in reversed(lines):
+                  if line.strip().startswith("CURATOR_REPLY:"):
+                      reply = line.split(":", 1)[1].strip()
+                      if reply:
+                          return reply
+
+              return text.strip()[:1000] or "[нет ответа от куратора]"
+
+          def normalize_mobile_text(text):
+              # Preserve line breaks; remove excessive blank lines.
+              raw = text.replace("\r\n", "\n").replace("\r", "\n")
+              lines = [ln.rstrip() for ln in raw.split("\n")]
+              cleaned = []
+              blank = False
+              for ln in lines:
+                  if not ln.strip():
+                      if not blank:
+                          cleaned.append("")
+                      blank = True
+                  else:
+                      cleaned.append(ln)
+                      blank = False
+              return "\n".join(cleaned).strip()
+
+          provider = extract_provider(output)
+          reply = normalize_mobile_text(extract_reply(output))
 
           trace_id = os.environ.get("TRACE_ID", "unknown")
           now = datetime.now(timezone.utc).isoformat()
+
           outbox = pathlib.Path("governance/telegram_outbox.jsonl")
           outbox.parent.mkdir(parents=True, exist_ok=True)
+
           entry = {
               "event_id": f"evt_{trace_id}",
               "status": "ready_to_send",
               "chat_id": os.environ["OPERATOR_CHAT_ID"],
-              "text": f"🤖 *Curator [{provider}]*\n\n{reply}",
-              "created_at": now
+              "text": f"🤖 Curator [{provider}]\n\n{reply}",
+              "created_at": now,
           }
+
           with outbox.open("a", encoding="utf-8") as f:
               f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
@@ -198,9 +260,11 @@ jobs:
               "trace_id": trace_id,
               "provider": provider,
               "llm_response": reply[:500],
-              "telegram_sent": True
+              "telegram_sent": True,
+              "format": "multiline_plaintext",
           }, ensure_ascii=False, indent=2), encoding="utf-8")
           PY
+
           git config user.email "gpt-curator@ai-devops-system"
           git config user.name "GPT Curator"
           git add governance/telegram_outbox.jsonl governance/state/gate5_runtime_receipt.json
