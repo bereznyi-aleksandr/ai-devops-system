@@ -1,12 +1,11 @@
 {
-  "version": 16,
-  "updated_at": "2026-06-07T20:20:00Z",
+  "version": 17,
+  "updated_at": "2026-06-07T20:31:00Z",
   "queue_state": "ACTIVE",
-  "system_status": "WORKING_CONTOUR_AUTONOMOUS_REPAIR_LOOP_REWRITTEN_AND_DISPATCHED",
+  "system_status": "WORKING_CONTOUR_AUTONOMOUS_REPAIR_SCRIPT_CREATED_AND_DISPATCHED",
   "operator_directive": "STOP_FORBIDDEN_UNTIL_ROADMAP_COMPLETE",
   "policy": {
-    "continuous_execution": "report is not a final stop; continue through task_self_assignment",
-    "operator_gate": "operator explicitly forbids pause/stop",
+    "report_is_not_stop": "after report immediately self-assign next task and continue",
     "done_rule": "DONE only with non-null SHA + artifacts + receipts + release PASS + external audit",
     "release_pass": "blocked until RM15/RM16/RM17 receipts + RM18 PASS + external audit"
   },
@@ -21,10 +20,19 @@
   },
   "last_actions": [
     {
-      "action": "rewrote release repair gate as one autonomous Python loop",
+      "action": "read ACTIVE_QUEUE before response",
+      "file": "governance/roadmap/ACTIVE_QUEUE.json",
+      "sha": "4fb743cfe8bf9981dec4c7b5138b020f1476c514"
+    },
+    {
+      "action": "created standalone autonomous repair gate runner",
+      "file": "governance/runners/bem931_autonomous_repair_gate.py",
+      "sha": "33362f902c555b95a877797fcedecdf4e1c6f568"
+    },
+    {
+      "action": "replaced embedded workflow code with runner script call",
       "file": ".github/workflows/bem931-v36-release-repair-gate.yml",
-      "sha": "f208bf929ba30456df9a6841bfee8e706bcd59c4",
-      "reason": "multi-step workflow could skip commit when a repair step failed; new loop always writes diagnostics and commit step always runs"
+      "sha": "1bbb358d000e459bb788904f8bf456299f02ed8a"
     },
     {
       "action": "dispatched release repair gate",
@@ -32,18 +40,9 @@
       "status": "DISPATCH_ACCEPTED"
     }
   ],
-  "receipts_to_check": [
-    "governance/proofs/BEM931-V36-RM02_object_passports_receipt.json",
-    "governance/proofs/BEM931-V36-RM04_runners_receipt.json",
-    "governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json",
-    "governance/proofs/BEM931-V36-RM16_multi_contour_receipt.json",
-    "governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json",
-    "governance/release/bem931_v36_release_gate.json",
-    "governance/blockers/bem931_v36_release_repair_diagnostics.json"
-  ],
   "next_task": {
-    "id": "RM-18-VERIFY-OR-REPAIR",
-    "action": "check receipts and diagnostics; if release PASS is absent, repair exact workflow/runner error and redispatch without operator pause",
+    "id": "RM-18-VERIFY-OR-REPAIR-2",
+    "action": "check release gate, proofs, and diagnostics after dispatch; if PASS absent, repair exact failure and redispatch without operator pause",
     "status": "SELF_ASSIGNED_CONTINUE"
   }
 }
