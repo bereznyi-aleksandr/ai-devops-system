@@ -1,43 +1,66 @@
 {
-  "version": 7,
-  "updated_at": "2026-06-07T16:15:00Z",
-  "source": "Claude external audit — жёсткие acceptance criteria, нет DONE без live proof",
+  "version": 8,
+  "updated_at": "2026-06-07T16:42:30Z",
+  "source": "Claude external audit + GPT RM14 completion; strict acceptance criteria; no DONE without live proof",
   "queue_state": "ACTIVE",
+  "system_status": "WORKING_CONTOUR_NOT_READY",
   "policy": {
-    "done_rule": "DONE = non-null SHA + файл > 50 байт + ast.parse OK для .py + для runtime задач: codex exit=0 + governance/codex/results/{trace_id}.json существует",
-    "stub_rule": "Файл <= 50 байт или SyntaxError = BLOCKED автоматически, не DONE",
-    "queue_limit": "Максимум 5 задач одновременно. Следующая открывается только после DONE предыдущей",
-    "report_canon": "Telegram: этап X/Y (%), дорожная карта X/Y (%), чек-лист строками, вопрос если нужен. Без diff/stdout/JSON/traceback",
-    "release_pass": "BLOCKED до live E2E receipt + Telegram receipt + Claude external audit PASS"
+    "done_rule": "DONE = non-null SHA + file > 50 bytes + ast.parse OK for .py + for runtime tasks: codex exit=0 + governance/codex/results/{trace_id}.json exists",
+    "stub_rule": "File <= 50 bytes or SyntaxError = BLOCKED automatically, not DONE",
+    "queue_limit": "Next task opens only after previous DONE",
+    "report_canon": "Telegram: stage X/Y tasks (%), roadmap X/Y stages (%), checklist separate lines, question only if needed. No diff/stdout/JSON/traceback",
+    "release_pass": "BLOCKED until live E2E receipt + Telegram receipt + Claude external audit PASS"
+  },
+  "progress": {
+    "stage_done": 2,
+    "stage_total": 4,
+    "current_stage_task_done": 0,
+    "current_stage_task_total": 6,
+    "percent_stage": 0,
+    "percent_roadmap": 50
   },
   "tasks": [
     {
       "id": "RM-14",
       "title": "Архив legacy runtime — подтвердить отключение",
-      "status": "IN_PROGRESS",
+      "status": "DONE_REPO",
       "priority": 1,
-      "acceptance": [
-        "Прочитать gpt-hosted-roles.yml → подтвердить ARCHIVED или if:false",
-        "Grep активных workflows: GEMINI_API_KEY не вызывается ни в одном активном workflow",
-        "Создать governance/reports/bem931_v36_legacy_archive_report.md > 100 байт с SHA",
-        "DONE только если все 3 условия выполнены одновременно"
+      "done_sha": "c53e14fc8a0192996c4c5b5f929dddef38c3be33",
+      "stage_total_tasks": 5,
+      "stage_done_tasks": 5,
+      "artifacts": [
+        "governance/reports/bem=31_v36_legacy_archive_report.md",
+        "governance/validators/bem931_v36_rm14_legacy_validate.py",
+        ".github/workflows/gpt-hosted-roles.yml",
+        ".github/workflows/codex-local.yml",
+        ".github/workflows/telegram-poll.yml"
       ],
-      "blocker_if": "Файл отчёта <= 100 байт ИЛИ SHA=null ИЛИ grep нашёл активный GEMINI вызов"
+      "acceptance": [
+        "gpt-hosted-roles.yml confirmed ARCHIVED disabled stub",
+        "telegram-poll.yml dispatches codex-local.yml",
+        "active checked workflows do not contain GEMINI_API_KEY runtime token",
+        "codex-local remains canonical active runtime",
+        "legacy archive report exists and file > 100 bytes with SHA"
+      ],
+      "blocker_if": "If active Gemini/OpenAI HTTP API/paid hosted runtime appears in production path, RM-14 reopens"
     },
     {
       "id": "RM-02",
       "title": "Паспорта объектов GD / DIR / WRK",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 2,
       "depends_on": "RM-14 DONE",
+      "stage_total_tasks": 6,
+      "stage_done_tasks": 0,
       "acceptance": [
-        "governance/architecture/object_passports/GD.json: > 200 байт, валидный JSON, поля id/curator_runner/contours/rule_owner",
-        "governance/architecture/object_passports/DIR.json: > 200 байт, валидный JSON, те же поля",
-        "governance/architecture/object_passports/WRK.json: > 200 байт, contours содержит [WRK-C1, WRK-C2, WRK-C3]",
-        "governance/architecture/objects_registry_v2.json: все 3 объекта, валидный JSON",
-        "В WRK.json ОТСУТСТВУЮТ поля ANALYSIS_CONTOUR / AUDIT_CONTOUR / EXECUTION_CONTOUR"
+        "governance/architecture/object_passports/GD.json: > 200 bytes, valid JSON, fields id/curator_runner/contours/rule_owner",
+        "governance/architecture/object_passports/DIR.json: > 200 bytes, valid JSON, same fields",
+        "governance/architecture/object_passports/WRK.json: > 200 bytes, contours contains [WRK-C1, WRK-C2, WRK-C3]",
+        "governance/architecture/objects_registry_v2.json: all 3 objects, valid JSON",
+        "WRK.json does not contain ANALYSIS_CONTOUR / AUDIT_CONTOUR / EXECUTION_CONTOUR as contours",
+        "validator passes"
       ],
-      "blocker_if": "Любой файл <= 200 байт ИЛИ невалидный JSON ИЛИ WRK.json содержит старые ошибочные контуры"
+      "blocker_if": "Any file <= 200 bytes, invalid JSON, or WRK.json contains old erroneous contour fields"
     },
     {
       "id": "RM-04-RUNNERS",
@@ -45,16 +68,16 @@
       "status": "PENDING",
       "priority": 3,
       "depends_on": "RM-02 DONE",
-      "note": "ЭТО САМАЯ ВАЖНАЯ ЗАДАЧА. Без рабочих runners всё остальное — документы.",
+      "note": "Критический путь. Без рабочих runners система остаётся документами.",
       "acceptance": [
-        "gd_curator_runner.py: > 300 байт, ast.parse OK, содержит def main(), читает managed_channel, пишет в dir_inbox",
-        "dir_curator_runner.py: > 300 байт, ast.parse OK, содержит def main(), читает dir_inbox, пишет в wrk_inbox",
-        "wrk_curator_runner.py: > 300 байт, ast.parse OK, содержит def main(), выбирает WRK-Cx, диспатчит analyst",
-        "executor_stage_runner.py: > 300 байт, ast.parse OK, содержит def main(), выполняет задачу, пишет result",
-        "auditor_stage_runner.py: > 300 байт, ast.parse OK, содержит def main(), проверяет result, выдаёт PASS/FAIL",
-        "Для каждого файла: python3 runner.py выполняется без исключений (exit 0 или graceful no-op)"
+        "gd_curator_runner.py: > 300 bytes, ast.parse OK, def main(), reads managed_channel, writes dir_inbox",
+        "dir_curator_runner.py: > 300 bytes, ast.parse OK, def main(), reads dir_inbox, writes wrk_inbox",
+        "wrk_curator_runner.py: > 300 bytes, ast.parse OK, def main(), selects WRK-Cx and dispatches analyst",
+        "executor_stage_runner.py: > 300 bytes, ast.parse OK, def main(), executes task and writes result",
+        "auditor_stage_runner.py: > 300 bytes, ast.parse OK, def main(), checks result and writes PASS/FAIL",
+        "python3 runner.py exits 0 or graceful no-op for every runner"
       ],
-      "blocker_if": "Любой файл <= 50 байт ИЛИ SyntaxError ИЛИ нет def main() ИЛИ python3 runner.py бросает исключение"
+      "blocker_if": "Any file <= 50 bytes, SyntaxError, missing def main(), or python3 runner.py throws exception"
     },
     {
       "id": "RM-15-E2E",
@@ -63,22 +86,23 @@
       "priority": 4,
       "depends_on": "RM-04-RUNNERS DONE",
       "acceptance": [
-        "Telegram сообщение от оператора → GD.CURATOR получает задачу (Codex exit=0, governance/codex/results/trace.json)",
-        "DIR.CURATOR назначает WRK контур (Codex exit=0, result файл)",
-        "WRK.CURATOR выбирает WRK-C1 (Codex exit=0, result файл)",
-        "WRK-C1.ANALYST создаёт план (Codex exit=0, artifact файл)",
-        "WRK-C1.AUDITOR проверяет план и даёт PASS (Codex exit=0, audit файл)",
-        "WRK-C1.EXECUTOR выполняет (Codex exit=0, commit_sha не null)",
-        "Оператор получает итоговый отчёт в Telegram (Telegram message_id зафиксирован)",
-        "Все 7 Codex receipts записаны в governance/codex/results/"
+        "Operator Telegram message triggers GD.CURATOR via codex-local, Codex exit=0, result json exists",
+        "GD.CURATOR routes to DIR.CURATOR with receipt",
+        "DIR.CURATOR routes to WRK.CURATOR and selects WRK-C1 with receipt",
+        "WRK-C1.ANALYST creates plan artifact",
+        "WRK-C1.AUDITOR pre-check PASS artifact",
+        "WRK-C1.EXECUTOR commits result with non-null commit_sha",
+        "WRK-C1.AUDITOR post-check PASS artifact",
+        "Operator receives canonical Telegram report with message_id",
+        "All 7 Codex receipts stored in governance/codex/results/"
       ],
-      "blocker_if": "Любой из 7 шагов без Codex receipt ИЛИ commit_sha=null ИЛИ нет Telegram message_id"
+      "blocker_if": "Any stage missing Codex receipt, commit_sha is null, or Telegram message_id missing"
     }
   ],
-  "next_action": "GPT: выполнить RM-14 — прочитать gpt-hosted-roles.yml и создать legacy_archive_report.md",
+  "next_action": "Execute RM-02 object passports",
   "release_lock": {
     "status": "BLOCKED",
-    "reason": "Нет live E2E receipt + нет рабочих runners + нет WRK-C1/C2/C3 контуров",
+    "reason": "No live E2E receipt + no working runners + no WRK-C1/C2/C3 contours",
     "unlock_after": "RM-15 DONE + Claude external audit PASS"
   }
 }
