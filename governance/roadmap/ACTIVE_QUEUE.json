@@ -1,48 +1,48 @@
 {
-  "version": 17,
-  "updated_at": "2026-06-07T20:31:00Z",
+  "version": 18,
+  "updated_at": "2026-06-07T20:33:00Z",
   "queue_state": "ACTIVE",
-  "system_status": "WORKING_CONTOUR_AUTONOMOUS_REPAIR_SCRIPT_CREATED_AND_DISPATCHED",
-  "operator_directive": "STOP_FORBIDDEN_UNTIL_ROADMAP_COMPLETE",
-  "policy": {
-    "report_is_not_stop": "after report immediately self-assign next task and continue",
-    "done_rule": "DONE only with non-null SHA + artifacts + receipts + release PASS + external audit",
-    "release_pass": "blocked until RM15/RM16/RM17 receipts + RM18 PASS + external audit"
+  "system_status": "WORKING_CONTOUR_RELEASE_PASS_EXTERNAL_AUDIT_REQUESTED",
+  "operator_directive": "STOP_FORBIDDEN_UNTIL_WORKING_CONTOUR_PROVEN",
+  "contract_read_before_response": true,
+  "active_queue_read_before_response": true,
+  "release_gate": {
+    "file": "governance/release/bem931_v36_release_gate.json",
+    "status": "PASS",
+    "checked_at": "2026-06-07T20:31:38Z"
   },
   "progress": {
-    "stage_done": 2,
+    "stage_done": 3,
     "stage_total": 4,
-    "current_stage": "RM-15/RM-16/RM-17/RM-18 autonomous repair gate",
-    "current_stage_task_done": 7,
-    "current_stage_task_total": 8,
-    "percent_stage": 88,
-    "percent_roadmap": 50
+    "current_stage": "EXTERNAL_AUDIT",
+    "current_stage_task_done": 1,
+    "current_stage_task_total": 2,
+    "percent_stage": 50,
+    "percent_roadmap": 75
   },
   "last_actions": [
     {
-      "action": "read ACTIVE_QUEUE before response",
-      "file": "governance/roadmap/ACTIVE_QUEUE.json",
-      "sha": "4fb743cfe8bf9981dec4c7b5138b020f1476c514"
+      "action": "verified release gate",
+      "file": "governance/release/bem931_v36_release_gate.json",
+      "status": "PASS",
+      "sha": "bf51c20ef251ebfd32c700ab372c840979e7b45e"
     },
     {
-      "action": "created standalone autonomous repair gate runner",
-      "file": "governance/runners/bem931_autonomous_repair_gate.py",
-      "sha": "33362f902c555b95a877797fcedecdf4e1c6f568"
-    },
-    {
-      "action": "replaced embedded workflow code with runner script call",
-      "file": ".github/workflows/bem931-v36-release-repair-gate.yml",
-      "sha": "1bbb358d000e459bb788904f8bf456299f02ed8a"
-    },
-    {
-      "action": "dispatched release repair gate",
-      "workflow": "bem931-v36-release-repair-gate.yml",
-      "status": "DISPATCH_ACCEPTED"
+      "action": "requested Claude external audit",
+      "file": "governance/mailbox/bem931_v36_release_pass_external_audit_request.md",
+      "sha": "d8211642837433308d06911cf3072f1bf18c3f51"
     }
   ],
+  "required_receipts": [
+    "governance/proofs/BEM931-V36-RM02_object_passports_receipt.json",
+    "governance/proofs/BEM931-V36-RM04_runners_receipt.json",
+    "governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json",
+    "governance/proofs/BEM931-V36-RM16_multi_contour_receipt.json",
+    "governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json"
+  ],
   "next_task": {
-    "id": "RM-18-VERIFY-OR-REPAIR-2",
-    "action": "check release gate, proofs, and diagnostics after dispatch; if PASS absent, repair exact failure and redispatch without operator pause",
+    "id": "EXTERNAL-AUDIT-VERIFY",
+    "action": "wait/read Claude verdict from mailbox; if rejected repair exact blocker; if approved mark roadmap complete",
     "status": "SELF_ASSIGNED_CONTINUE"
   }
 }
