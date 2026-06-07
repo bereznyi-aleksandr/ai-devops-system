@@ -1,77 +1,89 @@
 {
-  "version": 10,
-  "updated_at": "2026-06-07T17:58:00Z",
-  "source": "Operator explicitly forbade stopping until roadmap completion; autonomous continuation recorded",
+  "version": 11,
+  "updated_at": "2026-06-07T18:50:00Z",
+  "source": "Claude audit SHA 818f7075 fixed auditor_stage_runner SyntaxError; operator forbids stopping; RM15/RM16/RM17/RM18 redispatched",
   "queue_state": "ACTIVE",
   "system_status": "WORKING_CONTOUR_NOT_READY",
   "policy": {
     "continuous_execution": "no stop until roadmap completion or objective tool boundary",
-    "operator_gate": "operator forbade pause/stop",
+    "operator_gate": "operator forbids pause/stop",
     "done_rule": "DONE only with non-null SHA + artifact + validator/receipt",
-    "release_pass": "BLOCKED until live E2E receipt + Telegram receipt + Claude external audit PASS"
+    "release_pass": "BLOCKED until RM15/RM16/RM17 receipts + RM18 PASS + Claude external audit PASS"
   },
   "progress": {
     "stage_done": 2,
     "stage_total": 4,
-    "current_stage": "RM-16-MULTI_CONTOUR",
-    "current_stage_task_done": 4,
-    "current_stage_task_total": 7,
-    "percent_stage": 57,
+    "current_stage": "RM-15/RM-16/RM-17/RM-18 runtime proof chain",
+    "current_stage_task_done": 5,
+    "current_stage_task_total": 8,
+    "percent_stage": 63,
     "percent_roadmap": 50
   },
   "tasks": [
     {
       "id": "RM-14",
-      "title": "Архив legacy runtime",
       "status": "DONE_REPO",
       "done_sha": "c53e14fc8a0192996c4c5b5f929dddef38c3be33"
     },
     {
       "id": "RM-02",
-      "title": "Паспорта объектов GD/DIR/WRK",
       "status": "IN_PROGRESS_RECEIPT_PENDING",
-      "note": "files and validator workflow created; receipt not found yet"
+      "remaining": [
+        "check BEM931-V36-RM02_object_passports_receipt.json"
+      ]
     },
     {
       "id": "RM-04-RUNNERS",
-      "title": "Рабочие runner файлы",
       "status": "IN_PROGRESS_RECEIPT_PENDING",
-      "stage_total_tasks": 8,
-      "stage_done_tasks": 7,
       "remaining": [
         "check BEM931-V36-RM04_runners_receipt.json"
       ]
     },
     {
       "id": "RM-15-E2E",
-      "title": "Live E2E одного контура",
-      "status": "IN_PROGRESS",
+      "status": "DISPATCHED_AFTER_AUDITOR_FIX",
       "artifacts": [
-        ".github/workflows/bem931-v36-rm15-live-e2e.yml"
+        ".github/workflows/bem931-v36-rm15-live-e2e.yml",
+        "governance/runners/auditor_stage_runner.py"
       ],
       "remaining": [
-        "check BEM931-V36-RM15_live_e2e_receipt.json"
+        "check BEM931-V36-RM15_live_e2e_receipt.json",
+        "if failed repair workflow/runner and redispatch"
       ]
     },
     {
       "id": "RM-16-MULTI_CONTOUR",
-      "title": "Live нескольких контуров WRK-C1/C2/C3",
-      "status": "IN_PROGRESS",
-      "stage_total_tasks": 7,
-      "stage_done_tasks": 4,
+      "status": "DISPATCHED_AFTER_AUDITOR_FIX",
       "artifacts": [
-        "governance/runners/wrk_curator_runner.py",
-        "governance/runners/analyst_stage_runner.py",
-        "governance/runners/auditor_stage_runner.py",
-        "governance/runners/executor_stage_runner.py",
         ".github/workflows/bem931-v36-rm16-multi-contour.yml"
       ],
       "remaining": [
         "check BEM931-V36-RM16_multi_contour_receipt.json",
-        "after RM16 PASS continue to RM17 horizontal exchange",
-        "after RM17 continue to release gate"
+        "if failed repair and redispatch"
+      ]
+    },
+    {
+      "id": "RM-17-HORIZONTAL_EXCHANGE",
+      "status": "DISPATCHED_AFTER_AUDITOR_FIX",
+      "artifacts": [
+        ".github/workflows/bem931-v36-rm17-horizontal-exchange.yml"
+      ],
+      "remaining": [
+        "check BEM931-V36-RM17_horizontal_exchange_receipt.json",
+        "if failed repair and redispatch"
+      ]
+    },
+    {
+      "id": "RM-18-RELEASE_GATE",
+      "status": "DISPATCHED_BLOCKED_UNTIL_RECEIPTS",
+      "artifacts": [
+        ".github/workflows/bem931-v36-rm18-release-gate.yml"
+      ],
+      "remaining": [
+        "check bem931_v36_release_gate.json",
+        "release remains blocked until required receipts exist"
       ]
     }
   ],
-  "next_action": "continue checking receipts and executing next RM items without operator pause"
+  "next_action": "check workflow receipts and repair failures without operator pause"
 }
