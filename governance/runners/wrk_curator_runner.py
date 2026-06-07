@@ -7,12 +7,15 @@ from bem931_runner_lib import CHANNELS, now_iso, first_pending, append_jsonl, wr
 ROLE_NAME = "WRK.CURATOR"
 INBOX = CHANNELS / "dir_to_wrk.jsonl"
 
+
 def select_contour(task: dict) -> str:
     requested = task.get("target_contour") or task.get("contour_id")
     return requested if requested in {"WRK-C1", "WRK-C2", "WRK-C3"} else "WRK-C1"
 
+
 def channel_name(contour_id: str, suffix: str):
-    return CHANNELS / f"{contour_id.lower().replace('-', '_'i}_to_{suffix}.jsonl"
+    return CHANNELS / f"{contour_id.lower().replace('-', '_')}_to_{suffix}.jsonl"
+
 
 def main() -> str:
     task = first_pending(INBOX)
@@ -34,6 +37,7 @@ def main() -> str:
     append_jsonl(outbox, routed)
     write_result("wrk_curator_routed", {**routed, "status": "completed", "next_channel": str(outbox)})
     return f"routed_to_{contour_id}_analyst"
+
 
 if __name__ == "__main__":
     print(f"RUNNER: {main()}")
