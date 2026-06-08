@@ -4,6 +4,11 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '*/5 * * * *'
+  push:
+    paths:
+      - '.github/workflows/bem931-v36-live-receipt-proof.yml'
+      - 'governance/runners/*.py'
+      - 'governance/validators/*.py'
 
 permissions:
   contents: write
@@ -12,7 +17,7 @@ jobs:
   live-receipt-proof:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@1
         with:
           fetch-depth: 1
 
@@ -31,15 +36,13 @@ jobs:
           set -e
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add governance/channels governance/results governance/proofs governance/exchange governance/release governance/blockers || true
+          git add -A governance/channels governance/results governance/runtime governance/proofs governance/exchange governance/release governance/blockers || true
           if git diff --cached --quiet; then
             echo "No live proof changes"
             exit 0
           fi
-          git pull --rebase --autostash || true
-          git add governance/channels governance/results governance/proofs governance/exchange governance/release governance/blockers || true
-          git commit -m "BEM-931: live GitHub Actions receipt proof" || echo "No commit after rebase"
-          git push || true
+          git commit -m "BEM-931: live GitHub Actions receipt proof"
+          git push || (git pull --rebase --autostash && git push)
 
       - name: Fail if proof runner reported failure
         if: always()
