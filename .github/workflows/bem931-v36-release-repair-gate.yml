@@ -35,12 +35,16 @@ jobs:
           set -e
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+          # Stage FIRST — before pull --rebase which would wipe untracked files
           git add governance/channels governance/results governance/proofs governance/exchange governance/release governance/blockers || true
           if git diff --cached --quiet; then
-            echo "No autonomous repair changes"
+            echo "No changes to commit"
             exit 0
           fi
+          # Save staged diff as patch, rebase, re-apply
+          git stash
           git pull --rebase --autostash || true
+          git stash pop || true
           git add governance/channels governance/results governance/proofs governance/exchange governance/release governance/blockers || true
-          git commit -m "BEM-931: autonomous release repair receipts" || echo "No commit after rebase"
+          git commit -m "BEM-931: autonomous release repair receipts [run=$GITHUB_RUN_ID]" || echo "Nothing to commit after rebase"
           git push || true
