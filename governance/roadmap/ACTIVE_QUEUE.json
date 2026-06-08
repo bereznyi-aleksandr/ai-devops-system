@@ -1,8 +1,8 @@
 {
-  "version": 24,
-  "updated_at": "2026-06-08T01:18:00Z",
+  "version": 25,
+  "updated_at": "2026-06-08T01:30:00Z",
   "queue_state": "ACTIVE",
-  "system_status": "LIVE_RECEIPT_PROOF_WORKFLOW_CHECKOUT_V4_VERIFIED_AND_DISPATCHED",
+  "system_status": "LIVE_RECEIPT_PROOF_GITIGNORE_UNBLOCKED_DISPATCHED",
   "operator_directive": "STOP_FORBIDDEN_UNTIL_WORKING_CONTOUR_PROVEN",
   "active_queue_read_before_response": true,
   "progress": {
@@ -18,21 +18,21 @@
     {
       "action": "read ACTIVE_QUEUE before response",
       "file": "governance/roadmap/ACTIVE_QUEUE.json",
-      "sha": "197a3dd7fa35278f7179fe5cdc06c8fd5fa8e2d3"
+      "sha": "a14e05c6882355cda6d617caab4a5c3ca4992354"
     },
     {
-      "action": "verified live proof workflow checkout version",
-      "file": ".github/workflows/bem931-v36-live-receipt-proof.yml",
-      "sha": "76346ae9eca9b1b7f4ec0f8259b58ce7e60467d1",
-      "result": "actions/checkout@v4 present"
+      "action": "verified .gitignore no longer ignores governance/proofs/",
+      "file": ".gitignore",
+      "sha": "fb22ce0493d3a0f20552b91c2f3e19a0eb46f5af",
+      "result": "governance/proofs/ is not in .gitignore"
     },
     {
-      "action": "checked RM15 live receipt",
+      "action": "checked RM15 live receipt before redispatch",
       "file": "governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json",
       "status": "MISSING_404"
     },
     {
-      "action": "dispatched live receipt proof workflow after checkout@v4 fix",
+      "action": "dispatched live receipt proof workflow after .gitignore unblock",
       "workflow": "bem931-v36-live-receipt-proof.yml",
       "status": "DISPATCH_ACCEPTED"
     }
@@ -45,8 +45,8 @@
     "governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json"
   ],
   "next_task": {
-    "id": "LIVE-RECEIPT-PROOF-VERIFY-OR-REPAIR-5",
-    "action": "check live receipts after checkout@v4 fix; if missing, read workflow and diagnostics, repair exact blocker, dispatch again without operator pause",
+    "id": "LIVE-RECEIPT-PROOF-VERIFY-OR-REPAIR-6",
+    "action": "check live proof receipts after .gitignore unblock; if missing, read workflow, runner, diagnostics, and .gitignore; repair exact blocker and redispatch without operator pause",
     "status": "SELF_ASSIGNED_CONTINUE"
   }
 }
