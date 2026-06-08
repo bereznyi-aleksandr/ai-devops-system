@@ -1,0 +1,48 @@
+name: BEM-931 v3.6 Live Receipt Proof
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  live-receipt-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run live receipt proof
+        shell: bash
+        run: |
+          set +e
+          python3 governance/runners/bem931_live_receipt_proof.py
+          echo "proof_exit=$?" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Commit live receipts and diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set -e
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add governance/channels governance/results governance/proofs governance/exchange governance/release governance/blockers || true
+          if git diff --cached --quiet; then
+            echo "No live proof changes"
+            exit 0
+          fi
+          git pull --rebase --autostash || true
+          git add governance/channels governance/results governance/proofs governance/exchange governance/release governance/blockers || true
+          git commit -m "BEM-931: live GitHub Actions receipt proof" || echo "No commit after rebase"
+          git push || true
+
+      - name: Fail if proof runner reported failure
+        if: always()
+        shell: bash
+        run: |
+          test "${proof_exit:-0}" = "0"
