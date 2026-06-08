@@ -1,0 +1,53 @@
+{
+  "external_audit_verdict": "APPROVED",
+  "final_blocker_resolved": {
+    "file": ".gitignore",
+    "issue": "governance/proofs/ was ignored, so receipts written by GitHub Actions were not committed",
+    "resolution": "governance/proofs/ is no longer ignored; receipts are committed to main"
+  },
+  "github_live_actions_run_id": "27116441198",
+  "github_live_actions_run_number": "10",
+  "github_sha": "8e3b0b53a1883136c0cd86a34aca4a6f5020c6e3",
+  "protocol": "BEM-931 v3.6",
+  "receipts": {
+    "RM-02": {
+      "file": "governance/proofs/BEM931-V36-RM02_object_passports_receipt.json",
+      "status": "PASS"
+    },
+    "RM-04": {
+      "file": "governance/proofs/BEM931-V36-RM04_runners_receipt.json",
+      "status": "PASS"
+    },
+    "RM-15": {
+      "file": "governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json",
+      "status": "PASS"
+    },
+    "RM-16": {
+      "contours": [
+        "WRK-C1",
+        "WRK-C2",
+        "WRK-C3"
+      ],
+      "file": "governance/proofs/BEM931-V36-RM16_multi_contour_receipt.json",
+      "status": "PASS"
+    },
+    "RM17": {
+      "file": "governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json",
+      "status": "PASS"
+    },
+    "RM-18": {
+      "file": "governance/release/bem931_v36_release_gate.json",
+      "status": "PASS"
+    }
+  },
+  "release_gate": {
+    "failures": [],
+    "file": "governance/release/bem931_v36_release_gate.json",
+    "missing": [],
+    "status": "PASS"
+  },
+  "roadmap_status": "COMPLETED",
+  "status": "APPROVED",
+  "verified_at": "2026-06-08T04:45:00Z",
+  "working_contour_status": "PROVEN"
+}
