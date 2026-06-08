@@ -1,14 +1,17 @@
 {
-  "version": 20,
-  "updated_at": "2026-06-08T00:40:00Z",
+  "version": 21,
+  "updated_at": "2026-06-08T00:45:00Z",
   "queue_state": "ACTIVE",
-  "system_status": "WORKING_CONTOUR_EXTERNAL_AUDIT_REJECTED_LIVE_PROOF_WORKFLOW_DISPATCHED",
+  "system_status": "LIVE_RECEIPT_PROOF_REDISPATCHED_AFTER_GIT_ORDER_FIX",
   "operator_directive": "STOP_FORBIDDEN_UNTIL_WORKING_CONTOUR_PROVEN",
-  "contract_read_before_response": true,
+  "contract_read_before_response": {
+    "status": "TRYED",
+    "note": "GPT_CONTRACT_v3_0.md not found in repo; ACTIVE_QUEUE read and operator contract directive applied"
+  },
   "active_queue_read_before_response": true,
   "external_audit": {
     "verdict": "REJECTED",
-    "blocking_reason": "false PASS: release gate existed but live receipt files were absent"
+    "blocking_reason": "false PASS: live receipts were absent; git commit order in workflow was fixed by Claude"
   },
   "progress": {
     "stage_done": 3,
@@ -21,17 +24,22 @@
   },
   "last_actions": [
     {
-      "action": "created live receipt proof runner with GitHub runtime evidence fields",
-      "file": "governance/runners/bem931_live_receipt_proof.py",
-      "sha": "6bbe99dbe5052db259bc7055905947a27ebfc794"
+      "action": "read ACTIVE_QUEUE before response",
+      "file": "governance/roadmap/ACTIVE_QUEUE.json",
+      "sha": "473a09fc52fde44cdc3b60f3d8cbb91cedf63ba5"
     },
     {
-      "action": "created live receipt proof workflow",
+      "action": "checked RM15 receipt after external audit",
+      "file": "governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json",
+      "status": "MISSING_404"
+    },
+    {
+      "action": "read live receipt proof workflow and confirmed git add before pull order is present",
       "file": ".github/workflows/bem931-v36-live-receipt-proof.yml",
-      "sha": "47d346cb8ba6940d143d89c996a0a282841f01b7"
+      "sha": "39c2e26976a895c95ff93b44b50ab38038ebd8f0"
     },
     {
-      "action": "dispatched live receipt proof workflow",
+      "action": "redispatched live receipt proof workflow",
       "workflow": "bem931-v36-live-receipt-proof.yml",
       "status": "DISPATCH_ACCEPTED"
     }
@@ -44,8 +52,8 @@
     "governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json"
   ],
   "next_task": {
-    "id": "LIVE-RECEIPT-PROOF-VERIFY-OR-REPAIR",
-    "action": "check proof files and diagnostics after live workflow dispatch; if receipt missing or release BLOCKED, repair exact file and redispatch without operator pause",
+    "id": "LIVE-RECEIPT-PROOF-VERIFY-OR-REPAIR-2",
+    "action": "check live proof receipts; if missing, read diagnostics and fix exact workflow/runner blocker; redispatch without operator pause",
     "status": "SELF_ASSIGNED_CONTINUE"
   }
 }
