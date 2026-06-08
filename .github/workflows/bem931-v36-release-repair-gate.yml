@@ -28,23 +28,29 @@ jobs:
           set -e
           python3 governance/runners/bem931_autonomous_repair_gate.py
 
-      - name: Commit autonomous repair artifacts
+      - name: Commit receipts
         if: always()
         shell: bash
         run: |
           set -e
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          # Stage FIRST — before pull --rebase which would wipe untracked files
-          git add governance/channels governance/results governance/proofs governance/exchange governance/release governance/blockers || true
+
+          # Collect all generated files into a patch before touching remote
+          git add -A governance/channels \
+                     governance/results \
+                     governance/proofs \
+                     governance/exchange \
+                     governance/release \
+                     governance/blockers 2>/dev/null || true
+
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "Nothing new to commit — receipts may already be present"
             exit 0
           fi
-          # Save staged diff as patch, rebase, re-apply
-          git stash
-          git pull --rebase --autostash || true
-          git stash pop || true
-          git add governance/channels governance/results governance/proofs governance/exchange governance/release governance/blockers || true
-          git commit -m "BEM-931: autonomous release repair receipts [run=$GITHUB_RUN_ID]" || echo "Nothing to commit after rebase"
-          git push || true
+
+          # Commit on top of current HEAD without pulling first
+          git commit -m "BEM-931: live repair receipts [run=$GITHUB_RUN_ID]"
+
+          # Push with retry — if remote advanced, rebase and push again
+          git push || (git pull --rebase --autostash && git push)
