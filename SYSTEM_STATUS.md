@@ -1,189 +1,136 @@
-# SYSTEM_STATUS.md
-# Единый документ: что строим / что сделано / что осталось
-# Обновляется GPT после каждого завершённого этапа. Читается в начале каждой сессии.
+# SYSTEM_STATUS.md v2.0
+# ФИНАЛЬНАЯ АРХИТЕКТУРА | СТАТУС | ДОРОЖНАЯ КАРТА
+# Обновляется GPT после каждой завершённой задачи.
+# Читается ПЕРВЫМ в начале каждой сессии.
 
 Последнее обновление: 2026-06-08
-Статус системы: **WORKING_CONTOUR_NOT_READY**
+Статус: **WORKING_CONTOUR_NOT_READY**
+Release: **BLOCKED**
 
 ---
 
-## 1. ЧТО МЫ СТРОИМ — КОНЦЕПЦИЯ
+## 1. ФИНАЛЬНАЯ АРХИТЕКТУРА
 
-### Управляющий контур (ai-devops-system)
-
-Автономная мультиагентная система управления разработкой.
-Оператор пишет задачу в Telegram — система выполняет её без участия человека.
+### Концепция
+Автономная мультиагентная система. Оператор пишет в Telegram — система выполняет без участия человека через цепочку Codex CLI агентов.
 
 ### Иерархия объектов
-
 ```
-ОПЕРАТОР (вне контура — только стратегия и gate-решения)
+ОПЕРАТОР (вне контура — только стратегия, только Telegram)
     ↓
-ГЕНЕРАЛЬНЫЙ ДИРЕКТОР (GD)
-    ├── GD.CURATOR       — принимает задачу от оператора, маршрутизирует
+GD (Генеральный директор)
+    ├── GD.CURATOR       — принимает от оператора, маршрутизирует в DIR
     ├── GD-C1            — контур правил
     └── GD-C2            — контур решений
-
     ↓
-ДИРЕКТОР (DIR)
+DIR (Директор)
     ├── DIR.CURATOR      — доменный куратор
-    ├── DIR-C1           — контур правил домена
-    └── DIR-C2           — контур решений домена
-
+    ├── DIR-C1           — правила домена
+    └── DIR-C2           — решения домена
     ↓
-РАБОТНИК (WRK)
-    ├── WRK.CURATOR      — выбирает рабочий контур
+WRK (Работник)
+    ├── WRK.CURATOR      — выбирает контур
     ├── WRK-C1           — внутренний контур 1
     ├── WRK-C2           — внутренний контур 2
-    └── WRK-C3           — внутренний контур 3 (минимум 3, максимум N)
+    └── WRK-C3           — внутренний контур 3 (минимум 3)
 ```
 
 ### Внутри каждого WRK-Cx
-
 ```
-ANALYST → AUDITOR.pre → EXECUTOR → AUDITOR.post → обратная связь куратору
+ANALYST → AUDITOR.pre → EXECUTOR → AUDITOR.post → feedback → WRK.CURATOR
 ```
-
-Доработка — только через ANALYST. Горизонтальные связи — только через куратора-медиатора.
+Доработка — только через ANALYST.
+Горизонталь — только через куратора-медиатора.
 
 ### Роли и провайдеры
-
-| Роль | Провайдер | Примечание |
+| Роль | Primary | Fallback |
 |---|---|---|
-| GD.CURATOR | GPT Codex (подписка Plus) | Основной, Claude fallback при лимитах |
-| DIR.CURATOR | GPT Codex | То же |
-| WRK.CURATOR | GPT Codex | То же |
-| ANALYST | GPT Codex | Анализирует задачу, строит план |
-| AUDITOR | GPT Codex / Claude | Проверяет план и результат |
-| EXECUTOR | GPT Codex / Claude | Выполняет задачу |
+| GD.CURATOR | GPT Codex (ChatGPT Plus OAuth) | Claude Code |
+| DIR.CURATOR | GPT Codex | Claude Code |
+| WRK.CURATOR | GPT Codex | Claude Code |
+| ANALYST | GPT Codex | Claude Code |
+| AUDITOR | GPT Codex / Claude | — |
+| EXECUTOR | GPT Codex / Claude | — |
 
-### Канонический runtime
+**ЗАПРЕЩЕНО:** OPENAI_API_KEY, Gemini API — только Codex через подписку Plus.
 
-- GitHub Actions (`codex-local.yml`) → self-hosted runner → Codex CLI
-- Telegram polling каждые 5 минут (`telegram-poll.yml`)
-- Все платные API (OpenAI HTTP, Gemini) — **ЗАПРЕЩЕНЫ** в production
+### Технический стек
+| Компонент | Технология | Статус |
+|---|---|---|
+| Входящий канал | Telegram + Cloudflare Worker webhook | ⚠️ CF не задеплоен |
+| Резерв polling | telegram-poll.yml cron 5 мин | ✅ Работает |
+| LLM runtime | codex-local.yml → Codex CLI | ✅ Активен |
+| Инструкции Codex | AGENTS.md корень репо | ❌ Не создан |
+| Оркестратор | role-orchestrator.yml | ⚠️ Не подключён к Codex |
+| Каналы | governance/channels/ jsonl | ✅ Работают |
+| Провайдер система | provider_config.json | ❌ Не создана |
+| Исходящий Telegram | curl sendMessage из codex exec | ❌ Не реализован |
 
 ---
 
-## 2. ЧТО УЖЕ СДЕЛАНО ✅
-
-### Инфраструктура
+## 2. ЧТО СДЕЛАНО
 
 | Компонент | Статус | Доказательство |
 |---|---|---|
-| GitHub репозиторий | ✅ | bereznyi-aleksandr/ai-devops-system |
-| GitHub Actions CI | ✅ | Workflows работают |
-| `codex-local.yml` | ✅ | Поддерживает role=curator/analyst/auditor/executor |
-| `telegram-poll.yml` | ✅ | Читает Telegram каждые 5 мин, диспатчит curator |
-| `gpt-hosted-roles.yml` | ✅ ОТКЛЮЧЁН | ARCHIVED, платный API не вызывается |
-| GitHub MCP/PAT для GPT | ✅ | GPT пишет в репо через Custom GPT |
-| Mailbox Claude↔GPT | ✅ | `governance/audit_mailbox/` работает |
-| `.gitignore` | ✅ ИСПРАВЛЕН | `governance/proofs/` больше не игнорируется |
+| GitHub репозиторий | ✅ | main branch |
+| codex-local.yml | ✅ | role=curator/analyst/auditor/executor |
+| telegram-poll.yml | ✅ | Работает |
+| gpt-hosted-roles.yml | ✅ АРХИВ | Платный API отключён |
+| GitHub MCP/PAT для GPT | ✅ | Custom GPT пишет в репо |
+| Mailbox Claude↔GPT | ✅ | governance/audit_mailbox/ |
+| .gitignore исправлен | ✅ | SHA 73231b2e |
+| CF Worker код | ✅ | infrastructure/cloudflare-worker/ |
+| bem931_runner_lib.py | ✅ | 1622 байт |
+| gd_curator_runner.py | ✅ | 1049 байт |
+| dir_curator_runner.py | ✅ | 1080 байт |
+| wrk_curator_runner.py | ✅ | 1479 байт |
+| analyst_stage_runner.py | ⚠️ БЕЗ LLM | 2051 байт — Python без codex exec |
+| auditor_stage_runner.py | ⚠️ БЕЗ LLM | 2755 байт — Python без codex exec |
+| executor_stage_runner.py | ⚠️ БЕЗ LLM | 2438 байт — Python без codex exec |
+| RM-15 Live E2E | ✅ PASS | github_run_id 27116441198 |
+| RM-16 WRK-C1/C2/C3 | ✅ PASS | github_run_id 27116441198 |
+| RM-17 Горизонталь | ✅ PASS | github_run_id 27116441198 |
+| RM-18 Release gate | ✅ PASS | missing=[], failures=[] |
+| GPT Contract v3.0 | ✅ | governance/curator/GPT_CONTRACT_v3_0.md |
 
-### Python runners (библиотека и основные роли)
-
-| Файл | Статус | Размер |
-|---|---|---|
-| `bem931_runner_lib.py` | ✅ Рабочий | 1622 байт |
-| `gd_curator_runner.py` | ✅ Рабочий | 1049 байт |
-| `dir_curator_runner.py` | ✅ Рабочий | 1080 байт |
-| `wrk_curator_runner.py` | ✅ Рабочий | 1479 байт |
-| `analyst_stage_runner.py` | ✅ Рабочий | 2051 байт |
-| `auditor_stage_runner.py` | ✅ Рабочий | 2755 байт |
-| `executor_stage_runner.py` | ✅ Рабочий | 2438 байт |
-
-### Доказанные тесты (BEM-931 v3.6)
-
-| Тест | Статус | github_run_id |
-|---|---|---|
-| RM-15: Live E2E цепочка GD→DIR→WRK→WRK-C1→ANALYST→AUDITOR→EXECUTOR→AUDITOR | ✅ PASS | 27116441198 |
-| RM-16: WRK-C1, WRK-C2, WRK-C3 изолированно | ✅ PASS | 27116441198 |
-| RM-17: Горизонтальный обмен через куратора-медиатора | ✅ PASS | 27116441198 |
-| RM-18: Release gate (missing=[], failures=[]) | ✅ PASS | 27116441198 |
-
-### Контракты и протоколы
-
-| Документ | Статус |
-|---|---|
-| GPT_CONTRACT_v3.0 | ✅ Активен |
-| BEM-931 v3.6 — согласован Claude | ✅ APPROVED |
-| AGENT_CONTEXT.md v2.8 | ✅ Актуален |
+**Важно:** RM-15..18 доказывают работу файловых каналов. НЕ доказывают LLM внутри ролей.
 
 ---
 
-## 3. ЧТО НЕ СДЕЛАНО ❌ — КРИТИЧЕСКИЕ GAPS
+## 3. КРИТИЧЕСКИЕ GAPS
 
-### GAP-1: Роли не подключены к Codex CLI через orchestrator
-
-**Проблема:** `codex-local.yml` умеет запускать role=analyst/auditor/executor, но `role-orchestrator.yml` не диспатчит их через Codex по цепочке. Runners Python выполняются в CI как скрипты — без реального LLM внутри каждой роли.
-
-**Что нужно:** Orchestrator должен вызывать `codex exec` с AGENTS.md промптом для каждой роли.
-
-### GAP-2: AGENTS.md отсутствует
-
-**Проблема:** Codex CLI читает AGENTS.md как постоянные инструкции. Без него каждая роль работает вслепую — не знает структуру каналов, как читать задачи, куда писать результат.
-
-**Что нужно:** `AGENTS.md` в корне репо — инструкции для всех ролей системы.
-
-### GAP-3: Система провайдеров не реализована
-
-**Проблема:** Нет переключения GPT↔Claude при исчерпании лимитов. Нет `provider_config.json`.
-
-**Что нужно:** `governance/config/provider_config.json` + логика в orchestrator.
-
-### GAP-4: Telegram E2E не проверен
-
-**Проблема:** Оператор пишет в Telegram → задача диспатчится → но ответ куратора оператору в Telegram не доказан live receipt с message_id.
-
-**Что нужно:** Тест T-02 из протокола тестирования.
-
-### GAP-5: WRK-C1/C2/C3 как Codex агенты не работают
-
-**Проблема:** Контуры WRK-Cx проходят как Python-runners без LLM. Реального "думания" над задачей нет.
-
-**Что нужно:** Каждый WRK-Cx должен получать задачу через Codex exec с промптом своей роли.
-
----
-
-## 4. ДОРОЖНАЯ КАРТА — ЧТО ОСТАЛОСЬ СДЕЛАТЬ
-
-### Критический путь (строгий порядок)
-
-```
-BEM-CODEX-001 → BEM-CODEX-002 → BEM-CODEX-003 → BEM-CODEX-004 → BEM-CODEX-005 → TEST-T02
-```
-
-| ID | Задача | Зависит от | Статус |
+| # | Gap | Проблема | Что нужно |
 |---|---|---|---|
-| BEM-CODEX-001 | Создать AGENTS.md — инструкции для Codex по структуре системы | — | IN_PROGRESS |
-| BEM-CODEX-002 | Подключить ANALYST к Codex CLI через role-orchestrator | AGENTS.md | PENDING |
-| BEM-CODEX-003 | Подключить AUDITOR к Codex CLI | BEM-CODEX-002 | PENDING |
-| BEM-CODEX-004 | Подключить EXECUTOR к Codex CLI | BEM-CODEX-003 | PENDING |
-| BEM-CODEX-005 | Система провайдеров: GPT primary, Claude fallback | BEM-CODEX-002 | PENDING |
-| TEST-T02 | Live Telegram E2E: оператор пишет → система отвечает | BEM-CODEX-004 | PENDING |
-| RELEASE | Release PASS + Claude external audit | TEST-T02 | BLOCKED |
-
-### Acceptance критерий RELEASE
-
-- [ ] Оператор пишет в Telegram → получает ответ через полную цепочку
-- [ ] Каждая роль (ANALYST/AUDITOR/EXECUTOR) выполняется через `codex exec` с реальным LLM
-- [ ] Провайдер GPT Codex через подписку Plus (не API ключ)
-- [ ] При лимитах GPT — автоматический fallback на Claude
-- [ ] Live receipts с github_run_id для всех шагов
-- [ ] Claude external audit APPROVED
+| GAP-1 КРИТИЧЕСКИЙ | AGENTS.md отсутствует | Codex не знает структуру каналов, роли, форматы | AGENTS.md > 500 байт в корне репо |
+| GAP-2 КРИТИЧЕСКИЙ | Роли без LLM | ANALYST/AUDITOR/EXECUTOR — Python без codex exec | role-orchestrator вызывает codex exec для каждой роли |
+| GAP-3 | Нет исходящего Telegram | Оператор не получает ответ автоматически | curl sendMessage из codex exec в конце задачи |
+| GAP-4 | Нет системы провайдеров | При лимитах GPT — падение без fallback | provider_config.json + логика в orchestrator |
+| GAP-5 | CF Worker не задеплоен | Задержка 5 мин вместо мгновенного webhook | Задеплоить CF Worker, зарегистрировать webhook |
 
 ---
 
-## 5. КАК ЧИТАТЬ ЭТОТ ДОКУМЕНТ
+## 4. ДОРОЖНАЯ КАРТА
 
-**GPT:** Читать в начале каждой сессии ВМЕСТО или ВМЕСТЕ с AGENT_CONTEXT.md.
-После завершения этапа — обновить раздел 2 (сделано) и раздел 3 (осталось).
+Строгий порядок. DONE только с live receipt (github_run_id).
 
-**Claude:** Использовать как baseline для аудита. Проверять соответствие реального состояния репо разделу 2.
-
-**Оператор:** Раздел 3 — то что сейчас блокирует рабочую систему. Раздел 4 — порядок работ.
+| # | ID | Задача | Depends on | Acceptance | Статус |
+|---|---|---|---|---|---|
+| 1 | BEM-CODEX-001 | Создать AGENTS.md | — | > 500 байт, каналы+роли+провайдеры+Telegram формат | IN_PROGRESS |
+| 2 | BEM-CODEX-002 | ANALYST → Codex exec | AGENTS.md | codex exec, план специфичен для задачи, receipt | PENDING |
+| 3 | BEM-CODEX-003 | AUDITOR → Codex exec | BEM-CODEX-002 | codex exec, содержательный вердикт, receipt | PENDING |
+| 4 | BEM-CODEX-004 | EXECUTOR → Codex exec | BEM-CODEX-003 | codex exec, реальный коммит, commit_sha, receipt | PENDING |
+| 5 | BEM-CODEX-005 | Исходящий Telegram | BEM-CODEX-001 | curl sendMessage из curator, message_id в receipt | PENDING |
+| 6 | BEM-CODEX-006 | Система провайдеров | BEM-CODEX-002 | provider_config.json, fallback Claude при лимитах | PENDING |
+| 7 | BEM-CF-001 | Задеплоить CF Worker | — | CF онлайн, webhook < 1 сек, getWebhookInfo OK | PENDING |
+| 8 | TEST-T02 | Live Telegram E2E | BEM-CODEX-005 | Оператор пишет → ответ, 7 receipts, Claude APPROVED | PENDING |
+| 9 | RELEASE | Release PASS | TEST-T02 | WORKING_CONTOUR_READY | BLOCKED |
 
 ---
 
-*Документ создан: Claude (EXTERNAL_AUDITOR_CLAUDE) | 2026-06-08*
-*Следующее обновление: GPT после завершения BEM-CODEX-001*
+## 5. ПРАВИЛА РАБОТЫ С ДОКУМЕНТОМ
+
+**GPT:** читать в начале сессии. После DONE задачи — обновить разделы 2, 3, 4.
+**Claude:** проверять раздел 2 на соответствие репо при аудите.
+**Оператор:** раздел 3 = что блокирует. Раздел 4 = что строим.
+
+*Финальная редакция v2.0 | Claude | 2026-06-08*
