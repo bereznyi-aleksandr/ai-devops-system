@@ -1,94 +1,86 @@
 # AGENT_CONTEXT.md | canonical configuration
 
-Updated: 2026-06-07
+Updated: 2026-06-08
 Repository: bereznyi-aleksandr/ai-devops-system
-Instruction version: 2.8
+Instruction version: 2.9
 Protocol status: BEM-931 v3.6 active
 System status: WORKING_CONTOUR_NOT_READY
 
+## ПЕРВОЕ ДЕЙСТВИЕ ПРИ СТАРТЕ СЕССИИ
+
+1. Читать `SYSTEM_STATUS.md` в корне репо — там концепция, что сделано, что осталось
+2. Читать `governance/roadmap/ACTIVE_QUEUE.json` — текущие задачи
+3. Взять первую IN_PROGRESS или PENDING задачу и выполнять
+
 ## Role
 
-GPT is an external auditor and implementation agent for the repository.
+GPT is an external autonomous implementation agent for the repository.
 Claude is peer external auditor.
 Operator is strategic authority only, not a relay between tasks.
 
 ## Canonical runtime
 
 Canonical LLM runtime: `.github/workflows/codex-local.yml`
-Provider: `codex_local`
+Provider: GPT Codex via ChatGPT Plus subscription (OAuth, not API key)
 Runner: self-hosted runner with Codex CLI and OAuth session.
 Curator runtime must use Codex Local only.
 
 Forbidden active production runtimes:
 - Gemini API
-- OpenAI HTTP API
+- OpenAI HTTP API (OPENAI_API_KEY)
 - paid hosted GPT runtime
 - `.github/workflows/gpt-hosted-roles.yml` as active curator runtime
 
-`gpt-hosted-roles.yml` may exist only as archived/disabled stub and must not call any API.
+`gpt-hosted-roles.yml` exists only as archived/disabled stub.
 
-## Current status
+## System architecture (summary)
 
-The managing contour is not production-ready.
-Do not report "working contour complete" until all live receipts are present.
+Full architecture: see `SYSTEM_STATUS.md` section 1.
 
-Required for release:
-- canonical objects: GD, DIR, WRK
-- canonical contours: GD-C1, GD-C2, DIR-C1, DIR-C2, WRK-C1, WRK-C2, WRK-C3
-- each internal contour has ANALYST, AUDITOR, EXECUTOR
-- curators exist as runtime elements: GD.CURATOR, DIR.CURATOR, WRK.CURATOR
-- every element has prompt_profile_id and provider_binding_id
-- Codex Local provider receipt exists for every live role execution
-- managed channels route operator -> GD -> DIR -> WRK -> WRK-Cx and back
-- live E2E trace exists
-- Telegram receipt exists
-- external Claude audit receipt exists
-- legacy Gemini/API/paid hosted paths are disabled or archived
+Objects: GD → DIR → WRK
+Each WRK has: WRK.CURATOR + WRK-C1, WRK-C2, WRK-C3 (minimum)
+Each WRK-Cx has: ANALYST → AUDITOR.pre → EXECUTOR → AUDITOR.post
+All roles run via Codex CLI (codex exec) with AGENTS.md instructions.
 
-## Startup protocol
+## What is done / what remains
 
-1. Read this file.
-2. Read `governance/roadmap/ACTIVQUEUE.json`.
-3. Take the first task with status `IN_PROGRESS` or `PENDING`.
-4. Execute only from ACTIVE_QUEUE. Do not invent tasks.
-5. A task may be marked DONE only when it has:
-   - non-null commit SHA
-   - result artifact path
-   - validator or receipt
-   - execution log entry
-   - canonical operator report when required
-6. Documentation-only closure is not valid for runtime tasks.
-7. Continue to the next pending task only when acceptance evidence exists.
+See `SYSTEM_STATUS.md` sections 2 and 3.
 
-## File roles
+Critical gaps blocking production:
+1. AGENTS.md missing — Codex has no system instructions
+2. Roles not connected to Codex via orchestrator (run as Python stubs without LLM)
+3. Provider system missing (no GPT↔Claude fallback)
+4. Telegram E2E not proven with live receipt
 
-`governance/protocols/bem931_v3_6_working_contour_detailed_roadmap.md` — source protocol for working contour implementation.
-`governance/roadmap/ACTIVE_QUEUE.json` — current executable queue.
-`governance/logs/execution_log.jsonl` — append-only history.
-`governance/reports/operator/` — canonical operator reports.
-`governance/proofs/` — receipts and proof artifacts.
-`governance/traces/` — runtime traces.
+## Current tasks
 
-## Evidence rules
+`governance/roadmap/ACTIVE_QUEUE.json` — execute only from here.
+`SYSTEM_STATUS.md` — update after each completed stage.
 
-PASS requires non-null SHA from GitHub create/update response.
-Proof-only commits are not release evidence.
-Live runtime requires provider receipt, trace, and accepted result.
-No secrets or tokens in repository files.
-No raw logs, stdout, stderr, diffs, or tracebacks in Telegram operator reports.
+Task closure requires:
+- non-null commit SHA
+- result artifact
+- validator or receipt
+- execution log entry
+- canonical operator report when required
+
+Documentation-only closure is NOT valid for runtime tasks.
 
 ## Report canon
 
-Operator report must contain only:
-- stage progress: tasks inside current stage
-- roadmap progress: stages completed
-- checklist as separate lines
+Operator report (Telegram):
+- stage progress: X/Y tasks (%)
+- roadmap progress: X/Y stages (%)
+- checklist as separate lines with ✅ / ❌
 - operator question only if required
-- for direct answers: short answer + next step
 
-## Current source of tasks
+Forbidden: diff, stdout, stderr, traceback, raw JSON, reasoning text.
 
-Use `ACTIVE_QUEUE.json` only.
-Current queue is seeded from BEM-931 v3.6 with priority:
-1. RM-01 — working contour status/gap reset
-2. RM-14 — legacy runtime archive
+## File roles
+
+`SYSTEM_STATUS.md` — ГЛАВНЫЙ ДОКУМЕНТ: концепция, статус, дорожная карта
+`governance/roadmap/ACTIVE_QUEUE.json` — current executable queue
+`governance/logs/execution_log.jsonl` — append-only history
+`governance/reports/operator/` — canonical operator reports
+`governance/proofs/` — receipts and proof artifacts
+`governance/protocols/bem931_v3_6_working_contour_detailed_roadmap.md` — detailed protocol
