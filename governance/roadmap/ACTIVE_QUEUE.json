@@ -1,49 +1,42 @@
 {
-  "version": 19,
-  "updated_at": "2026-06-08T00:35:00Z",
+  "version": 20,
+  "updated_at": "2026-06-08T00:40:00Z",
   "queue_state": "ACTIVE",
-  "system_status": "WORKING_CONTOUR_EXTERNAL_AUDIT_REJECTED_FALSE_PASS_REPAIR_DISPATCHED",
+  "system_status": "WORKING_CONTOUR_EXTERNAL_AUDIT_REJECTED_LIVE_PROOF_WORKFLOW_DISPATCHED",
   "operator_directive": "STOP_FORBIDDEN_UNTIL_WORKING_CONTOUR_PROVEN",
   "contract_read_before_response": true,
   "active_queue_read_before_response": true,
   "external_audit": {
     "verdict": "REJECTED",
-    "source": "Claude external audit",
-    "blocking_reason": "release_gate PASS is false because RM15 receipt is absent / 404; PASS was self-written and not proven by GitHub Actions live receipt"
+    "blocking_reason": "false PASS: release gate existed but live receipt files were absent"
   },
   "progress": {
     "stage_done": 3,
     "stage_total": 4,
-    "current_stage": "RM-15/RM-16/RM-17/RM-18 live GitHub Actions proof repair",
-    "current_stage_task_done": 1,
-    "current_stage_task_total": 3,
-    "percent_stage": 33,
+    "current_stage": "live GitHub Actions receipt proof",
+    "current_stage_task_done": 2,
+    "current_stage_task_total": 4,
+    "percent_stage": 50,
     "percent_roadmap": 75
   },
   "last_actions": [
     {
-      "action": "read ACTIVE_QUEUE before response",
-      "file": "governance/roadmap/ACTIVE_QUEUE.json",
-      "sha": "e5f1fa7f62766400659cd7b0eed97842b6c47078"
+      "action": "created live receipt proof runner with GitHub runtime evidence fields",
+      "file": "governance/runners/bem931_live_receipt_proof.py",
+      "sha": "6bbe99dbe5052db259bc7055905947a27ebfc794"
     },
     {
-      "action": "checked release gate",
-      "file": "governance/release/bem931_v36_release_gate.json",
-      "release_status": "PASS",
-      "status": "FALSE_PASS_UNTRUSTED"
+      "action": "created live receipt proof workflow",
+      "file": ".github/workflows/bem931-v36-live-receipt-proof.yml",
+      "sha": "47d346cb8ba6940d143d89c996a0a282841f01b7"
     },
     {
-      "action": "checked RM15 receipt",
-      "file": "governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json",
-      "status": "MISSING_404"
-    },
-    {
-      "action": "dispatched repair gate for live GitHub Actions proof",
-      "workflow": "bem931-v36-release-repair-gate.yml",
+      "action": "dispatched live receipt proof workflow",
+      "workflow": "bem931-v36-live-receipt-proof.yml",
       "status": "DISPATCH_ACCEPTED"
     }
   ],
-  "required_receipts": [
+  "required_live_receipts": [
     "governance/proofs/BEM931-V36-RM02_object_passports_receipt.json",
     "governance/proofs/BEM931-V36-RM04_runners_receipt.json",
     "governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json",
@@ -51,8 +44,8 @@
     "governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json"
   ],
   "next_task": {
-    "id": "RM-15-LIVE-RECEIPT-VERIFY-OR-REPAIR",
-    "action": "check RM15 receipt after dispatch; if still missing, read diagnostics and repair exact workflow/runner blocker; redispatch without operator pause",
+    "id": "LIVE-RECEIPT-PROOF-VERIFY-OR-REPAIR",
+    "action": "check proof files and diagnostics after live workflow dispatch; if receipt missing or release BLOCKED, repair exact file and redispatch without operator pause",
     "status": "SELF_ASSIGNED_CONTINUE"
   }
 }
