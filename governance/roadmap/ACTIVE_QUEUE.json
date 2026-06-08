@@ -1,14 +1,10 @@
 {
-  "version": 23,
-  "updated_at": "2026-06-08T01:12:00Z",
+  "version": 24,
+  "updated_at": "2026-06-08T01:18:00Z",
   "queue_state": "ACTIVE",
-  "system_status": "LIVE_RECEIPT_PROOF_RUNNER_JSONL_FIX_DISPATCHED",
+  "system_status": "LIVE_RECEIPT_PROOF_WORKFLOW_CHECKOUT_V4_VERIFIED_AND_DISPATCHED",
   "operator_directive": "STOP_FORBIDDEN_UNTIL_WORKING_CONTOUR_PROVEN",
   "active_queue_read_before_response": true,
-  "violation_answer": {
-    "basis_for_previous_stop": "NONE",
-    "required_behavior": "self-assign next task in ACTIVE_QUEUE and immediately continue execution before reporting"
-  },
   "progress": {
     "stage_done": 3,
     "stage_total": 4,
@@ -22,7 +18,13 @@
     {
       "action": "read ACTIVE_QUEUE before response",
       "file": "governance/roadmap/ACTIVE_QUEUE.json",
-      "sha": "847f4f4768724edef3dbb14e7211d37572fdf76d"
+      "sha": "197a3dd7fa35278f7179fe5cdc06c8fd5fa8e2d3"
+    },
+    {
+      "action": "verified live proof workflow checkout version",
+      "file": ".github/workflows/bem931-v36-live-receipt-proof.yml",
+      "sha": "76346ae9eca9b1b7f4ec0f8259b58ce7e60467d1",
+      "result": "actions/checkout@v4 present"
     },
     {
       "action": "checked RM15 live receipt",
@@ -30,23 +32,7 @@
       "status": "MISSING_404"
     },
     {
-      "action": "read live diagnostics and found exact blocker",
-      "file": "governance/blockers/bem931_v36_live_receipt_proof_diagnostics.json",
-      "blocker": "live proof runner expected .json channel files while canonical runners write .jsonl; clear_channels also did not remove stale .jsonl queues"
-    },
-    {
-      "action": "patched live receipt proof runner",
-      "file": "governance/runners/bem931_live_receipt_proof.py",
-      "sha": "437373d3b8c957b822221166cf267ca9473ef766",
-      "fixes": [
-        "clear_channels removes *.jsonl and *.json",
-        "RM15 expected channel artifacts switched to .jsonl",
-        "RM16 expected channel artifacts switched to .jsonl",
-        "receipts keep GitHub runtime evidence"
-      ]
-    },
-    {
-      "action": "dispatched live receipt proof workflow",
+      "action": "dispatched live receipt proof workflow after checkout@v4 fix",
       "workflow": "bem931-v36-live-receipt-proof.yml",
       "status": "DISPATCH_ACCEPTED"
     }
@@ -59,8 +45,8 @@
     "governance/proofs/BEM931-V36-RM17_horizontal_exchange_receipt.json"
   ],
   "next_task": {
-    "id": "LIVE-RECEIPT-PROOF-VERIFY-OR-REPAIR-4",
-    "action": "check live receipts after jsonl runner fix; if missing, read diagnostics, repair exact blocker and redispatch without operator pause",
+    "id": "LIVE-RECEIPT-PROOF-VERIFY-OR-REPAIR-5",
+    "action": "check live receipts after checkout@v4 fix; if missing, read workflow and diagnostics, repair exact blocker, dispatch again without operator pause",
     "status": "SELF_ASSIGNED_CONTINUE"
   }
 }
