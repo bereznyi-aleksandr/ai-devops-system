@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """BEM-931 v3.6 live GitHub Actions receipt proof.
 
-This runner is intentionally used from GitHub Actions only.
-Every canonical receipt contains GitHub runtime evidence:
-workflow name, run id, run number, run attempt and commit SHA.
+The runner is executed inside GitHub Actions and writes receipts with
+GITHUB_RUN_ID / GITHUB_RUN_NUMBER / GITHUB_RUN_ATTEMPT / GITHUB_SHA.
+It verifies the real runner chain by reading jsonl channels and worker results
+created during the same workflow run.
 """
 from __future__ import annotations
 
@@ -38,10 +39,6 @@ COMMANDS: list[dict[str, Any]] = []
 FAILURES: list[dict[str, Any]] = []
 
 
-def rel(path: Path | str) -> str:
-    return str(Path(path).resolve().relative_to(ROOT))
-
-
 def runtime() -> dict[str, str]:
     return {
         "workflow": WORKFLOW,
@@ -51,6 +48,10 @@ def runtime() -> dict[str, str]:
         "github_sha": GITHUB_SHA,
         "created_at": NOW,
     }
+
+
+def rel(path: Path | str) -> str:
+    return str(Path(path).resolve().relative_to(ROOT))
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -70,13 +71,15 @@ def fail(stage: str, detail: str) -> None:
 
 def run_cmd(cmd: list[str], stage: str) -> subprocess.CompletedProcess[str]:
     proc = subprocess.run(cmd, cwd=ROOT, text=True, capture_output=True)
-    COMMANDS.append({
-        "stage": stage,
-        "cmd": cmd,
-        "returncode": proc.returncode,
-        "stdout_tail": proc.stdout[-4000:],
-        "stderr_tail": proc.stderr[-4000:],
-    })
+    COMMANDS.append(
+        {
+            "stage": stage,
+            "cmd": cmd,
+            "returncode": proc.returncode,
+            "stdout_tail": proc.stdout[-4000:],
+            "stderr_tail": proc.stderr[-4000:],
+        }
+    )
     if proc.returncode != 0:
         fail(stage, f"command failed: {' '.join(cmd)}")
     return proc
@@ -84,8 +87,9 @@ def run_cmd(cmd: list[str], stage: str) -> subprocess.CompletedProcess[str]:
 
 def clear_channels() -> None:
     CHANNELS.mkdir(parents=True, exist_ok=True)
-    for item in CHANNELS.glob("*.json"):
-        item.unlink()
+    for pattern in ("*.jsonl", "*.json"):
+        for item in CHANNELS.glob(pattern):
+            item.unlink()
 
 
 def assert_file(stage: str, file_name: str, trace: str | None = None, min_size: int = 20) -> bool:
@@ -107,25 +111,31 @@ def assert_file(stage: str, file_name: str, trace: str | None = None, min_size: 
 def validate_static() -> None:
     rm02 = run_cmd(["python3", "governance/validators/bem931_v36_rm02_object_passports_validate.py"], "RM-02")
     if rm02.returncode == 0:
-        write_json(PROOFS / "BEM931-V36-RM02_object_passports_receipt.json", {
-            "protocol": "BEM-931 v3.6",
-            "roadmap_item": "RM-02",
-            "status": "PASS",
-            "receipt_type": "live_github_actions_validator",
-            "validator": "governance/validators/bem931_v36_rm02_object_passports_validate.py",
-            **runtime(),
-        })
+        write_json(
+            PROOFS / "BEM931-V36-RM02_object_passports_receipt.json",
+            {
+                "protocol": "BEM-931 v3.6",
+                "roadmap_item": "RM-02",
+                "status": "PASS",
+                "receipt_type": "live_github_actions_validator",
+                "validator": "governance/validators/bem931_v36_rm02_object_passports_validate.py",
+                **runtime(),
+            },
+        )
 
     rm04 = run_cmd(["python3", "governance/validators/bem931_v36_rm04_runners_validate.py"], "RM-04")
     if rm04.returncode == 0:
-        write_json(PROOFS / "BEM931-V36-RM04_runners_receipt.json", {
-            "protocol": "BEM-931 v3.6",
-            "roadmap_item": "RM-04-RUNNERS",
-            "status": "PASS",
-            "receipt_type": "live_github_actions_validator",
-            "validator": "governance/validators/bem931_v36_rm04_runners_validate.py",
-            **runtime(),
-        })
+        write_json(
+            PROOFS / "BEM931-V36-RM04_runners_receipt.json",
+            {
+                "protocol": "BEM-931 v3.6",
+                "roadmap_item": "RM-04-RUNNERS",
+                "status": "PASS",
+                "receipt_type": "live_github_actions_validator",
+                "validator": "governance/validators/bem931_v36_rm04_runners_validate.py",
+                **runtime(),
+            },
+        )
 
 
 def run_runner_chain(trace: str, contour_id: str, source: str) -> bool:
@@ -135,14 +145,17 @@ def run_runner_chain(trace: str, contour_id: str, source: str) -> bool:
         shutil.rmtree(result_dir)
 
     if source == "operator":
-        append_jsonl(CHANNELS / "operator_to_gd.json", {
-            "trace_id": trace,
-            "status": "pending",
-            "from": "OPERATOR",
-            "to": "GD.CURATOR",
-            "task": f"BEM-931 v3.6 live E2E proof {trace}",
-            "created_at": NOW,
-        })
+        append_jsonl(
+            CHANNELS / "operator_to_gd.jsonl",
+            {
+                "trace_id": trace,
+                "status": "pending",
+                "from": "OPERATOR",
+                "to": "GD.CURATOR",
+                "task": f"BEM-931 v3.6 live E2E proof {trace}",
+                "created_at": NOW,
+            },
+        )
         runners = [
             "governance/runners/gd_curator_runner.py",
             "governance/runners/dir_curator_runner.py",
@@ -153,15 +166,18 @@ def run_runner_chain(trace: str, contour_id: str, source: str) -> bool:
             "governance/runners/auditor_stage_runner.py",
         ]
     else:
-        append_jsonl(CHANNELS / "dir_to_wrk.json", {
-            "trace_id": trace,
-            "status": "pending",
-            "from": "DIR.CURATOR",
-            "to": "WRK.CURATOR",
-            "target_contour": contour_id,
-            "task": f"BEM-931 v3.6 isolated contour proof {contour_id}",
-            "created_at": NOW,
-        })
+        append_jsonl(
+            CHANNELS / "dir_to_wrk.jsonl",
+            {
+                "trace_id": trace,
+                "status": "pending",
+                "from": "DIR.CURATOR",
+                "to": "WRK.CURATOR",
+                "target_contour": contour_id,
+                "task": f"BEM-931 v3.6 isolated contour proof {contour_id}",
+                "created_at": NOW,
+            },
+        )
         runners = [
             "governance/runners/wrk_curator_runner.py",
             "governance/runners/analyst_stage_runner.py",
@@ -179,12 +195,12 @@ def run_runner_chain(trace: str, contour_id: str, source: str) -> bool:
 
 def verify_rm15(trace: str) -> bool:
     files = [
-        "governance/channels/gd_to_dir.json",
-        "governance/channels/dir_to_wrk.json",
-        "governance/channels/wrk_c1_to_analyst.json",
-        "governance/channels/wrk_c1_to_auditor_pre.json",
-        "governance/channels/wrk_c1_to_executor.json",
-        "governance/channels/wrk_c1_to_auditor_post.json",
+        "governance/channels/gd_to_dir.jsonl",
+        "governance/channels/dir_to_wrk.jsonl",
+        "governance/channels/wrk_c1_to_analyst.jsonl",
+        "governance/channels/wrk_c1_to_auditor_pre.jsonl",
+        "governance/channels/wrk_c1_to_executor.jsonl",
+        "governance/channels/wrk_c1_to_auditor_post.jsonl",
         "governance/channels/wrk_to_curator_feedback.jsonl",
     ]
     ok = True
@@ -194,42 +210,45 @@ def verify_rm15(trace: str) -> bool:
     result_file = f"governance/results/{trace}/worker_result.json"
     ok = assert_file("RM-15", result_file, None, 50) and ok
 
-    feedback_path = ROOT / "governance/channels/wrk_to_curator_feedback.json"
+    feedback_path = ROOT / "governance/channels/wrk_to_curator_feedback.jsonl"
     if feedback_path.exists() and "PASS" not in feedback_path.read_text(encoding="utf-8", errors="replace"):
         fail("RM-15", "auditor PASS missing in feedback")
         ok = False
 
     if ok:
-        write_json(PROOFS / "BEM931-V36-RM15_live_e2e_receipt.json", {
-            "protocol": "BEM-931 v3.6",
-            "roadmap_item": "RM-15-E2E",
-            "status": "PASS",
-            "receipt_type": "live_github_actions_e2e",
-            "trace_id": trace,
-            "chain": [
-                "OPERATOR",
-                "GD.CURATOR",
-                "DIR.CURATOR",
-                "WRK.CURATOR",
-                "WRK-C1.ANALYST",
-                "WRK-C1.AUDITOR.pre",
-                "WRK-C1.EXECUTOR",
-                "WRK-C1.AUDITOR.post",
-                "WRK.CURATOR.feedback",
-            ],
-            "artifacts": files + [result_file],
-            **runtime(),
-        })
+        write_json(
+            PROOFS / "BEM931-V36-RM15_live_e2e_receipt.json",
+            {
+                "protocol": "BEM-931 v3.6",
+                "roadmap_item": "RM-15-E2E",
+                "status": "PASS",
+                "receipt_type": "live_github_actions_e2e",
+                "trace_id": trace,
+                "chain": [
+                    "OPERATOR",
+                    "GD.CURATOR",
+                    "DIR.CURATOR",
+                    "WRK.CURATOR",
+                    "WRK-C1.ANALYST",
+                    "WRK-C1.AUDITOR.pre",
+                    "WRK-C1.EXECUTOR",
+                    "WRK-C1.AUDITOR.post",
+                    "WRK.CURATOR.feedback",
+                ],
+                "artifacts": files + [result_file],
+                **runtime(),
+            },
+        )
     return ok
 
 
 def verify_one_contour(trace: str, contour_id: str) -> tuple[bool, dict[str, Any]]:
     prefix = contour_id.lower().replace("-", "_")
     files = [
-        f"governance/channels/{prefix}_to_analyst.json",
-        f"governance/channels/{prefix}_to_auditor_pre.json",
-        f"governance/channels/{prefix}_to_executor.json",
-        f"governance/channels/{prefix}_to_auditor_post.json",
+        f"governance/channels/{prefix}_to_analyst.jsonl",
+        f"governance/channels/{prefix}_to_auditor_pre.jsonl",
+        f"governance/channels/{prefix}_to_executor.jsonl",
+        f"governance/channels/{prefix}_to_auditor_post.jsonl",
         "governance/channels/wrk_to_curator_feedback.jsonl",
     ]
     ok = True
@@ -301,21 +320,24 @@ def run_rm17() -> bool:
         and "direct_role_to_role" not in text
     )
     if ok:
-        write_json(PROOFS / "BEM931-V36-RM17_horizontal_exchange_receipt.json", {
-            "protocol": "BEM-931 v3.6",
-            "roadmap_item": "RM-17",
-            "status": "PASS",
-            "receipt_type": "live_github_actions_horizontal_exchange",
-            "registry": rel(registry),
-            "checks": [
-                "mediator_present",
-                "source_auditor",
-                "receiver_analyst",
-                "proof_ref",
-                "rule_version",
-            ],
-            **runtime(),
-        })
+        write_json(
+            PROOFS / "BEM931-V36-RM17_horizontal_exchange_receipt.json",
+            {
+                "protocol": "BEM-931 v3.6",
+                "roadmap_item": "RM-17",
+                "status": "PASS",
+                "receipt_type": "live_github_actions_horizontal_exchange",
+                "registry": rel(registry),
+                "checks": [
+                    "mediator_present",
+                    "source_auditor",
+                    "receiver_analyst",
+                    "proof_ref",
+                    "rule_version",
+                ],
+                **runtime(),
+            },
+        )
     else:
         fail("RM-17", "horizontal exchange registry validation failed")
     return ok
@@ -331,22 +353,28 @@ def write_release_gate() -> str:
     }
     missing = [key for key, path in required.items() if not path.exists()]
     status = "PASS" if not missing and not FAILURES else "BLOCKED"
-    write_json(RELEASE / "bem931_v36_release_gate.json", {
-        "protocol": "BEM-931 v3.6",
-        "roadmap_item": "RM-18",
-        "release_status": status,
-        "missing": missing,
-        "failures": FAILURES,
-        "required": {key: rel(path) for key, path in required.items()},
-        **runtime(),
-    })
-    write_json(BLOCKERS / "bem931_v36_live_receipt_proof_diagnostics.json", {
-        "protocol": "BEM-931 v3.6",
-        "status": status,
-        "failures": FAILURES,
-        "commands": COMMANDS,
-        **runtime(),
-    })
+    write_json(
+        RELEASE / "bem931_v36_release_gate.json",
+        {
+            "protocol": "BEM-931 v3.6",
+            "roadmap_item": "RM-18",
+            "release_status": status,
+            "missing": missing,
+            "failures": FAILURES,
+            "required": {key: rel(path) for key, path in required.items()},
+            **runtime(),
+        },
+    )
+    write_json(
+        BLOCKERS / "bem931_v36_live_receipt_proof_diagnostics.json",
+        {
+            "protocol": "BEM-931 v3.6",
+            "status": status,
+            "failures": FAILURES,
+            "commands": COMMANDS,
+            **runtime(),
+        },
+    )
     return status
 
 
@@ -362,15 +390,19 @@ def main() -> int:
     rm17_ok = run_rm17()
     release_status = write_release_gate()
 
-    print(json.dumps({
-        "rm15": "PASS" if rm15_ok else "FAIL",
-        "rm16": "PASS" if rm16_ok else "FAIL",
-        "rm17": "PASS" if rm17_ok else "FAIL",
-        "release_status": release_status,
-        "failures": len(FAILURES),
-        "github_run_id": RUN_ID,
-    }, ensure_ascii=False))
-
+    print(
+        json.dumps(
+            {
+                "rm15": "PASS" if rm15_ok else "FAIL",
+                "rm16": "PASS" if rm16_ok else "FAIL",
+                "rm17": "PASS" if rm17_ok else "FAIL",
+                "release_status": release_status,
+                "failures": len(FAILURES),
+                "github_run_id": RUN_ID,
+            },
+            ensure_ascii=False,
+        )
+    )
     return 0
 
 
