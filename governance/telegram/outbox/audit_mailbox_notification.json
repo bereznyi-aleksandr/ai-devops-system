@@ -2,50 +2,14 @@
   "schema_version": "telegram_operator_notification.v1",
   "type": "audit_mailbox_new_response",
   "status": "pending_delivery",
-  "created_at": "2026-06-08 | 09:39 (UTC+3)",
-  "message": "BEM-MAILBOX | Ответ Claude получен\nДата: 2026-06-08 | 09:39 (UTC+3)\nНовых сообщений: 7\nРешение: APPROVE\nФайл: governance/audit_mailbox/claude_to_gpt/bem931_v3_6_final_audit_approved.md",
+  "created_at": "2026-06-08 | 14:29 (UTC+3)",
+  "message": "BEM-MAILBOX | Ответ Claude получен\nДата: 2026-06-08 | 14:29 (UTC+3)\nНовых сообщений: 1\nРешение: MESSAGE\nФайл: governance/audit_mailbox/claude_to_gpt/bem_codex_gap_analysis.md",
   "items": [
     {
-      "path": "governance/audit_mailbox/claude_to_gpt/bem931_checkout_fix.md",
-      "size": 1461,
+      "path": "governance/audit_mailbox/claude_to_gpt/bem_codex_gap_analysis.md",
+      "size": 2558,
       "decision": "MESSAGE",
-      "subject": "BEM-931 | CLAUDE → GPT | BLOCKER НАЙДЕН | 2026-06-08T04:16Z"
-    },
-    {
-      "path": "governance/audit_mailbox/claude_to_gpt/bem931_git_fix_2.md",
-      "size": 1685,
-      "decision": "MESSAGE",
-      "subject": "BEM-931 | CLAUDE → GPT | FIX 2 | 2026-06-08T03:59Z"
-    },
-    {
-      "path": "governance/audit_mailbox/claude_to_gpt/bem931_git_ordering_fix.md",
-      "size": 2014,
-      "decision": "MESSAGE",
-      "subject": "BEM-931 | CLAUDE → GPT | BLOCKER НАЙДЕН И ИСПРАВЛЕН | 2026-06-08"
-    },
-    {
-      "path": "governance/audit_mailbox/claude_to_gpt/bem931_gitignore_fix.md",
-      "size": 1322,
-      "decision": "MESSAGE",
-      "subject": "BEM-931 | CLAUDE → GPT | ФИНАЛЬНЫЙ БЛОКЕР НАЙДЕН | 2026-06-08T04:39Z"
-    },
-    {
-      "path": "governance/audit_mailbox/claude_to_gpt/bem931_v36_external_audit_verdict.md",
-      "size": 3287,
-      "decision": "MESSAGE",
-      "subject": "BEM-931 v3.6 | ВНЕШНИЙ АУДИТ | Claude → GPT | 2026-06-08"
-    },
-    {
-      "path": "governance/audit_mailbox/claude_to_gpt/bem931_v3_6_closure.md",
-      "size": 1839,
-      "decision": "APPROVE",
-      "subject": "BEM-931 v3.6 | ФИНАЛЬНОЕ ЗАКЛЮЧЕНИЕ ВНЕШНЕГО АУДИТОРА"
-    },
-    {
-      "path": "governance/audit_mailbox/claude_to_gpt/bem931_v3_6_final_audit_approved.md",
-      "size": 2057,
-      "decision": "APPROVE",
-      "subject": "BEM-931 v3.6 | ФИНАЛЬНЫЙ АУДИТ | Claude → GPT | 2026-06-08"
+      "subject": "BEM-CODEX | CLAUDE → GPT | GAP АНАЛИЗ + НОВЫЕ ЗАДАЧИ | 2026-06-08"
     }
   ]
 }
