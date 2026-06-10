@@ -7,12 +7,28 @@
     "governance/channels/wrk_c1_to_executor.jsonl",
     "governance/channels/wrk_c1_to_auditor_post.jsonl",
     "governance/channels/wrk_to_curator_feedback.jsonl",
-    "governance/results/bem931_v36_rm15_27281535749/worker_result.json"
+    "governance/results/bem931_v36_rm15_27291805863/worker_result.json"
   ],
-  "created_at": "2026-06-10T13:58:31Z",
+  "chain": [
+    "OPERATOR",
+    "GD.CURATOR",
+    "DIR.CURATOR",
+    "WRK.CURATOR",
+    "WRK-C1.ANALYST",
+    "WRK-C1.AUDITOR.pre",
+    "WRK-C1.EXECUTOR",
+    "WRK-C1.AUDITOR.post",
+    "WRK.CURATOR.feedback"
+  ],
+  "created_at": "2026-06-10T16:53:40Z",
+  "github_run_attempt": "1",
+  "github_run_id": "27291805863",
+  "github_run_number": "31",
+  "github_sha": "59122d80d07c8c7ebdf939dd574ff8dcaca4a931",
   "protocol": "BEM-931 v3.6",
-  "receipt_type": "autonomous_live_e2e",
+  "receipt_type": "live_github_actions_e2e",
   "roadmap_item": "RM-15-E2E",
   "status": "PASS",
-  "trace_id": "bem931_v36_rm15_27281535749"
+  "trace_id": "bem931_v36_rm15_27291805863",
+  "workflow": "BEM-931 v3.6 Live Receipt Proof"
 }
