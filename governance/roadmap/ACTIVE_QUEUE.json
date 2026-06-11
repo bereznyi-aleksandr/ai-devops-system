@@ -1,105 +1,189 @@
 {
-  "version": 8,
-  "updated_at": "2026-06-08T11:00:00Z",
-  "source": "Claude EXTERNAL_AUDITOR — GAP анализ подключения Codex CLI к ролям",
+  "version": 9,
+  "updated_at": "2026-06-08T18:30:00Z",
+  "source": "Claude EXTERNAL_AUDITOR — provider router gap confirmed by GPT analysis",
   "queue_state": "ACTIVE",
   "policy": {
     "done_rule": "DONE = non-null SHA + рабочий код + для workflow задач: receipt с github_run_id",
-    "stub_rule": "Python заглушка без LLM вызова = NOT DONE",
+    "stub_rule": "Python заглушка / метка-поле без реальной логики = NOT DONE",
     "queue_limit": "Максимум 5 задач одновременно",
     "stop_rule": "Остановка только если ACTIVE_QUEUE пуст"
   },
 
   "gap_summary": {
-    "что_работает": [
-      "codex-local.yml — инфраструктура для всех 4 ролей через Codex CLI ЕСТЬ",
-      "telegram-poll.yml — читает сообщения и диспатчит curator",
-      "Файловые каналы jsonl — работают",
-      "GitHub Actions CI — работает"
-    ],
-    "что_не_работает": [
-      "ANALYST/AUDITOR/EXECUTOR — вызываются как Python заглушки, не через Codex CLI",
-      "role-orchestrator.yml — не диспатчит роли через codex-local.yml по цепочке",
-      "Система провайдеров — нет переключения GPT↔Claude при лимитах",
-      "AGENTS.md — нет файла с инструкциями для Codex (как читать задачи из каналов)",
-      "Ответ куратора оператору в Telegram — не реализован"
+    "подтверждено_GPT": [
+      "governance/config/provider_config.json — отсутствует",
+      "codex-local.yml принимает provider как метку, но не использует для роутинга",
+      "role-orchestrator.yml выбирает роль, но не выбирает provider",
+      "scripts/role_orchestrator_decide.py — нет fallback provider логики",
+      "Нет provider-router: telegram → provider-router → codex-local | claude-local"
     ]
   },
 
   "tasks": [
     {
-      "id": "BEM-CODEX-001",
-      "title": "Создать AGENTS.md — инструкции для Codex по работе с системой",
+      "id": "BEM-PROVIDER-001",
+      "title": "Provider router: GPT primary → Claude fallback при quota/rate-limit/unavailable",
       "status": "IN_PROGRESS",
       "priority": 1,
-      "why": "Codex CLI читает AGENTS.md как постоянные инструкции. Без него каждая роль работает вслепую — не знает где каналы, как читать задачи, куда писать результат.",
+      "why": "Curator сейчас блокируется при исчерпании лимитов GPT Codex. provider:gpt_codex — метка без логики. Нужен единый router перед запуском роли.",
+      "subtasks": [
+        {
+          "id": "BEM-PROVIDER-001-A",
+          "title": "Создать governance/config/provider_config.json",
+          "acceptance": [
+            "Валидный JSON с разделом curator: {primary: gpt_codex, fallback: claude_code, fallback_on: [quota_exceeded, rate_limit, provider_unavailable]}",
+            "Аналогичные секции для analyst/auditor/executor (fallback может совпадать)",
+            "Файл > 200 байт"
+          ]
+        },
+        {
+          "id": "BEM-PROVIDER-001-B",
+          "title": "Создать scripts/provider_router.py",
+          "acceptance": [
+            "def main(role, task_input) -> определяет provider из provider_config.json",
+            "Проверяет предыдущий результат: если в governance/codex/results/ есть запись с error содержащим quota|rate limit|unavailable для primary — выбрать fallback",
+            "Возвращает provider + причину выбора (primary | fallback_quota | fallback_rate_limit | fallback_unavailable)",
+            "ast.parse OK, > 300 байт, def main() есть"
+          ]
+        },
+        {
+          "id": "BEM-PROVIDER-001-C",
+          "title": "Создать .github/workflows/provider-router.yml",
+          "acceptance": [
+            "workflow_dispatch с inputs: role, task, trace_id, chat_id, message_id",
+            "Job 1: запускает scripts/provider_router.py → определяет provider",
+            "Job 2: если provider=gpt_codex → dispatch codex-local.yml; если provider=claude_code → dispatch claude-code role workflow",
+            "Job 3: пишет receipt в governance/proofs/ с полями: role, provider_selected, fallback_reason, github_run_id"
+          ]
+        },
+        {
+          "id": "BEM-PROVIDER-001-D",
+          "title": "Переключить точку входа: Telegram/CF Worker → provider-router.yml вместо codex-local.yml",
+          "acceptance": [
+            "infrastructure/cloudflare-worker/telegram-webhook.js: dispatchUrl указывает на provider-router.yml",
+            "telegram-poll.yml (резерв): дефолтный dispatch тоже на provider-router.yml",
+            "Старый прямой dispatch на codex-local.yml из Telegram-слоя удалён или закомментирован с пометкой DEPRECATED"
+          ]
+        },
+        {
+          "id": "BEM-PROVIDER-001-E",
+          "title": "Честный outbox при fallback",
+          "acceptance": [
+            "Если router выбрал fallback — в governance/telegram_outbox.jsonl пишется сообщение вида: 'GPT quota exceeded → fallback Claude запущен' ПЕРЕД результатом задачи",
+            "Сообщение видно оператору в Telegram как отдельное уведомление, не скрыто внутри JSON",
+            "Receipt provider-router содержит fallback_reason != null когда был fallback"
+          ]
+        }
+      ],
+      "acceptance_overall": [
+        "Все 5 подзадач DONE с SHA",
+        "Live test: provider_router.py запущен с симулированной quota_exceeded ошибкой primary → возвращает claude_code + receipt с fallback_reason=fallback_quota",
+        "github_run_id присутствует в финальном receipt"
+      ]
+    },
+
+    {
+      "id": "BEM-CODEX-001",
+      "title": "Создать AGENTS.md — инструкции для Codex по работе с системой",
+      "status": "PENDING",
+      "priority": 2,
+      "depends_on": "BEM-PROVIDER-001",
+      "why": "Codex CLI читает AGENTS.md как постоянные инструкции. Без него каждая роль работает вслепую.",
       "acceptance": [
         "AGENTS.md в корне репо > 500 байт",
         "Описывает: структуру каналов governance/channels/, роли, как читать первый pending из jsonl, куда писать результат",
-        "Описывает: систему провайдеров — primary=gpt_codex, fallback=claude",
-        "Описывает: формат отчёта оператору через Telegram"
+        "Описывает: provider_config.json и что роль может быть запущена под gpt_codex или claude_code — промпт должен быть провайдеро-нейтральным",
+        "Описывает: формат отчёта оператору через Telegram, включая формат уведомления о fallback"
       ]
     },
     {
       "id": "BEM-CODEX-002",
-      "title": "Подключить ANALYST к Codex CLI через role-orchestrator",
+      "title": "Подключить ANALYST к Codex CLI через role-orchestrator + provider-router",
       "status": "PENDING",
-      "priority": 2,
+      "priority": 3,
       "depends_on": "BEM-CODEX-001",
-      "why": "ANALYST сейчас = Python заглушка. Должен быть codex exec с промптом: прочитать план из канала, проанализировать задачу, написать реальный план, передать аудитору.",
       "acceptance": [
-        "role-orchestrator.yml при role=analyst диспатчит codex-local.yml с role=analyst",
-        "Codex получает задачу из wrk_c1_to_analyst.jsonl через AGENTS.md инструкции",
-        "Codex пишет реальный план в governance/artifacts/plans/",
-        "Plan содержит конкретные шаги под задачу, не фиксированный текст",
-        "Receipt в governance/codex/results/ с github_run_id"
+        "role-orchestrator при role=analyst вызывает provider-router.yml (не напрямую codex-local)",
+        "Codex/Claude получает задачу из wrk_c1_to_analyst.jsonl через AGENTS.md инструкции",
+        "Пишет реальный план в governance/artifacts/plans/, специфичный для задачи",
+        "Receipt в governance/codex/results/ с github_run_id и provider_selected"
       ]
     },
     {
       "id": "BEM-CODEX-003",
-      "title": "Подключить AUDITOR к Codex CLI",
+      "title": "Подключить AUDITOR к Codex CLI через provider-router",
       "status": "PENDING",
-      "priority": 3,
+      "priority": 4,
       "depends_on": "BEM-CODEX-002",
-      "why": "AUDITOR сейчас проверяет только размер файла. Должен реально проверять план/результат через Codex.",
       "acceptance": [
-        "codex-local.yml с role=auditor вызывается из orchestrator",
-        "Codex читает план из канала и проверяет его содержательность",
-        "Вердикт PASS/FAIL основан на реальной проверке, не размере файла",
-        "Receipt в governance/codex/results/"
+        "auditor вызывается через provider-router.yml",
+        "Содержательная проверка плана/результата, не size-check",
+        "Receipt с provider_selected"
       ]
     },
     {
       "id": "BEM-CODEX-004",
-      "title": "Подключить EXECUTOR к Codex CLI",
+      "title": "Подключить EXECUTOR к Codex CLI через provider-router",
       "status": "PENDING",
-      "priority": 4,
+      "priority": 5,
       "depends_on": "BEM-CODEX-003",
-      "why": "EXECUTOR сейчас пишет 'executed_minimal_task'. Должен реально выполнять задачу через codex exec.",
       "acceptance": [
-        "codex-local.yml с role=executor вызывается из orchestrator",
-        "Codex читает план от ANALYST и реально исполняет шаги",
-        "Коммит изменений если задача требует изменений в репо",
-        "commit_sha не null если были изменения",
-        "Receipt в governance/codex/results/"
+        "executor вызывается через provider-router.yml",
+        "Реальные изменения в репо, commit_sha не null если были изменения",
+        "Receipt с provider_selected"
       ]
     },
     {
       "id": "BEM-CODEX-005",
-      "title": "Система провайдеров: GPT primary, Claude fallback при лимитах",
+      "title": "Исходящий Telegram: curator отвечает оператору напрямую",
       "status": "PENDING",
-      "priority": 5,
-      "depends_on": "BEM-CODEX-002",
-      "why": "При исчерпании лимитов GPT Codex система должна переключаться на Claude Code автоматически.",
+      "priority": 6,
+      "depends_on": "BEM-CODEX-001",
       "acceptance": [
-        "governance/config/provider_config.json: primary=gpt_codex, fallback=claude_code, limit_threshold",
-        "codex-local.yml проверяет provider из inputs",
-        "При provider=claude — вызывается claude-code-action вместо codex exec",
-        "role-orchestrator.yml умеет переключать провайдера при BLOCKED статусе",
-        "Оператор получает уведомление в Telegram при переключении провайдера"
+        "Curator (через любого провайдера) в конце задачи делает curl sendMessage с итоговым отчётом",
+        "Telegram message_id входящего и исходящего зафиксированы в receipt",
+        "При fallback — сообщение об этом отправлено оператору первым (см. BEM-PROVIDER-001-E)"
+      ]
+    },
+    {
+      "id": "BEM-CF-001",
+      "title": "Задеплоить Cloudflare Worker, переключить webhook на provider-router",
+      "status": "PENDING",
+      "priority": 7,
+      "depends_on": "BEM-PROVIDER-001-D",
+      "acceptance": [
+        "CF Worker онлайн (infrastructure/cloudflare-worker/telegram-webhook.js)",
+        "Webhook зарегистрирован, getWebhookInfo подтверждает URL",
+        "Worker диспатчит provider-router.yml (не codex-local.yml напрямую)",
+        "Оператор пишет → подтверждение приходит < 1 сек"
+      ]
+    },
+    {
+      "id": "TEST-T02",
+      "title": "Live Telegram E2E через provider-router",
+      "status": "PENDING",
+      "priority": 8,
+      "depends_on": ["BEM-CODEX-005", "BEM-CF-001"],
+      "acceptance": [
+        "Оператор пишет в Telegram → provider-router выбирает provider → полная цепочка GD→DIR→WRK→WRK-Cx с реальным LLM → ответ в Telegram",
+        "Все receipts с github_run_id и provider_selected",
+        "Claude external audit APPROVED"
+      ]
+    },
+    {
+      "id": "RELEASE",
+      "title": "Release PASS",
+      "status": "BLOCKED",
+      "priority": 9,
+      "depends_on": "TEST-T02",
+      "acceptance": [
+        "WORKING_CONTOUR_READY",
+        "Claude external audit APPROVED",
+        "Provider fallback live-tested хотя бы один раз с реальным fallback_reason"
       ]
     }
   ],
 
-  "next_action": "GPT: выполнить BEM-CODEX-001 — создать AGENTS.md с инструкциями для Codex по структуре системы"
+  "next_action": "GPT: выполнить BEM-PROVIDER-001-A — создать governance/config/provider_config.json"
 }
