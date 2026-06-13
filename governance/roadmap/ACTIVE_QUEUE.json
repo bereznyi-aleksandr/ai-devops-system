@@ -1,6 +1,6 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T08:22:00Z",
+  "updated_at": "2026-06-13T08:27:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "source_sha": "7d998ab7d25774eb5409dd942ebeff4084dff5c4",
   "source_commit_sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63",
@@ -81,12 +81,19 @@
     {
       "id": "BEM932-PROOF-RUN51",
       "title": "0.4 Create small proof for horizontal exchange run #51",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": 4,
       "source": "BEM932_Protocol_v8_3.md#0.4",
       "acceptance": [
         "governance/proofs/BEM932_horizontal_exchange_run51_receipt.json exists",
         "contains status, run_id, github_sha, trace_id, source_contour, target_contour, verified_at"
+      ],
+      "done_sha": "3342846f58eadb3b9651e4bc62f0dddbf0ac8516",
+      "artifacts": [
+        {
+          "path": "governance/proofs/BEM932_horizontal_exchange_run51_receipt.json",
+          "sha": "9c4642521bc4477621c3ad5c265ac15e3b5a87d7"
+        }
       ]
     },
     {
@@ -96,8 +103,7 @@
       "priority": 5,
       "blocked_by": [
         "BEM932-CONTINUITY-01",
-        "BEM932-CONTINUITY-02",
-        "BEM932-PROOF-RUN51"
+        "BEM932-CONTINUITY-02"
       ],
       "note": "Kept active per v8.3 but scheduled after continuity block.",
       "subtasks": [
@@ -253,9 +259,9 @@
     }
   ],
   "last_completed": {
-    "id": "BEM932-CANON-SYNC",
-    "sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63",
-    "completed_at": "2026-06-13T08:22:00Z"
+    "id": "BEM932-PROOF-RUN51",
+    "sha": "3342846f58eadb3b9651e4bc62f0dddbf0ac8516",
+    "completed_at": "2026-06-13T08:26:15Z"
   },
-  "next_action": "BEM932-CONTINUITY-01 — append explicit backfill records to execution_log.jsonl"
+  "next_action": "BEM932-CONTINUITY-01 — append explicit backfill records to execution_log.jsonl using RM15-18 receipts and BEM932 run51 proof"
 }
