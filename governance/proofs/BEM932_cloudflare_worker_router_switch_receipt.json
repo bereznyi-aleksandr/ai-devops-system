@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_worker_router_switch",
+  "created_at": "2026-06-13T09:42:00Z",
+  "task_id": "BEM-PROVIDER-001-D",
+  "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+  "worker_sha": "526c7908851fa79ee9cf202d86e402b8644cd82f",
+  "checks": [
+    "ROUTER_WORKFLOW_ID feature flag supported",
+    "default target workflow is provider-router.yml",
+    "legacy codex-local.yml remains supported through target workflow override",
+    "provider-router inputs include chat_id and message_id",
+    "telegram ack names selected workflow"
+  ],
+  "limitations": [
+    "Repository code switch verified; Cloudflare runtime deployment is not asserted by this receipt."
+  ]
+}
