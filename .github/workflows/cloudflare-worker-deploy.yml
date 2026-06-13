@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT || github.token }}
 
       - name: Deploy Cloudflare Worker through wrangler.toml
         shell: bash
@@ -21,7 +21,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT }}
           RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
@@ -53,7 +53,7 @@ jobs:
               STATUS="BLOCKED_DEPLOY_FAILED"
               DETAILS="$(tail -c 1200 /tmp/wrangler_deploy.log | tr '\n' ' ')"
             else
-              DETAILS="wrangler deploy completed from infrastructure/cloudflare-worker/wrangler.toml"
+              DETAILS="wrangler deploy completed from infrastructure/cloudflare-worker/wrangler.toml; GH_PAT sourced from AI_SYSTEM_GITHUB_PAT or GH_PAT"
             fi
           fi
 
@@ -76,6 +76,7 @@ jobs:
               "worker_name": "telegram-webhook",
               "router_workflow_id": "provider-router.yml",
               "deploy_command": "npx wrangler deploy --config infrastructure/cloudflare-worker/wrangler.toml",
+              "gh_pat_secret_source": "AI_SYSTEM_GITHUB_PAT || GH_PAT",
               "details": os.environ.get("DETAILS", ""),
           }
           Path("governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json").write_text(
