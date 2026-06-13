@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "analyst_prompt_router_smoke",
+  "created_at": "2026-06-13T13:34:52Z",
+  "checks": [
+    "prompt_assembler_py_compile",
+    "WRK.ANALYST_prompt_assembled",
+    "provider_config_routes_gpt_codex_to_codex_local_assembled"
+  ],
+  "role": "analyst",
+  "element_id": "WRK.ANALYST",
+  "prompt_assembler": "scripts/prompt_assembler.py",
+  "provider_router": ".github/workflows/provider-router.yml",
+  "provider_config": "governance/config/provider_config.json",
+  "target_workflow_id": "codex-local-assembled.yml",
+  "analyst_prompt_sha256": "9a33eac8b212546009af5c82b0938416d3efd77b0eebdc9888642c6f8837b6ab",
+  "analyst_prompt_bytes": 1967
+}
