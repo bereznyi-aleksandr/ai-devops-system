@@ -39,8 +39,7 @@ jobs:
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Assemble role prompt and dispatch codex-local
-        id: dispatch
+      - name: Assemble prompt, dispatch codex-local, write receipt
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
@@ -51,6 +50,7 @@ jobs:
           CYCLE_ID: ${{ inputs.cycle_id }}
           TASK_TYPE: ${{ inputs.task_type }}
           TASK: ${{ inputs.task }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
           case "$ROLE" in
@@ -61,120 +61,85 @@ jobs:
             *) echo "unsupported role: $ROLE"; exit 2 ;;
           esac
           export ELEMENT_ID
-          echo "element_id=$ELEMENT_ID" >> "$GITHUB_OUTPUT"
+
+          mkdir -p governance/proofs /tmp/bem932
           python3 -m py_compile scripts/prompt_assembler.py
-          python3 scripts/prompt_assembler.py --element-id "$ELEMENT_ID" --out /tmp/role_prompt.md
+          python3 scripts/prompt_assembler.py --element-id "$ELEMENT_ID" --out /tmp/bem932/role_prompt.md
 
           python3 - <<'PY'
           import hashlib
           import json
           import os
+          from datetime import datetime, timezone
           from pathlib import Path
 
-          role_prompt = Path("/tmp/role_prompt.md").read_text(encoding="utf-8")
+          role_prompt = Path("/tmp/bem932/role_prompt.md").read_text(encoding="utf-8")
           task = os.environ.get("TASK", "")
-          assembled = "\n".join([
-              "BEM-932 PROVIDER ROUTER ASSEMBLED TASK",
-              "",
-              "## Assembled role prompt",
-              role_prompt,
-              "",
-              "## Incoming task body",
-              "-----",
-              task,
-              "-----",
-              "",
-          ])
-          Path("/tmp/assembled_task.md").write_text(assembled, encoding="utf-8")
-          meta = {
-              "element_id": os.environ["ELEMENT_ID"],
-              "role": os.environ["ROLE"],
-              "trace_id": os.environ["TRACE_ID"],
-              "cycle_id": os.environ.get("CYCLE_ID", ""),
-              "task_type": os.environ.get("TASK_TYPE", ""),
-              "assembled_sha256": hashlib.sha256(assembled.encode("utf-8")).hexdigest(),
-              "assembled_bytes": len(assembled.encode("utf-8")),
-          }
-          Path("/tmp/assembled_meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          assembled = (
+              "BEM-932 PROVIDER ROUTER ASSEMBLED TASK\n\n"
+              "## Assembled role prompt\n"
+              + role_prompt
+              + "\n## Incoming task body\n-----\n"
+              + task
+              + "\n-----\n"
+          )
           payload = {
               "ref": "main",
               "inputs": {
                   "role": os.environ["ROLE"],
                   "provider": os.environ.get("PROVIDER", "gpt_codex"),
                   "trace_id": os.environ["TRACE_ID"],
-                  "cycle_id": os.environn.get("CYCLE_ID", ""),
+                  "cycle_id": os.environ.get("CYCLE_ID", ""),
                   "task_type": os.environ.get("TASK_TYPE", "default_development"),
                   "task": assembled,
               },
           }
-          Path("/tmp/codex_payload.json").write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-          print("assembled_sha256=" + meta["assembled_sha256"])
-          print("assembled_bytes=" + str(meta["assembled_bytes"]))
-          PY
-
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          from pathlib import Path
-          meta = json.loads(Path("/tmp/assembled_meta.json").read_text())
-          print("assembled_sha256=" + meta["assembled_sha256"])
-          print("assembled_bytes=" + str(meta["assembled_bytes"]))
-          PY
-
-          url="https://api.github.com/repos/$REPO/actions/workflows/codex-local.yml/dispatches"
-          code=$(curl -sS -o /tmp/dispatch_response.txt -w '%{http_code}' \
-            -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/json" \
-            "$url" \
-            --data @/tmp/codex_payload.json)
-          echo "dispatch_http_code=$code" >> "$GITHUB_OUTPUT"
-          cat /tmp/dispatch_response.txt || true
-
-      - name: Write assembly receipt
-        shell: bash
-        env:
-          TRACE_ID: ${{ inputs.trace_id }}
-          ROLE: ${{ inputs.role }}
-          PROVIDER: ${{ inputs.provider }}
-          DISPATCH_HTTP_CODE: ${{ steps.dispatch.outputs.dispatch_http_code }}
-          ASSEMBLED_SHA256: ${{ steps.dispatch.outputs.assembled_sha256 }}
-          ASSEMBLED_BYTES: ${{ steps.dispatch.outputs.assembled_bytes }}
-          ELEMENT_ID: ${{ steps.dispatch.outputs.element_id }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          set -euo pipefail
-          mkdir -p governance/proofs
-          python3 - <<'PY'
-          import json
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          trace = os.environ["TRACE_ID"]
-          status = "PASS" if os.environ.get("DISPATCH_HTTP_CODE") == "204" else "BLOCKED"
-          receipt = {
-              "status": status,
+          sha = hashlib.sha256(assembled.encode("utf-8")).hexdigest()
+          meta = {
+              "status": "DISPATCH_PENDING",
               "protocol": "BEM-932 v8.3",
               "receipt_type": "codex_local_assembled_dispatch",
               "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
               "role": os.environ.get("ROLE", ""),
               "element_id": os.environ.get("ELEMENT_ID", ""),
               "provider": os.environ.get("PROVIDER", ""),
-              "trace_id": trace,
+              "trace_id": os.environ.get("TRACE_ID", ""),
               "target_workflow_id": "codex-local.yml",
               "wrapper_workflow_id": "codex-local-assembled.yml",
               "prompt_assembler": "scripts/prompt_assembler.py",
-              "assembled_sha256": os.environ.get("ASSEMBLED_SHA256", ""),
-              "assembled_bytes": int(os.environ.get("ASSEMBLED_BYTES") or 0),
-              "dispatch_http_code": os.environ.get("DISPATCH_HTTP_CODE", ""),
+              "assembled_sha256": sha,
+              "assembled_bytes": len(assembled.encode("utf-8")),
               "github_run_id": os.environ.get("RUN_ID", ""),
           }
+          Path("/tmp/bem932/payload.json").write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+          Path("/tmp/bem932/receipt.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+
+          url="https://api.github.com/repos/$REPO/actions/workflows/codex-local.yml/dispatches"
+          code=$(curl -sS -o /tmp/bem932/dispatch_response.txt -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "$url" \
+            --data @/tmp/bem932/payload.json)
+          cat /tmp/bem932/dispatch_response.txt || true
+          export DISPATCH_HTTP_CODE="$code"
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          receipt = json.loads(Path("/tmp/bem932/receipt.json").read_text(encoding="utf-8"))
+          receipt["dispatch_http_code"] = os.environ.get("DISPATCH_HTTP_CODE", "")
+          receipt["status"] = "PASS" if receipt["dispatch_http_code"] == "204" else "BLOCKED"
+          trace = receipt["trace_id"]
           Path(f"governance/proofs/BEM932_codex_local_assembled_{trace}.json").write_text(
               json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
               encoding="utf-8",
           )
           PY
+
           git config user.email "codex-local-assembled@ai-devops-system"
           git config user.name "BEM-932 Codex Local Assembled"
           git pull --rebase --autostash origin main || true
