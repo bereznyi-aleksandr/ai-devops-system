@@ -1,11 +1,14 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "protocol": "BEM-932 v8.3",
   "created_at": "2026-06-13T09:15:00Z",
+  "updated_at": "2026-06-13T10:18:00Z",
   "providers": {
     "gpt_codex": {
       "type": "github_actions_workflow",
-      "workflow_id": "codex-local.yml",
+      "workflow_id": "codex-local-assembled.yml",
+      "downstream_workflow_id": "codex-local.yml",
+      "prompt_assembler": "scripts/prompt_assembler.py",
       "enabled": true,
       "role_support": [
         "curator",
