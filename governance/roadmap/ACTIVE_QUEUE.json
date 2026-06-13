@@ -1,13 +1,13 @@
 {
-  "version": 13,
-  "updated_at": "2026-06-13T19:18:00Z",
+  "version": 14,
+  "updated_at": "2026-06-13T19:24:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
-  "queue_state": "ACTIVE_RUNTIME_TEST",
+  "queue_state": "BLOCKED_RUNTIME_DEPLOY",
   "current_task": "TEST-T02-LIVE-MESSAGE",
   "policy": {
     "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
-    "runtime_rule": "Operator confirmed Cloudflare deploy; next required external event is one live Telegram message.",
-    "continuity_rule": "Continue repo-side verification after live receipt appears."
+    "runtime_rule": "Live Telegram test requires deployed Cloudflare Worker that dispatches provider-router.yml.",
+    "continuity_rule": "Repo-side diagnostics continue; live pass waits only for Cloudflare runtime deploy."
   },
   "tasks": [
     {
@@ -37,7 +37,7 @@
     },
     {
       "id": "BEM-PROVIDER-001",
-      "status": "DONE_REPO_SIDE_RUNTIME_DEPLOY_CONFIRMED",
+      "status": "DONE_REPO_SIDE_RUNTIME_DEPLOY_BLOCKED",
       "subtasks": [
         {
           "id": "BEM-PROVIDER-001-A",
@@ -57,7 +57,11 @@
         },
         {
           "id": "BEM-PROVIDER-001-D",
-          "status": "DONE_OPERATOR_DEPLOY_CONFIRMED"
+          "status": "DONE_REPO_SIDE_DEPLOY_BLOCKED_BY_CLOUDFLARE_SECRETS",
+          "proofs": [
+            "governance/proofs/BEM932_worker_router_switch_receipt.json",
+            "governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json"
+          ]
         },
         {
           "id": "BEM-PROVIDER-001-E",
@@ -66,26 +70,27 @@
         },
         {
           "id": "BEM-PROVIDER-001-FINAL",
-          "status": "WAIT_LIVE_TELEGRAM_MESSAGE"
+          "status": "WAIT_DEPLOY_AND_LIVE_TELEGRAM_MESSAGE"
         }
       ],
       "latest_artifacts": [
         {
-          "path": "governance/state/provider_status.json",
-          "sha": "c3a9a756fd050e2b59e4cc14d077cd537b628742",
-          "commit": "28436fda4d8414f0aa49b9d7c88faf4c3c158c59"
+          "path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+          "sha": "457ebdbd7adb2b8bc5354e81e2f695bf143258b3"
         },
         {
-          "path": "governance/proofs/BEM932_live_after_deploy_ready_receipt.json",
-          "sha": "634811f1e5336c8b3d269e4c18e50f677bbf3040",
-          "commit": "83435fa3861b4362c01029f497d9da1f792f7a07"
+          "path": "infrastructure/cloudflare-worker/wrangler.toml",
+          "sha": "afeacbb20ea8917fd6448074e00693dd0ec57cc2"
+        },
+        {
+          "path": "governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json",
+          "sha": "41a0c49e50717c708a320d781febc29365147323"
+        },
+        {
+          "path": "governance/proofs/BEM932_live_message_diagnostic_tg_818730862_20260613T191639Z.json",
+          "sha": "8e5f4ab9e50318235656185166968660cf612362"
         }
-      ],
-      "expected_live_result": {
-        "receipt_pattern": "governance/proofs/BEM932_provider_router_tg_*.json",
-        "provider_selected": "claude_code",
-        "fallback_reason": "fallback_quota"
-      }
+      ]
     },
     {
       "id": "BEM-CODEX-001",
@@ -114,7 +119,7 @@
     },
     {
       "id": "BEM-CF-001-COMPLETE",
-      "status": "DONE_REPO_SIDE_DEPLOY_CONFIRMED",
+      "status": "DONE_REPO_SIDE_DEPLOY_BLOCKED_BY_CLOUDFLARE_SECRETS",
       "done_sha": "ef314078289666478fb8e3bab65332d297be4d4e"
     },
     {
@@ -124,8 +129,14 @@
     },
     {
       "id": "TEST-T02-LIVE-MESSAGE",
-      "status": "WAIT_OPERATOR_SEND_TELEGRAM_MESSAGE",
-      "priority": 0
+      "status": "BLOCKED_BY_OLD_WORKER_ROUTE_AND_MISSING_CLOUDFLARE_RUNTIME_CONFIG",
+      "priority": 0,
+      "evidence": [
+        "governance/codex/results/tg_818730862_20260613T191639Z.json",
+        "governance/proofs/BEM932_live_message_diagnostic_tg_818730862_20260613T191639Z.json",
+        "governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json"
+      ],
+      "required_unblock": "Deploy Cloudflare Worker from current repo version with Cloudflare secrets available, then send one live Telegram message again."
     },
     {
       "id": "BEM932-EXTERNAL-AUDIT-VERDICT",
@@ -138,9 +149,10 @@
     }
   ],
   "last_completed": {
-    "id": "BEM-PROVIDER-001-E",
-    "completed_at": "2026-06-13T19:17:43Z",
-    "proof": "governance/proofs/BEM932_live_after_deploy_ready_receipt.json"
+    "id": "BEM932-LIVE-MESSAGE-DIAGNOSTIC",
+    "completed_at": "2026-06-13T19:22:59Z",
+    "proof": "governance/proofs/BEM932_live_message_diagnostic_tg_818730862_20260613T191639Z.json",
+    "sha": "46aa44041f1225f9509de258e9fd27a7f71cac63"
   },
-  "next_action": "Operator sends one live Telegram message to the deployed bot; then verify BEM932_provider_router_tg_* receipt and close TEST-T02."
+  "next_action": "Deploy Cloudflare Worker runtime with provider-router.yml switch, then rerun TEST-T02 live Telegram message."
 }
