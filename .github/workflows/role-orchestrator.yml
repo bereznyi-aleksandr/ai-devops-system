@@ -4,39 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       cycle_id:
-        description: "Internal cycle id"
         required: false
         default: ""
         type: string
-      mode:
-        description: "decide | advance"
-        required: false
-        default: "decide"
-        type: string
-      trace_id:
-        description: "Trace id from role completion"
-        required: false
-        default: ""
-        type: string
-      role:
-        description: "Completed role"
-        required: false
-        default: ""
-        type: string
-      status:
-        description: "Completed role status"
+      task:
         required: false
         default: ""
         type: string
       task_type:
-        description: "Task type"
         required: false
         default: "default_development"
-        type: string
-      task:
-        description: "Task body"
-        required: false
-        default: ""
         type: string
 
 permissions:
@@ -48,73 +25,28 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       next_role: ${{ steps.next.outputs.next_role }}
-      trace_id: ${{ steps.next.outputs.trace_id }}
-      task: ${{ steps.next.outputs.task }}
       should_dispatch: ${{ steps.next.outputs.should_dispatch }}
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Record role advance event
-        if: ${{ inputs.mode == 'advance' }}
+      - name: Decide next role
         shell: bash
         env:
           CYCLE_ID: ${{ inputs.cycle_id }}
-          TRACE_ID: ${{ inputs.trace_id }}
-          ROLE: ${{ inputs.role }}
-          STATUS: ${{ inputs.status }}
-          TASK_TYPE: ${{ inputs.task_type }}
-          TASK: ${{ inputs.task }}
-        run: |
-          set -euo pipefail
-          mkdir -p governance/transport governance/state
-          python3 -<<'PY'
-          import json, os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-          cycle_id = os.environ.get("CYCLE_ID") or os.environ.get("TRACE_ID") or f"cycle_{now}"
-          role = os.environ.get("ROLE") or "unknown"
-          status = os.environ.get("STATUS") or "completed"
-          trace_id = os.environ.get("TRACE_ID") or cycle_id
-
-          rec = {
-              "record_type": role if role in {"analysis", "audit", "execution"} else "role_completion",
-              "cycle_id": cycle_id,
-              "trace_id": trace_id,
-              "from_role": role,
-              "status": "completed" if status in {"ROLE_DONE", "completed", "success"} else status,
-              "decision": "PASS_TO_NEXT_ROLE" if status in {"ROLE_DONE", "completed", "success"} else "BLOCKED",
-              "artifact_path": f"governance/codex/results/{trace_id}.json",
-              "created_at": now,
-          }
-          with Path("governance/transport/results.jsonl").open("a", encoding="utf-8") as fh:
-              fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
-
-          Path("governance/state/role_cycle_state.json").write_text(
-              json.dumps({"cycle_id": cycle_id, "last_role": role, "last_status": status, "updated_at": now}, indent=2, ensure_ascii=False) + "\n",
-              encoding="utf-8"
-          )
-          PY
-
-      - name: Decide next role from transport
-        shell: bash
-        env:
-          CYCLE_ID: ${{ inputs.cycle_id || inputs.trace_id }}
         run: |
           set -euo pipefail
           python3 scripts/role_orchestrator_decide.py
 
-      - name: Commit orchestration state
+      - name: Commit orchestration decision
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          z­ add governance/transport/results.jsonl governance/state/role_cycle_state.json
-          git commit -m "Role orchestrator decision ${{ inputs.cycle_id || inputs.trace_id }}" || echo "No changes"
+          git add governance/transport/results.jsonl governance/state/role_cycle_state.json
+          git commit -m "Role orchestrator decision ${{ inputs.cycle_id }}" || echo "No changes"
           git push || true
 
       - name: Prepare provider-router dispatch
@@ -124,23 +56,24 @@ jobs:
           TASK: ${{ inputs.task }}
         run: |
           set -euo pipefail
-          xython3 -<<'PY' >> "$GITHUB_OUTPUT"
+          python3 -<<'PY' >> "$GITHUB_OUTPUT"
           import json, os
           from pathlib import Path
-
           state = json.loads(Path("governance/state/role_cycle_state.json").read_text())
           last = state.get("last_orchestrator_decision", {})
           next_role = last.get("to_role") or state.get("next_role") or ""
           if next_role == "auditor_final":
               next_role = "auditor"
           cycle_id = state.get("cycle_id") or ""
-          trace_id = last.get("trace_id") or cycle_id
+          trace_id = last.get("trace_id") or cycle_id or "role_orchestrator_trace"
+          yshould = next_role in {"analyst", "auditor", "executor", "curator"}
           task = os.environ.get("TASK") or f"Role orchestrator dispatch for cycle {cycle_id}"
-          should = next_role in {"analyst", "auditor", "executor", "curator"}
           print(f"next_role={next_role}")
           print(f"trace_id={trace_id}")
-          print("task<<EOF\n" + task + "\nEOF")
           print(f"should_dispatch={'true' if should else 'false'}")
+          print("task<<EOF")
+          print(task)
+          print("EOF")
           PY
 
       - name: Dispatch selected role through provider-router
@@ -151,14 +84,24 @@ jobs:
           REPO: ${{ github.repository }}
           NEXT_ROLE: ${{ steps.next.outputs.next_role }}
           TRACE_ID: ${{ steps.next.outputs.trace_id }}
-          xYCLE_ID: ${{ inputs.cycle_id || inputs.trace_id }}
+          CYCLE_ID: ${{ inputs.cycle_id }}
           TASK: ${{ steps.next.outputs.task }}
           TASK_TYPE: ${{ inputs.task_type }}
         run: |
           set -euo pipefail
           python3 -<<'PY' > /tmp/provider_router_payload.json
           import json, os
-          payload = {"ref": "main", "inputs": {"role": os.environ["NEXT_ROLE"], "trace_id": os.environ["TRACE_ID"], "cycle_id": os.environ.get("CYCLE_ID", ""), "task_type": os.environ.get("TASK_TYPE", "default_development"), "task": os.environ.get("TASK", ""), "mode": "live"}}
+          payload = {
+            "ref": "main",
+            "inputs": {
+              "role": os.environ["NEXT_ROLE"],
+              "trace_id": os.environ["TRACE_ID"],
+              "cycle_id": os.environ.get("CYCLE_ID", ""),
+              "task_type": os.environ.get("TASK_TYPE", "default_development"),
+              "task": os.environ.get("TASK", ""),
+              "mode": "live"
+            }
+          }
           print(json.dumps(payload))
           PY
           code=$(curl -sS -o /tmp/provider_router_dispatch.txt -w '%{http_code}' -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "Content-Type: application/json" "https://api.github.com/repos/$REPO/actions/workflows/provider-router.yml/dispatches" --data @/tmp/provider_router_payload.json)
@@ -179,7 +122,18 @@ jobs:
           import json, os
           from datetime import datetime, timezone
           from patlib import Path
-          receipt = {"status": "PASS", "protocol": "BEM-932 v8.3", "receipt_type": "role_orchestrator_provider_router", "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "workflow": "role-orchestrator.yml", "provider_router_workflow": "provider-router.yml", "next_role": os.environ.get("NEXT_ROLE", ""), "trace_id": os.environ.get("TRACE_ID", ""), "should_dispatch": os.environ.get("SHOULD_DISPATCH", ""), "note": "role-orchestrator dispatches analyst/auditor/executor/curator roles through provider-router.yml"}
+          receipt = {
+            "status": "PASS",
+            "protocol": "BEM-932 v8.3",
+            "receipt_type": "role_orchestrator_provider_router",
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "workflow": "role-orchestrator.yml",
+            "provider_router_workflow": "provider-router.yml",
+            "next_role": os.environ.get("NEXT_ROLE", ""),
+            "trace_id": os.environ.get("TRACE_ID", ""),
+            "should_dispatch": os.environ.get("SHOULD_DISPATCH", ""),
+            "note": "role-orchestrator dispatches analyst/auditor/executor/curator roles through provider-router.yml"
+          }
           Path("governance/proofs/BEM932_role_orchestrator_provider_router_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
           PY
 
