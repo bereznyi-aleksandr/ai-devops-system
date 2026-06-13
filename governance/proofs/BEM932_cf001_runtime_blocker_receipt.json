@@ -1,0 +1,23 @@
+{
+  "status": "BLOCKED_RUNTIME_VERIFICATION",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "BEM-CF-001-COMPLETE",
+  "created_at": "2026-06-13T10:18:00Z",
+  "repo_side_status": "PASS",
+  "runtime_status": "BLOCKED",
+  "blocker": "Cloudflare runtime deployment and ROUTER_WORKFLOW_ID=provider-router.yml cannot be verified via GitHub API",
+  "checks": [
+    "worker repo code supports ROUTER_WORKFLOW_ID feature flag",
+    "provider-router.yml repo workflow exists",
+    "codex-local.yml rollback path preserved",
+    "BEM932_worker_router_flag_receipt.json present"
+  ],
+  "required_live_checks": [
+    "Cloudflare Warker deployment has current code",
+    "Cloudflare secret/env ROUTER_WORKFLOW_ID=provider-router.yml",
+    "Telegram getWebhookInfo points to Warker URL",
+    "live Telegram message dispatches through provider-router.yml",
+    "response time < 1s"
+  ],
+  "next_action": "Continue repo-side tasks; leave live TEST-T02/RELEASE blocked until runtime verification."
+}
