@@ -1,0 +1,91 @@
+name: BEM-932 Cloudflare Worker Deploy V2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@1
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT || github.token }}
+
+      - name: Deploy and record receipt
+        shell: bash
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN || secrets.WRANGLER_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || secrets.CF_ACCOUNT_ID || secrets.WRANGLER_ACCOUNT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          GH_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          STATUS="PASS"
+          DETAILS=""
+          if [ -z "${CF_TOKEN:-}" ] || [ -z "${CF_ACCOUNT:-}" ]; then
+            STATUS="BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG"
+            DETAILS="requires Cloudflare token/account secret aliases: CLOUDFLARE_API_TOKEN|CF_API_TOKEN|WRANGLER_API_TOKEN and CLOUDFLARE_ACCOUNT_ID|CF_ACCOUNT_ID|WRANGLER_ACCOUNT_ID"
+          else
+            export CLOUDFLARE_API_TOKEN="$CF_TOKEN"
+            export CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT"
+            npm install --no-save wrangler@latest >/tmp/wrangler_install.log 2>&1
+            cd infrastructure/cloudflare-worker
+            if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
+              printf '%s' "$TELEGRAM_BOT_TOKEN" | npx wrangler secret put TELEGRAM_BOT_TOKEN --config wrangler.toml >/tmp/secret_tg.log 2>&1 || true
+            fi
+            if [ -n "${GH_PAT:-}" ]; then
+              printf '%s' "$GH_PAT" | npx wrangler secret put GH_PAT --config wrangler.toml >/tmp/secret_gh.log 2>&1 || true
+            fi
+            set +e
+            npx wrangler deploy --config wrangler.toml >/tmp/deploy.log 2>&1
+            CODE=$?
+            set -e
+            cd ../..
+            if [ "$CODE" -ne 0 ]; then
+              STATUS=\"BLOCKED_DEPLOY_FAILED\"
+              DETAILS="$(tail -c 1200 /tmp/deploy.log | tr '\n' ' ')"
+            else
+              DETAILS="wrangler deploy completed; ROUTER_WORKFLOW_ID=provider-router.yml"
+            fi
+          fi
+
+          export STATUS DETAILS
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          receipt = {
+            "status": os.environ["STATUS"],
+            "protocol": "BEM-932 v8.3",
+            "receipt_type": "cloudflare_worker_deploy_attempt",
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "workflow": ".github/workflows/cloudflare-worker-deploy-v2.yml",
+            "github_run_id": os.environ.get("RUN_ID", ""),
+            "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+            "wrangler_config": "infrastructure/cloudflare-worker/wrangler.toml",
+            "worker_name": "telegram-webhook",
+            "router_workflow_id": "provider-router.yml",
+            "accepted_secret_aliases": {
+              "token": ["CLOUDFLARE_API_TOKEN", "CF_API_TOKEN", "WRANGLER_API_TOKEN"],
+              "account": ["CLOUDFLARE_ACCOUNT_ID", "CF_ACCOUNT_ID", "WRANGLER_ACCOUNT_ID"]
+            },
+            "details": os.environ.get("DETAILS", "")
+          }
+          Path("governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
+          PY
+          git config user.email "cloudflare-deploy@ai-devops-system"
+          git config user.name "BEM-932 Cloudflare Deploy"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json
+          if git diff --cached --quiet; then
+            echo "No deploy receipt changes"
+          else
+            git commit -m "BEM-932 cloudflare worker deploy receipt v2"
+            git push
+          fi
