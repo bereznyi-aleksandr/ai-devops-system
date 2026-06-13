@@ -1,0 +1,30 @@
+{
+  "status": "BLOCKED",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "live_telegram_provider_router_e2e",
+  "created_at": "2026-06-13T13:58:00Z",
+  "test_id": "TEST-T02",
+  "checks": {
+    "codex_roles_connected": "PASS",
+    "cloudflare_worker_repo_route": "PASS",
+    "cloudflare_worker_static_smoke": "PASS",
+    "live_telegram_message_after_router_change": "BLOCKED"
+  },
+  "blocker": "Runtime live E2E requires deployed Cloudflare Worker with ROUTER_WORKFLOW_ID=provider-router.yml and an operator Telegram message after deployment; repo/API cannot prove live Telegram ingress without that runtime event.",
+  "required_next_event": "operator_telegram_message_after_cloudflare_deploy",
+  "evidence": [
+    {
+      "path": "governance/proofs/BEM932_codex_curator_final_report_receipt.json",
+      "status": "PASS"
+    },
+    {
+      "path": "governance/proofs/BEM932_cloudflare_worker_provider_router_receipt.json",
+      "status": "PASS"
+    },
+    {
+      "path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+      "commit": "ef314078289666478fb8e3bab65332d297be4d4e"
+    }
+  ],
+  "release_impact": "RELEASE remains BLOCKED until TEST-T02 live receipt is PASS and external auditor approval is recorded."
+}
