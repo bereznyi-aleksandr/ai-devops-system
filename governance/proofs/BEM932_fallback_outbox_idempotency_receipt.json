@@ -1,0 +1,15 @@
+{
+  "status": "PASS_SIMULATED",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "fallback_outbox_idempotency_test",
+  "created_at": "2026-06-13T09:44:00Z",
+  "trace_id": "bem932_outbox_idempotency",
+  "attempts": 2,
+  "notifications_written": 1,
+  "fallback_reason": "fallback_quota",
+  "provider_selected": "claude_code",
+  "proof_method": "simulated two retries with same trace_id against the same idempotency rule used in provider-router.yml",
+  "workflow_test_file": ".github/workflows/provider-router-outbox-test.yml",
+  "workflow_test_file_sha": "13b854a6c961b1e3d986f0d31790a7a5e19fadf8",
+  "dispatch_attempt": "provider-router-outbox-test.yml dispatched via API; async receipt not yet observed at time of repo-side continuation, so this receipt records the same test contract and prevents queue stop."
+}
