@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "provider_fallback_outbox_contract",
+  "created_at": "2026-06-13T21:24:00Z",
+  "task_id": "BEM-PROVIDER-001-E",
+  "artifacts": [
+    {
+      "path": ".github/workflows/provider-router.yml",
+      "sha": "343dee6e5c98bf5a5276708eabd2ccf839d64923"
+    },
+    {
+      "path": "governance/telegram_outbox.jsonl",
+      "mode": "append_on_fallback"
+    }
+  ],
+  "checks": {
+    "fallback_trigger": "fallback_reason is non-empty",
+    "idempotency_key": "trace_id",
+    "duplicate_prevention": "existing outbox lines are scanned before append",
+    "outbox_event_type": "provider_fallback_notice",
+    "human_notice_text": "GPT quota exceeded -> fallback Claude запущен",
+    "provider_selected_recorded": true,
+    "fallback_reason_recorded": true
+  },
+  "operator_secret_context": {
+    "TELEGRAM_BOT_TOKEN_present": true,
+    "TELEGRAM_CHAT_ID_present": true,
+    "AI_SYSTEM_GITHUB_PAT_present": true
+  },
+  "next_task": "BEM-PROVIDER-001-FINAL"
+}
