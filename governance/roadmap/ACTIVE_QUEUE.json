@@ -1,9 +1,9 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T13:43:00Z",
+  "updated_at": "2026-06-13T13:46:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "queue_state": "ACTIVE",
-  "current_task": "BEM-CODEX-004",
+  "current_task": "BEM-CODEX-005",
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
@@ -131,12 +131,27 @@
     },
     {
       "id": "BEM-CODEX-004",
-      "status": "IN_PROGRESS",
-      "depends_on": "BEM-CODEX-003"
+      "status": "DONE",
+      "depends_on": "BEM-CODEX-003",
+      "done_sha": "5f5ec695ef93a7ebd62922c2afdd0ae186db6b84",
+      "artifacts": [
+        {
+          "path": ".github/workflows/executor-prompt-router-smoke.yml",
+          "sha": "987fdc14b57e087013f1e4eea551e2589d9ee6e4"
+        },
+        {
+          "path": "governance/proofs/BEM932_codex_executor_prompt_router_receipt.json",
+          "sha": "cb7a791643c612616e83b86b97f216c2eb031b08"
+        }
+      ],
+      "checks": [
+        "WRK.EXECUTOR prompt assembled",
+        "provider_config routes gpt_codex to codex-local-assembled.yml"
+      ]
     },
     {
       "id": "BEM-CODEX-005",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "depends_on": "BEM-CODEX-001"
     },
     {
@@ -162,9 +177,9 @@
     }
   ],
   "last_completed": {
-    "id": "BEM-CODEX-003",
-    "sha": "ff2ef802268113b486bc53b8467ce725f65382aa",
-    "completed_at": "2026-06-13T13:43:00Z"
+    "id": "BEM-CODEX-004",
+    "sha": "5f5ec695ef93a7ebd62922c2afdd0ae186db6b84",
+    "completed_at": "2026-06-13T13:46:00Z"
   },
-  "next_action": "BEM-CODEX-004 — Connect executor via provider-router + prompt assembler"
+  "next_action": "BEM-CODEX-005 — Curator Telegram final report receipt"
 }
