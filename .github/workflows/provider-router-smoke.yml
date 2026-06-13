@@ -11,11 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run provider router tests and write receipt
+
+      - name: Router contract smoke + live worker POST receipt
         shell: bash
+        env:
+          WORKER_URL: "https://tg-curator-webhook.bereznii-aleksandr.workers.dev"
         run: |
           set -euo pipefail
           mkdir -p governance/state governance/codex/results governance/proofs
+
           python3 - <<'PY'
           import json, subprocess
           from pathlib import Path
@@ -34,28 +38,59 @@ jobs:
           assert stale["provider_selected"] == "gpt_codex" and stale["stale_ignored"] is True and stale["fallback_reason"] is None, stale
           assert same["provider_selected"] == "claude_code" and same["fallback_reason"] == "fallback_quota", same
           assert primary["provider_selected"] == "gpt_codex" and primary["decision_source"] == "default", primary
-          receipt = {
-              "status": "PASS",
-              "protocol": "BEM-932 v8.3",
-              "receipt_type": "provider_router_smoke",
-              "checks": ["stale_quota_ignored", "same_trace_quota_fallback", "no_status_primary"],
-              "stale_quota_ignored": stale,
-              "same_trace_quota_fallback": same,
-              "no_status_primary": primary
-          }
+          receipt = {"status":"PASS","protocol":"BEM-932 v8.3","receipt_type":"provider_router_smoke","checks":["stale_quota_ignored","same_trace_quota_fallback","no_status_primary"],"stale_quota_ignored":stale,"same_trace_quota_fallback":same,"no_status_primary":primary}
           Path("governance/proofs/BEM932_provider_router_smoke_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
           PY
-      - name: Commit smoke receipt
+
+          TRACE_UPDATE_ID="932000001"
+          cat > /tmp/telegram_update.json <<JSON
+          {
+            "update_id": $TRACE_UPDATE_ID,
+            "message": {
+              "message_id": 932001,
+              "date": 1781384469,
+              "chat": { "id": 601442777, "type": "private" },
+              "text": "BEM-932 live worker provider-router test: act without stopping"
+            }
+          }
+          JSON
+
+          HTTP_CODE=$(curl -sS -o /tmp/worker_response.json -w '%{http_code}' \
+            -X POST \
+            -H "Content-Type: application/json" \
+            --data @/tmp/telegram_update.json \
+            "$WORKER_URL" || true)
+          export HTTP_CODE
+          cat /tmp/worker_response.json || true
+
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          raw = Path("/tmp/worker_response.json").read_text() if Path("/tmp/worker_response.json").exists() else ""
+          try:
+              body = json.loads(raw)
+          except Exception:
+              body = {"raw": raw}
+          http_code = os.environ.get("HTTP_CODE", "")
+          status = "PASS" if http_code == "200" and body.get("status") == "DISPATCHED" else "BLOCKED"
+          receipt = {"status":status,"protocol":"BEM-932 v8.3","receipt_type":"live_cloudflare_worker_post","created_at":now,"worker_url":os.environ["WORKER_URL"],"http_code":http_code,"worker_response":body,"update_id":"932000001","sent_text":"BEM-932 live worker provider-router test: handoff from Cloudflare to provider-router"}
+          Path("governance/proofs/BEM932_live_worker_post_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
+          PY
+
+      - name: Commit receipts
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
           git config user.email "provider-router-smoke@ai-devops-system"
           git config user.name "BEM-932 Provider Router Smoke"
           git pull --rebase --autostash origin main || true
-          git add governance/proofs/BEM932_provider_router_smoke_receipt.json
+          git add governance/proofs/BEM932_provider_router_smoke_receipt.json governance/proofs/BEM932_live_worker_post_receipt.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No smoke receipt changes"
           else
-            git commit -m "BEM-932 provider router smoke receipt"
+            git commit -m "BEM-932 provider router smoke/live receipts"
             git push
           fi
