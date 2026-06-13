@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "BEM-CODEX-001_AGENTS_canon",
+  "created_at": "2026-06-13T09:52:00Z",
+  "artifact": {
+    "path": "AGENTS.md",
+    "sha": "575eace7459042937efc3f824572a5a9bf852283",
+    "size_bytes": 8377
+  },
+  "checks": [
+    "roles section present",
+    "canonical channels section present",
+    "result/reseult files section present",
+    "provider section present",
+    "operator report canon present",
+    "blocker/repair rules present"
+  ],
+  "note": "AGENTS.md already existed and satisfies > 500 bytes and six canon sections; no code change required."
+}
