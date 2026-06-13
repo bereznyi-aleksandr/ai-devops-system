@@ -1,0 +1,29 @@
+{
+  "status": "BLOCKED_OLD_WORKER_ROUTE",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "live_telegram_diagnostic",
+  "created_at": "2026-06-13T19:21:30Z",
+  "trace_id": "tg_818730862_20260613T191639Z",
+  "operator_message": "ping router",
+  "observed": {
+    "bot_reply": "Passed to curator; Curator [gpt_codex] reported wait next message.",
+    "codex_result_path": "governance/codex/results/tg_818730862_20260613T191639Z.json",
+    "codex_result_sha": "8e7d2e77d7c5b4ad72eebf33c93df056f1d6b1de",
+    "codex_result_status": "failed",
+    "codex_blocker": "CODEX_EXEC_FAILED"
+  },
+  "expected": {
+    "workflow": "provider-router.yml",
+    "proof_pattern": "governance/proofs/BEM932_provider_router_tg_*.json",
+    "provider_selected": "claude_code",
+    "fallback_reason": "fallback_quota"
+  },
+  "corrective_actions": [
+    "Worker repo file is now switched to provider-router.yml by default.",
+    "wrangler.toml sets ROUTER_WORKFLOW_ID=provider-router.yml.",
+    "Automatic deploy workflow was rerun and is blocked by missing CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets.",
+    "Live TEST-T02 must be retried after Cloudflare Worker deploys the current repo file."
+  ],
+  "blocker_proof": "governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json",
+  "blocker_status": "BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG"
+}
