@@ -1,7 +1,9 @@
-// Cloudflare Worker: Telegram Webhook → GitHub Actions provider-router
-// BEM-932: runtime route must dispatch provider-router.yml, not codex-local.yml.
+// Cloudflare Worker: Telegram Webhook → BEM-932 provider-router
+// FULL FILE REPLACEMENT. Runtime dispatch goes to ROUTER_WORKFLOW_ID/provider-router.yml,
+// not directly to codex-local.yml. Telegram metadata is passed as strict workflow inputs.
 
 const DEFAULT_ALLOWED_CHAT_ID = "601442777";
+const DEFAULT_REPO = "bereznyi-aleksandr/ai-devops-system";
 const DEFAULT_ROUTER_WORKFLOW_ID = "provider-router.yml";
 
 function jsonResponse(body, status = 200) {
@@ -9,6 +11,25 @@ function jsonResponse(body, status = 200) {
     status,
     headers: { "Content-Type": "application/json; charset=utf-8" },
   });
+}
+
+function safeString(value, fallback = "") {
+  if (value === undefined || value === null) return fallback;
+  return String(value);
+}
+
+function traceSuffix() {
+  return new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
+}
+
+function makeTraceId(updateId) {
+  const safeUpdateId = safeString(updateId, "unknown").replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `tg_${safeUpdateId}_${traceSuffix()}`;
+}
+
+function preview(text, limit = 500) {
+  const s = safeString(text);
+  return s.length > limit ? s.slice(0, limit) : s;
 }
 
 async function sendTelegram(env, chatId, text) {
@@ -20,9 +41,57 @@ async function sendTelegram(env, chatId, text) {
   });
 }
 
-function makeTraceId(updateId) {
-  const now = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
-  return `tg_${updateId}_${now}`;
+function buildProviderRouterPayload(msg, text, traceId) {
+  return {
+    ref: "main",
+    inputs: {
+      role: "curator",
+      task: text,
+      trace_id: traceId,
+      chat_id: safeString(msg.chat?.id),
+      message_id: safeString(msg.message_id),
+      cycle_id: "telegram_operator_message",
+      task_type: "telegram_operator_message",
+    },
+  };
+}
+
+async function dispatchWorkflow(env, workflowId, body) {
+  const repo = safeString(env.GH_REPO, DEFAULT_REPO);
+  const token = env.GH_PAT || env.AI_SYSTEM_GITHUB_PAT;
+  if (!token) {
+    return {
+      ok: false,
+      status: 500,
+      details: "missing GH_PAT or AI_SYSTEM_GITHUB_PAT",
+    };
+  }
+
+  const url = `https://api.github.com/repos/${repo}/actions/workflows/${workflowId}/dispatches`;
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "ai-devops-system-telegram-provider-router",
+    },
+    body: JSON.stringify(body),
+  });
+
+  let details = "";
+  try {
+    details = await resp.text();
+  } catch (e) {
+    details = safeString(e);
+  }
+
+  return {
+    ok: resp.ok,
+    status: resp.status,
+    details,
+  };
 }
 
 export default {
@@ -34,78 +103,56 @@ export default {
     let update;
     try {
       update = await request.json();
-    } catch {
+    } catch (e) {
       return jsonResponse({ status: "BAD_JSON" }, 400);
     }
 
     const msg = update?.message;
     if (!msg) return jsonResponse({ status: "NO_MESSAGE" });
 
-    const allowedChatId = String(env.ALLOWED_CHAT_ID || DEFAULT_ALLOWED_CHAT_ID);
-    const chatId = String(msg.chat?.id || "");
+    const allowedChatId = safeString(env.ALLOWED_CHAT_ID, DEFAULT_ALLOWED_CHAT_ID);
+    const chatId = safeString(msg.chat?.id);
     if (chatId !== allowedChatId) {
       return jsonResponse({ status: "IGNORED_CHAT", chat_id: chatId });
     }
 
-    const token = env.GH_PAT || env.AI_SYSTEM_GITHUB_PAT;
-    if (!token) {
-      await sendTelegram(env, msg.chat.id, "⚠️ GH_PAT отсутствует в runtime. provider-router не запущен.");
-      return jsonResponse({ status: "MISSING_GH_PAT" });
+    const text = safeString(msg.text).trim();
+    if (!text) {
+      await sendTelegram(env, chatId, "⚠️ Пустое сообщение не принято.");
+      return jsonResponse({ status: "EMPTY_MESSAGE" });
     }
 
-    const repo = env.GH_REPO || "bereznyi-aleksandr/ai-devops-system";
-    const routerWorkflowId = env.ROUTER_WORKFLOW_ID || DEFAULT_ROUTER_WORKFLOW_ID;
-    const updateId = String(update.update_id || msg.message_id || Date.now());
+    const workflowId = safeString(env.ROUTER_WORKFLOW_ID, DEFAULT_ROUTER_WORKFLOW_ID).trim();
+    const updateId = update.update_id ?? msg.message_id ?? Date.now();
     const traceId = makeTraceId(updateId);
-    const text = msg.text || "";
+    const payload = buildProviderRouterPayload(msg, text, traceId);
+    const result = await dispatchWorkflow(env, workflowId, payload);
 
-    const dispatchBody = {
-      ref: "main",
-      inputs: {
-        role: "curator",
-        trace_id: traceId,
-        cycle_id: "telegram_operator_message",
-        task_type: "telegram_operator_message",
-        task: text,
-        chat_id: chatId,
-        message_id: String(msg.message_id || ""),
-      },
-    };
-
-    const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/${routerWorkflowId}/dispatches`;
-    const dispatchResp = await fetch(dispatchUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-        "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "ai-devops-system-cloudflare-worker",
-      },
-      body: JSON.stringify(dispatchBody),
-    });
-
-    if (dispatchResp.ok) {
-      await sendTelegram(env, msg.chat.id, `⚡ Получено. Передано в provider-router (trace: ${traceId})`);
+    if (result.ok) {
+      await sendTelegram(
+        env,
+        chatId,
+        `⚡ Получено. Передано в provider-router (trace: ${traceId})`
+      );
       return jsonResponse({
         status: "DISPATCHED",
-        workflow_id: routerWorkflowId,
+        workflow_id: workflowId,
         trace_id: traceId,
       });
     }
 
-    let details = "";
-    try {
-      details = await dispatchResp.text();
-    } catch {}
+    await sendTelegram(
+      env,
+      chatId,
+      `⚠️ Ошибка provider-router dispatch: ${result.status}\nworkflow=${workflowId}\ntrace=${traceId}\n${preview(result.details)}`
+    );
 
-    const safeDetails = details ? `\n${details.slice(0, 500)}` : "";
-    await sendTelegram(env, msg.chat.id, `⚠️ Ошибка provider-router dispatch: ${dispatchResp.status}${safeDetails}`);
     return jsonResponse({
       status: "DISPATCH_FAILED",
-      workflow_id: routerWorkflowId,
-      http_status: dispatchResp.status,
-      details: details.slice(0, 1000),
+      workflow_id: workflowId,
+      trace_id: traceId,
+      http_status: result.status,
+      details: preview(result.details, 1000),
     });
   },
 };
