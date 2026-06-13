@@ -1,0 +1,17 @@
+{
+  "status": "PASS_REPO_SIDE",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "role_orchestrator_provider_router",
+  "created_at": "2026-06-13T09:58:00Z",
+  "workflow": "role-orchestrator.yml",
+  "workflow_sha": "5625a4e1996129e695834a7a24a1ae0d2ef92d61",
+  "commit_sha": "c14c15ef3b18f4078d897f7b8e5020e950b6d538",
+  "provider_router_workflow": "provider-router.yml",
+  "checks": [
+    "workflow_inputs_compatible_with_existing_dispatches",
+    "role_orchestrator_decision_script_called",
+    "next_role_in_analyst_auditor_executor_curator_dispatches_through_provider_router",
+    "provider_router_payload_contains_role_trace_id_cycle_id_task_mode_live"
+  ],
+  "execution_note": "role-orchestrator.yml was dispatched via API; async workflow receipt not yet observed at time of repo-side continuation."
+}
