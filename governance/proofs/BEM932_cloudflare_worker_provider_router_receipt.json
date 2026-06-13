@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_worker_provider_router_route",
+  "created_at": "2026-06-13T13:54:58Z",
+  "checks": [
+    "node_check",
+    "ROUTER_WORKFLOW_ID_present",
+    "provider_router_default_present",
+    "chat_message_ids_forwarded",
+    "no_undeclared_mode_input"
+  ],
+  "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+  "worker_sha256": "3928ca5e7d2e3c959e190fb3072eed96de530e952f0a03511e952f814f93e203",
+  "target_default": "provider-router.yml",
+  "fallback_supported": "codex-local.yml",
+  "runtime_scope": "repo_side_static_smoke"
+}
