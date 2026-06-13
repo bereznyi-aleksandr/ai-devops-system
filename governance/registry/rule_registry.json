@@ -1,6 +1,7 @@
 {
   "schema_version": "1.0",
-  "protocol": "BEM-931 v3.5",
+  "protocol": "BEM-932 v8.3",
+  "updated_at": "2026-06-13T10:05:00Z",
   "rules": [
     {
       "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
@@ -11,7 +12,7 @@
       "supersedes": [],
       "status": "active",
       "links": [
-        "BEM-931 v3.5#7"
+        "BEM-931 v3.5"
       ],
       "body": "Куратор ставит задачу аналитику; обратную связь получает от аудитора после ACCEPTED."
     },
@@ -24,7 +25,7 @@
       "supersedes": [],
       "status": "active",
       "links": [
-        "BEM-931 v3.5#7"
+        "BEM-931 v3.5"
       ],
       "body": "Аналитик готовит задачу; аудитор подтверждает до исполнения; исполнитель выполняет; аудитор принимает результат."
     },
@@ -37,7 +38,7 @@
       "supersedes": [],
       "status": "active",
       "links": [
-        "BEM-931 v3.5#8"
+        "BEM-931 v3.5"
       ],
       "body": "Горизонтальная связь идёт через куратора и реестр обмена; прямой runtime-канал роль-роль запрещён."
     },
@@ -50,9 +51,9 @@
       "supersedes": [],
       "status": "active",
       "links": [
-        "BEM-931 v3.5#RM-08"
+        "BEM-931 v3.5"
       ],
-      "body": "Ежечасовой отчёт: процент этапа, процент дорожной карты, чек-лист по строкам, вопрос оператору при наличии."
+      "body": "Ежечасовой отчёт: процент этапа, процент дорожной карты, чек-лист, вопрос оператору при наличии."
     },
     {
       "rule_id": "RULE.SYSTEM.PAID_API_FORBIDDEN",
@@ -63,9 +64,48 @@
       "supersedes": [],
       "status": "active",
       "links": [
-        "BEM-931 v3.5#13"
+        "BEM-931 v3.5"
       ],
-      "body": "Штатный runtime — Codex Local; Gemini API / OpenAI HTTP API / paid hosted не являются штатным путём."
+      "body": "Штатный runtime — Codex Local; Gemini API / OpenAI HTTP API / paid hosted runtime не являются штатным путём."
+    },
+    {
+      "rule_id": "RULE.SYSTEM.COUNCIL_ANALYST",
+      "rule_version": "1.0.0",
+      "scope": "system",
+      "owner": "GD.SYSTEM_RULES_CONTOUR",
+      "effective_from": "2026-06-13",
+      "supersedes": [],
+      "status": "active",
+      "links": [
+        "BEM-932 v8.3#5.1"
+      ],
+      "body": "АНАЛИТИК работает как внутренний совет: Критик выявляет риски и противоречия; Стратег предлагает архитектурный путь; Исполнитель переводит план в проверяемые шаги. Итог должен содержать цель, риски, альтернативы и критерии приёмки."
+    },
+    {
+      "rule_id": "RULE.SYSTEM.COUNCIL_AUDITOR",
+      "rule_version": "1.0.0",
+      "scope": "system",
+      "owner": "GD.SYSTEM_RULES_CONTOUR",
+      "effective_from": "2026-06-13",
+      "supersedes": [],
+      "status": "active",
+      "links": [
+        "BEM-932 v8.3#5.1"
+      ],
+      "body": "АУДИТОР работает как совет проверки: Критик рисков ищет блокеры; Тестировщик формирует проверки; Архитектор сверяет совместимость с каноном; Председатель синтезирует вердикт APPROVED/NEEDS_REVISION/BLOCKED."
+    },
+    {
+      "rule_id": "RULE.SYSTEM.COUNCIL_CURATOR_CANON",
+      "rule_version": "1.0.0",
+      "scope": "system",
+      "owner": "GD.SYSTEM_RULES_CONTOUR",
+      "effective_from": "2026-06-13",
+      "supersedes": [],
+      "status": "active",
+      "links": [
+        "BEM-932 v8.3#5.1"
+      ],
+      "body": "КУРАТОР формирует канонический вывод через роли архитектора, бизнес-аналитика, критика рисков, тестировщика, внедренца и председателя-аудитора. Технический шум скрывается; оператор получает только статус, следующий шаг и вопрос."
     }
   ]
 }
