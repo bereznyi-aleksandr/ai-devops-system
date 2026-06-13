@@ -4,14 +4,16 @@
   "receipt_type": "cloudflare_worker_router_switch",
   "created_at": "2026-06-13T09:40:00Z",
   "task_id": "BEM-PROVIDER-001-D",
-  "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
-  "worker_sha": "457ebdbd7adb2b8bc5354e81e2f695bf143258b3",
-  "default_router_workflow_id": "provider-router.yml",
-  "feature_flag": "ROUTER_WORKFLOW_ID",
-  "legacy_workflow_support": "codex-local.yml still supported when feature flag points to it",
   "checks": [
-    "Worker dispatches to provider-router.yml by default",
-    "chat_id and message_id are passed as provider-router inputs",
-    "legacy codex-local.yml contract is preserved for explicit feature flag override"
-  ]
+    "worker_uses_ROUTER_WORKFLOW_ID_feature_flag",
+    "default_workflow_is_provider_router_yml",
+    "telegram_metadata_sent_as_strict_workflow_inputs",
+    "dispatch_no_longer_targets_codex_local_directly"
+  ],
+  "artifact": {
+    "path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+    "sha": "aa964cf849ba10503d293dd7f17f0ce2d5590521"
+  },
+  "workflow_target": "provider-router.yml",
+  "source": "current repository file already contains provider-router switch; executor verified and records receipt"
 }
