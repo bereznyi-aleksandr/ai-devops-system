@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "curator_telegram_final_report_smoke",
+  "created_at": "2026-06-13T13:49:54Z",
+  "checks": [
+    "prompt_assembler_py_compile",
+    "WRK.CURATOR_prompt_assembled",
+    "telegram_outbox_has_sent_message_id"
+  ],
+  "role": "curator",
+  "element_id": "WRK.CURATOR",
+  "prompt_assembler": "scripts/prompt_assembler.py",
+  "curator_prompt_sha256": "3f9376dd5afbc53747160665a7200b2b3d11bd9fbc5815094a11b0c5406bac65",
+  "inbound_message_id": "simulated-bem-codex-005",
+  "outbound_message_id": "541",
+  "chat_id": "601442777",
+  "latest_outbox_event_id": "evt_codex_curator_operator_hourly_20260613T134801Z",
+  "runtime_scope": "repo_side_smoke_not_live_send"
+}
