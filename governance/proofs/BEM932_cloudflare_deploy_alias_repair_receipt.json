@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_deploy_workflow_alias_repair",
+  "created_at": "2026-06-13T21:22:00Z",
+  "task": "AUTOREPAIR-CLOUDFLARE-DEPLOY-ALIASES",
+  "workflow_path": ".github/workflows/cloudflare-worker-deploy.yml",
+  "workflow_blob_sha": "977afb500d3dda6a99512e95122c485ef9f20f4b",
+  "commit_sha": "94ed5c513bd78f55c6a4e6884772c373c134129d",
+  "checks": {
+    "accepts_cloudflare_token_aliases": [
+      "CLOUDFLARE_API_TOKEN",
+      "CF_API_TOKEN",
+      "WRANGLER_API_TOKEN"
+    ],
+    "accepts_cloudflare_account_aliases": [
+      "CLOUDFLARE_ACCOUNT_ID",
+      "CF_ACCOUNT_ID",
+      "WRANGLER_ACCOUNT_ID"
+    ],
+    "deploy_receipt_committed_even_when_blocked": true,
+    "router_workflow_id_retained": "provider-router.yml",
+    "redeploy_dispatched_after_repair": true
+  },
+  "next": "Poll governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json; PASS unblocks TEST-T02 live message, BLOCKED means runtime secrets still missing."
+}
