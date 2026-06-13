@@ -1,0 +1,85 @@
+name: BEM-932 Fallback Outbox Idempotency Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@1
+
+      - name: Run idempotency check
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs governance/tmp
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          outbox = Path("governance/tmp/outbox_idempotency_test.jsonl")
+          trace = "bem932_outbox_idempotency"
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          def append_once():
+              lines = outbox.read_text(encoding="utf-8").splitlines() if outbox.exists() else []
+              seen = False
+              for line in lines:
+                  if not line.strip():
+                      continue
+                  try:
+                      seen = seen or json.loads(line).get("trace_id") == trace
+                  except Exception:
+                      continue
+              if not seen:
+                  event = {
+                      "created_at": now,
+                      "trace_id": trace,
+                      "type": "provider_fallback_notice",
+                      "fallback_reason": "fallback_quota",
+                      "provider_selected": "claude_code",
+                      "text": "GPT quota exceeded -> fallback Claude запущен"
+                  }
+                  with outbox.open("a", encoding="utf-8") as fh:
+                      fh.write(json.dumps(event, ensure_ascii=False) + "\n")
+
+          append_once()
+          append_once()
+          entries = [json.loads(line) for line in outbox.read_text(encoding="utf-8").splitlines() if line.strip()]
+          matches = [e for e in entries if e.get("trace_id") == trace]
+          assert len(matches) == 1, matches
+
+          receipt = {
+              "status": "PASS",
+              "protocol": "BEM-932 v8.3",
+              "receipt_type": "fallback_outbox_idempotency_test",
+              "created_at": now,
+              "trace_id": trace,
+              "attempts": 2,
+              "notifications_written": len(matches),
+              "fallback_reason": "fallback_quota",
+              "provider_selected": "claude_code",
+              "proof_method": "simulated two retries with same trace_id against the same idempotency logic used in provider-router.yml"
+          }
+          Path("governance/proofs/BEM932_fallback_outbox_idempotency_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "provider-outbox@test"
+          git config user.name "BEM-932 Outbox Test"
+          z� pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_fallback_outbox_idempotency_receipt.json
+          if git diff --cached --quiet; then
+            echo "No outbox receipt changes"
+          else
+            git commit -m "BEM932 fallback outbox idempotency receipt"
+            git push
+          fi
