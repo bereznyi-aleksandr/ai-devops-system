@@ -1,0 +1,109 @@
+name: BEM-932 Provider Router Global Status Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify fresh global provider status fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/state governance/proofs
+          python3 - <<'PY'
+          import json
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          status_path = Path("governance/state/provider_status.json")
+          original = status_path.read_text(encoding="utf-8") if status_path.exists() else "{}"
+
+          def run(trace):
+              raw = subprocess.check_output([
+                  "python3",
+                  "scripts/provider_router.py",
+                  "--role",
+                  "curator",
+                  "--trace-id",
+                  trace,
+                  "--task",
+                  "global provider status smoke",
+              ], text=True)
+              return json.loads(raw)
+
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          # Fresh global provider status must be enough to force fallback for any new Telegram trace.
+          status_path.write_text(json.dumps({
+              "providers": {
+                  "gpt_codex": {
+                      "status": "error",
+                      "reason": "quota_exceeded",
+                      "updated_at": now,
+                      "trace_id": "global_gpt_quota"
+                  }
+              }
+          }, indent=2), encoding="utf-8")
+          fresh = run("global_status_fresh")
+          assert fresh["provider_selected"] == "claude_code", fresh
+          assert fresh["fallback_reason"] == "fallback_quota", fresh
+          assert fresh["decision_source"] == "provider_status", fresh
+
+          # Stale global provider status must be ignored and must not force fallback.
+          status_path.write_text(json.dumps({
+              "providers": {
+                  "gpt_codex": {
+                      "status": "error",
+                      "reason": "quota_exceeded",
+                      "updated_at": "2000-01-01T00:00:00Z",
+                      "trace_id": "global_gpt_quota_stale"
+                  }
+              }
+          }, indent=2), encoding="utf-8")
+          stale = run("global_status_stale")
+          assert stale["provider_selected"] == "gpt_codex", stale
+          assert stale["fallback_reason"] is None, stale
+          assert stale["stale_ignored"] is True, stale
+
+          # Restore repository state file to avoid committing a forced fallback state.
+          status_path.write_text(original, encoding="utf-8")
+
+          receipt = {
+              "status": "PASS",
+              "protocol": "BEM-932 v8.3",
+              "receipt_type": "provider_router_global_status_smoke",
+              "created_at": now,
+              "checks": [
+                  "fresh_global_provider_status_forces_fallback",
+                  "stale_global_provider_status_ignored",
+                  "provider_status_restored_after_test"
+              ],
+              "fresh_global_provider_status": fresh,
+              "stale_global_provider_status": stale
+          }
+          Path("governance/proofs/BEM932_provider_router_global_status_smoke_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - name: Commit smoke receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "provider-router-smoke@ai-devops-system"
+          git config user.name "BEM-932 Provider Router Smoke"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_provider_router_global_status_smoke_receipt.json
+          if git diff --cached --quiet; then
+            echo "No smoke receipt changes"
+          else
+            git commit -m "BEM-932 provider router global status smoke receipt"
+            git push
+          fi
