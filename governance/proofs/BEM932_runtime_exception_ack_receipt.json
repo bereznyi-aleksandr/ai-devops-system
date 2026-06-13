@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "external_auditor_runtime_exception_acknowledgement",
+  "created_at": "2026-06-13T15:35:00Z",
+  "verdict": "APPROVED_WITH_RUNTIME_EXCEPTION_ACKNOWLEDGED_NOT_FULL_APPROVAL",
+  "repo_side_code": "APPROVED",
+  "runtime_live_test": "NOT_TESTED",
+  "release_full_approval": "NOT_GRANTED",
+  "open_task": "WAIT_RUNTIME",
+  "requires_operator_action": true,
+  "required_actions": [
+    "Deploy updated infrastructure/cloudflare-worker/telegram-webhook.js to Cloudflare",
+    "Run live Telegram fallback test through provider-router.yml",
+    "Verify provider_selected=claude_code and fallback_reason=fallback_quota",
+    "Write final TEST-T02 full-live receipt"
+  ],
+  "audit_verdict_file": "governance/audit_mailbox/claude_to_gpt/BEM932_v8_3_external_audit_verdict.md"
+}
