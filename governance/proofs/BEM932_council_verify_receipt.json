@@ -1,0 +1,23 @@
+{
+  "status": "PASS_REPO_SIDE",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "BEM932-COUNCIL-VERIFY",
+  "created_at": "2026-06-13T10:19:00Z",
+  "baseline": {
+    "type": "fixed 3_step_plan",
+    "note": "pre-BEM932 role runners were fixed Python/stub outputs and did not resolve dynamic rules"
+  },
+  "after": {
+    "mechanism": "scripts/prompt_assembler.py + governance/registry/rule_registry.json + governance/registry/element_prompt_profiles.json",
+    "analyst_prompt": "static analyst prompt + 4 base system rules + RULE.SYSTEM.COUNCIL_ANALYST",
+    "auditor_prompt": "static auditor prompt + 4 base system rules + RULE.SYSTEM.COUNCIL_AUDITOR",
+    "curator_prompt": "static curator prompt + 4 base system rules + RULE.SYSTEM.COUNCIL_CURATOR_CANON"
+  },
+  "checks": [
+    "council_analyst_rule_adds_risks_alternatives_planning",
+    "council_auditor_rule_adds_risk_tester_architect_chaire’s_verdict",
+    "council_curator_canon_adds_architect_business_risk_test_operator_auditor_synthesis",
+    "repo-side_output_growth_is_controlled_by_prompt_assembly_not_live_llm_cost"
+  ],
+  "limitation": "This is repo-side prompt mechanism verification; live LLM output comparison remains covered by TesT-T02."
+}
