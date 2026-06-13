@@ -2,7 +2,7 @@
 """BEM-932 provider router.
 
 Selects the provider for a role/task without scanning stale result directories.
-The public contract is a strict JSON/dict with exactly these keys:
+Public contract: strict JSON with exactly:
 provider_selected, fallback_reason, decision_source, trace_id, ttl_seconds, stale_ignored.
 """
 
@@ -13,12 +13,10 @@ import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "governance" / "config" / "provider_config.json"
-
-
 CONTRACT_KEYS = (
     "provider_selected",
     "fallback_reason",
@@ -27,6 +25,8 @@ CONTRACT_KEYS = (
     "ttl_seconds",
     "stale_ignored",
 )
+
+OK_STATUSES = {"ok", "complete", "completed", "success", "pass", "passed", "ready", "available"}
 
 
 def _utc_now_ts() -> float:
@@ -71,6 +71,8 @@ def _is_fresh(record: Dict[str, Any], ttl_seconds: int, now_ts: Optional[float] 
         or _parse_ts(record.get("updated_at"))
         or _parse_ts(record.get("recorded_at"))
         or _parse_ts(record.get("timestamp"))
+        or _parse_ts(record.get("last_failure_at"))
+        or _parse_ts(record.get("last_used"))
     )
     if ts is None:
         return False
@@ -84,11 +86,13 @@ def _normalize_reason(reason: Any) -> Optional[str]:
     if not text:
         return None
     lowered = text.lower()
+    if lowered in OK_STATUSES:
+        return None
     if "quota" in lowered:
         return "quota_exceeded"
     if "rate" in lowered and "limit" in lowered:
         return "rate_limit"
-    if "unavailable" in lowered or "timeout" in lowered:
+    if "unavailable" in lowered or "timeout" in lowered or "runner_unavailable" in lowered:
         return "provider_unavailable"
     return text
 
@@ -96,22 +100,36 @@ def _normalize_reason(reason: Any) -> Optional[str]:
 def _extract_error_reason(record: Any) -> Optional[str]:
     if not isinstance(record, dict):
         return None
-    for key in ("error", "error_code", "status", "reason", "fallback_reason"):
+
+    # Prefer specific reason fields before generic status=error/failed.
+    for key in (
+        "error",
+        "error_code",
+        "reason",
+        "last_failure_type",
+        "failure_type",
+        "fallback_reason",
+    ):
         reason = _normalize_reason(record.get(key))
         if reason:
             return reason
+
+    status = _normalize_reason(record.get("status"))
+    if status:
+        return status
+
     nested = record.get("result")
     if isinstance(nested, dict):
         return _extract_error_reason(nested)
     return None
 
 
-def _same_trace_result_reason(config: Dict[str, Any], trace_id: str) -> tuple[Optional[str], bool]:
-    """Check only governance/codex/results/{trace_id}.json, never the whole directory."""
+def _same_trace_result_reason(config: Dict[str, Any], trace_id: str) -> Tuple[Optional[str], bool]:
+    """Check only governance/codex/results/{trace_id}.json; never scan the whole directory."""
     results_dir = ROOT / config.get("status_sources", {}).get("codex_results_dir", "governance/codex/results")
     path = results_dir / f"{trace_id}.json"
     record = _load_json(path, {})
-    if not record:
+    if not isinstance(record, dict) or not record:
         return None, False
     record_trace = str(record.get("trace_id") or trace_id)
     if record_trace != trace_id:
@@ -119,8 +137,16 @@ def _same_trace_result_reason(config: Dict[str, Any], trace_id: str) -> tuple[Op
     return _extract_error_reason(record), False
 
 
-def _provider_status_reason(config: Dict[str, Any], trace_id: str, ttl_seconds: int) -> tuple[Optional[str], bool]:
-    status_path = ROOT / config.get("status_sources", {}).get("provider_status", "governance/state/provider_status.json")
+def _provider_status_reason(
+    config: Dict[str, Any],
+    trace_id: str,
+    ttl_seconds: int,
+    primary_provider: str,
+) -> Tuple[Optional[str], bool]:
+    status_path = ROOT / config.get("status_sources", {}).get(
+        "provider_status",
+        "governance/state/provider_status.json",
+    )
     status = _load_json(status_path, {})
     if not isinstance(status, dict) or not status:
         return None, False
@@ -128,6 +154,7 @@ def _provider_status_reason(config: Dict[str, Any], trace_id: str, ttl_seconds: 
     candidates = []
     stale_ignored = False
 
+    # Trace-specific records are strongest.
     if isinstance(status.get(trace_id), dict):
         candidates.append(status[trace_id])
 
@@ -137,18 +164,24 @@ def _provider_status_reason(config: Dict[str, Any], trace_id: str, ttl_seconds: 
             if not isinstance(record, dict):
                 continue
             record_trace = str(record.get("trace_id", ""))
-            # Other trace ids must never cause fallback. If their error is stale,
-            # expose stale_ignored=True for audit/test visibility.
-            if record_trace != trace_id:
-                if _extract_error_reason(record) and not _is_fresh(record, ttl_seconds):
-                    stale_ignored = True
-                continue
-            candidates.append(record)
+            if record_trace == trace_id:
+                candidates.append(record)
+            elif _extract_error_reason(record) and not _is_fresh(record, ttl_seconds):
+                stale_ignored = True
 
     if str(status.get("trace_id", "")) == trace_id:
         candidates.append(status)
     elif _extract_error_reason(status) and not _is_fresh(status, ttl_seconds):
         stale_ignored = True
+
+    # Global provider health is allowed, but only if fresh.
+    providers = status.get("providers")
+    if isinstance(providers, dict) and isinstance(providers.get(primary_provider), dict):
+        provider_record = providers[primary_provider]
+        if _is_fresh(provider_record, ttl_seconds):
+            candidates.append(provider_record)
+        elif _extract_error_reason(provider_record):
+            stale_ignored = True
 
     for record in candidates:
         if not _is_fresh(record, ttl_seconds):
@@ -157,18 +190,22 @@ def _provider_status_reason(config: Dict[str, Any], trace_id: str, ttl_seconds: 
         reason = _extract_error_reason(record)
         if reason:
             return reason, stale_ignored
+
     return None, stale_ignored
 
 
 def main(role: str, task_input: Any = None, trace_id: Optional[str] = None) -> Dict[str, Any]:
     config = _load_json(CONFIG_PATH, {})
     ttl_seconds = int(config.get("ttl_seconds", 1800))
-    trace = str(trace_id or (task_input.get("trace_id") if isinstance(task_input, dict) else "") or "")
+    trace = str(
+        trace_id
+        or (task_input.get("trace_id") if isinstance(task_input, dict) else "")
+        or ""
+    )
     if not trace:
         trace = f"trace_{int(time.time())}"
 
-    roles = config.get("roles", {})
-    role_config = roles.get(role, {})
+    role_config = config.get("roles", {}).get(role, {})
     primary = role_config.get("primary", "gpt_codex")
     fallback = role_config.get("fallback", "claude_code")
     fallback_on = set(config.get("fallback_on", ["quota_exceeded", "rate_limit", "provider_unavailable"]))
@@ -179,7 +216,7 @@ def main(role: str, task_input: Any = None, trace_id: Optional[str] = None) -> D
     decision_source = "same_trace_result"
 
     if reason is None:
-        reason, stale = _provider_status_reason(config, trace, ttl_seconds)
+        reason, stale = _provider_status_reason(config, trace, ttl_seconds, primary)
         stale_ignored = stale_ignored or stale
         decision_source = "provider_status" if reason else config.get("default_decision_source", "default")
 
