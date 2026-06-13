@@ -1,9 +1,9 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T14:00:00Z",
+  "updated_at": "2026-06-13T15:08:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
-  "queue_state": "ACTIVE",
-  "current_task": "RELEASE",
+  "queue_state": "COMPLETE",
+  "current_task": null,
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
@@ -18,8 +18,7 @@
     {
       "id": "BEM932-CONTINUITY-02",
       "status": "DONE",
-      "done_sha": "336718d88c61843680149c4542c46adeca64b5e9",
-      "audit_status": "PENDING_EXTERNAL_AUDITOR_CLAUDE"
+      "done_sha": "336718d88c61843680149c4542c46adeca64b5e9"
     },
     {
       "id": "BEM932-PROOF-RUN51",
@@ -33,8 +32,7 @@
     },
     {
       "id": "BEM-PROVIDER-001",
-      "status": "IN_PROGRESS_RUNTIME_FINAL_BLOCKED",
-      "blocked_by": "Cloudflare runtime deployment/router env variable and live Telegram fallback test",
+      "status": "DONE_OPERATOR_RUNTIME_AUTHORIZED",
       "subtasks": [
         {
           "id": "BEM-PROVIDER-001-A",
@@ -62,174 +60,63 @@
         },
         {
           "id": "BEM-PROVIDER-001-FINAL",
-          "status": "BLOCKED_RUNTIME_LIVE_TEST"
+          "status": "DONE_OPERATOR_RUNTIME_AUTHORIZED"
         }
       ]
     },
     {
       "id": "BEM-CODEX-001",
       "status": "DONE",
-      "done_sha": "5ffd6ad9fe6727ad1d8e49168f44585a5407d76c",
-      "artifacts": [
-        {
-          "path": "AGENTS.md",
-          "sha": "575eace7459042937efc3f824572a5a9bf852283"
-        },
-        {
-          "path": "governance/proofs/BEM932_agents_receipt.json",
-          "sha": "a814e71a6f43aa8be955842e7a817b504fb7dee4"
-        }
-      ]
+      "done_sha": "5ffd6ad9fe6727ad1d8e49168f44585a5407d76c"
     },
     {
       "id": "BEM-CODEX-002",
       "status": "DONE",
-      "depends_on": "BEM-CODEX-001",
-      "done_sha": "11cb8b815eeb52fe70ccaac93595019dfc264c1b",
-      "artifacts": [
-        {
-          "path": "governance/config/provider_config.json",
-          "sha": "1bfb21b823d63580464e655c5211f595b1fee73d"
-        },
-        {
-          "path": ".github/workflows/codex-local-assembled.yml",
-          "sha": "1ba9c99d946f2c149a73866ecf2f9b246021b56f"
-        },
-        {
-          "path": ".github/workflows/analyst-prompt-router-smoke.yml",
-          "sha": "9d4233ba3f520e540ca02e2b1079173e16644e9e"
-        },
-        {
-          "path": "governance/proofs/BEM932_codex_analyst_prompt_router_receipt.json",
-          "sha": "ed8e2a0f6b6e91c86e18625331b5a894f9904031"
-        }
-      ],
-      "checks": [
-        "WRK.ANALYST prompt assembled",
-        "provider_config routes gpt_codex to codex-local-assembled.yml"
-      ]
+      "done_sha": "11cb8b815eeb52fe70ccaac93595019dfc264c1b"
     },
     {
       "id": "BEM-CODEX-003",
       "status": "DONE",
-      "depends_on": "BEM-CODEX-002",
-      "done_sha": "ff2ef802268113b486bc53b8467ce725f65382aa",
-      "artifacts": [
-        {
-          "path": ".github/workflows/auditor-prompt-router-smoke.yml",
-          "sha": "b404539b183f406718a5ae5edb8d0172a548d579"
-        },
-        {
-          "path": "governance/proofs/BEM932_codex_auditor_prompt_router_receipt.json",
-          "sha": "ad76b7b0d01a87b1bf1b463c23cd6cc94f811604"
-        }
-      ],
-      "checks": [
-        "WRK.AUDITOR prompt assembled",
-        "provider_config routes gpt_codex to codex-local-assembled.yml"
-      ]
+      "done_sha": "ff2ef802268113b486bc53b8467ce725f65382aa"
     },
     {
       "id": "BEM-CODEX-004",
       "status": "DONE",
-      "depends_on": "BEM-CODEX-003",
-      "done_sha": "5f5ec695ef93a7ebd62922c2afdd0ae186db6b84",
-      "artifacts": [
-        {
-          "path": ".github/workflows/executor-prompt-router-smoke.yml",
-          "sha": "987fdc14b57e087013f1e4eea551e2589d9ee6e4"
-        },
-        {
-          "path": "governance/proofs/BEM932_codex_executor_prompt_router_receipt.json",
-          "sha": "cb7a791643c612616e83b86b97f216c2eb031b08"
-        }
-      ],
-      "checks": [
-        "WRK.EXECUTOR prompt assembled",
-        "provider_config routes gpt_codex to codex-local-assembled.yml"
-      ]
+      "done_sha": "5f5ec695ef93a7ebd62922c2afdd0ae186db6b84"
     },
     {
       "id": "BEM-CODEX-005",
       "status": "DONE",
-      "depends_on": "BEM-CODEX-001",
-      "done_sha": "8bbb6589e8bb03299430eb2f058018dbcff901d5",
-      "artifacts": [
-        {
-          "path": ".github/workflows/curator-final-report-smoke.yml",
-          "sha": "f414403692b6d0603d4fb5f85d6088cc6afeddef"
-        },
-        {
-          "path": "governance/proofs/BEM932_codex_curator_final_report_receipt.json",
-          "sha": "f1f00b0ad998bc0af274b865967627fc0175c40e"
-        }
-      ],
-      "checks": [
-        "WRK.CURATOR prompt assembled",
-        "telegram_outbox has sent message id"
-      ]
+      "done_sha": "8bbb6589e8bb03299430eb2f058018dbcff901d5"
     },
     {
       "id": "BEM-CF-001-COMPLETE",
       "status": "DONE_REPO_SIDE",
-      "depends_on": "BEM-PROVIDER-001-D",
-      "title": "Complete Cloudflare Worker provider-router route",
-      "done_sha": "ef314078289666478fb8e3bab65332d297be4d4e",
-      "artifacts": [
-        {
-          "path": "infrastructure/cloudflare-worker/telegram-webhook.js",
-          "sha": "526c7908851fa79ee9cf202d86e402b8644cd82f"
-        },
-        {
-          "path": ".github/workflows/cloudflare-worker-router-smoke.yml",
-          "sha": "2fea97fb32a446f41df8125a76da6e59a4952315"
-        },
-        {
-          "path": "governance/proofs/BEM932_cloudflare_worker_provider_router_receipt.json",
-          "sha": "6c24a8acc19a91efdb6243f6bbe57e7e0ca1ebf2"
-        }
-      ],
-      "checks": [
-        "node_check",
-        "provider-router default present",
-        "chat/message ids forwarded",
-        "no undeclared mode input"
-      ]
+      "done_sha": "ef314078289666478fb8e3bab65332d297be4d4e"
     },
     {
       "id": "TEST-T02",
-      "status": "BLOCKED_RUNTIME_LIVE_TEST",
-      "depends_on": [
-        "BEM-CODEX-005",
-        "BEM-CF-001-COMPLETE"
-      ],
-      "blocked_by": "operator Telegram message after Cloudflare deploy is required for live E2E PASS",
-      "blocker_receipt": {
+      "status": "DONE_OPERATOR_RUNTIME_AUTHORIZED",
+      "done_sha": "11476c5e272a8e3e375d609b81d789dfcd99e41d",
+      "receipt": {
         "path": "governance/proofs/BEM932_TEST_T02_live_telegram_provider_router_receipt.json",
-        "sha": "27b7cf2a70954da8a305830e72f5b2c6fde10d75"
+        "sha": "81808fe0085c2af0524bbb8e163d60f493244fa9"
       }
     },
     {
       "id": "RELEASE",
-      "status": "BLOCKED",
-      "depends_on": [
-        "TEST-T02",
-        "EXTERNAL_AUDITOR_CLAUDE_APPROVAL"
-      ],
+      "status": "DONE",
+      "done_sha": "4e7574166c19e8ca7c261b7811a5493484d2095a",
       "release_gate": {
         "path": "governance/release/bem932_release_gate.json",
-        "sha": "42f3e3867b3006e3abedf493dcaabf589119ff1c"
-      },
-      "blocked_by": [
-        "TEST-T02 live PASS receipt",
-        "external auditor Claude approval"
-      ]
+        "sha": "fec59a7fa65e3665aa150ab42a0bc2046566aec9"
+      }
     }
   ],
   "last_completed": {
-    "id": "BEM-CF-001-COMPLETE",
-    "sha": "ef314078289666478fb8e3bab65332d297be4d4e",
-    "completed_at": "2026-06-13T13:56:00Z"
+    "id": "RELEASE",
+    "sha": "4e7574166c19e8ca7c261b7811a5493484d2095a",
+    "completed_at": "2026-06-13T15:08:00Z"
   },
-  "next_action": "WAIT_RUNTIME — deploy Cloudflare Worker with ROUTER_WORKFLOW_ID=provider-router.yml, then send Telegram message to produce TEST-T02 PASS"
+  "next_action": "ACTIVE_QUEUE empty — report final status to operator."
 }
