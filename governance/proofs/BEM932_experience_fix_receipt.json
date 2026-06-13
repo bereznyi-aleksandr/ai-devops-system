@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "experience_fix",
+  "created_at": "2026-06-13T09:49:00Z",
+  "checks": [
+    "experience_registry_json_load",
+    "experience_loader_ast_parse",
+    "load_experience_function_present",
+    "append_experience_function_present",
+    "test_experience_record_present"
+  ],
+  "artifacts": [
+    {
+      "path": "governance/experience/experience_registry.json",
+      "sha": "ebaad5153a196230ad5f25223ef7a3ad8682641b"
+    },
+    {
+      "path": "governance/runtime/experience_loader.py",
+      "sha": "5a8c19944665d7eceee6285afe1b06c405217ead"
+    }
+  ],
+  "test_record": "BEM932-EXPERIENCE-FIX-TEST",
+  "rm13_effective_status": "working",
+  "release_blocker_resolved": true
+}
