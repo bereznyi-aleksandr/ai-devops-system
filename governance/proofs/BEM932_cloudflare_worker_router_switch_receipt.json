@@ -2,16 +2,37 @@
   "status": "PASS",
   "protocol": "BEM-932 v8.3",
   "receipt_type": "cloudflare_worker_router_switch",
-  "created_at": "2026-06-13T17:24:00Z",
+  "created_at": "2026-06-13T09:42:00Z",
   "task_id": "BEM-PROVIDER-001-D",
-  "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
-  "worker_commit_sha": "cb701ab27415603a2a11c10f2752234111e73f3b",
-  "worker_blob_sha": "457ebdbd7adb2b8bc5354e81e2f695bf143258b3",
-  "checks": [
-    "ROUTER_WORKFLOW_ID feature flag supported",
-    "default workflow is provider-router.yml",
-    "provider-router input contract includes chat_id and message_id",
-    "legacy codex-local.yml dispatch remains supported when explicitly configured"
-  ],
+  "artifact": {
+    "path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+    "sha": "aa964cf849ba10503d293dd7f17f0ce2d5590521"
+  },
+  "checks": {
+    "router_workflow_id_feature_flag": "ROUTER_WORKFLOW_ID",
+    "default_router_workflow": "provider-router.yml",
+    "dispatch_target": "actions/workflows/{ROUTER_WORKFLOW_ID}/dispatches",
+    "provider_router_inputs": [
+      "role",
+      "task",
+      "trace_id",
+      "cycle_id",
+      "task_type",
+      "chat_id",
+      "message_id"
+    ],
+    "secret_compatibility": [
+      "GH_PAT",
+      "AI_SYSTEM_GITHUB_PAT",
+      "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_CHAT_ID"
+    ],
+    "secrets_seen_by_operator": [
+      "AI_SYSTEM_GITHUB_PAT",
+      "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_CHAT_ID"
+    ]
+  },
+  "note": "Operator screenshot confirms required repository secrets exist. Worker code already switched to provider-router with ROUTER_WORKFLOW_ID override and default provider-router.yml.",
   "next_task": "BEM-PROVIDER-001-E"
 }
