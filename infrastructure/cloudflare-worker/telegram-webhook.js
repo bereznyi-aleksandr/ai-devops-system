@@ -1,6 +1,6 @@
 // Cloudflare Worker: Telegram Webhook → GitHub Actions dispatch
-// BEM-932: routes through ROUTER_WORKFLOW_ID feature flag.
-// Default/rollback workflow: codex-local.yml. Canonical router: provider-router.yml.
+// BEM-932: routes operator messages through provider-router when ROUTER_WORKFLOW_ID is set.
+// Default target is provider-router.yml; legacy codex-local.yml remains supported.
 
 const ALLOWED_CHAT_ID = "601442777";
 
@@ -10,6 +10,36 @@ async function sendTelegram(env, chatId, text) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text }),
   });
+}
+
+function workflowInputsFor(targetWorkflowId, msg, text, traceId) {
+  const task = [
+    text,
+    "",
+    `telegram_chat_id=${String(msg.chat.id)}`,
+    `telegram_message_id=${String(msg.message_id)}`,
+  ].join("\n");
+
+  const common = {
+    role: "curator",
+    trace_id: traceId,
+    cycle_id: "telegram_operator_message",
+    task_type: "telegram_operator_message",
+    task,
+  };
+
+  if (targetWorkflowId === "provider-router.yml" || targetWorkflowId === "provider-router.yaml") {
+    return {
+      ...common,
+      chat_id: String(msg.chat.id),
+      message_id: String(msg.message_id),
+    };
+  }
+
+  return {
+    ...common,
+    provider: "gpt_codex",
+  };
 }
 
 export default {
@@ -37,40 +67,11 @@ export default {
     const now = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
     const traceId = `tg_${updateId}_${now}`;
 
-    const workflowId = env.ROUTER_WORKFLOW_ID || "codex-local.yml";
-    const useProviderRouter = workflowId === "provider-router.yml";
-    const dispatchUrl = `https://api.github.com/repos/${env.GH_REPO}/actions/workflows/${workflowId}/dispatches`;
-
-    const task = [
-      text,
-      "",
-      `telegram_chat_id=${String(msg.chat.id)}`,
-      `telegram_message_id=${String(msg.message_id)}`,
-    ].join("\n");
-
-    const inputs = useProviderRouter
-      ? {
-          role: "curator",
-          trace_id: traceId,
-          chat_id: String(msg.chat.id),
-          message_id: String(msg.message_id),
-          cycle_id: "telegram_operator_message",
-          task_type: "telegram_operator_message",
-          mode: "live",
-          task,
-        }
-      : {
-          role: "curator",
-          provider: "gpt_codex",
-          trace_id: traceId,
-          cycle_id: "telegram_operator_message",
-          task_type: "telegram_operator_message",
-          task,
-        };
-
+    const targetWorkflowId = env.ROUTER_WORKFLOW_ID || "provider-router.yml";
+    const dispatchUrl = `https://api.github.com/repos/${env.GH_REPO}/actions/workflows/${targetWorkflowId}/dispatches`;
     const dispatchBody = JSON.stringify({
       ref: "main",
-      inputs,
+      inputs: workflowInputsFor(targetWorkflowId, msg, text, traceId),
     });
 
     const dispatchResp = await fetch(dispatchUrl, {
@@ -86,7 +87,7 @@ export default {
     });
 
     if (dispatchResp.ok) {
-      await sendTelegram(env, msg.chat.id, `⚡ Получено. Передано куратору через ${workflowId} (trace: ${traceId})`);
+      await sendTelegram(env, msg.chat.id, `⚡ Получено. Передано в ${targetWorkflowId} (trace: ${traceId})`);
       return new Response("ok", { status: 200 });
     }
 
@@ -96,8 +97,7 @@ export default {
     } catch {}
 
     const safeDetails = details ? `\n${details.slice(0, 500)}` : "";
-    await sendTelegram(env, msg.chat.id, `⚠️ Ошибка dispatch: ${dispatchResp.status}${safeDetails}`);
-
+    await sendTelegram(env, msg.chat.id, `⚠️ Ошибка dispatch ${targetWorkflowId}: ${dispatchResp.status}${safeDetails}`);
     return new Response(`dispatch failed: ${dispatchResp.status}`, { status: 200 });
   },
 };
