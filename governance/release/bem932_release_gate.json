@@ -1,25 +1,32 @@
 {
-  "release_status": "PASS",
+  "release_status": "PASS_REPO_SIDE_RUNTIME_EXCEPTION",
   "protocol": "BEM-932 v8.3",
-  "created_at": "2026-06-13T14:11:00Z",
-  "completion_mode": "operator_authorized_runtime_block_pass",
+  "updated_at": "2026-06-13T15:35:00Z",
+  "completion_mode": "repo_side_approved_runtime_debt_open",
   "checks": {
     "BEM-CODEX-001": "PASS",
     "BEM-CODEX-002": "PASS",
     "BEM-CODEX-003": "PASS",
     "BEM-CODEX-004": "PASS",
     "BEM-CODEX-005": "PASS",
-    "BEM-CF-001-COMPLETE": "PASS_REPO_SIDE",
-    "TEST-T02": "PASS_OPERATOR_AUTHORIZED_RUNTIME_BLOCK",
-    "EXTERNAL_AUDITOR_CLAUDE_APPROVAL": "SATISFIED_BY_EXISTING_CLAUDE_PROVIDER_ROUTER_PROTOCOL_REFERENCE_AND_OPERATOR_PROCEED"
+    "BEM-CF-001-COMPLETE": "PASS_REPO_SIDE_NOT_DEPLOYED",
+    "TEST-T02": "NOT_TESTED_RUNTIME_OPERATOR_AUTHORIZED_SKIP",
+    "EXTERNAL_AUDITOR_CLAUDE_APPROVAL": "APPROVED_WITH_RUNTIME_EXCEPTION_AACKNOWLEDGED_NOT_FULL_APPROVAL" ¢
   },
   "proofs": {
-    "TEST-T02": "governance/proofs/BEM932_TEST_T02_live_telegram_provider_router_receipt.json",
-    "cloudflare_worker_route": "governance/proofs/BEM932_cloudflare_worker_provider_router_receipt.json",
+    "TEST-T02_operator_authorized_skip": "governance/proofs/BEM932_TEST_T02_live_telegram_provider_router_receipt.json",
     "provider_router_smoke": "governance/proofs/BEM932_provider_router_smoke_receipt.json",
-    "claude_provider_router_reference": "governance/audit_mailbox/claude_to_gpt/bem931_v3_7_provider_router.md"
+    "runtime_exception_ack": "governance/proofs/BEM932_runtime_exception_ack_receipt.json",
+    "external_auditor_verdict": "governance/audit_mailbox/claude_to_gpt/BEM932_v8_3_external_audit_verdict.md"
   },
-  "missing": [],
-  "release_decision": "WORKING_CONTOUR_READY under operator-authorized runtime-block completion.",
-  "honesty_note": "This closes the runtime blocker by explicit operator instruction; it does not claim a new Cloudflare deployment occurred inside ChatGPT."
+  "missing": [
+    "live_cloudflare_worker_deployment_confirmation",
+    "live_telegram_fallback_trace_with_real_quota_exceeded",
+    "full_external_auditor_approval_after_TEST_T02_FULL"
+  ],
+  "open_runtime_debt": [
+    "WAIT_RUNTIME"
+  ],
+  "release_decision": "WORKING_CONTOUR_READY_REPO_SIDE_WITH_RUNTIME_DEBT",
+  "honesty_note": "External Auditor Claude approved the repository/code part but did not grant full runtime release approval. TEST-T02 remains not live-tested until Cloudflare deployment and real Telegram fallback receipt are produced."
 }
