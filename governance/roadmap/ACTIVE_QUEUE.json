@@ -1,13 +1,13 @@
 {
-  "version": 11,
-  "updated_at": "2026-06-13T15:43:00Z",
+  "version": 12,
+  "updated_at": "2026-06-13T17:35:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "queue_state": "ACTIVE_RUNTIME_DEBT",
   "current_task": "WAIT_RUNTIME",
   "policy": {
     "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
     "runtime_rule": "Operator-authorized runtime skip is not equal to full live TEST-T02 approval.",
-    "continuity_rule": "Stop only at WAIT_RUNTIME because Cloudflare deployment requires external operator/runtime access."
+    "continuity_rule": "Continue repo-side repair where possible; stop only at external Cloudflare/runtime access boundary."
   },
   "tasks": [
     {
@@ -38,7 +38,6 @@
     {
       "id": "BEM-PROVIDER-001",
       "status": "DONE_REPO_SIDE_RUNTIME_DEBT",
-      "note": "1.A-1.E repo implementation approved; 1.FINAL live runtime test is open.",
       "subtasks": [
         {
           "id": "BEM-PROVIDER-001-A",
@@ -101,6 +100,30 @@
       "done_sha": "ef314078289666478fb8e3bab65332d297be4d4e"
     },
     {
+      "id": "BEM932-PROVIDER-GLOBAL-STATUS-FIX",
+      "status": "DONE",
+      "done_sha": "390f0f62062f9103ba0a4d6d0df2de7ec9242044",
+      "artifacts": [
+        {
+          "path": "scripts/provider_router.py",
+          "sha": "d8a25a868237cba5c8a1eeb367dab315a9be3f65"
+        },
+        {
+          "path": ".github/workflows/provider-router-global-status-smoke.yml",
+          "sha": "cf86c02bb9295553514cb92cf75d506b80e4330a"
+        },
+        {
+          "path": "governance/proofs/BEM932_provider_router_global_status_smoke_receipt.json",
+          "sha": "3e47d891ff7a71b25b703d17f31ce3936cf3715a"
+        },
+        {
+          "path": "governance/proofs/BEM932_provider_router_global_status_fix_receipt.json",
+          "sha": "9af38863b09f885ba842e003aad1d0e381d2a48c"
+        }
+      ],
+      "note": "Fresh global providers.gpt_codex quota_exceeded status now forces fallback for live Telegram traces; stale global status is ignored."
+    },
+    {
       "id": "TEST-T02",
       "status": "WAIT_RUNTIME_NOT_TESTED",
       "receipt": {
@@ -119,7 +142,9 @@
       "priority": 0,
       "required_actions": [
         "Deploy updated infrastructure/cloudflare-worker/telegram-webhook.js to Cloudflare",
-        "Run live Telegram fallback test with forced gpt_codex quota_exceeded",
+        "Set/confirm ROUTER_WORKFLOW_ID=provider-router.yml",
+        "For forced fallback test, write fresh providers.gpt_codex status=error reason=quota_exceeded or trigger real quota_exceeded",
+        "Send live Telegram message and verify provider_selected=claude_code fallback_reason=fallback_quota",
         "Record full TEST-T02 receipt and request final external auditor approval"
       ]
     },
@@ -132,9 +157,9 @@
     }
   ],
   "last_completed": {
-    "id": "BEM932-EXTERNAL-AUDIT-VERDICT",
-    "completed_at": "2026-06-13T15:43:00Z",
-    "proof": "governance/proofs/BEM932_runtime_exception_ack_receipt.json"
+    "id": "BEM932-PROVIDER-GLOBAL-STATUS-FIX",
+    "completed_at": "2026-06-13T17:35:00Z",
+    "proof": "governance/proofs/BEM932_provider_router_global_status_fix_receipt.json"
   },
-  "next_action": "WAIT_RUNTIME — requires operator Cloudflare deployment/runtime access; repository-side work is complete."
+  "next_action": "WAIT_RUNTIME — requires operator Cloudflare deployment/runtime access; repo-side forced fallback path is now prepared."
 }
