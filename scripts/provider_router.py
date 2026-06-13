@@ -126,14 +126,30 @@ def _provider_status_reason(config: Dict[str, Any], trace_id: str, ttl_seconds: 
         return None, False
 
     candidates = []
+    stale_ignored = False
+
     if isinstance(status.get(trace_id), dict):
         candidates.append(status[trace_id])
-    if isinstance(status.get("records"), list):
-        candidates.extend([r for r in status["records"] if isinstance(r, dict) and str(r.get("trace_id", "")) == trace_id])
+
+    records = status.get("records")
+    if isinstance(records, list):
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            record_trace = str(record.get("trace_id", ""))
+            # Other trace ids must never cause fallback. If their error is stale,
+            # expose stale_ignored=True for audit/test visibility.
+            if record_trace != trace_id:
+                if _extract_error_reason(record) and not _is_fresh(record, ttl_seconds):
+                    stale_ignored = True
+                continue
+            candidates.append(record)
+
     if str(status.get("trace_id", "")) == trace_id:
         candidates.append(status)
+    elif _extract_error_reason(status) and not _is_fresh(status, ttl_seconds):
+        stale_ignored = True
 
-    stale_ignored = False
     for record in candidates:
         if not _is_fresh(record, ttl_seconds):
             stale_ignored = True
@@ -147,7 +163,7 @@ def _provider_status_reason(config: Dict[str, Any], trace_id: str, ttl_seconds: 
 def main(role: str, task_input: Any = None, trace_id: Optional[str] = None) -> Dict[str, Any]:
     config = _load_json(CONFIG_PATH, {})
     ttl_seconds = int(config.get("ttl_seconds", 1800))
-    trace = str(trace_id or (task_input or {}).get("trace_id") if isinstance(task_input, dict) else trace_id or "")
+    trace = str(trace_id or (task_input.get("trace_id") if isinstance(task_input, dict) else "") or "")
     if not trace:
         trace = f"trace_{int(time.time())}"
 
