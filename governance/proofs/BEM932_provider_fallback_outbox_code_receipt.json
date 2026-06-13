@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "provider_fallback_outbox_code",
+  "created_at": "2026-06-13T17:18:00Z",
+  "task_id": "BEM-PROVIDER-001-E",
+  "workflow_path": ".github/workflows/provider-router.yml",
+  "workflow_sha": "343dee6e5c98bf5a5276708eabd2ccf839d64923",
+  "checks": [
+    "fallback_reason is persisted in provider-router receipt",
+    "fallback writes governance/telegram_outbox.jsonl",
+    "outbox append is idempotent by trace_id",
+    "fallback notice includes chat_id and message_id",
+    "fallback selected provider is recorded"
+  ],
+  "limitations": [
+    "Code-path verified by workflow source and smoke checks; live Telegram fallback remains in BEM-PROVIDER-001-FINAL."
+  ]
+}
