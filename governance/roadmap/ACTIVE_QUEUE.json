@@ -1,31 +1,18 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T09:07:00Z",
+  "updated_at": "2026-06-13T09:36:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "source_sha": "7d998ab7d25774eb5409dd942ebeff4084dff5c4",
-  "source_commit_sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63",
-  "previous_version": 9,
-  "previous_sha": "0872e415c4760524a55439d34b88e58dd2a46d53",
   "queue_state": "ACTIVE",
-  "contract": {
-    "contract_file": "governance/curator/GPT_CONTRACT_v3_0.md",
-    "contract_sha": "030b389e2ecc3e33e79d62f3eca833aa3f7ec270",
-    "agent_context_sha": "3f1d4b4c538a8f17dfb8687a7dac937f94664639",
-    "rule": "After every complete task, set the next task and continue."
-  },
+  "current_task": "BEM-PROVIDER-001-D",
   "policy": {
     "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
-    "stop_rule": "Stop only when ACTIVE_QUEUE is empty or operator explicitly blocks execution.",
-    "report_rule": "A8 mobile report; no diffs/stdout/stderr/raw JSON.",
-    "continuity_rule": "First IN_PROGRESS task is current; otherwise first PENDING."
+    "continuity_rule": "Continue to next task after each completion."
   },
-  "current_task": "BEM932-CONTINUITY-02",
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
-      "title": "0.0 Canon protocol + ACTIVE_QUEUE v10 sync",
       "status": "DONE",
-      "priority": 0,
       "done_sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63",
       "artifacts": [
         {
@@ -36,177 +23,152 @@
           "path": "governance/roadmap/ACTIVE_QUEUE.json",
           "sha": "6d0ba2aa7f5a592f421058d95b8c785378703042"
         }
-      ],
-      "acceptance": [
-        "Canon file committed with SHA",
-        "ACTIVE_QUEUE updated to version 10",
-        "BEM-PROVIDER-001 remains active but after continuity block"
       ]
     },
     {
       "id": "BEM932-CONTINUITY-01",
-      "title": "0.1 Backfill execution_log for RM-15..18 and run #51",
       "status": "DONE",
-      "priority": 1,
-      "source": "BEM932_Protocol_v8_3.md#0.1",
       "done_sha": "1534f7c38c011743daa837e3d54b8119d5faf195",
       "artifacts": [
         {
           "path": "governance/logs/execution_log.jsonl",
           "sha": "a1ebdd0a469b989cc3b27d6bd5e231d8fb5eba83"
         }
-      ],
-      "acceptance": [
-        "execution_log.jsonl contains explicit backfill=true entries",
-        "fields event_at, recorded_at, source_proof, source_sha present",
-        "run #51 entry references governance/proofs/BEM932_horizontal_exchange_run51_receipt.json"
       ]
     },
     {
       "id": "BEM932-CONTINUITY-02",
-      "title": "0.2 SYSTEM_STATUS writer/auditor sync",
-      "status": "IN_PROGRESS",
-      "priority": 2,
-      "source": "BEM932_Protocol_v8_3.md#0.2",
-      "acceptance": [
-        "SYSTEM_STATUS.md actualized by executor",
-        "external Claude verdict recorded separately"
-      ]
-    },
-    {
-      "id": "BEM932-EXPERIENCE-FIX",
-      "title": "0.3 Repair RM-13 experience registry and loader",
-      "status": "PENDING",
-      "priority": 3,
-      "release_blocker": true,
-      "blocks": [
-        "RELEASE"
+      "status": "DONE",
+      "done_sha": "336718d88c61843680149c4542c46adeca64b5e9",
+      "artifacts": [
+        {
+          "path": "SYSTEM_STATUS.md",
+          "sha": "7a09726ecb05606fb2e7ea7ffe0b828a001128a4"
+        },
+        {
+          "path": "governance/audit_mailbox/gpt_to_claude/BEM932_SYSTEM_STATUS_v2_1_audit_request.md",
+          "sha": "4e3afacf6167ba3a75bd4d11e11dfcf9a12df13f"
+        }
       ],
-      "source": "BEM932_Protocol_v8_3.md#0.3",
-      "acceptance": [
-        "experience_registry.json json.load OK",
-        "experience_loader.py ast.parse OK",
-        "test error creates experience record"
-      ]
+      "audit_status": "PENDING_EXTERNAL_AUDITOR_CLAUDE",
+      "note": "Executor update complete; external verdict requested separately."
     },
     {
       "id": "BEM932-PROOF-RUN51",
-      "title": "0.4 Create small proof for horizontal exchange run #51",
       "status": "DONE",
-      "priority": 4,
-      "source": "BEM932_Protocol_v8_3.md#0.4",
       "done_sha": "3342846f58eadb3b9651e4bc62f0dddbf0ac8516",
       "artifacts": [
         {
           "path": "governance/proofs/BEM932_horizontal_exchange_run51_receipt.json",
           "sha": "9c4642521bc4477621c3ad5c265ac15e3b5a87d7"
         }
-      ],
-      "acceptance": [
-        "governance/proofs/BEM932_horizontal_exchange_run51_receipt.json exists",
-        "contains status, run_id, github_sha, trace_id, source_contour, target_contour, verified_at"
       ]
     },
     {
+      "id": "BEM932-EXPERIENCE-FIX",
+      "status": "PENDING",
+      "priority": 20,
+      "release_blocker": true
+    },
+    {
       "id": "BEM-PROVIDER-001",
-      "title": "1.x Provider router: GPT primary -> Claude fallback",
       "status": "IN_PROGRESS",
       "priority": 5,
-      "blocked_by": [
-        "BEM932-CONTINUITY-02"
-      ],
-      "note": "Kept active per v8.3 but scheduled after continuity block.",
       "subtasks": [
         {
           "id": "BEM-PROVIDER-001-A",
-          "title": "1.A Create provider_config.json",
-          "status": "PENDING"
+          "title": "provider_config.json",
+          "status": "DONE",
+          "done_sha": "564bf9bec3b6d0cc53b9914d1964c89ce866f863",
+          "artifact": {
+            "path": "governance/config/provider_config.json",
+            "sha": "af4566478352a2e2419dccc7bbc3ac225146e0ed"
+          }
         },
         {
           "id": "BEM-PROVIDER-001-B",
-          "title": "1.B Create provider_router.py with strict JSON contract",
-          "status": "PENDING"
+          "title": "provider_router.py strict JSON contract",
+          "status": "DONE",
+          "done_sha": "3ed3eb5ef70ac0594771a3d8c3be93b0ae9c30e9",
+          "artifact": {
+            "path": "scripts/provider_router.py",
+            "sha": "d5b590e120e0e9e277540936ed6093d078a190d9"
+          }
         },
         {
           "id": "BEM-PROVIDER-001-C",
-          "title": "1.C Create provider-router.yml",
-          "status": "PENDING"
+          "title": "provider-router.yml",
+          "status": "DONE",
+          "done_sha": "56c5523e4e6089c592ea50ab73308049497ae61f",
+          "artifact": {
+            "path": ".github/workflows/provider-router.yml",
+            "sha": "343dee6e5c98bf5a5276708eabd2ccf839d64923"
+          }
         },
         {
           "id": "BEM932-ROUTER-TESTS",
-          "title": "1.C2 Add pre-live test job",
-          "status": "PENDING"
+          "title": "1.C2 pre-live tests",
+          "status": "DONE",
+          "done_sha": "e7e540f3aed5087d4e4afeb04c2ea2f9b0b923c5",
+          "receipt": {
+            "path": "governance/proofs/BEM932_provider_router_smoke_receipt.json",
+            "sha": "470cee5b2f87512f4a6f9267c610ee7b0e04a110"
+          }
         },
         {
           "id": "BEM-PROVIDER-001-D",
-          "title": "1.D Switch Cloudflare Worker via ROUTER_WORKFLOW_ID",
-          "status": "PENDING"
+          "title": "Switch Cloudflare Worker via ROUTER_WORKFLOW_ID",
+          "status": "IN_PROGRESS"
         },
         {
           "id": "BEM-PROVIDER-001-E",
-          "title": "1.E Honest idempotent fallback outbox",
+          "title": "Honest idempotent fallback outbox",
           "status": "PENDING"
         },
         {
           "id": "BEM-PROVIDER-001-FINAL",
-          "title": "1.FINAL Live Telegram fallback test",
+          "title": "Live Telegram fallback test",
           "status": "PENDING"
         }
       ],
       "acceptance_overall": [
-        "All provider subtasks DONE with SHA",
-        "1.C2 test job passed before live dispatch",
-        "live fallback receipt contains provider_selected=claude_code and fallback_reason=fallback_quota",
-        "github_run_id present"
+        "Provider config, router, workflow and pre-live tests complete",
+        "Worker switch and live fallback test pending"
       ]
     },
     {
       "id": "BEM-CODEX-001",
-      "title": "2.1 Create AGENTS.md",
       "status": "PENDING",
-      "priority": 6,
       "depends_on": "BEM-PROVIDER-001"
     },
     {
       "id": "BEM-CODEX-002",
-      "title": "2.2 Connect Analyst via provider-router + prompt assembler",
       "status": "PENDING",
-      "priority": 7,
       "depends_on": "BEM-CODEX-001"
     },
     {
       "id": "BEM-CODEX-003",
-      "title": "2.3 Connect Auditor via provider-router",
       "status": "PENDING",
-      "priority": 8,
       "depends_on": "BEM-CODEX-002"
     },
     {
       "id": "BEM-CODEX-004",
-      "title": "2.4 Connect Executor via provider-router",
       "status": "PENDING",
-      "priority": 9,
       "depends_on": "BEM-CODEX-003"
     },
     {
       "id": "BEM-CODEX-005",
-      "title": "2.5 Curator Telegram final reports",
       "status": "PENDING",
-      "priority": 10,
       "depends_on": "BEM-CODEX-001"
     },
     {
       "id": "BEM-CF-001-COMPLETE",
-      "title": "3.1 Complete Cloudflare Worker provider-router route",
       "status": "PENDING",
-      "priority": 11,
       "depends_on": "BEM-PROVIDER-001-D"
     },
     {
       "id": "TEST-T02",
-      "title": "4.1 Live Telegram E2E through provider-router",
       "status": "PENDING",
-      "priority": 12,
       "depends_on": [
         "BEM-CODEX-005",
         "BEM-CF-001-COMPLETE"
@@ -214,64 +176,17 @@
     },
     {
       "id": "RELEASE",
-      "title": "4.2 WORKING_CONTOUR_READY",
       "status": "BLOCKED",
-      "priority": 13,
       "depends_on": [
         "TEST-T02",
         "BEM932-EXPERIENCE-FIX"
       ]
-    },
-    {
-      "id": "BEM932-COUNCIL-RULES",
-      "title": "5.1 Add council rules",
-      "status": "PENDING",
-      "priority": 14
-    },
-    {
-      "id": "BEM932-COUNCIL-PROFILES",
-      "title": "5.2 Add council rule refs",
-      "status": "PENDING",
-      "priority": 15,
-      "depends_on": "BEM932-COUNCIL-RULES"
-    },
-    {
-      "id": "BEM932-PROMPT-ASSEMBLER",
-      "title": "5.3 Create prompt_assembler.py",
-      "status": "PENDING",
-      "priority": 16,
-      "depends_on": "BEM932-COUNCIL-PROFILES"
-    },
-    {
-      "id": "BEM932-COUNCIL-VERIFY",
-      "title": "5.4 Verify council prompts",
-      "status": "PENDING",
-      "priority": 17,
-      "depends_on": "BEM932-PROMPT-ASSEMBLER"
-    },
-    {
-      "id": "BEM932-CLOSE-01",
-      "title": "6.1 Update SYSTEM_STATUS after 1.x-5.x",
-      "status": "PENDING",
-      "priority": 18
-    },
-    {
-      "id": "BEM932-CLOSE-02",
-      "title": "6.2 Update AGENT_CONTEXT",
-      "status": "PENDING",
-      "priority": 19
-    },
-    {
-      "id": "BEM932-CLOSE-03",
-      "title": "6.3 Final Telegram A8 report",
-      "status": "PENDING",
-      "priority": 20
     }
   ],
   "last_completed": {
-    "id": "BEM932-CONTINUITY-01",
-    "sha": "1534f7c38c011743daa837e3d54b8119d5faf195",
-    "completed_at": "2026-06-13T09:06:06Z"
+    "id": "BEM932-ROUTER-TESTS",
+    "sha": "e7e540f3aed5087d4e4afeb04c2ea2f9b0b923c5",
+    "completed_at": "2026-06-13T09:36:00Z"
   },
-  "next_action": "BEM932-CONTINUITY-02 — update SYSTEM_STATUS.md and create separate Claude audit placeholder/verdict file"
+  "next_action": "BEM-PROVIDER-001-D — switch Cloudflare Worker via ROUTER_WORKFLOW_ID feature flag"
 }
