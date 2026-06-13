@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "council_rules_profiles_prompt_assembler",
+  "created_at": "2026-06-13T10:06:00Z",
+  "checks": [
+    "rule_registry_json_valid",
+    "council_rules_present",
+    "element_prompt_profiles_json_valid",
+    "analyst_profiles_reference_RULE.SYSTEM.COUNCIL_ANALYST",
+    "auditor_profiles_reference_RULE.SYSTEM.COUNCIL_AUDITOR",
+    "curator_profiles_reference_RULE.SYSTEM.COUNCIL_CURATOR_CANON",
+    "prompt_assembler_py_present",
+    "prompt_assembler_has_def_assemble_prompt",
+    "prompt_assembler_has_if_name_main"
+  ],
+  "artifacts": [
+    {
+      "path": "governance/registry/rule_registry.json",
+      "sha": "cb0c3f8288b0ed19e2aeefa07def03a14951b059",
+      "commit_sha": "b710548ab192bedbcc664982ae2e9513a0cd43ad"
+    },
+    {
+      "path": "governance/registry/element_prompt_profiles.json",
+      "sha": "b25bddcb70d550f8a06b9a6d05f783f10241f314",
+      "commit_sha": "17d184ac99df3f88a45ae73bb7176ae669ed9c9b"
+    },
+    {
+      "path": "scripts/prompt_assembler.py",
+      "sha": "48d2acac31605aa10f3d02c066164cd168e5028f",
+      "commit_sha": "9c668e74dc0b96e8714f332b109fb7598ca57892"
+    }
+  ],
+  "roles": {
+    "analyst": "static analyst prompt + 4 base system rules + RULE.SYSTEM.COUNCIL_ANALYST",
+    "auditor": "static auditor prompt + 4 base system rules + RULE.SYSTEM.COUNCIL_AUDITOR",
+    "curator": "static curator prompt + 4 base system rules + RULE.SYSTEM.COUNCIL_CURATOR_CANON"
+  }
+}
