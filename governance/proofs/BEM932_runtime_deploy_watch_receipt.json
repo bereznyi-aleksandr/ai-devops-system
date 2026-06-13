@@ -1,0 +1,15 @@
+{
+  "status": "DEPLOY_RERUN_DISPATCHED_PREVIOUS_RECEIPT_STILL_BLOCKED",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "runtime_deploy_watch",
+  "created_at": "2026-06-13T22:07:28Z",
+  "action": "create_workflow_dispatch",
+  "workflow_id": "cloudflare-worker-deploy.yml",
+  "ref": "main",
+  "current_blocker": "previous deploy receipt still reports BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG",
+  "required_secrets": [
+    "CLOUDFLARE_API_TOKEN or CF_API_TOKEN or WRANGLER_API_TOKEN",
+    "CLOUDFLARE_ACCOUNT_ID or CF_ACCOUNT_ID or WRANGLER_ACCOUNT_ID"
+  ],
+  "next_action": "poll governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json; if PASS then run live Telegram fallback verification and update release gate"
+}
