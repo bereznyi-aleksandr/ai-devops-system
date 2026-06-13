@@ -15,37 +15,48 @@ jobs:
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Deploy Cloudflare Worker when runtime secrets exist
+      - name: Deploy Cloudflare Worker through wrangler.toml
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CF_WORKER_NAME: ${{ vars.CF_WORKER_NAME }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
           RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
           mkdir -p governance/proofs
           STATUS="PASS"
           DETAILS=""
-          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ] || [ -z "${CF_WORKER_NAME:-}" ]; then
+
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
             STATUS="BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG"
-            DETAILS="requires CLOUDFLARE_API_TOKEN secret, CLOUDFLARE_ACCOUNT_ID secret, CF_WORKER_NAME repository variable"
+            DETAILS="requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets"
           else
             npm install --no-save wrangler@latest >/tmp/wrangler_install.log 2>&1
+            cd infrastructure/cloudflare-worker
+
+            if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
+              printf '%s' "$TELEGRAM_BOT_TOKEN" | npx wrangler secret put TELEGRAM_BOT_TOKEN --config wrangler.toml >/tmp/wrangler_secret_telegram.log 2>&1 || true
+            fi
+            if [ -n "${GH_PAT:-}" ]; then
+              printf '%s' "$GH_PAT" | npx wrangler secret put GH_PAT --config wrangler.toml >/tmp/wrangler_secret_ghpat.log 2>&1 || true
+            fi
+
             set +e
-            npx wrangler deploy infrastructure/cloudflare-worker/telegram-webhook.js \
-              --name "$CF_WORKER_NAME" \
-              --compatibility-date 2026-06-13 \
-              --keep-vars >/tmp/wrangler_deploy.log 2>&1
+            npx wrangler deploy --config wrangler.toml >/tmp/wrangler_deploy.log 2>&1
             CODE=$?
             set -e
+            cd ../..
+
             if [ "$CODE" -ne 0 ]; then
               STATUS="BLOCKED_DEPLOY_FAILED"
               DETAILS="$(tail -c 1200 /tmp/wrangler_deploy.log | tr '\n' ' ')"
             else
-              DETAILS="wrangler deploy completed with --keep-vars"
+              DETAILS="wrangler deploy completed from infrastructure/cloudflare-worker/wrangler.toml"
             fi
           fi
+
           export STATUS DETAILS
           python3 - <<'PY'
           import json
@@ -61,9 +72,10 @@ jobs:
               "workflow": ".github/workflows/cloudflare-worker-deploy.yml",
               "github_run_id": os.environ.get("RUN_ID", ""),
               "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
-              "worker_name": os.environ.get("CF_WORKER_NAME", ""),
+              "wrangler_config": "infrastructure/cloudflare-worker/wrangler.toml",
+              "worker_name": "telegram-webhook",
               "router_workflow_id": "provider-router.yml",
-              "deploy_command": "npx wrangler deploy infrastructure/cloudflare-worker/telegram-webhook.js --name <CF_WORKER_NAME> --compatibility-date 2026-06-13 --keep-vars",
+              "deploy_command": "npx wrangler deploy --config infrastructure/cloudflare-worker/wrangler.toml",
               "details": os.environ.get("DETAILS", ""),
           }
           Path("governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json").write_text(
