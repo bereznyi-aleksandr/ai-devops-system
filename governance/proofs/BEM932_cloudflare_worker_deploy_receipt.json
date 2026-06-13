@@ -1,0 +1,13 @@
+{
+  "status": "BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_worker_deploy_attempt",
+  "created_at": "2026-06-13T17:19:09Z",
+  "workflow": ".github/workflows/cloudflare-worker-deploy.yml",
+  "github_run_id": "27473639850",
+  "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+  "worker_name": "",
+  "router_workflow_id": "provider-router.yml",
+  "deploy_command": "npx wrangler deploy infrastructure/cloudflare-worker/telegram-webhook.js --name <CF_WORKER_NAME> --compatibility-date 2026-06-13 --keep-vars",
+  "details": "requires CLOUDFLARE_API_TOKEN secret, CLOUDFLARE_ACCOUNT_ID secret, CF_WORKER_NAME repository variable"
+}
