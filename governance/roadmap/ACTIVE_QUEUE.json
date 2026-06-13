@@ -1,9 +1,9 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T13:52:00Z",
+  "updated_at": "2026-06-13T13:56:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "queue_state": "ACTIVE",
-  "current_task": "BEM-CF-001-COMPLETE",
+  "current_task": "TEST-T02",
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
@@ -171,13 +171,34 @@
     },
     {
       "id": "BEM-CF-001-COMPLETE",
-      "status": "IN_PROGRESS",
+      "status": "DONE_REPO_SIDE",
       "depends_on": "BEM-PROVIDER-001-D",
-      "title": "Complete Cloudflare Worker provider-router route"
+      "title": "Complete Cloudflare Worker provider-router route",
+      "done_sha": "ef314078289666478fb8e3bab65332d297be4d4e",
+      "artifacts": [
+        {
+          "path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+          "sha": "526c7908851fa79ee9cf202d86e402b8644cd82f"
+        },
+        {
+          "path": ".github/workflows/cloudflare-worker-router-smoke.yml",
+          "sha": "2fea97fb32a446f41df8125a76da6e59a4952315"
+        },
+        {
+          "path": "governance/proofs/BEM932_cloudflare_worker_provider_router_receipt.json",
+          "sha": "6c24a8acc19a91efdb6243f6bbe57e7e0ca1ebf2"
+        }
+      ],
+      "checks": [
+        "node_check",
+        "provider-router default present",
+        "chat/message ids forwarded",
+        "no undeclared mode input"
+      ]
     },
     {
       "id": "TEST-T02",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "depends_on": [
         "BEM-CODEX-005",
         "BEM-CF-001-COMPLETE"
@@ -193,9 +214,9 @@
     }
   ],
   "last_completed": {
-    "id": "BEM-CODEX-005",
-    "sha": "8bbb6589e8bb03299430eb2f058018dbcff901d5",
-    "completed_at": "2026-06-13T13:52:00Z"
+    "id": "BEM-CF-001-COMPLETE",
+    "sha": "ef314078289666478fb8e3bab65332d297be4d4e",
+    "completed_at": "2026-06-13T13:56:00Z"
   },
-  "next_action": "BEM-CF-001-COMPLETE — Complete Cloudflare Worker provider-router route"
+  "next_action": "TEST-T02 — Live Telegram E2E through provider-router"
 }
