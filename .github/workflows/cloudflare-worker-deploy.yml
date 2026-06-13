@@ -1,0 +1,88 @@
+name: BEM-932 Cloudflare Worker Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Deploy Cloudflare Worker when runtime secrets exist
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_WORKER_NAME: ${{ vars.CF_WORKER_NAME }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          STATUS="PASS"
+          DETAILS=""
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ] || [ -z "${CF_WORKER_NAME:-}" ]; then
+            STATUS="BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG"
+            DETAILS="requires CLOUDFLARE_API_TOKEN secret, CLOUDFLARE_ACCOUNT_ID secret, CF_WORKER_NAME repository variable"
+          else
+            npm install --no-save wrangler@latest >/tmp/wrangler_install.log 2>&1
+            set +e
+            npx wrangler deploy infrastructure/cloudflare-worker/telegram-webhook.js \
+              --name "$CF_WORKER_NAME" \
+              --compatibility-date 2026-06-13 \
+              --keep-vars >/tmp/wrangler_deploy.log 2>&1
+            CODE=$?
+            set -e
+            if [ "$CODE" -ne 0 ]; then
+              STATUS="BLOCKED_DEPLOY_FAILED"
+              DETAILS="$(tail -c 1200 /tmp/wrangler_deploy.log | tr '\n' ' ')"
+            else
+              DETAILS="wrangler deploy completed with --keep-vars"
+            fi
+          fi
+          export STATUS DETAILS
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          receipt = {
+              "status": os.environ["STATUS"],
+              "protocol": "BEM-932 v8.3",
+              "receipt_type": "cloudflare_worker_deploy_attempt",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "workflow": ".github/workflows/cloudflare-worker-deploy.yml",
+              "github_run_id": os.environ.get("RUN_ID", ""),
+              "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+              "worker_name": os.environ.get("CF_WORKER_NAME", ""),
+              "router_workflow_id": "provider-router.yml",
+              "deploy_command": "npx wrangler deploy infrastructure/cloudflare-worker/telegram-webhook.js --name <CF_WORKER_NAME> --compatibility-date 2026-06-13 --keep-vars",
+              "details": os.environ.get("DETAILS", ""),
+          }
+          Path("governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit deploy receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "cloudflare-deploy@ai-devops-system"
+          git config user.name "BEM-932 Cloudflare Deploy"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json
+          if git diff --cached --quiet; then
+            echo "No deploy receipt changes"
+          else
+            git commit -m "BEM-932 cloudflare worker deploy receipt"
+            git push
+          fi
