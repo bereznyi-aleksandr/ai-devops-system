@@ -1,0 +1,77 @@
+name: BEM-932 Analyst Prompt Router Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Verify analyst prompt assembler path
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bem932
+          python3 -m py_compile scripts/prompt_assembler.py
+          python3 scripts/prompt_assembler.py --element-id WRK.ANALYST --out /tmp/bem932/analyst_prompt.md
+          grep -q "ASSEMBLED PROMPT" /tmp/bem932/analyst_prompt.md
+          grep -qi "analyst" /tmp/bem932/analyst_prompt.md
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          prompt = Path("/tmp/bem932/analyst_prompt.md").read_text(encoding="utf-8")
+          config = json.loads(Path("governance/config/provider_config.json").read_text(encoding="utf-8"))
+          workflow_id = config["providers"]["gpt_codex"]["workflow_id"]
+          assert workflow_id == "codex-local-assembled.yml", workflow_id
+          assert "WRK.ANALYST" in json.dumps(json.loads(Path("governance/registry/element_prompt_profiles.json").read_text(encoding="utf-8")), ensure_ascii=False)
+          receipt = {
+              "status": "PASS",
+              "protocol": "BEM-932 v8.3",
+              "receipt_type": "analyst_prompt_router_smoke",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "checks": [
+                  "prompt_assembler_py_compile",
+                  "WRK.ANALYST_prompt_assembled",
+                  "provider_config_routes_gpt_codex_to_codex_local_assembled",
+              ],
+              "role": "analyst",
+              "element_id": "WRK.ANALYST",
+              "prompt_assembler": "scripts/prompt_assembler.py",
+              "provider_router": ".github/workflows/provider-router.yml",
+              "provider_config": "governance/config/provider_config.json",
+              "target_workflow_id": workflow_id,
+              "analyst_prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+              "analyst_prompt_bytes": len(prompt.encode("utf-8")),
+          }
+          Path("governance/proofs").mkdir(parents=True, exist_ok=True)
+          Path("governance/proofs/BEM932_codex_analyst_prompt_router_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit smoke receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "analyst-prompt-router-smoke@ai-devops-system"
+          git config user.name "BEM-932 Analyst Prompt Router Smoke"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_codex_analyst_prompt_router_receipt.json
+          if git diff --cached --quiet; then
+            echo "No smoke receipt changes"
+          else
+            git commit -m "BEM-932 analyst prompt router smoke receipt"
+            git push
+          fi
