@@ -1,8 +1,10 @@
 // Cloudflare Worker: Telegram Webhook → GitHub Actions dispatch
-// BEM-932: routes operator messages through provider-router when ROUTER_WORKFLOW_ID is set.
-// Default target is provider-router.yml; legacy codex-local.yml remains supported.
+// BEM-932-D: routes operator messages through provider-router by default.
+// Feature flag: ROUTER_WORKFLOW_ID (default: provider-router.yml).
+// Legacy codex-local.yml remains supported when ROUTER_WORKFLOW_ID explicitly points to it.
 
 const ALLOWED_CHAT_ID = "601442777";
+const DEFAULT_ROUTER_WORKFLOW_ID = "provider-router.yml";
 
 async function sendTelegram(env, chatId, text) {
   return fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -12,12 +14,24 @@ async function sendTelegram(env, chatId, text) {
   });
 }
 
-function workflowInputsFor(targetWorkflowId, msg, text, traceId) {
-  const task = [
+function routerWorkflowId(env) {
+  const configured = String(env.ROUTER_WORKFLOW_ID || "").trim();
+  return configured || DEFAULT_ROUTER_WORKFLOW_ID;
+}
+
+function makeTraceId(updateId) {
+  const now = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
+  return `tg_${updateId}_${now}`;
+}
+
+function workflowInputsFor(workflowId, msg, text, traceId) {
+  const chatId = String(msg.chat.id);
+  const messageId = String(msg.message_id || "");
+  const taskWithTelegramMeta = [
     text,
     "",
-    `telegram_chat_id=${String(msg.chat.id)}`,
-    `telegram_message_id=${String(msg.message_id)}`,
+    `telegram_chat_id=${chatId}`,
+    `telegram_message_id=${messageId}`,
   ].join("\n");
 
   const common = {
@@ -25,14 +39,15 @@ function workflowInputsFor(targetWorkflowId, msg, text, traceId) {
     trace_id: traceId,
     cycle_id: "telegram_operator_message",
     task_type: "telegram_operator_message",
-    task,
+    task: taskWithTelegramMeta,
   };
 
-  if (targetWorkflowId === "provider-router.yml" || targetWorkflowId === "provider-router.yaml") {
+  if (workflowId === "provider-router.yml" || workflowId === "provider-router.yaml") {
     return {
       ...common,
-      chat_id: String(msg.chat.id),
-      message_id: String(msg.message_id),
+      chat_id: chatId,
+      message_id: messageId,
+      task: text,
     };
   }
 
@@ -56,22 +71,24 @@ export default {
     }
 
     const msg = update?.message;
-    if (!msg) return new Response("no message", { status: 200 });
+    if (!msg) {
+      return new Response("no message", { status: 200 });
+    }
 
-    if (String(msg.chat?.id) !== ALLOWED_CHAT_ID) {
+    const chatId = String(msg.chat?.id || "");
+    if (chatId !== ALLOWED_CHAT_ID) {
       return new Response("not allowed", { status: 200 });
     }
 
     const text = msg.text || "";
-    const updateId = String(update.update_id);
-    const now = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
-    const traceId = `tg_${updateId}_${now}`;
+    const updateId = String(update.update_id || "missing");
+    const traceId = makeTraceId(updateId);
+    const workflowId = routerWorkflowId(env);
 
-    const targetWorkflowId = env.ROUTER_WORKFLOW_ID || "provider-router.yml";
-    const dispatchUrl = `https://api.github.com/repos/${env.GH_REPO}/actions/workflows/${targetWorkflowId}/dispatches`;
+    const dispatchUrl = `https://api.github.com/repos/${env.GH_REPO}/actions/workflows/${workflowId}/dispatches`;
     const dispatchBody = JSON.stringify({
       ref: "main",
-      inputs: workflowInputsFor(targetWorkflowId, msg, text, traceId),
+      inputs: workflowInputsFor(workflowId, msg, text, traceId),
     });
 
     const dispatchResp = await fetch(dispatchUrl, {
@@ -87,7 +104,7 @@ export default {
     });
 
     if (dispatchResp.ok) {
-      await sendTelegram(env, msg.chat.id, `⚡ Получено. Передано в ${targetWorkflowId} (trace: ${traceId})`);
+      await sendTelegram(env, chatId, `⚙️ Получено. Передано в ${workflowId} (trace: ${traceId})`);
       return new Response("ok", { status: 200 });
     }
 
@@ -97,7 +114,7 @@ export default {
     } catch {}
 
     const safeDetails = details ? `\n${details.slice(0, 500)}` : "";
-    await sendTelegram(env, msg.chat.id, `⚠️ Ошибка dispatch ${targetWorkflowId}: ${dispatchResp.status}${safeDetails}`);
+    await sendTelegram(env, chatId, `⚠️ Ошибка dispatch ${workflowId}: ${dispatchResp.status}${safeDetails}`);
     return new Response(`dispatch failed: ${dispatchResp.status}`, { status: 200 });
   },
 };
