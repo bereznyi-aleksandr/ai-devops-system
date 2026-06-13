@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "provider_router_global_provider_status_fix",
+  "created_at": "2026-06-13T17:34:00Z",
+  "purpose": "Allow live Telegram fallback test to force provider_selected=claude_code by writing a fresh global providers.gpt_codex quota_exceeded status before the Telegram message.",
+  "changes": [
+    {
+      "path": "scripts/provider_router.py",
+      "commit_sha": "bcc80218dafced899e2c2f96ee6ef3f9f9bd0803",
+      "blob_sha": "d8a25a868237cba5c8a1eeb367dab315a9be3f65",
+      "change": "Support fresh global providers.<primary> status; stale global status ignored."
+    },
+    {
+      "path": ".github/workflows/provider-router-global-status-smoke.yml",
+      "commit_sha": "cbe8cb32e9008c1f2f9a0c3f5e76c467bd42b5c9",
+      "blob_sha": "cf86c02bb9295553514cb92cf75d506b80e4330a",
+      "change": "Workflow verifies fresh global quota fallback and stale ignore."
+    }
+  ],
+  "smoke_receipt": {
+    "path": "governance/proofs/BEM932_provider_router_global_status_smoke_receipt.json",
+    "sha": "3e47d891ff7a71b25b703d17f31ce3936cf3715a",
+    "status": "PASS"
+  },
+  "runtime_status": "WAIT_RUNTIME",
+  "next_action": "Deploy current infrastructure/cloudflare-worker/telegram-webhook.js to Cloudflare, set ROUTER_WORKFLOW_ID=provider-router.yml, then run live Telegram fallback test."
+}
