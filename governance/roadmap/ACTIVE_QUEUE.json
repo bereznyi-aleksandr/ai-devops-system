@@ -1,6 +1,6 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T08:27:00Z",
+  "updated_at": "2026-06-13T09:07:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "source_sha": "7d998ab7d25774eb5409dd942ebeff4084dff5c4",
   "source_commit_sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63",
@@ -11,7 +11,7 @@
     "contract_file": "governance/curator/GPT_CONTRACT_v3_0.md",
     "contract_sha": "030b389e2ecc3e33e79d62f3eca833aa3f7ec270",
     "agent_context_sha": "3f1d4b4c538a8f17dfb8687a7dac937f94664639",
-    "rule": "After every completed task, set the next task and continue."
+    "rule": "After every complete task, set the next task and continue."
   },
   "policy": {
     "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
@@ -19,7 +19,7 @@
     "report_rule": "A8 mobile report; no diffs/stdout/stderr/raw JSON.",
     "continuity_rule": "First IN_PROGRESS task is current; otherwise first PENDING."
   },
-  "current_task": "BEM932-CONTINUITY-01",
+  "current_task": "BEM932-CONTINUITY-02",
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
@@ -31,6 +31,10 @@
         {
           "path": "governance/protocols/BEM932_Protocol_v8_3.md",
           "sha": "7d998ab7d25774eb5409dd942ebeff4084dff5c4"
+        },
+        {
+          "path": "governance/roadmap/ACTIVE_QUEUE.json",
+          "sha": "6d0ba2aa7f5a592f421058d95b8c785378703042"
         }
       ],
       "acceptance": [
@@ -42,9 +46,16 @@
     {
       "id": "BEM932-CONTINUITY-01",
       "title": "0.1 Backfill execution_log for RM-15..18 and run #51",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 1,
       "source": "BEM932_Protocol_v8_3.md#0.1",
+      "done_sha": "1534f7c38c011743daa837e3d54b8119d5faf195",
+      "artifacts": [
+        {
+          "path": "governance/logs/execution_log.jsonl",
+          "sha": "a1ebdd0a469b989cc3b27d6bd5e231d8fb5eba83"
+        }
+      ],
       "acceptance": [
         "execution_log.jsonl contains explicit backfill=true entries",
         "fields event_at, recorded_at, source_proof, source_sha present",
@@ -54,7 +65,7 @@
     {
       "id": "BEM932-CONTINUITY-02",
       "title": "0.2 SYSTEM_STATUS writer/auditor sync",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 2,
       "source": "BEM932_Protocol_v8_3.md#0.2",
       "acceptance": [
@@ -84,16 +95,16 @@
       "status": "DONE",
       "priority": 4,
       "source": "BEM932_Protocol_v8_3.md#0.4",
-      "acceptance": [
-        "governance/proofs/BEM932_horizontal_exchange_run51_receipt.json exists",
-        "contains status, run_id, github_sha, trace_id, source_contour, target_contour, verified_at"
-      ],
       "done_sha": "3342846f58eadb3b9651e4bc62f0dddbf0ac8516",
       "artifacts": [
         {
           "path": "governance/proofs/BEM932_horizontal_exchange_run51_receipt.json",
           "sha": "9c4642521bc4477621c3ad5c265ac15e3b5a87d7"
         }
+      ],
+      "acceptance": [
+        "governance/proofs/BEM932_horizontal_exchange_run51_receipt.json exists",
+        "contains status, run_id, github_sha, trace_id, source_contour, target_contour, verified_at"
       ]
     },
     {
@@ -102,7 +113,6 @@
       "status": "IN_PROGRESS",
       "priority": 5,
       "blocked_by": [
-        "BEM932-CONTINUITY-01",
         "BEM932-CONTINUITY-02"
       ],
       "note": "Kept active per v8.3 but scheduled after continuity block.",
@@ -259,9 +269,9 @@
     }
   ],
   "last_completed": {
-    "id": "BEM932-PROOF-RUN51",
-    "sha": "3342846f58eadb3b9651e4bc62f0dddbf0ac8516",
-    "completed_at": "2026-06-13T08:26:15Z"
+    "id": "BEM932-CONTINUITY-01",
+    "sha": "1534f7c38c011743daa837e3d54b8119d5faf195",
+    "completed_at": "2026-06-13T09:06:06Z"
   },
-  "next_action": "BEM932-CONTINUITY-01 — append explicit backfill records to execution_log.jsonl using RM15-18 receipts and BEM932 run51 proof"
+  "next_action": "BEM932-CONTINUITY-02 — update SYSTEM_STATUS.md and create separate Claude audit placeholder/verdict file"
 }
