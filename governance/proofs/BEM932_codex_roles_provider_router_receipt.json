@@ -1,0 +1,56 @@
+{
+  "status": "PASS_REPO_SIDE",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "codex_roles_provider_router_bridge",
+  "created_at": "2026-06-13T10:08:00Z",
+  "roles": [
+    {
+      "roadmap_item": "BEM-CODEX-002",
+      "role": "analyst",
+      "provider_selected": "gpt_codex",
+      "router": "provider-router.yml",
+      "prompt_source": "scripts/prompt_assembler.py",
+      "status": "PASS_REPO_SIDE"
+    },
+    {
+      "roadmap_item": "BEM-CODEX-003",
+      "role": "auditor",
+      "provider_selected": "gpt_codex",
+      "router": "provider-router.yml",
+      "prompt_source": "scripts/prompt_assembler.py",
+      "status": "PASS_REPO_SIDE"
+    },
+    {
+      "roadmap_item": "BEM-CODEX-004",
+      "role": "executor",
+      "provider_selected": "gpt_codex",
+      "router": "provider-router.yml",
+      "prompt_source": "scripts/prompt_assembler.py",
+      "status": "PASS_REPO_SIDE"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": ".github/workflows/role-orchestrator.yml",
+      "sha": "5625a4e1996129e695834a7a24a1ae0d2ef92d61",
+      "commit_sha": "c14c15ef3b18f4078d897f7b8e5020e950b6d538"
+    },
+    {
+      "path": ".github/workflows/provider-router.yml",
+      "sha": "343dee6e5c98bf5a5276708eabd2ccf839d64923",
+      "commit_sha": "56c5523e4e6089c592ea50ab73308049497ae61f"
+    },
+    {
+      "path": "scripts/prompt_assembler.py",
+      "sha": "48d2acac31605aa10f3d02c066164cd168e5028f",
+      "commit_sha": "9c668e74dc0b96e8714f332b109fb7598ca57892"
+    }
+  ],
+  "checks": [
+    "role_orchestrator dispatches selected roles through provider-router.yml",
+    "provider_router returns strict JSON contract",
+    "prompt_assembler resolves dynamic council rules",
+    "analyst/auditor/executor provider route is repo-side wired"
+  ],
+  "limitation": "Live LLM role output is not claimed here; live Telegram E2E remains TEST-T02."
+}
