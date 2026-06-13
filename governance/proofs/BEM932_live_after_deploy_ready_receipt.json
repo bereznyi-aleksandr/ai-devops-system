@@ -1,0 +1,21 @@
+{
+  "status": "READY_FOR_LIVE_TELEGRAM_MESSAGE",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "operator_deploy_confirmed_and_live_fallback_armed",
+  "created_at": "2026-06-13T19:17:16Z",
+  "operator_statement": "Задеплоил, дальше",
+  "actions": [
+    {
+      "path": "governance/state/provider_status.json",
+      "sha": "c3a9a756fd050e2b59e4cc14d077cd537b628742",
+      "commit_sha": "28436fda4d8414f0aa49b9d7c88faf4c3c158c59",
+      "effect": "fresh providers.gpt_code quota_exceeded status will force provider_router fallback to claude_code"
+    }
+  ],
+  "next_required_external_action": "Send one live Telegram message to the deployed bot so Cloudflare Worker dispatches provider-router.yml.",
+  "expected_receipt_pattern": "governance/proofs/BEM932_provider_router_tg_*.json",
+  "expected_decision": {
+    "provider_selected": "claude_code",
+    "fallback_reason": "fallback_quota"
+  }
+}
