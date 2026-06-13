@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "worker_full_file_replacement",
+  "created_at": "2026-06-13T20:50:00Z",
+  "path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+  "file_sha": "aa964cf849ba10503d293dd7f17f0ce2d5590521",
+  "commit_sha": "4a90d57e26c3af4cbc20d0dd9dd7c171d26bdb58",
+  "checks": [
+    "full_file_replaced",
+    "dispatch_to_ROUTER_WORKFLOW_ID",
+    "default_provider_router_yml",
+    "chat_id_and_message_id_passed_as_strict_inputs",
+    "no_direct_codex_local_dispatch"
+  ],
+  "next_blocker": "Cloudflare runtime deploy still must be performed in Cloudflare with current repo version and required env/secrets."
+}
