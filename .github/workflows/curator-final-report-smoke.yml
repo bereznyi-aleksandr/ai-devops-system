@@ -75,7 +75,7 @@ jobs:
               "runtime_scope": "repo_side_smoke_not_live_send"
           }
           Path("governance/proofs/BEM932_codex_curator_final_report_receipt.json").write_text(
-              json.dumps(ureceipt, indent=2, ensure_ascii=False) + "\n",
+              json.dumps(\receipt, indent=2, ensure_ascii=False) + "\n",
               encoding="utf-8",
           )
           PY
