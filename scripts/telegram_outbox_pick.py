@@ -6,8 +6,7 @@ GATE-5 compatibility:
 - canonical queue: governance/telegram/outbox.jsonl
 """
 
-from __future__ import
- annotations
+from __future__ import annotations
 
 import hashlib
 import json
@@ -23,7 +22,7 @@ PICK = Path("governance/tmp/telegram_pick.json")
 CURRENT = Path("governance/state/operator_progress_current.json")
 
 
-def load_jsol(path: Path) -> list[tuple[int, dict[str, Any]]]:
+def load_jsonl(path: Path) -> list[tuple[int, dict[str, Any]]]:
     rows: list[tuple[int, dict[str, Any]]] = []
     if not path.exists():
         return rows
@@ -59,11 +58,6 @@ def delivered(source_path: str, line_no: int, msg_hash: str) -> bool:
         if same_hash and same_line and same_source:
             return True
     return False
-
-
-for rest in load_jsonl(:
-    pass
-
 
 
 def current_bem() -> str:
@@ -131,4 +125,5 @@ else:
     pick = {"found": False}
 
 PICK.parent.mkdir(parents=True, exist_ok=True)
-PIC. write_text
+PICK.write_text(json.dumps(pick, ensure_ascii=False) + "\n", encoding="utf-8")
+print(json.dumps(pick, ensure_ascii=False))
