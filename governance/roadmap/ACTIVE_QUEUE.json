@@ -1,50 +1,52 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T09:45:00Z",
+  "updated_at": "2026-06-13T09:49:30Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
-  "source_sha": "7d998ab7d25774eb5409dd942ebeff4084dff5c4",
   "queue_state": "ACTIVE",
-  "current_task": "BEM932-EXPERIENCE-FIX",
-  "policy": {
-    "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
-    "continuity_rule": "Continue to next task after each completion."
-  },
+  "current_task": "BEM-CODEX-001",
   "tasks": [
     {"id": "BEM932-CANON-SYNC", "status": "DONE", "done_sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63"},
     {"id": "BEM932-CONTINUITY-01", "status": "DONE", "done_sha": "1534f7c38c011743daa837e3d54b8119d5faf195"},
     {"id": "BEM932-CONTINUITY-02", "status": "DONE", "done_sha": "336718d88c61843680149c4542c46adeca64b5e9", "audit_status": "PENDING_EXTERNAL_AUDITOR_CLAUDE"},
     {"id": "BEM932-PROOF-RUN51", "status": "DONE", "done_sha": "3342846f58eadb3b9651e4bc62f0dddbf0ac8516"},
     {
-      "id": "BEM-PROVIDER-001",
-      "status": "IN_PROGRESS",
-      "subtasks": [
-        {"id": "BEM-PROVIDER-001-A", "status": "DONE", "done_sha": "564bf9bec3b6d0cc53b9914d1964c89ce866f863", "artifact": "governance/config/provider_config.json"},
-        {"id": "BEM-PROVIDER-001-B", "status": "DONE", "done_sha": "3ed3eb5ef70ac0594771a3d8c3be93b0ae9c30e9", "artifact": "scripts/provider_router.py"},
-        {"id": "BEM-PROVIDER-001-C", "status": "DONE", "done_sha": "56c5523e4e6089c592ea50ab73308049497ae61f", "artifact": ".github/workflows/provider-router.yml"},
-        {"id": "BEM932-ROUTER-TESTS", "status": "DONE", "done_sha": "e7e540f3aed5087d4e4afeb04c2ea2f9b0b923c5", "receipt": "governance/proofs/BEM932_provider_router_smoke_receipt.json"},
-        {"id": "BEM-PROVIDER-001-D", "status": "DONE_REPO_SIDE", "done_sha": "c4218a0969fddf60cce1f4bac047f27cac688f22", "artifacts": ["infrastructure/cloudflare-worker/telegram-webhook.js", "governance/proofs/BEM932_worker_router_flag_receipt.json"], "runtime_deploy_note": "Cloudflare runtime deployment and ROUTER_WORKFLOW_ID=provider-router.yml cannot be verified through GitHub API"},
-        {"id": "BEM-PROVIDER-001-E", "status": "DONE_SINULATED", "done_sha": "5bee2740a9a53f6748983132c145df1b0c04818f", "receipt": "governance/proofs/BEM932_fallback_outbox_idempotency_receipt.json"},
-        {"id": "BEM-PROVIDER-001-FINAL", "status": "BLOCKED_RUNTIME_LIVE_TEST", "blocked_by": "Cloudflare runtime deployment/router env variable and live Telegram fallback test"}
-      ]
+      "id": "BEM932-EXPERIENCE-FIX",
+      "status": "DONE",
+      "done_sha": "b635fe6c2f8e943ab94bb6a0fc34009396b6a171",
+      "artifacts": [
+        {"path": "governance/experience/experience_registry.json", "sha": "ebaad5153a196230ad5f25223ef7a3ad8682641b"},
+        {"path": "governance/runtime/experience_loader.py", "sha": "5a8c19944665d7eceee6285afe1b06c405217ead"},
+        {"path": "governance/proofs/BEM932_experience_fix_receipt.json", "sha": "6f709c83581e4cf087a6e6c66983246567e4a897"}
+      ],
+      "release_blocker_resolved": true
     },
     {
-      "id": "BEM932-EXPERIENCE-FIX",
-      "status": "IN_PROGRESS",
-      "release_blocker": true
+      "id": "BEM-PROVIDER-001",
+      "status": "IN_PROGRESS_RUNTIME_FINAL_BLOCKED",
+      "blocked_by": "Cloudflare runtime deployment/router env variable and live Telegram fallback test",
+      "subtasks": [
+        {"id": "BEM-PROVIDER-001-A", "status": "DONE"},
+        {"id": "BEM-PROVIDER-001-B", "status": "DONE"},
+        {"id": "BEM-PROVIDER-001-C", "status": "DONE"},
+        {"id": "BEM932-ROUTER-TESTS", "status": "DONE"},
+        {"id": "BEM-PROVIDER-001-D", "status": "DONE_REPO_SIDE"},
+        {"id": "BEM-PROVIDER-001-E", "status": "DONE_SIMULATED"},
+        {"id": "BEM-PROVIDER-001-FINAL", "status": "BLOCKED_RUNTIME_LIVE_TEST"}
+      ]
     },
-    {"id": "BEM-CODEX-001", "status": "PENDING", "depends_on": "BEM-PROVIDER-001"},
+    {"id": "BEM-CODEX-001", "status": "IN_PROGRESS", "depends_on": "BEM-PROVIDER-001"},
     {"id": "BEM-CODEX-002", "status": "PENDING", "depends_on": "BEM-CODEX-001"},
     {"id": "BEM-CODEX-003", "status": "PENDING", "depends_on": "BEM-CODEX-002"},
     {"id": "BEM-CODEX-004", "status": "PENDING", "depends_on": "BEM-CODEX-003"},
     {"id": "BEM-CODEX-005", "status": "PENDING", "depends_on": "BEM-CODEX-001"},
     {"id": "BEM-CF-001-COMPLETE", "status": "PENDING", "depends_on": "BEM-PROVIDER-001-D"},
     {"id": "TEST-T02", "status": "PENDING", "depends_on": ["BEM-CODEX-005", "BEM-CF-001-COMPLETE"]},
-    {"id": "RELEASE", "status": "BLOCKED", "depends_on": ["TEST-T02", "BEM932-EXPERIENCE-FIX"]}
+    {"id": "RELEASE", "status": "BLOCKED", "depends_on": ["TEST-T02", "EXTERNAL_AUDITOR_CLAUDE_APPROVAL"]}
   ],
   "last_completed": {
-    "id": "BEM-PROVIDER-001-E",
-    "sha": "5bee2740a9a53f6748983132c145df1b0c04818f",
-    "completed_at": "2026-06-13T09:45:00Z"
+    "id": "BEM932-EXPERIENCE-FIX",
+    "sha": "b635fe6c2f8e943ab94bb6a0fc34009396b6a171",
+    "completed_at": "2026-06-13T09:49:30Z"
   },
-  "next_action": "BEM932-EXPERIENCE-FIX — repair experience_registry.json and experience_loader.py"
+  "next_action": "BEM-CODEX-001 — Create AGENTS.md with six canon sections"
 }
