@@ -1,1 +1,30 @@
-{"bem_id":"BEM-1145","version":"1
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-932 v8.3 / BEM-931 v3.5 RM-13",
+  "bem_id": "BEM-1145",
+  "version": "1.0.0",
+  "updated_at": "2026-06-13T09:48:00Z",
+  "cycle_ref": "governance/experience/error_rule_cycle.json",
+  "mandatory_fields": [
+    "error_id",
+    "source",
+    "classification",
+    "proof_ref",
+    "rule_version_before",
+    "action",
+    "status"
+  ],
+  "records": [
+    {
+      "error_id": "BEM932-EXPERIENCE-FIX-TEST",
+      "source": "governance/runtime/experience_loader.py",
+      "classification": "registry_repair_validation",
+      "proof_ref": "governance/proofs/BEM932_experience_fix_receipt.json",
+      "rule_version_before": "BEM-931 v3.5 RM-13 formal pass",
+      "action": "restore valid experience_registry.json and complete experience_loader.py",
+      "status": "validated",
+      "created_at": "2026-06-13T09:48:00Z",
+      "rule_registry_ref": "governance/registry/rule_registry.json"
+    }
+  ]
+}
