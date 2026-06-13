@@ -2,14 +2,19 @@
   "status": "BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG",
   "protocol": "BEM-932 v8.3",
   "receipt_type": "cloudflare_worker_deploy_attempt",
-  "created_at": "2026-06-13T20:38:45Z",
+  "updated_at": "2026-06-13T20:51:00Z",
   "workflow": ".github/workflows/cloudflare-worker-deploy.yml",
-  "github_run_id": "27478444413",
   "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+  "worker_file_sha": "aa964cf849ba10503d293dd7f17f0ce2d5590521",
+  "worker_commit_sha": "4a90d57e26c3af4cbc20d0dd9dd7c171d26bdb58",
   "wrangler_config": "infrastructure/cloudflare-worker/wrangler.toml",
   "worker_name": "telegram-webhook",
   "router_workflow_id": "provider-router.yml",
   "deploy_command": "npx wrangler deploy --config infrastructure/cloudflare-worker/wrangler.toml",
   "gh_pat_secret_source": "AI_SYSTEM_GITHUB_PAT || GH_PAT",
-  "details": "requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets"
+  "missing_runtime_secrets": [
+    "CLOUDFLARE_API_TOKEN",
+    "CLOUDFLARE_ACCOUNT_ID"
+  ],
+  "details": "Repo-side Worker code is fully replaced and ready. Runtime deploy still requires Cloudflare secrets available to GitHub Actions."
 }
