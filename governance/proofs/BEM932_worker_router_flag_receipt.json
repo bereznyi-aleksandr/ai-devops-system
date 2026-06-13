@@ -1,0 +1,19 @@
+{
+  "status": "PASS_REPO_SIDE",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_worker_router_flag",
+  "created_at": "2026-06-13T09:40:00Z",
+  "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+  "worker_file_sha": "336f4bf31644ae68524ca8e5bacca030ce61a1a6",
+  "commit_sha": "1a3e431cc435a92d0002789c5295942308e6ddcf",
+  "feature_flag": "ROUTER_WORKFLOW_ID",
+  "canonical_router_workflow": "provider-router.yml",
+  "default_rollback_workflow": "codex-local.yml",
+  "checks": [
+    "worker code no longer hardcodes codex-local.yml as only dispatch target",
+    "provider-router.yml input shape supported when ROUTER_WORKFLOW_ID=provider-router.yml",
+    "codex-local.yml rollback input shape preserved when feature flag is unset or codex-local.yml",
+    "mode=live is set for provider-router dispatches"
+  ],
+  "limitation": "Repo-side code updated; the runtime Cloudflare deployment and ROUTER_WORKFLOW_ID env value cannot be verified through GitHub API."
+}
