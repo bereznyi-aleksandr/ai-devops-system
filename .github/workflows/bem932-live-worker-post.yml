@@ -38,7 +38,7 @@ jobs:
             -H "Content-Type: application/json" \
             --data @/tmp/telegram_update.json \
             "$WORKER_URL")
-
+          export HTTP_CODE
           cat /tmp/worker_response.json || true
 
           python3 - <<'PY'
@@ -51,7 +51,7 @@ jobs:
           try:
               body = json.loads(raw)
           except Exception:
-              body = {"raw": raw }
+              body = {"raw": raw}
           http_code = os.environ["HTTP_CODE"]
           status = "PASS" if (http_code == "200" and body.get("status") == "DISPATCHED") else "BLOCKED"
           receipt = {
@@ -79,9 +79,9 @@ jobs:
           git config user.name "BEM932 Live Worker Test"
           git pull --rebase --autostash origin main || true
           git add governance/proofs/BEM932_live_worker_post_receipt.json 2>/dev/null || true
-          if git diff --cached --quiet; then
+         if git diff --cached --quiet; then
             echo "No live test receipt changes"
           else
             git commit -m "BEM-932 live worker post receipt"
             git push
-          fi
+         fi
