@@ -14,83 +14,51 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-
-      - name: Verify curator prompt and final report receipt
-        shell: bash
+      - shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/bem932 governance/proofs
           python3 -m py_compile scripts/prompt_assembler.py
-          python3 scripts/prompt_assembler.py --element-id WRK.CURATOR --out /tmp/bem932/curator_prompt.md
-          grep -q "ASSEMBLED PROMPT" /tmp/bem932/curator_prompt.md
-          grep -qi "curator" /tmp/bem932/curator_prompt.md
-
+          python3 scripts/prompt_assembler.py --element-id WRK.CURATOR --out /tmp/bem932/curator.md
+          grep -q "ASSEMBLED PROMPT" /tmp/bem932/curator.md
+          grep -qi "curator" /tmp/bem932/curator.md
           python3 - <<'PY'
-          import hashlib
-          import json
+          import hashlib, json
           from datetime import datetime, timezone
           from pathlib import Path
-
-          prompt = Path("/tmp/bem932/curator_prompt.md").read_text(encoding="utf-8")
-          outbox_path = Path("governance/telegram_outbox.jsonl")
+          prompt = Path('/tmp/bem932/curator.md').read_text(encoding='utf-8')
           latest = None
-          if outbox_path.exists():
-              for raw in outbox_path.read_text(encoding="utf-8", errors="replace").splitlines():
-                  raw = raw.strip()
-                  if not raw.startswith("{"):
-                      continue
-                  try:
-                      obj = json.loads(raw)
-                  except Exception:
-                      continue
-                  if obj.get("status") == "sent" and obj.get("telegram_message_id"):
-                      latest = obj
-
-          assert latest is not None, "telegram_outbox_has_sent_message_id"
-
-          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-          receipt = {
-              "status": "PASS",
-              "protocol": "BEM-932 v8.3",
-              "receipt_type": "curator_telegram_final_report_smoke",
-              "created_at": now,
-              "checks": [
-                  "prompt_assembler_py_compile",
-                  "WRK.CURATOR_prompt_assembled",
-                  "telegram_outbox_has_sent_message_id",
-                  "final_report_receipt_records_inbound_and_outbound_message_id"
-              ],
-              "role": "curator",
-              "element_id": "WRK.CURATOR",
-              "prompt_assembler": "scripts/prompt_assembler.py",
-              "curator_prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
-              "curator_prompt_bytes": len(prompt.encode("utf-8")),
-              "inbound_message_id": "simulated-bem-codex-005",
-              "outbound_message_id": str(latest.get("telegram_message_id")),
-              "chat_id": str(latest.get("chat_id", "")),
-              "latest_outbox_event_id": latest.get("event_id"),
-              "latest_outbox_sent_at": latest.get("sent_at"),
-              "latest_outbox_created_at": latest.get("created_at"),
-              "telegram_outbox_path": str(outbox_path),
-              "runtime_scope": "repo_side_smoke_not_live_send"
+          p = Path('governance/telegram_outbox.jsonl')
+          for line in p.read_text(encoding='utf-8', errors='replace').splitlines():
+              if not line.strip().startswith('{'):
+                  continue
+              try:
+                  obj = json.loads(line)
+              except Exception:
+                  continue
+              if obj.get('status') == 'sent' and obj.get('telegram_message_id'):
+                  latest = obj
+          assert latest, 'telegram_outbox_has_sent_message_id'
+          r = {
+              'status': 'PASS',
+              'protocol': 'BEM-932 v8.3',
+              'receipt_type': 'curator_telegram_final_report_smoke',
+              'created_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+              'checks': ['prompt_assembler_py_compile','WRK.CURATOR_prompt_assembled','telegram_outbox_has_sent_message_id'],
+              'role': 'curator',
+              'element_id': 'WRK.CURATOR',
+              'prompt_assembler': 'scripts/prompt_assembler.py',
+              'curator_prompt_sha256': hashlib.sha256(prompt.encode()).hexdigest(),
+              'inbound_message_id': 'simulated-bem-codex-005',
+              'outbound_message_id': str(latest.get('telegram_message_id')),
+              'chat_id': str(latest.get('chat_id','')),
+              'latest_outbox_event_id': latest.get('event_id'),
+              'runtime_scope': 'repo_side_smoke_not_live_send'
           }
-          Path("governance/proofs/BEM932_codex_curator_final_report_receipt.json").write_text(
-              json.dumps(\receipt, indent=2, ensure_ascii=False) + "\n",
-              encoding="utf-8",
-          )
+          Path('governance/proofs/BEM932_codex_curator_final_report_receipt.json').write_text(json.dumps(r, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
           PY
-
-      - name: Commit curator final report receipt
-        shell: bash
-        run: |
-          set -euo pipefail
           git config user.email "curator-final-report-smoke@ai-devops-system"
           git config user.name "BEM-932 Curator Final Report Smoke"
           git pull --rebase --autostash origin main || true
           git add governance/proofs/BEM932_codex_curator_final_report_receipt.json
-          if git diff --cached --quiet; then
-            echo "No curator final report receipt changes"
-          else
-            git commit -m "BEM-932 curator final report smoke receipt"
-            git push
-          fi
+          git diff --cached --quiet || (git commit -m "BEM-932 curator final report smoke receipt" && git push)
