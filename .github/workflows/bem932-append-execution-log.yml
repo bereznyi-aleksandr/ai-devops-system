@@ -1,0 +1,86 @@
+name: BEM-932 Append Execution Log
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Append pending execution log records
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/logs governance/proofs
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          log_path = Path("governance/logs/execution_log.jsonl")
+          pending_path = Path("governance/logs/pending_append.jsonl")
+          receipt_path = Path("governance/proofs/BEM932_execution_log_append_receipt.json")
+
+          existing_lines = log_path.read_text(encoding="utf-8").splitlines() if log_path.exists() else []
+          pending_lines = pending_path.read_text(encoding="utf-8").splitlines() if pending_path.exists() else []
+
+          seen = set()
+          for line in existing_lines:
+              if not line.strip():
+                  continue
+              try:
+                  obj = json.loads(line)
+              except Exception:
+                  continue
+              key = obj.get("trace_id") or f"{obj.get('id')}::{obj.get('sha')}"
+              seen.add(str(key))
+
+          appended = []
+          for line in pending_lines:
+              if not line.strip():
+                  continue
+              obj = json.loads(line)
+              key = obj.get("trace_id") or f"{obj.get('id')}::{obj.get('sha')}"
+              if str(key) in seen:
+                  continue
+              existing_lines.append(json.dumps(obj, ensure_ascii=False, separators=(",", ":")))
+              seen.add(str(key))
+              appended.append(obj)
+
+          log_path.write_text("\n".join(existing_lines).rstrip() + "\n", encoding="utf-8")
+          receipt = {
+              "status": "PASS",
+              "protocol": "BEM-932 v8.3",
+              "receipt_type": "execution_log_append",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "pending_path": str(pending_path),
+              "log_path": str(log_path),
+              "appended_count": len(appended),
+              "appended_ids": [obj.get("id") for obj in appended],
+              "appended_trace_ids": [obj.get("trace_id") for obj in appended],
+          }
+          receipt_path.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit log update
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "execution-log@ai-devops-system"
+          git config user.name "BEM-932 Execution Log"
+          git pull --rebase --autostash origin main || true
+          git add governance/logs/execution_log.jsonl governance/logs/pending_append.jsonl governance/proofs/BEM932_execution_log_append_receipt.json
+          if git diff --cached --quiet; then
+            echo "No execution log changes"
+          else
+            git commit -m "BEM-932 append execution log"
+            git push
+          fi
