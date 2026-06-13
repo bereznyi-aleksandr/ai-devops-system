@@ -1,0 +1,33 @@
+{
+  "status": "REPO_SIDE_HOTFIX_APPLIED_DEPLOY_BLOCKED",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "operator_contract_runtime_hotfix",
+  "created_at": "2026-06-13T20:07:00Z",
+  "operator_signal": "contract/runtime not working",
+  "fixed": [
+    {
+      "path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+      "commit_sha": "5a00c34846fc3701ca40f727d165a45b0b579c90",
+      "content_sha": "77264e5056cea1355e5165224c8066c34b03ee17",
+      "change": "runtime dispatch path hardened to provider-router.yml and GH_PAT fallback added"
+    },
+    {
+      "path": ".github/workflows/cloudflare-worker-deploy.yml",
+      "commit_sha": "9467fb87b1c95444df97d33f302c6bc0447c68b0",
+      "content_sha": "dbc616c68239e72f9d452cd4780c45217b55754f",
+      "change": "deploy workflow uses AI_SYSTEM_GITHUB_PAT || GH_PAT and writes updated deploy receipt"
+    }
+  ],
+  "deploy_attempt": {
+    "workflow": "cloudflare-worker-deploy.yml",
+    "github_run_id": "27477661697",
+    "receipt_path": "governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json",
+    "receipt_sha": "7364019d76e8a6dde9c57b71b5840165a7c3e7c2",
+    "status": "BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG",
+    "missing": [
+      "CLOUDFLARE_API_TOKEN",
+      "CLOUDFLARE_ACCOUNT_ID"
+    ]
+  },
+  "next_action": "wait for Cloudflare runtime secrets, then rerun cloudflare-worker-deploy.yml and TEST-T02 live Telegram message"
+}
