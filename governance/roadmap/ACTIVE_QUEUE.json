@@ -1,9 +1,9 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T13:38:00Z",
+  "updated_at": "2026-06-13T13:43:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "queue_state": "ACTIVE",
-  "current_task": "BEM-CODEX-003",
+  "current_task": "BEM-CODEX-004",
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
@@ -111,12 +111,27 @@
     },
     {
       "id": "BEM-CODEX-003",
-      "status": "IN_PROGRESS",
-      "depends_on": "BEM-CODEX-002"
+      "status": "DONE",
+      "depends_on": "BEM-CODEX-002",
+      "done_sha": "ff2ef802268113b486bc53b8467ce725f65382aa",
+      "artifacts": [
+        {
+          "path": ".github/workflows/auditor-prompt-router-smoke.yml",
+          "sha": "b404539b183f406718a5ae5edb8d0172a548d579"
+        },
+        {
+          "path": "governance/proofs/BEM932_codex_auditor_prompt_router_receipt.json",
+          "sha": "ad76b7b0d01a87b1bf1b463c23cd6cc94f811604"
+        }
+      ],
+      "checks": [
+        "WRK.AUDITOR prompt assembled",
+        "provider_config routes gpt_codex to codex-local-assembled.yml"
+      ]
     },
     {
       "id": "BEM-CODEX-004",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "depends_on": "BEM-CODEX-003"
     },
     {
@@ -147,9 +162,9 @@
     }
   ],
   "last_completed": {
-    "id": "BEM-CODEX-002",
-    "sha": "11cb8b815eeb52fe70ccaac93595019dfc264c1b",
-    "completed_at": "2026-06-13T13:38:00Z"
+    "id": "BEM-CODEX-003",
+    "sha": "ff2ef802268113b486bc53b8467ce725f65382aa",
+    "completed_at": "2026-06-13T13:43:00Z"
   },
-  "next_action": "BEM-CODEX-003 — Connect auditor via provider-router + prompt assembler"
+  "next_action": "BEM-CODEX-004 — Connect executor via provider-router + prompt assembler"
 }
