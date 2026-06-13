@@ -1,0 +1,51 @@
+name: BEM-932 Cloudflare Worker Router Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+      - shell: bash
+        run: |
+          set -euo pipefail
+          node --check infrastructure/cloudflare-worker/telegram-webhook.js
+          grep -q "ROUTER_WORKFLOW_ID" infrastructure/cloudflare-worker/telegram-webhook.js
+          grep -q "provider-router.yml" infrastructure/cloudflare-worker/telegram-webhook.js
+          grep -q "chat_id" infrastructure/cloudflare-worker/telegram-webhook.js
+          grep -q "message_id" infrastructure/cloudflare-worker/telegram-webhook.js
+          mkdir -p governance/proofs
+          python3 - <<'PY'
+          import hashlib, json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          p = Path('infrastructure/cloudflare-worker/telegram-webhook.js')
+          text = p.read_text(encoding='utf-8')
+          assert 'mode:' not in text, 'provider-router dispatch must not include undeclared mode input'
+          r = {
+              'status': 'PASS',
+              'protocol': 'BEM-932 v8.3',
+              'receipt_type': 'cloudflare_worker_provider_router_route',
+              'created_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+              'checks': ['node_check','ROUTER_WORKFLOW_ID_present','provider_router_default_present','chat_message_ids_forwarded','no_undeclared_mode_input'],
+              'worker_path': str(p),
+              'worker_sha256': hashlib.sha256(text.encode()).hexdigest(),
+              'target_default': 'provider-router.yml',
+              'fallback_supported': 'codex-local.yml',
+              'runtime_scope': 'repo_side_static_smoke'
+          }
+          Path('governance/proofs/BEM932_cloudflare_worker_provider_router_receipt.json').write_text(json.dumps(r, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+          git config user.email "cf-worker-router-smoke@ai-devops-system"
+          git config user.name "BEM-932 CF Worker Router Smoke"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_cloudflare_worker_provider_router_receipt.json
+          git diff --cached --quiet || (git commit -m "BEM-932 cloudflare worker provider router receipt" && git push)
