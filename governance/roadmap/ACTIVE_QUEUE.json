@@ -1,25 +1,15 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T09:49:30Z",
+  "updated_at": "2026-06-13T09:52:30Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "queue_state": "ACTIVE",
-  "current_task": "BEM-CODEX-001",
+  "current_task": "BEM-CODEX-002",
   "tasks": [
     {"id": "BEM932-CANON-SYNC", "status": "DONE", "done_sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63"},
     {"id": "BEM932-CONTINUITY-01", "status": "DONE", "done_sha": "1534f7c38c011743daa837e3d54b8119d5faf195"},
     {"id": "BEM932-CONTINUITY-02", "status": "DONE", "done_sha": "336718d88c61843680149c4542c46adeca64b5e9", "audit_status": "PENDING_EXTERNAL_AUDITOR_CLAUDE"},
     {"id": "BEM932-PROOF-RUN51", "status": "DONE", "done_sha": "3342846f58eadb3b9651e4bc62f0dddbf0ac8516"},
-    {
-      "id": "BEM932-EXPERIENCE-FIX",
-      "status": "DONE",
-      "done_sha": "b635fe6c2f8e943ab94bb6a0fc34009396b6a171",
-      "artifacts": [
-        {"path": "governance/experience/experience_registry.json", "sha": "ebaad5153a196230ad5f25223ef7a3ad8682641b"},
-        {"path": "governance/runtime/experience_loader.py", "sha": "5a8c19944665d7eceee6285afe1b06c405217ead"},
-        {"path": "governance/proofs/BEM932_experience_fix_receipt.json", "sha": "6f709c83581e4cf087a6e6c66983246567e4a897"}
-      ],
-      "release_blocker_resolved": true
-    },
+    {"id": "BEM932-EXPERIENCE-FIX", "status": "DONE", "done_sha": "b635fe6c2f8e943ab94bb6a0fc34009396b6a171"},
     {
       "id": "BEM-PROVIDER-001",
       "status": "IN_PROGRESS_RUNTIME_FINAL_BLOCKED",
@@ -30,12 +20,12 @@
         {"id": "BEM-PROVIDER-001-C", "status": "DONE"},
         {"id": "BEM932-ROUTER-TESTS", "status": "DONE"},
         {"id": "BEM-PROVIDER-001-D", "status": "DONE_REPO_SIDE"},
-        {"id": "BEM-PROVIDER-001-E", "status": "DONE_SIMULATED"},
+        {"id": "BEM-PROVIDER-001-E", "status": "DONE_SINULATED"},
         {"id": "BEM-PROVIDER-001-FINAL", "status": "BLOCKED_RUNTIME_LIVE_TEST"}
       ]
     },
-    {"id": "BEM-CODEX-001", "status": "IN_PROGRESS", "depends_on": "BEM-PROVIDER-001"},
-    {"id": "BEM-CODEX-002", "status": "PENDING", "depends_on": "BEM-CODEX-001"},
+    {"id": "BEM-CODEX-001", "status": "DONE", "done_sha": "5ffd6ad9fe6727ad1d8e49168f44585a5407d76c", "artifacts": [{"path": "AGENTS.md", "sha": "575eace7459042937efc3f824572a5a9bf852283"}, {"path": "governance/proofs/BEM932_agents_receipt.json", "sha": "a814e71a6f43aa8be955842e7a817b504fb7dee4"}]},
+    {"id": "BEM-CODEX-002", "status": "IN_PROGRESS", "depends_on": "BEM-CODEX-001"},
     {"id": "BEM-CODEX-003", "status": "PENDING", "depends_on": "BEM-CODEX-002"},
     {"id": "BEM-CODEX-004", "status": "PENDING", "depends_on": "BEM-CODEX-003"},
     {"id": "BEM-CODEX-005", "status": "PENDING", "depends_on": "BEM-CODEX-001"},
@@ -44,9 +34,9 @@
     {"id": "RELEASE", "status": "BLOCKED", "depends_on": ["TEST-T02", "EXTERNAL_AUDITOR_CLAUDE_APPROVAL"]}
   ],
   "last_completed": {
-    "id": "BEM932-EXPERIENCE-FIX",
-    "sha": "b635fe6c2f8e943ab94bb6a0fc34009396b6a171",
-    "completed_at": "2026-06-13T09:49:30Z"
+    "id": "BEM-CODEX-001",
+    "sha": "5ffd6ad9fe6727ad1d8e49168f44585a5407d76c",
+    "completed_at": "2026-06-13T09:52:30Z"
   },
-  "next_action": "BEM-CODEX-001 — Create AGENTS.md with six canon sections"
+  "next_action": "BEM-CODEX-002 — Connect analyst via provider-router + prompt assembler"
 }
