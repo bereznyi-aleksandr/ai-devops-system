@@ -1,0 +1,61 @@
+name: BEM-932 Provider Router Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run provider router tests and write receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/state governance/codex/results governance/proofs
+          python3 - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          state = Path("governance/state/provider_status.json")
+          results = Path("governance/codex/results")
+          def run(trace):
+              raw = subprocess.check_output(["python3","scripts/provider_router.py","--role","curator","--trace-id",trace,"--task","smoke"], text=True)
+              return json.loads(raw)
+          state.write_text(json.dumps({"records":[{"trace_id":"old_other","status":"quota_exceeded","created_at":"2000-01-01T00:00:00Z"}]}))
+          stale = run("smoke_fresh")
+          state.unlink(missing_ok=True)
+          (results/"smoke_same.json").write_text(json.dumps({"trace_id":"smoke_same","status":"quota_exceeded","created_at":"2999-01-01T00:00:00Z"}))
+          same = run("smoke_same")
+          (results/"smoke_same.json").unlink(missing_ok=True)
+          primary = run("smoke_primary")
+          assert stale["provider_selected"] == "gpt_codex" and stale["stale_ignored"] is True and stale["fallback_reason"] is None, stale
+          assert same["provider_selected"] == "claude_code" and same["fallback_reason"] == "fallback_quota", same
+          assert primary["provider_selected"] == "gpt_codex" and primary["decision_source"] == "default", primary
+          receipt = {
+              "status": "PASS",
+              "protocol": "BEM-932 v8.3",
+              "receipt_type": "provider_router_smoke",
+              "checks": ["stale_quota_ignored", "same_trace_quota_fallback", "no_status_primary"],
+              "stale_quota_ignored": stale,
+              "same_trace_quota_fallback": same,
+              "no_status_primary": primary
+          }
+          Path("governance/proofs/BEM932_provider_router_smoke_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
+          PY
+      - name: Commit smoke receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "provider-router-smoke@ai-devops-system"
+          git config user.name "BEM-932 Provider Router Smoke"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_provider_router_smoke_receipt.json
+          if git diff --cached --quiet; then
+            echo "No smoke receipt changes"
+          else
+            git commit -m "BEM-932 provider router smoke receipt"
+            git push
+          fi
