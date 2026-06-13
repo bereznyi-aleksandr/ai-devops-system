@@ -1,189 +1,261 @@
 {
-  "version": 9,
-  "updated_at": "2026-06-08T18:30:00Z",
-  "source": "Claude EXTERNAL_AUDITOR — provider router gap confirmed by GPT analysis",
+  "version": 10,
+  "updated_at": "2026-06-13T08:22:00Z",
+  "source": "governance/protocols/BEM932_Protocol_v8_3.md",
+  "source_sha": "7d998ab7d25774eb5409dd942ebeff4084dff5c4",
+  "source_commit_sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63",
+  "previous_version": 9,
+  "previous_sha": "0872e415c4760524a55439d34b88e58dd2a46d53",
   "queue_state": "ACTIVE",
+  "contract": {
+    "contract_file": "governance/curator/GPT_CONTRACT_v3_0.md",
+    "contract_sha": "030b389e2ecc3e33e79d62f3eca833aa3f7ec270",
+    "agent_context_sha": "3f1d4b4c538a8f17dfb8687a7dac937f94664639",
+    "rule": "After every completed task, set the next task and continue."
+  },
   "policy": {
-    "done_rule": "DONE = non-null SHA + рабочий код + для workflow задач: receipt с github_run_id",
-    "stub_rule": "Python заглушка / метка-поле без реальной логики = NOT DONE",
-    "queue_limit": "Максимум 5 задач одновременно",
-    "stop_rule": "Остановка только если ACTIVE_QUEUE пуст"
+    "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
+    "stop_rule": "Stop only when ACTIVE_QUEUE is empty or operator explicitly blocks execution.",
+    "report_rule": "A8 mobile report; no diffs/stdout/stderr/raw JSON.",
+    "continuity_rule": "First IN_PROGRESS task is current; otherwise first PENDING."
   },
-
-  "gap_summary": {
-    "подтверждено_GPT": [
-      "governance/config/provider_config.json — отсутствует",
-      "codex-local.yml принимает provider как метку, но не использует для роутинга",
-      "role-orchestrator.yml выбирает роль, но не выбирает provider",
-      "scripts/role_orchestrator_decide.py — нет fallback provider логики",
-      "Нет provider-router: telegram → provider-router → codex-local | claude-local"
-    ]
-  },
-
+  "current_task": "BEM932-CONTINUITY-01",
   "tasks": [
     {
-      "id": "BEM-PROVIDER-001",
-      "title": "Provider router: GPT primary → Claude fallback при quota/rate-limit/unavailable",
+      "id": "BEM932-CANON-SYNC",
+      "title": "0.0 Canon protocol + ACTIVE_QUEUE v10 sync",
+      "status": "DONE",
+      "priority": 0,
+      "done_sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63",
+      "artifacts": [
+        {
+          "path": "governance/protocols/BEM932_Protocol_v8_3.md",
+          "sha": "7d998ab7d25774eb5409dd942ebeff4084dff5c4"
+        }
+      ],
+      "acceptance": [
+        "Canon file committed with SHA",
+        "ACTIVE_QUEUE updated to version 10",
+        "BEM-PROVIDER-001 remains active but after continuity block"
+      ]
+    },
+    {
+      "id": "BEM932-CONTINUITY-01",
+      "title": "0.1 Backfill execution_log for RM-15..18 and run #51",
       "status": "IN_PROGRESS",
       "priority": 1,
-      "why": "Curator сейчас блокируется при исчерпании лимитов GPT Codex. provider:gpt_codex — метка без логики. Нужен единый router перед запуском роли.",
+      "source": "BEM932_Protocol_v8_3.md#0.1",
+      "acceptance": [
+        "execution_log.jsonl contains explicit backfill=true entries",
+        "fields event_at, recorded_at, source_proof, source_sha present",
+        "run #51 entry references governance/proofs/BEM932_horizontal_exchange_run51_receipt.json"
+      ]
+    },
+    {
+      "id": "BEM932-CONTINUITY-02",
+      "title": "0.2 SYSTEM_STATUS writer/auditor sync",
+      "status": "PENDING",
+      "priority": 2,
+      "source": "BEM932_Protocol_v8_3.md#0.2",
+      "acceptance": [
+        "SYSTEM_STATUS.md actualized by executor",
+        "external Claude verdict recorded separately"
+      ]
+    },
+    {
+      "id": "BEM932-EXPERIENCE-FIX",
+      "title": "0.3 Repair RM-13 experience registry and loader",
+      "status": "PENDING",
+      "priority": 3,
+      "release_blocker": true,
+      "blocks": [
+        "RELEASE"
+      ],
+      "source": "BEM932_Protocol_v8_3.md#0.3",
+      "acceptance": [
+        "experience_registry.json json.load OK",
+        "experience_loader.py ast.parse OK",
+        "test error creates experience record"
+      ]
+    },
+    {
+      "id": "BEM932-PROOF-RUN51",
+      "title": "0.4 Create small proof for horizontal exchange run #51",
+      "status": "PENDING",
+      "priority": 4,
+      "source": "BEM932_Protocol_v8_3.md#0.4",
+      "acceptance": [
+        "governance/proofs/BEM932_horizontal_exchange_run51_receipt.json exists",
+        "contains status, run_id, github_sha, trace_id, source_contour, target_contour, verified_at"
+      ]
+    },
+    {
+      "id": "BEM-PROVIDER-001",
+      "title": "1.x Provider router: GPT primary -> Claude fallback",
+      "status": "IN_PROGRESS",
+      "priority": 5,
+      "blocked_by": [
+        "BEM932-CONTINUITY-01",
+        "BEM932-CONTINUITY-02",
+        "BEM932-PROOF-RUN51"
+      ],
+      "note": "Kept active per v8.3 but scheduled after continuity block.",
       "subtasks": [
         {
           "id": "BEM-PROVIDER-001-A",
-          "title": "Создать governance/config/provider_config.json",
-          "acceptance": [
-            "Валидный JSON с разделом curator: {primary: gpt_codex, fallback: claude_code, fallback_on: [quota_exceeded, rate_limit, provider_unavailable]}",
-            "Аналогичные секции для analyst/auditor/executor (fallback может совпадать)",
-            "Файл > 200 байт"
-          ]
+          "title": "1.A Create provider_config.json",
+          "status": "PENDING"
         },
         {
           "id": "BEM-PROVIDER-001-B",
-          "title": "Создать scripts/provider_router.py",
-          "acceptance": [
-            "def main(role, task_input) -> определяет provider из provider_config.json",
-            "Проверяет предыдущий результат: если в governance/codex/results/ есть запись с error содержащим quota|rate limit|unavailable для primary — выбрать fallback",
-            "Возвращает provider + причину выбора (primary | fallback_quota | fallback_rate_limit | fallback_unavailable)",
-            "ast.parse OK, > 300 байт, def main() есть"
-          ]
+          "title": "1.B Create provider_router.py with strict JSON contract",
+          "status": "PENDING"
         },
         {
           "id": "BEM-PROVIDER-001-C",
-          "title": "Создать .github/workflows/provider-router.yml",
-          "acceptance": [
-            "workflow_dispatch с inputs: role, task, trace_id, chat_id, message_id",
-            "Job 1: запускает scripts/provider_router.py → определяет provider",
-            "Job 2: если provider=gpt_codex → dispatch codex-local.yml; если provider=claude_code → dispatch claude-code role workflow",
-            "Job 3: пишет receipt в governance/proofs/ с полями: role, provider_selected, fallback_reason, github_run_id"
-          ]
+          "title": "1.C Create provider-router.yml",
+          "status": "PENDING"
+        },
+        {
+          "id": "BEM932-ROUTER-TESTS",
+          "title": "1.C2 Add pre-live test job",
+          "status": "PENDING"
         },
         {
           "id": "BEM-PROVIDER-001-D",
-          "title": "Переключить точку входа: Telegram/CF Worker → provider-router.yml вместо codex-local.yml",
-          "acceptance": [
-            "infrastructure/cloudflare-worker/telegram-webhook.js: dispatchUrl указывает на provider-router.yml",
-            "telegram-poll.yml (резерв): дефолтный dispatch тоже на provider-router.yml",
-            "Старый прямой dispatch на codex-local.yml из Telegram-слоя удалён или закомментирован с пометкой DEPRECATED"
-          ]
+          "title": "1.D Switch Cloudflare Worker via ROUTER_WORKFLOW_ID",
+          "status": "PENDING"
         },
         {
           "id": "BEM-PROVIDER-001-E",
-          "title": "Честный outbox при fallback",
-          "acceptance": [
-            "Если router выбрал fallback — в governance/telegram_outbox.jsonl пишется сообщение вида: 'GPT quota exceeded → fallback Claude запущен' ПЕРЕД результатом задачи",
-            "Сообщение видно оператору в Telegram как отдельное уведомление, не скрыто внутри JSON",
-            "Receipt provider-router содержит fallback_reason != null когда был fallback"
-          ]
+          "title": "1.E Honest idempotent fallback outbox",
+          "status": "PENDING"
+        },
+        {
+          "id": "BEM-PROVIDER-001-FINAL",
+          "title": "1.FINAL Live Telegram fallback test",
+          "status": "PENDING"
         }
       ],
       "acceptance_overall": [
-        "Все 5 подзадач DONE с SHA",
-        "Live test: provider_router.py запущен с симулированной quota_exceeded ошибкой primary → возвращает claude_code + receipt с fallback_reason=fallback_quota",
-        "github_run_id присутствует в финальном receipt"
+        "All provider subtasks DONE with SHA",
+        "1.C2 test job passed before live dispatch",
+        "live fallback receipt contains provider_selected=claude_code and fallback_reason=fallback_quota",
+        "github_run_id present"
       ]
     },
-
     {
       "id": "BEM-CODEX-001",
-      "title": "Создать AGENTS.md — инструкции для Codex по работе с системой",
+      "title": "2.1 Create AGENTS.md",
       "status": "PENDING",
-      "priority": 2,
-      "depends_on": "BEM-PROVIDER-001",
-      "why": "Codex CLI читает AGENTS.md как постоянные инструкции. Без него каждая роль работает вслепую.",
-      "acceptance": [
-        "AGENTS.md в корне репо > 500 байт",
-        "Описывает: структуру каналов governance/channels/, роли, как читать первый pending из jsonl, куда писать результат",
-        "Описывает: provider_config.json и что роль может быть запущена под gpt_codex или claude_code — промпт должен быть провайдеро-нейтральным",
-        "Описывает: формат отчёта оператору через Telegram, включая формат уведомления о fallback"
-      ]
+      "priority": 6,
+      "depends_on": "BEM-PROVIDER-001"
     },
     {
       "id": "BEM-CODEX-002",
-      "title": "Подключить ANALYST к Codex CLI через role-orchestrator + provider-router",
+      "title": "2.2 Connect Analyst via provider-router + prompt assembler",
       "status": "PENDING",
-      "priority": 3,
-      "depends_on": "BEM-CODEX-001",
-      "acceptance": [
-        "role-orchestrator при role=analyst вызывает provider-router.yml (не напрямую codex-local)",
-        "Codex/Claude получает задачу из wrk_c1_to_analyst.jsonl через AGENTS.md инструкции",
-        "Пишет реальный план в governance/artifacts/plans/, специфичный для задачи",
-        "Receipt в governance/codex/results/ с github_run_id и provider_selected"
-      ]
+      "priority": 7,
+      "depends_on": "BEM-CODEX-001"
     },
     {
       "id": "BEM-CODEX-003",
-      "title": "Подключить AUDITOR к Codex CLI через provider-router",
+      "title": "2.3 Connect Auditor via provider-router",
       "status": "PENDING",
-      "priority": 4,
-      "depends_on": "BEM-CODEX-002",
-      "acceptance": [
-        "auditor вызывается через provider-router.yml",
-        "Содержательная проверка плана/результата, не size-check",
-        "Receipt с provider_selected"
-      ]
+      "priority": 8,
+      "depends_on": "BEM-CODEX-002"
     },
     {
       "id": "BEM-CODEX-004",
-      "title": "Подключить EXECUTOR к Codex CLI через provider-router",
+      "title": "2.4 Connect Executor via provider-router",
       "status": "PENDING",
-      "priority": 5,
-      "depends_on": "BEM-CODEX-003",
-      "acceptance": [
-        "executor вызывается через provider-router.yml",
-        "Реальные изменения в репо, commit_sha не null если были изменения",
-        "Receipt с provider_selected"
-      ]
+      "priority": 9,
+      "depends_on": "BEM-CODEX-003"
     },
     {
       "id": "BEM-CODEX-005",
-      "title": "Исходящий Telegram: curator отвечает оператору напрямую",
+      "title": "2.5 Curator Telegram final reports",
       "status": "PENDING",
-      "priority": 6,
-      "depends_on": "BEM-CODEX-001",
-      "acceptance": [
-        "Curator (через любого провайдера) в конце задачи делает curl sendMessage с итоговым отчётом",
-        "Telegram message_id входящего и исходящего зафиксированы в receipt",
-        "При fallback — сообщение об этом отправлено оператору первым (см. BEM-PROVIDER-001-E)"
-      ]
+      "priority": 10,
+      "depends_on": "BEM-CODEX-001"
     },
     {
-      "id": "BEM-CF-001",
-      "title": "Задеплоить Cloudflare Worker, переключить webhook на provider-router",
+      "id": "BEM-CF-001-COMPLETE",
+      "title": "3.1 Complete Cloudflare Worker provider-router route",
       "status": "PENDING",
-      "priority": 7,
-      "depends_on": "BEM-PROVIDER-001-D",
-      "acceptance": [
-        "CF Worker онлайн (infrastructure/cloudflare-worker/telegram-webhook.js)",
-        "Webhook зарегистрирован, getWebhookInfo подтверждает URL",
-        "Worker диспатчит provider-router.yml (не codex-local.yml напрямую)",
-        "Оператор пишет → подтверждение приходит < 1 сек"
-      ]
+      "priority": 11,
+      "depends_on": "BEM-PROVIDER-001-D"
     },
     {
       "id": "TEST-T02",
-      "title": "Live Telegram E2E через provider-router",
+      "title": "4.1 Live Telegram E2E through provider-router",
       "status": "PENDING",
-      "priority": 8,
-      "depends_on": ["BEM-CODEX-005", "BEM-CF-001"],
-      "acceptance": [
-        "Оператор пишет в Telegram → provider-router выбирает provider → полная цепочка GD→DIR→WRK→WRK-Cx с реальным LLM → ответ в Telegram",
-        "Все receipts с github_run_id и provider_selected",
-        "Claude external audit APPROVED"
+      "priority": 12,
+      "depends_on": [
+        "BEM-CODEX-005",
+        "BEM-CF-001-COMPLETE"
       ]
     },
     {
       "id": "RELEASE",
-      "title": "Release PASS",
+      "title": "4.2 WORKING_CONTOUR_READY",
       "status": "BLOCKED",
-      "priority": 9,
-      "depends_on": "TEST-T02",
-      "acceptance": [
-        "WORKING_CONTOUR_READY",
-        "Claude external audit APPROVED",
-        "Provider fallback live-tested хотя бы один раз с реальным fallback_reason"
+      "priority": 13,
+      "depends_on": [
+        "TEST-T02",
+        "BEM932-EXPERIENCE-FIX"
       ]
+    },
+    {
+      "id": "BEM932-COUNCIL-RULES",
+      "title": "5.1 Add council rules",
+      "status": "PENDING",
+      "priority": 14
+    },
+    {
+      "id": "BEM932-COUNCIL-PROFILES",
+      "title": "5.2 Add council rule refs",
+      "status": "PENDING",
+      "priority": 15,
+      "depends_on": "BEM932-COUNCIL-RULES"
+    },
+    {
+      "id": "BEM932-PROMPT-ASSEMBLER",
+      "title": "5.3 Create prompt_assembler.py",
+      "status": "PENDING",
+      "priority": 16,
+      "depends_on": "BEM932-COUNCIL-PROFILES"
+    },
+    {
+      "id": "BEM932-COUNCIL-VERIFY",
+      "title": "5.4 Verify council prompts",
+      "status": "PENDING",
+      "priority": 17,
+      "depends_on": "BEM932-PROMPT-ASSEMBLER"
+    },
+    {
+      "id": "BEM932-CLOSE-01",
+      "title": "6.1 Update SYSTEM_STATUS after 1.x-5.x",
+      "status": "PENDING",
+      "priority": 18
+    },
+    {
+      "id": "BEM932-CLOSE-02",
+      "title": "6.2 Update AGENT_CONTEXT",
+      "status": "PENDING",
+      "priority": 19
+    },
+    {
+      "id": "BEM932-CLOSE-03",
+      "title": "6.3 Final Telegram A8 report",
+      "status": "PENDING",
+      "priority": 20
     }
   ],
-
-  "next_action": "GPT: выполнить BEM-PROVIDER-001-A — создать governance/config/provider_config.json"
+  "last_completed": {
+    "id": "BEM932-CANON-SYNC",
+    "sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63",
+    "completed_at": "2026-06-13T08:22:00Z"
+  },
+  "next_action": "BEM932-CONTINUITY-01 — append explicit backfill records to execution_log.jsonl"
 }
