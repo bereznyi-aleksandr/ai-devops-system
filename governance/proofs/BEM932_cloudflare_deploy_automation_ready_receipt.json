@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_deploy_automation_ready",
+  "created_at": "2026-06-13T17:42:00Z",
+  "artifacts": [
+    {
+      "path": "infrastructure/cloudflare-worker/wrangler.toml",
+      "sha": "afeacbb20ea8917fd6448074e00693dd0ec57cc2"
+    },
+    {
+      "path": ".github/workflows/cloudflare-telegram-worker-deploy.yml",
+      "sha": "fa29af3bb8ea95dc1e967d897c38b5f4d3a572cb"
+    }
+  ],
+  "action": "create workflow_dispatch deploy path for Cloudflare Worker with ROUTER_WORKFLOW_ID=provider-router.yml",
+  "external_docs": [
+    "Cloudflare CI requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as CI/CD secrets; repository does not store secret values"
+  ],
+  "next_runtime_check": "cloudflare-telegram-worker-deploy.yml dispatched; read BEM932_cloudflare_worker_deploy_receipt.json for PASS/BLOCKED result"
+}
