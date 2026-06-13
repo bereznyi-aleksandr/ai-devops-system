@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "provider_router_global_status_smoke",
+  "created_at": "2026-06-13T17:32:51Z",
+  "checks": [
+    "fresh_global_provider_status_forces_fallback",
+    "stale_global_provider_status_ignored",
+    "provider_status_restored_after_test"
+  ],
+  "fresh_global_provider_status": {
+    "decision_source": "provider_status",
+    "fallback_reason": "fallback_quota",
+    "provider_selected": "claude_code",
+    "stale_ignored": false,
+    "trace_id": "global_status_fresh",
+    "ttl_seconds": 1800
+  },
+  "stale_global_provider_status": {
+    "decision_source": "default",
+    "fallback_reason": null,
+    "provider_selected": "gpt_codex",
+    "stale_ignored": true,
+    "trace_id": "global_status_stale",
+    "ttl_seconds": 1800
+  }
+}
