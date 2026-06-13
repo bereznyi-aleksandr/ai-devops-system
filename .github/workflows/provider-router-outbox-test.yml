@@ -17,7 +17,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p governance/proofs governance/tmp
-          python3 - <<'PY'
+          python3 -<<'PY'
           import json
           from datetime import datetime, timezone
           from pathlib import Path
@@ -43,7 +43,7 @@ jobs:
                       "type": "provider_fallback_notice",
                       "fallback_reason": "fallback_quota",
                       "provider_selected": "claude_code",
-                      "text": "GPT quota exceeded -> fallback Claude запущен"
+                      "text": "GPT quota exceeded -> fallback Claude launched"
                   }
                   with outbox.open("a", encoding="utf-8") as fh:
                       fh.write(json.dumps(event, ensure_ascii=False) + "\n")
@@ -64,9 +64,12 @@ jobs:
               "notifications_written": len(matches),
               "fallback_reason": "fallback_quota",
               "provider_selected": "claude_code",
-              "proof_method": "simulated two retries with same trace_id against the same idempotency logic used in provider-router.yml"
+              "proof_method": "simulated two retries with same trace_id against the same idempotency rule used in provider-router.yml"
           }
-          Path("governance/proofs/BEM932_fallback_outbox_idempotency_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          Path("governance/proofs/BEM932_fallback_outbox_idempotency_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8"
+          )
           PY
 
       - name: Commit receipt
@@ -75,7 +78,7 @@ jobs:
           set -euo pipefail
           git config user.email "provider-outbox@test"
           git config user.name "BEM-932 Outbox Test"
-          z� pull --rebase --autostash origin main || true
+          git pull --rebase --autostash origin main || true
           git add governance/proofs/BEM932_fallback_outbox_idempotency_receipt.json
           if git diff --cached --quiet; then
             echo "No outbox receipt changes"
