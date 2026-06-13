@@ -1,9 +1,14 @@
 {
-  "version": 10,
-  "updated_at": "2026-06-13T15:08:00Z",
+  "version": 11,
+  "updated_at": "2026-06-13T15:35:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
-  "queue_state": "COMPLETE",
-  "current_task": null,
+  "queue_state": "ACTIVE_RUNTIME_DEBT",
+  "current_task": "WAIT_RUNTIME",
+  "policy": {
+    "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
+    "runtime_rule": "Operator-authorized runtime skip is not equal to full live TEST-T02 approval.",
+    "continuity_rule": "Stop only at WAIT_RUNTIME because Cloudflare deployment requires external operator/runtime access."
+  },
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
@@ -32,7 +37,8 @@
     },
     {
       "id": "BEM-PROVIDER-001",
-      "status": "DONE_OPERATOR_RUNTIME_AUTHORIZED",
+      "status": "DONE_REPO_SIDE_RUNTIME_DEBT",
+      "note": "1.A-1.E repo implementation approved; 1.FINAL live runtime test is open.",
       "subtasks": [
         {
           "id": "BEM-PROVIDER-001-A",
@@ -52,7 +58,7 @@
         },
         {
           "id": "BEM-PROVIDER-001-D",
-          "status": "DONE_REPO_SIDE"
+          "status": "DONE_REPO_SIDE_NOT_DEPLOYED"
         },
         {
           "id": "BEM-PROVIDER-001-E",
@@ -60,7 +66,7 @@
         },
         {
           "id": "BEM-PROVIDER-001-FINAL",
-          "status": "DONE_OPERATOR_RUNTIME_AUTHORIZED"
+          "status": "WAIT_RUNTIME_NOT_TESTED"
         }
       ]
     },
@@ -85,38 +91,50 @@
       "done_sha": "5f5ec695ef93a7ebd62922c2afdd0ae186db6b84"
     },
     {
-      "id": "BEM-CODEX-005",
+      "id": "BEL-CODEX-005",
       "status": "DONE",
       "done_sha": "8bbb6589e8bb03299430eb2f058018dbcff901d5"
     },
     {
       "id": "BEM-CF-001-COMPLETE",
-      "status": "DONE_REPO_SIDE",
+      "status": "DONE_REPO_SIDE_NOT_DEPLOYED",
       "done_sha": "ef314078289666478fb8e3bab65332d297be4d4e"
     },
     {
       "id": "TEST-T02",
-      "status": "DONE_OPERATOR_RUNTIME_AUTHORIZED",
-      "done_sha": "11476c5e272a8e3e375d609b81d789dfcd99e41d",
+      "status": "WAIT_RUNTIME_NOT_TESTED",
       "receipt": {
         "path": "governance/proofs/BEM932_TEST_T02_live_telegram_provider_router_receipt.json",
-        "sha": "81808fe0085c2af0524bbb8e163d60f493244fa9"
+        "meaning": "operator_authorized_skip_not_live_test"
       }
     },
     {
-      "id": "RELEASE",
+      "id": "BEM932-EXTERNAL-AUDIT-VERDICT",
       "status": "DONE",
-      "done_sha": "4e7574166c19e8ca7c261b7811a5493484d2095a",
+      "proof": "governance/audit_mailbox/claude_to_gpt/BEM932_v8_3_external_audit_verdict.md"
+    },
+    {
+      "id": "WAIT_RUNTIME",
+      "status": "BLOCKED_REQUIRES_OPERATOR_CLOUDFLARE_DEPLOY",
+      "priority": 0,
+      "required_actions": [
+        "Deploy updated infrastructure/cloudflare-worker/telegram-webhook.js to Cloudflare",
+        "Run live Telegram fallback test with forced gpt_codex quota_exceeded",
+        "Record full TEST-T02 receipt and request final external auditor approval"
+      ]
+    },
+    {
+      "id": "RELEASE",
+      "status": "PASS_REPO_SIDE_RUNTIME_EXCEPTION",
       "release_gate": {
-        "path": "governance/release/bem932_release_gate.json",
-        "sha": "fec59a7fa65e3665aa150ab42a0bc2046566aec9"
+        "path": "governance/release/bem932_release_gate.json"
       }
     }
   ],
   "last_completed": {
-    "id": "RELEASE",
-    "sha": "4e7574166c19e8ca7c261b7811a5493484d2095a",
-    "completed_at": "2026-06-13T15:08:00Z"
+    "id": "BEM932-EXTERNAL-AUDIT-VERDICT",
+    "completed_at": "2026-06-13T15:35:00Z",
+    "proof": "governance/proofs/BEM932_runtime_exception_ack_receipt.json"
   },
-  "next_action": "ACTIVE_QUEUE empty — report final status to operator."
+  "next_action": "WAIT_RUNTIME — requires operator Cloudflare deployment/runtime access; repository-side work is complete."
 }
