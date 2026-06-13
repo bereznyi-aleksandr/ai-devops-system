@@ -1,5 +1,6 @@
 // Cloudflare Worker: Telegram Webhook → GitHub Actions dispatch
-// Routes Telegram operator messages to codex-local.yml role=curator.
+// BEM-932: routes through ROUTER_WORKFLOW_ID feature flag.
+// Default/rollback workflow: codex-local.yml. Canonical router: provider-router.yml.
 
 const ALLOWED_CHAT_ID = "601442777";
 
@@ -36,10 +37,10 @@ export default {
     const now = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
     const traceId = `tg_${updateId}_${now}`;
 
-    const dispatchUrl = `https://api.github.com/repos/${env.GH_REPO}/actions/workflows/codex-local.yml/dispatches`;
+    const workflowId = env.ROUTER_WORKFLOW_ID || "codex-local.yml";
+    const useProviderRouter = workflowId === "provider-router.yml";
+    const dispatchUrl = `https://api.github.com/repos/${env.GH_REPO}/actions/workflows/${workflowId}/dispatches`;
 
-    // IMPORTANT: inputs must match codex-local.yml exactly.
-    // chat_id/message_id are intentionally embedded in task text, not sent as extra inputs.
     const task = [
       text,
       "",
@@ -47,16 +48,29 @@ export default {
       `telegram_message_id=${String(msg.message_id)}`,
     ].join("\n");
 
+    const inputs = useProviderRouter
+      ? {
+          role: "curator",
+          trace_id: traceId,
+          chat_id: String(msg.chat.id),
+          message_id: String(msg.message_id),
+          cycle_id: "telegram_operator_message",
+          task_type: "telegram_operator_message",
+          mode: "live",
+          task,
+        }
+      : {
+          role: "curator",
+          provider: "gpt_codex",
+          trace_id: traceId,
+          cycle_id: "telegram_operator_message",
+          task_type: "telegram_operator_message",
+          task,
+        };
+
     const dispatchBody = JSON.stringify({
       ref: "main",
-      inputs: {
-        role: "curator",
-        provider: "gpt_codex",
-        trace_id: traceId,
-        cycle_id: "telegram_operator_message",
-        task_type: "telegram_operator_message",
-        task,
-      },
+      inputs,
     });
 
     const dispatchResp = await fetch(dispatchUrl, {
@@ -72,7 +86,7 @@ export default {
     });
 
     if (dispatchResp.ok) {
-      await sendTelegram(env, msg.chat.id, `⚡ Получено. Передано куратору (trace: ${traceId})`);
+      await sendTelegram(env, msg.chat.id, `⚡ Получено. Передано куратору через ${workflowId} (trace: ${traceId})`);
       return new Response("ok", { status: 200 });
     }
 
