@@ -1,9 +1,9 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T13:46:00Z",
+  "updated_at": "2026-06-13T13:52:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "queue_state": "ACTIVE",
-  "current_task": "BEM-CODEX-005",
+  "current_task": "BEM-CF-001-COMPLETE",
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
@@ -151,13 +151,29 @@
     },
     {
       "id": "BEM-CODEX-005",
-      "status": "IN_PROGRESS",
-      "depends_on": "BEM-CODEX-001"
+      "status": "DONE",
+      "depends_on": "BEM-CODEX-001",
+      "done_sha": "8bbb6589e8bb03299430eb2f058018dbcff901d5",
+      "artifacts": [
+        {
+          "path": ".github/workflows/curator-final-report-smoke.yml",
+          "sha": "f414403692b6d0603d4fb5f85d6088cc6afeddef"
+        },
+        {
+          "path": "governance/proofs/BEM932_codex_curator_final_report_receipt.json",
+          "sha": "f1f00b0ad998bc0af274b865967627fc0175c40e"
+        }
+      ],
+      "checks": [
+        "WRK.CURATOR prompt assembled",
+        "telegram_outbox has sent message id"
+      ]
     },
     {
       "id": "BEM-CF-001-COMPLETE",
-      "status": "PENDING",
-      "depends_on": "BEM-PROVIDER-001-D"
+      "status": "IN_PROGRESS",
+      "depends_on": "BEM-PROVIDER-001-D",
+      "title": "Complete Cloudflare Worker provider-router route"
     },
     {
       "id": "TEST-T02",
@@ -177,9 +193,9 @@
     }
   ],
   "last_completed": {
-    "id": "BEM-CODEX-004",
-    "sha": "5f5ec695ef93a7ebd62922c2afdd0ae186db6b84",
-    "completed_at": "2026-06-13T13:46:00Z"
+    "id": "BEM-CODEX-005",
+    "sha": "8bbb6589e8bb03299430eb2f058018dbcff901d5",
+    "completed_at": "2026-06-13T13:52:00Z"
   },
-  "next_action": "BEM-CODEX-005 — Curator Telegram final report receipt"
+  "next_action": "BEM-CF-001-COMPLETE — Complete Cloudflare Worker provider-router route"
 }
