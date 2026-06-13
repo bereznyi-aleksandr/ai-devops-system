@@ -1,9 +1,9 @@
 {
   "version": 10,
-  "updated_at": "2026-06-13T13:56:00Z",
+  "updated_at": "2026-06-13T14:00:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
   "queue_state": "ACTIVE",
-  "current_task": "TEST-T02",
+  "current_task": "RELEASE",
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
@@ -198,11 +198,16 @@
     },
     {
       "id": "TEST-T02",
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED_RUNTIME_LIVE_TEST",
       "depends_on": [
         "BEM-CODEX-005",
         "BEM-CF-001-COMPLETE"
-      ]
+      ],
+      "blocked_by": "operator Telegram message after Cloudflare deploy is required for live E2E PASS",
+      "blocker_receipt": {
+        "path": "governance/proofs/BEM932_TEST_T02_live_telegram_provider_router_receipt.json",
+        "sha": "27b7cf2a70954da8a305830e72f5b2c6fde10d75"
+      }
     },
     {
       "id": "RELEASE",
@@ -210,6 +215,14 @@
       "depends_on": [
         "TEST-T02",
         "EXTERNAL_AUDITOR_CLAUDE_APPROVAL"
+      ],
+      "release_gate": {
+        "path": "governance/release/bem932_release_gate.json",
+        "sha": "42f3e3867b3006e3abedf493dcaabf589119ff1c"
+      },
+      "blocked_by": [
+        "TEST-T02 live PASS receipt",
+        "external auditor Claude approval"
       ]
     }
   ],
@@ -218,5 +231,5 @@
     "sha": "ef314078289666478fb8e3bab65332d297be4d4e",
     "completed_at": "2026-06-13T13:56:00Z"
   },
-  "next_action": "TEST-T02 — Live Telegram E2E through provider-router"
+  "next_action": "WAIT_RUNTIME — deploy Cloudflare Worker with ROUTER_WORKFLOW_ID=provider-router.yml, then send Telegram message to produce TEST-T02 PASS"
 }
