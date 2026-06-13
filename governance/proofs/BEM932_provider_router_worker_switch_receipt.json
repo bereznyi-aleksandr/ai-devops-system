@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_worker_router_switch",
+  "verified_at": "2026-06-13T09:42:00Z",
+  "task_id": "BEM-PROVIDER-001-D",
+  "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+  "worker_blob_sha": "526c7908851fa79ee9cf202d86e402b8644cd82f",
+  "checks": {
+    "router_workflow_id_env_supported": true,
+    "default_workflow": "provider-router.yml",
+    "provider_router_inputs": [
+      "role",
+      "trace_id",
+      "chat_id",
+      "message_id",
+      "cycle_id",
+      "task_type",
+      "task"
+    ],
+    "legacy_codex_local_supported": true,
+    "operator_ack_mentions_target_workflow": true
+  },
+  "note": "Latest worker already routes through ROUTER_WORKFLOW_ID/default provider-router.yml; recorded as done without overwriting concurrent change."
+}
