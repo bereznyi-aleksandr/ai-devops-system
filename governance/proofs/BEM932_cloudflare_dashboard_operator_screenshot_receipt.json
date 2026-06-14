@@ -1,0 +1,16 @@
+{
+  "status": "OPERATOR_EVIDENCE_RECEIVED",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_dashboard_operator_screenshot",
+  "created_at": "2026-06-14T04:46:00Z",
+  "evidence": {
+    "source": "user_uploaded_screenshot",
+    "sandbox_path": "/mnt/data/1781412396955.jpeg",
+    "observed"_ui": "dash.cloudflare.com worker editor",
+    "observed"_worker_name": "tg-curator-webhook",
+    "observed_preview_response": "OK",
+    "observed_saved_indicator": "Version saved"
+  },
+  "interpretation": "Operator has shown Cloudflare dashboard with worker version saved and GET preview returning OK. Live POST probe still requires cloudflare-worker-live-probe.",
+  "next_action": "Runucloudflare-worker-live-probe.yml and read BEM932_cloudflare_worker_live_probe_receipt.json"
+}
