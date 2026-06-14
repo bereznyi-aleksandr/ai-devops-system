@@ -15,42 +15,29 @@ jobs:
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT || github.token }}
 
-      - name: POST synthetic Telegram update to deployed Worker webhook path
+      - name: POST synthetic Telegram update to Worker /webhook
         shell: bash
         env:
           WORKER_URL: https://tg-curator-webhook.bereznii-aleksandr.workers.dev/webhook
         run: |
           set -euo pipefail
           mkdir -p governance/proofs
-          seed="$(date -u +%Y%m%d%24%M%S)"
+          seed="$(date -u +%Y%m%d%d_%M)S)"
           cat > /tmp/tg_payload.json <<JSON
-          {
-            "update_id": 932${seed},
-            "message": {
-              "message_id": 932,
-              "date": 1770000000,
-              "chat": {"id": 601442777, "type": "private"},
-              "text": "BEM-932 live probe: provider-router dispatch"
-            }
-          }
+          {"update_id": 932${seed}, "message": {"message_id": 932, "date": 1770000000, "chat": {"id": 601442777, "type": "private"}, "text": "BEM-932 live probe: provider-router dispatch"}}
           JSON
-
-          code="$(curl -sS -o /tmp/worker_response.txt -w '%{http_code}' \
-            -X POST -H 'Content-Type: application/json' \
-            --data @/tmp/tg_payload.json "$WORKER_URL" || true)"
+          code="$(curl -sS -o /tmp/worker_response.txt -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data @/tmp/tg_payload.json "$WORKER_URL" || true)"
           export HTTP_CODE="$code"
-
-          python3 -<<'PY'
-          import json
-          import os
+          python3 - <<'PY'
+          import json, os
           from datetime import datetime, timezone
           from pathlib import Path
 
-          response_text = Path("/tmp/worker_response.txt").read_text(encoding="utf-8", errors="replace")
+          txt = Path("/tmp/worker_response.txt").read_text(encoding="utf-8", errors="replace")
           try:
-              response = json.loads(response_text)
+              response = json.loads(txt)
           except Exception:
-              response = response_text[:1000]
+              response = txt[:1000]
 
           checks = {
               "http_200": os.environ["HTTP_CODE"] == "200",
@@ -72,10 +59,7 @@ jobs:
               "checks": checks,
               "next_action": None if status == "PASS" else "Verify Cloudflare active deployment contains current repo worker and webhook route dispatches provider-router.yml."
           }
-          Path("governance/proofs/BEM932_cloudflare_worker_live_probe_receipt.json").write_text(
-              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
-              encoding="utf-8"
-          )
+          Path("governance/proofs/BEM932_cloudflare_worker_live_probe_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
           print(json.dumps(receipt, indent=2, ensure_ascii=False))
           if status != "PASS":
               raise SystemExit(1)
