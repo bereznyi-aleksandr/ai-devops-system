@@ -1,0 +1,109 @@
+name: BEM-932 Runtime Status Sync
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT || github.token }}
+
+      - name: Sync ACTIVE_QUEUE and execution_log from runtime receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          queue_path = Path("governance/roadmap/ACTIVE_QUEUE.json")
+          log_path = Path("governance/logs/execution_log.jsonl")
+          live_path = Path("governance/proofs/BEM932_cloudflare_worker_live_probe_receipt.json")
+          dash_path = Path("governance/proofs/BEM932_cloudflare_dashboard_deploy_evidence.json")
+          wrangler_path = Path("infrastructure/cloudflare-worker/wrangler.toml")
+
+          queue = json.loads(queue_path.read_text(encoding="utf-8"))
+          live = json.loads(live_path.read_text(encoding="utf-8")) if live_path.exists() else {}
+          live_status = live.get("status", "MISSING")
+          queue["version"] = int(queue.get("version", 0)) + 1
+          queue["updated_at"] = now
+
+          if live_status == "PASS":
+              queue["queue_state"] = "ACTIVE"
+              queue["current_task"] = "RELEASE"
+              next_action = "Proceed to RELEASE gate after live Cloudflare worker provider-router receipt PASS."
+              task_status = "DONE"
+          else:
+              queue["queue_state"] = "BLOCKED_RUNTIME_NOT_CURRENT"
+              queue["current_task"] = "TEST-T02-LIVE-MESSAGE"
+              next_action = "Deploy current repo worker to Cloudflare; rerun cloudflare-worker-live-probe.yml until live receipt PASS."
+              task_status = "BLOCKED_RUNTIME_NOT_CURRENT"
+
+          def update_task(task):
+              if task.get("id") == "TEST-T02-LIVE-MESSAGE":
+                  task["status"] = task_status
+                  task["last_checked_at"] = now
+                  task["evidence"] = [
+                      str(dash_path),
+                      str(live_path)
+                  ]
+                  task["live_probe_status"] = live_status
+                  task["required_unblock"] = next_action
+              if task.get("id") == "RELEASE" and live_status == "PASS":
+                  task["status"] = "PENDING"
+              for sub in task.get("subtasks", []) if isinstance(task.get("subtasks"), list) else []:
+                  update_task(sub)
+
+          for task in queue.get("tasks", []):
+              update_task(task)
+
+          queue["last_completed"] = {
+              "id": "BEM932-CLOUDFLARE-LIVE-PROBE",
+              "completed_at": now,
+              "status": live_status,
+              "proof": str(live_path),
+              "dashboard_evidence": str(dash_path),
+              "wrangler_aligned": str(wrangler_path)
+          }
+          queue["next_action"] = next_action
+          queue_path.write_text(json.dumps(queue, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          entry = {
+              "date": now,
+              "id": "BEM932-CLOUDFLARE-LIVE-PROBE",
+              "trace_id": "bem932_cloudflare_worker_live_probe",
+              "sha": None,
+              "status": live_status,
+              "source_proof": str(live_path),
+              "dashboard_evidence": str(dash_path),
+              "wrangler_name_aligned": "tg-curator-webhook",
+              "next_task": "DEPLOY_CURRENT_WORKER_RUNTIME" if live_status != "PASS" else "RELEASE"
+          }
+          log_path.parent.mkdir(parents=True, exist_ok=True)
+          with log_path.open("a", encoding="utf-8") as fh:
+              fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+          PY
+
+      - name: Commit runtime status sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "runtime-status-sync@ai-devops-system"
+          git config user.name "BEM-932 Runtime Status Sync"
+          git pull --rebase --autostash origin main || true
+          git add governance/roadmap/ACTIVE_QUEUE.json governance/logs/execution_log.jsonl
+          if git diff --cached --quiet; then
+            echo "No runtime status changes"
+          else
+            git commit -m "BEM-932 sync runtime live probe status"
+            git push
+          fi
