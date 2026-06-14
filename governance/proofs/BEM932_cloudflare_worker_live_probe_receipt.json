@@ -1,0 +1,17 @@
+{
+  "status": "BLOCKED_RUNTIME_NOT_CURRENT",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_worker_live_probe",
+  "created_at": "2026-06-14T04:26:50Z",
+  "worker_url": "https://tg-curator-webhook.bereznii-aleksandr.workers.dev",
+  "http_code": "200",
+  "response": "ok",
+  "checks": {
+    "http_200": true,
+    "json_response": false,
+    "status_dispatched": false,
+    "workflow_provider_router": false,
+    "trace_id_present": false
+  },
+  "next_action": "Deploy current repo worker to Cloudflare and rerun probe."
+}
