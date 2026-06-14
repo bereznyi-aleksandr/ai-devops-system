@@ -1,0 +1,17 @@
+{
+  "status": "PASS_ROUTER_WORKFLOW_ID_VISIBLE",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "operator_cloudflare_env_evidence",
+  "created_at": "2026-06-14T04:39:30Z",
+  "source": "operator uploaded Cloudflare dashboard screenshots in chat",
+  "worker_name_visible": "tg-curator-webhook",
+  "visible_variables": {
+    "GH_REPO": "bereznyi-aleksandr/ai-devops-system",
+    "ROUTER_WORKFLOW_ID": "provider-router.yml",
+    "GH_PAT": "secret present",
+    "TELEGRAM_BOT_TOKEN": "secret present"
+  },
+  "interpretation": "Cloudflare dashboard shows ROUTER_WORKFLOW_ID set to provider-router.yml. Live probe still returned plain ok, so runtime code is not current or the edited settings were not deployed/applied yet.",
+  "latest_live_probe_status": "BLOCKED_RUNTIME_NOT_CURRENT",
+  "next_action": "Deploy current Worker code/runtime in Cloudflare, then rerun cloudflare-worker-live-probe.yml until status=PASS."
+}
