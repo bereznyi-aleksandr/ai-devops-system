@@ -51,7 +51,7 @@ jobs:
           PY
 
           set +e
-          HTTP=$(curl -syS -o /tmp/worker_response.json -w '%{http_code}' \
+          HTTP=$(curl -sS -o /tmp/worker_response.json -w '%{http_code}' \
             -X POST \
             -H 'Content-Type: application/json' \
             --data @/tmp/tg_update.json \
