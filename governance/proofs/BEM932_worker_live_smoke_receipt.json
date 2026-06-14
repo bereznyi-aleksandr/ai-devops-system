@@ -1,13 +1,14 @@
 {
   "status": "BLOCKED",
   "protocol": "BEM-932 v8.3",
-  "receipt_type": "worker_live_smoke_after_deploy_attempt",
-  "created_at": "2026-06-14T04:28:11Z",
+  "receipt_type": "worker_live_smoke",
+  "created_at": "2026-06-14T04:29:39Z",
   "worker_url": "https://tg-curator-webhook.bereznii-aleksandr.workers.dev",
   "http_status": "200",
   "curl_exit": "0",
   "worker_response": {
     "raw": "ok"
   },
-  "trace_id": ""
+  "trace_id": "",
+  "note": "POSTed Telegram-style update to deployed Cloudflare Worker. PASS requires HTTP 200 and worker_response.status=DISPATCHED."
 }
