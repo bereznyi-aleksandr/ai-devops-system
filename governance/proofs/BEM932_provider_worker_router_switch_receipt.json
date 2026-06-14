@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "recorded_at": "2026-06-14T04:05:00Z",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_worker_router_switch",
+  "context_proof": "governance/proofs/BEM932_operator_github_secrets_screenshot_context.json",
+  "checks": {
+    "operator_screenshot_considered": true,
+    "worker_dispatches_to_provider_router": true,
+    "default_router_workflow_id": "provider-router.yml",
+    "router_workflow_feature_flag": "ROUTER_WORKFLOW_ID",
+    "github_token_env_support": [
+      "AI_SYSTEM_GITHUB_PAT",
+      "GH_PAT"
+    ],
+    "telegram_metadata_passed_as_inputs": [
+      "chat_id",
+      "message_id"
+    ]
+  },
+  "artifact": {
+    "path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+    "sha": "aa964cf849ba10503d293dd7f17f0ce2d5590521"
+  }
+}
