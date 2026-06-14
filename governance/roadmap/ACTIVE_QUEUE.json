@@ -1,8 +1,8 @@
 {
-  "version": 15,
-  "updated_at": "2026-06-13T20:52:00Z",
+  "version": 16,
+  "updated_at": "2026-06-14T04:28:50Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
-  "queue_state": "BLOCKED_RUNTIME_DEPLOY",
+  "queue_state": "BLOCKED_RUNTIME_NOT_CURRENT",
   "current_task": "TEST-T02-LIVE-MESSAGE",
   "policy": {
     "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
@@ -129,13 +129,15 @@
     },
     {
       "id": "TEST-T02-LIVE-MESSAGE",
-      "status": "BLOCKED_WAIT_CLOUDFLARE_RUNTIME_DEPLOY",
+      "status": "BLOCKED_RUNTIME_NOT_CURRENT",
       "priority": 0,
       "evidence": [
-        "governance/proofs/BEM932_worker_full_replace_receipt.json",
-        "governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json"
+        "governance/proofs/BEM932_cloudflare_dashboard_deploy_evidence.json",
+        "governance/proofs/BEM932_cloudflare_worker_live_probe_receipt.json"
       ],
-      "required_unblock": "Deploy Cloudflare Worker runtime from current repo version with CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID available, then send one live Telegram message again."
+      "required_unblock": "Deploy current repo worker to Cloudflare; rerun cloudflare-worker-live-probe.yml until live receipt PASS.",
+      "last_checked_at": "2026-06-14T04:28:50Z",
+      "live_probe_status": "BLOCKED_RUNTIME_NOT_CURRENT"
     },
     {
       "id": "BEM932-EXTERNAL-AUDIT-VERDICT",
@@ -148,11 +150,12 @@
     }
   ],
   "last_completed": {
-    "id": "BEM932-WORKER-FULL-REPLACE",
-    "completed_at": "2026-06-13T20:51:15Z",
-    "commit_sha": "4a90d57e26c3af4cbc20d0dd9dd7c171d26bdb58",
-    "file_sha": "aa964cf849ba10503d293dd7f17f0ce2d5590521",
-    "proof": "governance/proofs/BEM932_worker_full_replace_receipt.json"
+    "id": "BEM932-CLOUDFLARE-LIVE-PROBE",
+    "completed_at": "2026-06-14T04:28:50Z",
+    "status": "BLOCKED_RUNTIME_NOT_CURRENT",
+    "proof": "governance/proofs/BEM932_cloudflare_worker_live_probe_receipt.json",
+    "dashboard_evidence": "governance/proofs/BEM932_cloudflare_dashboard_deploy_evidence.json",
+    "wrangler_aligned": "infrastructure/cloudflare-worker/wrangler.toml"
   },
-  "next_action": "Deploy Cloudflare Worker runtime with current full-file replacement, then rerun TEST-T02 live Telegram message."
+  "next_action": "Deploy current repo worker to Cloudflare; rerun cloudflare-worker-live-probe.yml until live receipt PASS."
 }
