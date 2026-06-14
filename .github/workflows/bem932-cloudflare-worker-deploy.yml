@@ -1,0 +1,150 @@
+name: BEM932 Cloudflare Worker Deploy And Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker_url:
+        required: false
+        default: "https://tg-curator-webhook.bereznii-aleksandr.workers.dev"
+        type: string
+      chat_id:
+        required: false
+        default: "601442777"
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || secrets.CF_ACCOUNT_ID }}
+      WORKER_URL: ${{ inputs.worker_url }}
+      CHAT_ID: ${{ inputs.chat_id }}
+      RUN_ID: ${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy current Worker code if Cloudflare secrets exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          DEPLOY_EXIT=99
+          DEPLOY_OUTPUT=""
+          STATUS="BLOCKED"
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            DEPLOY_OUTPUT="missing CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID"
+          else
+            set +e
+            DEPLOY_OUTPUT=$(cd infrastructure/cloudflare-worker && npx --yes wrangler deploy --config wrangler.toml 2>&1)
+            DEPLOY_EXIT=$?
+            set -e
+            if [ "$DEPLOY_EXIT" = "0" ]; then
+              STATUS="PASS"
+            fi
+          fi
+          printf '%s\n' "$DEPLOY_OUTPUT" > /tmp/cf_deploy_output.txt
+          export STATUS DEPLOY_EXIT
+          python3 - <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          def git(args):
+              try:
+                  return subprocess.check_output(["git"] + args, text=True).strip()
+              except Exception:
+                  return ""
+
+          receipt = {
+              "status": os.environ["STATUS"],
+              "protocol": "BEM-932 v8.3",
+              "receipt_type": "cloudflare_worker_deploy_attempt",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "github_run_id": os.environ.get("RUN_ID", ""),
+              "worker_url": os.environ.get("WORKER_URL", ""),
+              "worker_file_sha": git(["rev-parse", "HEAD:infrastructure/cloudflare-worker/telegram-webhook.js"]),
+              "wrangler_file_sha": git(["rev-parse", "HEAD:infrastructure/cloudflare-worker/wrangler.toml"]),
+              "commit_sha": git(["rev-parse", "HEAD"]),
+              "deploy_exit": os.environ.get("DEPLOY_EXIT"),
+              "deploy_output_tail": Path("/tmp/cf_deploy_output.txt").read_text(errors="replace")[-4000:],
+          }
+          Path("governance/proofs/BEM932_cloudflare_worker_deploy_attempt_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - name: Live smoke after deploy attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > /tmp/tg_update.json
+          import json, os, time
+          run = int(os.environ.get("RUN_ID") or int(time.time()))
+          print(json.dumps({
+              "update_id": run,
+              "message": {
+                  "message_id": run % 1000000,
+                  "date": int(time.time()),
+                  "chat": {"id": int(os.environ["CHAT_ID"]), "type": "private"},
+                  "from": {"id": int(os.environ["CHAT_ID"]), "is_bot": False, "first_name": "BEM932"},
+                  "text": "BEM-932 live smoke after Cloudflare deploy attempt",
+              },
+          }, ensure_ascii=False))
+          PY
+
+          set +e
+          HTTP=$(curl -sS -o /tmp/worker_response.json -w '%{http_code}'             -X POST             -H 'Content-Type: application/json'             --data @/tmp/tg_update.json             "$WORKER_URL")
+          CURL_EXIT=$?
+          set -e
+          export HTTP CURL_EXIT
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          body_text = Path("/tmp/worker_response.json").read_text(encoding="utf-8") if Path("/tmp/worker_response.json").exists() else ""
+          try:
+              body = json.loads(body_text) if body_text else {}
+          except Exception:
+              body = {"raw": body_text[:1000]}
+
+          status = "PASS" if (
+              os.environ.get("CURL_EXIT") == "0"
+              and os.environ.get("HTTP") == "200"
+              and body.get("status") == "DISPATCHED"
+          ) else "BLOCKED"
+
+          receipt = {
+              "status": status,
+              "protocol": "BEM-932 v8.3",
+              "receipt_type": "worker_live_smoke_after_deploy_attempt",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "worker_url": os.environ.get("WORKER_URL"),
+              "http_status": os.environ.get("HTTP", ""),
+              "curl_exit": os.environ.get("CURL_EXIT", ""),
+              "worker_response": body,
+              "trace_id": body.get("trace_id", ""),
+          }
+          Path("governance/proofs/BEM932_worker_live_smoke_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - name: Commit receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "cf-deploy@ai-devops-system"
+          git config user.name "BEM932 Cloudflare Deploy"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_cloudflare_worker_deploy_attempt_receipt.json governance/proofs/BEM932_worker_live_smoke_receipt.json
+          if git diff --cached --quiet; then
+            echo "No deploy receipt changes"
+          else
+            git commit -m "BEM-932 cloudflare deploy and live smoke receipts"
+            git push
+          fi
