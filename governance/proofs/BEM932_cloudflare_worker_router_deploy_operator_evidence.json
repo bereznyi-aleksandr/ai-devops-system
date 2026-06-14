@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_worker_router_deploy_evidence",
+  "created_at": "2026-06-13T09:42:00Z",
+  "source_file": "infrastructure/cloudflare-worker/telegram-webhook.js",
+  "source_sha": "aa964cf849ba10503d293dd7f17f0ce2d5590521",
+  "operator_confirmed_deployed": true,
+  "confirmation_source": "chat_interruption_screenshot_and_operator_message",
+  "confirmation_text_ru": "На скрине деплой выполнен",
+  "worker_default_router_workflow_id": "provider-router.yml",
+  "required_code_features": [
+    "ROUTER_WORKFLOW_ID feature flag",
+    "provider-router.yml dispatch",
+    "strict Telegram metadata inputs",
+    "non-direct codex-local.yml dispatch"
+  ],
+  "limitation": "Cloudflare deploy is operator-UI confirmed and not directly verified by repository API. Live Telegram fallback test remains required."
+}
