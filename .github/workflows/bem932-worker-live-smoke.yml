@@ -1,0 +1,102 @@
+name: BEM-932 Worker Live Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker_url:
+        required: false
+        default: "https://tg-curator-webhook.bereznii-aleksandr.workers.dev"
+        type: string
+      chat_id:
+        required: false
+        default: "601442777"
+        type: string
+      text:
+        required: false
+        default: "BEM-932 live smoke: provider-router runtime check"
+        type: string
+
+permissions:
+  contents: write
+
+iobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps: [
+      { uses: actions/checkout@1 },
+      {
+        name: "POST Telegram-style update to Cloudflare Worker",
+        shell: bash,
+        env: {
+          WORKER_URL: "${{ inputs.worker_url }}",
+          CHAT_ID: "${{ inputs.chat_id }}",
+          TEXT: "${{ inputs.text }}",
+          RUN_ID: "${{ github.run_id }}"
+        },
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          python3 -<<'PY' > /tmp/tg_update.json
+          import json, os, time
+          run = int(os.environ.get("RUN_ID") or int(time.time()))
+          print(json.dumps({
+            "update_id": run,
+            "message": {
+              "message_id": run % 1000000,
+              "date": int(time.time()),
+              "chat": {"id": int(os.environ["CHAT_ID"]), "type": "private"},
+              "from": {"id": int(os.environ["CHAT_ID"]), "is_bot": False, "first_name": "BEM932"},
+              "text": os.environ["TEXT"]
+            }
+          }, ensure_ascii=False))
+          PY
+          set +e
+          HTTP=$(curl -syS -o /tmp/worker_response.json -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data @/tmp/tg_update.json "$WORKER_URL")
+          CURL_EXIT=$?
+          set -e
+          cat /tmp/worker_response.json || true
+          export HTTP CURL_EXIT WORKER_URL
+          python3 -<<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          resp_path = Path("/tmp/worker_response.json")
+          body_text = resp_path.read_text(encoding="utf-8") if resp_path.exists() else ""
+          try:
+            body = json.loads(body_text) if body_text else {}
+          except Exception:
+            body = {"raw": body_text[:1000]}
+          status = "PASS" if ((os.environ.get("CURL_EXIT") == "0") and (os.environ.get("HTTP") == "200") and body.get("status") == "DISPATCHED") else "BLOCKED"
+          receipt = {
+            "status": status,
+            "protocol": "BEM-932 v8.3",
+            "receipt_type": "worker_live_smoke",
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "worker_url": os.environ.get("WORKER_URL"),
+            "http_status": os.environ.get("HTTP", ""),
+            "curl_exit": os.environ.get("CURL_EXIT", ""),
+            "worker_response": body,
+            "trace_id": body.get("trace_id", ""),
+            "note": "POSTed Telegram-style update to deployed Cloudflare Worker. PASS requires HTTP 200 and worker_response.status=DISPATCHED."
+          }
+          Path("governance/proofs/BEM932_worker_live_smoke_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+        }
+      - {
+        name: "Commit receipt",
+        shell: bash,
+        run: |
+          set -euo pipefail
+          git config user.email "worker-live-smoke@ai-devops-system"
+          git config user.name "BEM932 Worker Live Smoke"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_worker_live_smoke_receipt.json
+          if git diff --cached --quiet; then
+            echo "No live smoke receipt changes"
+          else
+            git commit -m "BEM-932 worker live smoke receipt"
+            git push
+          fi
+      }
+    ]
