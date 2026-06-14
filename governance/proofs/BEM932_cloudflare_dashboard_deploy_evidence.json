@@ -1,0 +1,17 @@
+{
+  "status": "PASS_DASHBOARD_DEPLOY_VISIBLE",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "operator_cloudflare_dashboard_evidence",
+  "created_at": "2026-06-14T04:28:00Z",
+  "source": "operator uploaded Cloudflare dashboard screenshot in chat",
+  "screenshot_file": "1781410860655.jpeg",
+  "visible_worker_name": "tg-curator-webhook",
+  "visible_workers_dev_url": "tg-curator-webhook.bereznii-aleksandr.workers.dev",
+  "visible_metrics": {
+    "requests_last_24h": 18,
+    "errors_last_24h": 0
+  },
+  "visible_deployment": "manual deployment visible in Cloudflare dashboard",
+  "interpretation": "Cloudflare runtime exists and has recent traffic; live provider-router dispatch still requires probe receipt.",
+  "next_action": "Run cloudflare-worker-live-probe.yml and require BEM932_cloudflare_worker_live_probe_receipt.json status=PASS."
+}
