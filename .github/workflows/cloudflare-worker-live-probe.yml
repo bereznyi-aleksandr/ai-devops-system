@@ -11,18 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@1
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT || github.token }}
 
-      - name: POST synthetic Telegram update to deployed Worker
+      - name: POST synthetic Telegram update to deployed Worker webhook path
         shell: bash
         env:
-          WORKER_URL: https://tg-curator-webhook.bereznii-aleksandr.workers.dev
+          WORKER_URL: https://tg-curator-webhook.bereznii-aleksandr.workers.dev/webhook
         run: |
           set -euo pipefail
           mkdir -p governance/proofs
-          seed="$(date -u +%Y%m%d%H%M%S)"
+          seed="$(date -u +%Y%m%d%24%M%S)"
           cat > /tmp/tg_payload.json <<JSON
           {
             "update_id": 932${seed},
@@ -40,7 +40,7 @@ jobs:
             --data @/tmp/tg_payload.json "$WORKER_URL" || true)"
           export HTTP_CODE="$code"
 
-          python3 - <<'PY'
+          python3 -<<'PY'
           import json
           import os
           from datetime import datetime, timezone
@@ -58,6 +58,7 @@ jobs:
               "status_dispatched": isinstance(response, dict) and response.get("status") == "DISPATCHED",
               "workflow_provider_router": isinstance(response, dict) and response.get("workflow_id") == "provider-router.yml",
               "trace_id_present": isinstance(response, dict) and bool(response.get("trace_id")),
+              "webhook_path_used": os.environ["WORKER_URL"].endswith("/webhook"),
           }
           status = "PASS" if all(checks.values()) else "BLOCKED_RUNTIME_NOT_CURRENT"
           receipt = {
@@ -69,7 +70,7 @@ jobs:
               "http_code": os.environ["HTTP_CODE"],
               "response": response,
               "checks": checks,
-              "next_action": None if status == "PASS" else "Deploy current repo worker to Cloudflare and rerun probe."
+              "next_action": None if status == "PASS" else "Verify Cloudflare active deployment contains current repo worker and webhook route dispatches provider-router.yml."
           }
           Path("governance/proofs/BEM932_cloudflare_worker_live_probe_receipt.json").write_text(
               json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
