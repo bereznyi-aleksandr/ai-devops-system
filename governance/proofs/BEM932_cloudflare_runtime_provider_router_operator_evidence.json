@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "operator_screenshot_runtime_evidence",
+  "created_at": "2026-06-15T15:26:00Z",
+  "evidence": {
+    "cloudflare_dashboard": "Worker peview returned OK and version saved/active shown in operator screenshot.",
+    "telegram_message": "Operator sent ping provider-router and bot replied: Polucheno. Peredano cherez provider-router.",
+    "trace_id": "tg_818730864_20260615T152505Z",
+    "workflow": "provider-router.yml"
+  },
+  "linked_proof": "governance/proofs/BEM932_provider_tg_818730864_20260615T152505Z.json",
+  "linked_proof_sha": "884a907c3fac3cec3b9ea7e6c0f51607dd174290",
+  "note": "Live provider-router runtime pass confirmed. Full quota-fallback live test remains separate."
+}
