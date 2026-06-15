@@ -1,0 +1,23 @@
+{
+  "status": "ARMED",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "live_fallback_trigger_arm",
+  "created_at": "2026-06-15T15:33:00Z",
+  "trigger_texts": [
+    "force-fallback",
+    "force fallback",
+    "quota_fallback",
+    "quota fallback"
+  ],
+  "expected_live_result": {
+    "provider_selected": "claude_code",
+    "fallback_reason": "fallback_quota",
+    "decision_source": "operator_forced_fallback"
+  },
+  "artifact": {
+    "path": "scripts/provider_router.py",
+    "commit_sha": "8e392fc8398ee1c2869f822a95dfe72d2bcf7764",
+    "blob_sha": "3bbc0cc6b4367c3642cdc73bce84b42650c2f3ba"
+  },
+  "next_action": "Operator sends Telegram message: force fallback"
+}
