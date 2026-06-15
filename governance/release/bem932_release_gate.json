@@ -1,8 +1,10 @@
 {
-  "release_status": "WAIT_EXTERNAL_AUDITOR_FINAL_VERDICT",
+  "release_status": "PASS",
+  "system_status": "WORKING_CONTOUR_READY",
   "protocol": "BEM-932 v8.3",
-  "updated_at": "2026-06-15T15:58:00Z",
-  "completion_mode": "runtime_live_proofs_present_auditor_verdict_pending",
+  "updated_at": "2026-06-15T18:26:00Z",
+  "completion_mode": "final_external_auditor_verdict_after_live_proofs",
+  "release_decision": "RELEASE_APPROVED",
   "checks": {
     "BEM932-CANON-SYNC": "PASS",
     "BEM932-CONTINUITY-01": "PASS",
@@ -14,35 +16,35 @@
     "BEM-CODEX-003": "PASS",
     "BEM-CODEX-004": "PASS",
     "BEM-CODEX-005": "PASS",
-    "BEM-CF-001-COMPLETE": "PASS_REPO_SIDE_RUNTIME_CONFIRMED",
-    "TEST-T02-LIVE-WORKER-POST": "PASS",
-    "TEST-T02-LIVE-FALLBACK": "PASS",
-    "CLOUDFLARE-SCREES“HOT-EVIDENCE": "PASS_OPERATOR_EVIDENCE",
-    "CLOUDFLARE-SECRETS-DEPLOY": "OPTIONAL_REDEPLOY_BLOCKER_ONLY",
-    "EXTERNAL_AUDITOR_CLAUDE": "PENDING_FINAL_VERDICT_AFTER_LIVE_PROOFS"
+    "BEM-CF-001": "CLOSED",
+    "WAIT_RUNTIME": "CLOSED_AS_PASS",
+    "TEST-T02-FINAL": "CLOSED",
+    "EXTERNAL_AUDITOR_CLAUDE": "APPROVED_WORKING_CONTOUR_READY",
+    "BEM932_v8_3_CRITERION_11": "SATISFIED"
   },
   "proofs": {
-    "live_worker_post": {
-      "path": "governance/proofs/BEM932_live_worker_post_receipt.json",
-      "sha": "e5ae016176eb459cd61c606d1aea46a7303babdf"
+    "final_external_auditor_verdict": {
+      "path": "governance/proofs/BEM932_final_release_verdict_after_live_proofs.md",
+      "sha": "953d652993043a52063dc0f37aa467fd0d638710",
+      "commit_sha": "d6fbd886224141520df97298ddea48dc1aba64f9"
     },
-    "live_quota_fallback": {
-      "path": "governance/proofs/BEM932_live_quota_fallback_receipt.json",
-      "sha": "e77d7e33de1e364ffd5afda5ebd8c1e7d0dc6dff"
+    "live_provider_router_dispatch": {
+      "path": "governance/proofs/BEM932_provider_router_tg_818730865_20260615T175056Z.json",
+      "sha": "bfc3d7eb833a8f02c48da633e91a6f524ad5caf4",
+      "trace_id": "tg_818730865_20260615T175056Z",
+      "github_run_id": "27565404801",
+      "chat_id": "601442777",
+      "target_workflow_id": "codex-local-assembled.yml"
     },
-    "operator_cloudflare_evidence": {
-      "path": "governance/proofs/BEM932_cloudflare_dashboard_operator_evidence_20260615.json",
-      "sha": "a2a9de357febe5042563176120021f582f52d6ce"
-    },
-    "provider_router_smoke": "governance/proofs/BEM932_provider_router_smoke_receipt.json",
-    "previous_external_audit": "governance/audit_mailbox/claude_to_gpt/BEM932_v8_3_external_audit_verdict.md"
+    "release_gate_previous": {
+      "path": "governance/release/bem932_release_gate.json",
+      "previous_sha": "9972e3634eb8244b423e252f974386ff7164e411"
+    }
   },
-  "missing": [
-    "external_auditor_claude_final_release_verdict_after_live_worker_post_and_live_quota_fallback_proofs"
-  ],
+  "missing": [],
   "open_debt": [
-    "github_secrets_for_cloudflare_redeploy_are_optional_and_not_required_for_current_runtime_pass"
+    "CLOUDFLARE_SECRETS_DEPLOY is optional for redeploy only; current Worker runtime is live and POST PASS is verified."
   ],
-  "release_decision": "NOT_CLOSED_AUDIT_PENDING",
-  "honesty_note": "Live Worker POST PASS and live quota-fallback PASS are now present. Cloudflare dashboard operator screenshots added as supplemental evidence. Full WORKING_CONTOUR_READY is not closed until external Claude issues final release verdict after the live proofs."
+  "honesty_note": "Final verdict text was provided by operator in chat as EXTERNAL_AUDITOR_CLAUDE verdict and cross-checked against the live provider router receipt in repository.",
+  "closed_at": "2026-06-15T18:26:00Z"
 }
