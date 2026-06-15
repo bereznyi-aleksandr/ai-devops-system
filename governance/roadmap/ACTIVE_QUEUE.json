@@ -1,12 +1,13 @@
 {
-  "version": 21,
-  "updated_at": "2026-06-15T19:25:01Z",
+  "version": 22,
+  "updated_at": "2026-06-15T19:30:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM933-ACTIVE-QUEUE-GUARD",
+  "current_task": "BEM933-RECEIPT-WATCHDOG",
   "system_status": "WORKING_CONTOUR_READY",
   "release_status": "PASS",
   "protocol": "BEM-933 Post-release Autonomous Development v1",
   "source": "governance/protocols/BEM933_PostRelease_Autonomous_Development_v1.md",
+  "guard_status": "ACTIVE_QUEUE_GUARDED",
   "reopened_from": {
     "previous_version": 20,
     "previous_queue_state": "CLOSED",
@@ -34,27 +35,38 @@
       "title": "Reopen ACTIVE_QUEUE after closed release queue",
       "status": "DONE",
       "done_at": "2026-06-15T18:41:00Z",
-      "acceptance": [
-        "queue_state set to ACTIVE",
-        "current_task is non-null",
-        "next autonomous development stream created"
-      ]
+      "done_sha": "a9315e01b7d1a2014d324c0b1b3ef7b05e1dc3ff"
     },
     {
       "id": "BEM933-ACTIVE-QUEUE-GUARD",
       "title": "Add guard runner/workflow preventing empty closed queue",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 1,
+      "done_sha": "e1768bc12b9e55aa109147ee6455ee13a6d89791",
+      "artifacts": [
+        {
+          "path": "governance/runners/active_queue_guard.py",
+          "sha": "80ac07d10b8751557bbfd67495fa6fb3d3d8918c"
+        },
+        {
+          "path": ".github/workflows/active-queue-guard.yml",
+          "sha": "84d89bbc907081df74344dee066d2b87bd97eb05"
+        },
+        {
+          "path": "governance/proofs/BEM933_active_queue_guard_receipt.json",
+          "sha": "13c0f785cee5b6e88df3ffebced61ce9ecdc78c7"
+        }
+      ],
       "acceptance": [
-        "governance/runners/active_queue_guard.py has def main()",
-        "workflow smoke validates closed_queue_repaired",
-        "receipt governance/proofs/BEM933_active_queue_guard_receipt.json status=PASS"
+        "def main present",
+        "active queue validation repaired",
+        "workflow smoke receipt status=PASS"
       ]
     },
     {
       "id": "BEM933-RECEIPT-WATCHDOG",
       "title": "Add receipt freshness watchdog for live workflows",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 2,
       "acceptance": [
         "watchdog scans governance/proofs and release gate",
@@ -66,29 +78,18 @@
       "id": "BEM933-TELEGRAM-DELIVERY-AUDIT",
       "title": "Audit Telegram delivery/outbox loop and idempotency",
       "status": "PENDING",
-      "priority": 3,
-      "acceptance": [
-        "telegram outbox duplicate protection verified",
-        "live/manual secrets boundaries documented",
-        "proof receipt written"
-      ]
+      "priority": 3
     },
     {
       "id": "BEM933-SELF-HEALING-PLAYBOOK",
       "title": "Encode workflow autorepair checklist as runnable checks",
       "status": "PENDING",
-      "priority": 4,
-      "acceptance": [
-        "YAML/Python common error checks runnable",
-        "proof written",
-        "next roadmap remains active"
-      ]
+      "priority": 4
     }
   ],
   "last_completed": {
-    "id": "BEM933-ROADMAP-REOPEN",
-    "completed_at": "2026-06-15T18:41:00Z"
+    "id": "BEM933-ACTIVE-QUEUE-GUARD",
+    "completed_at": "2026-06-15T19:30:00Z"
   },
-  "next_action": "BEM933-ACTIVE-QUEUE-GUARD — continue autonomous development",
-  "guard_status": "ACTIVE_QUEUE_GUARDED"
+  "next_action": "BEM933-RECEIPT-WATCHDOG — create receipt freshness watchdog and proof"
 }
