@@ -11,94 +11,85 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@1
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT || github.token }}
 
       - name: Deploy Cloudflare Worker through wrangler.toml
         shell: bash
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN || secrets.WRANGLER_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || secrets.CF_ACCOUNT_ID || secrets.WRANGLER_ACCOUNT_ID }}
+          CF_API_TOKEN_1: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_API_TOKEN_2: ${{ secrets.CLOUDFARE_API_TOKEN }}
+          CF_API_TOKEN_3: ${{ secrets.CF_API_TOKEN }}
+          CF_API_TOKEN_4: ${{ secrets.WRANGLER_API_TOKEN }}
+          CF_ACCOUNT_ID_1: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_ACCOUNT_ID_2: ${{ secrets.CLOUDFARE_ACCOUNT_ID }}
+          CF_ACCOUNT_ID_3: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_ACCOUNT_ID_4: ${{ secrets.WRANGLER_ACCOUNT_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          GH_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT }}
+          GH_PAT_VALUE: ${{ secrets.AI_SYSTEM_GITHUB_PAT || secrets.GH_PAT }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mkdir -p governance/proofs
-          STATUS=\"PASS\"
-          DETAILS=\"\"
-
-          if [ -z \"${CLOUDFLARE_API_TOKEN:-}\" ] || [ -z \"${CLOUDFLARE_ACCOUNT_ID:-}\" ]; then
-            STATUS=\"BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG\"
-            DETAILS=\"requires Cloudflare runtime secrets: CLOUDFLARE_API_TOKEN/CF_API_TOKEN/WRANGLER_API_TOKEN and CLOUDFLARE_ACCOUNT_ID/CF_ACCOUNT_ID/WRANGLER_ACCOUNT_ID\"
+          export CLOUDFLARE_API_TOKEN="${CF_API_TOKEN_1:-${CF_API_TOKEN_2:-${CF_API_TOKEN_3:-${CF_API_TOKEN_4:-}}}}"
+          export CLOUDFLARE_ACCOUNT_ID="${CF_ACCOUNT_ID_1:-${CF_ACCOUNT_ID_2:-${CF_ACCOUNT_ID_3:-${CF_ACCOUNT_ID_4:-}}}}"
+          STATUS="PASS"
+          DETAILS=""
+          HAS_TOKEN="false"
+          HAS_ACCOUNT="false"
+          if [ -n "${CLOUDFLARE_API_TOKEN:-}" ]; then HAS_TOKEN="true"; fi
+          if [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then HAS_ACCOUNT="true"; fi
+          if [ "$HAS_TOKEN" != "true" ] || [ "$HAS_ACCOUNT" != "true" ]; then
+            STATUS="BLOCKED_MISSING_CLOUDFLARE_RUNTIME_CONFIG"
+            DETAILS="requires Cloudflare runtime secrets. Accepted names: CLOUDFLARE_API_TOKEN or CLOUDFARE_API_TOKEN or CF_API_TOKEN or WRANGLER_API_TOKEN; CLOUDFLARE_ACCOUNT_ID or CLOUDFARE_ACCOUNT_ID or CF_ACCOUNT_ID or WRANGLER_ACCOUNT_ID"
           else
             npm install --no-save wrangler@latest >/tmp/wrangler_install.log 2>&1
             cd infrastructure/cloudflare-worker
-
-            if [ -n \"${TELEGRAM_BOT_TOKEN:-}\" ]; then
-              printf '%s' \"$TELEGRAM_BOT_TOKEN\" | npx wrangler secret put TELEGRAM_BOT_TOKEN --config wrangler.toml >/tmp/wrangler_secret_telegram.log 2>&1 || true
+            if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
+              printf '%s' "$TELEGRAM_BOT_TOKEN" | npx wrangler secret put TELEGRAM_BOT_TOKEN --config wrangler.toml >/tmp/wrangler_secret_telegram.log 2>&1 || true
             fi
-            if [ -n \"${GH_PAT:-}\" ]; then
-              printf '%s' \"$GH_PAT\" | npx wrangler secret put GH_PAT --config wrangler.toml >/tmp/wrangler_secret_ghpat.log 2>&1 || true
+            if [ -n "${GH_PAT_VALUE:-}" ]; then
+              printf '%s' "$GH_PAT_VALUE" | npx wrangler secret put GH_PAT --config wrangler.toml >/tmp/wrangler_secret_ghpat.log 2>&1 || true
             fi
-
-            set +e
             npx wrangler deploy --config wrangler.toml >/tmp/wrangler_deploy.log 2>&1
             CODE=$?
-            set -e
             cd ../..
-
-            if [ \"$CODE\" -ne 0 ]; then
-              STATUS=\"BLOCKED_DEPLOY_FAILED\"
-              DETAILS=$( tail -c 1200 /tmp/wrangler_deploy.log | tr '\n' ' ' )
+            if [ "$CODE" -ne 0 ]; then
+              STATUS="BLOCKED_DEPLOY_FAILED"
+              DETAILS="$(tail -c 1200 /tmp/wrangler_deploy.log | tr '\n' ' ')"
             else
-              DETAILS=\"wrangler deploy completed from infrastructure/cloudflare-worker/wrangler.toml; ROUTER_WORKFLOW_ID var points to provider-router.yml\"
+              DETAILS="wrangler deploy complete; worker routes Telegram to provider-router.yml via ROUTER_WORKFLOW_ID"
             fi
           fi
-
-          export STATUS DETAILS
+          export STATUS DETAILS HAS_TOKEN HAS_ACCOUNT
           python3 - <<'PY'
-          import json
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          receipt = {
-              "status": os.environ["STATUS"],
-              "protocol": "BEM-932 v8.3",
-              "receipt_type": "cloudflare_worker_deploy_attempt",
-              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "workflow": ".github/workflows/cloudflare-worker-deploy.yml",
-              "github_run_id": os.environ.get("RUN_ID", ""),
-              "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
-              "wrangler_config": "infrastructure/cloudflare-worker/wrangler.toml",
-              "worker_name": "telegram-webhook",
-              "router_workflow_id": "provider-router.yml",
-              "deploy_command": "npx wrangler deploy --config infrastructure/cloudflare-worker/wrangler.toml",
-              "accepted_cloudflare_token_secret_names": [
-                  "CLOUDFLARE_API_TOKEN",
-                  "CF_API_TOKEN",
-                  "WRANGLER_API_TOKEN"
-              ],
-              "accepted_cloudflare_account_secret_names": [
-                  "CLOUDFLARE_ACCOUNT_ID",
-                  "CF_ACCOUNT_ID",
-                  "WRANGLER_ACCOUNT_ID"
-              ],
-              "gh_pat_secret_source": "AI_SYSTEM_GITHUB_PAT || GH_PAT",
-              "details": os.environ.get("DETAILS", ""),
-          }
-          Path("governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json").write_text(
-              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
-              encoding="utf-8",
-          )
-          PY
-
+import json, os
+from datetime import datetime, timezone
+from pathlib import Path
+receipt = {
+  "status": os.environ["STATUS"],
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_worker_deploy_attempt",
+  "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+  "workflow": ".github/workflows/cloudflare-worker-deploy.yml",
+  "github_run_id": os.environ.get("RUN_ID", ""),
+  "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+  "wrangler_config": "infrastructure/cloudflare-worker/wrangler.toml",
+  "worker_name": "tg-curator-webhook",
+  "router_workflow_id": "provider-router.yml",
+  "has_cloudflare_api_token": os.environ.get("HAS_TOKEN") == "true",
+  "has_cloudflare_account_id": os.environ.get("HAS_ACCOUNT") == "true",
+  "accepted_cloudflare_token_secret_names": ["CLOUDFLARE_API_TOKEN", "CLOUDFARE_API_TOKEN", "CF_API_TOKEN", "WRANGLER_API_TOKEN"],
+  "accepted_cloudflare_account_secret_names": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFARE_ACCOUNT_ID", "CF_ACCOUNT_ID", "WRANGLER_ACCOUNT_ID"],
+  "details": os.environ.get("DETAILS", "")
+}
+Path("governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
       - name: Commit deploy receipt
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           git config user.email "cloudflare-deploy@ai-devops-system"
           git config user.name "BEM-932 Cloudflare Deploy"
           git pull --rebase --autostash origin main || true
