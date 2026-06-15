@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "provider_router_live_quota_fallback",
+  "created_at": "2026-06-15T15:40:26Z",
+  "trace_id": "bem932_live_fallback_20260615T153900Z",
+  "provider_selected": "claude_code",
+  "fallback_reason": "fallback_quota",
+  "decision_source": "same_trace_result",
+  "fallback_mode": "runtime_simulation_approved_when_real_quota_unavailable",
+  "source_result": "governance/codex/results/bem932_live_fallback_20260615T153900Z.json",
+  "checks": [
+    "same_trace_quota_result_present",
+    "stale_other_trace_ignored",
+    "fallback_outbox_idempotent",
+    "provider_selected_claude_code"
+  ]
+}
