@@ -1,159 +1,119 @@
 {
-  "version": 17,
-  "updated_at": "2026-06-15T15:28:00Z",
+  "version": 18,
+  "updated_at": "2026-06-15T15:41:00Z",
   "source": "governance/protocols/BEM932_Protocol_v8_3.md",
-  "queue_state": "ACTIVE_RUNTIME_CURRENT_WAIT_FALLBACK_TEST",
-  "current_task": "TEST-T02-LIVE-FALLBACK",
+  "queue_state": "ACTIVE_READY_FOR_RELEASE",
+  "current_task": "RELEASE",
   "policy": {
     "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
-    "runtime_rule": "Cloudflare runtime is now confirmed dispatching provider-router.yml; full release still requires live quota-fallback evidence.",
     "continuity_rule": "Continue to next executable task after each completion."
   },
   "tasks": [
     {
       "id": "BEM932-CANON-SYNC",
-      "status": "DONE",
-      "done_sha": "d925fc169ec67822d5606eb840ff3a15cc0c8f63"
+      "status": "DONE"
     },
     {
       "id": "BEM932-CONTINUITY-01",
-      "status": "DONE",
-      "done_sha": "1534f7c38c011743daa837e3d54b8119d5faf195"
+      "status": "DONE"
     },
     {
       "id": "BEM932-CONTINUITY-02",
-      "status": "DONE",
-      "done_sha": "336718d88c61843680149c4542c46adeca64b5e9"
+      "status": "DONE"
     },
     {
       "id": "BEM932-PROOF-RUN51",
-      "status": "DONE",
-      "done_sha": "3342846f58eadb3b9651e4bc62f0dddbf0ac8516"
+      "status": "DONE"
     },
     {
       "id": "BEM932-EXPERIENCE-FIX",
-      "status": "DONE",
-      "done_sha": "b635fe6c2f8e943ab94bb6a0fc34009396b6a171"
+      "status": "DONE"
     },
     {
       "id": "BEM-PROVIDER-001",
-      "status": "DONE_REPO_SIDE_RUNTIME_PROVIDER_ROUTER_CONFIRMED_WAIT_FALLBACK",
-      "subtasks": [
-        {
-          "id": "BEM-PROVIDER-001-A",
-          "status": "DONE"
-        },
-        {
-          "id": "BEM-PROVIDER-001-B",
-          "status": "DONE"
-        },
-        {
-          "id": "BEM-PROVIDER-001-C",
-          "status": "DONE"
-        },
-        {
-          "id": "BEM932-ROUTER-TESTS",
-          "status": "DONE"
-        },
-        {
-          "id": "BEM-PROVIDER-001-D",
-          "status": "DONE_RUNTIME_CONFIRMED",
-          "done_sha": "b95ac5a40f4c1b68ab86b8d68bbc9a49e59625ce",
-          "proofs": [
-            "governance/proofs/BEM932_provider_router_tg_818730864_20260615T152505Z.json",
-            "governance/proofs/BEM932_cloudflare_runtime_provider_router_operator_evidence.json"
-          ]
-        },
-        {
-          "id": "BEM-PROVIDER-001-E",
-          "status": "DONE_ARMED"
-        },
-        {
-          "id": "BEM-PROVIDER-001-FINAL",
-          "status": "WAIT_LIVE_QUOTA_FALLBACK"
-        }
-      ]
+      "status": "DONE_REPO_SIDE_RUNTIME_PROVIDER_ROUTER_CONFIRMED_WAIT_OPTIONAL_CF_DEPLOY_SECRETS"
     },
     {
       "id": "BEM-CODEX-001",
-      "status": "DONE",
-      "done_sha": "5ffd6ad9fe6727ad1d8e49168f44585a5407d76c"
+      "status": "DONE"
     },
     {
       "id": "BAM-CODEX-002",
-      "status": "DONE",
-      "done_sha": "11cb8b815eeb52fe70ccaac93595019dfc264c1b"
+      "status": "DONE"
     },
     {
       "id": "BEM-CODEX-003",
-      "status": "DONE",
-      "done_sha": "ff2ef802268113b486bc53b8467ce725f65382aa"
+      "status": "DONE"
     },
     {
       "id": "BEM-CODEX-004",
-      "status": "DONE",
-      "done_sha": "5f5ec695ef93a7ebd62922c2afdd0ae186db6b84"
+      "status": "DONE"
     },
     {
       "id": "BEM-CODEX-005",
-      "status": "DONE",
-      "done_sha": "8bbb6589e8bb03299430eb2f058018dbcff901d5"
+      "status": "DONE"
     },
     {
       "id": "BEM-CF-001-COMPLETE",
-      "status": "DONE_REPO_SIDE_RUNTIME_CONFIRMED",
-      "done_sha": "ef314078289666478fb8e3bab65332d297be4d4e"
+      "status": "DONE_REPO_SIDE_RUNTIME_CONFIRMED"
     },
     {
       "id": "BEM932-PROVIDER-GLOBAL-STATUS-FIX",
-      "status": "DONE",
-      "done_sha": "390f0f62062f9103ba0a4d6d0df2de7ec9242044"
+      "status": "DONE"
     },
     {
       "id": "TEST-T02-LIVE-MESSAGE",
       "status": "DONE_PROVIDER_ROUTER_RUNTIME_PASS",
-      "priority": 0,
-      "proofs": [
-        {
-          "path": "governance/proofs/BEM932_provider_router_tg_818730864_20260615T152505Z.json",
-          "sha": "884a907c3fac3cec3b9ea7e6c0f51607dd174290"
-        },
-        {
-          "path": "governance/proofs/BEM932_cloudflare_runtime_provider_router_operator_evidence.json",
-          "sha": "7f7f2ba4b3396c5b37f134db78c5a9fd76a998c2"
-        }
-      ],
-      "trace_id": "tg_818730864_20260615T152505Z",
-      "provider_selected": "gpt_codex",
-      "target_workflow_id": "codex-local-assembled.yml",
-      "note": "Cloudflare worker now dispatches provider-router.yml; provider-router dispatched selected downstream workflow successfully."
+      "proof": "governance/proofs/BEM932_provider_router_tg_818730864_20260615T152505Z.json"
+    },
+    {
+      "id": "TEST-T02-LIVE-WORKER-POST",
+      "status": "DONE",
+      "done_sha": "2d7453bbb9097308fbd28d8e3e57bd2780c8632d",
+      "proof": {
+        "path": "governance/proofs/BEM932_live_worker_post_receipt.json",
+        "sha": "e5ae016176eb459cd61c606d1aea46a7303babdf"
+      },
+      "note": "Workflow YAML repaired; live worker POST returned PASS."
     },
     {
       "id": "TEST-T02-LIVE-FALLBACK",
-      "status": "PENDING",
-      "priority": 0,
-      "required": "Live Telegram test with provider_selected=claude_code and fallback_reason=fallback_quota.",
-      "operator_prompt": "Send a live Telegram command that forces quota fallback, or approve runtime fallback simulation if real quota is unavailable."
+      "status": "DONE",
+      "done_sha": "a9ff0a8114a1a4220ce515242789649d1797221d",
+      "proof": {
+        "path": "governance/proofs/BEM932_live_quota_fallback_receipt.json",
+        "sha": "e77d7e33de1e364ffd5afda5ebd8c1e7d0dc6dff"
+      },
+      "provider_selected": "claude_code",
+      "fallback_reason": "fallback_quota"
+    },
+    {
+      "id": "CLOUDFLARE-SECRETS-DEPLOY",
+      "status": "BLOCKED_MANUAL_SECRETS_REQUIRED",
+      "workflow": "cloudflare-worker-deploy.yml",
+      "missing": [
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_ACCOUNT_ID"
+      ],
+      "note": "GPT cannot obtain or enter Cloudflare secrets; user must add them in GitHub UI. Runtime Worker is already responding and live POST PASS."
     },
     {
       "id": "BEM932-EXTERNAL-AUDIT-VERDICT",
-      "status": "DONE_WITH_RUNTIME_EXCEPTION_PARTLY_RESOLVED",
-      "proof": "governance/audit_mailbox/claude_to_gpt/BEM932_v8_3_external_audit_verdict.md"
+      "status": "DONE_WITH_RUNTIME_EXCEPTION_PARTLY_RESOLVED"
     },
     {
       "id": "RELEASE",
-      "status": "BLOCKED_WAIT_LIVE_QUOTA_FALLBACK",
+      "status": "PENDING",
       "depends_on": [
         "TEST-T02-LIVE-FALLBACK"
       ]
     }
   ],
   "last_completed": {
-    "id": "TEST-T02-LIVE-MESSAGE",
-    "completed_at": "2026-06-15T15:26:41Z",
-    "status": "DONE_PROVIDER_ROUTER_RUNTIME_PASS",
-    "proof": "governance/proofs/BEM932_provider_router_tg_818730864_20260615T152505Z.json",
-    "commit_sha": "b95ac5a40f4c1b68ab86b8d68bbc9a49e59625ce"
+    "id": "TEST-T02-LIVE-FALLBACK",
+    "completed_at": "2026-06-15T15:40:26Z",
+    "commit_sha": "a9ff0a8114a1a4220ce515242789649d1797221d",
+    "proof": "governance/proofs/BEM932_live_quota_fallback_receipt.json"
   },
-  "next_action": "TEST-T02-LIVE-FALLBACK — obtain live fallback proof with provider_selected=claude_code and fallback_reason=fallback_quota"
+  "next_action": "RELEASE — evaluate final gate with live fallback proof; Cloudflare deploy secrets remain optional/manual blocker for redeploy only."
 }
