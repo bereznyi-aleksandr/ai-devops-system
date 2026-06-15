@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-933",
+  "receipt_type": "active_queue_guard",
+  "created_at": "2026-06-15T19:25:01Z",
+  "smoke": {
+    "status": "PASS",
+    "checks": [
+      "closed_queue_repaired",
+      "current_task_set",
+      "operator_stop_respected"
+    ],
+    "sample_current_task": "BEM933-AUTO-NEXT-20260615_184100"
+  },
+  "check": {
+    "status": "PASS",
+    "problems": [],
+    "current_task": "BEM933-ACTIVE-QUEUE-GUARD",
+    "task_count": 6
+  }
+}
