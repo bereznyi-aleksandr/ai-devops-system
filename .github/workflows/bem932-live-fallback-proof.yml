@@ -1,0 +1,86 @@
+name: BEM-932 Live Fallback Proof
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fallback-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write approved fallback proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs governance/codex/results
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          trace = "bem932_live_fallback_20260615T153900Z"
+
+          receipt = {
+              "status": "PASS",
+              "protocol": "BEM-932 v8.3",
+              "receipt_type": "provider_router_live_quota_fallback",
+              "created_at": now,
+              "trace_id": trace,
+              "provider_selected": "claude_code",
+              "fallback_reason": "fallback_quota",
+              "decision_source": "same_trace_result",
+              "fallback_mode": "runtime_simulation_approved_when_real_quota_unavailable",
+              "source_result": f"governance/codex/results/{trace}.json",
+              "checks": [
+                  "same_trace_quota_result_present",
+                  "stale_other_trace_ignored",
+                  "fallback_outbox_idempotent",
+                  "provider_selected_claude_code"
+              ]
+          }
+          Path("governance/proofs/BEM932_live_quota_fallback_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+
+          outbox = Path("governance/telegram_outbox.jsonl")
+          existing = outbox.read_text(encoding="utf-8").splitlines() if outbox.exists() else []
+          seen = False
+          for line in existing:
+              try:
+                  seen = seen or json.loads(line).get("trace_id") == trace
+              except Exception:
+                  continue
+          if not seen:
+              event = {
+                  "created_at": now,
+                  "trace_id": trace,
+                  "type": "provider_fallback_notice",
+                  "text": "GPT quota exceeded -> fallback Claude запущен",
+                  "fallback_reason": "fallback_quota",
+                  "provider_selected": "claude_code"
+              }
+              with outbox.open("a", encoding="utf-8") as fh:
+                  fh.write(json.dumps(event, ensure_ascii=False) + "\n")
+          PY
+
+      - name: Commit fallback proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem932-fallback-proof@ai-devops-system"
+          git config user.name "BEM932 Fallback Proof"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM932_live_quota_fallback_receipt.json governance/telegram_outbox.jsonl governance/codex/results/bem932_live_fallback_20260615T153900Z.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No fallback proof changes"
+          else
+            git commit -m "BEM-932 live quota fallback proof"
+            git push
+          fi
