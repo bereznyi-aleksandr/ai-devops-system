@@ -1,32 +1,48 @@
 {
-  "release_status": "PASS_REPO_SIDE_RUNTIME_EXCEPTION",
+  "release_status": "WAIT_EXTERNAL_AUDITOR_FINAL_VERDICT",
   "protocol": "BEM-932 v8.3",
-  "updated_at": "2026-06-13T15:40:00Z",
-  "completion_mode": "repo_side_approved_runtime_debt_open",
+  "updated_at": "2026-06-15T15:58:00Z",
+  "completion_mode": "runtime_live_proofs_present_auditor_verdict_pending",
   "checks": {
+    "BEM932-CANON-SYNC": "PASS",
+    "BEM932-CONTINUITY-01": "PASS",
+    "BEM932-CONTINUITY-02": "PASS",
+    "BEM932-EXPERIENCE-FIX": "PASS",
+    "BEM-PROVIDER-001": "PASS",
     "BEM-CODEX-001": "PASS",
     "BEM-CODEX-002": "PASS",
     "BEM-CODEX-003": "PASS",
     "BEM-CODEX-004": "PASS",
     "BEM-CODEX-005": "PASS",
-    "BEM-CF-001-COMPLETE": "PASS_REPO_SIDE_NOT_DEPLOYED",
-    "TEST-T02": "NOT_TESTED_RUNTIME_OPERATOR_AUTHORIZED_SKIP",
-    "EXTERNAL_AUDITOR_CLAUDE_APPROVAL": "APPROVED_WITH_RUNTIME_EXCEPTION_ACKNOWLEDGED_NOT_FULL_APPROVAL"
+    "BEM-CF-001-COMPLETE": "PASS_REPO_SIDE_RUNTIME_CONFIRMED",
+    "TEST-T02-LIVE-WORKER-POST": "PASS",
+    "TEST-T02-LIVE-FALLBACK": "PASS",
+    "CLOUDFLARE-SCREES“HOT-EVIDENCE": "PASS_OPERATOR_EVIDENCE",
+    "CLOUDFLARE-SECRETS-DEPLOY": "OPTIONAL_REDEPLOY_BLOCKER_ONLY",
+    "EXTERNAL_AUDITOR_CLAUDE": "PENDING_FINAL_VERDICT_AFTER_LIVE_PROOFS"
   },
   "proofs": {
-    "TEST-T02_operator_authorized_skip": "governance/proofs/BEM932_TEST_T02_live_telegram_provider_router_receipt.json",
+    "live_worker_post": {
+      "path": "governance/proofs/BEM932_live_worker_post_receipt.json",
+      "sha": "e5ae016176eb459cd61c606d1aea46a7303babdf"
+    },
+    "live_quota_fallback": {
+      "path": "governance/proofs/BEM932_live_quota_fallback_receipt.json",
+      "sha": "e77d7e33de1e364ffd5afda5ebd8c1e7d0dc6dff"
+    },
+    "operator_cloudflare_evidence": {
+      "path": "governance/proofs/BEM932_cloudflare_dashboard_operator_evidence_20260615.json",
+      "sha": "a2a9de357febe5042563176120021f582f52d6ce"
+    },
     "provider_router_smoke": "governance/proofs/BEM932_provider_router_smoke_receipt.json",
-    "runtime_exception_ack": "governance/proofs/BEM932_runtime_exception_ack_receipt.json",
-    "external_auditor_verdict": "governance/audit_mailbox/claude_to_gpt/BEM932_v8_3_external_audit_verdict.md"
+    "previous_external_audit": "governance/audit_mailbox/claude_to_gpt/BEM932_v8_3_external_audit_verdict.md"
   },
   "missing": [
-    "live_cloudflare_worker_deployment_confirmation",
-    "live_telegram_fallback_trace_with_real_quota_exceeded",
-    "full_external_auditor_approval_after_TEST_T02_FULL"
+    "external_auditor_claude_final_release_verdict_after_live_worker_post_and_live_quota_fallback_proofs"
   ],
-  "open_runtime_debt": [
-    "WAIT_RUNTIME"
+  "open_debt": [
+    "github_secrets_for_cloudflare_redeploy_are_optional_and_not_required_for_current_runtime_pass"
   ],
-  "release_decision": "WORKING_CONTOUR_READY_REPO_SIDE_WITH_RUNTIME_DEBT",
-  "honesty_note": "External Auditor Claude approved repo-side code but did not grant full runtime release approval. TEST-T02 remains not live-tested until Cloudflare deployment and real Telegram fallback receipt are produced."
+  "release_decision": "NOT_CLOSED_AUDIT_PENDING",
+  "honesty_note": "Live Worker POST PASS and live quota-fallback PASS are now present. Cloudflare dashboard operator screenshots added as supplemental evidence. Full WORKING_CONTOUR_READY is not closed until external Claude issues final release verdict after the live proofs."
 }
