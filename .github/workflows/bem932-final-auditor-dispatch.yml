@@ -1,7 +1,7 @@
 name: BEM-932 Final Auditor Dispatch
 
 "on":
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 permissions:
   actions: write
@@ -22,28 +22,31 @@ jobs:
           python3 - <<'PY' > /tmp/bem932_final_auditor_payload.json
           import json
 
-          task = """BEM-932 v8.3 FINAL RELEASE AUDIT AFTER LIVE PROOFS
-
-Role: EXTERNAL_AUDITOR_CLAUDE
-
-Read these repository files:
-- governance/release/bem932_release_gate.json
-- governance/proofs/BEM932_live_worker_post_receipt.json
-- governance/proofs/BEM932_live_quota_fallback_receipt.json
-- governance/proofs/BEM932_cloudflare_dashboard_operator_evidence_20260615.json
-- governance/proofs/BEM932_provider_router_smoke_receipt.json
-- governance/audit_mailbox/gpt_to_claude/BEM932_final_release_after_live_proofs_audit_request.md
-
-Then write the final verdict file exactly here:
-governance/audit_mailbox/claude_to_gpt/BEM932_final_release_verdict_after_live_proofs.md
-
-Accepted verdicts:
-- APPROVED_FOR_WORKING_CONTOUR_READY
-- BLOCKED_WITH_REASON
-
-If approved, include a compact checklist of the live proofs reviewed.
-If blocked, include explicit missing proof/action.
-Do not paste secrets. Keep the verdict concise."""
+          task_lines = [
+              'BEM-932 v8.3 FINAL RELEASE AUDIT AFTER LIVE PROOFS',
+              '',
+              'Role: EXTERNAL_AUDITOR_CLAUDE',
+              '',
+              'Read these repository files:',
+              '- governance/release/bem932_release_gate.json',
+              '- governance/proofs/BEM932_live_worker_post_receipt.json',
+              '- governance/proofs/BEM932_live_quota_fallback_receipt.json',
+              '- governance/proofs/BEM932_cloudflare_dashboard_operator_evidence_20260615.json',
+              '- governance/proofs/BEM932_provider_router_smoke_receipt.json',
+              '- governance/audit_mailbox/gpt_to_claude/BEM932_final_release_after_live_proofs_audit_request.md',
+              '',
+              'Then write the final verdict file exactly here:',
+              'governance/audit_mailbox/claude_to_gpt/BEM932_final_release_verdict_after_live_proofs.md',
+              '',
+              'Accepted verdicts:',
+              '- APPROVED_FOR_WORKING_CONTOUR_READY',
+              '- BLOCKED_WITH_REASON',
+              '',
+              'If approved, include a compact checklist of the live proofs reviewed.',
+              'If blocked, include explicit missing proof/action.',
+              'Do not paste secrets. Keep the verdict concise.',
+          ]
+          task = "\n".join(task_lines)
           payload = {
               "ref": "main",
               "inputs": {
