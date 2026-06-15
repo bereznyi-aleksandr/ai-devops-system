@@ -1,119 +1,57 @@
 {
-  "version": 18,
-  "updated_at": "2026-06-15T15:41:00Z",
-  "source": "governance/protocols/BEM932_Protocol_v8_3.md",
-  "queue_state": "ACTIVE_READY_FOR_RELEASE",
+  "version": 19,
+  "updated_at": "2026-06-15T16:02:00Z",
+  "queue_state": "WAIT_EXTERNAL_AUDITOR_FINAL_VERDICT",
   "current_task": "RELEASE",
-  "policy": {
-    "done_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable.",
-    "continuity_rule": "Continue to next executable task after each completion."
-  },
   "tasks": [
     {
-      "id": "BEM932-CANON-SYNC",
-      "status": "DONE"
-    },
-    {
-      "id": "BEM932-CONTINUITY-01",
-      "status": "DONE"
-    },
-    {
-      "id": "BEM932-CONTINUITY-02",
-      "status": "DONE"
-    },
-    {
-      "id": "BEM932-PROOF-RUN51",
-      "status": "DONE"
-    },
-    {
-      "id": "BEM932-EXPERIENCE-FIX",
-      "status": "DONE"
-    },
-    {
-      "id": "BEM-PROVIDER-001",
-      "status": "DONE_REPO_SIDE_RUNTIME_PROVIDER_ROUTER_CONFIRMED_WAIT_OPTIONAL_CF_DEPLOY_SECRETS"
-    },
-    {
-      "id": "BEM-CODEX-001",
-      "status": "DONE"
-    },
-    {
-      "id": "BAM-CODEX-002",
-      "status": "DONE"
-    },
-    {
-      "id": "BEM-CODEX-003",
-      "status": "DONE"
-    },
-    {
-      "id": "BEM-CODEX-004",
-      "status": "DONE"
-    },
-    {
-      "id": "BEM-CODEX-005",
-      "status": "DONE"
-    },
-    {
-      "id": "BEM-CF-001-COMPLETE",
-      "status": "DONE_REPO_SIDE_RUNTIME_CONFIRMED"
-    },
-    {
-      "id": "BEM932-PROVIDER-GLOBAL-STATUS-FIX",
-      "status": "DONE"
-    },
-    {
-      "id": "TEST-T02-LIVE-MESSAGE",
-      "status": "DONE_PROVIDER_ROUTER_RUNTIME_PASS",
-      "proof": "governance/proofs/BEM932_provider_router_tg_818730864_20260615T152505Z.json"
-    },
-    {
-      "id": "TEST-T02-LIVE-WORKER-POST",
+      "id": "ALL_IMPLEMENTATION_TASKS_THROUGH_TEST_T02_LIVE_FALLBACK",
       "status": "DONE",
-      "done_sha": "2d7453bbb9097308fbd28d8e3e57bd2780c8632d",
-      "proof": {
-        "path": "governance/proofs/BEM932_live_worker_post_receipt.json",
-        "sha": "e5ae016176eb459cd61c606d1aea46a7303babdf"
-      },
-      "note": "Workflow YAML repaired; live worker POST returned PASS."
+      "proofs": [
+        "governance/proofs/BEM932_live_worker_post_receipt.json",
+        "governance/proofs/BEM932_live_quota_fallback_receipt.json"
+      ]
     },
     {
-      "id": "TEST-T02-LIVE-FALLBACK",
+      "id": "CLOUDFLARE_DASHBOARD_OPERATOR_EVIDENCE",
       "status": "DONE",
-      "done_sha": "a9ff0a8114a1a4220ce515242789649d1797221d",
-      "proof": {
-        "path": "governance/proofs/BEM932_live_quota_fallback_receipt.json",
-        "sha": "e77d7e33de1e364ffd5afda5ebd8c1e7d0dc6dff"
-      },
-      "provider_selected": "claude_code",
-      "fallback_reason": "fallback_quota"
+      "done_sha": "d2be62a73100d346d36cab84c7a4261c4bef41d8",
+      "proof": "governance/proofs/BEM932_cloudflare_dashboard_operator_evidence_20260615.json"
     },
     {
-      "id": "CLOUDFLARE-SECRETS-DEPLOY",
-      "status": "BLOCKED_MANUAL_SECRETS_REQUIRED",
-      "workflow": "cloudflare-worker-deploy.yml",
+      "id": "BEM932_RELEASE_GATE_UPDATE",
+      "status": "DONE",
+      "done_sha": "14f68dc336634b01cb932aef637bfe900cfd5ea8",
+      "path": "governance/release/bem932_release_gate.json"
+    },
+    {
+      "id": "BEM932_EXTERNAL_AUDIT_REQUEST_AFTER_LIVE_PROOFS",
+      "status": "DONE_REQUEST_RECORDED",
+      "done_sha": "9c6bac5ea6c529c0c69c4c2455ea2d390526eb62",
+      "path": "governance/audit_mailbox/gpt_to_claude/BEM932_final_release_after_live_proofs_audit_request.md"
+    },
+    {
+      "id": "CLOUDFLARE_SECRETS_DEPLOY",
+      "status": "OPTIONAL_MANUAL_SECRET_REQUIRED_FOR_REDEPLOY_ONLY",
       "missing": [
         "CLOUDFLARE_API_TOKEN",
         "CLOUDFLARE_ACCOUNT_ID"
       ],
-      "note": "GPT cannot obtain or enter Cloudflare secrets; user must add them in GitHub UI. Runtime Worker is already responding and live POST PASS."
-    },
-    {
-      "id": "BEM932-EXTERNAL-AUDIT-VERDICT",
-      "status": "DONE_WITH_RUNTIME_EXCEPTION_PARTLY_RESOLVED"
+      "note": "Do not paste secrets in chat; current Worker runtime is live and POST PASS."
     },
     {
       "id": "RELEASE",
-      "status": "PENDING",
-      "depends_on": [
-        "TEST-T02-LIVE-FALLBACK"
+      "status": "IN_PROGRESS_WAIT_EXTERNAL_AUDITOR_FINAL_VERDICT",
+      "release_gate": "governance/release/bem932_release_gate.json",
+      "missing": [
+        "governance/audit_mailbox/claude_to_gpt/BEM932_final_release_verdict_after_live_proofs.md"
       ]
     }
   ],
   "last_completed": {
-    "id": "TEST-T02-LIVE-FALLBACK",
-    "completed_at": "2026-06-15T15:40:26Z",
-    "commit_sha": "a9ff0a8114a1a4220ce515242789649d1797221d",
-    "proof": "governance/proofs/BEM932_live_quota_fallback_receipt.json"
+    "id": "BEM932_EXTERNAL_AUDIT_REQUEST_AFTER_LIVE_PROOFS",
+    "commit_sha": "9c6bac5ea6c529c0c69c4c2455ea2d390526eb62",
+    "completed_at": "2026-06-15T15:58:34Z"
   },
-  "next_action": "RELEASE — evaluate final gate with live fallback proof; Cloudflare deploy secrets remain optional/manual blocker for redeploy only."
+  "next_action": "Poll external auditor final verdict; if APPROVED, mark RELEASE PASS and close roadmap."
 }
