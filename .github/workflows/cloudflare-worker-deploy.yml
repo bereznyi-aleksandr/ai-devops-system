@@ -1,6 +1,6 @@
 name: BEM-932 Cloudflare Worker Deploy
 
-on:
+'on':
   workflow_dispatch:
 
 permissions:
@@ -64,28 +64,29 @@ jobs:
           fi
           export STATUS DETAILS HAS_TOKEN HAS_ACCOUNT
           python3 - <<'PY'
-import json, os
-from datetime import datetime, timezone
-from pathlib import Path
-receipt = {
-  "status": os.environ["STATUS"],
-  "protocol": "BEM-932 v8.3",
-  "receipt_type": "cloudflare_worker_deploy_attempt",
-  "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-  "workflow": ".github/workflows/cloudflare-worker-deploy.yml",
-  "github_run_id": os.environ.get("RUN_ID", ""),
-  "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
-  "wrangler_config": "infrastructure/cloudflare-worker/wrangler.toml",
-  "worker_name": "tg-curator-webhook",
-  "router_workflow_id": "provider-router.yml",
-  "has_cloudflare_api_token": os.environ.get("HAS_TOKEN") == "true",
-  "has_cloudflare_account_id": os.environ.get("HAS_ACCOUNT") == "true",
-  "accepted_cloudflare_token_secret_names": ["CLOUDFLARE_API_TOKEN", "CLOUDFARE_API_TOKEN", "CF_API_TOKEN", "WRANGLER_API_TOKEN"],
-  "accepted_cloudflare_account_secret_names": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFARE_ACCOUNT_ID", "CF_ACCOUNT_ID", "WRANGLER_ACCOUNT_ID"],
-  "details": os.environ.get("DETAILS", "")
-}
-Path("governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-PY
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          receipt = {
+            "status": os.environ["STATUS"],
+            "protocol": "BEM-932 v8.3",
+            "receipt_type": "cloudflare_worker_deploy_attempt",
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "workflow": ".github/workflows/cloudflare-worker-deploy.yml",
+            "github_run_id": os.environ.get("RUN_ID", ""),
+            "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
+            "wrangler_config": "infrastructure/cloudflare-worker/wrangler.toml",
+            "worker_name": "tg-curator-webhook",
+            "router_workflow_id": "provider-router.yml",
+            "has_cloudflare_api_token": os.environ.get("HAS_TOKEN") == "true",
+            "has_cloudflare_account_id": os.environ.get("HAS_ACCOUNT") == "true",
+            "accepted_cloudflare_token_secret_names": ["CLOUDFLARE_API_TOKEN", "CLOUDFARE_API_TOKEN", "CF_API_TOKEN", "WRANGLER_API_TOKEN"],
+            "accepted_cloudflare_account_secret_names": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFARE_ACCOUNT_ID", "CF_ACCOUNT_ID", "WRANGLER_ACCOUNT_ID"],
+            "details": os.environ.get("DETAILS", "")
+          }
+          Path("governance/proofs/BEM932_cloudflare_worker_deploy_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+
       - name: Commit deploy receipt
         shell: bash
         run: |
