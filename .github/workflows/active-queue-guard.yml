@@ -1,0 +1,60 @@
+name: BEM-933 Active Queue Guard
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Smoke and guard ACTIVE_QUEUE
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile governance/runners/active_queue_guard.py
+          python3 governance/runners/active_queue_guard.py --smoke > /tmp/active_queue_guard_smoke.json
+          python3 governance/runners/active_queue_guard.py --repair --check > /tmp/active_queue_guard_check.json
+          mkdir -p governance/proofs
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          smoke = json.loads(Path("/tmp/active_queue_guard_smoke.json").read_text())
+          check = json.loads(Path("/tmp/active_queue_guard_check.json").read_text())
+          receipt = {
+              "status": "PASS" if smoke.get("status") == "PASS" and check.get("status") == "PASS" else "BLOCKED",
+              "protocol": "BEM-933",
+              "receipt_type": "active_queue_guard",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "smoke": smoke,
+              "check": check,
+          }
+          Path("governance/proofs/BEM933_active_queue_guard_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit guard receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "active-queue-guard@ai-devops-system"
+          git config user.name "BEM-933 Active Queue Guard"
+          git pull --rebase --autostash origin main || true
+          git add governance/roadmap/ACTIVE_QUEUE.json governance/proofs/BEM933_active_queue_guard_receipt.json
+          if git diff --cached --quiet; then
+            echo "No guard changes"
+          else
+            git commit -m "BEM-933 active queue guard receipt"
+            git push
+          fi
