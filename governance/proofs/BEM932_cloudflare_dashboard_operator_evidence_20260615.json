@@ -1,0 +1,29 @@
+{
+  "status": "PASS_OPERATOR_EVIDENCE",
+  "protocol": "BEM-932 v8.3",
+  "receipt_type": "cloudflare_dashboard_operator_screenshot_evidence",
+  "created_at": "2026-06-15T15:54:00Z",
+  "source": "operator_pasted_screenshots_in_chat",
+  "evidence_items": [
+    {
+      "screenshot_file": "1000020029.jpg",
+      "observation": "Cloudflare Worker tg-curator-webhook editor is open, version eb445624 marked Active Latest, Preview GET returns OK."
+    },
+    {
+      "screenshot_file": "1000020033.jpg",
+      "observation": "Cloudflare User API Tokens page shows no user API tokens and Global API Key section exists."
+    },
+    {
+      "screenshot_file": "1000020031.jpg",
+      "observation": "Cloudflare Profile page shows account access and GMT+3 timezone."
+    }
+  ],
+  "checks": [
+    "cloudflare_worker_visible_active",
+    "cloudflare_worker_preview_get_ok",
+    "user_api_token_page_visible",
+    "no secrets_collected_by_gpt"
+  ],
+  "secrets_handling": "no secrets or API keys were requested, read, or recorded by GPT",
+  "release_usage": "supplemental operator evidence for review; source-of-truth runtime proofs remain governance/proofs/BEM932_live_worker_post_receipt.json and BEM932_live_quota_fallback_receipt.json"
+}
