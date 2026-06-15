@@ -1,8 +1,12 @@
 {
-  "version": 19,
-  "updated_at": "2026-06-15T16:02:00Z",
-  "queue_state": "WAIT_EXTERNAL_AUDITOR_FINAL_VERDICT",
-  "current_task": "RELEASE",
+  "version": 20,
+  "updated_at": "2026-06-15T18:27:00Z",
+  "queue_state": "CLOSED",
+  "current_task": null,
+  "system_status": "WORKING_CONTOUR_READY",
+  "release_status": "PASS",
+  "protocol": "BEM-932 v8.3",
+  "closure_reason": "Final EXTERNAL_AUDITOR_CLAUDE verdict recorded after live provider-router proof.",
   "tasks": [
     {
       "id": "ALL_IMPLEMENTATION_TASKS_THROUGH_TEST_T02_LIVE_FALLBACK",
@@ -21,14 +25,23 @@
     {
       "id": "BEM932_RELEASE_GATE_UPDATE",
       "status": "DONE",
-      "done_sha": "14f68dc336634b01cb932aef637bfe900cfd5ea8",
-      "path": "governance/release/bem932_release_gate.json"
+      "done_sha": "f33675046a9dc907d34f147774a0caaf56788551",
+      "path": "governance/release/bem932_release_gate.json",
+      "artifact_sha": "a20826ce0258d4a46f59fda67de4cc3ff363d99b"
     },
     {
       "id": "BEM932_EXTERNAL_AUDIT_REQUEST_AFTER_LIVE_PROOFS",
       "status": "DONE_REQUEST_RECORDED",
       "done_sha": "9c6bac5ea6c529c0c69c4c2455ea2d390526eb62",
       "path": "governance/audit_mailbox/gpt_to_claude/BEM932_final_release_after_live_proofs_audit_request.md"
+    },
+    {
+      "id": "BEM932_FINAL_RELEASE_VERDICT_AFTER_LIVE_PROOFS",
+      "status": "DONE",
+      "done_sha": "d6fbd886224141520df97298ddea48dc1aba64f9",
+      "path": "governance/proofs/BEM932_final_release_verdict_after_live_proofs.md",
+      "artifact_sha": "953d652993043a52063dc0f37aa467fd0d638710",
+      "verdict": "APPROVED — WORKING_CONTOUR_READY"
     },
     {
       "id": "CLOUDFLARE_SECRETS_DEPLOY",
@@ -41,17 +54,27 @@
     },
     {
       "id": "RELEASE",
-      "status": "IN_PROGRESS_WAIT_EXTERNAL_AUDITOR_FINAL_VERDICT",
+      "status": "DONE",
       "release_gate": "governance/release/bem932_release_gate.json",
-      "missing": [
-        "governance/audit_mailbox/claude_to_gpt/BEM932_final_release_verdict_after_live_proofs.md"
+      "release_status": "PASS",
+      "system_status": "WORKING_CONTOUR_READY",
+      "done_sha": "f33675046a9dc907d34f147774a0caaf56788551",
+      "proofs": [
+        {
+          "path": "governance/proofs/BEM932_provider_router_tg_818730865_20260615T175056Z.json",
+          "sha": "bfc3d7eb833a8f02c48da633e91a6f524ad5caf4"
+        },
+        {
+          "path": "governance/proofs/BEM932_final_release_verdict_after_live_proofs.md",
+          "sha": "953d652993043a52063dc0f37aa467fd0d638710"
+        }
       ]
     }
   ],
   "last_completed": {
-    "id": "BEM932_EXTERNAL_AUDIT_REQUEST_AFTER_LIVE_PROOFS",
-    "commit_sha": "9c6bac5ea6c529c0c69c4c2455ea2d390526eb62",
-    "completed_at": "2026-06-15T15:58:34Z"
+    "id": "RELEASE",
+    "commit_sha": "f33675046a9dc907d34f147774a0caaf56788551",
+    "completed_at": "2026-06-15T18:27:00Z"
   },
-  "next_action": "Poll external auditor final verdict; if APPROVED, mark RELEASE PASS and close roadmap."
+  "next_action": "ACTIVE_QUEUE is closed. No pending tasks."
 }
