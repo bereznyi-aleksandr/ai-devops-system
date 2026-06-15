@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """BEM-933 active queue continuity guard.
 
-The guard prevents the roadmap from becoming inert after a release.  It is safe
+The guard prevents the roadmap from becoming inert after a release. It is safe
 for repo-side automation because it only edits ACTIVE_QUEUE.json and only when
 there is no explicit operator stop.
 """
@@ -82,7 +82,7 @@ def repair_queue(queue: Dict[str, Any], now: Optional[str] = None) -> Dict[str, 
 
 def validate(queue: Dict[str, Any]) -> Dict[str, Any]:
     tasks = queue.get("tasks", [])
-    current = queue.get("current_taskb)
+    current = queue.get("current_task")
     task_ids = {str(t.get("id")) for t in tasks if isinstance(t, dict)}
     problems = []
     if queue.get("queue_state") != "ACTIVE":
