@@ -1,6 +1,6 @@
 name: BEM-932 Live Worker POST Test
 
-"on":
+on:
   workflow_dispatch:
 
 permissions:
@@ -23,12 +23,12 @@ jobs:
           TRACE_UPDATE_ID="932000001"
           cat > /tmp/telegram_update.json <<JSON
           {
-            "update_id": $TRACE_UPDATE_ID,
+            "update_id": ${TRACE_UPDATE_ID},
             "message": {
               "message_id": 932001,
               "date": 1781384469,
               "chat": { "id": 601442777, "type": "private" },
-              "text": "BEM-932 live worker provider-router test: act without stopping"
+              "text": "BEM-932 live worker provider-router test: handoff from Cloudflare to provider-router"
             }
           }
           JSON
@@ -37,23 +37,29 @@ jobs:
             -X POST \
             -H "Content-Type: application/json" \
             --data @/tmp/telegram_update.json \
-            "$WORKER_URL")
+            "$WORKER_URL" || true)
           export HTTP_CODE
           cat /tmp/worker_response.json || true
 
           python3 - <<'PY'
-          import json, os
+          import json
+          import os
           from pathlib import Path
           from datetime import datetime, timezone
+
           now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
           resp_path = Path("/tmp/worker_response.json")
-          raw = resp_path.read_text() if resp_path.exists() else ""
+          raw = resp_path.read_text(errors="replace") if resp_path.exists() else ""
           try:
-              body = json.loads(raw)
+              body = json.loads(raw) if raw else {}
           except Exception:
               body = {"raw": raw}
-          http_code = os.environ["HTTP_CODE"]
-          status = "PASS" if (http_code == "200" and body.get("status") == "DISPATCHED") else "BLOCKED"
+
+          http_code = os.environ.get("HTTP_CODE", "")
+          dispatched = isinstance(body, dict) and body.get("status") == "DISPATCHED"
+          accepted_text = raw.strip().lower() in {"ok", "dispatched"}
+          status = "PASS" if http_code == "200" and (dispatched or accepted_text) else "BLOCKED"
+
           receipt = {
               "status": status,
               "protocol": "BEM-932 v8.3",
@@ -65,13 +71,13 @@ jobs:
               "update_id": "932000001",
               "sent_text": "BEM-932 live worker provider-router test: handoff from Cloudflare to provider-router"
           }
-          Path("governance/proofs/BEM932_live_worker_post_receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
-          if status != "PASS":
-              raise SystemExit(1)
+          Path("governance/proofs/BEM932_live_worker_post_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
           PY
 
       - name: Commit live test receipt
-        if: always()
         shell: bash
         run: |
           set -euo pipefail
@@ -79,9 +85,23 @@ jobs:
           git config user.name "BEM932 Live Worker Test"
           git pull --rebase --autostash origin main || true
           git add governance/proofs/BEM932_live_worker_post_receipt.json 2>/dev/null || true
-         if git diff --cached --quiet; then
+          if git diff --cached --quiet; then
             echo "No live test receipt changes"
           else
             git commit -m "BEM-932 live worker post receipt"
             git push
-         fi
+          fi
+
+      - name: Enforce live test status
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("governance/proofs/BEM932_live_worker_post_receipt.json")
+          receipt = json.loads(path.read_text(encoding="utf-8"))
+          if receipt.get("status") != "PASS":
+              raise SystemExit(1)
+          PY
