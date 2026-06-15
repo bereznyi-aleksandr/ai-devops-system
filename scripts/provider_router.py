@@ -2,8 +2,7 @@
 """BEM-932 provider router.
 
 Selects the provider for a role/task without scanning stale result directories.
-Public contract: strict JSON with exactly:
-provider_selected, fallback_reason, decision_source, trace_id, ttl_seconds, stale_ignored.
+Public contract: provider_selected, fallback_reason, decision_source, trace_id, ttl_seconds, stale_ignored.
 """
 
 from __future__ import annotations
@@ -25,7 +24,6 @@ CONTRACT_KEYS = (
     "ttl_seconds",
     "stale_ignored",
 )
-
 OK_STATUSES = {"ok", "complete", "completed", "success", "pass", "passed", "ready", "available"}
 
 
@@ -101,15 +99,7 @@ def _extract_error_reason(record: Any) -> Optional[str]:
     if not isinstance(record, dict):
         return None
 
-    # Prefer specific reason fields before generic status=error/failed.
-    for key in (
-        "error",
-        "error_code",
-        "reason",
-        "last_failure_type",
-        "failure_type",
-        "fallback_reason",
-    ):
+    for key in ("error", "error_code", "reason", "last_failure_type", "failure_type", "fallback_reason"):
         reason = _normalize_reason(record.get(key))
         if reason:
             return reason
@@ -121,6 +111,24 @@ def _extract_error_reason(record: Any) -> Optional[str]:
     nested = record.get("result")
     if isinstance(nested, dict):
         return _extract_error_reason(nested)
+    return None
+
+
+def _forced_reason(task_input: Any) -> Optional[str]:
+    """Narrow operator-visible live-test hook.
+
+    Send one Telegram message containing one of:
+    force-fallback, force fallback, quota_fallback, quota fallback.
+    This produces provider_selected=claude_code and fallback_reason=fallback_quota.
+    """
+    if isinstance(task_input, dict):
+        text = " ".join(str(task_input.get(k, "")) for k in ("task", "text", "body", "message"))
+    else:
+        text = str(task_input or "")
+    lowered = text.lower()
+    markers = ("force-fallback", "force fallback", "quota_fallback", "quota fallback")
+    if any(marker in lowered for marker in markers):
+        return "quota_exceeded"
     return None
 
 
@@ -143,10 +151,7 @@ def _provider_status_reason(
     ttl_seconds: int,
     primary_provider: str,
 ) -> Tuple[Optional[str], bool]:
-    status_path = ROOT / config.get("status_sources", {}).get(
-        "provider_status",
-        "governance/state/provider_status.json",
-    )
+    status_path = ROOT / config.get("status_sources", {}).get("provider_status", "governance/state/provider_status.json")
     status = _load_json(status_path, {})
     if not isinstance(status, dict) or not status:
         return None, False
@@ -154,7 +159,6 @@ def _provider_status_reason(
     candidates = []
     stale_ignored = False
 
-    # Trace-specific records are strongest.
     if isinstance(status.get(trace_id), dict):
         candidates.append(status[trace_id])
 
@@ -174,7 +178,6 @@ def _provider_status_reason(
     elif _extract_error_reason(status) and not _is_fresh(status, ttl_seconds):
         stale_ignored = True
 
-    # Global provider health is allowed, but only if fresh.
     providers = status.get("providers")
     if isinstance(providers, dict) and isinstance(providers.get(primary_provider), dict):
         provider_record = providers[primary_provider]
@@ -211,9 +214,12 @@ def main(role: str, task_input: Any = None, trace_id: Optional[str] = None) -> D
     fallback_on = set(config.get("fallback_on", ["quota_exceeded", "rate_limit", "provider_unavailable"]))
 
     stale_ignored = False
-    reason, stale = _same_trace_result_reason(config, trace)
-    stale_ignored = stale_ignored or stale
-    decision_source = "same_trace_result"
+    reason = _forced_reason(task_input)
+    decision_source = "operator_forced_fallback" if reason else "same_trace_result"
+
+    if reason is None:
+        reason, stale = _same_trace_result_reason(config, trace)
+        stale_ignored = stale_ignored or stale
 
     if reason is None:
         reason, stale = _provider_status_reason(config, trace, ttl_seconds, primary)
