@@ -1,80 +1,93 @@
 {
-  "version": 20,
-  "updated_at": "2026-06-15T18:27:00Z",
-  "queue_state": "CLOSED",
-  "current_task": null,
+  "version": 21,
+  "updated_at": "2026-06-15T18:41:00Z",
+  "queue_state": "ACTIVE",
+  "current_task": "BEM933-ACTIVE-QUEUE-GUARD",
   "system_status": "WORKING_CONTOUR_READY",
   "release_status": "PASS",
-  "protocol": "BEM-932 v8.3",
-  "closure_reason": "Final EXTERNAL_AUDITOR_CLAUDE verdict recorded after live provider-router proof.",
+  "protocol": "BEM-933 Post-release Autonomous Development v1",
+  "source": "governance/protocols/BEM933_PostRelease_Autonomous_Development_v1.md",
+  "reopened_from": {
+    "previous_version": 20,
+    "previous_queue_state": "CLOSED",
+    "previous_current_task": null,
+    "reason": "Operator rejected empty queue and ordered autonomous development without stop."
+  },
+  "policy": {
+    "stop_rule": "Do not close ACTIVE_QUEUE unless operator explicitly sets OPERATOR_STOP.",
+    "continuity_rule": "After every DONE task, immediately set next IN_PROGRESS/PENDING task as current_task.",
+    "receipt_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable."
+  },
   "tasks": [
     {
-      "id": "ALL_IMPLEMENTATION_TASKS_THROUGH_TEST_T02_LIVE_FALLBACK",
+      "id": "BEM932-RELEASE-HISTORY",
+      "title": "BEM-932 release and external audit already completed",
       "status": "DONE",
+      "done_sha": "f33675046a9dc907d34f147774a0caaf56788551",
       "proofs": [
-        "governance/proofs/BEM932_live_worker_post_receipt.json",
-        "governance/proofs/BEM932_live_quota_fallback_receipt.json"
+        "governance/release/bem932_release_gate.json",
+        "governance/proofs/BEM932_final_release_verdict_after_live_proofs.md"
       ]
     },
     {
-      "id": "CLOUDFLARE_DASHBOARD_OPERATOR_EVIDENCE",
+      "id": "BEM933-ROADMAP-REOPEN",
+      "title": "Reopen ACTIVE_QUEUE after closed release queue",
       "status": "DONE",
-      "done_sha": "d2be62a73100d346d36cab84c7a4261c4bef41d8",
-      "proof": "governance/proofs/BEM932_cloudflare_dashboard_operator_evidence_20260615.json"
+      "done_at": "2026-06-15T18:41:00Z",
+      "acceptance": [
+        "queue_state set to ACTIVE",
+        "current_task is non-null",
+        "next autonomous development stream created"
+      ]
     },
     {
-      "id": "BEM932_RELEASE_GATE_UPDATE",
-      "status": "DONE",
-      "done_sha": "f33675046a9dc907d34f147774a0caaf56788551",
-      "path": "governance/release/bem932_release_gate.json",
-      "artifact_sha": "a20826ce0258d4a46f59fda67de4cc3ff363d99b"
+      "id": "BEM933-ACTIVE-QUEUE-GUARD",
+      "title": "Add guard runner/workflow preventing empty closed queue",
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "acceptance": [
+        "governance/runners/active_queue_guard.py has def main()",
+        "workflow smoke validates closed_queue_repaired",
+        "receipt governance/proofs/BEM933_active_queue_guard_receipt.json status=PASS"
+      ]
     },
     {
-      "id": "BEM932_EXTERNAL_AUDIT_REQUEST_AFTER_LIVE_PROOFS",
-      "status": "DONE_REQUEST_RECORDED",
-      "done_sha": "9c6bac5ea6c529c0c69c4c2455ea2d390526eb62",
-      "path": "governance/audit_mailbox/gpt_to_claude/BEM932_final_release_after_live_proofs_audit_request.md"
+      "id": "BEM933-RECEIPT-WATCHDOG",
+      "title": "Add receipt freshness watchdog for live workflows",
+      "status": "PENDING",
+      "priority": 2,
+      "acceptance": [
+        "watchdog scans governance/proofs and release gate",
+        "stale/missing receipts produce actionable BLOCKED proof",
+        "execution_log records watchdog result"
+      ]
     },
     {
-      "id": "BEM932_FINAL_RELEASE_VERDICT_AFTER_LIVE_PROOFS",
-      "status": "DONE",
-      "done_sha": "d6fbd886224141520df97298ddea48dc1aba64f9",
-      "path": "governance/proofs/BEM932_final_release_verdict_after_live_proofs.md",
-      "artifact_sha": "953d652993043a52063dc0f37aa467fd0d638710",
-      "verdict": "APPROVED — WORKING_CONTOUR_READY"
+      "id": "BEM933-TELEGRAM-DELIVERY-AUDIT",
+      "title": "Audit Telegram delivery/outbox loop and idempotency",
+      "status": "PENDING",
+      "priority": 3,
+      "acceptance": [
+        "telegram outbox duplicate protection verified",
+        "live/manual secrets boundaries documented",
+        "proof receipt written"
+      ]
     },
     {
-      "id": "CLOUDFLARE_SECRETS_DEPLOY",
-      "status": "OPTIONAL_MANUAL_SECRET_REQUIRED_FOR_REDEPLOY_ONLY",
-      "missing": [
-        "CLOUDFLARE_API_TOKEN",
-        "CLOUDFLARE_ACCOUNT_ID"
-      ],
-      "note": "Do not paste secrets in chat; current Worker runtime is live and POST PASS."
-    },
-    {
-      "id": "RELEASE",
-      "status": "DONE",
-      "release_gate": "governance/release/bem932_release_gate.json",
-      "release_status": "PASS",
-      "system_status": "WORKING_CONTOUR_READY",
-      "done_sha": "f33675046a9dc907d34f147774a0caaf56788551",
-      "proofs": [
-        {
-          "path": "governance/proofs/BEM932_provider_router_tg_818730865_20260615T175056Z.json",
-          "sha": "bfc3d7eb833a8f02c48da633e91a6f524ad5caf4"
-        },
-        {
-          "path": "governance/proofs/BEM932_final_release_verdict_after_live_proofs.md",
-          "sha": "953d652993043a52063dc0f37aa467fd0d638710"
-        }
+      "id": "BEM933-SELF-HEALING-PLAYBOOK",
+      "title": "Encode workflow autorepair checklist as runnable checks",
+      "status": "PENDING",
+      "priority": 4,
+      "acceptance": [
+        "YAML/Python common error checks runnable",
+        "proof written",
+        "next roadmap remains active"
       ]
     }
   ],
   "last_completed": {
-    "id": "RELEASE",
-    "commit_sha": "f33675046a9dc907d34f147774a0caaf56788551",
-    "completed_at": "2026-06-15T18:27:00Z"
+    "id": "BEM933-ROADMAP-REOPEN",
+    "completed_at": "2026-06-15T18:41:00Z"
   },
-  "next_action": "ACTIVE_QUEUE is closed. No pending tasks."
+  "next_action": "BEM933-ACTIVE-QUEUE-GUARD — add guard runner/workflow and run smoke receipt"
 }
