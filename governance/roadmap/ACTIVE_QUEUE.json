@@ -1,84 +1,70 @@
 {
-  "version": 22,
-  "updated_at": "2026-06-15T19:30:00Z",
+  "version": 23,
+  "updated_at": "2026-06-15T19:36:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM933-RECEIPT-WATCHDOG",
+  "current_task": "BEM933-TELEGRAM-DELIVERY-AUDIT",
   "system_status": "WORKING_CONTOUR_READY",
   "release_status": "PASS",
   "protocol": "BEM-933 Post-release Autonomous Development v1",
   "source": "governance/protocols/BEM933_PostRelease_Autonomous_Development_v1.md",
   "guard_status": "ACTIVE_QUEUE_GUARDED",
-  "reopened_from": {
-    "previous_version": 20,
-    "previous_queue_state": "CLOSED",
-    "previous_current_task": null,
-    "reason": "Operator rejected empty queue and ordered autonomous development without stop."
-  },
-  "policy": {
-    "stop_rule": "Do not close ACTIVE_QUEUE unless operator explicitly sets OPERATOR_STOP.",
-    "continuity_rule": "After every DONE task, immediately set next IN_PROGRESS/PENDING task as current_task.",
-    "receipt_rule": "DONE requires non-null SHA plus proof/receipt/result when applicable."
-  },
   "tasks": [
     {
       "id": "BEM932-RELEASE-HISTORY",
       "title": "BEM-932 release and external audit already completed",
       "status": "DONE",
-      "done_sha": "f33675046a9dc907d34f147774a0caaf56788551",
-      "proofs": [
-        "governance/release/bem932_release_gate.json",
-        "governance/proofs/BEM932_final_release_verdict_after_live_proofs.md"
-      ]
+      "done_sha": "f33675046a9dc907d34f147774a0caaf56788551"
     },
     {
       "id": "BEM933-ROADMAP-REOPEN",
       "title": "Reopen ACTIVE_QUEUE after closed release queue",
       "status": "DONE",
-      "done_at": "2026-06-15T18:41:00Z",
       "done_sha": "a9315e01b7d1a2014d324c0b1b3ef7b05e1dc3ff"
     },
     {
       "id": "BEM933-ACTIVE-QUEUE-GUARD",
       "title": "Add guard runner/workflow preventing empty closed queue",
       "status": "DONE",
-      "priority": 1,
       "done_sha": "e1768bc12b9e55aa109147ee6455ee13a6d89791",
-      "artifacts": [
-        {
-          "path": "governance/runners/active_queue_guard.py",
-          "sha": "80ac07d10b8751557bbfd67495fa6fb3d3d8918c"
-        },
-        {
-          "path": ".github/workflows/active-queue-guard.yml",
-          "sha": "84d89bbc907081df74344dee066d2b87bd97eb05"
-        },
-        {
-          "path": "governance/proofs/BEM933_active_queue_guard_receipt.json",
-          "sha": "13c0f785cee5b6e88df3ffebced61ce9ecdc78c7"
-        }
-      ],
-      "acceptance": [
-        "def main present",
-        "active queue validation repaired",
-        "workflow smoke receipt status=PASS"
-      ]
+      "proof": "governance/proofs/BEM933_active_queue_guard_receipt.json",
+      "proof_sha": "13c0f785cee5b6e88df3ffebced61ce9ecdc78c7"
     },
     {
       "id": "BEM933-RECEIPT-WATCHDOG",
       "title": "Add receipt freshness watchdog for live workflows",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 2,
+      "done_sha": "2c8316fe681b9d92c9401987e347964908367c5c",
+      "artifacts": [
+        {
+          "path": "governance/runners/receipt_watchdog.py",
+          "sha": "3ab88bd0b8e248b5745f36159f9dcee69c88e036"
+        },
+        {
+          "path": ".github/workflows/receipt-watchdog.yml",
+          "sha": "3285f5c413c7c34161244dbcd7dd1758059dde78"
+        },
+        {
+          "path": "governance/proofs/BEM933_receipt_watchdog_receipt.json",
+          "sha": "96860f07cbd757de84d0d5e28455f7e28468e332"
+        }
+      ],
       "acceptance": [
-        "watchdog scans governance/proofs and release gate",
-        "stale/missing receipts produce actionable BLOCKED proof",
-        "execution_log records watchdog result"
+        "release_gate_status PASS",
+        "missing receipts empty",
+        "workflow dispatch returned 422 no trigger; bootstrap receipt written and queued for autorepair if repeated"
       ]
     },
     {
       "id": "BEM933-TELEGRAM-DELIVERY-AUDIT",
       "title": "Audit Telegram delivery/outbox loop and idempotency",
-      "status": "PENDING",
-      "priority": 3
+      "status": "IN_PROGRESS",
+      "priority": 3,
+      "acceptance": [
+        "telegram outbox duplicate protection verified",
+        "live/manual secrets boundaries documented",
+        "proof receipt written"
+      ]
     },
     {
       "id": "BEM933-SELF-HEALING-PLAYBOOK",
@@ -88,8 +74,8 @@
     }
   ],
   "last_completed": {
-    "id": "BEM933-ACTIVE-QUEUE-GUARD",
-    "completed_at": "2026-06-15T19:30:00Z"
+    "id": "BEM933-RECEIPT-WATCHDOG",
+    "completed_at": "2026-06-15T19:36:00Z"
   },
-  "next_action": "BEM933-RECEIPT-WATCHDOG — create receipt freshness watchdog and proof"
+  "next_action": "BEM933-TELEGRAM-DELIVERY-AUDIT — audit Telegram outbox/inbox delivery and idempotency"
 }
