@@ -2,26 +2,14 @@
   "status": "PASS",
   "protocol": "BEM-932 v8.3",
   "receipt_type": "cloudflare_worker_deploy_attempt",
-  "created_at": "2026-06-15T17:35:26Z",
+  "created_at": "2026-06-15T17:45:52Z",
   "workflow": ".github/workflows/cloudflare-worker-deploy.yml",
-  "github_run_id": "27564514856",
+  "github_run_id": "27565090997",
   "worker_path": "infrastructure/cloudflare-worker/telegram-webhook.js",
   "wrangler_config": "infrastructure/cloudflare-worker/wrangler.toml",
   "worker_name": "tg-curator-webhook",
   "router_workflow_id": "provider-router.yml",
   "has_cloudflare_api_token": true,
   "has_cloudflare_account_id": true,
-  "accepted_cloudflare_token_secret_names": [
-    "CLOUDFLARE_API_TOKEN",
-    "CLOUDFARE_API_TOKEN",
-    "CF_API_TOKEN",
-    "WRANGLER_API_TOKEN"
-  ],
-  "accepted_cloudflare_account_secret_names": [
-    "CLOUDFLARE_ACCOUNT_ID",
-    "CLOUDFARE_ACCOUNT_ID",
-    "CF_ACCOUNT_ID",
-    "WRANGLER_ACCOUNT_ID"
-  ],
   "details": "wrangler deploy complete; worker routes Telegram to provider-router.yml via ROUTER_WORKFLOW_ID"
 }
