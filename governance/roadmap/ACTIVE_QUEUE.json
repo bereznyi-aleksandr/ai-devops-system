@@ -1,8 +1,8 @@
 {
-  "version": 24,
-  "updated_at": "2026-06-16T16:53:59Z",
-  "queue_state": "ACTIVE",
-  "current_task": "BEM933-SELF-HEALING-PLAYBOOK",
+  "version": 25,
+  "updated_at": "2026-06-16T17:03:33Z",
+  "queue_state": "IDLE",
+  "current_task": null,
   "system_status": "WORKING_CONTOUR_READY",
   "release_status": "PASS",
   "protocol": "BEM-933 Post-release Autonomous Development v1",
@@ -72,13 +72,17 @@
     {
       "id": "BEM933-SELF-HEALING-PLAYBOOK",
       "title": "Encode workflow autorepair checklist as runnable checks",
-      "status": "IN_PROGRESS",
-      "priority": 4
+      "status": "DONE",
+      "priority": 4,
+      "done_sha": "42b9b1aee037673a0f039c5f80f345135c426097",
+      "proof": "governance/proofs/BEM933_self_healing_playbook_receipt.json",
+      "proof_sha": "a2f7ad415d8c6a90792c9699bc1ece64314d5706",
+      "proof_status": "PASS"
     }
   ],
   "last_completed": {
-    "id": "BEM933-TELEGRAM-DELIVERY-AUDIT",
-    "completed_at": "2026-06-16T16:53:59Z"
+    "id": "BEM933-SELF-HEALING-PLAYBOOK",
+    "completed_at": "2026-06-16T17:03:33Z"
   },
-  "next_action": "BEM933-SELF-HEALING-PLAYBOOK — encode workflow autorepair checklist as runnable checks"
+  "next_action": "No actionable tasks. Operator gate required before adding new scope."
 }
