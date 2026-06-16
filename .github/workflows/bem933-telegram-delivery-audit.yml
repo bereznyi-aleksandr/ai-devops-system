@@ -19,7 +19,7 @@ jobs:
         continue-on-error: true
         run: python3 governance/runners/telegram_delivery_audit.py
 
-      - name: Commit audit receipt
+      - name: Commit audit closure
         if: always()
         shell: bash
         run: |
@@ -27,11 +27,14 @@ jobs:
           git config user.email "bem933-audit@ai-devops-system"
           git config user.name "BEM-933 Telegram Audit"
           git pull --rebase --autostash origin main || true
-          git add governance/proofs/BEM933_telegram_delivery_audit_receipt.json
+          git add \
+            governance/proofs/BEM933_telegram_delivery_audit_receipt.json \
+            governance/roadmap/ACTIVE_QUEUE.json \
+            governance/logs/execution_log.jsonl
           if git diff --cached --quiet; then
-            echo "No receipt changes"
+            echo "No audit closure changes"
           else
-            git commit -m "BEM-933 Telegram delivery audit receipt"
+            git commit -m "BEM-933 close Telegram delivery audit"
             git push
           fi
 
