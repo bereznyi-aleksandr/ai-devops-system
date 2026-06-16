@@ -1,0 +1,40 @@
+name: BEM-933 Telegram Delivery Audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Run Telegram delivery audit
+        id: audit
+        continue-on-error: true
+        run: python3 governance/runners/telegram_delivery_audit.py
+
+      - name: Commit audit receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem933-audit@ai-devops-system"
+          git config user.name "BEM-933 Telegram Audit"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM933_telegram_delivery_audit_receipt.json
+          if git diff --cached --quiet; then
+            echo "No receipt changes"
+          else
+            git commit -m "BEM-933 Telegram delivery audit receipt"
+            git push
+          fi
+
+      - name: Enforce audit result
+        if: steps.audit.outcome != 'success'
+        run: exit 1
