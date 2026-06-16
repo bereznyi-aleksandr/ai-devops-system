@@ -3,8 +3,8 @@
   "protocol": "BEM-933",
   "task_id": "BEM933-TELEGRAM-DELIVERY-AUDIT",
   "receipt_type": "telegram_delivery_outbox_idempotency_audit",
-  "created_at": "2026-06-16T16:52:10Z",
-  "source_sha": "9e9ce11247b46f0e496d3c0decbb113ee2940947",
+  "created_at": "2026-06-16T16:53:59Z",
+  "source_sha": "95de3fbc226d908051d25940f39a05af2218e087",
   "checks": {
     "deterministic_trace_from_update": true,
     "outbox_trace_duplicate_scan": true,
@@ -21,5 +21,7 @@
     "repo_manual_audit": "secret-free static verification only"
   },
   "idempotency_key": "Telegram update_id -> deterministic trace_id",
-  "outbox_rule": "append only when trace_id is not already present"
+  "outbox_rule": "append only when trace_id is not already present",
+  "queue_transitioned": true,
+  "next_task": "BEM933-SELF-HEALING-PLAYBOOK"
 }

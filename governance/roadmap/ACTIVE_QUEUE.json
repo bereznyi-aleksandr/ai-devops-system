@@ -1,8 +1,8 @@
 {
-  "version": 23,
-  "updated_at": "2026-06-15T19:36:00Z",
+  "version": 24,
+  "updated_at": "2026-06-16T16:53:59Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM933-TELEGRAM-DELIVERY-AUDIT",
+  "current_task": "BEM933-SELF-HEALING-PLAYBOOK",
   "system_status": "WORKING_CONTOUR_READY",
   "release_status": "PASS",
   "protocol": "BEM-933 Post-release Autonomous Development v1",
@@ -58,24 +58,27 @@
     {
       "id": "BEM933-TELEGRAM-DELIVERY-AUDIT",
       "title": "Audit Telegram delivery/outbox loop and idempotency",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 3,
       "acceptance": [
         "telegram outbox duplicate protection verified",
         "live/manual secrets boundaries documented",
         "proof receipt written"
-      ]
+      ],
+      "done_sha": "95de3fbc226d908051d25940f39a05af2218e087",
+      "proof": "governance/proofs/BEM933_telegram_delivery_audit_receipt.json",
+      "proof_status": "PASS"
     },
     {
       "id": "BEM933-SELF-HEALING-PLAYBOOK",
       "title": "Encode workflow autorepair checklist as runnable checks",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 4
     }
   ],
   "last_completed": {
-    "id": "BEM933-RECEIPT-WATCHDOG",
-    "completed_at": "2026-06-15T19:36:00Z"
+    "id": "BEM933-TELEGRAM-DELIVERY-AUDIT",
+    "completed_at": "2026-06-16T16:53:59Z"
   },
-  "next_action": "BEM933-TELEGRAM-DELIVERY-AUDIT — audit Telegram outbox/inbox delivery and idempotency"
+  "next_action": "BEM933-SELF-HEALING-PLAYBOOK — encode workflow autorepair checklist as runnable checks"
 }
