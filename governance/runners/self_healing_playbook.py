@@ -55,7 +55,10 @@ def git_sha() -> str:
 
 
 def relative(path: Path) -> str:
-    return str(path.relative_to(ROOT))
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
 
 
 def parse_python(source: str, label: str) -> tuple[ast.Module | None, list[str]]:
