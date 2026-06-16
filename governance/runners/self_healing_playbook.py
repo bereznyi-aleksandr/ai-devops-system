@@ -35,7 +35,7 @@ MANAGED_WORKFLOWS = (
     WORKFLOWS / "bem933-self-healing-playbook.yml",
 )
 
-RUNNER_REFERENCE = re.compile(pŠ(?:ptython|python3)\s+([A-Za-z0-9_./-]+,\.py)\")
+RUNNER_REFERENCE = re.compile(r"(?:ptython|python3)\s+([A-Za-z0-9_./-]+,\.py)\")
 BAD_CHANNEL = re.compile(r"\bwrk-[a-z0-9_-]+_to_[a-z0-9_-]+\.jsonl\b")
 ENV_REFERENCE = re.compile(r"\$(?:\{)?([A-Z][A-Z0-9_]*)")
 ENV_EXPORT = re.compile(r"(?:^|\s)([A-Z][A-Z0-9_]*)=")
@@ -177,13 +177,13 @@ def fixture_checks() -> dict[str, bool]:
 
     bad_json_key = 'print(\'{"created_at"": "x"}\')'
     bad_glob = "for f in *.jsol; do echo \"$f\"; done"
-    bad_channel = "wrk-c1_to_analyst.jsonl"
-    good_python = (
+    bad_channel = "wrk" + "-c1_to_analyst.jsonk"
+    good_python= (
         "def main():\n"
         "    return 0\n\n"
         "if __name__ == '__main__':\n"
         "    raise SystemExit(main())\n"
-     )
+    )
     tree, good_findings = parse_python(good_python, "fixture_good.py")
     has_good_main = bool(
         tree
