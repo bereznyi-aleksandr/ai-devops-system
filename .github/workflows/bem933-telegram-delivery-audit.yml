@@ -1,4 +1,4 @@
-name: BEM-933 Telegram Delivery Audit
+name: BEM-933 Telegram Delivery Audit and Self-Healing
 
 on:
   workflow_dispatch:
@@ -6,38 +6,55 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: bem933-post-release-autonomous
+  cancel-in-progress: false
+
 jobs:
-  audit:
+  audit-and-heal:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
 
-      - name: Run Telegram delivery audit
-        id: audit
+      - name: Compile BEM-933 runners
+        run: |
+          python3 -m py_compile governance/runners/telegram_delivery_audit.py
+          python3 -m py_compile governance/runners/self_healing_playbook.py
+
+      - name: Reverify Telegram delivery audit
+        id: telegram
         continue-on-error: true
         run: python3 governance/runners/telegram_delivery_audit.py
 
-      - name: Commit audit closure
+      - name: Run self-healing playbook
+        id: playbook
+        continue-on-error: true
+        run: python3 governance/runners/self_healing_playbook.py
+
+      - name: Commit receipts and queue state
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          git config user.email "bem933-audit@ai-devops-system"
-          git config user.name "BEM-933 Telegram Audit"
+          git config user.email "bem933-autonomous@ai-devops-system"
+          git config user.name "BEM-933 Autonomous"
           git pull --rebase --autostash origin main || true
           git add \
             governance/proofs/BEM933_telegram_delivery_audit_receipt.json \
+            governance/proofs/BEM933_self_healing_playbook_receipt.json \
             governance/roadmap/ACTIVE_QUEUE.json \
             governance/logs/execution_log.jsonl
           if git diff --cached --quiet; then
-            echo "No audit closure changes"
+            echo "No BEM-933 state changes"
           else
-            git commit -m "BEM-933 close Telegram delivery audit"
+            git commit -m "BEM-933 complete Telegram audit and self-healing playbook"
             git push
           fi
 
-      - name: Enforce audit result
-        if: steps.audit.outcome != 'success'
+      - name: Enforce results
+        if: steps.telegram.outcome != 'success' || steps.playbook.outcome != 'success'
         run: exit 1
