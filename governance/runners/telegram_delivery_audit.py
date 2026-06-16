@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BEM-933 Telegram delivery/outbox static audit."""
+"""BEM-933 Telegram delivery/outbox audit and idempotent task closure."""
 
 from __future__ import annotations
 
@@ -14,6 +14,11 @@ ROUTER = ROOT / ".github/workflows/provider-router.yml"
 ENV_DOC = ROOT / "infrastructure/cloudflare-worker/REQUIRED_ENV.md"
 WRANGLER = ROOT / "infrastructure/cloudflare-worker/wrangler.toml"
 RECEIPT = ROOT / "governance/proofs/BEM933_telegram_delivery_audit_receipt.json"
+QUEUE = ROOT / "governance/roadmap/ACTIVE_QUEUE.json"
+EXECUTION_LOG = ROOT / "governance/logs/execution_log.jsonl"
+
+TASK_ID = "BEM933-TELEGRAM-DELIVERY-AUDIT"
+NEXT_TASK_ID = "BEM933-SELF-HEALING-PLAYBOOK"
 
 
 def git_sha() -> str:
@@ -23,6 +28,68 @@ def git_sha() -> str:
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         return ""
+
+
+def now_utc() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def close_queue_and_log(source_sha: str, created_at: str) -> bool:
+    queue = json.loads(QUEUE.read_text(encoding="utf-8"))
+    tasks = {task["id"]: task for task in queue.get("tasks", [])}
+    current = tasks[TASK_ID]
+    next_task = tasks[NEXT_TASK_ID]
+    changed = current.get("status") != "DONE"
+
+    current.update(
+        {
+            "status": "DONE",
+            "done_sha": source_sha,
+            "proof": str(RECEIPT.relative_to(ROOT)),
+            "proof_status": "PASS",
+        }
+    )
+    if next_task.get("status") == "PENDING":
+        next_task["status"] = "IN_PROGRESS"
+
+    if changed:
+        queue["version"] = int(queue.get("version", 0)) + 1
+    queue["updated_at"] = created_at
+    queue["current_task"] = NEXT_TASK_ID
+    queue["last_completed"] = {"id": TASK_ID, "completed_at": created_at}
+    queue["next_action"] = (
+        "BEM933-SELF-HEALING-PLAYBOOK — encode workflow autorepair checklist "
+        "as runnable checks"
+    )
+    QUEUE.write_text(
+        json.dumps(queue, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    existing = []
+    if EXECUTION_LOG.exists():
+        existing = EXECUTION_LOG.read_text(encoding="utf-8").splitlines()
+    already_logged = False
+    for line in existing:
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if record.get("id") == TASK_ID and record.get("status") == "done":
+            already_logged = True
+            break
+    if not already_logged:
+        record = {
+            "date": created_at,
+            "id": TASK_ID,
+            "sha": source_sha,
+            "status": "done",
+            "source_proof": str(RECEIPT.relative_to(ROOT)),
+            "next_task": NEXT_TASK_ID,
+        }
+        with EXECUTION_LOG.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    return changed
 
 
 def main() -> int:
@@ -58,13 +125,19 @@ def main() -> int:
     }
 
     missing = [name for name, passed in checks.items() if not passed]
+    created_at = now_utc()
+    source_sha = git_sha()
+    queue_transitioned = False
+    if not missing:
+        queue_transitioned = close_queue_and_log(source_sha, created_at)
+
     receipt = {
         "status": "PASS" if not missing else "BLOCKED",
         "protocol": "BEM-933",
-        "task_id": "BEM933-TELEGRAM-DELIVERY-AUDIT",
+        "task_id": TASK_ID,
         "receipt_type": "telegram_delivery_outbox_idempotency_audit",
-        "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "source_sha": git_sha(),
+        "created_at": created_at,
+        "source_sha": source_sha,
         "checks": checks,
         "missing": missing,
         "boundaries": {
@@ -77,6 +150,8 @@ def main() -> int:
         },
         "idempotency_key": "Telegram update_id -> deterministic trace_id",
         "outbox_rule": "append only when trace_id is not already present",
+        "queue_transitioned": queue_transitioned,
+        "next_task": NEXT_TASK_ID,
     }
 
     RECEIPT.parent.mkdir(parents=True, exist_ok=True)
