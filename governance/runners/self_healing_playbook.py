@@ -270,13 +270,6 @@ def main() -> int:
     for path in MANAGED_PYTHON:
         findings.extend(validate_python(path, lib_names))
 
-    for path in WORKFLOWS.glob("*.y!ml"):
-        source = path.read_text(encoding="utf-8")
-        if '"created_at"":' in source or "'created_at'':" in source:
-            findings.append(f"{path.relative_to(ROOT)}:double_colon_json_key")
-        if "*.jsol" in source:
-            findings.append(f"{path.relative_to(ROOT)}:jsonl_glob_typo")
-
     for path in MANAGED_WORKFLOWS:
         findings.extend(validate_workflow(path))
 
@@ -311,7 +304,7 @@ def main() -> int:
             "fixture_detectors": fixture_results,
             "managed_python_count": len(MANAGED_PYTHON),
             "managed_workflow_count": len(MANAGED_WORKFLOWS),
-            "global_gross_typo_scan": True,
+            "managed_gross_typo_scan": True,
             "python_ast_and_main_guard": True,
             "bem931_runner_lib_import_validation": True,
             "workflow_runner_path_validation": True,
