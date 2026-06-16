@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-933",
+  "task_id": "BEM933-SELF-HEALING-PLAYBOOK",
+  "receipt_type": "runnable_workflow_autorepair_playbook",
+  "created_at": "2026-06-16T17:04:30Z",
+  "source_sha": "814d47ae9686af8c1245f5c62d06bb531ae33c03",
+  "execution_mode": "MCP_STATIC_PLUS_FIXTURE_VALIDATION",
+  "checks": {
+    "fixture_detectors": {
+      "detect_python_syntax_or_indent_error": true,
+      "detect_double_colon_json_key": true,
+      "detect_jsonl_glob_typo+": true,
+      "detect_hyphenated_channel_name": true,
+      "accept_valid_main_and_guard": true,
+      "detect_missing_runner_reference": true
+    },
+    "managed_python_count": 4,
+    "managed_workflow_count": 4,
+    "managed_gross_typo_scan": true,
+    "python_ast_and_main_guard": true,
+    "bem931_runner_lib_import_validation": true,
+    "workflow_runner_path_validation": true,
+    "heredoc_balance_validation": true,
+    "git_commit_guard_validation": true
+  },
+  "findings": [],
+  "artifacts": [
+    "governance/runners/self_healing_playbook.py",
+    ".github/workflows/bem933-self-healing-playbook.yml",
+    ".github/workflows/bem933-telegram-delivery-audit.yml"
+  ],
+  "queue_target_state": "IDLE",
+  "next_task": null
+}
