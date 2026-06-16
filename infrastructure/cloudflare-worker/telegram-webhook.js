@@ -1,6 +1,6 @@
 // Cloudflare Worker: Telegram Webhook → BEM-932 provider-router
-// FULL FILE REPLACEMENT. Runtime dispatch goes to ROUTER_WORKFLOW_ID/provider-router.yml,
-// not directly to codex-local.yml. Telegram metadata is passed as strict workflow inputs.
+// Runtime dispatch goes to ROUTER_WORKFLOW_ID/provider-router.yml.
+// Telegram metadata is passed as strict workflow inputs.
 
 const DEFAULT_ALLOWED_CHAT_ID = "601442777";
 const DEFAULT_REPO = "bereznyi-aleksandr/ai-devops-system";
@@ -18,18 +18,14 @@ function safeString(value, fallback = "") {
   return String(value);
 }
 
-function traceSuffix() {
-  return new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
-}
-
-function makeTraceId(updateId) {
-  const safeUpdateId = safeString(updateId, "unknown").replace(/[^a-zA-Z0-9_-]/g, "_");
-  return `tg_${safeUpdateId}_${traceSuffix()}`;
+function makeTraceId(updateKey) {
+  const safeUpdateKey = safeString(updateKey, "unknown").replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `tg_${safeUpdateKey}`;
 }
 
 function preview(text, limit = 500) {
-  const s = safeString(text);
-  return s.length > limit ? s.slice(0, limit) : s;
+  const value = safeString(text);
+  return value.length > limit ? value.slice(0, limit) : value;
 }
 
 async function sendTelegram(env, chatId, text) {
@@ -83,8 +79,8 @@ async function dispatchWorkflow(env, workflowId, body) {
   let details = "";
   try {
     details = await resp.text();
-  } catch (e) {
-    details = safeString(e);
+  } catch (error) {
+    details = safeString(error);
   }
 
   return {
@@ -103,7 +99,7 @@ export default {
     let update;
     try {
       update = await request.json();
-    } catch (e) {
+    } catch (error) {
       return jsonResponse({ status: "BAD_JSON" }, 400);
     }
 
@@ -122,9 +118,16 @@ export default {
       return jsonResponse({ status: "EMPTY_MESSAGE" });
     }
 
-    const workflowId = safeString(env.ROUTER_WORKFLOW_ID, DEFAULT_ROUTER_WORKFLOW_ID).trim();
-    const updateId = update.update_id ?? msg.message_id ?? Date.now();
-    const traceId = makeTraceId(updateId);
+    const workflowId = safeString(
+      env.ROUTER_WORKFLOW_ID,
+      DEFAULT_ROUTER_WORKFLOW_ID
+    ).trim();
+
+    // Telegram retries the same update_id. The fallback is also deterministic,
+    // so every retry reaches the outbox loop with the same trace_id.
+    const updateKey =
+      update.update_id ?? `${chatId}_${msg.message_id ?? "unknown"}`;
+    const traceId = makeTraceId(updateKey);
     const payload = buildProviderRouterPayload(msg, text, traceId);
     const result = await dispatchWorkflow(env, workflowId, payload);
 
