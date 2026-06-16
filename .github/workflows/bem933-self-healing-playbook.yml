@@ -1,7 +1,7 @@
 name: BEM-933 Self-Healing Playbook
 
 on:
-  workklow_dispatch:
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,6 +19,9 @@ jobs:
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
+
+      - name: Install YAML validator dependency
+        run: python3 -m pip install --disable-pip-version-check PyYAML
 
       - name: Compile playbook
         run: python3 -m py_compile governance/runners/self_healing_playbook.py
