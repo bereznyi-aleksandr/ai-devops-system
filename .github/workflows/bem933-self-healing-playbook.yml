@@ -1,0 +1,52 @@
+name: BEM-933 Self-Healing Playbook
+
+on:
+  workklow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem933-self-healing-playbook
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Compile playbook
+        run: python3 -m py_compile governance/runners/self_healing_playbook.py
+
+      - name: Run fail-closed self-healing checks
+        id: playbook
+        continue-on-error: true
+        run: python3 governance/runners/self_healing_playbook.py
+
+      - name: Commit receipt and queue closure
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem933-self-healing@ai-devops-system"
+          git config user.name "BEM-933 Self-Healing"
+          git pull --rebase --autostash origin main || true
+          git add \
+            governance/proofs/BEM933_self_healing_playbook_receipt.json \
+            governance/roadmap/ACTIVE_QUEUE.json \
+            governance/logs/execution_log.jsonl
+          if git diff --cached --quiet; then
+            echo "No playbook state changes"
+          else
+            git commit -m "BEM-933 self-healing playbook receipt and queue closure"
+            git push
+          fi
+
+      - name: Enforce playbook result
+        if: steps.playbook.outcome != 'success'
+        run: exit 1
