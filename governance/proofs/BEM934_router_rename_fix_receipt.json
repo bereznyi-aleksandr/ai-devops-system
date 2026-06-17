@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-ROUTER-RENAME-FIX",
+  "created_at": "2026-06-17T05:57:35Z",
+  "source": "governance/state/provider_status.json",
+  "source_blob_sha": "93e1ced3f63aa4c328bf8a23cb0dc15d131fa48d",
+  "checks": {
+    "provider_keys": [
+      "claude_code",
+      "gpt_codex_cloud"
+    ],
+    "gpt_code_typo_absent": true,
+    "legacy_gpt_codex_status_absent": true,
+    "synthetic_trace_data_removed": true,
+    "keys_match_enabled_provider_config": true
+  },
+  "missing": []
+}
