@@ -1,15 +1,15 @@
 {
-  "schema_version": "1.2",
+  "schema_version": "1.3",
   "protocol": "BEM-934",
   "created_at": "2026-06-13T09:15:00Z",
-  "updated_at": "2026-06-17T05:46:38Z",
+  "updated_at": "2026-06-17T05:56:20Z",
   "providers": {
     "gpt_codex": {
       "type": "github_actions_workflow",
       "workflow_id": "codex-local-assembled.yml",
       "downstream_workflow_id": "codex-local.yml",
       "prompt_assembler": "scripts/prompt_assembler.py",
-      "enabled": true,
+      "enabled": false,
       "role_support": [
         "curator",
         "analyst",
@@ -18,7 +18,7 @@
       ],
       "priority": 99,
       "deprecated": true,
-      "deprecation_reason": "BEM-934: self-hosted runner will not exist"
+      "deprecation_reason": "BEM-934: self-hosted runner will never exist"
     },
     "claude_code": {
       "type": "github_actions_workflow",
@@ -32,6 +32,21 @@
       ],
       "priority": 1,
       "note": "GitHub-hosted Claude Code action; BEM-934 primary provider."
+    },
+    "gpt_codex_cloud": {
+      "type": "github_actions_workflow",
+      "workflow_id": "gpt-codex-cloud.yml",
+      "enabled": true,
+      "role_support": [
+        "curator",
+        "analyst",
+        "auditor",
+        "executor"
+      ],
+      "priority": 2,
+      "execution_mode": "optional_openai_responses_api_or_mechanical_fallback",
+      "requires_self_hosted": false,
+      "note": "GitHub-hosted reserve. LLM mode requires OPENAI_API_KEY and repository variable OPENAI_MODEL."
     }
   },
   "roles": {
