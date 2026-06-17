@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.1",
-  "protocol": "BEM-932 v8.3",
+  "schema_version": "1.2",
+  "protocol": "BEM-934",
   "created_at": "2026-06-13T09:15:00Z",
-  "updated_at": "2026-06-13T10:18:00Z",
+  "updated_at": "2026-06-17T05:46:38Z",
   "providers": {
     "gpt_codex": {
       "type": "github_actions_workflow",
@@ -16,7 +16,9 @@
         "auditor",
         "executor"
       ],
-      "priority": 1
+      "priority": 99,
+      "deprecated": true,
+      "deprecation_reason": "BEM-934: self-hosted runner will not exist"
     },
     "claude_code": {
       "type": "github_actions_workflow",
@@ -28,26 +30,26 @@
         "auditor",
         "executor"
       ],
-      "priority": 2,
-      "note": "Existing .github/workflows/claude.yml is used; claude-local.yml does not exist."
+      "priority": 1,
+      "note": "GitHub-hosted Claude Code action; BEM-934 primary provider."
     }
   },
   "roles": {
     "curator": {
-      "primary": "gpt_codex",
-      "fallback": "claude_code"
+      "primary": "claude_code",
+      "fallback": "gpt_codex_cloud"
     },
     "analyst": {
-      "primary": "gpt_codex",
-      "fallback": "claude_code"
+      "primary": "claude_code",
+      "fallback": "gpt_codex_cloud"
     },
     "auditor": {
-      "primary": "gpt_codex",
-      "fallback": "claude_code"
+      "primary": "claude_code",
+      "fallback": "gpt_codex_cloud"
     },
     "executor": {
-      "primary": "gpt_codex",
-      "fallback": "claude_code"
+      "primary": "claude_code",
+      "fallback": "gpt_codex_cloud"
     }
   },
   "fallback_on": [
