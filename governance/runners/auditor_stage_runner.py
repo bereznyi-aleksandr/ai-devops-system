@@ -209,7 +209,7 @@ def handle_pre(contour_id: str, task: dict[str, Any]) -> str:
 
     plan = load_document(path, str(task.get("task") or ""))
     verdict = validate_plan(plan, task)
-    acepted = verdict["status"] == "PASS"
+    accepted = verdict["status"] == "PASS"
     routed = {
         "trace_id": task.get("trace_id") or f"audit_pre_{uuid4().hex[:12]}",
         "status": "pending" if accepted else "rejected",
