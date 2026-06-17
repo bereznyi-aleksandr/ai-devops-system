@@ -1,8 +1,8 @@
 {
-  "version": 27,
-  "updated_at": "2026-06-17T05:48:38Z",
+  "version": 28,
+  "updated_at": "2026-06-17T05:53:25Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM934-DEPRECATE-SELFHOSTED",
+  "current_task": "BEM934-GPT-CLOUD-PATH",
   "system_status": "BEM934_IN_PROGRESS",
   "release_status": "FOLLOW_UP_REQUIRED",
   "protocol": "BEM-934",
@@ -24,13 +24,15 @@
     {
       "id": "BEM934-DEPRECATE-SELFHOSTED",
       "title": "Deprecate self-hosted Codex workflows",
-      "status": "IN_PROGRESS",
-      "priority": 2
+      "status": "DONE",
+      "priority": 2,
+      "done_sha": "7ea5dfa0b28668497c3a92d7eea51a545d1ed39e",
+      "proof": "governance/proofs/BEM934_deprecate_selfhosted_receipt.json"
     },
     {
       "id": "BEM934-GPT-CLOUD-PATH",
       "title": "Create GitHub-hosted GPT Codex cloud path",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 3
     },
     {
@@ -63,9 +65,9 @@
     "BEM934-LIVE-TEST",
     "BEM934-CLOSE"
   ],
-  "next_action": "BEM934-DEPRECATE-SELFHOSTED — execute",
+  "next_action": "BEM934-GPT-CLOUD-PATH — execute",
   "last_completed": {
-    "id": "BEM934-CONFIG-SWAP",
-    "completed_at": "2026-06-17T05:48:38Z"
+    "id": "BEM934-DEPRECATE-SELFHOSTED",
+    "completed_at": "2026-06-17T05:53:25Z"
   }
 }
