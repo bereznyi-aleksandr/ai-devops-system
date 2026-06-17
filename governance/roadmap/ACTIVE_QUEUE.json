@@ -1,8 +1,8 @@
 {
-  "version": 30,
-  "updated_at": "2026-06-17T05:58:16Z",
+  "version": 31,
+  "updated_at": "2026-06-17T06:04:37Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM934-PROMPS-ASSEMBLER-RECONNECT",
+  "current_task": "BEM934-STAGE-RUNNER-RECONNECT",
   "system_status": "BEM934_IN_PROGRESS",
   "release_status": "FOLLOW_UP_REQUIRED",
   "protocol": "BEM-934",
@@ -54,13 +54,15 @@
     {
       "id": "BEM934-PROMPT-ASSEMBLER-RECONNECT",
       "title": "Reconnect prompt assembler to Claude workflow",
-      "status": "PENDING",
-      "priority": 6
+      "status": "DONE",
+      "priority": 6,
+      "done_sha": "86bb8532c407c2efd5a1a63b83d0b294bcce411c",
+      "proof": "governance/proofs/BEM934_prompt_assembler_reconnect_receipt.json"
     },
     {
       "id": "BEM934-STAGE-RUNNER-RECONNECT",
       "title": "Reconnect analyst and auditor contour stages",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 7
     }
   ],
@@ -69,9 +71,9 @@
     "BEM934-LIVE-TEST",
     "BEM934-CLOSE"
   ],
-  "next_action": "BEM934-PROMPS-ASSEMBLER-RECONNECT — execute",
+  "next_action": "BEM934-STAGE-RUNNER-RECONNECT — execute",
   "last_completed": {
-    "id": "BEM934-ROUTER-RENAME-FIX",
-    "completed_at": "2026-06-17T05:58:16Z"
+    "id": "BEM934-PROMPT-ASSEMBLER-RECONNECT",
+    "completed_at": "2026-06-17T06:04:37Z"
   }
 }
