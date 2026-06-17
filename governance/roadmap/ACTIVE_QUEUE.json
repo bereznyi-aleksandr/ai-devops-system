@@ -1,8 +1,8 @@
 {
-  "version": 26,
-  "updated_at": "2026-06-17T05:45:23Z",
+  "version": 27,
+  "updated_at": "2026-06-17T05:48:38Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM934-CONFIG-SWAP",
+  "current_task": "BEM934-DEPRECATE-SELFHOSTED",
   "system_status": "BEM934_IN_PROGRESS",
   "release_status": "FOLLOW_UP_REQUIRED",
   "protocol": "BEM-934",
@@ -16,13 +16,15 @@
     {
       "id": "BEM934-CONFIG-SWAP",
       "title": "Set Claude primary for all roles",
-      "status": "IN_PROGRESS",
-      "priority": 1
+      "status": "DONE",
+      "priority": 1,
+      "done_sha": "09826e1b2be295c2fe404c40983531749a54a2d4",
+      "proof": "governance/config/provider_config.json"
     },
     {
       "id": "BEM934-DEPRECATE-SELFHOSTED",
       "title": "Deprecate self-hosted Codex workflows",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 2
     },
     {
@@ -61,5 +63,9 @@
     "BEM934-LIVE-TEST",
     "BEM934-CLOSE"
   ],
-  "next_action": "BEM934-CONFIG-SWAP — execute"
+  "next_action": "BEM934-DEPRECATE-SELFHOSTED — execute",
+  "last_completed": {
+    "id": "BEM934-CONFIG-SWAP",
+    "completed_at": "2026-06-17T05:48:38Z"
+  }
 }
