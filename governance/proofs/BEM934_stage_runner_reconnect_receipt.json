@@ -1,0 +1,102 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-STAGE-RUNNER-RECONNECT",
+  "created_at": "2026-06-17T06:09:57Z",
+  "checks": {
+    "analyst_smoke_pass": true,
+    "auditor_smoke_pass": true,
+    "task_specific_request": true,
+    "configured_provider_is_claude": true,
+    "provider_workflow_dispatch_present": true,
+    "historical_fixed_plan_absent": true,
+    "semantic_auditor_rejects_logical_error": true,
+    "size_only_audit_absent": true
+  },
+  "analyst": {
+    "status": "PASS",
+    "checks": {
+      "objective_preserved": true,
+      "task_terms_specific": true,
+      "strict_json_plan_requested": true,
+      "historical_fixed_plan_absent": true,
+      "provider_is_claude": true
+    },
+    "request": {
+      "trace_id": "bem934_wrk_c1_stage_smoke",
+      "role": "WRK-C1.ANALYST",
+      "contour_id": "WRK-C1",
+      "objective": "Implement an idempotent retry policy for payment webhook delivery and verify duplicate suppression.",
+      "task_terms": [
+        "delivery",
+        "duplicate",
+        "idempotent",
+        "implement",
+        "payment",
+        "policy",
+        "retry",
+        "suppression",
+        "verify",
+        "webhook"
+      ],
+      "constraints": [
+        "preserve existing receipts",
+        "fail closed"
+      ],
+      "required_output": {
+        "format": "json",
+        "fields": [
+          "objective",
+          "assumptions",
+          "steps",
+          "acceptance",
+          "risks"
+        ],
+        "rules": [
+          "steps must be specific to the objective and executable",
+          "acceptance must be independently verifiable",
+          "do not assume success or skip validation"
+        ]
+      },
+      "created_at": "2026-06-17T06:09:57.989803+00:00"
+    }
+  },
+  "auditor": {
+    "status": "PASS",
+    "checks": {
+      "task_specific_plan_accepted": true,
+      "obvious_logical_error_rejected": true,
+      "bad_phrase_detector_triggered": true,
+      "size_only_check_absent": true
+    },
+    "good_verdict": {
+      "status": "PASS",
+      "problems": [],
+      "task_term_overlap": [
+        "duplicate",
+        "idempotent",
+        "payment",
+        "retry",
+        "webhook"
+      ],
+      "source_format": "fixture"
+    },
+    "bad_verdict": {
+      "status": "REJECT",
+      "problems": [
+        "insufficient_actionable_steps",
+        "steps_not_distinct",
+        "acceptance_missing",
+        "unsafe_or_logically_invalid_instruction:skip validation,delete all",
+        "plan_not_task_specific"
+      ],
+      "task_term_overlap": [],
+      "source_format": "fixture"
+    }
+  },
+  "artifacts": [
+    "governance/runners/analyst_stage_runner.py",
+    "governance/runners/auditor_stage_runner.py"
+  ],
+  "missing": []
+}
