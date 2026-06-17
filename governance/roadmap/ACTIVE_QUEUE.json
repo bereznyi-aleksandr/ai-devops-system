@@ -1,89 +1,65 @@
 {
-  "version": 25,
-  "updated_at": "2026-06-16T18:57:46Z",
-  "queue_state": "IDLE",
-  "current_task": null,
-  "system_status": "WORKING_CONTOUR_READY",
-  "release_status": "PASS",
-  "protocol": "BEM-933 Post-release Autonomous Development v1",
-  "source": "governance/protocols/BEM933_PostRelease_Autonomous_Development_v1.md",
-  "guard_status": "OPERATOR_GATE_REQUIRED",
+  "version": 26,
+  "updated_at": "2026-06-17T05:45:23Z",
+  "queue_state": "ACTIVE",
+  "current_task": "BEM934-CONFIG-SWAP",
+  "system_status": "BEM934_IN_PROGRESS",
+  "release_status": "FOLLOW_UP_REQUIRED",
+  "protocol": "BEM-934",
+  "source": "governance/protocols/BEM934_Protocol.md",
+  "batch": "1/2",
+  "operator_gate": {
+    "authorized_at": "2026-06-17T05:45:23Z",
+    "scope": "Execute BEM-934 autonomously without stops"
+  },
   "tasks": [
     {
-      "id": "BEM932-RELEASE-HISTORY",
-      "title": "BEM-932 release and external audit already completed",
-      "status": "DONE",
-      "done_sha": "f33675046a9dc907d34f147774a0caaf56788551"
+      "id": "BEM934-CONFIG-SWAP",
+      "title": "Set Claude primary for all roles",
+      "status": "IN_PROGRESS",
+      "priority": 1
     },
     {
-      "id": "BEM933-ROADMAP-REOPEN",
-      "title": "Reopen ACTIVE_QUEUE after closed release queue",
-      "status": "DONE",
-      "done_sha": "a9315e01b7d1a2014d324c0b1b3ef7b05e1dc3ff"
+      "id": "BEM934-DEPRECATE-SELFHOSTED",
+      "title": "Deprecate self-hosted Codex workflows",
+      "status": "PENDING",
+      "priority": 2
     },
     {
-      "id": "BEM933-ACTIVE-QUEUE-GUARD",
-      "title": "Add guard runner/workflow preventing empty closed queue",
-      "status": "DONE",
-      "done_sha": "e1768bc12b9e55aa109147ee6455ee13a6d89791",
-      "proof": "governance/proofs/BEM933_active_queue_guard_receipt.json",
-      "proof_sha": "13c0f785cee5b6e88df3ffebced61ce9ecdc78c7"
+      "id": "BEM934-GPT-CLOUD-PATH",
+      "title": "Create GitHub-hosted GPT Codex cloud path",
+      "status": "PENDING",
+      "priority": 3
     },
     {
-      "id": "BEM933-RECEIPT-WATCHDOG",
-      "title": "Add receipt freshness watchdog for live workflows",
-      "status": "DONE",
-      "priority": 2,
-      "done_sha": "2c8316fe681b9d92c9401987e347964908367c5c",
-      "artifacts": [
-        {
-          "path": "governance/runners/receipt_watchdog.py",
-          "sha": "3ab88bd0b8e248b5745f36159f9dcee69c88e036"
-        },
-        {
-          "path": ".github/workflows/receipt-watchdog.yml",
-          "sha": "3285f5c413c7c34161244dbcd7dd1758059dde78"
-        },
-        {
-          "path": "governance/proofs/BEM933_receipt_watchdog_receipt.json",
-          "sha": "96860f07cbd757de84d0d5e28455f7e28468e332"
-        }
-      ],
-      "acceptance": [
-        "release_gate_status PASS",
-        "missing receipts empty",
-        "workflow dispatch returned 422 no trigger; bootstrap receipt written and queued for autorepair if repeated"
-      ]
+      "id": "BEM934-PROVIDER-CONFIG-UPDATE",
+      "title": "Register cloud provider and disable local provider",
+      "status": "PENDING",
+      "priority": 4
     },
     {
-      "id": "BEM933-TELEGRAM-DELIVERY-AUDIT",
-      "title": "Audit Telegram delivery/outbox loop and idempotency",
-      "status": "DONE",
-      "priority": 3,
-      "acceptance": [
-        "telegram outbox duplicate protection verified",
-        "live/manual secrets boundaries documented",
-        "proof receipt written"
-      ],
-      "done_sha": "95de3fbc226d908051d25940f39a05af2218e087",
-      "proof": "governance/proofs/BEM933_telegram_delivery_audit_receipt.json",
-      "proof_status": "PASS"
+      "id": "BEM934-ROUTER-RENAME-FIX",
+      "title": "Normalize provider status keys",
+      "status": "PENDING",
+      "priority": 5
     },
     {
-      "id": "BEM933-SELF-HEALING-PLAYBOOK",
-      "title": "Encode workflow autorepair checklist as runnable checks",
-      "status": "DONE",
-      "priority": 4,
-      "done_sha": "e4c0fedb325f6ec6c8981678aa791c30a77948a5",
-      "proof": "governance/proofs/BEM933_self_healing_playbook_receipt.json",
-      "proof_sha": "a2f7ad415d8c6a90792c9699bc1ece64314d5706",
-      "proof_status": "PASS"
+      "id": "BEM934-PROMPT-ASSEMBLER-RECONNECT",
+      "title": "Reconnect prompt assembler to Claude workflow",
+      "status": "PENDING",
+      "priority": 6
+    },
+    {
+      "id": "BEM934-STAGE-RUNNER-RECONNECT",
+      "title": "Reconnect analyst and auditor contour stages",
+      "status": "PENDING",
+      "priority": 7
     }
   ],
-  "last_completed": {
-    "id": "BEM933-SELF-HEALING-PLAYBOOK",
-    "completed_at": "2026-06-16T17:03:33Z"
-  },
-  "next_action": "No actionable tasks. Operator gate required before adding new scope.",
-  "operator_gate_required": true
+  "next_batch": [
+    "BEM934-OBJECTS-BOUND",
+    "BEM934-LIVE-TEST",
+    "BEM934-CLOSE"
+  ],
+  "next_action": "BEM934-CONFIG-SWAP — execute"
 }
