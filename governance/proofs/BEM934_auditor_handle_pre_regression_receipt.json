@@ -1,10 +1,10 @@
 {
-  "status": "BLOCKED",
+  "status": "PASS",
   "protocol": "BEM-934",
   "task_id": "BEM934-AUDITOR-HANDLE-PRE-REGRESSION",
-  "created_at": "2026-06-17T17:57:40Z",
-  "source_commit_sha": null,
-  "typo_occurrences_repaired": 1,
+  "created_at": "2026-06-17T17:58:57Z",
+  "source_commit_sha": "4c47ba064e62acaa49fc02d8b64a9b6e627ac674",
+  "typo_occurrences_repaired": 0,
   "checks": {
     "typo_was_detected_or_already_fixed": true,
     "python_compile_pass": true,
@@ -14,7 +14,7 @@
     "misspelled_acepted_absent": true,
     "real_executor_route_verified": true,
     "real_pre_channel_consumed": true,
-    "source_fix_committed": false
+    "source_fix_committed": true
   },
   "integration": {
     "status": "PASS",
@@ -28,7 +28,7 @@
     "result": "WRK-C1_pre_check_pass",
     "executor_row": {
       "contour_id": "WRK-C1",
-      "created_at": "2026-06-17T17:57:39.575912+00:00",
+      "created_at": "2026-06-17T17:58:57.801854+00:00",
       "from": "WRK-C1.AUDITOR",
       "phase": "execute",
       "plan_path": "governance/proofs/auditor_pre_fixture_plan.json",
@@ -58,12 +58,10 @@
     "integration_returncode": 0,
     "integration_stderr_tail": ""
   },
-  "commit_error": "RuntimeError: To https://github.com/bereznyi-aleksandr/ai-devops-system\n ! [rejected]            main -> main (fetch first)\nerror: failed to push some refs to 'https://github.com/bereznyi-aleksandr/ai-devops-system'\nhint: Updates were rejected because the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n",
+  "commit_error": null,
   "artifacts": [
     "governance/runners/auditor_stage_runner.py",
     "governance/tests/test_auditor_handle_pre.py"
   ],
-  "missing": [
-    "source_fix_committed"
-  ]
+  "missing": []
 }
