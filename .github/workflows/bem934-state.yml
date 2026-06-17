@@ -7,13 +7,18 @@ permissions:
   contents: write
 
 jobs:
-  transition:
+  execute:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
+      - name: Execute requested repository action
+        run: |
+          set -euo pipefail
+          python3 -m py_compile governance/runners/bem934_actions.py
+          python3 governance/runners/bem934_actions.py
       - name: Update queue and append execution log
         run: |
           set -euo pipefail
@@ -26,6 +31,9 @@ jobs:
           queue_path = Path("governance/roadmap/ACTIVE_QUEUE.json")
           log_path = Path("governance/logs/execution_log.jsonl")
           req = json.loads(request_path.read_text(encoding="utf-8"))
+          if not req.get("transition"):
+              raise SystemExit(0)
+
           queue = json.loads(queue_path.read_text(encoding="utf-8"))
           task_id = str(req["task_id"])
           done_sha = str(req["done_sha"])
@@ -65,16 +73,16 @@ jobs:
           with log_path.open("a", encoding="utf-8") as handle:
               handle.write(json.dumps(record, ensure_ascii=False) + "\n")
           PY
-      - name: Commit state transition
+      - name: Commit requested action and state
         run: |
           set -euo pipefail
           git config user.email "bem934-state@ai-devops-system"
           git config user.name "BEM-934 State"
           git pull --rebase --autostash origin main || true
-          git add governance/roadmap/ACTIVE_QUEUE.json governance/logs/execution_log.jsonl governance/runtime/bem934_state_request.json
+          git add -A
           if git diff --cached --quiet; then
-            echo "No state changes"
+            echo "No BEM-934 changes"
           else
-            git commit -m "BEM-934 state transition"
+            git commit -m "BEM-934 request execution"
             git push
           fi
