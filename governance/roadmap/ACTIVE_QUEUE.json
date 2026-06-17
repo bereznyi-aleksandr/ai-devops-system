@@ -1,8 +1,8 @@
 {
-  "version": 29,
-  "updated_at": "2026-06-17T05:57:23Z",
+  "version": 30,
+  "updated_at": "2026-06-17T05:58:16Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM934-ROUTER-RENAME-FIX",
+  "current_task": "BEM934-PROMPS-ASSEMBLER-RECONNECT",
   "system_status": "BEM934_IN_PROGRESS",
   "release_status": "FOLLOW_UP_REQUIRED",
   "protocol": "BEM-934",
@@ -46,8 +46,10 @@
     {
       "id": "BEM934-ROUTER-RENAME-FIX",
       "title": "Normalize provider status keys",
-      "status": "IN_PROGRESS",
-      "priority": 5
+      "status": "DONE",
+      "priority": 5,
+      "done_sha": "bde6575baead18517158b7f44ee5f78527de9d38",
+      "proof": "governance/proofs/BEM934_router_rename_fix_receipt.json"
     },
     {
       "id": "BEM934-PROMPT-ASSEMBLER-RECONNECT",
@@ -67,9 +69,9 @@
     "BEM934-LIVE-TEST",
     "BEM934-CLOSE"
   ],
-  "next_action": "BEM934-ROUTER-RENAME-FIX — execute",
+  "next_action": "BEM934-PROMPS-ASSEMBLER-RECONNECT — execute",
   "last_completed": {
-    "id": "BEM934-PROVIDER-CONFIG-UPDATE",
-    "completed_at": "2026-06-17T05:57:23Z"
+    "id": "BEM934-ROUTER-RENAME-FIX",
+    "completed_at": "2026-06-17T05:58:16Z"
   }
 }
