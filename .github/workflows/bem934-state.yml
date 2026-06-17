@@ -5,20 +5,26 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   execute:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
+
       - name: Execute requested repository action
+        env:
+          BEM934_GITHUB_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
         run: |
           set -euo pipefail
           python3 -m py_compile governance/runners/bem934_actions.py
           python3 governance/runners/bem934_actions.py
+
       - name: Update queue and append execution log
         run: |
           set -euo pipefail
@@ -42,6 +48,7 @@ jobs:
           now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
           found = False
+          next_found = next_task is None
           for task in queue.get("tasks", []):
               if task.get("id") == task_id:
                   task["status"] = "DONE"
@@ -49,10 +56,15 @@ jobs:
                   if proof:
                       task["proof"] = proof
                   found = True
-              elif next_task and task.get("id") == next_task and task.get("status") == "PENDING":
-                  task["status"] = "IN_PROGRESS"
+              elif next_task and task.get("id") == next_task:
+                  if task.get("status") == "PENDING":
+                      task["status"] = "IN_PROGRESS"
+                  next_found = True
+
           if not found:
               raise SystemExit(f"task not found: {task_id}")
+          if not next_found:
+              raise SystemExit(f"next task not found: {next_task}")
 
           queue["version"] = int(queue.get("version", 0)) + 1
           queue["updated_at"] = now
@@ -60,7 +72,10 @@ jobs:
           queue["current_task"] = next_task
           queue["queue_state"] = "ACTIVE" if next_task else "IDLE"
           queue["next_action"] = f"{next_task} — execute" if next_task else "Batch complete"
-          queue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          queue_path.write_text(
+              json.dumps(queue, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
 
           record = {
               "date": now,
@@ -70,10 +85,26 @@ jobs:
               "source_proof": proof,
               "next_task": next_task,
           }
-          with log_path.open("a", encoding="utf-8") as handle:
-              handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+          existing = []
+          if log_path.exists():
+              existing = log_path.read_text(encoding="utf-8").splitlines()
+          duplicate = False
+          for line in existing:
+              try:
+                item = json.loads(line)
+              except json.JSONDecodeError:
+                continue
+              if item.get("id") == task_id and item.get("sha") == done_sha:
+                  duplicate = True
+                  break
+          if not duplicate:
+              log_path.parent.mkdir(parents=True, exist_ok=True)
+              with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
           PY
+
       - name: Commit requested action and state
+        if: always()
         run: |
           set -euo pipefail
           git config user.email "bem934-state@ai-devops-system"
