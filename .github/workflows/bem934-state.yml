@@ -2,21 +2,6 @@ name: BEM-934 State Transition
 
 on:
   workflow_dispatch:
-    inputs:
-      task_id:
-        required: true
-        type: string
-      done_sha:
-        required: true
-        type: string
-      next_task:
-        required: false
-        default: ''
-        type: string
-      proof:
-        required: false
-        default: ''
-        type: string
 
 permissions:
   contents: write
@@ -30,25 +15,22 @@ jobs:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
       - name: Update queue and append execution log
-        env:
-          TASK_ID: ${{ inputs.task_id }}
-          DONE_SHA: ${{ inputs.done_sha }}
-          NEXT_TASK: ${{ inputs.next_task }}
-          PROOF: ${{ inputs.proof }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json, os
+          import json
           from datetime import datetime, timezone
           from pathlib import Path
 
+          request_path = Path("governance/runtime/bem934_state_request.json")
           queue_path = Path("governance/roadmap/ACTIVE_QUEUE.json")
           log_path = Path("governance/logs/execution_log.jsonl")
+          req = json.loads(request_path.read_text(encoding="utf-8"))
           queue = json.loads(queue_path.read_text(encoding="utf-8"))
-          task_id = os.environ["TASK_ID"]
-          done_sha = os.environ["DONE_SHA"]
-          next_task = os.environ.get("NEXT_TASK", "").strip() or None
-          proof = os.environ.get("PROOF", "").strip() or None
+          task_id = str(req["task_id"])
+          done_sha = str(req["done_sha"])
+          next_task = str(req.get("next_task") or "").strip() or None
+          proof = str(req.get("proof") or "").strip() or None
           now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
           found = False
@@ -80,7 +62,6 @@ jobs:
               "source_proof": proof,
               "next_task": next_task,
           }
-          log_path.parent.mkdir(parents=True, exist_ok=True)
           with log_path.open("a", encoding="utf-8") as handle:
               handle.write(json.dumps(record, ensure_ascii=False) + "\n")
           PY
@@ -90,10 +71,10 @@ jobs:
           git config user.email "bem934-state@ai-devops-system"
           git config user.name "BEM-934 State"
           git pull --rebase --autostash origin main || true
-          git add governance/roadmap/ACTIVE_QUEUE.json governance/logs/execution_log.jsonl
+          git add governance/roadmap/ACTIVE_QUEUE.json governance/logs/execution_log.jsonl governance/runtime/bem934_state_request.json
           if git diff --cached --quiet; then
             echo "No state changes"
           else
-            git commit -m "BEM-934 state transition: ${{ inputs.task_id }}"
+            git commit -m "BEM-934 state transition"
             git push
           fi
