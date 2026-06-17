@@ -1,83 +1,58 @@
 {
-  "version": 33,
-  "updated_at": "2026-06-17T06:11:25Z",
-  "queue_state": "IDLE",
-  "current_task": null,
+  "version": 34,
+  "updated_at": "2026-06-17T06:14:30Z",
+  "queue_state": "ACTIVE",
+  "current_task": "BEM934-OBJECTS-BOUND",
   "system_status": "BEM934_IN_PROGRESS",
   "release_status": "FOLLOW_UP_REQUIRED",
   "protocol": "BEM-934",
   "source": "governance/protocols/BEM934_Protocol.md",
-  "batch": "1/2",
+  "batch": "2/2",
   "operator_gate": {
     "authorized_at": "2026-06-17T05:45:23Z",
     "scope": "Execute BEM-934 autonomously without stops"
   },
+  "completed_summary": {
+    "tasks_done": 7,
+    "tasks_total": 10,
+    "proofs": [
+      "governance/proofs/BEM934_deprecate_selfhosted_receipt.json",
+      "governance/proofs/BEM934_gpt_codex_cloud_smoke_receipt.json",
+      "governance/proofs/BEM934_provider_config_update_receipt.json",
+      "governance/proofs/BEM934_router_rename_fix_receipt.json",
+      "governance/proofs/BEM934_prompt_assembler_reconnect_receipt.json",
+      "governance/proofs/BEM934_stage_runner_reconnect_receipt.json"
+    ]
+  },
   "tasks": [
     {
-      "id": "BEM934-CONFIG-SWAP",
-      "title": "Set Claude primary for all roles",
-      "status": "DONE",
-      "priority": 1,
-      "done_sha": "09826e1b2be295c2fe404c40983531749a54a2d4",
-      "proof": "governance/config/provider_config.json"
+      "id": "BEM934-OBJECTS-BOUND",
+      "title": "Bind object runtime with concrete Claude trace and SHA evidence",
+      "status": "IN_PROGRESS",
+      "priority": 8
     },
     {
-      "id": "BEM934-DEPRECATE-SELFHOSTED",
-      "title": "Deprecate self-hosted Codex workflows",
-      "status": "DONE",
-      "priority": 2,
-      "done_sha": "7ea5dfa0b28668497c3a92d7eea51a545d1ed39e",
-      "proof": "governance/proofs/BEM934_deprecate_selfhosted_receipt.json"
+      "id": "BEM934-LIVE-TEST",
+      "title": "Content-bearing Telegram E2E through provider-router to Claude",
+      "status": "PENDING",
+      "priority": 9,
+      "blocked_by": [
+        "BEM934-OBJECTS-BOUND"
+      ]
     },
     {
-      "id": "BEM934-GPT-CLOUD-PATH",
-      "title": "Create GitHub-hosted GPT Codex cloud path",
-      "status": "DONE",
-      "priority": 3,
-      "done_sha": "0199d0008c0ae4471263c69a202f45e0a7d84447",
-      "proof": "governance/proofs/BEM934_gpt_codex_cloud_smoke_receipt.json"
-    },
-    {
-      "id": "BEM934-PROVIDER-CONFIG-UPDATE",
-      "title": "Register cloud provider and disable local provider",
-      "status": "DONE",
-      "priority": 4,
-      "done_sha": "149fa975d5311b205e8f45b29bcac76bae7405bf",
-      "proof": "governance/proofs/BEM934_provider_config_update_receipt.json"
-    },
-    {
-      "id": "BEM934-ROUTER-RENAME-FIX",
-      "title": "Normalize provider status keys",
-      "status": "DONE",
-      "priority": 5,
-      "done_sha": "bde6575baead18517158b7f44ee5f78527de9d38",
-      "proof": "governance/proofs/BEM934_router_rename_fix_receipt.json"
-    },
-    {
-      "id": "BEM934-PROMPT-ASSEMBLER-RECONNECT",
-      "title": "Reconnect prompt assembler to Claude workflow",
-      "status": "DONE",
-      "priority": 6,
-      "done_sha": "86bb8532c407c2efd5a1a63b83d0b294bcce411c",
-      "proof": "governance/proofs/BEM934_prompt_assembler_reconnect_receipt.json"
-    },
-    {
-      "id": "BEM934-STAGE-RUNNER-RECONNECT",
-      "title": "Reconnect analyst and auditor contour stages",
-      "status": "DONE",
-      "priority": 7,
-      "done_sha": "e8fef752fe1b7330acaa08f6a0fac6245f7d121c",
-      "proof": "governance/proofs/BEM934_stage_runner_reconnect_receipt.json"
+      "id": "BEM934-CLOSE",
+      "title": "Update canonical context/status and obtain external auditor approval",
+      "status": "PENDING",
+      "priority": 10,
+      "blocked_by": [
+        "BEM934-LIVE-TEST"
+      ]
     }
   ],
-  "next_batch": [
-    "BEM934-OBJECTS-BOUND",
-    "BEM934-LIVE-TEST",
-    "BEM934-CLOSE"
-  ],
-  "next_action": "Batch complete",
   "last_completed": {
     "id": "BEM934-STAGE-RUNNER-RECONNECT",
     "completed_at": "2026-06-17T06:11:25Z"
-  }
+  },
+  "next_action": "BEM934-OBJECTS-BOUND — execute proof-bearing Claude runtime binding probe"
 }
