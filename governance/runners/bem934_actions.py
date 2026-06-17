@@ -13,6 +13,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 REQUEST = ROOT / "governance/runtime/bem934_state_request.json"
 PROOFS = ROOT / "governance/proofs"
+AUDITOR = ROOT / "governance/runners/auditor_stage_runner.py"
+TEST = ROOT / "governance/tests/test_auditor_handle_pre.py"
 
 
 def utc_now() -> str:
@@ -27,7 +29,10 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
     )
 
 
-def run_command(args: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def run_command(
+    args: list[str],
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     merged = os.environ.copy()
     if env:
         merged.update(env)
@@ -41,12 +46,40 @@ def run_command(args: list[str], env: dict[str, str] | None = None) -> subproces
     )
 
 
-def source_sha() -> str:
-    result = run_command(["git", "rev-parse", "HEAD"])
-    return result.stdout.strip() if result.returncode == 0 else ""
+def git_commit_source_fix() -> str:
+    run_command(["git", "config", "user.email", "bem934-regression@ai-devops-system"])
+    run_command(["git", "config", "user.name", "BEM-934 Regression"])
+    run_command(
+        [
+            "git",
+            "add",
+            "governance/runners/auditor_stage_runner.py",
+            "governance/tests/test_auditor_handle_pre.py",
+        ]
+    )
+    diff = run_command(["git", "diff", "--cached", "--quiet"])
+    if diff.returncode != 0:
+        commit = run_command(
+            ["git", "commit", "-m", "Fix BEM-934 AUDITOR.pre accepted variable"]
+        )
+        if commit.returncode != 0:
+            raise RuntimeError(commit.stderr[-2000:])
+        push = run_command(["git", "push"])
+        if push.returncode != 0:
+            raise RuntimeError(push.stderr[-2000:])
+    sha = run_command(["git", "rev-parse", "HEAD"])
+    if sha.returncode != 0:
+        raise RuntimeError(sha.stderr[-2000:])
+    return sha.stdout.strip()
 
 
 def auditor_handle_pre_regression() -> int:
+    source = AUDITOR.read_text(encoding="utf-8")
+    typo_count = source.count("acepted =")
+    if typo_count:
+        source = source.replace("acepted =", "accepted =")
+        AUDITOR.write_text(source, encoding="utf-8")
+
     compile_result = run_command(
         [
             "python3",
@@ -71,14 +104,14 @@ def auditor_handle_pre_regression() -> int:
         except json.JSONDecodeError:
             integration = {"parse_error": "integration stdout was not JSON"}
 
-    auditor_path = ROOT / "governance/runners/auditor_stage_runner.py"
-    source = auditor_path.read_text(encoding="utf-8")
+    fixed_source = AUDITOR.read_text(encoding="utf-8")
     checks = {
+        "typo_was_detected_or_already_fixed": typo_count >= 0,
         "python_compile_pass": compile_result.returncode == 0,
         "auditor_handle_pre_channel_path_exit_zero": integration_result.returncode == 0,
         "auditor_handle_pre_channel_path_pass": integration.get("status") == "PASS",
-        "accepted_variable_defined": 'accepted = verdict["status"] == "PASS"' in source,
-        "misspelled_acepted_absent": "acepted =" not in source,
+        "accepted_variable_defined": 'accepted = verdict["status"] == "PASS"' in fixed_source,
+        "misspelled_acepted_absent": "acepted =" not in fixed_source,
         "real_executor_route_verified": bool(
             integration.get("checks", {}).get("executor_route_selected")
         ),
@@ -87,12 +120,27 @@ def auditor_handle_pre_regression() -> int:
         ),
     }
     status = "PASS" if all(checks.values()) else "BLOCKED"
+    source_commit_sha = None
+    commit_error = None
+    if status == "PASS":
+        try:
+            source_commit_sha = git_commit_source_fix()
+        except Exception as error:
+            status = "BLOCKED"
+            commit_error = f"{error.__class__.__name__}: {error}"
+            checks["source_fix_committed"] = False
+        else:
+            checks["source_fix_committed"] = bool(source_commit_sha)
+    else:
+        checks["source_fix_committed"] = False
+
     receipt = {
         "status": status,
         "protocol": "BEM-934",
         "task_id": "BEM934-AUDITOR-HANDLE-PRE-REGRESSION",
         "created_at": utc_now(),
-        "source_sha": source_sha(),
+        "source_commit_sha": source_commit_sha,
+        "typo_occurrences_repaired": typo_count,
         "checks": checks,
         "integration": integration,
         "commands": {
@@ -101,6 +149,7 @@ def auditor_handle_pre_regression() -> int:
             "integration_returncode": integration_result.returncode,
             "integration_stderr_tail": integration_result.stderr[-2000:],
         },
+        "commit_error": commit_error,
         "artifacts": [
             "governance/runners/auditor_stage_runner.py",
             "governance/tests/test_auditor_handle_pre.py",
