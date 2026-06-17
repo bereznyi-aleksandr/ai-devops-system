@@ -1,8 +1,8 @@
 {
-  "version": 32,
-  "updated_at": "2026-06-17T06:10:45Z",
-  "queue_state": "ACTIVE",
-  "current_task": "BEM934-STAGE-RUNNER-RECONNECT",
+  "version": 33,
+  "updated_at": "2026-06-17T06:11:25Z",
+  "queue_state": "IDLE",
+  "current_task": null,
   "system_status": "BEM934_IN_PROGRESS",
   "release_status": "FOLLOW_UP_REQUIRED",
   "protocol": "BEM-934",
@@ -64,8 +64,10 @@
     {
       "id": "BEM934-STAGE-RUNNER-RECONNECT",
       "title": "Reconnect analyst and auditor contour stages",
-      "status": "IN_PROGRESS",
-      "priority": 7
+      "status": "DONE",
+      "priority": 7,
+      "done_sha": "e8fef752fe1b7330acaa08f6a0fac6245f7d121c",
+      "proof": "governance/proofs/BEM934_stage_runner_reconnect_receipt.json"
     }
   ],
   "next_batch": [
@@ -73,9 +75,9 @@
     "BEM934-LIVE-TEST",
     "BEM934-CLOSE"
   ],
-  "next_action": "BEM934-STAGE-RUNNER-RECONNECT — execute",
+  "next_action": "Batch complete",
   "last_completed": {
-    "id": "BEM934-GPT-CLOUD-PATH",
-    "completed_at": "2026-06-17T06:10:45Z"
+    "id": "BEM934-STAGE-RUNNER-RECONNECT",
+    "completed_at": "2026-06-17T06:11:25Z"
   }
 }
