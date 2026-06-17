@@ -2,33 +2,68 @@
   "status": "BLOCKED",
   "protocol": "BEM-934",
   "task_id": "BEM934-AUDITOR-HANDLE-PRE-REGRESSION",
-  "created_at": "2026-06-17T17:55:47Z",
-  "source_sha": "a0eca277d7bceef4ecd4ee19115263ec03aa7597",
+  "created_at": "2026-06-17T17:57:40Z",
+  "source_commit_sha": null,
+  "typo_occurrences_repaired": 1,
   "checks": {
+    "typo_was_detected_or_already_fixed": true,
     "python_compile_pass": true,
-    "auditor_handle_pre_channel_path_exit_zero": false,
-    "auditor_handle_pre_channel_path_pass": false,
+    "auditor_handle_pre_channel_path_exit_zero": true,
+    "auditor_handle_pre_channel_path_pass": true,
     "accepted_variable_defined": true,
-    "misspelled_acepted_absent": false,
-    "real_executor_route_verified": false,
-    "real_pre_channel_consumed": false
+    "misspelled_acepted_absent": true,
+    "real_executor_route_verified": true,
+    "real_pre_channel_consumed": true,
+    "source_fix_committed": false
   },
-  "integration": {},
+  "integration": {
+    "status": "PASS",
+    "checks": {
+      "main_consumed_real_pre_channel": true,
+      "executor_channel_written": true,
+      "executor_route_selected": true,
+      "semantic_pre_check_pass": true,
+      "result_artifact_emitted": true
+    },
+    "result": "WRK-C1_pre_check_pass",
+    "executor_row": {
+      "contour_id": "WRK-C1",
+      "created_at": "2026-06-17T17:57:39.575912+00:00",
+      "from": "WRK-C1.AUDITOR",
+      "phase": "execute",
+      "plan_path": "governance/proofs/auditor_pre_fixture_plan.json",
+      "pre_check": "PASS",
+      "semantic_verdict": {
+        "problems": [],
+        "source_format": "json",
+        "status": "PASS",
+        "task_term_overlap": [
+          "duplicate",
+          "idempotent",
+          "payment",
+          "receipt",
+          "retry",
+          "webhook"
+        ]
+      },
+      "status": "pending",
+      "task": "Implement idempotent payment webhook retry and duplicate suppression with durable delivery receipts.",
+      "to": "WRK-C1.EXECUTOR",
+      "trace_id": "bem934_auditor_handle_pre_regression"
+    }
+  },
   "commands": {
     "compile_returncode": 0,
     "compile_stderr_tail": "",
-    "integration_returncode": 1,
-    "integration_stderr_tail": "Traceback (most recent call last):\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/tests/test_auditor_handle_pre.py\", line 118, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/tests/test_auditor_handle_pre.py\", line 82, in main\n    result = runner.main()\n             ^^^^^^^^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/auditor_stage_runner.py\", line 335, in main\n    return handle_pre(contour_id, pre)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/auditor_stage_runner.py\", line 215, in handle_pre\n    \"status\": \"pending\" if accepted else \"rejected\",\n                           ^^^^^^^^\nNameError: name 'accepted' is not defined. Did you mean: 'acepted'?\n"
+    "integration_returncode": 0,
+    "integration_stderr_tail": ""
   },
+  "commit_error": "RuntimeError: To https://github.com/bereznyi-aleksandr/ai-devops-system\n ! [rejected]            main -> main (fetch first)\nerror: failed to push some refs to 'https://github.com/bereznyi-aleksandr/ai-devops-system'\nhint: Updates were rejected because the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n",
   "artifacts": [
     "governance/runners/auditor_stage_runner.py",
     "governance/tests/test_auditor_handle_pre.py"
   ],
   "missing": [
-    "auditor_handle_pre_channel_path_exit_zero",
-    "auditor_handle_pre_channel_path_pass",
-    "misspelled_acepted_absent",
-    "real_executor_route_verified",
-    "real_pre_channel_consumed"
+    "source_fix_committed"
   ]
 }
