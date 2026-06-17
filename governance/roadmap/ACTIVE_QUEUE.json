@@ -1,6 +1,6 @@
 {
-  "version": 31,
-  "updated_at": "2026-06-17T06:04:37Z",
+  "version": 32,
+  "updated_at": "2026-06-17T06:10:45Z",
   "queue_state": "ACTIVE",
   "current_task": "BEM934-STAGE-RUNNER-RECONNECT",
   "system_status": "BEM934_IN_PROGRESS",
@@ -32,8 +32,10 @@
     {
       "id": "BEM934-GPT-CLOUD-PATH",
       "title": "Create GitHub-hosted GPT Codex cloud path",
-      "status": "IN_PROGRESS",
-      "priority": 3
+      "status": "DONE",
+      "priority": 3,
+      "done_sha": "0199d0008c0ae4471263c69a202f45e0a7d84447",
+      "proof": "governance/proofs/BEM934_gpt_codex_cloud_smoke_receipt.json"
     },
     {
       "id": "BEM934-PROVIDER-CONFIG-UPDATE",
@@ -73,7 +75,7 @@
   ],
   "next_action": "BEM934-STAGE-RUNNER-RECONNECT — execute",
   "last_completed": {
-    "id": "BEM934-PROMPT-ASSEMBLER-RECONNECT",
-    "completed_at": "2026-06-17T06:04:37Z"
+    "id": "BEM934-GPT-CLOUD-PATH",
+    "completed_at": "2026-06-17T06:10:45Z"
   }
 }
