@@ -1,0 +1,99 @@
+name: BEM-934 State Transition
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        required: true
+        type: string
+      done_sha:
+        required: true
+        type: string
+      next_task:
+        required: false
+        default: ''
+        type: string
+      proof:
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  transition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+      - name: Update queue and append execution log
+        env:
+          TASK_ID: ${{ inputs.task_id }}
+          DONE_SHA: ${{ inputs.done_sha }}
+          NEXT_TASK: ${{ inputs.next_task }}
+          PROOF: ${{ inputs.proof }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          queue_path = Path("governance/roadmap/ACTIVE_QUEUE.json")
+          log_path = Path("governance/logs/execution_log.jsonl")
+          queue = json.loads(queue_path.read_text(encoding="utf-8"))
+          task_id = os.environ["TASK_ID"]
+          done_sha = os.environ["DONE_SHA"]
+          next_task = os.environ.get("NEXT_TASK", "").strip() or None
+          proof = os.environ.get("PROOF", "").strip() or None
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          found = False
+          for task in queue.get("tasks", []):
+              if task.get("id") == task_id:
+                  task["status"] = "DONE"
+                  task["done_sha"] = done_sha
+                  if proof:
+                      task["proof"] = proof
+                  found = True
+              elif next_task and task.get("id") == next_task and task.get("status") == "PENDING":
+                  task["status"] = "IN_PROGRESS"
+          if not found:
+              raise SystemExit(f"task not found: {task_id}")
+
+          queue["version"] = int(queue.get("version", 0)) + 1
+          queue["updated_at"] = now
+          queue["last_completed"] = {"id": task_id, "completed_at": now}
+          queue["current_task"] = next_task
+          queue["queue_state"] = "ACTIVE" if next_task else "IDLE"
+          queue["next_action"] = f"{next_task} — execute" if next_task else "Batch complete"
+          queue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          record = {
+              "date": now,
+              "id": task_id,
+              "sha": done_sha,
+              "status": "done",
+              "source_proof": proof,
+              "next_task": next_task,
+          }
+          log_path.parent.mkdir(parents=True, exist_ok=True)
+          with log_path.open("a", encoding="utf-8") as handle:
+              handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+          PY
+      - name: Commit state transition
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-state@ai-devops-system"
+          git config user.name "BEM-934 State"
+          git pull --rebase --autostash origin main || true
+          git add governance/roadmap/ACTIVE_QUEUE.json governance/logs/execution_log.jsonl
+          if git diff --cached --quiet; then
+            echo "No state changes"
+          else
+            git commit -m "BEM-934 state transition: ${{ inputs.task_id }}"
+            git push
+          fi
