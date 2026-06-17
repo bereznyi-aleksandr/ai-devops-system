@@ -1,29 +1,20 @@
 {
-  "version": 2,
-  "updated_at": "2026-06-15T18:17:59Z",
-  "purpose": "BEM-932 live Telegram provider-router fallback test after operator confirmed Cloudflare deploy.",
+  "version": 3,
+  "updated_at": "2026-06-17T05:57:20Z",
+  "purpose": "BEM-934 clean provider status after removal of self-hosted Codex path.",
   "providers": {
-    "gpt_code": {
-      "status": "error",
-      "reason": "quota_exceeded",
-      "updated_at": "2026-06-13T17:45:00Z",
-      "last_failure_at": "2026-06-13T17:45:00Z",
-      "last_failure_type": "quota_exceeded",
-      "failure_count": 1,
-      "trace_id": "bem932_live_after_deploy_force_fallback",
-      "note": "Fresh global status intentionally forces provider_router to select claude_code for the next live Telegram trace."
-    },
     "claude_code": {
       "status": "ok",
-      "reason": "fallback target ready",
-      "updated_at": "2026-06-13T17:45:00Z",
-      "trace_id": "bem932_live_after_deploy_force_fallback"
+      "reason": "github_hosted_primary",
+      "workflow_id": "claude.yml",
+      "updated_at": "2026-06-17T05:57:20Z"
+    },
+    "gpt_codex_cloud": {
+      "status": "available",
+      "reason": "github_hosted_workflow_registered",
+      "workflow_id": "gpt-codex-cloud.yml",
+      "mode": "mechanical_fallback_until_openai_secret_and_model_are_configured",
+      "updated_at": "2026-06-17T05:57:20Z"
     }
-  },
-  "claude": {
-    "status": "completed",
-    "last_used": "2026-06-15T18:17:59Z",
-    "last_trace": "bem932_final_release_verdict_after_live_proofs",
-    "last_outcome": "success"
   }
 }
