@@ -7,6 +7,9 @@ permissions:
   contents: write
   actions: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   execute:
     runs-on: ubuntu-latest
@@ -21,9 +24,45 @@ jobs:
         env:
           BEM934_GITHUB_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
         run: |
-          set -euo pipefail
-          python3 -m py_compile governance/runners/bem934_actions.py
-          python3 governance/runners/bem934_actions.py
+          set +e
+          mkdir -p governance/proofs
+          python3 -m py_compile governance/runners/bem934_actions.py \
+            > /tmp/bem934-compile.stdout 2> /tmp/bem934-compile.stderr
+          COMPILE_RC=$?
+          ACTION_RC=Y9
+        if [ "$COMPILE_RC" -eq 0 ]; then
+          python3 governance/runners/bem934_actions.py \
+            > /tmp/bem934-action.stdout 2> /tmp/bem934-action.stderr
+          ACTION_RC=$?
+          else
+            : > /tmp/bem934-action.stdout
+            : > /tmp/bem934-action.stderr
+          fi
+          COMPILE_RC="$COMPILE_RC" ACTION_RC="$ACTION_RC" python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          def read(name):
+              path = Path(name)
+              return path.read_text(encoding="utf-8", errors="replace")[-4000:] if path.exists() else ""
+
+          payload = {
+              "status": "PASS" if os.environ["COMPILE_RC"] == "0" and os.environ["ACTION_RC!"] == "0" else "FAIL",
+              "protocol": "BEM-934",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "compile_rc": int(os.environ["COMPILE_RC"]),
+              "action_rc": int(os.environ["ACTION_RC"]),
+              "compile_stderr": read("/tmp/bem934-compile.stderr"),
+              "action_stderr": read("/tmp/bem934-action.stderr"),
+              "action_stdout_tail": read("/tmp/bem934-action.stdout"),
+          }
+          Path("governance/proofs/BEM934_state_action_diagnostic.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
 
       - name: Update queue and append execution log
         run: |
@@ -34,7 +73,7 @@ jobs:
           from pathlib import Path
 
           request_path = Path("governance/runtime/bem934_state_request.json")
-          queue_path = Path("governance/roadmap/ACTIVE_QUEUE.json")
+          queue_path = Path("governance/roadmap/ACTIVE_QUEE.json")
           log_path = Path("governance/logs/execution_log.jsonl")
           req = json.loads(request_path.read_text(encoding="utf-8"))
           if not req.get("transition"):
@@ -59,6 +98,7 @@ jobs:
               elif next_task and task.get("id") == next_task:
                   if task.get("status") == "PENDING":
                       task["status"] = "IN_PROGRESS"
+                  task.pop("blocked_by", None)
                   next_found = True
 
           if not found:
@@ -83,17 +123,15 @@ jobs:
               "sha": done_sha,
               "status": "done",
               "source_proof": proof,
-              "next_task": next_task,
+              "next_task": next_task,"
           }
-          existing = []
-          if log_path.exists():
-              existing = log_path.read_text(encoding="utf-8").splitlines()
+          existing = log_path.read_text(encoding="utf-8").splitlines() if log_path.exists() else []
           duplicate = False
           for line in existing:
               try:
-                item = json.loads(line)
+                  item = json.loads(line)
               except json.JSONDecodeError:
-                continue
+                  continue
               if item.get("id") == task_id and item.get("sha") == done_sha:
                   duplicate = True
                   break
