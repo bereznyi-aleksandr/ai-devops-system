@@ -1,8 +1,8 @@
 {
-  "version": 28,
-  "updated_at": "2026-06-17T05:53:25Z",
+  "version": 29,
+  "updated_at": "2026-06-17T05:57:23Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM934-GPT-CLOUD-PATH",
+  "current_task": "BEM934-ROUTER-RENAME-FIX",
   "system_status": "BEM934_IN_PROGRESS",
   "release_status": "FOLLOW_UP_REQUIRED",
   "protocol": "BEM-934",
@@ -38,13 +38,15 @@
     {
       "id": "BEM934-PROVIDER-CONFIG-UPDATE",
       "title": "Register cloud provider and disable local provider",
-      "status": "PENDING",
-      "priority": 4
+      "status": "DONE",
+      "priority": 4,
+      "done_sha": "149fa975d5311b205e8f45b29bcac76bae7405bf",
+      "proof": "governance/proofs/BEM934_provider_config_update_receipt.json"
     },
     {
       "id": "BEM934-ROUTER-RENAME-FIX",
       "title": "Normalize provider status keys",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 5
     },
     {
@@ -65,9 +67,9 @@
     "BEM934-LIVE-TEST",
     "BEM934-CLOSE"
   ],
-  "next_action": "BEM934-GPT-CLOUD-PATH — execute",
+  "next_action": "BEM934-ROUTER-RENAME-FIX — execute",
   "last_completed": {
-    "id": "BEM934-DEPRECATE-SELFHOSTED",
-    "completed_at": "2026-06-17T05:53:25Z"
+    "id": "BEM934-PROVIDER-CONFIG-UPDATE",
+    "completed_at": "2026-06-17T05:57:23Z"
   }
 }
