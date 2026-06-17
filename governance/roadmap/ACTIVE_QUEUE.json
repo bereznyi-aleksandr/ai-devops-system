@@ -1,6 +1,6 @@
 {
-  "version": 34,
-  "updated_at": "2026-06-17T06:14:30Z",
+  "version": 35,
+  "updated_at": "2026-06-17T18:01:00Z",
   "queue_state": "ACTIVE",
   "current_task": "BEM934-OBJECTS-BOUND",
   "system_status": "BEM934_IN_PROGRESS",
@@ -10,7 +10,11 @@
   "batch": "2/2",
   "operator_gate": {
     "authorized_at": "2026-06-17T05:45:23Z",
-    "scope": "Execute BEM-934 autonomously without stops"
+    "scope": "Execute BEM-934 autonomously without stops",
+    "authorized_by": "operator",
+    "source": "current_chat_operator_message",
+    "exact_quote": "Возьми в работу протокол, выполни его согласно контракта, выполняй разработку автономно, без остановки.",
+    "self_assigned": false
   },
   "completed_summary": {
     "tasks_done": 7,
@@ -21,7 +25,8 @@
       "governance/proofs/BEM934_provider_config_update_receipt.json",
       "governance/proofs/BEM934_router_rename_fix_receipt.json",
       "governance/proofs/BEM934_prompt_assembler_reconnect_receipt.json",
-      "governance/proofs/BEM934_stage_runner_reconnect_receipt.json"
+      "governance/proofs/BEM934_stage_runner_reconnect_receipt.json",
+      "governance/proofs/BEM934_auditor_handle_pre_regression_receipt.json"
     ]
   },
   "tasks": [
