@@ -70,6 +70,27 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
+      # BEM-934 prompt assembler bridge
+      - name: Assemble governed role prompt
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          INPUT_ROLE: ${{ inputs.role }}
+        run: |
+          set -euo pipefail
+          case "$INPUT_ROLE" in
+            curator) ELEMENT_ID="WRK.CURATOR" ;;
+            analyst) ELEMENT_ID="WRK.ANALYST" ;;
+            auditor) ELEMENT_ID="WRK.AUDITOR" ;;
+            executor) ELEMENT_ID="WRK.EXECUTOR" ;;
+            *) echo "Unsupported role: $INPUT_ROLE"; exit 2 ;;
+          esac
+          OUT="$RUNNER_TEMP/assembled_role_prompt.md"
+          python3 -m py_compile scripts/prompt_assembler.py
+          python3 scripts/prompt_assembler.py --element-id "$ELEMENT_ID" --out "$OUT"
+          test -s "$OUT"
+          echo "ASSEMBLED_ROLE_PROMPT=$OUT" >> "$GITHUB_ENV"
+
       - name: Build Claude role prompt
         if: github.event_name == 'workflow_dispatch'
         shell: bash
@@ -93,8 +114,19 @@ jobs:
           cycle_id  = os.environ.get('INPUT_CYCLE_ID', '')
           task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
           task      = os.environ.get('INPUT_TASK', '')
+          # BEM-934 governed prompt bridge
+          assembled_path = os.environ.get('ASSEMBLED_ROLE_PROMPT', '')
+          assembled_text = (
+              Path(assembled_path).read_text(encoding='utf-8').strip()
+              if assembled_path and Path(assembled_path).exists()
+              else ''
+          )
 
           parts = [
+              '# BEM-934 GOVERNED ASSEMBLED ROLE PROMPT',
+              '',
+              assembled_text,
+              '',
               'BEM-CLAUDE-ROLE | ' + role.upper(),
               '',
               'You are running inside the repo-side Cloud/Claude Code role adapter for ai-devops-system.',
