@@ -188,7 +188,7 @@ jobs:
 
       - name: Run Claude Code role
         id: claude_role
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && inputs.task_type != 'object_runtime_binding'
         continue-on-error: true
         uses: anthropics/claude-code-action@v1
         with:
@@ -196,6 +196,20 @@ jobs:
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           prompt_file: ${{ env.PROMPT_FILE }}
           claude_args: '--max-turns 10 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
+
+      - name: Run Claude Code binding role with structured output
+        id: claude_binding_role
+        if: github.event_name == 'workflow_dispatch' && inputs.task_type == 'object_runtime_binding'
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          prompt_file: ${{ env.PROMPT_FILE }}
+          claude_args: >-
+            --max-turns 10
+            --allowedTools "Read,Glob,Grep"
+            --json-schema '{"type":"object","properties":{"objective":{"type":"string"},"assumptions":{"type":"array","items":{"type":"string"}},"steps":{"type":"array","items":{"type":"string"},"minItems":3},"acceptance":{"type":"array","items":{"type":"string"},"minItems":2},"risks":{"type":"array","items":{"type":"string"}},"trace_id":{"type":"string"}},"required":["objective","assumptions","steps","acceptance","risks","trace_id"],"additionalProperties":false}'
 
       - name: Run Claude Code legacy
         id: claude_legacy
@@ -207,11 +221,11 @@ jobs:
           claude_args: --max-turns 10
 
       # BEM-488: YAML-safe — Python lines join instead of f-string multiline
-      - name: Materialize BEM-934 binding plan from Claude result
-        if: ${{ inputs.task_type == 'object_runtime_binding' && steps.claude_role.outcome == 'success' }}
+      - name: Materialize BEM-934 binding plan from Claude structured output
+        if: ${{ inputs.task_type == 'object_runtime_binding' && steps.claude_binding_role.outcome == 'success' }}
         shell: bash
         env:
-          EXECUTION_FILE: ${{ steps.claude_role.outputs.execution_file }}
+          STRUCTURED_OUTPUT: ${{ steps.claude_binding_role.outputs.structured_output }}
           TRACE_ID: ${{ inputs.trace_id }}
         run: |
           set -euo pipefail
@@ -219,13 +233,11 @@ jobs:
           python3 - <<'PY'
           import json
           import os
-          import re
           from datetime import datetime, timezone
           from pathlib import Path
 
-          execution_raw = os.environ.get("EXECUTION_FILE", "").strip()
-          execution_path = Path(execution_raw) if execution_raw else None
           trace_id = os.environ.get("TRACE_ID", "").strip()
+          structured_raw = os.environ.get("STRUCTURED_OUTPUT", "").strip()
           receipt_path = Path("governance/proofs/BEM934_claude_result_materialization_receipt.json")
           plan_path = Path("governance/proofs/BEM934_object_binding_plan.json")
 
@@ -244,7 +256,7 @@ jobs:
               "task_id": "BEM934-OBJECTS-BOUND",
               "created_at": now(),
               "trace_id": trace_id,
-              "execution_file_available": bool(execution_path and execution_path.is_file()),
+              "structured_output_available": bool(structured_raw),
               "checks": {},
               "missing": [],
           }
@@ -253,52 +265,17 @@ jobs:
               receipt["blocker"] = "trace_id_missing"
               write_receipt(receipt)
               raise SystemExit(0)
-          if execution_path is None or not execution_path.is_file():
-              receipt["blocker"] = "execution_file_missing"
+          if not structured_raw:
+              receipt["blocker"] = "structured_output_missing"
+              receipt["missing"] = ["structured_output_available"]
               write_receipt(receipt)
               raise SystemExit(0)
 
-          result_text = None
-          for raw_line in execution_path.read_text(encoding="utf-8", errors="replace").splitlines():
-              raw_line = raw_line.strip()
-              if not raw_line:
-                  continue
-              try:
-                  event = json.loads(raw_line)
-              except json.JSONDecodeError:
-                  continue
-              if isinstance(event, dict) and event.get("type") == "result":
-                  value = event.get("result")
-                  if isinstance(value, str) and value.strip():
-                      result_text = value.strip()
-
-          receipt["checks"]["final_result_event_present"] = bool(result_text)
-          if not result_text:
-              receipt["blocker"] = "claude_final_result_missing"
-              receipt["missing"] = ["final_result_event_present"]
-              write_receipt(receipt)
-              raise SystemExit(0)
-
-          candidates = [result_text]
-          fenced = re.findall(r"```(?:json)?\s*(\{.*?\})\s*```", result_text, flags=re.S | re.I)
-          candidates.extend(fenced)
-          start, end = result_text.find("{"), result_text.rfind("}")
-          if start >= 0 and end > start:
-              candidates.append(result_text[start:end + 1])
-
-          plan = None
-          for candidate in candidates:
-              try:
-                  parsed = json.loads(candidate)
-              except json.JSONDecodeError:
-                  continue
-              if isinstance(parsed, dict):
-                  plan = parsed
-                  break
-
-          receipt["checks"]["strict_json_object_parsed"] = isinstance(plan, dict)
-          if not isinstance(plan, dict):
-              receipt["blocker"] = "claude_result_not_strict_json"
+          try:
+              plan = json.loads(structured_raw)
+          except json.JSONDecodeError as error:
+              receipt["blocker"] = "structured_output_not_strict_json"
+              receipt["json_error"] = str(error)
               receipt["missing"] = ["strict_json_object_parsed"]
               write_receipt(receipt)
               raise SystemExit(0)
@@ -308,19 +285,26 @@ jobs:
           acceptance = plan.get("acceptance")
           text = json.dumps(plan, ensure_ascii=False).lower()
           checks = {
+              "strict_json_object_parsed": isinstance(plan, dict),
               "required_fields_present": all(field in plan for field in required),
               "trace_matches": plan.get("trace_id") == trace_id,
-              "steps_are_task_specific": isinstance(steps, list) and len([x for x in steps if str(x).strip()]) >= 3,
-              "acceptance_is_verifiable": isinstance(acceptance, list) and len([x for x in acceptance if str(x).strip()]) >= 2,
+              "steps_are_task_specific": isinstance(steps, list)
+                  and len([item for item in steps if str(item).strip()]) >= 3,
+              "acceptance_is_verifiable": isinstance(acceptance, list)
+                  and len([item for item in acceptance if str(item).strip()]) >= 2,
               "mentions_wrk_c1": "wrk-c1" in text or "wrk_c1" in text,
               "mentions_claude_provider": "claude" in text,
-              "mentions_object_runtime_binding": all(term in text for term in ("object", "runtime", "binding")),
-              "mentions_idempotent_telegram_routing": all(term in text for term in ("idempotent", "telegram", "routing")),
+              "mentions_object_runtime_binding": all(
+                  term in text for term in ("object", "runtime", "binding")
+              ),
+              "mentions_idempotent_telegram_routing": all(
+                  term in text for term in ("idempotent", "telegram", "routing")
+              ),
           }
-          receipt["checks"].update(checks)
-          receipt["missing"] = [key for key, value in receipt["checks"].items() if not value]
+          receipt["checks"] = checks
+          receipt["missing"] = [key for key, value in checks.items() if not value]
           if receipt["missing"]:
-              receipt["blocker"] = "claude_plan_semantic_validation_failed"
+              receipt["blocker"] = "claude_structured_plan_semantic_validation_failed"
               write_receipt(receipt)
               raise SystemExit(0)
 
@@ -331,8 +315,8 @@ jobs:
           receipt.update({
               "status": "PASS",
               "plan_path": str(plan_path),
-              "execution_file_committed": False,
-              "raw_execution_log_retained_ephemerally_only": True,
+              "raw_execution_log_committed": False,
+              "source": "claude_code_action_structured_output",
           })
           receipt.pop("blocker", None)
           write_receipt(receipt)
@@ -346,11 +330,12 @@ jobs:
             git add governance/proofs/BEM934_object_binding_plan.json
           fi
           if git diff --cached --quiet; then
-            echo "No materialized Claude proof changes"
+            echo "No structured Claude proof changes"
           else
             git commit -m "Materialize BEM-934 Claude binding proof trace=${{ inputs.trace_id }}"
             git push || (git pull --rebase origin main && git push)
           fi
+
 
       - name: Write final result to transport
         if: always() && github.event_name == 'workflow_dispatch'
@@ -359,7 +344,7 @@ jobs:
           ROLE_RAW:       ${{ env.ROLE_RAW }}
           TRACE_ID:       ${{ env.TRACE_ID }}
           CYCLE_ID:       ${{ env.CYCLE_ID }}
-          CLAUDE_OUTCOME: ${{ steps.claude_role.outcome }}
+          CLAUDE_OUTCOME: ${{ inputs.task_type == 'object_runtime_binding' && steps.claude_binding_role.outcome || steps.claude_role.outcome }}
         run: |
           python3 - <<'PYEOF'
           import json, os, subprocess
