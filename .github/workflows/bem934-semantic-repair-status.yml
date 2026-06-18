@@ -1,0 +1,34 @@
+name: BEM934 Semantic Repair Status
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture wrapper and Claude statuses
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-status@ai-devops-system"
+          git config user.name "BEM-934 Repair Status"
+          mkdir -p governance/proofs
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow bem934-live-semantic-repair-dispatch.yml --limit 5 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > /tmp/wrapper.json
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow claude.yml --limit 5 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > /tmp/claude.json
+          python3 -c 'import json; from pathlib import Path; out={"task_id":"BEM934-LIVE-TEST","wrapper_runs":json.load(open("/tmp/wrapper.json")),"claude_runs":json.load(open("/tmp/claude.json"))}; Path("governance/proofs/BEM934_semantic_repair_status.json").write_text(json.dumps(out,indent=2)+"\n")'
+          git add governance/proofs/BEM934_semantic_repair_status.json
+          git commit -m "Capture BEM-934 semantic repair status" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
