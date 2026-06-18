@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-PROMPT-OUTPUT-DELIMITER-REPAIR",
+  "created_at": "2026-06-18T05:11:54Z",
+  "action": "repair_prompt_output_delimiter",
+  "checks": {
+    "load_prompt_step_present": true,
+    "prompt_file_is_read": true,
+    "delimiter_header_present": true,
+    "delimiter_forced_to_new_line": true,
+    "unsafe_echo_delimiter_absent": true,
+    "official_prompt_input_present": true
+  },
+  "missing": [],
+  "old_occurrences_repaired": 1,
+  "source_commit_sha": "68e12c9b5c1661ea33f7dbc285178bdbd1dc1565",
+  "workflow_path": ".github/workflows/claude.yml",
+  "delimiter": "BEM934_PROMPT_EOF"
+}
