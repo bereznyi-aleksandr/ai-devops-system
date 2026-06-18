@@ -72,5 +72,8 @@
       "Concurrent WRK probe race condition: bem934_objects_bound_runner may dispatch the WRK probe before the DIR binding registry write commits. Risk: objects_registry_v2.json write conflict or WRK probe reads stale DIR status=PENDING_RUNTIME_BINDING. Mitigation: Step 7 enforces sequential dispatch — WRK probe must not be queued until DIR entry shows status=BOUND in objects_registry_v2.json and the registry commit SHA is recorded in DIR_runtime_binding.json.",
       "DIR-C1 and DIR-C2 channel file absence: governance/channels/DIR-C1.jsonl and DIR-C2.jsonl may not exist on disk. Risk: Step 3 channel-write verification fails with FileNotFoundError. Mitigation: Step 3 creates channel files if absent before writing and records channel_created=True in the evidence block. Absence is treated as cold-start binding for DIR contours, not a fatal error."
     ]
-  }
+  },
+  "snapshot_path": "governance/proofs/bem934_objects_bound/DIR_runtime_binding.json",
+  "snapshot_commit_sha": "e11bccc35ec762cd7194356535d64fa25ea9d988",
+  "snapshot_blob_sha": "804844d3b0b97a31ed059793065b5921c5b6ee62"
 }
