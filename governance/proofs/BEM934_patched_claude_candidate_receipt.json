@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-LIVE-TEST",
+  "source_claude_blob_sha": "1f5e70289ade86a83c660fcc8d45083fb748a925",
+  "candidate_blob_sha": "3eeaa9d26e8259b21b472e5a3bfb56fb89e4acd5",
+  "candidate_path": "governance/proofs/BEM934_patched_claude_candidate.yml",
+  "checks": {
+    "patcher_compiled": true,
+    "yaml_parsed": true,
+    "dynamic_trace_path": true,
+    "dynamic_router_path": true
+  }
+}
