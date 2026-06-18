@@ -219,7 +219,7 @@ jobs:
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           prompt: ${{ steps.load_prompt.outputs.prompt }}
           claude_args: >-
-            --max-turns 10
+            --max-turns 30
             --allowedTools "Read,Glob,Grep"
             --json-schema '{"type":"object","properties":{"objective":{"type":"string"},"assumptions":{"type":"array","items":{"type":"string"}},"steps":{"type":"array","items":{"type":"string"},"minItems":3},"acceptance":{"type":"array","items":{"type":"string"},"minItems":2},"risks":{"type":"array","items":{"type":"string"}},"trace_id":{"type":"string"}},"required":["objective","assumptions","steps","acceptance","risks","trace_id"],"additionalProperties":false}'
 
