@@ -1,0 +1,127 @@
+name: BEM-934 Binding Latest Inspector
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Inspect latest V2 binding run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          token = os.environ["GH_TOKEN"]
+          headers = {
+              "Authorization": f"Bearer {token}",
+              "Accept": "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "User-Agent": "bem934-binding-latest-inspector",
+          }
+
+          def get(url: str):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req, timeout=60) as response:
+                  return json.loads(response.read().decode("utf-8"))
+
+          workflow = ".github/workflows/bem934-object-binding-proof-v2.yml"
+          encoded = urllib.parse.quote(workflow, safe="")
+          runs = get(
+              f"https://api.github.com/repos/{repo}/actions/workflows/"
+              f"{encoded}/runs?branch=main&event=workflow_dispatch&per_page=10"
+          )
+          candidates = [
+              item for item in runs.get("workflow_runs", [])
+              if item.get("name") == "BEM-934 Object Binding Proof V2"
+          ]
+          if not candidates:
+              payload = {
+                  "status": "BLOCKED",
+                  "protocol": "BEM-934",
+                  "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                  "blocker": "no_v2_binding_runs_found",
+                  "missing": ["workflow_run"],
+              }
+          else:
+              run = candidates[0]
+              jobs_raw = get(
+                  f"https://api.github.com/repos/{repo}/actions/runs/{run['id']}/jobs?per_page=100"
+              )
+              jobs = []
+              for job in jobs_raw.get("jobs", []):
+                  jobs.append({
+                      "id": job.get("id"),
+                      "name": job.get("name"),
+                      "status": job.get("status"),
+                      "conclusion": job.get("conclusion"),
+                      "started_at": job.get("started_at"),
+                      "completed_at": job.get("completed_at"),
+                      "steps": [
+                          {
+                              "number": step.get("number"),
+                              "name": step.get("name"),
+                              "status": step.get("status"),
+                              "conclusion": step.get("conclusion"),
+                          }
+                          for step in job.get("steps", [])
+                      ],
+                  })
+              payload = {
+                  "status": "PASS",
+                  "protocol": "BEM-934",
+                  "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                  "workflow_path": workflow,
+                  "run": {
+                      "id": run.get("id"),
+                      "run_number": run.get("run_number"),
+                      "status": run.get("status"),
+                      "conclusion": run.get("conclusion"),
+                      "head_sha": run.get("head_sha"),
+                      "created_at": run.get("created_at"),
+                      "updated_at": run.get("updated_at"),
+                      "run_started_at": run.get("run_started_at"),
+                  },
+                  "jobs": jobs,
+                  "missing": [],
+              }
+
+          Path("governance/proofs/BEM934_binding_latest_run_inspection.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit inspection
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-binding-inspector@ai-devops-system"
+          git config user.name "BEM-934 Binding Inspector"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM934_binding_latest_run_inspection.json
+          if git diff --cached --quiet; then
+            echo "No inspection changes"
+          else
+            git commit -m "Inspect latest BEM-934 V2 binding run"
+            git push || (git pull --rebase origin main && git push)
+          fi
