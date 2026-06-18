@@ -1,7 +1,10 @@
 {
   "schema_version": "1.0",
   "registry_id": "objects_registry_v2",
-  "protocol": "BEM-931 v3.6",
+  "protocol": "BEM-934",
+  "status": "BOUND",
+  "bound_at": "2026-06-18T10:09:30Z",
+  "object_chain": "GD -> DIR -> WRK",
   "objects": [
     {
       "object_id": "GD",
@@ -10,7 +13,21 @@
       "contours": [
         "GD-C1",
         "GD-C2"
-      ]
+      ],
+      "status": "BOUND",
+      "runtime_binding": {
+        "status": "BOUND",
+        "trace_id": "bem934_objects_bound_27750274693_gd_a1",
+        "provider": "claude",
+        "workflow": ".github/workflows/claude.yml",
+        "source_receipt_path": "governance/proofs/BEM934_claude_result_materialization_receipt.json",
+        "source_receipt_blob_sha": "1a677515032d2484f2ddffa5e57bb5905b90c34b",
+        "source_plan_path": "governance/proofs/BEM934_object_binding_plan.json",
+        "source_plan_blob_sha": "0abba2157fb159392a96cd6f6325492b26a23211",
+        "source_commit_sha": "19a493c2230d120d9bce32d2944596186e68b3dc",
+        "snapshot_path": "governance/proofs/bem934_objects_bound/GD_runtime_binding.json",
+        "snapshot_blob_sha": "c356316c7d9d3cb74532fe77adb6b8674e5e621b"
+      }
     },
     {
       "object_id": "DIR",
@@ -19,7 +36,21 @@
       "contours": [
         "DIR-C1",
         "DIR-C2"
-      ]
+      ],
+      "status": "BOUND",
+      "runtime_binding": {
+        "status": "BOUND",
+        "trace_id": "bem934_objects_bound_27750274693_dir_a2",
+        "provider": "claude",
+        "workflow": ".github/workflows/claude.yml",
+        "source_receipt_path": "governance/proofs/BEM934_claude_result_materialization_receipt.json",
+        "source_receipt_blob_sha": "96eff12280a9fe6a99ce29079c4f7c2b9dcb7b55",
+        "source_plan_path": "governance/proofs/BEM934_object_binding_plan.json",
+        "source_plan_blob_sha": "5304c08d5a23cf22454804200bcf744efb942761",
+        "source_commit_sha": "f201f24770b6987f8464de7498d7b16ec5cf2619",
+        "snapshot_path": "governance/proofs/bem934_objects_bound/DIR_runtime_binding.json",
+        "snapshot_blob_sha": "7c544783cda3abe08f9877368d59530c9ad96a46"
+      }
     },
     {
       "object_id": "WRK",
@@ -29,13 +60,50 @@
         "WRK-C1",
         "WRK-C2",
         "WRK-C3"
-      ]
+      ],
+      "status": "BOUND",
+      "runtime_binding": {
+        "status": "BOUND",
+        "trace_id": "bem934_objects_bound_repair_27751086692_wrk",
+        "provider": "claude",
+        "workflow": ".github/workflows/claude.yml",
+        "source_receipt_path": "governance/proofs/BEM934_claude_result_materialization_receipt.json",
+        "source_receipt_blob_sha": "0a1f468aa975b00ae5546ccbd4b8e7f9e6438b95",
+        "source_plan_path": "governance/proofs/BEM934_object_binding_plan.json",
+        "source_plan_blob_sha": "d10197e73086c58b0aa6213c312cad3eeb6eafee",
+        "source_execution_commit_sha": "b907bccbb4b18dbd00751f9f1c18ae69ccbc1fa1",
+        "source_report_path": "governance/reports/bem934_objects_bound_repair_27751086692_wrk.md",
+        "source_report_blob_sha": "a56a37b2364988e5ba154d7cc3e4ab9153394e61",
+        "canonicalization_commits": [
+          "1189c70852088c0f9f6453c7b66cf1a17f88abdc",
+          "e1014853ddfaeaabbdd7c8e78e67dd90ea555352"
+        ],
+        "snapshot_path": "governance/proofs/bem934_objects_bound/WRK_runtime_binding.json",
+        "snapshot_blob_sha": "8488faa40b34f34283f5572f3b63ac9fc5469e99",
+        "snapshot_commit_sha": "e2872f13e14641823b39f68678f2bb26ba728da6"
+      }
     }
   ],
-  "status": "PENDING_RUNTIME_BINDING",
+  "binding_evidence": {
+    "task_id": "BEM934-OBJECTS-BOUNCD",
+    "provider": "claude",
+    "workflow": ".github/workflows/claude.yml",
+    "full_path": true,
+    "smoke_only": false,
+    "three_distinct_trace_ids": true,
+    "shared_materialization_race_recovered": true,
+    "gpt_codex_cloud_mode": "mechanical_fallback",
+    "gpt_codex_cloud_claimed_llm_capable": false,
+    "object_snapshot_paths": [
+      "governance/proofs/bem934_objects_bound/GD_runtime_binding.json",
+      "governance/proofs/bem934_objects_bound/DIR_runtime_binding.json",
+      "governance/proofs/bem934_objects_bound/WRK_runtime_binding.json"
+    ]
+  },
   "notes": [
     "WRK-C1, WRK-C2, WRK-C3 are internal worker contours, not role names.",
     "Each internal contour contains ANALYST, AUDITOR, EXECUTOR roles.",
-    "Legacy WRK.ANALYSIS_CONTOUR/WRK.AUDIT_CONTOUR/WRK.EXECUTION_CONTOUR must not be used as canonical contours."
+    "Legacy WRK.ANALYSIS_CONTOUR/WRK.AUDIT_CONTOUR/WRK.EXECUTION_CONTOUR must not be used as canonical contours.",
+    "Binding authority is the per-object Claude runtime evidence, not stale runtime_provider fields in passports."
   ]
 }
