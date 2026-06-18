@@ -1,31 +1,31 @@
 {
   "version": 1,
-  "updated_at": "2026-06-18T18:37:30Z",
+  "updated_at": "2026-06-18T19:10:00Z",
   "queue_state": "COMPLETE",
   "current_task": null,
-  "system_status": "BEM937_COMPLETE",
+  "system_status": "BEM938_COMPLETE",
   "release_status": "PASS",
-  "protocol": "BEM-937",
-  "source": "governance/protocols/BEM937_LEGACY_WORKFLOW_SYNTAX_HARDENING.md",
+  "protocol": "BEM-938",
+  "source": "governance/protocols/BEM938_GD_OBJECT_RUNTIME.md",
   "completed_summary": {
     "tasks_done": 4,
     "tasks_total": 4,
     "percent": 100,
     "proofs": [
-      "governance/proofs/BEM937_legacy_workflow_syntax_repair_receipt.json",
-      "governance/proofs/BEM937_legacy_workflow_dispatch_smoke_receipt.json",
-      "governance/proofs/BEM937_workflow_syntax_guard_receipt.json",
-      "governance/proofs/BEM937_FINAL_VERIFICATION_PASS.json"
+      "governance/proofs/BEM938_object_runner_receipt.json",
+      "governance/proofs/BEM938_gd_runtime_binding_receipt.json",
+      "governance/proofs/BEM938_internal_dispatch_e2e_receipt.json",
+      "governance/proofs/BEM938_FINAL_VERIFICATION_PASS.json"
     ]
   },
   "tasks": [
     {
-      "id": "BEM937-P0-LEGACY-WORKFLOW-SYNTAX-REPAIR",
-      "title": "Repair invalid legacy BEM-934 workflow YAML files",
+      "id": "BEM938-P0-OBJECT-RUNNER",
+      "title": "Implement object_runner.py runtime",
       "status": "DONE",
       "priority": 1,
-      "receipt": "governance/proofs/BEM937_legacy_workflow_syntax_repair_receipt.json",
-      "completed_at": "2026-06-18T18:36:30Z",
+      "receipt": "governance/proofs/BEM938_object_runner_receipt.json",
+      "completed_at": "2026-06-18T19:10:00Z",
       "stage_progress": {
         "tasks_done": 1,
         "tasks_total": 4,
@@ -33,12 +33,12 @@
       }
     },
     {
-      "id": "BEM937-P1-LEGACY-WORKFLOW-DISPATCH-SMOKE",
-      "title": "Dispatch repaired legacy workflows to verify API acceptance",
+      "id": "BEM938-P1-GD-RUNTIME-BINDING",
+      "title": "Bind OBJ-GD-001 to runtime state and events",
       "status": "DONE",
       "priority": 2,
-      "receipt": "governance/proofs/BEM937_legacy_workflow_dispatch_smoke_receipt.json",
-      "completed_at": "2026-06-18T18:36:45Z",
+      "receipt": "governance/proofs/BEM938_gd_runtime_binding_receipt.json",
+      "completed_at": "2026-06-18T19:10:00Z",
       "stage_progress": {
         "tasks_done": 2,
         "tasks_total": 4,
@@ -46,12 +46,12 @@
       }
     },
     {
-      "id": "BEM937-P2-WORKFLOW-SYNTAX-GUARD",
-      "title": "Install workflow syntax guard runner",
+      "id": "BEM938-P2-INTERNAL-DISPATCH-E2E",
+      "title": "Route GD object task through dispatch queue and curator router",
       "status": "DONE",
       "priority": 3,
-      "receipt": "governance/proofs/BEM937_workflow_syntax_guard_receipt.json",
-      "completed_at": "2026-06-18T18:37:01Z",
+      "receipt": "governance/proofs/BEM938_internal_dispatch_e2e_receipt.json",
+      "completed_at": "2026-06-18T19:10:00Z",
       "stage_progress": {
         "tasks_done": 3,
         "tasks_total": 4,
@@ -59,12 +59,12 @@
       }
     },
     {
-      "id": "BEM937-P3-QUEUE-FINAL-VERIFY",
-      "title": "Finalize queue and verify receipts",
+      "id": "BEM938-P3-FINAL-VERIFY",
+      "title": "Finalize and verify BEM-938 roadmap",
       "status": "DONE",
       "priority": 4,
-      "receipt": "governance/proofs/BEM937_FINAL_VERIFICATION_PASS.json",
-      "completed_at": "2026-06-18T18:37:30Z",
+      "receipt": "governance/proofs/BEM938_FINAL_VERIFICATION_PASS.json",
+      "completed_at": "2026-06-18T19:10:00Z",
       "stage_progress": {
         "tasks_done": 4,
         "tasks_total": 4,
@@ -73,9 +73,9 @@
     }
   ],
   "last_completed": {
-    "id": "BEM937-P3-QUEUE-FINAL-VERIFY",
-    "completed_at": "2026-06-18T18:37:30Z",
-    "receipt": "governance/proofs/BEM937_FINAL_VERIFICATION_PASS.json"
+    "id": "BEM938-P3-FINAL-VERIFY",
+    "completed_at": "2026-06-18T19:10:00Z",
+    "receipt": "governance/proofs/BEM938_FINAL_VERIFICATION_PASS.json"
   },
   "next_action": null
 }
