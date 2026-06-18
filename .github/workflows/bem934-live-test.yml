@@ -1,0 +1,26 @@
+name: BEM934 Content-Bearing Telegram Live E2E
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Execute content-bearing Telegram live test
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$TELEGRAM_BOT_TOKEN"
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          python3 -m py_compile governance/runners/bem934_live_test_runner.py
+          python3 governance/runners/bem934_live_test_runner.py
