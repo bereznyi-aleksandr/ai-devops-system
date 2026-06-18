@@ -1,8 +1,8 @@
 {
-  "version": 36,
-  "updated_at": "2026-06-18T10:12:20Z",
+  "version": 37,
+  "updated_at": "2026-06-18T10:31:57Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM934-LIVE-TEST",
+  "current_task": "BEM934-CLOSE",
   "system_status": "BEM934_IN_PROGRESS",
   "release_status": "FOLLOW_UP_REQUIRED",
   "protocol": "BEM-934",
@@ -17,7 +17,7 @@
     "self_assigned": false
   },
   "completed_summary": {
-    "tasks_done": 8,
+    "tasks_done": 9,
     "tasks_total": 10,
     "proofs": [
       "governance/proofs/BEM934_deprecate_selfhosted_receipt.json",
@@ -27,7 +27,8 @@
       "governance/proofs/BEM934_prompt_assembler_reconnect_receipt.json",
       "governance/proofs/BEM934_stage_runner_reconnect_receipt.json",
       "governance/proofs/BEM934_auditor_handle_pre_regression_receipt.json",
-      "governance/proofs/BEM934_objects_bound_receipt.json"
+      "governance/proofs/BEM934_objects_bound_receipt.json",
+      "governance/proofs/BEM934_live_test_receipt.json"
     ]
   },
   "tasks": [
@@ -43,23 +44,23 @@
     {
       "id": "BEM934-LIVE-TEST",
       "title": "Content-bearing Telegram E2E through provider-router to Claude",
-      "status": "IN_PROGRESS",
-      "priority": 9
+      "status": "DONE",
+      "priority": 9,
+      "done_sha": "24ceef191e06c7bfa702792bc76e42e4888b1ea4",
+      "receipt": "governance/proofs/BEM934_live_test_receipt.json",
+      "completed_at": "2026-06-18T10:31:57Z"
     },
     {
       "id": "BEM934-CLOSE",
       "title": "Update canonical context/status and obtain external auditor approval",
-      "status": "PENDING",
-      "priority": 10,
-      "blocked_by": [
-        "BEM934-LIVE-TEST"
-      ]
+      "status": "IN_PROGRESS",
+      "priority": 10
     }
   ],
   "last_completed": {
-    "id": "BEM934-OBJECTS-BOUND",
-    "completed_at": "2026-06-18T10:12:05Z",
-    "done_sha": "7a57afea15e110a1424e37f3fa294ce21094537a"
+    "id": "BEM934-LIVE-TEST",
+    "completed_at": "2026-06-18T10:31:57Z",
+    "done_sha": "24ceef191e06c7bfa702792bc76e42e4888b1ea4"
   },
-  "next_action": "BEM934-LIVE-TEST — execute content-bearing Telegram -> Cloudflare Worker -> provider-router.yml -> claude.yml E2E and capture provider_selected"
+  "next_action": "BEM934-CLOSE — update canonical context/status, remove self-hosted runtime claims, and request external Claude auditor verdict"
 }
