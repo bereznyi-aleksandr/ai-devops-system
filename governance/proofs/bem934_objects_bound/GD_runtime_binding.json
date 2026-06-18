@@ -72,5 +72,8 @@
       "Chain probe ordering dependency: dispatch_probe for GD, DIR, WRK runs sequentially in objects_bound_runner. GD probe failure (after 3 retries) raises RuntimeError and aborts DIR and WRK probes. Mitigation: confirm claude_code status=ok and prior failure was transient before dispatching; Step 1 includes provider health pre-check.",
       "Registry write conflict under concurrent runs: objects_registry_v2.json could be corrupted by parallel workflows. Mitigation: write_binding uses git pull --rebase --autostash before write and retries push on CalledProcessError conflict — provides optimistic concurrency control."
     ]
-  }
+  },
+  "snapshot_path": "governance/proofs/bem934_objects_bound/GD_runtime_binding.json",
+  "snapshot_commit_sha": "3c63c37e37949ce5395e2edf37dd98757d531703",
+  "snapshot_blob_sha": "6ecfb04be14ed930f8718739b150fb4643db3a03"
 }
