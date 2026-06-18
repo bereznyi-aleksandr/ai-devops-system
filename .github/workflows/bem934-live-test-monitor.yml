@@ -22,14 +22,36 @@ jobs:
           git config user.email "bem934-monitor@ai-devops-system"
           git config user.name "BEM-934 Live Monitor"
           mkdir -p governance/proofs
-          gh run list --repo "$GITHUB_REPOSITORY" --workflow bem934-live-test.yml --limit 3 --json databaseId,status,conclusion,createdAt,updatedAt,url,displayTitle,headSha > /tmp/runs.json
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow bem934-live-test.yml --limit 3             --json databaseId,status,conclusion,createdAt,updatedAt,url,displayTitle,headSha > /tmp/runs.json
+          RUN_ID="$(python3 - <<'PY'
+import json
+runs=json.load(open('/tmp/runs.json'))
+print(runs[0]['databaseId'] if runs else '')
+PY
+)"
+          : > /tmp/failed.log
+          if [ -n "$RUN_ID" ]; then
+            gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/failed.log 2>&1 || true
+            tail -n 120 /tmp/failed.log > /tmp/failed.tail
+          else
+            : > /tmp/failed.tail
+          fi
           python3 - <<'PY'
-          import json
-            from pathlib import Path
-          runs = json.loads(Path("/tmp/runs.json").read_text())
-          out = {"task_id": "BEM934-LIVE-TEST", "runs": runs}
-          Path("governance/proofs/BEM934_live_test_monitor.json").write_text(json.dumps(out, indent=2) + "\n")
-          PY
+import json
+from pathlib import Path
+runs=json.load(open('/tmp/runs.json'))
+tail=Path('/tmp/failed.tail').read_text(errors='replace')
+for token in ('ghp_', 'github_pat_', 'bot'):
+    if token in tail.lower():
+        tail='[redacted failure log; token-like material detected]'
+        break
+out={'task_id':'BEM934-LIVE-TEST','runs':runs,'failed_log_tail':tail}
+Path('governance/proofs/BEM934_live_test_monitor.json').write_text(json.dumps(out, indent=2)+'\n')
+PY
           git add governance/proofs/BEM934_live_test_monitor.json
           git commit -m "Capture BEM934 live test run status" || exit 0
-          git push origin HEAD:main
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
