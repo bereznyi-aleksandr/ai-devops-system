@@ -30,29 +30,36 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def clean_transport_jsonl(path: Path) -> tuple[list[dict[str, Any]], bool]:
     original = path.read_text(encoding="utf-8")
-    cleaned_lines: list[str] = []
-    invalid: list[str] = []
-    changed = False
-    for raw in original.splitlines():
-        stripped = raw.strip()
-        if not stripped:
-            continue
-        if stripped.startswith(("<<<<<<<", "=======", ">>>>>>>")):
-            changed = True
-            continue
+    decoder = json.JSONDecoder()
+    records: list[dict[str, Any]] = []
+    cursor = 0
+
+    # Recover valid top-level JSON objects even when merge markers or missing
+    # newlines concatenate several JSONL records into one physical line.
+    while cursor < len(original):
+        start = original.find("{", cursor)
+        if start < 0:
+            break
         try:
-            json.loads(stripped)
+            value, end = decoder.raw_decode(original, start)
         except json.JSONDecodeError:
-            invalid.append(stripped[:240])
+            cursor = start + 1
             continue
-        cleaned_lines.append(stripped)
-    if invalid:
-        raise RuntimeError(f"transport_jsonl_has_unparseable_lines={len(invalid)}")
-    cleaned_text = "\n".join(cleaned_lines) + "\n"
-    if cleaned_text != original:
+        if isinstance(value, dict):
+            records.append(value)
+        cursor = end
+
+    if not records:
+        raise RuntimeError("transport_jsonl_contains_no_recoverable_records")
+
+    cleaned_text = "\n".join(
+        json.dumps(record, ensure_ascii=False, separators=(",", ":"))
+        for record in records
+    ) + "\n"
+    changed = cleaned_text != original
+    if changed:
         path.write_text(cleaned_text, encoding="utf-8")
-        changed = True
-    return [json.loads(line) for line in cleaned_lines], changed
+    return records, changed
 
 
 def latest_completed(records: list[dict[str, Any]], trace_id: str) -> dict[str, Any] | None:
