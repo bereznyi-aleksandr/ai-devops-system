@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "protocol": "BEM-936",
+  "task_id": "BEM936-AUTONOMOUS-CONTINUATION-GUARD",
+  "created_at": "2026-06-18T18:20:00Z",
+  "status": "STANDING",
+  "purpose": "After each DONE task, immediately promote and start the next task until ACTIVE_QUEUE is COMPLETE.",
+  "must_read": [
+    "AGENT_CONTEXT.md",
+    "governance/roadmap/ACTIVE_QUEUE.json"
+  ],
+  "algorithm": [
+    "first IN_PROGRESS else first PENDING",
+    "execute task",
+    "verify proof file exists",
+    "mark DONE with receipt and sha",
+    "if PENDING remains: promote next to IN_PROGRESS and report 'Следующая задача: <id> — приступаю'",
+    "stop only if queue_state COMPLETE and current_task null"
+  ],
+  "forbidden": [
+    "reporting final stop while ACTIVE_QUEUE has IN_PROGRESS or PENDING",
+    "claiming PASS without physical proof",
+    "waiting for operator between roadmap tasks unless queue is COMPLETE or blocker requires external secret"
+  ],
+  "receipt": "governance/proofs/BEM936_autonomous_continuation_guard_receipt.json"
+}
