@@ -1,0 +1,50 @@
+name: BEM934 Wait Real Claude Run
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  wait:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for run and artifact materialization
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+          RUN_ID: "27757247326"
+          TRACE: tg_818730867_20260618T105741Z
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          for attempt in $(seq 1 100); do
+            STATUS="$(gh api "repos/$REPO/actions/runs/$RUN_ID" --jq .status)"
+            if [ "$STATUS" = "completed" ]; then break; fi
+            sleep 10
+          done
+          gh api "repos/$REPO/actions/runs/$RUN_ID" > /tmp/run.json
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-wait@ai-devops-system"
+          git config user.name "BEM-934 Wait"
+          PROOF="governance/proofs/BEM934_live_content_${TRACE}.json"
+          REPORT="governance/reports/${TRACE}.md"
+          for attempt in $(seq 1 30); do
+            git fetch origin main --quiet
+            git reset --hard origin/main --quiet
+            if [ -f "$PROOF" ] && [ -f "$REPORT" ]; then break; fi
+            sleep 10
+          done
+          mkdir -p governance/proofs
+          jq -n --slurpfile run /tmp/run.json             --arg proof "$PROOF" --arg report "$REPORT"             --argjson proof_exists "$(test -f "$PROOF" && echo true || echo false)"             --argjson report_exists "$(test -f "$REPORT" && echo true || echo false)"             '{task_id:"BEM934-LIVE-TEST",run:{id:$run[0].id,status:$run[0].status,conclusion:$run[0].conclusion,created_at:$run[0].created_at,updated_at:$run[0].updated_at,head_sha:$run[0].head_sha},proof_path:$proof,proof_exists:$proof_exists,report_path:$report,report_exists:$report_exists}'             > governance/proofs/BEM934_wait_real_claude_run.json
+          git add governance/proofs/BEM934_wait_real_claude_run.json
+          git commit -m "Capture completed BEM-934 real Claude run" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
