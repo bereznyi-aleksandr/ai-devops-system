@@ -1,7 +1,7 @@
 {
   "status": "PASS",
   "protocol": "BEM-934",
-  "created_at": "2026-06-18T04:39:21Z",
+  "created_at": "2026-06-18T04:44:29Z",
   "action": "inspect_binding_runs",
   "checks": {
     "state_runs_readable": true,
@@ -12,13 +12,43 @@
       "http_status": 200,
       "runs": [
         {
-          "id": 27737096674,
+          "id": 27737272353,
           "event": "workflow_dispatch",
           "status": "in_progress",
           "conclusion": null,
+          "head_sha": "5be0594e410a57631917c879e092679f196f75c5",
+          "created_at": "2026-06-18T04:44:18Z",
+          "updated_at": "2026-06-18T04:44:23Z",
+          "run_number": 29
+        },
+        {
+          "id": 27737221081,
+          "event": "workflow_dispatch",
+          "status": "in_progress",
+          "conclusion": null,
+          "head_sha": "f8ae243e9acecaee78102f8ca7dcf6ea6f296bb9",
+          "created_at": "2026-06-18T04:42:49Z",
+          "updated_at": "2026-06-18T04:42:55Z",
+          "run_number": 28
+        },
+        {
+          "id": 27737184357,
+          "event": "workflow_dispatch",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "ac2801d34794e53c3e7e901543974fe4b6b79966",
+          "created_at": "2026-06-18T04:41:46Z",
+          "updated_at": "2026-06-18T04:42:04Z",
+          "run_number": 27
+        },
+        {
+          "id": 27737096674,
+          "event": "workflow_dispatch",
+          "status": "completed",
+          "conclusion": "success",
           "head_sha": "ef3551a84cb6d8ebbfcc28a66427637d3ba1e171",
           "created_at": "2026-06-18T04:39:08Z",
-          "updated_at": "2026-06-18T04:39:15Z",
+          "updated_at": "2026-06-18T04:39:28Z",
           "run_number": 26
         },
         {
@@ -80,42 +110,22 @@
           "created_at": "2026-06-17T06:45:43Z",
           "updated_at": "2026-06-17T06:45:58Z",
           "run_number": 20
-        },
-        {
-          "id": 27670553116,
-          "event": "workflow_dispatch",
-          "status": "completed",
-          "conclusion": "failure",
-          "head_sha": "4806fd21e5da1482b5ca5a2fbd197c5190bf894d",
-          "created_at": "2026-06-17T06:35:42Z",
-          "updated_at": "2026-06-17T06:35:57Z",
-          "run_number": 19
-        },
-        {
-          "id": 27670350791,
-          "event": "workflow_dispatch",
-          "status": "completed",
-          "conclusion": "failure",
-          "head_sha": "4806fd21e5da1482b5ca5a2fbd197c5190bf894d",
-          "created_at": "2026-06-17T06:30:55Z",
-          "updated_at": "2026-06-17T06:31:11Z",
-          "run_number": 18
-        },
-        {
-          "id": 27670156719,
-          "event": "workflow_dispatch",
-          "status": "completed",
-          "conclusion": "failure",
-          "head_sha": "bef1173d7ade5d7c265b4faa355a9041ad84b6df",
-          "created_at": "2026-06-17T06:26:16Z",
-          "updated_at": "2026-06-17T06:26:31Z",
-          "run_number": 17
         }
       ]
     },
     "claude.yml": {
       "http_status": 200,
       "runs": [
+        {
+          "id": 27737229981,
+          "event": "workflow_dispatch",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "643e8c3cc6929522d3242f5dd1e28c6a2a6efe35",
+          "created_at": "2026-06-18T04:43:04Z",
+          "updated_at": "2026-06-18T04:43:24Z",
+          "run_number": 2553
+        },
         {
           "id": 27737006169,
           "event": "workflow_dispatch",
@@ -205,16 +215,6 @@
           "created_at": "2026-05-26T08:36:23Z",
           "updated_at": "2026-05-26T08:36:23Z",
           "run_number": 2544
-        },
-        {
-          "id": 26441625734,
-          "event": "push",
-          "status": "completed",
-          "conclusion": "failure",
-          "head_sha": "2761f1acd27d878ff7424862a9bd083769594509",
-          "created_at": "2026-05-26T08:36:11Z",
-          "updated_at": "2026-05-26T08:36:11Z",
-          "run_number": 2543
         }
       ]
     }
