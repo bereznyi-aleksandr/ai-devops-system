@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-OBJECTS-BOUND",
+  "object_id": "GD",
+  "passport_path": "governance/architecture/object_passports/GD.json",
+  "trace_id": "bem934_objects_bound_27750274693_gd_a1",
+  "provider": "claude",
+  "workflow": ".github/workflows/claude.yml",
+  "captured_at": "2026-06-18T09:47:28Z",
+  "source_receipt_path": "governance/proofs/BEM934_claude_result_materialization_receipt.json",
+  "source_receipt_blob_sha": "1a677515032d2484f2ddffa5e57bb5905b90c34b",
+  "source_plan_path": "governance/proofs/BEM934_object_binding_plan.json",
+  "source_plan_blob_sha": "0abba2157fb159392a96cd6f6325492b26a23211",
+  "source_commit_sha": "19a493c2230d120d9bce32d2944596186e68b3dc",
+  "receipt": {
+    "status": "PASS",
+    "protocol": "BEM-934",
+    "task_id": "BEM934-OBJECTS-BOUND",
+    "created_at": "2026-06-18T09:36:18Z",
+    "trace_id": "bem934_objects_bound_27750274693_gd_a1",
+    "structured_output_available": true,
+    "checks": {
+      "strict_json_object_parsed": true,
+      "required_fields_present": true,
+      "trace_matches": true,
+      "steps_are_task_specific": true,
+      "acceptance_is_verifiable": true,
+      "mentions_wrk_c1": true,
+      "mentions_claude_provider": true,
+      "mentions_object_runtime_binding": true,
+      "mentions_idempotent_telegram_routing": true
+    },
+    "missing": [],
+    "plan_path": "governance/proofs/BEM934_object_binding_plan.json",
+    "raw_execution_log_committed": false,
+    "source": "claude_code_action_structured_output"
+  },
+  "plan": {
+    "trace_id": "bem934_objects_bound_27750274693_gd_a1",
+    "objective": "Full runtime binding proof for target object GD (passport: governance/architecture/object_passports/GD.json) across the complete object chain GD -> DIR -> WRK. Prove Claude as the active provider for object runtime binding, establish auditor-validated executor dispatch through WRK-C1 as the downstream contour, and confirm idempotent Telegram routing from GD through DIR to WRK with trace-based deduplication.",
+    "assumptions": [
+      "Object GD (governance/architecture/object_passports/GD.json) is the root governance object (canonical_name: Генеральный директор) with child_object_ids=[DIR]; DIR has child_object_ids=[WRK]; WRK has no children — chain is GD -> DIR -> WRK per objects_registry_v2.json registry_id=objects_registry_v2.",
+      "Claude provider is active for executor and auditor roles per governance/state/routing.json (auditor.active=claude, executor.active=claude). claude_code status=ok per provider_status.json version 3. Prior cycle 27738258893 had outcome=failure — dispatch_probe retry logic (3 attempts, 16 polls × 15s per attempt) applies.",
+      "All three objects GD, DIR, WRK carry status=PENDING_RUNTIME_BINDING and runtime_provider=codex_local in their passports. The binding probe will transition registry status to BOUND via claude.yml workflow dispatches orchestrated by bem934_objects_bound_runner.py.",
+      "WRK-C1 (contour_id=WRK-C1, managed_channel=governance/channels/WRK-C1.jsonl, canonical_name: Первый внутренний контур работника) is the canonical downstream executor contour. exercise_auditor_pre in the materializer targets WRK-C1.EXECUTOR as the expected route.",
+      "Idempotent Telegram routing: delivery of the same trace_id through the Telegram/channel layer to WRK-C1.jsonl produces exactly one executor dispatch. Deduplication is enforced by trace_id uniqueness checks in managed_channel_consumer.py before writing to executor channel.",
+      "The materializer governance/runners/bem934_object_binding_materializer.py performs two validation layers: semantic_checks (required fields, trace_id match, keyword presence including wrk-c1, claude, provider, object, runtime, binding, idempotent, telegram, routing) and exercise_auditor_pre (isolated tempdir auditor stage runner verifying WRK-C1 channel write and executor routing).",
+      "The objects_bound_runner governance/runners/bem934_objects_bound_runner.py orchestrates sequential dispatch_probe calls for GD, DIR, WRK and writes FINAL_RECEIPT to governance/proofs/BEM934_objects_bound_receipt.json with binding_evidence covering all three objects."
+    ],
+    "steps": [
+      "Step 1 — GD binding probe dispatch: Dispatch claude.yml with inputs role=analyst, provider=claude, task_type=object_runtime_binding, trace_id=bem934_objects_bound_27750274693_gd_a1. The task prompt explicitly names target object GD, passport governance/architecture/object_passports/GD.json, full chain GD -> DIR -> WRK, Claude as provider, WRK-C1 as downstream contour, and idempotent Telegram routing. Poll SOURCE_RECEIPT governance/proofs/BEM934_claude_result_materialization_receipt.json every 15s up to 16 polls for trace_id match and status=PASS.",
+      "Step 2 — GD semantic validation via materializer: Run bem934_object_binding_materializer.py with TRACE_ID=bem934_objects_bound_27750274693_gd_a1, CLAUDE_OUTCOME=success, STRUCTURED_OUTPUT=<GD plan JSON>. Confirm all semantic_checks pass: strict_json_object_parsed, required_fields_present (objective/assumptions/steps/acceptance/risks/trace_id), trace_matches, steps_are_task_specific (>=3 non-empty), acceptance_is_verifiable (>=2 non-empty), mentions_wrk_c1, mentions_claude_provider, mentions_object_runtime_binding, mentions_idempotent_telegram_routing, historical_fixed_plan_absent.",
+      "Step 3 — GD auditor pre-check via exercise_auditor_pre: Materializer invokes auditor_stage_runner in isolated tempdir. Confirm checks: real_pre_channel_consumed=True (runner_result=WRK-C1_pre_check_pass), executor_channel_written=True (wrk_c1_to_executor.jsonl written), executor_route_selected=True (to=WRK-C1.EXECUTOR), semantic_pre_check_pass=True (pre_check=PASS), trace_preserved=True (trace_id=bem934_objects_bound_27750274693_gd_a1), result_artifact_emitted=True (auditor_pre_check artifact). Write GD plan to governance/proofs/BEM934_object_binding_plan_isolated.json.",
+      "Step 4 — DIR binding probe dispatch and validation: Dispatch claude.yml for object DIR (passport: governance/architecture/object_passports/DIR.json, parent=GD). Plan must name GD as parent object, include full chain GD -> DIR -> WRK, reference WRK-C1 as downstream executor contour, and confirm Claude provider binding for DIR-C1 and DIR-C2 contours. Run same semantic_checks and exercise_auditor_pre. Produce trace_id bem934_objects_bound_27750274693_dir_a{n} distinct from GD trace.",
+      "Step 5 — WRK binding probe dispatch and validation: Dispatch claude.yml for object WRK (passport: governance/architecture/object_passports/WRK.json, parent=DIR, grandparent=GD). Plan must explicitly address GD as root object and its passport governance/architecture/object_passports/GD.json, WRK-C1 as the primary downstream executor contour (managed_channel=governance/channels/WRK-C1.jsonl), and idempotent Telegram routing policy enforced via trace_id deduplication in managed_channel_consumer. Confirm WRK extension_policy (minimum_contours=3, can_extend_to_n=True) is noted in plan assumptions.",
+      "Step 6 — Chain assembly and registry BOUND transition: objects_bound_runner.write_binding pulls --rebase, writes GD/DIR/WRK evidence snapshots to governance/proofs/bem934_objects_bound/{GD,DIR,WRK}_runtime_binding.json. Updates objects_registry_v2.json: status=BOUND, bound_at=<utc_now>, binding_evidence.provider=claude, binding_evidence.full_path=True, binding_evidence.smoke_only=False. Each object entry gains runtime_binding block with trace_id, provider=claude, workflow=.github/workflows/claude.yml, source_receipt_blob_sha, source_plan_blob_sha, source_commit_sha. Confirms checks: claude_workflow_invoked_per_object=3, three_distinct_trace_ids=True, all_source_receipts_pass=True, provider_is_claude=True, full_non_smoke_path=True.",
+      "Step 7 — Idempotent Telegram routing verification for GD trace: Replay trace_id=bem934_objects_bound_27750274693_gd_a1 twice through the Telegram routing layer targeting WRK-C1.jsonl. Confirm managed_channel_consumer.py deduplicates: second delivery is no-op, only one executor entry written to governance/channels/WRK-C1.jsonl bearing this trace_id. Verify by line-count on WRK-C1.jsonl before and after replay — count must not change on second delivery.",
+      "Step 8 — Final receipt finalization and queue advance: objects_bound_runner.finalize writes binding_commit_sha and registry_blob_sha into BEM934_objects_bound_receipt.json. Verifies checks binding_commit_sha_present=True and registry_blob_sha_present=True. Marks BEM934-OBJECTS-BOUND status=DONE in ACTIVE_QUEUE.json with done_sha and completed_at. Advances BEM934-LIVE-TEST to IN_PROGRESS. Appends completion entry to governance/logs/execution_log.jsonl. Appends completed record to governance/transport/results.jsonl with trace_id=bem934_objects_bound_27750274693_gd_a1, status=completed, provider=claude, blocker=null."
+    ],
+    "acceptance": [
+      "governance/proofs/BEM934_objects_bound_receipt.json has status=PASS, protocol=BEM-934, provider_selected=claude, registry_status=BOUND, and all checks True — including claude_workflow_invoked_per_object=3, three_distinct_trace_ids=True, all_source_receipts_pass=True, provider_is_claude=True, full_non_smoke_path=True, binding_commit_sha_present=True, registry_blob_sha_present=True.",
+      "objects_registry_v2.json status=BOUND and each of GD, DIR, WRK contains a runtime_binding block with non-empty trace_id, provider=claude, workflow=.github/workflows/claude.yml, source_receipt_blob_sha, source_plan_blob_sha, source_commit_sha; GD entry explicitly references passport governance/architecture/object_passports/GD.json and trace_id=bem934_objects_bound_27750274693_gd_a1.",
+      "GD materializer receipt (governance/proofs/BEM934_objects_bound_isolated_receipt.json for GD probe) has status=PASS with all semantic_checks True and all contour checks True including real_pre_channel_consumed, executor_route_selected=WRK-C1.EXECUTOR, and trace_preserved for trace_id=bem934_objects_bound_27750274693_gd_a1.",
+      "WRK-C1 idempotency confirmed: governance/channels/WRK-C1.jsonl contains exactly one entry for trace_id=bem934_objects_bound_27750274693_gd_a1 after two replay deliveries; second delivery produced no additional line.",
+      "governance/transport/results.jsonl contains entry with trace_id=bem934_objects_bound_27750274693_gd_a1, role=analyst, provider=claude, status=completed, blocker=null, and non-empty commit_sha."
+    ],
+    "risks": [
+      "Provider failure risk: provider_status.json claude.last_outcome=failure for prior run 27738258893. dispatch_probe retries up to 3 attempts with up to 240s polling each. Mitigation: claude_code status=ok in providers block; fallback_chain in routing.json is [gpt_codex_cloud] for executor if claude unavailable after switch_after_failures=2.",
+      "Semantic check historical_fixed_plan_absent: any plan whose steps set exactly matches {verify objective, prepare execution boundary, request auditor pre-check} fails validation. Mitigation: this plan's steps are object-chain specific, include GD passport path, WRK-C1 channel reference, and Telegram idempotency verification — entirely distinct from the historical fixed set.",
+      "Idempotency violation: if managed_channel_consumer.py does not enforce trace_id uniqueness, replay delivers duplicate executor dispatch to WRK-C1.EXECUTOR causing double execution. Mitigation: Step 7 explicitly verifies line-count idempotency before finalizing; failure blocks acceptance criterion 4.",
+      "Chain probe ordering dependency: dispatch_probe for GD, DIR, WRK runs sequentially in objects_bound_runner. GD probe failure (after 3 retries) raises RuntimeError and aborts DIR and WRK probes. Mitigation: confirm claude_code status=ok and prior failure was transient before dispatching; Step 1 includes provider health pre-check.",
+      "Registry write conflict under concurrent runs: objects_registry_v2.json could be corrupted by parallel workflows. Mitigation: write_binding uses git pull --rebase --autostash before write and retries push on CalledProcessError conflict — provides optimistic concurrency control."
+    ]
+  }
+}
