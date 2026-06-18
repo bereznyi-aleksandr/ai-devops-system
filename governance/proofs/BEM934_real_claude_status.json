@@ -2,6 +2,15 @@
   "task_id": "BEM934-LIVE-TEST",
   "wrapper_runs": [
     {
+      "conclusion": "success",
+      "createdAt": "2026-06-18T11:29:38Z",
+      "databaseId": 27756357652,
+      "headSha": "8949f4aec72161571ce4c8f0c414f28c656455fc",
+      "status": "completed",
+      "updatedAt": "2026-06-18T11:29:47Z",
+      "url": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/27756357652"
+    },
+    {
       "conclusion": "failure",
       "createdAt": "2026-06-18T11:25:36Z",
       "databaseId": 27756156371,
@@ -12,6 +21,16 @@
     }
   ],
   "claude_runs": [
+    {
+      "conclusion": "",
+      "createdAt": "2026-06-18T11:29:45Z",
+      "databaseId": 27756363139,
+      "displayTitle": "Claude Code",
+      "headSha": "8949f4aec72161571ce4c8f0c414f28c656455fc",
+      "status": "in_progress",
+      "updatedAt": "2026-06-18T11:29:57Z",
+      "url": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/27756363139"
+    },
     {
       "conclusion": "success",
       "createdAt": "2026-06-18T10:58:07Z",
@@ -151,16 +170,6 @@
       "status": "completed",
       "updatedAt": "2026-06-18T04:59:29Z",
       "url": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/27737769111"
-    },
-    {
-      "conclusion": "failure",
-      "createdAt": "2026-06-18T04:55:06Z",
-      "databaseId": 27737635541,
-      "displayTitle": "Claude Code",
-      "headSha": "f5d33a6948efea1269c1210c54911da2cf4e02b3",
-      "status": "completed",
-      "updatedAt": "2026-06-18T04:55:22Z",
-      "url": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/27737635541"
     }
   ]
 }
