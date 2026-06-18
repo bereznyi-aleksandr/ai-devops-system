@@ -1,0 +1,32 @@
+name: BEM934 Claude Outcome Logic Diagnostic
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract Claude outcome logic
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-outcome@ai-devops-system"
+          git config user.name "BEM-934 Outcome Diagnostic"
+          mkdir -p governance/proofs
+          grep -n -C 10 -E 'claude_role|Outcome|outcome|Status|status|changed_files|changed files' .github/workflows/claude.yml > /tmp/logic.txt || true
+          python3 -c 'import json; from pathlib import Path; text=Path("/tmp/logic.txt").read_text(errors="replace"); Path("governance/proofs/BEM934_claude_outcome_logic.json").write_text(json.dumps({"task_id":"BEM934-LIVE-TEST","source":".github/workflows/claude.yml","matches":text.splitlines()},indent=2)+"\n")'
+          git add governance/proofs/BEM934_claude_outcome_logic.json
+          git commit -m "Capture Claude outcome materialization logic"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
