@@ -39,12 +39,32 @@ jobs:
           git config user.email "bem934-wait@ai-devops-system"
           git config user.name "BEM-934 Wait"
           mkdir -p governance/proofs
-          python3 -c 'import json,os; from pathlib import Path; trace=os.environ["TRACE"]; lines=[]; p=Path("governance/transport/results.jsonl"); 
-for line in p.read_text(errors="replace").splitlines():
-    if trace in line:
-        try: lines.append(json.loads(line))
-        except Exception: pass
-out={"task_id":"BEM934-LIVE-TEST","trace_id":trace,"run":json.load(open("/tmp/run.json")),"matching_transport_records":lines[-10:]}; Path("governance/proofs/BEM934_semantic_result_monitor.json").write_text(json.dumps(out,ensure_ascii=False,indent=2)+"\n")'
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          trace = os.environ["TRACE"]
+          records = []
+          path = Path("governance/transport/results.jsonl")
+          for line in path.read_text(errors="replace").splitlines():
+              if trace not in line:
+                  continue
+              try:
+                  records.append(json.loads(line))
+              except json.JSONDecodeError:
+                  pass
+          output = {
+              "task_id": "BEM934-LIVE-TEST",
+              "trace_id": trace,
+              "run": json.load(open("/tmp/run.json", encoding="utf-8")),
+              "matching_transport_records": records[-10:],
+          }
+          Path("governance/proofs/BEM934_semantic_result_monitor.json").write_text(
+              json.dumps(output, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
           git add governance/proofs/BEM934_semantic_result_monitor.json
           git commit -m "Capture BEM-934 Claude semantic result" || exit 0
           for attempt in 1 2 3 4 5; do
