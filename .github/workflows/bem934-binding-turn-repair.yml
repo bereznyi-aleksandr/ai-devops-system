@@ -1,0 +1,91 @@
+name: BEM-934 Binding Turn Budget Repair
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Patch dedicated binding role and write receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase --autostash origin main || true
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          workflow = Path(".github/workflows/claude.yml")
+          receipt = Path("governance/proofs/BEM934_binding_max_turns_repair_receipt.json")
+          source = workflow.read_text(encoding="utf-8")
+
+          start = source.find("id: claude_binding_role")
+          marker = "- name: Materialize BEM-934 binding plan"
+          end = source.find(marker, start if start >= 0 else 0)
+          checks = {
+              "dedicated_binding_role_present": start >= 0,
+              "binding_materializer_marker_present": end > start >= 0,
+          }
+          changed = False
+          if end > start >= 0:
+              block = source[start:end]
+              if "--max-turns 30" not in block and "--max-turns 10" in block:
+                  block = block.replace("--max-turns 10", "--max-turns 30", 1)
+                  source = source[:start] + block + source[end:]
+                  workflow.write_text(source, encoding="utf-8")
+                  changed = True
+
+          updated = workflow.read_text(encoding="utf-8")
+          start2 = updated.find("id: claude_binding_role")
+          end2 = updated.find(marker, start2 if start2 >= 0 else 0)
+          block2 = updated[start2:end2] if end2 > start2 >= 0 else ""
+          checks.update({
+              "binding_max_turns_is_30": "--max-turns 30" in block2,
+              "binding_max_turns_10_absent": "--max-turns 10" not in block2,
+              "json_schema_preserved": "--json-schema" in block2,
+              "structured_output_materializer_preserved": "outputs.structured_output" in updated[end2:] if end2 >= 0 else False,
+              "normal_role_preserved": "id: claude_role" in updated,
+          })
+          status = "PASS" if all(checks.values()) else "BLOCKED"
+          payload = {
+              "status": status,
+              "protocol": "BEM-934",
+              "task_id": "BEM934-OBJECTS-BOUND",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "changed": changed,
+              "checks": checks,
+              "missing": [k for k, v in checks.items() if not v],
+          }
+          if status != "PASS":
+              payload["blocker"] = "binding_turn_budget_validation_failed"
+          receipt.parent.mkdir(parents=True, exist_ok=True)
+          receipt.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          if status != "PASS":
+              raise SystemExit(1)
+          PY
+
+      - name: Commit repair
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-binding-repair@ai-devops-system"
+          git config user.name "BEM-934 Binding Repair"
+          git add .github/workflows/claude.yml governance/proofs/BEM934_binding_max_turns_repair_receipt.json
+          if git diff --cached --quiet; then
+            echo "No repair changes"
+          else
+            git commit -m "Repair BEM-934 structured binding turn budget"
+            git push || (git pull --rebase origin main && git push)
+          fi
