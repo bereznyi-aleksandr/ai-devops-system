@@ -1,0 +1,35 @@
+name: BEM934 Claude YAML Diagnostic
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture Claude YAML diagnostic slices
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-yaml-diagnostic@ai-devops-system"
+          git config user.name "BEM-934 YAML Diagnostic"
+          mkdir -p governance/proofs
+          nl -ba .github/workflows/claude.yml | sed -n '1,80p' > /tmp/head.txt
+          nl -ba .github/workflows/claude.yml | sed -n '330,460p' > /tmp/outcome.txt
+          python3 -m py_compile governance/runners/bem934_patch_claude_live_semantic.py > /tmp/compile.txt 2>&1 || true
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/claude.yml')" > /tmp/yaml.txt 2>&1 || true
+          jq -n --rawfile head /tmp/head.txt --rawfile outcome /tmp/outcome.txt --rawfile compile /tmp/compile.txt --rawfile yaml /tmp/yaml.txt             '{task_id:"BEM934-LIVE-TEST",head:$head,outcome_section:$outcome,patcher_compile:$compile,yaml_error:$yaml}'             > governance/proofs/BEM934_claude_yaml_diagnostic.json
+          git add governance/proofs/BEM934_claude_yaml_diagnostic.json
+          git commit -m "Capture BEM-934 Claude YAML diagnostic" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
