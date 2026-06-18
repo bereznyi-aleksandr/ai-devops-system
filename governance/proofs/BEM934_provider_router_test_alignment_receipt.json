@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-LIVE-TEST-PREP",
+  "created_at": "2026-06-18T05:19:00Z",
+  "action": "repair_provider_router_tests",
+  "checks": {
+    "healthy_primary_expectation_is_claude_code": true,
+    "quota_fallback_expectation_is_gpt_codex_cloud": true,
+    "legacy_gpt_codex_assertions_absent": true,
+    "fallback_notice_names_current_providers": true,
+    "router_compiles": true
+  },
+  "missing": [],
+  "replacement_counts": {
+    "out[\"provider_selected\"] == \"gpt_codex\" and out[\"fallback_reason\"] is None and o": 1,
+    "out[\"provider_selected\"] == \"claude_code\" and out[\"fallback_reason\"] == \"fallbac": 1,
+    "\"text\":\"GPT quota exceeded -> fallback Claude запущен\"": 1
+  },
+  "source_commit_sha": "7b25ac9325054c631f010516c00d942a81e99091",
+  "workflow_path": ".github/workflows/provider-router.yml",
+  "next_verification": "dispatch provider-router.yml selftest"
+}
