@@ -1,0 +1,50 @@
+name: BEM934 Prepare Claude Live Semantic Path
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Apply and verify Claude live semantic patches
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-prepare@ai-devops-system"
+          git config user.name "BEM-934 Prepare"
+          python3 -m py_compile governance/runners/bem934_fix_claude_live_outcome.py
+          python3 -m py_compile governance/runners/bem934_make_live_validation_dynamic.py
+          python3 governance/runners/bem934_fix_claude_live_outcome.py
+          python3 governance/runners/bem934_make_live_validation_dynamic.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/claude.yml')"
+          grep -q "TASK_TYPE:" .github/workflows/claude.yml
+          grep -q "BEM-934 live semantic proof validation" .github/workflows/claude.yml
+          grep -q "safe_trace" .github/workflows/claude.yml
+          git add .github/workflows/claude.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "Prepare Claude live semantic path for BEM-934"
+            for attempt in 1 2 3 4 5; do
+              if git push origin HEAD:main; then break; fi
+              git pull --rebase origin main
+              if [ "$attempt" = "5" ]; then exit 1; fi
+            done
+          fi
+          git pull --rebase origin main
+          mkdir -p governance/proofs
+          jq -n --arg sha "$(git rev-parse HEAD)" --arg blob "$(git rev-parse HEAD:.github/workflows/claude.yml)"             '{status:"PASS",protocol:"BEM-934",task_id:"BEM934-LIVE-TEST",claude_workflow_commit_sha:$sha,claude_workflow_blob_sha:$blob,checks:{python_patchers_compile:true,yaml_valid:true,task_type_env_present:true,semantic_proof_validation_present:true,dynamic_trace_binding_present:true}}'             > governance/proofs/BEM934_claude_live_semantic_path_receipt.json
+          git add governance/proofs/BEM934_claude_live_semantic_path_receipt.json
+          git commit -m "Record BEM-934 Claude live semantic path receipt" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
