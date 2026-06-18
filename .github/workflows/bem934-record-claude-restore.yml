@@ -1,0 +1,44 @@
+name: BEM934 Record Claude Restore
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate and record restoration
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-record@ai-devops-system"
+          git config user.name "BEM-934 Restore Receipt"
+          ruby -ryaml - <<'RUBY'
+          d = YAML.load_file(".github/workflows/claude.yml")
+          inputs = d["on"]["workflow_dispatch"]["inputs"]
+          %w role provider trace_id cycle_id task_type task].each do |key|
+            abort("missing #{key}" unless inputs[key]
+            abort("#{key} not required") unless inputs[key]["required"] == true
+            abort("#{key} has default") if inputs[key].key?("default")
+          end
+          step = d["jobs"]["claude"]["steps"].find { |s| s["name"] == "Write final result to transport" }
+          abort("final step missing") unless step
+          run = step["run"]
+          code = run.split("python3 - <<'PYEOF'\n", 2)[1].split("\nPYEOF", 2)[0]
+          File.write("/tmp/final.py", code)
+          RUBY
+          python3 -m py_compile /tmp/final.py
+          SHA="$(git rev-parse HEAD:.github/workflows/claude.yml)"
+          mkdir -p governance/proofs
+          jq -n --arg sha "$SHA" '{status:"PASS",protocol:"BEM-934",task_id:"BEM934-CLOSE",phase:"CLAUDE_WORKFLOW_RESTORED",installed_blob_sha:$sha,checks:{canonical_required_inputs:true,yaml_valid:true,final_python_compiled:true}}' > governance/proofs/BEM934_claude_workflow_restore_receipt.json
+          git add governance/proofs/BEM934_claude_workflow_restore_receipt.json
+          git commit -m "Record canonical Claude workflow restoration"
+          git push origin HEAD:main
