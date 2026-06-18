@@ -1,0 +1,60 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-937",
+  "task_id": "BEM937-P1-LEGACY-WORKFLOW-DISPATCH-SMOKE",
+  "created_at": "2026-06-18T18:36:30Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "dispatch_results": [
+    {
+      "workflow": ".github/workflows/bem934-finalize-real-telegram-live-test.yml",
+      "dispatch_api": "accepted",
+      "ref": "main"
+    },
+    {
+      "workflow": ".github/workflows/bem934-claude-action-input-diagnostic.yml",
+      "dispatch_api": "accepted",
+      "ref": "main"
+    },
+    {
+      "workflow": ".github/workflows/bem934-live-trace-monitor.yml",
+      "dispatch_api": "accepted",
+      "ref": "main"
+    },
+    {
+      "workflow": ".github/workflows/bem934-objects-runtime-binding.yml",
+      "dispatch_api": "accepted",
+      "ref": "main"
+    },
+    {
+      "workflow": ".github/workflows/bem934-fix-claude-live-outcome.yml",
+      "dispatch_api": "accepted",
+      "ref": "main"
+    },
+    {
+      "workflow": ".github/workflows/bem934-stage-runner-smoke.yml",
+      "dispatch_api": "accepted",
+      "ref": "main"
+    },
+    {
+      "workflow": ".github/workflows/bem934-v2-binding-inspector.yml",
+      "dispatch_api": "accepted",
+      "ref": "main"
+    },
+    {
+      "workflow": ".github/workflows/bem934-deprecate-selfhosted.yml",
+      "dispatch_api": "accepted",
+      "ref": "main"
+    }
+  ],
+  "checks": {
+    "all_dispatch_calls_accepted": true,
+    "no_dispatch_api_errors_seen": true,
+    "manual_guard_jobs_only": true
+  },
+  "blockers": [],
+  "next_task": "BEM937-P2-WORKFLOW-SYNTAX-GUARD"
+}
