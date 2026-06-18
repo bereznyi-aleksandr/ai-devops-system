@@ -1,0 +1,36 @@
+name: BEM-934 Prepare Close v2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem934-prepare-close-v2
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+      - name: Prepare canonical closure state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile governance/runners/bem934_prepare_close_v2.py
+          python3 governance/runners/bem934_prepare_close_v2.py
+      - name: Commit preparation evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-close-prep@ai-devops-system"
+          git config user.name "BEM-934 Close Preparation"
+          git add governance/AGENT_CONTEXT.md                   SYSTEM_STATUS.md                   .github/workflows/claude.yml                   governance/roadmap/ACTIVE_QUEUE.json                   governance/proofs/BEM934_close_preparation_receipt.json                   governance/logs/execution_log.jsonl
+          git commit -m "BEM-934: prepare canonical closure state"
+          git push || (git pull --rebase origin main && git push)
