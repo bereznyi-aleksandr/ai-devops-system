@@ -1,0 +1,29 @@
+name: BEM934 Restore Canonical Claude
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore canonical workflow inputs
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-restore@ai-devops-system"
+          git config user.name "BEM-934 Claude Restore"
+          python3 -m py_compile governance/runners/bem934_restore_claude_canonical_inputs.py
+          python3 governance/runners/bem934_restore_claude_canonical_inputs.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/claude.yml')"
+          git add .github/workflows/claude.yml
+          git commit -m "Restore canonical Claude workflow inputs after BEM-934 audit" || exit 0
+          git push origin HEAD:main
