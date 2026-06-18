@@ -1,31 +1,36 @@
 {
   "version": 1,
-  "updated_at": "2026-06-18T19:10:00Z",
-  "queue_state": "COMPLETE",
-  "current_task": null,
-  "system_status": "BEM938_COMPLETE",
-  "release_status": "PASS",
-  "protocol": "BEM-938",
-  "source": "governance/protocols/BEM938_GD_OBJECT_RUNTIME.md",
+  "updated_at": "2026-06-18T19:12:00Z",
+  "queue_state": "ACTIVE",
+  "current_task": "BEM939-P0-STUB-INVENTORY",
+  "system_status": "BEM939_IN_PROGRESS",
+  "release_status": "IN_PROGRESS",
+  "protocol": "BEM-939",
+  "source": "governance/protocols/BEM939_REMAINING_RUNTIME_STUB_ERADICATION.md",
   "completed_summary": {
-    "tasks_done": 4,
+    "tasks_done": 0,
     "tasks_total": 4,
-    "percent": 100,
-    "proofs": [
-      "governance/proofs/BEM938_object_runner_receipt.json",
-      "governance/proofs/BEM938_gd_runtime_binding_receipt.json",
-      "governance/proofs/BEM938_internal_dispatch_e2e_receipt.json",
-      "governance/proofs/BEM938_FINAL_VERIFICATION_PASS.json"
-    ]
+    "percent": 0,
+    "proofs": []
   },
   "tasks": [
     {
-      "id": "BEM938-P0-OBJECT-RUNNER",
-      "title": "Implement object_runner.py runtime",
-      "status": "DONE",
+      "id": "BEM939-P0-STUB-INVENTORY",
+      "title": "Build fresh inventory of remaining stub runners",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "receipt": "governance/proofs/BEM938_object_runner_receipt.json",
-      "completed_at": "2026-06-18T19:10:00Z",
+      "started_at": "2026-06-18T19:12:00Z",
+      "stage_progress": {
+        "tasks_done": 0,
+        "tasks_total": 4,
+        "percent": 0
+      }
+    },
+    {
+      "id": "BEM939-P1-ROLE-REPORT-WRITER",
+      "title": "Implement role_report_writer.py runtime if still stub",
+      "status": "PENDING",
+      "priority": 2,
       "stage_progress": {
         "tasks_done": 1,
         "tasks_total": 4,
@@ -33,12 +38,10 @@
       }
     },
     {
-      "id": "BEM938-P1-GD-RUNTIME-BINDING",
-      "title": "Bind OBJ-GD-001 to runtime state and events",
-      "status": "DONE",
-      "priority": 2,
-      "receipt": "governance/proofs/BEM938_gd_runtime_binding_receipt.json",
-      "completed_at": "2026-06-18T19:10:00Z",
+      "id": "BEM939-P2-EVENT-OBJECT-INTEGRATION",
+      "title": "Connect object events, role reports, and execution log",
+      "status": "PENDING",
+      "priority": 3,
       "stage_progress": {
         "tasks_done": 2,
         "tasks_total": 4,
@@ -46,36 +49,21 @@
       }
     },
     {
-      "id": "BEM938-P2-INTERNAL-DISPATCH-E2E",
-      "title": "Route GD object task through dispatch queue and curator router",
-      "status": "DONE",
-      "priority": 3,
-      "receipt": "governance/proofs/BEM938_internal_dispatch_e2e_receipt.json",
-      "completed_at": "2026-06-18T19:10:00Z",
+      "id": "BEM939-P3-FINAL-VERIFY",
+      "title": "Finalize and verify BEM-939 roadmap",
+      "status": "PENDING",
+      "priority": 4,
       "stage_progress": {
         "tasks_done": 3,
         "tasks_total": 4,
         "percent": 75
       }
-    },
-    {
-      "id": "BEM938-P3-FINAL-VERIFY",
-      "title": "Finalize and verify BEM-938 roadmap",
-      "status": "DONE",
-      "priority": 4,
-      "receipt": "governance/proofs/BEM938_FINAL_VERIFICATION_PASS.json",
-      "completed_at": "2026-06-18T19:10:00Z",
-      "stage_progress": {
-        "tasks_done": 4,
-        "tasks_total": 4,
-        "percent": 100
-      }
     }
   ],
-  "last_completed": {
-    "id": "BEM938-P3-FINAL-VERIFY",
-    "completed_at": "2026-06-18T19:10:00Z",
-    "receipt": "governance/proofs/BEM938_FINAL_VERIFICATION_PASS.json"
+  "previous_completed": {
+    "protocol": "BEM-938",
+    "receipt": "governance/proofs/BEM938_FINAL_VERIFICATION_PASS.json",
+    "percent": 100
   },
-  "next_action": null
+  "next_action": "audit remaining stubs and write BEM939 stub inventory receipt"
 }
