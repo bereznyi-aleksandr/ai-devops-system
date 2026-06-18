@@ -143,7 +143,7 @@ jobs:
               checks = verdict.get("checks")
               if verdict.get("status") != "PASS":
                   errors.append("verdict_status_not_pass")
-              if vrdict.get("conclusion") != "APPROVED":
+              if verdict.get("conclusion") != "APPROVED":
                   errors.append("verdict_conclusion_not_approved")
               if verdict.get("auditor") != "EXTERNAL_AUDITOR_CLAUDE":
                   errors.append("auditor_identity_mismatch")
