@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-937",
+  "task_id": "BEM937-P0-LEGACY-WORKFLOW-SYNTAX-REPAIR",
+  "created_at": "2026-06-18T18:36:30Z",
+  "stage": {
+    "tasks_done": 1,
+    "tasks_total": 4,
+    "percent": 25
+  },
+  "targets": [
+    ".github/workflows/bem934-finalize-real-telegram-live-test.yml",
+    ".github/workflows/bem934-claude-action-input-diagnostic.yml",
+    ".github/workflows/bem934-live-trace-monitor.yml",
+    ".github/workflows/bem934-objects-runtime-binding.yml",
+    ".github/workflows/bem934-fix-claude-live-outcome.yml",
+    ".github/workflows/bem934-stage-runner-smoke.yml",
+    ".github/workflows/bem934-v2-binding-inspector.yml",
+    ".github/workflows/bem934-deprecate-selfhosted.yml"
+  ],
+  "checks": {
+    "legacy_workflows_rewritten": true,
+    "workflow_dispatch_present": true,
+    "inline_python_heredocs_removed": true,
+    "legacy_write_permissions_removed": true,
+    "no_release_promotion_by_legacy_workflows": true
+  },
+  "blockers": [],
+  "next_task": "BEM937-P1-LEGACY-WORKFLOW-DISPATCH-SMOKE"
+}
