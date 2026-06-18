@@ -27,6 +27,7 @@ jobs:
           prompt_path = Path("governance/proofs/BEM934_live_operator_prompt_receipt.json")
           prompt = json.loads(prompt_path.read_text(encoding="utf-8"))
           prompt_id = int(prompt["prompt_message_id"])
+          prompt_created_at = str(prompt["created_at"])
           chat_id = str(prompt["chat_id"])
           candidates = []
           for path in sorted(Path("governance/proofs").glob("BEM932_provider_router_tg_*.json")):
@@ -38,14 +39,19 @@ jobs:
                   message_id = int(data.get("message_id") or 0)
               except (TypeError, ValueError):
                   message_id = 0
+              created_at = str(data.get("created_at") or "")
               if str(data.get("chat_id") or "") != chat_id:
                   continue
-              if message_id <= prompt_id:
+              if message_id <= prompt_id or created_at < prompt_created_at:
+                  continue
+              if data.get("provider_selected") != "claude_code":
+                  continue
+              if data.get("target_workflow_id") != "claude.yml":
                   continue
               candidates.append({
                   "path": path.as_posix(),
                   "status": data.get("status"),
-                  "created_at": data.get("created_at"),
+                  "created_at": created_at,
                   "trace_id": data.get("trace_id"),
                   "message_id": message_id,
                   "task": data.get("task"),
@@ -55,6 +61,7 @@ jobs:
               })
           output = {
               "task_id": "BEM934-LIVE-TEST",
+              "prompt_created_at": prompt_created_at,
               "prompt_message_id": prompt_id,
               "chat_id": chat_id,
               "candidate_count": len(candidates),
@@ -66,7 +73,7 @@ jobs:
           )
           PY
           git add governance/proofs/BEM934_real_operator_ingress_scan.json
-          git commit -m "Scan for real operator Telegram ingress after BEM-934 prompt" || exit 0
+          git commit -m "Rescan real operator Telegram ingress after BEM-934 prompt" || exit 0
           for attempt in 1 2 3 4 5; do
             if git push origin HEAD:main; then exit 0; fi
             git pull --rebase origin main
