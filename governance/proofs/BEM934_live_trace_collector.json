@@ -1,8 +1,18 @@
 {
   "task_id": "BEM934-LIVE-TEST",
   "trace_id": "tg_934432449",
-  "head_sha": "164628c1050711790ed05d3645b0017856e83e90",
+  "head_sha": "1d34ed95bf908129a68b6b0f7024775cb442f95e",
   "artifacts": [
+    {
+      "path": "governance/proofs/BEM934_live_trace_collector.json",
+      "size": 1709,
+      "blob_sha": "69df21eeb0842f900c3bb28ce25225516a3bff25",
+      "last_commit_sha": "e79d59ba9db1a31539ce7b05211704e76461ad9b",
+      "json_parseable": true,
+      "status": null,
+      "provider_selected": null,
+      "target_workflow": null
+    },
     {
       "path": "governance/proofs/BEM932_provider_router_tg_934432449_20260618T102008Z.json",
       "size": 850,
@@ -12,6 +22,16 @@
       "status": "PASS",
       "provider_selected": "claude_code",
       "target_workflow": "claude.yml"
+    },
+    {
+      "path": "governance/proofs/BEM934_claude_failure_diagnostic.json",
+      "size": 3948,
+      "blob_sha": "dccdd655c007fe40784a52f2d01538a469e21e39",
+      "last_commit_sha": "4360e1def2be6987053a768e71e9b13ea953b85a",
+      "json_parseable": true,
+      "status": null,
+      "provider_selected": null,
+      "target_workflow": null
     },
     {
       "path": "governance/reports/tg_934432449_20260618T102008Z.md",
