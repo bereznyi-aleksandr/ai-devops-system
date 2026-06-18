@@ -182,7 +182,7 @@ LIVE trace `{trace}` is operator-authored, not bot replay. Router selected `clau
 
 Updated: {at}
 Roadmap: 10/10 stages complete.
-Stage BBEM934-CLOSE: 3/3 tasks complete.
+Stage BEM934-CLOSE: 3/3 tasks complete.
 Queue: `COMPLETE`.
 Release: `PASS`.
 
