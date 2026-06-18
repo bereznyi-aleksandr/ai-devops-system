@@ -59,14 +59,14 @@ jobs:
               return json.loads(raw)
           state.write_text(json.dumps({"records":[{"trace_id":"old_other_trace","status":"quota_exceeded","created_at":"2000-01-01T00:00:00Z"}]}), encoding="utf-8")
           out = run_router("fresh_trace")
-          assert out["provider_selected"] == "gpt_codex" and out["fallback_reason"] is None and out["stale_ignored"] is True, out
+          assert out["provider_selected"] == "claude_code" and out["fallback_reason"] is None and out["stale_ignored"] is True, out
           state.unlink(missing_ok=True)
           (results / "same_trace.json").write_text(json.dumps({"trace_id":"same_trace","status":"quota_exceeded","created_at":"2999-01-01T00:00:00Z"}), encoding="utf-8")
           out = run_router("same_trace")
-          assert out["provider_selected"] == "claude_code" and out["fallback_reason"] == "fallback_quota" and out["decision_source"] == "same_trace_result", out
+          assert out["provider_selected"] == "gpt_codex_cloud" and out["fallback_reason"] == "fallback_quota" and out["decision_source"] == "same_trace_result", out
           (results / "same_trace.json").unlink(missing_ok=True)
           out = run_router("empty_trace")
-          assert out["provider_selected"] == "gpt_codex" and out["fallback_reason"] is None and out["decision_source"] == "default", out
+          assert out["provider_selected"] == "claude_code" and out["fallback_reason"] is None and out["decision_source"] == "default", out
           assert set(out) == {"provider_selected","fallback_reason","decision_source","trace_id","ttl_seconds","stale_ignored"}, out
           print("provider router tests PASS")
           PY
@@ -202,7 +202,7 @@ jobs:
                   try: seen = seen or json.loads(line).get("trace_id") == trace
                   except Exception: pass
               if not seen:
-                  event = {"created_at":receipt["created_at"],"trace_id":trace,"chat_id":os.environ.get("CHAT_ID",""),"message_id":os.environ.get("MESSAGE_ID",""),"type":"provider_fallback_notice","text":"GPT quota exceeded -> fallback Claude запущен","fallback_reason":fallback,"provider_selected":os.environ.get("PROVIDER_SELECTED","")}
+                  event = {"created_at":receipt["created_at"],"trace_id":trace,"chat_id":os.environ.get("CHAT_ID",""),"message_id":os.environ.get("MESSAGE_ID",""),"type":"provider_fallback_notice","text":"Claude primary unavailable -> gpt_codex_cloud fallback запущен","fallback_reason":fallback,"provider_selected":os.environ.get("PROVIDER_SELECTED","")}
                   with outbox.open("a", encoding="utf-8") as fh:
                       fh.write(json.dumps(event, ensure_ascii=False) + "\n")
           PY
