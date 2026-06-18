@@ -4,23 +4,42 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  actions: write
   contents: read
+  actions: write
 
 jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch Claude for real operator trace
+      - name: Dispatch Claude through Actions API
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          gh workflow ru claude.yml --repo "$REPO" --ref main \
-            -f role=curator \
-            -f provider=claude_code \
-            -f trace_id=tg_818730867_20260618T105741Z \
-            -f cycle_id=bem934_live_operator_actual_final \
-            -f task_type=live_content_analysis_repair \
-            -f task='BEM-934 real operator Telegram live trace tg_818730867_20260618T105741Z. Read and verify governance/proofs/BEM932_provider_router_tg_818730867_20260618T105741Z.json. Create governance/proofs/BEM934_live_content_tg_818730867_20260618T105741Z.json with status=PASS, protocol=BEM-934, task_id=BEM934-LIVE-TEST, trace_id=tg_818730867_20260618T105741Z, provider_selected=claude_code, source_router_receipt=governance/proofs/BEM932_provider_router_tg_818730867_20260618T105741Z.json, exactly two verifiable idempotency invariants for Telegram delivery into WRK-C1, at least two validation_steps, at least two acceptance_checks each with result=PASS, and at least one limitation. Produce a substantive content-bearing report. Do not modify ACTIVE_QUEUE, AGENT_CONTEXT, SYSTEM_STATUS, or any canonical closure state.'
+          test -n "$GH_TOKEN"
+          python3 - <<'PY' > /tmp/payload.json
+          import json
+          payload = {
+              "ref": "main",
+              "inputs": {
+                  "role": "curator",
+                  "provider": "claude_code",
+                  "trace_id": "tg_818730867_20260618T105741Z",
+                  "cycle_id": "bem934_live_operator_actual_final",
+                  "task_type": "live_content_analysis_repair",
+                  "task": (
+                      "BEM-934 real operator Telegram trace tg_818730867_20260618T105741Z. "
+                      "Verify governance/proofs/BEM932_provider_router_tg_818730867_20260618T105741Z.json. "
+                      "Create governance/proofs/BEM934_live_content_tg_818730867_20260618T105741Z.json "
+                      "with status PASS, protocol BEM-934, task_id BEM934-LIVE-TEST, exact trace_id, "
+                      "provider_selected claude_code, exact source_router_receipt, exactly two verifiable "
+                      "idempotency invariants for Telegram delivery into WRK-C1, at least two validation_steps, "
+                      "at least two acceptance_checks each result PASS, and at least one limitation. "
+                      "Produce a substantive report. Do not modify canonical closure state."
+                  ),
+              },
+          }
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+          gh api --method POST             -H "Accept: application/vnd.github+json"             -H "X-GitHub-Api-Version: 2022-11-28"             --input /tmp/payload.json             "repos/$REPO/actions/workflows/claude.yml/dispatches"
