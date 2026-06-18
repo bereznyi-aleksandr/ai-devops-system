@@ -1,93 +1,19 @@
-name: BEM934 Finalize Real Telegram Live Test
+name: BEM934 Finalize Real Telegram Live Test Repaired Legacy
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 permissions:
-  contents: write
-  actions: read
+  contents: read
 
 jobs:
-  finalize:
+  guard:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     steps:
-      - name: Strictly validate and close LIVE test
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          REPO: ${{ github.repository }}
-          RUN_ID: "27758419784"
-          TRACE: tg_818730867_20260618T105741Z
+      - name: Legacy workflow syntax guard
         run: |
-          set -euo pipefail
-          test -n "$GH_TOKEN"
-          gh auth setup-git
-          for attempt in $(seq 1 120); do
-            STATUS="$(gh api "repos/$REPO/actions/runs/$RUN_ID" --jq .status)"
-            if [ "$STATUS" = "completed" ]; then break; fi
-            sleep 10
-          done
-          CONCLUSION="$(gh api "repos/$REPO/actions/runs/$RUN_ID" --jq '.conclusion // ""')"
-          test "$CONCLUSION" = "success"
-
-          gh repo clone "$REPO" repo
-          cd repo
-          git config user.email "bem934-finalizer@ai-devops-system"
-          git config user.name "BEM-934 Live Finalizer"
-
-          PROOF="governance/proofs/BEM934_live_content_${TRACE}.json"
-          for attempt in $(seq 1 60); do
-            git fetch origin main --quiet
-            git reset --hard origin/main --quiet
-            if [ -f "$PROOF" ] && grep -Fq "$TRACE" governance/transport/results.jsonl; then
-              if python3 - "$TRACE" <<'PY'
-import json
-import sys
-from pathlib import Path
-trace = sys.argv[1]
-for line in Path("governance/transport/results.jsonl").read_text(encoding="utf-8", errors="replace").splitlines():
-    if trace not in line:
-        continue
-    try:
-        item = json.loads(line)
-    except json.JSONDecodeError:
-        continue
-    if (
-        item.get("trace_id") == trace
-        and item.get("status") == "completed"
-        and not item.get("blocker")
-        and item.get("provider") == "claude"
-    ):
-        raise SystemExit(0)
-raise SystemExit(1)
-PY
-              then
-                break
-              fi
-            fi
-            sleep 10
-          done
-
-          python3 -m py_compile governance/runners/bem934_finalize_real_live.py
-          python3 governance/runners/bem934_finalize_real_live.py validate \
-            --run-id "$RUN_ID" \
-            --run-conclusion "$CONCLUSION"
-
-          git add "governance/reports/${TRACE}.md" governance/proofs/BEM934_live_test_receipt.json
-          git commit -m "Record strict PASS for BEM934 real Telegram live test"
-          for attempt in 1 2 3 4 5; do
-            if git push origin HEAD:main; then break; fi
-            git pull --rebase origin main
-            if [ "$attempt" = "5" ]; then exit 1; fi
-          done
-          RECEIPT_SHA="$(git rev-parse HEAD)"
-
-          git pull --rebase origin main
-          python3 governance/runners/bem934_finalize_real_live.py advance --done-sha "$RECEIPT_SHA"
-          git add governance/roadmap/ACTIVE_QUEUE.json governance/logs/execution_log.jsonl
-          git commit -m "Close BEM934-LIVE-TEST and advance BEM934-CLOSE"
-          for attempt in 1 2 3 4 5; do
-            if git push origin HEAD:main; then exit 0; fi
-            git pull --rebase origin main
-          done
-          exit 1
+          echo "BEM-937: legacy workflow syntax repaired."
+          echo "This historical BEM-934 workflow is retained only as a valid manual guard."
+          echo "Canonical proofs remain in governance/proofs/."
+          echo "No release status is promoted by this legacy workflow."
