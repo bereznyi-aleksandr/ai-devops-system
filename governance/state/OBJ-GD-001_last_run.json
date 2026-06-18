@@ -1,1 +1,13 @@
-{"trace_id":"bem1284_minimal_local_e2e",
+{
+  "status": "ROUTED",
+  "object_id": "OBJ-GD-001",
+  "trace_id": "bem938_gd_runtime_selftest_20260618T191000Z",
+  "dispatch_id": "bem938_gd_runtime_selftest_20260618T191000Z:OBJ-GD-001",
+  "created_at": "2026-06-18T19:10:00Z",
+  "task_preview": "BEM-938 selftest: GD object creates internal dispatch and curator routing plan",
+  "queue_path": "governance/state/dispatch_queue.jsonl",
+  "processed_path": "governance/state/dispatch_processed.jsonl",
+  "target_workflow_id": "claude.yml",
+  "provider_selected": "claude_code",
+  "non_claim": "Object handoff is queued/routed only; downstream LLM completion is not claimed here."
+}
