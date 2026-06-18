@@ -1,0 +1,39 @@
+name: BEM934 Claude Failure Diagnostic
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect failed Claude run evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-diagnostic@ai-devops-system"
+          git config user.name "BEM-934 Diagnostic"
+          mkdir -p governance/proofs
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow claude.yml --limit 10 --json databaseId,status,conclusion,createdAt,updatedAt,displayTitle,headSha,url > /tmp/runs.json
+          RUN_ID="$(jq -r '[.[] | select(.createdAt >= "2026-06-18T10:20:00Z")] | .[0].databaseId // empty' /tmp/runs.json)"
+          : > /tmp/failed.log
+          if [ -n "$RUN_ID" ]; then
+            gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/failed.log 2>&1 || true
+          fi
+          tail -n 200 /tmp/failed.log > /tmp/failed.tail
+          python3 -c 'import json; from pathlib import Path; runs=json.load(open("/tmp/runs.json")); tail=Path("/tmp/failed.tail").read_text(errors="replace"); low=tail.lower(); tail="[redacted: token-like material detected]" if any(x in low for x in ("ghp_","github_pat_","bottoken")) else tail; Path("governance/proofs/BEM934_claude_failure_diagnostic.json").write_text(json.dumps({"router_trace_id":"tg_934432449_20260618T102008Z","runs":runs,"failed_log_tail":tail},ensure_ascii=False,indent=2)+"\n")'
+          git add governance/proofs/BEM934_claude_failure_diagnostic.json
+          git commit -m "Capture BEM-934 Claude live failure diagnostic"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
