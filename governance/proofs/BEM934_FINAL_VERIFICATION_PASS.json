@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-CLOSE.FINAL-VERIFICATION",
+  "verified_at": "2026-06-18T17:20:38Z",
+  "queue_state": "COMPLETE",
+  "current_task": null,
+  "roadmap": {
+    "tasks_done": 10,
+    "tasks_total": 10
+  },
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 3
+  },
+  "release_status": "PASS",
+  "checks": {
+    "live_receipt_v2_pass": true,
+    "operator_authored_not_replay": true,
+    "semantic_executor_completed_blocker_null": true,
+    "historical_failed_transports_disclosed": true,
+    "superseded_replay_receipt_archived": true,
+    "close_preparation_pass": true,
+    "external_auditor_claude_pass_approved": true,
+    "external_audit_run_pass": true,
+    "provider_truthful_claude_primary": true,
+    "self_hosted_codex_disabled_deprecated": true,
+    "cloud_fallback_mechanical_without_openai_runtime_secret": true,
+    "no_blockers": true,
+    "active_queue_complete": true,
+    "close_receipt_exists": true,
+    "final_verification_exists": true
+  },
+  "blockers": [],
+  "proofs": {
+    "close_receipt": "governance/proofs/BEM934_close_receipt.json",
+    "live_receipt": "governance/proofs/BEM934_live_test_receipt.json",
+    "external_auditor_verdict": "governance/proofs/BEM934_external_auditor_verdict.json",
+    "external_audit_run_receipt": "governance/proofs/BEM934_external_audit_run_receipt.json"
+  },
+  "next_task": null
+}
