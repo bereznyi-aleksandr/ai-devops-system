@@ -1,0 +1,31 @@
+name: BEM934 Live Trace Collector
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect trace evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-trace-collector@ai-devops-system"
+          git config user.name "BEM-934 Trace Collector"
+          python3 -m py_compile governance/runners/bem934_live_trace_collector.py
+          python3 governance/runners/bem934_live_trace_collector.py
+          git add governance/proofs/BEM934_live_trace_collector.json
+          git commit -m "Capture BEM-934 live trace evidence"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
