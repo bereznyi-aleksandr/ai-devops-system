@@ -1,0 +1,36 @@
+name: BEM-934 Finalize Operator LIVE v2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem934-finalize-operator-live-v2
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+      - name: Strict finalization
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile governance/runners/bem934_finalize_operator_live_v2.py
+          python3 governance/runners/bem934_finalize_operator_live_v2.py
+      - name: Commit LIVE receipt and queue
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-live-v2@ai-devops-system"
+          git config user.name "BEM-934 LIVE Finalizer v2"
+          git add governance/proofs/BEM934_live_test_receipt.json                   governance/proofs/BEM934_live_test_receipt_superseded_replay.json                   governance/roadmap/ACTIVE_QUEUE.json                   governance/logs/execution_log.jsonl
+          git commit -m "BEM-934: close strict operator-authored LIVE test"
+          git push || (git pull --rebase origin main && git push)
