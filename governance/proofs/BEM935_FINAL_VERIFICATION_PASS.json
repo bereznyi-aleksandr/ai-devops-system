@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-935",
+  "task_id": "BEM935-FINAL-VERIFICATION",
+  "verified_at": "2026-06-18T18:08:40Z",
+  "queue_state": "COMPLETE",
+  "current_task": null,
+  "roadmap": {
+    "tasks_done": 4,
+    "tasks_total": 4
+  },
+  "checks": {
+    "root_context_restored": true,
+    "curator_router_runtime_code": true,
+    "dispatch_consumer_runtime_code": true,
+    "provider_failover_runtime_code": true,
+    "telegram_input_runtime_code": true,
+    "event_writer_runtime_code": true,
+    "dispatch_processed_nonempty": true,
+    "bem934_remains_closed": true
+  },
+  "blockers": [],
+  "next_task": null
+}
