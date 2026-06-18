@@ -1,72 +1,61 @@
 {
-  "version": 42,
-  "updated_at": "2026-06-18T17:20:38Z",
-  "queue_state": "COMPLETE",
-  "current_task": null,
-  "system_status": "BEM934_COMPLETE",
-  "release_status": "PASS",
-  "protocol": "BEM-934",
-  "source": "governance/protocols/BEM934_Protocol.md",
-  "batch": "2/2",
+  "version": 2,
+  "updated_at": "2026-06-18T17:56:46Z",
+  "queue_state": "ACTIVE",
+  "current_task": "BEM935-P1-PROVIDER-FAILOVER",
+  "system_status": "BEM935_IN_PROGRESS",
+  "release_status": "P1_RUNTIME_HARDENING",
+  "protocol": "BEM-935",
+  "source": "governance/protocols/BEM935_P0_RUNTIME_FOUNDATION.md",
   "completed_summary": {
-    "tasks_done": 10,
-    "tasks_total": 10,
+    "tasks_done": 1,
+    "tasks_total": 4,
     "proofs": [
-      "governance/proofs/BEM934_deprecate_selfhosted_receipt.json",
-      "governance/proofs/BEM934_gpt_codex_cloud_smoke_receipt.json",
-      "governance/proofs/BEM934_provider_config_update_receipt.json",
-      "governance/proofs/BEM934_router_rename_fix_receipt.json",
-      "governance/proofs/BEM934_prompt_assembler_reconnect_receipt.json",
-      "governance/proofs/BEM934_stage_runner_reconnect_receipt.json",
-      "governance/proofs/BEM934_auditor_handle_pre_regression_receipt.json",
-      "governance/proofs/BEM934_objects_bound_receipt.json",
-      "governance/proofs/BEM934_live_test_receipt.json",
-      "governance/proofs/BEM934_close_receipt.json",
-      "governance/proofs/BEM934_FINAL_VERIFICATION_PASS.json"
+      "governance/proofs/BEM935_p0_runtime_foundation_receipt.json",
+      "governance/proofs/BEM935_dispatch_consumer_receipt.json"
     ]
   },
   "tasks": [
     {
-      "id": "BEM934-OBJECTS-BOUND",
-      "title": "Bind object runtime with concrete Claude trace and SHA evidence",
+      "id": "BEM935-P0-RUNTIME-FOUNDATION",
+      "title": "Root context + Python router + dispatch consumer",
       "status": "DONE",
-      "priority": 8,
-      "receipt": "governance/proofs/BEM934_objects_bound_receipt.json",
-      "completed_at": "2026-06-18T10:12:05Z"
-    },
-    {
-      "id": "BEM934-LIVE-TEST",
-      "title": "Content-bearing Telegram E2E through provider-router to Claude",
-      "status": "DONE",
-      "priority": 9,
-      "receipt": "governance/proofs/BEM934_live_test_receipt.json",
-      "completed_at": "2026-06-18T13:35:12Z"
-    },
-    {
-      "id": "BEM934-CLOSE",
-      "title": "Update canonical context/status and obtain external auditor approval",
-      "status": "DONE",
-      "priority": 10,
-      "receipt": "governance/proofs/BEM934_close_receipt.json",
-      "completed_at": "2026-06-18T17:20:38Z",
+      "priority": 1,
+      "receipt": "governance/proofs/BEM935_p0_runtime_foundation_receipt.json",
+      "completed_at": "2026-06-18T17:56:46Z",
       "stage_progress": {
         "tasks_done": 3,
         "tasks_total": 3,
-        "percent": 100,
-        "completed": [
-          "canonical_context_status_and_claude_inputs",
-          "external_claude_audit",
-          "strict_final_closure"
-        ],
-        "pending": []
-      },
-      "external_audit_verdict": "governance/proofs/BEM934_external_auditor_verdict.json"
+        "percent": 100
+      }
+    },
+    {
+      "id": "BEM935-P1-PROVIDER-FAILOVER",
+      "title": "Implement provider_failover.py and provider_failover_runner.py",
+      "status": "IN_PROGRESS",
+      "priority": 2,
+      "receipt": "governance/proofs/BEM935_provider_failover_receipt.json",
+      "started_at": "2026-06-18T17:56:46Z"
+    },
+    {
+      "id": "BEM935-P1-TELEGRAM-INPUT-HANDLER",
+      "title": "Implement telegram_input_handler_runner.py and telegram_input_mapper.py",
+      "status": "PENDING",
+      "priority": 3,
+      "receipt": "governance/proofs/BEM935_telegram_input_handler_receipt.json"
+    },
+    {
+      "id": "BEM935-P1-EVENT-WRITER",
+      "title": "Implement event_writer.py runtime logging",
+      "status": "PENDING",
+      "priority": 4,
+      "receipt": "governance/proofs/BEM935_event_writer_receipt.json"
     }
   ],
   "last_completed": {
-    "id": "BEM934-CLOSE",
-    "completed_at": "2026-06-18T17:20:38Z",
-    "receipt": "governance/proofs/BEM934_close_receipt.json"
+    "id": "BEM935-P0-RUNTIME-FOUNDATION",
+    "completed_at": "2026-06-18T17:56:46Z",
+    "receipt": "governance/proofs/BEM935_p0_runtime_foundation_receipt.json"
   },
-  "next_action": null
+  "next_action": "Implement provider failover runtime"
 }
