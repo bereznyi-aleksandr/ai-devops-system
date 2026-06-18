@@ -1,0 +1,56 @@
+name: BEM934 Apply Dynamic Validator and Dispatch First Real Trace
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  apply-and-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Apply dynamic validator and dispatch first real trace
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPO: ${{ github.repository }}
+          TRACE: tg_818730867_20260618T105741Z
+          RECEIPT: governance/proofs/BEM932_provider_router_tg_818730867_20260618T105741Z.json
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-dynamic-first@ai-devops-system"
+          git config user.name "BEM-934 Dynamic First"
+          python3 -m py_compile governance/runners/bem934_make_live_validation_dynamic.py
+          python3 governance/runners/bem934_make_live_validation_dynamic.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/claude.yml')"
+          grep -q "safe_trace" .github/workflows/claude.yml
+          grep -q "BEM932_provider_router_' + trace + '.json'" .github/workflows/claude.yml
+          git add .github/workflows/claude.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "Make BEM-934 Claude live validation dynamic and trace-bound"
+            for attempt in 1 2 3 4 5; do
+              if git push origin HEAD:main; then break; fi
+              git pull --rebase origin main
+              if [ "$attempt" = "5" ]; then exit 1; fi
+            done
+          fi
+          git pull --rebase origin main
+          jq -e --arg trace "$TRACE"             '.status=="PASS" and .trace_id==$trace and .provider_selected=="claude_code" and .target_workflow_id=="claude.yml" and ((.chat_id|tostring)=="601442777") and ((.message_id|tostring)=="729")'             "$RECEIPT" > /dev/null
+          SOURCE_TASK="$(jq -r '.task // ""' "$RECEIPT")"
+          DISPATCH_TASK="BEM-934 real operator Telegram live trace ${TRACE}. Verify ${RECEIPT}. Analyze exactly two verifiable idempotency invariants for Telegram delivery into WRK-C1. Create governance/proofs/BEM934_live_content_${TRACE}.json with status PASS, protocol BEM-934, task_id BEM934-LIVE-TEST, trace_id ${TRACE}, provider_selected claude_code, source_router_receipt ${RECEIPT}, exactly two invariants, at least two validation_steps, at least two acceptance_checks each with result PASS, and at least one limitation. Source user task: ${SOURCE_TASK}. Do not modify canonical state."
+          gh workflow run claude.yml --repo "$REPO" --ref main             -f role=curator             -f provider=claude_code             -f trace_id="$TRACE"             -f cycle_id=bem934_live_operator_actual_first_dynamic             -f task_type=live_content_analysis_repair             -f task="$DISPATCH_TASK"
+          mkdir -p governance/proofs
+          git pull --rebase origin main
+          jq -n --arg trace "$TRACE" --arg receipt "$RECEIPT" --arg sha "$(git rev-parse HEAD)" --arg blob "$(git rev-parse HEAD:.github/workflows/claude.yml)"             '{status:"PASS",protocol:"BEM-934",task_id:"BEM934-LIVE-TEST",trace_id:$trace,router_receipt:$receipt,claude_workflow_commit_sha:$sha,claude_workflow_blob_sha:$blob,claude_dispatched:true,checks:{dynamic_patcher_compiled:true,yaml_valid:true,dynamic_trace_binding_present:true,router_pass:true,provider_selected_claude_code:true,target_claude_yml:true,chat_id_match:true,message_id_match:true}}'             > governance/proofs/BEM934_dynamic_first_real_trace_dispatch_receipt.json
+          git add governance/proofs/BEM934_dynamic_first_real_trace_dispatch_receipt.json
+          git commit -m "Dispatch BEM-934 first real trace through dynamic Claude validator"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
