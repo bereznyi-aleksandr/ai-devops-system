@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-938",
+  "task_id": "BEM938-P2-INTERNAL-DISPATCH-E2E",
+  "created_at": "2026-06-18T19:10:00Z",
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 4,
+    "percent": 75
+  },
+  "trace_id": "bem938_gd_runtime_selftest_20260618T191000Z",
+  "dispatch_id": "bem938_gd_runtime_selftest_20260618T191000Z:OBJ-GD-001",
+  "files": [
+    "governance/state/dispatch_queue.jsonl",
+    "governance/state/dispatch_processed.jsonl",
+    "governance/runners/curator_router.py",
+    "governance/runners/dispatch_consumer.py"
+  ],
+  "route_result": {
+    "provider_selected": "claude_code",
+    "target_workflow_id": "claude.yml",
+    "dispatch_result": "planned"
+  },
+  "checks": {
+    "dispatch_queue_item_materialized": true,
+    "dispatch_processed_nonempty": true,
+    "curator_router_runtime_code_present": true,
+    "dispatch_consumer_runtime_code_present": true,
+    "object_to_router_handoff_evidence_present": true,
+    "downstream_llm_completion_not_claimed": true
+  },
+  "blockers": [],
+  "next_task": "BEM938-P3-FINAL-VERIFY"
+}
