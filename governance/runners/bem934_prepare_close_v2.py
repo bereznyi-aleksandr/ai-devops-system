@@ -47,7 +47,7 @@ def canonicalize_claude_inputs(text: str) -> str:
         if in_dispatch_inputs:
             if line.startswith("      ") and not line.startswith("        ") and line.rstrip().endswith(":"):
                 current_input = line.strip()[:-1]
-              out.append(line)
+                out.append(line)
                 continue
             if line.startswith("  ") and not line.startswith("    "):
                 in_dispatch_inputs = False
