@@ -81,7 +81,7 @@ if validation_marker not in segment:
                   blocker = None
 '''.lstrip("\n")
     insert_at = pos + len(exception_anchor)
-    segment = segment[:insert_at] + insertion + segment[insert_att:]
+    segment = segment[:insert_at] + insertion + segment[insert_at:]
 
 text = text[:start] + segment + text[end:]
 path.write_text(text, encoding="utf-8")
