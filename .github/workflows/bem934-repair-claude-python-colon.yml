@@ -1,0 +1,49 @@
+name: BEM934 Repair Claude Python Colon
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Repair, compile, and install claude.yml
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh auth setup-git
+          gh repo clone "$REPO" repo
+          cd repo
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path(".github/workflows/claude.yml")
+          t = p.read_text(encoding="utf-8")
+          old = "    if not proof_path.exists() and trace == 'tg_934432449_20260618T102008Z'\n"
+          new = old.rstrip("\n") + ":\n"
+          if old not in t:
+              raise SystemExit("missing fallback if line")
+          p.write_text(t.replace(old, new, 1), encoding="utf-8")
+          PY
+          ruby -ryaml - <<'RUBY'
+          d = YAML.load_file(".github/workflows/claude.yml")
+          step = d["jobs"]["claude"]["steps"].find { |s| s["name"] == "Write final result to transport" }
+          abort("final step not found") unless step
+          run = step["run"]
+          marker = "python3 - <<'PYEOF'\n"
+          code = run.split(marker, 2)[1].split("\nPYEOF", 2)[0]
+          File.write("/tmp/claude_final.py", code)
+          RUBY
+          python3 -m py_compile /tmp/claude_final.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/claude.yml')"
+          CURRENT_SHA="$(gh api "repos/$REPO/contents/.github/workflows/claude.yml?ref=main" --jq .sha)"
+          CONTENT="$(base64 -w 0 .github/workflows/claude.yml)"
+          jq -n --arg message "Repair missing Python colon in BEM934 Claude transport step" --arg content "$CONTENT" --arg sha "$CURRENT_SHA" '{message:$message,content:$content,sha:$sha,branch:"main"}' > /tmp/payload.json
+          gh api --method PUT -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" --input /tmp/payload.json "repos/$REPO/contents/.github/workflows/claude.yml" > /tmp/response.json
+          jq -e '.content.sha' /tmp/response.json
