@@ -1,0 +1,34 @@
+name: BEM934 Latest Claude Run Probe
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture latest Claude runs after repair
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh api "repos/$REPO/actions/workflows/claude.yml/runs?branch=main&per_page=10" > /tmp/runs.json
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-probe@ai-devops-system"
+          git config user.name "BEM-934 Probe"
+          mkdir -p governance/proofs
+          jq '{task_id:"BEM934-LIVE-TEST", captured_at:(now|todate), runs:[.workflow_runs[] | {id,status,conclusion,created_at,updated_at,head_sha,html_url}]}' /tmp/runs.json > governance/proofs/BEM934_latest_claude_run_probe.json
+          git add governance/proofs/BEM934_latest_claude_run_probe.json
+          git commit -m "Capture latest BEM-934 Claude runs after repair" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
