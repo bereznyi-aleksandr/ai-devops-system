@@ -1,0 +1,81 @@
+name: BEM934 Finalize Close Runner
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem934-finalize-close-runner
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Patch finalizer runner and prepare closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("governance/runners/bem934_finalize_close_v2.py")
+          text = path.read_text(encoding="utf-8")
+          text = text.replace("stasks_total", "tasks_total")
+          text = text.replace("stacks_total", "tasks_total")
+          text = text.replace("stasks_done", "tasks_done")
+          text = text.replace("stacks_done", "tasks_done")
+          text = text.replace("_supersed", "_superseded")
+          text = text.replace("Release status: PAS", "Release status: PASS")
+          text = text.replace("Stage BBEM934-CLOSE', "Stage BEM934-CLOSE")
+          path.write_text(text, encoding="utf-8")
+          PY
+          python3 -m py_compile governance/runners/bem934_finalize_close_v2.py
+          python3 governance/runners/bem934_finalize_close_v2.py prepare
+
+      - name: Commit prepared closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-finalizer@ai-devops-system"
+          git config user.name "BEM-934 Finalizer"
+          git add governance/runners/bem934_finalize_close_v2.py governance/roadmap/ACTIVE_QUEUE.json governance/AGENT_CONTEXT.md SYSTEM_STATUS.md governance/proofs/BEM934_close_receipt.json governance/logs/execution_log.jsonl
+          git commit -m "BEM-934: prepare strict final closure"
+          git push || (git pull --rebase origin main && git push)
+          echo "PREPARED_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Seal closure and final verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/runners/bem934_finalize_close_v2.py seal --commit-sha "$PREPARED_SHA"
+          git add governance/roadmap/ACTIVE_QUEUE.json governance/proofs/BEM934_close_receipt.json governance/proofs/BEM934_FINAL_VERIFICATION_PASS.json governance/logs/execution_log.jsonl
+          git commit -m "BEM-934: seal release and final verification"
+          git push || (git pull --rebase origin main && git push)
+
+      - name: Verify committed final state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin main
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          q=json.loads(Path("governance/roadmap/ACTIVE_QUEUE.json").read_text())
+          c=json.loads(Path("governance/proofs/BEM934_close_receipt.json").read_text())
+          f=json.loads(Path("governance/proofs/BEM934_FINAL_VERIFICATION_PASS.json").read_text())
+          assert q["queue_state"]=="COMPLETE"
+          assert q["current_task"] is None
+          assert q["release_status"]=="PASS"
+          assert q["completed_summary"]["tasks_done"]==10
+          assert c["status"]=="PASS" and c["phase"]=="COMPLETE"
+          assert f["status"]=="PASS" and f["release_status"]=="PASS"
+          assert f["blockers"]==[] and all(f["checks"].values())
+          PY
