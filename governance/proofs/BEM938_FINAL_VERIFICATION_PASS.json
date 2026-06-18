@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-938",
+  "task_id": "BEM938-FINAL-VERIFICATION",
+  "verified_at": "2026-06-18T19:10:00Z",
+  "queue_state": "COMPLETE",
+  "current_task": null,
+  "roadmap": {
+    "tasks_done": 4,
+    "tasks_total": 4,
+    "percent": 100
+  },
+  "checks": {
+    "curator_router_not_stub": true,
+    "dispatch_consumer_not_stub": true,
+    "object_runner_not_stub": true,
+    "gd_object_state_bound": true,
+    "internal_queue_processed": true,
+    "single_telegram_to_claude_route_remains_unchanged": true,
+    "no_full_autonomy_claim": true
+  },
+  "blockers": [],
+  "next_task": null
+}
