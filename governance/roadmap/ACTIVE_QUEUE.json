@@ -1,68 +1,81 @@
 {
-  "version": 3,
-  "updated_at": "2026-06-18T18:09:40Z",
+  "version": 1,
+  "updated_at": "2026-06-18T18:37:30Z",
   "queue_state": "COMPLETE",
   "current_task": null,
-  "system_status": "BEM935_COMPLETE",
+  "system_status": "BEM937_COMPLETE",
   "release_status": "PASS",
-  "protocol": "BEM-935",
-  "source": "governance/protocols/BEM935_P0_RUNTIME_FOUNDATION.md",
+  "protocol": "BEM-937",
+  "source": "governance/protocols/BEM937_LEGACY_WORKFLOW_SYNTAX_HARDENING.md",
   "completed_summary": {
     "tasks_done": 4,
     "tasks_total": 4,
+    "percent": 100,
     "proofs": [
-      "governance/proofs/BEM935_p0_runtime_foundation_receipt.json",
-      "governance/proofs/BEM935_dispatch_consumer_receipt.json",
-      "governance/proofs/BEM935_provider_failover_receipt.json",
-      "governance/proofs/BEM935_telegram_input_handler_receipt.json",
-      "governance/proofs/BEM935_event_writer_receipt.json",
-      "governance/proofs/BEM935_p1_runtime_hardening_receipt.json",
-      "governance/proofs/BEM935_FINAL_VERIFICATION_PASS.json"
+      "governance/proofs/BEM937_legacy_workflow_syntax_repair_receipt.json",
+      "governance/proofs/BEM937_legacy_workflow_dispatch_smoke_receipt.json",
+      "governance/proofs/BEM937_workflow_syntax_guard_receipt.json",
+      "governance/proofs/BEM937_FINAL_VERIFICATION_PASS.json"
     ]
   },
   "tasks": [
     {
-      "id": "BEM935-P0-RUNTIME-FOUNDATION",
-      "title": "Root context + Python router + dispatch consumer",
+      "id": "BEM937-P0-LEGACY-WORKFLOW-SYNTAX-REPAIR",
+      "title": "Repair invalid legacy BEM-934 workflow YAML files",
       "status": "DONE",
       "priority": 1,
-      "receipt": "governance/proofs/BEM935_p0_runtime_foundation_receipt.json",
-      "completed_at": "2026-06-18T17:56:46Z",
+      "receipt": "governance/proofs/BEM937_legacy_workflow_syntax_repair_receipt.json",
+      "completed_at": "2026-06-18T18:36:30Z",
       "stage_progress": {
-        "tasks_done": 3,
-        "tasks_total": 3,
-        "percent": 100
+        "tasks_done": 1,
+        "tasks_total": 4,
+        "percent": 25
       }
     },
     {
-      "id": "BEM935-P1-PROVIDER-FAILOVER",
-      "title": "Implement provider_failover.py and provider_failover_runner.py",
+      "id": "BEM937-P1-LEGACY-WORKFLOW-DISPATCH-SMOKE",
+      "title": "Dispatch repaired legacy workflows to verify API acceptance",
       "status": "DONE",
       "priority": 2,
-      "receipt": "governance/proofs/BEM935_provider_failover_receipt.json",
-      "completed_at": "2026-06-18T18:06:33Z"
+      "receipt": "governance/proofs/BEM937_legacy_workflow_dispatch_smoke_receipt.json",
+      "completed_at": "2026-06-18T18:36:45Z",
+      "stage_progress": {
+        "tasks_done": 2,
+        "tasks_total": 4,
+        "percent": 50
+      }
     },
     {
-      "id": "BEM935-P1-TELEGRAM-INPUT-HANDLER",
-      "title": "Implement Telegram input mapper and handler runner",
+      "id": "BEM937-P2-WORKFLOW-SYNTAX-GUARD",
+      "title": "Install workflow syntax guard runner",
       "status": "DONE",
       "priority": 3,
-      "receipt": "governance/proofs/BEM935_telegram_input_handler_receipt.json",
-      "completed_at": "2026-06-18T18:08:46Z"
+      "receipt": "governance/proofs/BEM937_workflow_syntax_guard_receipt.json",
+      "completed_at": "2026-06-18T18:37:01Z",
+      "stage_progress": {
+        "tasks_done": 3,
+        "tasks_total": 4,
+        "percent": 75
+      }
     },
     {
-      "id": "BEM935-P1-EVENT-WRITER",
-      "title": "Implement event_writer.py runtime logging",
+      "id": "BEM937-P3-QUEUE-FINAL-VERIFY",
+      "title": "Finalize queue and verify receipts",
       "status": "DONE",
       "priority": 4,
-      "receipt": "governance/proofs/BEM935_event_writer_receipt.json",
-      "completed_at": "2026-06-18T18:09:09Z"
+      "receipt": "governance/proofs/BEM937_FINAL_VERIFICATION_PASS.json",
+      "completed_at": "2026-06-18T18:37:30Z",
+      "stage_progress": {
+        "tasks_done": 4,
+        "tasks_total": 4,
+        "percent": 100
+      }
     }
   ],
   "last_completed": {
-    "id": "BEM935-P1-EVENT-WRITER",
-    "completed_at": "2026-06-18T18:09:09Z",
-    "receipt": "governance/proofs/BEM935_event_writer_receipt.json"
+    "id": "BEM937-P3-QUEUE-FINAL-VERIFY",
+    "completed_at": "2026-06-18T18:37:30Z",
+    "receipt": "governance/proofs/BEM937_FINAL_VERIFICATION_PASS.json"
   },
   "next_action": null
 }
