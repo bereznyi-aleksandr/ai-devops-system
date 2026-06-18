@@ -1,0 +1,59 @@
+name: BEM934 Patched Claude Fragment Diagnostic
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture patched fragment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-fragment@ai-devops-system"
+          git config user.name "BEM-934 Fragment Diagnostic"
+          python3 governance/runners/bem934_make_live_validation_dynamic.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path(".github/workflows/claude.yml")
+          lines = path.read_text(encoding="utf-8").splitlines()
+          indexes = [i for i, line in enumerate(lines) if "safe_trace" in line or "BEM932_provider_router_' + trace" in line]
+          windows = []
+          for index in indexes:
+              start = max(0, index - 6)
+              end = min(len(lines), index + 9)
+              windows.append({
+                  "match_line": index + 1,
+                  "lines": [{"number": i + 1, "repr": repr(lines[i])} for i in range(start, end)],
+              })
+          suspicious = [
+              {"number": i + 1, "repr": repr(line)}
+              for i, line in enumerate(lines)
+              if line and not line.startswith(" ") and i > 0 and not line.startswith(("#", "name:", "on:", "permissions:", "jobs:"))
+          ][:30]
+          output = {
+              "task_id": "BEM934-LIVE-TEST",
+              "head": [{"number": i + 1, "repr": repr(line)} for i, line in enumerate(lines[:20])],
+              "windows": windows,
+              "suspicious_top_level": suspicious,
+          }
+          out = Path("governance/proofs/BEM934_patched_claude_fragment_diagnostic.json")
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+          PY
+          git add governance/proofs/BEM934_patched_claude_fragment_diagnostic.json
+          git commit -m "Capture BEM-934 patched Claude fragment diagnostic"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
