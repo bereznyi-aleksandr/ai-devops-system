@@ -1,0 +1,35 @@
+name: BEM934 Progress Snapshot
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture BEM-934 workflow progress
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-progress@ai-devops-system"
+          git config user.name "BEM-934 Progress"
+          mkdir -p governance/proofs
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow bem934-prepare-claude-live-semantic-path.yml --limit 5 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > /tmp/prepare.json
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow claude.yml --limit 10 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url,displayTitle > /tmp/claude.json
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow bem934-wait-latest-real-router-and-dispatch-claude.yml --limit 5 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > /tmp/wait.json
+          jq -n --slurpfile prepare /tmp/prepare.json --slurpfile claude /tmp/claude.json --slurpfile wait /tmp/wait.json             --arg semantic_receipt "$(test -f governance/proofs/BEM934_claude_live_semantic_path_receipt.json && echo true || echo false)"             --arg second_router "$(test -f governance/proofs/BEM932_provider_router_tg_818734369_20260618T105814Z.json && echo true || echo false)"             --arg first_router "$(test -f governance/proofs/BEM932_provider_router_tg_818730867_20260618T105741Z.json && echo true || echo false)"             '{task_id:"BEM934-LIVE-TEST",prepare_runs:$prepare[0],claude_runs:$claude[0],wait_runs:$wait[0],files:{semantic_path_receipt:($semantic_receipt=="true"),first_real_router_receipt:($first_router=="true"),second_real_router_receipt:($second_router=="true")}}'             > governance/proofs/BEM934_progress_snapshot.json
+          git add governance/proofs/BEM934_progress_snapshot.json
+          git commit -m "Capture BEM-934 progress snapshot" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
