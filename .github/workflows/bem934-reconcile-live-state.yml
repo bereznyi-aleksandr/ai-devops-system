@@ -1,0 +1,43 @@
+name: BEM-934 Reconcile LIVE State
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem934-reconcile-live-state
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Reconcile strict LIVE evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile governance/runners/bem934_reconcile_live_state.py
+          python3 governance/runners/bem934_reconcile_live_state.py
+
+      - name: Commit reconciliation artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-reconciler@ai-devops-system"
+          git config user.name "BEM-934 LIVE Reconciler"
+          git add             governance/transport/results.jsonl             governance/roadmap/ACTIVE_QUEUE.json             governance/proofs/BEM934_live_state_reconciliation_receipt.json             governance/logs/execution_log.jsonl
+          if git diff --cached --quiet; then
+            echo "No reconciliation changes"
+          else
+            git commit -m "BEM-934: reconcile LIVE evidence without release promotion"
+            git push || (git pull --rebase origin main && git push)
+          fi
