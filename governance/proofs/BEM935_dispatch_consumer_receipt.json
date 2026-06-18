@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-935",
+  "task_id": "BEM935-P0-DISPATCH-CONSUMER",
+  "created_at": "2026-06-18T17:56:00Z",
+  "queue_items_seen": 1,
+  "processed_count": 1,
+  "skipped_count": 0,
+  "dead_letter_count": 0,
+  "checks": {
+    "dispatch_consumer_has_runtime_code": true,
+    "router_imported": true,
+    "processed_jsonl_written": true,
+    "dead_letters_bounded": true
+  },
+  "blockers": []
+}
