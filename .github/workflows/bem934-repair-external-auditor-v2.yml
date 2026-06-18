@@ -1,0 +1,25 @@
+name: BEM-934 Repair External Auditor v2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+    - shell: bash
+      run: |
+        set -euo pipefail
+        sed -i 's/vrdict\.get/verdict.get/g' .github/workflows/bem934-external-claude-auditor-v2.yml
+        grep -q 'verdict.get("conclusion")' .github/workflows/bem934-external-claude-auditor-v2.yml
+        git config user.email "bem934-repair@ai-devops-system"
+        git config user.name "BEM-934 Repair"
+        git add .github/workflows/bem934-external-claude-auditor-v2.yml
+        git commit -m "BEM-934: repair external auditor v2 validator"
+        git push || (git pull --rebase origin main && git push)
