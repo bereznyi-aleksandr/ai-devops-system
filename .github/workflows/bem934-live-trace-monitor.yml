@@ -1,0 +1,43 @@
+name: BEM934 Live Trace Monitor
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture trace materialization
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TRACE: tg_934432449
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-trace-monitor@ai-devops-system"
+          git config user.name "BEM-934 Trace Monitor"
+          mkdir -p governance/proofs
+          grep -F "$TRACE" governance/transport/results.jsonl > /tmp/transport.txt || true
+          python3 -c 'import json,os; from pathlib import Path; t=os.environ["TRACE"]; rp=Path("governance/proofs")/f"BEM932_provider_router_{t}.json"; route=None; err=None
+try: route=json.loads(rp.read_text()) if rp.exists() else None
+except Exception as e: err=str(e)
+reports=[]
+for p in Path("governance/reports").glob("*.md"):
+    try:
+        if t in p.read_text(errors="replace"): reports.append({"path":str(p),"size":p.stat().st_size})
+    except OSError: pass
+transport=Path("/tmp/transport.txt").read_text(errors="replace").splitlines()
+out={"task_id":"BEM934-LIVE-TEST","trace_id":t,"transport_lines":transport,"route_receipt_path":str(rp),"route_receipt_exists":rp.exists(),"route_receipt":route,"route_parse_error":err,"reports":reports}
+Path("governance/proofs/BEM934_live_trace_monitor.json").write_text(json.dumps(out,ensure_ascii=False,indent=2)+"\n")'
+          git add governance/proofs/BEM934_live_trace_monitor.json
+          git commit -m "Capture BEM934 live trace materialization" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
