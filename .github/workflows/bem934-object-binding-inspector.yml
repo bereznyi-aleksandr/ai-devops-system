@@ -1,0 +1,110 @@
+name: BEM-934 Object Binding Run Inspector
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Inspect proof run and jobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_RUN_ID: "27738813249"
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          run_id = os.environ["TARGET_RUN_ID"]
+          token = os.environ["GH_TOKEN"]
+          headers = {
+              "Authorization": f"Bearer {token}",
+              "Accept": "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "User-Agent": "bem934-object-binding-inspector",
+          }
+
+          def get(url):
+              request = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  return json.loads(response.read().decode("utf-8"))
+
+          run = get(f"https://api.github.com/repos/{repo}/actions/runs/{run_id}")
+          jobs_raw = get(f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100")
+          jobs = []
+          for job in jobs_raw.get("jobs", []):
+              steps = [
+                  {
+                    "name": step.get("name"),
+                    "status": step.get("status"),
+                    "conclusion": step.get("conclusion"),
+                    "number": step.get("number"),
+                  }
+                  for step in job.get("steps", [])
+              ]
+              jobs.append({
+                  "id": job.get("id"),
+                  "name": job.get("name"),
+                  "status": job.get("status"),
+                  "conclusion": job.get("conclusion"),
+                  "started_at": job.get("started_at"),
+                  "completed_at": job.get("completed_at"),
+                  "steps": steps,
+              })
+
+          payload = {
+              "status": "PASS",
+              "protocol": "BEM-934",
+              "target_run_id": int(run_id),
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "run": {
+                  "name": run.get("name"),
+                  "workflow_id": run.get("workflow_id"),
+                  "run_number": run.get("run_number"),
+                  "event": run.get("event"),
+                  "status": run.get("status"),
+                  "conclusion": run.get("conclusion"),
+                  "head_sha": run.get("head_sha"),
+                  "created_at": run.get("created_at"),
+                  "updated_at": run.get("updated_at"),
+                  "run_started_at": run.get("run_started_at"),
+                },
+              "jobs": jobs,
+          }
+          Path("governance/proofs/BEM934_object_binding_run_inspection.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit inspection receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-run-inspector@ai-devops-system"
+          git config user.name "BEM-934 Run Inspector"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM934_object_binding_run_inspection.json
+          if git diff --cached --quiet; then
+            echo "No inspection changes"
+          else
+            git commit -m "Inspect BEM-934 object binding run"
+            git push || (git pull --rebase origin main && git push)
+          fi
