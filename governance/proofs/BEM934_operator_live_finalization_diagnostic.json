@@ -1,0 +1,113 @@
+{
+  "status": "BLOCKED",
+  "task_id": "BEM934-LIVE-TEST-DIAGNOSTIC",
+  "checks": {
+    "queue_current_live": true,
+    "recon_status_pass": true,
+    "recon_release_not_promoted": true,
+    "recon_live_not_closed": true,
+    "evidence_exists": true,
+    "evidence_jpeg": true,
+    "evidence_size_min": true,
+    "router_status_pass": true,
+    "router_trace": true,
+    "router_provider": true,
+    "router_target": true,
+    "router_dispatch": true,
+    "router_message_id": true,
+    "transport_completed_any_role": true,
+    "transport_completed_executor": true,
+    "transport_provider_claude": true,
+    "report_length": true,
+    "report_has_pass": false,
+    "report_has_fail": false,
+    "report_has_invariant": false
+  },
+  "failed_checks": [
+    "report_has_pass",
+    "report_has_fail",
+    "report_has_invariant"
+  ],
+  "evidence": {
+    "size": 9602,
+    "sha256": "747977554bf955daa71979e3202abb6cfa0f5e604e318229d6426a3321976178",
+    "git_blob_sha": "be640cd714facf959f1b94ccda91b9bbdcbe0e58"
+  },
+  "router_observed": {
+    "status": "PASS",
+    "protocol": "BEM-932 v8.3",
+    "receipt_type": "provider_router_dispatch",
+    "created_at": "2026-06-18T10:58:14Z",
+    "role": "curator",
+    "task": "Проанализируй два проверяемых инварианта идемпотентной доставки Telegram-сообщения в WRK-C1 и предложи план проверки с критериями PASS/FAIL.",
+    "provider_selected": "claude_code",
+    "fallback_reason": null,
+    "decision_source": "default",
+    "trace_id": "tg_818730867_20260618T105741Z",
+    "ttl_seconds": 1800,
+    "stale_ignored": true,
+    "github_run_id": "27754747555",
+    "target_workflow_id": "claude.yml",
+    "chat_id": "601442777",
+    "message_id": "729",
+    "test_result": "success",
+    "route_result": "success",
+    "dispatch_result": "success"
+  },
+  "matching_transport_records": [
+    {
+      "trace_id": "tg_818730867_20260618T105741Z",
+      "cycle_id": "telegram_operator_message",
+      "role": "curator",
+      "provider": "claude",
+      "status": "failed",
+      "changed_files": [],
+      "commit_sha": "ce8a29fbfb2285c9205673aa14541052f6b96bba",
+      "blocker": "claude_role outcome=failure",
+      "report_path": "governance/reports/tg_818730867_20260618T105741Z.md",
+      "completed_at": "2026-06-18T11:02:01Z"
+    },
+    {
+      "trace_id": "tg_818730867_20260618T105741Z",
+      "cycle_id": "bem934_live_operator_actual_final",
+      "role": "curator",
+      "provider": "claude",
+      "status": "completed",
+      "changed_files": [],
+      "commit_sha": "58210199658c7ca5cbfb8ff31aad58074c0e239a",
+      "blocker": null,
+      "report_path": "governance/reports/tg_818730867_20260618T105741Z.md",
+      "completed_at": "2026-06-18T11:49:05Z"
+    },
+    {
+      "trace_id": "tg_818730867_20260618T105741Z",
+      "cycle_id": "bem934_live_operator_actual_final",
+      "role": "executor",
+      "provider": "claude",
+      "status": "failed",
+      "changed_files": [],
+      "commit_sha": "57ed5e1d855d1a25451d3d49e7ef58c791567850",
+      "blocker": "claude_role outcome=failure",
+      "report_path": "governance/reports/tg_818730867_20260618T105741Z.md",
+      "completed_at": "2026-06-18T12:00:23Z"
+    },
+    {
+      "trace_id": "tg_818730867_20260618T105741Z",
+      "cycle_id": "bem934_live_operator_actual_final",
+      "role": "executor",
+      "provider": "claude",
+      "status": "completed",
+      "changed_files": [],
+      "commit_sha": "56a251abc427f161696bbb3c1adf4434be7cd16c",
+      "blocker": null,
+      "report_path": "governance/reports/tg_818730867_20260618T105741Z.md",
+      "completed_at": "2026-06-18T12:10:57Z"
+    }
+  ],
+  "report": {
+    "path": "governance/reports/tg_818730867_20260618T105741Z.md",
+    "length": 415,
+    "preview": "# Claude Role Result - tg_818730867_20260618T105741Z\n\n| Field | Value |\n|---|---|\n| Trace | tg_818730867_20260618T105741Z |\n| Role | executor |\n| Provider | claude |\n| Outcome | success |\n| Status | completed |\n| Commit SHA | 56a251abc427f161696bbb3c1adf4434be7cd16c |\n| Completed at | 2026-06-18T12:10:57Z |\n| Changed files | none |\n\n**No blocker.**\n\nReport written by claude.yml (BEM-477/488). No issue comments.\n"
+  },
+  "release_promoted": false
+}
