@@ -1,0 +1,32 @@
+name: BEM934 Telegram User Message Trace Search
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find user-authored Telegram trace
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-search@ai-devops-system"
+          git config user.name "BEM-934 Trace Search"
+          mkdir -p governance/proofs
+          grep -R -n -F "Давай протестируем" governance/transport governance/proofs governance/reports governance/state 2>/dev/null | tail -n 100 > /tmp/matches.txt || true
+          python3 -c 'import json; from pathlib import Path; text=Path("/tmp/matches.txt").read_text(errors="replace"); Path("governance/proofs/BEM934_user_message_trace_search.json").write_text(json.dumps({"task_id":"BEM934-LIVE-TEST","query":"Давай протестируем","matches":text.splitlines()},ensure_ascii=False,indent=2)+"\n")'
+          git add governance/proofs/BEM934_user_message_trace_search.json
+          git commit -m "Search BEM-934 user Telegram message trace"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
