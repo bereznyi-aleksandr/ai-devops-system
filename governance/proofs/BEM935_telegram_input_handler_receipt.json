@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-935",
+  "task_id": "BEM935-P1-TELEGRAM-INPUT-HANDLER",
+  "created_at": "2026-06-18T18:08:10Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 3,
+    "percent": 67
+  },
+  "checks": {
+    "telegram_mapper_runtime_code_present": true,
+    "telegram_handler_runtime_code_present": true,
+    "trace_id_created": true,
+    "operator_authored_detected": true,
+    "dispatch_queue_mapping_defined": true,
+    "no_bot_replay_claim": true
+  },
+  "files": [
+    "governance/runners/telegram_input_mapper.py",
+    "governance/runners/telegram_input_handler_runner.py"
+  ],
+  "blockers": [],
+  "next_task": "BEM935-P1-EVENT-WRITER"
+}
