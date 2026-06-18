@@ -1,0 +1,64 @@
+name: BEM934 Request Real Operator Telegram Message
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send operator prompt and record message id
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: "601442777"
+        run: |
+          set -euo pipefail
+          test -n "$TELEGRAM_BOT_TOKEN"
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-telegram@ai-devops-system"
+          git config user.name "BEM-934 Telegram Gate"
+          TEXT='BEM-934 | ФИНАЛЬНЫЙ ЖИВОЙ ТЕСТ. Для подтверждения реального пользовательского ingress отправьте боту ОТДЕЛЬНЫМ сообщением: Проанализируй два проверяемых инварианта идемпотентной доставки Telegram-сообщения в WRK-C1 и предложи план проверки с критериями PASS/FAIL.'
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"             --data-urlencode "chat_id=${CHAT_ID}"             --data-urlencode "text=${TEXT}"             --data-urlencode "disable_web_page_preview=true" > /tmp/tg.json
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          response = json.load(open("/tmp/tg.json", encoding="utf-8"))
+          if not response.get("ok"):
+              raise SystemExit("Telegram sendMessage failed")
+          result = response["result"]
+          receipt = {
+              "status": "PASS",
+              "protocol": "BEM-934",
+              "task_id": "BEM934-LIVE-TEST",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "action": "operator_live_message_requested",
+              "chat_id": result["chat"]["id"],
+              "prompt_message_id": result["message_id"],
+              "prompt_from_is_bot": result.get("from", {}).get("is_bot"),
+              "next_acceptance": {
+                  "requires_new_inbound_message_id_greater_than_prompt": True,
+                  "requires_new_worker_trace": True,
+                  "requires_provider_selected": "claude_code",
+                  "requires_target_workflow": "claude.yml",
+                  "requires_semantic_transport_status": "completed",
+                  "forbids_replay": True,
+              },
+          }
+          path = Path("governance/proofs/BEM934_live_operator_prompt_receipt.json")
+          path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          git add governance/proofs/BEM934_live_operator_prompt_receipt.json
+          git commit -m "Request real operator Telegram message for BEM-934 live test"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
