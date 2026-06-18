@@ -1,0 +1,44 @@
+name: BEM934 Repair Finalizer v2 Typos
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+      - name: Patch typos
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          targets = [
+              Path("governance/runners/bem934_finalize_close_v2.py"),
+              Path(".github/workflows/bem934-finalize-close-v2.yml"),
+          ]
+          for path in targets:
+              text = path.read_text(encoding="utf-8")
+              text = text.replace('stacks_total', 'tasks_total')
+              text = text.replace('stacks_done', 'tasks_done')
+              text = text.replace('Stage BBEM934-CLOSE', 'Stage BEM934-CLOSE')
+              path.write_text(text, encoding="utf-8")
+          PY
+          python3 -m py_compile governance/runners/bem934_finalize_close_v2.py
+      - name: Commit repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-repair@ai-devops-system"
+          git config user.name "BEM-934 Repair"
+          git add governance/runners/bem934_finalize_close_v2.py .github/workflows/bem934-finalize-close-v2.yml
+          git commit -m "BEM-934: repair finalizer v2 typos" || exit 0
+          git push || (git pull --rebase origin main && git push)
