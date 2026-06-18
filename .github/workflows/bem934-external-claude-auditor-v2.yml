@@ -1,0 +1,196 @@
+name: BEM-934 External Claude Auditor v2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: bem934-external-claude-auditor-v2
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      - name: Build independent audit prompt
+        id: prompt
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/bem934_external_audit_prompt.md" <<'PROMPT'
+          You are EXTERNAL_AUDITOR_CLAUDE performing an independent fail-closed audit of BEM-934.
+
+          Read and verify these committed artifacts:
+          - governance/protocols/BEM934_Protocol.md
+          - governance/roadmap/ACTIVE_QUEUE.json
+          - governance/proofs/BEM934_live_test_receipt.json
+          - governance/proofs/BEM934_live_test_receipt_superseded_replay.json
+          - governance/proofs/BEM934_close_preparation_receipt.json
+          - governance/proofs/evidence/BEM934_operator_telegram_tg_818730867_20260618T105741Z.jpg
+          - governance/reports/tg_818730867_20260618T105741Z.md
+          - governance/config/provider_config.json
+          - governance/AGENT_CONTEXT.md
+          - SYSTEM_STATUS.md
+          - .github/workflows/claude.yml
+
+          Audit requirements:
+          1. LIVE receipt must be version 2 PASS, operator-authored, not bot replay, and release_promoted=false.
+          2. Latest semantic executor transport must be status=completed, provider=claude, role=executor, blocker=null.
+          3. Historical failed attempts must remain disclosed; the old replay receipt must be archived as superseded.
+          4. Operator Telegram evidence and substantive Claude report must physically exist.
+          5. ACTIVE_QUEUE must remain 9/10, current BEM934-CLOSE, release FOLLOW_UP_REQUIRED.
+          6. Close preparation receipt must PASS and must not promote release.
+          7. Canonical docs must state claude_code primary, self-hosted Codex disabled/deprecated/non-operational, and cloud reserve as mechanical fallback without OpenAI runtime secrets.
+          8. claude.yml workflow_dispatch inputs role, provider, trace_id, cycle_id, task_type, task must be required and default-free.
+          9. No release PASS, close receipt, or final verification may be claimed before this audit and the final validator.
+          10. Top-level PASS must not contradict nested evidence.
+
+          Write exactly one file:
+          governance/proofs/BEM934_external_auditor_verdict.json
+
+          JSON schema:
+          {
+            "status": "PASS" or "BLOCKED",
+            "conclusion": "APPROVED" or "REJECTED",
+            "auditor": "EXTERNAL_AUDITOR_CLAUDE",
+            "protocol": "BEM-934",
+            "task_id": "BEM934-CLOSE",
+            "created_at": "<UTC ISO timestamp>",
+            "release_promoted": false,
+            "checks": {
+              "live_receipt_v2_pass": true/false,
+              "operator_authored_not_replay": true/false,
+              "semantic_executor_completed": true/false,
+              "failed_history_disclosed": true/false,
+              "superseded_replay_archived": true/false,
+              "operator_evidence_exists": true/false,
+              "substantive_report_exists": true/false,
+              "queue_is_9_of_10_and_unreleased": true/false,
+              "close_preparation_pass": true/false,
+              "provider_claims_truthful": true/false,
+              "claude_inputs_canonical": true/false,
+              "no_premature_release_claim": true/false,
+              "nested_evidence_noncontradictory": true/false
+            },
+            "evidence_paths": ["..."],
+            "blockers": ["..."],
+            "summary": "..."
+          }
+
+          PASS/APPROVED is allowed only when every check is true and blockers is empty.
+          Do not modify any other file. Do not commit.
+          PROMPT
+          {
+            echo 'prompt<<EOF'
+            cat "$RUNNER_TEMP/bem934_external_audit_prompt.md"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run independent Claude audit
+        id: external_audit
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          prompt: ${{ steps.prompt.outputs.prompt }}
+          claude_args: '--max-turns 20 --allowedTools "Read,Glob,Grep,Write"'
+
+      - name: Validate, isolate, and commit audit artifacts
+        if: always()
+        shell: bash
+        env:
+          AUDIT_OUTCOME: ${{ steps.external_audit.outcome }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          verdict_path = Path("governance/proofs/BEM934_external_auditor_verdict.json")
+          receipt_path = Path("/tmp/BEM934_external_audit_run_receipt.json")
+          outcome = os.environ.get("AUDIT_OUTCOME", "unknown")
+          errors = []
+          verdict = None
+
+          if not verdict_path.exists():
+              errors.append("verdict_missing")
+          else:
+              try:
+                  verdict = json.loads(verdict_path.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  errors.append("verdict_invalid_json:" + str(exc))
+
+          if outcome != "success":
+              errors.append("claude_action_outcome=" + outcome)
+
+          if isinstance(verdict, dict):
+              checks = verdict.get("checks")
+              if verdict.get("status") != "PASS":
+                  errors.append("verdict_status_not_pass")
+              if vrdict.get("conclusion") != "APPROVED":
+                  errors.append("verdict_conclusion_not_approved")
+              if verdict.get("auditor") != "EXTERNAL_AUDITOR_CLAUDE":
+                  errors.append("auditor_identity_mismatch")
+              if verdict.get("release_promoted") is not False:
+                  errors.append("premature_release_promotion")
+              if verdict.get("blockers") != []:
+                  errors.append("verdict_has_blockers")
+              if not isinstance(checks, dict) or not checks or not all(value is True for value in checks.values()):
+                errors.append("verdict_checks_not_all_true")
+
+          verdict_bytes = verdict_path.read_bytes() if verdict_path.exists() else b""
+          receipt = {
+              "status": "PASS" if not errors else "BLOCKED",
+              "protocol": "BEM-934",
+              "task_id": "BEM934-CLOSE.EXTERNAL-AUDIT",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "workflow_run_id": os.environ.get("RUN_ID"),
+              "workflow_run_attempt": os.environ.get("RUN_ATTEMPT"),
+              "claude_action_outcome": outcome,
+              "verdict_path": str(verdict_path),
+              "verdict_sha256": hashlib.sha256(verdict_bytes).hexdigest() if verdict_bytes else None,
+              "errors": errors,
+              "release_promoted": False,
+          }
+          receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+          if [ -f governance/proofs/BEM934_external_auditor_verdict.json ]; then
+            cp governance/proofs/BEM934_external_auditor_verdict.json /tmp/BEM934_external_auditor_verdict.json
+          fi
+          git reset --hard HEAD
+          mkdir -p governance/proofs
+          if [ -f /tmp/BEM934_external_auditor_verdict.json ]; then
+            cp /tmp/BEM934_external_auditor_verdict.json governance/proofs/BEM934_external_auditor_verdict.json
+          fi
+          cp /tmp/BEM934_external_audit_run_receipt.json governance/proofs/BEM934_external_audit_run_receipt.json
+
+          git config user.email "external-auditor-claude@ai-devops-system"
+          git config user.name "EXTERNAL_AUDITOR_CLAUDE"
+          git add governance/proofs/BEM934_external_auditor_verdict.json governance/proofs/BEM934_external_audit_run_receipt.json || true
+          git commit -m "BEM-934: record independent external Claude audit"
+          git push || (git pull --rebase origin main && git push)
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path("governance/proofs/BEM934_external_audit_run_receipt.json").read_text())
+          if receipt.get("status") != "PASS":
+              raise SystemExit("external_audit_blocked:" + ",".join(receipt.get("errors", [])))
+          PY
