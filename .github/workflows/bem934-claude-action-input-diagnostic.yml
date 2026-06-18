@@ -1,40 +1,19 @@
-name: BEM934 Claude Action Input Diagnostic
+name: BEM934 Claude Action Input Diagnostic Repaired Legacy
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  diagnostic:
+  guard:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Capture Claude role and prompt wiring
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Legacy workflow syntax guard
         run: |
-          set -euo pipefail
-          gh auth setup-git
-          gh repo clone "$GITHUB_REPOSITORY" repo
-          cd repo
-          git config user.email "bem934-diagnostic@ai-devops-system"
-          git config user.name "BEM-934 Diagnostic"
-          mkdir -p governance/proofs
-          grep -n -C 20 -E "claude_role:|anthropics/claude-code-action|prompt:|claude_args:|task_type=:|inputs.task|inputs.role" .github/workflows/claude.yml > /tmp/wiring.txt || true
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          text = Path("/tmp/wiring.txt").read_text(encoding="utf-8", errors="replace")
-          Path("governance/proofs/BEM934_claude_action_input_diagnostic.json").write_text(
-            json.dumps({"task_id":"BEM934-LIVE-TEST","wiring_lines":text.splitlines()}, indent=2) + "\n",
-            encoding="utf-8",
-         )
-          PY
-          git add governance/proofs/BEM934_claude_action_input_diagnostic.json
-          git commit -m "Capture BEM-934 Claude action input wiring" || exit 0
-          for attempt in 1 2 3 4 5; do
-            if git push origin HEAD:main; then exit 0; fi
-            git pull --rebase origin main
-          done
-          exit 1
+          echo "BEM-937: legacy workflow syntax repaired."
+          echo "This historical BEM-934 workflow is retained only as a valid manual guard."
+          echo "Canonical proofs remain in governance/proofs/."
+          echo "No release status is promoted by this legacy workflow."
