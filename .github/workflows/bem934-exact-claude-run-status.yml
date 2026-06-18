@@ -1,0 +1,38 @@
+name: BEM934 Exact Claude Run Status
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Captur exact Claude run status
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+          RUN_ID: "27756862953"
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh auth setup-git
+          gh api "repos/$REPO/actions/runs/$RUN_ID" > /tmp/run.json
+          gh run view "$RUN_ID" --repo "$REPO" --log-failed > /tmp/failed.log 2>&1 || true
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-exact@donotreply.local"
+          git config user.name "BEM-934 Exact Status"
+          mkdir -p governance/proofs
+          tail -n 200 /tmp/failed.log > /tmp/failed.tail
+          jq -n --slurpfile run /tmp/run.json --rawfile failed_log /tmp/failed.tail             '{task_id:"BEM934-LIVE-TEST", run:{id:$run[0].id,status:$run[0].status,conclusion:$run[0].conclusion,created_at:$run[0].created_at,updated_at:$run[0].updated_at,head_sha:$run[0].head_sha,html_url:$run[0].html_url},failed_log_tail:$failed_log}'             > governance/proofs/BEM934_exact_claude_run_status.json
+          git add governance/proofs/BEM934_exact_claude_run_status.json
+          git commit -m "Capture exact BEM-934 Claude run status" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
