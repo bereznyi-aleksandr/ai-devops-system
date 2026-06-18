@@ -10,7 +10,7 @@ new_proof = "\n".join(
         "              safe_trace = ''.join(ch if ch.isalnum() or ch in ('_', '-') else '_' for ch in trace)",
         "              proof_path = Path('governance/proofs/BEM934_live_content_' + safe_trace + '.json')",
         "              if not proof_path.exists() and trace == 'tg_934432449_20260618T102008Z'",
-        ":                  proof_path = Path('governance/proofs/BEM934_live_content_tg_934432449.json')",
+        "                  proof_path = Path('governance/proofs/BEM934_live_content_tg_934432449.json')",
     ]
 )
 if old_proof in text:
