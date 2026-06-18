@@ -1,0 +1,35 @@
+name: BEM934 Prepare Failure Diagnostic
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture failed prepare log
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: "27755328457"
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-diagnostic@ai-devops-system"
+          git config user.name "BEM-934 Diagnostic"
+          mkdir -p governance/proofs
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/failed.log 2>&1 || true
+          tail -n 160 /tmp/failed.log > /tmp/failed.tail
+          jq -n --arg run_id "$RUN_ID" --rawfile log /tmp/failed.tail             '{task_id:"BEM934-LIVE-TEST",run_id:$run_id,failed_log_tail:$log}'             > governance/proofs/BEM934_prepare_failure_diagnostic.json
+          git add governance/proofs/BEM934_prepare_failure_diagnostic.json
+          git commit -m "Capture BEM-934 prepare failure diagnostic" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
