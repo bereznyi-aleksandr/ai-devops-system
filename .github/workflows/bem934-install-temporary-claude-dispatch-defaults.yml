@@ -1,0 +1,47 @@
+name: BEM934 Install Temporary Claude Dispatch Defaults
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Build, validate, record and install defaults candidate
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh auth setup-git
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-defaults@ai-devops-system"
+          git config user.name "BEM-934 Defaults"
+          mkdir -p governance/proofs
+          cp .github/workflows/claude.yml governance/proofs/BEM934_claude_pre_defaults_backup.yml
+          python3 -m py_compile governance/runners/bem934_set_claude_dispatch_defaults.py
+          python3 governance/runners/bem934_set_claude_dispatch_defaults.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/claude.yml')"
+          grep -q "default: 'tg_818730867_20260618T105741Z'" .github/workflows/claude.yml
+          cp .github/workflows/claude.yml governance/proofs/BEM934_claude_defaults_candidate.yml
+          CURRENT_SHA="$(gh api "repos/$REPO/contents/.github/workflows/claude.yml?ref=main" --jq .sha)"
+          CANDIDATE_BLOB="$(git hash-object governance/proofs/BEM934_claude_defaults_candidate.yml)"
+          jq -n --arg source "$CURRENT_SHA" --arg candidate "$CANDIDATE_BLOB"             '{status:"PASS",protocol:"BEM-934",task_id:"BEM934-LIVE-TEST",source_workflow_blob_sha:$source,candidate_blob_sha:$candidate,trace_id:"tg_818730867_20260618T105741Z",checks:{patcher_compiled:true,yaml_valid:true,defaults_present:true,backup_materialized:true}}'             > governance/proofs/BEM934_claude_defaults_candidate_receipt.json
+          git add governance/proofs/BEM934_claude_pre_defaults_backup.yml governance/proofs/BEM934_claude_defaults_candidate.yml governance/proofs/BEM934_claude_defaults_candidate_receipt.json
+          git commit -m "Materialize temporary BEM-934 Claude dispatch defaults"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then break; fi
+            git pull --rebase origin main
+            if [ "$attempt" = "5" ]; then exit 1; fi
+          done
+          CURRENT_SHA="$(gh api "repos/$REPO/contents/.github/workflows/claude.yml?ref=main" --jq .sha)"
+          CONTENT="$(base64 -w 0 governance/proofs/BEM934_claude_defaults_candidate.yml)"
+          jq -n --arg message "Install temporary BEM-934 real-trace dispatch defaults" --arg content "$CONTENT" --arg sha "$CURRENT_SHA"             '{message:$message,content:$content,sha:$sha,branch:"main"}' > /tmp/install.json
+          gh api --method PUT             -H "Accept: application/vnd.github+json"             -H "X-GitHub-Api-Version: 2022-11-28"             --input /tmp/install.json             "repos/$REPO/contents/.github/workflows/claude.yml" > /tmp/install.response.json
+          jq -e '.content.sha' /tmp/install.response.json
