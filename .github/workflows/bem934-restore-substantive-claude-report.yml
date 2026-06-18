@@ -1,0 +1,29 @@
+name: BEM-934 Restore Substantive Claude Report
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+      - name: Restore substantive Claude report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 58210199658c7ca5cbfb8ff31aad58074c0e239a:governance/reports/tg_818730867_20260618T105741Z.md > governance/reports/tg_818730867_20260618T105741Z.md
+          grep -q "## Idempotency Invariants" governance/reports/tg_818730867_20260618T105741Z.md
+          grep -q "Result: PASS" governance/reports/tg_818730867_20260618T105741Z.md
+          git config user.email "bem934-restorer@ai-devops-system"
+          git config user.name "BEM-934 Report Restorer"
+          git add governance/reports/tg_818730867_20260618T105741Z.md
+          git commit -m "BEM-934: restore substantive Claude LIVE report"
+          git push || (git pull --rebase origin main && git push)
