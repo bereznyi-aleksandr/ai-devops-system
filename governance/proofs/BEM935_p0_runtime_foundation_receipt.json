@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-935",
+  "task_id": "BEM935-P0-RUNTIME-FOUNDATION",
+  "created_at": "2026-06-18T17:56:00Z",
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 3,
+    "percent": 100
+  },
+  "checks": {
+    "root_agent_context_present": true,
+    "curator_router_runtime_code": true,
+    "dispatch_consumer_runtime_code": true,
+    "dispatch_processed_nonempty": true,
+    "python_stubs_replaced": true,
+    "bEM934_left_closed": true
+  },
+  "proofs": [
+    "AGENT_CONTEXT.md",
+    "governance/runners/curator_router.py",
+    "governance/runners/dispatch_consumer.py",
+    "governance/state/dispatch_processed.jsonl",
+    "governance/proofs/BEM935_dispatch_consumer_receipt.json"
+  ],
+  "blockers": [],
+  "next_task": "BEM935-P1-PROVIDER-FAILOVER"
+}
