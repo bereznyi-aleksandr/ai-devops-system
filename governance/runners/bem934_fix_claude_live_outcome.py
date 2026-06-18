@@ -3,51 +3,74 @@ from pathlib import Path
 
 path = Path(".github/workflows/claude.yml")
 text = path.read_text(encoding="utf-8")
+lines = text.splitlines()
 
-old_env = """          CYCLE_ID:         ${{ env.CYCLE_ID }}
-          CLAUDE_OUTCOME: ${{ inputs.task_type == 'object_runtime_binding' && steps.claude_binding_role.outcome || steps.claude_role.outcome }}
-"""
-new_env = """          CYCLE_ID:         ${{ env.CYCLE_ID }}
-          TASK_TYPE:        ${{ inputs.task_type }}
-          CLAUDE_OUTCOME: ${{ inputs.task_type == 'object_runtime_binding' && steps.claude_binding_role.outcome || steps.claude_role.outcome }}
-"""
-if old_env not in text and new_env not in text:
-    raise SystemExit("target env block not found")
-if old_env in text:
-    text = text.replace(old_env, new_env, 1)
+step_marker = "      - name: Write final result to transport"
+try:
+    step_start = lines.index(step_marker)
+except ValueError as exc:
+    raise SystemExit("transport result step not found") from exc
 
-old_logic = """          outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')
+step_end = len(lines)
+for idx in range(step_start + 1, len(lines)):
+    if lines[idx].startswith("      - name: "):
+        step_end = idx
+        break
 
-          status  = 'completed' if outcome == 'success' else ('failed' if outcome == 'failure' else outcome)
-          blocker = None if outcome == 'success' else ('claude_role outcome=' + outcome)
+segment = lines[step_start:step_end]
 
-          changed = []
-          try:
-              changed = subprocess.check_output(
-                  ['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], text=True
-              ).strip().split('\\n')
-              changed = [f for f in changed if f]
-          except Exception:
-              pass
-"""
-new_logic = """          outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')
-          task_type = os.environ.get('TASK_TYPE', '')
+if not any("TASK_TYPE:" in line for line in segment):
+    cycle_rel = next(
+        (idx for idx, line in enumerate(segment) if line.strip().startswith("CYCLE_ID:")),
+        None,
+    )
+    if cycle_rel is None:
+        raise SystemExit("CYCLE_ID env line not found")
+    cycle_line = segment[cycle_rel]
+    indent = cycle_line[: len(cycle_line) - len(cycle_line.lstrip())]
+    segment.insert(cycle_rel + 1, f"{indent}TASK_TYPE:       ${{{ inputs.task_type }}}")
 
-          status  = 'completed' if outcome == 'success' else ('failed' if outcome == 'failure' else outcome)
-          blocker = None if outcome == 'success' else ('claude_role outcome=' + outcome)
+marker = "         # BEM-934 live semantic proof validation"
+if marker not in segment:
+    outcome_rel = next(
+        (
+            idx
+            for idx, line in enumerate(segment)
+            if "outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')" in line
+        ),
+        None,
+    )
+    if outcome_rel is None:
+        raise SystemExit("outcome assignment not found")
+    segment.insert(
+        outcome_rel + 1,
+        "          task_type = os.environ.get('TASK_TYPE', '')",
+    )
 
-          changed = []
-          try:
-              changed = subprocess.check_output(
-                  ['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], text=True
-              ).strip().split('\\n')
-              changed = [f for f in changed if f]
-          except Exception:
-              pass
+    changed_rel = next(
+        (idx for idx, line in enumerate(segment) if line.strip() == "changed = []"),
+        None,
+    )
+    if changed_rel is None:
+        raise SystemExit("changed-files block not found")
 
-          # BEM-934: the Claude action can return a non-zero outcome after committing
-          # a valid content artifact. For the narrowly scoped live repair task, derive
-          # semantic success from strict proof validation instead of masking all errors.
+    pass_rel = None
+    for idx in range(changed_rel + 1, len(segment) - 1):
+        if segment[idx].strip() == "except Exception:":
+            for next_idx in range(idx + 1, min(idx + 4, len(segment)):
+                if segment[next_idx].strip() == "pass":
+                    pass_rel = next_idx
+                    break
+        if pass_rel is not None:
+            break
+    if pass_rel is None:
+        raise SystemExit("changed-files exception pass not found")
+
+    validation = r'''
+          # BEM-934 live semantic proof validation
+          # The Claude action may return a non-zero tool outcome after committing a valid
+          # proof. Only the narrowly scoped repair task may derive semantic success from
+          # strict, trace-bound proof validation.
           if task_type == 'live_content_analysis_repair':
               proof_path = Path('governance/proofs/BEM934_live_content_tg_934432449.json')
               proof_valid = False
@@ -55,11 +78,9 @@ new_logic = """          outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')
                   proof = json.loads(proof_path.read_text(encoding='utf-8'))
                   acceptance = proof.get('acceptance_checks')
                   acceptance_ok = (
-                      isinstance(acceptance, list) and len(acceptance) >= 2
-                  ) or (
-                      isinstance(acceptance, dict)
-                      and bool(acceptance)
-                      and all(bool(v) for v in acceptance.values())
+                      isinstance(acceptance, list)
+                      and len(acceptance) >= 2
+                      and all(isinstance(item, dict) and item.get('result') == 'PASS' for item in acceptance)
                   )
                   proof_valid = (
                       proof.get('status') == 'PASS'
@@ -68,7 +89,7 @@ new_logic = """          outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')
                       and proof.get('trace_id') == trace
                       and proof.get('provider_selected') == 'claude_code'
                       and proof.get('source_router_receipt')
-                          == 'governance/proofs/BEM932_provider_router_tg_934432449_20260618T102008Z.json'
+                            == 'governance/proofs/BEM932_provider_router_tg_934432449_20260618T102008Z.json'
                       and isinstance(proof.get('invariants'), list)
                       and len(proof['invariants']) >= 2
                       and isinstance(proof.get('validation_steps'), list)
@@ -83,11 +104,8 @@ new_logic = """          outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')
                   outcome = 'success'
                   status = 'completed'
                   blocker = None
-"""
-if new_logic in text:
-    path.write_text(text, encoding="utf-8")
-    raise SystemExit(0)
-if old_logic not in text:
-    raise SystemExit("target outcome block not found")
-text = text.replace(old_logic, new_logic, 1)
-path.write_text(text, encoding="utf-8")
+'''.strip("\n").splitlines()
+    segment[pass_rel + 1:pass_rel + 1] = validation
+
+lines[step_start:step_end] = segment
+path.write_text("\n".join(lines) + "\n", encoding="utf-8")
