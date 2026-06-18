@@ -1,0 +1,49 @@
+name: BEM-934 Repair Close Preparation v2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+      - name: Patch and compile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('governance/runners/bem934_prepare_close_v2.py')
+          s=p.read_text(encoding='utf-8')
+          replacements={
+            'live.get("telegram" if isinstance(':'live.get("telegram") if isinstance(',
+            'live.get("transport" if isinstance(':'live.get("ransport") if isinstance(',
+            'RECEIT.write_text':'RECEIPT.write_text',
+            '`{trace_id}`':'`{trace_id}`',
+          }
+          # Emplicit exact fixes for the two malformed get calls and typo.
+          s=s.replace('telegram = live.get("telegram" if instance(live.get("replay"), dict) else {}', 'telegram = live.get("telegram") if isinstance(live.get("telegram"), dict) else {}')
+          s=s.replace('telegram = live.get("telegram" if isinstance(live.get("telegram"), dict) else {}', 'telegram = live.get("telegram") if isinstance(live.get("telegram"), dict) else {}')
+          s=s.replace('transport = live.get("transport" if isinstance(live.get("transport"), dict) else {}', 'transport = live.get("transport") if isinstance(live.get("transport"), dict) else {}')
+          s=s.replace('RECEIT.write_text', 'RECEIPT.write_text')
+          s=s.replace('O;{trace_id}`', '`{trace_id}`')
+          p.write_text(s,encoding='utf-8')
+          PY
+          python3 -m py_compile governance/runners/bem934_prepare_close_v2.py
+      - name: Commit repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem934-repair@ai-devops-system"
+          git config user.name "BEM-934 Repair"
+          git add governance/runners/bem934_prepare_close_v2.py
+          git commit -m "BEM-934: repair close preparation v2 runner"
+          git push || (git pull --rebase origin main && git push)
