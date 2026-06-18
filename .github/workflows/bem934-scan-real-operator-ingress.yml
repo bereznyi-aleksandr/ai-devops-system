@@ -1,0 +1,74 @@
+name: BEM934 Scan Real Operator Telegram Ingress
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan provider-router receipts after operator prompt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-scan@ai-devops-system"
+          git config user.name "BEM-934 Ingress Scan"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          prompt_path = Path("governance/proofs/BEM934_live_operator_prompt_receipt.json")
+          prompt = json.loads(prompt_path.read_text(encoding="utf-8"))
+          prompt_id = int(prompt["prompt_message_id"])
+          chat_id = str(prompt["chat_id"])
+          candidates = []
+          for path in sorted(Path("governance/proofs").glob("BEM932_provider_router_tg_*.json")):
+              try:
+                  data = json.loads(path.read_text(encoding="utf-8"))
+              except Exception:
+                  continue
+              try:
+                  message_id = int(data.get("message_id") or 0)
+              except (TypeError, ValueError):
+                  message_id = 0
+              if str(data.get("chat_id") or "") != chat_id:
+                  continue
+              if message_id <= prompt_id:
+                  continue
+              candidates.append({
+                  "path": path.as_posix(),
+                  "status": data.get("status"),
+                  "created_at": data.get("created_at"),
+                  "trace_id": data.get("trace_id"),
+                  "message_id": message_id,
+                  "task": data.get("task"),
+                  "provider_selected": data.get("provider_selected"),
+                  "target_workflow_id": data.get("target_workflow_id"),
+                  "github_run_id": data.get("github_run_id"),
+              })
+          output = {
+              "task_id": "BEM934-LIVE-TEST",
+              "prompt_message_id": prompt_id,
+              "chat_id": chat_id,
+              "candidate_count": len(candidates),
+              "candidates": candidates,
+          }
+          Path("governance/proofs/BEM934_real_operator_ingress_scan.json").write_text(
+              json.dumps(output, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+          git add governance/proofs/BEM934_real_operator_ingress_scan.json
+          git commit -m "Scan for real operator Telegram ingress after BEM-934 prompt" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
