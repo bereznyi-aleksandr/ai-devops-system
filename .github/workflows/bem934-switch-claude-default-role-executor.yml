@@ -1,0 +1,53 @@
+name: BEM934 Switch Claude Default Role to Executor
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  switch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Switch and install workflow
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh auth setup-git
+          gh repo clone "$REPO" repo
+          cd repo
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path(".github/workflows/claude.yml")
+          lines = p.read_text(encoding="utf-8").splitlines()
+          start = lines.index("    inputs:")
+          end = next(i for i in range(start + 1, len(lines)) if lines[i].startswith("  issue_comment:"))
+          role_index = None
+          for i in range(start + 1, end):
+              if lines[i] == "      role:":
+                role_index = i
+                break
+          if role_index is None:
+              raise SystemExit("role input not found")
+          found = False
+          for i in range(role_index + 1, min(role_index + 10, end)):
+            if lines[i].strip().startswith("default:"):
+                indent = lines[i][: len(lines[i]) - len(lines[i].lstrip())]
+                lines[i] = indent + "default: 'executor'"
+                found = True
+                break
+          if not found:
+              raise SystemExit("role default not found")
+          p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/claude.yml')"
+          grep -q "default: 'executor'" .github/workflows/claude.yml
+          CURRENT_SHA="$(gh api "repos/$REPO/contents/.github/workflows/claude.yml?ref=main" --jq .sha)"
+          CONTENT="$(base64 -w 0 .github/workflows/claude.yml)"
+          jq -n --arg message "Switch temporary BEM934 Claude role to executor" --arg content "$CONTENT" --arg sha "$CURRENT_SHA" '{message:$message,content:$content,sha:$sha,branch:"main"}' > /tmp/payload.json
+          gh api --method PUT -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" --input /tmp/payload.json "repos/$REPO/contents/.github/workflows/claude.yml" > /tmp/response.json
+          jq -e '.content.sha' /tmp/response.json
