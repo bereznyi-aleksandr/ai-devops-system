@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-938",
+  "task_id": "BEM938-P1-GD-RUNTIME-BINDING",
+  "created_at": "2026-06-18T19:10:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "object_id": "OBJ-GD-001",
+  "trace_id": "bem938_gd_runtime_selftest_20260618T191000Z",
+  "dispatch_id": "bem938_gd_runtime_selftest_20260618T191000Z:OBJ-GD-001",
+  "files": [
+    "governance/state/runtime_objects.json",
+    "governance/state/OBJ-GD-001_last_run.json",
+    "governance/state/object_events.jsonl"
+  ],
+  "checks": {
+    "runtime_object_registry_written": true,
+    "gd_object_enabled": true,
+    "gd_last_run_has_trace": true,
+    "object_event_written": true,
+    "old_41b_placeholder_replaced": true
+  },
+  "blockers": [],
+  "next_task": "BEM938-P2-INTERNAL-DISPATCH-E2E"
+}
