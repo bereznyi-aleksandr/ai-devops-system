@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updated_at": "2026-06-17T05:57:20Z",
+  "updated_at": "2026-06-18T04:36:53Z",
   "purpose": "BEM-934 clean provider status after removal of self-hosted Codex path.",
   "providers": {
     "claude_code": {
@@ -16,5 +16,11 @@
       "mode": "mechanical_fallback_until_openai_secret_and_model_are_configured",
       "updated_at": "2026-06-17T05:57:20Z"
     }
+  },
+  "claude": {
+    "status": "completed",
+    "last_used": "2026-06-18T04:36:53Z",
+    "last_trace": "bem934_objects_bound_27736997880",
+    "last_outcome": "success"
   }
 }
