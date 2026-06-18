@@ -1,28 +1,88 @@
 {
-  "status": "BLOCKED",
+  "status": "PASS",
   "protocol": "BEM-934",
   "task_id": "BEM934-OBJECTS-BOUND",
-  "created_at": "2026-06-18T05:07:17Z",
-  "trace_id": "bem934_objects_bound_27738057209",
-  "provider_selected": "claude_code",
-  "workflow_id": "claude.yml",
-  "workflow_run_id": 27738064898,
-  "workflow_conclusion": "failure",
-  "workflow_head_sha": "906750b462eb95462440bb51de2942e41f671570",
-  "checks": {
-    "workflow_run_observed": true,
-    "prompt_multiline_output_passed": false,
-    "claude_binding_role_executed": false,
-    "trace_specific_plan_created": false,
-    "receipt_json_conflict_markers_absent": true
-  },
-  "missing": [
-    "prompt_multiline_output_pass",
-    "claude_binding_role_executed",
-    "trace_specific_plan_created",
-    "plan_blob_sha",
-    "plan_commit_sha"
+  "created_at": "2026-06-18T10:10:45Z",
+  "provider_selected": "claude",
+  "workflow": ".github/workflows/claude.yml",
+  "registry_path": "governance/architecture/objects_registry_v2.json",
+  "registry_status": "BOUND",
+  "binding_commit_sha": "7a57afea15e110a1424e37f3fa294ce21094537a",
+  "registry_blob_sha": "fcb7ba5560312ce251720ac1a04f80e2c995e7f3",
+  "trace_ids": [
+    "bem934_objects_bound_27750274693_gd_a1",
+    "bem934_objects_bound_27750274693_dir_a2",
+    "bem934_objects_bound_repair_27751086692_wrk"
   ],
-  "blocker": "github_multiline_output_delimiter_missing_newline",
-  "repair_required": "Ensure BEM934_PROMPT_EOF starts on a new line before retrying."
-]}
+  "objects": [
+    {
+      "object_id": "GD",
+      "status": "BOUND",
+      "trace_id": "bem934_objects_bound_27750274693_gd_a1",
+      "provider": "claude",
+      "workflow": ".github/workflows/claude.yml",
+      "passport_path": "governance/architecture/object_passports/GD.json",
+      "source_commit_sha": "19a493c2230d120d9bce32d2944596186e68b3dc",
+      "source_receipt_blob_sha": "1a677515032d2484f2ddffa5e57bb5905b90c34b",
+      "source_plan_blob_sha": "0abba2157fb159392a96cd6f6325492b26a23211",
+      "snapshot_path": "governance/proofs/bem934_objects_bound/GD_runtime_binding.json",
+      "snapshot_blob_sha": "c356316c7d9d3cb74532fe77adb6b8674e5e621b"
+    },
+    {
+      "object_id": "DIR",
+      "status": "BOUND",
+      "trace_id": "bem934_objects_bound_27750274693_dir_a2",
+      "provider": "claude",
+      "workflow": ".github/workflows/claude.yml",
+      "passport_path": "governance/architecture/object_passports/DIR.json",
+      "source_commit_sha": "f201f24770b6987f8464de7498d7b16ec5cf2619",
+      "source_receipt_blob_sha": "96eff12280a9fe6a99ce29079c4f7c2b9dcb7b55",
+      "source_plan_blob_sha": "5304c08d5a23cf22454804200bcf744efb942761",
+      "snapshot_path": "governance/proofs/bem934_objects_bound/DIR_runtime_binding.json",
+      "snapshot_blob_sha": "7c544783cda3abe08f9877368d59530c9ad96a46"
+    },
+    {
+      "object_id": "WRK",
+      "status": "BOUND",
+      "trace_id": "bem934_objects_bound_repair_27751086692_wrk",
+      "provider": "claude",
+      "workflow": ".github/workflows/claude.yml",
+      "passport_path": "governance/architecture/object_passports/WRK.json",
+      "source_execution_commit_sha": "b907bccbb4b18dbd00751f9f1c18ae69ccbc1fa1",
+      "source_receipt_blob_sha": "0a1f468aa975b00ae5546ccbd4b8e7f9e6438b95",
+      "source_plan_blob_sha": "d10197e73086c58b0aa6213c312cad3eeb6eafee",
+      "source_report_path": "governance/reports/bem934_objects_bound_repair_27751086692_wrk.md",
+      "source_report_blob_sha": "a56a37b2364988e5ba154d7cc3e4ab9153394e61",
+      "snapshot_path": "governance/proofs/bem934_objects_bound/WRK_runtime_binding.json",
+      "snapshot_commit_sha": "e2872f13e14641823b39f68678f2bb26ba728da6",
+      "snapshot_blob_sha": "8488faa40b34f34283f5572f3b63ac9fc5469e99",
+      "canonicalization_commits": [
+        "1189c70852088c0f9f6453c7b66cf1a17f88abdc",
+        "e1014853ddfaeaabbdd7c8e78e67dd90ea555352"
+      ]
+    }
+  ],
+  "checks": {
+    "three_objects_bound": true,
+    "three_distinct_trace_ids": true,
+    "all_source_receipts_pass": true,
+    "all_source_commit_shas_present": true,
+    "all_source_receipt_blob_shas_present": true,
+    "all_source_plan_blob_shas_present": true,
+    "all_snapshot_blob_shas_present": true,
+    "provider_is_claude": true,
+    "workflow_is_claude_yml": true,
+    "full_non_smoke_path": true,
+    "registry_status_bound": true,
+    "binding_commit_sha_present": true,
+    "registry_blob_sha_present": true,
+    "shared_materialization_race_recovered": true,
+    "conflict_markers_absent_from_canonical_shared_files": true,
+    "gpt_fallback_not_claimed_as_llm": true
+  },
+  "notes": [
+    "Each object was exercised through an independent claude.yml workflow dispatch and has a distinct real trace_id.",
+    "The WRK shared-artifact race was recovered by preserving the proof-bearing WRK side and recording immutable execution commit/report provenance.",
+    "gpt_codex_cloud remains mechanical_fallback without OPENAI_API_KEY/OPENAI_MODEL and is not claimed as an LLM-capable fallback."
+  ]
+}
