@@ -21,17 +21,42 @@ def blob(sha: str, path: Path) -> str:
     return repair.git("rev-parse", f"{sha}:{path}")
 
 
+def select_stashed(text: str) -> str:
+    output = []
+    mode = "normal"
+    for line in text.splitlines(keepends=True):
+        if line.startswith("<<<<<<< "):
+            if mode != "normal":
+                raise RuntimeError("nested conflict marker")
+            mode = "upstream"
+            continue
+        if line.startswith("=======") and mode == "upstream":
+            mode = "stashed"
+            continue
+        if line.startswith(">>>>>>> ") and mode == "stashed":
+            mode = "normal"
+            continue
+        if mode in {"normal", "stashed"}:
+            output.append(line)
+    if mode != "normal":
+        raise RuntimeError(unterminated conflict marker")
+    clean = "".join(output)
+    if any(marker in clean for marker in ("<<<<<<<", "=======", ">>>>>>>")):
+        raise RuntimeError("conflict marker remained")
+    return clean
+
+
 def main() -> None:
     repair.git("config", "user.email", "bem934-recovery@ai-devops-system")
     repair.git("config", "user.name", "BEM-934 Recovery")
     repair.git("fetch", "origin", "main")
     repair.git("pull", "--rebase", "--autostash", "origin", "main")
 
-    receipt = json.loads(at(EXEC_SHA, RECEIPT))
-    plan = json.loads(at(EXEC_SHA, PLAN))
+    receipt = json.loads(select_stashed(at(EXEC_SHA, RECEIPT)))
+    plan = json.loads(select_stashed(at(EXEC_SHA, PLAN)))
     repair.validate_source(receipt, plan, TRACE, "WRK")
 
-    RECEIPT.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n")
+    RECEIT.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n")
     PLAN.write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n")
     clean_sha = repair.push_commit(
         "Resolve BEM-934 materialization race with canonical WRK Claude output",
@@ -50,10 +75,11 @@ def main() -> None:
         "provider": "claude",
         "workflow": ".github/workflows/claude.yml",
         "source_receipt_path": str(RECEIPT),
-        "source_receipt_blob_sha": blob(EXEC_SHA, RECEIPT),
+        "source_receipt_blob_sha": blob(clean_sha, RECEIPT),
         "source_plan_path": str(PLAN),
-        "source_plan_blob_sha": blob(EXEC_SHA, PLAN),
-        "source_commit_sha": EXEC_SHA,
+        "source_plan_blob_sha": blob(clean_sha, PLAN),
+        "source_commit_sha": clean_sha,
+        "execution_commit_sha": EXEC_SHA,
         "source_report_path": str(REPORT),
         "source_report_blob_sha": blob(EXEC_SHA, REPORT),
         "race_resolution_commit_sha": clean_sha,
