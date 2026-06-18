@@ -1,0 +1,51 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-CLOSE",
+  "phase": "COMPLETE",
+  "created_at": "2026-06-18T17:20:38Z",
+  "sealed_at": "2026-06-18T17:20:38Z",
+  "roadmap": {
+    "tasks_done": 10,
+    "tasks_total": 10
+  },
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 3,
+    "completed": [
+      "canonical_context_status_and_claude_inputs",
+      "external_claude_audit",
+      "strict_final_closure"
+    ]
+  },
+  "queue_state": "COMPLETE",
+  "release_status": "PASS",
+  "release_promoted": true,
+  "closure_method": "direct_mcp_commit_after_workflow_yaml_repair_attempts",
+  "checks": {
+    "live_receipt_v2_pass": true,
+    "operator_authored_not_replay": true,
+    "semantic_executor_completed_blocker_null": true,
+    "historical_failed_transports_disclosed": true,
+    "superseded_replay_receipt_archived": true,
+    "close_preparation_pass": true,
+    "external_auditor_claude_pass_approved": true,
+    "external_audit_run_pass": true,
+    "provider_truthful_claude_primary": true,
+    "self_hosted_codex_disabled_deprecated": true,
+    "cloud_fallback_mechanical_without_openai_runtime_secret": true,
+    "no_blockers": true
+  },
+  "evidence": {
+    "live_receipt": "governance/proofs/BEM934_live_test_receipt.json",
+    "live_trace_id": "tg_818730867_20260618T105741Z",
+    "operator_telegram_evidence": "governance/proofs/evidence/BEM934_operator_telegram_tg_818730867_20260618T105741Z.jpg",
+    "superseded_replay_receipt": "governance/proofs/BEM934_live_test_receipt_superseded_replay.json",
+    "substantive_report": "governance/reports/tg_818730867_20260618T105741Z.md",
+    "close_preparation": "governance/proofs/BEM934_close_preparation_receipt.json",
+    "external_auditor_verdict": "governance/proofs/BEM934_external_auditor_verdict.json",
+    "external_audit_run_receipt": "governance/proofs/BEM934_external_audit_run_receipt.json"
+  },
+  "blockers": [],
+  "next_task": null
+}
