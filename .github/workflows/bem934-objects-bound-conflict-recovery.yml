@@ -21,10 +21,7 @@ jobs:
           for id in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow claude.yml --status in_progress --json databaseId --jq '.[].databaseId'); do
             gh run cancel "$id" --repo "$GITHUB_REPOSITORY" || true
           done
-          for id in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow claude.yml --status queued --json databaseId --jq '.[].databaseId'); do
-            gh run cancel "$id" --repo "$GITHUB_REPOSITORY" || true
-          done
-          sleep 10
+          sleep 5
 
       - name: Execute deterministic recovery
         env:
@@ -34,7 +31,13 @@ jobs:
           gh auth setup-git
           gh repo clone "$GITHUB_REPOSITORY" repo
           cd repo
+          git config user.email "bem934-recovery@ai-devops-system"
+          git config user.name "BEM-934 Recovery"
+          sed -i 's/RuntimeError(unterminated conflict marker)/RuntimeError("unterminated conflict marker")/' governance/runners/bem934_objects_bound_conflict_recovery.py
           python3 -m py_compile governance/runners/bem934_objects_bound_runner.py
           python3 -m py_compile governance/runners/bem934_objects_bound_repair.py
           python3 -m py_compile governance/runners/bem934_objects_bound_conflict_recovery.py
+          git add governance/runners/bem934_objects_bound_conflict_recovery.py
+          git commit -m "Fix BEM-934 recovery conflict parser syntax"
+          git push origin HEAD:main
           python3 governance/runners/bem934_objects_bound_conflict_recovery.py
