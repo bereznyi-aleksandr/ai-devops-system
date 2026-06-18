@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repair BEM-934 provider-router embedded expectations and fallback notice."""
+"""Increase only the BEM-934 structured binding role turn budget."""
 
 from __future__ import annotations
 
@@ -11,19 +11,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 REQUEST = ROOT / "governance/runtime/bem934_state_request.json"
-WORKFLOW = ROOT / ".github/workflows/provider-router.yml"
-RECEIPT = ROOT / "governance/proofs/BEM934_provider_router_test_alignment_receipt.json"
-
-REPLACEMENTS = {
-    'out["provider_selected"] == "gpt_codex" and out["fallback_reason"] is None and out["stale_ignored"] is True':
-        'out["provider_selected"] == "claude_code" and out["fallback_reason"] is None and out["stale_ignored"] is True',
-    'out["provider_selected"] == "claude_code" and out["fallback_reason"] == "fallback_quota" and out["decision_source"] == "same_trace_result"':
-        'out["provider_selected"] == "gpt_codex_cloud" and out["fallback_reason"] == "fallback_quota" and out["decision_source"] == "same_trace_result"',
-    'out["provider_selected"] == "gpt_codex" and out["fallback_reason"] is None and out["decision_source"] == "default"':
-        'out["provider_selected"] == "claude_code" and out["fallback_reason"] is None and out["decision_source"] == "default"',
-    '"text":"GPT quota exceeded -> fallback Claude запущен"':
-        '"text":"Claude primary unavailable -> gpt_codex_cloud fallback запущен"',
-}
+WORKFLOW = ROOT / ".github/workflows/claude.yml"
+RECEIPT = ROOT / "governance/proofs/BEM934_binding_max_turns_repair_receipt.json"
 
 
 def now() -> str:
@@ -45,13 +34,13 @@ def main() -> int:
     receipt: dict[str, Any] = {
         "status": "BLOCKED",
         "protocol": "BEM-934",
-        "task_id": "BEM934-LIVE-TEST-PREP",
+        "task_id": "BEM934-OBJECTS-BOUND",
         "created_at": now(),
         "action": action,
         "checks": {},
         "missing": [],
     }
-    if action != "repair_provider_router_tests":
+    if action != "increase_binding_structured_output_turns":
         receipt["blocker"] = "unsupported_action"
         write(receipt)
         return 0
@@ -64,46 +53,48 @@ def main() -> int:
         return 0
 
     source = WORKFLOW.read_text(encoding="utf-8")
-    counts: dict[str, int] = {}
-    for old, new in REPLACEMENTS.items():
-        count = source.count(old)
-        counts[old[:80]] = count
-        if count:
-            source = source.replace(old, new)
-    WORKFLOW.write_text(source, encoding="utf-8")
-
-    updated = WORKFLOW.read_text(encoding="utf-8")
-    checks = {
-        "healthy_primary_expectation_is_claude_code": updated.count(
-            'out["provider_selected"] == "claude_code" and out["fallback_reason"] is None'
-        ) >= 2,
-        "quota_fallback_expectation_is_gpt_codex_cloud": (
-            'out["provider_selected"] == "gpt_codex_cloud" and out["fallback_reason"] == "fallback_quota"'
-            in updated
-        ),
-        "legacy_gpt_codex_assertions_absent": (
-            'out["provider_selected"] == "gpt_codex"' not in updated
-        ),
-        "fallback_notice_names_current_providers": (
-            "Claude primary unavailable -> gpt_codex_cloud fallback" in updated
-        ),
-        "router_compiles": run(["python3", "-m", "py_compile", "scripts/provider_router.py"]).returncode == 0,
-    }
-    receipt["checks"] = checks
-    receipt["replacement_counts"] = counts
-    receipt["missing"] = [key for key, value in checks.items() if not value]
-    if receipt["missing"]:
-        receipt["blocker"] = "provider_router_alignment_validation_failed"
+    start = source.find("id: claude_binding_role")
+    end = source.find("- name: Materialize BEM-934 binding plan", start)
+    if start < 0 or end < 0:
+        receipt["blocker"] = "binding_role_or_materializer_marker_missing"
         write(receipt)
         return 0
 
-    run(["git", "config", "user.email", "bem934-router@ai-devops-system"])
-    run(["git", "config", "user.name", "BEM-934 Router"])
-    run(["git", "add", ".github/workflows/provider-router.yml"])
+    block = source[start:end]
+    old_count = block.count("--max-turns 10")
+    if old_count:
+        block = block.replace("--max-turns 10", "--max-turns 30", 1)
+        source = source[:start] + block + source[end:]
+        WORKFLOW.write_text(source, encoding="utf-8")
+
+    updated = WORKFLOW.read_text(encoding="utf-8")
+    start2 = updated.find("id: claue_binding_role")
+    end2 = updated.find("- name: Materialize BEM-934 binding plan", start2)
+    block2 = updated[start2:end2]
+    checks = {
+        "dedicated_binding_role_present": start2 >= 0,
+        "binding_max_turns_is_30": "--max-turns 30" in block2,
+        "binding_max_turns_10_absent": "--max-turns 10" not in block2,
+        "json_schema_preserved": "--json-schema" in block2,
+        "structured_output_materializer_preserved": (
+            "outputs.structured_output" in updated[end2:]
+        ),
+        "normal_role_still_present": "id: claude_role" in updated,
+    }
+    receipt["checks"] = checks
+    receipt["old_occurrences_repaired"] = old_count
+    receipt["missing"] = [key for key, value in checks.items() if not value]
+    if receipt["missing"]:
+        receipt["blocker"] = "binding_turn_budget_validation_failed"
+        write(receipt)
+        return 0
+
+    run(["git", "config", "user.email", "bem934-binding@ai-devops-system"])
+    run(["git", "config", "user.name", "BEM-934 Binding"])
+    run(["git", "add", ".github/workflows/claude.yml"])
     diff = run(["git", "diff", "--cached", "--quiet"])
-    commit_sha = None
     if diff.returncode != 0:
-        commit = run(["git", "commit", "-m", "Align BEM-934 provider-router tests with current providers"])
+        commit = run(["git", "commit", "-m", "Increase BEM-934 structured binding turn budget"])
         if commit.returncode:
             receipt["blocker"] = "git_commit_failed"
             receipt["stderr"] = commit.stderr[-2000:]
@@ -118,15 +109,18 @@ def main() -> int:
                 receipt["stderr"] = (pull2.stderr + "\n" + push2.stderr)[-3000:]
                 write(receipt)
                 return 0
-    head = run(["git", "rev-parse", "HEAD"])
-    if head.returncode == 0:
-        commit_sha = head.stdout.strip()
 
+    head = run(["git", "rev-parse", "HEAD"])
     receipt.update({
         "status": "PASS",
-        "source_commit_sha": commit_sha,
-        "workflow_path": ".github/workflows/provider-router.yml",
-        "next_verification": "dispatch provider-router.yml selftest",
+        "source_commit_sha": head.stdout.strip() if head.returncode == 0 else None,
+        "previous_failure": {
+            "claude_run_id": 27738266739,
+            "run_number": 2559,
+            "subtype": "error_max_turns",
+            "previous_max_turns": 10,
+        },
+        "new_max_turns": 30,
     })
     receipt.pop("blocker", None)
     write(receipt)
