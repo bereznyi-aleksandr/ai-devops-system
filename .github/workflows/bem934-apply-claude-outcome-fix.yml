@@ -1,0 +1,37 @@
+name: BEM934 Apply Claude Live Outcome Fix
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply validated live outcome fix
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-outcome-fix@ai-devops-system"
+          git config user.name "BEM-934 Outcome Fix"
+          python3 -m py_compile governance/runners/bem934_fix_claude_live_outcome.py
+          python3 governance/runners/bem934_fix_claude_live_outcome.py
+          git add .github/workflows/claude.yml
+          if git diff --cached --quiet; then
+            echo "Claude workflow already patched"
+            exit 0
+          fi
+          git commit -m "Fix Claude live semantic outcome with strict proof validation"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main
+          done
+          exit 1
