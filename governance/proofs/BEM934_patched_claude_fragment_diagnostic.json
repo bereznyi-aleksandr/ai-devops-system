@@ -1,0 +1,288 @@
+{
+  "task_id": "BEM934-LIVE-TEST",
+  "head": [
+    {
+      "number": 1,
+      "repr": "'name: Claude Code'"
+    },
+    {
+      "number": 2,
+      "repr": "''"
+    },
+    {
+      "number": 3,
+      "repr": "'# BEM-477: added transport result write + file report'"
+    },
+    {
+      "number": 4,
+      "repr": "'# BEM-488: YAML-safe rewrite \u2014 no f-string multiline, Python-based summary'"
+    },
+    {
+      "number": 5,
+      "repr": "'# NO createComment to issue #31 (locked at 2500 comments)'"
+    },
+    {
+      "number": 6,
+      "repr": "''"
+    },
+    {
+      "number": 7,
+      "repr": "'on:'"
+    },
+    {
+      "number": 8,
+      "repr": "'  workflow_dispatch:'"
+    },
+    {
+      "number": 9,
+      "repr": "'    inputs:'"
+    },
+    {
+      "number": 10,
+      "repr": "'      role:'"
+    },
+    {
+      "number": 11,
+      "repr": "\"        description: 'analyst | auditor | executor | curator'\""
+    },
+    {
+      "number": 12,
+      "repr": "'        required: true'"
+    },
+    {
+      "number": 13,
+      "repr": "'        type: string'"
+    },
+    {
+      "number": 14,
+      "repr": "'      provider:'"
+    },
+    {
+      "number": 15,
+      "repr": "\"        description: 'claude'\""
+    },
+    {
+      "number": 16,
+      "repr": "'        required: false'"
+    },
+    {
+      "number": 17,
+      "repr": "\"        default: 'claude'\""
+    },
+    {
+      "number": 18,
+      "repr": "'        type: string'"
+    },
+    {
+      "number": 19,
+      "repr": "'      trace_id:'"
+    },
+    {
+      "number": 20,
+      "repr": "\"        description: 'Trace id'\""
+    }
+  ],
+  "windows": [
+    {
+      "match_line": 390,
+      "lines": [
+        {
+          "number": 384,
+          "repr": "'              pass'"
+        },
+        {
+          "number": 385,
+          "repr": "'          # BEM-934 live semantic proof validation'"
+        },
+        {
+          "number": 386,
+          "repr": "'          # The Claude action may report a tool-level failure after committing a valid'"
+        },
+        {
+          "number": 387,
+          "repr": "'          # trace-bound proof. Only this narrowly scoped repair task may derive semantic'"
+        },
+        {
+          "number": 388,
+          "repr": "'          # success from strict proof validation; all other task types keep fail-closed behavior.'"
+        },
+        {
+          "number": 389,
+          "repr": "\"          if task_type == 'live_content_analysis_repair':\""
+        },
+        {
+          "number": 390,
+          "repr": "\"              safe_trace = ''.join(ch if ch.isalnum() or ch in ('_', '-') else '_' for ch in trace)\""
+        },
+        {
+          "number": 391,
+          "repr": "\"              proof_path = Path('governance/proofs/BEM934_live_content_' + safe_trace + '.json')\""
+        },
+        {
+          "number": 392,
+          "repr": "\"              if not proof_path.exists() and trace == 'tg_934432449_20260618T102008Z'\""
+        },
+        {
+          "number": 393,
+          "repr": "\":                  proof_path = Path('governance/proofs/BEM934_live_content_tg_934432449.json')\""
+        },
+        {
+          "number": 394,
+          "repr": "'              proof_valid = False'"
+        },
+        {
+          "number": 395,
+          "repr": "'              try:'"
+        },
+        {
+          "number": 396,
+          "repr": "\"                  proof = json.loads(proof_path.read_text(encoding='utf-8'))\""
+        },
+        {
+          "number": 397,
+          "repr": "\"                  acceptance = proof.get('acceptance_checks')\""
+        },
+        {
+          "number": 398,
+          "repr": "'                  acceptance_ok = ('"
+        }
+      ]
+    },
+    {
+      "match_line": 391,
+      "lines": [
+        {
+          "number": 385,
+          "repr": "'          # BEM-934 live semantic proof validation'"
+        },
+        {
+          "number": 386,
+          "repr": "'          # The Claude action may report a tool-level failure after committing a valid'"
+        },
+        {
+          "number": 387,
+          "repr": "'          # trace-bound proof. Only this narrowly scoped repair task may derive semantic'"
+        },
+        {
+          "number": 388,
+          "repr": "'          # success from strict proof validation; all other task types keep fail-closed behavior.'"
+        },
+        {
+          "number": 389,
+          "repr": "\"          if task_type == 'live_content_analysis_repair':\""
+        },
+        {
+          "number": 390,
+          "repr": "\"              safe_trace = ''.join(ch if ch.isalnum() or ch in ('_', '-') else '_' for ch in trace)\""
+        },
+        {
+          "number": 391,
+          "repr": "\"              proof_path = Path('governance/proofs/BEM934_live_content_' + safe_trace + '.json')\""
+        },
+        {
+          "number": 392,
+          "repr": "\"              if not proof_path.exists() and trace == 'tg_934432449_20260618T102008Z'\""
+        },
+        {
+          "number": 393,
+          "repr": "\":                  proof_path = Path('governance/proofs/BEM934_live_content_tg_934432449.json')\""
+        },
+        {
+          "number": 394,
+          "repr": "'              proof_valid = False'"
+        },
+        {
+          "number": 395,
+          "repr": "'              try:'"
+        },
+        {
+          "number": 396,
+          "repr": "\"                  proof = json.loads(proof_path.read_text(encoding='utf-8'))\""
+        },
+        {
+          "number": 397,
+          "repr": "\"                  acceptance = proof.get('acceptance_checks')\""
+        },
+        {
+          "number": 398,
+          "repr": "'                  acceptance_ok = ('"
+        },
+        {
+          "number": 399,
+          "repr": "'                      isinstance(acceptance, list)'"
+        }
+      ]
+    },
+    {
+      "match_line": 413,
+      "lines": [
+        {
+          "number": 407,
+          "repr": "\"                      proof.get('status') == 'PASS'\""
+        },
+        {
+          "number": 408,
+          "repr": "\"                      and proof.get('protocol') == 'BEM-934'\""
+        },
+        {
+          "number": 409,
+          "repr": "\"                      and proof.get('task_id') == 'BEM934-LIVE-TEST'\""
+        },
+        {
+          "number": 410,
+          "repr": "\"                      and proof.get('trace_id') == trace\""
+        },
+        {
+          "number": 411,
+          "repr": "\"                      and proof.get('provider_selected') == 'claude_code'\""
+        },
+        {
+          "number": 412,
+          "repr": "\"                      and proof.get('source_router_receipt')\""
+        },
+        {
+          "number": 413,
+          "repr": "\"                          == 'governance/proofs/BEM932_provider_router_' + trace + '.json'\""
+        },
+        {
+          "number": 414,
+          "repr": "\"                      and isinstance(proof.get('invariants'), list)\""
+        },
+        {
+          "number": 415,
+          "repr": "\"                      and len(proof['invariants']) >= 2\""
+        },
+        {
+          "number": 416,
+          "repr": "\"                      and isinstance(proof.get('validation_steps'), list)\""
+        },
+        {
+          "number": 417,
+          "repr": "\"                      and len(proof['validation_steps']) >= 2\""
+        },
+        {
+          "number": 418,
+          "repr": "'                      and acceptance_ok'"
+        },
+        {
+          "number": 419,
+          "repr": "\"                      and isinstance(proof.get('limitations'), list)\""
+        },
+        {
+          "number": 420,
+          "repr": "\"                      and len(proof['limitations']) >= 1\""
+        },
+        {
+          "number": 421,
+          "repr": "'                  )'"
+        }
+      ]
+    }
+  ],
+  "suspicious_top_level": [
+    {
+      "number": 393,
+      "repr": "\":                  proof_path = Path('governance/proofs/BEM934_live_content_tg_934432449.json')\""
+    }
+  ]
+}
