@@ -35,6 +35,7 @@ jobs:
           jq -n --arg source "$CURRENT_SHA" --arg candidate "$CANDIDATE_BLOB"             '{status:"PASS",protocol:"BEM-934",task_id:"BEM934-LIVE-TEST",source_workflow_blob_sha:$source,candidate_blob_sha:$candidate,trace_id:"tg_818730867_20260618T105741Z",checks:{patcher_compiled:true,yaml_valid:true,defaults_present:true,backup_materialized:true}}'             > governance/proofs/BEM934_claude_defaults_candidate_receipt.json
           git add governance/proofs/BEM934_claude_pre_defaults_backup.yml governance/proofs/BEM934_claude_defaults_candidate.yml governance/proofs/BEM934_claude_defaults_candidate_receipt.json
           git commit -m "Materialize temporary BEM-934 Claude dispatch defaults"
+          git checkout -- .github/workflows/claude.yml
           for attempt in 1 2 3 4 5; do
             if git push origin HEAD:main; then break; fi
             git pull --rebase origin main
