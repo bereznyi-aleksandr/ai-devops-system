@@ -1,0 +1,39 @@
+name: BEM934 Outcome Fix Status
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture outcome fix status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-status@ai-devops-system"
+          git config user.name "BEM-934 Status"
+          mkdir -p governance/proofs
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow bem934-apply-claude-outcome-fix.yml --limit 3 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > /tmp/runs.json
+          RUN_ID="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)"
+          : > /tmp/log.txt
+          if [ -n "$RUN_ID" ]; then
+            gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/log.txt 2>&1 || true
+          fi
+          tail -n 120 /tmp/log.txt > /tmp/log.tail
+          python3 -c 'import json; from pathlib import Path; runs=json.load(open("/tmp/runs.json")); log=Path("/tmp/log.tail").read_text(errors="replace"); Path("governance/proofs/BEM934_outcome_fix_status.json").write_text(json.dumps({"task_id":"BEM934-LIVE-TEST","runs":runs,"failed_log_tail":log},indent=2)+"\n")'
+          git add governance/proofs/BEM934_outcome_fix_status.json
+          git commit -m "Capture BEM-934 Claude outcome fix status" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
