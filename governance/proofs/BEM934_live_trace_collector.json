@@ -1,13 +1,13 @@
 {
   "task_id": "BEM934-LIVE-TEST",
   "trace_id": "tg_934432449",
-  "head_sha": "1d34ed95bf908129a68b6b0f7024775cb442f95e",
+  "head_sha": "499c125b2731ba7dc6fbef51c8de2fb1cddd6a93",
   "artifacts": [
     {
       "path": "governance/proofs/BEM934_live_trace_collector.json",
-      "size": 1709,
-      "blob_sha": "69df21eeb0842f900c3bb28ce25225516a3bff25",
-      "last_commit_sha": "e79d59ba9db1a31539ce7b05211704e76461ad9b",
+      "size": 2408,
+      "blob_sha": "4a841929439b139d2f4857f494e742fc7c74514e",
+      "last_commit_sha": "6d23a31c961157e41053d7a287cc3949ee55dda9",
       "json_parseable": true,
       "status": null,
       "provider_selected": null,
@@ -24,20 +24,40 @@
       "target_workflow": "claude.yml"
     },
     {
+      "path": "governance/proofs/BEM934_live_test_receipt.json",
+      "size": 4635,
+      "blob_sha": "a09887f66392c374e291a087356042e50fa2e0c2",
+      "last_commit_sha": "24ceef191e06c7bfa702792bc76e42e4888b1ea4",
+      "json_parseable": true,
+      "status": "PASS",
+      "provider_selected": "claude_code",
+      "target_workflow": "claude.yml"
+    },
+    {
       "path": "governance/proofs/BEM934_claude_failure_diagnostic.json",
-      "size": 3948,
-      "blob_sha": "dccdd655c007fe40784a52f2d01538a469e21e39",
-      "last_commit_sha": "4360e1def2be6987053a768e71e9b13ea953b85a",
+      "size": 4025,
+      "blob_sha": "742af3b7d6c71288e0c5a3b24dec35622610cef8",
+      "last_commit_sha": "1270cbb45048cb8fc7f1298f4e1e0aad4d62df5a",
       "json_parseable": true,
       "status": null,
       "provider_selected": null,
       "target_workflow": null
     },
     {
+      "path": "governance/proofs/BEM934_live_content_tg_934432449.json",
+      "size": 5251,
+      "blob_sha": "ec365dd45d601719398e4ce54725e643ee094e1d",
+      "last_commit_sha": "55cc61bb094728a0af025db9201aceacd5a5299b",
+      "json_parseable": true,
+      "status": "PASS",
+      "provider_selected": "claude_code",
+      "target_workflow": null
+    },
+    {
       "path": "governance/reports/tg_934432449_20260618T102008Z.md",
-      "size": 436,
-      "blob_sha": "6618cae30d5400ac606c8da88dfef972a4a1100b",
-      "last_commit_sha": "ff22eb66866518c7ac3e31f3f19af6b127c9a5ec",
+      "size": 540,
+      "blob_sha": "15e55c01d862e42aa7a3485c07526345d935dd84",
+      "last_commit_sha": "e086d80d32f15ac0c092a3ff0707fb90b9756288",
       "json_parseable": false,
       "status": null,
       "provider_selected": null,
@@ -45,9 +65,9 @@
     },
     {
       "path": "governance/transport/results.jsonl",
-      "size": 703169,
-      "blob_sha": "6ffbad3e5a625f536c397d6fb6ca63e36057e6bb",
-      "last_commit_sha": "ff22eb66866518c7ac3e31f3f19af6b127c9a5ec",
+      "size": 703658,
+      "blob_sha": "e1d639ac46857e61118bbaab81e7d50fc7dd4f4b",
+      "last_commit_sha": "e086d80d32f15ac0c092a3ff0707fb90b9756288",
       "json_parseable": false,
       "status": null,
       "provider_selected": null,
@@ -56,8 +76,8 @@
     {
       "path": "governance/state/provider_status.json",
       "size": 784,
-      "blob_sha": "ff83846a5750cb7f9fbcaee2e1753e44b795352e",
-      "last_commit_sha": "ff22eb66866518c7ac3e31f3f19af6b127c9a5ec",
+      "blob_sha": "1760a761dbbf54c7600f3f899d2df388c8ae2dc5",
+      "last_commit_sha": "e086d80d32f15ac0c092a3ff0707fb90b9756288",
       "json_parseable": true,
       "status": null,
       "provider_selected": null,
