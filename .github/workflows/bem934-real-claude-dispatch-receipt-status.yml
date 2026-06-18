@@ -12,10 +12,11 @@ jobs:
     steps:
       - name: Capture dispatch receipt workflow status
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          test -n "$GH_TOKEN"
           gh auth setup-git
           gh repo clone "$REPO" repo
           cd repo
@@ -23,7 +24,7 @@ jobs:
           git config user.name "BEM-934 Status"
           mkdir -p governance/proofs
           gh run list --repo "$REPO" --workflow bem934-dispatch-real-claude-live-with-receipt.yml --limit 5 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > /tmp/runs.json
-          RUN_ID="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)]"
+          RUN_ID="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)"
           : > /tmp/failed.log
           if [ -n "$RUN_ID" ]; then
             gh run view "$RUN_ID" --repo "$REPO" --log-failed > /tmp/failed.log 2>&1 || true
@@ -33,7 +34,7 @@ jobs:
             '{task_id:"BEM934-LIVE-TEST",runs:$runs[0],failed_log_tail:$log}' \
             > governance/proofs/BEM934_real_claude_dispatch_status.json
           git add governance/proofs/BEM934_real_claude_dispatch_status.json
-          git commit -m "Capture BEM-934 real Claude dispatch status" || exit 0
+          git commit -m "Refresh BEM-934 real Claude dispatch status" || exit 0
           for attempt in 1 2 3 4 5; do
             if git push origin HEAD:main; then exit 0; fi
             git pull --rebase origin main
