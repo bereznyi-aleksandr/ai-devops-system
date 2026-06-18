@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-937",
+  "task_id": "BEM937-P2-WORKFLOW-SYNTAX-GUARD",
+  "created_at": "2026-06-18T18:36:30Z",
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 4,
+    "percent": 75
+  },
+  "files": [
+    "governance/runners/workflow_syntax_guard.py"
+  ],
+  "checks": {
+    "guard_runner_written": true,
+    "target_manifest_in_runner": true,
+    "receipt_path_defined": true,
+    "future_verification_available": true
+  },
+  "blockers": [],
+  "next_task": "BEM937-P3-QUEUE-FINAL-VERIFY"
+}
