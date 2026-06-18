@@ -1,0 +1,132 @@
+name: BEM934 Wait Latest Real Router and Dispatch Claude
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  wait-and-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for router receipt and dispatch Claude
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPO: ${{ github.repository }}
+          TRACE: tg_818734369_20260618T105814Z
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-wait@ai-devops-system"
+          git config user.name "BEM-934 Wait Router"
+          RECEIPT="governance/proofs/BEM932_provider_router_${TRACE}.json"
+          FOUND=false
+          for attempt in $(seq 1 60); do
+            git fetch origin main --quiet
+            git reset --hard origin/main --quiet
+            if [ -f "$RECEIPT" ]; then
+              FOUND=true
+              break
+            fi
+            sleep 10
+          done
+          mkdir -p governance/proofs
+          if [ "$FOUND" = "true" ]; then
+            python3 - <<'PY'
+            import json
+            import os
+            from pathlib import Path
+
+            trace = os.environ["TRACE"]
+            receipt_path = Path("governance/proofs/BEM932_provider_router_" + trace + ".json")
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            checks = {
+                "status_pass": receipt.get("status") == "PASS",
+                "trace_match": receipt.get("trace_id") == trace,
+                "provider_claude": receipt.get("provider_selected") == "claude_code",
+                "target_claude": receipt.get("target_workflow_id") == "claude.yml",
+                "chat_match": str(receipt.get("chat_id") or "") == "601442777",
+                "message_id_match": str(receipt.get("message_id") or "") == "730",
+            }
+            ok = all(checks.values())
+            out = {
+                "status": "PASS" if ok else "BLOCKED",
+                "protocol": "BEM-934",
+                "task_id": "BEM934-LIVE-TEST",
+                "trace_id": trace,
+                "router_receipt": str(receipt_path),
+                "checks": checks,
+                "task": receipt.get("task"),
+            }
+            Path("governance/proofs/BEM934_latest_real_router_validation.json").write_text(
+                json.dumps(out, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            if not ok:
+                raise SystemExit("router receipt validation failed")
+            PY
+            TASK="$(python3 -c 'import json,os; p="governance/proofs/BEM932_provider_router_"+os.environ["TRACE"]+".json"; print(json.load(open(p,encoding="utf-8")).get("task",""))')"
+            python3 - <<'PY' > /tmp/dispatch.json
+            import json
+            import os
+
+            payload = {
+                "ref": "main",
+                "inputs": {
+                    "role": "curator",
+                    "provider": "claude_code",
+                    "trace_id": os.environ["TRACE"],
+                    "cycle_id": "bem934_live_operator_actual_latest",
+                    "task_type": "live_content_analysis_repair",
+                    "task": "BEM-934 validate real Telegram ingress and produce content-bearing idempotency analysis. Source user text: " + os.environ.get("TASK", "") + ". Create a trace-bound BEM-934 PSS proof with two verifiable invariants, validation steps, acceptance checks and limitations. Do not modify canonical state.",
+                },
+            }
+            print(json.dumps(payload, ensure_ascii=False))
+            PY
+            HTTP="$(curl -sSS -o /tmp/dispatch.resp -w '%{http_code}' -X POST --data-binary @/tmp/dispatch.jSon \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Content-Type: application/json" \
+              "https://api.github.com/repo/$REPO/actions/workflows/claude.yml/dispatches")"
+            test "$HTTP" = "204"
+            python3 - <<'PY'
+            import json
+            from pathlib import Path
+
+            p=Path("governance/proofs/BEM934_latest_real_router_validation.json")
+            d=json.loads(p.read_text(encoding="utf-8"))
+            d["claude_dispatch_http"]=204
+            d["claude_dispatched"]=True
+            p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+            PY
+          else
+            python3 - <<'PY'
+            import json
+            from pathlib import Path
+
+            out = {
+                "status": "BLOCKED",
+                "protocol": "BEM-934",
+                "task_id": "BEM934-LIVE-TEST",
+                "trace_id": "tg_818734369_20260618T105814Z",
+                "blocker": "latest_real_router_receipt_not_found_after_timeout",
+            }
+            Path("governance/proofs/BEM934_latest_real_router_validation.json").write_text(
+                json.dumps(out, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            PY
+          fi
+          git add governance/proofs/BEM934_latest_real_router_validation.json
+          git commit -m "Validate latest real BEM-934 Telegram router and dispatch Claude" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
