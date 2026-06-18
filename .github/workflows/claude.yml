@@ -387,7 +387,10 @@ jobs:
           # trace-bound proof. Only this narrowly scoped repair task may derive semantic
           # success from strict proof validation; all other task types keep fail-closed behavior.
           if task_type == 'live_content_analysis_repair':
-              proof_path = Path('governance/proofs/BEM934_live_content_tg_934432449.json')
+              safe_trace = ''.join(ch if ch.isalnum() or ch in ('_', '-') else '_' for ch in trace)
+              proof_path = Path('governance/proofs/BEM934_live_content_' + safe_trace + '.json')
+              if not proof_path.exists() and trace == 'tg_934432449_20260618T102008Z'
+                  proof_path = Path('governance/proofs/BEM934_live_content_tg_934432449.json')
               proof_valid = False
               try:
                   proof = json.loads(proof_path.read_text(encoding='utf-8'))
@@ -407,7 +410,7 @@ jobs:
                       and proof.get('trace_id') == trace
                       and proof.get('provider_selected') == 'claude_code'
                       and proof.get('source_router_receipt')
-                          == 'governance/proofs/BEM932_provider_router_tg_934432449_20260618T102008Z.json'
+                          == 'governance/proofs/BEM932_provider_router_' + trace + '.json'
                       and isinstance(proof.get('invariants'), list)
                       and len(proof['invariants']) >= 2
                       and isinstance(proof.get('validation_steps'), list)
