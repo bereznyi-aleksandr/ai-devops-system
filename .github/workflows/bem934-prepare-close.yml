@@ -1,0 +1,42 @@
+name: BEM934 Prepare Close
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Compile and prepare canonical closure state
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh auth setup-git
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-close@ai-devops-system"
+          git config user.name "BEM-934 Close Preparation"
+          python3 -m py_compile governance/runners/bem934_prepare_close.py
+          python3 governance/runners/bem934_prepare_close.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("governance/proofs/BEM934_close_preparation_receipt.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          assert data.get("status") == "PASS", data
+          assert data.get("task_id") == "BEM934-CLOSE", data
+          PY
+          git add governance/AGENT_CONTEXT.md SYSTEM_STATUS.md governance/proofs/BEM934_close_preparation_receipt.json
+          git commit -m "Prepare canonical BEM-934 closure state"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
