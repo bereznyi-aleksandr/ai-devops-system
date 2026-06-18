@@ -1,0 +1,84 @@
+{
+  "task_id": "BEM934-LIVE-TEST",
+  "trace_id": "tg_934432449_20260618T102008Z",
+  "run": {
+    "conclusion": "success",
+    "createdAt": "2026-06-18T10:52:46Z",
+    "databaseId": 27754498595,
+    "headSha": "f2525621545272f78e2977c39e140fa6ad11da24",
+    "status": "completed",
+    "updatedAt": "2026-06-18T10:54:46Z",
+    "url": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/27754498595"
+  },
+  "matching_transport_records": [
+    {
+      "record_type": "curator_analysis",
+      "cycle_id": "telegram_operator_message",
+      "trace_id": "tg_934432449_20260618T102008Z",
+      "source": "claude",
+      "from_role": "curator",
+      "to_role": "analyst",
+      "status": "analysis_complete",
+      "artifact_path": "governance/reports/tg_934432449_20260618T102008Z.md",
+      "commit_sha": null,
+      "blocker": null,
+      "task": "BEM-934 two idempotency invariants identified with PASS/FAIL verification plan",
+      "created_at": "2026-06-18T10:20:08Z"
+    },
+    {
+      "trace_id": "tg_934432449_20260618T102008Z",
+      "cycle_id": "telegram_operator_message",
+      "role": "curator",
+      "provider": "claude",
+      "status": "failed",
+      "changed_files": [],
+      "commit_sha": "463784dbb8e621737deaaedee65670765701f5a8",
+      "blocker": "claude_role outcome=failure",
+      "report_path": "governance/reports/tg_934432449_20260618T102008Z.md",
+      "completed_at": "2026-06-18T10:23:58Z"
+    },
+    {
+      "trace_id": "tg_934432449_20260618T102008Z",
+      "cycle_id": "bem934_live_test_repair",
+      "role": "curator",
+      "provider": "claude",
+      "status": "failed",
+      "changed_files": [
+        "governance/proofs/BEM934_live_content_tg_934432449.json",
+        "governance/reports/tg_934432449_20260618T102008Z.md"
+      ],
+      "commit_sha": "ee3daa58350cb31913848f7f287a02d8c6170b77",
+      "blocker": "claude_role outcome=failure",
+      "report_path": "governance/reports/tg_934432449_20260618T102008Z.md",
+      "completed_at": "2026-06-18T10:31:45Z"
+    },
+    {
+      "trace_id": "tg_934432449_20260618T102008Z",
+      "cycle_id": "bem934_live_test_repair_final",
+      "role": "curator",
+      "provider": "claude",
+      "status": "completed",
+      "changed_files": [
+        "governance/reports/tg_934432449_20260618T102008Z.md"
+      ],
+      "commit_sha": null,
+      "blocker": null,
+      "proof_verified": "governance/proofs/BEM934_live_content_tg_934432449.json",
+      "router_receipt_verified": "governance/proofs/BEM932_provider_router_tg_934432449_20260618T102008Z.json",
+      "report_path": "governance/reports/tg_934432449_20260618T102008Z.md",
+      "completed_at": "2026-06-18T10:20:54Z"
+    },
+    {
+      "trace_id": "tg_934432449_20260618T102008Z",
+      "cycle_id": "bem934_live_test_repair_final",
+      "role": "curator",
+      "provider": "claude",
+      "status": "completed",
+      "changed_files": [],
+      "commit_sha": "f2525621545272f78e2977c39e140fa6ad11da24",
+      "blocker": null,
+      "report_path": "governance/reports/tg_934432449_20260618T102008Z.md",
+      "completed_at": "2026-06-18T10:54:41Z"
+    }
+  ]
+}
