@@ -1,0 +1,35 @@
+name: BEM934 Real Claude Status
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture wrapper and Claude run status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-status@ai-devops-system"
+          git config user.name "BEM-934 Status"
+          mkdir -p governance/proofs
+          gh run list --repo "$REPO" --workflow bem934-dispatch-real-claude-live.yml --limit 5 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > /tmp/wrapper.json
+          gh run list --repo "$REPO" --workflow claude.yml --limit 15 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url,displayTitle > /tmp/claude.json
+          jq -n --slurpfile wrapper /tmp/wrapper.json --slurpfile claude /tmp/claude.json             '{task_id:"BEM934-LIVE-TEST",wrapper_runs:$wrapper[0],claude_runs:$claude[0]}'             > governance/proofs/BEM934_real_claude_status.json
+          git add governance/proofs/BEM934_real_claude_status.json
+          git commit -m "Capture BEM-934 real Claude status" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
