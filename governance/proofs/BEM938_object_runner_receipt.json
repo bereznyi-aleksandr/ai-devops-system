@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-938",
+  "task_id": "BEM938-P0-OBJECT-RUNNER",
+  "created_at": "2026-06-18T19:10:00Z",
+  "stage": {
+    "tasks_done": 1,
+    "tasks_total": 4,
+    "percent": 25
+  },
+  "object_id": "OBJ-GD-001",
+  "trace_id": "bem938_gd_runtime_selftest_20260618T191000Z",
+  "dispatch_id": "bem938_gd_runtime_selftest_20260618T191000Z:OBJ-GD-001",
+  "files": [
+    "governance/runners/object_runner.py"
+  ],
+  "checks": {
+    "object_runner_replaced_stub": true,
+    "object_runner_size_gt_300": true,
+    "object_runner_has_main": true,
+    "object_runner_has_object_to_queue_logic": true,
+    "downstream_llm_completion_not_claimed": true
+  },
+  "blockers": [],
+  "next_task": "BEM938-P1-GD-RUNTIME-BINDING"
+}
