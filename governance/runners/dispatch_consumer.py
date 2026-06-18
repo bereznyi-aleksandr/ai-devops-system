@@ -29,7 +29,7 @@ def consume(limit=20):
         if not k or item.get('_invalid'): dead.append({'status':'DEAD','created_at':now(),'reason':'invalid_or_missing_key','item':item}); continue
         if k in seen or item.get('status') not in (None,'queued','pending','READY'): skipped+=1; continue
         try:
-            req={'trace_id':item.get('trace_id') or k,'role':item.get('logical_role') or item.get('role') or 'curator','provider':item.get('provider') or item.get('provider_id'),'failure_reason':item.get('fallback_reason'),'payload':item.get('payload',{})}
+            req={'trace_id':item.get('trace_id') or k,'role':item.get('logical_role') or item.get('role') or 'curator','provider':item.get('provider'),'failure_reason':item.get('fallback_reason'),'payload':item.get('payload',{})}
             d=r.route(req)
             done.append({'status':'processed','processed_at':now(),'dispatch_id':k,'trace_id':req['trace_id'],'logical_role':req['role'],'provider_selected':d['provider_selected'],'target_workflow_id':d['target_workflow_id'],'dispatch_result':'planned','proof_ref':item.get('proof_ref'),'payload':req['payload']})
         except Exception as e: dead.append({'status':'DEAD','created_at':now(),'dispatch_id':k,'reason':str(e),'item':item})
