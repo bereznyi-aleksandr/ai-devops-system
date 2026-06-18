@@ -1,7 +1,7 @@
 {
   "status": "BLOCKED",
   "task_id": "BEM934-CLOSE.PREPARE-DIAGNOSTIC",
-  "created_at": "2026-06-18T13:48:53Z",
+  "created_at": "2026-06-18T13:49:49Z",
   "return_code": 1,
   "diagnostic": "  File \"governance/runners/bem934_prepare_close_v2.py\", line 103\n    telegram = live.get(\"telegram\" if isinstance(live.get(\"telegram\"), dict) else {}\n                                                                                  \nSyntaxError: invalid syntax. Perhaps you forgot a comma?\n",
   "release_promoted": false
