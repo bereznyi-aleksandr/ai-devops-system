@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-LIVE-TEST",
+  "created_at": "2026-06-18T10:57:08Z",
+  "action": "operator_live_message_requested",
+  "chat_id": 601442777,
+  "prompt_message_id": 728,
+  "prompt_from_is_bot": true,
+  "next_acceptance": {
+    "requires_new_inbound_message_id_greater_than_prompt": true,
+    "requires_new_worker_trace": true,
+    "requires_provider_selected": "claude_code",
+    "requires_target_workflow": "claude.yml",
+    "requires_semantic_transport_status": "completed",
+    "forbids_replay": true
+  }
+}
