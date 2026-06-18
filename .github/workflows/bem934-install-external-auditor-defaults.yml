@@ -1,0 +1,73 @@
+name: BEM934 Install External Auditor Defaults
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Build validate materialize and install audit candidate
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh auth setup-git
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-audit-defaults@ai-devops-system"
+          git config user.name "BEM-934 Audit Defaults"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          prep = json.loads(Path("governance/proofs/BEM934_close_preparation_receipt.json").read_text(encoding="utf-8"))
+          assert prep.get("status") == "PASS", prep
+          assert prep.get("task_id") == "BEM934-CLOSE", prep
+          PY
+          mkdir -p governance/proofs
+          cp .github/workflows/claude.yml governance/proofs/BEM934_claude_pre_audit_backup.yml
+          python3 -m py_compile governance/runners/bem934_set_claude_audit_defaults.py
+          python3 governance/runners/bem934_set_claude_audit_defaults.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/claude.yml')"
+          ruby -ryaml - <<'RUBY'
+          d = YAML.load_file(".github/workflows/claude.yml")
+          step = d["jobs"]["claude"]["steps"].find { |s | s["name"] == "Write final result to transport" }
+          abort("final step not found") unless step
+          run = step["run"]
+          marker = "python3 - <<'PYEOF'\n"
+          code = run.split(marker, 2)[1].split("\nPYEOF", 2)[0]
+          File.write("/tmp/claude_final.py", code)
+          RUBY
+          python3 -m py_compile /tmp/claude_final.py
+          grep -q "default: 'auditor'" .github/workflows/claude.yml
+          grep -q "bem934_close_external_audit_20260618" .github/workflows/claude.yml
+          cp .github/workflows/claude.yml governance/proofs/BEM934_claude_audit_candidate.yml
+          SOURCE_SHA="$(git rev-parse HEAD:.github/workflows/claude.yml)"
+          CANDIDATE_SHA="$(git hash-object governance/proofs/BEM934_claude_audit_candidate.yml)"
+          jq -n --arg source "$SOURCE_SHA" --arg candidate "$CANDIDATE_SHA" \
+            '{status:"PASS",protocol:"BEM-934",task_id:"BEM934-CLOSE",phase:"AUDIT_DEFAULTS_CANDIDATE",source_workflow_blob_sha:$source,candidate_blob_sha:$candidate,trace_id:"bem934_close_external_audit_20260618",checks:{patcher_compiled:true,yaml_valid:true,final_Python_compiled:true,auditor_role_default:true,task_default_present:true}}' \
+            > governance/proofs/BEM934_claude_audit_candidate_receipt.json
+          git add governance/proofs/BEM934_claude_pre_audit_backup.yml governance/proofs/BEM934_claude_audit_candidate.yml governance/proofs/BEM934_claude_audit_candidate_receipt.json
+          git commit -m "Materialize BEM-934 external auditor Claude candidate"
+          git checkout -- .github/workflows/claude.yml
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then break; fi
+            git pull --rebase origin main
+            if [ "$attempt" = "5" ]; then exit 1; fi
+          done
+          CURRENT_SHA="$(gh api "repos/$REPO/contents/.github/workflows/claude.yml?ref=main" --jq .sha)"
+          CONTENT="$(base64 -w 0 governance/proofs/BEM934_claude_audit_candidate.yml)"
+          jq -n --arg message "Install temporary BEM-934 external auditor defaults" --arg content "$CONTENT" --arg sha "$CURRENT_SHA" \
+            '{message:$message,content:$content,sha:$sha,branch:"main"}' > /tmp/install.json
+          gh api --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --input /tmp/install.json \
+            "repos/$REPO/contents/.github/workflows/claude.yml" > /tmp/install.response.json
+          jq -e '.content.sha' /tmp/install.response.json
