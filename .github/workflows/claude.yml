@@ -9,33 +9,27 @@ on:
     inputs:
       role:
         description: 'analyst | auditor | executor | curator'
-        required: false
-        default: 'executor'
+        required: true
         type: string
       provider:
         description: 'claude'
-        required: false
-        default: 'claude_code'
+        required: true
         type: string
       trace_id:
         description: 'Trace id'
-        required: false
-        default: 'tg_818730867_20260618T105741Z'
+        required: true
         type: string
       cycle_id:
         description: 'Role cycle id'
-        required: false
-        default: 'bem934_live_operator_actual_final'
+        required: true
         type: string
       task_type:
         description: 'Task type'
-        required: false
-        default: 'live_content_analysis_repair'
+        required: true
         type: string
       task:
         description: 'Task body'
-        required: false
-        default: 'BEM-934 real operator Telegram live trace tg_818730867_20260618T105741Z. Verify governance/proofs/BEM932_provider_router_tg_818730867_20260618T105741Z.json. Create governance/proofs/BEM934_live_content_tg_818730867_20260618T105741Z.json with status PASS, protocol BEM-934, task_id BEM934-LIVE-TEST, exact trace_id, provider_selected claude_code, exact source_router_receipt, exactly two verifiable idempotency invariants for Telegram delivery into WRK-C1, at least two validation_steps, at least two acceptance_checks each result PASS, and at least one limitation. Produce a substantive report. Do not modify canonical closure state.'
+        required: true
         type: string
   issue_comment:
     types: [created]

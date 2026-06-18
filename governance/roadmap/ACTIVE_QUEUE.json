@@ -1,6 +1,6 @@
 {
-  "version": 40,
-  "updated_at": "2026-06-18T13:35:12Z",
+  "version": 41,
+  "updated_at": "2026-06-18T13:51:17Z",
   "queue_state": "ACTIVE",
   "current_task": "BEM934-CLOSE",
   "system_status": "BEM934_IN_PROGRESS",
@@ -73,7 +73,20 @@
       "status": "IN_PROGRESS",
       "priority": 10,
       "blocked_by": [],
-      "started_at": "2026-06-18T13:35:12Z"
+      "started_at": "2026-06-18T13:35:12Z",
+      "stage_progress": {
+        "tasks_done": 1,
+        "tasks_total": 3,
+        "percent": 33,
+        "completed": [
+          "canonical_context_status_and_claude_inputs"
+        ],
+        "pending": [
+          "external_claude_audit",
+          "strict_final_closure"
+        ]
+      },
+      "preparation_receipt": "governance/proofs/BEM934_close_preparation_receipt.json"
     }
   ],
   "last_completed": {
@@ -81,5 +94,5 @@
     "completed_at": "2026-06-18T13:35:12Z",
     "receipt": "governance/proofs/BEM934_live_test_receipt.json"
   },
-  "next_action": "BEM934-CLOSE: refresh canonical context/status, obtain independent EXTERNAL_AUDITOR_CLAUDE PASS, then finalize release."
+  "next_action": "Run independent EXTERNAL_AUDITOR_CLAUDE audit against committed BEM-934 evidence; release promotion remains forbidden."
 }

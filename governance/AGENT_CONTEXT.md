@@ -1,86 +1,42 @@
 # AGENT_CONTEXT.md | canonical configuration
 
-Updated: 2026-06-08
+Updated: 2026-06-18T13:51:17Z
 Repository: bereznyi-aleksandr/ai-devops-system
-Instruction version: 2.9
-Protocol status: BEM-931 v3.6 active
-System status: WORKING_CONTOUR_NOT_READY
+Active protocol: BEM-934
+Roadmap state: 9/10 stages complete
+Current task: BEM934-CLOSE
+Release status: FOLLOW_UP_REQUIRED
 
-## ПЕРВОЕ ДЕЙСТВИЕ ПРИ СТАРТЕ СЕССИИ
+## Operational provider architecture
 
-1. Читать `SYSTEM_STATUS.md` в корне репо — там концепция, что сделано, что осталось
-2. Читать `governance/roadmap/ACTIVE_QUEUE.json` — текущие задачи
-3. Взять первую IN_PROGRESS или PENDING задачу и выполнять
+Primary provider for curator, analyst, auditor, and executor: `claude_code`.
+Primary workflow: `.github/workflows/claude.yml`.
+Operational ingress: Telegram -> Cloudflare Worker -> `provider-router.yml` -> `claude.yml`.
 
-## Role
+Historical self-hosted Codex paths are disabled and deprecated. They are not an available operational runtime.
+`gpt_codex_cloud` is a GitHub-hosted reserve path. It may claim LLM execution only when OpenAI runtime secrets are configured; otherwise it is a clearly labelled `mechanical_fallback`.
 
-GPT is an external autonomous implementation agent for the repository.
-Claude is peer external auditor.
-Operator is strategic authority only, not a relay between tasks.
+## Verified BEM-934 state
 
-## Canonical runtime
+Stages 1-8: DONE.
+Stage 9 `BEM934-LIVE-TEST`: DONE under strict receipt v2.
+Operator trace: `;tg_818730867_20260618T105741Z`.
+Provider route: `claude_code` -> `claude.yml`.
+Semantic executor transport: `completed`, blocker `null`.
+Historical failed attempts remain disclosed.
+The prior replay-based contradictory PASS is archived as superseded.
 
-Canonical LLM runtime: `.github/workflows/codex-local.yml`
-Provider: GPT Codex via ChatGPT Plus subscription (OAuth, not API key)
-Runner: self-hosted runner with Codex CLI and OAuth session.
-Curator runtime must use Codex Local only.
+Stage 10 `BEM934-CLOSE`: IN_PROGRESS.
+Closure is not approved yet. Release remains `FOLLOW_UP_REQUIRED` until an independent `EXTERNAL_AUDITOR_CLAUDE verdict is PASS/APPROVED and a strict final validator succeeds.
 
-Forbidden active production runtimes:
-- Gemini API
-- OpenAI HTTP API (OPENAI_API_KEY)
-- paid hosted GPT runtime
-- `.github/workflows/gpt-hosted-roles.yml` as active curator runtime
+## Canonical evidence
 
-`gpt-hosted-roles.yml` exists only as archived/disabled stub.
+- `governance/proofs/BEM934_live_test_receipt.json`
+- `governance/proofs/BEM934_live_test_receipt_superseded_replay.json`
+- `governance/roadmap/ACTIVE_QUEUE.json`
+- `governance/config/provider_config.json`
+- `governance/protocols/BEM934_Protocol.md`
 
-## System architecture (summary)
+## Closure rule
 
-Full architecture: see `SYSTEM_STATUS.md` section 1.
-
-Objects: GD → DIR → WRK
-Each WRK has: WRK.CURATOR + WRK-C1, WRK-C2, WRK-C3 (minimum)
-Each WRK-Cx has: ANALYST → AUDITOR.pre → EXECUTOR → AUDITOR.post
-All roles run via Codex CLI (codex exec) with AGENTS.md instructions.
-
-## What is done / what remains
-
-See `SYSTEM_STATUS.md` sections 2 and 3.
-
-Critical gaps blocking production:
-1. AGENTS.md missing — Codex has no system instructions
-2. Roles not connected to Codex via orchestrator (run as Python stubs without LLM)
-3. Provider system missing (no GPT↔Claude fallback)
-4. Telegram E2E not proven with live receipt
-
-## Current tasks
-
-`governance/roadmap/ACTIVE_QUEUE.json` — execute only from here.
-`SYSTEM_STATUS.md` — update after each completed stage.
-
-Task closure requires:
-- non-null commit SHA
-- result artifact
-- validator or receipt
-- execution log entry
-- canonical operator report when required
-
-Documentation-only closure is NOT valid for runtime tasks.
-
-## Report canon
-
-Operator report (Telegram):
-- stage progress: X/Y tasks (%)
-- roadmap progress: X/Y stages (%)
-- checklist as separate lines with ✅ / ❌
-- operator question only if required
-
-Forbidden: diff, stdout, stderr, traceback, raw JSON, reasoning text.
-
-## File roles
-
-`SYSTEM_STATUS.md` — ГЛАВНЫЙ ДОКУМЕНТ: концепция, статус, дорожная карта
-`governance/roadmap/ACTIVE_QUEUE.json` — current executable queue
-`governance/logs/execution_log.jsonl` — append-only history
-`governance/reports/operator/` — canonical operator reports
-`governance/proofs/` — receipts and proof artifacts
-`governance/protocols/bem931_v3_6_working_contour_detailed_roadmap.md` — detailed protocol
+No top-level PASS may contradict nested transport records. No replay may be represented as operator-authored ingress. Release PASS requires committed proof files, independent external Claude approval, and a final fail-closed validator.
