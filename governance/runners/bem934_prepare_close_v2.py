@@ -100,8 +100,8 @@ def main() -> None:
     superseded = load_json(SUPERSEDED)
     provider = load_json(PROVIDER)
 
-    telegram = live.get("telegram" if isinstance(live.get("telegram"), dict) else {}
-    transport = live.get("transport" if isinstance(live.get("transport"), dict) else {}
+    telegram = live.get("telegram") if isinstance(live.get("telegram"), dict) else {}
+    transport = live.get("transport") if isinstance(live.get("transport"), dict) else {}
     semantic = transport.get("semantic_result") if isinstance(transport.get("semantic_result"), dict) else {}
     live_checks = live.get("checks") if isinstance(live.get("checks"), dict) else {}
     providers = provider.get("providers") if isinstance(provider.get("providers"), dict) else {}
@@ -286,7 +286,7 @@ Do not assert release PASS before the two pending tasks produce committed proof 
         ],
         "next_action": "Independent EXTERNAL_AUDITOR_CLAUDE audit",
     }
-    RECEIT.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    RECEIPT.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     with EXECUTION_LOG.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps({
