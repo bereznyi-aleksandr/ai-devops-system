@@ -1,0 +1,18 @@
+name: BEM934 Cancel Superseded Live Runner
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  actions: write
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel superseded size-only live runner
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+        run: |
+          set -euo pipefail
+          gh run cancel 27752832449 --repo "$GITHUB_REPOSITORY" || true
