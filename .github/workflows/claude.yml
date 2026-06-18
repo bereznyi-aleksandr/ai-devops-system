@@ -195,7 +195,7 @@ jobs:
           {
             echo 'prompt<<BEM934_PROMPT_EOF'
             cat "$PROMPT_FILE"
-            echo 'BEM934_PROMPT_EOF'
+            printf '\nBEM934_PROMPT_EOF\n'
           } >> "$GITHUB_OUTPUT"
 
       - name: Run Claude Code role
