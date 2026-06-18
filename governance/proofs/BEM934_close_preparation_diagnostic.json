@@ -1,8 +1,8 @@
 {
   "status": "BLOCKED",
   "task_id": "BEM934-CLOSE.PREPARE-DIAGNOSTIC",
-  "created_at": "2026-06-18T13:41:47Z",
+  "created_at": "2026-06-18T13:46:17Z",
   "return_code": 1,
-  "diagnostic": "Sorry: IndentationError: unindent does not match any outer indentation level (bem934_prepare_close_v2.py, line 50)",
+  "diagnostic": "Traceback (most recent call last):\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/bem934_prepare_close_v2.py\", line 296, in <module>\n    main()\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/bem934_prepare_close_v2.py\", line 145, in main\n    raise RuntimeError(\"close_preparation_failed:\" + \",\".join(failed))\nRuntimeError: close_preparation_failed:superseded_replay_archived\n",
   "release_promoted": false
 }
