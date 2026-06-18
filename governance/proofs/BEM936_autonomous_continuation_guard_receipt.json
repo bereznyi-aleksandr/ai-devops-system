@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-936",
+  "task_id": "BEM936-AUTONOMOUS-CONTINUATION-GUARD",
+  "created_at": "2026-06-18T18:20:00Z",
+  "checks": {
+    "standing_task_written": true,
+    "protocol_written": true,
+    "runner_written": true,
+    "agent_context_updated": true,
+    "rule_stop_only_when_queue_complete": true,
+    "rule_report_next_task_and_continue": true
+  },
+  "files": [
+    "governance/roadmap/AUTONOMOUS_CONTINUATION_TASK.json",
+    "governance/protocols/BEM936_AUTONOMOUS_CONTINUATION_GUARD.md",
+    "governance/runners/autonomous_continuation_guard.py",
+    "AGENT_CONTEXT.md"
+  ],
+  "blockers": [],
+  "next_task": "use guard at every future task boundary"
+}
