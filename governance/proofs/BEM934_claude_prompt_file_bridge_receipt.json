@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-CLAUDE-PROMPT-FILE-BRIDGE-REPAIR",
+  "created_at": "2026-06-18T04:41:58Z",
+  "action": "repair_claude_prompt_file",
+  "checks": {
+    "claude_action_v1_present": true,
+    "prompt_file_input_present": true,
+    "path_passed_as_prompt_absent": true,
+    "assembled_prompt_env_present": true
+  },
+  "missing": [],
+  "changed": true,
+  "source_commit_sha": "7b3eb853e2ad61444e9b3860983872728cf017c7",
+  "workflow_path": ".github/workflows/claude.yml",
+  "official_action_contract": "anthropics/claude-code-action@v1 prompt_file input"
+}
