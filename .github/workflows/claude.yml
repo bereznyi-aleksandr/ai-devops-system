@@ -10,7 +10,7 @@ on:
       role:
         description: 'analyst | auditor | executor | curator'
         required: false
-        default: 'curator'
+        default: 'executor'
         type: string
       provider:
         description: 'claude'
