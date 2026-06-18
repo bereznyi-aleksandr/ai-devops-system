@@ -1,0 +1,71 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "task_id": "BEM934-LIVE-TEST-RECONCILIATION",
+  "created_at": "2026-06-18T13:17:16Z",
+  "release_promoted": false,
+  "live_task_closed": false,
+  "checks": {
+    "transport_jsonl_parseable": true,
+    "replay_trace_semantic_transport_completed": true,
+    "real_operator_candidate_router_receipt_valid": true,
+    "real_operator_candidate_transport_completed": true,
+    "old_live_receipt_rejected_as_contradictory": true,
+    "close_not_promoted": true
+  },
+  "transport_jsonl_conflict_markers_removed": true,
+  "replay_trace": {
+    "trace_id": "tg_934432449_20260618T102008Z",
+    "semantic_transport": {
+      "trace_id": "tg_934432449_20260618T102008Z",
+      "cycle_id": "bem934_live_test_repair_final",
+      "role": "curator",
+      "provider": "claude",
+      "status": "completed",
+      "changed_files": [],
+      "commit_sha": "f2525621545272f78e2977c39e140fa6ad11da24",
+      "blocker": null,
+      "report_path": "governance/reports/tg_934432449_20260618T102008Z.md",
+      "completed_at": "2026-06-18T10:54:41Z"
+    },
+    "classification": "infrastructure_replay_only_not_operator_authored"
+  },
+  "real_operator_candidate": {
+    "trace_id": "tg_818730867_20260618T105741Z",
+    "router_receipt": "governance/proofs/BEM932_provider_router_tg_818730867_20260618T105741Z.json",
+    "router_checks": {
+      "status_pass": true,
+      "provider_selected_claude_code": true,
+      "target_workflow_claude_yml": true,
+      "trace_matches": true,
+      "message_id_present": true,
+      "dispatch_success": true
+    },
+    "semantic_transport": {
+      "trace_id": "tg_818730867_20260618T105741Z",
+      "cycle_id": "bem934_live_operator_actual_final",
+      "role": "executor",
+      "provider": "claude",
+      "status": "completed",
+      "changed_files": [],
+      "commit_sha": "56a251abc427f161696bbb3c1adf4434be7cd16c",
+      "blocker": null,
+      "report_path": "governance/reports/tg_818730867_20260618T105741Z.md",
+      "completed_at": "2026-06-18T12:10:57Z"
+    },
+    "explicit_operator_authored_ingress_evidence_bound": false
+  },
+  "superseded_live_receipt": {
+    "path": "governance/proofs/BEM934_live_test_receipt.json",
+    "rejected": true,
+    "summary": {
+      "exists": true,
+      "top_level_status": "PASS",
+      "failed_transport_count": 2,
+      "replay_ingress_disclosed": true
+    }
+  },
+  "live_test_ready_for_strict_finalization": false,
+  "blocker": "explicit_operator_authored_telegram_webhook_evidence_not_bound_to_final_receipt",
+  "next_action": "Bind an explicit operator-authored Telegram webhook/update artifact to trace tg_818730867_20260618T105741Z; then create a strict non-contradictory LIVE receipt."
+}
