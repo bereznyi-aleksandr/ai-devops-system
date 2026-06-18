@@ -223,7 +223,8 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          execution_path = Path(os.environ.get("EXECUTION_FILE", ""))
+          execution_raw = os.environ.get("EXECUTION_FILE", "").strip()
+          execution_path = Path(execution_raw) if execution_raw else None
           trace_id = os.environ.get("TRACE_ID", "").strip()
           receipt_path = Path("governance/proofs/BEM934_claude_result_materialization_receipt.json")
           plan_path = Path("governance/proofs/BEM934_object_binding_plan.json")
@@ -243,7 +244,7 @@ jobs:
               "task_id": "BEM934-OBJECTS-BOUND",
               "created_at": now(),
               "trace_id": trace_id,
-              "execution_file_available": execution_path.exists(),
+              "execution_file_available": bool(execution_path and execution_path.is_file()),
               "checks": {},
               "missing": [],
           }
@@ -252,7 +253,7 @@ jobs:
               receipt["blocker"] = "trace_id_missing"
               write_receipt(receipt)
               raise SystemExit(0)
-          if not execution_path.exists():
+          if execution_path is None or not execution_path.is_file():
               receipt["blocker"] = "execution_file_missing"
               write_receipt(receipt)
               raise SystemExit(0)
