@@ -1,0 +1,41 @@
+name: BEM934 Real Claude Dispatch Receipt Status
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture dispatch receipt workflow status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$REPO" repo
+          cd repo
+          git config user.email "bem934-status@ai-devops-system"
+          git config user.name "BEM-934 Status"
+          mkdir -p governance/proofs
+          gh run list --repo "$REPO" --workflow bem934-dispatch-real-claude-live-with-receipt.yml --limit 5 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > /tmp/runs.json
+          RUN_ID="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)]"
+          : > /tmp/failed.log
+          if [ -n "$RUN_ID" ]; then
+            gh run view "$RUN_ID" --repo "$REPO" --log-failed > /tmp/failed.log 2>&1 || true
+          fi
+          tail -n 180 /tmp/failed.log > /tmp/failed.tail
+          jq -n --slurpfile runs /tmp/runs.json --rawfile log /tmp/failed.tail \
+            '{task_id:"BEM934-LIVE-TEST",runs:$runs[0],failed_log_tail:$log}' \
+            > governance/proofs/BEM934_real_claude_dispatch_status.json
+          git add governance/proofs/BEM934_real_claude_dispatch_status.json
+          git commit -m "Capture BEM-934 real Claude dispatch status" || exit 0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          exit 1
