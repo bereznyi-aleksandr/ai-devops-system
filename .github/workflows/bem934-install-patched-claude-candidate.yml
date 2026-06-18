@@ -1,0 +1,32 @@
+name: BEM934 Install Patched Claude Candidate
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Install validated candidate via GitHub Contents API
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh repo clone "$REPO" repo
+          cd repo
+          ruby -e "require 'yaml'; YAML.load_file('governance/proofs/BEM934_patched_claude_candidate.yml')"
+          CURRENT_SHA="$(gh api "repos/$REPO/contents/.github/workflows/claude.yml?ref=main" --jq .sha)"
+          CONTENT="$(base64 -w0 governance/proofs/BEM934_patched_claude_candidate.yml)"
+          jq -n --arg message "Install dynamic trace-bound Claude live validator" --arg content "$CONTENT" --arg sha "$CURRENT_SHA" '{message:$message,content:$content,sha:$sha,branch:"main"}' > /tmp/payload.json
+          gh api --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --input /tmp/payload.json \
+            "repos/$REPO/contents/.github/workflows/claude.yml" > /tmp/install.json
+          jq -e .content.sha /tmp/install.json
