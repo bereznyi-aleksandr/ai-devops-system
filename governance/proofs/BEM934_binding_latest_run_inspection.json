@@ -1,0 +1,83 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-934",
+  "created_at": "2026-06-18T09:01:24Z",
+  "workflow_path": ".github/workflows/bem934-object-binding-proof-v2.yml",
+  "run": {
+    "id": 27739114088,
+    "run_number": 1,
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "3518c90c8e98f68325e1c478d0901401ff9f985f",
+    "created_at": "2026-06-18T05:36:49Z",
+    "updated_at": "2026-06-18T05:37:48Z",
+    "run_started_at": "2026-06-18T05:36:49Z"
+  },
+  "jobs": [
+    {
+      "id": 82062181952,
+      "name": "prove",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-06-18T05:36:59Z",
+      "completed_at": "2026-06-18T05:37:47Z",
+      "steps": [
+        {
+          "number": 1,
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 2,
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 3,
+          "name": "Generate structured Claude binding plan",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 4,
+          "name": "Materialize and exercise AUDITOR.pre",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "number": 5,
+          "name": "Commit isolated proof artifacts",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "number": 6,
+          "name": "Promote verified binding state",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 11,
+          "name": "Post Generate structured Claude binding plan",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 12,
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 13,
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "missing": []
+}
