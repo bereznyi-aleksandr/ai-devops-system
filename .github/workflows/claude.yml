@@ -195,7 +195,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           prompt_file: ${{ env.PROMPT_FILE }}
-          claude_args: --max-turns 10
+          claude_args: '--max-turns 10 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
 
       - name: Run Claude Code legacy
         id: claude_legacy
