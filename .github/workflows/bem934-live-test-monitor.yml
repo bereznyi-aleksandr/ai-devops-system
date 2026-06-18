@@ -1,0 +1,35 @@
+name: BEM934 Live Test Monitor
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture live test run status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          gh repo clone "$GITHUB_REPOSITORY" repo
+          cd repo
+          git config user.email "bem934-monitor@ai-devops-system"
+          git config user.name "BEM-934 Live Monitor"
+          mkdir -p governance/proofs
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow bem934-live-test.yml --limit 3 --json databaseId,status,conclusion,createdAt,updatedAt,url,displayTitle,headSha > /tmp/runs.json
+          python3 - <<'PY'
+          import json
+            from pathlib import Path
+          runs = json.loads(Path("/tmp/runs.json").read_text())
+          out = {"task_id": "BEM934-LIVE-TEST", "runs": runs}
+          Path("governance/proofs/BEM934_live_test_monitor.json").write_text(json.dumps(out, indent=2) + "\n")
+          PY
+          git add governance/proofs/BEM934_live_test_monitor.json
+          git commit -m "Capture BEM934 live test run status" || exit 0
+          git push origin HEAD:main
