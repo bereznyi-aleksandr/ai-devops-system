@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE",
+  "created_at": "2026-06-19T05:23:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "artifacts": [
+    {
+      "path": ".github/workflows/bem947-live-object-dispatch.yml",
+      "sha": "340593e9edaa91d54705c8bdaebd571ec6eb4d69",
+      "sha_type": "git_blob",
+      "commit": "c8f8ee728a82d971df58b0d48316342859ee88b9",
+      "commit_sha_type": "commit"
+    }
+  ],
+  "checks": {
+    "bridge_workflow_created": true,
+    "claude_workflow_dispatch_path_present": true,
+    "object_event_and_dispatch_queue_proof_path_present": true,
+    "no_false_executed_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [],
+  "next_task": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN"
+}
