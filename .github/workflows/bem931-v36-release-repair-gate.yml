@@ -24,7 +24,7 @@ jobs:
       - name: Push reduced object dispatch to claude.yml
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          TRACE: bem947_object_dispatch_push_20260619T1108Z
+          TRACE: bem947_object_dispatch_push_20260619T1119Z
         shell: bash
         run: |
           set -euo pipefail
@@ -35,14 +35,14 @@ BEM-947 push-gate bridge: prove planned-to-executed object dispatch.
 You are the executor role. Keep scope minimal.
 
 Create and commit:
-1. governance/reports/bem947_object_dispatch_push_20260619T1108Z.md
-2. governance/proofs/BEM947_live_object_dispatch_executed_bem947_object_dispatch_push_20260619T1108Z.json
+1. governance/reports/bem947_object_dispatch_push_20260619T1119Z.md
+2. governance/proofs/BEM947_live_object_dispatch_executed_bem947_object_dispatch_push_20260619T1119Z.json
 
 JSON required:
   status: completed
   protocol: BEM-947
   task_id: BEM947-P2-LIVE-OBJECT-DISPATCH-RUN
-  trace_id: bem947_object_dispatch_push_20260619T1108Z
+  trace_id: bem947_object_dispatch_push_20260619T1119Z
   provider_selected: claude_code
   target_workflow_id: claude.yml
   dispatch_result: executed
@@ -68,7 +68,7 @@ TASK
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-trace = "bem947_object_dispatch_push_20260619T1108Z"
+trace = "bem947_object_dispatch_push_20260619T1119Z"
 payload = {
   "status": "DISPATCHED",
   "protocol": "BEM-947",
