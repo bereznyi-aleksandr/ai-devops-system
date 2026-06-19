@@ -1,0 +1,49 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-DIRECT-RESTORE-PRODUCTION-WORKFLOWS",
+  "created_at": "2026-06-19T17:43:30Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "artifacts": [
+    {
+      "path": ".github/workflows/role-orchestrator.yml",
+      "restored_from_commit": "922a9791f5547c738c74aa5f7f625383499e5e7c",
+      "sha": "5625a4e1996129e695834a7a24a1ae0d2ef92d61",
+      "sha_type": "git_blob",
+      "commit": "59b587511b83078bda722b75327166e957190e6d",
+      "commit_sha_type": "commit",
+      "restore_kind": "exact_known_good_blob"
+    },
+    {
+      "path": ".github/workflows/claude.yml",
+      "restore_source_commit": "8b74dd4398b67022406c3af90427ce17d95b5135",
+      "source_blob_sha": "9d81bd3263f23b13533d5df4990ad328da8927dd",
+      "source_blob_sha_type": "git_blob",
+      "current_sha": "99c58bdcf7225f5d8b3544ad09f58aef02a03ced",
+      "current_sha_type": "git_blob",
+      "commit": "16c0e76bb02dbbdb7ed163dc8f4eec69ff37a4f4",
+      "commit_sha_type": "commit",
+      "restore_kind": "direct_restore_from_known_good_content_attempt_current_blob_differs_from_source",
+      "note": "Known bad BEM947 default workflow blob 382a3b31 was replaced. Current blob is not the exact 9d81bd32 source blob and must not be reported as exact restore."
+    }
+  ],
+  "checks": {
+    "production_role_orchestrator_exactly_restored": true,
+    "broken_role_orchestrator_api_gate_removed": true,
+    "known_bad_claude_blob_382a3b31_removed": true,
+    "claude_current_blob_verified": true,
+    "no_executed_proof_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "bem947_executed_completed_proof_still_absent",
+    "claude_yml_restore_not_exact_known_good_blob",
+    "next_step_requires_telegram_or_external_gate_validation"
+  ],
+  "next_task": "BEM947-P2-TELEGRAM_OR_EXTERNAL_GATE_VALIDATION",
+  "non_claim": "This receipt restores/remediates production workflow files only; it does not claim BEM-947 planned-to-executed proof."
+}
