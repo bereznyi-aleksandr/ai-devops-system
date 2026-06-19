@@ -1,43 +1,35 @@
 {
   "version": 1,
-  "updated_at": "2026-06-19T04:16:00Z",
+  "updated_at": "2026-06-19T05:16:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM945-P0-STUB-INVENTORY-CONTINUE",
-  "system_status": "BEM945_IN_PROGRESS",
+  "current_task": "BEM946-P1-STUB-PRIORITIZATION",
+  "system_status": "BEM946_IN_PROGRESS",
   "release_status": "IN_PROGRESS",
-  "protocol": "BEM-945",
-  "source": "governance/protocols/BEM945_OPERATOR_REPORT_EXPERIENCE_LOADER_RUNTIME.md",
+  "protocol": "BEM-946",
+  "source": "governance/protocols/BEM946_FRESH_STUB_INVENTORY_AND_PRIORITIZATION.md",
   "completed_summary": {
-    "tasks_done": 0,
+    "tasks_done": 1,
     "tasks_total": 4,
-    "percent": 0,
-    "proofs": []
+    "percent": 25,
+    "proofs": [
+      "governance/proofs/BEM946_fresh_stub_inventory_receipt.json"
+    ]
   },
   "previous_completed": [
     {
-      "protocol": "BEM-944",
-      "receipt": "governance/proofs/BEM944_FINAL_VERIFICATION_PASS.json",
+      "protocol": "BEM-945",
+      "receipt": "governance/proofs/BEM945_FINAL_VERIFICATION_PASS.json",
       "percent": 100
     }
   ],
   "tasks": [
     {
-      "id": "BEM945-P0-STUB-INVENTORY-CONTINUE",
-      "title": "Inventory operator-report and experience-loader stubs",
-      "status": "IN_PROGRESS",
+      "id": "BEM946-P0-FRESH-STUB-INVENTORY",
+      "title": "Scan governance/runners and record exact 23-byte stubs",
+      "status": "DONE",
       "priority": 1,
-      "started_at": "2026-06-19T04:16:00Z",
-      "stage_progress": {
-        "tasks_done": 0,
-        "tasks_total": 4,
-        "percent": 0
-      }
-    },
-    {
-      "id": "BEM945-P1-OPERATOR-REPORT-RUNNER",
-      "title": "Replace operator_report_runner.py stub with mobile report materializer runtime",
-      "status": "PENDING",
-      "priority": 2,
+      "receipt": "governance/proofs/BEM946_fresh_stub_inventory_receipt.json",
+      "completed_at": "2026-06-19T05:16:00Z",
       "stage_progress": {
         "tasks_done": 1,
         "tasks_total": 4,
@@ -45,8 +37,20 @@
       }
     },
     {
-      "id": "BEM945-P2-EXPERIENCE-LOADER-RUNNER",
-      "title": "Replace experience_loader_runner.py stub with evidence loader runtime",
+      "id": "BEM946-P1-STUB-PRIORITIZATION",
+      "title": "Prioritize remaining small placeholder runners",
+      "status": "IN_PROGRESS",
+      "priority": 2,
+      "started_at": "2026-06-19T05:16:00Z",
+      "stage_progress": {
+        "tasks_done": 1,
+        "tasks_total": 4,
+        "percent": 25
+      }
+    },
+    {
+      "id": "BEM946-P2-NEXT-PROTOCOL-BRIDGE",
+      "title": "Bind planned-to-executed live protocol request",
       "status": "PENDING",
       "priority": 3,
       "stage_progress": {
@@ -56,8 +60,8 @@
       }
     },
     {
-      "id": "BEM945-P3-FINAL-VERIFY",
-      "title": "Finalize and verify BEM-945 roadmap",
+      "id": "BEM946-P3-FINAL-VERIFY",
+      "title": "Finalize and verify BEM-946 roadmap",
       "status": "PENDING",
       "priority": 4,
       "stage_progress": {
@@ -67,5 +71,5 @@
       }
     }
   ],
-  "next_action": "write BEM945 P0 stub inventory receipt"
+  "next_action": "prioritize small placeholder runners and bind BEM947 planned-to-executed live-test protocol"
 }
