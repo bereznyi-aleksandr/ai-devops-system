@@ -1,0 +1,41 @@
+{
+  "status": "BLOCKED",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-RETRY-LIVE-OBJECT-DISPATCH",
+  "created_at": "2026-06-19T07:01:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "attempted_repairs": [
+    {
+      "path": ".github/workflows/bem947-live-object-dispatch-retry.yml",
+      "sha": "7d718077fe52447b4814805db41f7551c54b5b9a",
+      "sha_type": "git_blob",
+      "commit": "28eaa5ed46e867255026c37e71f5bb834388762f",
+      "commit_sha_type": "commit",
+      "dispatch_result": "422 workflow does not have workflow_dispatch trigger"
+    },
+    {
+      "path": ".github/workflows/bem947-live-object-dispatch.yml",
+      "sha": "6b0bbc49578593158af010d80fe24b1068cd3ba9",
+      "sha_type": "git_blob",
+      "commit": "1d833b8c444ca4c636704e86015d32330510fbe3",
+      "commit_sha_type": "commit",
+      "dispatch_result": "422 workflow does not have workflow_dispatch trigger"
+    }
+  ],
+  "checks": {
+    "first_claude_run_failure_recorded": true,
+    "retry_workflow_created": true,
+    "retry_dispatch_blocked_by_github_api": true,
+    "no_false_completed_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "workflow_dispatch_422_no_trigger_available",
+    "executed_completed_proof_not_present"
+  ],
+  "next_task": "BEM947-P2-AUTOREPAIR-WORKFLOW-TRIGGER"
+}
