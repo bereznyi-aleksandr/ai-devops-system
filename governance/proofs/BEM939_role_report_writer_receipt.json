@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-939",
+  "task_id": "BEM939-P1-ROLE-REPORT-WRITER",
+  "created_at": "2026-06-19T03:12:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "record": {
+    "status": "PASS",
+    "protocol": "BEM-939",
+    "task_id": "BEM939-P1-ROLE-REPORT-WRITER",
+    "role": "curator",
+    "created_at": "2026-06-19T03:12:00Z",
+    "trace_id": "bem939_role_report_writer_selftest",
+    "dispatch_id": null,
+    "report_path": "governance/reports/BEM939-P1-ROLE-REPORT-WRITER_curator_bem939_role_report_writer_selftest.md",
+    "report_sha256": "5a04215a2d9af4d222fbd86e276cd433014226be48bf04a842ea319505ecb3b7",
+    "percent": 50,
+    "context": {
+      "object_event_present": false,
+      "dispatch_processed_present": false
+    },
+    "non_claim": "role report handoff only; no downstream LLM completion claimed"
+  },
+  "checks": {
+    "role_report_writer_replaced_stub": true,
+    "role_report_writer_size_gt_300": true,
+    "report_markdown_materialized": true,
+    "role_reports_jsonl_bound": true,
+    "report_hash_present": true,
+    "downstream_llm_completion_not_claimed": true
+  },
+  "blockers": [],
+  "next_task": "BEM939-P2-EVENT-OBJECT-INTEGRATION"
+}
