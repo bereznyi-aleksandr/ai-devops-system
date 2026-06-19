@@ -1,10 +1,10 @@
 {
-  "version": 4,
-  "updated_at": "2026-06-19T08:48:30Z",
+  "version": 5,
+  "updated_at": "2026-06-19T11:05:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P2-COLLECT-PUSH-BRIDGE-RECEIPT_OR_AUTOREPAIR",
+  "current_task": "BEM947-P2-AUTOREPAIR-DISPATCH_PATH_OR_EXTERNAL_GATE",
   "system_status": "BEM947_AUTOREPAIR_IN_PROGRESS",
-  "release_status": "BLOCKED_REPAIRING",
+  "release_status": "BLOCKED_REPAYRING",
   "protocol": "BEM-947",
   "completed_summary": {
     "tasks_done": 2,
@@ -14,14 +14,12 @@
       "governance/proofs/BEM947_live_test_design_receipt.json",
       "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
       "governance/proofs/BEM947_live_object_dispatch_blocked_bem947_object_dispatch_27809252833.json",
-      "governance/proofs/BEM947_retry_workflow_dispatch_blocked_receipt.json",
-      "governance/proofs/BEM947_workflow_yaml_repair_push_bridge_receipt.json"
+      "governance/proofs/BEM947_indexed_workflow_dispatch_blocked_receipt.json"
     ]
   },
   "blockers": [
     "first_claude_run_claude_role_outcome_failure",
-    "retry_workflow_dispatch_422_no_workflow_dispatch_trigger",
-    "push_bridge_requested_receipt_404_pending_run",
+    "github_actions_workflow_dispatch_422_no_trigger_available",
     "executed_completed_proof_not_present"
   ],
   "sha_policy": {
@@ -44,16 +42,16 @@
       "stage_progress": {"tasks_done": 2, "tasks_total": 4, "percent": 50}
     },
     {
-      "id": "BEM947-P2-COLLECT-PUSH-BRIDGE-RECEIPT_OR_AUTOREPAIR",
+      "id": "BEM947-P2-AUTOREPAIR-DISPATCH_PATH_OR_EXTERNAL_GATE",
       "status": "IN_PROGRESS",
-      "started_at": "2026-06-19T08:48:30Z",
+      "started_at": "2026-06-19T11:05:00Z",
       "stage_progress": {"tasks_done": 2, "tasks_total": 4, "percent": 50}
     },
     {
       "id": "BEM947-P3-FINAL-VERIFY",
       "status": "PENDING",
-      "stage_progresss": {"tasks_done": 3, "tasks_total": 4, "percent": 75}
+      "stage_progress": {"tasks_done": 3, "tasks_total": 4, "percent": 75}
     }
   ],
-  "next_action": "check governance/proofs/BEM947_live_object_dispatch_push_requested_receipt.json, then collect BEM947_live_object_dispatch_executed_*.json; don't mark PASS until executed/completed proof exists"
+  "next_action": "find working external/Telegram-gate or verified workflow_dispatch path; don't mark PASS until executed/completed proof exists"
 }
