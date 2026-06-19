@@ -1,9 +1,9 @@
 {
-  "version": 13,
-  "updated_at": "2026-06-19T19:56:30Z",
+  "version": 14,
+  "updated_at": "2026-06-19T20:06:30Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P2-RETRY_CLAUDE_WITH_MINIMAL_PROMPT_OR_EXTERNAL_GATE",
-  "system_status": "BEM947_CLAUDE_ROLE_FAILURE_DIAGNOSED_CONTINUING",
+  "current_task": "BEM947-P2-POLL-MINIMAL-CLAUDE-RETRY",
+  "system_status": "BEM947_MINIMAL_CLAUDE_RETRY_DISPATCHED_AWAITING_RESULT",
   "release_status": "BLOCKED_REPAIRING",
   "protocol": "BEM-947",
   "progress": {
@@ -18,27 +18,26 @@
     "governance/proofs/BEM947_live_gate_after_yaml_dispatch_requested_receipt.json",
     "governance/proofs/BEM947_live_gate_bridge_yaml_repair_receipt.json",
     "governance/proofs/BEM947_claude_role_failure_after_yaml_validation_receipt.json",
-    "governance/proofs/BEM947_claude_run_log_collector_receipt.json"
+    "governance/proofs/BEM947_claude_run_log_collector_receipt.json",
+    "governance/proofs/BEM947_minimal_claude_retry_dispatch_receipt.json"
   ],
   "recent_action": {
-    "action": "claude_yml_runtime_reached_but_claude_code_action_failed",
-    "trace_id": "bem947_object_dispatch_after_yaml_validation_20260619T1935Z",
-    "dispatch_receipt_sha": "df20d1fc7d247eb681c3bf9ffd0621f1d5883c55",
+    "action": "minimal_claude_retry_dispatched_after_runtime_failure",
+    "bridge_path": ".github/workflows/bem947-live-claude-dispatch-on-push.yml",
+    "bridge_sha": "aa051c64166ce27f85e2befa7a7828b61480d92a",
+    "bridge_sha_type": "git_blob",
+    "bridge_commit": "ae254801c0d57dcdb2f9ad63574349f0d536fae5",
+    "bridge_commit_sha_type": "commit",
+    "dispatch_receipt": "governance/proofs/BEM947_minimal_claude_retry_dispatch_receipt.json",
+    "dispatch_receipt_sha": "1173934c6aca9a4db026164f2e379cbccec9c2ea",
     "dispatch_receipt_sha_type": "git_blob",
     "dispatch_http_status": 204,
-    "execution_report_sha": "dcfa2145386055b2acd4d8a64e5703f2ca2aaec7",
-    "execution_report_sha_type": "git_blob",
-    "execution_report_commit": "9b53344878f6a6bed8ea8e21844452faa8cc962c",
-    "execution_report_commit_sha_type": "commit",
-    "log_collector_workflow_sha": "73b789d7f556a5354df67c3e398ba819854c896c",
-    "log_collector_workflow_sha_type": "git_blob",
-    "log_collector_workflow_commit": "45a81d76879026177afa401d97d2f31e5ff9c0da",
-    "log_collector_workflow_commit_sha_type": "commit",
-    "log_collector_receipt_sha": "909dba71618e8ba33c844fece833224d8a329e20",
-    "log_collector_receipt_sha_type": "git_blob",
-    "diagnostic_report_sha": "8836fa21752feb461cd5f0c9597b744d1ef41d8b",
-    "diagnostic_report_sha_type": "git_blob",
-    "targeted_log_collector_status": "DISPATCHED_PENDING_RECEIPT"
+    "trace_id": "bem947_minimal_claude_retry_20260619T1958Z",
+    "minimal_executed_proof": "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json",
+    "minimal_executed_proof_status": "404_absent",
+    "minimal_report": "governance/reports/bem947_minimal_claude_retry_20260619T1958Z.md",
+    "minimal_report_status": "404_absent",
+    "targeted_log_collector_status": "still_pending_or_no_receipt"
   },
   "validation": {
     "claude_yml_blob": "df512080669e993f5f0128b1e5e2628d0a4ff368",
@@ -46,19 +45,18 @@
     "claude_yml_yaml_validated": true,
     "bridge_yaml_validated": true,
     "claude_yml_runtime_reached": true,
-    "claude_workflow_run_id": 27845000228,
-    "claude_workflow_head_sha": "9b53344878f6a6bed8ea8e21844452faa8cc962c",
-    "claude_workflow_head_sha_type": "commit",
-    "claude_workflow_conclusion": "success",
-    "claude_role_outcome": "failure",
+    "previous_claude_workflow_run_id": 27845000228,
+    "previous_claude_workflow_conclusion": "success",
+    "previous_claude_role_outcome": "failure",
+    "minimal_retry_dispatch_succeeded": true,
     "executed_completed_proof_present": false,
     "no_pass_claimed": true
   },
   "blockers": [
-    "claude_code_action_outcome_failure",
-    "executed_completed_proof_not_present",
+    "previous_claude_code_action_outcome_failure",
+    "minimal_retry_executed_proof_not_present_yet",
     "targeted_log_collector_receipt_pending_or_failed",
-    "minimal_claude_retry_or_external_gate_required"
+    "external_gate_or_minimal_retry_result_required"
   ],
   "tasks": [
     {
@@ -72,7 +70,7 @@
       "percent": 50
     },
     {
-      "id": "BEM947-P2-RETRY_CLAUDE_WITH_MINIMAL_PROMPT_OR_EXTERNAL_GATE",
+      "id": "BEM947-P2-POLL-MINIMAL-CLAUDE-RETRY",
       "status": "IN_PROGRESS",
       "percent": 50
     },
@@ -82,5 +80,5 @@
       "percent": 75
     }
   ],
-  "next_action": "poll targeted log collector receipt; if still absent, proceed to minimal claude retry or external gate; don't mark PASS until executed/completed proof exists"
+  "next_action": "poll minimal retry report/proof; if absent or failed, keep BLOCKED and use external gate/operator evidence; never mark PASS without executed/completed proof"
 }
