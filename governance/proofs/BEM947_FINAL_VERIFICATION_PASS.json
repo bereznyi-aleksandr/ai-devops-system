@@ -1,0 +1,75 @@
+{
+  "status": "PASS",
+  "release_status": "PASS",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P3-FINAL-VERIFY",
+  "created_at": "2026-06-19T20:19:30Z",
+  "stage": {
+    "tasks_done": 4,
+    "tasks_total": 4,
+    "percent": 100
+  },
+  "summary": "BEM-947 final verification closed after P2 minimal Claude retry produced completed executed proof through claude.yml.",
+  "scope_note": "Final PASS uses the verified minimal Claude retry as replacement live evidence after earlier full-dispatch attempts were blocked or failed; earlier failed traces remain preserved as blockers history, not hidden.",
+  "evidence": {
+    "p0_design": {
+      "path": "governance/proofs/BEM947_live_test_design_receipt.json",
+      "sha": "c883cb4e732d673429ce1f3e3afb2d6389154c31",
+      "sha_type": "git_blob",
+      "status": "PASS"
+    },
+    "p1_bridge": {
+      "path": "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
+      "sha": "e5e366545ec59f8e75010b127a2264cd99ce8a8c",
+      "sha_type": "git_blob",
+      "status": "PASS"
+    },
+    "p2_pass": {
+      "path": "governance/proofs/BEM947_P2_MINIMAL_CLAUDE_RETRY_PASS.json",
+      "sha": "e5d61b8939d866cc8e3bafce9cf908c04193a8ef",
+      "sha_type": "git_blob",
+      "commit": "671f46974a98307627dd5c45c7e1d98495658f07",
+      "commit_sha_type": "commit",
+      "status": "PASS"
+    },
+    "executed_proof": {
+      "path": "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json",
+      "sha": "545a9721513c1af4353835577f3b73d5784ab679",
+      "sha_type": "git_blob",
+      "commit": "6e373f6e6964780bbc155e8a92b36c4d05c72b50",
+      "commit_sha_type": "commit",
+      "status": "completed",
+      "dispatch_result": "executed",
+      "blocker": null
+    },
+    "execution_report": {
+      "path": "governance/reports/bem947_minimal_claude_retry_20260619T1958Z.md",
+      "sha": "de19b74ef1c216e65372f04000e67c7e737b555d",
+      "sha_type": "git_blob",
+      "reported_outcome": "success",
+      "reported_status": "completed",
+      "reported_commit_sha": "51c9ea711e828cd3f51a826e943a181f348c7713",
+      "reported_commit_sha_type": "commit"
+    }
+  },
+  "checks": {
+    "p0_pass": true,
+    "p1_pass": true,
+    "p2_pass": true,
+    "executed_completed_proof_present": true,
+    "executed_proof_status_completed": true,
+    "executed_proof_blocker_null": true,
+    "execution_report_success": true,
+    "sha_policy_explicit": true,
+    "prior_failures_preserved": true,
+    "no_unverified_pass_claim": true
+  },
+  "known_history": [
+    "initial live object dispatch failed with claude_role outcome=failure",
+    "multiple workflow dispatch attempts were blocked before YAML/bridge repair",
+    "claude.yml and bridge YAML were repaired and independently validated",
+    "minimal Claude retry subsequently completed and wrote executed proof"
+  ],
+  "blockers": [],
+  "next_task": "NONE"
+}
