@@ -1,0 +1,45 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-CONTINUATION-AFTER-OPERATOR-QUESTION",
+  "created_at": "2026-06-19T15:33:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "actions": [
+    {
+      "action": "checked_expected_receipts",
+      "result": "404 for executed/completed proof"
+    },
+    {
+      "action": "retried claude.yml workflow_dispatch",
+      "result": "422 workflow_dispatch trigger not available"
+    },
+    {
+      "action": "tested role-orchestrator dispatch",
+      "result": "initial dispatch endpoint available, later repurpose blocked and restored"
+    },
+    {
+      "action": "installed production-compatible claude.yml defaults",
+      "result": "committed, dispatch still 422"
+    },
+    {
+      "action": "recorded production-compatible blocker",
+      "receipt": "governance/proofs/BEM947_claude_yml_production_compatible_blocked_receipt.json"
+    }
+  ],
+  "checks": {
+    "no_false_pass": true,
+    "executed_completed_proof_present": false,
+    "sha_type_policy_continues": true,
+    "development_not_closed": true
+  },
+  "blockers": [
+    "github_actions_workflow_dispatch_422_no_trigger_available",
+    "executed_completed_proof_not_present"
+  ],
+  "next_task": "BEM947-P2-TELEGRAM_GATE_OR_EXTERNAL_GATE",
+  "operator_question_answer": "No stop; P2 remains active, but direct GitHub dispatch is blocked by 422. Switching to Telegram/external gate path is required."
+}
