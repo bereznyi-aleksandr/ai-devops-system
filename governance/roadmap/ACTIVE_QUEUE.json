@@ -1,17 +1,20 @@
 {
-  "version": 1,
-  "updated_at": "2026-06-19T05:18:30Z",
+  "version": 2,
+  "updated_at": "2026-06-19T05:23:30Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P0-LIVE-TEST-DESIGN",
+  "current_task": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
   "system_status": "BEM947_IN_PROGRESS",
   "release_status": "IN_PROGRESS",
   "protocol": "BEM-947",
   "source": "governance/protocols/BEM947_PLANNED_TO_EXECUTED_LIVE_OBJECT_DISPATCH_TEST.md",
   "completed_summary": {
-    "tasks_done": 0,
+    "tasks_done": 2,
     "tasks_total": 4,
-    "percent": 0,
-    "proofs": []
+    "percent": 50,
+    "proofs": [
+      "governance/proofs/BEM947_live_test_design_receipt.json",
+      "governance/proofs/BEM947_workflow_execution_bridge_receipt.json"
+    ]
   },
   "previous_completed": [
     {
@@ -29,20 +32,10 @@
     {
       "id": "BEM947-P0-LIVE-TEST-DESIGN",
       "title": "Create strict planned-to-executed live-test design and guardrails",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 1,
-      "started_at": "2026-06-19T05:18:30Z",
-      "stage_progress": {
-        "tasks_done": 0,
-        "tasks_total": 4,
-        "percent": 0
-      }
-    },
-    {
-      "id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE",
-      "title": "Create safe workflow execution bridge with syntax guard",
-      "status": "PENDING",
-      "priority": 2,
+      "receipt": "governance/proofs/BEM947_live_test_design_receipt.json",
+      "completed_at": "2026-06-19T05:22:00Z",
       "stage_progress": {
         "tasks_done": 1,
         "tasks_total": 4,
@@ -50,10 +43,24 @@
       }
     },
     {
+      "id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE",
+      "title": "Create safe workflow execution bridge with syntax guard",
+      "status": "DONE",
+      "priority": 2,
+      "receipt": "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
+      "completed_at": "2026-06-19T05:23:00Z",
+      "stage_progress": {
+        "tasks_done": 2,
+        "tasks_total": 4,
+        "percent": 50
+      }
+    },
+    {
       "id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
       "title": "Run object dispatch and collect executed/completed evidence",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "priority": 3,
+      "started_at": "2026-06-19T05:23:30Z",
       "stage_progress": {
         "tasks_done": 2,
         "tasks_total": 4,
@@ -62,7 +69,7 @@
     },
     {
       "id": "BEM947-P3-FINAL-VERIFY",
-      "title": "Final verify; BLOCKED if only planned evidence exists",
+      "title": "Final verify; BLOCKED if only planned/dispatched evidence exists",
       "status": "PENDING",
       "priority": 4,
       "stage_progress": {
@@ -72,5 +79,5 @@
       }
     }
   ],
-  "next_action": "create BEM947 P0 live-test design without claiming executed evidence yet"
+  "next_action": "check BEM947_live_object_dispatch_requested_receipt.json, then collect BEM947_live_object_dispatch_executed_<trace>.json; do not mark PASS until executed/completed evidence exists"
 }
