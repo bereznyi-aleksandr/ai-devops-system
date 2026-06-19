@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-944",
+  "task_id": "BEM944-P1-MANAGED-CHANNEL-CONSUMER-RUNNER",
+  "created_at": "2026-06-19T04:13:30Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "invocation": {
+    "timestamp": "2026-06-19T04:13:30Z",
+    "protocol": "BEM-944",
+    "task_id": "BEM944-P1-MANAGED-CHANNEL-CONSUMER-RUNNER",
+    "module": "managed_channel_consumer.py",
+    "exit_code": 0,
+    "parsed_result": {
+      "runner": "managed_channel_consumer",
+      "status": "ok",
+      "release_pass": false
+    },
+    "non_claim": "wrapper invocation only; no downstream LLM completion claimed"
+  },
+  "invocations_path": "governance/state/managed_channel_consumer_runner_invocations.jsonl",
+  "checks": {
+    "managed_channel_consumer_runner_replaced_stub": true,
+    "managed_channel_consumer_runner_size_gt_300": true,
+    "managed_channel_consumer_module_loaded": true,
+    "managed_channel_consumer_invoked": true,
+    "result_contains_runner": true,
+    "non_claim_present": true
+  },
+  "blockers": [],
+  "non_claim": "managed channel consumer wrapper evidence only; no downstream LLM completion claimed",
+  "next_task": "BEM944-P2-OBJECT-REPORT-AGGREGATOR"
+}
