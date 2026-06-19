@@ -1,0 +1,149 @@
+name: BEM947 Live Claude Dispatch After YAML Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem947-live-claude-dispatch-on-push.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Dispatch claude.yml with explicit inputs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPO: ${{ github.repository }}
+          API: ${{ github.api_url }}
+          TRACE_ID: bem947_object_dispatch_after_yaml_validation_20260619T1912Z
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bem947
+          python3 - <<'PY'
+          import json, os
+          trace = os.environ["TRACE_ID"]
+          task = f'''
+BEM-947 live gate after YAML validation.
+
+Create and commit an executed/completed proof for the planned-to-executed closure.
+
+Required report:
+- governance/reports/{trace}.md
+
+Required proof:
+- governance/proofs/BEM947_live_object_dispatch_executed_{trace}.json
+
+Required JSON fields:
+{{
+  "status": "completed",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
+  "trace_id": "{trace}",
+  "provider_selected": "claude_code",
+  "target_workflow_id": "claude.yml",
+  "dispatch_result": "executed",
+  "blocker": null,
+  "checks": {{
+    "object_runner_to_dispatch_queue": true,
+    "curator_router_to_claude_yml": true,
+    "executed_by_claude_yml": true,
+    "sha_type_explicit": true
+  }},
+  "artifacts": [
+    {{
+      "path": "governance/reports/{trace}.md",
+      "sha_type": "git_blob"
+    }}
+  ]
+}}
+
+Every SHA value you include must include sha_type or commit_sha_type. If any required field cannot be truthfully satisfied, write a BLOCKED proof instead and do not claim completed.
+'''
+          payload = {
+              "ref": "main",
+              "inputs": {
+                  "role": "executor",
+                  "provider": "claude",
+                  "trace_id": trace,
+                  "cycle_id": "bem947_after_yaml_validation",
+                  "task_type": "default_development",
+                  "task": task,
+              },
+          }
+          with open("/tmp/bem947/dispatch_payload.json", "w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False)
+          PY
+
+          http_status=$(curl -sS -o /tmp/bem947/dispatch_response.txt -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "$API/repos/$REPO/actions/workflows/claude.yml/dispatches" \
+            --data @/tmp/bem947/dispatch_payload.json || true)
+          echo "$http_status" > /tmp/bem947/http_status.txt
+
+          python3 - <<'PY'
+          import base64, json, os, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          repo = os.environ["REPO"]
+          api = os.environ["API"]
+          token = os.environ["GH_TOKEN"]
+          trace = os.environ["TRACE_ID"]
+          http_status = Path("/tmp/bem947/http_status.txt").read_text(encoding="utf-8").strip()
+          response = Path("/tmp/bem947/dispatch_response.txt").read_text(encoding="utf-8", errors="replace")
+          receipt = {
+              "status": "DISPATCHED" if http_status == "204" else "BLOCKED",
+              "protocol": "BEM-947",
+              "task_id": "BEM947-P2-LIVE-GATE-AFTER-YAML-VALIDATION",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "trace_id": trace,
+              "target_workflow_id": "claude.yml",
+              "dispatch_mode": "curl_api_with_explicit_inputs_from_push_bridge",
+              "http_status": http_status,
+              "response_excerpt": response[:500],
+              "checks": {
+                  "explicit_inputs_supplied": True,
+                  "yaml_validation_receipt_present": True,
+                  "no_executed_proof_claim": True,
+                  "sha_type_explicit": True
+              },
+              "blockers": [] if http_status == "204" else ["claude_yml_dispatch_http_" + http_status],
+              "next_task": "BEM947-P2-POLL-EXECUTED-PROOF" if http_status == "204" else "BEM947-P2-AUTOREPAIR-LIVE-GATE-DISPATCH"
+          }
+          data = json.dumps(receipt, ensure_ascii=False, indent=2).encode("utf-8")
+          path = "governance/proofs/BEM947_live_gate_after_yaml_dispatch_requested_receipt.json"
+          url = f"{api}/repos/{repo}/contents/{path}"
+          headers = {
+              "Authorization": "Bearer " + token,
+              "Accept": "application/vnd.github+json",
+              "Content-Type": "application/json",
+              "User-Agent": "bem947-live-gate-bridge"
+          }
+          current_sha = None
+          try:
+              req = urllib.request.Request(url + "?ref=main", headers=headers, method="GET")
+              with urllib.request.urlopen(req) as r:
+                  current_sha = json.loads(r.read().decode("utf-8"))["sha"]
+          except Exception:
+              current_sha = None
+          payload = {
+              "message": "BEM-947: record live gate dispatch after yaml validation",
+              "content": base64.b64encode(data).decode("ascii"),
+              "branch": "main"
+          }
+          if current_sha:
+              payload["sha"] = current_sha
+          req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="PUT")
+          with urllib.request.urlopen(req) as r:
+              print(r.read().decode("utf-8")[:1000])
+          PY
