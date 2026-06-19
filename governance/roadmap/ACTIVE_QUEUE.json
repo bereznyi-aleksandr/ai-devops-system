@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "updated_at": "2026-06-19T03:20:00Z",
+  "updated_at": "2026-06-19T03:24:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM942-P0-STUB-INVENTORY-CONTINUE",
-  "system_status": "BEM942_IN_PROGRESS",
+  "current_task": "BEM943-P0-STUB-INVENTORY-CONTINUE",
+  "system_status": "BEM943_IN_PROGRESS",
   "release_status": "IN_PROGRESS",
-  "protocol": "BEM-942",
-  "source": "governance/protocols/BEM942_PROVIDER_FAILOVER_RUNNER_ALIGNMENT.md",
+  "protocol": "BEM-943",
+  "source": "governance/protocols/BEM943_RUNNER_WRAPPER_STUB_HARDENING.md",
   "completed_summary": {
     "tasks_done": 0,
     "tasks_total": 4,
@@ -15,28 +15,23 @@
   },
   "previous_completed": [
     {
-      "protocol": "BEM-939",
-      "receipt": "governance/proofs/BEM939_FINAL_VERIFICATION_PASS.json",
-      "percent": 100
-    },
-    {
-      "protocol": "BEM-940",
-      "receipt": "governance/proofs/BEM940_FINAL_VERIFICATION_PASS.json",
-      "percent": 100
-    },
-    {
       "protocol": "BEM-941",
       "receipt": "governance/proofs/BEM941_FINAL_VERIFICATION_PASS.json",
+      "percent": 100
+    },
+    {
+      "protocol": "BEM-942",
+      "receipt": "governance/proofs/BEM942_FINAL_VERIFICATION_PASS.json",
       "percent": 100
     }
   ],
   "tasks": [
     {
-      "id": "BEM942-P0-STUB-INVENTORY-CONTINUE",
-      "title": "Confirm provider failover runner state and target",
+      "id": "BEM943-P0-STUB-INVENTORY-CONTINUE",
+      "title": "Inventory remaining wrapper/report stubs",
       "status": "IN_PROGRESS",
       "priority": 1,
-      "started_at": "2026-06-19T03:20:00Z",
+      "started_at": "2026-06-19T03:24:00Z",
       "stage_progress": {
         "tasks_done": 0,
         "tasks_total": 4,
@@ -44,8 +39,8 @@
       }
     },
     {
-      "id": "BEM942-P1-FAILOVER-RUNNER-ALIGNMENT",
-      "title": "Align provider_failover_runner.py with provider activation/status receipts",
+      "id": "BEM943-P1-DISPATCH-CONSUMER-RUNNER",
+      "title": "Replace dispatch_consumer_runner.py stub with wrapper runtime",
       "status": "PENDING",
       "priority": 2,
       "stage_progress": {
@@ -55,8 +50,8 @@
       }
     },
     {
-      "id": "BEM942-P2-FAILOVER-ACTIVATION-E2E",
-      "title": "Materialize provider activation to failover decision smoke evidence",
+      "id": "BEM943-P2-PROOF-MANIFEST-UPDATER",
+      "title": "Replace proof_manifest_updater.py stub with manifest runtime",
       "status": "PENDING",
       "priority": 3,
       "stage_progress": {
@@ -66,8 +61,8 @@
       }
     },
     {
-      "id": "BEM942-P3-FINAL-VERIFY",
-      "title": "Finalize and verify BEM-942 roadmap",
+      "id": "BEM943-P3-FINAL-VERIFY",
+      "title": "Finalize and verify BEM-943 roadmap",
       "status": "PENDING",
       "priority": 4,
       "stage_progress": {
@@ -77,5 +72,5 @@
       }
     }
   ],
-  "next_action": "verify provider_failover_runner.py alignment and write BEM942 P0 receipt"
+  "next_action": "write BEM943 P0 stub inventory receipt and continue to dispatch_consumer_runner"
 }
