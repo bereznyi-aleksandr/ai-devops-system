@@ -1,0 +1,38 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-AUTOREPAIR-DISPATCH_PATH_OR_EXTERNAL_GATE",
+  "created_at": "2026-06-19T11:21:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "progress": [
+    {
+      "action": "push_trigger_bridge_added",
+      "path": ".github/workflows/bem931-v36-release-repair-gate.yml",
+      "sha": "64c0b03171bb00f0f5fc11c98a2e354f2ff432cb",
+      "sha_type": "git_blob",
+      "commit": "7dfdcae4868a0ffbbe2d6f65e789e69780f0f896",
+      "commit_sha_type": "commit"
+    },
+    {
+      "action": "claude_yml_direct_dispatch_tested",
+      "result": "422 required_input_role_not_provided",
+      "detail": "github_connector_dispatch_tool_does_not_support_inputs"}
+  ],
+  "checks": {
+    "no_false_executed_claim": true,
+    "push_bridge_second_commit_done": true,
+    "claude_yml_direct_dispatch_blocker_recorded": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "claude_yml_requires_inputs_and_connector_dispatch_cannot_pass_inputs",
+    "push_bridge_requested_receipt_pending",
+    "executed_completed_proof_not_present"
+  ],
+  "next_task": "BEM947-P2-AUTOREPAIR-INDEXED-PUSH_OR_TELEGRAM_GATE",
+  "non_claim": "P2 remains active; executed/completed evidence not yet verified"
+}
