@@ -1,0 +1,43 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-CLAUDE-ROLE-FAILURE-AFTER-YAML-VALIDATION",
+  "created_at": "2026-06-19T19:40:30Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "trace_id": "bem947_object_dispatch_after_yaml_validation_20260619T1935Z",
+  "dispatch_receipt": {
+    "path": "governance/proofs/BEM947_live_gate_after_yaml_dispatch_requested_receipt.json",
+    "sha": "df20d1fc7d247eb681c3bf9ffd0621f1d5883c55",
+    "sha_type": "git_blob",
+    "http_status": 204,
+    "previous_assistant_reported_sha": "3697fbd6a31df7fa35c1e86b24c4673eafd74f87",
+    "previous_assistant_reported_sha_status": "stale_or_superseded_sha_not_current"
+  },
+  "execution_report": {
+    "path": "governance/reports/bem947_object_dispatch_after_yaml_validation_20260619T1935Z.md",
+    "sha": "dcfa2145386055b2acd4d8a64e5703f2ca2aaec7",
+    "sha_type": "git_blob",
+    "commit_sha_reported_by_report": "9b53344878f6a6bed8ea8e21844452faa8cc962c",
+    "commit_sha_type": "commit",
+    "outcome": "failure",
+    "status": "failed",
+    "blocker": "claude_role outcome=failure"
+  },
+  "checks": {
+    "claude_yml_dispatch_reached_runtime": true,
+    "infrastructure_chain_reached_report_commit": true,
+    "executed_completed_proof_exists": false,
+    "no_false_pass_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "claude_code_action_outcome_failure",
+    "executed_completed_proof_not_present",
+    "github_actions_job_logs_required_for_root_cause"
+  ],
+  "next_task": "BEM947-P2-COLLECT-CLAUDE-RUN-LOGS-OR-EXTERNAL-GATE"
+}
