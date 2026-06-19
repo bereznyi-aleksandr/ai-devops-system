@@ -1,10 +1,10 @@
 {
-  "version": 6,
-  "updated_at": "2026-06-19T11:21:30Z",
+  "version": 7,
+  "updated_at": "2026-06-19T15:03:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P2-AUTOREPAIR-INDEXED-PUSH_OR_TELEGRAM_GATE",
-  "system_status": "BEM947_AUTOREPAYR_IN_PROGRESS",
-  "release_status": "BLOCKED_REPAIRING",
+  "current_task": "BEM947-P2-AUTOREPAIR-CLAUDE-YML-INDEXING-OR-RESTORE",
+  "system_status": "BEM947_AUTOREPAIR_IN_PROGRESS",
+  "release_status": "BLOCKED_REPAYRING",
   "protocol": "BEM-947",
   "completed_summary": {
     "tasks_done": 2,
@@ -15,13 +15,14 @@
       "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
       "governance/proofs/BEM947_live_object_dispatch_blocked_bem947_object_dispatch_27809252833.json",
       "governance/proofs/BEM947_indexed_workflow_dispatch_blocked_receipt.json",
-      "governance/proofs/BEM947_dispatch_path_autorepair_progress_receipt.json"
+      "governance/proofs/BEM947_dispatch_path_autorepair_progress_receipt.json",
+      "governance/proofs/BEM947_claude_yml_default_dispatch_blocked_receipt.json"
     ]
   },
   "blockers": [
     "first_claude_run_claude_role_outcome_failure",
     "github_actions_workflow_dispatch_422_no_trigger_available",
-    "claude_yml_requires_inputs_and_connector_dispatch_cannot_pass_inputs",
+    "claude_yml_dispatch_422_after_default_repair",
     "executed_completed_proof_not_present"
   ],
   "sha_policy": {
@@ -33,27 +34,10 @@
     ]
   },
   "tasks": [
-    {
-      "id": "BEM947-P0-LIVE-TEST-DESIGN",
-      "status": "DONE",
-      "stage_progress": {"tasks_done": 1, "tasks_total": 4, "percent": 25}
-    },
-    {
-      "id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE",
-      "status": "DONE",
-      "stage_progress": {"tasks_done": 2, "tasks_total": 4, "percent": 50}
-    },
-    {
-      "id": "BEM947-P2-AUTOREPAIR-INDEXED-PUSH_OR_TELEGRAM_GATE",
-      "status": "IN_PROGRESS",
-      "started_at": "2026-06-19T11:21:30Z",
-      "stage_progress": {"tasks_done": 2, "tasks_total": 4, "percent": 50}
-    },
-    {
-      "id": "BEM947-P3-FINAL-VERIFY",
-      "status": "PENDING",
-      "stage_progress": {"tasks_done": 3, "tasks_total": 4, "percent": 75}
-    }
+    {"id": "BEM947-P0-LIVE-TEST-DESIGN", "status": "DONE", "stage_progress": {"tasks_done": 1, "tasks_total": 4, "percent": 25}},
+    {"id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE", "status": "DONE", "stage_progress": {"tasks_done": 2, "tasks_total": 4, "percent": 50}},
+    {"id": "BEM947-P2-AUTOREPAIR-CLAUDE-YML-INDEXING-OR-RESTORE", "status": "IN_PROGRESS", "started_at": "2026-06-19T15:03:00Z", "stage_progress": {"tasks_done": 2, "tasks_total": 4, "percent": 50}},
+    {"id": "BEM947-P3-FINAL-VERIFY", "status": "PENDING", "stage_progress": {"tasks_done": 3, "tasks_total": 4, "percent": 75}}
   ],
-  "next_action": "check push bridge receipt; if absent, use Telegram/operator gate or repair claude.yml default inputs; do not mark PASS until executed/completed proof exists"
+  "next_action": "check indexing again, then restore or fix claude.yml to a live dispatchable workflow; do not mark PASS until executed/completed proof exists"
 }
