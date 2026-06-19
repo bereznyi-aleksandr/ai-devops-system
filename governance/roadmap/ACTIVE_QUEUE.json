@@ -1,21 +1,24 @@
 {
   "version": 1,
-  "updated_at": "2026-06-19T05:16:00Z",
+  "updated_at": "2026-06-19T05:18:30Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM946-P1-STUB-PRIORITIZATION",
-  "system_status": "BEM946_IN_PROGRESS",
+  "current_task": "BEM947-P0-LIVE-TEST-DESIGN",
+  "system_status": "BEM947_IN_PROGRESS",
   "release_status": "IN_PROGRESS",
-  "protocol": "BEM-946",
-  "source": "governance/protocols/BEM946_FRESH_STUB_INVENTORY_AND_PRIORITIZATION.md",
+  "protocol": "BEM-947",
+  "source": "governance/protocols/BEM947_PLANNED_TO_EXECUTED_LIVE_OBJECT_DISPATCH_TEST.md",
   "completed_summary": {
-    "tasks_done": 1,
+    "tasks_done": 0,
     "tasks_total": 4,
-    "percent": 25,
-    "proofs": [
-      "governance/proofs/BEM946_fresh_stub_inventory_receipt.json"
-    ]
+    "percent": 0,
+    "proofs": []
   },
   "previous_completed": [
+    {
+      "protocol": "BEM-946",
+      "receipt": "governance/proofs/BEM946_FINAL_VERIFICATION_PASS.json",
+      "percent": 100
+    },
     {
       "protocol": "BEM-945",
       "receipt": "governance/proofs/BEM945_FINAL_VERIFICATION_PASS.json",
@@ -24,24 +27,22 @@
   ],
   "tasks": [
     {
-      "id": "BEM946-P0-FRESH-STUB-INVENTORY",
-      "title": "Scan governance/runners and record exact 23-byte stubs",
-      "status": "DONE",
-      "priority": 1,
-      "receipt": "governance/proofs/BEM946_fresh_stub_inventory_receipt.json",
-      "completed_at": "2026-06-19T05:16:00Z",
-      "stage_progress": {
-        "tasks_done": 1,
-        "tasks_total": 4,
-        "percent": 25
-      }
-    },
-    {
-      "id": "BEM946-P1-STUB-PRIORITIZATION",
-      "title": "Prioritize remaining small placeholder runners",
+      "id": "BEM947-P0-LIVE-TEST-DESIGN",
+      "title": "Create strict planned-to-executed live-test design and guardrails",
       "status": "IN_PROGRESS",
+      "priority": 1,
+      "started_at": "2026-06-19T05:18:30Z",
+      "stage_progress": {
+        "tasks_done": 0,
+        "tasks_total": 4,
+        "percent": 0
+      }
+    },
+    {
+      "id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE",
+      "title": "Create safe workflow execution bridge with syntax guard",
+      "status": "PENDING",
       "priority": 2,
-      "started_at": "2026-06-19T05:16:00Z",
       "stage_progress": {
         "tasks_done": 1,
         "tasks_total": 4,
@@ -49,8 +50,8 @@
       }
     },
     {
-      "id": "BEM946-P2-NEXT-PROTOCOL-BRIDGE",
-      "title": "Bind planned-to-executed live protocol request",
+      "id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
+      "title": "Run object dispatch and collect executed/completed evidence",
       "status": "PENDING",
       "priority": 3,
       "stage_progress": {
@@ -60,8 +61,8 @@
       }
     },
     {
-      "id": "BEM946-P3-FINAL-VERIFY",
-      "title": "Finalize and verify BEM-946 roadmap",
+      "id": "BEM947-P3-FINAL-VERIFY",
+      "title": "Final verify; BLOCKED if only planned evidence exists",
       "status": "PENDING",
       "priority": 4,
       "stage_progress": {
@@ -71,5 +72,5 @@
       }
     }
   ],
-  "next_action": "prioritize small placeholder runners and bind BEM947 planned-to-executed live-test protocol"
+  "next_action": "create BEM947 P0 live-test design without claiming executed evidence yet"
 }
