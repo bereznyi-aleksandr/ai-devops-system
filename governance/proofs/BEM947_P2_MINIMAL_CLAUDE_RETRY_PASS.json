@@ -1,0 +1,59 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-MINIMAL-CLAUDE-RETRY-DONE",
+  "created_at": "2026-06-19T20:17:00Z",
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 4,
+    "percent": 75
+  },
+  "evidence": {
+    "dispatch_receipt": {
+      "path": "governance/proofs/BEM947_minimal_claude_retry_dispatch_receipt.json",
+      "sha": "1173934c6aca9a4db026164f2e379cbccec9c2ea",
+      "sha_type": "git_blob",
+      "http_status": 204,
+      "trace_id": "bem947_minimal_claude_retry_20260619T1958Z"
+    },
+    "execution_report": {
+      "path": "governance/reports/bem947_minimal_claude_retry_20260619T1958Z.md",
+      "sha": "de19b74ef1c216e65372f04000e67c7e737b555d",
+      "sha_type": "git_blob",
+      "reported_outcome": "success",
+      "reported_status": "completed",
+      "reported_commit_sha": "51c9ea711e828cd3f51a826e943a181f348c7713",
+      "reported_commit_sha_type": "commit",
+      "reported_completed_at": "2026-06-19T20:07:07Z"
+    },
+    "executed_proof": {
+      "path": "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json",
+      "sha": "545a9721513c1af4353835577f3b73d5784ab679",
+      "sha_type": "git_blob",
+      "normalization_commit": "6e373f6e6964780bbc155e8a92b36c4d05c72b50",
+      "normalization_commit_sha_type": "commit",
+      "status": "completed",
+      "dispatch_result": "executed",
+      "blocker": null
+    },
+    "bridge": {
+      "path": ".github/workflows/bem947-live-claude-dispatch-on-push.yml",
+      "sha": "aa051c64166ce27f85e2befa7a7828b61480d92a",
+      "sha_type": "git_blob",
+      "commit": "ae254801c0d57dcdb2f9ad63574349f0d536fae5",
+      "commit_sha_type": "commit"
+    }
+  },
+  "checks": {
+    "dispatcher_http_204": true,
+    "claude_yml_runtime_reached": true,
+    "minimal_retry_report_success": true,
+    "executed_proof_status_completed": true,
+    "executed_proof_blocker_null": true,
+    "executed_proof_sha_policy_normalized": true,
+    "no_false_pass_before_evidence": true,
+    "sha_type_explicit": true
+  },
+  "non_claim": "P2 PASS is based on minimal Claude retry executed/completed evidence; final BEM-947 closure still requires P3 final verification.",
+  "next_task": "BEM947-P3-FINAL-VERIFY"
+}
