@@ -1,9 +1,9 @@
 {
-  "version": 10,
-  "updated_at": "2026-06-19T19:07:30Z",
+  "version": 11,
+  "updated_at": "2026-06-19T19:26:30Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P2-LIVE-GATE-AFTER-YAML-VALIDATION",
-  "system_status": "BEM947_PRODUCTION_WORKFLOW_YAML_VALIDATED_CONTINUING",
+  "current_task": "BEM947-P2-POLL-LIVE-GATE-OR-EXTERNAL-GATE",
+  "system_status": "BEM947_LIVE_GATE_BLOCKED_REPAIRING",
   "release_status": "BLOCKED_REPAIRING",
   "protocol": "BEM-947",
   "progress": {
@@ -14,35 +14,37 @@
   "proofs": [
     "governance/proofs/BEM947_live_test_design_receipt.json",
     "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
-    "governance/proofs/BEM947_direct_restore_production_workflows_receipt.json",
-    "governance/proofs/BEM947_claude_yml_three_indent_fix_receipt.json"
+    "governance/proofs/BEM947_claude_yml_three_indent_fix_receipt.json",
+    "governance/proofs/BEM947_live_gate_mailbox_request_receipt.json",
+    "governance/proofs/BEM947_live_gate_bridge_dispatch_blocked_receipt.json"
   ],
   "recent_action": {
-    "action": "applied_three_exact_indent_fixes_to_claude_yml",
-    "old_sha": "99c58bdcf7225f5d8b3544ad09f58aef02a03ced",
-    "old_sha_type": "git_blob",
-    "new_sha": "df512080669e993f5f0128b1e5e2628d0a4ff368",
-    "new_sha_type": "git_blob",
-    "commit": "d2843490efc2bb2aafc5fe1044361d5d8be52943",
-    "commit_sha_type": "commit",
-    "checks": {
-      "exactly_three_indent_fixes": true,
-      "yaml_validated_by_ruby_psych": true,
-      "python_heredocs_compile": true
-    }
+    "action": "attempted_live_gate_after_validated_yaml",
+    "bridge_path": ".github/workflows/bem947-live-claude-dispatch-on-push.yml",
+    "bridge_sha": "bbe0913c60776275c501733f8658e076c8c1bded",
+    "bridge_sha_type": "git_blob",
+    "bridge_commit": "9f7d90534cb700d6cbd0a10c8f2c8c3bff49c9ea",
+    "bridge_commit_sha_type": "commit",
+    "dispatch_result": "BLOCKED_422_WORKFLOW_DISPATCH_NOT_INDEXED",
+    "receipt": "governance/proofs/BEM947_live_gate_bridge_dispatch_blocked_receipt.json",
+    "receipt_sha": "f38954ef80a061c3e6ba330e7b3f170cf23b76a9",
+    "receipt_sha_type": "git_blob",
+    "receipt_commit": "f2a6627ab6fa131dec0c74da9140b3d08003354a",
+    "receipt_commit_sha_type": "commit"
+  },
+  "validation": {
+    "claude_yml_blob": "df512080669e993f5f0128b1e5e2628d0a4ff368",
+    "claude_yml_sha_type": "git_blob",
+    "yaml_validated_by_ruby_psych": true,
+    "python_heredocs_compile": true,
+    "executed_completed_proof_present": false,
+    "no_pass_claimed": true
   },
   "blockers": [
     "bem947_executed_completed_proof_still_absent",
-    "live_gate_validation_required_after_yaml_fix"
+    "new_bridge_workflow_dispatch_422_not_indexed",
+    "awaiting_mailbox_or_external_gate_response"
   ],
-  "sha_policy": {
-    "sha_type_required": true,
-    "allowed": [
-      "git_blob",
-      "commit",
-      "sha256_content"
-    ]
-  },
   "tasks": [
     {
       "id": "BEM947-P0-LIVE-TEST-DESIGN",
@@ -55,7 +57,7 @@
       "percent": 50
     },
     {
-      "id": "BEM947-P2-LIVE-GATE-AFTER-YAML-VALIDATION",
+      "id": "BEM947-P2-POLL-LIVE-GATE-OR-EXTERNAL-GATE",
       "status": "IN_PROGRESS",
       "percent": 50
     },
@@ -65,5 +67,5 @@
       "percent": 75
     }
   ],
-  "next_action": "trigger or route live gate only after validated YAML; do not claim PASS until executed/completed proof exists"
+  "next_action": "poll from_claude mailbox and executed-proof; if absent, keep external gate pending and do not mark PASS"
 }
