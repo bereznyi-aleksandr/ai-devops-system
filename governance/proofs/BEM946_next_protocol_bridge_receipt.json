@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-946",
+  "task_id": "BEM946-P2-NEXT-PROTOCOL-BRIDGE",
+  "created_at": "2026-06-19T05:18:00Z",
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 4,
+    "percent": 75
+  },
+  "bridge": {
+    "next_protocol": "BEM-947",
+    "protocol_path": "governance/protocols/BEM947_PLANNED_TO_EXECUTED_LIVE_OBJECT_DISPATCH_TEST.md",
+    "requested_by": "EXTERNAL_AUDITOR_CLAUDE P3"
+  },
+  "checks": {
+    "planned_to_executed_gap_bound": true,
+    "bem947_protocol_created": true,
+    "no_false_executed_claim": true,
+    "sha_type_policy_continues": true
+  },
+  "blockers": [],
+  "next_task": "BEM946-P3-FINAL-VERIFY"
+}
