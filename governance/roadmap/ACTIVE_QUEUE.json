@@ -1,10 +1,10 @@
 {
-  "version": 7,
-  "updated_at": "2026-06-19T15:03:00Z",
+  "version": 8,
+  "updated_at": "2026-06-19T15:31:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P2-AUTOREPAIR-CLAUDE-YML-INDEXING-OR-RESTORE",
+  "current_task": "BEM947-P2-TELEGRAM_GATE_OR_EXTERNAL_GATE",
   "system_status": "BEM947_AUTOREPAIR_IN_PROGRESS",
-  "release_status": "BLOCKED_REPAYRING",
+  "release_status": "BLOCKED_REPAIRING",
   "protocol": "BEM-947",
   "completed_summary": {
     "tasks_done": 2,
@@ -16,28 +16,41 @@
       "governance/proofs/BEM947_live_object_dispatch_blocked_bem947_object_dispatch_27809252833.json",
       "governance/proofs/BEM947_indexed_workflow_dispatch_blocked_receipt.json",
       "governance/proofs/BEM947_dispatch_path_autorepair_progress_receipt.json",
-      "governance/proofs/BEM947_claude_yml_default_dispatch_blocked_receipt.json"
+      "governance/proofs/BEM947_claude_yml_default_dispatch_blocked_receipt.json",
+      "governance/proofs/BEM947_claude_yml_production_compatible_blocked_receipt.json"
     ]
   },
+  "recent_actions": [
+    {
+      "action": "role_orchestrator_temp_gate_restored",
+      "restored_blob_sha": "5625a4e1996129e695834a7a24a1ae0d2ef92d61",
+      "restored_blob_sha_type": "git_blob",
+      "restore_commit": "922a9791f5547c738c74aa5f7f625383499e5e7c",
+      "restore_commit_sha_type": "commit"
+    },
+    {
+      "action": "claude_yml_compatible_defaults_installed_but_dispatch_422",
+      "blob_sha": "382a3b31b1773009cf8119519070d02a8f2f80ba",
+      "sha_type": "git_blob",
+      "commit": "dd500eebba5731212bed759da26a546f39992a17",
+      "commit_sha_type": "commit"
+    }
+  ],
   "blockers": [
     "first_claude_run_claude_role_outcome_failure",
     "github_actions_workflow_dispatch_422_no_trigger_available",
-    "claude_yml_dispatch_422_after_default_repair",
+    "claude_yml_dispatch_422_after_compatible_repair",
     "executed_completed_proof_not_present"
   ],
   "sha_policy": {
     "sha_type_required": true,
-    "allowed": [
-      "git_blob",
-      "commit",
-      "sha256_content"
-    ]
+    "allowed": ["git_blob", "commit", "sha256_content"]
   },
   "tasks": [
     {"id": "BEM947-P0-LIVE-TEST-DESIGN", "status": "DONE", "stage_progress": {"tasks_done": 1, "tasks_total": 4, "percent": 25}},
     {"id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE", "status": "DONE", "stage_progress": {"tasks_done": 2, "tasks_total": 4, "percent": 50}},
-    {"id": "BEM947-P2-AUTOREPAIR-CLAUDE-YML-INDEXING-OR-RESTORE", "status": "IN_PROGRESS", "started_at": "2026-06-19T15:03:00Z", "stage_progress": {"tasks_done": 2, "tasks_total": 4, "percent": 50}},
+    {"id": "BEM947-P2-TELEGRAM_GATE_OR_EXTERNAL_GATE", "status": "IN_PROGRESS", "started_at": "2026-06-19T15:31:00Z", "stage_progress": {"tasks_done": 2, "tasks_total": 4, "percent": 50}},
     {"id": "BEM947-P3-FINAL-VERIFY", "status": "PENDING", "stage_progress": {"tasks_done": 3, "tasks_total": 4, "percent": 75}}
   ],
-  "next_action": "check indexing again, then restore or fix claude.yml to a live dispatchable workflow; do not mark PASS until executed/completed proof exists"
+  "next_action": "use Telegram/operator gate or external gate; do not mark PASS until executed/completed proof exists"
 }
