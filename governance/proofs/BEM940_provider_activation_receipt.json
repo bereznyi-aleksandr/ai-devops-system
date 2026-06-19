@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-940",
+  "task_id": "BEM940-P0-PROVIDER-ACTIVATION",
+  "created_at": "2026-06-19T03:15:00Z",
+  "stage": {
+    "tasks_done": 1,
+    "tasks_total": 4,
+    "percent": 25
+  },
+  "decision": {
+    "status": "ACTIVE",
+    "protocol": "BEM-940",
+    "task_id": "BEM940-P0-PROVIDER-ACTIVATION",
+    "created_at": "2026-06-19T03:15:00Z",
+    "trace_id": "bem940_provider_activation_claude_code_curator",
+    "provider": "claude_code",
+    "role": "curator",
+    "workflow_id": "claude.yml",
+    "enabled": true,
+    "deprecated": false,
+    "primary_for_role": true,
+    "fallback_for_role": false,
+    "activation_mode": "primary",
+    "blockers": [],
+    "non_claim": "activation decision only; no downstream LLM completion claimed"
+  },
+  "status_path": "governance/state/provider_status.json",
+  "decisions_path": "governance/state/provider_activation_decisions.jsonl",
+  "checks": {
+    "provider_activation_replaced_stub": true,
+    "provider_activation_size_gt_300": true,
+    "provider_config_read": true,
+    "provider_enabled": true,
+    "provider_not_deprecated": true,
+    "workflow_id_present": true,
+    "downstream_llm_completion_not_claimed": true
+  },
+  "blockers": [],
+  "next_task": "BEM940-P1-PROVIDER-STATUS-INTEGRATION"
+}
