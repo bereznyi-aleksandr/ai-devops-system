@@ -1,0 +1,77 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-946",
+  "task_id": "BEM946-P0-FRESH-STUB-INVENTORY",
+  "created_at": "2026-06-19T05:16:00Z",
+  "stage": {
+    "tasks_done": 1,
+    "tasks_total": 4,
+    "percent": 25
+  },
+  "scan_source": {
+    "path": "governance/runners",
+    "method": "GitHub contents API directory listing",
+    "sha_type": "git_blob for each listed file sha"
+  },
+  "exact_23_byte_stubs": [],
+  "exact_23_byte_stub_count": 0,
+  "small_placeholder_candidates": [
+    {
+      "path": "governance/runners/analyst_experience_stage_runner.py",
+      "size": 51,
+      "sha": "ed3f6f031afa51af7ed64e2f396f28383c4586ff",
+      "sha_type": "git_blob",
+      "priority": "P1",
+      "reason": "role experience path"
+    },
+    {
+      "path": "governance/runners/auditor_experience_stage_runner.py",
+      "size": 51,
+      "sha": "ed3f6f031afa51af7ed64e2f396f28383c4586ff",
+      "sha_type": "git_blob",
+      "priority": "P1",
+      "reason": "role experience path"
+    },
+    {
+      "path": "governance/runners/minimal_governance_loop_runner.py",
+      "size": 114,
+      "sha": "f0bd7a0afcfcc23d925ee2c22272174aabed3898",
+      "sha_type": "git_blob",
+      "priority": "P1",
+      "reason": "autonomy loop support"
+    },
+    {
+      "path": "governance/runners/live_runtime_receipt_collector.py",
+      "size": 151,
+      "sha": "61a72d34f23f2d6c194bec736c6ffd750cffc213",
+      "sha_type": "git_blob",
+      "priority": "P2",
+      "reason": "live proof collection"
+    },
+    {
+      "path": "governance/runners/telegram_production_receipt_collector.py",
+      "size": 178,
+      "sha": "c4132015eb9a5a2d838e2f716c2332ffb48c2f31",
+      "sha_type": "git_blob",
+      "priority": "P2",
+      "reason": "telegram proof collection"
+    },
+    {
+      "path": "governance/runners/external_claude_audit_result_collector.py",
+      "size": 186,
+      "sha": "188d387e311e46cf6b9d6784b2f68b23f8f9c6ed",
+      "sha_type": "git_blob",
+      "priority": "P2",
+      "reason": "external audit result collection"
+    }
+  ],
+  "checks": {
+    "fresh_directory_scan_done": true,
+    "exact_23_byte_stub_list_current": true,
+    "sha_type_explicit_for_listed_shas": true,
+    "no_memory_based_inventory": true,
+    "no_downstream_llm_completion_claim": true
+  },
+  "blockers": [],
+  "next_task": "BEM946-P1-STUB-PRIORITIZATION"
+}
