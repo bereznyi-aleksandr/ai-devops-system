@@ -1,0 +1,51 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-AUTOREPAIR-WORKFLOW-TRIGGER",
+  "created_at": "2026-06-19T08:47:30Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "repairs": [
+    {
+      "path": ".github/workflows/bem947-live-object-dispatch.yml",
+      "bug": "YAML heredoc content was not indented inside the run block and broke line 31",
+      "repair": "heredoc content now indented inside run block",
+      "sha": "34eecab6a6bc08a346e858e19733475b5ac6b4a8",
+      "sha_type": "git_blob",
+      "commit": "7783eb11cb1693f6fe41c86d786add1660fcb70f",
+      "commit_sha_type": "commit"
+    },
+    {
+      "path": ".github/workflows/bem947-live-object-dispatch-push.yml",
+      "repair": "added push-triggered bridge because workflow_dispatch API returned 422 for the indexed bridge",
+      "sha": "fa1d1dcf4dee394f4cfd1e319f0cc56d1c53e33e",
+      "sha_type": "git_blob",
+      "commit": "9a9bc77e011c62821c89966ebd996a25e5c5371c",
+      "commit_sha_type": "commit"
+    },
+    {
+      "path": "governance/triggers/BEM947_live_dispatch_push_trigger.txt",
+      "sha": "175c47064f15b955314712d57728f24485665451",
+      "sha_type": "git_blob",
+      "commit": "eef20a9c781f5cc07f80cd5aa11bae59b3f26b4c",
+      "commit_sha_type": "commit"
+    }
+  ],
+  "checks": {
+    "screenshot_bem947_yaml_failure_confirmed": true,
+    "bem947_workflow_repaired_from_line31_heredoc_bug": true,
+    "push_bridge_created": true,
+    "push_bridge_trigger_committed": true,
+    "push_bridge_requested_receipt_not_yet_present": true,
+    "no_false_executed_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "push_bridge_requested_receipt_404_pending_run"
+  ],
+  "next_task": "BEM947-P2-COLLECT-PUSH-BRIDGE-RECEIPT_OR_AUTOREPAIR",
+  "non_claim": "Workflow fixed and push bridge triggered; executed/completed PUSH not claimed until receipt exists"
+}
