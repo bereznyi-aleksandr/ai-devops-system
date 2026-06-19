@@ -1,0 +1,20 @@
+{
+  "protocol": "BEM-939",
+  "created_at": "2026-06-19T03:13:00Z",
+  "task_id": "BEM939-P2-EVENT-OBJECT-INTEGRATION",
+  "links": {
+    "object_events": "governance/state/object_events.jsonl",
+    "dispatch_processed": "governance/state/dispatch_processed.jsonl",
+    "role_reports": "governance/state/role_reports.jsonl",
+    "role_report": "governance/reports/BEM939-P1-ROLE-REPORT-WRITER_curator_bem939_role_report_writer_selftest.md",
+    "execution_log_sidecar": "governance/logs/bem939_runtime_integration.jsonl"
+  },
+  "checks": {
+    "object_events_bound": true,
+    "dispatch_processed_bound": true,
+    "role_reports_bound": true,
+    "role_report_materialized": true,
+    "execution_log_sidecar_bound": true,
+    "no_downstream_llm_completion_claim": true
+  }
+}
