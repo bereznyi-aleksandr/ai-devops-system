@@ -1,0 +1,42 @@
+{
+  "status": "BLOCKED",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-COLLECT-PUSH-BRIDGE-RECEIPT_OR_AUTOREPAIR",
+  "created_at": "2026-06-19T11:04:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "attempts": [
+    {
+      "path": ".github/workflows/bem934-binding-failure-log-inspector.yml",
+      "repurposed": true,
+      "sha": "f69bdaa81ff8a09b1e4baa3b7086fb3967fe03a5",
+      "sha_type": "git_blob",
+      "commit": "29cc17855e3a1a831bb864b9cc5a786801d42eb9",
+      "commit_sha_type": "commit",
+      "dispatch_result": "422 workflow does not have workflow_dispatch trigger"
+    },
+    {
+      "path": ".github/workflows/bem931-v36-release-repair-gate.yml",
+      "repurposed": true,
+      "sha": "f69bdaa81ff8a09b1e4baa3b7086fb3967fe03a5",
+      "sha_type": "git_blob",
+      "commit": "5ed81c62e7f563c17e43f6ceec90cf57b9744486",
+      "commit_sha_type": "commit",
+      "dispatch_result": "422 workflow does not have workflow_dispatch trigger"
+    }
+  ],
+  "checks": {
+    "error_recorded_truthfully": true,
+    "no_false_executed_claim": true,
+    "sha_type_explicit": true,
+    "p22scope_remains_active": true
+  },
+  "blockers": [
+    "github_actions_workflow_dispatch_422_no_trigger_available",
+    "executed_completed_proof_not_present"
+  ],
+  "next_task": "BEM947-P2-AUTOREPAIR-DISPATCH_Path_OR_EXTERNAL_GATE"
+}
