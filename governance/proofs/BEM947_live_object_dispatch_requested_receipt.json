@@ -1,0 +1,27 @@
+{
+  "status": "DISPATCHED",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
+  "created_at": "2026-06-19T06:21:08Z",
+  "trace_id": "bem947_object_dispatch_27809252833",
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 4,
+    "percent": 75
+  },
+  "workflow_dispatch": {
+    "target_workflow_id": "claude.yml",
+    "http_status": 204,
+    "error": null
+  },
+  "checks": {
+    "object_event_written": true,
+    "dispatch_queue_written": true,
+    "claude_workflow_dispatch_attempted": true,
+    "no_false_executed_claim": true,
+    "sha_type_policy_bound": true
+  },
+  "blockers": [],
+  "next_task": "BEM947-P3-FINAL-VERIFY",
+  "non_claim": "DISPATCHED is not final PASS; executed/completed proof must be collected separately"
+}
