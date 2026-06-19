@@ -16,12 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Collect Claude workflow failure logs through GitHub APIs
+      - name: Collect targeted Claude action failure segment
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           REPO: ${{ github.repository }}
           API: ${{ github.api_url }}
+          RUN_ID: "27845000228"
           TRACE_ID: bem947_object_dispatch_after_yaml_validation_20260619T1935Z
           REPORT_PATH: governance/reports/bem947_object_dispatch_after_yaml_validation_20260619T1935Z.md
           REPORT_SHA: dcfa2145386055b2acd4d8a64e5703f2ca2aaec7
@@ -29,47 +30,15 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/bem947_logs
-          gh run list --repo "$REPO" --workflow claude.yml --limit 30 \
-            --json databaseId,headSha,createdAt,status,conclusion,event,displayTitle,workflowName \
-            > /tmp/bem947_logs/runs.json || echo '[]' > /tmp/bem947_logs/runs.json
-
-          RUN_ID="$(python3 -<<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          root = Path("/tmp/bem947_logs")
-          trace = os.environ["TRACE_ID"]
-          try:
-              runs = json.loads((root / "runs.json").read_text(encoding="utf-8"))
-          except Exception:
-              runs = []
-          selected = None
-          for run in runs:
-              title = str(run.get("displayTitle", ""))
-              created = str(run.get("createdAt", ""))
-              if trace in title or created >= "2026-06-19T19:35:00Z":
-                  selected = run
-                  break
-          if selected is None and runs:
-              selected = runs[0]
-          (root / "selected_run.json").write_text(json.dumps(selected or {}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          print((selected or {}).get("databaseId", ""))
-          PY
-          )"
-
-          if [ -n "$RUN_ID" ]; then
-            gh run view "$RUN_ID" --repo "$REPO" --log > /tmp/bem947_logs/full.log 2> /tmp/bem947_logs/log_error.txt || true
-            gh run view "$RUN_ID" --repo "$REPO" --log-failed > /tmp/bem947_logs/failed.log 2>> /tmp/bem947_logs/log_error.txt || true
-          else
-            echo "no run id selected" > /tmp/bem947_logs/log_error.txt
-            touch /tmp/bem947_logs/full.log /tmp/bem947_logs/failed.log
-          fi
+          gh run view "$RUN_ID" --repo "$REPO" --json databaseId,headSha,createdAt,status,conclusion,event,displayTitle,workflowName,jobs > /tmp/bem947_logs/run.json || echo '{}' > /tmp/bem947_logs/run.json
+          gh run view "$RUN_ID" --repo "$REPO" --log > /tmp/bem947_logs/full.log 2> /tmp/bem947_logs/log_error.txt || true
+          gh run view "$RUN_ID" --repo "$REPO" --log-failed > /tmp/bem947_logs/failed.log 2>> /tmp/bem947_logs/log_error.txt || true
 
           python3 - <<'PY'
           import base64
           import json
           import os
+          import re
           import urllib.request
           from datetime import datetime, timezone
           from pathlib import Path
@@ -78,6 +47,7 @@ jobs:
           repo = os.environ["REPO"]
           api = os.environ["API"]
           token = os.environ["GH_TOKEN"]
+          run_id = os.environ["RUN_ID"]
           trace = os.environ["TRACE_ID"]
           report_path = os.environ["REPORT_PATH"]
           report_sha = os.environ["REPORT_SHA"]
@@ -86,8 +56,8 @@ jobs:
           def now():
               return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-          def read_text(path):
-              p = root / path
+          def read_text(name):
+              p = root / name
               return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
 
           def put_file(path, text, message):
@@ -96,7 +66,7 @@ jobs:
                   "Authorization": "Bearer " + token,
                   "Accept": "application/vnd.github+json",
                   "Content-Type": "application/json",
-                  "User-Agent": "bem947-log-collector",
+                  "User-Agent": "bem947-targeted-log-collector",
               }
               sha = None
               try:
@@ -104,7 +74,7 @@ jobs:
                   with urllib.request.urlopen(req) as resp:
                       sha = json.loads(resp.read().decode("utf-8"))["sha"]
               except Exception:
-                  sha = None
+                  sha = Non
               payload = {
                   "message": message,
                   "content": base64.b64encode(text.encode("utf-8")).decode("ascii"),
@@ -117,64 +87,97 @@ jobs:
                   return json.loads(resp.read().decode("utf-8"))
 
           try:
-              selected = json.loads(read_text("selected_run.json"))
+              run_meta = json.loads(read_text("run.json"))
           except Exception:
-              selected = {}
+              run_meta = {}
 
           full_log = read_text("full.log")
           failed_log = read_text("failed.log")
           log_error = read_text("log_error.txt")
+          source = failed_log if failed_log.strip() else full_log
+          lines = source.splitlines()
 
-          keywords = ("error", "failed", "failure", "anthropic", "claude", "oauth", "token", "permission", "unauthorized", "forbidden", "rate")
-          excerpt_lines = []
-          for source_name, text in (("failed", failed_log), ("full", full_log), ("error", log_error)):
-              for line in text.splitlines():
-                  lower = line.lower()
-                  if any(key in lower for key in keywords):
-                      cleaned = line.replace(token, "***")
-                      excerpt_lines.append(f"{source_name}: {cleaned[:500]}")
-                  if len(excerpt_lines) >= 40:
-                      break
-              if len(excerpt_lines) >= 40:
+          markers = (
+              "run claude code role",
+              "anthropics/claude-code-action",
+              "claude_role",
+              "error:",
+              "process completed with exit code",
+              "exit code",
+              "failed",
+              "failure",
+              "oauth",
+              "unauthorized",
+              "forbidden",
+              "token",
+              "rate limit",
+          )
+          keep = set()
+          for idx, line in enumerate(lines):
+              lower = line.lower()
+              if any(marker in lower for marker in markers):
+                  start = max(0, idx - 8)
+                  end = min(len(lines), idx + 18)
+                  keep.update(range(start, end))
+          if not keep and lines:
+              keep.update(range(max(0, len(lines) - 120), len(lines)))
+
+          selected_lines = []
+          for idx in sorted(keep):
+              line = lines[idx].replace(token, "***")
+              line = re.sub(r"ghp_[A-Za-z0-9_]+", "***", line)
+              line = re.sub(r"github_pat_[A-Za-z0-9_]+", "***", line)
+              selected_lines.append(f" {idx + 1}: {line[:700]}")
+              if len(selected_lines) >= 220:
                   break
 
           logs_accessible = bool(full_log.strip() or failed_log.strip())
-          blockers = ["claude_code_action_outcome_failure", "executed_completed_proof_not_present"]
-          if not logs_accessible:
-              blockers.append("github_actions_logs_not_accessible_to_collector")
-          if not excerpt_lines:
-              blockers.append("no_diagnostic_log_excerpt_found")
+          found_specific_error = any(("error" in line.lower() or "exit code" in line.lower() or "unauthorized" in line.lower() or "forbidden" in line.lower()) for line in selected_lines)
 
-          excerpt_report = [
-              "# BEM-947 Claude role failure diagnostic",
+          report_lines = [
+              "# BEM-947 Claude role targeted failure log",
               "",
               f"Trace: `{trace}`",
-              f"Selected run: `{selected.get('databaseId', '')}`",
-              f"Report commit: `{report_commit}` ",
+              f"Run ID: `{run_id}`",
+              f"Run conclusion: `{run_meta.get('conclusion', '')}`",
+              f"Run status: `{run_meta.get('status', '')}`",
+              f"Run head SHA: `{run_meta.get('headSha', '')}`",
               "",
-              "## Sanitized excerpts",
+              "## Targeted sanitized log segment",
               "",
           ]
-          if excerpt_lines:
-              excerpt_report.extend(f"- `{line}`" for line in excerpt_lines)
+          if selected_lines:
+              report_lines.extend(f"- `{line}`" for line in selected_lines)
           else:
-              excerpt_report.append("- No relevant log excerpt was available to this collector.")
-          excerpt_report.extend(["", "## Result", "", "BLOCKED: claude_role outcome=failure; executed/completed proof remains absent.", ""])
+              report_lines.append("- No log segment was available.")
+          report_lines.extend(["", "## Result", "", "BLOCKED: Claude Code action step outcome=failure; executed/completed proof remains absent.", ""])
 
           report_result = put_file(
-              "governance/reports/bem947_claude_role_failure_log_excerpt.md",
-              "\n".join(excerpt_report),
-              "BEM-947: record claude role failure diagnostic excerpt",
+              "governance/reports/bem947_claude_role_failure_targeted_log.md",
+              "\n".join(report_lines),
+              "BEM-947: record targeted claude role failure log",
           )
+
+          blockers = ["claude_code_action_outcome_failure", "executed_completed_proof_not_present"]
+          if not logs_accessible:
+              blockers.append("github_actions_logs_not_accessible")
+          if not found_specific_error:
+              blockers.append("no_specific_error_line_found_in_targeted_excerpt")
 
           receipt = {
               "status": "BLOCKED_REPAIRING",
               "protocol": "BEM-947",
-              "task_id": "BEM947-P2-CLAUDE-RUN-LOG-COLLECTOR",
+              "task_id": "BEM947-P2-CLAUDE-RUN-TARGETED-LOG-COLLECTOR",
               "created_at": now(),
               "stage": {"tasks_done": 2, "tasks_total": 4, "percent": 50},
               "trace_id": trace,
-              "selected_run": selected,
+              "run": {
+                  "databaseId": run_meta.get("databaseId"),
+                  "conclusion": run_meta.get("conclusion"),
+                  "status": run_meta.get("status"),
+                  "headSha": run_meta.get("headSha"),
+                  "headSha_type": "commit" if run_meta.get("headSha") else None,
+              },
               "execution_report": {
                   "path": report_path,
                   "sha": report_sha,
@@ -183,20 +186,17 @@ jobs:
                   "commit_sha_type": "commit",
                   "blocker": "claude_role outcome=failure",
               },
-              "diagnostic_report": {
-                  "path": "governance/reports/bem947_claude_role_failure_log_excerpt.md",
+              "targeted_log_report": {
+                  "path": "governance/reports/bem947_claude_role_failure_targeted_log.md",
                   "sha": report_result["content"]["sha"],
                   "sha_type": "git_blob",
                   "commit": report_result["commit"]["sha"],
                   "commit_sha_type": "commit",
               },
-              "diagnostic": {
-                  "logs_accessible": logs_accessible,
-                  "excerpt_line_count": len(excerpt_lines),
-              },
               "checks": {
-                  "run_metadata_collected": bool(selected),
-                  "log_collection_attempted": True,
+                  "logs_accessible": logs_accessible,
+                  "targeted_segment_written": bool(selected_lines),
+                  "specific_error_line_found": found_specific_error,
                   "executed_completed_proof_exists": False,
                   "no_false_pass_claim": True,
                   "sha_type_explicit": True
@@ -206,9 +206,9 @@ jobs:
           }
 
           receipt_result = put_file(
-              "governance/proofs/BEM947_claude_run_log_collector_receipt.json",
+              "governance/proofs/BEM947_claude_targeted_log_collector_receipt.json",
               json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
-              "BEM-947: collect claude role failure diagnostics",
+              "BEM-947: record targeted claude role failure diagnostic",
           )
           print(json.dumps({"report": report_result["content"]["sha"], "receipt": receipt_result["content"]["sha"]}, indent=2))
           PY
