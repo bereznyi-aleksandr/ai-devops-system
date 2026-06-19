@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-944",
+  "task_id": "BEM944-P2-OBJECT-REPORT-AGGREGATOR",
+  "created_at": "2026-06-19T04:15:00Z",
+  "aggregate_path": "governance/state/object_report_aggregate.json",
+  "report_count": 1,
+  "role_report_count": 1,
+  "object_event_count": 2,
+  "dispatch_processed_count": 2,
+  "reports": [
+    {
+      "path": "governance/reports/BEM939-P1-ROLE-REPORT-WRITER_curator_bem939_role_report_writer_selftest.md",
+      "name": "BEM939-P1-ROLE-REPORT-WRITER_curator_bem939_role_report_writer_selftest.md",
+      "size": 631
+    }
+  ],
+  "latest_role_report_path": "governance/state/role_reports.jsonl",
+  "latest_object_event_path": "governance/state/object_events.jsonl",
+  "latest_dispatch_processed_path": "governance/state/dispatch_processed.jsonl",
+  "non_claim": "object report aggregation only; no downstream LLM completion claimed"
+}
