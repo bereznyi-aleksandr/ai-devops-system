@@ -1,0 +1,163 @@
+name: BEM947 Live Object Dispatch Bridge
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Dispatch object trace to claude.yml
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          def now():
+              return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          root = Path(".")
+          state = root / "governance" / "state"
+          proofs = root / "governance" / "proofs"
+          reports = root / "governance" / "reports"
+          state.mkdir(parents=True, exist_ok=True)
+          proofs.mkdir(parents=True, exist_ok=True)
+          reports.mkdir(parents=True, exist_ok=True)
+
+          trace = f"bem947_object_dispatch_{os.environ.get('RUN_ID', 'manual')}"
+          cycle = "bem947_planned_to_executed"
+          task = "\n".join([
+              "BEM-947 live object dispatch execution proof.",
+              f"Trace: {trace}",
+              "Goal: prove object_runner -> dispatch_queue -> curator_router -> claude.yml -> executed/completed evidence.",
+              "Write governance/proofs/BEM947_live_object_dispatch_executed_" + trace + ".json.",
+              "PASS only if status is executed or completed, provider_selected is claude_code, target_workflow_id is claude.yml, blocker is null.",
+              "Every SHA field must include sha_type: git_blob, commit, or sha256_content.",
+              "Also write governance/reports/" + trace + ".md with the result.",
+          ])
+
+          object_event = {
+              "created_at": now(),
+              "protocol": "BEM-947",
+              "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
+              "trace_id": trace,
+              "object_id": "OBJ-GD-001",
+              "event": "object_runner_to_dispatch_queue",
+              "dispatch_result": "requested",
+              "no_executed_claim_yet": True,
+          }
+          with (state / "object_events.jsonl").open("a", encoding="utf-8") as handle:
+              handle.write(json.dumps(object_event, ensure_ascii=False, sort_keys=True) + "\n")
+
+          dispatch_item = {
+              "created_at": now(),
+              "protocol": "BEM-947",
+              "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
+              "trace_id": trace,
+              "cycle_id": cycle,
+              "object_id": "OBJ-GD-001",
+              "role": "executor",
+              "provider_selected": "claude_code",
+              "target_workflow_id": "claude.yml",
+              "dispatch_result": "requested",
+              "task_type": "live_object_dispatch",
+              "task": task,
+          }
+          with (state / "dispatch_queue.jsonl").open("a", encoding="utf-8") as handle:
+              handle.write(json.dumps(dispatch_item, ensure_ascii=False, sort_keys=True) + "\n")
+
+          payload = {
+              "ref": "main",
+              "inputs": {
+                  "role": "executor",
+                  "provider": "claude",
+                  "trace_id": trace,
+                  "cycle_id": cycle,
+                  "task_type": "live_object_dispatch",
+                  "task": task,
+              },
+          }
+          status = None
+          error = None
+          try:
+              req = urllib.request.Request(
+                  f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/claude.yml/dispatches",
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={
+                      "Authorization": "Bearer " + os.environ["GH_TOKEN"],
+                      "Accept": "application/vnd.github+json",
+                      "Content-Type": "application/json",
+                      "User-Agent": "bem947-live-object-dispatch",
+                  },
+                  method="POST",
+              )
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  status = resp.status
+          except Exception as exc:
+              error = str(exc)
+
+          ok = status in (200, 201, 202, 204)
+          receipt = {
+              "status": "DISPATCHED" if ok else "BLOCKED",
+              "protocol": "BEM-947",
+              "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
+              "created_at": now(),
+              "trace_id": trace,
+              "stage": {"tasks_done": 3, "tasks_total": 4, "percent": 75},
+              "workflow_dispatch": {
+                  "target_workflow_id": "claude.yml",
+                  "http_status": status,
+                  "error": error,
+              },
+              "checks": {
+                  "object_event_written": True,
+                  "dispatch_queue_written": True,
+                  "claude_workflow_dispatch_attempted": True,
+                  "no_false_executed_claim": True,
+                  "sha_type_policy_bound": True,
+              },
+              "blockers": [] if ok else ["claude_workflow_dispatch_failed"],
+              "next_task": "BEM947-P3-FINAL-VERIFY",
+              "non_claim": "DISPATCHED is not final PASS; executed/completed proof must be collected separately",
+          }
+          (proofs / "BEM947_live_object_dispatch_requested_receipt.json").write_text(
+              json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(receipt, ensure_ascii=False, indent=2))
+          if not ok:
+              raise SystemExit(1)
+          PY
+
+      - name: Commit dispatch evidence
+        if: always()
+        shell: bash
+        run: |
+          git config user.email "bem947-live-bridge@ai-devops-system"
+          git config user.name "BEM947 Live Bridge"
+          git pull --rebase --autostash origin main || true
+          git add governance/state/object_events.jsonl governance/state/dispatch_queue.jsonl governance/proofs/BEM947_live_object_dispatch_requested_receipt.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No BEM947 dispatch changes"
+          else
+            git commit -m "BEM-947: dispatch live object trace to claude"
+            git push || (git pull --rebase origin main && git push)
+          fi
