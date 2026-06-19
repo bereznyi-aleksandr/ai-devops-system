@@ -1,10 +1,10 @@
 {
-  "version": 2,
-  "updated_at": "2026-06-19T05:23:30Z",
+  "version": 3,
+  "updated_at": "2026-06-19T07:01:30Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
-  "system_status": "BEM947_IN_PROGRESS",
-  "release_status": "IN_PROGRESS",
+  "current_task": "BEM947-P2-AUTOREPAIR-WORKFLOW-TRIGGER",
+  "system_status": "BEM947_AUTOREPAIR_IN_PROGRESS",
+  "release_status": "BLOCKED_REPAIRING",
   "protocol": "BEM-947",
   "source": "governance/protocols/BEM947_PLANNED_TO_EXECUTED_LIVE_OBJECT_DISPATCH_TEST.md",
   "completed_summary": {
@@ -13,29 +13,28 @@
     "percent": 50,
     "proofs": [
       "governance/proofs/BEM947_live_test_design_receipt.json",
-      "governance/proofs/BEM947_workflow_execution_bridge_receipt.json"
+      "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
+      "governance/proofs/BEM947_live_object_dispatch_blocked_bem947_object_dispatch_27809252833.json",
+      "governance/proofs/BEM947_retry_workflow_dispatch_blocked_receipt.json"
     ]
   },
-  "previous_completed": [
-    {
-      "protocol": "BEM-946",
-      "receipt": "governance/proofs/BEM946_FINAL_VERIFICATION_PASS.json",
-      "percent": 100
-    },
-    {
-      "protocol": "BEM-945",
-      "receipt": "governance/proofs/BEM945_FINAL_VERIFICATION_PASS.json",
-      "percent": 100
-    }
+  "blockers": [
+    "first_claude_run_claude_role_outcome_failure",
+    "retry_workflow_dispatch_422_no_workflow_dispatch_trigger",
+    "executed_completed_proof_not_present"
   ],
+  "sha_policy": {
+    "sha_type_required": true,
+    "allowed": [
+      "git_blob",
+      "commit",
+      "sha256_content"
+    ]
+  },
   "tasks": [
     {
       "id": "BEM947-P0-LIVE-TEST-DESIGN",
-      "title": "Create strict planned-to-executed live-test design and guardrails",
       "status": "DONE",
-      "priority": 1,
-      "receipt": "governance/proofs/BEM947_live_test_design_receipt.json",
-      "completed_at": "2026-06-19T05:22:00Z",
       "stage_progress": {
         "tasks_done": 1,
         "tasks_total": 4,
@@ -44,11 +43,7 @@
     },
     {
       "id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE",
-      "title": "Create safe workflow execution bridge with syntax guard",
       "status": "DONE",
-      "priority": 2,
-      "receipt": "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
-      "completed_at": "2026-06-19T05:23:00Z",
       "stage_progress": {
         "tasks_done": 2,
         "tasks_total": 4,
@@ -56,11 +51,9 @@
       }
     },
     {
-      "id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
-      "title": "Run object dispatch and collect executed/completed evidence",
+      "id": "BEM947-P2-AUTOREPAIR-WORKFLOW-TRIGGER",
       "status": "IN_PROGRESS",
-      "priority": 3,
-      "started_at": "2026-06-19T05:23:30Z",
+      "started_at": "2026-06-19T07:01:30Z",
       "stage_progress": {
         "tasks_done": 2,
         "tasks_total": 4,
@@ -69,9 +62,7 @@
     },
     {
       "id": "BEM947-P3-FINAL-VERIFY",
-      "title": "Final verify; BLOCKED if only planned/dispatched evidence exists",
       "status": "PENDING",
-      "priority": 4,
       "stage_progress": {
         "tasks_done": 3,
         "tasks_total": 4,
@@ -79,5 +70,5 @@
       }
     }
   ],
-  "next_action": "check BEM947_live_object_dispatch_requested_receipt.json, then collect BEM947_live_object_dispatch_executed_<trace>.json; do not mark PASS until executed/completed evidence exists"
+  "next_action": "repair workflow_dispatch trigger/indexing or use an already-indexed dispatch bridge; do not mark BEM947 PASS until executed/completed proof exists"
 }
