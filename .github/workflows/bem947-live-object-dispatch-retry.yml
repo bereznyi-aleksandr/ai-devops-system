@@ -1,7 +1,7 @@
 name: BEM947 Live Object Dispatch Retry
 
-on:
-  workflow_dispatch:
+"on":
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -33,22 +33,8 @@ You are the executor role. Keep scope minimal.
 Required actions:
 1. Create governance/reports/bem947_object_dispatch_retry_20260619T0656Z.md with a concise report.
 2. Create governance/proofs/BEM947_live_object_dispatch_executed_bem947_object_dispatch_retry_20260619T0656Z.json.
-3. The JSON must include:
-   - status: "completed"
-   - protocol: "BEM-947"
-   - task_id: "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN"
-   - trace_id: "bem947_object_dispatch_retry_20260619T0656Z"
-   - provider_selected: "claude_code"
-   - target_workflow_id: "claude.yml"
-   - dispatch_result: "executed"
-   - blocker: null
-   - checks.object_runner_to_dispatch_queue: true
-   - checks.curator_router_to_claude_yml: true
-   - checks.sha_type_explicit: true
-   - artifacts array with every sha carrying sha_type
-4. Commit only the report and proof. Keep the commit small.
-
-Do not claim anything beyond this trace. If blocked, write a BLOCKED proof with blockers and do not mark completed.
+3. The JSON must include: status=completed, protocol=BEM-947, task_id=BEM947-P2-LIVE-OBJECT-DISPATCH-RUN, trace_id=bem947_object_dispatch_retry_20260619T0656Z, provider_selected=claude_code, target_workflow_id=claude.yml, dispatch_result=executed, blocker=null.
+4. Commit only the report and proof. If blocked, write a BLOCKED proof instead.
 TASK
 
           gh workflow run claude.yml \
@@ -60,7 +46,8 @@ TASK
             -f task_type="live_object_dispatch_retry" \
             -f task="$(cat "$TASK_FILE")"
 
-          mkdir -p governance/proofs
+          xw=governance/proofs
+          mkdir -p "$xw"
           python3 - <<'PY'
 import json
 from datetime import datetime, timezone
@@ -73,20 +60,12 @@ payload = {
   "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
   "trace_id": trace,
   "target_workflow_id": "claude.yml",
-  "checks": {
-    "retry_workflow_dispatched": True,
-    "reduced_scope_task_used": True,
-    "no_false_completed_claim": True,
-    "sha_type_policy_bound": True
-  },
+  "checks": {"retry_workflow_dispatched": True, "reduced_scope_task_used": True, "no_false_completed_claim": True, "sha_type_policy_bound": True},
   "blockers": [],
   "next_task": "BEM947-P2-COLLECT-EXECUTED-PROOF",
   "non_claim": "DISPATCHED is not PASS; completed proof must be collected separately"
 }
-Path("governance/proofs/BEM947_live_object_dispatch_retry_requested_receipt.json").write_text(
-    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-    encoding="utf-8",
-)
+Path("governance/proofs/BEM947_live_object_dispatch_retry_requested_receipt.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 PY
 
       - name: Commit retry dispatch receipt
@@ -97,7 +76,7 @@ PY
           git config user.name "BEM947 Retry Bridge"
           git pull --rebase origin main || true
           git add governance/proofs/BEM947_live_object_dispatch_retry_requested_receipt.json 2>/dev/null || true
-          if git diff --cached --quiet; then
+         if git diff --cached --quiet; then
             echo "No BEM947 retry receipt changes"
           else
             git commit -m "BEM-947: dispatch reduced live object retry"
