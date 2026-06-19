@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-945",
+  "task_id": "BEM945-P0-STUB-INVENTORY-CONTINUE",
+  "created_at": "2026-06-19T05:14:00Z",
+  "stage": {
+    "tasks_done": 1,
+    "tasks_total": 4,
+    "percent": 25
+  },
+  "sha_policy": {
+    "required_for_new_receipts": true,
+    "allowed_sha_type": [
+      "git_blob",
+      "commit",
+      "sha256_content"
+    ]
+  },
+  "checked_files": {
+    "governance/runners/operator_report_runner.py": {
+      "old_size": 23,
+      "old_sha": "e5a0d9b4834ec8f46d6e0d1256c6dcaad2e460fe",
+      "sha_type": "git_blob",
+      "new_status": "replaced_runtime"
+    },
+    "governance/runners/experience_loader_runner.py": {
+      "old_size": 23,
+      "old_sha": "e5a0d9b4834ec8f46d6e0d1256c6dcaad2e460fe",
+      "sha_type": "git_blob",
+      "new_status": "replaced_runtime"
+    }
+  },
+  "checks": {
+    "inventory_read": true,
+    "sha_type_policy_bound": true,
+    "next_targets_selected": true,
+    "no_downstream_llm_completion_claim": true
+  },
+  "blockers": [],
+  "next_task": "BEM945-P1-OPERATOR-REPORT-RUNNER"
+}
