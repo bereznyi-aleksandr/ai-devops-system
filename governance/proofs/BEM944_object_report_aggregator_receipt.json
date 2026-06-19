@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-944",
+  "task_id": "BEM944-P2-OBJECT-REPORT-AGGREGATOR",
+  "created_at": "2026-06-19T04:15:00Z",
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 4,
+    "percent": 75
+  },
+  "aggregate_path": "governance/state/object_report_aggregate.json",
+  "counts": {
+    "report_count": 1,
+    "role_report_count": 1,
+    "object_event_count": 2,
+    "dispatch_processed_count": 2
+  },
+  "checks": {
+    "object_report_aggregator_replaced_stub": true,
+    "object_report_aggregator_size_gt_300": true,
+    "aggregate_written": true,
+    "aggregate_has_report_or_role_data": true,
+    "object_event_channel_readable": true,
+    "dispatch_processed_channel_readable": true,
+    "non_claim_present": true
+  },
+  "blockers": [],
+  "non_claim": "object report aggregation evidence only; no downstream LLM completion claimed",
+  "next_task": "BEM944-P3-FINAL-VERIFY"
+}
