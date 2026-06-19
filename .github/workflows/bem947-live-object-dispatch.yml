@@ -1,7 +1,7 @@
 name: BEM947 Live Object Dispatch Bridge
 
-"on":
-  workflow_dispatch: {}
+on:
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,13 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          token: ${{ github.token }}
           fetch-depth: 0
 
       - name: Dispatch reduced live object task to claude.yml
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          TRACE: bem947_object_dispatch_retry_20260619T0702Z
+          GH_TOKEN: ${{ github.token }}
+          TRACE: bem947_object_dispatch_retry_20260619T0705Z
         shell: bash
         run: |
           set -euo pipefail
@@ -28,44 +28,34 @@ jobs:
           cat > "$TASK_FILE" <<'TASK'
 BEM-947 retry task: prove planned-to-executed object dispatch.
 
-You are the executor role. Keep scope minimal.
+Executor role. Minimal scope.
 
-Required actions:
-1. Create governance/reports/bem947_object_dispatch_retry_20260619T0702Z.md with a concise report.
-2. Create governance/proofs/BEM947_live_object_dispatch_executed_bem947_object_dispatch_retry_20260619T0702Z.json.
-3. The JSON must include:
-   - status: "completed"
-   - protocol: "BEM-947"
-   - task_id: "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN"
-   - trace_id: "bem947_object_dispatch_retry_20260619T0702Z"
-   - provider_selected: "claude_code"
-   - target_workflow_id: "claude.yml"
-   - dispatch_result: "executed"
-   - blocker: null
-   - checks.object_runner_to_dispatch_queue: true
-   - checks.curator_router_to_claude_yml: true
-   - checks.sha_type_explicit: true
-   - artifacts array with every sha carrying sha_type
-4. Commit only the report and proof. Keep the commit small.
+Create and commit:
+- governance/reports/bem947_object_dispatch_retry_20260619T0705Z.md
+- governance/proofs/BEM947_live_object_dispatch_executed_bem947_object_dispatch_retry_20260619T0705Z.json
 
-Do not claim anything beyond this trace. If blocked, write a BLOCKED proof with blockers and do not mark completed.
+JSON required fields:
+status: completed
+protocol: BEM-947
+task_id: BEM947-P2-LIVE-OBJECT-DISPATCH-RUN
+trace_id: bem947_object_dispatch_retry_20260619T0705Z
+provider_selected: claude_code
+target_workflow_id: claude.yml
+dispatch_result: executed
+blocker: null
+checks.sha_type_explicit: true
+
+If blocked, write BLOCKED instead. Do not over-claim.
 TASK
 
-          gh workflow run claude.yml \
-            --ref main \
-            -f role=executor \
-            -f provider=claude \
-            -f trace_id="$TRACE" \
-            -f cycle_id="bem947_planned_to_executed_retry" \
-            -f task_type="live_object_dispatch_retry" \
-            -f task="$(cat "$TASK_FILE")"
+          gh workflow run claude.yml             --ref main             -f role=executor             -f provider=claude             -f trace_id="$TRACE"             -f cycle_id="bem947_planned_to_executed_retry"             -f task_type="live_object_dispatch_retry"             -f task="$(cat "$TASK_FILE")"
 
           mkdir -p governance/proofs
           python3 - <<'PY'
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-trace = "bem947_object_dispatch_retry_20260619T0702Z"
+trace = "bem947_object_dispatch_retry_20260619T0705Z"
 payload = {
   "status": "DISPATCHED",
   "protocol": "BEM-947",
@@ -73,7 +63,12 @@ payload = {
   "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
   "trace_id": trace,
   "target_workflow_id": "claude.yml",
-  "checks": {"retry_workflow_dispatched": True, "reduced_scope_task_used": True, "no_false_completed_claim": True, "sha_type_policy_bound": True},
+  "checks": {
+    "retry_workflow_dispatched": True,
+    "reduced_scope_task_used": True,
+    "no_false_completed_claim": True,
+    "sha_type_policy_bound": True
+  },
   "blockers": [],
   "next_task": "BEM947-P2-COLLECT-EXECUTED-PROOF",
   "non_claim": "DISPATCHED is not PASS; completed proof must be collected separately"
