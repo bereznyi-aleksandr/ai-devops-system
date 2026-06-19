@@ -1,0 +1,43 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-LIVE-GATE-AFTER-YAML-VALIDATION",
+  "created_at": "2026-06-19T19:26:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "bridge": {
+    "path": ".github/workflows/bem947-live-claude-dispatch-on-push.yml",
+    "sha": "bbe0913c60776275c501733f8658e076c8c1bded",
+    "sha_type": "git_blob",
+    "commit": "9f7d90534cb700d6cbd0a10c8f2c8c3bff49c9ea",
+    "commit_sha_type": "commit"
+  },
+  "attempts": [
+    {
+      "method": "push-trigger bridge creation",
+      "result": "receipt_absent",
+      "receipt_path": "governance/proofs/BEM947_live_gate_after_yaml_dispatch_requested_receipt.json"
+    },
+    {
+      "method": "create_workflow_dispatch bridge",
+      "workflow_id": "bem947-live-claude-dispatch-on-push.yml",
+      "result": "422 workflow does not have workflow_dispatch trigger"
+    }
+  ],
+  "checks": {
+    "claude_yml_yaml_validated_before_attempt": true,
+    "bridge_written": true,
+    "direct_dispatch_attempted": true,
+    "executed_proof_exists": false,
+    "no_false_pass_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "new_bridge_workflow_not_indexed_or_push_run_not_completed",
+    "executed_completed_proof_not_present"
+  ],
+  "next_task": "BEM947-P2-POLL-LIVE-GATE-OR-EXTERNAL-GATE"
+}
