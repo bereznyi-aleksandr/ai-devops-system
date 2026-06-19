@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-940",
+  "task_id": "BEM940-FINAL-VERIFICATION",
+  "verified_at": "2026-06-19T03:15:00Z",
+  "queue_state": "COMPLETE",
+  "current_task": null,
+  "roadmap": {
+    "tasks_done": 4,
+    "tasks_total": 4,
+    "percent": 100
+  },
+  "checks": {
+    "provider_activation_not_stub": true,
+    "provider_status_integrated": true,
+    "router_smoke_aligned": true,
+    "final_verification_done": true,
+    "continuation_guard_next_task_required": true
+  },
+  "proofs": [
+    "governance/proofs/BEM940_provider_activation_receipt.json",
+    "governance/proofs/BEM940_provider_status_integration_receipt.json",
+    "governance/proofs/BEM940_provider_activation_router_smoke_receipt.json",
+    "governance/proofs/BEM940_FINAL_VERIFICATION_PASS.json"
+  ],
+  "blockers": [],
+  "next_task": "BEM941-P0-STUB-INVENTORY-CONTINUE"
+}
