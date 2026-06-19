@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-943",
+  "task_id": "BEM943-P2-PROOF-MANIFEST-UPDATER",
+  "created_at": "2026-06-19T04:11:00Z",
+  "manifest_path": "governance/proofs/PROOF_MANIFEST.json",
+  "entry_count": 3,
+  "by_protocol": {
+    "BEM-943": 3
+  },
+  "invalid_json_count": 0,
+  "blocked_receipt_count": 0,
+  "entries": [
+    {
+      "path": "governance/proofs/BEM943_stub_inventory_receipt.json",
+      "name": "BEM943_stub_inventory_receipt.json",
+      "status": "PASS",
+      "protocol": "BEM-943",
+      "task_id": "BEM943-P0-STUB-INVENTORY-CONTINUE",
+      "invalid_json": false
+    },
+    {
+      "path": "governance/proofs/BEM943_dispatch_consumer_runner_receipt.json",
+      "name": "BEM943_dispatch_consumer_runner_receipt.json",
+      "status": "PASS",
+      "protocol": "BEM-943",
+      "task_id": "BEM943-P1-DISPATCH-CONSUMER-RUNNER",
+      "invalid_json": false
+    },
+    {
+      "path": "governance/proofs/BEM943_proof_manifest_updater_receipt.json",
+      "name": "BEM943_proof_manifest_updater_receipt.json",
+      "status": "PASS",
+      "protocol": "BEM-943",
+      "task_id": "BEM943-P2-PROOF-MANIFEST-UPDATER",
+      "invalid_json": false
+    }
+  ],
+  "non_claim": "proof manifest indexing only; no downstream LLM completion claimed"
+}
