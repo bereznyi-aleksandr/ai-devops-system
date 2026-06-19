@@ -1,48 +1,39 @@
 {
-  "version": 9,
-  "updated_at": "2026-06-19T17:45:30Z",
+  "version": 10,
+  "updated_at": "2026-06-19T19:07:30Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P2-TELEGRAM_OR_EXTERNAL_GATE_VALIDATION",
-  "system_status": "BEM947_EMERGENCY_RESTORED_CONTINUING",
+  "current_task": "BEM947-P2-LIVE-GATE-AFTER-YAML-VALIDATION",
+  "system_status": "BEM947_PRODUCTION_WORKFLOW_YAML_VALIDATED_CONTINUING",
   "release_status": "BLOCKED_REPAIRING",
   "protocol": "BEM-947",
-  "completed_summary": {
+  "progress": {
     "tasks_done": 2,
     "tasks_total": 4,
-    "percent": 50,
-    "proofs": [
-      "governance/proofs/BEM947_live_test_design_receipt.json",
-      "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
-      "governance/proofs/BEM947_direct_restore_production_workflows_receipt.json"
-    ]
+    "percent": 50
   },
-  "recent_actions": [
-    {
-      "action": "direct_restore_role_orchestrator_production_workflow",
-      "sha": "5625a4e1996129e695834a7a24a1ae0d2ef92d61",
-      "sha_type": "git_blob",
-      "commit": "59b587511b83078bda722b75327166e957190e6d",
-      "commit_sha_type": "commit",
-      "restore_kind": "exact_known_good_blob"
-    },
-    {
-      "action": "direct_replace_known_bad_claude_workflow",
-      "old_sha": "382a3b31b1773009cf8119519070d02a8f2f80ba",
-      "old_sha_type": "git_blob",
-      "current_sha": "99c58bdcf7225f5d8b3544ad09f58aef02a03ced",
-      "current_sha_type": "git_blob",
-      "commit": "16c0e76bb02dbbdb7ed163dc8f4eec69ff37a4f4",
-      "commit_sha_type": "commit",
-      "source_commit": "8b74dd4398b67022406c3af90427ce17d95b5135",
-      "source_blob_sha": "9d81bd3263f23b13533d5df4990ad328da8927dd",
-      "source_blob_sha_type": "git_blob",
-      "warning": "current blob differs from exact source blob; do not claim exact restore"
-    }
+  "proofs": [
+    "governance/proofs/BEM947_live_test_design_receipt.json",
+    "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
+    "governance/proofs/BEM947_direct_restore_production_workflows_receipt.json",
+    "governance/proofs/BEM947_claude_yml_three_indent_fix_receipt.json"
   ],
+  "recent_action": {
+    "action": "applied_three_exact_indent_fixes_to_claude_yml",
+    "old_sha": "99c58bdcf7225f5d8b3544ad09f58aef02a03ced",
+    "old_sha_type": "git_blob",
+    "new_sha": "df512080669e993f5f0128b1e5e2628d0a4ff368",
+    "new_sha_type": "git_blob",
+    "commit": "d2843490efc2bb2aafc5fe1044361d5d8be52943",
+    "commit_sha_type": "commit",
+    "checks": {
+      "exactly_three_indent_fixes": true,
+      "yaml_validated_by_ruby_psych": true,
+      "python_heredocs_compile": true
+    }
+  },
   "blockers": [
     "bem947_executed_completed_proof_still_absent",
-    "claude_yml_current_blob_not_exact_known_good_9d81bd32",
-    "telegram_or_external_gate_validation_required"
+    "live_gate_validation_required_after_yaml_fix"
   ],
   "sha_policy": {
     "sha_type_required": true,
@@ -56,40 +47,23 @@
     {
       "id": "BEM947-P0-LIVE-TEST-DESIGN",
       "status": "DONE",
-      "stage_progress": {
-        "tasks_done": 1,
-        "tasks_total": 4,
-        "percent": 25
-      }
+      "percent": 25
     },
     {
       "id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE",
       "status": "DONE",
-      "stage_progress": {
-        "tasks_done": 2,
-        "tasks_total": 4,
-        "percent": 50
-      }
+      "percent": 50
     },
     {
-      "id": "BEM947-P2-TELEGRAM_OR_EXTERNAL_GATE_VALIDATION",
+      "id": "BEM947-P2-LIVE-GATE-AFTER-YAML-VALIDATION",
       "status": "IN_PROGRESS",
-      "started_at": "2026-06-19T17:45:30Z",
-      "stage_progress": {
-        "tasks_done": 2,
-        "tasks_total": 4,
-        "percent": 50
-      }
+      "percent": 50
     },
     {
       "id": "BEM947-P3-FINAL-VERIFY",
       "status": "PENDING",
-      "stage_progress": {
-        "tasks_done": 3,
-        "tasks_total": 4,
-        "percent": 75
-      }
+      "percent": 75
     }
   ],
-  "next_action": "validate production workflow recovery, then use Telegram/operator or external gate for live executed proof; no further production workflow surgery unless restore verification fails"
+  "next_action": "trigger or route live gate only after validated YAML; do not claim PASS until executed/completed proof exists"
 }
