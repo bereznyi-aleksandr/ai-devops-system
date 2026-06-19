@@ -14,11 +14,22 @@
     "executed_by_claude_yml": true,
     "sha_type_explicit": true
   },
-  "commit_sha_type": "pending_commit",
+  "commit_sha": "51c9ea711e828cd3f51a826e943a181f348c7713",
+  "commit_sha_type": "commit",
   "executed_at": "2026-06-19T19:58:00Z",
+  "completed_at_from_report": "2026-06-19T20:07:07Z",
   "role": "executor",
   "files_created": [
-    "governance/reports/bem947_minimal_claude_retry_20260619T1958Z.md",
-    "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json"
-  ]
+    {
+      "path": "governance/reports/bem947_minimal_claude_retry_20260619T1958Z.md",
+      "sha": "de19b74ef1c216e65372f04000e67c7e737b555d",
+      "sha_type": "git_blob"
+    },
+    {
+      "path": "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json",
+      "sha": "9e93ff97d126dafa31220591e695d3784fc9fd2d",
+      "sha_type": "git_blob"
+    }
+  ],
+  "repair_note": "Corrected previous commit_sha_type=pending_commit to commit using commit SHA recorded in the execution report."
 }
