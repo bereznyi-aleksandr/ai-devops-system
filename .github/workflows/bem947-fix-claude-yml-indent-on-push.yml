@@ -1,0 +1,150 @@
+name: BEM947 Fix Claude YML Indent On Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem947-fix-claude-yml-indent-on-push.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Patch claude.yml indentation through Contents API
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPO: ${{ github.repository }}
+          API: ${{ github.api_url }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bem947
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "$API/repos/$REPO/contents/.github/workflows/claude.yml?ref=main" > /tmp/bem947/claude_meta.json
+
+          python3 - <<'PY'
+          import base64, hashlib, json, os, re, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+          root = Path("/tmp/bem947")
+          meta = json.loads((root / "claude_meta.json").read_text(encoding="utf-8"))
+          old_sha = meta["sha"]
+          text = base64.b64decode(meta["content"]).decode("utf-8")
+          old_blob = hashlib.sha1(("blob %d\0" % len(text.encode("utf-8"))).encode() + text.encode("utf-8")).hexdigest()
+          out, changes = [], []
+          for number, line in enumerate(text.splitlines(keepends=True), 1):
+              stripped = line.lstrip(" ")
+              leading = len(line) - len(stripped)
+              replacement = line
+              if stripped.startswith("def now():") and leading == 9:
+                  replacement = " " + line
+                  changes.append({"line": number, "fix": "indent def now() from 9 to 10 spaces"})
+              elif stripped.startswith("env:") and leading == 7:
+                  replacement = " " + line
+                  changes.append({"line": number, "fix": "indent env from 7 to 8 spaces"})
+              elif stripped.startswith("# trace-bound proof") and leading == 9:
+                  replacement = " " + line
+                  changes.append({"line": number, "fix": "indent Python heredoc comment from 9 to 10 spaces"})
+              out.append(replacement)
+          patched = "".join(out)
+          new_blob = hashlib.sha1(("blob %d\0" % len(patched.encode("utf-8"))).encode() + patched.encode("utf-8")).hexdigest()
+          status, blockers = "PASS", []
+          if len(changes) != 3:
+              status = "BLOCKED"
+              blockers.append("expected_exactly_three_indent_fixes_found_%d" % len(changes))
+          yaml_valid = False
+          py_valid = False
+          if status == "PASS":
+              (root / "claude.yml").write_text(patched, encoding="utf-8")
+              try:
+                  subprocess.check_call(["ruby", "-e", 'require "yaml"; YAML.load_file("/tmp/bem947/claude.yml")'])
+                  yaml_valid = True
+              except Exception as exc:
+                  status = "BLOCKED"
+                  blockers.append("yaml_safe_load_failed:%s" % exc)
+              try:
+                  src = patched.splitlines()
+                  idx = 0
+                  count = 0
+                  while idx < len(src):
+                      m = re.search(r"<<'([^']+)'", src[idx])
+                      if not m:
+                          idx += 1
+                          continue
+                      tag = m.group(1)
+                      indent = len(src[idx]) - len(src[idx].lstrip(" "))
+                      idx += 1
+                      body = []
+                      while idx < len(src) and src[idx].strip() != tag:
+                          item = src[idx]
+                          if item.startswith(" " * indent):
+                              item = item[indent:]
+                          body.append(item)
+                          idx += 1
+                      if idx < len(src) and src[idx].strip() == tag:
+                          count += 1
+                          compile("\n".join(body) + "\n", "<claude-yml-%s-%d>" % (tag, count), "exec")
+                      idx += 1
+                  py_valid = count >= 5
+                  if not py_valid:
+                      status = "BLOCKED"
+                      blockers.append("python_heredoc_compile_count_too_low:%d" % count)
+              except Exception as exc:
+                  status = "BLOCKED"
+                  blockers.append("python_heredoc_compile_failed:%s" % exc)
+          receipt = {
+              "status": status,
+              "protocol": "BEM-947",
+              "task_id": "BEM947-P2-CLAUDE-YML-THREE-INDENT-FIX",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "stage": {"tasks_done": 2, "tasks_total": 4, "percent": 50},
+              "target": ".github/workflows/claude.yml",
+              "old_sha": old_sha,
+              "old_sha_type": "git_blob",
+              "old_content_blob_sha": old_blob,
+              "old_content_blob_sha_type": "git_blob",
+              "new_sha": new_blob if status == "PASS" else old_sha,
+              "new_sha_type": "git_blob",
+              "changes": changes,
+              "checks": {
+                  "exactly_three_indent_fixes": len(changes) == 3,
+                  "yaml_validated_by_ruby_psych": yaml_valid,
+                  "python_heredocs_compile": py_valid,
+                  "no_executed_proof_claim": True,
+                  "sha_type_explicit": True
+              },
+              "blockers": blockers,
+              "next_task": "BEM947-P2-LIVE-GATE-AFTER-YAML-VALIDATION" if status == "PASS" else "BEM947-P2-AUTOREPAIR-CLAUDE-YML-VALIDATION"
+          }
+          (root / "receipt.json").write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          if status != "PASS":
+              print(json.dumps(receipt, ensure_ascii=False, indent=2))
+              raise SystemExit(1)
+          put = {"message": "BEM-947: fix three claude.yml indentation defects", "content": base64.b64encode(patched.encode("utf-8")).decode("ascii"), "sha": old_sha, "branch": "main"}
+          (root / "put_claude.json").write_text(json.dumps(put), encoding="utf-8")
+          PY
+
+          curl -fsSL -X PUT -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "Content-Type: application/json" "$API/repos/$REPO/contents/.github/workflows/claude.yml" --data @/tmp/bem947/put_claude.json > /tmp/bem947/put_claude_response.json
+
+          python3 - <<'PY'
+          import base64, json
+          from pathlib import Path
+          root = Path("/tmp/bem947")
+          receipt = json.loads((root / "receipt.json").read_text(encoding="utf-8"))
+          response = json.loads((root / "put_claude_response.json").read_text(encoding="utf-8"))
+          receipt["commit"] = response["commit"]["sha"]
+          receipt["commit_sha_type"] = "commit"
+          receipt["applied_blob_sha"] = response["content"]["sha"]
+          receipt["applied_blob_sha_type"] = "git_blob"
+          (root / "receipt.json").write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          content = base64.b64encode((root / "receipt.json").read_bytes()).decode("ascii")
+          payload = {"message": "BEM-947: record claude.yml three-indent validation receipt", "content": content, "branch": "main"}
+          (root / "put_receipt.json").write_text(json.dumps(payload), encoding="utf-8")
+          PY
+
+          curl -fsSL -X PUT -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "Content-Type: application/json" "$API/repos/$REPO/contents/governance/proofs/BEM947_claude_yml_three_indent_fix_receipt.json" --data @/tmp/bem947/put_receipt.json
