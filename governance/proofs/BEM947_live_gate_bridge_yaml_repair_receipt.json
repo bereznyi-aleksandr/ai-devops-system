@@ -1,0 +1,42 @@
+{
+  "status": "DISPATCHED",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-LIVE-GATE-BRIDGE-YAML-REPAIR-AND-DISPATCH",
+  "created_at": "2026-06-19T19:37:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "repair": {
+    "path": ".github/workflows/bem947-live-claude-dispatch-on-push.yml",
+    "old_sha": "bbe0913c60776275c501733f8658e076c8c1bded",
+    "old_sha_type": "git_blob",
+    "new_sha": "9c1b782b3a2d9ab8f25ab7866dea54f6cbdd0258",
+    "new_sha_type": "git_blob",
+    "commit": "705e0a9ada5b5a07811a2427c906c4055cefd7f1",
+    "commit_sha_type": "commit",
+    "repair_kind": "replace raw multiline f-string with task_lines list plus '\\n'.join() inside YAML block scalar"
+  },
+  "dispatch_request": {
+    "path": "governance/proofs/BEM947_live_gate_after_yaml_dispatch_requested_receipt.json",
+    "sha": "3697fbd6a31df7fa35c1e86b24c4673eafd74f87",
+    "sha_type": "git_blob",
+    "trace_id": "bem947_object_dispatch_after_yaml_validation_20260619T1935Z",
+    "http_status": 204,
+    "status": "DISPATCHED"
+  },
+  "checks": {
+    "external_auditor_finding_accepted": true,
+    "bridge_yaml_validated_before_write": true,
+    "python_heredocs_compile_before_write": true,
+    "direct_dispatch_after_repair_succeeded_http_204": true,
+    "executed_proof_exists": false,
+    "no_false_pass_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "executed_completed_proof_not_present_yet"
+  ],
+  "next_task": "BEM947-P2-POLL-EXECUTED-PROOF"
+}
