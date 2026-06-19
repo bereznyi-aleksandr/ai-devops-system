@@ -1,0 +1,98 @@
+name: BEM947 Live Object Dispatch Push Bridge
+
+on:
+  push:
+    paths:
+      - governance/triggers/BEM947_live_dispatch_push_trigger.txt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+          fetch-depth: 0
+
+      - name: Dispatch BEM947 reduced task to claude.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          TRACE="bem947_object_dispatch_push_${GITHUB_RUN_ID}"
+          TASK>//dev/null
+          TASK="BEM-947 live object dispatch proof. Executor: create governance/reports/${TRACE}.md and governance/proofs/BEM947_live_object_dispatch_executed_${TRACE}.json. JSON must include status=completed, protocol=BEM-947, task_id=BEM947-P2-LIVE-OBJECT-DISPATCH-RUN, trace_id=${TRACE}, provider_selected=claude_code, target_workflow_id=claude.yml, dispatch_result=executed, blocker=null, checks.sha_type_explicit=true. If blocked write BLOCKED proof; do not overclaim."
+
+          if gh workflow run claude.yml --ref main \
+            -f role=executor \
+            -f provider=claude \
+            -f trace_id="$TRACE" \
+            -f cycle_id=bem947_planned_to_executed_push \
+            -f task_type=live_object_dispatch_push \
+            -f task="$TASK"; then
+            GH_STATUS=0
+          else
+            GH_STATUS=$?
+          fi
+          export TRACE GH_STATUS
+
+          mkdir -p governance/proofs
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          status_code = int(os.environ.get("GH_STATUS", "1"))
+          payload = {
+              "status": "DISPATCHED" if status_code == 0 else "BLOCKED",
+              "protocol": "BEM-947",
+              "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-PUSH-BRIDGE",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "trace_id": os.environ["TRACE"],
+              "target_workflow_id": "claude.yml",
+              "gh_status": status_code,
+              "checks": {
+                  "push_bridge_triggered": True,
+                  "claude_workflow_dispatch_attempted": True,
+                  "claude_workflow_dispatch_succeeded": status_code == 0,
+                  "no_false_completed_claim": True,
+                  "sha_type_policy_bound": True
+              },
+              "blockers": [] if status_code == 0 else ["claude_workflow_dispatch_failed"],
+              "next_task": "BEM947-P2-COLLECT-EXECUTED-PROOF",
+              "non_claim": "DISPATCHED is not PASS; completed proof must be collected separately"
+          }
+          Path("governance/proofs/BEM947_live_object_dispatch_push_requested_receipt.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8"
+          )
+          PY
+
+      - name: Commit push bridge receipt
+        if: always()
+        shell: bash
+        run: |
+          git config user.email "bem947-push-bridge@ai-devops-system"
+          git config user.name "BEM947 Push Bridge"
+          git pull --rebase origin main || true
+          git add governance/proofs/BEM947_live_object_dispatch_push_requested_receipt.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No BEM947 push bridge receipt changes"
+          else
+            git commit -m "BEM-947: record push bridge dispatch request"
+            git push || (git pull --rebase origin main && git push)
+          fi
+
+      - name: Fail job if claude dispatch failed
+        if: always()
+        shell: bash
+        run: |
+          if grep -q "BLOCKED" governance/proofs/BEM947_live_object_dispatch_push_requested_receipt.json 2>/dev/null; then exit 1; else exit 0; fi
