@@ -1,9 +1,9 @@
 {
-  "version": 11,
-  "updated_at": "2026-06-19T19:26:30Z",
+  "version": 12,
+  "updated_at": "2026-06-19T19:37:30Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P2-POLL-LIVE-GATE-OR-EXTERNAL-GATE",
-  "system_status": "BEM947_LIVE_GATE_BLOCKED_REPAIRING",
+  "current_task": "BEM947-P2-POLL-EXECUTED-PROOF",
+  "system_status": "BEM947_LIVE_GATE_DISPATCHED_AWAITING_EXECUTED_PROOF",
   "release_status": "BLOCKED_REPAIRING",
   "protocol": "BEM-947",
   "progress": {
@@ -15,35 +15,40 @@
     "governance/proofs/BEM947_live_test_design_receipt.json",
     "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
     "governance/proofs/BEM947_claude_yml_three_indent_fix_receipt.json",
-    "governance/proofs/BEM947_live_gate_mailbox_request_receipt.json",
-    "governance/proofs/BEM947_live_gate_bridge_dispatch_blocked_receipt.json"
+    "governance/proofs/BEM947_live_gate_after_yaml_dispatch_requested_receipt.json",
+    "governance/proofs/BEM947_live_gate_bridge_yaml_repair_receipt.json"
   ],
   "recent_action": {
-    "action": "attempted_live_gate_after_validated_yaml",
+    "action": "repaired_live_gate_bridge_yaml_and_dispatched_claude_yml",
     "bridge_path": ".github/workflows/bem947-live-claude-dispatch-on-push.yml",
-    "bridge_sha": "bbe0913c60776275c501733f8658e076c8c1bded",
-    "bridge_sha_type": "git_blob",
-    "bridge_commit": "9f7d90534cb700d6cbd0a10c8f2c8c3bff49c9ea",
+    "old_bridge_sha": "bbe0913c60776275c501733f8658e076c8c1bded",
+    "old_bridge_sha_type": "git_blob",
+    "new_bridge_sha": "9c1b782b3a2d9ab8f25ab7866dea54f6cbdd0258",
+    "new_bridge_sha_type": "git_blob",
+    "bridge_commit": "705e0a9ada5b5a07811a2427c906c4055cefd7f1",
     "bridge_commit_sha_type": "commit",
-    "dispatch_result": "BLOCKED_422_WORKFLOW_DISPATCH_NOT_INDEXED",
-    "receipt": "governance/proofs/BEM947_live_gate_bridge_dispatch_blocked_receipt.json",
-    "receipt_sha": "f38954ef80a061c3e6ba330e7b3f170cf23b76a9",
-    "receipt_sha_type": "git_blob",
-    "receipt_commit": "f2a6627ab6fa131dec0c74da9140b3d08003354a",
-    "receipt_commit_sha_type": "commit"
+    "dispatch_receipt": "governance/proofs/BEM947_live_gate_after_yaml_dispatch_requested_receipt.json",
+    "dispatch_receipt_sha": "3697fbd6a31df7fa35c1e86b24c4673eafd74f87",
+    "dispatch_receipt_sha_type": "git_blob",
+    "dispatch_http_status": 204,
+    "trace_id": "bem947_object_dispatch_after_yaml_validation_20260619T1935Z",
+    "repair_receipt": "governance/proofs/BEM947_live_gate_bridge_yaml_repair_receipt.json",
+    "repair_receipt_sha": "f71ae57513f5f07fa42fb5f5b46a3a25a35e9718",
+    "repair_receipt_sha_type": "git_blob",
+    "repair_receipt_commit": "e43a6321f70af7feaf01a3c80f2409945e28372c",
+    "repair_receipt_commit_sha_type": "commit"
   },
   "validation": {
     "claude_yml_blob": "df512080669e993f5f0128b1e5e2628d0a4ff368",
     "claude_yml_sha_type": "git_blob",
-    "yaml_validated_by_ruby_psych": true,
-    "python_heredocs_compile": true,
+    "bridge_yaml_validated_before_write": true,
+    "bridge_python_heredocs_compile_before_write": true,
     "executed_completed_proof_present": false,
     "no_pass_claimed": true
   },
   "blockers": [
-    "bem947_executed_completed_proof_still_absent",
-    "new_bridge_workflow_dispatch_422_not_indexed",
-    "awaiting_mailbox_or_external_gate_response"
+    "bem947_executed_completed_proof_not_present_yet",
+    "awaiting_claude_yml_run_completion_or_blocked_proof"
   ],
   "tasks": [
     {
@@ -57,7 +62,7 @@
       "percent": 50
     },
     {
-      "id": "BEM947-P2-POLL-LIVE-GATE-OR-EXTERNAL-GATE",
+      "id": "BEM947-P2-POLL-EXECUTED-PROOF",
       "status": "IN_PROGRESS",
       "percent": 50
     },
@@ -67,5 +72,5 @@
       "percent": 75
     }
   ],
-  "next_action": "poll from_claude mailbox and executed-proof; if absent, keep external gate pending and do not mark PASS"
+  "next_action": "poll executed proof for trace bem947_object_dispatch_after_yaml_validation_20260619T1935Z; if completed proof appears, move P2 to DONE, otherwise record BLOCKED without PASS"
 }
