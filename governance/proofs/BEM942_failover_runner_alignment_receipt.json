@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-942",
+  "task_id": "BEM942-P1-FAILOVER-RUNNER-ALIGNMENT",
+  "created_at": "2026-06-19T03:22:00Z",
+  "trace_id": "bem942_failover_runner_alignment",
+  "role": "curator",
+  "activation_decision": {
+    "status": "ACTIVE",
+    "provider": "claude_code",
+    "role": "curator",
+    "workflow_id": "claude.yml",
+    "activation_mode": "primary",
+    "blockers": []
+  },
+  "failover_decisions": {
+    "primary": {
+      "provider_selected": "claude_code",
+      "fallback_used": false,
+      "target_workflow_id": "claude.yml"
+    },
+    "fallback": {
+      "provider_selected": "gpt_codex_cloud",
+      "fallback_used": true,
+      "target_workflow_id": "gpt-codex-cloud.yml",
+      "failure_reason": "rate_limit"
+    },
+    "unrecognized": {
+      "provider_selected": "claude_code",
+      "fallback_used": false,
+      "target_workflow_id": "claude.yml",
+      "failure_reason": "syntax_error"
+    }
+  },
+  "checks": {
+    "provider_failover_runner_runtime_code_present": true,
+    "activation_decision_active": true,
+    "primary_uses_claude_code": true,
+    "recognized_failure_uses_cloud_fallback": true,
+    "unrecognized_failure_keeps_primary": true,
+    "status_layer_readable": true,
+    "no_downstream_llm_completion_claim": true
+  },
+  "blockers": [],
+  "non_claim": "failover decision evidence only; no downstream LLM completion claimed",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "decisions_path": "governance/state/provider_failover_runner_decisions.jsonl",
+  "next_task": "BEM942-P2-FAILOVER-ACTIVATION-E2E"
+}
