@@ -1,0 +1,37 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-EMERGENCY-RESTORE-GATE-LAUNCHED",
+  "created_at": "2026-06-19T15:38:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "actions": [
+    {
+      "action": "emergency_restore_gate_installed_with_push_trigger",
+      "path": ".github/workflows/role-orchestrator.yml",
+      "blob_sha": "79b247e5e411b04c21b7811ed2f80016b6207140",
+      "sha_type": "git_blob",
+      "commit": "bdb469f8b75abd2428eda6753118ae4a7cbfda58",
+      "commit_sha_type": "commit"
+    },
+    {
+      "action": "restore_proof_check",
+      "result": "404 pending_or_push_gate_not_run_yet",
+      "expected_proof": "governance/proofs/BEM947_emergency_restore_production_workflows_receipt.json"
+    }
+  ],
+  "checks": {
+    "no_false_executed_claim": true,
+    "emergency_restore_gate_launched": true,
+    "restore_proof_pending": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "production_restore_proof_pending",
+    "executed_completed_proof_not_present"
+  ],
+  "next_task": "BEM947-P2-CHECK-EMERGENCY-RESTORE-THEN-TELEGRAM_OR_EXTERNAL_GATE"
+}
