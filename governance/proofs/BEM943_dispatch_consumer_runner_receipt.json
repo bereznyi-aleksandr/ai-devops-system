@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-943",
+  "task_id": "BEM943-P1-DISPATCH-CONSUMER-RUNNER",
+  "created_at": "2026-06-19T03:24:30Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "checks": {
+    "dispatch_consumer_runner_replaced_stub": true,
+    "dispatch_consumer_runner_size_gt_300": true,
+    "dispatch_consumer_import_logic_present": true,
+    "receipt_path_defined": true,
+    "no_downstream_llm_completion_claim": true
+  },
+  "consumer_result": {
+    "status": "PASS",
+    "processed_count": 0,
+    "skipped_count": 2,
+    "dead_letter_count": 0,
+    "dispatch_result": "wrapper_ready"
+  },
+  "blockers": [],
+  "non_claim": "wrapper proves dispatch consumer invocation path only; no downstream LLM completion claimed",
+  "next_task": "BEM943-P2-PROOF-MANIFEST-UPDATER"
+}
