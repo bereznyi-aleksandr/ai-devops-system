@@ -16,13 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Dispatch claude.yml with explicit inputs
+      - name: Dispatch claude.yml minimal retry with explicit inputs
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           REPO: ${{ github.repository }}
           API: ${{ github.api_url }}
-          TRACE_ID: bem947_object_dispatch_after_yaml_validation_20260619T1935Z
+          TRACE_ID: bem947_minimal_claude_retry_20260619T1958Z
         run: |
           set -euo pipefail
           mkdir -p /tmp/bem947
@@ -34,42 +34,35 @@ jobs:
 
           trace = os.environ["TRACE_ID"]
           task_lines = [
-              "BEM-947 live gate after YAML validation.",
+              "BEM-947 minimal Claude retry after validated claude.yml runtime failure.",
               "",
-              "Create and commit an executed/completed proof for planned-to-executed closure.",
-              "",
-              "Required report:",
+              "This is a minimal action-health test.",
+              "Do not edit production workflows.",
+              "Create exactly two files:",
               f"- governance/reports/{trace}.md",
+              f"- governance/proofs/BEM947_minimal_claude_retry_executed_{trace}.json",
               "",
-              "Required proof:",
-              f"- governance/proofs/BEM947_live_object_dispatch_executed_{trace}.json",
-              "",
-              "Required JSON fields:",
+              "The proof must be JSON. If you can complete the task, use:",
               "{",
               '  "status": "completed",',
               '  "protocol": "BEM-947",',
-              '  "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",',
+              '  "task_id": "BEM947-P2-MINIMAL-CLAUDE-RETRY",',
               f'  "trace_id": "{trace}",',
               '  "provider_selected": "claude_code",',
               '  "target_workflow_id": "claude.yml",',
               '  "dispatch_result": "executed",',
               '  "blocker": null,',
               '  "checks": {',
-              '    "object_runner_to_dispatch_queue": true,',
-              '    "curator_router_to_claude_yml": true,',
+              '    "minimal_prompt_received": true,',
+              '    "report_written": true,',
+              '    "proof_written": true,',
               '    "executed_by_claude_yml": true,',
               '    "sha_type_explicit": true',
-              "  },",
-              '  "artifacts": [',
-              "    {",
-              f'      "path": "governance/reports/{trace}.md",',
-              '      "sha_type": "git_blob"',
-              "    }",
-              "  ]",
+              "  }",
               "}",
               "",
-              "Every SHA value you include must have sha_type or commit_sha_type.",
-              "If any required field cannot be truthfully satisfied, write a BLOCKED proof instead and do not claim completed.",
+              "Every SHA value you include must include sha_type or commit_sha_type.",
+              "If the task cannot be completed truthfully, write a BLOCKED proof instead and include the exact blocker.",
           ]
           payload = {
               "ref": "main",
@@ -77,7 +70,7 @@ jobs:
                   "role": "executor",
                   "provider": "claude",
                   "trace_id": trace,
-                  "cycle_id": "bem947_after_yaml_validation",
+                  "cycle_id": "bem947_minimal_retry_after_runtime_failure",
                   "task_type": "default_development",
                   "task": "\n".join(task_lines),
               },
@@ -112,49 +105,46 @@ jobs:
           receipt = {
               "status": "DISPATCHED" if http_status == "204" else "BLOCKED",
               "protocol": "BEM-947",
-              "task_id": "BEM947-P2-LIVE-GATE-AFTER-YAML-VALIDATION",
+              "task_id": "BEM947-P2-MINIMAL-CLAUDE-RETRY-DISPATCH",
               "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
               "trace_id": trace,
               "target_workflow_id": "claude.yml",
-              "dispatch_mode": "curl_api_with_explicit_inputs_from_validated_push_bridge",
+              "dispatch_mode": "minimal_retry_via_validated_bridge",
               "http_status": http_status,
               "response_excerpt": response[:500],
               "checks": {
                   "explicit_inputs_supplied": True,
-                  "yaml_validation_receipt_present": True,
+                  "minimal_prompt": True,
                   "no_executed_proof_claim": True,
                   "sha_type_explicit": True
               },
-              "blockers": [] if http_status == "204" else ["claude_yml_dispatch_http_" + http_status],
-              "next_task": "BEM947-P2-POLL-EXECUTED-PROOF" if http_status == "204" else "BEM947-P2-AUTOREPAIR-LIVE-GATE-DISPATCH"
+              "blockers": [] if http_status == "204" else ["claude_yml_minimal_retry_dispatch_http_" + http_status],
+              "next_task": "BEM947-P2-POLL-MINIMAL-CLAUDE-RETRY"
           }
           data = json.dumps(receipt, ensure_ascii=False, indent=2).encode("utf-8")
-          path = "governance/proofs/BEM947_live_gate_after_yaml_dispatch_requested_receipt.json"
+          path = "governance/proofs/BEM947_minimal_claude_retry_dispatch_receipt.json"
           url = f"{api}/repos/{repo}/contents/{path}"
           headers = {
               "Authorization": "Bearer " + token,
               "Accept": "application/vnd.github+json",
               "Content-Type": "application/json",
-              "User-Agent": "bem947-live-gate-bridge"
+              "User-Agent": "bem947-minimal-claude-retry"
           }
-
           current_sha = None
           try:
               req = urllib.request.Request(url + "?ref=main", headers=headers, method="GET")
-              with urllib.request.urlopen(req) as r:
-                  current_sha = json.loads(r.read().decode("utf-8"))["sha"]
+              with urllib.request.urlopen(req) as resp:
+                  current_sha = json.loads(resp.read().decode("utf-8"))["sha"]
           except Exception:
               current_sha = None
-
           payload = {
-              "message": "BEM-947: record live gate dispatch after yaml validation",
+              "message": "BEM-947: record minimal claude retry dispatch",
               "content": base64.b64encode(data).decode("ascii"),
               "branch": "main"
           }
           if current_sha:
               payload["sha"] = current_sha
-
           req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="PUT")
-          with urllib.request.urlopen(req) as r:
-              print(r.read().decode("utf-8")[:1000])
+          with urllib.request.urlopen(req) as resp:
+              print(resp.read().decode("utf-8")[:1000])
           PY
