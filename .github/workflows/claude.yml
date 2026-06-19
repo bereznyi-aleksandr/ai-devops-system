@@ -249,7 +249,7 @@ jobs:
           receipt_path = Path("governance/proofs/BEM934_claude_result_materialization_receipt.json")
           plan_path = Path("governance/proofs/BEM934_object_binding_plan.json")
 
-         def now():
+          def now():
               return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
           def write_receipt(payload):
@@ -348,7 +348,7 @@ jobs:
       - name: Write final result to transport
         if: always() && github.event_name == 'workflow_dispatch'
         shell: bash
-       env:
+        env:
           ROLE_RAW:       ${{ env.ROLE_RAW }}
           TRACE_ID:       ${{ env.TRACE_ID }}
           CYCLE_ID:       ${{ env.CYCLE_ID }}
@@ -380,7 +380,7 @@ jobs:
               pass
           # BEM-934 live semantic proof validation
           # The Claude action may report a tool-level failure after committing a valid
-         # trace-bound proof. Only this narrowly scoped repair task may derive semantic
+          # trace-bound proof. Only this narrowly scoped repair task may derive semantic
           # success from strict proof validation; all other task types keep fail-close behavior.
           if task_type == 'live_content_analysis_repair':
               safe_trace = ''.join(ch if ch.isalnum() or ch in ('_', '-') else '_' for ch in trace)
