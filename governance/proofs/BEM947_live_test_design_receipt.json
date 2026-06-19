@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P0-LIVE-TEST-DESIGN",
+  "created_at": "2026-06-19T05:22:00Z",
+  "stage": {
+    "tasks_done": 1,
+    "tasks_total": 4,
+    "percent": 25
+  },
+  "design": {
+    "objective": "prove object_runner -> dispatch_queue -> curator_router -> claude.yml -> executed/completed evidence",
+    "pass_condition": "BEM947 final remains PASS only if executed/completed evidence exists; requested/planned evidence is insufficient",
+    "guardrail": "no false executed claim; BLOCKED until downstream receipt exists",
+    "sha_policy": [
+      "git_blob",
+      "commit",
+      "sha256_content"
+    ]
+  },
+  "checks": {
+    "active_queue_read": true,
+    "claude_workflow_inputs_read": true,
+    "no_false_executed_claim": true,
+    "sha_type_policy_bound": true
+  },
+  "blockers": [],
+  "next_task": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE"
+}
