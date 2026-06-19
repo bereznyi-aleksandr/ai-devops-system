@@ -1,0 +1,42 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-STATUS-CLARIFICATION",
+  "created_at": "2026-06-19T15:35:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "current_facts": {
+    "active_queue_state": "ACTIVE",
+    "bem947_p0_p1": "DONE",
+    "bem947_p2": "BLOCKED_REPAIRING",
+    "executed_completed_proof": "ABSENT",
+    "pass_claim": false
+  },
+  "latest_actions": [
+    {
+      "action": "claude_yml_production_compatible_defaults_installed",
+      "sha": "382a3b31b1773009cf8119519070d02a8f2f80ba",
+      "sha_type": "git_blob",
+      "commit": "dd500eebba5731212bed759da26a546f39992a17",
+      "commit_sha_type": "commit"
+    },
+    {
+      "action": "dispatch_check",
+      "result": "no executed proof yet"
+    }
+  ],
+  "checks": {
+    "operator_question_acknowledged": true,
+    "no_false_pass_claim": true,
+    "sha_type_explicit": true,
+    "continuation_required": true
+  },
+  "blockers": [
+    "executed_completed_proof_not_present",
+    "github_actions_dispatch_indexing_or_execution_delay"
+  ],
+  "next_task": "BEM947-P2-COLLECT_OR_REPAIR_EXECUTED_PROOF"
+}
