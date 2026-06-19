@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-941",
+  "task_id": "BEM941-P2-TESTING-CONTOUR-ASSIGNMENT",
+  "created_at": "2026-06-19T03:17:00Z",
+  "stage": {
+    "tasks_done": 3,
+    "tasks_total": 4,
+    "percent": 75
+  },
+  "assignment": {
+    "status": "ASSIGNED",
+    "protocol": "BEM-941",
+    "task_id": "BEM941-P2-TESTING-CONTOUR-ASSIGNMENT",
+    "trace_id": "bem941_testing_contour_selftest",
+    "created_at": "2026-06-19T03:17:00Z",
+    "contour": "WRK-SMOKE",
+    "source": "governance/runners/testing_contour_assignment.py",
+    "non_claim": "contour assignment only; no downstream LLM completion claimed"
+  },
+  "assignments_path": "governance/state/testing_contour_assignments.jsonl",
+  "checks": {
+    "testing_contour_assignment_runtime_code_present": true,
+    "assignment_written": true,
+    "contour_selected": true,
+    "downstream_llm_completion_not_claimed": true
+  },
+  "blockers": [],
+  "next_task": "BEM941-P3-FINAL-VERIFY"
+}
