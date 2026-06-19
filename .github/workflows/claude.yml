@@ -2,16 +2,61 @@ name: Claude Code
 
 on:
   workflow_dispatch:
+    inputs:
+      role:
+        description: 'analyst | auditor | executor | curator'
+        required: false
+        default: 'executor'
+        type: string
+      provider:
+        description: 'claude'
+        required: false
+        default: 'claude'
+        type: string
+      trace_id:
+        description: 'Trace id'
+        required: false
+        default: 'bem947_object_dispatch_claude_yml_default_20260619T1530Z'
+        type: string
+      cycle_id:
+        description: 'Role cycle id'
+        required: false
+        default: 'bem947_planned_to_executed_claude_yml_default'
+        type: string
+      task_type:
+        description: 'Task type'
+        required: false
+        default: 'live_object_dispatch_default'
+        type: string
+      task:
+        description: 'Task body'
+        required: false
+        default: 'BEM-947 default-input live object dispatch proof. Create governance/reports/bem947_object_dispatch_claude_yml_default_20260619T1530Z.md and governance/proofs/BEM947_live_object_dispatch_executed_bem947_object_dispatch_claude_yml_default_20260619T1530Z.json with status completed, provider_selected claude_code, target_workflow_id claude.yml, dispatch_result executed, blocker null, checks.object_runner_to_dispatch_queue true, checks.curator_router_to_claude_yml true, checks.executed_by_claude_yml true, checks.sha_type_explicit true. Every SHA field must include sha_type or commit_sha_type. If blocked, write BLOCKED proof instead.'
+        type: string
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
 
 permissions:
   contents: write
-  actions: write
-  id-token: write
-  issues: write
   pull-requests: write
+  issues: write
+  id-token: write
+  actions: write
 
 jobs:
   claude:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude')) || contains(github.event.issue.title, '@claude'))) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -21,141 +66,212 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Run Claude Code BEM-947 executor
+      - name: Build role prompt
+        id: build
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          INPUT_ROLE: ${{ inputs.role }}
+         INPUT_PROVIDER: ${{ inputs.provider }}
+         INPUT_TRACE_ID: ${{ inputs.trace_id }}
+         INPUT_CYCLE_ID: ${{ inputs.cycle_id }}
+         INPUT_TASK_TYPE: ${{ inputs.task_type }}
+          INPUT_TASK: ${{ inputs.task }}
+        run: |
+          set -euo pipefail
+          PROMPT_FILE="$RUNNER_TEMP/claude_role_prompt.txt"
+          export PROMPT_FILE
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          role = (os.environ.get("INPUT_ROLE") or "executor").lower().strip()
+          provider = os.environ.get("INPUT_PROVIDER") or "claude"
+          trace = os.environ.get("INPUT_TRACE_ID") or "manual_dispatch"
+          cycle = os.environ.get("INPUT_CYCLE_ID") or ("cycle_" + trace)
+          task_type = os.environ.get("INPUT_TASK_TYPE") or "default_development"
+          task = os.environ.get("INPUT_TASK") or "Default Claude role task."
+
+          parts = [
+              "# GOVERNED CLAUDE ROLE PROMPT",
+              "",
+              "ROLE: " + role,
+              "PROVIDER: " + provider,
+              "TRACE_ID: " + trace,
+              "CYCLE_ID: " + cycle,
+              "TASK_TYPE: " + task_type,
+              "",
+              "Rules:",
+              "- Keep scope limited to the task.",
+              "- Do not print secrets.",
+              "- Commit only required proof/report artifacts.",
+              "- Every SHA value in JSON receipts must include sha_type or commit_sha_type.",
+              "- If any required evidence cannot be created truthfully, write a BLOCKED proof and do not claim PASS.",
+              "",
+              "Incoming task:",
+              "-----",
+              task,
+              "-----",
+              "",
+              "Required final report line:",
+              "BEM-CLAUDE-ROLE | " + role.upper() + " | RESULT",
+              "",
+              "Write report to governance/reports/" + trace + ".md unless task specifies a stricter report path.",
+          ]
+          Path(os.environ["PROMPT_FILE"]).write_text("\n".join(parts) + "\n", encoding="utf-8")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
+              f.write("PROMPT_FILE=" + os.environ["PROMPT_FILE"] + "\n")
+              f.write("ROLE_RAW=" + role + "\n")
+              f.write("TRACE_ID=" + trace + "\n")
+              f.write("CYCLE_ID=" + cycle + "\n")
+              f.write("TASK_TYPE=" + task_type + "\n")
+          PY
+          {
+            echo 'prompt<<BEM947_PROMPT_EOF'
+            cat "$PROMPT_FILE"
+            echo 'BEM947_PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run Claude Code role
         id: claude_role
+        if: github.event_name == 'workflow_dispatch'
         continue-on-error: true
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          prompt: |
-            BEM-947 planned-to-executed live object dispatch proof.
+          prompt: ${{ steps.build.outputs.prompt }}
+          claude_args: '--max-turns 10 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
 
-            You are the executor role inside ai-devops-system.
-
-            Scope is minimal and evidence-bearing:
-            1. Read:
-               - governance/state/dispatch_queue.jsonl
-               - governance/state/dispatch_processed.jsonl
-               - governance/runners/object_runner.py
-               - governance/runners/dispatch_consumer.py
-               - governance/runners/curator_router.py
-            2. Create governance/reports/bem947_object_dispatch_claude_yml_default_20260619T1130Z.md.
-            3. Create governance/proofs/BEM947_live_object_dispatch_executed_bem947_object_dispatch_claude_yml_default_20260619T1130Z.json.
-            4. Commit only that report/proof.
-
-            Required JSON fields:
-            {
-              "status": "completed",
-              "protocol": "BEM-947",
-              "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
-              "trace_id": "bem947_object_dispatch_claude_yml_default_20260619T1130Z",
-              "provider_selected": "claude_code",
-              "target_workflow_id": "claude.yml",
-              "dispatch_result": "executed",
-              "blocker": null,
-              "checks": {
-                "object_runner_to_dispatch_queue": true,
-                "curator_router_to_claude_yml": true,
-                "executed_by_claude_yml": true,
-                "sha_type_explicit": true
-              },
-              "artifacts": [
-                {
-                  "path": "governance/reports/bem947_object_dispatch_claude_yml_default_20260619T1130Z.md",
-                  "sha_type": "git_blob"
-                }
-              ]
-            }
-
-            If any required field cannot be truthfully satisfied, write a BLOCKED proof instead and do not claim completed.
-          claude_args: '--max-turns 10 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"' 
+      - name: Run Claude Code legacy event
+        id: claude_legacy
+        if: github.event_name != 'workflow_dispatch'
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          claude_args: '--max-turns 10'
 
       - name: Validate and commit BEM-947 proof
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch'
         shell: bash
         env:
           CLAUDE_OUTCOME: ${{ steps.claude_role.outcome }}
         run: |
           set -euo pipefail
-          mkdir -p governance/proofs governance/reports
+          mkdir -p governance/proofs governance/reports governance/transport governance/state
           python3 - <<'PY'
-import json
-import os
-import subprocess
-from datetime import datetime, timezone
-from pathlib import Path
+          import json
+          import os
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
 
-trace = "bem947_object_dispatch_claude_yml_default_20260619T1130Z"
-proof_path = Path("governance/proofs/BEM947_live_object_dispatch_executed_" + trace + ".json")
-report_path = Path("governance/reports/" + trace + ".md")
-receipt_path = Path("governance/proofs/BEM947_claude_yml_default_execution_receipt.json")
+          trace = os.environ.get("TRACE_ID", "unknown")
+          task_type = os.environ.get("TASK_TYPE", "")
+          proof_path = Path("governance/proofs/BEM947_live_object_dispatch_executed_" + trace + ".json")
+          report_path = Path("governance/reports/" + trace + ".md")
+          receipt_path = Path("governance/proofs/BEM947_claude_yml_default_execution_receipt.json")
 
-def now():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          def now():
+              return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-proof_valid = False
-blockers = []
-if proof_path.exists():
-    try:
-        proof = json.loads(proof_path.read_text(encoding="utf-8"))
-        checks = proof.get("checks") if isinstance(proof.get("checks"), dict) else {}
-        proof_valid = (
-            proof.get("status") == "completed"
-            and proof.get("protocol") == "BEM-947"
-            and proof.get("task_id") == "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN"
-            and proof.get("trace_id") == trace
-            and proof.get("provider_selected") == "claude_code"
-            and proof.get("target_workflow_id") == "claude.yml"
-            and proof.get("dispatch_result") == "executed"
-            and proof.get("blocker") is None
-            and checks.get("executed_by_claude_yml") is True
-            and checks.get("sha_type_explicit") is True
-        )
-        if not proof_valid:
-            blockers.append("proof_semantic_validation_failed")
-    except Exception as exc:
-        blockers.append("proof_json_parse_failed:" + str(exc))
-else:
-    blockers.append("executed_proof_not_created_by_claude")
+          blockers = []
+          proof_valid = False
+          if proof_path.exists():
+              try:
+                  proof = json.loads(proof_path.read_text(encoding="utf-8"))
+                  checks = proof.get("checks") if isinstance(proof.get("checks"), dict) else {}
+                  proof_valid = (
+                      proof.get("status") == "completed"
+                      and proof.get("protocol") == "BEM-947"
+                      and proof.get("task_id") == "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN"
+                      and proof.get("trace_id") == trace
+                      and proof.get("provider_selected") == "claude_code"
+                      and proof.get("target_workflow_id") == "claude.yml"
+                      and proof.get("dispatch_result") == "executed"
+                      and proof.get("blocker") is None
+                      and checks.get("curator_router_to_claude_yml") is True
+                      and checks.get("executed_by_claude_yml") is True
+                      and checks.get("sha_type_explicit") is True
+                  )
+                  if not proof_valid:
+                      blockers.append("executed_proof_semantic_validation_failed")
+              except Exception as exc:
+                  blockers.append("executed_proof_parse_failed:" + str(exc))
+          else:
+              blockers.append("executed_proof_not_created_by_claude")
 
-if not report_path.exists():
-    blockers.append("report_not_created_by_claude")
+          if not report_path.exists():
+              blockers.append("report_not_created_by_claude")
 
-receipt = {
-    "status": "PASS" if proof_valid and report_path.exists() else "BLOCKED",
-    "protocol": "BEM-947",
-    "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
-    "created_at": now(),
-    "trace_id": trace,
-    "stage": {"tasks_done": 3 if proof_valid and report_path.exists() else 2, "tasks_total": 4, "percent": 75 if proof_valid and report_path.exists() else 50},
-    "workflow": {
-        "target_workflow_id": "claude.yml",
-        "dispatch_mode": "default_inputs_after_autorepair",
-        "claude_action_outcome": os.environ.get("CLAUDE_OUTCOME", "unknown")
-    },
-    "checks": {
-        "claude_yml_ran": True,
-        "executed_proof_exists": proof_path.exists(),
-        "report_exists": report_path.exists(),
-        "executed_proof_semantically_valid": proof_valid,
-        "no_false_completed_claim": True,
-        "sha_type_policy_bound": True
-    },
-    "blockers": blockers,
-    "next_task": "BEM947-P3-FINAL-VERIFY" if proof_valid and report_path.exists() else "BEM947-P2-AUTOREPAIR-CLAUDE-YML-DEFAULT",
-}
-receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          receipt = {
+              "status": "PASS" if proof_valid and report_path.exists() else "BLOCKED",
+              "protocol": "BEM-947",
+              "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
+              "created_at": now(),
+              "trace_id": trace,
+              "stage": {"tasks_done": 3 if proof_valid and report_path.exists() else 2, "tasks_total": 4, "percent": 75 if proof_valid and report_path.exists() else 50},
+              "workflow": {
+                  "target_workflow_id": "claude.yml",
+                  "dispatch_mode": "workflow_dispatch_default_inputs",
+                  "claude_action_outcome": os.environ.get("CLAUDE_OUTCOME", "unknown"),
+              },
+              "checks": {
+                  "claude_yml_ran": True,
+                  "executed_proof_exists": proof_path.exists(),
+                  "report_exists": report_path.exists(),
+                  "executed_proof_semantically_valid": proof_valid,
+                  "no_false_completed_claim": True,
+                  "sha_type_policy_bound": True,
+              },
+              "blockers": blockers,
+              "next_task": "BEM947-P3-FINAL-VERIFY" if proof_valid and report_path.exists() else "BEM947-P2-AUTOREPAIR-CLAUDE-YML-DEFAULT",
+          }
+          receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-PY
+          transport = {
+              "trace_id": trace,
+              "cycle_id": os.environ.get("CYCLE_ID", ""),
+              "role": os.environ.get("ROLE_RAW", ""),
+              "provider": "claude",
+              "status": "completed" if receipt["status"] == "PASS" else "failed",
+              "blocker": None if receipt["status"] == "PASS" else ";".join(blockers),
+              "report_path": str(report_path),
+              "completed_at": now(),
+          }
+          with Path("governance/transport/results.jsonl").open("a", encoding="utf-8") as f:
+              f.write(json.dumps(transport, ensure_ascii=False, sort_keys=True) + "\n")
+
+          if receipt["status"] == "BLOCKED" and not report_path.exists():
+              report_path.write_text(
+                  "# BEM-947 Claude YML default dispatch\n\nStatus: BLOCKED\n\nBlockers: " + ", ".join(blockers) + "\n",
+                  encoding="utf-8",
+              )
+          PY
 
           git config user.email "bem947-claude-yml@ai-devops-system"
           git config user.name "BEM947 Claude YML"
           git pull --rebase --autostash origin main || true
-          git add governance/proofs/BEM947_claude_yml_default_execution_receipt.json governance/proofs/BEM947_live_object_dispatch_executed_bem947_object_dispatch_claude_yml_default_20260619T1130Z.json governance/reports/bem947_object_dispatch_claude_yml_default_20260619T1130Z.md 2>/dev/null || true
+          git add governance/proofs/BEM947_claude_yml_default_execution_receipt.json governance/proofs/BEM947_live_object_dispatch_executed_*.json governance/reports/ governance/transport/results.jsonl 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No BEM947 Claude yml proof changes"
           else
-            git commit -m "BEM-947: collect claude.yml executed dispatch proof"
+            git commit -m "BEM947: collect claude.yml executed dispatch proof"
             git push || (git pull --rebase origin main && git push)
           fi
+
+      - name: Report to job summary
+        if: always() && github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          {
+            echo "## Claude workflow dispatch"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Trace | ${TRACE_ID:-unknown} |"
+            echo "| Role | ${ROLE_RAW:-unknown} |"
+            echo "| Task type | ${TASK_TYPE:-unknown} |"
+          } >> "$GITHUB_STEP_SUMMARY"
