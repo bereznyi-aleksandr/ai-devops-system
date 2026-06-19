@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "updated_at": "2026-06-19T04:12:00Z",
+  "updated_at": "2026-06-19T04:16:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM944-P0-STUB-INVENTORY-CONTINUE",
-  "system_status": "BEM944_IN_PROGRESS",
+  "current_task": "BEM945-P0-STUB-INVENTORY-CONTINUE",
+  "system_status": "BEM945_IN_PROGRESS",
   "release_status": "IN_PROGRESS",
-  "protocol": "BEM-944",
-  "source": "governance/protocols/BEM944_MANAGED_CHANNEL_OBJECT_REPORT_RUNTIME.md",
+  "protocol": "BEM-945",
+  "source": "governance/protocols/BEM945_OPERATOR_REPORT_EXPERIENCE_LOADER_RUNTIME.md",
   "completed_summary": {
     "tasks_done": 0,
     "tasks_total": 4,
@@ -15,18 +15,18 @@
   },
   "previous_completed": [
     {
-      "protocol": "BEM-943",
-      "receipt": "governance/proofs/BEM943_FINAL_VERIFICATION_PASS.json",
+      "protocol": "BEM-944",
+      "receipt": "governance/proofs/BEM944_FINAL_VERIFICATION_PASS.json",
       "percent": 100
     }
   ],
   "tasks": [
     {
-      "id": "BEM944-P0-STUB-INVENTORY-CONTINUE",
-      "title": "Inventory managed-channel and object-report stubs",
+      "id": "BEM945-P0-STUB-INVENTORY-CONTINUE",
+      "title": "Inventory operator-report and experience-loader stubs",
       "status": "IN_PROGRESS",
       "priority": 1,
-      "started_at": "2026-06-19T04:12:00Z",
+      "started_at": "2026-06-19T04:16:00Z",
       "stage_progress": {
         "tasks_done": 0,
         "tasks_total": 4,
@@ -34,8 +34,8 @@
       }
     },
     {
-      "id": "BEM944-P1-MANAGED-CHANNEL-CONSUMER-RUNNER",
-      "title": "Replace managed_channel_consumer_runner.py stub with wrapper runtime",
+      "id": "BEM945-P1-OPERATOR-REPORT-RUNNER",
+      "title": "Replace operator_report_runner.py stub with mobile report materializer runtime",
       "status": "PENDING",
       "priority": 2,
       "stage_progress": {
@@ -45,8 +45,8 @@
       }
     },
     {
-      "id": "BEM944-P2-OBJECT-REPORT-AGGREGATOR",
-      "title": "Replace object_report_aggregator.py stub with aggregation runtime",
+      "id": "BEM945-P2-EXPERIENCE-LOADER-RUNNER",
+      "title": "Replace experience_loader_runner.py stub with evidence loader runtime",
       "status": "PENDING",
       "priority": 3,
       "stage_progress": {
@@ -56,8 +56,8 @@
       }
     },
     {
-      "id": "BEM944-P3-FINAL-VERIFY",
-      "title": "Finalize and verify BEM-944 roadmap",
+      "id": "BEM945-P3-FINAL-VERIFY",
+      "title": "Finalize and verify BEM-945 roadmap",
       "status": "PENDING",
       "priority": 4,
       "stage_progress": {
@@ -67,5 +67,5 @@
       }
     }
   ],
-  "next_action": "write BEM944 P0 stub inventory receipt"
+  "next_action": "write BEM945 P0 stub inventory receipt"
 }
