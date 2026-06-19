@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-945",
+  "task_id": "BEM945-P3-FINAL-VERIFY",
+  "verified_at": "2026-06-19T05:15:30Z",
+  "queue_state": "COMPLETE",
+  "current_task": null,
+  "roadmap": {
+    "tasks_done": 4,
+    "tasks_total": 4,
+    "percent": 100
+  },
+  "sha_policy": {
+    "new_receipts_include_sha_type": true,
+    "allowed_sha_type": [
+      "git_blob",
+      "commit",
+      "sha256_content"
+    ]
+  },
+  "checks": {
+    "p0_inventory_done": true,
+    "p1_operator_report_runner_done": true,
+    "p2_experience_loader_runner_done": true,
+    "final_verification_done": true,
+    "continuation_guard_next_task_required": true
+  },
+  "proofs": [
+    "governance/proofs/BEM945_stub_inventory_receipt.json",
+    "governance/proofs/BEM945_operator_report_runner_receipt.json",
+    "governance/proofs/BEM945_experience_loader_runner_receipt.json",
+    "governance/proofs/BEM945_FINAL_VERIFICATION_PASS.json"
+  ],
+  "blockers": [],
+  "next_task": "BEM946-P0-FRESH-STUB-INVENTORY"
+}
