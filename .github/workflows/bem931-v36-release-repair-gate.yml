@@ -1,56 +1,115 @@
-name: BEM-931 v3.6 Release Repair Gate
+name: BEM947 Indexed Push Bridge
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
-  push:
-    paths:
-      - '.github/workflows/bem931-v36-release-repair-gate.yml'
-      - 'governance/runners/**'
-      - 'governance/validators/**'
-      - 'governance/architecture/**'
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
-  release-repair-gate:
+  push:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
 
-      - name: Run autonomous repair gate
+      - name: Push reduced object dispatch to claude.yml
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          TRACE: bem947_object_dispatch_indexed_20260619T0710Z
         shell: bash
         run: |
-          set -e
-          python3 governance/runners/bem931_autonomous_repair_gate.py
+          set -euo pipefail
+          mkdir -p governance/proofs governance/reports
+          TASK_FILE="$(mktemp)"
+          cat > "$TASK_FILE" <<'TASK'
+BEM-947 indexed push bridge: prove planned-to-executed object dispatch.
 
-      - name: Commit receipts
-        if: always()
+You are the executor role. Keep scope minimal.
+
+Create and commit exactly:
+- governance/reports/bem947_object_dispatch_indexed_20260619T0710Z.md
+- governance/proofs/BEM947_live_object_dispatch_executed_bem947_object_dispatch_indexed_20260619T0710Z.json
+
+The JSON must include:
+{
+  "status": "completed",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
+  "trace_id": "bem947_object_dispatch_indexed_20260619T0710Z",
+  "provider_selected": "claude_code",
+  "target_workflow_id": "claude.yml",
+  "dispatch_result": "executed",
+  "blocker": null,
+  "checks": {
+    "object_runner_to_dispatch_queue": true,
+    "curator_router_to_claude_yml": true,
+    "sha_type_explicit": true
+  },
+  "artifacts": [
+    {
+      "path": "governance/reports/bem947_object_dispatch_indexed_20260619T0710Z.md",
+      "sha_type": "git_blob"
+    }
+  ]
+}
+
+Every SHA field you add must have sha_type or commit_sha_type.
+If blocked, write BLOCKED proof instead and do not claim completed.
+TASK
+
+          gh workflow run claude.yml \
+            --ref main \
+            -f role=executor \
+            -f provider=claude \
+            -f trace_id="$TRACE" \
+            -f cycle_id=bem947_planned_to_executed_indexed \
+            -f task_type=live_object_dispatch_indexed \
+            -f task="$(cat "$TASK_FILE")"
+
+          python3 - <<'PY'
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+trace = "bem947_object_dispatch_indexed_20260619T0710Z"
+payload = {
+  "status": "DISPATCHED",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-COLLECT-PUSH-BRIDGE-RECEIPT_OR_AUTOREPAIR",
+  "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+  "trace_id": trace,
+  "target_workflow_id": "claude.yml",
+  "checks": {
+    "indexed_workflow_used": True,
+    "claude_workflow_dispatch_attempted": True,
+    "reduced_scope_task_used": True,
+    "no_false_completed_claim": True,
+    "sha_type_policy_bound": True
+  },
+  "blockers": [],
+  "next_task": "BEM947-P2-COLLECT-EXECUTED-PROOF",
+  "non_claim": "DISPATCHED is not PASS; completed proof must be collected separately"
+}
+Path("governance/proofs/BEM947_live_object_dispatch_push_requested_receipt.json").write_text(
+    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+    encoding="utf-8",
+)
+PY
+
+      - name: Commit push receipt
         shell: bash
         run: |
-          set -e
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-
-          # Collect all generated files into a patch before touching remote
-          git add -A governance/channels \
-                     governance/results \
-                     governance/proofs \
-                     governance/exchange \
-                     governance/release \
-                     governance/blockers 2>/dev/null || true
-
+          git config user.email "bem947-indexed-push@ai-devops-system"
+          git config user.name "BEM947 Indexed Push Bridge"
+          git pull --rebase origin main || true
+          git add governance/proofs/BEM947_live_object_dispatch_push_requested_receipt.json 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "Nothing new to commit — receipts may already be present"
-            exit 0
+            echo "No BEM947 push receipt changes"
+          else
+            git commit -m "BEM-947: indexed push bridge dispatch receipt"
+            git push || (git pull --rebase origin main && git push)
           fi
-
-          # Commit on top of current HEAD without pulling first
-          git commit -m "BEM-931: live repair receipts [run=$GITHUB_RUN_ID]"
-
-          # Push with retry — if remote advanced, rebase and push again
-          git push || (git pull --rebase --autostash && git push)
