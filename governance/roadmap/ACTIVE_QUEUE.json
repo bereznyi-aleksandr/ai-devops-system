@@ -1,62 +1,51 @@
 {
-  "version": 14,
-  "updated_at": "2026-06-19T20:06:30Z",
+  "version": 15,
+  "updated_at": "2026-06-19T20:18:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM947-P2-POLL-MINIMAL-CLAUDE-RETRY",
-  "system_status": "BEM947_MINIMAL_CLAUDE_RETRY_DISPATCHED_AWAITING_RESULT",
-  "release_status": "BLOCKED_REPAIRING",
+  "current_task": "BEM947-P3-FINAL-VERIFY",
+  "system_status": "BEM947_P2_DONE_P3_FINAL_VERIFY_IN_PROGRESS",
+  "release_status": "P3_VERIFYING",
   "protocol": "BEM-947",
   "progress": {
-    "tasks_done": 2,
+    "tasks_done": 3,
     "tasks_total": 4,
-    "percent": 50
+    "percent": 75
   },
   "proofs": [
     "governance/proofs/BEM947_live_test_design_receipt.json",
     "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
     "governance/proofs/BEM947_claude_yml_three_indent_fix_receipt.json",
-    "governance/proofs/BEM947_live_gate_after_yaml_dispatch_requested_receipt.json",
-    "governance/proofs/BEM947_live_gate_bridge_yaml_repair_receipt.json",
-    "governance/proofs/BEM947_claude_role_failure_after_yaml_validation_receipt.json",
-    "governance/proofs/BEM947_claude_run_log_collector_receipt.json",
-    "governance/proofs/BEM947_minimal_claude_retry_dispatch_receipt.json"
+    "governance/proofs/BEM947_minimal_claude_retry_dispatch_receipt.json",
+    "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json",
+    "governance/proofs/BEM947_P2_MINIMAL_CLAUDE_RETRY_PASS.json"
   ],
   "recent_action": {
-    "action": "minimal_claude_retry_dispatched_after_runtime_failure",
-    "bridge_path": ".github/workflows/bem947-live-claude-dispatch-on-push.yml",
-    "bridge_sha": "aa051c64166ce27f85e2befa7a7828b61480d92a",
-    "bridge_sha_type": "git_blob",
-    "bridge_commit": "ae254801c0d57dcdb2f9ad63574349f0d536fae5",
-    "bridge_commit_sha_type": "commit",
-    "dispatch_receipt": "governance/proofs/BEM947_minimal_claude_retry_dispatch_receipt.json",
+    "action": "p2_done_after_minimal_claude_retry_completed_evidence",
     "dispatch_receipt_sha": "1173934c6aca9a4db026164f2e379cbccec9c2ea",
     "dispatch_receipt_sha_type": "git_blob",
-    "dispatch_http_status": 204,
-    "trace_id": "bem947_minimal_claude_retry_20260619T1958Z",
-    "minimal_executed_proof": "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json",
-    "minimal_executed_proof_status": "404_absent",
-    "minimal_report": "governance/reports/bem947_minimal_claude_retry_20260619T1958Z.md",
-    "minimal_report_status": "404_absent",
-    "targeted_log_collector_status": "still_pending_or_no_receipt"
+    "executed_proof_sha": "545a9721513c1af4353835577f3b73d5784ab679",
+    "executed_proof_sha_type": "git_blob",
+    "executed_proof_normalization_commit": "6e373f6e6964780bbc155e8a92b36c4d05c72b50",
+    "executed_proof_normalization_commit_sha_type": "commit",
+    "report_sha": "de19b74ef1c216e65372f04000e67c7e737b555d",
+    "report_sha_type": "git_blob",
+    "reported_commit_sha": "51c9ea711e828cd3f51a826e943a181f348c7713",
+    "reported_commit_sha_type": "commit",
+    "p2_pass_receipt_sha": "e5d61b8939d866cc8e3bafce9cf908c04193a8ef",
+    "p2_pass_receipt_sha_type": "git_blob",
+    "p2_pass_receipt_commit": "671f46974a98307627dd5c45c7e1d98495658f07",
+    "p2_pass_receipt_commit_sha_type": "commit"
   },
   "validation": {
-    "claude_yml_blob": "df512080669e993f5f0128b1e5e2628d0a4ff368",
-    "claude_yml_sha_type": "git_blob",
-    "claude_yml_yaml_validated": true,
-    "bridge_yaml_validated": true,
-    "claude_yml_runtime_reached": true,
-    "previous_claude_workflow_run_id": 27845000228,
-    "previous_claude_workflow_conclusion": "success",
-    "previous_claude_role_outcome": "failure",
-    "minimal_retry_dispatch_succeeded": true,
-    "executed_completed_proof_present": false,
-    "no_pass_claimed": true
+    "p2_minimal_retry_status": "completed",
+    "p2_minimal_retry_blocker": null,
+    "p2_minimal_retry_dispatch_result": "executed",
+    "sha_policy_pending_commit_fixed": true,
+    "executed_completed_proof_present": true,
+    "no_false_pass_claim_before_evidence": true
   },
   "blockers": [
-    "previous_claude_code_action_outcome_failure",
-    "minimal_retry_executed_proof_not_present_yet",
-    "targeted_log_collector_receipt_pending_or_failed",
-    "external_gate_or_minimal_retry_result_required"
+    "final_BEM947_release_not_yet_verified_by_P3"
   ],
   "tasks": [
     {
@@ -70,15 +59,15 @@
       "percent": 50
     },
     {
-      "id": "BEM947-P2-POLL-MINIMAL-CLAUDE-RETRY",
-      "status": "IN_PROGRESS",
-      "percent": 50
+      "id": "BEM947-P2-MINIMAL-CLAUDE-RETRY-DONE",
+      "status": "DONE",
+      "percent": 75
     },
     {
       "id": "BEM947-P3-FINAL-VERIFY",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "percent": 75
     }
   ],
-  "next_action": "poll minimal retry report/proof; if absent or failed, keep BLOCKED and use external gate/operator evidence; never mark PASS without executed/completed proof"
+  "next_action": "run P3 final verification over P0/P1/P2 receipts and only then mark BEM-947 PASS"
 }
