@@ -1,0 +1,51 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-AUTOREPAIR-CLAUDE-YML-INDEXING-OR-RESTORE",
+  "created_at": "2026-06-19T15:30:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "actions": [
+    {
+      "action": "role_orchestrator_repair_attempted_and_restored",
+      "path": ".github/workflows/role-orchestrator.yml",
+      "repair_blob_sha": "bcce6e799082c12cfe4abc6eb756c3631b9b7902",
+      "repair_blob_sha_type": "git_blob",
+      "repair_commit": "2785369286272a2aade8cb0d75bb222dc9f6cff2",
+      "repair_commit_sha_type": "commit",
+      "restored_blob_sha": "5625a4e1996129e695834a7a24a1ae0d2ef92d61",
+      "restored_blob_sha_type": "git_blob",
+      "restore_commit": "922a9791f5547c738c74aa5f7f625383499e5e7c",
+      "restore_commit_sha_type": "commit"
+    },
+    {
+      "action": "claude_yml_production_compatible_default_dispatch_installed",
+      "path": ".github/workflows/claude.yml",
+      "blob_sha": "382a3b31b1773009cf8119519070d02a8f2f80ba",
+      "sha_type": "git_blob",
+      "commit": "dd500eebba5731212bed759da26a546f39992a17",
+      "commit_sha_type": "commit"
+    },
+    {
+      "action": "claude_yml_dispatch_retried",
+      "result": "422 workflow does not have workflow_dispatch trigger"
+    }
+  ],
+  "checks": {
+    "role_orchestrator_restored_after_test": true,
+    "claude_yml_has_workflow_dispatch_in_file": true,
+    "claude_yml_defaults_installed": true,
+    "dispatch_422_still_present": true,
+    "no_false_executed_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "github_actions_workflow_dispatch_422_no_trigger_available_after_compatible_repair",
+    "executed_completed_proof_not_present"
+  ],
+  "next_task": "BEM947-P2-TELEGRAM_GATE_OR_EXTERNAL_GATE",
+  "non_claim": "BEM-947 P2 remains active; no PASS until executed/completed evidence exists"
+}
