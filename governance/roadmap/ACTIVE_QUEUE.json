@@ -1,25 +1,42 @@
 {
   "version": 1,
-  "updated_at": "2026-06-18T19:12:00Z",
+  "updated_at": "2026-06-19T03:20:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM939-P0-STUB-INVENTORY",
-  "system_status": "BEM939_IN_PROGRESS",
+  "current_task": "BEM942-P0-STUB-INVENTORY-CONTINUE",
+  "system_status": "BEM942_IN_PROGRESS",
   "release_status": "IN_PROGRESS",
-  "protocol": "BEM-939",
-  "source": "governance/protocols/BEM939_REMAINING_RUNTIME_STUB_ERADICATION.md",
+  "protocol": "BEM-942",
+  "source": "governance/protocols/BEM942_PROVIDER_FAILOVER_RUNNER_ALIGNMENT.md",
   "completed_summary": {
     "tasks_done": 0,
     "tasks_total": 4,
     "percent": 0,
     "proofs": []
   },
+  "previous_completed": [
+    {
+      "protocol": "BEM-939",
+      "receipt": "governance/proofs/BEM939_FINAL_VERIFICATION_PASS.json",
+      "percent": 100
+    },
+    {
+      "protocol": "BEM-940",
+      "receipt": "governance/proofs/BEM940_FINAL_VERIFICATION_PASS.json",
+      "percent": 100
+    },
+    {
+      "protocol": "BEM-941",
+      "receipt": "governance/proofs/BEM941_FINAL_VERIFICATION_PASS.json",
+      "percent": 100
+    }
+  ],
   "tasks": [
     {
-      "id": "BEM939-P0-STUB-INVENTORY",
-      "title": "Build fresh inventory of remaining stub runners",
+      "id": "BEM942-P0-STUB-INVENTORY-CONTINUE",
+      "title": "Confirm provider failover runner state and target",
       "status": "IN_PROGRESS",
       "priority": 1,
-      "started_at": "2026-06-18T19:12:00Z",
+      "started_at": "2026-06-19T03:20:00Z",
       "stage_progress": {
         "tasks_done": 0,
         "tasks_total": 4,
@@ -27,8 +44,8 @@
       }
     },
     {
-      "id": "BEM939-P1-ROLE-REPORT-WRITER",
-      "title": "Implement role_report_writer.py runtime if still stub",
+      "id": "BEM942-P1-FAILOVER-RUNNER-ALIGNMENT",
+      "title": "Align provider_failover_runner.py with provider activation/status receipts",
       "status": "PENDING",
       "priority": 2,
       "stage_progress": {
@@ -38,8 +55,8 @@
       }
     },
     {
-      "id": "BEM939-P2-EVENT-OBJECT-INTEGRATION",
-      "title": "Connect object events, role reports, and execution log",
+      "id": "BEM942-P2-FAILOVER-ACTIVATION-E2E",
+      "title": "Materialize provider activation to failover decision smoke evidence",
       "status": "PENDING",
       "priority": 3,
       "stage_progress": {
@@ -49,8 +66,8 @@
       }
     },
     {
-      "id": "BEM939-P3-FINAL-VERIFY",
-      "title": "Finalize and verify BEM-939 roadmap",
+      "id": "BEM942-P3-FINAL-VERIFY",
+      "title": "Finalize and verify BEM-942 roadmap",
       "status": "PENDING",
       "priority": 4,
       "stage_progress": {
@@ -60,10 +77,5 @@
       }
     }
   ],
-  "previous_completed": {
-    "protocol": "BEM-938",
-    "receipt": "governance/proofs/BEM938_FINAL_VERIFICATION_PASS.json",
-    "percent": 100
-  },
-  "next_action": "audit remaining stubs and write BEM939 stub inventory receipt"
+  "next_action": "verify provider_failover_runner.py alignment and write BEM942 P0 receipt"
 }
