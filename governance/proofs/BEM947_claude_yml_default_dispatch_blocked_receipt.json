@@ -1,0 +1,34 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-AUTOREPAIR-CLAUDE-YML-DEFAULT",
+  "created_at": "2026-06-19T15:02:00Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "attempt": {
+    "path": ".github/workflows/claude.yml",
+    "repair_scope": "temporary default BEM-947 executor workflow",
+    "old_sha": "9d81bd3263f23b13533d5df4990ad328da8927dd",
+    "old_sha_type": "git_blob",
+    "new_sha": "10e26fdbc5c6c9e0e4a93d60f8e44de929b6768c",
+    "new_sha_type": "git_blob",
+    "commit": "eb00f5aeaec41e72c4202813df9a986889fb0294",
+    "commit_sha_type": "commit",
+    "dispatch_result": "422 workflow does not have workflow_dispatch trigger"
+  },
+  "checks": {
+    "claude_yml_default_repair_committed": true,
+    "dispatch_attempted": true,
+    "dispatch_blocker_recorded": true,
+    "no_false_executed_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "github_actions_workflow_dispatch_422_no_trigger_available",
+    "executed_completed_proof_not_present"
+  ],
+  "next_task": "BEM947-P2-AUTOREPAIR-CLAUDE-YML-INDEXING-OR-RESTORE"
+}
