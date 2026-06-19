@@ -1,0 +1,35 @@
+{
+  "status": "BLOCKED",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RUN",
+  "created_at": "2026-06-19T06:25:00Z",
+  "trace_id": "bem947_object_dispatch_27809252833",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "attempt": {
+    "workflow_dispatch": "DISPATCHED",
+    "workflow_http_status": 204,
+    "report_path": "governance/reports/bem947_object_dispatch_27809252833.md",
+    "report_sha": "c369c096f5f0b01623d2aa11a09458d33d166bfc",
+    "report_sha_type": "git_blob",
+    "report_status": "failed",
+    "report_outcome": "failure",
+    "blocker": "claude_role outcome=failure"
+  },
+  "checks": {
+    "dispatch_request_exists": true,
+    "report_exists": true,
+    "executed_or_completed_proof_absent": true,
+    "no_false_pass_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "claude_role_outcome_failure",
+    "executed_completed_proof_not_present"
+  ],
+  "next_task": "BEM947-P2-RETRY-LIVE-OBJECT-DISPATCH",
+  "autorepair_plan": "redispatch a reduced scope claude.yml task and collect a strict completed proof"
+ }
