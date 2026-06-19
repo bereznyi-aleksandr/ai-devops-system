@@ -1,0 +1,26 @@
+{
+  "status": "DISPATCHED",
+  "protocol": "BEM-947",
+  "task_id": "BEM947-P2-LIVE-GATE-MAILBOX-REQUEST",
+  "created_at": "2026-06-19T19:09:45Z",
+  "stage": {
+    "tasks_done": 2,
+    "tasks_total": 4,
+    "percent": 50
+  },
+  "request_path": "governance/audit/mailbox/to_claude/BEM947_LIVE_GATE_AFTER_YAML_VALIDATION_REQUEST.md",
+  "request_sha": "47db37e06c4d23d33867811ab63ed6e788584872",
+  "request_sha_type": "git_blob",
+  "commit": "d1837d306d3fa3034872970321724cc8c0ec4297",
+  "commit_sha_type": "commit",
+  "checks": {
+    "mailbox_request_written": true,
+    "yaml_validation_receipt_present": true,
+    "no_executed_proof_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "awaiting_live_gate_response_or_executed_proof"
+  ],
+  "next_task": "BEM947-P2-POLL-LIVE-GATE-RESULTS"
+}
