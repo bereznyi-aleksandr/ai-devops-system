@@ -1,0 +1,34 @@
+{
+  "status": "executing",
+  "protocol": "BEM-948",
+  "trace_id": "bem948_p0_live_object_e2e_observed_20260620T0455Z",
+  "cycle_id": "dispatch_bem948_p0_live_object_e2e_observed_20260620T0455Z",
+  "provider_selected": "claude_code",
+  "target_workflow_id": "claude.yml",
+  "dispatch_result": "executed",
+  "blocker": null,
+  "created_at": "2026-06-20T04:55:00Z",
+  "files_created": [
+    {
+      "path": "governance/reports/bem948_p0_live_object_e2e_observed_20260620T0455Z.md",
+      "sha_type": "sha_pending_commit"
+    },
+    {
+      "path": "governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_observed_20260620T0455Z.json",
+      "sha_type": "sha_pending_commit"
+    }
+  ],
+  "commit_sha": null,
+  "commit_sha_type": "sha_pending_commit",
+  "checks": {
+    "role_sequence_read": true,
+    "routing_read": true,
+    "provider_status_read": true,
+    "role_cycle_state_read": true,
+    "executor_is_claude": true,
+    "no_workflows_modified": true,
+    "no_secrets_written": true,
+    "exactly_two_files_created": true,
+    "sha_type_explicit": true
+  }
+}
