@@ -1,1 +1,106 @@
-{"version":25,"updated_at":"2026-06-20T13:13:20Z","queue_state":"ACTIVE","current_task":"BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST","system_state":"P2_DONE_P3_ACTIVE","release_status":"BLOCKED_BUILDING","protocol":"BEM-948","progress":{"tasks_done":3,"tasks_total":5,"percent":60},"retry_policy":{"max_autonomous_attempts_per_task":3,"prior_blocker_history":[{"task_id":"BEM948-P1-AGENT-CONTEXT-SYNC","blocker":"retry_ceiling_reached_operator_decision_required","attempts":3,"status":"BLOCKED_OPERATOR_ASSISTANCE","resolution":"operator duplicate-context diagnosis resolved"}],"active_blocker":"p3_provider_failover_not_yet_verified","current_task_attempts":0},"tasks":[{"id":"BEM948-P0-REAL-DISPATCH-BRIDGE","status":"DONE","percent":20,"receipt":"governance/proofs/BEM948_p0_final_verification_receipt.json","receipt_blob_sha":"bc1ce9719d872d840281c47b6c056fc02c83fb5a","receipt_blob_sha_type":"git_blob","done_commit_sha":"d06ee9aa2265ebe0cec579f42335bad8c3026541","done_commit_sha_type":"commit"},{"id":"BEM948-P1-AGENT-CONTEXT-SYNC","status":"DONE","percent":40,"prior_status":"BLOCKED_OPERATOR_ASSISTANCE","consolidation_receipt":"governance/proofs/BEM948_p1_canonical_context_consolidation_receipt.json","consolidation_receipt_blob_sha":"e6d2253bc1ccc8260d8e099eae6d421aca21e7ec","consolidation_receipt_blob_sha_type":"git_blob","receipt":"governance/proofs/BEM948_p1_final_verification_receipt","receipt_blob_sha":"4474b042a8d3ae3e5ea55ccbac55bd12f6c27b96","receipt_blob_sha_type":"git_blob","done_commit_sha":"046300603df0ee82534319a12ede564722094d1f","done_commit_sha_type":"commit"},{"id":"BEM948-P2-RULE-ENFORCEMENT-VERIFICATION","status":"DONE","percent":60,"receipt":"governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json","receipt_blob_sha":"04a1e0d7425980721fd571e261f0e1fdfefd9320","receipt_blob_sha_type":"git_blob","done_commit_sha":"e8485ec984c3725b7f3097ce6acb0e7117daf6ec","done_commit_sha_type":"commit","runner_blob_sha":"e191e706b1983c95894f20cdff1127f0bb111e24","runner_blob_sha_type":"git_blob","workflow_run_id":"27872147604","workflow_terminal":"FAILURE_RECEIPT_PERSISTENCE_RECONCILED","scope":"R011,R012 ENFORCED; R004-R010 NOT_VERIFIED"},{"id":"BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST","status":"IN_PROGRESS","percent":60,"blocker":"p3_provider_failover_not_yet_verified"},{"id":"BEM948-P4-FINAL-VERIFY","status":"PENDING","percent":80}],"recent_action":{"action":"P2 receipt reconciled","receipt_blob_sha":"04a1e0d7425980721fd571e261f0e1fdfefd9320","receipt_blob_sha_type":"git_blob","receipt_commit_sha":"e8485ec984c3725b7f3097ce6acb0e7117daf6ec","receipt_commit_sha_type":"commit","workflow_run_id":"27872147604","workflow_terminal":"FAILURE at receipt persistence; enforcement step preceded it"},"blockers":["p3_provider_failover_not_yet_verified","p4_final_verification_not_yet_verified"],"next_action":"Execute P3 through dispatch_executor.py; record live, mechanical fallback, or missing-secret result.","sha_policy":{"sha_type_required":true,"allowed":["git_blob","commit","sha256_content"]}}
+{
+  "version": 26,
+  "updated_at": "2026-06-20T13:22:55Z",
+  "queue_state": "ACTIVE",
+  "current_task": "BEM948-P4-FINAL-VERIFY",
+  "system_state": "P3_MECHANICAL_FALLBACK_VALIDATED_P4_ACTIVE",
+  "release_status": "BLOCKED_BUILDING",
+  "protocol": "BEM-948",
+  "progress": {
+    "tasks_done": 4,
+    "tasks_total": 5,
+    "percent": 80
+  },
+  "retry_policy": {
+    "max_autonomous_attempts_per_task": 3,
+    "rule": "Count outcome-changing attempts per task_id plus named blocker. After three unsuccessful attempts for the same blocker, stop and escalate; preserve prior history.",
+    "prior_blocker_history": [
+      {
+        "task_id": "BEM948-P1-AGENT-CONTEXT-SYNC",
+        "blocker": "retry_ceiling_reached_operator_decision_required",
+        "attempts": 3,
+        "status": "BLOCKED_OPERATOR_ASSISTANCE",
+        "resolution": "operator duplicate-context diagnosis resolved by root canonicalization"
+      }
+    ],
+    "active_blocker": "p4_final_verification_not_yet_completed",
+    "current_task_attempts": 0
+  },
+  "tasks": [
+    {
+      "id": "BEM948-P0-REAL-DISPATCH-BRIDGE",
+      "status": "DONE",
+      "percent": 20,
+      "receipt": "governance/proofs/BEM948_p0_final_verification_receipt.json",
+      "receipt_blob_sha": "bc1ce9719d872d840281c47b6c056fc02c83fb5a",
+      "receipt_blob_sha_type": "git_blob",
+      "done_commit_sha": "d06ee9aa2265ebe0cec579f42335bad8c3026541",
+      "done_commit_sha_type": "commit"
+    },
+    {
+      "id": "BEM948-P1-AGENT-CONTEXT-SYNC",
+      "status": "DONE",
+      "percent": 40,
+      "receipt": "governance/proofs/BEM948_p1_final_verification_receipt.json",
+      "receipt_blob_sha": "4474b042a8d3ae3e5ea55ccbac55bd12f6c27b96",
+      "receipt_blob_sha_type": "git_blob",
+      "done_commit_sha": "046300603df0ee82534319a12ede564722094d1f",
+      "done_commit_sha_type": "commit"
+    },
+    {
+      "id": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
+      "status": "DONE",
+      "percent": 60,
+      "receipt": "governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json",
+      "receipt_blob_sha": "04a1e0d7425980721fd571e261f0e1fdfefd9320",
+      "receipt_blob_sha_type": "git_blob",
+      "done_commit_sha": "e8485ec984c3725b7f3097ce6acb0e7117daf6ec",
+      "done_commit_sha_type": "commit",
+      "scope": "RULE-011 and RULE-012 enforced; RULE-004 through RULE-010 explicitly NOT_VERIFIED"
+    },
+    {
+      "id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
+      "status": "DONE",
+      "percent": 80,
+      "receipt": "governance/proofs/BEM948_p3_final_failover_verification_receipt.json",
+      "receipt_blob_sha": "1b09d522140aff66041392788ba65791bb0ca2dc",
+      "receipt_blob_sha_type": "git_blob",
+      "done_commit_sha": "a88e1db8c15f9f08da740c6cabf5fd1746c2df95",
+      "done_commit_sha_type": "commit",
+      "trace_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
+      "outcome": "MECHANICAL_FALLBACK_VALIDATED",
+      "terminal_provider_receipt": "governance/proofs/BEM948_p3_bem948_p3_gpt_codex_cloud_failover_20260620T1322Z_gpt_codex_cloud_receipt.json",
+      "terminal_provider_receipt_blob_sha": "a966d760b770544ee6996b05105c28402c533e56",
+      "terminal_provider_receipt_blob_sha_type": "git_blob",
+      "non_claim": "No OpenAI Responses API execution claimed; terminal receipt records llm_available=false."
+    },
+    {
+      "id": "BEM948-P4-FINAL-VERIFY",
+      "status": "IN_PROGRESS",
+      "percent": 80,
+      "blocker": "p4_final_verification_not_yet_completed"
+    }
+  ],
+  "recent_action": {
+    "action": "P3 trace-bound gpt_codex_cloud failover completed as mechanical fallback",
+    "receipt": "governance/proofs/BEM948_p3_final_failover_verification_receipt.json",
+    "receipt_blob_sha": "1b09d522140aff66041392788ba65791bb0ca2dc",
+    "receipt_blob_sha_type": "git_blob",
+    "receipt_commit_sha": "a88e1db8c15f9f08da740c6cabf5fd1746c2df95",
+    "receipt_commit_sha_type": "commit",
+    "outcome": "MECHANICAL_FALLBACK_VALIDATED",
+    "truth_note": "executor HTTP 204 was recorded only as DISPATCHED; terminal provider receipt determined the outcome."
+  },
+  "blockers": [
+    "p4_final_verification_not_yet_completed"
+  ],
+  "next_action": "Execute BEM948-P4-FINAL-VERIFY: verify P0-P3 receipts and canonical context; preserve P2 scope and P3 mechanical-fallback limitation.",
+  "sha_policy": {
+    "sha_type_required": true,
+    "allowed": [
+      "git_blob",
+      "commit",
+      "sha256_content"
+    ]
+  }
+}
