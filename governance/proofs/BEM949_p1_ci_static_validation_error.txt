@@ -1,24 +1,4 @@
 Traceback (most recent call last):
-  File "/home/runner/work/ai-devops-system/ai-devops-system/scripts/bem949_ci_stabilize.py", line 31, in <module>
-    HEREDOC_RE = re.compile(
-                 ^^^^^^^^^^^
-  File "/usr/lib/python3.12/re/__init__.py", line 228, in compile
-    return _compile(pattern, flags)
-           ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/re/__init__.py", line 307, in _compile
-    p = _compiler.compile(pattern, flags)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/re/_compiler.py", line 745, in compile
-    p = _parser.parse(p, flags)
-        ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/re/_parser.py", line 979, in parse
-    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/re/_parser.py", line 460, in _parse_sub
-    itemsappend(_parse(source, state, verbose, nested + 1,
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/re/_parser.py", line 730, in _parse
-    source.checkgroupname(name, 1)
-  File "/usr/lib/python3.12/re/_parser.py", line 310, in checkgroupname
-    raise self.error(msg, len(name) + offset)
-re.error: bad character in group name '<tag>' at position 126
+  File "/home/runner/work/ai-devops-system/ai-devops-system/scripts/bem949_ci_stabilize.py", line 14, in <module>
+    import texwrap
+ModuleNotFoundError: No module named 'texwrap'
