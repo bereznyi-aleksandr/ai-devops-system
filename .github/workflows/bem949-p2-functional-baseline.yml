@@ -18,11 +18,14 @@ jobs:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
 
-      - name: Generate functional before/after baseline
+      - name: Generate functional before-after baseline
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p governance/proofs governance/reports
           python3 scripts/bem949_p2_functional_baseline.py
+          test -s governance/proofs/BEM949_p2_functional_baseline.json
+          test -s governance/reports/BEM949_p2_functional_before_after.md
 
       - name: Commit baseline evidence
         shell: bash
@@ -30,7 +33,9 @@ jobs:
           set -euo pipefail
           git config user.email "bem949-p2@ai-devops-system"
           git config user.name "BEM949 P2 Restore Baseline"
-          git add governance/proofs/BEM949_p2_functional_baseline.json governance/reports/BEM949_p2_functional_before_after.md
+          git add -- \
+            governance/proofs/BEM949_p2_functional_baseline.json \
+            governance/reports/BEM949_p2_functional_before_after.md
           if git diff --cached --quiet; then
             exit 0
           fi
