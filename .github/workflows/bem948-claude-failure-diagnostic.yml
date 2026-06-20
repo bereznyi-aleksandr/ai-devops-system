@@ -1,5 +1,6 @@
 name: BEM-948 Claude Failure Diagnostic
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
