@@ -1,19 +1,19 @@
 {
-  "version": 22,
-  "updated_at": "2026-06-20T10:25:09Z",
+  "version": 23,
+  "updated_at": "2026-06-20T12:58:19Z",
   "queue_state": "IN_PROGRESS",
-  "current_task": "BEM948-P1-AGENT-CONTEXT-SYNC",
-  "system_state": "P1_CANONICAL_CONTEXT_CONSOLIDATED",
+  "current_task": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
+  "system_state": "P1_CONTEXT_SYNC_VERIFIED_P2_IN_PROGRESS",
   "release_status": "BLOCKED_BUILDING",
   "protocol": "BEM-948",
   "progress": {
-    "tasks_done": 1,
+    "tasks_done": 2,
     "tasks_total": 5,
-    "percent": 20
+    "percent": 40
   },
   "retry_policy": {
     "max_autonomous_attempts_per_task": 3,
-    "rule": "Count outcome-changing attempts per task_id plus named blocker. After three unsuccessful attempts for the same blocker, stop and escalate. A new operator instruction or explicitly changed blocker hypothesis may authorize work on a distinct blocker without erasing the prior attempt history.",
+    "rule": "Count outcome-changing attempts per task_id plus named blocker. After three unsuccessful attempts for the same blocker, stop and escalate. A new operator instruction or explicitly changed blocker hypothesis may authorize work on a distinct blocker without erasing prior history.",
     "prior_blocker_history": [
       {
         "task_id": "BEM948-P1-AGENT-CONTEXT-SYNC",
@@ -23,7 +23,7 @@
         "escalated_at": "2026-06-20T10:00:00Z"
       }
     ],
-    "active_blocker": "p1_remaining_acceptance_criteria_not_yet_evidenced",
+    "active_blocker": "p2_rule_enforcement_not_yet_verified",
     "current_task_attempts": 0
   },
   "tasks": [
@@ -33,28 +33,31 @@
       "percent": 20,
       "done_receipt": "governance/proofs/BEM948_p0_final_verification_receipt.json",
       "done_receipt_blob_sha": "bc1ce9719d872d840281c47b6c056fc02c83fb5a",
-      "done_receipt_blob_sha_type": "git_blob",
+      "done_receipt_blo_sha_type": "git_blob",
       "done_commit_sha": "d06ee9aa2265ebe0cec579f42335bad8c3026541",
       "done_commit_sha_type": "commit"
     },
     {
       "id": "BEM948-P1-AGENT-CONTEXT-SYNC",
-      "status": "IN_PROGRESS",
-      "percent": 20,
+      "status": "DONE",
+      "percent": 40,
       "prior_status": "BLOCKED_OPERATOR_ASSISTANCE",
       "prior_blocker": "retry_ceiling_reached_operator_decision_required",
       "resolved_subtask": "canonical_context_path_consolidation",
-      "subtask_receipt": "governance/proofs/BEM948_p1_canonical_context_consolidation_receipt.json",
-      "subtask_receipt_blob_sha": "e6d2253bc1ccc8260d8e099eae6d421aca21e7ec",
-      "subtask_receipt_blob_sha_type": "git_blob",
-      "subtask_receipt_commit_sha": "032a016a166701ba7de13d1b1e8c331539550bfd",
-      "subtask_receipt_commit_sha_type": "commit",
-      "remaining_blocker": "p1_remaining_acceptance_criteria_not_yet_evidenced"
+      "consolidation_receipt": "governance/proofs/BEM948_p1_canonical_context_consolidation_receipt.json",
+      "consolidation_receipt_blob_sha": "e6d2253bc1ccc8260d8e099eae6d421aca21e7ec",
+      "consolidation_receipt_blob_sha_type": "git_blob",
+      "done_receipt": "governance/proofs/BEM948_p1_final_verification_receipt.json",
+      "done_receipt_blob_sha": "4474b042a8d3ae3e5ea55ccbac55bd12f6c27b96",
+      "done_receipt_blob_sha_type": "git_blob",
+      "done_commit_sha": "046300603df0ee82534319a12ede564722094d1f",
+      "done_commit_sha_type": "commit"
     },
     {
       "id": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
-      "status": "PENDING",
-      "percent": 40
+      "status": "IN_PROGRESS",
+      "percent": 40,
+      "blocker": "p2_rule_enforcement_not_yet_verified"
     },
     {
       "id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
@@ -68,21 +71,19 @@
     }
   ],
   "recent_action": {
-    "action": "Canonical context path consolidated under operator-provided duplicate-file diagnosis",
-    "reason": "The former root and governance files were divergent full contexts. The root file is now canonical; the governance file is redirect-only.",
-    "receipt": "governance/proofs/BEM948_p1_canonical_context_consolidation_receipt.json",
-    "receipt_blob_sha": "e6d2253bc1ccc8260d8e099eae6d421aca21e7ec",
+    "action": "P1 canonical context synchronization verified after duplicate-path consolidation",
+    "receipt": "governance/proofs/BEM948_p1_final_verification_receipt.json",
+    "receipt_blob_sha": "4474b042a8d3ae3e5ea55ccbac55bd12f6c27b96",
     "receipt_blob_sha_type": "git_blob",
-    "receipt_commit_sha": "032a016a166701ba7de13d1b1e8c331539550bfd",
+    "receipt_commit_sha": "046300603df0ee82534319a12ede564722094d1f",
     "receipt_commit_sha_type": "commit"
   },
   "blockers": [
-    "p1_remaining_acceptance_criteria_not_yet_evidenced",
     "p2_rule_enforcement_not_yet_verified",
     "p3_failover_not_yet_verified",
     "p4_final_verification_not_yet_verified"
   ],
-  "next_action": "Continue BEM948-P1-AGENT-CONTEXT-SYNC against its remaining acceptance criteria without reusing the retired duplicate-context blocker.",
+  "next_action": "Execute BEM948-P2-RULE-ENFORCEMENT-VERIFICATION: establish a code-backed enforcement inventory for RULE-004 through RULE-012 and add real enforcement runners for RULE-011 and RULE-012 when absent.",
   "sha_policy": {
     "sha_type_required": true,
     "allowed": [
