@@ -1,0 +1,44 @@
+name: BEM-948 P0 Reconcile Evidence
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'governance/runners/bem948_p0_reconcile.py'
+      - '.github/workflows/bem948-p0-reconcile.yml'
+      - 'governance/state/bem948_p0_reconcile_trigger.json'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Reconcile BEM-948 P0 evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile governance/runners/bem948_p0_reconcile.py
+          python3 governance/runners/bem948_p0_reconcile.py
+
+      - name: Commit reconciliation receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Reconciler"
+          git config user.email "bem948-reconciler@ai-devops-system"
+          git add governance/proofs/BEM948_p0_reconciliation_receipt.json governance/reports/bem948_p0_reconciliation.md
+          if git diff --cached --quiet; then
+            echo "No reconciliation evidence changes"
+          else
+            git commit -m "BEM-948: reconcile P0 proof and report evidence"
+            git push
+          fi
