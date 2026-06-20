@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   record:
@@ -20,54 +21,71 @@ jobs:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           fetch-depth: 0
 
-      - name: Record workflow_run conclusion
+      - name: Collect target workflow job diagnostics
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          script: |
+            const fs = require("fs");
+            const runId = context.payload.workflow_run.id;
+            const { data: jobResponse } = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId,
+              per_page: 100,
+            });
+            const conclusion = context.payload.workflow_run.conclusion || "unknown";
+            const jobs = jobResponse.jobs.map(job => ({
+              name: job.name,
+              status: job.status,
+              conclusion: job.conclusion,
+              started_at: job.started_at,
+              completed_at: job.completed_at,
+              steps: job.steps.map(step => ({
+                number: step.number,
+                name: step.name,
+                status: step.status,
+                conclusion: step.conclusion,
+              })),
+            }));
+            const payload = {
+              schema_version: 1,
+              protocol: "BEM-949",
+              task_id: "BEM949-P1-CI-STABILIZE",
+              status: conclusion === "success" ? "PASS" : "FAIL",
+              workflow: context.payload.workflow_run.name,
+              run_id: String(runId),
+              run_id_type: "github_actions_run",
+              run_attempt: String(context.payload.workflow_run_attempt || ""),
+              run_conclusion: conclusion,
+              run_conclusion_type: "github_actions_conclusion",
+              head_sha: context.payload.workflow_run.head_sha || "",
+              head_sha_type: "commit",
+              created_at: new Date().toISOString(),
+              jobs,
+              checks: {
+                conclusion_observed_from_workflow_run_event: true,
+                green_dispatch_proven: conclusion === "success",
+                job_diagnostics_collected: true,
+              },
+              non_claim: "A non-successful run remains failure; its step conclusions are preserved for autorepair.",
+            };
+            fs.writeFileSync(
+              "/tmp/BEM949_p1_ci_run_observer.json",
+              JSON.stringify(payload, null, 2) + "\n",
+              "utf8"
+            );
+
+      - name: Commit run observation
         shell: bash
-        env:
-          RUN_ID: ${{ github.event.workflow_run.id }}
-          RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
-          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
-          RUN_CONCLUSION_TYPE: github_actions_conclusion
-          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          RUN_WORKFLOW: ${{ github.event.workflow_run.name }}
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          conclusion = os.environ.get("RUN_CONCLUSION", "unknown")
-          payload = {
-              "schema_version": 1,
-              "protocol": "BEM-949",
-              "task_id": "BEM949-P1-CI-STABILIZE",
-              "status": "PASS" if conclusion == "success" else "FAIL",
-              "workflow": os.environ.get("RUN_WORKFLOW", ""),
-              "run_id": os.environ.get("RUN_ID", ""),
-              "run_id_type": "github_actions_run",
-              "run_attempt": os.environ.get("RUN_ATTEMPT", ""),
-              "run_conclusion": conclusion,
-              "run_conclusion_type": os.environ.get("RUN_CONCLUSION_TYPE", ""),
-              "head_sha": os.environ.get("RUN_HEAD_SHA", ""),
-              "head_sha_type": "commit",
-              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "checks": {
-                  "conclusion_observed_from_workflow_run_event": True,
-                  "green_dispatch_proven": conclusion == "success",
-              },
-              "non_claim": "A failed or neutral run is preserved as failure, not converted into a static-pass claim.",
-          }
-          Path("governance/proofs/BEM949_p1_ci_run_observer.json").write_text(
-              json.dumps(payload, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          PY
+          cp /tmp/BEM949_p1_ci_run_observer.json governance/proofs/BEM949_p1_ci_run_observer.json
           git config user.email "bem949-ci-observer@ai-devops-system"
           git config user.name "BEM949 CI Run Observer"
           git add governance/proofs/BEM949_p1_ci_run_observer.json
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "BEM949 P1: record static-validation run conclusion"
+          git commit -m "BEM949 P1: record static-validation run diagnostics"
           git push || (git pull --rebase origin main && git push)
