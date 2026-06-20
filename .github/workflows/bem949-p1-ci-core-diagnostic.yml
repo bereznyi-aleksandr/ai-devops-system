@@ -1,0 +1,38 @@
+name: BEM949 P1 Core Workflow Diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          fetch-depth: 0
+
+      - name: Generate core workflow diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/bem949_ci_focus.py
+
+      - name: Commit core workflow diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-ci@ai-devops-system"
+          git config user.name "BEM949 CI Stabilizer"
+          git add governance/proofs/BEM949_p1_ci_core_diagnostic.json governance/reports/BEM949_p1_core_workflow_diagnostics.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P1: diagnose core workflows"
+          git push || (git pull --rebase origin main && git push)
