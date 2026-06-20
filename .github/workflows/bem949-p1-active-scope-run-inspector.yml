@@ -1,0 +1,93 @@
+name: BEM949 P1 Active Scope Run Inspector
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Collect recent target runs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          script: |
+            const fs = require("fs");
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "bem949-p1-active-scope-validation.yml",
+              per_page: 10,
+            });
+            const runs = [];
+            for (const run of data.workflow_runs) {
+              const { data: jobsData } = await github.rest.actions.listJobsForWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id,
+                per_page: 100,
+              });
+              runs.push({
+                run_id: String(run.id),
+                run_id_type: "github_actions_run",
+                head_sha: run.head_sha,
+                head_sha_type: "commit",
+                status: run.status,
+                conclusion: run.conclusion,
+                event: run.event,
+                attempt: run.run_attempt,
+                created_at: run.created_at,
+                updated_at: run.updated_at,
+                jobs: jobsData.jobs.map(node => ({
+                  name: node.name,
+                  status: node.status,
+                  conclusion: node.conclusion,
+                  steps: node.steps.map(step => ({
+                    name: step.name,
+                    status: step.status,
+                    conclusion: step.conclusion,
+                  })),
+                })),
+              });
+            }
+            const payload = {
+              schema_version: 1,
+              protocol: "BEM-949",
+              task_id: "BEM949-P1-CI-STABILIZE",
+              receipt_id: "BEM949_p1_active_scope_run_inspection",
+              created_at: new Date().toISOString(),
+              target_workflow: ".github/workflows/bem949-p1-active-scope-validation.yml",
+              target_workflow_type: "workflow_path",
+              runs,
+              checks: {
+                workflow_runs_queried_via_GitHub Actions API: true,
+                run_level_conclusions_preserved: true,
+              },
+            };
+            fs.writeFileSync("/tmp/BEM949_p1_active_scope_run_inspection.json", JSON.stringify(payload, null, 2) + "\n", "utf8");
+
+      - name: Commit run inspection
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/BEM949_p1_active_scope_run_inspection.json governance/proofs/BEM949_p1_active_scope_run_inspection.json
+          git config user.email "bem949-ci-inspector@ai-devops-system"
+          git config user.name "BEM949 CI Run Inspector"
+          git add governance/proofs/BEM949_p1_active_scope_run_inspection.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P1: inspect active-scope validation runs"
+          git push || (git pull --rebase origin main && git push)
