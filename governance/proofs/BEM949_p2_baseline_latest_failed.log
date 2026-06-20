@@ -1,0 +1,9 @@
+baseline	Generate functional before-after baseline	﻿2026-06-20T17:48:09.5370486Z ##[group]Run set -euo pipefail
+baseline	Generate functional before-after baseline	2026-06-20T17:48:09.5371000Z ^[[36;1mset -euo pipefail^[[0m
+baseline	Generate functional before-after baseline	2026-06-20T17:48:09.5371453Z ^[[36;1mmkdir -p governance/proofs governance/reports^[[0m
+baseline	Generate functional before-after baseline	2026-06-20T17:48:09.5371997Z ^[[36;1mpython3 scripts/bem949_p2_functional_baseline.py^[[0m
+baseline	Generate functional before-after baseline	2026-06-20T17:48:09.5372600Z ^[[36;1mtest -s governance/proofs/BEM949_p2_functional_baseline.json^[[0m
+baseline	Generate functional before-after baseline	2026-06-20T17:48:09.5373224Z ^[[36;1mtest -s governance/reports/BEM949_p2_functional_before_after.md^[[0m
+baseline	Generate functional before-after baseline	2026-06-20T17:48:09.5539468Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+baseline	Generate functional before-after baseline	2026-06-20T17:48:09.5540048Z ##[endgroup]
+baseline	Generate functional before-after baseline	2026-06-20T17:48:09.8044879Z ##[error]Process completed with exit code 1.
