@@ -1,0 +1,37 @@
+name: BEM949 CI Execution Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - governance/state/bem949_ci_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Record trace-bound Actions execution probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          printf '%s\n' '{"schema_version":1,"protocol":"BEM-949","task_id":"BEM949-P1-CI-STABILIZE","status":"COMPLETED","scope":"push-backed GitHub Actions execution probe only; not static-validation or green-all-CI claim","trigger_path":"governance/state/bem949_ci_trigger.json","run_id":"${{ github.run_id }}","run_id_type":"github_actions_run"}' > governance/proofs/BEM949_p1_push_execution_probe.json
+          git config user.email "bem949-ci@ai-devops-system"
+          git config user.name "BEM949 CI Stabilizer"
+          git add governance/proofs/BEM949_p1_push_execution_probe.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P1: record GitHub Actions execution probe"
+          git push
