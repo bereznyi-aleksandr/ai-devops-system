@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P0-DISPATCH-EXECUTOR-RUNTIME-REPAIR",
+  "created_at": "2026-06-20T09:47:20Z",
+  "repair_scope": "replaced faulty dispatcher implementation after verified NameError and workflow-target resolution defects",
+  "repaired_runner": "governance/runners/dispatch_executor.py",
+  "runner_blob_sha": "a7c1787593d5a1cd2d823b612730e465583f32ac",
+  "runner_blob_sha_type": "git_blob",
+  "runner_commit_sha": "d57ba05cdef28c0b7ecf4b0ad469720e13a98f2f",
+  "runner_commit_sha_type": "commit",
+  "checks": {
+    "local_python_compile_passed": true,
+    "trace_id_required": true,
+    "trace_scope_enforced": true,
+    "historical_replay_prevented": true,
+    "target_workflow_mismatch_fail_closed": true,
+    "http_204_means_dispatched_not_completed": true,
+    "no_completed_claim": true
+  },
+  "known_prior_blockers": [
+    "NameError: name 'recipht' is not defined",
+    "target_workflow_resolution_defect"
+  ],
+  "next_task": "BEM948-P0-BINDING-MODE-LIVE-OBJECT-E2E"
+}
