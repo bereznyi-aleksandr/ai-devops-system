@@ -1,0 +1,30 @@
+name: BEM-948 Rule Enforcement
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax and runtime enforcement
+        run: |
+          python3 -m py_compile governance/runners/bem948_rule_enforcement_runner.py
+          python3 governance/runners/bem948_rule_enforcement_runner.py \
+            --out governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json \
+            --strict
+          python3 governance/runners/bem948_rule_enforcement_runner.py \
+            --verify governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json
+      - name: Commit runtime receipt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM-948 P2: record rule enforcement runtime receipt"
+            git push
+          fi
