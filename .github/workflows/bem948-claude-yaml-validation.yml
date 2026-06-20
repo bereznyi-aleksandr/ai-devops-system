@@ -1,0 +1,68 @@
+name: BEM-948 Claude YAML Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-claude-yaml-validation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          fetch-depth: 1
+      - name: Validate Claude workflow and embedded Python
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/claude.yml')"
+          python3 - <<'PY'
+          import hashlib,json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          path=Path(".github/workflows/claude.yml")
+          data=path.read_bytes()
+          text=data.decode("utf-8")
+          assert text.count('--max-turns 24 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"')==1
+          lines=text.splitlines()
+          blocks=[]; cap=False; body=[]
+          for line in lines:
+              if not cap and line.startswith("          python3 - <<'PY'"):
+                  cap=True;body=[];continue
+              if cap and line=="          PY":
+                  blocks.append("\n".join(x[10:] if x.startswith("          ") else x for x in body))
+                  cap=False;continue
+              if cap:body.append(line)
+          assert not cap and blocks, "heredoc_scan_failed"
+          for i,b in enumerate(blocks,1):compile(b,f"claude.yml:block:{i}","exec")
+          blob=hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()
+          q=Path("governance/proofs/BEM948_claude_yaml_validation_receipt.json")
+          q.parent.mkdir(parents=True,exist_ok=True)
+          q.write_text(json.dumps({
+            "status":"PASS","protocol":"BEM-948",
+            "task_id":"BEM948-P0-VALIDATE-CLAUDE-YAML-AFTER-TURN-BUDGET-REPAIR",
+            "created_at":datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "claude_yml_blob_sha":blob,"claude_yml_blob_sha_type":"git_blob",
+            "checks":{"yaml_valid":True,"default_turn_budget_24_present":True,"embedded_python_blocks_compiled":len(blocks),"secret_values_read_or_logged":False,"sha_type_explicit":True},
+            "next_task":"BEM948-P0-LIVE-OBJECT-E2E-RETRY"
+          },indent=2)+"\n")
+          Path("governance/reports/bem948_p0_claude_yaml_validation.md").write_text(
+            f"# BEM-948 P0 Claude workflow validation\n\nYAML valid; embedded Python blocks compiled: {len(blocks)}.\n",
+            encoding="utf-8")
+          PY
+      - name: Commit validation evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Validator"
+          git config user.email "bem948-validator@ai-devops-system"
+          git add governance/proofs/BEM948_claude_yaml_validation_receipt.json governance/reports/bem948_p0_claude_yaml_validation.md
+          git diff --cached --quiet || (git commit -m "BEM-948: validate Claude YAML after turn-budget repair" && git push)
