@@ -6,6 +6,7 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   "trace_id": "bem948_p0_binding_repair_20260620T0935Z",
   "objective": "Repair and re-verify the live object runtime binding between WRK-C1 and the Claude provider executor under BEM-948 P0: resolve residual merge-conflict markers in governance proof files, produce a clean idempotent transport record for the new trace, and confirm idempotent Telegram routing.",
 =======
@@ -132,6 +133,28 @@
   "risks": [
     "Concurrent passport writes from a parallel claude.yml run can overwrite the runtime_binding block; canonical binding authority must remain the per-object snapshot in governance/proofs/bem934_objects_bound/WRK_runtime_binding.json, not the passport field.",
     "Telegram idempotency failure (missing trace_id guard) allows duplicate routing records on retry, producing false evidence of multiple execution cycles for a single trace."
+>>>>>>> Stashed changes
+=======
+  "trace_id": "bem948_p0_binding_runtime_probe_20260620T0945Z",
+  "objective": "Verify that the WRK object's WRK-C1 contour (Первый внутренний контур работника) is live-bound to the Claude runtime provider — confirmed by objects_registry_v2.json WRK.runtime_binding.status=BOUND, provider=claude, and provider_status.json claude.last_outcome=success — and record idempotent Telegram routing for trace bem948_p0_binding_runtime_probe_20260620T0945Z exactly once in governance/transport/results.jsonl.",
+  "assumptions": [
+    "WRK object is BOUND per objects_registry_v2.json (bound_at=2026-06-18T10:09:30Z); runtime_binding.provider=claude, workflow=.github/workflows/claude.yml.",
+    "governance/state/provider_status.json confirms claude.last_outcome=success at 2026-06-20T09:30:48Z; governance/state/routing.json confirms executor.active=claude.",
+    "WRK passport field runtime_provider=codex_local is a stale pre-binding value; the authoritative provider is set by objects_registry_v2.json runtime_binding and proof artifacts, not the passport field (per registry notes and BEM-934 canonicalization).",
+    "WRK-C1 is the primary executor contour with roles [ANALYST, AUDITOR, EXECUTOR] and managed_channel=governance/channels/WRK-C1.jsonl. The channel file does not yet exist; no contour-level writes are pending for this probe."
+  ],
+  "steps": [
+    "Verify WRK runtime binding proof at governance/proofs/bem934_objects_bound/WRK_runtime_binding.json: assert status=PASS, provider=claude, trace=bem934_objects_bound_repair_27751086692_wrk, and execution_commit_sha=b907bccbb4b18dbd00751f9f1c18ae69ccbc1fa1.",
+    "Assert Claude provider health from governance/state/provider_status.json (claude.last_outcome=success, claude.status=completed) and confirm executor.active=claude in governance/state/routing.json.",
+    "Idempotency guard: grep governance/transport/results.jsonl for trace_id=bem948_p0_binding_runtime_probe_20260620T0945Z; if count=0, append one record with role=executor, provider=claude, status=completed, and write report to governance/reports/bem948_p0_binding_runtime_probe_20260620T0945Z.md; if count>0, skip append (no-op)."
+  ],
+  "acceptance": [
+    "governance/architecture/objects_registry_v2.json contains objects[WRK].runtime_binding.status == 'BOUND' AND objects[WRK].runtime_binding.provider == 'claude' (verifiable by reading governance/architecture/objects_registry_v2.json).",
+    "governance/state/provider_status.json contains claude.last_outcome == 'success' AND governance/state/routing.json contains executor.active == 'claude' (verifiable by reading both files)."
+  ],
+  "risks": [
+    "governance/transport/results.jsonl contains unresolved git merge-conflict markers (<<<<<<< / ======= / >>>>>>>) in earlier entries; JSONL consumers parsing the full file as line-delimited JSON will encounter parse errors on those lines.",
+    "governance/channels/WRK-C1.jsonl (WRK-C1 managed channel) does not yet exist; any contour-level channel operation targeting WRK-C1 will fail until the file is initialized."
 >>>>>>> Stashed changes
   ]
 =======
