@@ -26,7 +26,7 @@
         "governance/runners/gd_curator_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm15_27861019811",
+      "stage": "bem931_v36_rm15_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: routed_to_dir\n"
     },
@@ -36,7 +36,7 @@
         "governance/runners/dir_curator_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm15_27861019811",
+      "stage": "bem931_v36_rm15_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: routed_to_wrk\n"
     },
@@ -46,7 +46,7 @@
         "governance/runners/wrk_curator_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm15_27861019811",
+      "stage": "bem931_v36_rm15_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: routed_to_WRK-C1_analyst\n"
     },
@@ -56,7 +56,7 @@
         "governance/runners/analyst_stage_runner.py"
       ],
       "returncode": 1,
-      "stage": "bem931_v36_rm15_27861019811",
+      "stage": "bem931_v36_rm15_27861091646",
       "stderr_tail": "Traceback (most recent call last):\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 244, in <module>\n    print(f\"RUNNER: {main()}\")\n                     ^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 218, in main\n    dispatch = dispatch_provider(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 116, in dispatch_provider\n    raise RuntimeError(\"GitHub dispatch token/repository unavailable\")\nRuntimeError: GitHub dispatch token/repository unavailable\n",
       "stdout_tail": ""
     },
@@ -66,7 +66,7 @@
         "governance/runners/auditor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm15_27861019811",
+      "stage": "bem931_v36_rm15_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -76,7 +76,7 @@
         "governance/runners/executor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm15_27861019811",
+      "stage": "bem931_v36_rm15_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -86,7 +86,7 @@
         "governance/runners/auditor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm15_27861019811",
+      "stage": "bem931_v36_rm15_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -96,7 +96,7 @@
         "governance/runners/wrk_curator_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C1_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C1_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: routed_to_WRK-C1_analyst\n"
     },
@@ -106,7 +106,7 @@
         "governance/runners/analyst_stage_runner.py"
       ],
       "returncode": 1,
-      "stage": "bem931_v36_rm16_WRK-C1_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C1_27861091646",
       "stderr_tail": "Traceback (most recent call last):\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 244, in <module>\n    print(f\"RUNNER: {main()}\")\n                     ^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 218, in main\n    dispatch = dispatch_provider(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 116, in dispatch_provider\n    raise RuntimeError(\"GitHub dispatch token/repository unavailable\")\nRuntimeError: GitHub dispatch token/repository unavailable\n",
       "stdout_tail": ""
     },
@@ -116,7 +116,7 @@
         "governance/runners/auditor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C1_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C1_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -126,7 +126,7 @@
         "governance/runners/executor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C1_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C1_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -136,7 +136,7 @@
         "governance/runners/auditor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C1_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C1_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -146,7 +146,7 @@
         "governance/runners/wrk_curator_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C2_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C2_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: routed_to_WRK-C2_analyst\n"
     },
@@ -156,7 +156,7 @@
         "governance/runners/analyst_stage_runner.py"
       ],
       "returncode": 1,
-      "stage": "bem931_v36_rm16_WRK-C2_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C2_27861091646",
       "stderr_tail": "Traceback (most recent call last):\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 244, in <module>\n    print(f\"RUNNER: {main()}\")\n                     ^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 218, in main\n    dispatch = dispatch_provider(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 116, in dispatch_provider\n    raise RuntimeError(\"GitHub dispatch token/repository unavailable\")\nRuntimeError: GitHub dispatch token/repository unavailable\n",
       "stdout_tail": ""
     },
@@ -166,7 +166,7 @@
         "governance/runners/auditor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C2_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C2_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -176,7 +176,7 @@
         "governance/runners/executor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C2_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C2_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -186,7 +186,7 @@
         "governance/runners/auditor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C2_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C2_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -196,7 +196,7 @@
         "governance/runners/wrk_curator_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C3_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C3_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: routed_to_WRK-C3_analyst\n"
     },
@@ -206,7 +206,7 @@
         "governance/runners/analyst_stage_runner.py"
       ],
       "returncode": 1,
-      "stage": "bem931_v36_rm16_WRK-C3_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C3_27861091646",
       "stderr_tail": "Traceback (most recent call last):\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 244, in <module>\n    print(f\"RUNNER: {main()}\")\n                     ^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 218, in main\n    dispatch = dispatch_provider(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/analyst_stage_runner.py\", line 116, in dispatch_provider\n    raise RuntimeError(\"GitHub dispatch token/repository unavailable\")\nRuntimeError: GitHub dispatch token/repository unavailable\n",
       "stdout_tail": ""
     },
@@ -216,7 +216,7 @@
         "governance/runners/auditor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C3_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C3_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -226,7 +226,7 @@
         "governance/runners/executor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C3_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C3_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     },
@@ -236,258 +236,258 @@
         "governance/runners/auditor_stage_runner.py"
       ],
       "returncode": 0,
-      "stage": "bem931_v36_rm16_WRK-C3_27861019811",
+      "stage": "bem931_v36_rm16_WRK-C3_27861091646",
       "stderr_tail": "",
       "stdout_tail": "RUNNER: no_task\n"
     }
   ],
-  "created_at": "2026-06-20T05:05:55Z",
+  "created_at": "2026-06-20T05:09:09Z",
   "failures": [
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "command failed: python3 governance/runners/analyst_stage_runner.py",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
-      "stage": "bem931_v36_rm15_27861019811",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
+      "stage": "bem931_v36_rm15_27861091646",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c1_to_auditor_pre.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-15",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c1_to_executor.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-15",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c1_to_auditor_post.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-15",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_to_curator_feedback.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-15",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
-      "detail": "missing file: governance/results/bem931_v36_rm15_27861019811/worker_result.json",
+      "created_at": "2026-06-20T05:09:09Z",
+      "detail": "missing file: governance/results/bem931_v36_rm15_27861091646/worker_result.json",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-15",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "command failed: python3 governance/runners/analyst_stage_runner.py",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
-      "stage": "bem931_v36_rm16_WRK-C1_27861019811",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
+      "stage": "bem931_v36_rm16_WRK-C1_27861091646",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c1_to_auditor_pre.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c1_to_executor.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c1_to_auditor_post.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_to_curator_feedback.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
-      "detail": "missing file: governance/results/bem931_v36_rm16_WRK-C1_27861019811/wrk_c1_worker_result.json",
+      "created_at": "2026-06-20T05:09:09Z",
+      "detail": "missing file: governance/results/bem931_v36_rm16_WRK-C1_27861091646/wrk_c1_worker_result.json",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "command failed: python3 governance/runners/analyst_stage_runner.py",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
-      "stage": "bem931_v36_rm16_WRK-C2_27861019811",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
+      "stage": "bem931_v36_rm16_WRK-C2_27861091646",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c2_to_auditor_pre.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c2_to_executor.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c2_to_auditor_post.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_to_curator_feedback.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
-      "detail": "missing file: governance/results/bem931_v36_rm16_WRK-C2_27861019811/wrk_c2_worker_result.json",
+      "created_at": "2026-06-20T05:09:09Z",
+      "detail": "missing file: governance/results/bem931_v36_rm16_WRK-C2_27861091646/wrk_c2_worker_result.json",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "command failed: python3 governance/runners/analyst_stage_runner.py",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
-      "stage": "bem931_v36_rm16_WRK-C3_27861019811",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
+      "stage": "bem931_v36_rm16_WRK-C3_27861091646",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c3_to_auditor_pre.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c3_to_executor.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_c3_to_auditor_post.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
+      "created_at": "2026-06-20T05:09:09Z",
       "detail": "missing file: governance/channels/wrk_to_curator_feedback.jsonl",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     },
     {
-      "created_at": "2026-06-20T05:05:55Z",
-      "detail": "missing file: governance/results/bem931_v36_rm16_WRK-C3_27861019811/wrk_c3_worker_result.json",
+      "created_at": "2026-06-20T05:09:09Z",
+      "detail": "missing file: governance/results/bem931_v36_rm16_WRK-C3_27861091646/wrk_c3_worker_result.json",
       "github_run_attempt": "1",
-      "github_run_id": "27861019811",
-      "github_run_number": "216",
-      "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+      "github_run_id": "27861091646",
+      "github_run_number": "217",
+      "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
       "stage": "RM-16",
       "workflow": "BEM-931 v3.6 Live Receipt Proof"
     }
   ],
   "github_run_attempt": "1",
-  "github_run_id": "27861019811",
-  "github_run_number": "216",
-  "github_sha": "bf95fe597e5f98286947527c4b4e60b54ea72c6c",
+  "github_run_id": "27861091646",
+  "github_run_number": "217",
+  "github_sha": "a21f657079cdbccf13a2aa8dda3c0f20241d7e4b",
   "protocol": "BEM-931 v3.6",
   "status": "BLOCKED",
   "workflow": "BEM-931 v3.6 Live Receipt Proof"
