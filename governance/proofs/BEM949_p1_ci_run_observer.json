@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P1-CI-STABILIZE",
+  "status": "FAIL",
+  "workflow": "BEM949 CI Static Validation",
+  "run_id": "27877580835",
+  "run_id_type": "github_actions_run",
+  "run_attempt": "1",
+  "run_conclusion": "failure",
+  "run_conclusion_type": "github_actions_conclusion",
+  "head_sha": "02a59f85a9e6d4b235731bf4ac942c0a46981fcb",
+  "head_sha_type": "commit",
+  "created_at": "2026-06-20T16:47:47Z",
+  "checks": {
+    "conclusion_observed_from_workflow_run_event": true,
+    "green_dispatch_proven": false
+  },
+  "non_claim": "A failed or neutral run is preserved as failure, not converted into a static-pass claim."
+}
