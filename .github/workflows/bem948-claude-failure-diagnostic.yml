@@ -1,0 +1,32 @@
+name: BEM-948 Claude Failure Diagnostic
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-claude-failure-diagnostic.yml'
+permissions:
+  contents: write
+  actions: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_SHA: 1a948e0c0213fb858a84da5e2dfa134902bec82c
+    steps:
+      - uses: actions/checkout@v4
+      - shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bem948 governance/reports governance/proofs
+          gh run list --repo "$REPO" --workflow claude.yml --limit 80 --json databaseId,headSha > /tmp/bem948/runs.json || echo '[]' > /tmp/bem948/runs.json
+          RUN_ID="$(TARGET_SHA="$TARGET_SHA" python3 -c "import json,os; print(next((str(x.get('databaseId','')) for x in json.load(open('/tmp/bem948/runs.json')) if x.get('headSha')==os.environ['TARGET_SHA']),''))")"
+          gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>&1 | grep -iE 'claude|anthropic|error|failed|failure|exit code|token|rate|quota|unauthorized|forbidden' | head -180 > governance/reports/bem948_p0_claude_role_diagnostic.md || true
+          test -s governance/reports/bem948_p0_claude_role_diagnostic.md || echo "No targeted log line returned; run_id=$RUN_ID" > governance/reports/bem948_p0_claude_role_diagnostic.md
+          printf '{"status":"BLOCKED_REPAIRING","protocol":"BEM-948","task_id":"BEM948-P0-CLAUDE-ROLE-DIAGNOSTIC","target_head_sha":"%s","target_head_sha_type":"commit","run_id":"%s","blockers":["claude_role_outcome=failure","p0_completed_evidence_absent"],"next_task":"BEM948-P0-AUTOREPAIR-AFTER-CLAUDE-LOG-DIAGNOSTIC","checks":{"log_collection_attempted":true,"no_false_pass_claim":true,"sha_type_explicit":true}}\n' "$TARGET_SHA" "$RUN_ID" > governance/proofs/BEM948_p0_claude_role_diagnostic_receipt.json
+          git config user.name "BEM-948 Diagnostic"
+          git config user.email "bem948-diagnostic@ai-devops-system"
+          git add governance/reports/bem948_p0_claude_role_diagostic.md governance/proofs/BEM948_p0_claude_role_diagnostic_receipt.json
+          git diff --cached --quiet || (git commit -m "BEM-948: collect Claude failure diagnostic" && git push)
