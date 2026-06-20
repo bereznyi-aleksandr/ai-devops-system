@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P1-CI-STABILIZE",
+  "receipt_id": "BEM949_p1_dispatch_watch",
+  "created_at": "2026-06-20T16:32:00Z",
+  "status": "IN_PROGRESS",
+  "scope": "Dispatch-attempt history only. It is not a green workflow receipt and does not establish execution.",
+  "attempts": [
+    {
+      "attempt": 1,
+      "workflow": ".github/workflows/bem949-ci-static-validation.yml",
+      "workflow_blob_sha": "824d64a05f48f5b2aa0e632cd93a5b486fe947c1",
+      "workflow_blob_sha_type": "git_blob",
+      "dispatch_requested": true,
+      "expected_receipt": "governance/proofs/BEM949_p1_ci_static_validation.json",
+      "receipt_observed": false,
+      "observation": "Expected receipt was absent on repository re-read after dispatch."
+    },
+    {
+      "attempt": 2,
+      "workflow": ".github/workflows/bem949-ci-static-validation.yml",
+      "workflow_blob_sha": "82f070428c56fc32faf1f5a2fc375c2432eb3e9d",
+      "workflow_blob_sha_type": "git_blob",
+      "dispatch_requested": true,
+      "expected_receipt": "governance/proofs/BEM949_p1_ci_static_validation.json",
+      "receipt_observed": false,
+      "observation": "Expected receipt was absent on repository re-read after dispatch; checkout token path had been repaired before this attempt."
+    }
+  ],
+  "checks": {
+    "attempts_preserved": true,
+    "manual_dispatch_execution_evidence_collected": false,
+    "http_204_not_treated_as_completion": true
+  },
+  "blocker": null,
+  "next_action": "Obtain the GitHub Actions run-level outcome and logs for the static-validation workflow, repair the earliest failing step, then re-dispatch within the three-attempt circuit breaker."
+}
