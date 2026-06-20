@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P1-CI-STABILIZE",
+  "receipt_id": "BEM949_p1_active_workflow_manifest",
+  "created_at": "2026-06-20T17:19:03Z",
+  "scope_registry": "governance/registry/BEM949_WORKFLOW_OPERABILITY_SCOPE.json",
+  "workflow_count": 7,
+  "workflows": [
+    {
+      "path": ".github/workflows/claude.yml",
+      "purpose": "primary Claude Code provider for curator, analyst, auditor, executor",
+      "provider": "claude_code",
+      "static_validation": "valid",
+      "workflow_dispatch_available": true,
+      "inputs": [
+        {
+          "name": "role",
+          "required": true,
+          "type": "string",
+          "has_default": false
+        },
+        {
+          "name": "provider",
+          "required": true,
+          "type": "string",
+          "has_default": false
+        },
+        {
+          "name": "trace_id",
+          "required": true,
+          "type": "string",
+          "has_default": false
+        },
+        {
+          "name": "cycle_id",
+          "required": true,
+          "type": "string",
+          "has_default": false
+        },
+        {
+          "name": "task_type",
+          "required": true,
+          "type": "string",
+          "has_default": false
+        },
+        {
+          "name": "task",
+          "required": true,
+          "type": "string",
+          "has_default": false
+        }
+      ],
+      "required_input_count": 6,
+      "manual_dispatch_evidence": "pending_controlled_trace_P3"
+    },
+    {
+      "path": ".github/workflows/provider-router.yml",
+      "purpose": "provider selection and routing",
+      "provider": "router",
+      "static_validation": "valid",
+      "workflow_dispatch_available": true,
+      "inputs": [
+        {
+          "name": "role",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        },
+        {
+          "name": "task",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        },
+        {
+          "name": "trace_id",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        },
+        {
+          "name": "chat_id",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        },
+        {
+          "name": "message_id",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        },
+        {
+          "name": "cycle_id",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        },
+        {
+          "name": "task_type",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        }
+      ],
+      "required_input_count": 0,
+      "manual_dispatch_evidence": "pending"
+    },
+    {
+      "path": ".github/workflows/role-orchestrator.yml",
+      "purpose": "role-cycle sequencing",
+      "provider": "orchestrator",
+      "static_validation": "valid",
+      "workflow_dispatch_available": true,
+      "inputs": [
+        {
+          "name": "cycle_id",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        },
+        {
+          "name": "task",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        }
+      ],
+      "required_input_count": 0,
+      "manual_dispatch_evidence": "pending_controlled_trace_P3"
+    },
+    {
+      "path": ".github/workflows/role-router.yml",
+      "purpose": "role handoff routing",
+      "provider": "router",
+      "static_validation": "valid",
+      "workflow_dispatch_available": true,
+      "inputs": [
+        {
+          "name": "role",
+          "required": true,
+          "type": "string",
+          "has_default": false
+        },
+        {
+          "name": "task",
+          "required": false,
+          "type": "string",
+          "has_default": false
+        },
+        {
+          "name": "trace_id",
+          "required": false,
+          "type": "string",
+          "has_default": false
+        }
+      ],
+      "required_input_count": 1,
+      "manual_dispatch_evidence": "pending_controlled_trace_P3"
+    },
+    {
+      "path": ".github/workflows/gpt-codex-cloud.yml",
+      "purpose": "configured fallback provider",
+      "provider": "gpt_codex_cloud",
+      "static_validation": "valid",
+      "workflow_dispatch_available": true,
+      "inputs": [
+        {
+          "name": "trace_id",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        },
+        {
+          "name": "task_id",
+          "required": false,
+          "type": "string",
+          "has_default": true
+        }
+      ],
+      "required_input_count": 0,
+      "manual_dispatch_evidence": "pending_live_or_declaim_P4"
+    },
+    {
+      "path": ".github/workflows/curator.yml",
+      "purpose": "curator role entry and governance execution",
+      "provider": "claude_code",
+      "static_validation": "valid",
+      "workflow_dispatch_available": false,
+      "inputs": [],
+      "required_input_count": 0,
+      "manual_dispatch_evidence": "pending_controlled_trace_P3"
+    },
+    {
+      "path": ".github/workflows/provider-adapter.yml",
+      "purpose": "provider adapter integration",
+      "provider": "adapter",
+      "static_validation": "valid",
+      "workflow_dispatch_available": true,
+      "inputs": [
+        {
+          "name": "cycle_id",
+          "required": true,
+          "type": "string",
+          "has_default": false
+        },
+        {
+          "name": "provider",
+          "required": true,
+          "type": "string",
+          "has_default": true
+        },
+        {
+          "name": "role",
+          "required": true,
+          "type": "string",
+          "has_default": false
+        },
+        {
+          "name": "status",
+          "required": true,
+          "type": "string",
+          "has_default": true
+        }
+      ],
+      "required_input_count": 4,
+      "manual_dispatch_evidence": "pending"
+    }
+  ],
+  "checks": {
+    "active_workflows_enumerated": true,
+    "dispatch_interfaces_parsed": true,
+    "all_active_workflows_static_valid_in_scope_registry": true,
+    "all_active_workflows_have_green_run_evidence": false
+  },
+  "non_claim": "This manifest inventories dispatch interfaces. It does not claim any provider or workflow execution completed successfully.",
+  "next_action": "Use the manifest to form controlled, trace-bound P3 and P4 dispatches; preserve run-level completion results separately."
+}
