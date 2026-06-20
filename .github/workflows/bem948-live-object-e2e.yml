@@ -2,10 +2,6 @@ name: BEM-948 Live Object To Claude E2E
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/bem948-live-object-e2e.yml'
 
 permissions:
   contents: write
@@ -16,13 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      TRACE_ID: bem948_p0_live_object_e2e_minimal_20260620T0432Z
+      TRACE_ID: bem948_p0_live_object_e2e_observed_20260620T0455Z
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 1
+
+      - name: Record trace window
+        id: timing
+        shell: bash
+        run: |
+          echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
 
       - name: Queue and route OBJ-GD-001 minimal health task
         shell: bash
@@ -34,7 +36,7 @@ jobs:
             --provider claude_code \
             --trace-id "$TRACE_ID" \
             --consume \
-            --task "BEM-948 P0 minimal object-to-dispatch health test. Create exactly two files: governance/reports/bem948_p0_live_object_e2e_minimal_20260620T0432Z.md and governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_minimal_20260620T0432Z.json. The JSON must truthfully state completed only after work is done; include protocol BEM-948, this trace_id, provider_selected claude_code, target_workflow_id claude.yml, dispatch_result executed, blocker null, and sha_type for every SHA. Do not modify workflows."
+            --task "BEM-948 P0 observed object-to-dispatch health test. Create exactly two files: governance/reports/bem948_p0_live_object_e2e_observed_20260620T0455Z.md and governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_observed_20260620T0455Z.json. The JSON must truthfully state completed only after work is done; include protocol BEM-948, this trace_id, provider_selected claude_code, target_workflow_id claude.yml, dispatch_result executed, blocker null, and sha_type for every SHA. Do not modify workflows."
 
       - name: Execute only this routed governance dispatch
         id: executor
@@ -51,21 +53,47 @@ jobs:
           set -e
           echo "result=$result" >> "$GITHUB_OUTPUT"
 
-      - name: Commit P0 handoff evidence
+      - name: Observe dispatched Claude Actions run
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 governance/runners/claude_run_diagnostic.py \
+            --trace-id "$TRACE_ID" \
+            --head-sha "$GITHUB_SHA" \
+            --started-at "${{ steps.timing.outputs.started_at }}" \
+            --attempts 12 \
+            --delay 15
+
+      - name: Commit P0 handoff and observation evidence
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "BEM-948 Live E2E"
           git config user.email "bem948-live-e2e@ai-devops-system"
-          git add governance/state/dispatch_queue.jsonl governance/state/dispatch_processed.jsonl governance/state/dispatch_executed.jsonl governance/state/object_events.jsonl governance/state/OBJ-GD-001_last_run.json governance/proofs/BEM938_object_runner_receipt.json governance/proofs/BEM935_dispatch_consumer_receipt.json governance/proofs/BEM948_dispatch_executor_receipt.json 2>/dev/null || true
+          git add \
+            governance/state/dispatch_queue.jsonl \
+            governance/state/dispatch_processed.jsonl \
+            governance/state/dispatch_executed.jsonl \
+            governance/state/object_events.jsonl \
+            governance/state/OBJ-GD-001_last_run.json \
+            governance/proofs/BEM938_object_runner_receipt.json \
+            governance/proofs/BEM935_dispatch_consumer_receipt.json \
+            governance/proofs/BEM948_dispatch_executor_receipt.json \
+            governance/proofs/BEM948_p0_claude_run_observation_receipt.json \
+            governance/reports/ \
+            2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "No P0 handoff evidence changes"
+            echo "No P0 handoff or observation evidence changes"
           else
-            git commit -m "BEM-948: minimal live object to dispatch executor handoff"
+            git commit -m "BEM-948: observed live object to dispatch executor handoff"
             git push
           fi
 
-      - name: Enforce handoff result
+      - name: Enforce dispatch handoff result
         if: always()
         shell: bash
         run: |
