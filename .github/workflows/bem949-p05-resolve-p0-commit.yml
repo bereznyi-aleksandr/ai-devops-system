@@ -1,0 +1,86 @@
+name: BEM949 P0.5 Resolve P0 Commit SHA
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve malformed historical commit reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          python3 - <<'PY'
+          import json
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          malformed = "3bf9f8e257cd113ed4436d956ebbf2b2ea7b859bd"
+          candidates = [
+              malformed[:-1],
+              malformed[1:],
+          ]
+          resolved = []
+          for candidate in candidates:
+              try:
+                  value = subprocess.check_output(
+                      ["git", "rev-parse", "--verify", candidate + "^{commit}"],
+                      text=True,
+                      stderr=subprocess.DEVNULL,
+                  ).strip()
+              except subprocess.CalledProcessError:
+                  continue
+              if len(value) == 40 and value not in resolved:
+                  resolved.append(value)
+
+          status = "PASS" if len(resolved) == 1 else "BLOCKED"
+          payload = {
+              "schema_version": 1,
+              "protocol": "BEM-949",
+              "task_id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
+              "receipt_id": "BEM949_p05_p0_commit_resolution",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "status": status,
+              "source_receipt": "governance/proofs/BEM948_p0_final_verification_receipt.json",
+              "source_report": "governance/reports/bem948_p0_live_object_e2e_turn24_20260620T0950Z.md",
+              "malformed_reference": malformed,
+              "malformed_reference_length": len(malformed),
+              "candidates_checked": candidates,
+              "resolved_commit_shas": resolved,
+              "resolved_commit_sha_type": "commit" if len(resolved) == 1 else None,
+              "checks": {
+                  "source_reference_is_invalid_length": len(malformed) != 40,
+                  "exactly_one_repository_commit_resolved": len(resolved) == 1,
+              },
+              "blocker": None if len(resolved) == 1 else "p0_execution_commit_sha_not_resolvable_from_repository_candidates",
+          }
+          Path("governance/proofs/BEM949_p05_p0_commit_resolution.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit resolution receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p05@ai-devops-system"
+          git config user.name "BEM949 P0.5 Resolver"
+          git add governance/proofs/BEM949_p05_p0_commit_resolution.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P0.5: resolve historical P0 commit SHA"
+          git push
