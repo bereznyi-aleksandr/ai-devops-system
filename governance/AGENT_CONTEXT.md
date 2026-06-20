@@ -62,3 +62,12 @@ Operational ingress remains:
 ## Integrity boundary
 
 Historical BEM-934 materialization artifacts remain outside the BEM-948 P0 bridge acceptance scope. Do not use them to assert a broader release PASS. BEM-948 can advance only on current task-specific, trace-bound evidence with explicit SHA types.
+
+## Retry circuit breaker — operator escalation
+
+For one `task_id` plus one named blocker, count only outcome-changing attempts: a code/configuration change followed by a verification, or a new dispatch followed by verification. Passive reads do not reset the count.
+
+- Maximum: **3 attempts**.
+- After the third unsuccessful attempt: set `queue_status` to `BLOCKED_OPERATOR_DECISION`, set `system_status` to `CIRCUIT_BREAKER_TRIPPED`, stop all retries/dispatches/edits for that blocker, and report the blocker plus the three attempt references to the operator.
+- Resume only after an operator supplies a new input, an explicit changed hypothesis, or an instruction to close/rollback the branch.
+- A restatement of the same hypothesis is not a new attempt and may not reset the count.
