@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P4-FINAL-VERIFY",
+  "receipt_id": "BEM948_p4_final_verification_receipt",
+  "created_at": "2026-06-20T13:25:49Z",
+  "status": "PASS",
+  "scope_status": "PASS",
+  "evidence_kind": "repository_state_final_verification",
+  "runtime_execution_claim": false,
+  "release_status": "VERIFIED_WITH_LIMITATIONS",
+  "verification_scope": "Verify the P0-P3 receipts, canonical agent context, queue progression, and explicitly retained limitations. This receipt does not convert limited scope enidence into a broader release PASS.",
+  "canonical_context": {
+    "path": "AGENT_CONTEXT.md",
+    "blob_sha": "0d866920ecc4d4b9b782a0ca064a44c729600426",
+    "blob_sha_type": "git_blob",
+    "commit_sha": "1f64f84689b6e0ad69c153c7933817c69168b842",
+    "commit_sha_type": "commit",
+    "governance_redirect_path": "governance/AGENT_CONTEXT.md",
+    "governance_redirect_blob_sha": "e46b86486e0f78dd785cadacf440b89d2410dfbd",
+    "governance_redirect_blob_sha_type": "git_blob"
+  },
+  "stage_receipts": {
+    "P0": {
+      "path": "governance/proofs/BEM948_p0_final_verification_receipt.json",
+      "blob_sha": "bc1ce9719d872d840281c47b6c056fc02c83fb5a",
+      "blob_sha_type": "git_blob",
+      "status": "PASS",
+      "scope": "trace-bound planned-to-executed bridge only"
+    },
+    "P1": {
+      "path": "governance/proofs/BEM948_p1_final_verification_receipt.json",
+      "blob_sha": "4474b042a8d3ae3e5ea55ccbac55bd12f6c27b96",
+      "blob_sha_type": "git_blob",
+      "status": "PASS",
+      "scope": "canonical context synchronization"
+    },
+    "P2": {
+      "path": "governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json",
+      "blob_sha": "04a1e0d7425980721fd571e261f0e1fdfefd9320",
+      "blob_sha_type": "git_blob",
+      "status": "PASS",
+      "scope": "RULE-011 and RULE-012 runtime enforcers; RULE-004 through RULE-010 explicitly NOT_VERIFIED",
+      "workflow_terminal_status": "FAILURE_RECEIPT_PERSISTENCE_RECONCILED"
+    },
+    "P3": {
+      "path": "governance/proofs/BEM948_p3_final_failover_verification_receipt.json",
+      "blob_sha": "1b09d522140aff66041392788ba65791bb0ca2dc",
+      "blob_sha_type": "git_blob",
+      "status": "PASS",
+      "scope": "trace-bound GitHub-hosted mechanical fallback",
+      "terminal_provider_receipt_path": "governance/proofs/BEM948_p3_bem948_p3_gpt_codex_cloud_failover_20260620T1322Z_gpt_codex_cloud_receipt.json",
+      "terminal_provider_receipt_blob_sha": "a966d760b770544ee6996b05105c28402c533e56",
+      "terminal_provider_receipt_blob_sha_type": "git_blob",
+      "terminal_mode": "mechanical_fallback",
+      "llm_available": false
+    }
+  },
+  "truth_hierarchy": {
+    "rule": "A terminal trace-matched provider receipt or report overrides a dispatch acknowledgement for provider outcome.",
+    "P3_dispatch_acknowledgement_path": "governance/proofs/BEM948_p3_dispatch_executor_receipt.json",
+    "P3_dispatch_acknowledgement_blob_sha": "3a7e497b2a119b13282cae537dbccbfad95ccad8",
+    "P3_dispatch_acknowledgement_blob_sha_type": "git_blob",
+    "P3_dispatch_http_status": 204,
+    "P3_dispatch_interpretation": "DISPATCHED only; no provider completion inferred from HTTP 204."
+  },
+  "queue_verification": {
+    "pre_close_path": "governance/roadmap/ACTIVE_QUEUE.json",
+    "pre_close_blob_sha": "cb1750361cea312ddc13cef9206fdce61b4e02a2",
+    "pre_close_blob_sha_type": "git_blob",
+    "pre_close_current_task": "BEM948-P4-FINAL-VERIFY",
+    "pre_close_queue_state": "ACTIVE",
+    "expected_post_close": {
+      "queue_state": "COMPLETE",
+      "current_task": null,
+      "tasks_done": 5,
+      "tasks_total": 5,
+      "release_status": "VERIFIEG_WITH_LIMITATIONS"
+    }
+  },
+  "execution_log_integrity": {
+    "path": "governance/logs/execution_log.jsonl",
+    "blob_sha": "ba2404cd4fc5f69f27df4e0c168f05b480327e24",
+    "blob_sha_type": "git_blob",
+    "status": "LEGACY_FORMAT_LIMITATION_UNCHANGED",
+    "finding": "The historical file is not used as evidence of BEM-948 append completion in this verification.",
+    "non_claim": "No BEM-948 execution-log append is claimed by this receipt."
+  },
+  "checks": {
+    "P0_receipt_exists_and_is_scope_limited": true,
+    "P1_root_context_is_canonical": true,
+    "P1_governance_context_is_redirect_only": true,
+    "P2_RULE_011_and_RULE_012_enforcement_recorded": true,
+    "P2_RULE_004_through_RULE_010_not_misrepresented_as_enforced": true,
+    "P2_workflow_failure_preserved": true,
+    "P3_terminal_provider_receipt_exists": true,
+    "P3_mechanical_fallback_not_misrepresented_as_LLM_execution": true,
+    "P3_HTTP_204_not_mispresented_as_completion": true,
+    "all_recorded_SHA_fields_include_sha_type": true,
+    "canonical_context_updated_as_P4_acceptance": true,
+    "release_limitations_preserved": true
+  },
+  "known_history": {
+    "P1_prior_retry_ceiling": {
+      "attempts": 3,
+      "blocker": "retry_ceiling_reached_operator_decision_required",
+      "resolution": "A new operator-provided duplicate-context diagnosis led to root canonicalization; prior history remains preserved."
+    }
+  },
+  "limitations": [
+    "RULE-004 through RULE-010 remain NOT_VERIFIED; no complete ROLE-004..012 enforcement claim is made.",
+    "P2 GitHub Actions workflow failed in its receipt-persistence step; scope receipt was reconciled without reclassifying the workflow as successful.",
+    "P3 was mechanical fallback only; terminal provider enidence reports llm_available=false and no OpenAI Responses API success is claimed.",
+    "The historical execution log format remains an unremediated integrity limitation and is not claimed as BEM948 completion enidence."
+  ],
+  "operator_decisions_for_future_scope": [
+    "Authorize separate work to implement and verify RULE-004 through RULE-010 enforcement if full policy enforcement is required.",
+    "Configure a valid OPENAI_API_KEY and OPENAI_MODE, then run a new trace-bound P3 test if a live OpenAI provider execution is required.",
+    "Authorize a separately scoped execution-log repair and migration if strict JSONL continuity logging is required."
+  ],
+  "next_task": null
+}
