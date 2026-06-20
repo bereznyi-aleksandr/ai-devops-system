@@ -6,16 +6,22 @@ on:
     branches: [main]
     paths:
       - 'governance/runners/bem948_p0_reconcile.py'
+      - 'governance/runners/claude_run_diagnostic.py'
       - '.github/workflows/bem948-p0-reconcile.yml'
       - 'governance/state/bem948_p0_reconcile_trigger.json'
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   reconcile:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+    env:
+      TRACE_ID: bem948_p0_live_object_e2e_observed_20260620T0455Z
+      TARGET_HEAD_SHA: aec5d8ff2e0f52b431326311767e9802157cfe3e
+      STARTED_AT: 2026-06-20T04:55:00Z
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,16 +35,35 @@ jobs:
           python3 -m py_compile governance/runners/bem948_p0_reconcile.py
           python3 governance/runners/bem948_p0_reconcile.py
 
-      - name: Commit reconciliation receipt
+      - name: Collect repaired trace-bound Claude diagnostic
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 -m py_compile governance/runners/claude_run_diagnostic.py
+          python3 governance/runners/claude_run_diagnostic.py \
+            --trace-id "$TRACE_ID" \
+            --head-sha "$TARGET_HEAD_SHA" \
+            --started-at "$STARTED_AT" \
+            --attempts 1 \
+            --delay 1
+
+      - name: Commit reconciliation and diagnostic evidence
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "BEM-948 Reconciler"
           git config user.email "bem948-reconciler@ai-devops-system"
-          git add governance/proofs/BEM948_p0_reconciliation_receipt.json governance/reports/bem948_p0_reconciliation.md
+          git add \
+            governance/proofs/BEM948_p0_reconciliation_receipt.json \
+            governance/proofs/BEM948_p0_claude_run_observation_receipt.json \
+            governance/reports/bem948_p0_reconciliation.md \
+            governance/reports/bem948_p0_live_object_e2e_observed_20260620T0455Z_claude_observation.md
           if git diff --cached --quiet; then
-            echo "No reconciliation evidence changes"
+            echo "No reconciliation or diagnostic evidence changes"
           else
-            git commit -m "BEM-948: reconcile P0 proof and report evidence"
+            git commit -m "BEM-948: reconcile P0 evidence and collect Claude diagnostics"
             git push
           fi
