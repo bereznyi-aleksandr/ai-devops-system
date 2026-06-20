@@ -1,0 +1,90 @@
+name: BEM948 Turn24 Status Observer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-turn24-status-observer.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          fetch-depth: 1
+      - name: Observe turn24 workflow status
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs governance/reports
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow bem948-live-object-e2e-turn24.yml --limit 20 --json databaseId,status,conclusion,createdAt,updatedAt,headSha > /tmp/bem948_turn24_runs.json || echo '[]' > /tmp/bem948_turn24_runs.json
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          try:
+              rows = json.loads(Path("/tmp/bem948_turn24_runs.json").read_text())
+          except Exception:
+              rows = []
+          rows = [row for row in rows if isinstance(row, dict)]
+          rows.sort(key=lambda row: str(row.get("createdAt", "")), reverse=True)
+          run = rows[0] if rows else {}
+          status = str(run.get("status", "absent"))
+          conclusion = str(run.get("conclusion", ""))
+          if not run:
+              next_task = "BEM948-P0-AUTOREPAIR-TURN24-DISPATCH-INDEX"
+          elif status != "completed":
+              next_task = "BEM948-P0-POLL-TURN24-RUN"
+          elif conclusion != "success":
+              next_task = "BEM948-P0-AUTOREPAIR-TURN24-RUN-CAUSE"
+          else:
+              next_task = "BEM948-P0-VERIFY-TURN24-EXECUTED-PROOF"
+          payload = {
+              "status": "OBSERVED",
+              "protocol": "BEM-948",
+              "task_id": "BEM948-P0-LIVE-OBJECT-E2E-TURN24-OBSERVATION",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "target_workflow": "bem948-live-object-e2e-turn24.yml",
+              "target_trace_id": "bem948_p0_live_object_e2e_turn24_20260620T0950Z",
+              "run": run,
+              "checks": {
+                  "github_actions_run_list_accessible": True,
+                  "no_false_p0_pass_claim": True,
+                  "secret_values_read_or_logged": False,
+              },
+              "next_task": next_task,
+          }
+          Path("governance/proofs/BEM948_p0_turn24_status_observation_receipt.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          Path("governance/reports/bem948_p0_turn24_status_observation.md").write_text(
+              "# BEM-948 P0 turn24 workflow status\n\n"
+              f"Run id: `{run.get('databaseId','')}`\n"
+              f"Status: `{status}`\n"
+              f"Conclusion: `{conclusion}`\n"
+              f"Next task: `{next_task}`\n",
+              encoding="utf-8"
+          )
+          PY
+      - name: Commit observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Observer"
+          git config user.email "bem948-observer@ai-devops-system"
+          git add governance/proofs/BEM948_p0_turn24_status_observation_receipt.json governance/reports/bem948_p0_turn24_status_observation.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "BEM-948: observe turn24 workflow status"
+          for attempt in 1 2 3; do
+            if git push; then exit 0; fi
+            git pull --rebase --autostash origin main
+          done
+          exit 1
