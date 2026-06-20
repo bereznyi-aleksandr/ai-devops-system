@@ -4,6 +4,7 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   "trace_id": "bem948_p0_binding_repair_20260620T0935Z",
   "objective": "Repair and re-verify the live object runtime binding between WRK-C1 and the Claude provider executor under BEM-948 P0: resolve residual merge-conflict markers in governance proof files, produce a clean idempotent transport record for the new trace, and confirm idempotent Telegram routing.",
   "assumptions": [
@@ -106,6 +107,28 @@
     "RISK-2 (MEDIUM): governance/state/telegram_sent.json may not exist on first run; executor must create it as an empty object if absent, otherwise the key-check in STEP-3 throws file-not-found and incorrectly blocks notification.",
     "RISK-3 (MEDIUM): task_type 'object_runtime_binding' is not in role_sequence.json; if the orchestrator enforces strict task_type validation it will reject the cycle before STEP-1 executes. Mitigation: curator must confirm default_development fallback is accepted before executor begins.",
     "RISK-4 (LOW): provider_status.json may re-acquire merge conflict markers from concurrent writers; executor must validate JSON parseability before asserting field values in STEP-1."
+>>>>>>> Stashed changes
+=======
+  "trace_id": "bem948_p0_binding_runtime_probe_20260620T0945Z",
+  "objective": "Verify and confirm the WRK-C1 contour runtime binding to the Claude provider via a P0 runtime probe; update the WRK passport status from PENDING_RUNTIME_BINDING to BOUND and record a single idempotent Telegram routing entry for trace bem948_p0_binding_runtime_probe_20260620T0945Z.",
+  "assumptions": [
+    "WRK is recorded as BOUND in objects_registry_v2.json with trace bem934_objects_bound_repair_27751086692_wrk, provider claude, and workflow .github/workflows/claude.yml.",
+    "WRK-C1 is the primary executor contour; its managed channel is governance/channels/WRK-C1.jsonl; WRK-C2 and WRK-C3 are secondary contours sharing the same role set.",
+    "The stale WRK passport fields (runtime_provider: codex_local, status: PENDING_RUNTIME_BINDING) are superseded by the proof-bearing BEM-934 runtime evidence recorded in governance/proofs/bem934_objects_bound/WRK_runtime_binding.json.",
+    "Telegram routing is idempotent: re-delivery of the same trace_id must produce no additional entry in governance/transport/results.jsonl; the guard checks trace_id presence before appending."
+  ],
+  "steps": [
+    "Verify WRK binding evidence: confirm objects_registry_v2.json records WRK.status=BOUND, snapshot governance/proofs/bem934_objects_bound/WRK_runtime_binding.json has status=PASS with all checks true, and execution commit b907bccbb4b18dbd00751f9f1c18ae69ccbc1fa1 is present.",
+    "Update WRK passport: set runtime_provider=claude and status=BOUND in governance/architecture/object_passports/WRK.json; add a runtime_binding block referencing the BEM-934 canonical trace_id, snapshot path, execution commit SHA, primary executor contour WRK-C1, bound_at, probe_confirmed_at, and probe_trace_id.",
+    "Record idempotent Telegram routing: append exactly one execution record to governance/transport/results.jsonl with trace_id=bem948_p0_binding_runtime_probe_20260620T0945Z; a replay of this trace_id MUST NOT produce a second record — guard by scanning existing trace_id values before appending."
+  ],
+  "acceptance": [
+    "governance/architecture/object_passports/WRK.json declares runtime_provider=claude and status=BOUND; a grep confirms no remaining PENDING_RUNTIME_BINDING value in the file.",
+    "governance/transport/results.jsonl contains exactly one record with trace_id=bem948_p0_binding_runtime_probe_20260620T0945Z; re-submitting the same trace_id leaves the line count unchanged (idempotency verified)."
+  ],
+  "risks": [
+    "Concurrent passport writes from a parallel claude.yml run can overwrite the runtime_binding block; canonical binding authority must remain the per-object snapshot in governance/proofs/bem934_objects_bound/WRK_runtime_binding.json, not the passport field.",
+    "Telegram idempotency failure (missing trace_id guard) allows duplicate routing records on retry, producing false evidence of multiple execution cycles for a single trace."
 >>>>>>> Stashed changes
   ]
 =======
