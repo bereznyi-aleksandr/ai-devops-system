@@ -1,0 +1,45 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P0-LIVE-OBJECT-E2E",
+  "created_at": "2026-06-20T04:45:00Z",
+  "stage": {
+    "tasks_done": 0,
+    "tasks_total": 5,
+    "percent": 0
+  },
+  "known_history": [
+    {
+      "trace_id": "bem948_p0_live_object_e2e_20260620T0427Z",
+      "dispatch_http_status": 204,
+      "dispatch_receipt_sha": "db1e05b02f160aae33a77424ef1d01f20e9ab156",
+      "dispatch_receipt_sha_type": "git_blob",
+      "report_sha": "d5c750ba401bac4d8714ee728c62df767faa5ee3",
+      "report_sha_type": "git_blob",
+      "outcome": "failure",
+      "blocker": "claude_role outcome=failure"
+    },
+    {
+      "trace_id": "bem948_p0_live_object_e2e_minimal_20260620T0432Z",
+      "dispatch_http_status": 204,
+      "dispatch_receipt_sha": "dd1e1af268e97e8b2f9bcb3708c3ff330933fc13",
+      "dispatch_receipt_sha_type": "git_blob",
+      "report_sha": "ab608647ef06025fe094cf74f06e5a500466e89e",
+      "report_sha_type": "git_blob",
+      "outcome": "failure",
+      "blocker": "claude_role outcome=failure"
+    }
+  ],
+  "checks": {
+    "object_runner_to_dispatch_executor_real_http_confirmed": true,
+    "claude_yml_runtime_reached": true,
+    "executed_completed_proof_exists": false,
+    "no_false_pass_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "claude_role_outcome=failure",
+    "p0_executed_completed_evidence_absent"
+  ],
+  "next_task": "BEM948-P0-AUTOREPAIR-AFTER-CLAUDE-LOG-DIAGNOSTIC"
+}
