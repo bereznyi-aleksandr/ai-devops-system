@@ -7,5 +7,23 @@
   "target_workflow_id": "claude.yml",
   "dispatch_result": "executed",
   "blocker": null,
-  "executed_at": "2026-06-20T09:50:00Z"
+  "executed_at": "2026-06-20T09:50:00Z",
+  "completed_at": "2026-06-20T09:51:56Z",
+  "commit_sha": "3bf9f8e257cd113ed4436d966ebf2b2ea7b859bd",
+  "commit_sha_type": "commit",
+  "report_path": "governance/reports/bem948_p0_live_object_e2e_turn24_20260620T0950Z.md",
+  "report_blob_sha": "e7eddb7bee967b8ccf67349ab4aa2fdd2c6269e1",
+  "report_blob_sha_type": "git_blob",
+  "proof_repair_note": "The original completed proof omitted explicit commit metadata. The commit identifier and scope were materialized from the trace-matched claude.yml report, which records outcome=success, status=completed, changed_files limited to this proof, and the same trace.",
+  "repair_scope": "metadata completeness only; original protocol, task, trace, status, provider, target workflow, dispatch result, blocker and execution timestamp preserved",
+  "checks": {
+    "trace_matches_report": true,
+    "report_outcome_success": true,
+    "report_status_completed": true,
+    "report_changed_files_limited_to_this_proof": true,
+    "commit_sha_type_explicit": true,
+    "sha_policy_allowed": true,
+    "no_false_p0_pass_claim": true
+  },
+  "next_task": "BEM948-P0-FINAL-EVIDENCE-VERIFY"
 }
