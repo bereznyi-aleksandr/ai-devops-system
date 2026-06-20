@@ -1,0 +1,62 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P0-REAL-DISPATCH-BRIDGE",
+  "created_at": "2026-06-20T10:05:40Z",
+  "selected_trace_id": "bem948_p0_binding_selftest_20260620T0940Z",
+  "selected_evidence": {
+    "planned_record": {
+      "path": "governance/state/dispatch_processed.jsonl",
+      "blob_sha": "40d0555984586db4a3e79503162cf5affc8816f9",
+      "blob_sha_type": "git_blob",
+      "dispatch_result": "planned",
+      "status": "processed",
+      "target_workflow_id": "claude.yml",
+      "provider_selected": "claude_code"
+    },
+    "real_dispatch_record": {
+      "path": "governance/state/dispatch_executed.jsonl",
+      "blob_sha": "73ecd627b82f54dc817114964920c67caf25cd59",
+      "blob_sha_type": "git_blob",
+      "http_status": 204,
+      "dispatch_result": "dispatched",
+      "target_workflow_id": "claude.yml",
+      "provider_selected": "claude_code"
+    },
+    "terminal_result_report": {
+      "path": "governance/reports/bem948_p0_binding_selftest_20260620T0940Z.md",
+      "blob_sha": "1b0da121ac25913cc994dc373ab7b9e1d10a3902",
+      "blob_sha_type": "git_blob",
+      "outcome": "success",
+      "status": "completed",
+      "commit_sha": "43097df8a0c9841f28cd54a103550c152b735246",
+      "commit_sha_type": "commit"
+    },
+    "transport_conflict_invalidation": {
+      "path": "governance/proofs/BEM948_p0_transport_truth_invalidation_receipt.json",
+      "blob_sha": "eb30b793c134e413ce75baf7cadd6e9654602590",
+      "blob_sha_type": "git_blob",
+      "commit_sha": "0a9f4c261b6ad32ff696a0296eb018cfa34172a8",
+      "commit_sha_type": "commit"
+    }
+  },
+  "checks": {
+    "object_to_processed_planned_record": true,
+    "processed_to_github_actions_http_204_dispatch": true,
+    "terminal_claude_transport_completed": true,
+    "same_trace_id_across_chain": true,
+    "http_204_not_misrepresented_as_completion": true,
+    "contradictory_task_created_completed_claim_quarantined": true,
+    "sha_type_explicit": true
+  },
+  "scope_note": "P0 closes only the planned-to-executed bridge. It does not certify integrity of the historical BEM-934 materialization artifacts written by the selected Claude run; that independent artifact-integrity finding remains outside the P0 bridge acceptance scope.",
+  "known_history": {
+    "failed_traces_not_used_for_pass": [
+      "bem948_p0_live_object_e2e_20260620T0427Z",
+      "bem948_p0_live_object_e2e_minimal_20260620T0432Z",
+      "bem948_p0_live_object_e2e_observed_20260620T0455Z"
+    ],
+    "invalidated_false_completed_trace": "bem948_p0_live_object_e2e_observed_20260620T0455Z"
+  },
+  "next_task": "BEM948-P1-AGENT-CONTEXT-SYNC"
+}
