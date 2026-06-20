@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'governance/state/bem948_e2e_trigger.json'
+      - 'governance/state/bem948_live_e2e_binding_trigger.json'
       - '.github/workflows/bem948-live-object-e2e.yml'
 
 permissions:
@@ -13,11 +13,11 @@ permissions:
   actions: write
 
 jobs:
-  live_e2e:
+  live_binding_e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      TRACE_ID: bem948_p0_live_object_e2e_observer_20260620T0510Z
+      TRACE_ID: bem948_p0_binding_repair_20260620T0935Z
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,19 +25,20 @@ jobs:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 1
 
-      - name: Queue and route minimal health task
+      - name: Queue and route binding-mode object task
         shell: bash
         run: |
           set -euo pipefail
-          python3 governance/runners/object_runner.py \
+          python3 governance/runners/object_dispatch_bridge.py \
             --object-id OBJ-GD-001 \
             --role executor \
             --provider claude_code \
             --trace-id "$TRACE_ID" \
+            --task-type object_runtime_binding \
             --consume \
-            --task "BEM-948 P0 observed object-to-dispatch health test. Create exactly two files: governance/reports/bem948_p0_live_object_e2e_observer_20260620T0510Z.md and governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_observer_20260620T0510Z.json. The JSON must truthfully state completed only after work is done; include protocol BEM-948, this trace_id, provider_selected claude_code, target_workflow_id claude.yml, dispatch_result executed, blocker null, and sha_type for every SHA. Do not modify workflows."
+            --task "BEM-948 P0 binding-mode live object E2E. Return a strict JSON governance plan for WRK-C1 and the Claude provider object runtime binding. Include an objective, assumptions, at least three specific steps, at least two verifiable acceptance conditions, and risks. The plan must explicitly cover idempotent Telegram routing. Trace: $TRACE_ID."
 
-      - name: Execute only this routed dispatch
+      - name: Execute only the trace-bound governance dispatch
         id: executor
         shell: bash
         env:
@@ -52,20 +53,20 @@ jobs:
           set -e
           echo "result=$result" >> "$GITHUB_OUTPUT"
 
-      - name: Commit P0 handoff evidence
+      - name: Commit handoff evidence
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "BEM-948 Live E2E"
-          git config user.email "bem948-live-e2e@ai-devops-system"
-          git add governance/state/ governance/proofs/BEM948_dispatch_executor_receipt.json 2>/dev/null || true
+          git config user.name "BEM-948 Binding E2E"
+          git config user.email "bem948-binding-e2e@ai-devops-system"
+          git add governance/state/ governance/proofs/BEM948_object_dispatch_bridge_receipt.json governance/proofs/BEM948_dispatch_executor_receipt.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
-            git commit -m "BEM-948: dispatch trace-bound live object handoff"
+            git commit -m "BEM-948: bind object route to Claude structured runtime"
             git push
           fi
 
-      - name: Enforce dispatch handoff result
+      - name: Enforce dispatch bridge result
         if: always()
         shell: bash
         run: |
