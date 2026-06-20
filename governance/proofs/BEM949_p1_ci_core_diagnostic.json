@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P1-CI-STABILIZE",
+  "receipt_id": "BEM949_p1_ci_core_diagnostic",
+  "created_at": "2026-06-20T17:07:32Z",
+  "source_receipt": "governance/proofs/BEM949_p1_ci_static_validation.json",
+  "source_status": "FAIL",
+  "workflow_count": 230,
+  "valid_workflow_count": 133,
+  "invalid_workflow_count": 97,
+  "core_workflows": [
+    {
+      "path": ".github/workflows/claude.yml",
+      "present": true,
+      "valid": false,
+      "yaml_valid": true,
+      "python_heredocs": 5,
+      "python_heredocs_compiled": 0,
+      "errors": [
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        },
+        {
+          "kind": "python_heredoc",
+          "index": 2,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        },
+        {
+          "kind": "python_heredoc",
+          "index": 3,
+          "tag": "PYEOF",
+          "message": "unexpected indent at line 1, column 10"
+        },
+        {
+          "kind": "python_heredoc",
+          "index": 4,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        },
+        {
+          "kind": "python_heredoc",
+          "index": 5,
+          "tag": "PYEOF",
+          "message": "unexpected indent at line 1, column 10"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/provider-router.yml",
+      "present": true,
+      "valid": false,
+      "yaml_valid": true,
+      "python_heredocs": 4,
+      "python_heredocs_compiled": 0,
+      "errors": [
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        },
+        {
+          "kind": "python_heredoc",
+          "index": 2,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        },
+        {
+          "kind": "python_heredoc",
+          "index": 3,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        },
+        {
+          "kind": "python_heredoc",
+          "index": 4,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/role-orchestrator.yml",
+      "present": true,
+      "valid": false,
+      "yaml_valid": true,
+      "python_heredocs": 2,
+      "python_heredocs_compiled": 0,
+      "errors": [
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        },
+        {
+          "kind": "python_heredoc",
+          "index": 2,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/role-router.yml",
+      "present": true,
+      "valid": false,
+      "yaml_valid": true,
+      "python_heredocs": 1,
+      "python_heredocs_compiled": 0,
+      "errors": [
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PYEOF",
+          "message": "unexpected indent at line 1, column 10"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/gpt-codex-cloud.yml",
+      "present": true,
+      "valid": false,
+      "yaml_valid": true,
+      "python_heredocs": 1,
+      "python_heredocs_compiled": 0,
+      "errors": [
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/curator.yml",
+      "present": true,
+      "valid": false,
+      "yaml_valid": true,
+      "python_heredocs": 1,
+      "python_heredocs_compiled": 0,
+      "errors": [
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/gpt-action-ingress.yml",
+      "present": true,
+      "valid": false,
+      "yaml_valid": true,
+      "python_heredocs": 1,
+      "python_heredocs_compiled": 0,
+      "errors": [
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/telegram-outbox-sender.yml",
+      "present": true,
+      "valid": false,
+      "yaml_valid": true,
+      "python_heredocs": 1,
+      "python_heredocs_compiled": 0,
+      "errors": [
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/provider-adapter.yml",
+      "present": true,
+      "valid": false,
+      "yaml_valid": true,
+      "python_heredocs": 1,
+      "python_heredocs_compiled": 0,
+      "errors": [
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PY",
+          "message": "unexpected indent at line 1, column 10"
+        }
+      ]
+    }
+  ],
+  "p2_restore_workflows": [
+    {
+      "path": ".github/workflows/bem934-binding-failure-log-inspector.yml",
+      "present": true,
+      "valid": true,
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem931-v36-release-repair-gate.yml",
+      "present": true,
+      "valid": true,
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem947-live-object-dispatch-retry.yml",
+      "present": true,
+      "valid": true,
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem948-live-object-e2e.yml",
+      "present": true,
+      "valid": true,
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem948-p0-claude-diagnostic-retry.yml",
+      "present": true,
+      "valid": true,
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "errors": []
+    }
+  ],
+  "error_groups": [
+    {
+      "key": "python_heredoc: unexpected indent at line 1, column 10",
+      "count": 135
+    },
+    {
+      "key": "yaml: while parsing a block mapping   in \"<unicode string>\", line 97, column 9:           - name: Commit retry dispatch receipt             ^ expected <block end>, but found '<scalar>'  ",
+      "count": 1
+    }
+  ],
+  "checks": {
+    "sourceipt_parsed": true,
+    "core_workflows_explicitly_inventoried": true,
+    "p2_restore_paths_explicitly_inventoried": true
+  }
+}
