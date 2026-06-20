@@ -203,7 +203,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           prompt: ${{ steps.load_prompt.outputs.prompt }}
-          claude_args: '--max-turns 10 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
+          claude_args: '--max-turns 24 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
 
       - name: Run Claude Code binding role with structured output
         id: claude_binding_role
