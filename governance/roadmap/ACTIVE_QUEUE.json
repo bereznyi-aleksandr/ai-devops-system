@@ -1,15 +1,21 @@
 {
-  "version": 20,
-  "updated_at": "2026-06-20T09:56:00Z",
-  "queue_state": "ACTIVE",
+  "version": 21,
+  "updated_at": "2026-06-20T10:00:00Z",
+  "queue_state": "OPERATOR_ASSISTANCE_REQUIRED",
   "current_task": "BEM948-P1-AGENT-CONTEXT-SYNC",
-  "system_status": "BEM948_P1_IN_PROGRESS",
-  "release_status": "BLOCKED_BUILDING",
+  "system_status": "ESTALATED_AFTER_RETRY_CEILING",
+  "release_status": "BLOCKED_OPERATOR_ASSISTANCE",
   "protocol": "BEM-948",
   "progress": {
     "tasks_done": 1,
     "tasks_total": 5,
     "percent": 20
+  },
+  "retry_policy": {
+    "max_autonmous_attempts_per_task": 3,
+    "rule": "After three autonomous attempts or after another trustworthy terminal blocker, stop retring and escalate to the operator. Do not create additional workflows or mutate production files until an operator response.",
+    "current_task_attempts": 3,
+    "escalated_at": "2026-06-20T10:00:00Z"
   },
   "tasks": [
     {
@@ -24,8 +30,9 @@
     },
     {
       "id": "BEM948-P1-AGENT-CONTEXT-SYNC",
-      "status": "IN_PROGRESS",
-      "percent": 20
+      "status": "BLOCKED_OPERATOR_ASSISTANCE",
+      "percent": 20,
+      "blocker": "retry_ceiling_reached_operator_decision_required"
     },
     {
       "id": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
@@ -44,21 +51,17 @@
     }
   ],
   "recent_action": {
-    "action": "P0 permanent live object-to-dispatch bridge verified on a trace-bound completed Claude execution",
-    "p0_final_receipt": "governance/proofs/BEM948_p0_final_verification_receipt.json",
-    "p0_final_receipt_blob_sha": "bc1ce9719d872d840281c47b6c056fc02c83fb5a",
-    "p0_final_receipt_blob_sha_type": "git_blob",
-    "live_trace": "bem948_p0_live_object_e2e_turn24_20260620T0950Z",
-    "execution_commit_sha": "3bf9f8e257cd113ed4436d966ebf2b2ea7b859bd",
-    "execution_commit_sha_type": "commit"
+    "action": "Autonmous retry ceiling enforced and work escalated to the operator",
+    "reason": "Three-attempt limit required to prevent repeated workflow-mutation loops"
   },
   "blockers": [
-    "p1_agent_context_sync_not_yet_verified",
+    "operator_assistance_required_after_three_attempts",
+    "p1_agent_context_sync_requires_operator_decision",
     "p2_rule_enforcement_not_yet_verified",
     "p3_failover_not_yet_verified",
     "p4_final_verification_not_yet_verified"
   ],
-  "next_action": "synchronize AGENT_CONTEXT.md through BEM-948 and validate its current-state references before P2",
+  "next_action": "Await operator direction or approval for the next repair attempt; do not retry autonomously.",
   "sha_policy": {
     "sha_type_required": true,
     "allowed": [
