@@ -1,0 +1,37 @@
+{
+  "status": "DISPATCHED",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
+  "created_at": "2026-06-20T13:21:41Z",
+  "trace_filter": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
+  "evidence_kind": "dispatch_acknowledgement",
+  "runtime_execution_claim": false,
+  "dispatched_count": 1,
+  "failed_count": 0,
+  "dispatches": [
+    {
+      "protocol": "BEM-948",
+      "task_id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
+      "created_at": "2026-06-20T13:21:40Z",
+      "dispatch_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
+      "trace_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
+      "logical_role": "executor",
+      "provider_selected": "gpt_codex_cloud",
+      "target_workflow_id": "gpt-codex-cloud.yml",
+      "dispatch_result": "dispatched",
+      "http_status": 204,
+      "blocker": null,
+      "inputs": {
+        "trace_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
+        "task_id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST"
+      }
+    }
+  ],
+  "checks": {
+    "trace_id_required": true,
+    "trace_scope_enforced": true,
+    "http_204_means_dispatched_not_completed": true
+  },
+  "blockers": [],
+  "next_task": "WAIT_FOR_TERMINAL_PROVIDER_RECEIPT"
+}
