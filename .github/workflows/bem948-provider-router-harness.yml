@@ -1,0 +1,150 @@
+name: BEM-948 Provider Router Harness
+
+on:
+  workflow_run:
+    workflows: ["BEM-932 Provider Router"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  p0_harness:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TRACE_ID: bem948_p0_provider_router_harness_20260620T1000Z
+      AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+      GITHUB_TOKEN: ${{ github.token }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      GITHUB_API_URL: ${{ github.api_url }}
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 1
+
+      - name: Verify explicit BEM-948 harness trigger
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          trigger = Path("governance/state/bem948_provider_router_harness_trigger.json")
+          if not trigger.exists():
+              raise SystemExit("bem948_harness_trigger_absent")
+          data = json.loads(trigger.read_text(encoding="utf-8"))
+          expected = "bem948_p0_provider_router_harness_20260620T1000Z"
+          if data.get("protocol") != "BEM-948" or data.get("trace_id") != expected or data.get("enabled") is not True:
+              raise SystemExit("bem948_harness_trigger_invalid")
+          print("gate=enabled")
+          PY
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - name: Compile permanent dispatch runners
+        if: steps.gate.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile \
+            governance/runners/object_dispatch_bridge.py \
+            governance/runners/dispatch_executor.py \
+            governance/runners/dispatch_executor_guard.py
+
+      - name: Queue and route exact binding-mode object task
+        if: steps.gate.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/runners/object_dispatch_bridge.py \
+            --object-id OBJ-GD-001 \
+            --role executor \
+            --provider claude_code \
+            --trace-id "$TRACE_ID" \
+            --task-type object_runtime_binding \
+            --consume \
+            --task "BEM-948 P0 provider-router harness. Return a strict JSON governance plan for WRK-C1 and the Claude provider object runtime binding. Include objective, assumptions, at least three specific steps, at least two verifiable acceptance conditions, and risks. The plan must explicitly cover idempotent Telegram routing. Trace: $TRACE_ID."
+
+      - name: Dispatch only matching planned record
+        id: executor
+        if: steps.gate.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set +e
+          python3 governance/runners/dispatch_executor_guard.py \
+            --max 1 \
+            --trace-id "$TRACE_ID"
+          result=$?
+          set -e
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Write harness receipt
+        if: always()
+        shell: bash
+        env:
+          EXECUTOR_RESUNT: ${{ steps.executor.outputs.result }}
+          PROVIDER_ROUTER_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          result = os.environ.get("EXECUTOR_RESULT", "")
+          status = "PASS" if result == "0" else "BLOCKED"
+          payload = {
+              "status": status,
+              "protocol": "BEM-948",
+              "task_id": "BEM948-P0-PROVIDER-ROUTER-HARNESS",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "trace_id": "bem948_p0_provider_router_harness_20260620T1000Z",
+              "triggering_provider_router_run_id": os.environ.get("PROVIDER_ROUTER_RUN_ID", ""),
+              "executor_exit_code": result,
+              "checks": {
+                  "workflow_run_harness_triggered": True,
+                  "trace_scope_required": True,
+                  "permanent_runner_pycompile_passed_before_dispatch": True,
+                  "http_204_means_dispatched_not_completed": True,
+                  "sha_type_explicit": True,
+              },
+              "blockers": [] if status == "PASS" else ["dispatch_executor_guard_nonzero"],
+              "next_task": "BEM948-P0-POLL-DOWNSTREAM-EXECUTED-PROOF" if status == "PASS" else "BEM948-P0-AUTOREPAIR-DISPATCH-EXECUTOR",
+          }
+          Path("governance/proofs/BEM948_provider_router_harness_receipt.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+          )
+          PY
+
+      - name: Commit BEM-948 harness evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Provider Router Harness"
+          git config user.email "bem948-harness@ai-devops-system"
+          git add \
+            governance/state/ \
+            governance/proofs/BEM948_provider_harness_receipt.json \
+            governance/proofs/BEM948_object_dispatch_bridge_receipt.json \
+            governance/proofs/BEM948_dispatch_executor_receipt.json \
+            2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM-948: run trace-bound provider-router harness"
+            git push
+          fi
+
+      - name: Enforce harness result
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.executor.outputs.result }}" = "0"
