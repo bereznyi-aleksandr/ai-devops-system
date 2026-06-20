@@ -1,0 +1,52 @@
+{
+  "status": "BLOCKED_REPAIRING",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P0-EVIDENCE-RECONCILIATION",
+  "created_at": "2026-06-20T05:14:00Z",
+  "stage": {
+    "tasks_done": 0,
+    "tasks_total": 5,
+    "percent": 0
+  },
+  "trace_id": "bem948_p0_live_object_e2e_observed_20260620T0455Z",
+  "evidence": {
+    "dispatch_executor_receipt": {
+      "path": "governance/proofs/BEM948_dispatch_executor_receipt.json",
+      "sha": "dd1e1af268e97e8b2f9bcb3708c3ff330933fc13",
+      "sha_type": "git_blob",
+      "dispatch_result": "dispatched",
+      "http_status": 204
+    },
+    "executed_proof": {
+      "path": "governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_observed_20260620T0455Z.json",
+      "sha": "23a913bb6596c61a8016e63bf8b6534b3960a8d3",
+      "sha_type": "git_blob",
+      "reported_status": "completed",
+      "reported_blocker": null,
+      "integrity_issue": "commit_sha is null with commit_sha_type=sha_post_commit; files_created use unsupported sha_type=git_sha"
+    },
+    "execution_report": {
+      "path": "governance/reports/bem948_p0_live_object_e2e_observed_20260620T0455Z.md",
+      "sha": "979c88f78a1bdafcc6387e37dcd1a5318bb5a784",
+      "sha_type": "git_blob",
+      "reported_outcome": "failure",
+      "reported_status": "failed",
+      "reported_blocker": "claude_role outcome=failure",
+      "integrity_issue": "contains unresolved merge-conflict markers"
+    }
+  },
+  "checks": {
+    "object_to_dispatch_executor_http_confirmed": true,
+    "proof_report_consistent": false,
+    "executed_completed_evidence_accepted": false,
+    "no_false_p0_pass_claim": true,
+    "sha_type_policy_explicit": true
+  },
+  "blockers": [
+    "proof_report_outcome_conflict",
+    "executed_proof_sha_policy_invalid",
+    "claude_role outcome=failure",
+    "report_merge_conflict_markers"
+  ],
+  "next_task": "BEM948-P0-RECONCILE-PROOF-REPORT-AND-REPAIR-CLAUDE-TRANSPORT"
+}
