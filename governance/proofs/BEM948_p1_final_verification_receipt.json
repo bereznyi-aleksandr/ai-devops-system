@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P1-AGENT-CONTEXT-SYNC",
+  "receipt_id": "BEM948_p1_final_verification_receipt",
+  "created_at": "2026-06-20T10:26:30Z",
+  "status": "PASS",
+  "evidence_kind": "repository_state_configuration_verification",
+  "runtime_execution_claim": false,
+  "canonical_context": {
+    "path": "AGENT_CONTEXT.md",
+    "blob_sha": "eeaa40e0920781589da3d7e91071cefbde899c80",
+    "blob_sha_type": "git_blob",
+    "commit_sha": "edbf513ffce4f43f4c60cb11eab1ee9cffca891c",
+    "commit_sha_type": "commit"
+  },
+  "compatibility_redirect": {
+    "path": "governance/AGENT_CONTEXT.md",
+    "blob_sha": "e46b86486e0f78dd785cadacf440b89d2410dfbd",
+    "blob_sha_type": "git_blob",
+    "commit_sha": "341650435424ce2239cba3e6f3aaa7a687f1cf16",
+    "commit_sha_type": "commit"
+  },
+  "supersedes": {
+    "path": "governance/proofs/BEM948_p1_agent_context_sync_receipt.json",
+    "blob_sha": "15975a0cc9322707dde0156bcf8f2658065b7367",
+    "blob_sha_type": "git_blob",
+    "reason": "It validated the former full governance-path copy, which could not be authoritative while the root startup context remained stale."
+  },
+  "supporting_receipt": {
+    "path": "governance/proofs/BEM948_p1_canonical_context_consolidation_receipt.json",
+    "blob_sha": "e6d2253bc1ccc8260d8e099eae6d421aca21e7ec",
+    "blob_sha_type": "git_blob",
+    "commit_sha": "032a016a166701ba7de13d1b1e8c331539550bfd",
+    "commit_sha_type": "commit"
+  },
+  "checks": {
+    "root_path_declares_itself_canonical": true,
+    "governance_path_is_redirect_only": true,
+    "active_protocol_is_bem948": true,
+    "p0_final_receipt_reference_present": true,
+    "p1_current_task_reference_present": true,
+    "p2_p3_p4_unverified_boundary_present": true,
+    "primary_and_fallback_provider_topology_present": true,
+    "terminal_report_truth_hierarchy_present": true,
+    "transport_invalidation_reference_present": true,
+    "stale_bem934_current_task_removed_from_canonical_root": true,
+    "canonical_state_paths_present": true,
+    "sha_type_policy_present": true
+  },
+  "verification": {
+    "method": "GitHub Contents API read-after-write for both context paths and both P1 receipts",
+    "result": "PASS",
+    "acceptance_interpretation": "P1 is a repository-context synchronization task. PASS concerns the verified file state only; it does not assert workflow execution or completion for P2, P3, or P4."
+  },
+  "historical_record": {
+    "prior_retry_ceiling_preserved": true,
+    "prior_blocker": "retry_ceiling_reached_operator_decision_required",
+    "new_operator_input": "Concrete duplicate-context diagnosis and instruction to consolidate canonical path."
+  },
+  "next_task": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION"
+}
