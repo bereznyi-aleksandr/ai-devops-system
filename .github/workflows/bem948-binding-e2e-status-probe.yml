@@ -14,58 +14,64 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+      REPO: ${{ github.repository }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
+          ref: main
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Observe binding E2E runs
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           mkdir -p /tmp/bem948 governance/proofs governance/reports
-          gh run list --repo "$REPO" --workflow bem948-binding-e2e.yml --limit 30 \
+          query_status=0
+          if ! gh run list \
+            --repo "$REPO" \
+            --workflow bem948-binding-e2e.yml \
+            --limit 30 \
             --json databaseId,headSha,status,conclusion,createdAt,updatedAt,event \
-            > /tmp/bem948/runs.json || echo '[]' > /tmp/bem948/runs.json
-          python3 - <<'PY'
-          import json
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          runs = json.loads(Path("/tmp/bem948/runs.json").read_text(encoding="utf-8"))
-          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-          report = ["# BEM-948 binding E2E status probe", "", f"Observed at: `${now}`", ""]
-          report.extend([
-            f"- `{r.get('databaseId')}` status={r.get('status')} conclusion={r.get('conclusion')} event={r.get('event')} head={r.get('headSha')}"
-            for r in runs
-        ] or ["- No binding E2E runs returned."])
-          Path("governance/reports/bem948_binding_e2e_status_probe.md").write_text(
-            "\n".join(report) + "\n", encoding="utf-8"
-          )
-          receipt = {
-            "status": "OBSERVED",
-            "protocol": "BEM-948",
-            "task_id": "BEM948-P0-BINDING-E2E-STATUS-PROBE",
-            "created_at": now,
-            "workflow_id": "bem948-binding-e2e.yml",
-            "runs_seen": len(runs),
-            "runs": runs,
-            "checks": {
-              "actions_api_query_attempted": True,
-              "no_false_completed_claim": True,
-              "sha_type_explicit": True,
-            },
-            "next_task": "BEM948-P0-AUTOREPAI-BINDING-E2E-RUNTIME",
-          }
-          Path("governance/proofs/BEM948_binding_e2e_status_probe_receipt.json").write_text(
-            json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-          )
-          PY
+            > /tmp/bem948/runs.json; then
+            query_status=$?
+            printf '[]\n' > /tmp/bem948/runs.json
+          fi
+          jq -n \
+            --arg created_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg query_status "$query_status" \
+            --slurpfile runs /tmp/bem948/runs.json \
+            '{
+              schema_version: 2,
+              status: "OBSERVED",
+              protocol: "BEM-948",
+              task_id: "BEM948-P0-BINDING-E2E-STATUS-PROBE",
+              created_at: $created_at,
+              workflow_id: "bem948-binding-e2e.yml",
+              runs_seen: ($runs[0] | length),
+              runs: $runs[0],
+              query_exit_code: ($query_status | tonumber),
+              checks: {
+                actions_api_query_attempted: true,
+                no_false_completed_claim: true,
+                sha_type_explicit: true
+              },
+              non_claim: "This receipt records observed workflow metadata only; it does not claim a completed binding E2E run."
+            }' > governance/proofs/BEM948_binding_e2e_status_probe_receipt.json
+          {
+            echo "# BEM-948 binding E2E status probe"
+            echo
+            echo "Observed at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "Query exit code: ${query_status}"
+            echo
+            echo '```json'
+            cat /tmp/bem948/runs.json
+            echo '```'
+          } > governance/reports/bem948_binding_e2e_status_probe.md
 
       - name: Commit status probe
         shell: bash
@@ -73,7 +79,9 @@ jobs:
           set -euo pipefail
           git config user.name "BEM-948 Status Probe"
           git config user.email "bem948-status-probe@ai-devops-system"
-          git add governance/reports/bem948_binding_e2e_status_probe.md governance/proofs/BEM948_binding_e2e_status_probe_receipt.json
+          git add \
+            governance/prports/bem948_binding_e2e_status_probe.md \
+            governance/proofs/BEM948_binding_e2e_status_probe_receipt.json
           if git diff --cached --quiet; then
             exit 0
           fi
