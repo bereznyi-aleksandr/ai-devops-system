@@ -1,0 +1,35 @@
+{
+  "status": "BLOCKED",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P0-DISPATCH-EXECUTOR-RUNTIME-PROBE",
+  "created_at": "2026-06-20T09:38:38Z",
+  "trace_id": "bem948_p0_binding_runtime_probe_20260620T0945Z",
+  "exit_code": 1,
+  "stderr_tail": [
+    "Traceback (most recent call last):",
+    "  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/dispatch_executor_guard.py\", line 34, in <module>",
+    "    main()",
+    "  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/dispatch_executor_guard.py\", line 30, in main",
+    "    runpy.run_path(str(TARGET), run_name=\"__main__\")",
+    "  File \"<frozen runpy>\", line 286, in run_path",
+    "  File \"<frozen runpy>\", line 98, in _run_module_code",
+    "  File \"<frozen runpy>\", line 88, in _run_code",
+    "  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/dispatch_executor.py\", line 62, in <module>",
+    "    if __name__==\"__main__\":main()",
+    "                            ^^^^^^",
+    "  File \"/home/runner/work/ai-devops-system/ai-devops-system/governance/runners/dispatch_executor.py\", line 60, in main",
+    "    append(out);bad=[x for x in out if x[\"dispatch_result\"]!=\"dispatched\"];receipt={\"status\":\"PASS\" if out and not bad else \"BLOCKED\",\"protocol\":\"BEM-948\",\"task_id\":\"BEM948-P0-REAL-DISPATCH-BRIDGE\",\"created_at\":now(),\"trace_filter\":t,\"dispatched_count\":sum(x[\"dispatch_result\"]==\"dispatched\" for x in out),\"failed_count\":len(bad),\"skipped_count\":skip,\"dispatches\":out,\"checks\":{\"trace_id_required\":True,\"trace_scope_enforced\":True,\"historical_replay_prevented\":True,\"http_dispatch_attempted\":bool(out",
+    "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ",
+    "NameError: name 'recipht' is not defined. Did you mean: 'receipt'?"
+  ],
+  "checks": {
+    "trace_bound_execution_attempted": true,
+    "stderr_sanitized": true,
+    "no_false_completed_claim": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [
+    "dispatch_executor_runtime_failed"
+  ],
+  "next_task": "BEM948-P0-AUTOREPAIR-DISPATCH-EXECUTOR-RUNTIME"
+}

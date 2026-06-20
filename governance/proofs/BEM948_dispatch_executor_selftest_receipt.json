@@ -2,14 +2,11 @@
   "status": "PASS",
   "protocol": "BEM-948",
   "task_id": "BEM948-P0-DISPATCH-EXECUTOR-SELFTEST",
-  "created_at": "2026-06-20T09:35:22Z",
+  "created_at": "2026-06-20T09:38:37Z",
   "checks": {
-    "object_dispatch_bridge_pycompile": true,
-    "dispatch_executor_pycompile": true,
-    "dispatch_executor_guard_pycompile": true,
+    "runner_py_compile": true,
     "no_false_runtime_success_claim": true,
     "sha_type_explicit": true
   },
-  "blockers": [],
-  "next_task": "BEM948-P0-BINDING-MODE-LIVE-OBJECT-E2E"
+  "blockers": []
 }
