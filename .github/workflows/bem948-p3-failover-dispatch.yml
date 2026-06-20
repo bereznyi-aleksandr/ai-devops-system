@@ -1,0 +1,45 @@
+name: BEM-948 P3 Failover Dispatch
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate dispatch executor
+        run: python3 -m py_compile governance/runners/dispatch_executor.py
+
+      - name: Dispatch trace through executor
+        env:
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 governance/runners/dispatch_executor.py \
+            --trace-id bem948_p3_gpt_codex_cloud_failover_20260620T1322Z \
+            --plan-file governance/state/BEM948_p3_failover_plan.json \
+            --output governance/proofs/BEM948_p3_dispatch_executor_receipt.json
+
+      - name: Commit dispatch evidence
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase --autostash origin main
+          git add governance/state/dispatch_executed.jsonl \
+            governance/proofs/BEM948_p3_dispatch_executor_receipt.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM-948 P3: record trace-bound cloud failover dispatch"
+          git push origin HEAD:main
