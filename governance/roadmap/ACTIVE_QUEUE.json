@@ -1,15 +1,15 @@
 {
-  "version": 26,
-  "updated_at": "2026-06-20T13:22:55Z",
-  "queue_state": "ACTIVE",
-  "current_task": "BEM948-P4-FINAL-VERIFY",
-  "system_state": "P3_MECHANICAL_FALLBACK_VALIDATED_P4_ACTIVE",
-  "release_status": "BLOCKED_BUILDING",
+  "version": 27,
+  "updated_at": "2026-06-20T13:26:48Z",
+  "queue_state": "COMPLETE",
+  "current_task": null,
+  "system_state": "BEM948_FINAL_VERIFIED_WITH_LIMITATIONS",
+  "release_status": "VERIFIED_WITH_LIMITATIONS",
   "protocol": "BEM-948",
   "progress": {
-    "tasks_done": 4,
+    "tasks_done": 5,
     "tasks_total": 5,
-    "percent": 80
+    "percent": 100
   },
   "retry_policy": {
     "max_autonomous_attempts_per_task": 3,
@@ -20,11 +20,9 @@
         "blocker": "retry_ceiling_reached_operator_decision_required",
         "attempts": 3,
         "status": "BLOCKED_OPERATOR_ASSISTANCE",
-        "resolution": "operator duplicate-context diagnosis resolved by root canonicalization"
+        "resolution": "Operator-provided duplicate-context diagnosis; root canonicalization was separately verified."
       }
-    ],
-    "active_blocker": "p4_final_verification_not_yet_completed",
-    "current_task_attempts": 0
+    ]
   },
   "tasks": [
     {
@@ -35,7 +33,8 @@
       "receipt_blob_sha": "bc1ce9719d872d840281c47b6c056fc02c83fb5a",
       "receipt_blob_sha_type": "git_blob",
       "done_commit_sha": "d06ee9aa2265ebe0cec579f42335bad8c3026541",
-      "done_commit_sha_type": "commit"
+      "done_commit_sha_type": "commit",
+      "scope": "planned-to-executed bridge only"
     },
     {
       "id": "BEM948-P1-AGENT-CONTEXT-SYNC",
@@ -45,7 +44,11 @@
       "receipt_blob_sha": "4474b042a8d3ae3e5ea55ccbac55bd12f6c27b96",
       "receipt_blob_sha_type": "git_blob",
       "done_commit_sha": "046300603df0ee82534319a12ede564722094d1f",
-      "done_commit_sha_type": "commit"
+      "done_commit_sha_type": "commit",
+      "canonical_context_path": "AGENT_CONTEXT.md",
+      "canonical_context_blob_sha": "0d866920ecc4d4b9b782a0ca064a44c729600426",
+      "canonical_context_blob_sha_type": "git_blob",
+      "scope": "canonical root; governance path redirect-only"
     },
     {
       "id": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
@@ -56,7 +59,20 @@
       "receipt_blob_sha_type": "git_blob",
       "done_commit_sha": "e8485ec984c3725b7f3097ce6acb0e7117daf6ec",
       "done_commit_sha_type": "commit",
-      "scope": "RULE-011 and RULE-012 enforced; RULE-004 through RULE-010 explicitly NOT_VERIFIED"
+      "enforced_rules": [
+        "RULE-011",
+        "RULE-012"
+      ],
+      "not_verified_rules": [
+        "RULE-004",
+        "RULE-005",
+        "RULE-006",
+        "RULE-007",
+        "RULE-008",
+        "RULE-009",
+        "RULE-010"
+      ],
+      "workflow_terminal_status": "FAILURE_RECEIPT_PERSISTENCE_RECONCILED"
     },
     {
       "id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
@@ -68,33 +84,42 @@
       "done_commit_sha": "a88e1db8c15f9f08da740c6cabf5fd1746c2df95",
       "done_commit_sha_type": "commit",
       "trace_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
-      "outcome": "MECHANICAL_FALLBACK_VALIDATED",
+      "outcome": "MECHANICAL_FALBACK_VALIDATED",
       "terminal_provider_receipt": "governance/proofs/BEM948_p3_bem948_p3_gpt_codex_cloud_failover_20260620T1322Z_gpt_codex_cloud_receipt.json",
       "terminal_provider_receipt_blob_sha": "a966d760b770544ee6996b05105c28402c533e56",
       "terminal_provider_receipt_blob_sha_type": "git_blob",
-      "non_claim": "No OpenAI Responses API execution claimed; terminal receipt records llm_available=false."
+      "non_claim": "No OpenAI Responses API or LLM execution claimed; terminal receipt records llm_available=false."
     },
     {
       "id": "BEM948-P4-FINAL-VERIFY",
-      "status": "IN_PROGRESS",
-      "percent": 80,
-      "blocker": "p4_final_verification_not_yet_completed"
+      "status": "DONE",
+      "percent": 100,
+      "receipt": "governance/proofs/BEM948_p4_final_verification_receipt",
+      "receipt_blob_sha": "f3b90aca919159c8a207a260025ef4bdd5e77a82",
+      "receipt_blob_sha_type": "git_blob",
+      "done_commit_sha": "35771859d26df4e6f82f6487f4126304d1e4057f",
+      "done_commit_sha_type": "commit",
+      "release_status": "VERIFIEG_WITH_LIMITATIONS",
+      "scope": "P0-P3 receipt and context verification; limitations retained"
     }
   ],
   "recent_action": {
-    "action": "P3 trace-bound gpt_codex_cloud failover completed as mechanical fallback",
-    "receipt": "governance/proofs/BEM948_p3_final_failover_verification_receipt.json",
-    "receipt_blob_sha": "1b09d522140aff66041392788ba65791bb0ca2dc",
+    "action": "BEM-948 P4 final verification recorded and roadmap closed",
+    "receipt": "governance/proofs/BEM948_p4_final_verification_receipt.json",
+    "receipt_blob_sha": "f3b90aca919159c8a207a260025ef4bdd5e77a82",
     "receipt_blob_sha_type": "git_blob",
-    "receipt_commit_sha": "a88e1db8c15f9f08da740c6cabf5fd1746c2df95",
+    "receipt_commit_sha": "35771859d26df4e6f82f6487f4126304d1e4057f",
     "receipt_commit_sha_type": "commit",
-    "outcome": "MECHANICAL_FALLBACK_VALIDATED",
-    "truth_note": "executor HTTP 204 was recorded only as DISPATCHED; terminal provider receipt determined the outcome."
+    "result": "VERIFIED_WITH_LIMITATIONS"
   },
-  "blockers": [
-    "p4_final_verification_not_yet_completed"
+  "blockers": [],
+  "open_limitations": [
+    "RULE-004 through RULE-010 are NOT_VERIFIED, not enforced by implication.",
+    "P2 workflow failure at receipt persistence remains recorded; it was not reclassified as workflow success.",
+    "P3 is a GitHub-hosted mechanical fallback; no usable OpenAI secret/model pair and no live LLM execution were recorded.",
+    "The historical execution_log.jsonl remains a legacy format integrity limitation; no BEM-948 append is claimed."
   ],
-  "next_action": "Execute BEM948-P4-FINAL-VERIFY: verify P0-P3 receipts and canonical context; preserve P2 scope and P3 mechanical-fallback limitation.",
+  "next_action": "Await an operator decision before creating separate scope for full RULE-004..010 enforcement, live OpenAI provider verification, or execution-log repair.",
   "sha_policy": {
     "sha_type_required": true,
     "allowed": [
