@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P1-AGENT-CONTEXT-SYNC",
+  "created_at": "2026-06-20T09:58:20Z",
+  "agent_context": {
+    "path": "governance/AGENT_CONTEXT.md",
+    "blob_sha": "f2f46e5bf3d712723ae7135a02e84613220af64f",
+    "blob_sha_type": "git_blob",
+    "commit_sha": "7651b8ddc944016a9aff02ae03a64ecff2416d2f",
+    "commit_sha_type": "commit"
+  },
+  "roadmap_before_advance": {
+    "path": "governance/roadmap/ACTIVE_QUEUE.json",
+    "blob_sha": "72ca7feeb5e1b63a71cee56ad385b01317ef0eeb",
+    "blob_sha_type": "git_blob",
+    "current_task": "BEM948-P1-AGENT-CONTEXT-SYNC"
+  },
+  "checks": {
+    "active_protocol_is_bem948": true,
+    "p0_final_receipt_reference_present": true,
+    "p1_current_task_reference_present": true,
+    "p2_p3_p4_unverified_boundary_present": true,
+    "primary_and_fallback_provider_topology_present": true,
+    "dispatch_truth_hierarchy_present": true,
+    "transport_invalidation_reference_present": true,
+    "stale_bem934_current_task_removed": true,
+    "canonical_state_paths_present": true,
+    "sha_type_explicit": true
+  },
+  "scope_note": "This receipt verifies context synchronization only. It does not verify P2 rule enforcement, P3 failover, or P4 final validation.",
+  "next_task": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION"
+}
