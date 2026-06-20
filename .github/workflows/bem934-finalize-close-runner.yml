@@ -34,7 +34,7 @@ jobs:
           text = text.replace("stacks_done", "tasks_done")
           text = text.replace("_supersed", "_superseded")
           text = text.replace("Release status: PAS", "Release status: PASS")
-          text = text.replace("Stage BBEM934-CLOSE', "Stage BEM934-CLOSE")
+          text = text.replace("Stage BBEM934-CLOSE", "Stage BEM934-CLOSE")
           path.write_text(text, encoding="utf-8")
           PY
           python3 -m py_compile governance/runners/bem934_finalize_close_v2.py
