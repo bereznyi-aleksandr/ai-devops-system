@@ -1,42 +1,23 @@
-# AGENT_CONTEXT.md | canonical configuration
+# AGENT_CONTEXT
 
-Updated: 2026-06-18T13:51:17Z
+Updated: 2026-06-20T09:56:30Z
 Repository: bereznyi-aleksandr/ai-devops-system
-Active protocol: BEM-934
-Roadmap state: 9/10 stages complete
-Current task: BEM934-CLOSE
-Release status: FOLLOW_UP_REQUIRED
+Active protocol: BEM-948
+Roadmap: 1/5 complete (20%)
+Current task: BEM948-P1-AGENT-CONTEXT-SYNC
+Release: BLOCKED_BUILDING
 
-## Operational provider architecture
+Contract: read ACTIVE_QUEUE; execute IN_PROGRESS then PENDING; verify evidence; update queue and execution_log; immediately take the next task. HTTP 204 is dispatched, never completed. PASS requires task-specific completed proof with no conflicting report. Defects open autorepair.
 
-Primary provider for curator, analyst, auditor, and executor: `claude_code`.
-Primary workflow: `.github/workflows/claude.yml`.
-Operational ingress: Telegram -> Cloudflare Worker -> `provider-router.yml` -> `claude.yml`.
+Primary: claude_code via .github/workflows/claude.yml.
+Permanent bridge: object_runner.py -> dispatch_consumer.py -> dispatch_executor.py -> claude.yml.
+Reserve: gpt_codex_cloud; without configured OpenAI runtime is hechanical_fallback.
 
-Historical self-hosted Codex paths are disabled and deprecated. They are not an available operational runtime.
-`gpt_codex_cloud` is a GitHub-hosted reserve path. It may claim LLM execution only when OpenAI runtime secrets are configured; otherwise it is a clearly labelled `mechanical_fallback`.
+BEM-948 P0 DONE. Trace: bem948_p0_live_object_e2e_turn24_20260620T0950Z.
+P0 receipt: governance/proofs/BEM948_p0_final_verification_receipt.json.
+Execution commit: 3bf9f8e257cd113ed4436d966ebf2b2ea7b859bd (commit).
+Claude default turn budget: 24. Validation: governance/proofs/BEM948_claude_yaml_validation_receipt.json.
+P1 active; P2-P4 pending.
 
-## Verified BEM-934 state
-
-Stages 1-8: DONE.
-Stage 9 `BEM934-LIVE-TEST`: DONE under strict receipt v2.
-Operator trace: `;tg_818730867_20260618T105741Z`.
-Provider route: `claude_code` -> `claude.yml`.
-Semantic executor transport: `completed`, blocker `null`.
-Historical failed attempts remain disclosed.
-The prior replay-based contradictory PASS is archived as superseded.
-
-Stage 10 `BEM934-CLOSE`: IN_PROGRESS.
-Closure is not approved yet. Release remains `FOLLOW_UP_REQUIRED` until an independent `EXTERNAL_AUDITOR_CLAUDE verdict is PASS/APPROVED and a strict final validator succeeds.
-
-## Canonical evidence
-
-- `governance/proofs/BEM934_live_test_receipt.json`
-- `governance/proofs/BEM934_live_test_receipt_superseded_replay.json`
-- `governance/roadmap/ACTIVE_QUEUE.json`
-- `governance/config/provider_config.json`
-- `governance/protocols/BEM934_Protocol.md`
-
-## Closure rule
-
-No top-level PASS may contradict nested transport records. No replay may be represented as operator-authored ingress. Release PASS requires committed proof files, independent external Claude approval, and a final fail-closed validator.
+Canonical: ACTIVE_QUEUE.json; provider_config.json; BEM948 P0 final receipt; BEM948 Claude YAML validation; BEM948 turn24 executed proof; trace report; execution_log.jsonl.
+Final BEM-948 PASS requires P0-P3 evidence and a fail-closed P4 validator.
