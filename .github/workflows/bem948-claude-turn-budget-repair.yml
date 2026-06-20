@@ -20,13 +20,14 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Repair and validate Claude turn budget
+      - name: Patch turn budget and validate syntax
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import hashlib
           import json
+          import subprocess
           from datetime import datetime, timezone
           from pathlib import Path
 
@@ -34,66 +35,71 @@ jobs:
           proof = Path("governance/proofs/BEM948_claude_turn_budget_repair_receipt.json")
           report = Path("governance/reports/bem948_p0_claude_turn_budget_repair.md")
           before = target.read_bytes()
-          old = b'claude_args: \'--max-turns 10 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"\''
-          new = b'claude_args: \'--max-turns 24 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"\''
-          count = before.count(old)
-          if count != 1:
-              raise SystemExit("expected exactly one default Claude turn-budget setting")
+          old = b'--max-turns 10 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
+          new = b'--max-turns 24 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)""'
+          match_count = before.count(old)
+          if match_count != 1:
+              raise SystemExit(f"expected one default turn-budget setting, found {match_count}")
           after = before.replace(old, new, 1)
-          target.write_bytes(after)
+          temp = Path("/tmp/bem948_claude.yml")
+          temp.write_bytes(after)
 
-          try:
-              import yaml
-              yaml.safe_load(after.decode("utf-8"))
-              yaml_valid = True
-          except Exception as exc:
-              raise SystemExit("yaml_validation_failed:" + str(exc))
+          yaml_check = subprocess.run(
+              ["ruby", "-e", "require 'yaml'; YAML.load_file(ARGV[0])", str(temp)],
+              text=True,
+              capture_output=True,
+              check=False,
+          )
+          if yaml_check.returncode != 0:
+              raise SystemExit("yaml_validation_failed: " + yaml_check.stderr[:500])
 
           lines = after.decode("utf-8").splitlines()
           blocks = []
-          active = None
+          capture = False
+          body = []
           for line in lines:
-              if "python3 - <<'PY'" in line:
-                  active = []
+              if not capture and line.startswith("          python3 - <<'PY'"):
+                  capture = True
+                  body = []
                   continue
-              if active is not None and line.strip() == "PY":
+              if capture and line == "          PY":
                   blocks.append("\n".join(
-                      item[10:] if item.startswith("          ") else item
-                      for item in active
+                      item[10:] if item.startswith("         ") else item
+                      for item in body
                   ))
-                  active = None
+                  capture = False
                   continue
-              if active is not None:
-                  active.append(line)
+              if capture:
+                  body.append(line)
+          if capture or not blocks:
+              raise SystemExit("embedded_python_heredoc_scan_failed")
           for index, block in enumerate(blocks, 1):
-              compile(block, "claude.yml:python-block-" + str(index), "exec")
+              compile(block, f"claude.yml:python-block-{index}", "exec")
 
+          target.write_bytes(after)
           def blob(data):
-              return hashlib.sha1(
-                  ("blob " + str(len(data)) + "\0").encode("utf-8") + data
-              ).hexdigest()
-
+              return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
           now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
           receipt = {
               "status": "PASS",
               "protocol": "BEM-948",
               "task_id": "BEM948-P0-REPAIR-CLAUDE-TURN-BUDGET",
               "created_at": now,
-              "cause": "claude_role reached max turns 10 in trace-bound live run",
+              "cause": "claude_role reached maximum turns 10 in trace-bound live run",
               "before_blob_sha": blob(before),
               "before_blob_sha_type": "git_blob",
               "after_blob_sha": blob(after),
               "after_blob_sha_type": "git_blob",
               "change": {"from": "--max-turns 10", "to": "--max-turns 24"},
               "checks": {
-                  "default_setting_match_count": count,
-                  "yaml_valid": yaml_valid,
+                  "default_setting_match_count": match_count,
+                  "yaml_valid": True,
                   "embedded_python_blocks_compiled": len(blocks),
-                  "no_secret_values_read_or_logged": True,
+                  "secret_values_read_or_logged": False,
                   "sha_type_explicit": True
               },
               "next_task": "BEM948-P0-LIVE-OBJECT-E2E-RETRY"
-          }
+}
           proof.parent.mkdir(parents=True, exist_ok=True)
           report.parent.mkdir(parents=True, exist_ok=True)
           proof.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
