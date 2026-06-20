@@ -1,116 +1,83 @@
-name: BEM947 Live Object Dispatch Bridge
+name: BEM-947 Live Object Dispatch Bridge
 
 on:
   workflow_dispatch:
+    inputs:
+      trace_id:
+        description: "Trace identifier"
+        required: true
+        type: string
+      cycle_id:
+        description: "Cycle identifier"
+        required: true
+        type: string
+      task:
+        description: "Reduced executor task"
+        required: true
+        type: string
+      allow_dispatch:
+        description: "Enable a real dispatch command"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
-  contents: write
   actions: write
+  contents: write
 
 jobs:
   retry:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          token: ${{ github.token }}
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
 
-      - name: Dispatch reduced live object task to claude.yml
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TRACE: bem947_object_dispatch_retry_${{ github.run_id }}
+      - name: Dispatch reduced executor task behind safe gate
         shell: bash
         run: |
-          set -uo pipefail
-          TASK_FILE="$(mktemp)"
-          cat > "$TASK_FILE" <<'TASK'
-          BEM-947 retry task: prove planned-to-executed object dispatch.
-
-          Executor role. Minimal scope.
-
-          Create and commit:
-          - governance/reports/${TRACE}.md
-          - governance/proofs/BEM947_live_object_dispatch_executed_${TRACE}.json
-
-          JSON required fields:
-          status: completed
-          protocol: BEM-947
-          task_id: BEM947-P2-LIVE-OBJECT-DISPATCH-RUN
-          trace_id: ${TRACE}
-          provider_selected: claude_code
-          target_workflow_id: claude.yml
-          dispatch_result: executed
-          blocker: null
-          checks.sha_type_explicit: true
-
-          If blocked, write BLOCKED instead. Do not over-claim.
-          TASK
-
-          if gh workflow run claude.yml --ref main \
-            -f role=executor \
-            -f provider=claude \
-            -f trace_id="$TRACE" \
-            -f cycle_id=bem947_planned_to_executed_retry \
-            -f task_type=live_object_dispatch_retry \
-            -f task="$(cat "$TASK_FILE")"; then
-            GH_STATUS=0
-          else
-            GH_STATUS=$?
+          set -euo pipefail
+          safe_trace="$(printf '%s' "${{ inputs.trace_id }}" | tr -cd 'A-Za-z0-9._-')"
+          safe_cycle="$(printf '%s' "${{ inputs.cycle_id }}" | tr -cd 'A-Za-z0-9._-')"
+          test -n "$safe_trace"
+          test -n "$safe_cycle"
+          dispatch_exit=0
+          if [ "${{ inputs.allow_dispatch }}" = "true" ]; then
+            set +e
+            gh workflow run claude.yml \
+              --ref main \
+              -f role=executor \
+              -f provider=claude \
+              -f trace_id="$safe_trace" \
+              -f cycle_id="$safe_cycle" \
+              -f task_type=bem947_live_object_dispatch_retry \
+              -f task="${{ inputs.task }}"
+            dispatch_exit=$?
+            set -e
           fi
-          export GH_STATUS
-
-          mkdir -p governance/proofs
-          python3 - <<'PY'
-          import json
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          trace = os.environ["TRACE"]
-          status_code = int(os.environ.get("GH_STATUS", "1"))
-          payload = {
-              "status": "DISPATCHED" if status_code == 0 else "BLOCKED",
-              "protocol": "BEM-947",
-              "task_id": "BEM947-P2-LIVE-OBJECT-DISPATCH-RETRY",
-              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "trace_id": trace,
-              "target_workflow_id": "claude.yml",
-              "gh_status": status_code,
-              "checks": {
-                  "retry_workflow_dispatched": status_code == 0,
-                  "reduced_scope_task_used": True,
-                  "no_false_completed_claim": True,
-                  "sha_type_policy_bound": True
-              },
-              "blockers": [] if status_code == 0 else ["claude_workflow_dispatch_failed"],
-              "next_task": "BEM947-P2-COLLECT-EXECUTED-PROOF",
-              "non_claim": "DISPATCHED is not PASS; completed proof must be collected separately"
-          }
-          Path("governance/proofs/BEM947_live_object_dispatch_retry_requested_receipt.json").write_text(
-              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-              encoding="utf-8"
-          )
-          PY
+          python3 scripts/bem949_dispatch_request_receipt.py \
+            --component bem947-live-object-dispatch \
+            --trace-id "$safe_trace" \
+            --target-workflow claude.yml \
+            --allow-dispatch "${{ inputs.allow_dispatch }}" \
+            --dispatch-exit-code "$dispatch_exit" \
+            --out "governance/proofs/BEM947_live_object_dispatch_retry_requested_receipt.json"
 
       - name: Commit retry dispatch receipt
-        if: always()
         shell: bash
         run: |
+          set -euo pipefail
           git config user.email "bem947-retry@ai-devops-system"
           git config user.name "BEM947 Retry Bridge"
-          git pull --rebase origin main || true
-          git add governance/proofs/BEM947_live_object_dispatch_retry_requested_receipt.json 2>/dev/null || true
-         if git diff --cached --quiet; then
-            echo "No BEM947 retry receipt changes"
-          else
-            git commit -m "BEM-947: dispatch reduced live object retry"
-            git push || (git pull --rebase origin main && git push)
+          git add governance/proofs/BEM947_live_object_dispatch_retry_requested_receipt.json
+          if git diff --cached --quiet; then
+            exit 0
           fi
-
-      - name: Fail job if dispatch failed
-        if: always()
-        shell: bash
-        run: |
-          status=0 and exit 0
+          git commit -m "BEM-947: record reduced live object dispatch request"
+          git push || (git pull --rebase origin main && git push)
