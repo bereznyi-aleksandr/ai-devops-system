@@ -1,1 +1,13 @@
-{"schema_version":1,"protocol":"BEM-949","task_id":"BEM949-P1-CI-STABILIZE","status":"FAIL","blocker":"static_validation_runner_process_failed","checks":{"manual_dispatch_execution_evidence_collected":false}}
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P1-CI-STABILIZE",
+  "status": "FAIL",
+  "blocker": "static_validation_runner_process_failed",
+  "validation_exit_code": 1,
+  "error_log_path": "governance/proofs/BEM949_p1_ci_static_validation_error.txt",
+  "checks": {
+    "manual_dispatch_execution_evidence_collected": true,
+    "runner_process_completed": false
+  }
+}
