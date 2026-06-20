@@ -1,6 +1,7 @@
 {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   "trace_id": "bem948_p0_binding_repair_20260620T0935Z",
   "objective": "Repair and re-verify the live object runtime binding between WRK-C1 and the Claude provider executor under BEM-948 P0: resolve residual merge-conflict markers in governance proof files, produce a clean idempotent transport record for the new trace, and confirm idempotent Telegram routing.",
   "assumptions": [
@@ -84,5 +85,32 @@
     "RISK-4 | results.jsonl duplicate records after conflict resolution (LOW): stripping conflict markers while preserving all stash-variant records may yield multiple lines with the same (trace_id, record_type) from different branches; downstream consumers that enforce uniqueness will reject the file; mitigation: run a dedup-by-(trace_id, record_type, completed_at) pass after marker removal and log any dropped duplicates."
   ],
   "trace_id": "bem948_p0_binding_repair_20260620T0935Z"
+>>>>>>> Stashed changes
+=======
+  "objective": "Verify that the WRK-C1 Claude provider object runtime binding established in prior cycle bem948_p0_binding_object_e2e_20260620T0930Z remains stable and idempotent via a dedicated self-test probe under trace_id bem948_p0_binding_selftest_20260620T0940Z.",
+  "assumptions": [
+    "Prior E2E cycle (bem948_p0_binding_object_e2e_20260620T0930Z) completed successfully: provider_status.json last_outcome=success at 2026-06-20T09:30:48Z.",
+    "routing.json v6 executor.active='claude' is the authoritative WRK-C1 binding declaration; this self-test reads but does not modify routing.json.",
+    "task_type 'object_runtime_binding' is absent from role_sequence.json; selftest follows default_development sequence per default_task_type (analyst -> auditor -> executor -> auditor -> curator_summary).",
+    "Idempotent Telegram routing is enforced by trace_id deduplication at the outbox consumer; re-running with the same trace_id must yield exactly one delivery and zero duplicate outbox entries.",
+    "governance/transport/results.jsonl is the sole canonical transport sink; 27 pre-existing git conflict markers do not affect the integrity of newly appended records."
+  ],
+  "steps": [
+    "STEP-1 Assert binding state: read routing.json and verify executor.active='claude'; read provider_status.json and verify last_outcome='success' and last_trace='bem948_p0_binding_object_e2e_20260620T0930Z'. Fail and write a blocker record if either assertion fails, then escalate to curator per fallback_rules.on_role_blocked.",
+    "STEP-2 Append selftest result idempotently: write exactly one record to governance/transport/results.jsonl with fields record_type='selftest_result', trace_id='bem948_p0_binding_selftest_20260620T0940Z', provider='claude', binding_mode='live_object', status='pass', completed_at='2026-06-20T09:40:00Z'. Before appending, grep results.jsonl for an existing record with the same (trace_id, record_type); skip append if found.",
+    "STEP-3 Validate idempotent Telegram routing: confirm the transport record from STEP-2 triggers at most one Telegram outbox entry for this trace_id (dedup key = trace_id). Dispatch the same trace_id a second time; assert results.jsonl line count is unchanged and Telegram outbox contains no additional entry for this trace_id. Log telegram_idempotency='pass' or 'fail'.",
+    "STEP-4 Write executor report to governance/reports/bem948_p0_binding_selftest_20260620T0940Z.md including checklist, files changed, checks run, and commit SHA.",
+    "STEP-5 Commit changed files (report + results.jsonl append) and update the transport record with the resulting commit SHA."
+  ],
+  "acceptance": [
+    "AC-1 Binding confirmed: routing.json executor.active == 'claude' AND governance/transport/results.jsonl contains exactly one record with trace_id='bem948_p0_binding_selftest_20260620T0940Z' and record_type='selftest_result' and status='pass'. Verifiable by: grep -c '\"trace_id\": \"bem948_p0_binding_selftest_20260620T0940Z\"' governance/transport/results.jsonl == 1.",
+    "AC-2 Idempotent Telegram routing verified: dispatching the same trace_id a second time produces zero additional entries in results.jsonl and zero additional Telegram outbox messages. Verifiable by recording results.jsonl line count before and after the second dispatch and asserting the counts are equal."
+  ],
+  "risks": [
+    "MEDIUM — results.jsonl contains 27 pre-existing git merge-conflict markers from a prior concurrent-writer race; strict JSONL parsers will reject the file until markers are resolved; mitigation: repair in a dedicated BEM task; selftest appends are clean and parseable in isolation.",
+    "LOW — provider_status.json may be overwritten by a concurrent transport writer between the selftest binding assertion (STEP-1) and the commit, producing a transient false failure; mitigation: assert routing.json (authoritative source) over provider_status.json (supplementary cache) as the binding source of truth.",
+    "LOW — role_cycle_state.json is stale (last updated 2026-05-17); orchestrator reads of this file to gate executor dispatch may see a closed prior cycle; mitigation: selftest declares its own cycle_id 'dispatch_bem948_p0_binding_selftest_20260620T0940Z' and does not depend on role_cycle_state.json for dispatch gating."
+  ],
+  "trace_id": "bem948_p0_binding_selftest_20260620T0940Z"
 >>>>>>> Stashed changes
 }
