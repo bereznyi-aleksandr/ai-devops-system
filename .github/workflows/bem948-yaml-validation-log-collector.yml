@@ -1,0 +1,122 @@
+name: BEM948 YAML Validation Failure Log Collector
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-yaml-validation-log-collector.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_RUN_ID: '27867354184'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 1
+
+      - name: Collect and sanitize YAML validation failure log
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bem948 governance/reports governance/proofs
+          set +e
+          gh run view "$TARGET_RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/bem948/failed.log 2> /tmp/bem948/log.err
+          rc=$?
+          set -e
+          export LOG_RC="$rc"
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          raw = Path("/tmp/bem948/failed.log").read_text(encoding="utf-8", errors="replace")
+          stderr = Path("/tmp/bem948/log.err").read_text(encoding="utf-8", errors="replace")
+          patterns = (
+              r"ghp_[A-Za-z0-9_]+",
+              r"github_pat_[A-Za-z0-9_]+",
+              r"Bearer\s+[A-Za-z0-9._-]+",
+          )
+          for pattern in patterns:
+              raw = re.sub(pattern, "***", raw, flags=re.IGNORECASE)
+              stderr = re.sub(pattern, "***", stderr, flags=re.IGNORECASE)
+          raw = re.sub(r"\x1b\[[0-9;]*m", "", raw)
+          lines = raw.splitlines()
+          selected = []
+          seen = set()
+          keywords = (
+              "error", "traceback", "syntax", "yaml", "indentation",
+              "assert", "heredoc", "compile", "ruby", "python",
+              "validation", "failed", "exit code", "exception",
+          )
+          for index, line in enumerate(lines):
+              if any(keyword in line.lower() for keyword in keywords):
+                  for item in lines[max(0, index - 6):min(len(lines), index + 20)]:
+                      if item not in seen:
+                          seen.add(item)
+                          selected.append(item[:900])
+          if not selected:
+              selected = [line[:900] for line in lines[-180:]]
+          selected = selected[:260]
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          report_path = Path("governance/reports/bem948_p0_yaml_validation_failure_log.md")
+          proof_path = Path("governance/proofs/BEM948_yaml_validation_failure_log_receipt.json")
+          report = [
+              "# BEM-948 P0 YAML validation failure log",
+              "",
+              "Target run id: `27867354184`",
+              f"Log retrieval exit code: `{os.environ.get('LOG_RC', '')}`",
+              "",
+              "## Sanitized targeted excerpt",
+              "",
+          ]
+          report.extend([f"- `{line}`" for line in selected] or ["- No failed-log text returned."])
+          report_path.write_text("\n".join(report) + "\n", encoding="utf-8")
+          receipt = {
+              "status": "COLLECTED" if raw.strip() else "BLOCKED_REPAIRING",
+              "protocol": "BEM-948",
+              "task_id": "BEM948-P0-YAML-VALIDATION-DIAGNOSTIC",
+              "created_at": now,
+              "target_run_id": "27867354184",
+              "target_run_id_type": "github_actions_run",
+              "log_retrieval_exit_code": int(os.environ.get("LOG_RC", "1")),
+              "logs_accessible": bool(raw.strip()),
+              "sanitized_excerpt_lines": len(selected),
+              "diagnostic_stderr_present": bool(stderr.strip()),
+              "report_path": str(report_path),
+              "checks": {
+                  "targeted_failed_log_collection_attempted": True,
+                  "secret_values_read_or_logged": False,
+                  "no_false_p0_pass_claim": True,
+              },
+              "next_task": "BEM948-P0-AUTOREPAIR-YAML-VALIDATOR-CAUSE",
+          }
+          proof_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit diagnostic evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Diagnostic"
+          git config user.email "bem948-diagnostic@ai-devops-system"
+          git add governance/reports/bem948_p0_yaml_validation_failure_log.md governance/proofs/BEM948_yaml_validation_failure_log_receipt.json
+          if git diff --cached --quiet; then
+            echo "No diagnostic evidence changes"
+          else
+            git commit -m "BEM-948: collect Claude YAML validation failure diagnostic"
+            git push
+          fi
