@@ -1,102 +1,71 @@
-name: BEM-934 GPT Codex Cloud
-
+name: BEM-948 GPT Codex Cloud
 on:
   workflow_dispatch:
-
+    inputs:
+      trace_id:
+        required: false
+        default: ""
+        type: string
+      task_id:
+        required: false
+        default: "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST"
+        type: string
 permissions:
   contents: write
-
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
-
-      - name: Validate GitHub-hosted provider path
-        shell: bash
+      - name: Execute cloud fallback
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          TRACE_ID: ${{ inputs.trace_id }}
+          TASK_ID: ${{ inputs.task_id }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json
-          import os
-          import urllib.request
+          import json, os, re, urllib.request
           from datetime import datetime, timezone
           from pathlib import Path
-
-          key = os.environ.get("OPENAI_API_KEY", "").strip()
-          model = os.environ.get("OPENAI_MODEL", "").strip()
-          mode = "mechanical_fallback"
-          llm_available = False
-          error = None
-          preview = (
-              "GitHub-hosted path validated. No configured OpenAI model/secret; "
-              "no LLM reasoning claimed."
-          )
-
+          key=os.getenv("OPENAI_API_KEY","").strip()
+          model=os.getenv("OPENAI_MODEL","").strip()
+          trace=os.getenv("TRACE_ID","").strip()
+          task=os.getenv("TASK_ID","BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST").strip()
+          mode="mechanical_fallback"; available=False; error=None
           if key and model:
-              payload = {
-                  "model": model,
-                  "input": "Return exactly: BEM-934 cloud path operational",
-              }
-              request = urllib.request.Request(
+              request=urllib.request.Request(
                   "https://api.openai.com/v1/responses",
-                  data=json.dumps(payload).encode("utf-8"),
-                  headers={
-                      "Authorization": "Bearer " + key,
-                      "Content-Type": "application/json",
-                  },
+                  data=json.dumps({"model":model,"input":"Return exactly: BEM-948 cloud failover operational"}).encode(),
+                  headers={"Authorization":"Bearer "+key,"Content-Type":"application/json"},
                   method="POST",
               )
               try:
-                  with urllib.request.urlopen(request, timeout=120) as response:
-                      data = json.loads(response.read().decode("utf-8"))
-                  preview = str(data.get("output_text") or "")[:1000]
-                  mode = "openai_responses_api"
-                  llm_available = True
+                  with urllib.request.urlopen(request,timeout=120) as response:
+                      text=str(json.loads(response.read().decode()).get("output_text") or "")[:1000]
+                  mode="openai_responses_api"; available=True
               except Exception as exc:
-                  error = "openai_call_failed:" + exc.__class__.__name__
-                  preview = "GitHub-hosted path completed; optional OpenAI call failed."
-          elif key or model:
-              error = "openai_secret_or_model_mismatch"
-
-          receipt = {
-              "status": "PASS",
-              "protocol": "BEM-934",
-              "task_id": "BEM934-GPT-CLOUD-PATH",
-              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "github_hosted": True,
-              "self_hosted": False,
-              "runner": "ubuntu-latest",
-              "mode": mode,
-              "llm_available": llm_available,
-              "response_preview": preview,
-              "error": error,
-          }
-          path = Path("governance/proofs/BEM934_gpt_codex_cloud_smoke_receipt.json")
-          path.parent.mkdir(parents=True, exist_ok=True)
-          path.write_text(
-              json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
-              encoding="utf-8",
-          )
+                  text="OpenAI call failed."; error="openai_call_failed:"+type(exc).__name__
+          else:
+              text="GitHub-hosted mechanical fallback; no LLM claim."
+              if key or model: error="openai_secret_or_model_mismatch"
+          receipt={"schema_version":1,"status":"PASS","protocol":"BEM-948" if trace else "BEM-934","task_id":task,"created_at":datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),"trace_id":trace or None,"github_hosted":True,"self_hosted":False,"mode":mode,"llm_available":available,"execution_kind":"live_openai_responses_api" if available else "mechanical_fallback","response_preview":text,"error":error,"non_claims":[] if available else ["No OpenAI LLM execution is claimed without OPENAI_API_KEY and OPENAI_MODEL."]}
+          suffix=re.sub(r"[^A-Za-z0-9_.-]+","_",trace)[:120]
+          path=Path(f"governance/proofs/BEM948_p3_{suffix}_gpt_codex_cloud_receipt.json") if trace else Path("governance/proofs/BEM934_gpt_codex_cloud_smoke_receipt.json")
+          path.parent.mkdir(parents=True,exist_ok=True)
+          path.write_text(json.dumps(receipt,indent=2)+"\n",encoding="utf-8")
+          with open(os.environ["GITHUB_ENV"],"a",encoding="utf-8") as handle: handle.write(f"RECEIPT_PATH={path}\n")
           PY
-
       - name: Commit receipt
         run: |
           set -euo pipefail
-          git config user.email "bem934-gpt-cloud@ai-devops-system"
-          git config user.name "BEM-934 GPT Cloud"
+          git config user.email "bem948-gpt-cloud@ai-devops-system"
+          git config user.name "BEM-948 GPT Codex Cloud"
           git pull --rebase --autostash origin main || true
-          git add governance/proofs/BEM934_gpt_codex_cloud_smoke_receipt.json
-          if git diff --cached --quiet; then
-            echo "No receipt changes"
-          else
-            git commit -m "BEM-934 GPT Codex cloud smoke receipt"
-            git push
-          fi
+          git add "$RECEIPT_PATH"
+          git diff --cached --quiet || git commit -m "BEM-948 GPT Codex cloud receipt"
+          git push || true
