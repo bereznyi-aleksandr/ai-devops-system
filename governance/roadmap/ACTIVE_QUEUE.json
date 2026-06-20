@@ -1,8 +1,8 @@
 {
-  "version": 18,
-  "updated_at": "2026-06-20T04:46:10Z",
+  "version": 19,
+  "updated_at": "2026-06-20T05:14:40Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM948-P0-AUTOREPAIR-AFTER-CLAUDE-LOG-DIAGNOSTIC",
+  "current_task": "BEM948-P0-RECONCILE-PROOF-REPORT-AND-REPAIR-CLAUDE-TRANSPORT",
   "system_status": "BEM948_P0_BLOCKED_REPAIRING",
   "release_status": "BLOCKED_REPAIRING",
   "protocol": "BEM-948",
@@ -13,7 +13,7 @@
   },
   "tasks": [
     {
-      "id": "BEM948-P0-AUTOREPAIR-AFTER-CLAUDE-LOG-DIAGNOSTIC",
+      "id": "BEM948-P0-RECONCILE-PROOF-REPORT-AND-REPAIR-CLAUDE-TRANSPORT",
       "status": "IN_PROGRESS",
       "percent": 0
     },
@@ -39,23 +39,42 @@
     }
   ],
   "recent_action": {
-    "action": "real_object_to_claude_dispatch_proven_but_claude_runtime_failed",
-    "bridge_runner_sha": "72fe03fc642f78c39d73aec9c9718485033ece38",
-    "bridge_runner_sha_type": "git_blob",
-    "bridge_runner_commit": "6e6fd3faf70efade442d493c911601f04b159b8b",
-    "bridge_runner_commit_sha_type": "commit",
-    "blocked_receipt": "governance/proofs/BEM948_p0_live_object_dispatch_blocked_receipt.json",
-    "blocked_receipt_sha": "df11463cef4bff8cfb2555039e3cb3d263267d6e",
-    "blocked_receipt_sha_type": "git_blob",
-    "blocked_receipt_commit": "21a0b2291f5a91975e1bbaba850b3976ca533124",
-    "blocked_receipt_commit_sha_type": "commit"
+    "action": "P0 real object-to-dispatch path reached actual HTTP dispatch but completion evidence conflicted",
+    "dispatch_executor_receipt": {
+      "sha": "dd1e1af268e97e8b2f9bcb3708c3ff330933fc13",
+      "sha_type": "git_blob"
+    },
+    "executed_proof": {
+      "sha": "23a913bb6596c61a8016e63bf8b6534b3960a8d3",
+      "sha_type": "git_blob",
+      "reported_status": "completed"
+    },
+    "execution_report": {
+      "sha": "979c88f78a1bdafcc6387e37dcd1a5318bb5a784",
+      "sha_type": "git_blob",
+      "reported_outcome": "failure"
+    },
+    "reconciliation_receipt": {
+      "sha": "76a453bf140e2cfea565adf6b7c0ff10e4744422",
+      "sha_type": "git_blob",
+      "commit": "84f9f548c7b13813d43d570670bd363989fd11cb",
+      "commit_sha_type": "commit"
+    },
+    "targeted_diagnostic_workflow": {
+      "sha": "105e1481fa3e794bcb7a9d1d67cce0b61c7d96fe",
+      "sha_type": "git_blob",
+      "commit": "768b2783792ecd02e551979f70052be6d323591d",
+      "commit_sha_type": "commit"
+    }
   },
   "blockers": [
-    "claude_role_outcome=failure",
-    "p0_executed_completed_evidence_absent",
-    "targeted_claude_log_diagnostic_receipt_absent"
+    "proof_report_outcome_conflict",
+    "executed_proof_sha_policy_invalid",
+    "claude_role outcome=failure",
+    "report_merge_conflict_markers",
+    "targeted_diagnostic_receipt_pending"
   ],
-  "next_action": "collect targeted action logs, repair the confirmed Claude runtime cause, then repeat P0 without a manual bridge",
+  "next_action": "complete trace-bound Claude log diagnostic; repair confirmed Claude transport/report-write cause; then repeat P0 object-to-dispatch E2E without a manual bridge",
   "sha_policy": {
     "sha_type_required": true,
     "allowed": [
