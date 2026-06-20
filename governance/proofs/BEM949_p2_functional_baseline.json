@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P2-FUNCTIONAL-RESTORE",
+  "receipt_id": "BEM949_p2_functional_baseline",
+  "created_at": "2026-06-20T17:53:19Z",
+  "status": "OBSERVED",
+  "head_sha": "418acd2172a193d28ba9e0a54c61615a83a5581b",
+  "head_sha_type": "commit",
+  "workflows": [
+    {
+      "path": ".github/workflows/bem934-binding-failure-log-inspector.yml",
+      "exists": true,
+      "current_blob_sha": "2109635b719b0c94de8b9666bb42abfc08694faf",
+      "current_blob_sha_type": "git_blob",
+      "historical_candidate_commit_sha": "29cc17855e3a1a831bb864b9cc5a786801d42eb9",
+      "historical_candidate_commit_sha_type": "commit"
+    },
+    {
+      "path": ".github/workflows/bem931-v36-release-repair-gate.yml",
+      "exists": true,
+      "current_blob_sha": "3de1e44f7836ba3b2bd3d9cda112d920c44b48cd",
+      "current_blob_sha_type": "git_blob",
+      "historical_candidate_commit_sha": "7dfdcae4868a0ffbbe2d6f65e789e69780f0f896",
+      "historical_candidate_commit_sha_type": "commit"
+    },
+    {
+      "path": ".github/workflows/bem947-live-object-dispatch-retry.yml",
+      "exists": true,
+      "current_blob_sha": "267a7fc0f9b1f53e07cb3467475e4a0b3b1d17b1",
+      "current_blob_sha_type": "git_blob",
+      "historical_candidate_commit_sha": "28eaa5ed46e867255026c37e71f5bb834388762f",
+      "historical_candidate_commit_sha_type": "commit"
+    },
+    {
+      "path": ".github/workflows/bem948-live-object-e2e.yml",
+      "exists": true,
+      "current_blob_sha": "345ff6c47fff4c7b65a1d1095957427f1077803e",
+      "current_blob_sha_type": "git_blob",
+      "historical_candidate_commit_sha": "8d00c315bbd51a57af2e2703b616e92800fc5f2f",
+      "historical_candidate_commit_sha_type": "commit"
+    },
+    {
+      "path": ".github/workflows/bem948-p0-claude-diagnostic-retry.yml",
+      "exists": true,
+      "current_blob_sha": "df0611373ea4dca91843b0455b115b462e8ab956",
+      "current_blob_sha_type": "git_blob",
+      "historical_candidate_commit_sha": "91e392369bf54a0f20ebbbcabbb963aef3b6272c",
+      "historical_candidate_commit_sha_type": "commit"
+    }
+  ],
+  "checks": {
+    "all_five_audited_workflows_enumerated": true,
+    "current_blob_sha_types_explicit": true,
+    "historical_candidates_searched": true,
+    "functional_restore_claimed": false
+  },
+  "non_claim": "Baseline only; no workflow completion or provider-success claim."
+}
