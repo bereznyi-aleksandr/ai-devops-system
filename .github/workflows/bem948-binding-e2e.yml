@@ -1,0 +1,73 @@
+name: BEM-948 Binding-mode Object E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'governance/state/bem948_binding_e2e_trigger.json'
+      - '.github/workflows/bem948-binding-e2e.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  live_binding_e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TRACE_ID: bem948_p0_binding_object_e2e_20260620T0930Z
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 1
+
+      - name: Queue and route binding-mode object task
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/runners/object_dispatch_bridge.py \
+            --object-id OBJ-GD-001 \
+            --role executor \
+            --provider claude_code \
+            --trace-id "$TRACE_ID" \
+            --task-type object_runtime_binding \
+            --consume \
+            --task "BEM-948 P0 binding-mode live object E2E. Return a strict JSON governance plan for WRK-C1 and the Claude provider object runtime binding. Include an objective, assumptions, at least three specific steps, at least two verifiable acceptance conditions, and risks. The plan must explicitly cover idempotent Telegram routing. Trace: $TRACE_ID."
+
+      - name: Execute only the trace-bound governance dispatch
+        id: executor
+        shell: bash
+        env:
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+        run: |
+          set +e
+          python3 governance/runners/dispatch_executor_guard.py --max 1 --trace-id "$TRACE_ID"
+          result=$?
+          set -e
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Commit handoff evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Binding E2E"
+          git config user.email "bem948-binding-e2e@ai-devops-system"
+          git add governance/state/ governance/proofs/BEM948_object_dispatch_bridge_receipt.json governance/proofs/BEM948_dispatch_executor_receipt.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM-948: bind object route to Claude structured runtime"
+            git push
+          fi
+
+      - name: Enforce dispatch bridge result
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.executor.outputs.result }}" = "0"
