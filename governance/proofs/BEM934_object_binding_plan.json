@@ -1,46 +1,27 @@
 {
-  "status": "PASS",
-  "protocol": "BEM-934",
-  "task_id": "BEM934-OBJECTS-BOUND",
-  "trace_id": "bem934_objects_bound_repair_27751086692_wrk",
-  "provider_selected": "claude",
-  "workflow": ".github/workflows/claude.yml",
-  "object_id": "WRK",
-  "passport_path": "governance/architecture/object_passports/WRK.json",
-  "objective": "Bind the terminal WRK object in the GD -> DIR -> WRK governance chain to the Claude runtime, with WRK-C1 as the primary executor contour and trace-based idempotent Telegram routing.",
+  "trace_id": "bem948_p0_binding_object_e2e_20260620T0930Z",
+  "objective": "Establish a verifiable, idempotent E2E binding between the WRK-C1 work-unit and the Claude provider object runtime so that every dispatch produces exactly one governance transport record and one idempotent Telegram routing event, with no duplicate delivery on retry.",
   "assumptions": [
-    "GD runtime binding is evidenced by trace bem934_objects_bound_27750274693_gd_a1.",
-    "DIR runtime binding is evidenced by trace bem934_objects_bound_27750274693_dir_a2 and commit f201f24770b6987f8464de7498d7b16ec5cf2619.",
-    "WRK is the terminal object and has contours WRK-C1, WRK-C2, and WRK-C3; WRK-C1 is the primary executor contour.",
-    "Claude is the active provider for executor and auditor roles; the stale passport value codex_local is superseded by proof-bearing runtime evidence."
+    "provider_status.json merge-conflict markers have been noted; repair_note present confirms BEM-948 fix intent; claude provider is bound as active executor.",
+    "Telegram routing is governance-synthetic in this E2E; no live bot token is required for the pass.",
+    "task_type 'object_runtime_binding' is absent from role_sequence.json; cycle follows default_development sequence per default_task_type.",
+    "Idempotency key is trace_id; a second dispatch with the same trace_id must produce no new Telegram message and no duplicate transport record.",
+    "governance/transport/results.jsonl is the canonical transport sink; no other file is written by executor."
   ],
   "steps": [
-    "Validate the full GD -> DIR -> WRK chain and the GD/DIR proof artifacts before WRK binding.",
-    "Assert Claude as the active runtime provider from routing/provider state, not from the stale passport field.",
-    "Verify WRK-C1, WRK-C2, and WRK-C3 managed channels are present and writable.",
-    "Run the auditor pre-check and confirm executor dispatch resolves to WRK-C1.EXECUTOR.",
-    "Create a WRK runtime-binding evidence record with trace_id, provider, workflow, passport path, source commit SHA, source receipt blob SHA, and source plan blob SHA.",
-    "Verify idempotent Telegram routing for the WRK trace: first delivery creates one WRK-C1 record and replay creates no duplicate.",
-    "Update objects_registry_v2.json only after the WRK evidence and the prior GD/DIR evidence validate.",
-    "Write a final BEM934-OBJECTS-BOUND receipt with all three trace IDs and immutable commit/blob identifiers."
+    "Step 1 — Resolve provider_status and confirm executor binding: Read provider_status.json; assert claude entry is reachable. Write a single 'binding_probe' record to governance/transport/results.jsonl with trace_id. Skip write if record with same trace_id and record_type already exists (idempotent).",
+    "Step 2 — Execute object runtime binding for WRK-C1: Append 'binding_result' record to results.jsonl: trace_id, cycle_id, from_role=executor, to_role=auditor, status=completed, artifact_path=governance/reports/bem948_p0_binding_object_e2e_20260620T0930Z.md. Check for existing record before appending (idempotent). Commit report and transport append.",
+    "Step 3 — Idempotent Telegram routing: Compute idempotency_key=SHA256(trace_id+':'+record_type). Check governance/state/telegram_sent.json for key. Emit Telegram notification only if key is absent; write key to dedup store after successful send. On retry, key present — send skipped, no duplicate.",
+    "Step 4 — Hand off to auditor: Append 'handoff' record to results.jsonl (from_role=executor, to_role=auditor). Update role_cycle_state.json active_role=auditor. Idempotent on trace_id+record_type=handoff."
   ],
   "acceptance": [
-    "A WRK runtime binding snapshot exists and names trace bem934_objects_bound_repair_27751086692_wrk, provider claude, workflow .github/workflows/claude.yml, and passport governance/architecture/object_passports/WRK.json.",
-    "The WRK snapshot cites execution commit b907bccbb4b18dbd00751f9f1c18ae69ccbc1fa1 and report blob a56a37b2364988e5ba154d7cc3e4ab9153394e61.",
-    "GD, DIR, and WRK have three distinct real trace IDs and each object has a non-empty source commit/blob proof.",
-    "objects_registry_v2.json is BOUND only after all object checks pass.",
-    "The final receipt status is PASS and contains explicit checks for full path, Claude provider, and non-smoke execution."
+    "governance/transport/results.jsonl contains exactly one record with trace_id=bem948_p0_binding_object_e2e_20260620T0930Z and record_type=binding_result, status=completed — verifiable by grep on the file.",
+    "A second identical dispatch (same trace_id) produces zero new transport records and zero new Telegram messages — verifiable by running the dispatch twice and asserting results.jsonl line-count is unchanged after the second run."
   ],
   "risks": [
-    "Shared materialization file collision can occur when multiple claude.yml runs finish concurrently; canonical per-object snapshots prevent evidence loss.",
-    "Passport runtime_provider fields may be stale; provider authority comes from runtime routing and proof artifacts.",
-    "The gpt_codex_cloud fallback is mechanical without OPENAI_API_KEY and OPENAI_MODEL and is not represented as an LLM-capable fallback."
-  ],
-  "source_execution_commit_sha": "b907bccbb4b18dbd00751f9f1c18ae69ccbc1fa1",
-  "source_report_path": "governance/reports/bem934_objects_bound_repair_27751086692_wrk.md",
-  "source_report_blob_sha": "a56a37b2364988e5ba154d7cc3e4ab9153394e61",
-  "race_recovery": {
-    "selected_side": "WRK stashed changes",
-    "original_conflicted_plan_blob_sha": "eafefb87790391baa5605df64b6ffee1faac2328"
-  }
+    "HIGH — provider_status.json still has unresolved git merge-conflict markers at runtime; mitigation: executor detects markers, writes blocker record, escalates to curator per fallback_rules.on_role_blocked.",
+    "MEDIUM — task_type 'object_runtime_binding' not in role_sequence.json causes orchestrator to fall back to default_development; mitigation: auditor final check required before curator_summary regardless of sequence used.",
+    "MEDIUM — telegram_sent.json dedup store does not exist on first run; mitigation: executor creates it as empty object if absent so subsequent runs always find the file.",
+    "LOW — results.jsonl concurrent writers may produce duplicate lines (pattern seen in provider_status.json conflict); mitigation: append-only atomic writes enforced by orchestrator cycle locking."
+  ]
 }
