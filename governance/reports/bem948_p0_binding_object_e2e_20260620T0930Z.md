@@ -1,0 +1,16 @@
+# Claude Role Result - bem948_p0_binding_object_e2e_20260620T0930Z
+
+| Field | Value |
+|---|---|
+| Trace | bem948_p0_binding_object_e2e_20260620T0930Z |
+| Role | executor |
+| Provider | claude |
+| Outcome | success |
+| Status | completed |
+| Commit SHA | 3df3441c90ca13af8718aebdb54bfa61bada7d24 |
+| Completed at | 2026-06-20T09:28:49Z |
+| Changed files | governance/proofs/BEM934_claude_result_materialization_receipt.json, governance/proofs/BEM934_object_binding_plan.json |
+
+**No blocker.**
+
+Report written by claude.yml (BEM-477/488). No issue comments.
