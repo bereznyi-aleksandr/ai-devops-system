@@ -1,0 +1,49 @@
+name: BEM949 P1 Active Scope Static Validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install YAML parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check PyYAML
+
+      - name: Validate active control-plane workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/bem949_active_scope_validate.py
+
+      - name: Commit active-scope validation receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-ci@ai-devops-system"
+          git config user.name "BEM949 CI Stabilizer"
+          git pull --rebase --autostash origin main || true
+          git add governance/proofs/BEM949_p1_active_scope_static_validation.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P1: validate active control-plane workflows"
+          git push || (git pull --rebase origin main && git push)
