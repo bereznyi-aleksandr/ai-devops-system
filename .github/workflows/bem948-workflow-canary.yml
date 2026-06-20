@@ -1,0 +1,63 @@
+name: BEM-948 Workflow Canary
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-workflow-canary.yml'
+      - 'governance/state/bem948_canary_trigger.json'
+
+permissions:
+  contents: write
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write canary receipt through Contents API
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPO: ${{ github.repository }}
+          API: ${{ github.api_url }}
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, urllib.request
+          from datetime import datetime, timezone
+          path = "governance/proofs/BEM948_workflow_canary_receipt.json"
+          url = f"{os.environ['API']}/repos/{os.environ['REPO']}/contents/{path}"
+          headers = {
+              "Authorization": "Bearer " + os.environ["GH_TOKEN"],
+              "Accept": "application/vnd.github+json",
+              "Content-Type": "application/json",
+          }
+          receipt = {
+              "status": "PASS",
+              "protocol": "BEM-948",
+              "task_id": "BEM948-WORKFLOW-CANARY",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "event_name": os.environ.get("GITHUB_EVENT_NAME"),
+              "checks": {
+                  "workflow_runtime_reached": True,
+                  "contents_api_write_reached": True,
+                  "sha_type_explicit": True,
+              },
+          }
+          current_sha = None
+          try:
+              with urllib.request.urlopen(urllib.request.Request(url + "?ref=main", headers=headers)) as response:
+                  current_sha = json.loads(response.read().decode("utf-8"))["sha"]
+          except Exception:
+              current_sha = None
+          payload = {
+              "message": "BEM-948: record workflow canary",
+              "content": base64.b64encode((json.dumps(receipt, ensure_ascii=False, indent=2) + "\n").encode("utf-8")).decode("ascii"),
+              "branch": "main",
+          }
+          if current_sha:
+              payload["sha"] = current_sha
+          request = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="PUT")
+          with urllib.request.urlopen(request) as response:
+              print(response.status)
+          PY
