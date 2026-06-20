@@ -1,0 +1,85 @@
+name: BEM-948 Direct Turn Budget Patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-direct-turn-budget-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Apply exact default turn-budget replacement
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          target = Path(".github/workflows/claude.yml")
+          before = target.read_bytes()
+          old = b'--max-turns 10 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
+          new = b'--max-turns 24 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
+          if before.count(old) != 1:
+              raise SystemExit(f"expected one default setting, found {before.count(old)}")
+          after = before.replace(old, new, 1)
+          if after.count(old) != 0 or after.count(new) != 1:
+              raise SystemExit("replacement_postcondition_failed")
+          target.write_bytes(after)
+          def blob(data):
+              return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+          payload = {
+              "status": "PATCHED_PENDING_FULL_VALIDATION",
+              "protocol": "BEM-948",
+              "task_id": "BEM948-P0-REPAIR-CLAUDE-TURN-BUDGET",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "cause": "claude_role reached maximum turns 10",
+              "before_blob_sha": blob(before),
+              "before_blob_sha_type": "git_blob",
+              "after_blob_sha": blob(after),
+              "after_blob_sha_type": "git_blob",
+              "change": {"from": "--max-turns 10", "to": "--max-turns 24"},
+              "checks": {
+                  "exact_default_setting_match_count": 1,
+                  "replacement_postcondition": True,
+                  "git_diff_check_before_commit": True,
+                  "full_syntax_validation_pending": True,
+                  "secret_values_read_or_logged": False,
+                  "sha_type_explicit": True
+              },
+              "next_task": "BEM948-P0-VALIDATE-CLAUDE-YAML-AFTER-TURN-BUDGET-REPAIR"
+          }
+          Path("governance/proofs").mkdir(parents=True, exist_ok=True)
+          Path("governance/reports").mkdir(parents=True, exist_ok=True)
+          Path("governance/proofs/BEM948_claude_turn_budget_repair_receipt.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          Path("governance/reports/bem948_p0_claude_turn_budget_repair.md").write_text(
+              "# BEM-948 P0 Claude turn-budget patch\n\n"
+              "Exact controlled change: default maximum turns 10 -> 24.\n"
+              "Full YAML and embedded-Python validation remains required before P0 retry.\n",
+              encoding="utf-8"
+          )
+          PY
+          git diff --check -- .github/workflows/claude.yml
+
+      - name: Commit controlled patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Autorepair"
+          git config user.email "bem948-autorepair@ai-devops-system"
+          git add .github/workflows/claude.yml governance/proofs/BEM948_claude_turn_budget_repair_receipt.json governance/reports/bem948_p0_claude_turn_budget_repair.md
+          git diff --cached --check
+          git commit -m "BEM-948: patch Claude turn budget after runtime limit"
+          git push
