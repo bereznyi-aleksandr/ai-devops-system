@@ -1,0 +1,59 @@
+name: BEM948 Governance Dispatch Executor
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'governance/state/dispatch_processed.jsonl'
+      - '.github/workflows/bem948-governance-dispatch-executor.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 1
+
+      - name: Dispatch planned governance records
+        id: executor
+        shell: bash
+        env:
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+        run: |
+          set +e
+          python3 governance/runners/dispatch_executor.py --max 20
+          result=$?
+          set -e
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Commit dispatch evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Dispatch Executor"
+          git config user.email "bem948-dispatch-executor@ai-devops-system"
+          git add governance/state/dispatch_executed.jsonl governance/proofs/BEM948_dispatch_executor_receipt.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No dispatch evidence changes"
+          else
+            git commit -m "BEM-948: execute planned governance dispatches"
+            git push
+          fi
+
+      - name: Enforce dispatch result
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.executor.outputs.result }}" = "0"
