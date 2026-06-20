@@ -1,0 +1,41 @@
+name: BEM949 CI Static Validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install YAML parser
+        run: python -m pip install --disable-pip-version-check PyYAML
+
+      - name: Validate all workflows and preserve findings
+        run: python scripts/bem949_ci_stabilize.py
+
+      - name: Commit static validation report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-ci@ai-devops-system"
+          git config user.name "BEM949 CI Stabilizer"
+          git add governance/proofs/BEM949_p1_ci_static_validation.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P1: record repository-wide CI static validation"
+          git push
