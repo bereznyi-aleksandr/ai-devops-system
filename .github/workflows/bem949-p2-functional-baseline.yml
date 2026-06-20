@@ -1,0 +1,38 @@
+name: BEM949 P2 Functional Baseline
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Generate functional before/after baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/bem949_p2_functional_baseline.py
+
+      - name: Commit baseline evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p2@ai-devops-system"
+          git config user.name "BEM949 P2 Restore Baseline"
+          git add governance/proofs/BEM949_p2_functional_baseline.json governance/reports/BEM949_p2_functional_before_after.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P2: record functional restore baseline"
+          git push || (git pull --rebase origin main && git push)
