@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'governance/state/bem948_live_e2e_selftest_trigger.json'
+      - 'governance/state/bem948_live_e2e_runtime_probe_trigger.json'
       - '.github/workflows/bem948-live-object-e2e.yml'
 
 permissions:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      TRACE_ID: bem948_p0_binding_selftest_20260620T0940Z
+      TRACE_ID: bem948_p0_binding_runtime_probe_20260620T0945Z
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          python3 -m py_compile             governance/runners/object_dispatch_bridge.py             governance/runners/dispatch_executor.py             governance/runners/dispatch_executor_guard.py
+          python3 -m py_compile governance/runners/object_dispatch_bridge.py governance/runners/dispatch_executor.py governance/runners/dispatch_executor_guard.py
           result=$?
           set -e
           mkdir -p governance/proofs
@@ -39,24 +39,14 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
           rc = int(sys.argv[1])
-          payload = {
+          Path("governance/proofs/BEM948_dispatch_executor_selftest_receipt.json").write_text(json.dumps({
             "status": "PASS" if rc == 0 else "BLOCKED",
             "protocol": "BEM-948",
             "task_id": "BEM948-P0-DISPATCH-EXECUTOR-SELFTEST",
             "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "checks": {
-              "object_dispatch_bridge_pycompile": rc == 0,
-              "dispatch_executor_pycompile": rc == 0,
-              "dispatch_executor_guard_pycompile": rc == 0,
-              "no_false_runtime_success_claim": True,
-              "sha_type_explicit": True,
-            },
+            "checks": {"runner_py_compile": rc == 0, "no_false_runtime_success_claim": True, "sha_type_explicit": True},
             "blockers": [] if rc == 0 else ["runner_py_compile_failed"],
-            "next_task": "BEM948-P0-BINDING-MODE-LIVE-OBJECT-E2E",
-          }
-          Path("governance/proofs/BEM948_dispatch_executor_selftest_receipt.json").write_text(
-              json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-          )
+          }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
           echo "result=$result" >> "$GITHUB_OUTPUT"
           test "$result" = "0"
@@ -65,9 +55,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 governance/runners/object_dispatch_bridge.py             --object-id OBJ-GD-001             --role executor             --provider claude_code             --trace-id "$TRACE_ID"             --task-type object_runtime_binding             --consume             --task "BEM-948 P0 binding-mode live object E2E. Return a strict JSON governance plan for WRK-C1 and the Claude provider object runtime binding. Include an objective, assumptions, at least three specific steps, at least two verifiable acceptance conditions, and risks. The plan must explicitly cover idempotent Telegram routing. Trace: $TRACE_ID."
+          python3 governance/runners/object_dispatch_bridge.py             --object-id OBJ-GD-001             --role executor             --provider claude_code             --trace-id "$TRACE_ID"             --task-type object_runtime_binding             --consume             --task "BEM-948 P0 runtime-probe binding object E2E. Return strict JSON for WRK-C1 and Claude object runtime binding; include objective, assumptions, three steps, two verifiable acceptance conditions, risks, and idempotent Telegram routing. Trace: $TRACE_ID."
 
-      - name: Execute only the trace-bound governance dispatch
+      - name: Dispatch and capture sanitized permanent-runner diagnostic
         id: executor
         shell: bash
         env:
@@ -77,9 +67,33 @@ jobs:
           GITHUB_API_URL: ${{ github.api_url }}
         run: |
           set +e
-          python3 governance/runners/dispatch_executor_guard.py --max 1 --trace-id "$TRACE_ID"
+          python3 governance/runners/dispatch_executor_guard.py --max 1 --trace-id "$TRACE_ID" > /tmp/bem948_executor.out 2> /tmp/bem948_executor.err
           result=$?
           set -e
+          python3 - "$result" <<'PY'
+          import json, re, sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+          rc = int(sys.argv[1])
+          raw = Path("/tmp/bem948_executor.err").read_text(encoding="utf-8", errors="replace")
+          raw = re.sub(r"ghp_[A-Za-z0-9_]+", "***", raw)
+          raw = re.sub(r"github_pat_[A-Za-z0-9_]+", "***", raw)
+          raw = re.sub(r"Bearer\s+[A-Za-z0-9._-]+", "Bearer ***", raw, flags=re.I)
+          excerpt = [line[:500] for line in raw.splitlines()[-20:]]
+          payload = {
+            "status": "PASS" if rc == 0 else "BLOCKED",
+            "protocol": "BEM-948",
+            "task_id": "BEM948-P0-DISPATCH-EXECUTOR-RUNTIME-PROBE",
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "trace_id": "bem948_p0_binding_runtime_probe_20260620T0945Z",
+            "exit_code": rc,
+            "stderr_tail": excerpt,
+            "checks": {"trace_bound_execution_attempted": True, "stderr_sanitized": True, "no_false_completed_claim": True, "sha_type_explicit": True},
+            "blockers": [] if rc == 0 else ["dispatch_executor_runtime_failed"],
+            "next_task": "BEM948-P0-BINDING-MODE-LIVE-OBJECT-E2E" if rc == 0 else "BEM948-P0-AUTOREPAIR-DISPATCH-EXECUTOR-RUNTIME",
+          }
+          Path("governance/proofs/BEM948_dispatch_executor_runtime_probe_receipt.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
           echo "result=$result" >> "$GITHUB_OUTPUT"
 
       - name: Commit handoff evidence
@@ -87,11 +101,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "BEM-948 Binding E2E"
-          git config user.email "bem948-binding-e2e@ai-devops-system"
-          git add governance/state/ governance/proofs/BEM948_dispatch_executor_selftest_receipt.json governance/proofs/BEM948_object_dispatch_bridge_receipt.json governance/proofs/BEM948_dispatch_executor_receipt.json 2>/dev/null || true
+          git config user.name "BEM-948 Runtime Probe"
+          git config user.email "bem948-runtime-probe@ai-devops-system"
+          git add governance/state/ governance/proofs/BEM948_dispatch_executor_selftest_receipt.json governance/proofs/BEM948_dispatch_executor_runtime_probe_receipt.json governance/proofs/BEM948_object_dispatch_bridge_receipt.json governance/proofs/BEM948_dispatch_executor_receipt.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
-            git commit -m "BEM-948: validate and bind object dispatch runtime"
+            git commit -m "BEM-948: diagnose trace-bound dispatcher runtime"
             git push
           fi
 
