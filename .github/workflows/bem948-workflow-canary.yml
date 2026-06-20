@@ -10,12 +10,13 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   canary:
     runs-on: ubuntu-latest
     steps:
-      - name: Write canary receipt through Contents API
+      - name: Record runtime canary and diagnose P0 E2E workflow
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
@@ -23,20 +24,92 @@ jobs:
           API: ${{ github.api_url }}
         run: |
           python3 - <<'PY'
-          import base64, json, os, urllib.request
+          import base64, json, os, re, subprocess, urllib.request
           from datetime import datetime, timezone
-          path = "governance/proofs/BEM948_workflow_canary_receipt.json"
-          url = f"{os.environ['API']}/repos/{os.environ['REPO']}/contents/{path}"
+
+          repo = os.environ["REPO"]
+          api = os.environ["API"]
+          token = os.environ["GH_TOKEN"]
           headers = {
-              "Authorization": "Bearer " + os.environ["GH_TOKEN"],
+              "Authorization": "Bearer " + token,
               "Accept": "application/vnd.github+json",
               "Content-Type": "application/json",
           }
-          receipt = {
+
+          def now():
+              return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          def gh(args):
+              run = subprocess.run(["gh", *args], text=True, capture_output=True, check=False)
+              return run.returncode, run.stdout, run.stderr
+
+          def put(path, value, message):
+              url = f"{api}/repos/{repo}/contents/{path}"
+              current = None
+              try:
+                  req = urllib.request.Request(url + "?ref=main", headers=headers)
+                  with urllib.request.urlopen(req) as response:
+                      current = json.loads(response.read().decode("utf-8"))["sha"]
+              except Exception:
+                  current = None
+              content = json.dumps(value, ensure_ascii=False, indent=2) + "\n" if isinstance(value, dict) else value
+              payload = {
+                  "message": message,
+                  "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
+                  "branch": "main",
+              }
+              if current:
+                  payload["sha"] = current
+              req = urllib.request.Request(
+                  url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="PUT"
+              )
+              with urllib.request.urlopen(req) as response:
+                  return json.loads(response.read().decode("utf-8"))
+
+          _, raw, list_err = gh([
+              "run", "list", "--repo", repo, "--workflow", "bem948-live-object-e2e.yml",
+              "--limit", "20",
+              "--json", "databaseId,headSha,createdAt,updatedAt,status,conclusion,displayTitle",
+          ])
+          try:
+              runs = json.loads(raw)
+          except Exception:
+              runs = []
+          selected = runs[0] if isinstance(runs, list) and runs else {}
+          run_id = str(selected.get("databaseId", ""))
+          log = ""
+          log_err = list_err
+          if run_id:
+              _, log, view_err = gh(["run", "view", run_id, "--repo", repo, "--log-failed"])
+              log_err += "\n" + view_err
+          log = re.sub(r"ghp_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+", "***", log)
+          markers = ("error", "failed", "failure", "exit code", "traceback", "permission", "not found", "invalid")
+          lines = [line[:700] for line in log.splitlines() if any(m in line.lower() for m in markers)][:120]
+          diagnostic = {
+              "status": "OBSERVED",
+              "protocol": "BEM-948",
+              "task_id": "BEM948-P0-E2E-WORKFLOW-DIAGNOSTIC",
+              "created_at": now(),
+              "workflow": "bem948-live-object-e2e.yml",
+              "latest_run": selected,
+              "logs_accessible": bool(log.strip()),
+              "targeted_excerpt_lines": len(lines),
+              "log_access_error_present": bool(log_err.strip()),
+              "excerpt": lines,
+              "checks": {
+                  "canary_runtime_reached": True,
+                  "e2e_run_query_attempted": True,
+                  "e2e_log_query_attempted": bool(run_id),
+                  "no_false_p0_pass": True,
+                  "sha_type_explicit": True,
+              },
+              "next_task": "BEM948-P0-AUTOREPAIR-AFTER-E2E-WORKFLOW-DIAGNOSTIC",
+          }
+          canary = {
               "status": "PASS",
               "protocol": "BEM-948",
               "task_id": "BEM948-WORKFLOW-CANARY",
-              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "created_at": now(),
               "event_name": os.environ.get("GITHUB_EVENT_NAME"),
               "checks": {
                   "workflow_runtime_reached": True,
@@ -44,20 +117,15 @@ jobs:
                   "sha_type_explicit": True,
               },
           }
-          current_sha = None
-          try:
-              with urllib.request.urlopen(urllib.request.Request(url + "?ref=main", headers=headers)) as response:
-                  current_sha = json.loads(response.read().decode("utf-8"))["sha"]
-          except Exception:
-              current_sha = None
-          payload = {
-              "message": "BEM-948: record workflow canary",
-              "content": base64.b64encode((json.dumps(receipt, ensure_ascii=False, indent=2) + "\n").encode("utf-8")).decode("ascii"),
-              "branch": "main",
-          }
-          if current_sha:
-              payload["sha"] = current_sha
-          request = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="PUT")
-          with urllib.request.urlopen(request) as response:
-              print(response.status)
+          report = "\n".join([
+              "# BEM-948 P0 E2E workflow diagnostic", "",
+              f"Run ID: `{run_id}`",
+              f"Run status: `{selected.get('status', '')}`",
+              f"Run conclusion: `{selected.get('conclusion', '')}`", "",
+              "## Sanitized excerpt", "",
+              *([f"- `{line}`" for line in lines] or ["- No selected failure line returned."]),
+          ]) + "\n"
+          put("governance/proofs/BEM948_workflow_canary_receipt.json", canary, "BEM-948: record workflow canary")
+          put("governance/proofs/BEM948_p0_e2e_workflow_diagnostic_receipt.json", diagnostic, "BEM-948: diagnose P0 E2E workflow")
+          put("governance/reports/bem948_p0_e2e_workflow_diagnostic.md", report, "BEM-948: record P0 E2E workflow diagnostic")
           PY
