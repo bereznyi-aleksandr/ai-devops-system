@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P1-CI-STABILIZE",
+  "receipt_id": "BEM949_p1_core_diagnostic_inspection",
+  "created_at": "2026-06-20T17:04:58.325Z",
+  "workflow_file": ".github/workflows/bem949-p1-ci-core-diagnostic.yml",
+  "workflow_file_type": "workflow_path",
+  "runs": [
+    {
+      "run_id": "27877989383",
+      "run_id_type": "github_actions_run",
+      "head_sha": "7c63170f6b35089108365bf329530437619a5aeb",
+      "head_sha_type": "commit",
+      "status": "completed",
+      "conclusion": "failure",
+      "event": "workflow_dispatch",
+      "created_at": "2026-06-20T17:03:38Z",
+      "updated_at": "2026-06-20T17:03:51Z",
+      "jobs": [
+        {
+          "id": 82500617088,
+          "name": "diagnose",
+          "status": "completed",
+          "conclusion": "failure",
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 2,
+              "name": "Checkout repository",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 3,
+              "name": "Generate core workflow diagnostics",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "number": 4,
+              "name": "Commit core workflow diagnostics",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 8,
+              "name": "Post Checkout repository",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 9,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": "27877963308",
+      "run_id_type": "github_actions_run",
+      "head_sha": "032f7bdfc93964de1a27b58994f8eca4a0d597ef",
+      "head_sha_type": "commit",
+      "status": "completed",
+      "conclusion": "failure",
+      "event": "workflow_dispatch",
+      "created_at": "2026-06-20T17:02:34Z",
+      "updated_at": "2026-06-20T17:02:47Z",
+      "jobs": [
+        {
+          "id": 82500550673,
+          "name": "diagnose",
+          "status": "completed",
+          "conclusion": "failure",
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 2,
+              "name": "Checkout repository",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 3,
+              "name": "Generate core workflow diagnostics",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "number": 4,
+              "name": "Commit core workflow diagnostics",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 8,
+              "name": "Post Checkout repository",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 9,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": "27877929910",
+      "run_id_type": "github_actions_run",
+      "head_sha": "cc10285fd93478d6c79c2c66bf2df321c09f838d",
+      "head_sha_type": "commit",
+      "status": "completed",
+      "conclusion": "failure",
+      "event": "workflow_dispatch",
+      "created_at": "2026-06-20T17:01:13Z",
+      "updated_at": "2026-06-20T17:01:27Z",
+      "jobs": [
+        {
+          "id": 82500466740,
+          "name": "diagnose",
+          "status": "completed",
+          "conclusion": "failure",
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 2,
+              "name": "Checkout repository",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 3,
+              "name": "Generate core workflow diagnostics",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "number": 4,
+              "name": "Commit core workflow diagnostics",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 8,
+              "name": "Post Checkout repository",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 9,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
