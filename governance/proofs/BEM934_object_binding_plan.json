@@ -2,6 +2,7 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   "trace_id": "bem948_p0_binding_repair_20260620T0935Z",
   "objective": "Repair and re-verify the live object runtime binding between WRK-C1 and the Claude provider executor under BEM-948 P0: resolve residual merge-conflict markers in governance proof files, produce a clean idempotent transport record for the new trace, and confirm idempotent Telegram routing.",
   "assumptions": [
@@ -53,6 +54,30 @@
     "RISK-1 (HIGH): Concurrent GitHub Actions runner may commit to the same proof files during this repair window re-introducing conflict markers from a stash/pop race; mitigation — post-write grep check (grep -c '<<<<<<<') before committing; if new conflicts detected write blocker record and escalate per fallback_rules.on_role_blocked per role_sequence.json.",
     "RISK-2 (MEDIUM): results.jsonl conflict markers at lines 860-900 are out of scope for this repair cycle; downstream JSON consumers parsing the full file will still encounter parse errors on those lines; mitigation — document scope boundary in executor report; file a follow-up BEM task to clean the full results.jsonl and resolve the underlying concurrent-writer race in the GitHub Actions workflow.",
     "RISK-3 (LOW): governance/state/telegram_sent.json does not exist on first run; create-if-absent initialization is idempotent for the governance dedup protocol; if two executor instances race on creation both write the same empty object and subsequent key-checks remain consistent — no duplicate Telegram routing event is possible after the key is written."
+>>>>>>> Stashed changes
+=======
+  "trace_id": "bem948_p0_binding_runtime_probe_20260620T0945Z",
+  "objective": "Verify E2E runtime binding of WRK-C1 dispatcher to Claude provider executor role; confirm binding object materializes correctly and Telegram result routing is idempotent (dedup keyed on trace_id).",
+  "assumptions": [
+    "Claude provider is active: provider_status.json status=completed, last_outcome=success, last_trace=bem948_p0_binding_object_e2e_20260620T0930Z",
+    "Executor role lifecycle=ACTIVE per role_cycle_state.json agents.executor",
+    "governance/transport/results.jsonl is writable for append (trailing lines are clean — conflict markers are mid-file)",
+    "Telegram outbox delivery layer deduplicates on trace_id, making repeated dispatch safe",
+    "Task type object_runtime_binding follows default_development FSM sequence: analyst → auditor → executor → auditor → curator_summary"
+  ],
+  "steps": [
+    "Read and validate all four governance state files (role_sequence.json, routing.json, provider_status.json, role_cycle_state.json) to confirm Claude executor binding is active, no step-limit is exceeded, and no blocker is present",
+    "Materialize the binding proof object: write report to governance/reports/bem948_p0_binding_runtime_probe_20260620T0945Z.md and append a completed transport record to governance/transport/results.jsonl keyed on trace_id=bem948_p0_binding_runtime_probe_20260620T0945Z",
+    "Emit idempotent Telegram routing record with dedup_key=trace_id and dedup_value=bem948_p0_binding_runtime_probe_20260620T0945Z; Telegram delivery layer MUST discard any repeat delivery that carries the same dedup_value"
+  ],
+  "acceptance": [
+    "governance/reports/bem948_p0_binding_runtime_probe_20260620T0945Z.md exists on disk with status=completed and blocker=null",
+    "governance/transport/results.jsonl contains at least one record with trace_id=bem948_p0_binding_runtime_probe_20260620T0945Z and status=completed (idempotent: additional records with same trace_id must not cause duplicate Telegram delivery)"
+  ],
+  "risks": [
+    "results.jsonl contains unresolved git conflict markers (=======, >>>>>>>) from prior merge disputes — append must target only the clean trailing section to avoid corrupting the file",
+    "Duplicate WRK-C1 dispatch (e.g., workflow retry) could insert multiple transport records with the same trace_id; Telegram layer MUST deduplicate on trace_id or consumers will receive repeated notifications",
+    "role_cycle_state.json reflects stale cycle bem550-6 (closed 2026-05-17); the cycle_id mismatch does not block this probe but may confuse downstream consumers that expect a live cycle in that file"
 >>>>>>> Stashed changes
   ]
 =======
