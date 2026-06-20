@@ -11,6 +11,47 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Record execution probe
+        uses: actions/github-script@f7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          script: |
+            const path = "governance/proofs/BEM949_p1_ci_execution_probe.json";
+            const payload = {
+              schema_version: 1,
+              protocol: "BEM-949",
+              task_id: "BEM949-P1-CI-STABILIZE",
+              status: "EXECUTING",
+              workflow: ".github/workflows/bem949-ci-static-validation.yml",
+              run_id: context.runId,
+              attempt: context.runAttempt,
+              ref: context.ref,
+              sha: context.sha,
+              sha_type: "commit",
+              created_at: new Date().toISOString(),
+            };
+            let sha;
+            try {
+              const current = await github.rest.repos.getContent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path,
+                ref: context.ref,
+              });
+              if (!Array.isArray(current.data)) sha = current.data.sha;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            await github.rest.repos.createOrUpdateFileContents({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path,
+              message: "BEM949 P1: record static validation execution probe",
+              content: Buffer.from(JSON.stringify(payload, null, 2) + "\n", "utf8").toString("base64"),
+              branch: context.ref.replace("refs/heads/", ""),
+              ...(sha ? { sha } : {}),
+            });
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -25,19 +66,58 @@ jobs:
       - name: Install YAML parser
         run: python -m pip install --disable-pip-version-check PyYAML
 
-      - name: Validate all workflows and preserve findings
-        run: python scripts/bem949_ci_stabilize.py
+      - name: Validate all workflows
+        run: python scripts/bem949_ci_stabilize.py --out /tmp/BEM949_p1_ci_static_validation.json
 
-      - name: Commit static validation report
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.email "bem949-ci@ai-devops-system"
-          git config user.name "BEM949 CI Stabilizer"
-          git pull --rebase --autostash origin main || true
-          git add governance/proofs/BEM949_p1_ci_static_validation.json
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "BEM949 P1: record repository-wide CI static validation"
-          git push || (git pull --rebase origin main && git push)
+      - name: Persist terminal validation receipt
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          script: |
+            const fs = require("fs");
+            const path = "governance/proofs/BEM949_p1_ci_static_validation.json";
+            let payload;
+            try {
+              payload = JSON.parse(fs.readFileSync("/tmp/BEM949_p1_ci_static_validation.json", "utf8"));
+            } catch (error) {
+              payload = {
+                schema_version: 1,
+                protocol: "BEM949",
+                task_id: "BEM949-P1-CI-STABILIZE",
+                status: "FAIL",
+                created_at: new Date().toISOString(),
+                run_id: context.runId,
+                run_id_type: "github_actions_run",
+                blocker: "static_validator_did_not_produce_report",
+                error: String(error),
+              };
+            }
+            payload = {
+              ...payload,
+              run_id: context.runId,
+              run_id_type: "github_actions_run",
+              workflow: ".github/workflows/bem949-ci-static-validation.yml",
+              terminal_step_reached: true,
+            };
+            let sha;
+            try {
+              const current = await github.rest.repos.getContent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path,
+                ref: context.ref,
+              });
+              if (!Array.isArray(current.data)) sha = current.data.sha;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            await github.rest.repos.createOrUpdateFileContents({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path,
+              message: "BEM949 P1: persist static validation result",
+              content: Buffer.from(JSON.stringify(payload, null, 2) + "\n", "utf8").toString("base64"),
+              branch: context.ref.replace("refs/heads/", ""),
+              ...(sha ? { sha } : {}),
+            });
