@@ -3,7 +3,7 @@
   "protocol": "BEM-949",
   "task_id": "BEM949-P1-CI-STABILIZE",
   "receipt_id": "BEM949_p1_ci_static_validation",
-  "created_at": "2026-06-20T17:20:56Z",
+  "created_at": "2026-06-20T17:22:57Z",
   "validator": {
     "path": "scripts/bem949_ci_stabilize.py",
     "heredoc_dedent_before_compile": true,
@@ -12,13 +12,12 @@
   "status": "FAIL",
   "scope": "Repository-wide static validation only; no per-workflow execution claim.",
   "workflow_count": 237,
-  "valid_workflow_count": 233,
-  "invalid_workflow_count": 4,
+  "valid_workflow_count": 234,
+  "invalid_workflow_count": 3,
   "invalid_workflows": [
     ".github/workflows/bem934-object-binding-proof-v2.yml",
     ".github/workflows/bem947-live-object-dispatch.yml",
-    ".github/workflows/bem948-binding-e2e-status-probe.yml",
-    ".github/workflows/bem948-claude-credential-preflight.yml"
+    ".github/workflows/bem948-binding-e2e-status-probe.yml"
   ],
   "workflows": [
     {
@@ -1011,16 +1010,20 @@
     },
     {
       "path": ".github/workflows/bem948-binding-e2e-status-probe.yml",
-      "yaml_valid": true,
+      "yaml_valid": false,
       "python_heredocs": 1,
       "python_heredocs_compiled": 0,
       "valid": false,
       "errors": [
         {
+          "kind": "yaml",
+          "message": "while parsing a block mapping\n  in \"<unicode string>\", line 23, column 9:\n          - name: Observe binding E2E runs\n            ^\nexpected <block end>, but found ']'\n  in \"<unicode string>\", line 45, column 9:\n            ] or [\"- No binding E2E runs ret ... \n            ^"
+        },
+        {
           "kind": "python_heredoc",
           "index": 1,
           "tag": "PY",
-          "message": "f-string: expecting a valid expression after '{' at line 8, column 69"
+          "message": "unexpected indent at line 1, column 2"
         }
       ]
     },
@@ -1035,17 +1038,10 @@
     {
       "path": ".github/workflows/bem948-claude-credential-preflight.yml",
       "yaml_valid": true,
-      "python_heredocs": 1,
+      "python_heredocs": 0,
       "python_heredocs_compiled": 0,
-      "valid": false,
-      "errors": [
-        {
-          "kind": "python_heredoc",
-          "index": 1,
-          "tag": "PY",
-          "message": "invalid syntax at line 9, column 24"
-        }
-      ]
+      "valid": true,
+      "errors": []
     },
     {
       "path": ".github/workflows/bem948-claude-credentials-preflight.yml",
