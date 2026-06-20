@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""BEM-949 P1 repository-wide static CI validation.
+"""BEM-949 P1 repository-wide static validation for GitHub Actions workflows.
 
-The checker inventories each workflow under .github/workflows, parses YAML with
-yaml.safe_load(), extracts Python heredocs, and compile()s each extracted block.
-It always writes a receipt-style JSON report so invalid findings remain available
-for repair rather than disappearing behind a failed CI job.
+The runner validates YAML syntax and Python heredoc syntax. Python heredoc bodies
+are dedented before compile(), because YAML block scalar indentation is not part
+of the embedded Python source at runtime.
 """
 
 from __future__ import annotations
@@ -12,24 +11,19 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import texwrap
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-try:
-    import yaml
-except ImportError as exc:  # pragma: no cover
-    raise SystemExit(
-        "PyYAML is required. Install it with: python -m pip install PyYAML"
-    ) from exc
-
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS_DIR = ROOT / ".github" / "workflows"
 DEFAULT_OUT = ROOT / "governance" / "proofs" / "BEM949_p1_ci_static_validation.json"
 
 HEREDOC_RE = re.compile(
-    r"(?ms)^[ \t]*(?:python|python3)[ \t]+-[ \t]*<<[ \t]*['\"]?"
+    r"(?my)^[ \t]*(?:python|python3)[ \t]+-[ \t]*<<[ \t]*['\"]?"
     r"(?P<tag>[A-Za-z_][A-Za-z0-9_]*)['\"]?[^\n]*\n"
     r"(?P<body>.*?)"
     r"^[ \t]*(?P=tag)[ \t]*$"
@@ -42,16 +36,13 @@ def utc_now() -> str:
 
 def workflow_paths() -> list[Path]:
     return sorted(
-        {
-            *WORKFLOWS_DIR.glob("*.yml"),
-            *WORKFLOWS_DIR.glob("*.yaml"),
-        },
-        key=lambda path: path.name,
+        set(WORKFLOWS_DIR.glob("*.yml")) | set(WORKFLOWS_DIR.glob("*.yaml")),
+        key=lambda item: item.name,
     )
 
 
 def validate_workflow(path: Path) -> dict[str, Any]:
-    entry: dict[str, Any] = {
+    record: dict[str, Any] = {
         "path": path.relative_to(ROOT).as_posix(),
         "yaml_valid": False,
         "python_heredocs": 0,
@@ -60,79 +51,78 @@ def validate_workflow(path: Path) -> dict[str, Any]:
         "errors": [],
     }
     try:
-        text = path.read_text(encoding="utf-8")
+        source = path.read_text(encoding="utf-8")
     except OSError as exc:
-        entry["errors"].append({"kind": "read", "message": str(exc)})
-        return entry
+        record["errors"].append({"kind": "read", "message": str(exc)})
+        return record
 
     try:
-        yaml.safe_load(text)
-        entry["yaml_valid"] = True
+        yaml.safe_load(source)
+        record["yaml_valid"] = True
     except yaml.YAMLError as exc:
-        entry["errors"].append({"kind": "yaml", "message": str(exc)})
+        record["errors"].append({"kind": "yaml", "message": str(exc)})
 
-    for index, match in enumerate(HEREDOC_RE.finditer(text), start=1):
-        entry["python_heredocs"] += 1
-        body = match.group("body")
+    for index, match in enumerate(HEREDOC_RE.finditer(source), start=1):
+        record["python_heredocs"] += 1
+        body = textwrap.dedent(match.group("body"))
         try:
             compile(body, f"{path.name}:heredoc:{index}", "exec")
-            entry["python_heredocs_compiled"] += 1
+            record["python_heredocs_compiled"] += 1
         except SyntaxError as exc:
-            entry["errors"].append(
+            record["errors"].append(
                 {
                     "kind": "python_heredoc",
                     "index": index,
                     "tag": match.group("tag"),
-                    "message": (
-                        f"{exc.msg} at line {exc.lineno}, column {exc.offset}"
-                    ),
+                    "message": f"{exc.msg} at line {exc.lineno}, column {exc.offset}",
                 }
             )
 
-    entry["valid"] = (
-        entry["yaml_valid"]
-        and entry["python_heredocs"] == entry["python_heredocs_compiled"]
+    record["valid"] = (
+        record["yaml_valid"]
+        and record["python_heredocs"] == record["python_heredocs_compiled"]
     )
-    return entry
+    return record
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Validate BEM-949 GitHub Actions workflow syntax"
-    )
+    parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
 
-    paths = workflow_paths()
-    results = [validate_workflow(path) for path in paths]
-    invalid = [item["path"] for item in results if not item["valid"]]
-
+    workflows = [validate_workflow(path) for path in workflow_paths()]
+    invalid = [item["path"] for item in workflows if not item["valid"]]
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "protocol": "BEM-949",
         "task_id": "BEM949-P1-CI-STABILIZE",
         "receipt_id": "BEM949_p1_ci_static_validation",
         "created_at": utc_now(),
+        "validator": {
+            "path": "scripts/bem949_ci_stabilize.py",
+            "heredoc_dedent_before_compile": True,
+            "scope": "yaml.safe_load plus Python heredoc compile only",
+        },
         "status": "PASS" if not invalid else "FAIL",
         "scope": (
-            "Repository-wide static validation only: yaml.safe_load() and compile() "
-            "for extracted Python heredocs. It is not an executed green-dispatch "
-            "claim for the checked workflows."
+            "Repository-wide static validation only. A static PASS does not claim "
+            "manual-dispatch execution for each workflow."
         ),
-        "workflow_count": len(results),
-        "valid_workflow_count": len(results) - len(invalid),
+        "workflow_count": len(workflows),
+        "valid_workflow_count": len(workflows) - len(invalid),
         "invalid_workflow_count": len(invalid),
         "invalid_workflows": invalid,
-        "workflows": results,
+        "workflows": workflows,
         "checks": {
-            "all_workflow_files_enumerated": bool(results),
+            "all_workflow_files_enumerated": bool(workflows),
             "yaml_safe_load_attempted_for_every_workflow": True,
+            "python_heredocs_dedented_before_compile": True,
             "python_heredocs_compiled_for_every_detected_block": True,
             "manual_dispatch_execution_evidence_collected": False,
         },
         "next_action": (
-            "Repair invalid workflow findings, then collect trace-bound "
-            "manual-dispatch completion evidence per active workflow."
+            "Repair only actual YAML or dedented-Python findings, then collect "
+            "run-level dispatch evidence for the classified active workflow set."
         ),
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
