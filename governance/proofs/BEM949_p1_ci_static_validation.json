@@ -3,7 +3,7 @@
   "protocol": "BEM-949",
   "task_id": "BEM949-P1-CI-STABILIZE",
   "receipt_id": "BEM949_p1_ci_static_validation",
-  "created_at": "2026-06-20T17:13:06Z",
+  "created_at": "2026-06-20T17:20:56Z",
   "validator": {
     "path": "scripts/bem949_ci_stabilize.py",
     "heredoc_dedent_before_compile": true,
@@ -11,11 +11,10 @@
   },
   "status": "FAIL",
   "scope": "Repository-wide static validation only; no per-workflow execution claim.",
-  "workflow_count": 236,
-  "valid_workflow_count": 231,
-  "invalid_workflow_count": 5,
+  "workflow_count": 237,
+  "valid_workflow_count": 233,
+  "invalid_workflow_count": 4,
   "invalid_workflows": [
-    ".github/workflows/bem934-finalize-close-runner.yml",
     ".github/workflows/bem934-object-binding-proof-v2.yml",
     ".github/workflows/bem947-live-object-dispatch.yml",
     ".github/workflows/bem948-binding-e2e-status-probe.yml",
@@ -450,16 +449,9 @@
       "path": ".github/workflows/bem934-finalize-close-runner.yml",
       "yaml_valid": true,
       "python_heredocs": 2,
-      "python_heredocs_compiled": 1,
-      "valid": false,
-      "errors": [
-        {
-          "kind": "python_heredoc",
-          "index": 1,
-          "tag": "PY",
-          "message": "unterminated string literal (detected at line 10) at line 10, column 63"
-        }
-      ]
+      "python_heredocs_compiled": 2,
+      "valid": true,
+      "errors": []
     },
     {
       "path": ".github/workflows/bem934-finalize-close-runner2.yml",
@@ -1265,6 +1257,14 @@
     },
     {
       "path": ".github/workflows/bem949-p05-resolve-p0-commit.yml",
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "valid": true,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem949-p1-active-workflow-manifest.yml",
       "yaml_valid": true,
       "python_heredocs": 0,
       "python_heredocs_compiled": 0,
