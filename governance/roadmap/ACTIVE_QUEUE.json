@@ -1,10 +1,10 @@
 {
-  "version": 21,
-  "updated_at": "2026-06-20T10:00:00Z",
-  "queue_state": "OPERATOR_ASSISTANCE_REQUIRED",
+  "version": 22,
+  "updated_at": "2026-06-20T10:25:09Z",
+  "queue_state": "IN_PROGRESS",
   "current_task": "BEM948-P1-AGENT-CONTEXT-SYNC",
-  "system_status": "ESTALATED_AFTER_RETRY_CEILING",
-  "release_status": "BLOCKED_OPERATOR_ASSISTANCE",
+  "system_state": "P1_CANONICAL_CONTEXT_CONSOLIDATED",
+  "release_status": "BLOCKED_BUILDING",
   "protocol": "BEM-948",
   "progress": {
     "tasks_done": 1,
@@ -12,10 +12,19 @@
     "percent": 20
   },
   "retry_policy": {
-    "max_autonmous_attempts_per_task": 3,
-    "rule": "After three autonomous attempts or after another trustworthy terminal blocker, stop retring and escalate to the operator. Do not create additional workflows or mutate production files until an operator response.",
-    "current_task_attempts": 3,
-    "escalated_at": "2026-06-20T10:00:00Z"
+    "max_autonomous_attempts_per_task": 3,
+    "rule": "Count outcome-changing attempts per task_id plus named blocker. After three unsuccessful attempts for the same blocker, stop and escalate. A new operator instruction or explicitly changed blocker hypothesis may authorize work on a distinct blocker without erasing the prior attempt history.",
+    "prior_blocker_history": [
+      {
+        "task_id": "BEM948-P1-AGENT-CONTEXT-SYNC",
+        "blocker": "retry_ceiling_reached_operator_decision_required",
+        "attempts": 3,
+        "status": "BLOCKED_OPERATOR_ASSISTANCE",
+        "escalated_at": "2026-06-20T10:00:00Z"
+      }
+    ],
+    "active_blocker": "p1_remaining_acceptance_criteria_not_yet_evidenced",
+    "current_task_attempts": 0
   },
   "tasks": [
     {
@@ -30,9 +39,17 @@
     },
     {
       "id": "BEM948-P1-AGENT-CONTEXT-SYNC",
-      "status": "BLOCKED_OPERATOR_ASSISTANCE",
+      "status": "IN_PROGRESS",
       "percent": 20,
-      "blocker": "retry_ceiling_reached_operator_decision_required"
+      "prior_status": "BLOCKED_OPERATOR_ASSISTANCE",
+      "prior_blocker": "retry_ceiling_reached_operator_decision_required",
+      "resolved_subtask": "canonical_context_path_consolidation",
+      "subtask_receipt": "governance/proofs/BEM948_p1_canonical_context_consolidation_receipt.json",
+      "subtask_receipt_blob_sha": "e6d2253bc1ccc8260d8e099eae6d421aca21e7ec",
+      "subtask_receipt_blob_sha_type": "git_blob",
+      "subtask_receipt_commit_sha": "032a016a166701ba7de13d1b1e8c331539550bfd",
+      "subtask_receipt_commit_sha_type": "commit",
+      "remaining_blocker": "p1_remaining_acceptance_criteria_not_yet_evidenced"
     },
     {
       "id": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
@@ -51,17 +68,21 @@
     }
   ],
   "recent_action": {
-    "action": "Autonmous retry ceiling enforced and work escalated to the operator",
-    "reason": "Three-attempt limit required to prevent repeated workflow-mutation loops"
+    "action": "Canonical context path consolidated under operator-provided duplicate-file diagnosis",
+    "reason": "The former root and governance files were divergent full contexts. The root file is now canonical; the governance file is redirect-only.",
+    "receipt": "governance/proofs/BEM948_p1_canonical_context_consolidation_receipt.json",
+    "receipt_blob_sha": "e6d2253bc1ccc8260d8e099eae6d421aca21e7ec",
+    "receipt_blob_sha_type": "git_blob",
+    "receipt_commit_sha": "032a016a166701ba7de13d1b1e8c331539550bfd",
+    "receipt_commit_sha_type": "commit"
   },
   "blockers": [
-    "operator_assistance_required_after_three_attempts",
-    "p1_agent_context_sync_requires_operator_decision",
+    "p1_remaining_acceptance_criteria_not_yet_evidenced",
     "p2_rule_enforcement_not_yet_verified",
     "p3_failover_not_yet_verified",
     "p4_final_verification_not_yet_verified"
   ],
-  "next_action": "Await operator direction or approval for the next repair attempt; do not retry autonomously.",
+  "next_action": "Continue BEM948-P1-AGENT-CONTEXT-SYNC against its remaining acceptance criteria without reusing the retired duplicate-context blocker.",
   "sha_policy": {
     "sha_type_required": true,
     "allowed": [
