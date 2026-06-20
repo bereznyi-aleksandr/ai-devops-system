@@ -1,25 +1,19 @@
 {
-  "version": 17,
-  "updated_at": "2026-06-20T00:00:00Z",
+  "version": 18,
+  "updated_at": "2026-06-20T04:46:10Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM948-P0-REAL-DISPATCH-BRIDGE",
-  "system_status": "BEM948_P0_IN_PROGRESS",
-  "release_status": "BLOCKED_BUILDING",
+  "current_task": "BEM948-P0-AUTOREPAIR-AFTER-CLAUDE-LOG-DIAGNOSTIC",
+  "system_status": "BEM948_P0_BLOCKED_REPAIRING",
+  "release_status": "BLOCKED_REPAIRING",
   "protocol": "BEM-948",
   "progress": {
     "tasks_done": 0,
     "tasks_total": 5,
     "percent": 0
   },
-  "protocol_source": {
-    "title": "BEM-948 Management Contour Closure Protocol",
-    "author": "EXTERNAL_AUDITOR_CLAUDE",
-    "date": "2026-06-20",
-    "scope": "planned-to-executed dispatch bridge, context sync, rule enforcement, provider failover, final verify"
-  },
   "tasks": [
     {
-      "id": "BEM948-P0-REAL-DISPATCH-BRIDGE",
+      "id": "BEM948-P0-AUTOREPAIR-AFTER-CLAUDE-LOG-DIAGNOSTIC",
       "status": "IN_PROGRESS",
       "percent": 0
     },
@@ -44,9 +38,24 @@
       "percent": 80
     }
   ],
+  "recent_action": {
+    "action": "real_object_to_claude_dispatch_proven_but_claude_runtime_failed",
+    "bridge_runner_sha": "72fe03fc642f78c39d73aec9c9718485033ece38",
+    "bridge_runner_sha_type": "git_blob",
+    "bridge_runner_commit": "6e6fd3faf70efade442d493c911601f04b159b8b",
+    "bridge_runner_commit_sha_type": "commit",
+    "blocked_receipt": "governance/proofs/BEM948_p0_live_object_dispatch_blocked_receipt.json",
+    "blocked_receipt_sha": "df11463cef4bff8cfb2555039e3cb3d263267d6e",
+    "blocked_receipt_sha_type": "git_blob",
+    "blocked_receipt_commit": "21a0b2291f5a91975e1bbaba850b3976ca533124",
+    "blocked_receipt_commit_sha_type": "commit"
+  },
   "blockers": [
-    "planned_to_executed_bridge_not_yet_implemented"
+    "claude_role_outcome=failure",
+    "p0_executed_completed_evidence_absent",
+    "targeted_claude_log_diagnostic_receipt_absent"
   ],
+  "next_action": "collect targeted action logs, repair the confirmed Claude runtime cause, then repeat P0 without a manual bridge",
   "sha_policy": {
     "sha_type_required": true,
     "allowed": [
@@ -54,6 +63,5 @@
       "commit",
       "sha256_content"
     ]
-  },
-  "next_action": "implement governance/runners/dispatch_executor.py and prove a live object-to-claude dispatch without a manual bridge"
+  }
 }
