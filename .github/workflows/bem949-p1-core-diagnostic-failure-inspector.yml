@@ -1,0 +1,74 @@
+name: BEM949 P1 Core Diagnostic Failure Inspector
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  checks: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          fetch-depth: 0
+
+      - name: Fetch annotations
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          script: |
+            const fs = require("fs");
+            const { data } = await github.rest.checks.listAnnotations({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: 82500617088,
+              per_page: 100,
+            });
+            const payload = {
+              schema_version: 1,
+              protocol: "BEM-949",
+              task_id: "BEM949-P1-CI-STABILIZE",
+              receipt_id: "BEM949_p1_core_diagnostic_failure_annotation",
+              status: "OBSERVED",
+              source_workflow: "BEM949 P1 Core Workflow Diagnostics",
+              source_run_id: "27877989383",
+              source_run_id_type: "github_actions_run",
+              source_check_run_id: "82500617088",
+              source_check_run_id_type: "github_check_run",
+              created_at: new Date().toISOString(),
+              annotations: data.map(annotation => ({
+                path: annotation.path,
+                start_line: annotation.start_line,
+                end_line: annotation.end_line,
+                annotation_level: annotation.annotation_level,
+                message: annotation.message,
+                title: annotation.title,
+                raw_details: annotation.raw_details,
+              })),
+            };
+            fs.writeFileSync(
+              "/tmp/BEM949_p1_core_diagnostic_failure_annotation.json",
+              JSON.stringify(payload, null, 2) + "\n",
+              "utf8"
+            );
+
+      - name: Commit failure annotation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/BEM949_p1_core_diagnostic_failure_annotation.json governance/proofs/BEM949_p1_core_diagnostic_failure_annotation.json
+          git config user.email "bem949-ci-inspector@ai-devops-system"
+          git config user.name "BEM949 CI Inspector"
+          git add governance/proofs/BEM949_p1_core_diagnostic_failure_annotation.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P1: inspect core diagnostic failure"
+          git push || (git pull --rebase origin main && git push)
