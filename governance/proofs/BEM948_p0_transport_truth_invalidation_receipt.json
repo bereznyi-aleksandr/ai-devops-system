@@ -1,0 +1,29 @@
+{
+  "status": "INVALIDATED",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P0-TRANSPORT-TRUTH-RECONCILIATION",
+  "created_at": "2026-06-20T10:05:00Z",
+  "invalidated_evidence": {
+    "path": "governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_observed_20260620T0455Z.json",
+    "blob_sha": "23a913bb6596c61a8016e63bf8b6534b3960a8d3",
+    "blob_sha_type": "git_blob",
+    "claimed_status": "completed",
+    "claimed_dispatch_result": "executed"
+  },
+  "authoritative_counterevidence": {
+    "path": "governance/reports/bem948_p0_live_object_e2e_observed_20260620T0455Z.md",
+    "blob_sha": "272ce0d2f2fc6c7699e02dff3de0a849fa2fef01",
+    "blob_sha_type": "git_blob",
+    "outcome": "failure",
+    "blocker": "claude_role outcome=failure"
+  },
+  "reason": "The terminal claude.yml transport report is authoritative for the role outcome. A task-created completed proof cannot override a terminal workflow failure.",
+  "checks": {
+    "same_trace_id": true,
+    "outcome_conflict_confirmed": true,
+    "terminal_transport_report_preferred": true,
+    "false_pass_not_used_for_p0": true,
+    "sha_type_explicit": true
+  },
+  "next_task": "BEM948-P0-FINAL-BRIDGE-RECONCILIATION"
+}
