@@ -1,27 +1,29 @@
 {
   "version": 30,
-  "updated_at": "2026-06-20T16:00:00Z",
+  "updated_at": "2026-06-20T16:27:12Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
-  "system_state": "BEM949_EXECUTING",
+  "current_task": "BEM949-P1-CI-STABILIZE",
+  "system_state": "BEM949_CI_STABILIZATION",
   "release_status": "VERIFIED_WITH_LIMITATIONS",
   "protocol": "BEM-949",
   "protocol_path": "governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
   "progress": {
-    "tasks_done": 0,
+    "tasks_done": 1,
     "tasks_total": 8,
-    "percent": 0
+    "percent": 12.5
   },
   "tasks": [
     {
       "id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "receipt": "governance/proofs/BEM949_p05_text_integrity_receipt.json",
-      "acceptance": "canonical AGENT_CONTEXT text-only fix with micro-receipt and explicit sha_type"
+      "acceptance": "canonical AGENT_CONTEXT text-only fix with micro-receipt and explicit sha_type",
+      "sha": "2b09e1f683f16ac2b0fd977dd331bad9a90863ec",
+      "sha_type": "git_blob"
     },
     {
       "id": "BEM949-P1-CI-STABILIZE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "receipt": "governance/proofs/BEM949_p1_ci_stabilize_receipt.json",
       "acceptance": "active workflow static validation and manual-dispatch executed evidence"
     },
@@ -78,5 +80,5 @@
     "max_outcome_changing_attempts": 3,
     "broad_release_pass_requires_external_audit": true
   },
-  "next_action": "Resolve the historical P0 execution-commit identity from the repository git object, then apply the text-only canonical context fix."
+  "next_action": "Run repository-wide static CI validation; preserve every invalid workflow finding and do not claim green dispatch from HTTP 204."
 }
