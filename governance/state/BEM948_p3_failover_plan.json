@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
+  "trace_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
+  "dispatch_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
+  "created_at": "2026-06-20T13:22:00Z",
+  "status": "processed",
+  "dispatch_result": "planned",
+  "logical_role": "executor",
+  "provider_selected": "gpt_codex_cloud",
+  "target_workflow_id": "gpt-codex-cloud.yml",
+  "failure_reason": "primary_provider_unavailable",
+  "payload": {
+    "task_type": "provider_failover_live_test",
+    "task": "BEM-948 P3 trace-bound gpt_codex_cloud failover test",
+    "acceptance": "Record terminal provider receipt as OpenAI Responses execution, mechanical fallback, or explicit unavailable-secret condition."
+  },
+  "non_claims": [
+    "planned is not dispatched",
+    "dispatch acknowledgement is not terminal provider completion"
+  ]
+}
