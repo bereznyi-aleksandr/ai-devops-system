@@ -66,17 +66,21 @@ jobs:
               schema_version: 1,
               protocol: "BEM-949",
               task_id: "BEM949-P1-CI-STABILIZE",
-              receipt_id: "BEM949_p1_active_scope_run_inspection",
+              receipt_id": "BEM949_p1_active_scope_run_inspection",
               created_at: new Date().toISOString(),
               target_workflow: ".github/workflows/bem949-p1-active-scope-validation.yml",
               target_workflow_type: "workflow_path",
               runs,
               checks: {
-                workflow_runs_queried_via_GitHub Actions API: true,
+                workflow_runs_queried_via_github_actions_api: true,
                 run_level_conclusions_preserved: true,
               },
             };
-            fs.writeFileSync("/tmp/BEM949_p1_active_scope_run_inspection.json", JSON.stringify(payload, null, 2) + "\n", "utf8");
+            fs.writeFileSync(
+              "/tmp/BEM949_p1_active_scope_run_inspection.json",
+              JSON.stringify(payload, null, 2) + "\n",
+              "utf8"
+            );
 
       - name: Commit run inspection
         shell: bash
