@@ -1,0 +1,112 @@
+name: BEM-948 Targeted Claude Log Collector
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-targeted-claude-log-collector.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_TRACE: bem948_p0_live_object_e2e_observer_20260620T0510Z
+      TARGET_HEAD_SHA: 6a12540c8273ca6c14b26f84c33f7108f8ef7dc1
+      GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 1
+
+      - name: Collect Claude run and sanitize failure excerpt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bem948 governance/reports governance/proofs
+          gh run list --repo "$REPO" --workflow claude.yml --limit 80 --json databaseId,headSha,status,conclusion,createdAt,updatedAt > /tmp/bem948/runs.json 2> /tmp/bem948/list.err || echo '[]' > /tmp/bem948/runs.json
+          RUN_ID="$(python3 -c 'import json,os; rows=json.load(open("/tmp/bem948/runs.json")); hit=next((r for r in rows if r.get("headSha")==os.environ["TARGET_HEAD_SHA"]),{}); print(hit.get("databaseId",""))')"
+          printf '%s' "$RUN_ID" > /tmp/bem948/run_id.txt
+          if [ -n "$RUN_ID" ]; then
+            gh run view "$RUN_ID" --repo "$REPO" --log-failed > /tmp/bem948/log.txt 2> /tmp/bem948/log.err || true
+            if ! test -s /tmp/bem948/log.txt; then
+              gh run view "$RUN_ID" --repo "$REPO" --log > /tmp/bem948/log.txt 2>> /tmp/bem948/log.err || true
+            fi
+          else
+            : > /tmp/bem948/log.txt
+          fi
+          python3 - <<'PY'
+          import json, os, re
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          trace = os.environ["TARGET_TRACE"]
+          target_sha = os.environ["TARGET_HEAD_SHA"]
+          root = Path("/tmp/bem948")
+          logs = (root / "log.txt").read_text(encoding="utf-8", errors="replace")
+          error = (root / "log.err").read_text(encoding="utf-8", errors="replace") if (root / "log.err").exists() else ""
+          run_id = (root / "run_id.txt").read_text().strip()
+          token = os.environ.get("GH_TOKEN", "")
+          for pattern in (r"ghp_[A-Za-z0-9_]+", r"github_pat_[A-Za-z0-9_]+", r"Bearer\s+[A-Za-z0-9._-]+"):
+              logs = re.sub(pattern, "***", logs, flags=re.I)
+              error = re.sub(pattern, "***", error, flags=re.I)
+          if token:
+              logs = logs.replace(token, "***")
+              error = error.replace(token, "***")
+          lines = logs.splitlines()
+          marks = ("anthropics/claude-code-action", "claude_role", "error", "failure", "failed", "exit code", "oauth", "token", "rate", "quota", "unauthorized", "forbidden")
+          picks = []
+          for line in lines:
+              if any(mark in line.lower() for mark in marks):
+                  picks.append(line[:700])
+              if len(picks) == 180:
+                  break
+          report = Path("governance/reports") / f"{trace}_targeted_claude_log.md"
+          receipt = Path("governance/proofs") / f"BEM948_p0_targeted_claude_log_{trace}.json"
+          report.write_text("\n".join(picks or ["No targeted Claude log line returned.", error[:700]]) + "\n", encoding="utf-8")
+          payload = {
+              "status": "OBSERVED",
+              "protocol": "BEM-948",
+              "task_id": "BEM948-P0-TARGETED-CLAUDE-LOG",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "trace_id": trace,
+              "target_head_sha": target_sha,
+              "target_head_sha_type": "commit",
+              "run_id": run_id,
+              "logs_accessible": bool(logs.strip()),
+              "targeted_excerpt_lines": len(picks),
+              "list_error_present": bool((root / "list.err").read_text(encoding="utf-8", errors="replace").strip()) if (root / "list.err").exists() else False,
+              "report_path": str(report),
+              "checks": {
+                  "targeted_collection_attempted": True,
+                  "executed_completed_proof_exists": False,
+                  "no_false_pass_claim": True,
+                  "sha_type_explicit": True
+              },
+              "blockers": [
+                  "claude_role_outcome=failure",
+                  "p0_executed_completed_evidence_absent"
+              ],
+              "next_task": "BEM948-P0-AUTOREPAIR-AFTER-TARGETED-CLAUDE-LOG"
+          }
+          receipt.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit diagnostic evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Claude Log Collector"
+          git config user.email "bem948-claude-log@ai-devops-system"
+          git add governance/reports/ governance/proofs/
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM-948: collect targeted Claude action failure logs"
+            git push
+          fi
