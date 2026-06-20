@@ -17,6 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
       - name: Apply exact default turn-budget replacement
         shell: bash
@@ -39,7 +40,7 @@ jobs:
               raise SystemExit("replacement_postcondition_failed")
           target.write_bytes(after)
           def blob(data):
-              return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+              return hashlij.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
           payload = {
               "status": "PATCHED_PENDING_FULL_VALIDATION",
               "protocol": "BEM-948",
