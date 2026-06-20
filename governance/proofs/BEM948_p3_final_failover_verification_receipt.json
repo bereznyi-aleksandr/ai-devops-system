@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
+  "receipt_id": "BEM948_p3_final_failover_verification_receipt",
+  "created_at": "2026-06-20T13:22:30Z",
+  "status": "PASS",
+  "scope_status": "PASS",
+  "outcome": "MECHANICAL_FALLBACK_VALIDATED",
+  "evidence_kind": "trace_bound_terminal_provider_receipt",
+  "runtime_execution_claim": true,
+  "execution": {
+    "executed_at": "2026-06-20T13:21:52Z",
+    "github_run_id": "27872432819",
+    "github_run_status": "success",
+    "runner": "ubuntu-latest",
+    "provider": "gpt_codex_cloud",
+    "mode": "mechanical_fallback",
+    "llm_available": false,
+    "openai_configuration_result": "openai_secret_or_model_mismatch"
+  },
+  "trace": {
+    "trace_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
+    "plan": {
+      "path": "governance/state/BEM948_p3_failover_plan.json",
+      "blob_sha": "07233523dce473154ffbecb547d8090bad7b662e",
+      "blob_sha_type": "git_blob",
+      "commit_sha": "356fb8f742a42900a7d0c36dca38ae797807c9f2",
+      "commit_sha_type": "commit"
+    },
+    "dispatch_executor": {
+      "path": "governance/runners/dispatch_executor.py",
+      "blob_sha": "30b56860b096acad8286ed061a12b269b2394279",
+      "blob_sha_type": "git_blob"
+    },
+    "dispatch_workflow": {
+      "path": ".github/workflows/bem948-p3-failover-dispatch.yml",
+      "blob_sha": "c0e6f0f0a22946f1e79b71c39c311862feac9efb",
+      "blob_sha_type": "git_blob",
+      "commit_sha": "371d1655e94ce79bc4ac1ed175cd15457cf2aa59",
+      "commit_sha_type": "commit",
+      "github_run_id": "27872428560",
+      "github_run_status": "success"
+    },
+    "dispatch_acknowledgement": {
+      "path": "governance/proofs/BEM948_p3_dispatch_executor_receipt.json",
+      "blob_sha": "3a7e497b2a119b13282cae537dbccbfad95ccad8",
+      "blob_sha_type": "git_blob",
+      "status": "DISPATCHED",
+      "http_status": 204,
+      "runtime_execution_claim": false
+    },
+    "terminal_provider_receipt": {
+      "path": "governance/proofs/BEM948_p3_bem948_p3_gpt_codex_cloud_failover_20260620T1322Z_gpt_codex_cloud_receipt.json",
+      "blob_sha": "a966d760b770544ee6996b05105c28402c533e56",
+      "blob_sha_type": "git_blob",
+      "status": "PASS",
+      "mode": "mechanical_fallback",
+      "llm_available": false,
+      "execution_kind": "mechanical_fallback"
+    },
+    "provider_workflow": {
+      "path": ".github/workflows/gpt-codex-cloud.yml",
+      "blob_sha": "fb471ce31ff4bcd45abd2f73610c320af01ec38c",
+      "blob_sha_type": "git_blob"
+    }
+  },
+  "verification": {
+    "method": "GitHub Contents API read-after-write for all trace artifacts; GitHub Actions public run summary for both action runs",
+    "truth_hierarchy": "terminal_provider_receipt overrides dispatch acknowledgement for provider outcome",
+    "checks": {
+      "trace_plan_is_planned_only": true,
+      "executor_http_204_recorded_as_dispatched_not_completed": true,
+      "provider_terminal_receipt_exists": true,
+      "provider_terminal_receipt_is_trace_matched": true,
+      "terminal_mode_is_mechanical_fallback": true,
+      "terminal_llm_available_is_false": true,
+      "github_hosted_execution_recorded": true,
+      "self_hosted_execution_false": true
+    },
+    "result": "PASS"
+  },
+  "non_claims": [
+    "This result does not claim a successful OpenAI Responses API call.",
+    "This result does not claim OPENAI_API_KEY or OPENAI_MODEL were configured.",
+    "Mechanical fallback validation is not equivalent to an LLM provider execution.",
+    "This result does not claim P4 final verification."
+  ],
+  "next_task": "BEM948-P4-FINAL-VERIFY"
+}
