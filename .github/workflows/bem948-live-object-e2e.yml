@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      TRACE_ID: bem948_p0_live_object_e2e_20260620T0427Z
+      TRACE_ID: bem948_p0_live_object_e2e_minimal_20260620T0432Z
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 1
 
-      - name: Queue and route OBJ-GD-001 task
+      - name: Queue and route OBJ-GD-001 minimal health task
         shell: bash
         run: |
           set -euo pipefail
@@ -34,7 +34,7 @@ jobs:
             --provider claude_code \
             --trace-id "$TRACE_ID" \
             --consume \
-            --task "BEM-948 P0 live object E2E. Create governance/reports/bem948_p0_live_object_e2e_20260620T0427Z.md and governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_20260620T0427Z.json. The proof must be truthful: status completed only after work is complete; include protocol BEM-948, trace_id, provider_selected claude_code, target_workflow_id claude.yml, dispatch_result executed, blocker null, and explicit sha_type for every SHA."
+            --task "BEM-948 P0 minimal object-to-dispatch health test. Create exactly two files: governance/reports/bem948_p0_live_object_e2e_minimal_20260620T0432Z.md and governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_minimal_20260620T0432Z.json. The JSON must truthfully state completed only after work is done; include protocol BEM-948, this trace_id, provider_selected claude_code, target_workflow_id claude.yml, dispatch_result executed, blocker null, and sha_type for every SHA. Do not modify workflows."
 
       - name: Execute only this routed governance dispatch
         id: executor
@@ -61,7 +61,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No P0 handoff evidence changes"
           else
-            git commit -m "BEM-948: live object to dispatch executor handoff"
+            git commit -m "BEM-948: minimal live object to dispatch executor handoff"
             git push
           fi
 
