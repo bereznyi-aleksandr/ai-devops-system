@@ -1,0 +1,51 @@
+name: BEM-948 Claude Targeted Diagnostic
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'governance/state/bem948_claude_diagnostic_trigger.json'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TRACE_ID: bem948_p0_live_object_e2e_observed_20260620T0455Z
+      NOT_BEFORE: '2026-06-20T04:55:00Z'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 1
+
+      - name: Collect target Claude run diagnostics
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 governance/runners/claude_targeted_diagnostic.py \
+            --trace-id "$TRACE_ID" \
+            --not-before "$NOT_BEFORE"
+
+      - name: Commit target diagnostic evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Claude Diagnostic"
+          git config user.email "bem948-diagnostic@ai-devops-system"
+          git add \
+            governance/reports/bem948_p0_live_object_e2e_observed_20260620T0455Z_claude_targeted_diagnostic.md \
+            governance/proofs/BEM948_p0_claude_targeted_diagnostic_receipt.json
+          if git diff --cached --quiet; then
+            echo "No diagnostic changes"
+          else
+            git commit -m "BEM-948: collect target Claude dispatch diagnostics"
+            git push
+          fi
