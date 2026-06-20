@@ -34,8 +34,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if ! python3 scripts/bem949_ci_stabilize.py --out governance/proofs/BEM949_p1_ci_static_validation.json; then
-            printf '%s\n' '{"schema_version":1,"protocol":"BEM-949","task_id":"BEM949-P1-CI-STABILIZE","status":"FAIL","blocker":"static_validation_runner_process_failed","checks":{"manual_dispatch_execution_evidence_collected":false}}' > governance/proofs/BEM949_p1_ci_static_validation.json
+          mkdir -p governance/proofs
+          set +e
+          python3 scripts/bem949_ci_stabilize.py --out governance/proofs/BEM949_p1_ci_static_validation.json > /tmp/bem949_ci_validation.stdout 2> /tmp/bem949_ci_validation.stderr
+          validation_exit=$?
+          set -e
+          if [ "$validation_exit" -ne 0 ]; then
+            cp /tmp/bem949_ci_validation.stderr governance/proofs/BEM949_p1_ci_static_validation_error.txt
+            VALIDATION_EXIT="$validation_exit" python3 -c 'import json, os; from pathlib import Path; payload={"schema_version":1,"protocol":"BEM-949","task_id":"BEM949-P1-CI-STABILIZE","status":"FAIL","blocker":"static_validation_runner_process_failed","validation_exit_code":int(os.environ["VALIDATION_EXIT"]),"error_log_path":"governance/proofs/BEM949_p1_ci_static_validation_error.txt","checks":{"manual_dispatch_execution_evidence_collected":True,"runner_process_completed":False}}; Path("governance/proofs/BEM949_p1_ci_static_validation.json").write_text(json.dumps(payload, indent=2)+"\n", encoding="utf-8")'
           fi
 
       - name: Commit static validation receipt
@@ -45,7 +51,7 @@ jobs:
           git config user.email "bem949-ci@ai-devops-system"
           git config user.name "BEM949 CI Stabilizer"
           git pull --rebase --autostash origin main || true
-          git add governance/proofs/BEM949_p1_ci_static_validation.json
+          git add governance/proofs/BEM949_p1_ci_static_validation.json governance/proofs/BEM949_p1_ci_static_validation_error.txt 2>/dev/null || true
           if git diff --cached --quiet; then
             exit 0
           fi
