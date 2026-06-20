@@ -1,83 +1,59 @@
 {
-  "version": 16,
-  "updated_at": "2026-06-19T20:20:00Z",
-  "queue_state": "EMPTY",
-  "current_task": null,
-  "system_status": "BEM947_DONE",
-  "release_status": "PASS",
-  "protocol": "BEM-947",
+  "version": 17,
+  "updated_at": "2026-06-20T00:00:00Z",
+  "queue_state": "ACTIVE",
+  "current_task": "BEM948-P0-REAL-DISPATCH-BRIDGE",
+  "system_status": "BEM948_P0_IN_PROGRESS",
+  "release_status": "BLOCKED_BUILDING",
+  "protocol": "BEM-948",
   "progress": {
-    "tasks_done": 4,
-    "tasks_total": 4,
-    "percent": 100
+    "tasks_done": 0,
+    "tasks_total": 5,
+    "percent": 0
   },
-  "proofs": [
-    "governance/proofs/BEM947_live_test_design_receipt.json",
-    "governance/proofs/BEM947_workflow_execution_bridge_receipt.json",
-    "governance/proofs/BEM947_P2_MINIMAL_CLAUDE_RETRY_PASS.json",
-    "governance/proofs/BEM947_FINAL_VERIFICATION_PASS.json"
-  ],
-  "final_evidence": {
-    "final_receipt": {
-      "path": "governance/proofs/BEM947_FINAL_VERIFICATION_PASS.json",
-      "sha": "2bc041d9fd98ecf87fe4201d037a3e1cd90465c2",
-      "sha_type": "git_blob",
-      "commit": "1fd4545bdfb732017f551c266d37985e5f018407",
-      "commit_sha_type": "commit"
-    },
-    "p2_pass_receipt": {
-      "path": "governance/proofs/BEM947_P2_MINIMAL_CLAUDE_RETRY_PASS.json",
-      "sha": "e5d61b8939d866cc8e3bafce9cf908c04193a8ef",
-      "sha_type": "git_blob",
-      "commit": "671f46974a98307627dd5c45c7e1d98495658f07",
-      "commit_sha_type": "commit"
-    },
-    "executed_proof": {
-      "path": "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json",
-      "sha": "545a9721513c1af4353835577f3b73d5784ab679",
-      "sha_type": "git_blob",
-      "status": "completed",
-      "blocker": null
-    },
-    "execution_report": {
-      "path": "governance/reports/bem947_minimal_claude_retry_20260619T1958Z.md",
-      "sha": "de19b74ef1c216e65372f04000e67c7e737b555d",
-      "sha_type": "git_blob",
-      "reported_outcome": "success",
-      "reported_status": "completed"
-    }
-  },
-  "checks": {
-    "p0_done": true,
-    "p1_done": true,
-    "p2_done": true,
-    "p3_done": true,
-    "executed_completed_proof_present": true,
-    "sha_policy_explicit": true,
-    "prior_failures_preserved": true,
-    "active_queue_empty": true
+  "protocol_source": {
+    "title": "BEM-948 Management Contour Closure Protocol",
+    "author": "EXTERNAL_AUDITOR_CLAUDE",
+    "date": "2026-06-20",
+    "scope": "planned-to-executed dispatch bridge, context sync, rule enforcement, provider failover, final verify"
   },
   "tasks": [
     {
-      "id": "BEM947-P0-LIVE-TEST-DESIGN",
-      "status": "DONE",
-      "percent": 25
+      "id": "BEM948-P0-REAL-DISPATCH-BRIDGE",
+      "status": "IN_PROGRESS",
+      "percent": 0
     },
     {
-      "id": "BEM947-P1-WORKFLOW-EXECUTION-BRIDGE",
-      "status": "DONE",
-      "percent": 50
+      "id": "BEM948-P1-AGENT-CONTEXT-SYNC",
+      "status": "PENDING",
+      "percent": 20
     },
     {
-      "id": "BEM947-P2-MINIMAL-CLAUDE-RETRY-DONE",
-      "status": "DONE",
-      "percent": 75
+      "id": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
+      "status": "PENDING",
+      "percent": 40
     },
     {
-      "id": "BEM947-P3-FINAL-VERIFY",
-      "status": "DONE",
-      "percent": 100
+      "id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
+      "status": "PENDING",
+      "percent": 60
+    },
+    {
+      "id": "BEM948-P4-FINAL-VERIFY",
+      "status": "PENDING",
+      "percent": 80
     }
   ],
-  "next_action": "no pending BEM947 tasks; wait for operator or next roadmap item"
+  "blockers": [
+    "planned_to_executed_bridge_not_yet_implemented"
+  ],
+  "sha_policy": {
+    "sha_type_required": true,
+    "allowed": [
+      "git_blob",
+      "commit",
+      "sha256_content"
+    ]
+  },
+  "next_action": "implement governance/runners/dispatch_executor.py and prove a live object-to-claude dispatch without a manual bridge"
 }
