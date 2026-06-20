@@ -1,13 +1,15 @@
 {
-  "status": "ROUTED",
+  "status": "PASS",
   "protocol": "BEM-948",
+  "task_id": "BEM948-P0-OBJECT-DISPATCH-BRIDGE",
+  "created_at": "2026-06-20T09:31:23Z",
   "object_id": "OBJ-GD-001",
   "trace_id": "bem948_p0_binding_repair_20260620T0935Z",
   "dispatch_id": "bem948_p0_binding_repair_20260620T0935Z:OBJ-GD-001",
   "task_type": "object_runtime_binding",
-  "created_at": "2026-06-20T09:31:23Z",
   "queue_path": "governance/state/dispatch_queue.jsonl",
   "processed_path": "governance/state/dispatch_processed.jsonl",
+  "object_state_path": "governance/state/OBJ-GD-001_last_run.json",
   "consumer_receipt": {
     "status": "PASS",
     "protocol": "BEM-935",
@@ -25,5 +27,14 @@
     },
     "blockers": []
   },
-  "non_claim": "This adapter proves queue/route only. A downstream HTTP 204 is dispatch, not executed/completed work."
+  "checks": {
+    "trace_id_required": true,
+    "task_type_required": true,
+    "object_runner_runtime_reused": true,
+    "dispatch_consumer_runtime_reused": true,
+    "downstream_llm_completion_not_claimed": true,
+    "sha_type_explicit": true
+  },
+  "blockers": [],
+  "next_task": "BEM948-P0-REAL-DISPATCH-BRIDGE"
 }
