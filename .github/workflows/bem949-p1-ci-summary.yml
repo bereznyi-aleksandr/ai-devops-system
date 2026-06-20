@@ -1,0 +1,38 @@
+name: BEM949 P1 CI Validation Summary
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          fetch-depth: 0
+
+      - name: Build concise validation evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/bem949_ci_summarize.py
+
+      - name: Commit validation summary and matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-ci@ai-devops-system"
+          git config user.name "BEM949 CI Stabilizer"
+          git add governance/proofs/BEM949_p1_ci_static_validation_summary.json governance/reports/BEM949_p1_ci_validation_matrix.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P1: summarize static validation evidence"
+          git push || (git pull --rebase origin main && git push)
