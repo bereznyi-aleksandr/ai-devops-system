@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
+  "created_at": "2026-06-20T13:21:52Z",
+  "trace_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
+  "github_hosted": true,
+  "self_hosted": false,
+  "mode": "mechanical_fallback",
+  "llm_available": false,
+  "execution_kind": "mechanical_fallback",
+  "response_preview": "GitHub-hosted mechanical fallback; no LLM claim.",
+  "error": "openai_secret_or_model_mismatch",
+  "non_claims": [
+    "No OpenAI LLM execution is claimed without OPENAI_API_KEY and OPENAI_MODEL."
+  ]
+}
