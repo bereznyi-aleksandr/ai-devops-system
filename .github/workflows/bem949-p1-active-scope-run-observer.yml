@@ -1,0 +1,46 @@
+name: BEM949 P1 Active Scope Run Observer
+
+on:
+  workflow_run:
+    workflows: ["BEM949 P1 Active Scope Static Validation"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Write target run conclusion
+        shell: bash
+        env:
+          TARGET_RUN_ID: ${{ github.event.workflow_run.id }}
+          TARGET_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          TARGET_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          TARGET_EVENT: ${{ github.event.workflow_run.event }}
+          TARGET_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          python3 -c 'import json, os; from datetime import datetime, timezone; from pathlib import Path; conclusion=os.environ.get("TARGET_CONCLUSION","unknown"); payload={"schema_version":1,"protocol":"BEM-949","task_id":"BEM949-P1-CI-STABILIZE","receipt_id":"BEM949_p1_active_scope_run","status":"PASS" if conclusion=="success" else "FAIL","target_workflow":".github/workflows/bem949-p1-active-scope-validation.yml","run_id":os.environ["TARGET_RUN_ID"],"run_id_type":"github_actions_run","run_attempt":os.environ.get("TARGET_ATTEMPT",""),"run_conclusion":conclusion,"run_conclusion_type":"github_actions_conclusion","head_sha":os.environ.get("TARGET_HEAD_SHA",""),"head_sha_type":"commit","trigger_event":os.environ.get("TARGET_EVENT",""),"created_at":datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),"checks":{"workflow_run_completion_observed":true,"green_dispatch_proven":conclusion=="success"},"non_claim":"Target run conclusion is recorded as observed; static validation remains distinct from provider runtime proof."}; Path("governance/proofs/BEM949_p1_active_scope_run.json").write_text(json.dumps(payload,indent=2)+"\n",encoding="utf-8")'
+      - name: Commit observed run
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-ci-observer@ai-devops-system"
+          git config user.name "BEM949 CI Run Observer"
+          git add governance/proofs/BEM949_p1_active_scope_run.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P1: record active-scope validation run"
+          git push || (git pull --rebase origin main && git push)
