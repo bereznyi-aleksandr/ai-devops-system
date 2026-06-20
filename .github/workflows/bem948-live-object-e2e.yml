@@ -1,4 +1,4 @@
-name: BEM948 Live Object To Claude E2E
+name: BEM-948 Live Object To Claude E2E
 
 on:
   workflow_dispatch:
@@ -15,6 +15,8 @@ jobs:
   live_e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      TRACE_ID: bem948_p0_live_object_e2e_20260620T0427Z
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,11 +32,11 @@ jobs:
             --object-id OBJ-GD-001 \
             --role executor \
             --provider claude_code \
-            --trace-id bem948_p0_live_object_e2e_20260620T0415Z \
+            --trace-id "$TRACE_ID" \
             --consume \
-            --task "BEM-948 P0 live object E2E. Create governance/reports/bem948_p0_live_object_e2e_20260620T0415Z.md and governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_20260620T0415Z.json. The proof must be truthful: status completed only after work is completed; include protocol BEM-948, trace_id, provider_selected claude_code, target_workflow_id claude.yml, dispatch_result executed, blocker null, and explicit sha_type for every SHA."
+            --task "BEM-948 P0 live object E2E. Create governance/reports/bem948_p0_live_object_e2e_20260620T0427Z.md and governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_20260620T0427Z.json. The proof must be truthful: status completed only after work is complete; include protocol BEM-948, trace_id, provider_selected claude_code, target_workflow_id claude.yml, dispatch_result executed, blocker null, and explicit sha_type for every SHA."
 
-      - name: Execute routed governance dispatch
+      - name: Execute only this routed governance dispatch
         id: executor
         shell: bash
         env:
@@ -44,7 +46,7 @@ jobs:
           GITHUB_API_URL: ${{ github.api_url }}
         run: |
           set +e
-          python3 governance/runners/dispatch_executor.py --max 20
+          python3 governance/runners/dispatch_executor.py --max 1 --trace-id "$TRACE_ID"
           result=$?
           set -e
           echo "result=$result" >> "$GITHUB_OUTPUT"
