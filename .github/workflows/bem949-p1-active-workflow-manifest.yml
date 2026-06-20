@@ -1,0 +1,43 @@
+name: BEM949 P1 Active Workflow Manifest
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install YAML parser
+        run: python3 -m pip install --disable-pip-version-check PyYAML
+
+      - name: Build active workflow dispatch manifest
+        run: python3 scripts/bem949_active_workflow_manifest.py
+
+      - name: Commit manifest evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-ci@ai-devops-system"
+          git config user.name "BEM949 CI Stabilizer"
+          git add governance/proofs/BEM949_p1_active_workflow_manifest.json governance/reports/BEM949_p1_active_workflow_manifest.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P1: record active workflow dispatch manifest"
+          git push || (git pull --rebase origin main && git push)
