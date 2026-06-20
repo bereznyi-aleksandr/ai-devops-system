@@ -1,0 +1,94 @@
+name: BEM948 Live Object E2E Turn24
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  p0_live_e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TRACE_ID: bem948_p0_live_object_e2e_turn24_20260620T0950Z
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          fetch-depth: 1
+
+      - name: Verify validated Claude workflow precondition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path("governance/proofs/BEM948_claude_yaml_validation_receipt.json").read_text(encoding="utf-8"))
+          assert receipt.get("status") == "PASS"
+          assert receipt.get("checks", {}).get("yaml_valid") is True
+          assert receipt.get("checks", {}).get("default_turn_budget_24_present") is True
+          PY
+
+      - name: Route OBJ-GD-001 through permanent governance bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/runners/object_runner.py \
+            --object-id OBJ-GD-001 \
+            --role executor \
+            --provider claude_code \
+            --trace-id "$TRACE_ID" \
+            --consume \
+            --task "BEM-948 P0 minimal permanent-bridge execution. Create exactly governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_turn24_20260620T0950Z.json. The JSON must be truthful: protocol BEM-948, task_id BEM948-P0-LIVE-OBJECT-E2E, trace_id bem948_p0_live_object_e2e_turn24_20260620T0950Z, status completed only after the file is written, provider_selected claude_code, target_workflow_id claude.yml, dispatch_result executed, blocker null. Commit only that proof with a real commit SHA and commit_sha_type commit. Do not edit workflows, secrets, or unrelated files."
+
+      - name: Dispatch only this routed record
+        id: executor
+        shell: bash
+        env:
+          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+        run: |
+          set +e
+          python3 governance/runners/dispatch_executor.py --max 1 --trace-id "$TRACE_ID"
+          result=$?
+          set -e
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Commit permanent bridge handoff evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Live E2E"
+          git config user.email "bem948-live-e2e@ai-devops-system"
+          git add \
+            governance/state/dispatch_queue.jsonl \
+            governance/state/dispatch_processed.jsonl \
+            governance/state/dispatch_executed.json \
+            governance/state/object_events.jsonl \
+            governance/state/OBJ-GD-001_last_run.json \
+            governance/proofs/BEM938_object_runner_receipt.json \
+            governance/proofs/BEM935_dispatch_consumer_receipt.json \
+            governance/proofs/BEM948_dispatch_executor_receipt.json \
+            2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No handoff state changes"
+          else
+            git commit -m "BEM-948: live object-to-dispatch turn24 handoff"
+            for attempt in 1 2 3; do
+              if git push; then exit 0; fi
+              git pull --rebase --autostash origin main
+            done
+            exit 1
+          fi
+
+      - name: Enforce permanent bridge dispatch acceptance
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.executor.outputs.result }}" = "0"
