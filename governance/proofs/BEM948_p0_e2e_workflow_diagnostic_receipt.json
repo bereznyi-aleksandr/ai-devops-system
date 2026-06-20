@@ -1,0 +1,32 @@
+{
+  "status": "OBSERVED",
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P0-E2E-WORKFLOW-DIAGNOSTIC",
+  "created_at": "2026-06-20T05:02:49Z",
+  "workflow": "bem948-live-object-e2e.yml",
+  "latest_run": {
+    "conclusion": "failure",
+    "createdAt": "2026-06-20T04:57:13Z",
+    "databaseId": 27860822333,
+    "displayTitle": "BEM-948: trigger trace-bound live P0 observation",
+    "headSha": "aec5d8ff2e0f52b431326311767e9802157cfe3e",
+    "status": "completed",
+    "updatedAt": "2026-06-20T04:59:51Z"
+  },
+  "logs_accessible": true,
+  "targeted_excerpt_lines": 3,
+  "log_access_error_present": false,
+  "excerpt": [
+    "live_e2e\tObserve dispatched Claude Actions run\t2026-06-20T04:59:47.2287562Z Traceback (most recent call last):",
+    "live_e2e\tObserve dispatched Claude Actions run\t2026-06-20T04:59:47.2304515Z NameError: name 'diagostic_lines' is not defined. Did you mean: 'diagnostic_lines'?",
+    "live_e2e\tObserve dispatched Claude Actions run\t2026-06-20T04:59:47.2446680Z ##[error]Process completed with exit code 1."
+  ],
+  "checks": {
+    "canary_runtime_reached": true,
+    "e2e_run_query_attempted": true,
+    "e2e_log_query_attempted": true,
+    "no_false_p0_pass": true,
+    "sha_type_explicit": true
+  },
+  "next_task": "BEM948-P0-AUTOREPAIR-AFTER-E2E-WORKFLOW-DIAGNOSTIC"
+}
