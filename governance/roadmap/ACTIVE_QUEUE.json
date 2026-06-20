@@ -1,9 +1,9 @@
 {
-  "version": 23,
-  "updated_at": "2026-06-20T12:58:19Z",
-  "queue_state": "IN_PROGRESS",
+  "version": 24,
+  "updated_at": "2026-06-20T13:07:00Z",
+  "queue_state": "ACTIVE",
   "current_task": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
-  "system_state": "P1_CONTEXT_SYNC_VERIFIED_P2_IN_PROGRESS",
+  "system_state": "P1_CONTEXT_SYNC_VERIFIED_P2_ACTIVE",
   "release_status": "BLOCKED_BUILDING",
   "protocol": "BEM-948",
   "progress": {
@@ -33,7 +33,7 @@
       "percent": 20,
       "done_receipt": "governance/proofs/BEM948_p0_final_verification_receipt.json",
       "done_receipt_blob_sha": "bc1ce9719d872d840281c47b6c056fc02c83fb5a",
-      "done_receipt_blo_sha_type": "git_blob",
+      "done_receipt_blob_sha_type": "git_blob",
       "done_commit_sha": "d06ee9aa2265ebe0cec579f42335bad8c3026541",
       "done_commit_sha_type": "commit"
     },
@@ -57,7 +57,8 @@
       "id": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
       "status": "IN_PROGRESS",
       "percent": 40,
-      "blocker": "p2_rule_enforcement_not_yet_verified"
+      "blocker": "p2_rule_enforcement_not_yet_verified",
+      "continuity_state": "ACTIVE queue_state selected to satisfy active_queue_guard.validate()"
     },
     {
       "id": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST",
@@ -71,19 +72,20 @@
     }
   ],
   "recent_action": {
-    "action": "P1 canonical context synchronization verified after duplicate-path consolidation",
-    "receipt": "governance/proofs/BEM948_p1_final_verification_receipt.json",
-    "receipt_blob_sha": "4474b042a8d3ae3e5ea55ccbac55bd12f6c27b96",
-    "receipt_blob_sha_type": "git_blob",
-    "receipt_commit_sha": "046300603df0ee82534319a12ede564722094d1f",
-    "receipt_commit_sha_type": "commit"
+    "action": "Align active task metadata with the existing continuity guard before P2 runtime verification",
+    "reason": "active_queue_guard.validate() treats ACTIVE as the canonical queue state while a runnable task is present; task status remains IN_PROGRESS.",
+    "runner_path": "governance/runners/bem948_rule_enforcement_runner.py",
+    "runner_blob_sha": "1a0f3e3c7118efd6210aa5e62fd959ca26fed3aa",
+    "runner_blob_sha_type": "git_blob",
+    "runner_commit_sha": "3020630606d8ff437d96a2d47e6f661bdfe678d4",
+    "runner_commit_sha_type": "commit"
   },
   "blockers": [
     "p2_rule_enforcement_not_yet_verified",
     "p3_failover_not_yet_verified",
     "p4_final_verification_not_yet_verified"
   ],
-  "next_action": "Execute BEM948-P2-RULE-ENFORCEMENT-VERIFICATION: establish a code-backed enforcement inventory for RULE-004 through RULE-012 and add real enforcement runners for RULE-011 and RULE-012 when absent.",
+  "next_action": "Execute BEM948-P2 runtime enforcement workflow; verify the committed runtime receipt before moving P3 to IN_PROGRESS.",
   "sha_policy": {
     "sha_type_required": true,
     "allowed": [
