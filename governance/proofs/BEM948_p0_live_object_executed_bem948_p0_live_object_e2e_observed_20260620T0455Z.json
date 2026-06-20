@@ -1,5 +1,5 @@
 {
-  "status": "executing",
+  "status": "completed",
   "protocol": "BEM-948",
   "trace_id": "bem948_p0_live_object_e2e_observed_20260620T0455Z",
   "cycle_id": "dispatch_bem948_p0_live_object_e2e_observed_20260620T0455Z",
@@ -8,18 +8,19 @@
   "dispatch_result": "executed",
   "blocker": null,
   "created_at": "2026-06-20T04:55:00Z",
+  "completed_at": "2026-06-20T05:10:00Z",
   "files_created": [
     {
       "path": "governance/reports/bem948_p0_live_object_e2e_observed_20260620T0455Z.md",
-      "sha_type": "sha_pending_commit"
+      "sha_type": "git_sha"
     },
     {
       "path": "governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_observed_20260620T0455Z.json",
-      "sha_type": "sha_pending_commit"
+      "sha_type": "git_sha"
     }
   ],
   "commit_sha": null,
-  "commit_sha_type": "sha_pending_commit",
+  "commit_sha_type": "sha_post_commit",
   "checks": {
     "role_sequence_read": true,
     "routing_read": true,
