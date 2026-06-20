@@ -1,0 +1,55 @@
+name: BEM-948 Turn Budget Patch v2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-turn-budget-patch-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          fetch-depth: 1
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          p=Path(".github/workflows/claude.yml")
+          before=p.read_bytes()
+          old=b'--max-turns 10 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
+          new=b'--max-turns 24 --allowedTools "Edit,Read,Write,Glob,Grep,Bash(git:*)"'
+          assert before.count(old)==1, before.count(old)
+          after=before.replace(old,new,1)
+          assert after.count(old)==0 and after.count(new)==1
+          p.write_bytes(after)
+          blob=lambda x:hashlib.sha1(b"blob "+str(len(x)).encode()+b"\0"+x).hexdigest()
+          q=Path("governance/proofs/BEM948_claude_turn_budget_repair_receipt.json")
+          q.parent.mkdir(parents=True,exist_ok=True)
+          q.write_text(json.dumps({
+            "status":"PATCHED_PENDING_FULL_VALIDATION","protocol":"BEM-948",
+            "task_id":"BEM948-P0-REPAIR-CLAUDE-TURN-BUDGET",
+            "created_at":datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "before_blob_sha":blob(before),"before_blob_sha_type":"git_blob",
+            "after_blob_sha":blob(after),"after_blob_sha_type":"git_blob",
+            "change":{"from":"--max-turns 10","to":"--max-turns 24"},
+            "checks":{"exact_replacement":True,"full_validation_pending":True,"secret_values_read_or_logged":False},
+            "next_task":"BEM948-P0-VALIDATE-CLAUDE-YAML"
+          },indent=2)+"\n")
+          PY
+          git diff --check -- .github/workflows/claude.yml
+          git config user.name "BEM-948 Autorepair"
+          git config user.email "bem948-autorepair@ai-devops-system"
+          git add .github/workflows/claude.yml governance/proofs/BEM948_claude_turn_budget_repair_receipt.json
+          git commit -m "BEM-948: patch Claude turns 10 to 24"
+          git push
