@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/bem948-binding-e2e-status-probe.yml'
+      - ".github/workflows/bem948-binding-e2e-status-probe.yml"
 
 permissions:
   actions: read
@@ -37,11 +37,15 @@ jobs:
           from pathlib import Path
 
           runs = json.loads(Path("/tmp/bem948/runs.json").read_text(encoding="utf-8"))
-          target = "bem948_p0_binding_object_e2e_20260620T0930Z"
           now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-          report = ["# BEM-948 binding E2E status probe", "", f"Observed at: {`{no}}`", ""]
-          report.extend([f"- `{r.get('databaseId')}` status={r.get('status')} conclusion={r.get('conclusion')} event={r.get('event)} head={r.get('headSha')}" for r in runs] or ["- No binding E2E runs returned."])
-          Path("governance/reports/bem948_binding_e2e_status_probe.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+          report = ["# BEM-948 binding E2E status probe", "", f"Observed at: `${now}`", ""]
+          report.extend([
+            f"- `{r.get('databaseId')}` status={r.get('status')} conclusion={r.get('conclusion')} event={r.get('event')} head={r.get('headSha')}"
+            for r in runs
+        ] or ["- No binding E2E runs returned."])
+          Path("governance/reports/bem948_binding_e2e_status_probe.md").write_text(
+            "\n".join(report) + "\n", encoding="utf-8"
+          )
           receipt = {
             "status": "OBSERVED",
             "protocol": "BEM-948",
@@ -55,9 +59,12 @@ jobs:
               "no_false_completed_claim": True,
               "sha_type_explicit": True,
             },
-            "next_task": "BEM948-P0-AUTOREPAIR-BINDING-E2E-RUNTIME",
+            "next_task": "BEM948-P0-AUTOREPAI-BINDING-E2E-RUNTIME",
           }
-          Path("governance/proofs/BEM948_binding_e2e_status_probe_receipt.json").write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          Path("governance/proofs/BEM948_binding_e2e_status_probe_receipt.json").write_text(
+            json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+          )
           PY
 
       - name: Commit status probe
@@ -67,7 +74,8 @@ jobs:
           git config user.name "BEM-948 Status Probe"
           git config user.email "bem948-status-probe@ai-devops-system"
           git add governance/reports/bem948_binding_e2e_status_probe.md governance/proofs/BEM948_binding_e2e_status_probe_receipt.json
-          if ! git diff --cached --quiet; then
-            git commit -m "BEM-948: observe binding E2E workflow state"
-            git push
+          if git diff --cached --quiet; then
+            exit 0
           fi
+          git commit -m "BEM-948: observe binding E2E workflow state"
+          git push || (git pull --rebase origin main && git push)
