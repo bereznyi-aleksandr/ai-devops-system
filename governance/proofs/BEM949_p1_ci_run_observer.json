@@ -2,24 +2,24 @@
   "schema_version": 1,
   "protocol": "BEM-949",
   "task_id": "BEM949-P1-CI-STABILIZE",
-  "status": "FAIL",
+  "status": "PASS",
   "workflow": "BEM949 CI Static Validation",
-  "run_id": "27877670091",
+  "run_id": "27877747522",
   "run_id_type": "github_actions_run",
-  "run_conclusion": "failure",
+  "run_conclusion": "success",
   "run_conclusion_type": "github_actions_conclusion",
-  "head_sha": "542eed3df66c8dfcbe56cdd30f1c0329e146612a",
+  "head_sha": "a1294bf3a30161982fa107db3af3708a24dc9a0c",
   "head_sha_type": "commit",
-  "created_at": "2026-06-20T16:51:23.849Z",
+  "created_at": "2026-06-20T16:54:35.936Z",
   "jobs": [
     {
-      "id": 82499808676,
+      "id": 82500001744,
       "name": "validate",
       "status": "completed",
-      "conclusion": "failure",
-      "started_at": "2026-06-20T16:51:05Z",
-      "completed_at": "2026-06-20T16:51:08Z",
-      "check_run_url": "https://api.github.com/repos/bereznyi-aleksandr/ai-devops-system/check-runs/82499808676",
+      "conclusion": "success",
+      "started_at": "2026-06-20T16:54:09Z",
+      "completed_at": "2026-06-20T16:54:23Z",
+      "check_run_url": "https://api.github.com/repos/bereznyi-aleksandr/ai-devops-system/check-runs/82500001744",
       "check_output": {
         "title": null,
         "summary": null,
@@ -31,14 +31,56 @@
           "number": 1,
           "name": "Set up job",
           "status": "completed",
-          "conclusion": "failure"
+          "conclusion": "success"
+        },
+        {
+          "number": 2,
+          "name": "Checkout repository",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 3,
+          "name": "Confirm Python runtime",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 4,
+          "name": "Install YAML parser",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 5,
+          "name": "Validate workflows and preserve findings",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 6,
+          "name": "Commit static validation receipt",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 12,
+          "name": "Post Checkout repository",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 13,
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
         }
       ]
     }
   ],
   "checks": {
     "conclusion_observed_from_workflow_run_event": true,
-    "green_dispatch_proven": false,
+    "green_dispatch_proven": true,
     "job_diagnostics_collected": true,
     "check_output_collected": true
   },
