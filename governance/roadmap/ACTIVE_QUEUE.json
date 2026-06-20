@@ -1,1 +1,82 @@
-{"version":29,"updated_at":"2026-06-20T13:30:00Z","queue_state":"COMPLETE","current_task":null,"system_state":"BEM948_FINAL_VERIFIED_WITH_LIMITATIONS","release_status":"VERIFIED_WITH_LIMITATIONS","protocol":"BEM-948","progress":{"tasks_done":5,"tasks_total":5,"percent":100},"tasks":[{"id":"BEM948-P0-REAL-DISPATCH-BRIDGE","status":"DONE","receipt":"governance/proofs/BEM948_p0_final_verification_receipt.json","sha":"bc1ce9719d872d840281c47b6c056fc02c83fb5a","sha_type":"git_blob"},{"id":"BEM948-P1-AGENT-CONTEXT-SYNC","status":"DONE","receipt":"governance/proofs/BEM948_p1_final_verification_receipt.json","sha":"4474b042a8d3ae3e5ea55ccbac55bd12f6c27b96","sha_type":"git_blob"},{"id":"BEM948-P2-RULE-ENFORCEMENT-VERIFICATION","status":"DONE","receipt":"governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json","sha":"04a1e0d7425980721fd571e261f0e1fdfefd9320","sha_type":"git_blob","scope":"RULE-011/012 enforced; RULE-004..010 NOT_VERIFIED"},{"id":"BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST","status":"DONE","receipt":"governance/proofs/BEM948_p3_final_failover_verification_receipt.json","sha":"1b09d522140aff66041392788ba65791bb0ca2dc","sha_type":"git_blob","outcome":"MECHANICAL_FALLBACK_VALIDATED"},{"id":"BEM948-P4-FINAL-VERIFY","status":"DONE","receipt":"governance/proofs/BEM948_p4_final_verification_receipt.json","sha":"f3b90aca919159c8a207a260025ef4bdd5e77a82","sha_type":"git_blob"}],"open_limitations":["RULE-004..010 NOT_VERIFIED","P2 workflow receipt persistence failed","P3 mechanical fallback; llm_available=false","legacy execution log unchanged"],"next_action":"Await operator decision for separate scope.","sha_policy":{"sha_type_required":true,"allowed":["git_blob","commit","sha256_content"]}}
+{
+  "version": 30,
+  "updated_at": "2026-06-20T16:00:00Z",
+  "queue_state": "ACTIVE",
+  "current_task": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
+  "system_state": "BEM949_EXECUTING",
+  "release_status": "VERIFIED_WITH_LIMITATIONS",
+  "protocol": "BEM-949",
+  "protocol_path": "governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
+  "progress": {
+    "tasks_done": 0,
+    "tasks_total": 8,
+    "percent": 0
+  },
+  "tasks": [
+    {
+      "id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
+      "status": "IN_PROGRESS",
+      "receipt": "governance/proofs/BEM949_p05_text_integrity_receipt.json",
+      "acceptance": "canonical AGENT_CONTEXT text-only fix with micro-receipt and explicit sha_type"
+    },
+    {
+      "id": "BEM949-P1-CI-STABILIZE",
+      "status": "PENDING",
+      "receipt": "governance/proofs/BEM949_p1_ci_stabilize_receipt.json",
+      "acceptance": "active workflow static validation and manual-dispatch executed evidence"
+    },
+    {
+      "id": "BEM949-P2-FUNCTIONAL-RESTORE",
+      "status": "PENDING",
+      "receipt": "governance/proofs/BEM949_p2_functional_restore_receipt.json",
+      "acceptance": "before/after table and a live non-validator bridge trace"
+    },
+    {
+      "id": "BEM949-P3-ALL-ROLE-E2E",
+      "status": "PENDING",
+      "receipt": "governance/proofs/BEM949_p3_all_role_e2e_receipt.json",
+      "acceptance": "one unsimulated all-role trace with terminal reports"
+    },
+    {
+      "id": "BEM949-P4-LIVE-LLM-FALLBACK",
+      "status": "PENDING",
+      "receipt": "governance/proofs/BEM949_p4_live_llm_fallback_receipt.json",
+      "acceptance": "live LLM fallback evidence or documentation de-claim"
+    },
+    {
+      "id": "BEM949-P5-RULE-ENBORCEMENT-COMPLETE",
+      "status": "PENDING",
+      "receipt": "governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json",
+      "acceptance": "RULE-004..010 positive and negative runtime enforcement evidence"
+    },
+    {
+      "id": "BEM949-P6-LEARNING-LOOP-DRILL",
+      "status": "PENDING",
+      "receipt": "governance/proofs/BEM949_p6_learning_loop_receipt.json",
+      "acceptance": "auditable error-to-rule-version dynamic refresh cycle"
+    },
+    {
+      "id": "BEM949-P7-RELEASE-AUDIT-FINAL",
+      "status": "PENDING",
+      "receipt": "governance/proofs/BEM949_p7_external_release_audit_receipt.json",
+      "acceptance": "independent audit of P0.5-P6; Broad PASS only with no limitations"
+    }
+  ],
+  "open_blockers": [
+    "B-01",
+    "B-02",
+    "B-03",
+    "B-04",
+    "B-05",
+    "B-06",
+    "B-07"
+  ],
+  "evidence_policy": {
+    "sha_type_required": true,
+    "http_204_is_dispatched_only": true,
+    "terminal_report_priority": true,
+    "max_outcome_changing_attempts": 3,
+    "broad_release_pass_requires_external_audit": true
+  },
+  "next_action": "Resolve P0 (execution commit identity from repository git object, then apply the text-only canoical context fix."
+}
