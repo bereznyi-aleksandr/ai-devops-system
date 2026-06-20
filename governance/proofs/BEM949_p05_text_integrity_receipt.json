@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
+  "receipt_id": "BEM949_p05_text_integrity_receipt",
+  "created_at": "2026-06-20T16:26:43Z",
+  "status": "PASS",
+  "scope": "Text-integrity correction of root canonical AGENT_CONTEXT.md only; no runtime, policy, provider, or release-status claim is changed.",
+  "source_audit": {
+    "document": "BEM949_HARD_AUDIT_AND_ROADMAP.docx",
+    "author": "EXTERNAL_AUDITOR_CLAUDE",
+    "date": "2026-06-20"
+  },
+  "evidence": {
+    "agent_context_pre_blob_sha": "0d866920ecc4d4b9b782a0ca064a44c729600426",
+    "agent_context_pre_blob_sha_type": "git_blob",
+    "agent_context_post_blob_sha": "04e31b2f380be182d4ba206a9f0809ae24e3d9d3",
+    "agent_context_post_blob_sha_type": "git_blob",
+    "agent_context_update_commit_sha": "f841f74e1ebf182c0ece839774eee1ca36ffffb8",
+    "agent_context_update_commit_sha_type": "commit",
+    "p0_final_receipt_path": "governance/proofs/BEM948_p0_final_verification_receipt.json",
+    "p0_final_receipt_blob_sha": "bc1ce9719d872d840281c47b6c056fc02c83fb5a",
+    "p0_final_receipt_blob_sha_type": "git_blob",
+    "authoritative_executed_proof_path": "governance/proofs/BEM948_p0_live_object_executed_bem948_p0_live_object_e2e_turn24_20260620T0950Z.json",
+    "authoritative_executed_proof_blob_sha": "ab0f199422ed68d4da9f710cd53a90237d20a77d",
+    "authoritative_executed_proof_blob_sha_type": "git_blob",
+    "corrected_p0_execution_commit_sha": "3bf9f8e257cd113ed4436d966ebf2b2ea7b859bd",
+    "corrected_p0_execution_commit_sha_type": "commit"
+  },
+  "changes": [
+    {
+      "field": "P0 completion commit reference",
+      "from": "3bf9f8e257cd113ed4436d956ebbf2b2ea7b859bd",
+      "to": "3bf9f8e257cd113ed4436d966ebf2b2ea7b859bd",
+      "basis": "trace-bound executed proof is stronger than a metadata-reconciled final receipt when commit identifiers conflict"
+    },
+    {
+      "field": "routing-state path markup",
+      "from": "unclosed inline code delimiter",
+      "to": "closed inline code delimiter"
+    }
+  ],
+  "checks": {
+    "post_context_sha_has_sha_type": true,
+    "corrected_p0_execution_commit_sha_length_is_40": true,
+    "corrected_p0_execution_commit_has_sha_type": true,
+    "routing_path_inline_code_is_closed": true,
+    "current_context_contains_VERIFIEG": false,
+    "current_context_contains_enidence": false,
+    "scope_is_text_only": true,
+    "release_status_unchanged": true
+  },
+  "limitations": [
+    "The historical BEM-948 final receipt and its associated Claude report still contain the malformed 41-character P0 commit reference; this BEM-949 receipt does not rewrite historical evidence.",
+    "The attempted repository-backed resolver workflow did not persist a receipt; the corrective value is instead grounded in the existing trace-bound executed proof."
+  ],
+  "next_task": "BEM949-P1-CI-STABILIZE"
+}
