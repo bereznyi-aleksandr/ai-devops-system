@@ -1,0 +1,114 @@
+name: BEM-948 Direct Patch Failure Log Collector
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-direct-patch-log-collector.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_RUN_ID: "27867249121"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Collect and sanitize failed patch log
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bem948 governance/reports governance/proofs
+          set +e
+          gh run view "$TARGET_RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/bem948/failed.log 2> /tmp/bem948/log.err
+          rc=$?
+          set -e
+          export LOG_RC="$rc"
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          raw = Path("/tmp/bem948/failed.log").read_text(encoding="utf-8", errors="replace")
+          err = Path("/tmp/bem948/log.err").read_text(encoding="utf-8", errors="replace")
+          patterns = (
+              r"ghp_[A-Za-z0-9_]+",
+              r"github_pat_[A-Za-z0-9_]+",
+              r"Bearer\s+[A-Za-z0-9._-]+",
+          )
+          for pattern in patterns:
+              raw = re.sub(pattern, "***", raw, flags=re.IGNORECASE)
+              err = re.sub(pattern, "***", err, flags=re.IGNORECASE)
+          lines = raw.splitlines()
+          selected = []
+          for index, line in enumerate(lines):
+              lowered = line.lower()
+              if any(marker in lowered for marker in (
+                  "error", "traceback", "exception", "exit code",
+                  "expected one", "replacement", "git push", "permission",
+                  "fatal:", "failed",
+              )):
+                  selected.extend(lines[max(0, index - 6):min(len(lines), index + 20)])
+          if not selected:
+              selected = lines[-160:]
+          deduped = []
+          seen = set()
+          for line in selected:
+              if line not in seen:
+                  seen.add(line)
+                  deduped.append(line[:900])
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          report_path = Path("governance/reports/bem948_p0_direct_patch_failure_log.md")
+          proof_path = Path("governance/proofs/BEM948_direct_patch_failure_log_receipt.json")
+          report = [
+              "# BEM-948 P0 direct patch failure log",
+              "",
+              "Target run id: `27867249121`",
+              f"Log retrieval exit code: `{os.environ.get('LOG_RC', '')}`",
+              "",
+              "## Sanitized targeted excerpt",
+              "",
+          ]
+          report.extend([f"- `{line}`" for line in deduped] or ["- No failed-log text returned."])
+          report_path.write_text("\n".join(report) + "\n", encoding="utf-8")
+          receipt = {
+              "status": "COLLECTED" if raw.strip() else "BLOCKED_REPAIRING",
+              "protocol": "BEM-948",
+              "task_id": "BEM948-P0-DIRECT-PATCH-FAILURE-DIAGNOSTIC",
+              "created_at": now,
+              "target_run_id": "27867249121",
+              "target_run_id_type": "github_actions_run",
+              "log_retrieval_exit_code": int(os.environ.get("LOG_RC", "1")),
+              "logs_accessible": bool(raw.strip()),
+              "report_path": str(report_path),
+              "sanitized_excerpt_lines": len(deduped),
+              "diagnostic_stderr_present": bool(err.strip()),
+              "checks": {
+                  "targeted_failed_log_collection_attempted": True,
+                  "secret_values_read_or_logged": False,
+                  "no_false_p0_pass_claim": True,
+              },
+              "next_task": "BEM948-P0-AUTOREPAIR-DIRECT-PATCH-CAUSE",
+          }
+          proof_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit diagnostic evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Diagnostic"
+          git config user.email "bem948-diagnostic@ai-devops-system"
+          git add governance/reports/bem948_p0_direct_patch_failure_log.md governance/proofs/BEM948_direct_patch_failure_log_receipt.json
+          git diff --cached --quiet || (git commit -m "BEM-948: collect direct patch failure diagostic" && git push)
