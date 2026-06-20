@@ -3,7 +3,7 @@
   "protocol": "BEM-949",
   "task_id": "BEM949-P1-CI-STABILIZE",
   "receipt_id": "BEM949_p1_ci_static_validation",
-  "created_at": "2026-06-20T17:22:57Z",
+  "created_at": "2026-06-20T17:45:46Z",
   "validator": {
     "path": "scripts/bem949_ci_stabilize.py",
     "heredoc_dedent_before_compile": true,
@@ -11,13 +11,11 @@
   },
   "status": "FAIL",
   "scope": "Repository-wide static validation only; no per-workflow execution claim.",
-  "workflow_count": 237,
-  "valid_workflow_count": 234,
-  "invalid_workflow_count": 3,
+  "workflow_count": 241,
+  "valid_workflow_count": 240,
+  "invalid_workflow_count": 1,
   "invalid_workflows": [
-    ".github/workflows/bem934-object-binding-proof-v2.yml",
-    ".github/workflows/bem947-live-object-dispatch.yml",
-    ".github/workflows/bem948-binding-e2e-status-probe.yml"
+    ".github/workflows/bem934-object-binding-proof-v2.yml"
   ],
   "workflows": [
     {
@@ -997,35 +995,19 @@
     },
     {
       "path": ".github/workflows/bem947-live-object-dispatch.yml",
-      "yaml_valid": false,
-      "python_heredocs": 1,
-      "python_heredocs_compiled": 1,
-      "valid": false,
-      "errors": [
-        {
-          "kind": "yaml",
-          "message": "while parsing a block mapping\n  in \"<unicode string>\", line 97, column 9:\n          - name: Commit retry dispatch receipt\n            ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 105, column 10:\n             if git diff --cached --quiet; then\n             ^"
-        }
-      ]
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "valid": true,
+      "errors": []
     },
     {
       "path": ".github/workflows/bem948-binding-e2e-status-probe.yml",
-      "yaml_valid": false,
-      "python_heredocs": 1,
+      "yaml_valid": true,
+      "python_heredocs": 0,
       "python_heredocs_compiled": 0,
-      "valid": false,
-      "errors": [
-        {
-          "kind": "yaml",
-          "message": "while parsing a block mapping\n  in \"<unicode string>\", line 23, column 9:\n          - name: Observe binding E2E runs\n            ^\nexpected <block end>, but found ']'\n  in \"<unicode string>\", line 45, column 9:\n            ] or [\"- No binding E2E runs ret ... \n            ^"
-        },
-        {
-          "kind": "python_heredoc",
-          "index": 1,
-          "tag": "PY",
-          "message": "unexpected indent at line 1, column 2"
-        }
-      ]
+      "valid": true,
+      "errors": []
     },
     {
       "path": ".github/workflows/bem948-binding-e2e.yml",
@@ -1260,6 +1242,30 @@
       "errors": []
     },
     {
+      "path": ".github/workflows/bem949-p1-active-scope-run-inspector.yml",
+      "yaml_valid": true,
+      "python_heredocs": 1,
+      "python_heredocs_compiled": 1,
+      "valid": true,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem949-p1-active-scope-run-observer.yml",
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "valid": true,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem949-p1-active-scope-validation.yml",
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "valid": true,
+      "errors": []
+    },
+    {
       "path": ".github/workflows/bem949-p1-active-workflow-manifest.yml",
       "yaml_valid": true,
       "python_heredocs": 0,
@@ -1317,6 +1323,14 @@
     },
     {
       "path": ".github/workflows/bem949-p1-static-run-inspector.yml",
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
+      "valid": true,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem949-p2-functional-baseline.yml",
       "yaml_valid": true,
       "python_heredocs": 0,
       "python_heredocs_compiled": 0,
