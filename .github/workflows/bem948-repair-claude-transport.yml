@@ -1,0 +1,29 @@
+name: BEM-948 Claude Transport Repair
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path(".github/workflows/claude.yml")
+          t=p.read_text()
+          m="concurrency:\n  group: claude-role-transport-main\n  cancel-in-progress: false\n\n"
+          if m not in t:
+              t=t.replace("permissions:\n",m+"permissions:\n",1)
+              p.write_text(t)
+          s={"claude":{"status":"failed","last_used":"2026-06-20T04:59:29Z","last_trace":"bem948_p0_live_object_e2e_observed_20260620T0455Z","last_outcome":"failure"},"updated_at":"2026-06-20T04:59:29Z","repair_note":"BEM-948 removed merge-conflict markers and serialized Claude workflow runs."}
+          Path("governance/state/provider_status.json").write_text(json.dumps(s,indent=2)+"\n")
+          PY
+          git config user.name "BEM-948 Transport Repair"
+          git config user.email "bem948-repair@ai-devops-system"
+          git add .github/workflows/claude.yml governance/state/provider_status.json
+          git diff --cached --quiet || (git commit -m "BEM-948: serialize Claude transport and repair state" && git push)
