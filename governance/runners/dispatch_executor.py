@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""BEM-948: permanent bridge from routed governance records to Actions dispatches.
+"""BEM-948 permanent bridge: planned governance record -> Actions dispatch.
 
-HTTP 204 is recorded only as "dispatched"; it never means task completion.
+HTTP 204 is recorded as `dispatched`, never as `completed`.
 """
-from __future__ import annotations
-
 import argparse
 import hashlib
 import json
@@ -13,147 +11,114 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
-STATE = ROOT / "governance" / "state"
-PROOFS = ROOT / "governance" / "proofs"
+root = Path(__file__).resolve().parents[2]
+STATE = root / "governance" / "state"
 PROCESSED = STATE / "dispatch_processed.jsonl"
 EXECUTED = STATE / "dispatch_executed.jsonl"
-CONFIG = ROOT / "governance" / "config" / "provider_config.json"
+PROOF = root / "governance" / "proofs" / "BEM948_dispatch_executor_receipt.json"
+CONFIG = root / "governance" / "config" / "provider_config.json"
 
 
-def now() -> str:
+def now():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def text(value: Any, default: str = "") -> str:
-    return str(value if value is not None else default)
-
-
-def read_jsonl(path: Path) -> list[dict[str, Any]]:
+def rows(path):
     if not path.exists():
         return []
-    records: list[dict[str, Any]] = []
-    for line_number, raw in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+    out = []
+    for number, raw in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
         if not raw.strip():
             continue
         try:
-            item = json.loads(raw)
+            value = json.loads(raw)
+            out.append(value if isinstance(value, dict) else {"_invalid": "non_object", "_line": number})
         except json.JSONDecodeError as exc:
-            records.append({"_invalid": "json", "_line": line_number, "_error": str(exc)})
-            continue
-        records.append(item if isinstance(item, dict) else {"_invalid": "non_object_json", "_line": line_number})
-    return records
+            out.append({"_invalid": "json", "_line": number, "_error": str(exc)})
+    return out
 
 
-def append_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
-    if not records:
+def append(path, values):
+    if not values:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+        for value in values:
+            handle.write(json.dumps(value, ensure_ascii=False, sort_keys=True) + "\n")
 
 
-def write_json(path: Path, document: dict[str, Any]) -> None:
+def write(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def key(record: dict[str, Any]) -> str:
-    return text(record.get("dispatch_id") or record.get("trace_id") or record.get("id"))
+def key(item):
+    return str(item.get("dispatch_id") or item.get("trace_id") or item.get("id") or "")
 
 
-def sha256_json(value: Any) -> str:
-    raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return hashlib.sha256(raw).hexdigest()
-
-
-def config() -> dict[str, Any]:
-    try:
-        loaded = json.loads(CONFIG.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"provider_config_unavailable:{exc}") from exc
-    if not isinstance(loaded, dict):
-        raise RuntimeError("provider_config_not_object")
-    return loaded
-
-
-def allowed(cfg: dict[str, Any], provider: str, workflow_id: str) -> str | None:
-    provider_config = (cfg.get("providers") or {}).get(provider)
-    if not isinstance(provide_config, dict):
-        return "provider_missing"
-    if provider_config.get("enabled") is not True:
-        return "provider_disabled"
-    if text(provider_config.get("workflow_id")) != workflow_id:
-        return "target_workflow_mismatch"
-    return None
-
-
-def post_dispatch(token: str, repository: str, api_url: str, workflow_id: str, inputs: dict[str, str]) -> tuple[int | None, str]:
-    url = f"{api_url.rstrip('/')}/repos/{repository}/actions/workflows/{workflow_id}/dispatches"
-    body = json.dumps({"ref": "main", "inputs": inputs}, ensure_ascii=False).encode("utf-8")
+def post(token, repo, api, workflow, inputs):
+    url = f"{api.rstrip('/')}/repos/{repo}/actions/workflows/{workflow}/dispatches"
+    body = json.dumps({"ref": "main", "inputs": inputs}, ensure_ascii=False).encode()
     request = urllib.request.Request(
-        url,
-        data=body,
+        url, data=body, method="POST",
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
             "Content-Type": "application/json",
             "User-Agent": "ai-devops-system-bem948-dispatch-executor",
         },
-        method="POST",
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             return int(response.status), response.read().decode("utf-8", errors="replace")[:500]
     except urllib.error.HTTPError as exc:
         return int(exc.code), exc.read().decode("utf-8", errors="replace")[:500]
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+    except (urllib.error.URLError, OSError, TimeoutError) as exc:
         return None, str(exc)[:500]
 
 
-def run(max_items: int, dry_run: bool) -> dict[str, Any]:
-    cfg = config()
-    source = read_jsonl(PROCESSED)
-    prior = read_jsonl(EXECUTED)
-    handled = {key(item) for item in prior if key(item)}
-    token = os.environ.get("AI_SYSTEM_GITHUB_PAT") or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or ""
-    repository = os.environ.get("GITHUB_REPOSITORY", "")
-    api_url = os.environ.get("GITHUB_API_URL", "https://api.github.com")
-    outputs: list[dict[str, Any]] = []
-    skipped = 0
+def run(maximum, trace_filter=None, dry_run=False):
+    cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
+    prior = {key(item) for item in rows(EXECUTED) if key(item)}
+    token = os.getenv("AI_SYSTEM_GITHUB_PAT") or os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN") or ""
+    repo = os.getenv("GITHUB_REPOSITORY", "")
+    api = os.getenv("GITHUB_API_URL", "https://api.github.com")
+    out, skipped = [], 0
 
-    for record in source:
-        if len(outputs) >= max_items:
+    for item in rows(PROCESSED):
+        if len(out) >= maximum:
             break
-        dispatch_id = key(record)
-        if (
-            not dispatch_id
-            or record.get("_invalid")
-            or record.get("status") != "processed"
-            or record.get("dispatch_result") != "planned"
-            or dispatch_id in handled
-        ):
+        dispatch_id = key(item)
+        trace_id = str(item.get("trace_id") or dispatch_id)
+        eligible = (
+            dispatch_id and not item.get("_invalid")
+            and item.get("status") == "processed"
+            and item.get("dispatch_result") == "planned"
+            and dispatch_id not in prior
+            and (not trace_filter or trace_id == trace_filter)
+        )
+        if not eligible:
             skipped += 1
             continue
 
-        payload = record.get("payload") if isinstance(record.get("payload"), dict) else {}
-        role = text(record.get("logical_role") or record.get("role") or "curator")
-        provider = text(record.get("provider_selected") or record.get("provider"))
-        trace_id = text(record.get("trace_id") or dispatch_id)
-        workflow_id = text(record.get("target_workflow_id"))
-        task = text(payload.get("task") or record.get("saske") or f"Governance dispatch {trace_id}: create truthful report and proof.")
+        payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+        role = str(item.get("logical_role") or item.get("role") or "curator")
+        provider = str(item.get("provider_selected") or item.get("provider") or "")
+        workflow = str(item.get("target_workflow_id") or "")
+        config = (cfg.get("providers") or {}).get(provider, {})
         inputs = {
             "role": role,
             "provider": "claude" if provider == "claude_code" else provider,
             "trace_id": trace_id,
-            "cycle_id": text(payload.get("cycle_id") or record.get("cycle_id") or f"dispatch_{trace_id}"),
-            "task_type": text(payload.get("task_type") or record.get("sask_type") or "default_development"),
-            "task": task,
+            "cycle_id": str(payload.get("cycle_id") or item.get("cycle_id") or f"dispatch_{trace_id}"),
+            "task_type": str(payload.get("task_type") or "default_development"),
+            "task": str(payload.get("task") or f"Governance dispatch {trace_id}"),
         }
-        outcome: dict[str, Any] = {
+        source_hash = hashlib.sha256(
+            json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        record = {
             "protocol": "BEM-948",
             "task_id": "BEM948-P0-REAL-DISPATCH-BRIDGE",
             "created_at": now(),
@@ -161,70 +126,72 @@ def run(max_items: int, dry_run: bool) -> dict[str, Any]:
             "trace_id": trace_id,
             "logical_role": role,
             "provider_selected": provider,
-            "target_workflow_id": workflow_id,
+            "target_workflow_id": workflow,
             "inputs": inputs,
-            "source_processed_sha256": sha256_json(record),
+            "source_processed_sha256": source_hash,
             "source_processed_sha256_type": "sha256_content",
             "dispatch_result": "failed",
             "http_status": None,
             "blocker": None,
         }
-        blocker = allowed(cfg, provider, workflow_id)
-        if blocker:
-            outcome["blocker"] = blocker
+        if not config:
+            record["blocker"] = "provider_missing"
+        elif config.get("enabled") is not True:
+            record["blocker"] = "provider_disabled"
+        elif config.get("workflow_id") != workflow:
+            record["blocker"] = "target_workflow_mismatch"
         elif dry_run:
-            outcome["dispatch_result"] = "dry_run"
-            outcome["http_status"] = 0
-            outcome["blocker"] = "dry_run"
+            record.update(dispatch_result="dry_run", http_status=0, blocker="dry_run")
         elif not token:
-            outcome["blocker"] = "github_token_missing"
-        elif not repository:
-            outcome["blocker"] = "github_repository_missing"
+            record["blocker"] = "github_token_missing"
+        elif not repo:
+            record["blocker"] = "github_repository_missing"
         else:
-            http_status, response = post_dispatch(token, repository, api_url, workflow_id, inputs)
-            outcome["http_status"] = http_status
-            outcome["response_excerpt"] = response
-            if http_status == 204:
-                outcome["dispatch_result"] = "dispatched"
+            status, response = post(token, repo, api, workflow, inputs)
+            record.update(http_status=status, response_excerpt=response)
+            if status == 204:
+                record["dispatch_result"] = "dispatched"
             else:
-                outcome["blocker"] = f"workflow_dispatch_http_{http_status if http_status is not None else 'network_error'}"
-        outputs.append(outcome)
+                record["blocker"] = f"workflow_dispatch_http_{status if status is not None else 'network_error'}"
+        out.append(record)
 
-    append_jsonl(EXECUTED, outputs)
-    failed = [item for item in outputs if item["dispatch_result"] == "failed"]
-    dispatched = [item for item in outputs if item["dispatch_result"] == "dispatched"]
+    append(EXECUTED, out)
+    failures = [item for item in out if item["dispatch_result"] == "failed"]
+    no_match = bool(trace_filter) and not out
     receipt = {
-        "status": "PASS" if not failed else "BLOCKED",
+        "status": "PASS" if not failures and not no_match else "BLOCKED",
         "protocol": "BEM-948",
         "task_id": "BEM948-P0-REAL-DISPATCH-BRIDGE",
         "created_at": now(),
-        "processed_source": str(PROCESSED.relative_to(ROOT)),
-        "executed_output": str(EXECUTED.relative_to(ROOT)),
-        "processed_items_seen": len(source),
-        "dispatched_count": len(dispatched),
-        "failed_count": len(failed),
+        "processed_source": "governance/state/dispatch_processed.jsonl",
+        "executed_output": "governance/state/dispatch_executed.jsonl",
+        "trace_filter": trace_filter,
+        "dispatched_count": sum(x["dispatch_result"] == "dispatched" for x in out),
+        "failed_count": len(failures),
         "skipped_count": skipped,
-        "dispatches": outputs,
+        "dispatches": out,
         "checks": {
             "dispatch_executor_has_runtime_code": True,
-            "http_dispatch_attempted": bool(outputs),
+            "http_dispatch_attempted": bool(out),
             "http_204_means_dispatched_not_completed": True,
-            "executed_jsonl_written": EXECUTED.exists(),
+            "trace_scope_enforced": bool(trace_filter),
             "sha_type_explicit": True,
         },
-        "blockers": [text(item.get("blocker")) for item in failed if item.get("blocker")],
-        "next_task": "BEM948-P0-LIVE-OBJECT-E2E" if not failed else "BEM948-P0-AUTOREPAIR-DISPATCH-EXECUTOR",
+        "blockers": [x["blocker"] for x in failures if x.get("blocker")]
+        + (["corresponding_processed_dispatch_not_found"] if no_match else []),
+        "next_task": "BEM948-P0-LIVE-OBJECT-E2E" if not failures and not no_match else "BEM948-P0-AUTOREPAIR-DISPATCH-EXECUTOR",
     }
-    write_json(PROOFS / "BEM948_dispatch_executor_receipt.json", receipt)
+    write(PROOF, receipt)
     return receipt
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Dispatch planned governance records through GitHub Actions.")
+def main():
+    parser = argparse.ArgumentParser()
     parser.add_argument("--max", type=int, default=20)
+    parser.add_argument("--trace-id")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
-    receipt = run(max_items=max(1, args.max), dry_run=args.dry_run)
+    receipt = run(max(1, args.max), args.trace_id, args.dry_run)
     print(json.dumps(receipt, ensure_ascii=False, indent=2))
     if receipt["status"] != "PASS":
         raise SystemExit(1)
