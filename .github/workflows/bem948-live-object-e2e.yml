@@ -2,6 +2,11 @@ name: BEM-948 Live Object To Claude E2E
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bem948-live-object-e2e.yml'
+      - 'governance/state/bem948_e2e_trigger.json'
 
 permissions:
   contents: write
