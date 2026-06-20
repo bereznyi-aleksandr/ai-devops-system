@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-948",
+  "task_id": "BEM948-P1-AGENT-CONTEXT-SYNC",
+  "receipt_id": "BEM948_p1_canonical_context_consolidation_receipt",
+  "created_at": "2026-06-20T10:24:41Z",
+  "status": "PASS",
+  "scope_status": "PASS",
+  "task_status_after": "IN_PROGRESS",
+  "scope": "Eliminate ambiguous duplicate full AGENT_CONTEXT files by declaring the root path canonical and converting the governance path to a redirect.",
+  "canonical_path": "AGENT_CONTEXT.md",
+  "redirect_path": "governance/AGENT_CONTEXT.md",
+  "pre_change": {
+    "AGENT_CONTEXT.md": {
+      "sha": "e625b660abce39ec500db58158944c7a22cc7d16",
+      "sha_type": "git_blob",
+      "role": "stale root startup context"
+    },
+    "governance/AGENT_CONTEXT.md": {
+      "sha": "7614567ed916080d097991313c5b75502581ccd2",
+      "sha_type": "git_blob",
+      "role": "full but divergent governance context"
+    }
+  },
+  "post_change": {
+    "AGENT_CONTEXT.md": {
+      "sha": "eeaa40e0920781589da3d7e91071cefbde899c80",
+      "sha_type": "git_blob",
+      "role": "sole full canonical context",
+      "commit_sha": "edbf513ffce4f43f4c60cb11eab1ee9cffca891c",
+      "commit_sha_type": "commit"
+    },
+    "governance/AGENT_CONTEXT.md": {
+      "sha": "e46b86486e0f78dd785cadacf440b89d2410dfbd",
+      "sha_type": "git_blob",
+      "role": "redirect-only companion",
+      "commit_sha": "341650435424ce2239cba3e6f3aaa7a687f1cf16",
+      "commit_sha_type": "commit"
+    }
+  },
+  "verification": {
+    "method": "GitHub Contents API read-after-write",
+    "checks": [
+      "root file exists and declares itself the sole full canonical context",
+      "governance file exists and is redirect-only",
+      "both post-change git blob SHAs match the write responses"
+    ],
+    "result": "PASS"
+  },
+  "resolution": {
+    "why_root_path": "The stale root document already instructed agents to read it first, so preserving that location prevents legacy startup protocols from selecting a noncanonical context.",
+    "why_redirect_not_copy": "A redirect preserves compatibility for governance-path readers while preventing another independent full copy from drifting."
+  },
+  "non_claims": [
+    "This receipt does not claim BEM948-P1 is terminally complete.",
+    "This receipt does not claim P2, P3, or P4 verification.",
+    "No workflow dispatch or executed/completed runtime claim is asserted."
+  ]
+}
