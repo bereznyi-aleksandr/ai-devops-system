@@ -7,8 +7,8 @@
 | Provider | claude |
 | Outcome | success |
 | Status | completed |
-| Commit SHA | dd06f32997ff6efcbe2b28af17a27a74ab7c2e16 |
-| Completed at | 2026-06-20T09:29:29Z |
+| Commit SHA | bf762aa5abf6f1d90e5c2a246aa1b6e3613c5747 |
+| Completed at | 2026-06-20T09:30:48Z |
 | Changed files | governance/proofs/BEM934_claude_result_materialization_receipt.json, governance/proofs/BEM934_object_binding_plan.json |
 
 **No blocker.**
