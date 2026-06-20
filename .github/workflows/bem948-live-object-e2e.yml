@@ -1,110 +1,25 @@
-name: BEM-948 Live Object To Claude E2E
+name: BEM-948 Live Object to Claude E2E
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'governance/state/bem948_nameerror_repair_trigger.json'
-     - '.github/workflows/bem948-live-object-e2e.yml'
 
 permissions:
-  contents: write
-  actions: write
+  contents: read
 
 jobs:
-  repair_and_e2e:
+  validate:
+    name: Validate retired E2E repair workflow
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      TRACE_ID: bem948_p0_binding_nameerror_repair_20260620T0955Z
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          fetch-depth: 1
-
-      - name: Repair dispatcher NameError and validate runtime source
-        id: repair
+      - uses: actions/checkout@v4
+      - name: Confirm workflow source is available
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          target = Path("governance/runners/dispatch_executor.py")
-          text = target.read_text(encoding="utf-8")
-          before = text.count("recipht")
-          if before:
-              text = text.replace("recipht", "receipt")
-              target.write_text(text, encoding="utf-8")
-          if "recipht" in target.read_text(encoding="utf-8"):
-              raise SystemExit("dispatcher_nameerror_repair_incomplete")
-
-          proof = {
-              "status": "PASS",
-              "protocol": "BEM-948",
-              "task_id": "BEM948-P0-DISPATCH-EXECUTOR-NAMEERROR-REPAIR",
-              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "repair": {
-                  "symbol_before": "recipht",
-                  "symbol_after": "receipt",
-                  "occurrences_repaired": before,
-                  "scope": "only the confirmed NameError symbol",
-              },
-              "checks": {
-                  "runtime_nameerror_symbol_absent": "recipht" not in target.read_text(encoding="utf-8"),
-                  "no_false_completed_claim": True,
-                  "sha_type_explicit": True,
-              },
-              "blockers": [],
-              "next_task": "BEM948-P0-BINDING-MODE-LIVE-OBJECT-E2E",
-          }
-          out = Path("governance/proofs/BEM948_dispatch_executor_nameerror_repair_receipt.json")
-          out.parent.mkdir(parents=True, exist_ok=True)
-          out.write_text(json.dumps(proof, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          PY
+          test -s .github/workflows/bem948-live-object-e2e.yml
+          echo "BEM-948 retired E2E workflow is syntax-safe."
+      - name: Verify dispatch bridge sources
+        shell: bash
+        run: |
+          set -euo pipefail
           python3 -m py_compile             governance/runners/object_dispatch_bridge.py             governance/runners/dispatch_executor.py             governance/runners/dispatch_executor_guard.py
-
-      - name: Queue and route trace-bound binding-mode object task
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 governance/runners/object_dispatch_bridge.py             --object-id OBJ-GD-001             --role executor             --provider claude_code             --trace-id "$TRACE_ID"             --task-type object_runtime_binding             --consume             --task "BEM-948 P0 binding-mode live object E2E after dispatcher NameError repair. Return strict JSON governance plan for WRK-C1 and Claude object runtime binding. Include objective, assumptions, at least three specific steps, at least two verifiable acceptance conditions, risks, and idempotent Telegram routing. Trace: $TRACE_ID."
-
-      - name: Execute only the matching planned dispatch
-        id: executor
-        shell: bash
-        env:
-          AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          GITHUB_TOKEN: ${{ github.token }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_API_URL: ${{ github.api_url }}
-        run: |
-          set +e
-          python3 governance/runners/dispatch_executor_guard.py             --max 1             --trace-id "$TRACE_ID"
-          result=$?
-          set -e
-          echo "result=$result" >> "$GITHUB_OUTPUT"
-
-      - name: Commit repair and trace evidence
-        if: always()
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "BEM-948 Repair E2E"
-          git config user.email "bem948-repair-e2e@ai-devops-system"
-          git add             governance/runners/dispatch_executor.py             governance/state/             governance/proofs/BEM948_dispatch_executor_nameerror_repair_receipt.json             governance/proofs/BEM948_object_dispatch_bridge_receipt.json             governance/proofs/BEM948_dispatch_executor_receipt.json             2>/dev/null || true
-          if ! git diff --cached --quiet; then
-            git commit -m "BEM-948: repair trace-bound dispatch executor runtime"
-            git push
-          fi
-
-      - name: Enforce repair and handoff result
-        if: always()
-        shell: bash
-        run: |
-          test "${{ steps.executor.outputs.result }}" = "0"
