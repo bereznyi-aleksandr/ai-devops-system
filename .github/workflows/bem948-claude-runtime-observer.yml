@@ -1,0 +1,72 @@
+name: BEM-948 Claude Runtime Observer
+
+on:
+  workflow_run:
+    workflows: ["Claude Code"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_TRACE: bem948_p0_live_object_e2e_observer_20260620T0510Z
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+      RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+      - name: Collect only matching Claude run
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bem948 governance/reports governance/proofs
+          gh run view "$RUN_ID" --repo "$REPO" --log-failed > /tmp/bem948/log.txt 2>&1 || true
+          if ! grep -Fq "$TARGET_TRACE" /tmp/bem948/log.txt; then
+            echo "Not target trace"
+            exit 0
+          fi
+          grep -iE 'claude|anthropic|error|failed|failure|exit code|oauth|token|rate|quota|unauthorized|forbidden' /tmp/bem948/log.txt | head -180 > "governance/reports/${TARGET_TRACE}_claude_runtime_observation.md" || true
+          test -s "governance/reports/${TARGET_TRACE}_claude_runtime_observation.md" || echo "No targeted line returned." > "governance/reports/${TARGET_TRACE}_claude_runtime_observation.md"
+          cat > "governance/proofs/BEM948_p0_claude_runtime_observation_${TARGET_TRACE}.json" <<EOF
+          {
+            "status": "OBSERVED",
+            "protocol": "BEM-948",
+            "task_id": "BEM948-P0-CLAUDE-RUNTIME-OBSERVATION",
+            "trace_id": "$TARGET_TRACE",
+            "run_id": "$RUN_ID",
+            "run_conclusion": "$RUN_CONCLUSION",
+            "run_head_sha": "$RUN_HEAD_SHA",
+            "run_head_sha_type": "commit",
+            "checks": {
+              "workflow_run_event_received": true,
+              "trace_matched_in_claude_logs": true,
+              "executed_completed_proof_exists": false,
+              "no_false_pass_claim": true,
+              "sha_type_explicit": true
+            },
+            "blockers": [
+              "claude_role_outcome=failure",
+              "p0_executed_completed_evidence_absent"
+            ],
+            "next_task": "BEM948-P0-AUTOREPAIR-AFTER-CLAUDE-RUNTIME-OBSERVATION"
+          }
+          EOF
+      - name: Commit matching observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Runtime Observer"
+          git config user.email "bem948-runtime-observer@ai-devops-system"
+          git add governance/reports/ governance/proofs/ 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM-948: observe targeted Claude runtime failure"
+            git push
+          fi
