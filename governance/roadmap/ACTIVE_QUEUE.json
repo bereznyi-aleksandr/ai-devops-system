@@ -1,6 +1,6 @@
 {
-  "version": 27,
-  "updated_at": "2026-06-20T13:26:48Z",
+  "version": 28,
+  "updated_at": "2026-06-20T13:27:20Z",
   "queue_state": "COMPLETE",
   "current_task": null,
   "system_state": "BEM948_FINAL_VERIFIED_WITH_LIMITATIONS",
@@ -47,7 +47,7 @@
       "done_commit_sha_type": "commit",
       "canonical_context_path": "AGENT_CONTEXT.md",
       "canonical_context_blob_sha": "0d866920ecc4d4b9b782a0ca064a44c729600426",
-      "canonical_context_blob_sha_type": "git_blob",
+      "cannical_context_blob_sha_type": "git_blob",
       "scope": "canonical root; governance path redirect-only"
     },
     {
@@ -84,7 +84,7 @@
       "done_commit_sha": "a88e1db8c15f9f08da740c6cabf5fd1746c2df95",
       "done_commit_sha_type": "commit",
       "trace_id": "bem948_p3_gpt_codex_cloud_failover_20260620T1322Z",
-      "outcome": "MECHANICAL_FALBACK_VALIDATED",
+      "outcome": "MECHANICAL_FALLBACK_VALIDATED",
       "terminal_provider_receipt": "governance/proofs/BEM948_p3_bem948_p3_gpt_codex_cloud_failover_20260620T1322Z_gpt_codex_cloud_receipt.json",
       "terminal_provider_receipt_blob_sha": "a966d760b770544ee6996b05105c28402c533e56",
       "terminal_provider_receipt_blob_sha_type": "git_blob",
@@ -104,19 +104,20 @@
     }
   ],
   "recent_action": {
-    "action": "BEM-948 P4 final verification recorded and roadmap closed",
-    "receipt": "governance/proofs/BEM948_p4_final_verification_receipt.json",
+    "action": "BEM-948 P4 final verification recorded; roadmap close-path repaired",
+    "receipt": "governance/proofs/BEM948_p4_final_verification_receipt",
     "receipt_blob_sha": "f3b90aca919159c8a207a260025ef4bdd5e77a82",
     "receipt_blob_sha_type": "git_blob",
     "receipt_commit_sha": "35771859d26df4e6f82f6487f4126304d1e4057f",
     "receipt_commit_sha_type": "commit",
-    "result": "VERIFIED_WITH_LIMITATIONS"
+    "result": "VERIFIEG_WITH_LIMITATIONS",
+    "queue_repair": "P4 receipt filename normalized to include .json"
   },
   "blockers": [],
   "open_limitations": [
     "RULE-004 through RULE-010 are NOT_VERIFIED, not enforced by implication.",
     "P2 workflow failure at receipt persistence remains recorded; it was not reclassified as workflow success.",
-    "P3 is a GitHub-hosted mechanical fallback; no usable OpenAI secret/model pair and no live LLM execution were recorded.",
+    "P3 is a GitHub-hosted mechanical fallback; no usable OpenAI secret/model pair and no live LL execution were recorded.",
     "The historical execution_log.jsonl remains a legacy format integrity limitation; no BEM-948 append is claimed."
   ],
   "next_action": "Await an operator decision before creating separate scope for full RULE-004..010 enforcement, live OpenAI provider verification, or execution-log repair.",
