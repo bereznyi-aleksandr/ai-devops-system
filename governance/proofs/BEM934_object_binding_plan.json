@@ -1,109 +1,29 @@
 {
-  "trace_id": "bem948_p0_binding_object_e2e_20260620T0930Z",
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  "objective": "Establish a verifiable, idempotent E2E binding between the WRK-C1 work-unit and the Claude provider object runtime so that every dispatch produces exactly one governance transport record and one idempotent Telegram routing event, with no duplicate delivery on retry.",
+  "trace_id": "bem948_p0_binding_repair_20260620T0935Z",
+  "objective": "Repair and re-verify the live object runtime binding between WRK-C1 and the Claude provider executor under BEM-948 P0: resolve residual merge-conflict markers in governance proof files, produce a clean idempotent transport record for the new trace, and confirm idempotent Telegram routing.",
   "assumptions": [
-    "provider_status.json merge-conflict markers have been noted; repair_note present confirms BEM-948 fix intent; claude provider is bound as active executor.",
-    "Telegram routing is governance-synthetic in this E2E; no live bot token is required for the pass.",
-    "task_type 'object_runtime_binding' is absent from role_sequence.json; cycle follows default_development sequence per default_task_type.",
-    "Idempotency key is trace_id; a second dispatch with the same trace_id must produce no new Telegram message and no duplicate transport record.",
-    "governance/transport/results.jsonl is the canonical transport sink; no other file is written by executor."
+    "routing.json v6 designates claude as executor.active and executor.primary; no provider switch is required for this repair cycle.",
+    "task_type 'object_runtime_binding' is absent from role_sequence.json; the cycle follows the 'default_development' sequence (analyst -> auditor -> executor -> auditor -> curator_summary) per default_task_type.",
+    "governance/proofs/BEM934_object_binding_plan.json and BEM934_claude_result_materialization_receipt.json contain unresolved git merge-conflict markers from the previous trace (bem948_p0_binding_object_e2e_20260620T0930Z) and must be repaired before the new trace is considered clean.",
+    "Idempotency key for Telegram routing is trace_id; a second dispatch with trace_id=bem948_p0_binding_repair_20260620T0935Z must produce zero new Telegram messages and zero duplicate transport records.",
+    "Telegram delivery in this cycle is synthetic (send_synthetic mode); no live bot token or production credentials are required."
   ],
   "steps": [
-    "Step 1 — Resolve provider_status and confirm executor binding: Read provider_status.json; assert claude entry is reachable. Write a single 'binding_probe' record to governance/transport/results.jsonl with trace_id. Skip write if record with same trace_id and record_type already exists (idempotent).",
-    "Step 2 — Execute object runtime binding for WRK-C1: Append 'binding_result' record to results.jsonl: trace_id, cycle_id, from_role=executor, to_role=auditor, status=completed, artifact_path=governance/reports/bem948_p0_binding_object_e2e_20260620T0930Z.md. Check for existing record before appending (idempotent). Commit report and transport append.",
-    "Step 3 — Idempotent Telegram routing: Compute idempotency_key=SHA256(trace_id+':'+record_type). Check governance/state/telegram_sent.json for key. Emit Telegram notification only if key is absent; write key to dedup store after successful send. On retry, key present — send skipped, no duplicate.",
-    "Step 4 — Hand off to auditor: Append 'handoff' record to results.jsonl (from_role=executor, to_role=auditor). Update role_cycle_state.json active_role=auditor. Idempotent on trace_id+record_type=handoff."
+    "STEP-1 | Resolve merge-conflict markers: clean governance/proofs/BEM934_object_binding_plan.json and BEM934_claude_result_materialization_receipt.json by retaining the most-recent post-conflict values and removing all conflict markers; validate both files as strict JSON before proceeding.",
+    "STEP-2 | Assert WRK-C1 binding: verify routing.json executor.active == 'claude'; create governance/proofs/BEM948_binding_repair_plan.json with trace_id=bem948_p0_binding_repair_20260620T0935Z as the authoritative plan artifact for this cycle.",
+    "STEP-3 | Execute object runtime binding probe: append exactly one binding_result record to governance/transport/results.jsonl with fields trace_id, cycle_id, role=executor, provider=claude, status=completed, binding_mode=live_object, telegram_idempotent=true, completed_at; skip append if record with same (trace_id, record_type) already exists.",
+    "STEP-4 | Idempotent Telegram routing verification: replay the same trace_id dispatch and assert results.jsonl gains zero additional records for this trace_id; confirm no second Telegram outbox payload is emitted; set telegram_idempotency=pass in the transport record.",
+    "STEP-5 | Report and commit: write executor report to governance/reports/bem948_p0_binding_repair_20260620T0935Z.md with checklist, changed files, checks run, and commit SHA; append handoff record to results.jsonl with from_role=executor, to_role=auditor; commit all changed governance files in one atomic commit."
   ],
   "acceptance": [
-    "governance/transport/results.jsonl contains exactly one record with trace_id=bem948_p0_binding_object_e2e_20260620T0930Z and record_type=binding_result, status=completed — verifiable by grep on the file.",
-    "A second identical dispatch (same trace_id) produces zero new transport records and zero new Telegram messages — verifiable by running the dispatch twice and asserting results.jsonl line-count is unchanged after the second run."
+    "AC-1 | governance/proofs/BEM934_object_binding_plan.json and BEM934_claude_result_materialization_receipt.json contain zero git merge-conflict markers and parse as valid strict JSON after STEP-1.",
+    "AC-2 | governance/transport/results.jsonl contains exactly one record with trace_id=bem948_p0_binding_repair_20260620T0935Z and record_type=binding_result after STEP-3; a second dispatch with the same trace_id adds zero additional records, confirming idempotency.",
+    "AC-3 | Telegram routing is idempotent: two sends with the same trace_id produce exactly one outbox entry; transport record contains telegram_idempotent=true."
   ],
   "risks": [
-    "HIGH — provider_status.json still has unresolved git merge-conflict markers at runtime; mitigation: executor detects markers, writes blocker record, escalates to curator per fallback_rules.on_role_blocked.",
-    "MEDIUM — task_type 'object_runtime_binding' not in role_sequence.json causes orchestrator to fall back to default_development; mitigation: auditor final check required before curator_summary regardless of sequence used.",
-    "MEDIUM — telegram_sent.json dedup store does not exist on first run; mitigation: executor creates it as empty object if absent so subsequent runs always find the file.",
-    "LOW — results.jsonl concurrent writers may produce duplicate lines (pattern seen in provider_status.json conflict); mitigation: append-only atomic writes enforced by orchestrator cycle locking."
-=======
-  "objective": "Validate WRK-C1 Claude provider object runtime binding through a live binding-mode E2E cycle, including idempotent Telegram routing, and confirm results are recorded in governance transport without duplication.",
-  "assumptions": [
-    "routing.json executor.active = 'claude' is the authoritative WRK-C1 binding declaration.",
-    "provider_status.json contains merge conflict markers from concurrent transport writers; repair is in scope per existing repair_note.",
-    "The role sequence for task_type 'object_runtime_binding' is not listed in role_sequence.json and falls back to 'default_development': analyst → auditor → executor → auditor → curator_summary.",
-    "Idempotent Telegram routing is enforced by deduplication on (trace_id, record_type) in results.jsonl before any Telegram outbox write.",
-    "No production credentials or secrets are required; all Telegram delivery in this cycle is synthetic (send_synthetic mode)."
-  ],
-  "steps": [
-    "STEP-1 | Repair provider_status.json: remove all git merge conflict markers (<<<<<<< / ======= / >>>>>>>); set claude.last_outcome to the most recent authoritative value and claude.status to a single deterministic string; record repair in repair_note.",
-    "STEP-2 | Verify WRK-C1 binding: assert routing.json executor.active == 'claude' and that provider_status.json (post-repair) claude entry exists; if claude.status == 'failed', assert fallback_chain activates gpt_codex as reserve per role_sequence.json fallback_rules.on_provider_limit.",
-    "STEP-3 | Execute binding-mode E2E cycle: dispatch bem948 through default_development sequence (analyst → auditor → executor → auditor → curator_summary) using trace_id bem948_p0_binding_object_e2e_20260620T0930Z; each role hand-off appends one record to governance/transport/results.jsonl.",
-    "STEP-4 | Validate idempotent Telegram routing: replay the same dispatch with identical trace_id; confirm results.jsonl contains no new duplicate entries keyed on (trace_id, record_type); confirm no duplicate Telegram outbox payload is generated.",
-    "STEP-5 | Commit and report: commit changed files (governance/reports/bem948_p0_binding_object_e2e_20260620T0930Z.md, governance/transport/results.jsonl, governance/state/provider_status.json if repaired); record commit SHA in transport entry; return result to auditor."
-  ],
-  "acceptance": [
-    "AC-1: provider_status.json contains zero git merge conflict markers after STEP-1, and claude.status is a single deterministic string value ('active' or 'failed') with no conflicting hunks.",
-    "AC-2: governance/transport/results.jsonl contains exactly one record with record_type='execution' and trace_id='bem948_p0_binding_object_e2e_20260620T0930Z' after STEP-3, and a second identical dispatch in STEP-4 adds zero additional records with the same (trace_id, record_type) pair."
-  ],
-  "risks": [
-    "RISK-1: Concurrent workflow runners may re-introduce merge conflict markers into provider_status.json before the repaired version is committed, causing a write race on the same file.",
-    "RISK-2: claude.status is currently 'failed' per the last recorded outcome; the live binding E2E may silently route to the gpt_codex reserve without surfacing a clear WRK-C1 binding failure signal.",
-    "RISK-3: Idempotent dedup keyed on (trace_id, record_type) breaks if a legitimate auditor rejection triggers a second executor run for the same trace_id; the dedup key must include an 'attempt' counter to distinguish retries from replays.",
-    "RISK-4: results.jsonl append-only model has no atomic write guarantee under parallel GitHub Actions runners; simultaneous appends may interleave lines and corrupt JSONL parsing."
->>>>>>> Stashed changes
-=======
-  "objective": "Verify and validate end-to-end binding of the Claude provider as a live runtime object for WRK-C1, including idempotent Telegram routing delivery under BEM-948 P0 constraints.",
-  "assumptions": [
-    "The Claude provider object binding interface is authoritative in governance/state/routing.json (executor.active=claude, executor.primary=claude); provider_status.json is supplementary state and does not override routing.json declarations.",
-    "Telegram routing uses the existing outbox mechanism with deduplication keyed on trace_id; a second dispatch with the same trace_id must not produce a second outbox entry (idempotency guaranteed at the routing layer, not the caller).",
-    "WRK-C1 is the active Claude executor instance as declared in routing.json; the binding probe must assert this value directly rather than inferring from provider_status.json, which currently contains merge-conflict markers and last_outcome=failure.",
-    "provider_status.json merge-conflict markers are a pre-existing transport-writer race condition (9 conflict markers detected in results.jsonl as well) and do not invalidate the routing declaration; resolving them is a prerequisite step, not a separate task.",
-    "The task type object_runtime_binding follows the default_development role sequence (analyst -> auditor -> executor -> auditor -> curator_summary) per role_sequence.json; executor acts on auditor-approved scope only."
-  ],
-  "steps": [
-    "STEP-1 Baseline cleanup: Resolve pre-existing git merge-conflict markers in governance/state/provider_status.json and governance/transport/results.jsonl to establish clean, parseable state before binding probes run. Retain the most-recent post-conflict value for each key; record the repair commit SHA.",
-    "STEP-2 Binding probe: Assert routing.json executor.active == 'claude'. Dispatch a minimal role cycle step (task_type=object_runtime_binding) tagged with trace_id=bem948_p0_binding_object_e2e_20260620T0930Z through the Claude provider object. Capture and log: status, provider, cycle_id, binding_mode=live_object, completed_at.",
-    "STEP-3 Idempotency probe: Re-dispatch the identical role cycle step with the same trace_id. Assert that governance/transport/results.jsonl gains exactly one new record (not two), that the Telegram outbox contains no duplicate entry for this trace_id, and that the second call returns the cached result rather than a new dispatch. Log idempotency verdict.",
-    "STEP-4 State write: Append one verified result record {trace_id, cycle_id, role='executor', provider='claude', status, binding_mode='live_object', telegram_idempotent, completed_at} to governance/transport/results.jsonl.",
-    "STEP-5 Report and handoff: Write executor report to governance/reports/bem948_p0_binding_object_e2e_20260620T0930Z.md including checklist, files changed, checks run, and commit SHA. Signal auditor role for final review per role_sequence default_development flow."
-  ],
-  "acceptance": [
-    "ACCEPT-1 Object binding confirmed: routing.json executor.active == 'claude' AND the binding probe (STEP-2) returns status=success with trace_id=bem948_p0_binding_object_e2e_20260620T0930Z, provider=claude, and binding_mode=live_object.",
-    "ACCEPT-2 Idempotent Telegram routing verified: dispatching the same trace_id twice (STEP-3) produces exactly one entry appended to results.jsonl and exactly one Telegram outbox record for this trace_id — no duplicate delivery, no second dispatch side-effect."
-  ],
-  "risks": [
-    "RISK-1 provider_status.json merge-conflict markers (detected) cause JSON parse failures in downstream consumers reading provider state before binding; mitigated by resolving markers in STEP-1 as an explicit prerequisite — if STEP-1 is skipped, STEP-2 binding assertion may read corrupt state.",
-    "RISK-2 provider_status.json last_outcome=failure for claude may trigger role_sequence fallback to gpt_codex reserve per routing.json policy (switch_after_failures=2), bypassing the Claude object binding test entirely; mitigated by asserting routing.json executor.active directly and not relying on provider_status outcome field for binding decisions.",
-    "RISK-3 results.jsonl merge-conflict markers (9 detected) corrupt JSONL integrity and may cause automated consumers to miscount or skip records; mitigated in STEP-1. If not resolved before STEP-4, the append will succeed but file will remain unparseable as strict JSONL."
->>>>>>> Stashed changes
-=======
-  "objective": "Establish and verify live object runtime binding between WRK-C1 and the Claude provider executor for BEM-948 P0, confirming end-to-end cycle delivery with idempotent Telegram routing.",
-  "assumptions": [
-    "routing.json v6 designates claude as the active executor provider; no provider switch is required unless the live probe returns failure.",
-    "task_type 'object_runtime_binding' is not listed in role_sequence.json; it maps to the 'default_development' sequence: analyst → auditor → executor → auditor → curator_summary.",
-    "provider_status.json contains pre-existing unresolved git merge conflict markers (3 blocks); these must be resolved before the cycle executes to avoid divergent state.",
-    "role_cycle_state.json last cycle (bem550-6-full-internal-contour-smoke) is CLOSED/PASS; a new cycle may be opened under trace_id bem948_p0_binding_object_e2e_20260620T0930Z.",
-    "Telegram routing uses the existing synthetic outbox adapter; idempotency is enforced by trace_id deduplication on the consumer side before delivery."
-  ],
-  "steps": [
-    "STEP 1 — Provider probe and WRK-C1 binding verification: confirm routing.json executor.active == 'claude'; run a live provider health probe; log probe result to governance/transport/results.jsonl with status 'binding_verified' or trigger fallback to gpt_codex per routing.json executor.fallback_chain.",
-    "STEP 2 — Resolve pre-existing merge conflict markers: clean governance/state/provider_status.json by keeping the most recent entry (2026-06-20T09:19:35Z) and removing all conflict markers; commit with reference to BEM-948 before starting the live cycle.",
-    "STEP 3 — Execute default_development role sequence under trace_id: run analyst → auditor → executor → auditor → curator_summary; write each role result record to governance/transport/results.jsonl and update governance/state/role_cycle_state.json with cycle_id and current active_role after each step.",
-    "STEP 4 — Idempotent Telegram routing verification: submit the outbox notification twice with the same trace_id bem948_p0_binding_object_e2e_20260620T0930Z; assert the Telegram consumer delivers exactly one message; append record to governance/transport/results.jsonl with field telegram_idempotency='pass' or 'fail'.",
-    "STEP 5 — Curator summary and cycle closure: write the final curator_summary record to governance/transport/results.jsonl with status 'completed'; update governance/state/role_cycle_state.json with curator_status='CLOSED', completed_at, and bem948_smoke='PASS' or 'FAIL'."
-  ],
-  "acceptance": [
-    "ACCEPT-1: governance/transport/results.jsonl contains exactly one record with trace_id == 'bem948_p0_binding_object_e2e_20260620T0930Z' and status == 'completed' after the full default_development cycle; no duplicate or partial records for this trace_id.",
-    "ACCEPT-2: Telegram idempotency verified — sending the same trace_id twice results in exactly one delivered message; results.jsonl contains a record with telegram_idempotency == 'pass' for this trace.",
-    "ACCEPT-3: governance/state/provider_status.json is free of git conflict markers and reflects the outcome (pass or fallback) of the BEM-948 live provider probe."
-  ],
-  "risks": [
-    "RISK-1: provider_status.json has three unresolved git merge conflict markers from concurrent transport writers; resolving them may surface divergent state snapshots requiring manual curator decision.",
-    "RISK-2: claude provider shows status='failed' for the three most recent traces; if the live probe fails again, executor must switch to gpt_codex per routing.json fallback_chain — this changes the active provider mid-cycle.",
-    "RISK-3: task_type 'object_runtime_binding' is not explicitly defined in role_sequence.json; defaulting to 'default_development' may not match the intended governance sequence and should be confirmed by curator before execution.",
-    "RISK-4: results.jsonl contains stash conflict markers that break JSON parsing for downstream consumers; the file must be repaired alongside provider_status.json before transport records are written.",
-    "RISK-5: role_cycle_state.json has not been updated since 2026-05-17; stale state may cause the role orchestrator to misread cycle boundaries if it does not verify cycle_id before dispatching."
->>>>>>> Stashed changes
+    "RISK-1 | Concurrent runners may re-introduce conflict markers into governance proof files before the repair commit is pushed; mitigated by atomic commit of all repaired files in a single step.",
+    "RISK-2 | results.jsonl append-only model has no atomic write guarantee under parallel GitHub Actions runners; simultaneous appends may interleave lines; mitigated by the single-executor-per-cycle constraint in role_sequence.json.",
+    "RISK-3 | task_type object_runtime_binding is not in role_sequence.json; if the orchestrator rejects the default_development fallback, the cycle cannot proceed; mitigated by explicit curator pre-approval recorded in the task description.",
+    "RISK-4 | provider_status.json claude.last_outcome was failed in prior traces; if the live binding probe surfaces a failure, executor must trigger fallback to gpt_codex per routing.json executor.fallback_chain before proceeding."
   ]
 }
