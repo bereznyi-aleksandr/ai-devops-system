@@ -20,12 +20,18 @@ jobs:
           ref: main
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Collect P2 run metadata
+      - name: Collect P2 run metadata and failure log
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p governance/proofs
           gh run list --repo "$REPO" --workflow bem949-p2-functional-baseline.yml --limit 10 --json databaseId,headSha,status,conclusion,event,createdAt,updatedAt > governance/proofs/BEM949_p2_baseline_runs.json || printf '[]\n' > governance/proofs/BEM949_p2_baseline_runs.json
+          run_id="$(jq -r '.[0].databaseId // empty' governance/proofs/BEM949_p2_baseline_runs.json)"
+          if [ -n "$run_id" ]; then
+            gh run view "$run_id" --repo "$REPO" --log-failed 2>/dev/null | tail -n 300 > governance/proofs/BEM949_p2_baseline_latest_failed.log || true
+          else
+            : > governance/proofs/BEM949_p2_baseline_latest_failed.log
+          fi
 
       - name: Commit inspection
         shell: bash
@@ -33,7 +39,7 @@ jobs:
           set -euo pipefail
           git config user.email "bem949-p2-inspector@ai-devops-system"
           git config user.name "BEM949 P2 Run Inspector"
-          git add governance/proofs/BEM949_p2_baseline_runs.json
+          git add governance/proofs/BEM949_p2_baseline_runs.json governance/proofs/BEM949_p2_baseline_latest_failed.log
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "BEM949 P2: inspect baseline workflow runs"
+          git commit -m "BEM949 P2: collect baseline workflow diagnostics"
           git push || (git pull --rebase origin main && git push)
