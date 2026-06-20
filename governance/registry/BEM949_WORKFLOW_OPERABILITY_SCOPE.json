@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P1-CI-STABILIZE",
+  "classification_id": "BEM949_p1_workflow_operability_scope",
+  "created_at": "2026-06-20T17:20:00Z",
+  "scope_rule": "P1 requires static validation plus executed manual-dispatch evidence for active control-plane workflows. Historical or superseded workflows remain preserved but are not silently treated as active.",
+  "evidence": {
+    "static_validation_receipt": "governance/proofs/BEM949_p1_ci_static_validation.json",
+    "static_validation_receipt_blob_sha": "55ae35f039027938c8c8f10c18196e1bd519dc17",
+    "static_validation_receipt_blob_sha_type": "git_blob",
+    "provider_config": "governance/config/provider_config.json",
+    "provider_config_blob_sha": "8b011f1523e436b306e11330096f81906165c704",
+    "provider_config_blob_sha_type": "git_blob",
+    "canonical_context": "AGENT_CONTEXT.md",
+    "canonical_context_blob_sha": "04e31b2f380be182d4ba206a9f0809ae24e3d9d3",
+    "canonical_context_blob_sha_type": "git_blob"
+  },
+  "active_control_plane_workflows": [
+    {
+      "path": ".github/workflows/claude.yml",
+      "purpose": "primary Claude Code provider for curator, analyst, auditor, executor",
+      "provider": "claude_code",
+      "static_validation": "valid",
+      "manual_dispatch_evidence": "pending_controlled_trace_P3",
+      "reason": "requires six explicit dispatch inputs; P3 owns live all-role execution"
+    },
+    {
+      "path": ".github/workflows/provider-router.yml",
+      "purpose": "provider selection and routing",
+      "provider": "router",
+      "static_validation": "valid",
+      "manual_dispatch_evidence": "pending",
+      "reason": "runtime routing evidence remains required"
+    },
+    {
+      "path": ".github/workflows/role-orchestrator.yml",
+      "purpose": "role-cycle sequencing",
+      "provider": "orchestrator",
+      "static_validation": "valid",
+      "manual_dispatch_evidence": "pending_controlled_trace_P3",
+      "reason": "all-role cycle evidence belongs to P3"
+    },
+    {
+      "path": ".github/workflows/role-router.yml",
+      "purpose": "role handoff routing",
+      "provider": "router",
+      "static_validation": "valid",
+      "manual_dispatch_evidence": "pending_controlled_trace_P3",
+      "reason": "all-role cycle evidence belongs to P3"
+    },
+    {
+      "path": ".github/workflows/gpt-codex-cloud.yml",
+      "purpose": "configured fallback provider",
+      "provider": "gpt_codex_cloud",
+      "static_validation": "valid",
+      "manual_dispatch_evidence": "pending_live_or_declaim_P4",
+      "reason": "P4 owns live LLM fallback proof or documentation de-claim"
+    },
+    {
+      "path": ".github/workflows/curator.yml",
+      "purpose": "curator role entry and governance execution",
+      "provider": "claude_code",
+      "static_validation": "valid",
+      "manual_dispatch_evidence": "pending_controlled_trace_P3",
+      "reason": "role trace evidence belongs to P3"
+    },
+    {
+      "path": ".github/workflows/provider-adapter.yml",
+      "purpose": "provider adapter integration",
+      "provider": "adapter",
+      "static_validation": "valid",
+      "manual_dispatch_evidence": "pending",
+      "reason": "adapter runtime coverage remains required"
+    }
+  ],
+  "preserved_non_active_workflows_with_static_defects": [
+    {
+      "path": ".github/workflows/bem934-finalize-close-runner.yml",
+      "static_defect": "Python heredoc unterminated string",
+      "classification": "legacy_BEM934_closure",
+      "exclusion_reason": "assumes obsolete BEM-934 queue completion and release PASS; incompatible with current BEM-949 VERIFIED_WITH_LIMITATIONS state",
+      "repair_owner": "separate legacy-archive or controlled restoration scope"
+    },
+    {
+      "path": ".github/workflows/bem934-object-binding-proof-v2.yml",
+      "static_defect": "Python heredoc unmatched parenthesis",
+      "classification": "legacy_BEM934_object_binding",
+      "exclusion_reason": "historical BEM-934 proof scenario; not referenced by current provider topology or BEM-949 active path",
+      "repair_owner": "separate legacy-archive or controlled restoration scope"
+    },
+    {
+      "path": ".github/workflows/bem947-live-object-dispatch.yml",
+      "static_defect": "YAML block indentation error",
+      "classification": "superseded_BEM947_retry_bridge",
+      "exclusion_reason": "BEM-948 P0 canonical proof supersedes its historical bridge claim; P2 explicitly owns bridge/retry functional restoration",
+      "repair_owner": "BEM949-P2-FUNCTIONAL-RESTORE"
+    },
+    {
+      "path": ".github/workflows/bem948-binding-e2e-status-probe.yml",
+      "static_defect": "Python heredoc malformed f-string",
+      "classification": "historical_BEM948_observability_probe",
+      "exclusion_reason": "observes an earlier binding workflow and does not constitute the current control-plane execution path",
+      "repair_owner": "separate observability cleanup scope"
+    },
+    {
+      "path": ".github/workflows/bem948-claude-credential-preflight.yml",
+      "static_defect": "Python heredoc invalid shell interpolation",
+      "classification": "historical_BEM948_preflight",
+      "exclusion_reason": "credential presence alone is not runtime provider proof and P3/P4 own live provider evidence",
+      "repair_owner": "BEM949-P3/P4 evidence scope or retire explicitly"
+    }
+  ],
+  "checks": {
+    "all_active_control_plane_workflows_static_valid": true,
+    "all_236_workflows_static_valid": false,
+    "all_active_control_plane_workflows_have_run_level_green_evidence": false,
+    "legacy_static_defects_preserved": true,
+    "no_broad_ci_pass_claim": true
+  },
+  "blockers": [
+    "active_workflow_run_level_evidence_pending",
+    "five_preserved_non_active_workflows_have_static_defects"
+  ],
+  "next_action": "Generate an explicit dispatch-input manifest for active workflows, then use controlled P3/P4 traces for provider-bearing workflows without converting static validation into runtime success."
+}
