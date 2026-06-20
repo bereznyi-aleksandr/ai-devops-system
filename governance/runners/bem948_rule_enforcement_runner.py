@@ -1,227 +1,76 @@
 #!/usr/bin/env python3
-"""BEM-948 executable enforcement for evidence (RULE-011) and continuity (RULE-012)."""
-
-import argparse
-import hashlib
-import importlib.util
-import json
-import os
+"""BEM-948 P2 runtime enforcers: RULE-011 evidence; RULE-012 continuity."""
+import argparse, hashlib, importlib.util, json, os
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-QUEUE_DEFAULT = ROOT / "governance/roadmap/ACTIVE_QUEUE.json"
-RUNNER_REL = "governance/runners/bem948_rule_enforcement_runner.py"
-GUARD_REL = "governance/runners/active_queue_guard.py"
-RULES = [f"RULE-{n:03d}" for n in range(4, 13)]
+ROOT=Path(__file__).resolve().parents[2]
+QDEF=ROOT/"governance/roadmap/ACTIVE_QUEUE.json"
+R="governance/runners/bem948_rule_enforcement_runner.py"
+G="governance/runners/active_queue_guard.py"
+IDS=[f"RULE-{n:03d}" for n in range(4,13)]
 
-
-def now():
-    return datetime.now(timezoe.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def load_json(path):
-    value = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(value, dict):
-        raise ValueError(f"json_object_required:{path}")
-    return value
-
-
-def write_json(path, value):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-def sha256(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def sha_errors(value, where="$"):
-    out = []
-    if isinstance(value, dict):
-        for key, item in value.items():
-            if (key == "sha" or key.endswith("_sha")) and isinstance(item, str) and item:
-                if f"{key}_type" not in value and "sha_type" not in value:
-                    out.append(f"{where}.{key}:sha_type_missing")
-            out.extend(sha_errors(item, f"{where}.{key}"))
-    elif isinstance(value, list):
-        for index, item in enumerate(value):
-            out.extend(sha_errors(item, f"{where}[{index}]"))
-    return out
-
-
-def evidence_errors(receipt):
-    out = sha_errors(receipt)
-    runtime = receipt.get("runtime_execution_claim") is True or receipt.get("evidence_kind") == "runtime_execution"
-    if receipt.get("status") == "PASS" and runtime:
-        execution = receipt.get("execution")
-        terminal = receipt.get("terminal_report")
-        executed = isinstance(execution, dict) and any(
-            execution.get(key) for key in ("executed_at", "completed_at", "run_id")
-        )
-        if not executed and not isinstance(terminal, dict):
-            out.append("runtime_pass_without_executed_or_terminal_evidence")
-    return out
-
-
-def local_queue_errors(queue):
-    tasks = queue.get("tasks")
-    if not isinstance(tasks, list):
-        return ["tasks_list_missing"]
-    runnable = [t for t in tasks if isinstance(t, dict) and t.get("status") in ("IN_PROGRESS", "PENDING)]
-    current = queue.get("current_task")
-    ids = {str(t.get("id")) for t in tasks if isinstance(t, dict) and t.get("id")}
-    out = []
-    if runnable:
-        if not current:
-            out.append("current_task_missing_with_runnable_task")
-        elif str(current) not in ids:
-            out.append("current_task_not_in_tasks")
-        elif not any(str(t.get("id")) == str(current) for t in runnable):
-            out.append("current_task_not_runnable")
-        if queue.get("queue_state") not in ("ACTIVE", "IN_PROGRESS"):
-            out.append("queue_state_not_active_with_runnable_task")
-    elif current:
-        out.append("current_task_set_without_runnable_task")
-    return out
-
-
-def legacy_queue_errors(root, queue):
-    path = root / GUARD_REL
+def now(): return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+def h(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+def j(p):
+    x=json.loads(p.read_text(encoding="utf-8"))
+    if not isinstance(x,dict): raise ValueError("json_object_required")
+    return x
+def w(p,x):
+    p.parent.mkdir(parents=True,exist_ok=True)
+    p.write_text(json.dumps(x,indent=2)+"\n",encoding="utf-8")
+def shae(x,p="$"):
+    z=[]
+    if isinstance(x,dict):
+        for k,v in x.items():
+            if (k=="sha" or k.endswith("_sha")) and isinstance(v,str) and v and k+"_type" not in x and "sha_type" not in x:z+=[p+"."+k+":sha_type_missing"]
+            z+=shae(v,p+"."+k)
+    if isinstance(x,list):
+        for i,v in enumerate(x):z+=shae(v,p+f"[{i}]")
+    return z
+def evid(x):
+    z=shae(x); rt=x.get("runtime_execution_claim") is True or x.get("evidence_kind")=="runtime_execution"
+    ex=x.get("execution"); done=isinstance(ex,dict) and any(ex.get(k) for k in ("executed_at","completed_at","run_id"))
+    if x.get("status")=="PASS" and rt and not done and not isinstance(x.get("terminal_report"),dict):z+=["runtime_pass_without_executed_or_terminal_evidence"]
+    return z
+def loc(q):
+    t=q.get("tasks"); z=[]
+    if not isinstance(t,list):return ["tasks_list_missing"]
+    r=[a for a in t if isinstance(a,dict) and a.get("status") in ("IN_PROGRESS","PENDING")]
+    c=q.get("current_task"); ids={str(a.get("id")) for a in t if isinstance(a,dict) and a.get("id")}
+    if r:
+        if not c:z+=["current_task_missing_with_runnable_task"]
+        elif str(c) not in ids:z+=["current_task_not_in_tasks"]
+        elif not any(str(a.get("id"))==str(c) for a in r):z+=["current_task_not_runnable"]
+        if q.get("queue_state") not in ("ACTIVE","IN_PROGRESS"):z+=["queue_state_not_active_with_runnable_task"]
+    elif c:z+=["current_task_set_without_runnable_task"]
+    return z
+def leg(root,q):
     try:
-        spec = importlib.util.spec_from_file_location("bem948_active_queue_guard", path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("load_failed")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        result = module.validate(queue)
-        if not isinstance(result, dict):
-            return ["legacy_guard_invalid_result"], {"status": "BLOCKED"}
-        if result.get("status") != "PASS":
-            return ["legacy_guard_rejected_queue"], result
-        return [], result
-    except Exception as exc:
-        return [f"legacy_guard_error:{type(exc).__name__}"], {"status": "BLOCKED", "error": type(exc).__name_}
-
-
-def self_tests(root):
-    bad_receipt = {"status": "PASS", "runtime_execution_claim": True, "artifact_sha": "abc"}
-    evidence = evidence_errors(bad_receipt)
-    bad_queue = {"queue_state": "ACTIVE", "current_task": "MISSING", "tasks": [{"id": "P2", "status": "PENDING"}]}
-    local = local_queue_errors(bad_queue)
-    legacy, _ = legacy_queue_errors(root, bad_queue)
-    return {
-        "rule_011_missing_sha_type_rejected": any(x.endswith("artifact_sha:sha_type_missing") for x in evidence),
-        "rule_011_runtime_pass_without_execution_rejected": "runtime_pass_without_executed_or_terminal_evidence" in evidence,
-        "rule_012_local_invalid_queue_rejected": "current_task_not_in_tasks" in local,
-        "rule_012_legacy_invalid_queue_rejected": bool(legacy),
-    }
-
-
-def build_receipt(root, queue_path, queue):
-    runner = root / RUNNER_REL
-    local = local_queue_errors(queue)
-    legacy, legacy_result = legacy_queue_errors(root, queue)
-    tests = self_tests(root)
-    blockers = [*local, *legacy, *[name for name, ok in tests.items() if not ok]]
-    rows = {
-        rule: {
-            "enforcement_status": "NOT_VERIFIED",
-            "enforcement_paths": [],
-            "note": "No code-backed mapping is claimed by this runtime inventory.",
-        }
-        for rule in RULES
-    }
-    rows["RULE-011"] = {
-        "enforcement_status": "ENFORCED",
-        "enforcement_paths": [RUNNER_REL],
-        "runtime_checks": {
-            "missing_sha_type_rejected": tests["rule_011_missing_sha_type_rejected"],
-            "runtime_pass_without_execution_rejected": tests["rule_011_runtime_pass_without_execution_rejected"],
-        },
-    }
-    rows["RULE-012"] = {
-        "enforcement_status": "ENFORCED",
-        "enforcement_paths": [RUNNER_REL, GUARD_REL],
-        "runtime_checks": {
-            "local_invalid_queue_rejected": tests["rule_012_local_invalid_queue_rejected"],
-            "legacy_invalid_queue_rejected": tests["rule_012_legacy_invalid_queue_rejected"],
-            "current_queue_local_valid": not local,
-            "current_queue_legacy_guard_valid": not legacy,
-        },
-        "legacy_guard_result": legacy_result,
-    }
-    receipt = {
-        "schema_version": 1,
-        "protocol": "BEM-948",
-        "task_id": "BEM948-P2-RULE-ENFORCEMENT-VERIFICATION",
-        "created_at": now(),
-        "status": "PASS" if not blockers else "BLOCKED",
-        "evidence_kind": "runtime_execution",
-        "runtime_execution_claim": True,
-        "execution": {
-            "executed_at": now(),
-            "runner_path": RUNNER_REL,
-            "runner_sha": sha256(runner),
-            "runner_sha_type": "sha256_content",
-            "github_run_id": os.getenv("GITHUB_RUN_ID", ""),
-            "github_workflow": os.getenv("GITHUB_WORKFLOW", ""),
-        },
-        "queue_input": {
-            "path": str(queue_path.relative_to(root)),
-            "queue_sha": sha256(queue_path),
-            "queue_sha_type": "sha256_content",
-        },
-        "rules": rows,
-        "required_enforcers": ["RULE-011", "RULE-012"],
-        "verification_scope": "RULE-004 through RULE-010 are NOT_VERIFIED; RULE-011 and RULE-012 are runtime enforcers.",
-        "blockers": blockers,
-        "next_task": "BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST" if not blockers else "BEM948-P2-AUTOREPAIR",
-    }
-    generated = evidence_errors(receipt)
-    if generated:
-        receipt["status"] = "BLOCKED"
-        receipt["blockers"] = sorted(set(blockers + generated))
-        receipt["next_task"] = "BEM948-P2-AUTOREPAIR"
-    return receipt
-
-
+        s=importlib.util.spec_from_file_location("aqg",root/G)
+        if not s or not s.loader:raise RuntimeError("load")
+        m=importlib.util.module_from_spec(s);s.loader.exec_module(m);o=m.validate(q)
+        return ([] if isinstance(o,dict) and o.get("status")=="PASS" else ["legacy_guard_rejected_queue"],o)
+    except Exception as e:return ([f"legacy_guard_error:{type(e).__name__}"],{"status":"BLOCKED"})
+def tests(root):
+    e=evid({"status":"PASS","runtime_execution_claim":True,"artifact_sha":"x"})
+    l=loc({"queue_state":"ACTIVE","current_task":"X","tasks":[{"id":"Y","status":"PENDING"}]})
+    g,_=leg(root,{"queue_state":"ACTIVE","current_task":"X","tasks":[{"id":"Y","status":"PENDING"}]})
+    return {"r11_sha_type":any(x.endswith("artifact_sha:sha_type_missing") for x in e),"r11_runtime": "runtime_pass_without_executed_or_terminal_evidence" in e,"r12_local":"current_task_not_in_tasks" in l,"r12_legacy":bool(g)}
+def make(root,qp,q):
+    a=loc(q);b,o=leg(root,q);t=tests(root);bad=a+b+[k for k,v in t.items() if not v]
+    rows={i:{"enforcement_status":"NOT_VERIFIED","enforcement_paths":[]} for i in IDS}
+    rows["RULE-011"]={"enforcement_status":"ENFORCED","enforcement_paths":[R],"runtime_checks":{"sha_type_rejected":t["r11_sha_type"],"runtime_pass_rejected":t["r11_runtime"]}}
+    rows["RULE-012"]={"enforcement_status":"ENFORCED","enforcement_paths":[R,G],"runtime_checks":{"local_invalid_rejected":t["r12_local"],"legacy_invalid_rejected":t["r12_legacy"],"current_local_valid":not a,"current_legacy_valid":not b},"legacy_guard_result":o}
+    x={"schema_version":1,"protocol":"BEM-948","task_id":"BEM948-P2-RULE-ENFORCEMENT-VERIFICATION","created_at":now(),"status":"PASS" if not bad else "BLOCKED","evidence_kind":"runtime_execution","runtime_execution_claim":True,"execution":{"executed_at":now(),"runner_path":R,"runner_sha":h(root/R),"runner_sha_type":"sha256_content","github_run_id":os.getenv("GITHUB_RUN_ID","")},"queue_input":{"path":str(qp.relative_to(root)),"queue_sha":h(qp),"queue_sha_type":"sha256_content"},"rules":rows,"required_enforcers":["RULE-011","RULE-012"],"blockers":bad,"next_task":"BEM948-P3-PROVIDER-FAILOVER-LIVE-TEST" if not bad else "BEM948-P2-AUTOREPAIR"}
+    z=evid(x)
+    if z:x["status"]="BLOCKED";x["blockers"]=sorted(set(bad+z));x["next_task"]="BEM948-P2-AUTOREPAIR"
+    return x
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--repo-root", default=str(ROOT))
-    parser.add_argument("--queue", default=str(QUEUE_DEFAULT))
-    parser.add_argument("--check-queue", action="store_true")
-    parser.add_argument("--check-receipt")
-    parser.add_argument("--write-receipt")
-    parser.add_argument("--strict", action="store_true")
-    args = parser.parse_args()
-    root = Path(args.repo_root).resolve()
-    queue_path = Path(args.queue).resolve()
-
-    if args.check_receipt:
-        errors = evidence_errors(load_json(Path(args.check_receipt).resolve()))
-        print(json.dumps({"status": "PASS" if not errors else "BLOCKED", "violations": errors}, indent=2))
-        if errors:
-            raise SystemExit(1)
-        return
-
-    queue = load_json(queue_path)
-    if args.check_queue:
-        local = local_queue_errors(queue)
-        legacy, legacy_result = legacy_queue_errors(root, queue)
-        errors = local + legacy
-        print(json.dumps({"status": "PASS" if not errors else "BLOCKED", "violations": errors, "legacy_guard_result": legacy_result}, indent=2))
-        if errors:
-            raise SystemExit(1)
-        return
-
-    receipt = build_receipt(root, queue_path, queue)
-    if args.write_receipt:
-        write_json(Path(args.write_receipt).resolve(), receipt)
-    print(json.dumps(receipt, ensure_ascii=False, indent=2))
-    if args.strict and receipt["status"] != "PASS":
-        raise SystemExit(1)
-
-
-if __name__ == "__main__":
-    main()
+    p=argparse.ArgumentParser();p.add_argument("--repo-root",default=str(ROOT));p.add_argument("--queue",default=str(QDEF));p.add_argument("--out");p.add_argument("--verify");p.add_argument("--strict",action="store_true");a=p.parse_args()
+    if a.verify:
+        z=evid(j(Path(a.verify)));print(json.dumps({"status":"PASS" if not z else "BLOCKED","violations":z}));raise SystemExit(bool(z))
+    root=Path(a.repo_root).resolve();qp=Path(a.queue).resolve();x=make(root,qp,j(qp))
+    if a.out:w(Path(a.out).resolve(),x)
+    print(json.dumps(x,indent=2));raise SystemExit(a.strict and x["status"]!="PASS")
+if __name__=="__main__":main()
