@@ -1,0 +1,57 @@
+name: BEM-948 P0 Claude Diagnostic Retry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'governance/runners/claude_run_diagostic.py'
+       - '.github/workflows/bem948-p0-claude-diagnostic-retry.yml'
+      - 'governance/state/bem948_p0_claude_diagnostic_trigger.json'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACE_ID: bem948_p0_live_object_e2e_observed_20260620T0455Z
+      TARGET_HEAD_SHA: aec5d8ff2e0f52b431326311767e9802157cfe3e
+      STARTED_AT: 2026-06-20T04:55:00Z
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Collect trace-bound Claude diagnostics
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 -m py_compile governance/runners/claude_run_diagnostic.py
+          python3 governance/runners/claude_run_diagnostic.py \
+            --trace-id "$TRACE_ID" \
+            --head-sha "$TARGET_HEAD_SHA" \
+            --started-at "$STARTED_AT" \
+            --attempts 1 \
+            --delay 1
+
+      - name: Commit diagnostic evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BEM-948 Diagnostic"
+          git config user.email "bem948-diagnostic@ai-devops-system"
+          git add governance/proofs/BEM948_p0_claude_run_observation_receipt.json governance/reports/bem948_p0_live_object_e2e_observed_20260620T0455Z_claude_observation.md
+          if git diff --cached --quiet; then
+            echo "No diagnostic evidence changes"
+          else
+            git commit -m "BEM-948: repair trace-bound Claude diagnostic"
+            git push
+          fi
