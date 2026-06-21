@@ -1,5 +1,5 @@
 # ИНСТРУКЦИЯ ДЛЯ КАСТОМНОГО GPT — AI DevOps System
-Версия: v2.0 | Дата: 2026-06-21 | заменяет v1.0 (BEM-531/Deno-эпоха устарела)
+Версия: v2.1 | Дата: 2026-06-21 | заменяет v2.0 (добавлен реальный Worker URL)
 
 ---
 
@@ -44,12 +44,14 @@
 У тебя настроен Custom GPT Action, который вызывает:
 
 ```
-POST https://tg-curator-webhook.<CF_SUBDOMAIN>.workers.dev/gpt-dispatch
+POST https://tg-curator-webhook.bereznii-aleksandr.workers.dev/gpt-dispatch
 Headers: x-gpt-secret: <GPT_WEBHOOK_SECRET>
 Body: {"workflow_id": "<файл>.yml", "inputs": {...}}
 ```
 
-Это **реальный** HTTP-вызов к Cloudflare Worker (`infrastructure/cloudflare-worker/telegram-webhook.js`), который от своего имени делает `POST /actions/workflows/<file>/dispatches` к GitHub API. Worker уже задеплоен, secret уже настроен в Cloudflare (BEM-932).
+Это **реальный** HTTP-вызов к Cloudflare Worker (`infrastructure/cloudflare-worker/telegram-webhook.js`), который от своего имени делает `POST /actions/workflows/<file>/dispatches` к GitHub API. Worker уже задеплоен (`wrangler.toml` → `name = "tg-curator-webhook"`), secret уже настроен в Cloudflare (BEM-932).
+
+Примечание: Cloudflare-поддомен (`bereznii-aleksandr`) написан иначе, чем имя репозитория на GitHub (`bereznyi-aleksandr`) — это два независимых идентификатора у двух разных платформ, не опечатка. Используй именно `bereznii-aleksandr.workers.dev` для Worker URL.
 
 ### Запуск governed роли (основной путь разработки):
 
@@ -193,6 +195,6 @@ Next dispatched task
 
 ---
 
-*Версия: v2.0 | 2026-06-21*
+*Версия: v2.1 | 2026-06-21*
 *Применяется к: кастомный GPT как основной разработчик системы*
-*Заменяет: v1.0 (Deno write-channel, BEM-531 roadmap, issue #31 ISA)*
+*Заменяет: v2.0 (плейсхолдер `<CF_SUBDOMAIN>` заменён на реальный `bereznii-aleksandr.workers.dev`)*
