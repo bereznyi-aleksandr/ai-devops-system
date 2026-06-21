@@ -3,7 +3,7 @@
   "protocol": "BEM-949",
   "task_id": "BEM949-P1-CI-STABILIZE",
   "receipt_id": "BEM949_p1_ci_static_validation",
-  "created_at": "2026-06-21T02:39:33Z",
+  "created_at": "2026-06-21T02:43:38Z",
   "validator": {
     "path": "scripts/bem949_ci_stabilize.py",
     "heredoc_dedent_before_compile": true,
@@ -11,8 +11,8 @@
   },
   "status": "PASS",
   "scope": "Repository-wide static validation only; no per-workflow execution claim.",
-  "workflow_count": 244,
-  "valid_workflow_count": 244,
+  "workflow_count": 246,
+  "valid_workflow_count": 246,
   "invalid_workflow_count": 0,
   "invalid_workflows": [],
   "workflows": [
@@ -1225,6 +1225,14 @@
       "errors": []
     },
     {
+      "path": ".github/workflows/bem949-p05-context-typography-repair.yml",
+      "yaml_valid": true,
+      "python_heredocs": 2,
+      "python_heredocs_compiled": 2,
+      "valid": true,
+      "errors": []
+    },
+    {
       "path": ".github/workflows/bem949-p05-resolve-p0-commit.yml",
       "yaml_valid": true,
       "python_heredocs": 0,
@@ -1346,6 +1354,14 @@
     },
     {
       "path": ".github/workflows/bem949-p2-safe-gated-trace.yml",
+      "yaml_valid": true,
+      "python_heredocs": 1,
+      "python_heredocs_compiled": 1,
+      "valid": true,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem949-p3-all-role-runtime-trace.yml",
       "yaml_valid": true,
       "python_heredocs": 1,
       "python_heredocs_compiled": 1,
