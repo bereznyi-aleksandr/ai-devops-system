@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
+  "receipt_id": "BEM949_p05_context_typography_repair",
+  "status": "REPAIRED",
+  "created_at": "2026-06-21T02:49:22Z",
+  "file": "AGENT_CONTEXT.md",
+  "before_blob_sha": "04e31b2f380be182d4ba206a9f0809ae24e3d9d3",
+  "before_blob_sha_type": "git_blob",
+  "replacement": {
+    "from": "ₒ",
+    "to": "→",
+    "occurrences_repaired": 1,
+    "semantic_change": false
+  },
+  "checks": {
+    "single_target_character_repaired": true,
+    "canonical_context_retained": true,
+    "provider_completion_claimed": false
+  }
+}

@@ -45,7 +45,7 @@ Primary provider for curator, analyst, auditor, and executor: `claude_code`.
 Primary workflow: `.github/workflows/claude.yml.
 
 Configured fallback: `gpt_codex_cloud` on GitHub-hosted infrastructure. It may claim OpenAI Responses execution only when runtime secrets and a model are configured; otherwise it must identify itself as a mechanical fallback.
-Operational ingress: `Telegram → Cloudflare Worker ₒ provider-router.yml → claude.yml`.
+Operational ingress: `Telegram → Cloudflare Worker → provider-router.yml → claude.yml`.
 
 ## Canonical state and evidence paths
 
