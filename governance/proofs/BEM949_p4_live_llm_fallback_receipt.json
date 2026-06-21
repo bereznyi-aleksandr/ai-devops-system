@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P4-LIVE-LLM-FALLBACK",
+  "receipt_id": "BEM949_p4_live_llm_fallback",
+  "status": "BLOCKED",
+  "created_at": "2026-06-21T19:57:47Z",
+  "trace_id": "bem949_p4_live_llm_fallback",
+  "provider": {
+    "name": "openai_responses_api",
+    "model": null,
+    "live_call_attempted": false,
+    "response_id": null,
+    "response_id_type": null,
+    "http_status": null,
+    "output_text_sha256": null,
+    "output_text_length": null,
+    "output_text_persisted": false
+  },
+  "acceptance": {
+    "live_fallback_evidence_observed": false,
+    "mechanical_fallback_substituted_for_live_evidence": false
+  },
+  "blockers": [
+    "openai_model_var_not_configured"
+  ],
+  "non_claim": "A live fallback claim is made only after a 2xx Responses API result with a response id and non-empty output text. No provider output or secret is persisted. A BLOCKED receipt is not a live-fallback claim."
+}
