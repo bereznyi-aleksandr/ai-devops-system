@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "observation_id": "BEM949_p5_source_catalog_dispatch_observation",
+  "created_at": "2026-06-21T20:02:51Z",
+  "task_id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
+  "workflow_id": "bem949-p5-rule-source-catalog.yml",
+  "dispatch_attempts": 3,
+  "dispatch_gateway_results": [
+    {
+      "attempt": 1,
+      "dispatch_accepted": true,
+      "http_status": 204
+    },
+    {
+      "attempt": 2,
+      "dispatch_accepted": true,
+      "http_status": 204
+    },
+    {
+      "attempt": 3,
+      "dispatch_accepted": true,
+      "http_status": 204
+    }
+  ],
+  "expected_receipt": "governance/proofs/BEM949_p5_rule_source_catalog.json",
+  "receipt_observation": "NOT_FOUND_404_after_each_attempt",
+  "non_claim": "Gateway acceptance is not workflow completion. This observation is not an execution receipt, source catalog, or runtime enforcement evidence.",
+  "resume_condition": "Obtain GitHub Actions run-level outcome/log evidence for the three P5A dispatches, or an operator-supplied run URL/screenshot identifying the first failing job."
+}
