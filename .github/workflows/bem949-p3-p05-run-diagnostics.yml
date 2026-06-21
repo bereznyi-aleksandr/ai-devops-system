@@ -1,0 +1,87 @@
+name: BEM949 P3 P05 Run Diagnostics
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Collect P05 and P3 GitHub Actions diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bem949_diagnostics governance/proofs
+          for workflow in bem949-p05-context-typography-repair.yml bem949-p3-all-role-runtime-trace.yml; do
+            stem="${workflow%.yml}"
+            if ! gh run list               --repo "$REPO"               --workflow "$workflow"               --limit 5               --json databaseId,headSha,status,conclusion,event,createdAt,updatedAt               > "/tmp/bem949_diagnostics/${stem}.json"; then
+              printf '[]\n' > "/tmp/bem949_diagnostics/${stem}.json"
+            fi
+          done
+
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          mapping = {
+              "bem949-p05-context-typography-repair.yml": "BEM949_p05_context_typography_repair",
+              "bem949-p3-all-role-runtime-trace.yml": "BEM949_p3_all_role_runtime_trace",
+          }
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          for workflow, stem in mapping.items():
+              source = Path("/tmp/bem949_diagnostics") / f"{workflow[:-4]}.json"
+              rows = json.loads(source.read_text(encoding="utf-8"))
+              latest = rows[0] if rows else None
+              payload = {
+                  "schema_version": 1,
+                  "protocol": "BEM-949",
+                  "receipt_id": f"{stem}_run_diagnostics",
+                  "created_at": now,
+                  "target_workflow": f".github/workflows/{workflow}",
+                  "target_workflow_type": "workflow_path",
+                  "runs": rows,
+                  "latest_run": latest,
+                  "checks": {
+                      "github_actions_api_query_attempted": True,
+                      "run_level_conclusion_preserved": True,
+                      "diagnostic_is_not_completion_claim": True,
+                  },
+                  "non_claim": (
+                      "This file is a GitHub Actions run-metadata diagnostic. "
+                      "It does not claim a successful target execution, provider execution, "
+                      "or a repaired source workflow."
+                  ),
+              }
+              Path(f"governance/proofs/{stem}_run_diagnostics.json").write_text(
+                  json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                  encoding="utf-8",
+              )
+          PY
+
+      - name: Commit run diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-diagnostics@ai-devops-system"
+          git config user.name "BEM949 Run Diagnostics"
+          git add --             governance/proofs/BEM949_p05_context_typography_repair_run_diagnostics.json             governance/proofs/BEM949_p3_all_role_runtime_trace_run_diagnostics.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949: record P05 and P3 workflow run diagnostics"
+          git push || (git pull --rebase origin main && git push)
