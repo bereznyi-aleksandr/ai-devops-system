@@ -36,14 +36,14 @@ result = subprocess.run(
     stdout=subprocess.PIPE,
     stderr=subprocess.DEVNULL,
     check=False,
-]
-Jrows = []
+)
+rows = []
 for line in result.stdout.splitlines():
     try:
         path, lineno, text = line.split(":", 2)
     except ValueError:
         continue
-    matched = sorted(set(re.findall(r"RULE-(?:004|005|006|007|008|009|010)", text))))
+    matched = sorted(set(re.findall(r"RULE-(?:004|005|006|007|008|009|010)", text)))
     if not matched:
         continue
     blob = subprocess.check_output(["git", "hash-object", path], text=True).strip()
@@ -60,7 +60,7 @@ found = sorted({rule for row in rows for rule in row["rules"]})
 payload = {
     "schema_version": 1,
     "protocol": "BEM-949",
-    "task_id": "BEM949-P5-RULE-ENHORCEMENT-COMPLETE",
+    "task_id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
     "receipt_id": "BEM949_p5_rule_source_catalog",
     "status": "DISCOVERED" if found == rules else "BLOCKED",
     "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
