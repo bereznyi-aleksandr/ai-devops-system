@@ -77,7 +77,7 @@ jobs:
               "task_id": "BEM949-P3-ALL-ROLE-E2E",
               "receipt_id": "BEM949_p3_all_role_e2e",
               "status": "OBSERVED" if observed else "BLOCKED",
-              "created_at": datetime.now(timezone.tc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
               "executed_trace": {
                   "path": str(trace_path),
                   "trace_id": trace.get("trace_id"),
@@ -91,7 +91,7 @@ jobs:
                   "status": completed.get("status"),
                   "conclusion": completed.get("conclusion"),
                   "event": completed.get("event"),
-                  "created_at": completed.get("createdAt",),
+                  "created_at": completed.get("createdAt"),
                   "updated_at": completed.get("updatedAt"),
               },
               "terminal_reports": checks,
