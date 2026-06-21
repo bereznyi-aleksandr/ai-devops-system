@@ -1,0 +1,123 @@
+name: BEM949 P2 Safe-Gated Trace Observer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Observe completed safe-gated trace
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          if ! gh run list \
+            --repo "$REPO" \
+            --workflow bem949-p2-safe-gated-trace.yml \
+            --limit 10 \
+            --json databaseId,headSha,status,conclusion,event,createdAt,updatedAt \
+            > /tmp/bem949_p2_trace_runs.json; then
+            printf '[]\n' > /tmp/bem949_p2_trace_runs.json
+          fi
+          python3 - <<'PY'
+          import json
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          runs = json.loads(Path("/tmp/bem949_p2_trace_runs.json").read_text(encoding="utf-8"))
+          completed = next((row for row in runs if row.get("status") == "completed"), {})
+          trace_path = Path("governance/proofs/BEM949_p2_safe_gated_trace_executed.json")
+          trace = json.loads(trace_path.read_text(encoding="utf-8")) if trace_path.is_file() else {}
+          trace_blob = ""
+          if trace_path.is_file():
+              trace_blob = subprocess.check_output(
+                  ["git", "hash-object", str(trace_path)], text=True
+              ).strip()
+
+          completed_successfully = bool(completed) and completed.get("conclusion") == "success"
+          trace_executed = trace.get("status") == "EXECUTED_WITH_GATES"
+          observed = completed_successfully and trace_executed and bool(trace_blob)
+          payload = {
+              "schema_version": 1,
+              "protocol": "BEM-949",
+              "task_id": "BEM949-P2-FUNCTIONAL-RESTORE",
+              "receipt_id": "BEM949_p2_functional_restore",
+              "status": "OBSERVED" if observed else "BLOCKED",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "baseline": {
+                  "path": "governance/proofs/BEM949_p2_functional_baseline.json",
+                  "required_before_after_table": True,
+              },
+              "executed_safe_gated_trace": {
+                  "path": str(trace_path),
+                  "blob_sha": trace_blob or None,
+                  "blob_sha_type": "git_blob" if trace_blob else None,
+                  "trace_id": trace.get("trace_id"),
+                  "trace_status": trace.get("status"),
+              },
+              "target_run": {
+                  "run_id": str(completed.get("databaseId", "")),
+                  "run_id_type": "github_actions_run",
+                  "head_sha": completed.get("headSha", ""),
+                  "head_sha_type": "commit",
+                  "status": completed.get("status"),
+                  "conclusion": completed.get("conclusion"),
+                  "event": completed.get("event"),
+                  "created_at": completed.get("createdAt"),
+                  "updated_at": completed.get("updatedAt"),
+              },
+              "acceptance": {
+                  "before_after_table_available": True,
+                  "safe_gated_non_validator_trace_observed": observed,
+                  "target_run_completed_successfully": completed_successfully,
+                  "functional_restore_claimed": False,
+                  "provider_completion_claimed": False,
+              },
+              "gates": {
+                  "provider_dispatch_attempted": False,
+                  "network_provider_call_attempted": False,
+                  "target_validator_invoked": False,
+                  "historical_candidate_mutation_attempted": False,
+              },
+              "blockers": [] if observed else [
+                  "completed_safe_gated_trace_run_or_trace_receipt_not_observed"
+              ],
+              "non_claim": (
+                  "The observation confirms only the safe-gated, non-validator trace. "
+                  "It does not claim a provider, model, bridge, retry, E2E, or historical-workflow completion."
+              ),
+          }
+          Path("governance/proofs/BEM949_p2_functional_restore_receipt.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+          )
+          PY
+          test -s governance/proofs/BEM949_p2_functional_restore_receipt.json
+
+      - name: Commit P2 observation receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p2-observer@ai-devops-system"
+          git config user.name "BEM949 P2 Trace Observer"
+          git add governance/proofs/BEM949_p2_functional_restore_receipt.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P2: observe safe-gated functional trace"
+          git push || (git pull --rebase origin main && git push)
