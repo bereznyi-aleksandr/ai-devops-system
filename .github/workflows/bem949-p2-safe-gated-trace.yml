@@ -1,0 +1,118 @@
+name: BEM949 P2 Safe-Gated Functional Trace
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        description: Trace identifier for this non-validator evidence run
+        required: false
+        default: bem949_p2_safe_gated_trace
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACE_ID: ${{ inputs.trace_id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Record safe-gated non-validator trace
+        shell: bash
+        run: |
+          set -euo pipefail
+          safe_trace="$(printf '%s' "$TRACE_ID" | tr -cd 'A-Za-z0-9._-')"
+          test -n "$safe_trace"
+          mkdir -p governance/proofs governance/reports
+          baseline_blob="$(git hash-object governance/proofs/BEM949_p2_functional_baseline.json)"
+          export SAFE_TRACE="$safe_trace"
+          export BASELINE_BLOB="$baseline_blob"
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          trace_id = os.environ["SAFE_TRACE"]
+          payload = {
+              "schema_version": 1,
+              "protocol": "BEM-949",
+              "task_id": "BEM949-P2-FUNCTIONAL-RESTORE",
+              "receipt_id": "BEM949_p2_safe_gated_trace_executed",
+              "status": "EXECUTED_WITH_GATES",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "trace_id": trace_id,
+              "execution": {
+                  "workflow": ".github/workflows/bem949-p2-safe-gated-trace.yml",
+                  "github_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+                  "github_run_id_type": "github_actions_run",
+                  "head_sha": os.environ.get("GITHUB_SHA", ""),
+                  "head_sha_type": "commit",
+              },
+              "baseline": {
+                  "path": "governance/proofs/BEM949_p2_functional_baseline.json",
+                  "blob_sha": os.environ["BASELINE_BLOB"],
+                  "blob_sha_type": "git_blob",
+              },
+              "gates": {
+                  "provider_dispatch_attempted": False,
+                  "network_provider_call_attempted": False,
+                  "target_validator_invoked": False,
+                  "historical_candidate_mutation_attempted": False,
+                  "safe_gate_mode": "non_validator_trace_only",
+              },
+              "acceptance": {
+                  "before_after_table_available": True,
+                  "safe_gated_trace_executed": True,
+                  "functional_restore_claimed": False,
+              },
+              "non_claim": (
+                  "This is an executed GitHub Actions trace for evidence collection only. "
+                  "It does not claim provider, model, bridge, retry, E2E, or historical-workflow completion."
+              ),
+          }
+          proof = Path("governance/proofs/BEM949_p2_safe_gated_trace_executed.json")
+          proof.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          report = [
+              "# BEM-949 P2 safe-gated functional trace",
+              "",
+              f"Trace: `{trace_id}`",
+              "",
+              "| Gate | Result |",
+              "|---|---|",
+              "| Provider dispatch | not attempted |",
+              "| Network provider call | not attempted |",
+              "| Validator invocation | not attempted |",
+              "| Historical candidate mutation | not attempted |",
+              "",
+              "The run records a non-validator evidence trace. It is not a provider-completion or functional-restore claim.",
+          ]
+          Path("governance/reports/BEM949_p2_safe_gated_trace.md").write_text(
+              "\n".join(report) + "\n", encoding="utf-8"
+          )
+          PY
+          test -s governance/proofs/BEM949_p2_safe_gated_trace_executed.json
+          test -s governance/reports/BEM949_p2_safe_gated_trace.md
+
+      - name: Commit safe-gated trace evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p2-trace@ai-devops-system"
+          git config user.name "BEM949 P2 Safe-Gated Trace"
+          git add -- \
+            governance/proofs/BEM949_p2_safe_gated_trace_executed.json \
+            governance/reports/BEM949_p2_safe_gated_trace.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P2: record safe-gated non-validator trace"
+          git push || (git pull --rebase origin main && git push)
