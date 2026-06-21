@@ -1,0 +1,147 @@
+name: BEM949 P3 V3 Trace Observer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Verify bounded v3 trace and terminal reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/prooffs
+          proof="governance/proofs/BEM949_p3_all_role_trace_executed.json"
+          test -s "$proof"
+          run_id="$(jq -r '.execution.github_run_id // empty' "$proof")"
+          test -n "$run_id"
+          gh api "repos/$REPO/actions/runs/$run_id" --*q '{id:.id,status:.status,conclusion:.conclusion,headSha:.head_sha,workflow_id:.workflow_id}' > /tmp/bem949_p3_target_run.json
+          python3 - <<'PY'
+          import json
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          proof_path = Path("governance/proofs/BEM949_p3_all_role_trace_executed.json")
+          target_path = Path("/tmp/bem949_p3_target_run.json")
+          proof = json.loads(proof_path.read_text(encoding="utf-8"))
+          target = json.loads(target_path.read_text(encoding="utf-8"))
+          expected_roles = ["analyst", "auditor", "executor", "auditor", "curator_summary"]
+          entries = proof.get("terminal_reports", [])
+          verifications = []
+          for step, expected_role in enumerate(expected_roles, start=1):
+              entry = entries[step - 1] if len(entries) >= step else {}
+              path = Path(entry.get("path", ""))
+              observed_sha = None
+              valid = False
+              if path.is_file():
+                  observed_sha = subprocess.check_output(["git", "hash-object", str(path)], text=True).strip()
+                  report = json.loads(path.read_text(encoding="utf-8"))
+                  valid = (
+                      entry.get("role") == expected_role
+                      and entry.get("role_step") == step
+                      and entry.get("blob_sha") == observed_sha
+                      and report.get("role") == expected_role
+                      and report.get("role_step") == step
+                      and report.get("terminal") is True
+                      and report.get("status") == "completed"
+                      and report.get("provider_execution_claimed") is False
+                  )
+              verifications.append({
+                  "role": expected_role,
+                  "role_step": step,
+                  "path": str(path),
+                  "expected_blob_sha": entry.get("blob_sha"),
+                  "observed_blob_sha": observed_sha,
+                  "valid_terminal_report": valid,
+              })
+
+          run_ok = (
+              target.get("status") == "completed"
+              and target.get("conclusion") == "success"
+              and str(target.get("id", "")) == str(proof.get("execution", {}).get("github_run_id", ""))
+          )
+          proof_ok = (
+              proof.get("status") == "EXECUTED_WITH_GATES"
+              and proof.get("execution", {}).get("workflow")
+              == ".github/workflows/bem949-p3-all-role-runtime-trace-v3.yml"
+          )
+          reports_ok = len(entries) == 5 and all(item["valid_terminal_report"] for item in verifications)
+          observed = run_ok and proof_ok and reports_ok
+          receipt = {
+              "schema_version": 1,
+              "protocol": "BEM-949",
+              "task_id": "BEM949-P3-ALL-ROLE-E2E",
+              "receipt_id": "BEM949_p3_all_role_e2e",
+              "status": "OBSERVED" if observed else "BLOCKED",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "target_workflow": ".github/workflows/bem949-p3-all-role-runtime-trace-v3.yml",
+              "target_run": {
+                  "run_id": str(target.get("id", "")),
+                  "run_id_type": "github_actions_run",
+                  "head_sha": target.get("head_sha", ""),
+                  "head_sha_type": "commit",
+                  "status": target.get("status"),
+                  "conclusion": target.get("conclusion"),
+              },
+              "executed_trace": {
+                  "path": str(proof_path),
+                  "blob_sha": subprocess.check_output(
+                      ["git", "hash-object", str(proof_path)], text=True
+                    ).strip(),
+                  "blob_sha_type": "git_blob",
+                  "trace_id": proof.get("trace_id"),
+                  "status": proof.get("stats"),
+              },
+              "terminal_reports": verifications,
+              "acceptance": {
+                  "target_run_completed_successfully": run_ok,
+                  "exactly_five_terminal_reports_verified": reports_ok,
+                  "bounded_role_orchestration_trace_observed": observed,
+                  "provider_execution_claimed": False,
+                  "all_role_provider_e2e_claimed": False,
+              },
+              "gates": {
+                  "provider_dispatch_attempted": False,
+                  "network_provider_call_attempted": False,
+                  "historical_candidate_mutation_attempted": False,
+              },
+              "blockers": [] if observed else [
+                  "target_run_or_terminal_report_verification_did_not_pass"
+              ],
+              "non_claim": "This receipt confirms a bounded GitHub Actions role-orchestration trace and termal-report persistence only. It does not claim provider, model, bridge, retry, E2E, or LL completion.",
+          }
+          Path("governance/proofs/BEM949_p3_all_role_e2e_receipt.json").write_text(
+              json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit P3 observation receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p3-observer@ai-devops-system"
+          git config user.name "BEM949 P3 V3 Trace Observer"
+          git add -- governance/proofs/BEM949_p3_all_role_e2e_receipt.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P3: observe bounded all-role runtime trace"
+          git push || (git pull --rebase origin main && git push)
