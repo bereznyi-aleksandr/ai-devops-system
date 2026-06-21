@@ -2,6 +2,12 @@ name: BEM949 P5 Rule Source Catalog
 
 on:
   workflow_dispatch:
+    inputs:
+      trace_id:
+        description: Trace identifier for the source-catalog run
+        required: false
+        default: bem949_p5_rule_source_catalog
+        type: string
 
 permissions:
   contents: write
@@ -10,6 +16,8 @@ jobs:
   catalog:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      TRACE_ID: ${{ inputs.trace_id }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,13 +30,18 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p governance/proofs
+          trace="$(printf '%s' "${TRACE_ID:-bem949_p5_rule_source_catalog}" | tr -cd 'A-Za-z0-9._-')"
+          test -n "$trace"
+          export TRACE="$trace"
           python3 - <<'PY'
 import json
+import os
 import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
+trace_id = os.environ.get("TRACE", "bem949_p5_rule_source_catalog")
 rules = [f"RULE-{number:03d}" for number in range(4, 11)]
 result = subprocess.run(
     ["git", "grep", "-nE", r"RULE-(004|005|006|007|008|009|010)"],
@@ -62,6 +75,7 @@ payload = {
     "protocol": "BEM-949",
     "task_id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
     "receipt_id": "BEM949_p5_rule_source_catalog",
+    "trace_id": trace_id,
     "status": "DISCOVERED" if found == rules else "BLOCKED",
     "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "rules_requested": rules,
