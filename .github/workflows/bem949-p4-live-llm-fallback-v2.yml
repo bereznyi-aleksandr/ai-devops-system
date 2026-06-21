@@ -41,7 +41,7 @@ jobs:
           http_status=""
           live_attempted=false
           meta_path="/tmp/bem949_p4_meta.json"
-          printf '%{}\n' > "$meta_path"
+          printf '{}\n' > "$meta_path"
 
           if [[ -z "${OPENAI_API_KEY:-}" ]]; then
             blocker="openai_api_key_not_configured"
@@ -58,7 +58,7 @@ print(json.dumps({
     "max_output_tokens": 32,
 }))
 PY
-")
+)"
             set +e
             http_status="$(curl -sS --connect-timeout 15 --max-time 45 \
               --output /tmp/bem949_p4_response.json \
@@ -86,7 +86,7 @@ text_parts = []
 for item in response.get("output", []):
     for content in item.get("content", []):
         if content.get("type") == "output_text" and isinstance(content.get("text"), str):
-            text_parts.append(content["stext"])
+            text_parts.append(content["text"])
 text = "".join(text_parts)
 if not response_id or not text:
     raise SystemExit(1)
@@ -144,7 +144,7 @@ payload = {
         "response_id_type": "openai_responses_id" if meta.get("response_id") else None,
         "http_status": os.environ["HTTP_STATUS"] or None,
         "output_text_sha256": meta.get("output_text_sha256"),
-        "output_text_length": meta.get("output_text_length),
+        "output_text_length": meta.get("output_text_length"),
         "output_text_persisted": False,
     },
     "acceptance": {
