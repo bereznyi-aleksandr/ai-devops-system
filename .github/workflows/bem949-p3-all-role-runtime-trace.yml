@@ -2,6 +2,12 @@ name: BEM949 P3 All-Role Runtime Trace
 
 on:
   workflow_dispatch:
+    inputs:
+      trace_id:
+        description: Trace identifier for bounded P3 orchestration
+        required: false
+        default: bem949_p3_all_role_trace
+        type: string
 
 permissions:
   contents: write
@@ -21,7 +27,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          trace="bem949_p3_all_role_trace"
+          trace="${{ inputs.trace_id }}"
+          trace="$(printf '%s' "$trace" | tr -cd 'A-Za-z0-9._-')"
+          test -n "$trace"
           mkdir -p governance/proofs governance/reports governance/logs
           jq -e '.task_types.default_development == ["analyst","auditor","executor","auditor","curator_summary"] and .cycle_controls.max_role_steps_per_cycle >= 5' governance/policies/role_sequence.json >/dev/null
           now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
