@@ -1,67 +1,13 @@
 {
-  "version": 1,
-  "updated_at": "2026-06-04T11:19:00Z",
-  "max_active_tasks": 7,
-  "policy": {
-    "source_of_next_task": "first PENDING item in tasks",
-    "workflow_yml_locked_for_gpt": true,
-    "do_not_invent_tasks_when_empty": true,
-    "write_execution_log_after_status": true
+  "redirect_only": true,
+  "reason": "obsolete 2026-06-04 P26-P28B queue; not BEM-949 state",
+  "canonical_path": "governance/roadmap/ACTIVE_QUEUE.json",
+  "note": "Do not write operational queue state to this file. It is preserved only as a redirect marker so legacy readers do not mistake it for an empty/inactive system.",
+  "historical_snapshot": {
+    "blob_sha": "ee8a9c7b927a73cc7d20a5b0db39d1cd403a610a",
+    "blob_sha_type": "git_blob",
+    "description": "Last content of this file before conversion to redirect marker: P26-P28B three-file-model migration queue, queue_state EMPTY_AFTER_P28B_PENDING_ITS_OWN_SHA_RECORD, updated_at 2026-06-04T11:19:00Z"
   },
-  "tasks": [
-    {
-      "id": "P26",
-      "title": "Three-file model migration and roadmap audit",
-      "status": "DONE",
-      "criteria": "AGENT_CONTEXT reduced to config, ACTIVE_QUEUE present, execution_log present, roadmap audit report written",
-      "touch_workflows": false,
-      "sha": "fa40ee24cbf3b1200727a02934df9e1d1c659a33",
-      "completed_at": "2026-06-04T11:14:12Z"
-    },
-    {
-      "id": "P26B",
-      "title": "Record P26 result in ACTIVE_QUEUE and execution_log",
-      "status": "DONE",
-      "criteria": "P26 status updated with SHA and execution_log receives P26 line",
-      "touch_workflows": false,
-      "sha": "dd0850cce54105d2a7e301c2135c5bb247d1c00d",
-      "completed_at": "2026-06-04T11:14:57Z"
-    },
-    {
-      "id": "P27",
-      "title": "Real roadmap execution audit from state and reports",
-      "status": "DONE",
-      "criteria": "Create audit comparing completed state files, reports and queue status",
-      "touch_workflows": false,
-      "sha": "94b73379c3160c01d636f087388f895d5141238b",
-      "completed_at": "2026-06-04T11:15:39Z"
-    },
-    {
-      "id": "P27B",
-      "title": "Record P27 result in ACTIVE_QUEUE and execution_log",
-      "status": "DONE",
-      "criteria": "P27 status updated with SHA and execution_log receives P27 line",
-      "touch_workflows": false,
-      "sha": "7bf1800b826c8fab8cb3837c0dac89f81eb0a002",
-      "completed_at": "2026-06-04T11:16:20Z"
-    },
-    {
-      "id": "P28",
-      "title": "Consolidate current queue status report",
-      "status": "DONE",
-      "criteria": "Create compact report from ACTIVE_QUEUE only, no invented tasks",
-      "touch_workflows": false,
-      "sha": "4a6357f744d861d5cdaa4fa3efec57d1914ce4db",
-      "completed_at": "2026-06-04T11:17:02Z"
-    },
-    {
-      "id": "P28B",
-      "title": "Record P28 result and queue empty state",
-      "status": "DONE_PENDING_SHA_RECORD",
-      "criteria": "P27B and P28 logged; no PENDING tasks remain; await operator or Claude queue refill",
-      "touch_workflows": false
-    }
-  ],
-  "queue_state": "EMPTY_AFTER_P28B_PENDING_ITS_OWN_SHA_RECORD",
-  "next_action": "await operator or Claude to add next ACTIVE_QUEUE tasks; do not invent tasks"
+  "converted_at": "2026-06-21T04:50:00Z",
+  "converted_reason": "BEM-949 audit found two files both named ACTIVE_QUEUE.json with conflicting content (governance/ vs governance/roadmap/), creating a split-brain risk for any reader/process not aware of both paths."
 }
