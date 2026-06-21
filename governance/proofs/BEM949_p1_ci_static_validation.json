@@ -3,7 +3,7 @@
   "protocol": "BEM-949",
   "task_id": "BEM949-P1-CI-STABILIZE",
   "receipt_id": "BEM949_p1_ci_static_validation",
-  "created_at": "2026-06-21T02:56:31Z",
+  "created_at": "2026-06-21T02:57:46Z",
   "validator": {
     "path": "scripts/bem949_ci_stabilize.py",
     "heredoc_dedent_before_compile": true,
@@ -11,8 +11,8 @@
   },
   "status": "FAIL",
   "scope": "Repository-wide static validation only; no per-workflow execution claim.",
-  "workflow_count": 249,
-  "valid_workflow_count": 248,
+  "workflow_count": 250,
+  "valid_workflow_count": 249,
   "invalid_workflow_count": 1,
   "invalid_workflows": [
     ".github/workflows/bem949-p3-all-role-runtime-trace.yml"
@@ -1359,6 +1359,14 @@
       "yaml_valid": true,
       "python_heredocs": 1,
       "python_heredocs_compiled": 1,
+      "valid": true,
+      "errors": []
+    },
+    {
+      "path": ".github/workflows/bem949-p3-all-role-runtime-trace-v3.yml",
+      "yaml_valid": true,
+      "python_heredocs": 0,
+      "python_heredocs_compiled": 0,
       "valid": true,
       "errors": []
     },
