@@ -1,0 +1,59 @@
+name: BEM949 P1 Receipt Conflict Repair
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+      - name: Repair created-at-only conflict
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          mkdir -p governance/proofs governance/logs
+          python3 - <<'PY'
+          import json,re,subprocess
+          from datetime import datetime,timezone
+          from pathlib import Path
+          p=Path("governance/proofs/BEM949_p1_ci_static_validation.json")
+          before=p.read_text(encoding="utf-8")
+          pat=re.compile(r'<<<<<<< Updated upstream\n  "created_at": "([^"]+)",\n=======\n  "created_at": "([^"]+)",\n>>>>>>> Stashed changes')
+          if before.count("<<<<<<<")!=1 or before.count("=======")!=1 or before.count(">>>>>>>")!=1:
+              raise RuntimeError("expected one conflict")
+          m=pat.search(before)
+          if not m: raise RuntimeError("conflict not created_at-only")
+          candidates=list(m.groups()); selected=max(candidates)
+          after=pat.sub(f'  "created_at": "{selected}",',before,count=1)
+          if any(x in after for x in ("<<<<<<<","=======",">>>>>>>")): raise RuntimeError("marker remains")
+          receipt=json.loads(after)
+          if receipt.get("status")!="PASS" or receipt.get("workflow_count")!=receipt.get("valid_workflow_count") or receipt.get("invalid_workflow_count")!=0 or receipt.get("invalid_workflows")!=[]:
+              raise RuntimeError("static evidence not internally consistent")
+          def blob(v): return subprocess.check_output(["git","hash-object","--stdin"],input=v,text=True).strip()
+          old,new=blob(before),blob(after)
+          p.write_text(after,encoding="utf-8")
+          now=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          proof={"schema_version":1,"protocol":"BEM-949","task_id":"BEM949-P1-CI-STABILIZE","receipt_id":"BEM949_p1_static_receipt_conflict_repair","status":"REPAIRED","created_at":now,"target":str(p),"before_blob_sha":old,"before_blob_sha_type":"git_blob","after_blob_sha":new,"after_blob_sha_type":"git_blob","candidate_created_at_values":candidates,"selected_created_at":selected,"selection_rule":"latest ISO-8601 UTC candidate","checks":{"created_at_only":True,"reparsed_as_json":True,"runtime_not_claimed":True},"non_claim":"Resolves a static receipt merge artifact only; no runtime or provider completion evidence is created."}
+          q=Path("governance/proofs/BEM949_p1_static_receipt_conflict_repair.json")
+          q.write_text(json.dumps(proof,indent=2)+"\n",encoding="utf-8")
+          with Path("governance/logs/execution_log.jsonl").open("a",encoding="utf-8") as f:
+              f.write(json.dumps({"timestamp":now,"task_id":"BEM949-P1-CI-STABILIZE","status":"receipt_conflict_repaired","target":str(p),"receipt":str(q),"before_blob_sha":old,"after_blob_sha":new})+"\n")
+          PY
+          python3 -m json.tool governance/proofs/BEM949_p1_ci_static_validation.json >/dev/null
+      - name: Commit repair
+        shell: bash
+        run: |
+          set -euo pipefall
+          git config user.email "bem949-receipt-repair@ai-devops-system"
+          git config user.name "BEM949 Static Receipt Repair"
+          git add -- governance/proofs/BEM949_p1_ci_static_validation.json governance/proofs/BEM949_p1_static_receipt_conflict_repair.json governance/logs/execution_log.jsonl
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "BEM949 P1: repair static validation receipt conflict"
+          git push
