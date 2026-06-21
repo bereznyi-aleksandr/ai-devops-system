@@ -1,0 +1,119 @@
+name: BEM949 P4 Live LLM Fallback Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        description: Trace identifier for the bounded live fallback probe
+        required: false
+        default: bem949_p4_live_llm_fallback
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACE_ID: ${{ inputs.trace_id }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Record bounded live fallback result
+        shell: bash
+        run: |
+          set -euo pipefail
+          trace="$(printf '%s' "$TRACE_ID" | tr -cd 'A-Za-z0-9._-')"
+          test -n "$trace"
+          mkdir -p governance/proofs          status="BLOCKED"
+          blocker=""
+          http_status=""
+          response_id=""
+          response_model=""
+          output_sha256=""
+          live_attempted=false
+          if [ -z "$OPENAI_API_KEY" ]; then
+            blocker="openai_api_key_not_configured"
+          elif [ -z "$OPENAI_MODEL" ]; then
+            blocker="openai_model_var_not_configured"
+          else
+            live_attempted=true
+            payload="$(jq -n --arg model "$OPENAI_MODEL" '{model:$model,input:"Return exactly: BEM949 P4 live fallback probe acknowledged.",max_output_tokens:32}')"
+            set +e
+            http_status="$(curl -sS --connect-timeout 15 --max-time 45 --output /tmp/bem949_p4_response.json --write-out '%{http_code}' -X POST "https://api.openai.com/v1/responses" -H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" -d "$payload")"
+            curl_exit=$?
+            set -e
+            if [ "$curl_exit" -ne 0 ]; then
+              blocker="openai_transport_failed"
+            elif [[ "$http_status" =~ ^2[0-9][0-9]$ ]] && [ -s /tmp/bem949_p4_response.json ]; then
+              response_id="$(jq -r '.id // empty' /tmp/bem949_p4_response.json || true)"
+              response_model="$(jq -r '.model // empty' /tmp/bem949_p4_response.json || true)"
+              output_text="$(jq -r '[.output[]?.content[]? select(.type == "output_text") | .text] | join("")' /tmp/bem949_p4_response.json || true)"
+              if [ -n "$response_id" ] && [ -n "$output_text" ]; then
+                output_sha256="$(printf '%s' "$output_text" | sha256sum | awk '{print $1}')"
+                status="OBSERVED_LIVE_FALLBACK"
+              else
+                blocker="openai_response_missing_id_or_output_text"
+              fi
+            else
+              blocker="openai_api_http_${http_status:-unknown}"
+            fi
+          fi
+          jq -n \
+            --arg trace "$trace" \
+            --arg status "$status" \
+            --arg blocker "$blocker" \
+            --arg http_status "$http_status" \
+            --arg response_id "$response_id" \
+            --arg response_model "$response_model" \
+            --arg output_sha256 "$output_sha256" \
+            --arg created_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson live_attempted "$live_attempted" \
+            '{
+              schema_version: 1,
+              protocol: "BEM-949",
+              task_id: "BEM949-P4-LIVE-LLM-FALLBACK",
+              receipt_id: "BEM949_p4_live_llm_fallback",
+              status: $status,
+              created_at: $created_at,
+              trace_id: $trace,
+              provider: {
+                name: "openai_responses_api",
+                model: ($response_model | select(length > 0) // null),
+                live_call_attempted: $live_attempted,
+                response_id: ($response_id | select(length > 0) // null),
+                response_id_type: (if ($response_id | length) > 0 then "openai_responses_id" else null end),
+                http_status: ($http_status | select(length > 0) // null),
+                output_text_sha256: ($output_sha256 | select(length > 0) // null),
+                output_text_present: (($output_sha256 | length) > 0)
+              },
+              acceptance: {
+                live_fallback_evidence_observed: ($status == "OBSERVED_LIVE_FALLBACK"),
+                mechanical_fallback_substituted_for_live_evidence: false
+              },
+              blockers: (if $status == "OBSERVED_LIVE_FALLBACK" then [] else [$blocker] end),
+              non_claim: "A live completion claim is made only after a 2xx Responses API result with a response id and non-empty output text. A BLOCKED receipt is not a live-fallback claim."
+            }' > governance/proofs/BEM949_p4_live_llm_fallback_receipt.json
+          test -s governance/proofs/BEM949_p4_live_llm_fallback_receipt.json
+
+      - name: Commit P4 receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p4-probe@ai-devops-system"
+          git config user.name "BEM949 P4 Live Fallback Probe"
+          git add -- governance/proofs/BEM949_p4_live_llm_fallback_receipt.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P4: record live LLM fallback probe"
+          git push || (git pull --rebase origin main && git push)
