@@ -1,0 +1,95 @@
+name: BEM949 P5 Rule Source Catalog
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Inventory RULE-004 through RULE-010 sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          python3 - <<'PY'
+import json
+import re
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
+rules = [f"RULE-{number:03d}" for number in range(4, 11)]
+result = subprocess.run(
+    ["git", "grep", "-nE", r"RULE-(004|005|006|007|008|009|010)"],
+    text=True,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.DEVNULL,
+    check=False,
+]
+Jrows = []
+for line in result.stdout.splitlines():
+    try:
+        path, lineno, text = line.split(":", 2)
+    except ValueError:
+        continue
+    matched = sorted(set(re.findall(r"RULE-(?:004|005|006|007|008|009|010)", text))))
+    if not matched:
+        continue
+    blob = subprocess.check_output(["git", "hash-object", path], text=True).strip()
+    rows.append(
+        {
+            "path": path,
+            "line": int(lineno),
+            "rules": matched,
+            "blob_sha": blob,
+            "blob_sha_type": "git_blob",
+        }
+    )
+found = sorted({rule for row in rows for rule in row["rules"]})
+payload = {
+    "schema_version": 1,
+    "protocol": "BEM-949",
+    "task_id": "BEM949-P5-RULE-ENHORCEMENT-COMPLETE",
+    "receipt_id": "BEM949_p5_rule_source_catalog",
+    "status": "DISCOVERED" if found == rules else "BLOCKED",
+    "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "rules_requested": rules,
+    "rules_found": found,
+    "sources": rows,
+    "acceptance": {
+        "all_rule_identifiers_discovered": found == rules,
+        "runtime_enforcement_claimed": False,
+    },
+    "blockers": [] if found == rules else ["one_or_more_rule_identifiers_not_found_in_checked_out_repository"],
+    "non_claim": (
+        "This catalog records source locations only. It does not constitute positive "
+        "or negative runtime enforcement evidence."
+    ),
+}
+Path("governance/proofs/BEM949_p5_rule_source_catalog.json").write_text(
+    json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+)
+PY
+          test -s governance/proofs/BEM949_p5_rule_source_catalog.json
+
+      - name: Commit rule catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p5-catalog@ai-devops-system"
+          git config user.name "BEM949 P5 Rule Catalog"
+          git add -- governance/proofs/BEM949_p5_rule_source_catalog.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "BEM949 P5: catalog rule enforcement sources"
+          git push || (git pull --rebase origin main && git push)
