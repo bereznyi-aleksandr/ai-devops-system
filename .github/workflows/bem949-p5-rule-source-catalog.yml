@@ -31,69 +31,69 @@ jobs:
           set -euo pipefail
           mkdir -p governance/proofs
           python3 - <<'PY'
-import json
-import os
-import re
-import subprocess
-from datetime import datetime, timezone
-from pathlib import Path
+          import json
+          import os
+          import re
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
 
-raw_trace = os.environ.get("TRACE_ID", "") or "bem949_p5_rule_source_catalog"
-trace = "".join(ch for ch in raw_trace if ch.isalnum() or ch in "._-") or "bem949_p5_rule_source_catalog"
+          raw_trace = os.environ.get("TRACE_ID", "") or "bem949_p5_rule_source_catalog"
+          trace = "".join(ch for ch in raw_trace if ch.isalnum() or ch in "._-") or "bem949_p5_rule_source_catalog"
 
-rules = [f"RULE-{number:03d}" for number in range(4, 11)]
-result = subprocess.run(
-    ["git", "grep", "-nE", r"RULE-(004|005|006|007|008|009|010)"],
-    text=True,
-    stdout=subprocess.PIPE,
-    stderr=subprocess.DEVNULL,
-    check=False,
-)
-rows = []
-for line in result.stdout.splitlines():
-    try:
-        path, lineno, text = line.split(":", 2)
-    except ValueError:
-        continue
-    matched = sorted(set(re.findall(r"RULE-(?:004|005|006|007|008|009|010)", text)))
-    if not matched:
-        continue
-    blob = subprocess.check_output(["git", "hash-object", path], text=True).strip()
-    rows.append(
-        {
-            "path": path,
-            "line": int(lineno),
-            "rules": matched,
-            "blob_sha": blob,
-            "blob_sha_type": "git_blob",
-        }
-    )
-found = sorted({rule for row in rows for rule in row["rules"]})
-payload = {
-    "schema_version": 1,
-    "protocol": "BEM-949",
-    "task_id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
-    "receipt_id": "BEM949_p5_rule_source_catalog",
-    "status": "DISCOVERED" if found == rules else "BLOCKED",
-    "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-    "trace_id": trace,
-    "rules_requested": rules,
-    "rules_found": found,
-    "sources": rows,
-    "acceptance": {
-        "all_rule_identifiers_discovered": found == rules,
-        "runtime_enforcement_claimed": False,
-    },
-    "blockers": [] if found == rules else ["one_or_more_rule_identifiers_not_found_in_checked_out_repository"],
-    "non_claim": (
-        "This catalog records source locations only. It does not constitute positive "
-        "or negative runtime enforcement evidence."
-    ),
-}
-Path("governance/proofs/BEM949_p5_rule_source_catalog.json").write_text(
-    json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-)
-PY
+          rules = [f"RULE-{number:03d}" for number in range(4, 11)]
+          result = subprocess.run(
+              ["git", "grep", "-nE", r"RULE-(004|005|006|007|008|009|010)"],
+              text=True,
+              stdout=subprocess.PIPE,
+              stderr=subprocess.DEVNULL,
+              check=False,
+          )
+          rows = []
+          for line in result.stdout.splitlines():
+              try:
+                  path, lineno, text = line.split(":", 2)
+              except ValueError:
+                  continue
+              matched = sorted(set(re.findall(r"RULE-(?:004|005|006|007|008|009|010)", text)))
+              if not matched:
+                  continue
+              blob = subprocess.check_output(["git", "hash-object", path], text=True).strip()
+              rows.append(
+                  {
+                      "path": path,
+                      "line": int(lineno),
+                      "rules": matched,
+                      "blob_sha": blob,
+                      "blob_sha_type": "git_blob",
+                  }
+              )
+          found = sorted({rule for row in rows for rule in row["rules"]})
+          payload = {
+              "schema_version": 1,
+              "protocol": "BEM-949",
+              "task_id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
+              "receipt_id": "BEM949_p5_rule_source_catalog",
+              "status": "DISCOVERED" if found == rules else "BLOCKED",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "trace_id": trace,
+              "rules_requested": rules,
+              "rules_found": found,
+              "sources": rows,
+              "acceptance": {
+                  "all_rule_identifiers_discovered": found == rules,
+                  "runtime_enforcement_claimed": False,
+              },
+              "blockers": [] if found == rules else ["one_or_more_rule_identifiers_not_found_in_checked_out_repository"],
+              "non_claim": (
+                  "This catalog records source locations only. It does not constitute positive "
+                  "or negative runtime enforcement evidence."
+              ),
+          }
+          Path("governance/proofs/BEM949_p5_rule_source_catalog.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+          )
+          PY
           test -s governance/proofs/BEM949_p5_rule_source_catalog.json
 
       - name: Commit rule catalog
