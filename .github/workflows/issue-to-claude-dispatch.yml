@@ -1,116 +1,26 @@
-name: Issue To Claude Governed Dispatch
+name: DEPRECATED - Issue To Claude Dispatch (superseded)
 
-# Bridges issue-based task submission into real workflow_dispatch calls.
-# Neither the ChatGPT Codex Connector app nor the Claude PAT MCP tool
-# surface exposes a workflow_dispatch-creation API call directly - this
-# bridge runs inside GitHub Actions (full API access via
-# AI_SYSTEM_GITHUB_PAT) and performs that call on the operator's/agent's
-# behalf, with zero manual confirmation required from the operator.
+# SUPERSEDED 2026-06-21: this bridge was built to work around a believed
+# gap in GPT's tool surface (no direct workflow_dispatch capability).
+# That gap already had a correct, deployed solution:
 #
-# Two supported formats in an issue body or issue comment:
+#   infrastructure/cloudflare-worker/telegram-webhook.js
+#   POST /gpt-dispatch  (header: x-gpt-secret)
+#   { "workflow_id": "<any>.yml", "inputs": {...} }
 #
-# 1) Generic workflow dispatch (any workflow, any single trace_id input):
-#    @dispatch
-#    WORKFLOW: <workflow-file-name.yml>
-#    TRACE_ID: <value>
+# This is the canonical BEM-932 mechanism (Cloudflare Worker, full
+# arbitrary-workflow dispatch, already deployed/receipt-verified).
+# Routing GPT task submission through GitHub Issues was unnecessary
+# indirection. Use the Worker /gpt-dispatch endpoint directly instead.
 #
-# 2) Governed claude.yml role dispatch (original format, unchanged):
-#    @claude
-#    ROLE: <curator|analyst|auditor|executor>
-#    TRACE_ID: <value>
-#    TASK_TYPE: <value>
-#    <task body>
-#
-# Does NOT replace claude.yml's existing issues/issue_comment legacy
-# trigger; that one still fires in parallel for format 2 (harmless,
-# writes no conflicting evidence).
+# This file is kept (disabled) only as a historical record, not deleted,
+# per the repository's archive-don't-delete convention.
 
 on:
-  issues:
-    types: [opened]
-  issue_comment:
-    types: [created]
-
-permissions:
-  contents: read
-  actions: write
+  workflow_dispatch:
 
 jobs:
-  bridge:
+  disabled:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: |
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.body, '@dispatch'))) ||
-      (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '@claude') || contains(github.event.comment.body, '@dispatch')))
     steps:
-      - name: Parse body and dispatch target workflow
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
-          REPO: ${{ github.repository }}
-          BODY: ${{ github.event_name == 'issues' && github.event.issue.body || github.event.comment.body }}
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import json
-          import os
-          import re
-          import urllib.request
-
-          body = os.environ.get("BODY", "")
-
-          def field(name, default=""):
-              m = re.search(rf"^{name}:\s*(.+)$", body, re.MULTILINE)
-              return m.group(1).strip() if m else default
-
-          def dispatch(workflow_file, inputs):
-              payload = json.dumps({"ref": "main", "inputs": inputs}).encode("utf-8")
-              req = urllib.request.Request(
-                  "https://api.github.com/repos/" + os.environ["REPO"]
-                  + "/actions/workflows/" + workflow_file + "/dispatches",
-                  data=payload,
-                  headers={
-                      "Authorization": "Bearer " + os.environ["GH_TOKEN"],
-                      "Accept": "application/vnd.github+json",
-                      "Content-Type": "application/json",
-                      "User-Agent": "ai-devops-issue-to-claude-bridge",
-                  },
-                  method="POST",
-              )
-              with urllib.request.urlopen(req) as resp:
-                  print("BRIDGE_DISPATCHED: workflow=" + workflow_file + " HTTP " + str(resp.status))
-
-          if "@dispatch" in body:
-              workflow_file = field("WORKFLOW")
-              trace_id = field("TRACE_ID")
-              if not workflow_file or not trace_id:
-                  print("BRIDGE_SKIPPED: @dispatch requires WORKFLOW and TRACE_ID fields")
-                  raise SystemExit(0)
-              dispatch(workflow_file, {"trace_id": trace_id})
-              raise SystemExit(0)
-
-          if "@claude" in body and "ROLE:" in body:
-              role = field("ROLE", "analyst").lower()
-              trace_id = field("TRACE_ID")
-              cycle_id = field("CYCLE_ID") or trace_id
-              task_type = field("TASK_TYPE", "default_development")
-
-              if not trace_id:
-                  print("BRIDGE_SKIPPED: no TRACE_ID found in body")
-                  raise SystemExit(0)
-              if role not in ("curator", "analyst", "auditor", "executor"):
-                  print("BRIDGE_SKIPPED: unsupported role '" + role + "'")
-                  raise SystemExit(0)
-
-              dispatch("claude.yml", {
-                  "role": role,
-                  "provider": "claude",
-                  "trace_id": trace_id,
-                  "cycle_id": cycle_id,
-                  "task_type": task_type,
-                  "task": body[:60000],
-              })
-              raise SystemExit(0)
-
-          print("BRIDGE_SKIPPED: no recognized @dispatch or @claude+ROLE: format")
-          PY
+      - run: echo "DEPRECATED - use Cloudflare Worker /gpt-dispatch instead. See infrastructure/cloudflare-worker/telegram-webhook.js"
