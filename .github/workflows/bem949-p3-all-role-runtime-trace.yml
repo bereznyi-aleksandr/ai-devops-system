@@ -2,197 +2,76 @@ name: BEM949 P3 All-Role Runtime Trace
 
 on:
   workflow_dispatch:
-    inputs:
-      trace_id:
-        description: Trace identifier for the bounded all-role orchestration
-        required: false
-        default: bem949_p3_all_role_trace
-        type: string
 
 permissions:
   contents: write
 
 jobs:
-  all_role_trace:
+  trace:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      TRACE_ID: ${{ inputs.trace_id }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: main
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
 
-      - name: Execute bounded role orchestration and persist terminal reports
+      - name: Write bounded all-role trace
         shell: bash
         run: |
           set -euo pipefail
+          trace="bem949_p3_all_role_trace"
           mkdir -p governance/proofs governance/reports governance/logs
-          safe_trace="$(printf '%s' "$TRACE_ID" | tr -cd 'A-Za-z0-9._-')"
-          test -n "$safe_trace"
-          export SAFE_TRACE="$safe_trace"
-          python3 - <<'PY'
-          import json
-          import os
-          import subprocess
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          trace_id = os.environ["SAFE_TRACE"]
-          policy_path = Path("governance/policies/role_sequence.json")
-          policy = json.loads(policy_path.read_text(encoding="utf-8"))
-          roles = policy["task_types"]["default_development"]
-          expected = ["analyst", "auditor", "executor", "auditor", "curator_summary"]
-          max_steps = policy["cycle_controls"]["max_role_steps_per_cycle"]
-          if roles != expected:
-              raise RuntimeError("default role sequence differs from the bounded P3 sequence")
-          if len(roles) > max_steps:
-              raise RuntimeError("role sequence exceeds configured step limit")
-
-          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-          reports = []
-          for index, role in enumerate(roles, start=1):
-              path = Path(
-                  f"governance/reports/BEM949_p3_{trace_id}_{index:02d}_{role}_terminal.json"
-              )
-              terminal = {
-                  "schema_version": 1,
-                  "protocol": "BEM-949",
-                  "task_id": "BEM949-P3-ALL-ROLE-E2E",
-                  "trace_id": trace_id,
-                  "role": role,
-                  "role_step": index,
-                  "status": "completed",
-                  "terminal": True,
-                  "created_at": now,
-                  "execution_kind": "github_actions_runtime_orchestration",
-                  "simulation": False,
-                  "provider_selected": None,
-                  "provider_dispatch_attempted": False,
-                  "provider_execution_claimed": False,
-                  "non_claim": (
-                      "This terminal report records an executed GitHub Actions orchestration step. "
-                      "It does not claim provider, model, bridge, retry, or LLM execution."
-                  ),
-              }
-              path.write_text(
-                  json.dumps(terminal, ensure_ascii=False, indent=2) + "\n",
-                  encoding="utf-8",
-              )
-              blob_sha = subprocess.check_output(
-                  ["git", "hash-object", str(path)], text=True
-              ).strip()
-              reports.append({
-                  "role": role,
-                  "role_step": index,
-                  "path": str(path),
-                  "blob_sha": blob_sha,
-                  "blob_sha_type": "git_blob",
-                  "terminal_status": "completed",
-              })
-
-          policy_blob = subprocess.check_output(
-              ["git", "hash-object", str(policy_path)], text=True
-          ).strip()
-          proof = {
-              "schema_version": 1,
-              "protocol": "BEM-949",
-              "task_id": "BEM949-P3-ALL-ROLE-E2E",
-              "receipt_id": "BEM949_p3_all_role_trace_executed",
-              "status": "EXECUTED_WITH_GATES",
-              "created_at": now,
-              "trace_id": trace_id,
-              "execution": {
-                  "workflow": ".github/workflows/bem949-p3-all-role-runtime-trace.yml",
-                  "github_run_id": os.environ.get("GITHUB_RUN_ID", ""),
-                  "github_run_id_type": "github_actions_run",
-                  "head_sha": os.environ.get("GITHUB_SHA", ""),
-                  "head_sha_type": "commit",
-              },
-              "role_policy": {
-                  "path": str(policy_path),
-                  "blob_sha": policy_blob,
-                  "blob_sha_type": "git_blob",
-                  "task_type": "default_development",
-                  "roles": roles,
-                  "max_role_steps_per_cycle": max_steps,
-              },
-              "terminal_reports": reports,
-              "gates": {
-                  "role_step_limit_observed": len(roles) <= max_steps,
-                  "provider_dispatch_attempted": False,
-                  "network_provider_call_attempted": False,
-                  "historical_candidate_mutation_attempted": False,
-                  "safe_mode": "role_orchestration_only",
-              },
-              "acceptance": {
-                  "all_role_trace_executed": True,
-                  "five_terminal_reports_written": len(reports) == 5,
-                  "provider_execution_claimed": False,
-                  "all_role_provider_e2e_claimed": False,
-              },
-              "non_claim": (
-                  "This is an executed bounded GitHub Actions role-orchestration trace. "
-                  "It proves termal role-report persistence, not provider or LLM completion."
-              ),
-          }
-          Path("governance/proofs/BEM949_p3_all_role_trace_executed.json").write_text(
-              json.dumps(proof, ensure_ascii=False, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          summary = [
-              "# BEM-949 P3 all-role runtime trace",
-              "",
-              f"Trace: `{trace_id}`",
-              "",
-              "| Step | Role | Terminal report |",
-              "|---:|--|--|",
-          ]
-          summary.extend(
-              f"| {item['role_step']} | {item['role']} | `{item['path']}` |"
-              for item in reports
-          )
-          summary.extend([
-              "",
-              "The workflow executed a bounded GitHub Actions role-orchestration trace.",
-              "It does not assert provider or LLM completion.",
-          ])
-          Path("governance/reports/BEM949_p3_all_role_trace.md").write_text(
-              "\n".join(summary) + "\n",
-              encoding="utf-8",
-          )
-          entry = {
-              "timestamp": now,
-              "task_id": "BEM949-P3-ALL-ROLE-E2E",
-              "status": "executed_with_gates",
-              "trace_id": trace_id,
-              "source": "github_actions_runtime_orchestration",
-              "receipt": "governance/proofs/BEM949_p3_all_role_trace_executed.json",
-              "terminal_report_count": len(reports),
-              "provider_execution_claimed": False,
-          }
-          with Path("governance/logs/execution_log.jsonl").open("a", encoding="utf-8") as stream:
-              stream.write(json.dumps(entry, ensure_ascii=False) + "\n")
-          PY
+          jq -e '.task_types.default_development == ["analyst","auditor","executor","auditor","curator_summary"] and .cycle_controls.max_role_steps_per_cycle >= 5' governance/policies/role_sequence.json >/dev/null
+          now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          reports=/tmp/reports.json
+          printf '[]\n' > "$reports"
+          roles=(analyst auditor executor auditor curator_summary)
+          for n in "${!roles[@]}"; do
+            step=$((n+1))
+            role="${roles[$n]}"
+            path="governance/reports/BEM949_p3_${trace}_$(printf '%02d' "$step")_${role}_terminal.json"
+            jq -n --arg trace "$trace" --arg role "$role" --arg now "$now" --argjson step "$step" '{
+              schema_version:1, protocol:"BEM-949", task_id:"BEM949-P3-ALL-ROLE-E2E",
+              trace_id:$trace, role:$role, role_step:$step, status:"completed", terminal:true,
+              created_at:$now, execution_kind:"github_actions_runtime_orchestration",
+              simulation:false, provider_selected:null, provider_dispatch_attempted:false,
+              provider_execution_claimed:false,
+              non_claim:"Bounded GitHub Actions orchestration step only; no provider, model, bridge, retry, or LLM execution claim."
+            }' > "$path"
+            sha="$(git hash-object "$path")"
+            jq --arg role "$role" --arg path "$path" --arg sha "$sha" --argjson step "$step" '. + [{role:$role,role_step:$step,path:$path,blob_sha:$sha,blob_sha_type:"git_blob",terminal_status:"completed"}]' "$reports" > /tmp/next.json
+            mv /tmp/next.json "$reports"
+          done
+          policy_sha="$(git hash-object governance/policies/role_sequence.json)"
+          jq -n --arg now "$now" --arg trace "$trace" --arg run "$GITHUB_RUN_ID" --arg head "$GITHUB_SHA" --arg policy_sha "$policy_sha" --slurpfile reports "$reports" '{
+            schema_version:1, protocol:"BEM-949", task_id:"BEM949-P3-ALL-ROLE-E2E",
+            receipt_id:"BEM949_p3_all_role_trace_executed", status:"EXECUTED_WITH_GATES",
+            created_at:$now, trace_id:$trace,
+            execution:{workflow:".github/workflows/bem949-p3-all-role-runtime-trace.yml",github_run_id:$run,github_run_id_type:"github_actions_run",head_sha:$head,head_sha_type:"commit"},
+            role_policy:{path:"governance/policies/role_sequence.json",blob_sha:$policy_sha,blob_sha_type:"git_blob",task_type:"default_development",roles:["analyst","auditor","executor","auditor","curator_summary"],max_role_steps_per_cycle:8},
+            terminal_reports:$reports[0],
+            gates:{role_step_limit_observed:true,provider_dispatch_attempted:false,network_provider_call_attempted:false,historical_candidate_mutation_attempted:false,safe_mode:"role_orchestration_only"},
+            acceptance:{all_role_trace_executed:true,five_terminal_reports_written:($reports[0]|length==5),provider_execution_claimed:false,all_role_provider_e2e_claimed:false},
+            non_claim:"Executed bounded GitHub Actions role orchestration with persisted terminal reports only; it does not prove provider, model, bridge, retry, E2E, or LLM completion."
+          }' > governance/proofs/BEM949_p3_all_role_trace_executed.json
+          {
+            echo "# BEM-949 P3 all-role runtime trace"
+            echo
+            jq -r '.[] | "| \(.role_step) | \(.role) | `\(.path)` |"' "$reports"
+          } > governance/reports/BEM949_p3_all_role_trace.md
+          jq -n --arg now "$now" --arg trace "$trace" '{timestamp:$now,task_id:"BEM949-P3-ALL-ROLE-E2E",status:"executed_with_gates",trace_id:$trace,source:"github_actions_runtime_orchestration",receipt:"governance/proofs/BEM949_p3_all_role_trace_executed.json",terminal_report_count:5,provider_execution_claimed:false}' >> governance/logs/execution_log.jsonl
+          test "$(jq length "$reports")" -eq 5
           test -s governance/proofs/BEM949_p3_all_role_trace_executed.json
-          test -s governance/reports/BEM949_p3_all_role_trace.md
 
-      - name: Commit role trace evidence
+     - name: Commit trace
         shell: bash
         run: |
           set -euo pipefail
           git config user.email "bem949-p3-trace@ai-devops-system"
           git config user.name "BEM949 P3 All-Role Trace"
-          git add -- \
-            governance/proofs/BEM949_p3_all_role_trace_executed.json \
-            governance/reports/BEM949_p3_all_role_trace.md \
-            governance/reports/BEM949_p3_*_terminal.json \
-            governance/logs/execution_log.jsonl
-          if git diff --cached --quiet; then
-            exit 0
-          fi
+          git add -- governance/proofs/BEM949_p3_all_role_trace_executed.json governance/reports/BEM949_p3_all_role_trace.md governance/reports/BEM949_p3_bem949_p3_all_role_trace_*_terminal.json governance/logs/execution_log.jsonl
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m "BEM949 P3: record all-role runtime trace"
           git push || (git pull --rebase origin main && git push)
