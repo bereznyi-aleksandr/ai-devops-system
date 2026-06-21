@@ -1,0 +1,57 @@
+name: BEM949 P3 P05 Failure Log Collector
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Collect recent failed target logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          for item in \
+            "bem949-p05-context-typography-repair.yml:BEM949_p05_context_typography_repair_latest_failed.log" \
+            "bem949-p3-all-role-runtime-trace.yml:BEM949_p3_all_role_runtime_trace_latest_failed.log"; do
+            workflow="${item%%:*}"
+            output="${item#*:}"
+            run_id="$(gh run list --repo "$REPO" --workflow "$workflow" --limit 10 --json databaseId,status,conclusion --jq '[.[] | select(.status == "completed" and .conclusion == "failure")][0].databaseId // empty' || true)"
+            if [ -n "$run_id" ]; then
+              gh run view "$run_id" --repo "$REPO" --log-failed 2>/dev/null | tail -n 220 > "governance/proofs/$output" || true
+            else
+              printf '%s\n' "No completed failed run returned by GitHub Actions API." > "governance/proofs/$output"
+            fi
+            test -s "governance/proofs/$output"
+          done
+
+      - name: Commit failure diagnostics
+        shell: bash
+        run: |
+          set -euo pipefall
+          git config user.email "bem949-log-collector@ai-devops-system"
+          git config user.name "BEM949 Failure Log Collector"
+          git add -- \
+            governance/proofs/BEM949_p05_context_typography_repair_latest_failed.log \
+            governance/proofs/BEM949_p3_all_role_runtime_trace_latest_failed.log
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949: collect P05 and P3 failed run logs"
+          git push || (git pull --rebase origin main && git push)
