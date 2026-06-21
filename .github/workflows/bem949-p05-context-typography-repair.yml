@@ -1,0 +1,114 @@
+name: BEM949 P0.5 Context Typography Repair
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Repair ingress typography without changing semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs governance/logs
+          before_blob="$(git hash-object AGENT_CONTEXT.md)"
+          export BEFORE_BLOB="$before_blob"
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          context = Path("AGENT_CONTEXT.md")
+          before = context.read_text(encoding="utf-8")
+          corrected = "Operational ingress: `Telegram → Cloudflare Worker → provider-router.yml → claude.yml`."
+          candidates = (
+              "Operational ingress: `Telegram → Cloudflare Worker ₒ provider-router.yml → claude.yml`.",
+              "Operational ingress: `Telegram → Cloudflare Worker ₀ provider-router.yml → claude.yml`.",
+          )
+          after = before
+          matched = None
+          for candidate in candidates:
+              if candidate in after:
+                  after = after.replace(candidate, corrected, 1)
+                  matched = candidate
+                  break
+          if matched is None:
+              raise RuntimeError("expected ingress typography variant was not present")
+          context.write_text(after, encoding="utf-8")
+          payload = {
+              "schema_version": 1,
+              "protocol": "BEM-949",
+              "task_id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
+              "receipt_id": "BEM949_p05_context_typography_repair",
+              "status": "REPAIRED",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "file": "AGENT_CONTEXT.md",
+              "before_blob_sha": os.environ["BEFORE_BLOB"],
+              "before_blob_sha_type": "git_blob",
+              "replacement": {
+                  "matched": matched,
+                  "corrected": corrected,
+                  "semantic_change": False,
+              },
+              "checks": {
+                  "only_ingress_typography_targeted": True,
+                  "canonical_root_context_retained": True,
+                  "provider_completion_claimed": False,
+              },
+          }
+          Path("governance/proofs/BEM949_p05_context_typography_repair_receipt.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+          after_blob="$(git hash-object AGENT_CONTEXT.md)"
+          export AFTER_BLOB="$after_blob"
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          log_path = Path("governance/logs/execution_log.jsonl")
+          entry = {
+              "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "task_id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
+              "status": "done",
+              "trace_id": "bem949_p05_context_typography_repair",
+              "source": "executed_github_actions_repair",
+              "before_blob_sha": os.environ["BEFORE_BLOB"],
+              "before_blob_sha_type": "git_blob",
+              "after_blob_sha": os.environ["AFTER_BLOB"],
+              "after_blob_sha_type": "git_blob",
+              "receipt": "governance/proofs/BEM949_p05_context_typography_repair_receipt.json",
+              "scope": "ingress typography only",
+          }
+          with log_path.open("a", encoding="utf-8") as stream:
+              stream.write(json.dumps(entry, ensure_ascii=False) + "\n")
+          PY
+          test -s AGENT_CONTEXT.md
+          test -s governance/proofs/BEM949_p05_context_typography_repair_receipt.json
+
+      - name: Commit repair evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p05-repair@ai-devops-system"
+          git config user.name "BEM949 P0.5 Typography Repair"
+          git add -- AGENT_CONTEXT.md governance/proofs/BEM949_p05_context_typography_repair_receipt.json governance/logs/execution_log.jsonl
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P0.5: repair ingress typography"
+          git push || (git pull --rebase origin main && git push)
