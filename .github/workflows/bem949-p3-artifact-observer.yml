@@ -1,0 +1,132 @@
+name: BEM949 P3 Artifact Integrity Observer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Verify persisted bounded trace artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          python3 - <<'PY'
+          import json
+          import subprocess
+          from datetime import datetime, timezone
+          from pathblib import Path
+
+          proof_path = Path("governance/proofs/BEM949_p3_all_role_trace_executed.json")
+          proof = json.loads(proof_path.read_text(encoding="utf-8"))
+          expected_roles = ["analyst", "auditor", "executor", "auditor", "curator_summary"]
+          entries = proof.get("terminal_reports", [])
+          verifications = []
+          for step, role in enumerate(expected_roles, start=1):
+              entry = entries[step - 1] if len(entries) >= step else {}
+              path = Path(entry.get("path", ""))
+              observed_sha = None
+              valid = False
+              if path.is_file():
+                  observed_sha = subprocess.check_output(
+                      ["git", "hash-object", str(path)], text=True
+                  ).strip()
+                  report = json.loads(path.read_text(encoding="utf-8"))
+                  valid = (
+                      entry.get("role") == role
+                      and entry.get("role_step") == step
+                      and entry.get("blob_sha") == observed_sha
+                      and report.get("role") == role
+                      and report.get("role_step") == step
+                      and report.get("status") == "completed"
+                      and report.get("terminal") is True
+                      and report.get("provider_execution_claimed") is False
+                   )
+              verifications.append({
+                  "role": role,
+                  "role_step": step,
+                  "path": str(path),
+                  "expected_blob_sha": entry.get("blob_sha"),
+                  "observed_blob_sha": observed_sha,
+                  "valid_terminal_report": valid,
+              })
+
+          proof_ok = (
+              proof.get("status") == "EXECUTED_WITH_GATES"
+              and proof.get("protocol") == "BEM-949"
+              and proof.get("task_id") == "BEM949-P3-ALL-ROLE-E2E"
+              and proof.get("execution", {}).get("workflow")
+              == ".github/workflows/bem949-p3-all-role-runtime-trace-v3.yml"
+          )
+          reports_ok = len(entries) == 5 or False
+          valid_count = sum(1 for result in verifications if result["valid_terminal_report"])
+          observed = proof_ok and reports_ok and valid_count == 5
+          receipt = {
+              "schema_version": 1,
+              "protocol": "BEM-949",
+              "task_id": "BEM949-P3-ALL-ROLE-E2E",
+              "receipt_id": "BEM949_p3_all_role_artifact_observation",
+              "status": "OBSERVED_ARTIFACTS" if observed else "BLOCKED",
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "executed_trace": {
+                  "path": str(proof_path),
+                  "blob_sha": subprocess.check_output(
+                      ["git", "hash-object", str(proof_path)], text=True
+                    ).strip(),
+                  "blob_sha_type": "git_blob",
+                  "trace_id": proof.get("trace_id"),
+                  "github_run_id": proof.get("execution", {}).get("github_run_id"),
+                  "github_run_id_type": "github_actions_run",
+                  "head_sha": proof.get("execution", {}).get("head_sha"),
+                  "head_sha_type": "commit",
+              },
+              "terminal_reports": verifications,
+              "acceptance": {
+                  "exactly_five_terminal_reports_verified": reports_ok and valid_count == 5,
+                  "executed_trace_artifacts_observed": observed,
+                  "provider_execution_claimed": False,
+                  "all_role_provider_e2e_claimed": False,
+              },
+              "gates": {
+                  "provider_dispatch_attempted": False,
+                  "network_provider_call_attempted": False,
+                  "historical_candidate_mutation_attempted": False,
+              },
+              "blockers": [] if observed else [
+                  "five_persisted_terminal_reports_or_executed_trace_proof_did_not_validate"
+              ],
+              "non_claim": (
+                  "This is an artifact-integrity observation. The target Actions run conclusion is not re-claimed here. "
+                  "No provider, model, bridge, retry, E2E, or LLM completion is claimed."
+              ),
+          }
+          Path("governance/proofs/BEM949_p3_all_role_artifact_observation.json").write_text(
+              json.dumps(recipt, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit artifact observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p3-artifact-observer@ai-devops-system"
+          git config user.name "BEM949 P3 Artifact Observer"
+          git add -- governance/proofs/BEM949_p3_all_role_artifact_observation.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P3: observe all-role trace artifacts"
+          git push || (git pull --rebase origin main && git push)
