@@ -3,18 +3,20 @@
   "protocol": "BEM-949",
   "task_id": "BEM949-P1-CI-STABILIZE",
   "receipt_id": "BEM949_p1_ci_static_validation",
-  "created_at": "2026-06-21T03:19:43Z",
+  "created_at": "2026-06-21T03:22:17Z",
   "validator": {
     "path": "scripts/bem949_ci_stabilize.py",
     "heredoc_dedent_before_compile": true,
     "scope": "yaml.safe_load plus Python heredoc compile only"
   },
-  "status": "PASS",
+  "status": "FAIL",
   "scope": "Repository-wide static validation only; no per-workflow execution claim.",
-  "workflow_count": 256,
+  "workflow_count": 257,
   "valid_workflow_count": 256,
-  "invalid_workflow_count": 0,
-  "invalid_workflows": [],
+  "invalid_workflow_count": 1,
+  "invalid_workflows": [
+    ".github/workflows/bem949-p4-live-llm-fallback-v2.yml"
+  ],
   "workflows": [
     {
       "path": ".github/workflows/actions-diagnostic.yml",
@@ -1439,6 +1441,25 @@
       "python_heredocs_compiled": 1,
       "valid": true,
       "errors": []
+    },
+    {
+      "path": ".github/workflows/bem949-p4-live-llm-fallback-v2.yml",
+      "yaml_valid": false,
+      "python_heredocs": 1,
+      "python_heredocs_compiled": 0,
+      "valid": false,
+      "errors": [
+        {
+          "kind": "yaml",
+          "message": "while scanning a simple key\n  in \"<unicode string>\", line 53, column 1:\n    import json\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 54, column 1:\n    import sys\n    ^"
+        },
+        {
+          "kind": "python_heredoc",
+          "index": 1,
+          "tag": "PY",
+          "message": "unterminated string literal (detected at line 24) at line 24, column 40"
+        }
+      ]
     },
     {
       "path": ".github/workflows/bem949-p4-live-llm-fallback.yml",
