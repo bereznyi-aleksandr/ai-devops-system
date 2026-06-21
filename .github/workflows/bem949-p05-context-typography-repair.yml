@@ -15,9 +15,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
 
-      - name: Repair ingress typography without changing semantics
+      - name: Repair the single ingress typography artifact
         shell: bash
         run: |
           set -euo pipefail
@@ -30,24 +31,14 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          context = Path("AGENT_CONTEXT.md")
-          before = context.read_text(encoding="utf-8")
-          corrected = "Operational ingress: `Telegram → Cloudflare Worker → provider-router.yml → claude.yml`."
-          candidates = (
-              "Operational ingress: `Telegram → Cloudflare Worker ₒ provider-router.yml → claude.yml`.",
-              "Operational ingress: `Telegram → Cloudflare Worker ₀ provider-router.yml → claude.yml`.",
-          )
-          after = before
-          matched = None
-          for candidate in candidates:
-              if candidate in after:
-                  after = after.replace(candidate, corrected, 1)
-                  matched = candidate
-                  break
-          if matched is None:
-              raise RuntimeError("expected ingress typography variant was not present")
-          context.write_text(after, encoding="utf-8")
-          payload = {
+          context_path = Path("AGENT_CONTEXT.md")
+          before = context_path.read_text(encoding="utf-8")
+          count = before.count("ₒ")
+          if count != 1:
+              raise RuntimeError(f"expected exactly one ingress artifact, found {count}")
+          after = before.replace("ₒ", "→")
+          context_path.write_text(after, encoding="utf-8")
+          receipt = {
               "schema_version": 1,
               "protocol": "BEM-949",
               "task_id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
@@ -58,18 +49,19 @@ jobs:
               "before_blob_sha": os.environ["BEFORE_BLOB"],
               "before_blob_sha_type": "git_blob",
               "replacement": {
-                  "matched": matched,
-                  "corrected": corrected,
+                  "from": "ₒ",
+                  "to": "→",
+                  "occurrences_repaired": 1,
                   "semantic_change": False,
               },
               "checks": {
-                  "only_ingress_typography_targeted": True,
-                  "canonical_root_context_retained": True,
+                  "single_target_character_repaired": True,
+                  "canonical_context_retained": True,
                   "provider_completion_claimed": False,
               },
           }
           Path("governance/proofs/BEM949_p05_context_typography_repair_receipt.json").write_text(
-              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
               encoding="utf-8",
           )
           PY
@@ -80,7 +72,7 @@ jobs:
           import os
           from datetime import datetime, timezone
           from pathlib import Path
-          log_path = Path("governance/logs/execution_log.jsonl")
+
           entry = {
               "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
               "task_id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
@@ -92,9 +84,9 @@ jobs:
               "after_blob_sha": os.environ["AFTER_BLOB"],
               "after_blob_sha_type": "git_blob",
               "receipt": "governance/proofs/BEM949_p05_context_typography_repair_receipt.json",
-              "scope": "ingress typography only",
+              "scope": "single ingress typography character only",
           }
-          with log_path.open("a", encoding="utf-8") as stream:
+          with Path("governance/logs/execution_log.jsonl").open("a", encoding="utf-8") as stream:
               stream.write(json.dumps(entry, ensure_ascii=False) + "\n")
           PY
           test -s AGENT_CONTEXT.md
@@ -106,7 +98,10 @@ jobs:
           set -euo pipefail
           git config user.email "bem949-p05-repair@ai-devops-system"
           git config user.name "BEM949 P0.5 Typography Repair"
-          git add -- AGENT_CONTEXT.md governance/proofs/BEM949_p05_context_typography_repair_receipt.json governance/logs/execution_log.jsonl
+          git add -- \
+            AGENT_CONTEXT.md \
+            governance/proofs/BEM949_p05_context_typography_repair_receipt.json \
+            governance/logs/execution_log.jsonl
           if git diff --cached --quiet; then
             exit 0
           fi
