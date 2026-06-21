@@ -1,0 +1,92 @@
+name: Issue To Claude Governed Dispatch
+
+# Bridges issue-based task submission (which external LLM agents can
+# create via standard issue-write permissions) into a proper governed
+# workflow_dispatch call on claude.yml. Neither the ChatGPT Codex
+# Connector app nor the Claude GitHub PAT MCP tool surface exposes a
+# workflow_dispatch-creation API call directly - this bridge runs
+# inside GitHub Actions (full API access) and performs that call.
+#
+# Does NOT replace claude.yml's existing issues/issue_comment legacy
+# trigger; that one still fires in parallel (harmless, writes no
+# conflicting evidence). This workflow performs the real governed
+# dispatch with the six structured inputs claude.yml requires.
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: |
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@claude') && contains(github.event.issue.body, 'ROLE:')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && contains(github.event.comment.body, 'ROLE:'))
+    steps:
+      - name: Parse structured fields and dispatch claude.yml
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+          BODY: ${{ github.event_name == 'issues' && github.event.issue.body || github.event.comment.body }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import urllib.request
+
+          body = os.environ.get("BODY", "")
+
+          def field(name, default=""):
+              m = re.search(rf"^{name}:\s*(.+)$", body, re.MULTILINE)
+              return m.group(1).strip() if m else default
+
+          role = field("ROLE", "analyst").lower()
+          trace_id = field("TRACE_ID")
+          cycle_id = field("CYCLE_ID") or trace_id
+          task_type = field("TASK_TYPE", "default_development")
+
+          if not trace_id:
+              print("BRIDGE_SKIPPED: no TRACE_ID found in body")
+              raise SystemExit(0)
+          if role not in ("curator", "analyst", "auditor", "executor"):
+              print("BRIDGE_SKIPPED: unsupported role '" + role + "'")
+              raise SystemExit(0)
+
+          task = body
+
+          payload = json.dumps({
+              "ref": "main",
+              "inputs": {
+                  "role": role,
+                  "provider": "claude",
+                  "trace_id": trace_id,
+                  "cycle_id": cycle_id,
+                  "task_type": task_type,
+                  "task": task[:60000],
+              }
+          }).encode("utf-8")
+
+          req = urllib.request.Request(
+              "https://api.github.com/repos/" + os.environ["REPO"] + "/actions/workflows/claude.yml/dispatches",
+              data=payload,
+              headers={
+                  "Authorization": "Bearer " + os.environ["GH_TOKEN"],
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json",
+                  "User-Agent": "ai-devops-issue-to-claude-bridge",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req) as resp:
+              print("BRIDGE_DISPATCHED: HTTP " + str(resp.status) + " role=" + role + " trace_id=" + trace_id)
+          PY
