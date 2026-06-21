@@ -1,16 +1,16 @@
 {
-  "version": 31,
-  "updated_at": "2026-06-20T17:31:00Z",
+  "version": 32,
+  "updated_at": "2026-06-21T02:41:00Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM949-P2-FUNCTIONAL-RESTORE",
-  "system_state": "BEM949_P2_FUNCTIONAL_BASELINE",
+  "current_task": "BEM949-P3-ALL-ROLE-E2E",
+  "system_status": "BEM949_P3_ALL_ROLE_E2E",
   "release_status": "VERIFIED_WITH_LIMITATIONS",
   "protocol": "BEM-949",
   "protocol_path": "governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
   "progress": {
-    "tasks_done": 1,
+    "tasks_done": 2,
     "tasks_total": 8,
-    "percent": 12.5
+    "percent": 25.0
   },
   "tasks": [
     {
@@ -27,7 +27,7 @@
       "acceptance": "active workflow static validation and manual-dispatch executed evidence",
       "attempts": 3,
       "blocker": "run_level_manual_dispatch_evidence_not_observable_from_repository_with_current_control_surface",
-      "blocker_detail": "Three result-changing approaches were attempted: target dispatch, completion observer, and GitHub Actions API run inspector. The expected target/observer receipts were not observable by repository re-read. HTTP dispatch acknowledgements were not converted into completion claims.",
+      "blocker_detail": "Three result-changing approaches were attempted: target dispatch, completion observer, and GitHub Actions API run inspector. The expected target-observer receipts were not observable by repository re-read. HTTP dispatch acknowledgements were not converted into completion claims.",
       "preserved_evidence": [
         "governance/proofs/BEM949_p1_dispatch_watch.json",
         "governance/proofs/BEM949_p1_ci_static_validation.json",
@@ -37,14 +37,20 @@
     },
     {
       "id": "BEM949-P2-FUNCTIONAL-RESTORE",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "receipt": "governance/proofs/BEM949_p2_functional_restore_receipt.json",
+      "receipt_sha": "de2f6e62c11132188a275530cd5623eaf5810b09",
+      "receipt_sha_type": "git_blob",
       "acceptance": "before/after table and a safe-gated non-validator trace",
-      "preflight_receipt": "governance/proofs/BEM949_p2_functional_baseline.json"
+      "completion_scope": "safe_gated_non_validator_trace_only",
+      "target_run_id": "27891197032",
+      "target_run_id_type": "github_actions_run",
+      "functional_restore_claimed": false,
+      "provider_completion_claimed": false
     },
     {
       "id": "BEM949-P3-ALL-ROLE-E2E",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "receipt": "governance/proofs/BEM949_p3_all_role_e2e_receipt.json",
       "acceptance": "one unsimulated all-role trace with terminal reports"
     },
@@ -57,7 +63,7 @@
     {
       "id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
       "status": "PENDING",
-      "receipt": "governance/proofs/BEM949_p5_rule_enforcement_complete_recipt.json",
+      "receipt": "governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json",
       "acceptance": "RULE-004..010 positive and negative runtime enforcement evidence"
     },
     {
@@ -90,5 +96,5 @@
     "max_outcome_changing_attempts": 3,
     "broad_release_pass_requires_external_audit": true
   },
-  "next_action": "Read the P2 trace-bound functional baseline from reachable Git history, then recover the smallest safe-gated functional workflow without claiming a provider completion."
+  "next_action": "Execute a trace-bound all-role workflow with terminal role reports. Do not claim provider, model, bridge, retry, or E2E completion without terminal trace evidence."
 }
