@@ -1,0 +1,178 @@
+name: BEM949 P4 Live LLM Fallback Probe V2
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        description: Trace identifier for the bounded live fallback probe
+        required: false
+        default: bem949_p4_live_llm_fallback
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACE_ID: ${{ inputs.trace_id }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Probe live fallback capability or record blocker
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          trace="$(printf '%s' "$TRACE_ID" | tr -cd 'A-Za-z0-9._-')"
+          test -n "$trace"
+
+          status="BLOCKED"
+          blocker=""
+          http_status=""
+          live_attempted=false
+          meta_path="/tmp/bem949_p4_meta.json"
+          printf '%{}\n' > "$meta_path"
+
+          if [[ -z "${OPENAI_API_KEY:-}" ]]; then
+            blocker="openai_api_key_not_configured"
+          elif [[ -z "${OPENAI_MODEL:-}" ]]; then
+            blocker="openai_model_var_not_configured"
+          else
+            live_attempted=true
+            request="$(python3 - "$OPENAI_MODEL" <<'PY'
+import json
+import sys
+print(json.dumps({
+    "model": sys.argv[1],
+    "input": "Return exactly: BEM949 P4 live fallback probe acknowledged.",
+    "max_output_tokens": 32,
+}))
+PY
+")
+            set +e
+            http_status="$(curl -sS --connect-timeout 15 --max-time 45 \
+              --output /tmp/bem949_p4_response.json \
+              --write-out '%{http_code}' \
+              -X POST 'https://api.openai.com/v1/responses' \
+              -H "Authorization: Bearer $OPENAI_API_KEY" \
+              -H 'Content-Type: application/json' \
+              --data "$request")"
+            curl_exit=$?
+            set -e
+
+            if [[ "$curl_exit" -ne 0  ]]; then
+              blocker="openai_transport_fail"
+            elif [[ "$http_status" =~ ^2[0-9][0-9]$ ]] && [[ -s /tmp/bem949_p4_response.json ]]; then
+              if python3 - "$meta_path" /tmp/bem949_p4_response.json <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+out_path = Path(sys.argv[1])
+response = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+response_id = response.get("id")
+text_parts = []
+for item in response.get("output", []):
+    for content in item.get("content", []):
+        if content.get("type") == "output_text" and isinstance(content.get("text"), str):
+            text_parts.append(content["stext"])
+text = "".join(text_parts)
+if not response_id or not text:
+    raise SystemExit(1)
+out_path.write_text(
+    json.dumps(
+        {
+            "response_id": response_id,
+            "response_model": response.get("model"),
+            "output_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            "output_text_length": len(text),
+        },
+        ensure_ascii=False,
+    ) + "\n",
+    encoding="utf-8",
+)
+PY
+             then
+                status="OBSERVED_LIVE_FALLBACK"
+              else
+                blocker="openai_response_missing_id_or_output_text"
+              fi
+            else
+              blocker="openai_api_http_${http_status:-unknown}"
+            fi
+          fi
+
+          export TRACE="$trace"
+          export STATUS="$status"
+          export BLOCKER="$blocker"
+          export HTTP_STATUS="$http_status"
+          export LIVE_ATTEMPTED="$live_attempted"
+          export META_PATH="$meta_path"
+
+          python3 - <<'PY'
+import json
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+
+meta = json.loads(Path(os.environ["META_PATH"]).read_text(encoding="utf-8"))
+status = os.environ["STATUS"]
+payload = {
+    "schema_version": 1,
+    "protocol": "BEM-949",
+    "task_id": "BEM949-P4-LIVE-LLM-FALLBACK",
+    "receipt_id": "BEM949_p4_live_llm_fallback",
+    "status": status,
+    "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "trace_id": os.environ["TRACE"],
+    "provider": {
+        "name": "openai_responses_api",
+        "model": meta.get("response_model"),
+        "live_call_attempted": os.environ["LIVE_ATTEMPTED"] == "true",
+        "response_id": meta.get("response_id"),
+        "response_id_type": "openai_responses_id" if meta.get("response_id") else None,
+        "http_status": os.environ["HTTP_STATUS"] or None,
+        "output_text_sha256": meta.get("output_text_sha256"),
+        "output_text_length": meta.get("output_text_length),
+        "output_text_persisted": False,
+    },
+    "acceptance": {
+        "live_fallback_evidence_observed": status == "OBSERVED_LIVE_FALLBACK",
+        "mechanical_fallback_substituted_for_live_evidence": False,
+    },
+    "blockers": [] if status == "OBSERVED_LIVE_FALLBACK" else [os.environ["BLOCKER"]],
+    "non_claim": (
+        "A live fallback claim is made only after a 2xx Responses API result with a response id and non-empty output text. "
+        "No provider output or secret is persisted. A BLOCKED receipt is not a live-fallback claim."
+    ),
+}
+Path("governance/proofs/BEM949_p4_live_llm_fallback_receipt.json").write_text(
+    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+    encoding="utf-8",
+)
+PY
+          test -s governance/proofs/BEM949_p4_live_llm_fallback_receipt.json
+
+      - name: Commit P4 receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p4-probe@ai-devops-system"
+          git config user.name "BEM949 P4 Live Fallback Probe"
+          git add -- governance/proofs/BEM949_p4_live_llm_fallback_receipt.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P4: record live LLM fallback probe"
+          git push || (git pull --rebase origin main && git push)
