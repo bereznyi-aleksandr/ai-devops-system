@@ -2,10 +2,19 @@
   "schema_version": 1,
   "protocol": "BEM-949",
   "receipt_id": "BEM949_p05_context_typography_repair_run_diagnostics",
-  "created_at": "2026-06-21T02:46:42Z",
+  "created_at": "2026-06-21T02:50:42Z",
   "target_workflow": ".github/workflows/bem949-p05-context-typography-repair.yml",
   "target_workflow_type": "workflow_path",
   "runs": [
+    {
+      "conclusion": "success",
+      "createdAt": "2026-06-21T02:49:10Z",
+      "databaseId": 27891395607,
+      "event": "workflow_dispatch",
+      "headSha": "37144a8d8d84de5228acb6008f1215967ad81ad7",
+      "status": "completed",
+      "updatedAt": "2026-06-21T02:49:27Z"
+    },
     {
       "conclusion": "failure",
       "createdAt": "2026-06-21T02:43:28Z",
@@ -17,13 +26,13 @@
     }
   ],
   "latest_run": {
-    "conclusion": "failure",
-    "createdAt": "2026-06-21T02:43:28Z",
-    "databaseId": 27891279250,
+    "conclusion": "success",
+    "createdAt": "2026-06-21T02:49:10Z",
+    "databaseId": 27891395607,
     "event": "workflow_dispatch",
-    "headSha": "2364ce840e96761e69e7be12b041915f9d85c199",
+    "headSha": "37144a8d8d84de5228acb6008f1215967ad81ad7",
     "status": "completed",
-    "updatedAt": "2026-06-21T02:43:42Z"
+    "updatedAt": "2026-06-21T02:49:27Z"
   },
   "checks": {
     "github_actions_api_query_attempted": true,

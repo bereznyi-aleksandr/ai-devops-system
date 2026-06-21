@@ -2,10 +2,19 @@
   "schema_version": 1,
   "protocol": "BEM-949",
   "receipt_id": "BEM949_p3_all_role_runtime_trace_run_diagnostics",
-  "created_at": "2026-06-21T02:46:42Z",
+  "created_at": "2026-06-21T02:50:42Z",
   "target_workflow": ".github/workflows/bem949-p3-all-role-runtime-trace.yml",
   "target_workflow_type": "workflow_path",
   "runs": [
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-06-21T02:49:15Z",
+      "databaseId": 27891397346,
+      "event": "workflow_dispatch",
+      "headSha": "378c8c7caa0ad4d04d978aa337165034d03da36d",
+      "status": "completed",
+      "updatedAt": "2026-06-21T02:49:29Z"
+    },
     {
       "conclusion": "failure",
       "createdAt": "2026-06-21T02:44:57Z",
@@ -18,12 +27,12 @@
   ],
   "latest_run": {
     "conclusion": "failure",
-    "createdAt": "2026-06-21T02:44:57Z",
-    "databaseId": 27891308382,
+    "createdAt": "2026-06-21T02:49:15Z",
+    "databaseId": 27891397346,
     "event": "workflow_dispatch",
-    "headSha": "deb72c24f9b87030e748ae3b6b95ae70807a39ce",
+    "headSha": "378c8c7caa0ad4d04d978aa337165034d03da36d",
     "status": "completed",
-    "updatedAt": "2026-06-21T02:45:13Z"
+    "updatedAt": "2026-06-21T02:49:29Z"
   },
   "checks": {
     "github_actions_api_query_attempted": true,
