@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
+  "receipt_id": "BEM949_p5_rule_enforcement_complete",
+  "created_at": "2026-06-22T02:16:45Z",
+  "trace_id": "bem949_p5_rule_enforcement",
+  "evidence_kind": "runtime_execution",
+  "runtime_execution_claim": true,
+  "execution": {
+    "executed_at": "2026-06-22T02:16:45Z",
+    "runner_path": "governance/runners/bem949_rule_enforcement_runner.py",
+    "runner_sha": "f867e5e7e5deea315a2351163393915f462131fcbbb3596a472ea040f3dc071b",
+    "runner_sha_type": "sha256_content",
+    "registry_path": "governance/state/rule_registry.json",
+    "registry_sha": "72f566aa04734e813ba3d2bcf3a5d69f8dc40a9442bd28ea217e77ccc71b6fa4",
+    "registry_sha_type": "sha256_content"
+  },
+  "rules": {
+    "positive_validation": {
+      "target_rules": [
+        "RULE-004",
+        "RULE-005",
+        "RULE-006",
+        "RULE-007",
+        "RULE-008",
+        "RULE-009",
+        "RULE-010"
+      ],
+      "checks": [
+        {
+          "rule_id": "RULE-004",
+          "owner": "OBJ-WRK-001",
+          "scope": "registry_validation",
+          "version": "1.0",
+          "required_fields_present": true
+        },
+        {
+          "rule_id": "RULE-005",
+          "owner": "OBJ-WRK-001",
+          "scope": "workspace_promotion",
+          "version": "1.0",
+          "required_fields_present": true
+        },
+        {
+          "rule_id": "RULE-006",
+          "owner": "OBJ-DIR-001",
+          "scope": "managed_channel",
+          "version": "1.0",
+          "required_fields_present": true
+        },
+        {
+          "rule_id": "RULE-007",
+          "owner": "OBJ-DIR-001",
+          "scope": "rule_update",
+          "version": "1.0",
+          "required_fields_present": true
+        },
+        {
+          "rule_id": "RULE-008",
+          "owner": "OBJ-WRK-001",
+          "scope": "testing_assignment",
+          "version": "1.0",
+          "required_fields_present": true
+        },
+        {
+          "rule_id": "RULE-009",
+          "owner": "OBJ-GD-001",
+          "scope": "director_governance",
+          "version": "1.0",
+          "required_fields_present": true
+        },
+        {
+          "rule_id": "RULE-010",
+          "owner": "OBJ-WRK-001",
+          "scope": "product_repository_feedback",
+          "version": "1.0",
+          "required_fields_present": true
+        }
+      ]
+    },
+    "negative_validation": [
+      {
+        "rule_id": "RULE-004",
+        "mutation": "remove_prohibited_action",
+        "rejected": true,
+        "observed_error": "RULE-004:missing_required_field:prohibited_action",
+        "expected_error": "RULE-004:missing_required_field:prohibited_action"
+      },
+      {
+        "rule_id": "RULE-005",
+        "mutation": "remove_prohibited_action",
+        "rejected": true,
+        "observed_error": "RULE-005:missing_required_field:prohibited_action",
+        "expected_error": "RULE-005:missing_required_field:prohibited_action"
+      },
+      {
+        "rule_id": "RULE-006",
+        "mutation": "remove_prohibited_action",
+        "rejected": true,
+        "observed_error": "RULE-006:missing_required_field:prohibited_action",
+        "expected_error": "RULE-006:missing_required_field:prohibited_action"
+      },
+      {
+        "rule_id": "RULE-007",
+        "mutation": "remove_prohibited_action",
+        "rejected": true,
+        "observed_error": "RULE-007:missing_required_field:prohibited_action",
+        "expected_error": "RULE-007:missing_required_field:prohibited_action"
+      },
+      {
+        "rule_id": "RULE-008",
+        "mutation": "remove_prohibited_action",
+        "rejected": true,
+        "observed_error": "RULE-008:missing_required_field:prohibited_action",
+        "expected_error": "RULE-008:missing_required_field:prohibited_action"
+      },
+      {
+        "rule_id": "RULE-009",
+        "mutation": "remove_prohibited_action",
+        "rejected": true,
+        "observed_error": "RULE-009:missing_required_field:prohibited_action",
+        "expected_error": "RULE-009:missing_required_field:prohibited_action"
+      },
+      {
+        "rule_id": "RULE-010",
+        "mutation": "remove_prohibited_action",
+        "rejected": true,
+        "observed_error": "RULE-010:missing_required_field:prohibited_action",
+        "expected_error": "RULE-010:missing_required_field:prohibited_action"
+      }
+    ]
+  },
+  "blockers": [],
+  "non_claim": "This receipt proves only the explicit RULE-004 through RULE-010 registry schema enforcement and mutation rejections executed here.",
+  "acceptance": {
+    "positive_runtime_evidence": true,
+    "negative_runtime_evidence": true,
+    "all_target_rules_enforced": true
+  },
+  "status": "PASS"
+}
