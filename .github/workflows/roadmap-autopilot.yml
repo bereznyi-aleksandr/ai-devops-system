@@ -1,0 +1,273 @@
+name: Roadmap Autopilot
+
+# BEM-949 | GitHub-native autonomous roadmap executor
+#
+# This workflow is the ONLY continuous execution channel.
+# ChatGPT Custom GPT Actions are NOT used for routine dispatch —
+# they require operator confirmation on every external call, which
+# violates the autonomy principle.
+#
+# How it works:
+#   1. Reads governance/roadmap/ACTIVE_QUEUE.json
+#   2. Finds next actionable PENDING or IN_PROGRESS task
+#   3. Dispatches the correct target workflow
+#   4. Writes a dispatch record (NOT a completion claim — HTTP 204 = accepted only)
+#   5. Waits for the target workflow to write its receipt/report
+#   6. Reads the receipt, updates the queue status
+#   7. If more tasks remain → re-dispatches self (self-continuing pipeline)
+#   8. Stops only on BLOCKED_OPERATOR_DECISION or empty queue
+#
+# Triggers:
+#   - workflow_run: fires after any listed workflow completes
+#     (target workflows write receipt → this picks up the next task)
+#   - workflow_dispatch: manual start or first-run boot
+#   - schedule: daily safety net in case workflow_run chain breaks
+
+on:
+  workflow_run:
+    workflows:
+      - "BEM949 P4 Live LLM Fallback Probe V2"
+      - "BEM949 P5 Rule Source Catalog"
+      - "Claude Code"
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      force_task_id:
+        description: 'Override: run specific task ID (leave empty for auto)'
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: 'Dry run: read queue and report next task without dispatching'
+        required: false
+        default: 'false'
+        type: string
+  schedule:
+    - cron: '0 6 * * *'  # daily safety net
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: roadmap-autopilot
+  cancel-in-progress: false
+
+jobs:
+  advance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          fetch-depth: 1
+
+      - name: Read queue and select next task
+        id: select
+        shell: bash
+        env:
+          FORCE_TASK_ID: ${{ inputs.force_task_id }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          QUEUE_PATH = Path("governance/roadmap/ACTIVE_QUEUE.json")
+          ENV_FILE = os.environ.get("GITHUB_ENV", "/dev/null")
+          OUTPUT_FILE = os.environ.get("GITHUB_OUTPUT", "/dev/null")
+
+          def write_env(k, v):
+              with open(ENV_FILE, "a") as f:
+                  f.write(f"{k}={v}\n")
+
+          def write_output(k, v):
+              with open(OUTPUT_FILE, "a") as f:
+                  f.write(f"{k}={v}\n")
+
+          if not QUEUE_PATH.exists():
+              print("AUTOPILOT: queue file not found — stopping")
+              write_output("action", "stop")
+              write_output("reason", "queue_file_not_found")
+              sys.exit(0)
+
+          queue = json.loads(QUEUE_PATH.read_text(encoding="utf-8"))
+          tasks = queue.get("tasks", [])
+          force = os.environ.get("FORCE_TASK_ID", "").strip()
+          dry_run = os.environ.get("DRY_RUN", "false").strip().lower() == "true"
+
+          # Task → workflow mapping
+          TASK_WORKFLOWS = {
+              "BEM949-P4-LIVE-LLM-FALLBACK": {
+                  "workflow_id": "bem949-p4-live-llm-fallback-v2.yml",
+                  "inputs_fn": lambda trace: {"trace_id": trace},
+              },
+              "BEM949-P5-RULE-ENFORCEMENT-COMPLETE": {
+                  "workflow_id": "bem949-p5-rule-source-catalog.yml",
+                  "inputs_fn": lambda trace: {"trace_id": trace},
+                  "subtask_note": "P5A source catalog only — P5 main enforcement requires separate runners per RULE",
+              },
+              "BEM949-P6-LEARNING-LOOP-DRILL": {
+                  "workflow_id": "claude.yml",
+                  "inputs_fn": lambda trace: {
+                      "role": "executor", "provider": "claude",
+                      "trace_id": trace, "cycle_id": trace,
+                      "task_type": "default_development",
+                      "task": "Execute BEM949-P6 Learning Loop Drill per governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md acceptance criteria.",
+                  },
+              },
+              "BEM949-P7-RELEASE-AUDIT-FINAL": {
+                  "workflow_id": "claude.yml",
+                  "inputs_fn": lambda trace: {
+                      "role": "auditor", "provider": "claude",
+                      "trace_id": trace, "cycle_id": trace,
+                      "task_type": "default_development",
+                      "task": "Execute BEM949-P7 Final Release Audit per governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md acceptance criteria.",
+                  },
+              },
+          }
+
+          # Find next actionable task
+          selected = None
+          for task in tasks:
+              tid = task.get("id", "")
+              status = task.get("status", "")
+              if force:
+                  if tid == force:
+                      selected = task
+                      break
+                  continue
+              # Skip non-actionable statuses
+              if status in ("DONE", "DONE_LIMITED_SCOPE"):
+                  continue
+              if status == "BLOCKED_OPERATOR_DECISION":
+                  print(f"AUTOPILOT: {tid} is BLOCKED_OPERATOR_DECISION — skipping (operator input required)")
+                  continue
+              if status in ("PENDING", "IN_PROGRESS"):
+                  if tid not in TASK_WORKFLOWS:
+                      print(f"AUTOPILOT: {tid} has no workflow mapping yet — skipping")
+                      continue
+                  selected = task
+                  break
+
+          if not selected:
+              print("AUTOPILOT: no actionable task found — queue complete or all blocked")
+              write_output("action", "stop")
+              write_output("reason", "no_actionable_task")
+              sys.exit(0)
+
+          tid = selected["id"]
+          mapping = TASK_WORKFLOWS[tid]
+          import datetime, hashlib, time
+          ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+          trace_id = f"autopilot_{tid.lower().replace('-','_')}_{ts}"
+          workflow_id = mapping["workflow_id"]
+          inputs = mapping["inputs_fn"](trace_id)
+
+          print(f"AUTOPILOT: selected task={tid} workflow={workflow_id} trace={trace_id}")
+          if mapping.get("subtask_note"):
+              print(f"AUTOPILOT NOTE: {mapping['subtask_note']}")
+
+          write_output("action", "dispatch")
+          write_output("task_id", tid)
+          write_output("workflow_id", workflow_id)
+          write_output("trace_id", trace_id)
+          write_output("dry_run", str(dry_run).lower())
+
+          # Write inputs as JSON for next step
+          Path("/tmp/autopilot_dispatch.json").write_text(
+              json.dumps({"workflow_id": workflow_id, "inputs": inputs}, ensure_ascii=False),
+              encoding="utf-8"
+          )
+          PY
+
+      - name: Dispatch target workflow
+        if: steps.select.outputs.action == 'dispatch' && steps.select.outputs.dry_run == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          dispatch = json.loads(Path("/tmp/autopilot_dispatch.json").read_text())
+          workflow_id = dispatch["workflow_id"]
+          inputs = dispatch["inputs"]
+
+          data = json.dumps({"ref": "main", "inputs": inputs}).encode("utf-8")
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/{workflow_id}/dispatches",
+              data=data,
+              headers={
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json",
+                  "User-Agent": "ai-devops-roadmap-autopilot",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req) as resp:
+              http_status = resp.status
+
+          # Write dispatch record (NOT a completion claim)
+          record = {
+              "dispatched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "workflow_id": workflow_id,
+              "trace_id": inputs.get("trace_id", "unknown"),
+              "http_status": http_status,
+              "meaning": "HTTP 204 = GitHub accepted dispatch request only. Workflow outcome unknown until receipt is written.",
+              "completion_claimed": False,
+          }
+          import pathlib
+          pathlib.Path("governance/state").mkdir(parents=True, exist_ok=True)
+          with open("governance/state/dispatch_executed.jsonl", "a") as f:
+              import json as j
+              f.write(j.dumps(record, ensure_ascii=False) + "\n")
+
+          print(f"AUTOPILOT: dispatched {workflow_id} HTTP {http_status}")
+          print(f"AUTOPILOT: dispatch recorded (NOT completion claimed)")
+          PY
+
+      - name: Dry run report
+        if: steps.select.outputs.action == 'dispatch' && steps.select.outputs.dry_run == 'true'
+        shell: bash
+        run: |
+          echo "AUTOPILOT DRY RUN"
+          echo "Would dispatch: ${{ steps.select.outputs.workflow_id }}"
+          echo "Task: ${{ steps.select.outputs.task_id }}"
+          echo "Trace: ${{ steps.select.outputs.trace_id }}"
+          echo "No actual dispatch performed."
+
+      - name: Queue stopped report
+        if: steps.select.outputs.action == 'stop'
+        shell: bash
+        run: |
+          echo "AUTOPILOT STOPPED: ${{ steps.select.outputs.reason }}"
+          echo "No further tasks dispatched."
+
+      - name: Commit dispatch record
+        if: steps.select.outputs.action == 'dispatch' && steps.select.outputs.dry_run == 'false'
+        shell: bash
+        run: |
+          git config user.email "roadmap-autopilot@ai-devops-system"
+          git config user.name "Roadmap Autopilot"
+          git pull --rebase --autostash origin main || true
+          git add governance/state/dispatch_executed.jsonl || true
+          if git diff --cached --quiet; then
+            echo "No dispatch record changes"
+          else
+            git commit -m "AUTOPILOT: dispatched ${{ steps.select.outputs.workflow_id }} trace=${{ steps.select.outputs.trace_id }}"
+            git push || (git pull --rebase origin main && git push)
+          fi
