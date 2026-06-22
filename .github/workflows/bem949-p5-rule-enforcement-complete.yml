@@ -1,0 +1,62 @@
+name: BEM949 P5 Rule Enforcement Complete
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        description: Trace identifier for the runtime enforcement run
+        required: false
+        default: bem949_p5_rule_enforcement
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACE_ID: ${{ inputs.trace_id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Execute positive and negative rule enforcement
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/runners/bem949_rule_enforcement_runner.py \
+            --trace-id "$TRACE_ID" \
+            --out governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json
+
+      - name: Commit P5 runtime receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p5-enforcement@ai-devops-system"
+          git config user.name "BEM949 P5 Rule Enforcement"
+          git add -- governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM949 P5: record runtime rule enforcement"
+            git push origin HEAD:main || (
+              git pull --rebase origin main &&
+              git push origin HEAD:main
+            )
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(
+              Path(
+                  "governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json"
+              ).read_text(encoding="utf-8")
+          )
+          if receipt.get("status") != "PASS":
+              raise SystemExit("P5 receipt is BLOCKED")
+          PY
