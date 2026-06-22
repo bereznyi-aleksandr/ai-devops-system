@@ -1,0 +1,565 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
+  "receipt_id": "BEM949_p5_rule_source_catalog",
+  "status": "DISCOVERED",
+  "created_at": "2026-06-22T02:14:52Z",
+  "trace_id": "bem949_p5_rule_source_catalog",
+  "rules_requested": [
+    "RULE-004",
+    "RULE-005",
+    "RULE-006",
+    "RULE-007",
+    "RULE-008",
+    "RULE-009",
+    "RULE-010"
+  ],
+  "rules_found": [
+    "RULE-004",
+    "RULE-005",
+    "RULE-006",
+    "RULE-007",
+    "RULE-008",
+    "RULE-009",
+    "RULE-010"
+  ],
+  "sources": [
+    {
+      "path": ".github/workflows/bem949-p5-rule-source-catalog.yml",
+      "line": 29,
+      "rules": [
+        "RULE-004",
+        "RULE-010"
+      ],
+      "blob_sha": "d61afda7a53eeca67a3bf19643ee57b35cb96435",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "AGENT_CONTEXT.md",
+      "line": 22,
+      "rules": [
+        "RULE-004",
+        "RULE-010"
+      ],
+      "blob_sha": "9cdfe62f6d4f6c67013bfbcc5b11c473b381f104",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "AGENT_CONTEXT.md",
+      "line": 37,
+      "rules": [
+        "RULE-004",
+        "RULE-010"
+      ],
+      "blob_sha": "9cdfe62f6d4f6c67013bfbcc5b11c473b381f104",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/codex/tasks/bem884_operational_rules.json",
+      "line": 8,
+      "rules": [
+        "RULE-004",
+        "RULE-005",
+        "RULE-006",
+        "RULE-007",
+        "RULE-008",
+        "RULE-009",
+        "RULE-010"
+      ],
+      "blob_sha": "ffa7c72a113e6dbdb96d4170ecc69ab1003a4ca9",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/codex/tasks/bem885_channel_envelope.json",
+      "line": 8,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "26327b8c4963c858175010a52cf31b5b7cc6d4da",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/codex/tasks/bem890_dispatch_contour.json",
+      "line": 8,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "0a0e90a9334066fc6e717aaf9f76f1c0b9ea58f9",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/codex/tasks/bem892_contour_processing.json",
+      "line": 8,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "df486bd8b89e15c983dfdb8bb63f92006dc8a184",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/codex/tasks/bem903_product_onboarding.json",
+      "line": 8,
+      "rules": [
+        "RULE-006",
+        "RULE-010"
+      ],
+      "blob_sha": "a97187cbbdc287cb760310ad4620dc31ce5bdbf8",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/codex/tasks/bem910_object_runners.json",
+      "line": 8,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "7f2be1405745a1c2a71d39b28a5dc9e473f27a7e",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/codex/tasks/bem910_object_runners_retry.json",
+      "line": 8,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "c0fe33e152cf04d35bc0f581252310f0a14208a3",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/codex/tasks/bem920_elements_inventory.json",
+      "line": 8,
+      "rules": [
+        "RULE-004",
+        "RULE-005",
+        "RULE-006",
+        "RULE-007",
+        "RULE-008",
+        "RULE-009"
+      ],
+      "blob_sha": "68756d74b9bf626b22dbe53a2e81b392351b9c6d",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/messages/managed_channel_messages.jsonl",
+      "line": 1,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "04ae7f254cb5050120a5b350e5056c0a4f484532",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/messages/managed_channel_messages.jsonl",
+      "line": 2,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "04ae7f254cb5050120a5b350e5056c0a4f484532",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/messages/managed_channel_messages.jsonl",
+      "line": 3,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "04ae7f254cb5050120a5b350e5056c0a4f484532",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/messages/managed_channel_messages.jsonl",
+      "line": 4,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "04ae7f254cb5050120a5b350e5056c0a4f484532",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/messages/managed_channel_messages.jsonl",
+      "line": 5,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "04ae7f254cb5050120a5b350e5056c0a4f484532",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/messages/managed_channel_messages.jsonl",
+      "line": 6,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "04ae7f254cb5050120a5b350e5056c0a4f484532",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/messages/managed_channel_messages.jsonl",
+      "line": 7,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "04ae7f254cb5050120a5b350e5056c0a4f484532",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/messages/managed_channel_messages.jsonl",
+      "line": 8,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "04ae7f254cb5050120a5b350e5056c0a4f484532",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/pilot/product_onboarding/feedback_channel_stub.json",
+      "line": 13,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "73c09dffd07e4117a5e38f084cf25d03ae318fea",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/pilot/product_onboarding/feedback_channel_stub.json",
+      "line": 14,
+      "rules": [
+        "RULE-010"
+      ],
+      "blob_sha": "73c09dffd07e4117a5e38f084cf25d03ae318fea",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json",
+      "line": 1,
+      "rules": [
+        "RULE-004",
+        "RULE-005",
+        "RULE-006",
+        "RULE-007",
+        "RULE-008",
+        "RULE-009",
+        "RULE-010"
+      ],
+      "blob_sha": "04a1e0d7425980721fd571e261f0e1fdfefd9320",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/proofs/BEM948_p4_final_verification_receipt.json",
+      "line": 43,
+      "rules": [
+        "RULE-004",
+        "RULE-010"
+      ],
+      "blob_sha": "f3b90aca919159c8a207a260025ef4bdd5e77a82",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/proofs/BEM948_p4_final_verification_receipt.json",
+      "line": 111,
+      "rules": [
+        "RULE-004",
+        "RULE-010"
+      ],
+      "blob_sha": "f3b90aca919159c8a207a260025ef4bdd5e77a82",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/proofs/BEM948_p4_final_verification_receipt.json",
+      "line": 117,
+      "rules": [
+        "RULE-004",
+        "RULE-010"
+      ],
+      "blob_sha": "f3b90aca919159c8a207a260025ef4bdd5e77a82",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
+      "line": 19,
+      "rules": [
+        "RULE-004"
+      ],
+      "blob_sha": "18a79976c9a4dc076aafb964a4b1d9543870c790",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
+      "line": 33,
+      "rules": [
+        "RULE-004"
+      ],
+      "blob_sha": "18a79976c9a4dc076aafb964a4b1d9543870c790",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/roadmap/ACTIVE_QUEUE.json",
+      "line": 1,
+      "rules": [
+        "RULE-004"
+      ],
+      "blob_sha": "e2908f7f3b250cde336670a60d54ed51cb02312d",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/rules/BEM884_OPERATIONAL_RULE_SEED.md",
+      "line": 6,
+      "rules": [
+        "RULE-004"
+      ],
+      "blob_sha": "5548f09bcfef132f080b65e226abf23c90f5a7c7",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/rules/BEM884_OPERATIONAL_RULE_SEED.md",
+      "line": 7,
+      "rules": [
+        "RULE-005"
+      ],
+      "blob_sha": "5548f09bcfef132f080b65e226abf23c90f5a7c7",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/rules/BEM884_OPERATIONAL_RULE_SEED.md",
+      "line": 8,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "5548f09bcfef132f080b65e226abf23c90f5a7c7",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/rules/BEM884_OPERATIONAL_RULE_SEED.md",
+      "line": 9,
+      "rules": [
+        "RULE-007"
+      ],
+      "blob_sha": "5548f09bcfef132f080b65e226abf23c90f5a7c7",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/rules/BEM884_OPERATIONAL_RULE_SEED.md",
+      "line": 10,
+      "rules": [
+        "RULE-008"
+      ],
+      "blob_sha": "5548f09bcfef132f080b65e226abf23c90f5a7c7",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/rules/BEM884_OPERATIONAL_RULE_SEED.md",
+      "line": 11,
+      "rules": [
+        "RULE-009"
+      ],
+      "blob_sha": "5548f09bcfef132f080b65e226abf23c90f5a7c7",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/rules/BEM884_OPERATIONAL_RULE_SEED.md",
+      "line": 12,
+      "rules": [
+        "RULE-010"
+      ],
+      "blob_sha": "5548f09bcfef132f080b65e226abf23c90f5a7c7",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/dispatch_contour.json",
+      "line": 34,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "6b65925c5be22b1c4e1806d379a7ef9c1bdda9ef",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 49,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 83,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 84,
+      "rules": [
+        "RULE-009"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 116,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 117,
+      "rules": [
+        "RULE-007"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 149,
+      "rules": [
+        "RULE-007"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 181,
+      "rules": [
+        "RULE-009"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 250,
+      "rules": [
+        "RULE-004"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 285,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 286,
+      "rules": [
+        "RULE-007"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 321,
+      "rules": [
+        "RULE-005"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/elements_registry.json",
+      "line": 322,
+      "rules": [
+        "RULE-008"
+      ],
+      "blob_sha": "f8f9a923c35c35860c96f14ac7c16f5fa1a6cb47",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/rule_registry.json",
+      "line": 34,
+      "rules": [
+        "RULE-004"
+      ],
+      "blob_sha": "0a71c395088bafe08dfa2d2c0a0634b2442b6690",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/rule_registry.json",
+      "line": 44,
+      "rules": [
+        "RULE-005"
+      ],
+      "blob_sha": "0a71c395088bafe08dfa2d2c0a0634b2442b6690",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/rule_registry.json",
+      "line": 54,
+      "rules": [
+        "RULE-006"
+      ],
+      "blob_sha": "0a71c395088bafe08dfa2d2c0a0634b2442b6690",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/rule_registry.json",
+      "line": 64,
+      "rules": [
+        "RULE-007"
+      ],
+      "blob_sha": "0a71c395088bafe08dfa2d2c0a0634b2442b6690",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/rule_registry.json",
+      "line": 74,
+      "rules": [
+        "RULE-008"
+      ],
+      "blob_sha": "0a71c395088bafe08dfa2d2c0a0634b2442b6690",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/rule_registry.json",
+      "line": 84,
+      "rules": [
+        "RULE-009"
+      ],
+      "blob_sha": "0a71c395088bafe08dfa2d2c0a0634b2442b6690",
+      "blob_sha_type": "git_blob"
+    },
+    {
+      "path": "governance/state/rule_registry.json",
+      "line": 94,
+      "rules": [
+        "RULE-010"
+      ],
+      "blob_sha": "0a71c395088bafe08dfa2d2c0a0634b2442b6690",
+      "blob_sha_type": "git_blob"
+    }
+  ],
+  "scan": {
+    "command": [
+      "git",
+      "grep",
+      "-I",
+      "-nE",
+      "RULE-(004|005|006|007|008|009|010)"
+    ],
+    "stdout_utf8_replaced": true,
+    "git_grep_returncode": 0
+  },
+  "acceptance": {
+    "all_rule_identifiers_discovered": true,
+    "runtime_enforcement_claimed": false
+  },
+  "blockers": [],
+  "non_claim": "This catalog records source locations only. It does not constitute positive or negative runtime enforcement evidence."
+}
