@@ -1,0 +1,50 @@
+name: BEM949 P7 Release Audit Final
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        description: Trace identifier for the independent release audit
+        required: false
+        default: bem949_p7_release_audit
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACE_ID: ${{ inputs.trace_id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Execute independent release audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/runners/bem949_release_audit_runner.py \
+            --trace-id "$TRACE_ID"
+
+      - name: Commit release audit receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p7-audit@ai-devops-system"
+          git config user.name "BEM949 P7 Release Audit"
+          git add -- governance/proofs/BEM949_p7_external_release_audit_receipt.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P7: record independent release audit"
+          git push origin HEAD:main || (
+            git pull --rebase origin main &&
+            git push origin HEAD:main
+          )
