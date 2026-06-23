@@ -12,6 +12,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: bem949-p5-rule-source-catalog
+  cancel-in-progress: false
+
 jobs:
   catalog:
     runs-on: ubuntu-latest
@@ -43,7 +47,6 @@ jobs:
           trace = "".join(
               char for char in raw_trace if char.isalnum() or char in "._-"
           ) or "bem949_p5_rule_source_catalog"
-
           rules = [f"RULE-{number:03d}" for number in range(4, 11)]
           pattern = r"RULE-(004|005|006|007|008|009|010)"
 
@@ -56,7 +59,6 @@ jobs:
           stdout = result.stdout.decode("utf-8", errors="replace")
 
           rows = []
-          saw_decode_replacement = "\ufffd" in stdout
           for record in stdout.splitlines():
               try:
                   path, lineno, text = record.split(":", 2)
@@ -66,7 +68,7 @@ jobs:
               matched_rules = [f"RULE-{value}" for value in matched]
               if not matched_rules:
                   continue
-              blob = subprocess.check_output(
+              blob_sha = subprocess.check_output(
                   ["git", "hash-object", path], text=True
               ).strip()
               rows.append(
@@ -74,9 +76,9 @@ jobs:
                       "path": path,
                       "line": int(lineno),
                       "rules": matched_rules,
-                      "blob_sha": blob,
+                      "blob_sha": blob_sha,
                       "blob_sha_type": "git_blob",
-                  }
+                 }
               )
 
           found = sorted({rule for row in rows for rule in row["rules"]})
@@ -95,7 +97,7 @@ jobs:
               "sources": rows,
               "scan": {
                   "command": ["git", "grep", "-I", "-nE", pattern],
-                  "stdout_utf8_replaced": saw_decode_replacement,
+                  "stdout_utf8_replaced": "ÔøΩ" in stdout,
                   "git_grep_returncode": result.returncode,
               },
               "acceptance": {
@@ -106,10 +108,10 @@ jobs:
                   []
                   if found == rules
                   else ["one_or_more_rule_identifiers_not_found_in_checked_out_repository"]
-              ),
+               ),
               "non_claim": (
                   "This catalog records source locations only. It does not constitute "
-                  "positive or negative runtime enforcement evidence."
+                  "positive or negative runtime enforcement eæ'^ù«∏."
               ),
           }
           Path(
