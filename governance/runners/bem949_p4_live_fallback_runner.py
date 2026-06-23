@@ -5,7 +5,6 @@ import argparse
 import hashlib
 import json
 import os
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -24,13 +23,12 @@ def sha256_file(path):
 
 
 def safe_api_error(raw):
-    """Keep only stable error categories; never persist raw provider output."""
     result = {"type": None, "code": None}
     try:
-        body = json.loads(raw.decode("utf-8", errors="replace"))
+        data = json.loads(raw.decode("utf-8", errors="replace"))
     except (UnicodeDecodeError, json.JSONDecodeError):
         return result
-    error = body.get("error") if isinstance(body, dict) else None
+    error = data.get("error") if isinstance(data, dict) else None
     if not isinstance(error, dict):
         return result
     if isinstance(error.get("type"), str):
@@ -40,7 +38,7 @@ def safe_api_error(raw):
     return result
 
 
-def extract_output_text(data):
+def output_text(data):
     parts = []
     for item in data.get("output", []):
         if not isinstance(item, dict):
@@ -76,27 +74,20 @@ def call_openai(api_key, model):
             http_status = response.status
             data = json.loads(response.read().decode("utf-8"))
         response_id = data.get("id") if isinstance(data.get("id"), str) else None
-        text = extract_output_text(data)
+        text = output_text(data)
         return {
             "http_status": http_status,
             "response_id": response_id,
             "text": text,
             "blocker": "" if 200 <= http_status < 300 and response_id and text else "openai_response_missing_id_or_output_text",
-            "retry_after_seconds": None,
             "api_error": {"type": None, "code": None},
         }
     except HTTPError as exc:
-        retry_after = exc.headers.get("Retry-After")
-        try:
-            retry_after_seconds = int(retry_after) if retry_after else None
-        except ValueError:
-            retry_after_seconds = None
         return {
             "http_status": exc.code,
             "response_id": None,
             "text": "",
             "blocker": "openai_api_http_{0}".format(exc.code),
-            "retry_after_seconds": retry_after_seconds,
             "api_error": safe_api_error(exc.read()),
         }
     except URLError:
@@ -105,7 +96,6 @@ def call_openai(api_key, model):
             "response_id": None,
             "text": "",
             "blocker": "openai_transport_failure",
-            "retry_after_seconds": None,
             "api_error": {"type": None, "code": None},
         }
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
@@ -114,7 +104,6 @@ def call_openai(api_key, model):
             "response_id": None,
             "text": "",
             "blocker": "openai_response_unreadable",
-            "retry_after_seconds": None,
             "api_error": {"type": None, "code": None},
         }
 
@@ -122,7 +111,7 @@ def call_openai(api_key, model):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--queue", default="governance/roadmap/ACTIVE_QUEUE.json")
-    parser.add_argument("--out", default="governance/profs/BEM949_p4_live_llm_fallback_receipt.json")
+    parser.add_argument("--out", default="governance/proofs/BEM949_p4_live_llm_fallback_receipt.json")
     parser.add_argument("--trace-id", required=True)
     args = parser.parse_args()
 
@@ -134,40 +123,23 @@ def main():
         raise ValueError("ACTIVE_QUEUE.tasks must be a list")
 
     task = next(
-        (
-            row
-            for row in tasks
-            if isinstance(row, dict) and row.get("id") == TASK_ID
-        ),
+        (row for row in tasks if isinstance(row, dict) and row.get("id") == TASK_ID),
         None,
     )
     if task is None:
         raise ValueError("P4 task missing from ACTIVE_QUEUE")
 
-    api_key = os.genv("OPENAI_API_KEY", "").strip()
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
     model = os.getenv("OPENAI_MODEL", "").strip() or DEFAULT_MODEL
-    attempts_this_run = 0
-
+    attempts_this_run = 1 if api_key else 0
     if api_key:
-        attempts_this_run = 1
         outcome = call_openai(api_key, model)
-        retry_after = outcome["retry_after_seconds"]
-        if (
-            outcome["http_status"] == 429
-            and outcome["api_error"].get("type") == "rate_limit_error"
-            and isinstance(retry_after, int)
-            and 0 < retry_after <= 15
-        ):
-            time.sleep(retry_after)
-            attempts_this_run += 1
-            outcome = call_openai(api_key, model)
     else:
         outcome = {
             "http_status": None,
             "response_id": None,
             "text": "",
             "blocker": "openai_api_key_not_configured",
-            "retry_after_seconds": None,
             "api_error": {"type": None, "code": None},
         }
 
@@ -195,19 +167,18 @@ def main():
             "http_status": outcome["http_status"],
             "response_id": outcome["response_id"],
             "response_id_type": "openai_responses_id" if outcome["response_id"] else None,
-            "output_text_sha256": hashlib.sha256(outcome["stext"].encode("utf-8")).hexdigest() if outcome["text"] else None,
-            "output_text_length": len(outcome["stext"]),
+            "output_text_sha256": hashlib.sha256(outcome["text"].encode("utf-8")).hexdigest() if outcome["text"] else None,
+            "output_text_length": len(outcome["text"]),
             "output_text_persisted": False,
             "attempts_this_run": attempts_this_run,
-            "retry_after_seconds": outcome["retry_after_seconds"],
             "api_error": outcome["api_error"],
         },
         "acceptance": {
             "live_fallback_evidence_observed": observed,
-            "mechanical_fallbacksubstituted_for_live_evidence": False,
+            "mechanical_fallback_substituted_for_live_evidence": False,
         },
         "blockers": [] if observed else [outcome["blocker"]],
-        "non_claim": "Live fallback requires 2xx Responses API, response id, and non-empty output text. Secrets, raw provider errors, and output are not persisted.",
+        "non_claim": "Live fallback requires a 2xx Responses API result, response id, and non-empty output text. Secrets, raw provider errors, and output are not persisted.",
     }
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
