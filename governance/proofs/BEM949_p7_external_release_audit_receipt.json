@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P7-RELEASE-AUDIT-FINAL",
+  "receipt_id": "BEM949_p7_external_release_audit",
+  "created_at": "2026-06-23T15:02:41Z",
+  "evidence_kind": "curator_blocker_assessment",
+  "independent_runtime_audit_observed": false,
+  "runtime_execution_claim": false,
+  "inputs": {
+    "active_queue_git_blob": "a8f736a00bf7ed6c0d3831bcc942fc3a4d9a9ada",
+    "active_queue_sha_type": "git_blob",
+    "p6_receipt_git_blob": "7476492b8bd774a895b7fcda331f19a532660e49",
+    "p6_receipt_sha_type": "git_blob",
+    "p4_receipt_git_blob": "46fad335edae7b69ecd30f64e6240eec5164b1ce",
+    "p4_receipt_sha_type": "git_blob"
+  },
+  "checks": [
+    {
+      "task_id": "BEM949-P1-CI-STABILIZE",
+      "queue_status": "BLOCKED_OPERATOR_DECISION",
+      "clean_done": false,
+      "blocker": "run_level_manual_dispatch_evidence_not_observable"
+    },
+    {
+      "task_id": "BEM949-P3-ALL-ROLE-E2E",
+      "queue_status": "DONE_LIMITED_SCOPE",
+      "clean_done": false,
+      "blocker": "completion_scope_limited"
+    },
+    {
+      "task_id": "BEM949-P4-LIVE-LLM-FALLBACK",
+      "queue_status": "BLOCKED",
+      "clean_done": false,
+      "blocker": "openai_model_var_not_configured"
+    },
+    {
+      "task_id": "BEM949-P6-LEARNING-LOOP-DRILL",
+      "queue_status": "IN_PROGRESS",
+      "receipt_status": "PASS",
+      "evidence_observed": true
+    }
+  ],
+  "dispatch_attempts": {
+    "workflow_id": "bem949-p7-release-audit-final.yml",
+    "attempts": 3,
+    "receipt_observed": false,
+    "completion_claimed": false
+  },
+  "acceptance": {
+    "all_p05_to_p6_clean_done": false,
+    "limitations_absent": false,
+    "broad_release_pass_claimed": false
+  },
+  "blockers": [
+    "BEM949-P1-run_level_manual_dispatch_evidence_not_observable",
+    "BEM949-P3-completion_scope_limited",
+    "BEM949-P4-openai_model_var_not_configured",
+    "BEM949-P7-independent_runtime_audit_receipt_not_observed_after_three_attempts"
+  ],
+  "non_claim": "This is a terminal BLOCKED guard, not an independent runtime audit receipt. It does not claim broad Release PASS or substitute a self-authored JSON for external evidence.",
+  "status": "BLOCKED"
+}
