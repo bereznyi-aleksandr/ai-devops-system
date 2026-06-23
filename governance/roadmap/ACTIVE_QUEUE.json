@@ -1,6 +1,6 @@
 {
   "version": 37,
-  "updated_at": "2026-06-23T16:47:03Z",
+  "updated_at": "2026-06-23T17:26:02Z",
   "queue_state": "BLOCKED",
   "current_task": null,
   "system_status": "BEM949_RELEASE_AUDIT_BLOCKED",
@@ -48,12 +48,12 @@
       "id": "BEM949-P4-LIVE-LLM-FALLBACK",
       "status": "BLOCKED",
       "receipt": "governance/proofs/BEM949_p4_live_llm_fallback_receipt.json",
-      "receipt_sha": "44c56a4f98da3dab10d5f7f29fecc5817bd7e197771f7953c3efdd59285511ac",
+      "receipt_sha": "fada709b65af58cfc32bad902c7178963de1775d2a0e7684d898062c35780d08",
       "receipt_sha_type": "sha256_content",
-      "attempts": 1,
+      "attempts": 2,
       "blocker": "openai_api_http_429",
-      "resume_condition": "Restore OpenAI API access, then rerun P4.",
-      "completed_at": "2026-06-23T16:47:03Z"
+      "resume_condition": "Restore OpenAI API capacity or permission, then rerun P4.",
+      "completed_at": "2026-06-23T17:26:02Z"
     },
     {
       "id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
