@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "incident_id": "BEM949-P5A-UTF8-DECODE-001",
+  "observed_at": "2026-06-22T02:00:00Z",
+  "source": {
+    "kind": "operator_supplied_github_actions_screenshots",
+    "workflow": ".github/workflows/bem949-p5-rule-source-catalog.yml",
+    "runs": [
+      38,
+      39
+    ],
+    "failing_step": "Inventory RULE-004 through RULE-010 sources"
+  },
+  "error_class": "UnicodeDecodeError",
+  "error_message": "utf-8 codec cannot decode byte 0x8b",
+  "rule_id": "RULE-010",
+  "rule_mapping_rationale": "Repository-originated workflow incident is routed as product_repository_feedback under RULE-010.",
+  "resolution_commit": "09245c9faf9ad8ecce60014d9e835e8c0ba8a142",
+  "resolution_commit_type": "commit",
+  "status": "RESOLVED"
+}
