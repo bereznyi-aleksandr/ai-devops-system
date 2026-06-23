@@ -4,54 +4,71 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '*/5 * * * *'
-  push:
-    paths:
-      - '.github/workflows/bem931-v36-live-receipt-proof.yml'
-      - 'governance/runners/*.py'
-      - 'governance/validators/*.py'
 
 permissions:
   contents: write
 
+concurrency:
+  group: bem931-v36-live-receipt-proof
+  cancel-in-progress: false
+
 jobs:
   live-receipt-proof:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Run live receipt proof
+      - name: Run and publish live receipt proof without rebase conflicts
+        id: proof
         shell: bash
         run: |
-          set +e
-          python3 governance/runners/bem931_live_receipt_proof.py
-          echo "proof_exit=$?" >> "$GITHUB_ENV"
-          exit 0
-
-      - name: Commit live receipts and diagnostics
-        if: always()
-        shell: bash
-        run: |
-          set -e
+          set -euo pipefail
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add -A \
-            governance/channels \
-            governance/results \
-            governance/proofs \
-            governance/exchange \
-            governance/release \
-            governance/blockers || true
-          if git diff --cached --quiet; then
-            echo "No live proof changes"
-            exit 0
+
+          proof_exit=1
+          published=false
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+
+            set +e
+            python3 governance/runners/bem931_live_receipt_proof.py
+            proof_exit=$?
+            set -e
+
+            git add -A               governance/channels               governance/results               governance/proofs               governance/exchange               governance/release               governance/blockers || true
+
+            if git diff --cached --quiet; then
+              published=true
+              break
+            fi
+
+            git commit -m "BEM-931: live GitHub Actions receipt proof [run=${GITHUB_RUN_ID}]"
+            if git push origin HEAD:main; then
+              published=true
+              break
+            fi
+
+            if [ "$attempt" -lt 3 ]; then
+              sleep "$((attempt * 2))"
+            fi
+          done
+
+          if [ "$published" != "true" ]; then
+            echo "receipt publication failed after 3 fresh-base attempts" >&2
+            exit 1
           fi
-          git commit -m "BEM-931: live GitHub Actions receipt proof [run=$GITHUB_RUN_ID]"
-          git push || (git pull --rebase --autostash && git push)
+
+          echo "proof_exit=$proof_exit" >> "$GITHUB_OUTPUT"
 
       - name: Fail if proof runner reported failure
-        if: always()
         shell: bash
         run: |
-          test "${proof_exit:-0}" = "0"
+          test "${{ steps.proof.outputs.proof_exit }}" = "0"
