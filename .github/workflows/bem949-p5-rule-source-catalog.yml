@@ -1,6 +1,8 @@
 name: BEM949 P5 Evidence Check
-"on":
+
+on:
   workflow_dispatch:
+
 jobs:
   verify:
     runs-on: ubuntu-latest
