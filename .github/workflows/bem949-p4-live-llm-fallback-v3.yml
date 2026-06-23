@@ -1,6 +1,6 @@
 name: BEM949 P4 Live LLM Fallback Probe V3
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       trace_id:
@@ -37,25 +37,40 @@ jobs:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
 
-      - name: Probe live OpenAI fallback or record blocker
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 governance/runners/bem949_p4_live_fallback_runner.py \
-            --trace-id "$TRACE_ID"
-
-      - name: Commit P4 runtime receipt and queue reconciliation
+      - name: Probe live OpenAI fallback and publish receipt safely
         shell: bash
         run: |
           set -euo pipefail
           git config user.email "bem949-p4-probe@ai-devops-system"
           git config user.name "BEM949 P4 Live Fallback Probe"
-          git add -- \
-            governance/roadmap/ACTIVE_QUEUE.json \
-            governance/proofs/BEM949_p4_live_llm_fallback_receipt.json
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "BEM949 P4: record live LLM fallback probe"
-          git pull --rebase origin main
-          git push origin HEAD:main
+
+          published=false
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+
+            python3 governance/runners/bem949_p4_live_fallback_runner.py \
+              --trace-id "$TRACE_ID"
+
+            git add -- \
+              governance/roadmap/ACTIVE_QUEUE.json \
+              governance/proofs/BEM949_p4_live_llm_fallback_receipt.json
+
+            if git diff --cached --quiet; then
+              published=true
+              break
+            fi
+
+            git commit -m "BEM949 P4: record live LLM fallback probe [run=${GITHUB_RUN_ID}]"
+            if git push origin HEAD:main; then
+              published=true
+              break
+            fi
+
+            if [ "$attempt" -lt 3 ]; then
+              sleep "$((attempt * 2))"
+            fi
+          done
+
+          test "$published" = "true"
