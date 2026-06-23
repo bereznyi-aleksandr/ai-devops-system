@@ -3,61 +3,85 @@
   "protocol": "BEM-949",
   "task_id": "BEM949-P7-RELEASE-AUDIT-FINAL",
   "receipt_id": "BEM949_p7_external_release_audit",
-  "created_at": "2026-06-23T15:02:41Z",
-  "evidence_kind": "curator_blocker_assessment",
-  "independent_runtime_audit_observed": false,
-  "runtime_execution_claim": false,
-  "inputs": {
-    "active_queue_git_blob": "a8f736a00bf7ed6c0d3831bcc942fc3a4d9a9ada",
-    "active_queue_sha_type": "git_blob",
-    "p6_receipt_git_blob": "7476492b8bd774a895b7fcda331f19a532660e49",
-    "p6_receipt_sha_type": "git_blob",
-    "p4_receipt_git_blob": "46fad335edae7b69ecd30f64e6240eec5164b1ce",
-    "p4_receipt_sha_type": "git_blob"
+  "created_at": "2026-06-23T15:44:00Z",
+  "trace_id": "bem949_p7_release_audit",
+  "evidence_kind": "independent_runtime_audit",
+  "runtime_execution_claim": true,
+  "execution": {
+    "runner_path": "governance/runners/bem949_release_audit_runner.py",
+    "runner_sha": "765e41d73cafd05d0be2e2b2af1f015fc3d186548f410867d2e6f64a3525514b",
+    "runner_sha_type": "sha256_content",
+    "queue_sha": "e5df5f56133dc67e6bacba9ff5673a0f992f479da9dbc0d81cf68eb7ec8d6a53",
+    "queue_sha_type": "sha256_content"
   },
   "checks": [
     {
+      "task_id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
+      "queue_status": "DONE",
+      "receipt_status": "PASS",
+      "receipt_sha": "14bacf85cfb16451fe72422964322b760bf5dc4d7613a4de4e461ed01ac0c63f",
+      "receipt_error": null,
+      "clean_done": true
+    },
+    {
       "task_id": "BEM949-P1-CI-STABILIZE",
       "queue_status": "BLOCKED_OPERATOR_DECISION",
-      "clean_done": false,
-      "blocker": "run_level_manual_dispatch_evidence_not_observable"
+      "receipt_status": null,
+      "receipt_sha": null,
+      "receipt_error": "missing_receipt",
+      "clean_done": false
+    },
+    {
+      "task_id": "BEM949-P2-FUNCTIONAL-RESTORE",
+      "queue_status": "DONE",
+      "receipt_status": "OBSERVED",
+      "receipt_sha": "24036cf728166ce33c6d38ae1b049dd97ad2db2d1f51e2354d18c994043dc3be",
+      "receipt_error": null,
+      "clean_done": false
     },
     {
       "task_id": "BEM949-P3-ALL-ROLE-E2E",
       "queue_status": "DONE_LIMITED_SCOPE",
-      "clean_done": false,
-      "blocker": "completion_scope_limited"
+      "receipt_status": "OBSERVED_LIMITED_SCOPE",
+      "receipt_sha": "1bf94e8ad1d161c6b3867cacc6fba78becd8dd044b4be24e572dbdf79ce04b70",
+      "receipt_error": null,
+      "clean_done": false
     },
     {
       "task_id": "BEM949-P4-LIVE-LLM-FALLBACK",
       "queue_status": "BLOCKED",
-      "clean_done": false,
-      "blocker": "openai_model_var_not_configured"
+      "receipt_status": "BLOCKED",
+      "receipt_sha": "b3d0b17a5e4916ec9cda877d2774e9330cc4a72d53b00f36db9c0085ac310180",
+      "receipt_error": null,
+      "clean_done": false
+    },
+    {
+      "task_id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
+      "queue_status": "DONE",
+      "receipt_status": "PASS",
+      "receipt_sha": "12e6343414c62987b8a785e04dd5da14a27af493cb4a787d6719f2c21c4984f1",
+      "receipt_error": null,
+      "clean_done": true
     },
     {
       "task_id": "BEM949-P6-LEARNING-LOOP-DRILL",
-      "queue_status": "IN_PROGRESS",
+      "queue_status": "DONE",
       "receipt_status": "PASS",
-      "evidence_observed": true
+      "receipt_sha": "6b1cdeda966db43830556bc0304219de9148fe9080e45141c1e77e9419ae94ef",
+      "receipt_error": null,
+      "clean_done": true
     }
   ],
-  "dispatch_attempts": {
-    "workflow_id": "bem949-p7-release-audit-final.yml",
-    "attempts": 3,
-    "receipt_observed": false,
-    "completion_claimed": false
-  },
+  "blockers": [
+    "stage_not_clean_done:BEM949-P1-CI-STABILIZE:queue=BLOCKED_OPERATOR_DECISION:receipt=missing_receipt",
+    "stage_not_clean_done:BEM949-P2-FUNCTIONAL-RESTORE:queue=DONE:receipt=OBSERVED",
+    "stage_not_clean_done:BEM949-P3-ALL-ROLE-E2E:queue=DONE_LIMITED_SCOPE:receipt=OBSERVED_LIMITED_SCOPE",
+    "stage_not_clean_done:BEM949-P4-LIVE-LLM-FALLBACK:queue=BLOCKED:receipt=BLOCKED"
+  ],
   "acceptance": {
     "all_p05_to_p6_clean_done": false,
     "limitations_absent": false,
     "broad_release_pass_claimed": false
   },
-  "blockers": [
-    "BEM949-P1-run_level_manual_dispatch_evidence_not_observable",
-    "BEM949-P3-completion_scope_limited",
-    "BEM949-P4-openai_model_var_not_configured",
-    "BEM949-P7-independent_runtime_audit_receipt_not_observed_after_three_attempts"
-  ],
-  "non_claim": "This is a terminal BLOCKED guard, not an independent runtime audit receipt. It does not claim broad Release PASS or substitute a self-authored JSON for external evidence.",
   "status": "BLOCKED"
 }
