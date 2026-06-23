@@ -1,0 +1,52 @@
+name: BEM949 P6 Learning Loop Drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        description: Trace identifier for the learning-loop drill
+        required: false
+        default: bem949_p6_learning_loop
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACE_ID: ${{ inputs.trace_id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Execute error to experience to rule refresh drill
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/runners/bem949_learning_loop_drill.py \
+            --trace-id "$TRACE_ID" \
+            --strict
+
+      - name: Commit learning-loop evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p6-learning-loop@ai-devops-system"
+          git config user.name "BEM949 P6 Learning Loop"
+          git add -- \
+            governance/state/learning/BEM949_p6_dynamic_rule_refresh.json \
+            governance/proofs/BEM949_p6_learning_loop_receipt.json
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM949 P6: record dynamic learning-loop refresh"
+            git push origin HEAD:main || (
+              git pull --rebase origin main &&
+              git push origin HEAD:main
+            )
+          fi
