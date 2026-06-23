@@ -1,0 +1,79 @@
+name: Repair Claude transport persistence
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Replace conflict-prone transport commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path(".github/workflows/claude.yml")
+          text = path.read_text(encoding="utf-8")
+          start = text.index("      - name: Commit transport and report\n")
+          end = text.index("\n      - name: Advance role orchestrator\n", start)
+          replacement = '''      - name: Commit trace report safely
+        if: always() && github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "claude-role-adapter@ai-devops-system"
+          git config user.name "Claude Role Adapter"
+          report="governance/reports/${TRACE_ID}.md"
+          if [ ! -f "$report" ]; then
+            echo "No trace report to persist: $report"
+            exit 0
+          fi
+          git add -- "$report" governance/audit/mailbox/from_claude/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No trace-report changes"
+            exit 0
+          fi
+          git commit -m "CLAUDE-ROLE: role=${ROLE_RAW} trace=${TRACE_ID}"
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              exit 0
+            fi
+            git rebase --abort || true
+            sleep "$attempt"
+          done
+          echo "Trace report commit could not be pushed after retries"
+          exit 1
+'''
+          path.write_text(text[:start] + replacement + text[end:], encoding="utf-8")
+          PY
+          git diff --check
+          ruby -e 'require "yaml"; YAML.load_file(".github/workflows/claude.yml")'
+
+      - name: Commit repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add .github/workflows/claude.yml
+          git commit -m "BEM949: prevent Claude transport rebase conflicts"
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              exit 0
+            fi
+            git rebase --abort || true
+            sleep "$attempt"
+          done
+          exit 1
