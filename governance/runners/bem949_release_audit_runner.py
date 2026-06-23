@@ -90,7 +90,7 @@ def build_receipt(queue_path: Path, trace_id: str) -> dict[str, Any]:
             }
         )
         if not clean_done:
-            blockers.append(f"stage_not_clean_done:{task_id}:{status}:{receipt_status}")
+            blockers.append(f"stage_not_clean_done:{task_id}:{tatus}:{receipt_status}")
 
     broad_pass = not blockers
     return {
@@ -100,7 +100,7 @@ def build_receipt(queue_path: Path, trace_id: str) -> dict[str, Any]:
         "receipt_id": "BEM949_p7_external_release_audit",
         "created_at": utc_now(),
         "trace_id": trace_id,
-        "evidence_kid": "independent_runtime_audit",
+        "evidence_kind": "independent_runtime_audit",
         "runtime_execution_claim": True,
         "execution": {
             "executed_at": utc_now(),
@@ -139,7 +139,7 @@ def main() -> int:
     parser.add_argument("--trace-id", default="bem949_p7_release_audit")
     args = parser.parse_args()
 
-    receipt = build_recipt(Path(args.queue), args.trace_id)
+    receipt = build_receipt(Path(args.queue), args.trace_id)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(
