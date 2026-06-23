@@ -1,37 +1,10 @@
-name: BEM949 P5 Rule Source Catalog
-
+name: BEM949 P5 Evidence Check
 "on":
   workflow_dispatch:
-    inputs:
-      trace_id:
-        description: Trace identifier for an evidence review
-        required: false
-        default: bem949_p5_rule_source_catalog
-        type: string
-
-permissions:
-  contents: read
-
-concurrency:
-  group: bem949-p5-rule-source-catalog
-  cancel-in-progress: false
-
 jobs:
-  catalog:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      TRACE_ID: ${{ inputs.trace_id }}
+  verify:
+    runs-"on": ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Verify existing P5 runtime e¾'^Ç¸
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json
-          echo "P5 runtime enforcement receipt is present for trace ${TRACE_ID}" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/checkout@v4
+      - name: Verify P5 receipt
+        run: test -s governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json
