@@ -1,16 +1,5 @@
 name: Roadmap Autopilot
 
-# BEM-949 | GitHub-native autonomous roadmap executor
-#
-# ЕДИНСТВЕННЫЙ непрерывный исполнительный канал.
-# GPT Actions НЕ используются для routine dispatch —
-# требуют Allow/Decline от оператора = нарушение автономности.
-#
-# Цикл:
-#   читает ACTIVE_QUEUE.json -> диспатчит целевой workflow ->
-#   workflow пишет receipt -> workflow_run -> следующий task ->
-#   стоп при BLOCKED_OPERATOR_DECISION или пустой очереди
-
 on:
   workflow_run:
     workflows:
@@ -64,107 +53,47 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json
-          import os
-          import sys
+          import json, os, sys
           from pathlib import Path
-
           QUEUE_PATH = Path("governance/roadmap/ACTIVE_QUEUE.json")
-          OUTPUT_FILE = os.environ.get("GITHUB_OUTPUT", "/dev/null")
-
-          def write_output(k, v):
-              with open(OUTPUT_FILE, "a") as f:
-                  f.write(f"{k}={v}\n")
-
+          OUT = os.environ.get("GITHUB_OUTPUT", "/dev/null")
+          def out(k, v):
+              open(OUT, "a").write(f"{k}={v}\n")
           if not QUEUE_PATH.exists():
-              print("AUTOPILOT: queue file not found — stopping")
-              write_output("action", "stop")
-              write_output("reason", "queue_file_not_found")
-              sys.exit(0)
-
-          queue = json.loads(QUEUE_PATH.read_text(encoding="utf-8"))
+              print("AUTOPILOT: queue not found"); out("action","stop"); out("reason","queue_not_found"); sys.exit(0)
+          queue = json.loads(QUEUE_PATH.read_text())
           tasks = queue.get("tasks", [])
-          force = os.environ.get("FORCE_TASK_ID", "").strip()
-          dry_run = os.environ.get("DRY_RUN", "false").strip().lower() == "true"
-
-          TASK_WORKFLOWS = {
-              "BEM949-P4-LIVE-LLM-FALLBACK": {
-                  "workflow_id": "bem949-p4-live-llm-fallback-v2.yml",
-                  "inputs_fn": lambda trace: {"trace_id": trace},
-              },
-              "BEM949-P5-RULE-ENFORCEMENT-COMPLETE": {
-                  "workflow_id": "bem949-p5-rule-source-catalog.yml",
-                  "inputs_fn": lambda trace: {"trace_id": trace},
-              },
-              "BEM949-P6-LEARNING-LOOP-DRILL": {
-                  "workflow_id": "claude.yml",
-                  "inputs_fn": lambda trace: {
-                      "role": "executor", "provider": "claude",
-                      "trace_id": trace, "cycle_id": trace,
-                      "task_type": "default_development",
-                      "task": "Execute BEM949-P6 Learning Loop Drill per governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
-                  },
-              },
-              "BEM949-P7-RELEASE-AUDIT-FINAL": {
-                  "workflow_id": "claude.yml",
-                  "inputs_fn": lambda trace: {
-                      "role": "auditor", "provider": "claude",
-                      "trace_id": trace, "cycle_id": trace,
-                      "task_type": "default_development",
-                      "task": "Execute BEM949-P7 Final Release Audit per governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
-                  },
-              },
+          force = os.environ.get("FORCE_TASK_ID","").strip()
+          dry = os.environ.get("DRY_RUN","false").strip().lower() == "true"
+          WORKFLOWS = {
+              "BEM949-P4-LIVE-LLM-FALLBACK": ("bem949-p4-live-llm-fallback-v2.yml", lambda t: {"trace_id": t}),
+              "BEM949-P5-RULE-ENFORCEMENT-COMPLETE": ("bem949-p5-rule-source-catalog.yml", lambda t: {"trace_id": t}),
+              "BEM949-P6-LEARNING-LOOP-DRILL": ("claude.yml", lambda t: {"role":"executor","provider":"claude","trace_id":t,"cycle_id":t,"task_type":"default_development","task":"Execute BEM949-P6 per governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md"}),
+              "BEM949-P7-RELEASE-AUDIT-FINAL": ("claude.yml", lambda t: {"role":"auditor","provider":"claude","trace_id":t,"cycle_id":t,"task_type":"default_development","task":"Execute BEM949-P7 per governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md"}),
           }
-
-          selected = None
+          sel = None
           for task in tasks:
-              tid = task.get("id", "")
-              status = task.get("status", "")
+              tid = task.get("id",""); status = task.get("status","")
               if force:
-                  if tid == force:
-                      selected = task
-                      break
+                  if tid == force: sel = task; break
                   continue
-              if status in ("DONE", "DONE_LIMITED_SCOPE"):
-                  continue
-              if status == "BLOCKED_OPERATOR_DECISION":
-                  print(f"AUTOPILOT: {tid} BLOCKED_OPERATOR_DECISION — skipping")
-                  continue
-              if status == "BLOCKED":
-                  print(f"AUTOPILOT: {tid} BLOCKED ({task.get('blocker','?')}) — skipping")
-                  continue
-              if status in ("PENDING", "IN_PROGRESS"):
-                  if tid not in TASK_WORKFLOWS:
-                      print(f"AUTOPILOT: {tid} has no workflow mapping — skipping")
-                      continue
-                  selected = task
-                  break
-
-          if not selected:
-              print("AUTOPILOT: no actionable task — queue complete or all blocked")
-              write_output("action", "stop")
-              write_output("reason", "no_actionable_task")
-              sys.exit(0)
-
+              if status in ("DONE","DONE_LIMITED_SCOPE"): continue
+              if status in ("BLOCKED_OPERATOR_DECISION","BLOCKED"):
+                  print(f"AUTOPILOT: skip {tid} ({status})"); continue
+              if status in ("PENDING","IN_PROGRESS") and tid in WORKFLOWS:
+                  sel = task; break
+              if status in ("PENDING","IN_PROGRESS"):
+                  print(f"AUTOPILOT: skip {tid} no mapping"); continue
+          if not sel:
+              print("AUTOPILOT: nothing actionable"); out("action","stop"); out("reason","no_actionable_task"); sys.exit(0)
           import datetime
-          tid = selected["id"]
-          mapping = TASK_WORKFLOWS[tid]
+          tid = sel["id"]; wf, inp_fn = WORKFLOWS[tid]
           ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-          trace_id = f"autopilot_{tid.lower().replace('-','_')}_{ts}"
-          workflow_id = mapping["workflow_id"]
-          inputs = mapping["inputs_fn"](trace_id)
-
-          print(f"AUTOPILOT: task={tid} workflow={workflow_id} trace={trace_id}")
-          write_output("action", "dispatch")
-          write_output("task_id", tid)
-          write_output("workflow_id", workflow_id)
-          write_output("trace_id", trace_id)
-          write_output("dry_run", str(dry_run).lower())
-
-          Path("/tmp/autopilot_dispatch.json").write_text(
-              json.dumps({"workflow_id": workflow_id, "inputs": inputs}, ensure_ascii=False),
-              encoding="utf-8"
-          )
+          trace = f"autopilot_{tid.lower().replace('-','_')}_{ts}"
+          inputs = inp_fn(trace)
+          print(f"AUTOPILOT: task={tid} wf={wf} trace={trace}")
+          out("action","dispatch"); out("task_id",tid); out("workflow_id",wf); out("trace_id",trace); out("dry_run",str(dry).lower())
+          Path("/tmp/ap.json").write_text(json.dumps({"workflow_id":wf,"inputs":inputs}))
           PY
 
       - name: Dispatch target workflow
@@ -176,70 +105,41 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json
-          import os
-          import urllib.request
+          import json, os, urllib.request
           from pathlib import Path
           from datetime import datetime, timezone
-
-          dispatch = json.loads(Path("/tmp/autopilot_dispatch.json").read_text())
-          workflow_id = dispatch["workflow_id"]
-          inputs = dispatch["inputs"]
-
-          data = json.dumps({"ref": "main", "inputs": inputs}).encode("utf-8")
+          d = json.loads(Path("/tmp/ap.json").read_text())
+          wf = d["workflow_id"]; inputs = d["inputs"]
+          data = json.dumps({"ref":"main","inputs":inputs}).encode()
           req = urllib.request.Request(
-              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/{workflow_id}/dispatches",
+              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/{wf}/dispatches",
               data=data,
-              headers={
-                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
-                  "Accept": "application/vnd.github+json",
-                  "Content-Type": "application/json",
-                  "User-Agent": "ai-devops-roadmap-autopilot",
-              },
-              method="POST",
-          )
-          with urllib.request.urlopen(req) as resp:
-              http_status = resp.status
-
-          record = {
-              "dispatched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "workflow_id": workflow_id,
-              "trace_id": inputs.get("trace_id", "unknown"),
-              "http_status": http_status,
-              "meaning": "HTTP 204 = GitHub accepted dispatch only. Not a completion claim.",
-              "completion_claimed": False,
-          }
+              headers={"Authorization":f"Bearer {os.environ['GH_TOKEN']}","Accept":"application/vnd.github+json","Content-Type":"application/json","User-Agent":"ai-devops-autopilot"},
+              method="POST")
+          with urllib.request.urlopen(req) as r:
+              http = r.status
+          rec = {"dispatched_at":datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),"workflow_id":wf,"trace_id":inputs.get("trace_id","?"),"http_status":http,"completion_claimed":False}
           Path("governance/state").mkdir(parents=True, exist_ok=True)
-          with open("governance/state/dispatch_executed.jsonl", "a") as f:
-              f.write(json.dumps(record, ensure_ascii=False) + "\n")
-
-          print(f"AUTOPILOT: dispatched {workflow_id} HTTP {http_status}")
+          open("governance/state/dispatch_executed.jsonl","a").write(json.dumps(rec)+"\n")
+          print(f"AUTOPILOT: dispatched {wf} HTTP {http}")
           PY
 
       - name: Dry run report
         if: steps.select.outputs.action == 'dispatch' && steps.select.outputs.dry_run == 'true'
-        shell: bash
         run: |
-          echo "DRY RUN — would dispatch: ${{ steps.select.outputs.workflow_id }}"
-          echo "Task: ${{ steps.select.outputs.task_id }}"
-          echo "Trace: ${{ steps.select.outputs.trace_id }}"
+          echo "DRY RUN: ${{ steps.select.outputs.workflow_id }} / ${{ steps.select.outputs.task_id }}"
 
-      - name: Queue stopped
+      - name: Stopped
         if: steps.select.outputs.action == 'stop'
-        shell: bash
-        run: echo "AUTOPILOT STOPPED: ${{ steps.select.outputs.reason }}"
+        run: echo "AUTOPILOT STOPPED"
 
       - name: Commit dispatch record
         if: steps.select.outputs.action == 'dispatch' && steps.select.outputs.dry_run == 'false'
-        shell: bash
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git pull --rebase --autostash origin main || true
           git add governance/state/dispatch_executed.jsonl || true
-          if git diff --cached --quiet; then
-            echo "No changes"
-          else
-            git commit -m "AUTOPILOT: dispatched ${{ steps.select.outputs.workflow_id }} trace=${{ steps.select.outputs.trace_id }}"
-            git push || (git pull --rebase origin main && git push)
-          fi
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "AUTOPILOT: ${{ steps.select.outputs.workflow_id }} trace=${{ steps.select.outputs.trace_id }}"
+          git push || (git pull --rebase origin main && git push)
