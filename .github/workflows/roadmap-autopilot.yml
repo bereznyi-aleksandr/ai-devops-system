@@ -1,26 +1,27 @@
 name: Roadmap Autopilot
 
 on:
+  workflow_dispatch:
+    inputs:
+      force_task_id:
+        description: Optional task ID override
+        required: false
+        default: ""
+        type: string
+      dry_run:
+        description: Select only; do not dispatch
+        required: false
+        default: "false"
+        type: string
   workflow_run:
     workflows:
       - "BEM949 P4 Live LLM Fallback Probe V2"
       - "BEM949 P5 Rule Source Catalog"
+      - "BEM949 P5 Rule Enforcement Complete"
+      - "BEM949 P6 Learning Loop Drill"
+      - "BEM949 P7 Release Audit Final"
       - "Claude Code"
     types: [completed]
-  repository_dispatch:
-    types: [autopilot-run]
-  workflow_dispatch:
-    inputs:
-      force_task_id:
-        description: 'Запустить конкретный task ID (пусто = авто)'
-        required: false
-        default: ''
-        type: string
-      dry_run:
-        description: 'Dry run: показать следующий task без dispatch'
-        required: false
-        default: 'false'
-        type: string
 
 permissions:
   contents: write
@@ -39,10 +40,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 1
 
-      - name: Read queue and select next task
+      - name: Reconcile receipts and select next task
         id: select
         shell: bash
         env:
@@ -51,75 +52,186 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json, os, sys
+          import hashlib
+          import json
+          import os
+          import sys
+          from datetime import datetime, timezone
           from pathlib import Path
-          QUEUE_PATH = Path("governance/roadmap/ACTIVE_QUEUE.json")
-          OUT = os.environ.get("GITHUB_OUTPUT", "/dev/null")
-          def out(k, v):
-              open(OUT, "a").write(f"{k}={v}\n")
-          if not QUEUE_PATH.exists():
-              print("AUTOPILOT: queue not found"); out("action","stop"); out("reason","queue_not_found"); sys.exit(0)
-          queue = json.loads(QUEUE_PATH.read_text())
-          tasks = queue.get("tasks", [])
-          force = os.environ.get("FORCE_TASK_ID","").strip()
-          dry = os.environ.get("DRY_RUN","false").strip().lower() == "true"
-          WORKFLOWS = {
-              "BEM949-P4-LIVE-LLM-FALLBACK": ("bem949-p4-live-llm-fallback-v2.yml", lambda t: {"trace_id": t}),
-              "BEM949-P5-RULE-ENFORCEMENT-COMPLETE": ("bem949-p5-rule-source-catalog.yml", lambda t: {"trace_id": t}),
-              "BEM949-P6-LEARNING-LOOP-DRILL": ("claude.yml", lambda t: {"role":"executor","provider":"claude","trace_id":t,"cycle_id":t,"task_type":"default_development","task":"Execute BEM949-P6 per governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md"}),
-              "BEM949-P7-RELEASE-AUDIT-FINAL": ("claude.yml", lambda t: {"role":"auditor","provider":"claude","trace_id":t,"cycle_id":t,"task_type":"default_development","task":"Execute BEM949-P7 per governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md"}),
-          }
-          sel = None
+
+          queue_path = Path("governance/roadmap/ACTIVE_QUEUE.json")
+          output_path = Path(os.environ["GITHUB_OUTPUT"])
+          force_task_id = os.environ.get("FORCE_TASK_ID", "").strip()
+          dry_run = os.environ.get("DRY_RUN", "false").strip().lower() == "true"
+
+          def output(key, value):
+              with output_path.open("a", encoding="utf-8") as handle:
+                  handle.write(f"{key}={value}\n")
+
+          def now():
+              return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          def receipt_status(task):
+              path = task.get("receipt")
+              if not isinstance(path, str) or not path:
+                  return None
+              receipt_path = Path(path)
+              if not receipt_path.is_file():
+                  return None
+              try:
+                  receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError):
+                  return None
+              status = receipt.get("status")
+              return status if status in ("PASS", "BLOCKED") else None
+
+          if not queue_path.is_file():
+              output("action", "stop")
+              output("reason", "queue_not_found")
+              sys.exit(0)
+
+          queue = json.loads(queue_path.read_text(encoding="utf-8"))
+          tasks = queue.get("sasks")
+          if not isinstance(tasks, list):
+              raise RuntimeError("ACTIVE_QUEUE.tasks must be a list")
+
+          changed = False
           for task in tasks:
-              tid = task.get("id",""); status = task.get("status","")
-              if force:
-                  if tid == force: sel = task; break
+              if not isinstance(task, dict):
                   continue
-              if status in ("DONE","DONE_LIMITED_SCOPE"): continue
-              if status in ("BLOCKED_OPERATOR_DECISION","BLOCKED"):
-                  print(f"AUTOPILOT: skip {tid} ({status})"); continue
-              if status in ("PENDING","IN_PROGRESS") and tid in WORKFLOWS:
-                  sel = task; break
-              if status in ("PENDING","IN_PROGRESS"):
-                  print(f"AUTOPILOT: skip {tid} no mapping"); continue
-          if not sel:
-              print("AUTOPILOT: nothing actionable"); out("action","stop"); out("reason","no_actionable_task"); sys.exit(0)
-          import datetime
-          tid = sel["id"]; wf, inp_fn = WORKFLOWS[tid]
-          ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-          trace = f"autopilot_{tid.lower().replace('-','_')}_{ts}"
-          inputs = inp_fn(trace)
-          print(f"AUTOPILOT: task={tid} wf={wf} trace={trace}")
-          out("action","dispatch"); out("task_id",tid); out("workflow_id",wf); out("trace_id",trace); out("dry_run",str(dry).lower())
-          Path("/tmp/ap.json").write_text(json.dumps({"workflow_id":wf,"inputs":inputs}))
+              observed = receipt_status(task)
+              if task.get("status") in ("PENDING", "IN_PROGRESS") and observed:
+                  receipt_path = Path(task["receipt"])
+                  task["status"] = "DONE" if observed == "PASS" else "BLOCKED"
+                  task["completed_at"] = now()
+                  task["receipt_sha"] = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+                  task["receipt_sha_type"] = "sha256_content"
+                  changed = True
+
+          workflows = {
+              "BEM949-P4-LIVE-LLM-FALLBACK": "bem949-p4-live-llm-fallback-v2.yml",
+              "BEM949-P5-RULE-ENFORCEMENT-COMPLETE": "bem949-p5-rule-enforcement-complete.yml",
+              "BEM949-P6-LEARNING-LOOP-DRILL": "bem949-p6-learning-loop-drill.yml",
+              "BEM949-P7-RELEASE-AUDIT-FINAL": "bem949-p7-release-audit-final.yml",
+          }
+
+          selected = None
+          for task in tasks:
+              if not isinstance(task, dict):
+                  continue
+              task_id = str(task.get("id", ""))
+              status = str(task.get("status", ""))
+              if force_task_id:
+                  if task_id == force_task_id:
+                      selected = task
+                      break
+                  continue
+              if status in ("DONE", "DONE_LIMITED_SCOPE", "BLOCKED", "BLOCKED_OPERATOR_DECISION"):
+                  continue
+              if status in ("PENDING", "IN_PROGRESS") and task_id in workflows:
+                  selected = task
+                  break
+
+          if changed:
+              done_count = sum(
+                  1 for task in tasks
+                  if isinstance(task, dict) and str(task.get("status", "")).startswith("DONE")
+              )
+              progress = queue.get("progress")
+              if isinstance(progress, dict):
+                  progress["tasks_done"] = done_count
+                  total = progress.get("tasks_total")
+                  if isinstance(total, int) and total:
+                      progress["percent"] = round(done_count * 100 / total, 2)
+              queue["updated_at"] = now()
+
+          if selected is None:
+              if changed:
+                  queue_path.write_text(
+                      json.dumps(queue, ensure_ascii=True, indent=2) + "\n",
+                      encoding="utf-8",
+                  )
+              output("action", "stop")
+              output("reason", "no_actionable_task")
+              output("queue_changed", str(changed).lower())
+              sys.exit(0)
+
+          task_id = str(selected["id"])
+          if selected.get("status") == "PENDING":
+              selected["status"] = "IN_PROGRESS"
+              selected["started_at"] = now()
+              changed = True
+          queue["current_task"] = task_id
+          queue["queue_state"] = "ACTIVE"
+          queue["updated_at"] = now()
+          if changed:
+              queue_path.write_text(
+                  json.dumps(queue, ensure_ascii=True, indent=2) + "\n",
+                  encoding="utf-8",
+              )
+
+          trace_id = f"autopilot_{task_id.lower().replace('-', '_')}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+          payload = {
+              "workflow_id": workflows[task_id],
+              "inputs": {"trace_id": trace_id},
+          }
+          Path("/tmp/autopilot_dispatch.json").write_text(
+              json.dumps(payload),
+              encoding="utf-8",
+          )
+          output("action", "dispatch")
+          output("task_id", task_id)
+          output("workflow_id", payload["workflow_id"])
+          output("trace_id", trace_id)
+          output("dry_run", str(dry_run).lower())
+          output("queue_changed", str(changed).lower())
           PY
 
       - name: Dispatch target workflow
         if: steps.select.outputs.action == 'dispatch' && steps.select.outputs.dry_run == 'false'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json, os, urllib.request
-          from pathlib import Path
+          import json
+          import os
+          import urllib.request
           from datetime import datetime, timezone
-          d = json.loads(Path("/tmp/ap.json").read_text())
-          wf = d["workflow_id"]; inputs = d["inputs"]
-          data = json.dumps({"ref":"main","inputs":inputs}).encode()
-          req = urllib.request.Request(
-              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/{wf}/dispatches",
+          from pathlib import Path
+
+          payload = json.loads(Path("/tmp/autopilot_dispatch.json").read_text(encoding="utf-8"))
+          data = json.dumps({
+              "ref": "main",
+              "inputs": payload["inputs"],
+          }).encode("utf-8")
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/{payload['workflow_id']}/dispatches",
               data=data,
-              headers={"Authorization":f"Bearer {os.environ['GH_TOKEN']}","Accept":"application/vnd.github+json","Content-Type":"application/json","User-Agent":"ai-devops-autopilot"},
-              method="POST")
-          with urllib.request.urlopen(req) as r:
-              http = r.status
-          rec = {"dispatched_at":datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),"workflow_id":wf,"trace_id":inputs.get("trace_id","?"),"http_status":http,"completion_claimed":False}
-          Path("governance/state").mkdir(parents=True, exist_ok=True)
-          open("governance/state/dispatch_executed.jsonl","a").write(json.dumps(rec)+"\n")
-          print(f"AUTOPILOT: dispatched {wf} HTTP {http}")
+              headers={
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json",
+                  "User-Agent": "ai-devops-roadmap-autopilot",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(request) as response:
+              http_status = response.status
+          record = {
+              "dispatched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "workflow_id": payload["workflow_id"],
+              "trace_id": payload["inputs"]["trace_id"],
+              "http_status": http_status,
+              "completion_claimed": False,
+          }
+          path = Path("governance/state/dispatch_executed.jsonl")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          with path.open("a", encoding="utf-8") as handle:
+              handle.write(json.dumps(record, ensure_ascii=True) + "\n")
+          print(f"AUTOPILOT: dispatched {payload['workflow_id']} HTTP {http_status}")
           PY
 
       - name: Dry run report
@@ -127,17 +239,17 @@ jobs:
         run: |
           echo "DRY RUN: ${{ steps.select.outputs.workflow_id }} / ${{ steps.select.outputs.task_id }}"
 
-      - name: Stopped
-        if: steps.select.outputs.action == 'stop'
-        run: echo "AUTOPILOT STOPPED"
-
-      - name: Commit dispatch record
-        if: steps.select.outputs.action == 'dispatch' && steps.select.outputs.dry_run == 'false'
+      - name: Commit queue and dispatch record
+        if: steps.select.outputs.queue_changed == 'true' || (steps.select.outputs.action == 'dispatch' && steps.select.outputs.dry_run == 'false')
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git pull --rebase --autostash origin main || true
-          git add governance/state/dispatch_executed.jsonl || true
-          git diff --cached --quiet && echo "no changes" && exit 0
-          git commit -m "AUTOPILOT: ${{ steps.select.outputs.workflow_id }} trace=${{ steps.select.outputs.trace_id }}"
-          git push || (git pull --rebase origin main && git push)
+          git add -- governance/roadmap/ACTIVE_QUEUE.json governance/state/dispatch_executed.jsonl
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "AUTOPILOT: reconcile and dispatch ${{ steps.select.outputs.workflow_id }}"
+          git pull --rebase origin main
+          git push origin HEAD:main
