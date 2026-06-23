@@ -500,24 +500,35 @@ jobs:
           echo "- Keep battle-audit responses in governance/audit/mailbox/from_claude and poll for APPROVED_WITH_NOTES or BLOCKED_WITH_REASON." >> "$OUT"
           echo "Trace: bem867_battle_audit_mailbox" >> "$OUT"
 
-      - name: Commit transport and report
+      - name: Commit trace report safely
         if: always() && github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
+          set -euo pipefail
           git config user.email "claude-role-adapter@ai-devops-system"
-          git config user.name  "Claude Role Adapter"
-          git pull --rebase --autostash origin main || true
-          git add \
-            governance/transport/results.jsonl \
-            governance/state/provider_status.json \
-            governance/reports/ \
-            2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "No transport changes"
-          else
-            git commit -m "CLAUDE-ROLE: role=$ROLE_RAW trace=$TRACE_ID"
-            git push || (git pull --rebase origin main && git push)
+          git config user.name "Claude Role Adapter"
+          report="governance/reports/${TRACE_ID}.md"
+          if [ ! -f "$report" ]; then
+            echo "No trace report to persist: $report"
+            exit 0
           fi
+          git fetch origin main
+          git rebase origin/main
+          git add -- "$report"
+          if git diff --cached --quiet; then
+            echo "No trace-report changes"
+            exit 0
+          fi
+          git commit -m "CLAUDE-ROLE: role=${ROLE_RAW} trace=${TRACE_ID}"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main || git rebase --abort || true
+            sleep "$attempt"
+          done
+          echo "Trace report commit could not be pushed after retries"
+          exit 1
 
       - name: Advance role orchestrator
         if: always() && github.event_name == 'workflow_dispatch'
