@@ -1,92 +1,118 @@
 name: BEM-931 v3.6 RM04 Validate Runners
 
-on:
+"on":
   workflow_dispatch:
   push:
     paths:
-      - 'governance/runners/*.py'
-      - 'governance/validators/bem931_v36_rm04_runners_validate.py'
-      - '.github/workflows/bem931-v36-rm04-validate-runners.yml'
+      - "governance/runners/*.py"
+      - "governance/validators/bem931_v36_rm04_runners_validate.py"
+      - ".github/workflows/bem931-v36-rm04-validate-runners.yml"
 
 permissions:
   contents: write
 
+concurrency:
+  group: bem931-v36-rm04-runners-validation
+  cancel-in-progress: false
+
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Validate RM04 runner files without live provider dispatch
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 governance/validators/bem931_v36_rm04_runners_validate.py
-          python3 - <<'PY'
-          import ast
-          import py_compile
-          from pathlib import Path
-
-          runner_paths = (
-              Path("governance/runners/gd_curator_runner.py"),
-              Path("governance/runners/dir_curator_runner.py"),
-              Path("governance/runners/wrk_curator_runner.py"),
-              Path("governance/runners/analyst_stage_runner.py"),
-              Path("governance/runners/auditor_stage_runner.py"),
-              Path("governance/runners/executor_stage_runner.py"),
-          )
-          for path in runner_paths:
-              py_compile.compile(str(path), doraise=True)
-              module = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-              assert any(
-                  isinstance(node, ast.FunctionDef) and node.name == "main"
-                  for node in module.body
-              ), f"missing main(): {path}"
-          print("PASS: RM04 runner syntax and entrypoints validated without live dispatch")
-          PY
-
-      - name: Write RM04 validation receipt
-        if: success()
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p governance/proofs
-          python3 - <<'PY'
-          import hashlib
-          import json
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          validator = Path("governance/validators/bem931_v36_rm04_runners_validate.py")
-          receipt = {
-              "protocol": "BEM-931 v3.6",
-              "roadmap_item": "RM-04-RUNNERS",
-              "validator": str(validator),
-              "validator_sha": hashlib.sha256(validator.read_bytes()).hexdigest(),
-              "validator_sha_type": "sha256_content",
-              "status": "PASS",
-              "receipt_type": "static_runner_validation",
-              "created_by": "github_actions",
-              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "non_claim": "This validates runnable Python and entrypoints; it does not claim live provider dispatch.",
-          }
-          Path("governance/proofs/BEM931-V36-RM04_runners_receipt.json").write_text(
-              json.dumps(receipt, ensure_ascii=True, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          PY
-
-      - name: Commit receipt
-        if: success()
+      - name: Validate and publish RM04 static runner receipt safely
         shell: bash
         run: |
           set -euo pipefail
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add governance/proofs/BEM931-V36-RM04_runners_receipt.json
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "BEM-931 RM04: static runner validation receipt"
-          git pull --rebase origin main
-          git push origin HEAD:main
+
+          validate_and_write_receipt() {
+            python3 governance/validators/bem931_v36_rm04_runners_validate.py
+            python3 - <<'PY'
+import ast
+import hashlib
+import json
+import os
+import py_compile
+from datetime import datetime, timezone
+from pathlib import Path
+
+runner_paths = (
+    Path("governance/runners/gd_curator_runner.py"),
+    Path("governance/runners/dir_curator_runner.py"),
+    Path("governance/runners/wrk_curator_runner.py"),
+    Path("governance/runners/analyst_stage_runner.py"),
+    Path("governance/runners/auditor_stage_runner.py"),
+    Path("governance/runners/executor_stage_runner.py"),
+)
+checked = []
+for path in runner_paths:
+    py_compile.compile(str(path), doraise=True)
+    module = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    has_main = any(
+        isinstance(node, ast.FunctionDef) and node.name == "main"
+        for node in module.body
+    )
+    if not has_main:
+        raise SystemExit(f"missing main(): {path}")
+    checked.append({
+        "path": str(path),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "sha_type": "sha256_content",
+        "has_main": True,
+    })
+
+out = Path("governance/proofs/BEM931-V36-RM04_runners_receipt.json")
+out.parent.mkdir(parents=True, exist_ok=True)
+receipt = {
+    "protocol": "BEM-931 v3.6",
+    "roadmap_item": "RM-04-RUNNERS",
+    "status": "PASS",
+    "receipt_type": "static_runner_validation",
+    "created_by": "github_actions",
+    "github_run_id": os.environ.get("GITHUB_RUN_ID"),
+    "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "checked_runners": checked,
+    "non_claim": (
+        "This validates Python syntax and main() entrypoints only; "
+        "it does not claim live provider dispatch."
+    ),
+}
+out.write_text(json.dumps(receipt, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+print("PASS: RM04 static runner validation")
+PY
+          }
+
+          published=false
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+            validate_and_write_receipt
+            git add -- governance/proofs/BEM931-V36-RM04_runners_receipt.json
+
+            if git diff --cached --quiet; then
+              published=true
+              break
+            fi
+
+            git commit -m "BEM-931 RM04: static runner validation receipt [run=${GITHUB_RUN_ID}]"
+            if git push origin HEAD:main; then
+              published=true
+              break
+            fi
+
+            if [ "$attempt" -lt 3 ]; then
+              sleep "$((attempt * 2))"
+            fi
+          done
+
+          test "$published" = "true"
