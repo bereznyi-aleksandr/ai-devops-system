@@ -1,13 +1,12 @@
 {
-  "created_at": "2026-06-23T16:51:04Z",
-  "github_run_attempt": "1",
-  "github_run_id": "28042143610",
-  "github_run_number": "278",
-  "github_sha": "1771283b014c84d54b755eb99a410d07ed615ea9",
   "protocol": "BEM-931 v3.6",
-  "receipt_type": "live_github_actions_validator",
   "roadmap_item": "RM-04-RUNNERS",
-  "status": "PASS",
   "validator": "governance/validators/bem931_v36_rm04_runners_validate.py",
-  "workflow": "BEM-931 v3.6 Live Receipt Proof"
+  "validator_sha": "bad21106b832b10786c8d2e949d606934378f05451f376139dea2f09e53a1fce",
+  "validator_sha_type": "sha256_content",
+  "status": "PASS",
+  "receipt_type": "static_runner_validation",
+  "created_by": "github_actions",
+  "created_at": "2026-06-23T16:52:19Z",
+  "non_claim": "This validates runnable Python and entrypoints; it does not claim live provider dispatch."
 }
