@@ -2,6 +2,9 @@ name: Repair Claude transport persistence
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/repair-claude-transport-persistence.yml"
 
 permissions:
   contents: write
