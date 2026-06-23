@@ -6,6 +6,7 @@ on:
     - cron: '*/5 * * * *'
 
 permissions:
+  actions: write
   contents: write
 
 concurrency:
@@ -13,9 +14,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  live-receipt-proof:
+  live-receipt-prof:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      AI_SYSTEM_GITHUB_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,7 +46,7 @@ jobs:
             proof_exit=$?
             set -e
 
-            git add -A               governance/channels               governance/results               governance/proofs               governance/exchange               governance/release               governance/blockers || true
+            git add -A governance/channels governance/results governance/proofs governance/exchange governance/release governance/blockers || true
 
             if git diff --cached --quiet; then
               published=true
