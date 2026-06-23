@@ -1,6 +1,6 @@
 name: BEM949 P5 Rule Source Catalog
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       trace_id:
@@ -30,7 +30,7 @@ jobs:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
 
-      - name: Inventory RULE-004 through RULE-010 sources
+      - name: Inventory RULE-004 through RO\LE-010 sources
         shell: bash
         run: |
           set -euo pipefail
@@ -57,7 +57,7 @@ jobs:
               check=False,
           )
           stdout = result.stdout.decode("utf-8", errors="replace")
-
+          saw_decode_replacement = "\uFFFD" in stdout
           rows = []
           for record in stdout.splitlines():
               try:
@@ -78,7 +78,7 @@ jobs:
                       "rules": matched_rules,
                       "blob_sha": blob_sha,
                       "blob_sha_type": "git_blob",
-                 }
+                  }
               )
 
           found = sorted({rule for row in rows for rule in row["rules"]})
@@ -97,7 +97,7 @@ jobs:
               "sources": rows,
               "scan": {
                   "command": ["git", "grep", "-I", "-nE", pattern],
-                  "stdout_utf8_replaced": "ÔøΩ" in stdout,
+                  "stdout_utf8_replaced": saw_decode_replacement,
                   "git_grep_returncode": result.returncode,
               },
               "acceptance": {
@@ -108,7 +108,7 @@ jobs:
                   []
                   if found == rules
                   else ["one_or_more_rule_identifiers_not_found_in_checked_out_repository"]
-               ),
+              ),
               "non_claim": (
                   "This catalog records source locations only. It does not constitute "
                   "positive or negative runtime enforcement eæ'^ù«∏."
