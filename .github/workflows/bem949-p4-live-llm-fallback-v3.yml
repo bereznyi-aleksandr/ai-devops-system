@@ -1,0 +1,61 @@
+name: BEM949 P4 Live LLM Fallback Probe V3
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        description: Trace identifier for the bounded live fallback probe
+        required: false
+        default: bem949_p4_live_llm_fallback
+        type: string
+      model:
+        description: OpenAI model; repository variable OPENAI_MODEL overrides this default
+        required: false
+        default: gpt-4.1-mini
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem949-p4-live-llm-fallback
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACE_ID: ${{ inputs.trace_id }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || inputs.model }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Probe live OpenAI fallback or record blocker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/runners/bem949_p4_live_fallback_runner.py \
+            --trace-id "$TRACE_ID"
+
+      - name: Commit P4 runtime receipt and queue reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "bem949-p4-probe@ai-devops-system"
+          git config user.name "BEM949 P4 Live Fallback Probe"
+          git add -- \
+            governance/roadmap/ACTIVE_QUEUE.json \
+            governance/proofs/BEM949_p4_live_llm_fallback_receipt.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM949 P4: record live LLM fallback probe"
+          git pull --rebase origin main
+          git push origin HEAD:main
