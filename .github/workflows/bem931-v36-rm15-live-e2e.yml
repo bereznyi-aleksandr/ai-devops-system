@@ -4,34 +4,34 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: 'Live E2E test task'
+        description: Live E2E test task
         required: false
-        default: 'BEM-931 v3.6 live E2E test'
+        default: BEM-931 v3.6 live E2E test
         type: string
-  push:
-    paths:
-      - 'governance/runners/*.py'
-      - '.github/workflows/bem931-v36-rm15-live-e2e.yml'
 
 permissions:
   contents: write
 
+concurrency:
+  group: bem931-v36-rm15-live-e2e
+  cancel-in-progress: false
+
 jobs:
   live-e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TRACE: bem931_v36_rm15_${{ github.run_id }}
+      INPUT_TASK: ${{ inputs.task }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@r4
         with:
           fetch-depth: 1
 
       - name: Seed canonical operator task
         shell: bash
-        env:
-          INPUT_TASK: ${{ inputs.task }}
         run: |
-          set -e
-          TRACE="bem931_v36_rm15_${GITHUB_RUN_ID}"
-          echo "TRACE=$TRACE" >> "$GITHUB_ENV"
+          set -euo pipefail
           rm -f governance/channels/operator_to_gd.jsonl \
                 governance/channels/gd_to_dir.jsonl \
                 governance/channels/dir_to_wrk.jsonl \
@@ -42,7 +42,10 @@ jobs:
                 governance/channels/wrk_to_curator_feedback.jsonl
           mkdir -p governance/channels
           python3 - <<'PY'
-          import json, os, time
+          import json
+          import os
+          import time
+
           trace = os.environ["TRACE"]
           row = {
               "trace_id": trace,
@@ -50,16 +53,16 @@ jobs:
               "from": "OPERATOR",
               "to": "GD.CURATOR",
               "task": os.environ.get("INPUT_TASK") or "BEM-931 v3.6 live E2E test",
-              "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+              "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
           }
-          with open("governance/channels/operator_to_gd.jsonl", "w", encoding="utf-8") as f:
-              f.write(json.dumps(row, ensure_ascii=False) + "\n")
+          with open("governance/channels/operator_to_gd.jsonl", "w", encoding="utf-8") as handle:
+              handle.write(json.dumps(row, ensure_ascii=False) + "\n")
           PY
 
-      - name: Run canonical curator and contour chain
+      - name: Run cannical curator and contour chain
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           python3 governance/runners/gd_curator_runner.py
           python3 governance/runners/dir_curator_runner.py
           python3 governance/runners/wrk_curator_runner.py
@@ -71,10 +74,12 @@ jobs:
       - name: Validate live E2E receipts
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           python3 - <<'PY'
-          import json, os
+          import json
+          import os
           from pathlib import Path
+
           trace = os.environ["TRACE"]
           required_files = [
               "governance/channels/gd_to_dir.jsonl",
@@ -86,9 +91,9 @@ jobs:
               "governance/channels/wrk_to_curator_feedback.jsonl",
           ]
           for file_name in required_files:
-              p = Path(file_name)
-              assert p.exists() and p.stat().st_size > 20, f"missing receipt {file_name}"
-              assert trace in p.read_text(encoding="utf-8"), f"trace missing in {file_name}"
+              path = Path(file_name)
+              assert path.exists() and path.stat().st_size > 20, f"missing receipt {file_name}"
+              assert trace in path.read_text(encoding="utf-8"), f"trace missing in {file_name}"
           result_path = Path("governance/results") / trace / "worker_result.json"
           assert result_path.exists() and result_path.stat().st_size > 50, "missing worker result"
           feedback = Path("governance/channels/wrk_to_curator_feedback.jsonl").read_text(encoding="utf-8")
@@ -110,13 +115,13 @@ jobs:
                   "WRK-C1.AUDITOR.pre",
                   "WRK-C1.EXECUTOR",
                   "WRK-C1.AUDITOR.post",
-                  "WRK.CURATOR.feedback"
+                  "WRK.CURATOR.feedback",
               ],
-              "artifacts": required_files + [str(result_path)]
+              "artifacts": required_files + [str(result_path)],
           }
           (proofs / "BEM931-V36-RM15_live_e2e_receipt.json").write_text(
               json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
-              encoding="utf-8"
+              encoding="utf-8",
           )
           print("PASS: RM15 live E2E", trace)
           PY
@@ -124,9 +129,13 @@ jobs:
       - name: Commit live E2E proof
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git add governance/channels governance/results governance/proofs/BEM931-V36-RM15_live_e2e_receipt.json
-          git commit -m "BEM-931 RM15: live E2E receipt" || echo "No changes"
-          git push
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "BEM-931 RM15: live E2E receipt"
+          git pull --rebase origin main
+          git push origin HEAD:main
