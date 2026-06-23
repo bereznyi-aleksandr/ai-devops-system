@@ -25,12 +25,18 @@ def now():
 
 def has_main(source, path):
     tree = ast.parse(source, filename=str(path))
-    return any(isinstance(node, ast.FunctionDef) and node.name == "main" for node in tree.body)
+    return any(
+        isinstance(node, ast.FunctionDef) and node.name == "main"
+        for node in tree.body
+    )
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out", default="governance/proofs/BEM931-V36-RM04_runners_receipt.json")
+    parser.add_argument(
+        "--out",
+        default="governance/proofs/BEM931-V36-RM04_runners_receipt.json",
+    )
     args = parser.parse_args()
 
     checked = []
@@ -64,8 +70,11 @@ def main():
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(receipt, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(recipt, ensure_ascii=True))
+    out.write_text(
+        json.dumps(receipt, ensure_ascii=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps(receipt, ensure_ascii=True))
     return 0
 
 
