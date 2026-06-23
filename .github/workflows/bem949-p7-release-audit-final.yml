@@ -26,7 +26,7 @@ jobs:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           fetch-depth: 0
 
-      - name: Reconcile P6 proof and promote P7 audit
+      - name: Reconcile P6 PASS before audit
         shell: bash
         run: |
           set -euo pipefail
@@ -37,9 +37,9 @@ jobs:
           from pathlib import Path
 
           queue_path = Path("governance/roadmap/ACTIVE_QUEUE.json")
-          p6_receipt_path = Path("governance/proofs/BEM949_p6_learning_loop_receipt.json")
+          receipt_path = Path("governance/proofs/BEM949_p6_learning_loop_receipt.json")
           queue = json.loads(queue_path.read_text(encoding="utf-8"))
-          receipt = json.loads(p6_receipt_path.read_text(encoding="utf-8"))
+          receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
           if receipt.get("status") != "PASS":
               raise SystemExit("P6 receipt is not PASS")
 
@@ -52,7 +52,7 @@ jobs:
               if task.get("id") == "BEM949-P6-LEARNING-LOOP-DRILL":
                   task["status"] = "DONE"
                   task["completed_at"] = now
-                  task["receipt_sha"] = hashlib.sha256(p6_receipt_path.read_bytes()).hexdigest()
+                  task["receipt_sha"] = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
                   task["receipt_sha_type"] = "sha256_content"
                   p6_seen = True
               if task.get("id") == "BEM949-P7-RELEASE-AUDIT-FINAL":
@@ -60,15 +60,14 @@ jobs:
                   task.setdefault("started_at", now)
                   p7_seen = True
           if not (p6_seen and p7_seen):
-              raise SystemExit("P6 or P7 task absent from ACTIVE_QUEUE")
+              raise SystemExit("P6 or P7 task missing from ACTIVE_QUEUE")
 
           progress = queue.get("progress")
           if isinstance(progress, dict):
               done_count = sum(
                   1
-                  for task in queue["tasks"]
-                  if isinstance(task, dict)
-                  and str(task.get("status", "")).startswith("DONE")
+                  for task in queue.get("tasks", [])
+                  if isinstance(task, dict) and str(task.get("status", "")).startswith("DONE")
               )
               progress["tasks_done"] = done_count
               total = progress.get("tasks_total")
@@ -77,7 +76,6 @@ jobs:
           queue["current_task"] = "BEM949-P7-RELEASE-AUDIT-FINAL"
           queue["queue_state"] = "ACTIVE"
           queue["system_status"] = "BEM949_P6_PASS_P7_AUDIT_IN_PROGRESS"
-          queue["next_action"] = "Execute BEM949 P7 independent release audit."
           queue["updated_at"] = now
           queue_path.write_text(
               json.dumps(queue, ensure_ascii=True, indent=2) + "\n",
@@ -106,34 +104,34 @@ jobs:
           receipt_path = Path("governance/proofs/BEM949_p7_external_release_audit_receipt.json")
           queue = json.loads(queue_path.read_text(encoding="utf-8"))
           receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-          status = receipt.get("status")
-          if status not in {"PASS", "BLOCKED"}:
-              raise SystemExit("P7 receiqt has no terminal status")
+          outcome = receipt.get("status")
+          if outcome not in {"PASS", "BLOCKED"}:
+              raise SystemExit("P7 receipt has no termal status")
 
           now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          p7_seen = False
           for task in queue.get("tasks", []):
               if isinstance(task, dict) and task.get("id") == "BEM949-P7-RELEASE-AUDIT-FINAL":
-                  task["status"] = "DONE" if status == "PASS" else "BLOCKED"
+                  task["status"] = "DONE" if outcome == "PASS" else "BLOCKED"
                   task["completed_at"] = now
-                  task["receipt_sha"] = hashlib.sha256(recipit_path.read_bytes()).hexdigest()
+                  task["receipt_sha"] = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
                   task["receipt_sha_type"] = "sha256_content"
+                  p7_seen = True
                   break
-          else:
-              raise SystemExit("P7 task absent from ACTIVE_QUEUE")
+          if not p7_seen:
+              raise SystemExit("P7 task missing from ACTIVE_QUEUE")
 
           queue["current_task"] = None
-          queue["queue_state" = "COMPLETE" if status == "PASS" else "BLOCKED"
+          queue["queue_state" = "COMPLETE" if outcome == "PASS" else "BLOCKED"
           queue["system_status"] = (
               "BEM949_RELEASE_AUDIT_PASS"
-              if status == "PASS"
+              if outcome == "PASS"
               else "BEM949_RELEASE_AUDIT_BLOCKED"
           )
-          queue["release_status"] = (
-              "PASS" if status == "PASS" else "VERIFIED_WITH_LIMITATIONS"
-          )
+          queue["release_status"] = "PASS" if outcome == "PASS" else "VERIFIED_WITH_LIMITATIONS"
           queue["next_action"] = (
               "Roadmap complete."
-              if status == "PASS"
+              if outcome == "PASS"
               else "Resume only recorded blockers; do not claim broad Release PASS."
           )
           queue["updated_at"] = now
