@@ -13,8 +13,11 @@ def main() -> str:
     if not task:
         write_result("dir_curator_no_task", {"role": ROLE_NAME, "result": "no_task"})
         return "no_task"
+    trace_id = task.get("trace_id") or f"dir_{uuid4().hex[:12]}"
+    cycle_id = task.get("cycle_id") or f"cycle_{trace_id}"
     routed = {
-        "trace_id": task.get("trace_id") or f"dir_{uuid4().hex[:12]}",
+        "trace_id": trace_id,
+        "cycle_id": cycle_id,
         "status": "pending",
         "from": ROLE_NAME,
         "to": "WRK.CURATOR",
