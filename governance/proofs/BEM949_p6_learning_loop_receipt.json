@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P6-LEARNING-LOOP-DRILL",
+  "receipt_id": "BEM949_p6_learning_loop",
+  "created_at": "2026-06-23T14:41:47Z",
+  "trace_id": "bem949_p6_learning_loop",
+  "evidence_kind": "runtime_execution",
+  "runtime_execution_claim": true,
+  "execution": {
+    "executed_at": "2026-06-23T14:41:47Z",
+    "runner_path": "governance/runners/bem949_learning_loop_drill.py",
+    "runner_sha": "da05d77452e21a453266f99366b5a6bbb647475df8f0555fbc38fe905052f031",
+    "runner_sha_type": "sha256_content",
+    "incident_path": "governance/incidents/BEM949_p5a_utf8_decode_incident.json",
+    "incident_sha": "a87866d01e3cadd3b2ccb1cc94be3eebbecc1f601b5f96d4933f9f4511fb4d83",
+    "incident_sha_type": "sha256_content",
+    "registry_path": "governance/state/rule_registry.json",
+    "registry_sha": "72f566aa04734e813ba3d2bcf3a5d69f8dc40a9442bd28ea217e77ccc71b6fa4",
+    "registry_sha_type": "sha256_content",
+    "refresh_path": "governance/state/learning/BEM949_p6_dynamic_rule_refresh.json",
+    "refresh_sha": "e5b6b266ccb0605edcddb8e38d7287b95ac0cf45bd9bf77246cb93a225ac123f",
+    "refresh_sha_type": "sha256_content"
+  },
+  "chain": {
+    "error": {
+      "incident_id": "BEM949-P5A-UTF8-DECODE-001",
+      "error_class": "UnicodeDecodeError",
+      "source": {
+        "kind": "operator_supplied_github_actions_screenshots",
+        "workflow": ".github/workflows/bem949-p5-rule-source-catalog.yml",
+        "runs": [
+          38,
+          39
+        ],
+        "failing_step": "Inventory RULE-004 through RULE-010 sources"
+      }
+    },
+    "experience": {
+      "experience_id": "experience:BEM949-P5A-UTF8-DECODE-001",
+      "incident_id": "BEM949-P5A-UTF8-DECODE-001",
+      "error_class": "UnicodeDecodeError",
+      "source_kind": "operator_supplied_github_actions_screenshots",
+      "incident_sha": "a87866d01e3cadd3b2ccb1cc94be3eebbecc1f601b5f96d4933f9f4511fb4d83",
+      "incident_sha_type": "sha256_content"
+    },
+    "rule_version": {
+      "id": "RULE-010",
+      "version": "1.0",
+      "owner": "OBJ-WRK-001",
+      "scope": "product_repository_feedback",
+      "registry_sha": "72f566aa04734e813ba3d2bcf3a5d69f8dc40a9442bd28ea217e77ccc71b6fa4",
+      "registry_sha_type": "sha256_content"
+    },
+    "dynamic_refresh": {
+      "refresh_readback_matches_current_rule": true,
+      "applied": true,
+      "refresh_generation": 1,
+      "refresh_basis": "current_canonical_rule_registry"
+    }
+  },
+  "negative_validation": {
+    "mutation": "unknown_rule_mapping",
+    "rejected": true,
+    "observed_error": "unknown_rule_id:RULE-999",
+    "expected_error": "unknown_rule_id:RULE-999"
+  },
+  "blockers": [],
+  "non_claim": "This drill proves only the observed incident to experience to RULE-010 version refresh path. It does not claim a broad release result or autonomous policy mutation.",
+  "acceptance": {
+    "error_to_experience_recorded": true,
+    "experience_to_rule_version_bound": true,
+    "dynamic_refresh_readback": true,
+    "negative_unknown_rule_rejected": true
+  },
+  "status": "PASS"
+}

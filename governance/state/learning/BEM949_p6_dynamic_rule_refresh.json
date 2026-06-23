@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P6-LEARNING-LOOP-DRILL",
+  "refreshed_at": "2026-06-23T14:41:47Z",
+  "trace_id": "bem949_p6_learning_loop",
+  "experience": {
+    "experience_id": "experience:BEM949-P5A-UTF8-DECODE-001",
+    "incident_id": "BEM949-P5A-UTF8-DECODE-001",
+    "error_class": "UnicodeDecodeError",
+    "source_kind": "operator_supplied_github_actions_screenshots",
+    "incident_sha": "a87866d01e3cadd3b2ccb1cc94be3eebbecc1f601b5f96d4933f9f4511fb4d83",
+    "incident_sha_type": "sha256_content"
+  },
+  "rule": {
+    "id": "RULE-010",
+    "version": "1.0",
+    "owner": "OBJ-WRK-001",
+    "scope": "product_repository_feedback",
+    "registry_sha": "72f566aa04734e813ba3d2bcf3a5d69f8dc40a9442bd28ea217e77ccc71b6fa4",
+    "registry_sha_type": "sha256_content"
+  },
+  "dynamic_refresh": {
+    "applied": true,
+    "refresh_generation": 1,
+    "refresh_basis": "current_canonical_rule_registry"
+  }
+}
