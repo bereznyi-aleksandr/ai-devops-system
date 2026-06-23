@@ -24,7 +24,7 @@ jobs:
       TRACE: bem931_v36_rm15_${{ github.run_id }}
       INPUT_TASK: ${{ inputs.task }}
     steps:
-      - uses: actions/checkout@r4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
