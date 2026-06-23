@@ -3,7 +3,7 @@ name: BEM949 P5 Evidence Check
   workflow_dispatch:
 jobs:
   verify:
-    runs-"on": ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Verify P5 receipt
