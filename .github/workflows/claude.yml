@@ -379,9 +379,6 @@ jobs:
           except Exception:
               pass
           # BEM-934 live semantic proof validation
-          # The Claude action may report a tool-level failure after committing a valid
-          # trace-bound proof. Only this narrowly scoped repair task may derive semantic
-          # success from strict proof validation; all other task types keep fail-close behavior.
           if task_type == 'live_content_analysis_repair':
               safe_trace = ''.join(ch if ch.isalnum() or ch in ('_', '-') else '_' for ch in trace)
               proof_path = Path('governance/proofs/BEM934_live_content_' + safe_trace + '.json')
@@ -431,7 +428,6 @@ jobs:
           report_path = 'governance/reports/' + trace + '.md'
           Path('governance/reports').mkdir(parents=True, exist_ok=True)
 
-          # BEM-488: safe lines join instead of f-string multiline
           lines = [
               '# Claude Role Result - ' + trace,
               '',
@@ -513,8 +509,13 @@ jobs:
             exit 0
           fi
           git fetch origin main
+          git stash --include-untracked || true
           git rebase origin/main
-          git add -- "$report"
+          git stash pop || true
+          git add -- "$report" \
+            governance/transport/results.jsonl \
+            governance/state/provider_status.json \
+            2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No trace-report changes"
             exit 0
@@ -524,7 +525,7 @@ jobs:
             if git push origin HEAD:main; then
               exit 0
             fi
-            git pull --rebase origin main || git rebase --abort || true
+            git pull --rebase --autostash origin main || true
             sleep "$attempt"
           done
           echo "Trace report commit could not be pushed after retries"
