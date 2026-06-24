@@ -15,9 +15,7 @@
           git rebase origin/main
           if ! git stash pop; then
             echo "STASH POP CONFLICT: stash restore failed after rebase"
-            echo "Conflict files:"
             git status --short || true
-            echo "Aborting commit to prevent partial/conflicted trace report"
             exit 1
           fi
           git add -- "$report" \
