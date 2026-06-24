@@ -110,7 +110,6 @@ jobs:
           cycle_id  = os.environ.get('INPUT_CYCLE_ID', '')
           task_type = os.environ.get('INPUT_TASK_TYPE', 'default_development')
           task      = os.environ.get('INPUT_TASK', '')
-          # BEM-934 governed prompt bridge
           assembled_path = os.environ.get('ASSEMBLED_ROLE_PROMPT', '')
           assembled_text = (
               Path(assembled_path).read_text(encoding='utf-8').strip()
@@ -228,7 +227,6 @@ jobs:
           github_token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           claude_args: --max-turns 10
 
-      # BEM-488: YAML-safe — Python lines join instead of f-string multiline
       - name: Materialize BEM-934 binding plan from Claude structured output
         if: ${{ inputs.task_type == 'object_runtime_binding' && steps.claude_binding_role.outcome == 'success' }}
         shell: bash
@@ -253,81 +251,51 @@ jobs:
               return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
           def write_receipt(payload):
-              receipt_path.write_text(
-                  json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                  encoding="utf-8",
-              )
+              receipt_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
           receipt = {
-              "status": "BLOCKED",
-              "protocol": "BEM-934",
-              "task_id": "BEM934-OBJECTS-BOUND",
-              "created_at": now(),
-              "trace_id": trace_id,
-              "structured_output_available": bool(structured_raw),
-              "checks": {},
-              "missing": [],
+              "status": "BLOCKED", "protocol": "BEM-934", "task_id": "BEM934-OBJECTS-BOUND",
+              "created_at": now(), "trace_id": trace_id,
+              "structured_output_available": bool(structured_raw), "checks": {}, "missing": [],
           }
 
           if not trace_id:
-              receipt["blocker"] = "trace_id_missing"
-              write_receipt(receipt)
-              raise SystemExit(0)
+              receipt["blocker"] = "trace_id_missing"; write_receipt(receipt); raise SystemExit(0)
           if not structured_raw:
               receipt["blocker"] = "structured_output_missing"
-              receipt["missing"] = ["structured_output_available"]
-              write_receipt(receipt)
-              raise SystemExit(0)
+              receipt["missing"] = ["structured_output_available"]; write_receipt(receipt); raise SystemExit(0)
 
           try:
               plan = json.loads(structured_raw)
           except json.JSONDecodeError as error:
               receipt["blocker"] = "structured_output_not_strict_json"
               receipt["json_error"] = str(error)
-              receipt["missing"] = ["strict_json_object_parsed"]
-              write_receipt(receipt)
-              raise SystemExit(0)
+              receipt["missing"] = ["strict_json_object_parsed"]; write_receipt(receipt); raise SystemExit(0)
 
           required = ("objective", "assumptions", "steps", "acceptance", "risks", "trace_id")
-          steps = plan.get("steps")
-          acceptance = plan.get("acceptance")
+          steps = plan.get("steps"); acceptance = plan.get("acceptance")
           text = json.dumps(plan, ensure_ascii=False).lower()
           checks = {
               "strict_json_object_parsed": isinstance(plan, dict),
               "required_fields_present": all(field in plan for field in required),
               "trace_matches": plan.get("trace_id") == trace_id,
-              "steps_are_task_specific": isinstance(steps, list)
-                  and len([item for item in steps if str(item).strip()]) >= 3,
-              "acceptance_is_verifiable": isinstance(acceptance, list)
-                  and len([item for item in acceptance if str(item).strip()]) >= 2,
+              "steps_are_task_specific": isinstance(steps, list) and len([i for i in steps if str(i).strip()]) >= 3,
+              "acceptance_is_verifiable": isinstance(acceptance, list) and len([i for i in acceptance if str(i).strip()]) >= 2,
               "mentions_wrk_c1": "wrk-c1" in text or "wrk_c1" in text,
               "mentions_claude_provider": "claude" in text,
-              "mentions_object_runtime_binding": all(
-                  term in text for term in ("object", "runtime", "binding")
-              ),
-              "mentions_idempotent_telegram_routing": all(
-                  term in text for term in ("idempotent", "telegram", "routing")
-              ),
+              "mentions_object_runtime_binding": all(t in text for t in ("object", "runtime", "binding")),
+              "mentions_idempotent_telegram_routing": all(t in text for t in ("idempotent", "telegram", "routing")),
           }
           receipt["checks"] = checks
-          receipt["missing"] = [key for key, value in checks.items() if not value]
+          receipt["missing"] = [k for k, v in checks.items() if not v]
           if receipt["missing"]:
               receipt["blocker"] = "claude_structured_plan_semantic_validation_failed"
-              write_receipt(receipt)
-              raise SystemExit(0)
+              write_receipt(receipt); raise SystemExit(0)
 
-          plan_path.write_text(
-              json.dumps(plan, ensure_ascii=False, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          receipt.update({
-              "status": "PASS",
-              "plan_path": str(plan_path),
-              "raw_execution_log_committed": False,
-              "source": "claude_code_action_structured_output",
-          })
-          receipt.pop("blocker", None)
-          write_receipt(receipt)
+          plan_path.write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          receipt.update({"status": "PASS", "plan_path": str(plan_path),
+              "raw_execution_log_committed": False, "source": "claude_code_action_structured_output"})
+          receipt.pop("blocker", None); write_receipt(receipt)
           PY
 
           git config user.email "bem934-claude-materializer@ai-devops-system"
@@ -343,7 +311,6 @@ jobs:
             git commit -m "Materialize BEM-934 Claude binding proof trace=${{ inputs.trace_id }}"
             git push || (git pull --rebase origin main && git push)
           fi
-
 
       - name: Write final result to transport
         if: always() && github.event_name == 'workflow_dispatch'
@@ -366,19 +333,16 @@ jobs:
           cycle   = os.environ.get('CYCLE_ID') or ('cycle_' + trace)
           outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')
           task_type = os.environ.get('TASK_TYPE', '')
-
           status  = 'completed' if outcome == 'success' else ('failed' if outcome == 'failure' else outcome)
           blocker = None if outcome == 'success' else ('claude_role outcome=' + outcome)
 
           changed = []
           try:
-              changed = subprocess.check_output(
-                  ['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], text=True
-              ).strip().split('\n')
+              changed = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], text=True).strip().split('\n')
               changed = [f for f in changed if f]
           except Exception:
               pass
-          # BEM-934 live semantic proof validation
+
           if task_type == 'live_content_analysis_repair':
               safe_trace = ''.join(ch if ch.isalnum() or ch in ('_', '-') else '_' for ch in trace)
               proof_path = Path('governance/proofs/BEM934_live_content_' + safe_trace + '.json')
@@ -388,36 +352,21 @@ jobs:
               try:
                   proof = json.loads(proof_path.read_text(encoding='utf-8'))
                   acceptance = proof.get('acceptance_checks')
-                  acceptance_ok = (
-                      isinstance(acceptance, list)
-                      and len(acceptance) >= 2
-                      and all(
-                          isinstance(item, dict) and item.get('result') == 'PASS'
-                          for item in acceptance
-                      )
-                  )
+                  acceptance_ok = isinstance(acceptance, list) and len(acceptance) >= 2 and all(isinstance(i, dict) and i.get('result') == 'PASS' for i in acceptance)
                   proof_valid = (
-                      proof.get('status') == 'PASS'
-                      and proof.get('protocol') == 'BEM-934'
-                      and proof.get('task_id') == 'BEM934-LIVE-TEST'
-                      and proof.get('trace_id') == trace
+                      proof.get('status') == 'PASS' and proof.get('protocol') == 'BEM-934'
+                      and proof.get('task_id') == 'BEM934-LIVE-TEST' and proof.get('trace_id') == trace
                       and proof.get('provider_selected') == 'claude_code'
-                      and proof.get('source_router_receipt')
-                          == 'governance/proofs/BEM932_provider_router_' + trace + '.json'
-                     and isinstance(proof.get('invariants'), list)
-                      and len(proof['invariants']) >= 2
-                     and isinstance(proof.get('validation_steps'), list)
-                      and len(proof['validation_steps']) >= 2
-                     and acceptance_ok
-                     and isinstance(proof.get('limitations'), list)
-                      and len(proof['limitations']) >= 1
+                      and proof.get('source_router_receipt') == 'governance/proofs/BEM932_provider_router_' + trace + '.json'
+                      and isinstance(proof.get('invariants'), list) and len(proof['invariants']) >= 2
+                      and isinstance(proof.get('validation_steps'), list) and len(proof['validation_steps']) >= 2
+                      and acceptance_ok
+                      and isinstance(proof.get('limitations'), list) and len(proof['limitations']) >= 1
                   )
               except Exception:
                   proof_valid = False
               if proof_valid:
-                  outcome = 'success_'
-                  status = 'completed'
-                  blocker = None
+                  outcome = 'success_'; status = 'completed'; blocker = None
 
           sha = None
           try:
@@ -427,39 +376,23 @@ jobs:
 
           report_path = 'governance/reports/' + trace + '.md'
           Path('governance/reports').mkdir(parents=True, exist_ok=True)
-
           lines = [
-              '# Claude Role Result - ' + trace,
-              '',
-              '| Field | Value |',
-              '|---|---|',
-              '| Trace | ' + trace + ' |',
-              '| Role | ' + role + ' |',
-              '| Provider | claude |',
-              '| Outcome | ' + outcome + ' |',
-              '| Status | ' + status + ' |',
-              '| Commit SHA | ' + (sha or 'none') + ' |',
-              '| Completed at | ' + now + ' |',
-              '| Changed files | ' + (', '.join(changed) or 'none') + ' |',
-              '',
-              ('**Blocker:** ' + blocker) if blocker else '**No blocker.**',
-              '',
+              '# Claude Role Result - ' + trace, '',
+              '| Field | Value |', '|---|---|',
+              '| Trace | ' + trace + ' |', '| Role | ' + role + ' |',
+              '| Provider | claude |', '| Outcome | ' + outcome + ' |',
+              '| Status | ' + status + ' |', '| Commit SHA | ' + (sha or 'none') + ' |',
+              '| Completed at | ' + now + ' |', '| Changed files | ' + (', '.join(changed) or 'none') + ' |',
+              '', ('**Blocker:** ' + blocker) if blocker else '**No blocker.**', '',
               'Report written by claude.yml (BEM-477/488). No issue comments.',
           ]
           Path(report_path).write_text('\n'.join(lines) + '\n')
 
           Path('governance/transport').mkdir(parents=True, exist_ok=True)
           result = {
-              'trace_id':     trace,
-              'cycle_id':     cycle,
-              'role':         role,
-              'provider':     'claude',
-              'status':       status,
-              'changed_files': changed,
-              'commit_sha':   sha,
-              'blocker':      blocker,
-              'report_path':  report_path,
-              'completed_at': now
+              'trace_id': trace, 'cycle_id': cycle, 'role': role, 'provider': 'claude',
+              'status': status, 'changed_files': changed, 'commit_sha': sha,
+              'blocker': blocker, 'report_path': report_path, 'completed_at': now
           }
           with open('governance/transport/results.jsonl', 'a') as f:
               f.write(json.dumps(result, ensure_ascii=False) + '\n')
@@ -472,11 +405,8 @@ jobs:
           ps['claude'] = {'status': status, 'last_used': now, 'last_trace': trace, 'last_outcome': outcome}
           ps['updated_at'] = now
           ps_path.write_text(json.dumps(ps, indent=2) + '\n')
-
           print('Transport result written: status=' + status + ' trace=' + trace)
           PYEOF
-
-
 
       - name: BEM-867 mailbox write for battle audit
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.trace_id == 'bem867_battle_audit_mailbox' }}
@@ -511,7 +441,11 @@ jobs:
           git fetch origin main
           git stash --include-untracked || true
           git rebase origin/main
-          git stash pop || true
+          if ! git stash pop; then
+            echo "STASH POP CONFLICT: stash restore failed after rebase"
+            git status --short || true
+            exit 1
+          fi
           git add -- "$report" \
             governance/transport/results.jsonl \
             governance/state/provider_status.json \
@@ -590,7 +524,6 @@ jobs:
               print('orchestrator advance failed: ' + str(e))
           PY
 
-      # BEM-488: Python-based summary — no heredoc, no f-string
       - name: Report to job summary
         if: always() && github.event_name == 'workflow_dispatch'
         shell: bash
@@ -607,17 +540,12 @@ jobs:
           outcome = os.environ.get('CLAUDE_OUTCOME', 'unknown')
 
           lines = [
-              '## Claude Role - ' + role + ' | ' + outcome,
-              '',
-              '| Field | Value |',
-              '|---|---|',
-              '| Trace | ' + trace + ' |',
-              '| Role | ' + role + ' |',
+              '## Claude Role - ' + role + ' | ' + outcome, '',
+              '| Field | Value |', '|---|---|',
+              '| Trace | ' + trace + ' |', '| Role | ' + role + ' |',
               '| Outcome | ' + outcome + ' |',
-              '| Report | governance/reports/' + trace + '.md |',
-              '',
-              '**No issue comments written (BEM-476/477/488)**',
-              '',
+              '| Report | governance/reports/' + trace + '.md |', '',
+              '**No issue comments written (BEM-476/477/488)**', '',
           ]
 
           summary_path = os.environ.get('GITHUB_STEP_SUMMARY', '/tmp/summary.md')
