@@ -1,38 +1,9 @@
-      - name: Commit trace report safely
-        if: always() && github.event_name == 'workflow_dispatch'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.email "claude-role-adapter@ai-devops-system"
-          git config user.name "Claude Role Adapter"
-          report="governance/reports/${TRACE_ID}.md"
-          if [ ! -f "$report" ]; then
-            echo "No trace report to persist: $report"
-            exit 0
-          fi
-          git fetch origin main
-          git stash --include-untracked || true
-          git rebase origin/main
-          if ! git stash pop; then
-            echo "STASH POP CONFLICT: stash restore failed after rebase"
-            git status --short || true
-            exit 1
-          fi
-          git add -- "$report" \
-            governance/transport/results.jsonl \
-            governance/state/provider_status.json \
-            2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "No trace-report changes"
-            exit 0
-          fi
-          git commit -m "CLAUDE-ROLE: role=${ROLE_RAW} trace=${TRACE_ID}"
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-            git pull --rebase --autostash origin main || true
-            sleep "$attempt"
-          done
-          echo "Trace report commit could not be pushed after retries"
-          exit 1
+# ФАЙЛ СОЗДАН ПО ОШИБКЕ — НЕ ЯВЛЯЕТСЯ РАБОЧИМ WORKFLOW
+# Случайно создан при попытке патчить claude.yml через неверный путь.
+# Логика из этого файла уже применена в .github/workflows/claude.yml (commit 8b81ca3).
+# Этот файл можно удалить вручную — он не влияет на работу системы.
+# GitHub Contents API не позволяет удалять файлы — только обнулить содержимое.
+
+name: DISABLED - stray file, not a real workflow
+on: []
+jobs: {}
