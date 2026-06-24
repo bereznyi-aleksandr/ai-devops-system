@@ -1,9 +1,11 @@
-# ФАЙЛ СОЗДАН ПО ОШИБКЕ — НЕ ЯВЛЯЕТСЯ РАБОЧИМ WORKFLOW
-# Случайно создан при попытке патчить claude.yml через неверный путь.
-# Логика из этого файла уже применена в .github/workflows/claude.yml (commit 8b81ca3).
-# Этот файл можно удалить вручную — он не влияет на работу системы.
-# GitHub Contents API не позволяет удалять файлы — только обнулить содержимое.
+name: DISABLED - legacy stray file
 
-name: DISABLED - stray file, not a real workflow
-on: []
-jobs: {}
+on:
+  workflow_dispatch:
+
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disabled workflow sentinel
+        run: echo "This legacy file is intentionally inert."
