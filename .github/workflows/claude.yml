@@ -431,6 +431,55 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
+          resolve_generated_conflicts() {
+            local stage_dir="$1"
+            python3 - "$TRACE_ID" "$stage_dir" <<'PYMERGE'
+            import json
+            import sys
+            from datetime import datetime, timezone
+            from pathlib import Path
+
+            trace_id, stage_dir = sys.argv[1], Path(sys.argv[2])
+            results_path = Path("governance/transport/results.jsonl")
+            staged_result = (stage_dir / "result.jsonl").read_text(encoding="utf-8").strip()
+
+            merged = []
+            replaced = False
+            if results_path.exists():
+                for line in results_path.read_text(encoding="utf-8").splitlines():
+                    try:
+                        value = json.loads(line)
+                    except json.JSONDecodeError:
+                        merged.append(line)
+                        continue
+                    if value.get("trace_id") != trace_id:
+                        merged.append(json.dumps(value, ensure_ascii=False, sort_keys=True))
+                    elif staged_result and not replaced:
+                        merged.append(staged_result)
+                        replaced = True
+            if staged_result and not replaced:
+                merged.append(staged_result)
+            results_path.parent.mkdir(parents=True, exist_ok=True)
+            results_path.write_text("\n".join(merged) + ("\n" if merged else ""), encoding="utf-8")
+
+            provider_path = Path("governance/state/provider_status.json")
+            try:
+                provider_state = json.loads(provider_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                provider_state = {}
+            raw_claude = (stage_dir / "claude_state.json").read_text(encoding="utf-8").strip()
+            if raw_claude:
+                provider_state["claude"] = json.loads(raw_claude)
+            provider_state["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            provider_path.parent.mkdir(parents=True, exist_ok=True)
+            provider_path.write_text(
+                json.dumps(provider_state, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            PYMERGE
+          }
+
           report="governance/reports/${TRACE_ID}.md"
           if [ ! -f "$report" ]; then
             echo "No trace report to persist: $report"
@@ -445,9 +494,8 @@ jobs:
           import sys
           from pathlib import Path
 
-          trace_id, stage = sys.argv[1], Path(sys.argv[2])
-
-          result_line = ""
+          trace_id, stage_dir = sys.argv[1], Path(sys.argv[2])
+          staged_result = ""
           results_path = Path("governance/transport/results.jsonl")
           if results_path.exists():
               for line in results_path.read_text(encoding="utf-8").splitlines():
@@ -456,8 +504,11 @@ jobs:
                   except json.JSONDecodeError:
                       continue
                   if value.get("trace_id") == trace_id:
-                      result_line = json.dumps(value, ensure_ascii=False, sort_keys=True)
-          (stage / "result.jsonl").write_text(result_line + ("\n" if result_line else ""), encoding="utf-8")
+                      staged_result = json.dumps(value, ensure_ascii=False, sort_keys=True)
+          (stage_dir / "result.jsonl").write_text(
+              staged_result + ("\n" if staged_result else ""),
+              encoding="utf-8",
+          )
 
           provider_path = Path("governance/state/provider_status.json")
           try:
@@ -465,63 +516,25 @@ jobs:
           except (OSError, json.JSONDecodeError):
               provider_state = {}
           claude_state = provider_state.get("claude")
-          (stage / "claude_state.json").write_text(
+          (stage_dir / "claude_state.json").write_text(
               json.dumps(claude_state, ensure_ascii=False) if claude_state is not None else "",
               encoding="utf-8",
           )
           PYTRACE
 
+          git config user.email "claude-role-adapter@ai-devops-system"
+          git config user.name "Claude Role Adapter"
           for attempt in 1 2 3; do
             git fetch origin main
             git reset --hard origin/main
-            mkdir -p "$(dirname "$report")" governance/transport governance/state
+            mkdir -p "$(dirname "$report")"
             cp "$stage_dir/report.md" "$report"
+            resolve_generated_conflicts "$stage_dir"
 
-            python3 - "$TRACE_ID" "$stage_dir" <<'PYMERGE'
-          import json
-          import sys
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          trace_id, stage = sys.argv[1], Path(sys.argv[2])
-
-          def resolve_generated_conflicts():
-              results_path = Path("governance/transport/results.jsonl")
-              lines = results_path.read_text(encoding="utf-8").splitlines() if results_path.exists() else []
-              staged = (stage / "result.jsonl").read_text(encoding="utf-8").strip()
-              seen_trace = False
-              merged = []
-              for line in lines:
-                  try:
-                      value = json.loads(line)
-                  except json.JSONDecodeError:
-                      merged.append(line)
-                      continue
-                  if value.get("trace_id") == trace_id:
-                      if not seen_trace and staged:
-                          merged.append(staged)
-                          seen_trace = True
-                  else:
-                      merged.append(line)
-              if staged and not seen_trace:
-                  merged.append(staged)
-              results_path.write_text("\n".join(merged) + ("\n" if merged else ""), encoding="utf-8")
-
-              provider_path = Path("governance/state/provider_status.json")
-              try:
-                  remote = json.loads(provider_path.read_text(encoding="utf-8"))
-              except (OSError, json.JSONDecodeError):
-                  remote = {}
-              raw = (stage / "claude_state.json").read_text(encoding="utf-8").strip()
-              if raw:
-                  remote["claude"] = json.loads(raw)
-              remote["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-              provider_path.write_text(json.dumps(remote, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-          resolve_generated_conflicts()
-          PYMERGE
-
-            git add -- "$report" governance/transport/results.jsonl governance/state/provider_status.json
+            git add -- "$report" \
+              governance/transport/results.jsonl \
+              governance/state/provider_status.json \
+              2>/dev/null || true
             if git diff --cached --quiet; then
               echo "No trace-report changes to commit"
               exit 0
