@@ -431,37 +431,108 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.email "claude-role-adapter@ai-devops-system"
-          git config user.name "Claude Role Adapter"
           report="governance/reports/${TRACE_ID}.md"
           if [ ! -f "$report" ]; then
             echo "No trace report to persist: $report"
             exit 0
           fi
-          git fetch origin main
-          git stash --include-untracked || true
-          git rebase origin/main
-          if ! git stash pop; then
-            echo "STASH POP CONFLICT: stash restore failed after rebase"
-            git status --short || true
-            exit 1
-          fi
-          git add -- "$report" \
-            governance/transport/results.jsonl \
-            governance/state/provider_status.json \
-            2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "No trace-report changes"
-            exit 0
-          fi
-          git commit -m "CLAUDE-ROLE: role=${ROLE_RAW} trace=${TRACE_ID}"
+
+          stage_dir="$(mktemp -d)"
+          trap 'rm -rf "$stage_dir"' EXIT
+          cp "$report" "$stage_dir/report.md"
+          python3 - "$TRACE_ID" "$stage_dir" <<'PYTRACE'
+          import json
+          import sys
+          from pathlib import Path
+
+          trace_id, stage = sys.argv[1], Path(sys.argv[2])
+
+          result_line = ""
+          results_path = Path("governance/transport/results.jsonl")
+          if results_path.exists():
+              for line in results_path.read_text(encoding="utf-8").splitlines():
+                  try:
+                      value = json.loads(line)
+                  except json.JSONDecodeError:
+                      continue
+                  if value.get("trace_id") == trace_id:
+                      result_line = json.dumps(value, ensure_ascii=False, sort_keys=True)
+          (stage / "result.jsonl").write_text(result_line + ("\n" if result_line else ""), encoding="utf-8")
+
+          provider_path = Path("governance/state/provider_status.json")
+          try:
+              provider_state = json.loads(provider_path.read_text(encoding="utf-8"))
+          except (OSError, json.JSONDecodeError):
+              provider_state = {}
+          claude_state = provider_state.get("claude")
+          (stage / "claude_state.json").write_text(
+              json.dumps(claude_state, ensure_ascii=False) if claude_state is not None else "",
+              encoding="utf-8",
+          )
+          PYTRACE
+
           for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p "$(dirname "$report")" governance/transport governance/state
+            cp "$stage_dir/report.md" "$report"
+
+            python3 - "$TRACE_ID" "$stage_dir" <<'PYMERGE'
+          import json
+          import sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          trace_id, stage = sys.argv[1], Path(sys.argv[2])
+
+          def resolve_generated_conflicts():
+              results_path = Path("governance/transport/results.jsonl")
+              lines = results_path.read_text(encoding="utf-8").splitlines() if results_path.exists() else []
+              staged = (stage / "result.jsonl").read_text(encoding="utf-8").strip()
+              seen_trace = False
+              merged = []
+              for line in lines:
+                  try:
+                      value = json.loads(line)
+                  except json.JSONDecodeError:
+                      merged.append(line)
+                      continue
+                  if value.get("trace_id") == trace_id:
+                      if not seen_trace and staged:
+                          merged.append(staged)
+                          seen_trace = True
+                  else:
+                      merged.append(line)
+              if staged and not seen_trace:
+                  merged.append(staged)
+              results_path.write_text("\n".join(merged) + ("\n" if merged else ""), encoding="utf-8")
+
+              provider_path = Path("governance/state/provider_status.json")
+              try:
+                  remote = json.loads(provider_path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError):
+                  remote = {}
+              raw = (stage / "claude_state.json").read_text(encoding="utf-8").strip()
+              if raw:
+                  remote["claude"] = json.loads(raw)
+              remote["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+              provider_path.write_text(json.dumps(remote, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          resolve_generated_conflicts()
+          PYMERGE
+
+            git add -- "$report" governance/transport/results.jsonl governance/state/provider_status.json
+            if git diff --cached --quiet; then
+              echo "No trace-report changes to commit"
+              exit 0
+            fi
+            git commit -m "CLAUDE-ROLE: role=${ROLE_RAW} trace=${TRACE_ID}"
             if git push origin HEAD:main; then
               exit 0
             fi
-            git pull --rebase --autostash origin main || true
             sleep "$attempt"
           done
+
           echo "Trace report commit could not be pushed after retries"
           exit 1
 
