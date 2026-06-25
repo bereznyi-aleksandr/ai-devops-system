@@ -1,10 +1,7 @@
-name: Repair Claude transport persistence
+name: Repair Claude trace persistence
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - ".github/workflows/repair-claude-transport-persistence.yml"
 
 permissions:
   contents: write
@@ -20,41 +17,91 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Replace conflict-prone transport commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import base64
-          from pathlib import Path
-
-          path = Path(".github/workflows/claude.yml")
-          text = path.read_text(encoding="utf-8")
-          start = text.index("      - name: Commit transport and report\n")
-          end = text.index("\n      - name: Advance role orchestrator\n", start)
-          replacement = base64.b64decode("ICAgICAgLSBuYW1lOiBDb21taXQgdHJhY2UgcmVwb3J0IHNhZmVseQogICAgICAgIGlmOiBhbHdheXMoKSAmJiBnaXRodWIuZXZlbnRfbmFtZSA9PSAnd29ya2Zsb3dfZGlzcGF0Y2gnCiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHwKICAgICAgICAgIHNldCAtZXVvIHBpcGVmYWlsCiAgICAgICAgICBnaXQgY29uZmlnIHVzZXIuZW1haWwgImNsYXVkZS1yb2xlLWFkYXB0ZXJAYWktZGV2b3BzLXN5c3RlbSIKICAgICAgICAgIGdpdCBjb25maWcgdXNlci5uYW1lICJDbGF1ZGUgUm9sZSBBZGFwdGVyIgogICAgICAgICAgcmVwb3J0PSJnb3Zlcm5hbmNlL3JlcG9ydHMvJHtUUkFDRV9JRH0ubWQiCiAgICAgICAgICBpZiBbICEgLWYgIiRyZXBvcnQiIF07IHRoZW4KICAgICAgICAgICAgZWNobyAiTm8gdHJhY2UgcmVwb3J0IHRvIHBlcnNpc3Q6ICRyZXBvcnQiCiAgICAgICAgICAgIGV4aXQgMAogICAgICAgICAgZmkKICAgICAgICAgIGdpdCBmZXRjaCBvcmlnaW4gbWFpbgogICAgICAgICAgZ2l0IHJlYmFzZSBvcmlnaW4vbWFpbgogICAgICAgICAgZ2l0IGFkZCAtLSAiJHJlcG9ydCIKICAgICAgICAgIGlmIGdpdCBkaWZmIC0tY2FjaGVkIC0tcXVpZXQ7IHRoZW4KICAgICAgICAgICAgZWNobyAiTm8gdHJhY2UtcmVwb3J0IGNoYW5nZXMiCiAgICAgICAgICAgIGV4aXQgMAogICAgICAgICAgZmkKICAgICAgICAgIGdpdCBjb21taXQgLW0gIkNMQVVERS1ST0xFOiByb2xlPSR7Uk9MRV9SQVd9IHRyYWNlPSR7VFJBQ0VfSUR9IgogICAgICAgICAgZm9yIGF0dGVtcHQgaW4gMSAyIDM7IGRvCiAgICAgICAgICAgIGlmIGdpdCBwdXNoIG9yaWdpbiBIRUFEOm1haW47IHRoZW4KICAgICAgICAgICAgICBleGl0IDAKICAgICAgICAgICAgZmkKICAgICAgICAgICAgZ2l0IHB1bGwgLS1yZWJhc2Ugb3JpZ2luIG1haW4gfHwgZ2l0IHJlYmFzZSAtLWFib3J0IHx8IHRydWUKICAgICAgICAgICAgc2xlZXAgIiRhdHRlbXB0IgogICAgICAgICAgZG9uZQogICAgICAgICAgZWNobyAiVHJhY2UgcmVwb3J0IGNvbW1pdCBjb3VsZCBub3QgYmUgcHVzaGVkIGFmdGVyIHJldHJpZXMiCiAgICAgICAgICBleGl0IDEK").decode("utf-8")
-          path.write_text(text[:start] + replacement + text[end:], encoding="utf-8")
-          PY
-          git diff --check
-          ruby -e 'require "yaml"; YAML.load_file(".github/workflows/claude.yml")'
-
-      - name: Commit repair
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add .github/workflows/claude.yml
-          if git diff --cached --quiet; then
-            echo "Claude transport step already repaired"
+      - name: Replace conflict-prone trace persistence step
+        env:
+          REPLACEMENT_B64: ICAgICAgLSBuYW1lOiBDb21taXQgdHJhY2UgcmVwb3J0IHNhZmVseQogICAgICAgIGlmOiBhbHdheXMoKSAmJiBnaXRodWIuZXZlbnRfbmFtZSA9PSAnd29ya2Zsb3dfZGlzcGF0Y2gnCiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHwKICAgICAgICAgIHNldCAtZXVvIHBpcGVmYWlsCiAgICAgICAgICBnaXQgY29uZmluIHVzZXIuZW1haWwgImNsYXVkZS1zbmxqb25lLWFkYXB0ZXJAYWktZGV2b3BzLXN5c3RlbSIKICAgICAgICAgIGdpdCBjb25maWwgdXNlci5uYW1lICJDbGF1ZGUgUm9sZSBBZGFwdGVyIgogICAgICAgICAgcmVwb3J0PSJnb3ZlbnJhbmNlL3JlcG9ydHMvJHtUUkFDRV9JRn0ubWQiCiAgICAgICAgICBpZiBbICEgLWYgIiRyZXBvcnQiIF07IHRoZW4KgICAgICAgICAgICAgICAgZWNobyAiTm8gdHJhY2UgcnVwb3J0IHRvIHBlcnNpc3Q6ICRyZXBvcnQiCiAgICAgICAgICAgIGV4aXQgMAogICAgICAgICAgZmkKICAgICAgICAgIGdpdCBjb21taXQgLyA4CiAgICAgICAgICAgICAgIHN5bmNjaHJvbml6aW5nIHdpdGggbWFpbi4gVGhpcyBwcmV2ZW50cyBnZW5lcmF0ZWQgSlNPTiBmaWxlcyBmcm9tIGJlaW5nCiAgICAgICAgICAgICAgICAgICAjIGhpZGRlbiBpbiBhIHN0YXNoIGFuZCBsYXRlciBjb25mbGljdGluZyBkdXJpbmcgcmV0cmFrZS4KICAgICAgICAgICAgZ2l0IGFkZCAtAAogICAgICAgICAgIGFmIGdpdCBdiff --cached --quiet; then
+            echo "No trace-report changes"
             exit 0
           fi
-          git commit -m "BEM949: prevent Claude transport rebase conflicts"
+          git commit -m "CLAUDER-ROLE: role=${ROLE_RAW} trace=${TRACE_ID}"
+
+          resolve_transport_conflicts() {
+            local path
+            local unresolved
+            unresolved="$(git diff --name-only --diff-filter=U || true)"
+
+            for path in governance/transport/results.jsoll governance/state/provider_status.json; do
+              if printf '%s\n' "$unresolved" | grep -Fxq "$path"; then
+                python3 - "$path" <<'PY'
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+path = sys.argv[1]
+
+def stage_blob(stage):
+    return subprocess.check_output(
+        ["git", "show", f":{stage}:{path}"],
+        text=True,
+        encoding="utf-8",
+    )
+
+upstream = stage_blob(2)
+local = stage_blob(3)
+
+if path.endswith("results.jsol"):
+    seen = set()
+    merged = []
+    for source in (upstream, local):
+        for line in source.splitlines():
+            if line.strip() and line not in seen:
+                seen.add(line)
+                merged.append(line)
+    Path(path).write_text(
+        ("\n".join(merged) + "\n") if merged else "",
+        encoding="utf-8",
+    )
+else:
+    remote_state = json.loads(upstream)
+    local_state = json.loads(local)
+    if not isinstance(remote_state, dict) or not isinstance(local_state, dict):
+        raise SystemExit("provider_status.json must contain JSON objects")
+    merged_state = dict(remote_state)
+    if "claude" in local_state:
+        merged_state["claude"] = local_state["claude"]
+    if "updated_at" in local_state:
+        merged_state["updated_at"] = local_state["updated_at"]
+    Path(path).write_text(
+        json.dumps(merged_state, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+PY
+                git add -- "$path"
+              fi
+            done
+
+            unresolved="$(git diff --name-only --diff-filter=U || true)"
+            if [ -n "$unresolved" ]; then
+              echo "Unresolved rebase conflicts outside deterministic transport state:"
+              printf '%s\n' "$unresolved"
+              git status --short || true
+              exit 1
+            fi
+            GIT_EDITOR=true git rebase --continue
+          }
+
           for attempt in 1 2 3; do
-            if git pull --rebase origin main && git push origin HEAD:main; then
+            if git push origin HEAD:main; then
               exit 0
             fi
-            git rebase --abort || true
+
+            git fetch origin main
+            if ! git rebase origin/main; then
+              resolve_transport_conflicts
+            fi
             sleep "$attempt"
           done
+
+          echo "Trace report commit could not be pushed after retries"
           exit 1
