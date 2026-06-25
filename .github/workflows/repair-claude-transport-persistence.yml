@@ -17,9 +17,9 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Replace conflict-prone trace persistence step
+      - name: Restore valid trace persistence step
         env:
-          PATCH_B64: eNrNWN1T3DYQf7+/YquBYE+xachL55J7YODapJOvATptShmPsNd3CrbkSDIXSvnfK9m+i+TzAU1pp35gkLTfv9Xu6gDsFwGnJY7hUJQl06AlTREkVkJqUDTH4noE3cfyMdBiQa9VEMKTJzBjel5fxHiFXCdWCkwmsLMQ8jIvxCLJmKqoTuc7KwFqjkUxhguq5qs9WfMx/LlaGiLUEGEtoGIV5pQVzllr14TMxBVKTnmKe+2W2tu6OT0+OJwmr45u4zIjDhPL4Qy+gSgHstVSEzh/DnqO3KECwHQugLwVfgy0MQSlYkqPYcnus302YfvO2crZyHVH0xmaWMgJ2QrKS41lBVEWujKMvgp2ZAmRtDauOMgOTH99depQppXjg0PZRaHneHWt54I/MxCTrWVwPDYCL17svP/QnO24ESsb1z8qwdd31bVynZWiBAPzvGAXS4r3Zjny/UsxYdluGwyYWBkxlbOrs6fnuw15sNrZPw9HHuKqLnRSMG75CFk7UonVbs4aMW5mGLVcWYP2OsrYOlSQ0M8NV0xswFTapPfYg9i4KSQ0NjDuM0ikWaLxsw6QpyJjfDYhtc6j70kYq6pg2nINCGzjcj20bb8rWtTWYWtxXAiaqcAKCgfI8XOKVQtW/NPJu7dHaOzAqZRCbpKeCq4Zr3Hg2ASk0R3PUAdkiRwJ7dVerjaJ9bFqDMrqslJBI3EXkKtaYkJVytjkB1oos6cMPsklXqvJqaw9/4I2WfaAtHKX6MULyTS2MXc1fgsB+Z2TL5C222jUmLwJrfoeQG6eVVJcsQzlxmwy1mjcW5HZZd1mlJdQA5h6PD1QPbV3JZOro0M8eHfSoLw7iH14rxk3t25lKWid4erMJ26ToSUhwxi5/F1UXKB6tji54TIOpUhoAfWsYwq40PBWfEF3tye/Hz733LW/q31uItibTrUt09pe9qewD8+eQyY8DabzQY6mt4GQbGbISsr4GoVJQ9vLojmVWUe4t0ZYXppCDJEt7IH5r2mjqxofEhgqaNDPS09i0ySGWsMXuSOP4aF94s30+Md/1CcyY6pmxsGOZLneBfv3DwPof9hZMmwKhSiuMJkhR2mMyRJTGvOCpUM94DH6jf2ajmAEfFUf2dix2qtwdt5T1sQlM9o2ltM7NWvJqqDvgELkSTskTaC5pD2CEmWrdM0ct482Hv2v+mJrd0yrCnm2UfC/2EENry1tToApzzoMN/GsG97Sh3fQewjaxjsUP4Pr1wfKeNKlnvXAd2pI6kM88PLeaS627ccfBeNBKyV0Z4EuFx84BjzmKHBHKkssxaOMAl8/DnhmeKNAc0IXXs0Yau9/v3DY2kUXmy05W84Y535oDNN6LrQMdZU1dZvqhmnZUWIuFsGyqcS1ThuTcrsTkO0P0XYZbWen2y/H22/G2ye/reHmg+HkmjO5tCYMj7WMZ+ZRPNm3qWgz8Z60u7MPefNK04NHa6MGzTIzaDiPw/v7Ejwoo0c9/KyyjOW50ZbSdI5W7aeaoR54UPef1FH3pE7nlM9MCzRP67T51YGsZXTvSd08qvs+t7wQlUAOXx/8fDSNjt+9no5BigInWzd2kRwf/HLbKp84PxCQIa+qWq3GuZfTg6OxHdWGvbrXPFUg2imsGyRdfZmdckb9EJ26Pzl0jqWiLtrSeYGNdbaY5hqloTPXCxUZ9Wx6OvoLQh8JIg==
+          PATCH_B64: eNq1WG1v2zYQ/u5fwRJJI2GRvKRfBrceFjRe26FvSDNsXRoIjHSy2UiiRlJOszT/fUdJdkhZdtys0wfDou6Ozx3v5ZEIMVdACpbDiDwXec410ZLFQCSUQmqiWArZ9YC0F09HhGVX7Fp5Pnn8mEy5nlUXIcyh0JGxQsZjsncl5GWaiaso4apkOp7tLQ2oGWTZiFwwNVuuyaoYka/LWxQCTQKoBCl5CSnj2cB6KEGJbA7RFAqQTEMSxaJIMx5rg+nGkiQkEzHLiNJsCohFjunOAXUEyms9E8UTDAHdOT05ej6JXh1T/L9UoeTZs733H99MTl5M9hxVntcB+qxE0beurpWznEqRkwTxao5RaoUW9/vE/P4jCljVwQDOMn6xUHmPtwNHqj6viCf7d46Ssdk/ZHI6Pzs436+VvOXK4bnvGMCIVplWkdkJNWthOhVzkAUrYhjiBoUymw9bydA4nVHXSr15EjUiaMa7QzMktFleKIYSWBJp+KI9KGKR8GI6ppVOg5/wmdKSl57vOpmDROto9uy8g73M0H3z5FeWKTd+PHV8C+ELVyZLRo5UHWkhScYLPJjCVdkItMy4Nlq9Jpujue5/YK45yyqslzqDwkywRHnGmN+rAF9iKJtsC3/78O7tMSAamEgp5PodmqCFrCyhSDYYNxcWkeZFBb0CGMgabTgF7dFFwlGfPBov029bGLULSZWXyqtt7hMoVCUhYirmfFyfIqYyplt0CddqfCor8NcEJUNgbt6xIiGF0Mu82BaVY2V9lKx0M7i62fatWLbG4ORkySS22zC/xNrympsmTBhKk+GRuGyitt7EleQamrymnwoafha88Bo0PvmB1IvGobbsAM+EUOqbs+pUgVumpRRznoBc20vQRw3DpZi5rZp+0mknvaXj6HVqx9l6U926+7SF5b37UBfTfm+J+VtAubl1w82uojhjVQIrvbBZbhRb17dqiN3WttzhPnRn7Zb03A3ZnQV/sEm7KpN60DJdW1hMrbAQV95icIWVjmuoqVnx6O7HYDcPdpPT3Zej3Tej3Q9/UX99qjwwp10bVlKvBMTqOq53/e2HFwkiGB+aYjC1sL9isHtMroQLs+UP1tqty2jMcB3bZdIsqeHOzYKV3IZ5YnMXTIAz8ogEKbKVRpqS86dEz8ClIxDPBKFvhUvrNHIrkAoDOyIL9U5ZIBP80VpKuQ3ZplRefqkhL0mQ+LYN3K8kezIngUwdRrVHJn++OrUk49LywZJso9BxfFvKVj+zKVs/Yeula9sQr/9Iu7p0idLB92Vk25Kf/4X6bCA+30B7HkB6NtCYtSRmfD+J6Z7Wg0iMZXsjOV7fx1wY1px2HyzH9WD7nuUM8u81xnvS4LuP8IcN8M3j257Q+MwVbvKnnajrD7Vvyq8/WSuhbMW+vPLNgTsIuap55lscw4uz/7ajt0dV3TftZMB3fFNWKZ+SSoEMIcc38oV/gRQZBCxhpQb5C+NBAnNRqgC7Hg4FusFM/bWAPm8o0glaIUeNFVvJNCemzXjRpj8dkEPy5ClJhOOdsZyCjmdESD5FMQRYrEhgbZjPCsGMyaQVHK4I1vyDBGYgefivwbiYTb47Iuux1Tes7jS6BHzdhwtnfA1WoLMkQeDWkPzUOd37R8MmlfXFvKJ1+PMQD3hYVFlGvn7F+l59BzKAE56miDhm8QwM9L8rDrqHnHTpSdDSk3jGiikoQ1Pi+qMU7ap16UlNULpxa3RJkGOevT76/XgSnLx7PRkRk7PjnRtzE50c/XHbbD62yBbt86qs1DLFXk6Ojkcmffq9uheeygBM/rTJbe+XmM9Ag26ITm361joWiyprXjEvoEaHwWYplhDK4TsDKDroYDoY/Auce6uo
         shell: bash
         run: |
           set -euo pipefail
@@ -37,7 +37,9 @@ jobs:
               raise SystemExit("expected exactly one trace persistence step")
           start = text.index(start_marker)
           end = text.index(end_marker, start)
-          replacement = zlib.decompress(base64.b64decode(os.environ["PATCH_B64"])).decode("utf-8")
+          replacement = zlib.decompress(
+              base64.b64decode(os.environ["PATCH_B64"])
+          ).decode("utf-8")
           path.write_text(text[:start] + replacement + text[end:], encoding="utf-8")
           PY
           git diff --check
@@ -55,7 +57,7 @@ jobs:
             echo "Claude trace persistence is already repaired"
             exit 0
           fi
-          git commit -m "BEM949: resolve Claude transport rebase conflicts"
+          git commit -m "BEM949: restore valid Claude transport persistence"
           for attempt in 1 2 3; do
             if git push origin HEAD:main; then
               exit 0
