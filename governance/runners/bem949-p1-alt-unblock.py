@@ -1,28 +1,113 @@
 #!/usr/bin/env python3
-import hashlib,json
-from datetime import datetime,timezone
+"""Produce static-only evidence for BEM949 P1 workflows.
+
+This validator deliberately does not claim GitHub Actions run-level success.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from datetime import datetime, timezone
 from pathlib import Path
-R=Path(__file__).resolve().parents[2]; W=R/'.github/workflows'; O=R/'governance/proofs/BEM949_p1_static_validation_receipt.json'
-def now(): return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-def sha(b): return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
-def main():
- try: import yaml
- except ImportError:
-  x={'schema_version':1,'task_id':'BEM949-P1-ALT-UNBLOCK','created_at':now(),'status':'BLOCKED','outcome':'static_validation_unavailable','blocker':'PyYAML unavailable'}
-  O.parent.mkdir(parents=True,exist_ok=True);O.write_text(json.dumps(x,indent=2)+'\n');print(json.dumps({'task_status':'BLOCKED','receipt_path':str(O.relative_to(R))}));return 1
- checks=[];problems=[];files=sorted(W.glob('bem949-p1-*.yml'))
- for p in files:
-  raw=p.read_bytes()
-  try:
-   d=yaml.safe_load(raw.decode())
-   if not isinstance(d,dict): raise ValueError('top_level_not_mapping')
-   if d.get('on',d.get(True)) is None: raise ValueError('missing_on')
-   jobs=d.get('jobs')
-   if not isinstance(jobs,dict) or not jobs: raise ValueError('missing_or_empty_jobs')
-   if any(not isinstance(v,dict) or ('runs-on' not in v and 'uses' not in v) for v in jobs.values()): raise ValueError('invalid_job')
-   checks.append({'path':str(p.relative_to(R)),'git_blob_sha':sha(raw),'sha_type':'git_blob','yaml_safe_load':'PASS','static_schema':'PASS'})
-  except Exception as e: problems.append({'path':str(p.relative_to(R)),'error':type(e).__name__+':'+str(e)})
- if not files: problems.append({'path':'.github/workflows/bem949-p1-*.yml','error':'no_matching_workflows'})
- ok=not problems;x={'schema_version':1,'task_id':'BEM949-P1-ALT-UNBLOCK','created_at':now(),'status':'PASS' if ok else 'BLOCKED','outcome':'static_pass_only' if ok else 'blocked_with_detail','evidence_kind':'yaml_safe_load_static_validation','scope':'.github/workflows/bem949-p1-*.yml','checks':checks,'problems':problems,'limitations':['Static validation does not prove GitHub Actions dispatch or run-level success.','BEM949-P1-CI-STABILIZE remains independently blocked until run-level evidence exists.'],'broad_release_pass_claimed':False}
- O.parent.mkdir(parents=True,exist_ok=True);O.write_text(json.dumps(x,indent=2)+'\n');print(json.dumps({'task_status':'DONE_STATIC_ONLY' if ok else 'BLOCKED','receipt_path':str(O.relative_to(R))}));return 0 if ok else 1
-raise SystemExit(main())
+
+ROOT = Path(__file__).resolve().parents[2]
+WORKFLOWS = ROOT / ".github" / "workflows"
+OUT = ROOT / "governance" / "proofs" / "BEM949_p1_static_validation_receipt.json"
+
+def now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+def blob_sha(data: bytes) -> str:
+    return hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest()
+
+def write_receipt(receipt: dict) -> None:
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+def main() -> int:
+    try:
+        import yaml
+    except ImportError:
+        receipt = {
+            "schema_version": 1,
+            "task_id": "BEM949-P1-ALT-UNBLOCK",
+            "created_at": now(),
+            "status": "BLOCKED",
+            "outcome": "static_validation_unavailable",
+            "blocker": "PyYAML unavailable; yaml.safe_load did not execute",
+            "broad_release_pass_claimed": False,
+        }
+        write_receipt(receipt)
+        print(json.dumps({
+            "task_status": "BLOCKED",
+            "receipt_path": str(OUT.relative_to(ROOT)),
+        }))
+        return 1
+
+    checks: list[dict] = []
+    problems: list[dict] = []
+    files = sorted(WORKFLOWS.glob("bem949-p1-*.yml"))
+
+    for path in files:
+        raw = path.read_bytes()
+        relative = str(path.relative_to(ROOT))
+        try:
+            document = yaml.safe_load(raw.decode("utf-8"))
+            if not isinstance(document, dict):
+                raise ValueError("top_level_not_mapping")
+            trigger = document.get("on", document.get(True))
+            if trigger is None:
+                raise ValueError("missing_on")
+            jobs = document.get("jobs")
+            if not isinstance(jobs, dict) or not jobs:
+                raise ValueError "missing_or_empty_jobs")
+            for name, spec in jobs.items():
+                if not isinstance(spec, dict):
+                    raise ValueError(f"job_not_mapping:{name}")
+                if "runs-on" not in spec and "uses" not in spec:
+                    raise ValueError(f"job_has_no_runner_or_reusable_workflow:{name}")
+            checks.append({
+                "path": relative,
+                "git_blob_sha": blob_sha(raw),
+                "sha_type": "git_blob",
+                "yaml_safe_load": "PASS",
+                "static_schema": "PASS",
+            })
+        except Exception as exc:
+            problems.append({
+                "path": relative,
+                "error": f"{type(exc).__name__}:{exc}",
+            })
+
+    if not files:
+        problems.append({
+            "path": ".github/workflows/bem949-p1-*.yml",
+            "error": "no_matching_workflows",
+        })
+
+    passed = not problems
+    receipt = {
+        "schema_version": 1,
+        "task_id": "BEM949-P1-ALT-UNBLOCK",
+        "created_at": now(),
+        "status": "PASS" if passed else "BLOCKED",
+        "outcome": "static_pass_only" if passed else "blocked_with_detail",
+        "evidence_kind": "yaml_safe_load_static_validation",
+        "scope": ".github/workflows/bem949-p1-*.yml",
+        "checks": checks,
+        "problems": problems,
+        "limitations": [
+            "Static validation does not prove GitHub Actions dispatch or run-level success.",
+            "BEM949-P1-CI-STABILIZE remains independently blocked until run-level evidence exists.",
+        ],
+        "broad_release_pass_claimed": False,
+    }
+    write_receipt(receipt)
+    print(json.dumps({
+        "task_status": "DONE_STATIC_ONLY" if passed else "BLOCKED",
+        "receipt_path": str(OUT.relative_to(ROOT)),
+    }))
+    return 0 if passed else 1
+
+if __name__ == "__main__":
+    raise SystemExit(main())
