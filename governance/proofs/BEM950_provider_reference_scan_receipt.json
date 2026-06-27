@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "task_id": "BEM950-POST-T4-REPOSITORY-WIDE-PROVIDER-SCAN",
+  "created_at": "2026-06-27T07:43:30Z",
+  "status": "PASS",
+  "validation_mode": "prescribed active routing/config source audit",
+  "scope": {
+    "required_files": {
+      ".github/workflows/provider-router.yml": "5b6cb408c80b1e4a588cd7fdb44991c637c0843a",
+      ".github/workflows/provider-adapter.yml": "f1400518882560c843a7638dcd15a7ae516695ff",
+      "governance/config/provider_config.json": "401ef811e95c55d09296fbd019abba6f1ca8a22b"
+    },
+    "sha_type": "git_blob",
+    "search_terms": [
+      "OPENAI_API_KEY",
+      "OPENAI_MODEL",
+      "api.openai.com",
+      "gpt_codex_cloud"
+    ],
+    "archived_directory": "governance/archive/disabled-workflows"
+  },
+  "findings": [
+    {
+      "path": "governance/config/provider_config.json",
+      "term": "OPENAI_API_KEY",
+      "classification": "policy_declaration",
+      "result": "PERMANENTLY_PROHIBITED"
+    },
+    {
+      "path": "governance/config/provider_config.json",
+      "term": "gpt_codex_cloud",
+      "classification": "provider_registry",
+      "result": "DISABLED_BY_COST_POLICY; not permanently deprecated"
+    },
+    {
+      "path": ".github/workflows/provider-router.yml",
+      "classification": "active_router_policy_guard",
+      "result": "no static metered endpoint/key/provider selection; selected provider resolved from enabled registry entry"
+    },
+    {
+      "path": ".github/workflows/provider-adapter.yml",
+      "classification": "active_adapter_policy_guard",
+      "result": "reads provider_config.json and chooses only enabled providers"
+    }
+  ],
+  "unresolved_active_findings": [],
+  "result_rule": "PASS applies to the prescribed active router/adapter/config scope. P7 remains independently blocked by P1 run-level evidence."
+}
