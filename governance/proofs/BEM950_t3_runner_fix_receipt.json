@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "BEM950-T3-RUNNER-FIX-AND-P4-SKIP-LOGIC",
+  "created_at": "2026-06-27T07:26:46Z",
+  "status": "PASS",
+  "runner_path": "governance/runners/bem949_release_audit_runner.py",
+  "runner_sha_before": "c09ad4dd8e4c2e848cad95708876b6bd8e50cf0e",
+  "runner_sha_after": "8d22180e1f7e5dd60576354f4c542aaf4b2e1ff5",
+  "sha_type": "git_blob",
+  "compile_verified": true,
+  "compile_method": "compile(updated_source, runner_path, 'exec')",
+  "fixes": [
+    "typo_ValueEror_to_ValueError",
+    "undefined_path_reference_to_path_parameter",
+    "compile_blocking_indentation_and_typo_repair",
+    "SKIPPED_BY_OPERATOR_allowlist_logic"
+  ],
+  "operator_skip_acknowledged": [
+    "BEM949-P4-LIVE-LLM-FALLBACK"
+  ],
+  "operator_skip_scope": "The allowlist is exact-match and recognizes only queue status SKIPPED_BY_OPERATOR for the named P4 task; it does not assert a broad release PASS.",
+  "verification_note": "The prior runner could not satisfy the required compile gate because its checked-in source included ValueEror/path errors and invalid indentation. The replacement was compiled before persistence."
+}
