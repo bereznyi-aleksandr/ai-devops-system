@@ -1,9 +1,9 @@
 {
-  "version": 38,
-  "updated_at": "2026-06-27T06:25:00Z",
-  "queue_state": "BLOCKED",
-  "current_task": null,
-  "system_status": "BEM949_RELEASE_AUDIT_BLOCKED",
+  "version": 39,
+  "updated_at": "2026-06-27T06:39:00Z",
+  "queue_state": "PENDING",
+  "current_task": "BEM950-T1-INVALID-WORKFLOW-ARCHIVE",
+  "system_status": "BEM950_REMEDIATION_PRECONDITIONS_PENDING",
   "release_status": "VERIFIED_WITH_LIMITATIONS",
   "protocol": "BEM-949",
   "protocol_path": "governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
@@ -57,7 +57,8 @@
         ".github/workflows/bem949-p4-live-llm-fallback-v2.yml",
         ".github/workflows/bem949-p4-live-llm-fallback-v3.yml",
         ".github/workflows/gpt-codex-cloud.yml"
-      ]
+      ],
+      "review_required": "Do not treat this operator skip as permanent GPT provider-class deprecation. BEM950-T2 and BEM950-T4 must reclassify the policy and P4 semantics."
     },
     {
       "id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
@@ -65,7 +66,7 @@
       "receipt": "governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json",
       "receipt_sha": "d31be705d9c595c828c987648eed9bca5e2fd885",
       "receipt_sha_type": "git_blob",
-      "acceptance": "RULE-004...010 positive and negative runtime enforcement evidence",
+      "acceptance": "RULE-004...010 positive and negative runtime enforcemnt emivence",
       "completion_scope": "registry_schema_enforcement_and_mutation_rejection_for_RULE_004_through_RULE_010"
     },
     {
@@ -80,14 +81,144 @@
     },
     {
       "id": "BEM949-P7-RELEASE-AUDIT-FINAL",
-      "status": "PENDING",
+      "status": "BLOCKED_PRECONDITIONS",
       "receipt": null,
       "acceptance": "independent audit of P0.5-P6; broad PASS only with no limitations",
-      "note": "P4 now SKIPPED_BY_OPERATOR (paid API prohibited). P7 can proceed. Remaining limitation: P1 missing run-level evidence. Broad PASS requires acknowledging this limitation explicitly."
+      "note": "P7 must not be dispatched until BEM-950 T1-T4 and the post-T4 provider-reference scan have PASS receipts. P1 remains a limitation; broad PASS requires independent run-level evidence and must not be inferred from task status.",
+      "blockers": [
+        "BEM950-T1-INVALID-WORKFLOW-ARCHIVE",
+        "BEM950-T2-PROVIDER-CONFIG-RECLASSIFY",
+        "BEM950-T3-RUNNER-FIX-AND-P4-SKIP-LOGIC",
+        "BEM950-T4-ACTIVE-QUEUE-P4-RECLASSIFY",
+        "BEM950-POST-T4-REPOSITORY-WIDE-PROVIDER-SCAN",
+        "BEM949-P1-RUN-LEVEL-EVIDENCE"
+      ]
+    },
+    {
+      "id": "BEM950-T1-INVALID-WORKFLOW-ARCHIVE",
+      "status": "PENDING",
+      "priority": "CRITICAL",
+      "protocol": "BEM-950",
+      "receipt": "governance/proofs/BEM950_t1_workflow_archive_receipt.json",
+      "depends_on": [],
+      "scope": {
+        "files": [
+          ".github/workflows/repair-claude-transport-persistence.yml",
+          ".github/workflows/gpt-codex-cloud.yml"
+        ],
+        "archive_directory": "governance/archive/disabled-workflows/",
+        "required_replacement": "Valid GitHub Actions archive stub: workflow_dispatch only, at least one job, and job-level if: false. Do not use on: [] or jobs: {}."
+      },
+      "acceptance": [
+        "Archive copies exist outside .github/workflows/.",
+        "Each original workflow path contains a GitHub Actions-valid no-op archive stub.",
+        "Receipt lists archive and stub git_blob SHA values with sha_type=git_blob.",
+        "No invalid on: [] / jobs: {} stub remains for either target."
+      ]
+    },
+    {
+      "id": "BEM950-T2-PROVIDER-CONFIG-RECLASSIFY",
+      "status": "PENDING",
+      "priority": "HIGH",
+      "protocol": "BEM-950",
+      "receipt": "governance/proofs/BEM950_t2_provider_config_receipt.json",
+      "depends_on": [
+        "BEM950-T1-INVALID-WORKFLOW-ARCHIVE"
+      ],
+      "scope": {
+        "file": "governance/config/provider_config.json",
+        "target_version": "1.5",
+        "required_policy": "Provider-neutral architecture: metered OpenAI API falback is denied; GPT remains a provider class that may be reactivated through a verified subscription, OAuth, or interactive adapter."
+      },
+      "acceptance": [
+        "gpt_codex_cloud is DISABLED_BY_COST_POLICY, not permanently deprecated as a provider class.",
+        "gpt_codex keeps a reactivation path.",
+        "paid_api_policy denies metered_api_default and automatic_paid_fallback while identifying allowed classes.",
+        "Receipt records before and after git_blob SHA values and status PASS."
+      ]
+    },
+    {
+      "id": "BEM950-T3-RUNNER-FIX-AND-P4-SKIP-LOGIC",
+      "status": "PENDING",
+      "priority": "CRITICAL",
+      "protocol": "BEM-950",
+      "receipt": "governance/proofs/BEM950_t3_runner_fix_receipt.json",
+      "depends_on": [
+        "BEM950-T2-PROVIDER-CONFIG-RECLASSIFY"
+      ],
+      "scope": {
+        "file": "governance/runners/bem949_release_audit_runner.py",
+        "required_fixes": [
+          "Correct ValuError to ValueError and use the intended path variable.",
+          "Accept SKIPPED_BY_OPERATOR only for the allowlisted BEM949-P4-LIVE-LLM-FALLBACK task."
+        ],
+        "validation": "Compile the exact updated Python source before persistence."
+      },
+      "acceptance": [
+        "The changed runner compiles.",
+        "The precise P4 allowlist is recorded as operator_skip_acknowledged in the receipt.",
+        "The operator skip is non-blocking for the allowed task only and is not interpreted as a broad release PASS.",
+        "Receipt has before/after git_blob SHAs, compile_verified=true, and status PASS."
+      ]
+    },
+    {
+      "id": "BEM950-T4-ACTIVE-QUEUE-P4-RECLASSIFY",
+      "status": "PENDING",
+      "priority": "HIGH",
+      "protocol": "BEM-950",
+      "receipt": "governance/proofs/BEM950_t4_queue_reclassify_receipt.json",
+      "depends_on": [
+        "BEM950-T3-RUNNER-FIX-AND-P4-SKIP-LOGIC"
+      ],
+      "scope": {
+        "file": "governance/roadmap/ACTIVE_QUEUE.json",
+        "p4_classification": "SUPERSEDBED_BY_BEM950_PROVIDER_POLICY",
+        "progress_rule": "Do not change the BEM-949 progress percentage before P7 completes."
+      },
+      "acceptance": [
+        "P4 records a billing-class-specific prohibition rather than permanent GPT provider-class deprecation.",
+        "The queue policy states that subscription, OAuth, and interactive GPT adapter paths remain architecturally valid.",
+        "P7 remains blocked until T1-T4 and the provider-reference scan receipts are PASS.",
+        "Receipt records the updated queue git_blob SHA and status PASS."
+      ]
+    },
+    {
+      "id": "BEM950-POST-T4-REPOSITORY-WIDE-PROVIDER-SCAN",
+      "status": "PENDING",
+      "priority": "CRITICAL",
+      "protocol": "BEM-950",
+      "receipt": "governance/proofs/BEM950_provider_reference_scan_receipt.json",
+      "depends_on": [
+        "BEM950-T4-ACTIVE-QUEUE-P4-RECLASSIFY"
+      ],
+      "scope": {
+        "required_files": [
+          ".github/workflows/provider-router.yml",
+          ".github/workflows/provider-adapter.yml",
+          "governance/config/provider_config.json"
+        ],
+        "search_terms": [
+          "OPENAI_API_KEY",
+          "OPENAI_MODEL",
+          "api.openai.com",
+          "gpt_codex_cloud"
+        ],
+        "rule": "Inventory active, non-archived workflow/config references. An unresolved metered-API reference requires a BLOCKED receipt and an operator gate."
+      },
+      "acceptance": [
+        "Receipt enumerates every finding with file and active/archive classification.",
+        "PASS is permitted only when active references conform to the billing-class policy.",
+        "No P7 dispatch occurs before this receipt is PASS."
+      ]
     }
   ],
   "open_blockers": [
-    "BEM949-P1-RUN-LEVEL-EVIDENCE"
+    "BEM949-P1-RUN-LEVEL-EVIDENCE",
+    "BEM950-T1-INVALID-WORKFLOW-ARCHIVE",
+    "BEM950-T2-PROVIDER-CONFIG-RECLASSIFY",
+    "BEM950-T3-RUNNER-FIX-AND-P4-SKIP-LOGIC",
+    "BEM950-T4-ACTIVE-QUEUE-P4-RECLASSIFY",
+    "BEM950-POST-T4-REPOSITORY-WIDE-PROVIDER-SCAN"
   ],
   "evidence_policy": {
     "sha_type_required": true,
@@ -99,7 +230,8 @@
   "paid_api_policy": {
     "openai_api_key": "PERMANENTLY_PROHIBITED",
     "automatic_paid_fallback": "PERMANENTLY_PROHIBITED",
-    "violation_action": "BLOCKED_COST_POLICY"
+    "violation_action": "BLOCKED_COST_POLICY",
+    "scope_clarification": "The prohibition covers billing_class=metered_api_default and automatic_paid_fallback only. GPT provider-class reactivation through a verified subscription, OAuth, or interactive adapter remains architecturally valid under BEM-950."
   },
-  "next_action": "Autopilot can now dispatch P7 final release audit. P1 limitation will be noted in audit but does not block P7 execution."
+  "next_action": "Execute BEM950-T1-INVALID-WORKFLOW-ARCHIVE. Do not dispatch P7 or run roadmap-autopilot for P7 until BEM-950 T1-T4 and BEM950-POST-T4-REPOSITORY-WIDE-PROVIDER-SCAN each have PASS receipts."
 }
