@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "BEM950-T2-PROVIDER-CONFIG-RECLASSIFY",
+  "created_at": "2026-06-27T07:24:44Z",
+  "status": "PASS",
+  "provider_config_path": "governance/config/provider_config.json",
+  "provider_config_sha_before": "374076a8f2f2791beaf1fe10e7d605bb137c8dc0",
+  "provider_config_sha_after": "401ef811e95c55d09296fbd019abba6f1ca8a22b",
+  "sha_type": "git_blob",
+  "version_before": "1.4",
+  "version_after": "1.5",
+  "assertions": {
+    "gpt_codex_cloud_status": "DISABLED_BY_COST_POLICY",
+    "gpt_codex_status": "DISABLED_NO_RUNNER",
+    "gpt_provider_class_permanently_deprecated": false,
+    "metered_api_default_denied": true,
+    "automatic_paid_fallback_denied": true,
+    "allowed_billing_classes": [
+      "subscription_included",
+      "oauth_verified",
+      "interactive_only"
+    ]
+  }
+}
