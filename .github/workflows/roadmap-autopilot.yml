@@ -4,10 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       force_task_id:
-        description: Optional PENDING task ID override
+        description: Optional eligible PENDING task ID override
         required: false
         default: ""
         type: string
+  workflow_run:
+    workflows: ["Roadmap Task Executor"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - governance/roadmap/ACTIVE_QUEUE.json
+      - governance/proofs/**
+      - governance/logs/execution_log.jsonl
   schedule:
     - cron: "*/5 * * * *"
 
@@ -24,37 +33,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
 
-      - name: Compile universal autopilot before execution
-        shell: bash
+      - name: Compile universal autopilot
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           path = Path("governance/runners/roadmap_autopilot.py")
           compile(path.read_text(encoding="utf-8"), str(path), "exec")
-          print("PASS: universal roadmap autopilot compiles")
           PY
 
       - id: advance
         name: Reconcile receipts and select any eligible task
-        shell: bash
         env:
-          FORCE_TASK_ID: ${{ inputs.force_task_id }}
+          FORCE_TASK_ID: ${{ inputs.force_task_id || '' }}
           RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
-          python3 governance/runners/roadmap_autopilot.py \
-            --force-task-id "$FORCE_TASK_ID" \
-            --trace-prefix "autopilot_${RUN_ID}" \
-            --dispatch-out /tmp/roadmap_dispatch.json \
-            > /tmp/roadmap_advance.json
+          python3 governance/runners/roadmap_autopilot.py             --force-task-id "$FORCE_TASK_ID"             --trace-prefix "autopilot_${RUN_ID}"             --dispatch-out /tmp/roadmap_dispatch.json             > /tmp/roadmap_advance.json
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           from pathlib import Path
@@ -65,41 +66,31 @@ jobs:
           print("task_id=" + str(result.get("task_id", "")))
           PY
 
-      - name: Commit universal-autopilot queue transition
+      - name: Persist autopilot queue transition
         if: steps.advance.outputs.queue_changed == 'true'
-        shell: bash
         run: |
           set -euo pipefail
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git diff --check
-          git add -A -- governance/roadmap/ACTIVE_QUEUE.json
-          if [ -d governance/state ]; then
-            git add -A -- governance/state
-          fi
-          if git diff --cached --quiet; then
-            exit 0
-          fi
+          git add -A -- governance/roadmap/ACTIVE_QUEUE.json governance/state/dispatch_executed.jsonl
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m "AUTOPILOT: reconcile and advance universal queue"
           for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              exit 0
-            fi
+            if git push origin HEAD:main; then exit 0; fi
             git pull --rebase --autostash origin main
             sleep "$attempt"
           done
-          echo "Unable to persist universal autopilot transition" >&2
           exit 1
 
       - name: Dispatch selected task binding
         if: steps.advance.outputs.action == 'dispatch'
-        shell: bash
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          python3 - <<'PY' > /tmp/dispatch_request.json
+          python3 - <<'PY' > /tmp/dispatch_payload.json
           import json
           from pathlib import Path
           dispatch = json.loads(Path("/tmp/roadmap_dispatch.json").read_text(encoding="utf-8"))
@@ -113,12 +104,6 @@ jobs:
           print(quote(dispatch["workflow_id"], safe=""))
           PY
           )"
-          code="$(curl -sS -o /tmp/dispatch_response.txt -w '%{http_code}' \
-            -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/json" \
-            "https://api.github.com/repos/$REPOSITORY/actions/workflows/$workflow_path/dispatches" \
-            --data @/tmp/dispatch_request.json)"
+          code="$(curl -sS -o /tmp/dispatch_response.txt -w '%{http_code}'             -X POST             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             -H "Content-Type: application/json"             "https://api.github.com/repos/$REPOSITORY/actions/workflows/$workflow_path/dispatches"             --data @/tmp/dispatch_payload.json)"
           cat /tmp/dispatch_response.txt || true
           test "$code" = "204"
