@@ -15,98 +15,74 @@ on:
         required: false
         default: ""
         type: string
-      chat_id:
-        required: false
-        default: ""
-        type: string
-      message_id:
-        required: false
-        default: ""
-        type: string
-      cycle_id:
-        required: false
-        default: ""
-        type: string
       task_type:
         required: false
         default: provider_router_selftest
         type: string
 
 permissions:
-  contents: write
+  contents: read
   actions: write
 
 jobs:
-  tests:
+  validate:
     runs-on: ubuntu-latest
     outputs:
-      status: ${{ steps.t.outputs.status }}
+      status: ${{ steps.test.outputs.status }}
     steps:
       - uses: actions/checkout@v4
-      - id: t
+      - id: test
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p governance/state governance/codex/results
           python3 - <<'PY'
-          import json, subprocess
           from pathlib import Path
-          state = Path("governance/state/provider_status.json")
-          results = Path("governance/codex/results")
-          results.mkdir(parents=True, exist_ok=True)
-          def run_router(trace):
-              raw = subprocess.check_output(["python3","scripts/provider_router.py","--role","curator","--trace-id",trace,"--task","router contract test"], text=True)
-              return json.loads(raw)
-          state.write_text(json.dumps({"records":[{"trace_id":"old_other_trace","status":"quota_exceeded","created_at":"2000-01-01T00:00:00Z"}]}), encoding="utf-8")
-          out = run_router("fresh_trace")
-          assert out["provider_selected"] == "claude_code" and out["fallback_reason"] is None and out["stale_ignored"] is True, out
-          state.unlink(missing_ok=True)
-          (results / "same_trace.json").write_text(json.dumps({"trace_id":"same_trace","status":"quota_exceeded","created_at":"2999-01-01T00:00:00Z"}), encoding="utf-8")
-          out = run_router("same_trace")
-          assert out["provider_selected"] == "gpt_codex_cloud" and out["fallback_reason"] == "fallback_quota" and out["decision_source"] == "same_trace_result", out
-          (results / "same_trace.json").unlink(missing_ok=True)
-          out = run_router("empty_trace")
-          assert out["provider_selected"] == "claude_code" and out["fallback_reason"] is None and out["decision_source"] == "default", out
-          assert set(out) == {"provider_selected","fallback_reason","decision_source","trace_id","ttl_seconds","stale_ignored"}, out
-          print("provider router tests PASS")
+          source = Path("scripts/provider_router.py").read_text(encoding="utf-8")
+          compile(source, "scripts/provider_router.py", "exec")
+          PY
+          default="$(python3 scripts/provider_router.py --role curator --trace-id bem950_default)"
+          forced="$(python3 scripts/provider_router.py --role curator --trace-id bem950_cost --task force-fallback)"
+          python3 - "$default" "$forced" <<'PY'
+          import json, sys
+          default, forced = map(json.loads, sys.argv[1:3])
+          assert default["provider_selected"] == "claude_code", default
+          assert default["fallback_reason"] is None, default
+          assert forced["provider_selected"] == "claude_code", forced
+          assert forced["fallback_reason"] == "fallback_blocked_cost_policy", forced
+          assert forced["decision_source"] == "cost_policy", forced
           PY
           echo "status=PASS" >> "$GITHUB_OUTPUT"
 
   route:
     runs-on: ubuntu-latest
-    needs: tests
+    needs: validate
     outputs:
-      provider_selected: ${{ steps.r.outputs.provider_selected }}
-      fallback_reason: ${{ steps.r.outputs.fallback_reason }}
-      decision_source: ${{ steps.r.outputs.decision_source }}
-      trace_id: ${{ steps.r.outputs.trace_id }}
-      ttl_seconds: ${{ steps.r.outputs.ttl_seconds }}
-      stale_ignored: ${{ steps.r.outputs.stale_ignored }}
-      workflow_id: ${{ steps.r.outputs.workflow_id }}
+      provider_selected: ${{ steps.route.outputs.provider_selected }}
+      workflow_id: ${{ steps.route.outputs.workflow_id }}
+      trace_id: ${{ steps.route.outputs.trace_id }}
     steps:
       - uses: actions/checkout@v4
-      - id: r
+      - id: route
         shell: bash
         env:
-          INPUT_ROLE: ${{ inputs.role }}
-          INPUT_TASK: ${{ inputs.task }}
-          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          ROLE: ${{ inputs.role }}
+          TASK: ${{ inputs.task }}
+          TRACE_ID: ${{ inputs.trace_id }}
           RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
-          TRACE_ID="$INPUT_TRACE_ID"
-          if [ -z "$TRACE_ID" ]; then TRACE_ID="provider_router_selftest_${RUN_ID}"; fi
-          python3 scripts/provider_router.py --role "$INPUT_ROLE" --task "$INPUT_TASK" --trace-id "$TRACE_ID" > /tmp/decision.json
-          cat /tmp/decision.json
+          trace="$TRACE_ID"
+          if [ -z "$trace" ]; then trace="provider_router_${RUN_ID}"; fi
+          python3 scripts/provider_router.py --role "$ROLE" --task "$TASK" --trace-id "$trace" > /tmp/decision.json
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           from pathlib import Path
-          d = json.loads(Path("/tmp/decision.json").read_text())
-          c = json.loads(Path("governance/config/provider_config.json").read_text())
-          for k in ["provider_selected","fallback_reason","decision_source","trace_id","ttl_seconds","stale_ignored"]:
-              v = d.get(k)
-              print(f"{k}={'' if v is None else v}")
-          print("workflow_id=" + c["providers"][d["provider_selected"]]["workflow_id"])
+          decision = json.loads(Path("/tmp/decision.json").read_text(encoding="utf-8"))
+          config = json.loads(Path("governance/config/provider_config.json").read_text(encoding="utf-8"))
+          spec = config["providers"][decision["provider_selected"]]
+          print(f"provider_selected={decision['provider_selected']}")
+          print(f"workflow_id={spec['workflow_id']}")
+          print(f"trace_id={decision['trace_id']}")
           PY
 
   dispatch:
@@ -114,105 +90,21 @@ jobs:
     needs: route
     if: ${{ inputs.task_type != 'provider_router_selftest' }}
     steps:
-      - shell: bash
+      - name: Dispatch selected enabled provider only
         env:
           GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          REPO: ${{ github.repository }}
+          REPOSITORY: ${{ github.repository }}
           WORKFLOW_ID: ${{ needs.route.outputs.workflow_id }}
           ROLE: ${{ inputs.role }}
-          PROVIDER: ${{ needs.route.outputs.provider_selected }}
-          TRACE_ID: ${{ needs.route.outputs.trace_id }}
-          CYCLE_ID: ${{ inputs.cycle_id }}
-          TASK_TYPE: ${{ inputs.task_type }}
           TASK: ${{ inputs.task }}
+          TRACE_ID: ${{ needs.route.outputs.trace_id }}
+        shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY' > /tmp/payload.json
           import json, os
-          print(json.dumps({"ref":"main","inputs":{"role":os.environ["ROLE"],"provider":os.environ["PROVIDER"],"trace_id":os.environ["TRACE_ID"],"cycle_id":os.environ.get("CYCLE_ID",""),"task_type":os.environ.get("TASK_TYPE","default_development"),"task":os.environ.get("TASK","")}}))
+          print(json.dumps({"ref":"main","inputs":{"role":os.environ["ROLE"],"task":os.environ["TASK"],"trace_id":os.environ["TRACE_ID"]}}))
           PY
-          url="https://api.github.com/repos/$REPO/actions/workflows/$WORKFLOW_ID/dispatches"
-          code="$(curl -sS -o /tmp/resp.txt -w '%{http_code}' -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "Content-Type: application/json" "$url" --data @/tmp/payload.json)"
-          cat /tmp/resp.txt || true
-          echo "dispatch_http=$code"
+          code="$(curl -sS -o /tmp/response.txt -w '%{http_code}'             -X POST             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             -H "Content-Type: application/json"             "https://api.github.com/repos/$REPOSITORY/actions/workflows/$WORKFLOW_ID/dispatches"             --data @/tmp/payload.json)"
+          cat /tmp/response.txt || true
           test "$code" = "204"
-
-  receipt:
-    runs-on: ubuntu-latest
-    needs: [tests, route, dispatch]
-    if: always()
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-      - shell: bash
-        env:
-          ROLE: ${{ inputs.role }}
-          TASK: ${{ inputs.task }}
-          CHAT_ID: ${{ inputs.chat_id }}
-          MESSAGE_ID: ${{ inputs.message_id }}
-          PROVIDER_SELECTED: ${{ needs.route.outputs.provider_selected }}
-          FALLBACK_REASON: ${{ needs.route.outputs.fallback_reason }}
-          DECISION_SOURCE: ${{ needs.route.outputs.decision_source }}
-          TRACE_ID: ${{ needs.route.outputs.trace_id || inputs.trace_id }}
-          TTL_SECONDS: ${{ needs.route.outputs.ttl_seconds }}
-          STALE_IGNORED: ${{ needs.route.outputs.stale_ignored }}
-          WORKFLOW_ID: ${{ needs.route.outputs.workflow_id }}
-          TEST_RESULT: ${{ needs.tests.result }}
-          ROUTE_RESULT: ${{ needs.route.result }}
-          DISPATCH_RESULT: ${{ needs.dispatch.result }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          set -euo pipefail
-          mkdir -p governance/proofs
-          python3 - <<'PY'
-          import json, os
-          from datetime import datetime, timezone
-          from pathlib import Path
-          trace = os.environ.get("TRACE_ID") or f"provider_router_{os.environ.get('RUN_ID','unknown')}"
-          fallback = os.environ.get("FALLBACK_REASON") or None
-          status = "PASS" if os.environ.get("TEST_RESULT") == "success" and os.environ.get("ROUTE_RESULT") == "success" and os.environ.get("DISPATCH_RESULT") in {"success","skipped"} else "BLOCKED"
-          receipt = {
-              "status": status,
-              "protocol": "BEM-932 v8.3",
-              "receipt_type": "provider_router_dispatch",
-              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "role": os.environ.get("ROLE",""),
-              "task": os.environ.get("TASK",""),
-              "provider_selected": os.environ.get("PROVIDER_SELECTED",""),
-              "fallback_reason": fallback,
-              "decision_source": os.environ.get("DECISION_SOURCE",""),
-              "trace_id": trace,
-              "ttl_seconds": int(os.environ.get("TTL_SECONDS") or 0),
-              "stale_ignored": str(os.environ.get("STALE_IGNORED","")).lower() == "true",
-              "github_run_id": os.environ.get("RUN_ID",""),
-              "target_workflow_id": os.environ.get("WORKFLOW_ID",""),
-              "chat_id": os.environ.get("CHAT_ID",""),
-              "message_id": os.environ.get("MESSAGE_ID",""),
-              "test_result": os.environ.get("TEST_RESULT",""),
-              "route_result": os.environ.get("ROUTE_RESULT",""),
-              "dispatch_result": os.environ.get("DISPATCH_RESULT","")
-          }
-          Path(f"governance/proofs/BEM932_provider_router_{trace}.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-          if fallback:
-              outbox = Path("governance/telegram_outbox.jsonl")
-              lines = outbox.read_text(encoding="utf-8").splitlines() if outbox.exists() else []
-              seen = False
-              for line in lines:
-                  try: seen = seen or json.loads(line).get("trace_id") == trace
-                  except Exception: pass
-              if not seen:
-                  event = {"created_at":receipt["created_at"],"trace_id":trace,"chat_id":os.environ.get("CHAT_ID",""),"message_id":os.environ.get("MESSAGE_ID",""),"type":"provider_fallback_notice","text":"Claude primary unavailable -> gpt_codex_cloud fallback запущен","fallback_reason":fallback,"provider_selected":os.environ.get("PROVIDER_SELECTED","")}
-                  with outbox.open("a", encoding="utf-8") as fh:
-                      fh.write(json.dumps(event, ensure_ascii=False) + "\n")
-          PY
-          git config user.email "provider-router@ai-devops-system"
-          git config user.name "BEM-932 Provider Router"
-          git pull --rebase --autostash origin main || true
-          git add governance/proofs/ governance/telegram_outbox.jsonl 2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "No receipt changes"
-          else
-            git commit -m "BEM-932 provider-router receipt trace=${{ inputs.trace_id }}"
-            git push
-          fi
