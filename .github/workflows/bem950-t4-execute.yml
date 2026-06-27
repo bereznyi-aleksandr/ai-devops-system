@@ -1,0 +1,58 @@
+name: BEM950 T4 Execute Queue Reclassification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem950-t4-execute
+  cancel-in-progress: false
+
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Compile and run T4 mutator
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("governance/runners/bem950_t4_queue_mutator.py")
+          compile(path.read_text(encoding="utf-8"), str(path), "exec")
+          print("PASS: BEM950 T4 mutator compiles")
+          PY
+          python3 governance/runners/bem950_t4_queue_mutator.py
+
+      - name: Commit queue and receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git diff --check
+          git add governance/roadmap/ACTIVE_QUEUE.json             governance/proofs/BEM950_t4_queue_reclassify_receipt.json             governance/proofs/BEM950_provider_reference_scan_receipt.json
+          if git diff --cached --quiet; then
+            echo "No BEM950 T4 state changes"
+            exit 0
+          fi
+          git commit -m "BEM950 T4: reclassify P4 and scan provider references"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase --autostash origin main
+            sleep "$attempt"
+          done
+          echo "Unable to push BEM950 T4 state after retries" >&2
+          exit 1
