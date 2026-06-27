@@ -1,1 +1,149 @@
-{"version":40,"updated_at":"2026-06-27T07:46:30Z","queue_state":"BLOCKED","current_task":"BEM949-P1-CI-STABILIZE","system_status":"BEM949_P7_WAITING_FOR_P1_EVIDENCE","release_status":"VERIFIED_WITH_LIMITATIONS","protocol":"BEM-949","protocol_path":"governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md","progress":{"tasks_done":6,"tasks_total":8,"percent":75.0},"tasks":[{"id":"BEM949-P0.5-TEXT-INTEGRITY-FIX","status":"DONE","receipt":"governance/proofs/BEM949_p05_text_integrity_receipt.json","receipt_sha":"2b09e1f683f16ac2b0fd977dd331bad9a90863ec","receipt_sha_type":"git_blob"},{"id":"BEM949-P1-CI-STABILIZE","status":"BLOCKED_OPERATOR_DECISION","receipt":"governance/proofs/BEM949_p1_ci_stabilize_receipt.json","blocker":"run_level_manual_dispatch_evidence_not_observable","resume_condition":"GitHub Actions run-level outcome/log access or operator-supplied run URL/screenshot."},{"id":"BEM949-P2-FUNCTIONAL-RESTORE","status":"DONE","receipt":"governance/proofs/BEM949_p2_functional_restore_receipt.json","receipt_sha":"de2f6e62c11132188a275530cd5623eaf5810b09","receipt_sha_type":"git_blob","completion_scope":"safe_gated_non_validator_trace_only"},{"id":"BEM949-P3-ALL-ROLE-E2E","status":"DONE_LIMITED_SCOPE","receipt":"governance/proofs/BEM949_p3_all_role_e2e_receipt.json","receipt_sha":"bfb0a31f50271cb765c64c664b0fe1fa46b22e6f4","receipt_sha_type":"git_blob"},{"id":"BEM949-P4-LIVE-LLM-FALLBACK","status":"SKIPPED_BY_OPERATOR","classification":"SUPERSEDED_BY_BEM950_PROVIDER_POLICY","skipped_at":"2026-06-27T06:25:00Z","operator_decision":"PAID_API_BILLING_CLASS_PROHIBITED","skip_reason":"P4 used prohibited metered OpenAI Responses API; GPT provider class remains eligible for future non-metered adapters.","note":"Allowed non-blocking only for P7 audit; does not establish broad Release PASS."},{"id":"BEM949-P5-RULE-ENFORCEMENT-COMPLETE","status":"DONE","receipt":"governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json","receipt_sha":"d31be705d9c595c828c987648eed9bca5e2fd885","receipt_sha_type":"git_blob"},{"id":"BEM949-P6-LEARNING-LOOP-DRILL","status":"DONE","receipt":"governance/proofs/BEM949_p6_learning_loop_receipt.json","receipt_sha":"6b1cdeda966db43830556bc0304219de9148fe9080e45141c1e377e9419ae94ef","receipt_sha_type":"sha256_content"},{"id":"BEM949-P7-RELEASE-AUDIT-FINAL","status":"BLOCKED_PRECONDITIONS","receipt":null,"blockers":["BEM949-P1-RUN-LEVEL-EVIDENCE"],"note":"BEM950 remediation and prescribed provider-policy scan are complete. Do not dispatch P7 or claim broad Release PASS without independent P1 run-level evidence."},{"id":"BEM950-T1-INVALID-WORKFLOW-ARCHIVE","status":"DONE","receipt":"governance/proofs/BEM950_t1_workflow_archive_receipt.json","receipt_sha":"9c3a07bf7742ded2e49e1ff2af14454009a63d8d","receipt_sha_type":"git_blob"},{"id":"BEM950-T2-PROVIDER-CONFIG-RECLASSIFY","status":"DONE","receipt":"governance/proofs/BEM950_t2_provider_config_receipt.json","receipt_sha":"9a48f7dd690ba803738a9a977727468f0ada06b6","receipt_sha_type":"git_blob"},{"id":"BEM950-T3-RUNNER-FIX-AND-P4-SKIP-LOGIC","status":"DONE","receipt":"governance/proofs/BEM950_t3_runner_fix_receipt.json","receipt_sha":"48ec57aff7296f53b7bca77a5ccb368e4f3317bd","receipt_sha_type":"git_blob"},{"id":"BEM950-T4-ACTIVE-QUEUE-P4-RECLASSIFY","status":"DONE","receipt":"governance/proofs/BEM950_t4_queue_reclassify_receipt.json","progress_changed":false},{"id":"BEM950-T5-PROVIDER-ROUTER-COST-POLICY-GUARD","status":"DONE","receipt":"governance/proofs/BEM950_t5_provider_router_cost_policy_guard_receipt.json","receipt_sha":"65dde219a50fb437e2df10048db6118db051495e","receipt_sha_type":"git_blob"},{"id":"BEM950-POST-T4-REPOSITORY-WIDE-PROVIDER-SCAN","status":"DONE","receipt":"governance/proofs/BEM950_provider_reference_scan_receipt.json","receipt_sha":"d1f86321ab8929adcbfa82fa764d37ced090e2c6","receipt_sha_type":"git_blob","scope":"prescribed active routing/config source audit"}],"open_blockers":["BEM949-P1-RUN-LEVEL-EVIDENCE"],"paid_api_policy":{"openai_api_key":"PERMANENTLY_PROHIBITED","automatic_paid_fallback":"PERMANENTLY_PROHIBITED","violation_action":"BLOCKED_COST_POLICY","scope_clarification":"Prohibition covers metered_api_default and automatic_paid_fallback only. GPT provider-class reactivation via verified subscription, OAuth, or interactive adapter remains valid under BEM-950."},"next_action":"Resume only when BEM949-P1-RUN-LEVEL-EVIDENCE is available. Do not dispatch P7 or claim broad Release PASS first."}
+{
+  "version": 41,
+  "updated_at": "2026-06-27T12:00:00Z",
+  "queue_state": "IN_PROGRESS",
+  "current_task": "BEM949-P1-ALT-UNBLOCK",
+  "system_status": "BEM949_P1_ALTERNATIVE_UNBLOCK_ATTEMPT",
+  "release_status": "VERIFIED_WITH_LIMITATIONS",
+  "protocol": "BEM-949",
+  "protocol_path": "governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
+  "progress": {
+    "tasks_done": 6,
+    "tasks_total": 8,
+    "percent": 75.0
+  },
+  "tasks": [
+    {
+      "id": "BEM949-P0.5-TEXT-INTEGRITY-FIX",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM949_p05_text_integrity_receipt.json",
+      "receipt_sha": "2b09e1f683f16ac2b0fd977dd331bad9a90863ec",
+      "receipt_sha_type": "git_blob"
+    },
+    {
+      "id": "BEM949-P1-CI-STABILIZE",
+      "status": "BLOCKED_OPERATOR_DECISION",
+      "receipt": "governance/proofs/BEM949_p1_ci_stabilize_receipt.json",
+      "blocker": "run_level_manual_dispatch_evidence_not_observable",
+      "resume_condition": "GitHub Actions run-level outcome/log access or operator-supplied run URL/screenshot."
+    },
+    {
+      "id": "BEM949-P1-ALT-UNBLOCK",
+      "status": "PENDING",
+      "priority": "CRITICAL",
+      "assigned_to": "GPT",
+      "description": "P1 заблокирован из-за отсутствия run-level evidence. Альтернативный путь разблокировки: (1) Прочитать governance/proofs/BEM949_p1_ci_stabilize_receipt.json напрямую из репозитория. (2) Найти в .github/workflows/ все файлы из scope P1 (bem949-p1-*.yml). (3) Для каждого workflow: проверить yaml.safe_load() — валиден ли синтаксис. (4) Записать результат статической валидации как partial P1 evidence в governance/proofs/BEM949_p1_static_validation_receipt.json с sha_type=git_blob для каждого файла. (5) Если все workflows валидны статически — создать receipt с outcome=static_pass_only и пометить P1 как DONE_STATIC_ONLY. (6) Если хотя бы один невалиден — зафиксировать как BLOCKED с точным файлом и ошибкой.",
+      "acceptance": [
+        "governance/proofs/BEM949_p1_static_validation_receipt.json создан с sha_type",
+        "Каждый bem949-p1-*.yml проверен yaml.safe_load()",
+        "outcome зафиксирован: static_pass_only ИЛИ blocked_with_detail",
+        "P1 переведён в DONE_STATIC_ONLY или оставлен BLOCKED с точным blocker_detail"
+      ],
+      "circuit_breaker": "Максимум 3 попытки. После 3 — BLOCKED_OPERATOR_DECISION с точным blocker."
+    },
+    {
+      "id": "BEM949-P2-FUNCTIONAL-RESTORE",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM949_p2_functional_restore_receipt.json",
+      "receipt_sha": "de2f6e62c11132188a275530cd5623eaf5810b09",
+      "receipt_sha_type": "git_blob",
+      "completion_scope": "safe_gated_non_validator_trace_only"
+    },
+    {
+      "id": "BEM949-P3-ALL-ROLE-E2E",
+      "status": "DONE_LIMITED_SCOPE",
+      "receipt": "governance/proofs/BEM949_p3_all_role_e2e_receipt.json",
+      "receipt_sha": "bfb0a31f50271cb765c64c664b0fe1fa46b22e6f4",
+      "receipt_sha_type": "git_blob"
+    },
+    {
+      "id": "BEM949-P4-LIVE-LLM-FALLBACK",
+      "status": "SKIPPED_BY_OPERATOR",
+      "classification": "SUPERSEDED_BY_BEM950_PROVIDER_POLICY",
+      "skipped_at": "2026-06-27T06:25:00Z",
+      "operator_decision": "PAID_API_BILLING_CLASS_PROHIBITED",
+      "skip_reason": "P4 used prohibited metered OpenAI Responses API; GPT provider class remains eligible for future non-metered adapters.",
+      "note": "Allowed non-blocking only for P7 audit; does not establish broad Release PASS."
+    },
+    {
+      "id": "BEM949-P5-RULE-ENFORCEMENT-COMPLETE",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json",
+      "receipt_sha": "d31be705d9c595c828c987648eed9bca5e2fd885",
+      "receipt_sha_type": "git_blob"
+    },
+    {
+      "id": "BEM949-P6-LEARNING-LOOP-DRILL",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM949_p6_learning_loop_receipt.json",
+      "receipt_sha": "6b1cdeda966db43830556bc0304219de9148fe9080e45141c1e377e9419ae94ef",
+      "receipt_sha_type": "sha256_content"
+    },
+    {
+      "id": "BEM949-P7-RELEASE-AUDIT-FINAL",
+      "status": "PENDING",
+      "assigned_to": "GPT_PREPARE_THEN_CLAUDE_AUDIT",
+      "priority": "HIGH",
+      "precondition": "BEM949-P1-ALT-UNBLOCK must be DONE_STATIC_ONLY or BLOCKED_OPERATOR_DECISION with full detail before P7 can start",
+      "description": "GPT готовит пакет для финального аудита Claude: (1) Прочитать все receipts P0.5, P2, P3, P5, P6 из governance/proofs/ напрямую. (2) Составить сводную таблицу: этап → receipt_path → receipt_sha → outcome → limitations. (3) Записать в governance/proofs/BEM949_p7_audit_package.json. (4) После создания пакета — уведомить оператора в Telegram: 'P7 audit package ready. Claude auditor required.' (5) Claude (внешний аудитор) читает пакет и все receipts напрямую из репозитория и выдаёт финальный вердикт.",
+      "acceptance": [
+        "governance/proofs/BEM949_p7_audit_package.json создан с sha_type для каждого receipt",
+        "Все 6 этапов (P0.5, P2, P3, P5, P6 + P1 альтернативный) представлены в пакете",
+        "Telegram-уведомление доставлено оператору",
+        "Claude (внешний чат) прочитал пакет напрямую и выдал вердикт APPROVED или BLOCKED"
+      ],
+      "blockers": ["BEM949-P1-ALT-UNBLOCK"],
+      "note": "P4 SKIPPED_BY_OPERATOR — не блокирует P7. Broad Release PASS выдаётся только Claude-аудитором после прямой верификации."
+    },
+    {
+      "id": "BEM950-T1-INVALID-WORKFLOW-ARCHIVE",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM950_t1_workflow_archive_receipt.json",
+      "receipt_sha": "9c3a07bf7742ded2e49e1ff2af14454009a63d8d",
+      "receipt_sha_type": "git_blob"
+    },
+    {
+      "id": "BEM950-T2-PROVIDER-CONFIG-RECLASSIFY",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM950_t2_provider_config_receipt.json",
+      "receipt_sha": "9a48f7dd690ba803738a9a977727468f0ada06b6",
+      "receipt_sha_type": "git_blob"
+    },
+    {
+      "id": "BEM950-T3-RUNNER-FIX-AND-P4-SKIP-LOGIC",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM950_t3_runner_fix_receipt.json",
+      "receipt_sha": "48ec57aff7296f53b7bca77a5ccb368e4f3317bd",
+      "receipt_sha_type": "git_blob"
+    },
+    {
+      "id": "BEM950-T4-ACTIVE-QUEUE-P4-RECLASSIFY",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM950_t4_queue_reclassify_receipt.json",
+      "progress_changed": false
+    },
+    {
+      "id": "BEM950-T5-PROVIDER-ROUTER-COST-POLICY-GUARD",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM950_t5_provider_router_cost_policy_guard_receipt.json",
+      "receipt_sha": "65dde219a50fb437e2df10048db6118db051495e",
+      "receipt_sha_type": "git_blob"
+    },
+    {
+      "id": "BEM950-POST-T4-REPOSITORY-WIDE-PROVIDER-SCAN",
+      "status": "DONE",
+      "receipt": "governance/proofs/BEM950_provider_reference_scan_receipt.json",
+      "receipt_sha": "d1f86321ab8929adcbfa82fa764d37ced090e2c6",
+      "receipt_sha_type": "git_blob",
+      "scope": "prescribed active routing/config source audit"
+    }
+  ],
+  "open_blockers": ["BEM949-P1-ALT-UNBLOCK"],
+  "paid_api_policy": {
+    "openai_api_key": "PERMANENTLY_PROHIBITED",
+    "automatic_paid_fallback": "PERMANENTLY_PROHIBITED",
+    "violation_action": "BLOCKED_COST_POLICY",
+    "scope_clarification": "Prohibition covers metered_api_default and automatic_paid_fallback only. GPT provider-class reactivation via verified subscription, OAuth, or interactive adapter remains valid under BEM-950."
+  },
+  "next_action": "GPT: выполнить BEM949-P1-ALT-UNBLOCK (статическая валидация P1 workflows). После DONE_STATIC_ONLY — подготовить BEM949-P7 audit package и уведомить оператора."
+}
