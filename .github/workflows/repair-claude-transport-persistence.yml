@@ -1,7 +1,18 @@
-# DISABLED — repair-workflow для claude.yml transport persistence.
-# Содержал непрозрачный бинарный PATCH_B64 blob — нарушение принципа аудитируемости.
-# Более не нужен: claude.yml содержит корректный шаг напрямую.
-# Дата отключения: 2026-06-27
-name: DISABLED repair-claude-transport-persistence
-on: []
-jobs: {}
+# ARCHIVED — repair-claude-transport-persistence.yml
+# The prior disabled-stub source is retained under governance/archive/disabled-workflows/.
+# This workflow is intentionally inert but remains syntactically valid for GitHub Actions.
+name: ARCHIVED repair-claude-transport-persistence.yml
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Archived workflow; execution is intentionally disabled."
+        required: false
+        default: "ARCHIVED"
+        type: string
+jobs:
+  archived:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ARCHIVED"
