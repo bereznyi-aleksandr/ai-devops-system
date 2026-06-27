@@ -1,0 +1,76 @@
+name: Roadmap Task Executor
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: Queue task to execute
+        required: true
+        type: string
+      trace_id:
+        description: Correlation identifier
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: roadmap-task-${{ inputs.task_id }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Compile generic task executor before execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("governance/runners/roadmap_task_executor.py")
+          compile(path.read_text(encoding="utf-8"), str(path), "exec")
+          print("PASS: generic roadmap task executor compiles")
+          PY
+
+      - name: Execute declared task binding
+        shell: bash
+        env:
+          TASK_ID: ${{ inputs.task_id }}
+          TRACE_ID: ${{ inputs.trace_id }}
+        run: |
+          set -euo pipefail
+          python3 governance/runners/roadmap_task_executor.py \
+            --task-id "$TASK_ID" \
+            --trace-id "$TRACE_ID"
+
+      - name: Commit task outcome and receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git diff --check
+          git add -- governance/roadmap/ACTIVE_QUEUE.json governance/proofs governance/logs/execution_log.jsonl
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "AUTOPILOT: execute ${{ inputs.task_id }}"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase --autostash origin main
+            sleep "$attempt"
+          done
+          echo "Unable to persist task outcome" >&2
+          exit 1
