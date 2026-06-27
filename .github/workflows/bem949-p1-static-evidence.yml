@@ -1,0 +1,84 @@
+name: BEM949 P1 Static Evidence Execution
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem949-p1-static-evidence
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install PyYAML for yaml.safe_load
+        run: python3 -m pip install --disable-pip-version-check --quiet pyyaml
+
+      - name: Validate BEM949 P1 workflows statically
+        run: python3 governance/runners/bem949-p1-alt-unblock.py
+
+      - name: Reconcile P1 alternate task from PASS receipt
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root = Path(".")
+          queue_path = root / "governance/roadmap/ACTIVE_QUEUE.json"
+          receipt_path = root / "governance/proofs/BEM949_p1_static_validation_receipt.json"
+          q = json.loads(queue_path.read_text(encoding="utf-8"))
+          receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+          if receipt.get("status") not in {"PASS", "DONE"}:
+              raise SystemExit("P1 static receipt did not pass")
+          task = next(
+              x for x in q["tasks"]
+              if isinstance(x, dict) and x.get("id") == "BEM949-P1-ALT-UNBLOCK"
+          )
+          def sha(data):
+              return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+          data = receipt_path.read_bytes()
+          task.update({
+              "status": "DONE_STATIC_ONLY",
+              "completed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "receipt": str(receipt_path),
+              "receipt_sha": sha(data),
+              "receipt_sha_type": "git_blob",
+          })
+          task.pop("blocker", None)
+          if q.get("current_task") == task["id"]:
+              q["current_task"] = None
+          q["queue_state"] = "PENDING"
+          q["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          queue_path.write_text(json.dumps(q, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit P1 static receipt
+        run: |
+          set -euo pipefail
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git diff --check
+          git add -- governance/roadmap/ACTIVE_QUEUE.json governance/proofs/BEM949_p1_static_validation_receipt.json
+          git commit -m "BEM949: record P1 static validation evidence"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase --autostash origin main
+            sleep "$attempt"
+          done
+          exit 1
