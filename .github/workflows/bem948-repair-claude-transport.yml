@@ -1,5 +1,18 @@
-# DISABLED — bem948 repair-workflow, устаревший протокол.
-# Дата отключения: 2026-06-27
-name: DISABLED bem948-repair-claude-transport
-on: []
-jobs: {}
+# ARCHIVED — bem948-repair-claude-transport.yml
+# The prior disabled-stub source is retained under governance/archive/disabled-workflows/.
+# This workflow is intentionally inert but remains syntactically valid for GitHub Actions.
+name: ARCHIVED bem948-repair-claude-transport.yml
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Archived workflow; execution is intentionally disabled."
+        required: false
+        default: "ARCHIVED"
+        type: string
+jobs:
+  archived:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ARCHIVED"
