@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""BEM-932 provider router.
-
-Selects the provider for a role/task without scanning stale result directories.
-Public contract: provider_selected, fallback_reason, decision_source, trace_id, ttl_seconds, stale_ignored.
-"""
+"""Provider-neutral, cost-policy-aware BEM-932 router."""
 
 from __future__ import annotations
 
@@ -12,10 +8,12 @@ import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG_PATH = ROOT / "governance" / "config" / "provider_config.json"
+CONFIG_PATH = ROOT / "governance/config/provider_config.json"
+STATE_PATH = ROOT / "governance/state/provider_status.json"
+RESULTS_DIR = ROOT / "governance/codex/results"
 CONTRACT_KEYS = (
     "provider_selected",
     "fallback_reason",
@@ -24,236 +22,142 @@ CONTRACT_KEYS = (
     "ttl_seconds",
     "stale_ignored",
 )
-OK_STATUSES = {"ok", "complete", "completed", "success", "pass", "passed", "ready", "available"}
+FAILURE_MARKERS = ("quota", "rate limit", "unavailable", "timeout")
 
 
-def _utc_now_ts() -> float:
-    return datetime.now(timezone.utc).timestamp()
-
-
-def _parse_ts(value: Any) -> Optional[float]:
-    if value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    if not isinstance(value, str):
-        return None
-    text = value.strip()
-    if not text:
-        return None
+def load_json(path: Path, default: Any) -> Any:
     try:
-        return float(text)
-    except ValueError:
-        pass
-    if text.endswith("Z"):
-        text = text[:-1] + "+00:00"
-    try:
-        return datetime.fromisoformat(text).timestamp()
-    except ValueError:
-        return None
-
-
-def _load_json(path: Path, default: Any) -> Any:
-    try:
-        if not path.exists():
-            return default
-        return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else default
     except Exception:
         return default
 
 
-def _is_fresh(record: Dict[str, Any], ttl_seconds: int, now_ts: Optional[float] = None) -> bool:
-    now = _utc_now_ts() if now_ts is None else now_ts
-    ts = (
-        _parse_ts(record.get("created_at"))
-        or _parse_ts(record.get("updated_at"))
-        or _parse_ts(record.get("recorded_at"))
-        or _parse_ts(record.get("timestamp"))
-        or _parse_ts(record.get("last_failure_at"))
-        or _parse_ts(record.get("last_used"))
-    )
-    if ts is None:
-        return False
-    return now - ts <= ttl_seconds
-
-
-def _normalize_reason(reason: Any) -> Optional[str]:
-    if reason is None:
+def parse_time(value: Any) -> float | None:
+    if isinstance(value, (int, float)):
+        return float(value)
+    if not isinstance(value, str) or not value.strip():
         return None
-    text = str(reason).strip()
-    if not text:
+    value = value.strip()
+    try:
+        return float(value)
+    except ValueError:
+        pass
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+    except ValueError:
         return None
-    lowered = text.lower()
-    if lowered in OK_STATUSES:
-        return None
-    if "quota" in lowered:
-        return "quota_exceeded"
-    if "rate" in lowered and "limit" in lowered:
-        return "rate_limit"
-    if "unavailable" in lowered or "timeout" in lowered or "runner_unavailable" in lowered:
-        return "provider_unavailable"
-    return text
 
 
-def _extract_error_reason(record: Any) -> Optional[str]:
+def fresh(record: dict[str, Any], ttl_seconds: int) -> bool:
+    for key in ("created_at", "updated_at", "recorded_at", "timestamp", "last_failure_at"):
+        timestamp = parse_time(record.get(key))
+        if timestamp is not None:
+            return time.time() - timestamp <= ttl_seconds
+    return False
+
+
+def failure_reason(record: Any) -> str | None:
     if not isinstance(record, dict):
         return None
-
-    for key in ("error", "error_code", "reason", "last_failure_type", "failure_type", "fallback_reason"):
-        reason = _normalize_reason(record.get(key))
-        if reason:
-            return reason
-
-    status = _normalize_reason(record.get("status"))
-    if status:
-        return status
-
+    for key in ("error", "error_code", "reason", "status", "failure_type", "fallback_reason"):
+        value = str(record.get(key, "")).lower()
+        if any(marker in value for marker in FAILURE_MARKERS):
+            return "quota_exceeded" if "quota" in value else "provider_unavailable"
     nested = record.get("result")
-    if isinstance(nested, dict):
-        return _extract_error_reason(nested)
-    return None
+    return failure_reason(nested) if isinstance(nested, dict) else None
 
 
-def _forced_reason(task_input: Any) -> Optional[str]:
-    """Narrow operator-visible live-test hook.
-
-    Send one Telegram message containing one of:
-    force-fallback, force fallback, quota_fallback, quota fallback.
-    This produces provider_selected=claude_code and fallback_reason=fallback_quota.
-    """
-    if isinstance(task_input, dict):
-        text = " ".join(str(task_input.get(k, "")) for k in ("task", "text", "body", "message"))
-    else:
-        text = str(task_input or "")
-    lowered = text.lower()
-    markers = ("force-fallback", "force fallback", "quota_fallback", "quota fallback")
-    if any(marker in lowered for marker in markers):
-        return "quota_exceeded"
-    return None
+def provider_candidates(config: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
+    providers = config.get("providers", {})
+    if not isinstance(providers, dict):
+        return []
+    candidates = [
+        (provider_id, spec)
+        for provider_id, spec in providers.items()
+        if isinstance(provider_id, str)
+        and isinstance(spec, dict)
+        and spec.get("enabled") is True
+    ]
+    return sorted(candidates, key=lambda item: (int(item[1].get("priority", 999)), item[0]))
 
 
-def _same_trace_result_reason(config: Dict[str, Any], trace_id: str) -> Tuple[Optional[str], bool]:
-    """Check only governance/codex/results/{trace_id}.json; never scan the whole directory."""
-    results_dir = ROOT / config.get("status_sources", {}).get("codex_results_dir", "governance/codex/results")
-    path = results_dir / f"{trace_id}.json"
-    record = _load_json(path, {})
-    if not isinstance(record, dict) or not record:
-        return None, False
-    record_trace = str(record.get("trace_id") or trace_id)
-    if record_trace != trace_id:
-        return None, True
-    return _extract_error_reason(record), False
+def has_cost_blocked_provider(config: dict[str, Any]) -> bool:
+    providers = config.get("providers", {})
+    return isinstance(providers, dict) and any(
+        isinstance(spec, dict) and spec.get("status") == "DISABLED_BY_COST_POLICY"
+        for spec in providers.values()
+    )
 
 
-def _provider_status_reason(
-    config: Dict[str, Any],
-    trace_id: str,
-    ttl_seconds: int,
-    primary_provider: str,
-) -> Tuple[Optional[str], bool]:
-    status_path = ROOT / config.get("status_sources", {}).get("provider_status", "governance/state/provider_status.json")
-    status = _load_json(status_path, {})
-    if not isinstance(status, dict) or not status:
-        return None, False
-
-    candidates = []
+def current_trace_reason(trace_id: str, ttl_seconds: int) -> tuple[str | None, bool]:
     stale_ignored = False
-
-    if isinstance(status.get(trace_id), dict):
-        candidates.append(status[trace_id])
-
-    records = status.get("records")
-    if isinstance(records, list):
+    sources = [RESULTS_DIR / f"{trace_id}.json", STATE_PATH]
+    for source in sources:
+        value = load_json(source, {})
+        records: list[dict[str, Any]] = []
+        if isinstance(value, dict):
+            records.append(value)
+            listed = value.get("records")
+            if isinstance(listed, list):
+                records.extend(item for item in listed if isinstance(item, dict))
         for record in records:
-            if not isinstance(record, dict):
-                continue
             record_trace = str(record.get("trace_id", ""))
-            if record_trace == trace_id:
-                candidates.append(record)
-            elif _extract_error_reason(record) and not _is_fresh(record, ttl_seconds):
+            reason = failure_reason(record)
+            if record_trace == trace_id and reason and fresh(record, ttl_seconds):
+                return reason, stale_ignored
+            if reason and record_trace != trace_id:
                 stale_ignored = True
-
-    if str(status.get("trace_id", "")) == trace_id:
-        candidates.append(status)
-    elif _extract_error_reason(status) and not _is_fresh(status, ttl_seconds):
-        stale_ignored = True
-
-    providers = status.get("providers")
-    if isinstance(providers, dict) and isinstance(providers.get(primary_provider), dict):
-        provider_record = providers[primary_provider]
-        if _is_fresh(provider_record, ttl_seconds):
-            candidates.append(provider_record)
-        elif _extract_error_reason(provider_record):
-            stale_ignored = True
-
-    for record in candidates:
-        if not _is_fresh(record, ttl_seconds):
-            stale_ignored = True
-            continue
-        reason = _extract_error_reason(record)
-        if reason:
-            return reason, stale_ignored
-
     return None, stale_ignored
 
 
-def main(role: str, task_input: Any = None, trace_id: Optional[str] = None) -> Dict[str, Any]:
-    config = _load_json(CONFIG_PATH, {})
+def forced_reason(task: str) -> str | None:
+    lowered = task.lower()
+    return "quota_exceeded" if any(marker in lowered for marker in ("force-fallback", "force fallback", "quota-fallback", "quota fallback")) else None
+
+
+def main(role: str, task: str, trace_id: str) -> dict[str, Any]:
+    config = load_json(CONFIG_PATH, {})
+    if not isinstance(config, dict):
+        raise ValueError("provider_config.json must be a JSON object")
+    candidates = provider_candidates(config)
+    if not candidates:
+        raise RuntimeError("no enabled provider is configured")
+
     ttl_seconds = int(config.get("ttl_seconds", 1800))
-    trace = str(
-        trace_id
-        or (task_input.get("trace_id") if isinstance(task_input, dict) else "")
-        or ""
-    )
-    if not trace:
-        trace = f"trace_{int(time.time())}"
-
-    role_config = config.get("roles", {}).get(role, {})
-    primary = role_config.get("primary", "gpt_codex")
-    fallback = role_config.get("fallback", "claude_code")
-    fallback_on = set(config.get("fallback_on", ["quota_exceeded", "rate_limit", "provider_unavailable"]))
-
+    selected = candidates[0][0]
+    reason = forced_reason(task)
+    source = "operator_forced_fallback" if reason else "same_trace_result"
     stale_ignored = False
-    reason = _forced_reason(task_input)
-    decision_source = "operator_forced_fallback" if reason else "same_trace_result"
-
     if reason is None:
-        reason, stale = _same_trace_result_reason(config, trace)
-        stale_ignored = stale_ignored or stale
+        reason, stale_ignored = current_trace_reason(trace_id, ttl_seconds)
+        source = "provider_status" if reason else "default"
 
-    if reason is None:
-        reason, stale = _provider_status_reason(config, trace, ttl_seconds, primary)
-        stale_ignored = stale_ignored or stale
-        decision_source = "provider_status" if reason else config.get("default_decision_source", "default")
-
-    normalized = _normalize_reason(reason)
-    if normalized in fallback_on:
-        provider = fallback
-        fallback_reason = "fallback_quota" if normalized == "quota_exceeded" else f"fallback_{normalized}"
+    if reason:
+        fallback_reason = "fallback_blocked_cost_policy" if has_cost_blocked_provider(config) else "fallback_unavailable"
+        source = "cost_policy" if has_cost_blocked_provider(config) else source
     else:
-        provider = primary
-        fallback_reason = None
+        fallback_reason = Noe
 
     result = {
-        "provider_selected": provider,
+        "provider_selected": selected,
         "fallback_reason": fallback_reason,
-        "decision_source": decision_source,
-        "trace_id": trace,
+        "decision_source": source,
+        "trace_id": trace_id,
         "ttl_seconds": ttl_seconds,
-        "stale_ignored": bool(stale_ignored),
+        "stale_ignored": stale_ignored,
     }
     return {key: result[key] for key in CONTRACT_KEYS}
 
 
-def _cli() -> None:
+def cli() -> None:
     parser = argparse.ArgumentParser(description="BEM-932 provider router")
-    parser.add_argument("--role", required=True, choices=["curator", "analyst", "auditor", "executor"])
+    parser.add_argument("--role", required=True, choices=("curator", "analyst", "auditor", "executor"))
     parser.add_argument("--task", default="")
     parser.add_argument("--trace-id", default="")
     args = parser.parse_args()
-    task_input = {"task": args.task, "trace_id": args.trace_id}
-    print(json.dumps(main(args.role, task_input, args.trace_id), ensure_ascii=False, sort_keys=True))
+    trace_id = args.trace_id or f"trace_{int(time.time())}"
+    print(json.dumps(main(args.role, args.task, trace_id), ensure_ascii=False, sort_keys=True))
 
 
 if __name__ == "__main__":
-    _cli()
+    cli()
