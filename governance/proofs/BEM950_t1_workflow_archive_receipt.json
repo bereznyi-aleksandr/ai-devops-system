@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "task_id": "BEM950-T1-INVALID-WORKFLOW-ARCHIVE",
+  "created_at": "2026-06-27T06:52:00Z",
+  "status": "PASS",
+  "scope": "Observed invalid disabled stubs in .github/workflows; expanded from the initial two paths to all six paths read during this remediation.",
+  "action": "archived_disabled_stub_sources_and_replaced_workflow_paths_with_inert_valid_stubs",
+  "source_copy_note": "The archives preserve the disabled-stub source bytes retrieved during this remediation. They do not claim to reconstruct functional workflow history predating those stubs.",
+  "files": [
+    {
+      "workflow_path": ".github/workflows/bem948-repair-claude-transport.yml",
+      "archive_path": "governance/archive/disabled-workflows/bem948-repair-claude-transport.yml",
+      "archive_sha": "b7c383cc05db1e3558e98c4edab0ed494b0bd7fc",
+      "stub_sha": "e7f6c0f7dfccab656cb814b76a9ed399e55ab3bf",
+      "sha_type": "git_blob"
+    },
+    {
+      "workflow_path": ".github/workflows/repair-claude-transport-persistence.yml",
+      "archive_path": "governance/archive/disabled-workflows/repair-claude-transport-persistence.yml",
+      "archive_sha": "379d6cf742d35ee9d4c15b66a2e9d8457912f8d9",
+      "stub_sha": "24909992aea8289f6b985525b4ab644e2bd28557",
+      "sha_type": "git_blob",
+      "source_sha_note": "The initial Contents API response reported a different source SHA; the archive SHA is the created Git blob SHA for the retrieved content."
+    },
+    {
+      "workflow_path": ".github/workflows/bem949-p4-live-llm-fallback.yml",
+      "archive_path": "governance/archive/disabled-workflows/bem949-p4-live-llm-fallback.yml",
+      "archive_sha": "7ab67461a69a77b61636b96b0581ebc1d299ba15",
+      "stub_sha": "3d53eb852c8ef9f42dcc5cbe3bdcdef14462823e",
+      "sha_type": "git_blob"
+    },
+    {
+      "workflow_path": ".github/workflows/bem949-p4-live-llm-fallback-v2.yml",
+      "archive_path": "governance/archive/disabled-workflows/bem949-p4-live-llm-fallback-v2.yml",
+      "archive_sha": "a9d71b857aa5aa904e91446061db9b998ce62866",
+      "stub_sha": "65b90c6fb2cb96880cc3f2070cce687ce25701f1",
+      "sha_type": "git_blob"
+    },
+    {
+      "workflow_path": ".github/workflows/bem949-p4-live-llm-fallback-v3.yml",
+      "archive_path": "governance/archive/disabled-workflows/bem949-p4-live-llm-fallback-v3.yml",
+      "archive_sha": "78861b6adc417c476a10a09c388c3d5dd9f6468b",
+      "stub_sha": "a3be68adb1e9687c4a5d097ddabe470623669168",
+      "sha_type": "git_blob"
+    },
+    {
+      "workflow_path": ".github/workflows/gpt-codex-cloud.yml",
+      "archive_path": "governance/archive/disabled-workflows/gpt-codex-cloud.yml",
+      "archive_sha": "b4a7e831f8955112cc985d423816eed68a6fe7f6",
+      "stub_sha": "d98f7a4a8b6aa889799b84a7814a28f94dbcc3d1",
+      "sha_type": "git_blob"
+    }
+  ],
+  "valid_stub_contract": {
+    "trigger": "workflow_dispatch",
+    "job_id": "archived",
+    "job_if": "${{ false }}",
+    "runtime_behavior": "inert; no job steps run"
+  },
+  "dispatch_validation": {
+    "workflow_dispatch_accepted_for": [
+      "bem948-repair-claude-transport.yml",
+      "repair-claude-transport-persistence.yml",
+      "bem949-p4-live-llm-fallback.yml",
+      "bem949-p4-live-llm-fallback-v2.yml",
+      "bem949-p4-live-llm-fallback-v3.yml",
+      "gpt-codex-cloud.yml"
+    ],
+    "run_outcome": "NOT_ASSERTED",
+    "note": "Dispatch acknowledgement is evidence that GitHub accepted the workflow for dispatch, not evidence of a completed runtime job."
+  }
+}
