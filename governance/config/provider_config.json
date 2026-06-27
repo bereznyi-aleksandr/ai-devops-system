@@ -1,33 +1,44 @@
 {
-  "version": "1.4",
+  "version": "1.5",
   "updated_at": "2026-06-27",
-  "note": "Paid OpenAI API (OPENAI_API_KEY) is PERMANENTLY PROHIBITED by operator. gpt_codex_cloud removed as fallback. Claude Code via CLAUDE_CODE_OAUTH_TOKEN is the only authorized executor.",
+  "note": "Provider-neutral architecture. Paid metered OpenAI API (OPENAI_API_KEY) is PERMANENTLY PROHIBITED. GPT as provider class is not deprecated — it is DISABLED_BY_COST_POLICY pending BEM-950 provider-neutral registry.",
   "providers": {
     "claude_code": {
       "enabled": true,
       "priority": 1,
       "workflow_id": "claude.yml",
       "billing_class": "subscription_included",
-      "description": "Claude Code Action via CLAUDE_CODE_OAUTH_TOKEN — primary and only executor",
+      "description": "Claude Code Action via CLAUDE_CODE_OAUTH_TOKEN — current primary executor",
       "headless": true
     },
     "gpt_codex_cloud": {
       "enabled": false,
-      "deprecated": true,
-      "deprecation_reason": "Used OPENAI_API_KEY (paid OpenAI API). Permanently prohibited by operator. Disabled 2026-06-27.",
-      "workflow_id": "gpt-codex-cloud.yml"
+      "status": "DISABLED_BY_COST_POLICY",
+      "billing_class_denied": "metered_api_default",
+      "deprecation_reason": "Used OPENAI_API_KEY (paid metered OpenAI API). Prohibited by operator cost policy. Not permanently deprecated as provider class.",
+      "reactivation_path": "BEM950_PROVIDER_NEUTRAL_REGISTRY — requires non-metered adapter (subscription/OAuth/interactive)",
+      "workflow_id": "gpt-codex-cloud.yml",
+      "disabled_at": "2026-06-27"
     },
     "gpt_codex": {
       "enabled": false,
-      "deprecated": true,
+      "status": "DISABLED_NO_RUNNER",
       "deprecation_reason": "self-hosted runner required — never provisioned",
+      "reactivation_path": "BEM950_PROVIDER_NEUTRAL_REGISTRY — requires self-hosted runner provisioning",
       "workflow_id": "codex-local-assembled.yml"
     }
   },
   "paid_api_policy": {
     "openai_api_key": "PERMANENTLY_PROHIBITED",
-    "openai_model_var": "NOT_NEEDED",
-    "automatic_paid_fallback": "PERMANENTLY_PROHIBITED",
-    "violation_action": "BLOCKED_COST_POLICY — do not proceed, create receipt, notify operator"
+    "billing_class_denied": [
+      "metered_api_default",
+      "automatic_paid_fallback"
+    ],
+    "allowed_classes": [
+      "subscription_included",
+      "oauth_verified",
+      "interactive_only"
+    ],
+    "violation_action": "BLOCKED_COST_POLICY — create receipt, notify operator, do not proceed"
   }
 }
