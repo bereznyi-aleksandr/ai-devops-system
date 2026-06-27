@@ -1,69 +1,7 @@
-name: Repair Claude trace persistence
-
-on:
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  repair:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-
-      - name: Restore valid trace persistence step
-        env:
-          PATCH_B64: eNq1WG1v2zYQ/u5fwRJJI2GRvKRfBrceFjRe26FvSDNsXRoIjHSy2UiiRlJOszT/fUdJdkhZdtys0wfDou6Ozx3v5ZEIMVdACpbDiDwXec410ZLFQCSUQmqiWArZ9YC0F09HhGVX7Fp5Pnn8mEy5nlUXIcyh0JGxQsZjsncl5GWaiaso4apkOp7tLQ2oGWTZiFwwNVuuyaoYka/LWxQCTQKoBCl5CSnj2cB6KEGJbA7RFAqQTEMSxaJIMx5rg+nGkiQkEzHLiNJsCohFjunOAXUEyms9E8UTDAHdOT05ej6JXh1T/L9UoeTZs733H99MTl5M9hxVntcB+qxE0beurpWznEqRkwTxao5RaoUW9/vE/P4jCljVwQDOMn6xUHmPtwNHqj6viCf7d46Ssdk/ZHI6Pzs436+VvOXK4bnvGMCIVplWkdkJNWthOhVzkAUrYhjiBoUymw9bydA4nVHXSr15EjUiaMa7QzMktFleKIYSWBJp+KI9KGKR8GI6ppVOg5/wmdKSl57vOpmDROto9uy8g73M0H3z5FeWKTd+PHV8C+ELVyZLRo5UHWkhScYLPJjCVdkItMy4Nlq9Jpujue5/YK45yyqslzqDwkywRHnGmN+rAF9iKJtsC3/78O7tMSAamEgp5PodmqCFrCyhSDYYNxcWkeZFBb0CGMgabTgF7dFFwlGfPBov029bGLULSZWXyqtt7hMoVCUhYirmfFyfIqYyplt0CddqfCor8NcEJUNgbt6xIiGF0Mu82BaVY2V9lKx0M7i62fatWLbG4ORkySS22zC/xNrympsmTBhKk+GRuGyitt7EleQamrymnwoafha88Bo0PvmB1IvGobbsAM+EUOqbs+pUgVumpRRznoBc20vQRw3DpZi5rZp+0mknvaXj6HVqx9l6U926+7SF5b37UBfTfm+J+VtAubl1w82uojhjVQIrvbBZbhRb17dqiN3WttzhPnRn7Zb03A3ZnQV/sEm7KpN60DJdW1hMrbAQV95icIWVjmuoqVnx6O7HYDcPdpPT3Zej3Tej3Q9/UX99qjwwp10bVlKvBMTqOq53/e2HFwkiGB+aYjC1sL9isHtMroQLs+UP1tqty2jMcB3bZdIsqeHOzYKV3IZ5YnMXTIAz8ogEKbKVRpqS86dEz8ClIxDPBKFvhUvrNHIrkAoDOyIL9U5ZIBP80VpKuQ3ZplRefqkhL0mQ+LYN3K8kezIngUwdRrVHJn++OrUk49LywZJso9BxfFvKVj+zKVs/Yeula9sQr/9Iu7p0idLB92Vk25Kf/4X6bCA+30B7HkB6NtCYtSRmfD+J6Z7Wg0iMZXsjOV7fx1wY1px2HyzH9WD7nuUM8u81xnvS4LuP8IcN8M3j257Q+MwVbvKnnajrD7Vvyq8/WSuhbMW+vPLNgTsIuap55lscw4uz/7ajt0dV3TftZMB3fFNWKZ+SSoEMIcc38oV/gRQZBCxhpQb5C+NBAnNRqgC7Hg4FusFM/bWAPm8o0glaIUeNFVvJNCemzXjRpj8dkEPy5ClJhOOdsZyCjmdESD5FMQRYrEhgbZjPCsGMyaQVHK4I1vyDBGYgefivwbiYTb47Iuux1Tes7jS6BHzdhwtnfA1WoLMkQeDWkPzUOd37R8MmlfXFvKJ1+PMQD3hYVFlGvn7F+l59BzKAE56miDhm8QwM9L8rDrqHnHTpSdDSk3jGiikoQ1Pi+qMU7ap16UlNULpxa3RJkGOevT76/XgSnLx7PRkRk7PjnRtzE50c/XHbbD62yBbt86qs1DLFXk6Ojkcmffq9uheeygBM/rTJbe+XmM9Ag26ITm361joWiyprXjEvoEaHwWYplhDK4TsDKDroYDoY/Auce6uo
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import base64
-          import os
-          import zlib
-          from pathlib import Path
-
-          path = Path(".github/workflows/claude.yml")
-          text = path.read_text(encoding="utf-8")
-          start_marker = "      - name: Commit trace report safely\n"
-          end_marker = "\n      - name: Advance role orchestrator\n"
-          if text.count(start_marker) != 1:
-              raise SystemExit("expected exactly one trace persistence step")
-          start = text.index(start_marker)
-          end = text.index(end_marker, start)
-          replacement = zlib.decompress(
-              base64.b64decode(os.environ["PATCH_B64"])
-          ).decode("utf-8")
-          path.write_text(text[:start] + replacement + text[end:], encoding="utf-8")
-          PY
-          git diff --check
-          ruby -e 'require "yaml"; YAML.load_file(".github/workflows/claude.yml")'
-          grep -Fq 'resolve_generated_conflicts()' .github/workflows/claude.yml
-
-      - name: Commit and push repair
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add -- .github/workflows/claude.yml
-          if git diff --cached --quiet; then
-            echo "Claude trace persistence is already repaired"
-            exit 0
-          fi
-          git commit -m "BEM949: restore valid Claude transport persistence"
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-            git pull --rebase origin main
-            sleep "$attempt"
-          done
-          echo "Repair commit could not be pushed after retries"
-          exit 1
+# DISABLED — repair-workflow для claude.yml transport persistence.
+# Содержал непрозрачный бинарный PATCH_B64 blob — нарушение принципа аудитируемости.
+# Более не нужен: claude.yml содержит корректный шаг напрямую.
+# Дата отключения: 2026-06-27
+name: DISABLED repair-claude-transport-persistence
+on: []
+jobs: {}
