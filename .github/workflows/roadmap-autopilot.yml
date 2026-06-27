@@ -4,17 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       force_task_id:
-        description: Optional task ID override
+        description: Optional PENDING task ID override
         required: false
         default: ""
         type: string
-  workflow_run:
-    workflows:
-      - "BEM949 P4 Live LLM Fallback Probe V2"
-      - "BEM949 P5 Rule Enforcement Complete"
-      - "BEM949 P6 Learning Loop Drill"
-      - "BEM949 P7 Release Audit Final"
-    types: [completed]
+  schedule:
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
@@ -28,139 +23,102 @@ jobs:
   advance:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      FORCE_TASK_ID: ${{ inputs.force_task_id }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout main
+        uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          fetch-depth: 1
 
-      - id: advance
-        name: Reconcile receipts and dispatch next task
+      - name: Compile universal autopilot before execution
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import hashlib
-          import json
-          import os
-          import urllib.request
-          from datetime import datetime, timezone
           from pathlib import Path
-
-          queue_path = Path("governance/roadmap/ACTIVE_QUEUE.json")
-          queue = json.loads(queue_path.read_text(encoding="utf-8"))
-          tasks = queue.get("tasks")
-          if not isinstance(tasks, list):
-              raise RuntimeError("ACTIVE_QUEUE.tasks must be a list")
-
-          def now():
-              return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-          def terminal_receipt(task):
-              value = task.get("receipt")
-              if not isinstance(value, str):
-                  return None
-              path = Path(value)
-              if not path.is_file():
-                  return None
-              try:
-                  status = json.loads(path.read_text(encoding="utf-8")).get("status")
-              except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-                  return None
-              return status if status in {"PASS", "BLOCKED"} else None
-
-          changed = False
-          for task in tasks:
-              if not isinstance(task, dict):
-                  continue
-              outcome = terminal_receipt(task)
-              if task.get("status") in {"PENDING", "IN_PROGRESS"} and outcome:
-                  receipt_path = Path(task["receipt"])
-                  task["status"] = "DONE" if outcome == "PASS" else "BLOCKED"
-                  task["completed_at"] = now()
-                  task["receipt_sha"] = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
-                  task["receipt_sha_type"] = "sha256_content"
-                  changed = True
-
-          workflows = {
-              "BEM949-P4-LIVE-LLM-FALLBACK": "bem949-p4-live-llm-fallback-v2.yml",
-              "BEM949-P5-RULE-ENFORCEMENT-COMPLETE": "bem949-p5-rule-enforcement-complete.yml",
-              "BEM949-P6-LEARNING-LOOP-DRILL": "bem949-p6-learning-loop-drill.yml",
-              "BEM949-P7-RELEASE-AUDIT-FINAL": "bem949-p7-release-audit-final.yml",
-          }
-          force = os.environ.get("FORCE_TASK_ID", "").strip()
-          selected = next(
-              (
-                  task for task in tasks
-                  if isinstance(task, dict)
-                  and (not force or task.get("id") == force)
-                  and str(task.get("status", "")) in {"PENDING", "IN_PROGRESS"}
-                  and task.get("id") in workflows
-              ),
-              None,
-          )
-          if selected is None:
-              if changed:
-                  queue["updated_at"] = now()
-                  queue_path.write_text(json.dumps(queue, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
-              print("action=stop", file=open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8"))
-              print("queue_changed=" + str(changed).lower(), file=open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8"))
-              raise SystemExit(0)
-
-          task_id = selected["id"]
-          if selected.get("status") == "PENDING":
-              selected["status"] = "IN_PROGRESS"
-              selected["started_at"] = now()
-          queue["current_task"] = task_id
-          queue["queue_state"] = "ACTIVE"
-          queue["updated_at"] = now()
-          queue_path.write_text(json.dumps(queue, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
-
-          trace_id = "autopilot_" + task_id.lower().replace("-", "_") + "_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-          workflow_id = workflows[task_id]
-          request = urllib.request.Request(
-              f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/{workflow_id}/dispatches",
-              data=json.dumps({"ref": "main", "inputs": {"trace_id": trace_id}}).encode("utf-8"),
-              headers={
-                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
-                  "Accept": "application/vnd.github+json",
-                  "Content-Type": "application/json",
-                  "User-Agent": "ai-devops-roadmap-autopilot",
-              },
-              method="POST",
-          )
-          with urllib.request.urlopen(request) as response:
-              http_status = response.status
-          Path("governance/state").mkdir(parents=True, exist_ok=True)
-          with Path("governance/state/dispatch_executed.jsonl").open("a", encoding="utf-8") as handle:
-              handle.write(json.dumps({
-                  "dispatched_at": now(),
-                  "workflow_id": workflow_id,
-                  "trace_id": trace_id,
-                  "http_status": http_status,
-                  "completion_claimed": False,
-              }, ensure_ascii=True) + "\n")
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write("action=dispatch\nqueue_changed=true\n")
+          path = Path("governance/runners/roadmap_autopilot.py")
+          compile(path.read_text(encoding="utf-8"), str(path), "exec")
+          print("PASS: universal roadmap autopilot compiles")
           PY
 
-      - name: Commit queue and dispatch record
+      - id: advance
+        name: Reconcile receipts and select any eligible task
+        shell: bash
+        env:
+          FORCE_TASK_ID: ${{ inputs.force_task_id }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python3 governance/runners/roadmap_autopilot.py \
+            --force-task-id "$FORCE_TASK_ID" \
+            --trace-prefix "autopilot_${RUN_ID}" \
+            --dispatch-out /tmp/roadmap_dispatch.json \
+            > /tmp/roadmap_advance.json
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          result = json.loads(Path("/tmp/roadmap_advance.json").read_text(encoding="utf-8"))
+          print("action=" + str(result["action"]))
+          print("queue_changed=" + str(bool(result["queue_changed"])).lower())
+          print("workflow_id=" + str(result.get("workflow_id", "")))
+          print("task_id=" + str(result.get("task_id", "")))
+          PY
+
+      - name: Commit universal-autopilot queue transition
         if: steps.advance.outputs.queue_changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add -- governance/roadmap/ACTIVE_QUEUE.json governance/state/dispatch_executed.jsonl
+          git diff --check
+          git add -A -- governance/roadmap/ACTIVE_QUEUE.json
+          if [ -d governance/state ]; then
+            git add -A -- governance/state
+          fi
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "AUTOPILOT: reconcile and advance queue"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          git commit -m "AUTOPILOT: reconcile and advance universal queue"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase --autostash origin main
+            sleep "$attempt"
+          done
+          echo "Unable to persist universal autopilot transition" >&2
+          exit 1
+
+      - name: Dispatch selected task binding
+        if: steps.advance.outputs.action == 'dispatch'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > /tmp/dispatch_request.json
+          import json
+          from pathlib import Path
+          dispatch = json.loads(Path("/tmp/roadmap_dispatch.json").read_text(encoding="utf-8"))
+          print(json.dumps({"ref": "main", "inputs": dispatch["inputs"]}))
+          PY
+          workflow_path="$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from urllib.parse import quote
+          dispatch = json.loads(Path("/tmp/roadmap_dispatch.json").read_text(encoding="utf-8"))
+          print(quote(dispatch["workflow_id"], safe=""))
+          PY
+          )"
+          code="$(curl -sS -o /tmp/dispatch_response.txt -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/$REPOSITORY/actions/workflows/$workflow_path/dispatches" \
+            --data @/tmp/dispatch_request.json)"
+          cat /tmp/dispatch_response.txt || true
+          test "$code" = "204"
