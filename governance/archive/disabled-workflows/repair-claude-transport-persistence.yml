@@ -1,0 +1,7 @@
+# DISABLED — repair-workflow для claude.yml transport persistence.
+# Содержал непрозрачный бинарный PATCH_B64 blob — нарушение принципа аудитируемости.
+# Более не нужен: claude.yml содержит корректный шаг сохранения.
+# Дата отключения: 2026-06-27
+name: DISABLED repair-claude-transport-persistence
+on: []
+jobs: {}
