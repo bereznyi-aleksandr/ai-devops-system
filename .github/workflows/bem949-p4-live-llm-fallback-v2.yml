@@ -1,6 +1,18 @@
-# DISABLED — v2 P4 Live LLM Fallback использует OPENAI_API_KEY (платный).
-# Оператор запретил использование платного OpenAI API.
-# Дата отключения: 2026-06-27
-name: DISABLED bem949-p4-live-llm-fallback-v2
-on: []
-jobs: {}
+# ARCHIVED — bem949-p4-live-llm-fallback-v2.yml
+# The prior disabled-stub source is retained under governance/archive/disabled-workflows/.
+# This workflow is intentionally inert but remains syntactically valid for GitHub Actions.
+name: ARCHIVED bem949-p4-live-llm-fallback-v2.yml
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Archived workflow; execution is intentionally disabled."
+        required: false
+        default: "ARCHIVED"
+        type: string
+jobs:
+  archived:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ARCHIVED"
