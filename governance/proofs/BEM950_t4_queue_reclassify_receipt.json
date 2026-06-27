@@ -1,14 +1,16 @@
 {
   "schema_version": 1,
   "task_id": "BEM950-T4-ACTIVE-QUEUE-P4-RECLASSIFY",
-  "created_at": "2026-06-27T07:43:30Z",
+  "created_at": "2026-06-27T07:46:30Z",
   "status": "PASS",
   "queue_path": "governance/roadmap/ACTIVE_QUEUE.json",
   "queue_sha_before": "27821bea494db56eaca5af877b8c62b350fe98fd",
-  "queue_sha_after": "9cdcbb666cc62cadefe9738a04890617464edd14",
+  "queue_sha_after": "1a1da47d4e887cad43b5cb884868acbe98105be9",
   "sha_type": "git_blob",
   "p4_status": "SKIPPED_BY_OPERATOR",
   "p4_classification": "SUPERSEDED_BY_BEM950_PROVIDER_POLICY",
   "progress_changed": false,
-  "policy_scope_clarification": "The prohibition covers billing_class=metered_api_default and automatic_paid_fallback only. GPT provider-class reactivation through a verified subscription, OAuth, or interactive adapter remains architecturally valid under BEM-950."
+  "policy_scope_clarification": "The prohibition covers billing_class=metered_api_default and automatic_paid_fallback only. GPT provider-class reactivation through a verified subscription, OAuth, or interactive adapter remains architecturally valid under BEM-950.",
+  "queue_content_form": "compact_canonical_json",
+  "note": "Queue state was updated directly after workflow dispatch did not persist; progress remains unchanged before P7."
 }
