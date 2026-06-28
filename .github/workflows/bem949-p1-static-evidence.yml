@@ -29,9 +29,18 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check --quiet pyyaml
 
       - name: Validate BEM949 P1 workflows statically
-        run: python3 governance/runners/bem949-p1-alt-unblock.py
+        shell: bash
+        run: |
+          set -u
+          set +e
+          python3 governance/runners/bem949-p1-alt-unblock.py > /tmp/p1.out 2>&1
+          rc=$?
+          set -e
+          cat /tmp/p1.out
+          printf '%s\n' "$rc" > /tmp/p1.rc
 
-      - name: Reconcile P1 alternate task from PASS receipt
+      - name: Persist static evidence and reconcile queue
+        shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -41,44 +50,79 @@ jobs:
 
           root = Path(".")
           queue_path = root / "governance/roadmap/ACTIVE_QUEUE.json"
-          receipt_path = root / "governance/proofs/BEM949_p1_static_validation_receipt.json"
+          task_receipt = root / "governance/proofs/BEM949_p1_static_validation_receipt.json"
+          envelope_path = root / "governance/proofs/BEM949_p1_static_execution_receipt.json"
+          output = Path("/tmp/p1.out").read_text(encoding="utf-8")
+          runner_rc = int(Path("/tmp/p1.rc").read_text().strip())
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
           q = json.loads(queue_path.read_text(encoding="utf-8"))
-          receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-          if receipt.get("status") not in {"PASS", "DONE"}:
-              raise SystemExit("P1 static receipt did not pass")
-          task = next(
-              x for x in q["tasks"]
-              if isinstance(x, dict) and x.get("id") == "BEM949-P1-ALT-UNBLOCK"
-          )
+          task = next(x for x in q["tasks"] if isinstance(x, dict) and x.get("id") == "BEM949-P1-ALT-UNBLOCK")
+          receipt_status = ""
+          error = None
+          if task_receipt.is_file():
+              try:
+                  receipt = json.loads(task_receipt.read_text(encoding="utf-8"))
+                  receipt_status = str(receipt.get("status", "")).upper()
+              except Exception:
+                  error = "static_receipt_unreadable"
+          else:
+              error = "static_receipt_missing"
+          if error is None and (runner_rc != 0 or receipt_status not in {"PASS", "DONE"}):
+              error = "static_validation_failed"
+          final = "DONE_STATIC_ONLY" if error is None else "BLOCKED"
           def sha(data):
               return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
-          data = receipt_path.read_bytes()
+          envelope = {
+              "schema_version": 1,
+              "task_id": "BEM949-P1-ALT-UNBLOCK",
+              "created_at": now,
+              "status": "PASS" if error is None else "BLOCKED",
+              "task_status": final,
+              "runner_returncode": runner_rc,
+              "task_receipt": str(task_receipt) if task_receipt.is_file() else None,
+              "task_receipt_status": receipt_status or None,
+              "error": error,
+              "stdout_tail": output[-4000:],
+              "broad_release_pass_claimed": False,
+          }
+          envelope_bytes = (json.dumps(envelope, ensure_ascii=False, indent=2) + "\n").encode()
+          envelope_path.write_bytes(envelope_bytes)
           task.update({
-              "status": "DONE_STATIC_ONLY",
-              "completed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-              "receipt": str(receipt_path),
-              "receipt_sha": sha(data),
-              "receipt_sha_type": "git_blob",
+              "status": final,
+              "completed_at": now,
+              "executor_receipt": str(envelope_path),
+              "executor_receipt_sha": sha(envelope_bytes),
+              "executor_receipt_sha_type": "git_blob",
           })
-          task.pop("blocker", None)
+          if task_receipt.is_file():
+              data = task_receipt.read_bytes()
+              task["receipt"] = str(task_receipt)
+              task["receipt_sha"] = sha(data)
+              task["receipt_sha_type"] = "git_blob"
+          if error:
+              task["blocker"] = error
+          else:
+              task.pop("blocker", None)
           if q.get("current_task") == task["id"]:
               q["current_task"] = None
-          q["queue_state"] = "PENDING"
-          q["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          q["queue_state"] = "PENDING" if error is None else "BLOCKED"
+          q["updated_at"] = now
           queue_path.write_text(json.dumps(q, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          Path("/tmp/p1.failed").write_text("1" if error else "0")
           PY
 
-      - name: Commit P1 static receipt
+      - name: Commit P1 evidence
+        shell: bash
         run: |
           set -euo pipefail
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git diff --check
-          git add -- governance/roadmap/ACTIVE_QUEUE.json governance/proofs/BEM949_p1_static_validation_receipt.json
-          git commit -m "BEM949: record P1 static validation evidence"
+          git add -- governance/roadmap/ACTIVE_QUEUE.json governance/proofs/BEM949_p1_static_validation_receipt.json governance/proofs/BEM949_p1_static_execution_receipt.json
+          git commit -m "BEM949: persist P1 static validation outcome"
           for attempt in 1 2 3; do
-            if git push origin HEAD:main; then exit 0; fi
+            if git push origin HEAD:main; then break; fi
             git pull --rebase --autostash origin main
             sleep "$attempt"
           done
-          exit 1
+          test "$(cat /tmp/p1.failed)" = "0"
