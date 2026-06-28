@@ -1,0 +1,63 @@
+name: BEM949 P1 Static Receipt Recovery
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem949-p1-static-receipt-recovery
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: python3 -m pip install --disable-pip-version-check --quiet pyyaml
+      - id: validate
+        shell: bash
+        run: |
+          set +e
+          python3 governance/runners/bem949-p1-alt-unblock.py > /tmp/p1-output.txt 2>&1
+          rc=$?
+          set -e
+          cat /tmp/p1-output.txt
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+      - name: Guarantee a receipt file exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=governance/proofs/BEM949_p1_static_validation_receipt.json
+          if [ ! -f "$target" ]; then
+            mkdir -p governance/proofs
+            printf '%s\n' '{"schema_version":1,"task_id":"BEM949-P1-ALT-UNBLOCK","status":"BLOCKED","outcome":"validator_did_not_create_receipt","broad_release_pass_claimed":false}' > "$target"
+          fi
+          test -s "$target"
+      - name: Commit P1 static receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -- governance/proofs/BEM949_p1_static_validation_receipt.json
+          if ! git diff --cached --quiet; then
+            git commit -m "BEM949: persist P1 static validation receipt"
+            for n in 1 2 3; do
+              if git push origin HEAD:main; then exit 0; fi
+              git pull --rebase --autostash origin main
+              sleep "$n"
+            done
+            exit 1
+          fi
+      - if: steps.validate.outputs.rc != '0'
+        run: exit 1
