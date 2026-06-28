@@ -1,0 +1,27 @@
+name: BEM949 P1 ALT UNBLOCK
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch static evidence worker
+        env:
+          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          code="$(curl -sS -o /tmp/response.txt -w '%{http_code}'             -X POST             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             -H "Content-Type: application/json"             "https://api.github.com/repos/$REPOSITORY/actions/workflows/bem949-p1-static-evidence.yml/dispatches"             --data '{"ref":"main"}')"
+          cat /tmp/response.txt || true
+          test "$code" = "204"
