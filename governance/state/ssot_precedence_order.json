@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-010",
+  "created_at": "2026-06-30T00:00:00Z",
+  "purpose": "Resolves which file wins when two SSOT files appear to disagree about the same fact. Distributed SSOT across 5 files requires explicit precedence, or conflicting reads produce silent wrong answers.",
+  "domain_separation": {
+    "task_state_domain": {
+      "owner_file": "governance/roadmap/ACTIVE_QUEUE.json",
+      "governs": "what task is being worked on, its status, blockers, receipts for THAT task",
+      "does_not_govern": "architectural facts about the system (what is implemented/wired/proven) — that is architecture_plan_fact_gap.json's domain"
+    },
+    "architecture_state_domain": {
+      "owner_file": "governance/state/architecture_plan_fact_gap.json",
+      "governs": "implementation_status, runtime_status, evidence_status, release_status of architectural areas",
+      "does_not_govern": "task queue mechanics — a task can be DONE in ACTIVE_QUEUE while its architectural area remains RELEASE_NEUTRAL pending broader verification"
+    },
+    "dependency_domain": {
+      "owner_file": "governance/state/runtime_dependency_manifest.json",
+      "governs": "what files are required by active runtime — sole basis for archival safety"
+    },
+    "historical_migration_domain": {
+      "owner_file": "governance/state/protocol_supersession_index.json",
+      "governs": "whether a historical protocol document's normative content has been migrated, and whether it is safe to archive"
+    },
+    "compliance_domain": {
+      "owner_file": "governance/state/rule_enforcement_matrix.json",
+      "governs": "per-rule enforcement reality (declarative/code/workflow/guard) — see classification note below"
+    }
+  },
+  "precedence_order_when_files_disagree": [
+    "1. governance/proofs/<specific receipt> — a receipt is always ground truth over any narrative SSOT file; if a receipt contradicts a SSOT row, the SSOT row is wrong and must be corrected via a transaction (BEM-010 ssot_transaction_protocol.json), not trusted as-is",
+    "2. governance/roadmap/ACTIVE_QUEUE.json — wins for task_state_domain questions only",
+    "3. governance/state/architecture_plan_fact_gap.json — wins for architecture_state_domain questions only",
+    "4. governance/state/runtime_dependency_manifest.json — wins for dependency_domain questions only",
+    "5. governance/state/protocol_supersession_index.json — wins for historical_migration_domain questions only",
+    "6. governance/state/rule_enforcement_matrix.json — wins for compliance_domain questions only",
+    "7. AGENT_CONTEXT.md and any .docx canon snapshot — NEVER wins; always lowest precedence; treated as a stale cache if it disagrees with any file above"
+  ],
+  "conflict_rule": "If two files claim authority over the SAME fact within the SAME domain (e.g., both architecture_plan_fact_gap.json and a stray note in ACTIVE_QUEUE.json claim a release_status for the same area), the system state is STATE_INCONSISTENT. STATE_INCONSISTENT blocks any release_status upgrade for the affected area until resolved by an explicit SSOT transaction that removes the duplicate claim from the non-owning file.",
+  "rule_enforcement_matrix_classification": "DERIVED COMPLIANCE REGISTER, not primary SSOT. It is derived from (a) rule_registry.json contents and (b) governance/proofs/ receipts that test those rules. It must be regenerated/reconciled whenever rule_registry.json changes or a new enforcement receipt is created — never hand-maintained as an independent fact source."
+}
