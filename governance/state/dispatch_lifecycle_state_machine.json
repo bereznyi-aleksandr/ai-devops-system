@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-010",
+  "created_at": "2026-06-30T00:00:00Z",
+  "purpose": "Full lifecycle state machine for any dispatch event, regardless of which mechanism originates it (governance-chain dispatch_executor.py OR roadmap-autopilot.yml direct curl). Closes the false-success risk: an HTTP 204 is not completion.",
+  "states": [
+    {
+      "state": "PLANNED",
+      "meaning": "Task/object selected for dispatch by a router (curator_router.py or roadmap_autopilot.py); no network call made yet",
+      "writer": "selecting component",
+      "next_allowed": ["DISPATCHED", "ABORTED"]
+    },
+    {
+      "state": "DISPATCHED",
+      "meaning": "HTTP POST to GitHub Actions workflow_dispatch endpoint made; HTTP 204 received. This is acknowledgement of receipt by GitHub, NOT confirmation the workflow started or finished.",
+      "writer": "dispatch_executor.py OR roadmap-autopilot.yml inline dispatch step",
+      "next_allowed": ["START_CONFIRMED", "DISPATCH_FAILED"]
+    },
+    {
+      "state": "DISPATCH_FAILED",
+      "meaning": "HTTP call did not return 204, or threw a network error",
+      "writer": "same as DISPATCHED",
+      "next_allowed": ["TERMINAL"]
+    },
+    {
+      "state": "START_CONFIRMED",
+      "meaning": "GitHub Actions run_id observed via API (workflow run list query matching trace_id/inputs) confirming the dispatched run actually began executing",
+      "writer": "dispatch_executor.py polling step OR roadmap-autopilot.yml follow-up step",
+      "next_allowed": ["COMPLETED", "FAILED", "TIMED_OUT"]
+    },
+    {
+      "state": "COMPLETED",
+      "meaning": "GitHub Actions run concluded with status=success, observed via API",
+      "writer": "same as START_CONFIRMED",
+      "next_allowed": ["STATE_COMMITTED"]
+    },
+    {
+      "state": "FAILED",
+      "meaning": "GitHub Actions run concluded with status=failure, observed via API",
+      "writer": "same as START_CONFIRMED",
+      "next_allowed": ["TERMINAL"]
+    },
+    {
+      "state": "TIMED_OUT",
+      "meaning": "No START_CONFIRMED or COMPLETED observed within configured TTL after DISPATCHED",
+      "writer": "polling step",
+      "next_allowed": ["TERMINAL"]
+    },
+    {
+      "state": "STATE_COMMITTED",
+      "meaning": "The owning SSOT file (ACTIVE_QUEUE.json row, or architecture_plan_fact_gap.json row) has been updated to reflect this outcome via a valid SSOT transaction (ssot_transaction_protocol.json)",
+      "writer": "Curator-Executor, via SSOT transaction",
+      "next_allowed": ["TERMINAL"]
+    },
+    {
+      "state": "TERMINAL",
+      "meaning": "End of lifecycle for this dispatch event. No further state transitions permitted.",
+      "writer": null,
+      "next_allowed": []
+    },
+    {
+      "state": "ABORTED",
+      "meaning": "Selected but never dispatched (operator cancel, circuit breaker, policy block)",
+      "writer": "selecting component or guard",
+      "next_allowed": ["TERMINAL"]
+    }
+  ],
+  "hard_rule": "release_status=RELEASE_CLEARED is FORBIDDEN for any area whose evidence depends on a dispatch event that has not reached COMPLETED followed by STATE_COMMITTED. DISPATCHED alone (HTTP 204) must never be read as success by any auditor, runner, or report generator.",
+  "current_known_gap": "Neither dispatch_executor.py nor roadmap-autopilot.yml currently implement START_CONFIRMED polling. Both currently stop logging at DISPATCHED. This is the single most important functional gap exposed by this protocol — see BEM-010 roadmap task DSM-1.",
+  "log_location": "governance/state/dispatch_executed.jsonl",
+  "required_fields_per_entry": ["source", "trace_id", "queue_item_id", "target_workflow_id", "dispatch_mode", "state", "http_status", "run_id", "completion_receipt_ref", "state_transition_written"]
+}
