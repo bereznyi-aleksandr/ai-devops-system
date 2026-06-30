@@ -1,21 +1,40 @@
 {
-  "schema_version": 3,
-  "protocol": "BEM-009",
+  "schema_version": 4,
+  "protocol": "BEM-010",
   "updated_at": "2026-06-30T00:00:00Z",
-  "supersedes_baseline": "BEM-008 schema_version 2 (single-column status replaced by 4-field model per GPT audit BEM-008 review)",
+  "supersedes_baseline": "BEM-009 schema_version 3 (release_status model expanded per GPT audit BEM-009A item 4)",
   "status": "active",
-  "ssot_update_protocol": {
-    "who_may_update": "Curator-Executor role only, and only as part of a task-closure event with an accompanying receipt",
-    "when_updated": "Atomically with the closing receipt of the task that changes the row's state — never as a standalone narrative edit",
-    "required_fields_per_row": ["planned", "actual", "remaining_gap", "last_receipt_ref", "last_verified_at"],
-    "invalid_update_definition": "Any edit to this file without a receipt path in last_receipt_ref pointing to a real governance/proofs/ file is INVALID and must be reverted by the next auditor pass",
-    "derived_documents_rule": "AGENT_CONTEXT.md and any human-readable canon document are regenerated FROM this file after it changes — never edited first and back-propagated"
+  "definition_of_working_management_contour": {
+    "purpose": "Explicit, non-derived statement of what counts as a working control contour, per GPT audit BEM-009A item 9.",
+    "necessary_and_sufficient_conditions": [
+      "1. An operator message via Telegram reaches an executing agent within a bounded time, end to end, with a runtime-proven receipt (currently satisfied: Telegram->Worker->claude.yml).",
+      "2. Every dispatch event reaches COMPLETED + STATE_COMMITTED per dispatch_lifecycle_state_machine.json before being reported as successful to the operator (currently NOT satisfied: no START_CONFIRMED polling exists yet).",
+      "3. Every change to architectural state is logged as a valid SSOT transaction with receipt_ref and pre/post hash (currently NOT satisfied: ssot_transaction_log.jsonl does not yet exist as enforced practice).",
+      "4. No two SSOT files claim authority over the same fact without conflict resolution per ssot_precedence_order.json (currently satisfied as a RULE; not yet stress-tested against a real conflict).",
+      "5. Paid/metered API calls are structurally blocked, not just policy-documented (currently satisfied: cost policy guard in provider-router.yml, RELEASE_CLEARED).",
+      "6. Every governance rule has a known enforcement_type in rule_enforcement_matrix.json; none remain 'unknown' (currently NOT satisfied: RULE-004..010 unresolved).",
+      "7. Archival of any file requires a PASS row in archive_candidate_report.json (currently satisfied as a RULE; first real archival pass not yet executed).",
+      "8. AGENT_CONTEXT.md and all human-readable canon snapshots are mechanically regenerated from SSOT, never hand-edited (currently NOT satisfied: no regeneration pipeline exists yet)."
+    ],
+    "current_assessment": "4 of 8 conditions structurally satisfied as rules; 4 of 8 still require implementation. This protocol (BEM-010) defines the rules; it does not yet claim they are all enforced in running code."
   },
-  "status_model": {
-    "implementation_status": ["NOT_STARTED", "IMPLEMENTED", "PARTIALLY_IMPLEMENTED"],
-    "runtime_status": ["NOT_WIRED", "WIRED", "RUNTIME_PROVEN"],
-    "evidence_status": ["NO_RECEIPT", "RECEIPT_INCOMPLETE", "RECEIPT_BACKED"],
-    "release_status": ["RELEASE_BLOCKING", "RELEASE_NEUTRAL", "RELEASE_CLEARED"]
+  "release_status_model": {
+    "values": ["RELEASE_BLOCKING", "RELEASE_LIMITED", "RELEASE_NEUTRAL", "RELEASE_UNKNOWN", "RELEASE_CLEARED"],
+    "definitions": {
+      "RELEASE_BLOCKING": "Actively prevents Broad Release PASS; must be resolved before P7 can pass",
+      "RELEASE_LIMITED": "Implemented and working but with a known, accepted, permanent scope restriction (e.g. P3 all-role E2E limited scope) — does not block release but must be disclosed in every audit package",
+      "RELEASE_NEUTRAL": "Wired and partially proven; does not currently block release but is not yet fully verified either",
+      "RELEASE_UNKNOWN": "Status genuinely not established by available evidence — distinct from RELEASE_NEUTRAL, which implies partial evidence exists",
+      "RELEASE_CLEARED": "Fully implemented, runtime-proven, receipt-backed; no known gap"
+    }
+  },
+  "ssot_update_protocol": {
+    "who_may_update": "Curator-Executor role only, as part of a task-closure event",
+    "when_updated": "Atomically with the closing receipt, per governance/state/ssot_transaction_protocol.json",
+    "required_fields_per_row": ["planned", "actual", "remaining_gap", "implementation_status", "runtime_status", "evidence_status", "release_status", "last_receipt_ref", "last_verified_at"],
+    "invalid_update_definition": "Any edit without a corresponding governance/state/ssot_transaction_log.jsonl entry is INVALID per ssot_transaction_protocol.json",
+    "precedence_note": "See governance/state/ssot_precedence_order.json for full conflict resolution and domain separation rules",
+    "derived_documents_rule": "AGENT_CONTEXT.md and all canon .docx snapshots are regenerated FROM this file — never edited first"
   },
   "rows": [
     {
@@ -23,108 +42,88 @@
       "planned": "Operator message reaches an executing agent reliably and quickly",
       "actual": "Telegram -> Cloudflare Worker -> claude.yml proven live (BEM-947)",
       "remaining_gap": "None for this path",
-      "implementation_status": "IMPLEMENTED",
-      "runtime_status": "RUNTIME_PROVEN",
-      "evidence_status": "RECEIPT_BACKED",
-      "release_status": "RELEASE_CLEARED",
-      "last_receipt_ref": "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json",
-      "last_verified_at": "2026-06-19"
+      "implementation_status": "IMPLEMENTED", "runtime_status": "RUNTIME_PROVEN", "evidence_status": "RECEIPT_BACKED", "release_status": "RELEASE_CLEARED",
+      "last_receipt_ref": "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json", "last_verified_at": "2026-06-19"
     },
     {
       "area": "GD-object governance chain",
-      "planned": "object_runner -> dispatch_consumer -> curator_router -> dispatch_executor: route by role/provider with fallback policy, honest planned/dispatched/executed states",
-      "actual": "All components exist as real code. dispatch_executor.py repaired after NameError bug (BEM-948), makes real HTTP calls, writes to dispatch_executed.jsonl",
-      "remaining_gap": "No live end-to-end trace proving object_runner-triggered task reaches executed/completed automatically without manual bridge",
-      "implementation_status": "IMPLEMENTED",
-      "runtime_status": "WIRED",
-      "evidence_status": "RECEIPT_INCOMPLETE",
-      "release_status": "RELEASE_NEUTRAL",
-      "last_receipt_ref": "governance/proofs/BEM948_dispatch_executor_runtime_repair_receipt.json",
-      "last_verified_at": "2026-06-20"
+      "planned": "object_runner -> dispatch_consumer -> curator_router -> dispatch_executor with honest planned/dispatched/executed states",
+      "actual": "All components exist as real code. dispatch_executor.py repaired after NameError bug (BEM-948)",
+      "remaining_gap": "No START_CONFIRMED polling implemented per dispatch_lifecycle_state_machine.json — stops logging at DISPATCHED, not COMPLETED+STATE_COMMITTED",
+      "implementation_status": "IMPLEMENTED", "runtime_status": "WIRED", "evidence_status": "RECEIPT_INCOMPLETE", "release_status": "RELEASE_LIMITED",
+      "last_receipt_ref": "governance/proofs/BEM948_dispatch_executor_runtime_repair_receipt.json", "last_verified_at": "2026-06-20"
     },
     {
       "area": "Roadmap dispatch (BEM-949/950)",
-      "planned": "Single universal queue-driven dispatcher reads ACTIVE_QUEUE.json, dispatches next PENDING task workflow",
-      "actual": "roadmap-autopilot.yml exists, functional, makes direct curl HTTP dispatch to GitHub Actions API",
-      "remaining_gap": "Does not write to dispatch_executed.jsonl. Evidence not unified with governance-chain trail (BEM-007 decision: unify journal). Operational Contract for Dispatch not yet formalized (BEM-009 addition).",
-      "implementation_status": "IMPLEMENTED",
-      "runtime_status": "RUNTIME_PROVEN",
-      "evidence_status": "RECEIPT_INCOMPLETE",
-      "release_status": "RELEASE_BLOCKING",
-      "last_receipt_ref": null,
-      "last_verified_at": "2026-06-30"
+      "planned": "Single universal queue-driven dispatcher, evidence unified with governance-chain trail",
+      "actual": "roadmap-autopilot.yml exists, functional, direct curl dispatch",
+      "remaining_gap": "Does not write to dispatch_executed.jsonl. Same START_CONFIRMED gap as governance chain. Operational Contract for Dispatch not yet implemented in code (only specified in BEM-010 state machine)",
+      "implementation_status": "IMPLEMENTED", "runtime_status": "RUNTIME_PROVEN", "evidence_status": "RECEIPT_INCOMPLETE", "release_status": "RELEASE_BLOCKING",
+      "last_receipt_ref": null, "last_verified_at": "2026-06-30"
     },
     {
       "area": "Prompt assembly (BEM-932 council mechanism)",
       "planned": "prompt_assembler.py composes static+dynamic prompt per element_prompt_profiles.json + rule_registry.json",
-      "actual": "prompt_assembler.py real implementation. element_prompt_profiles.json has 10 profiles. rule_registry.json has all 3 COUNCIL rules present and cross-referenced",
-      "remaining_gap": "Wired correctly at config level; no runtime trace proving *_stage_runner.py actually calls prompt_assembler.py during a live task",
-      "implementation_status": "IMPLEMENTED",
-      "runtime_status": "WIRED",
-      "evidence_status": "RECEIPT_INCOMPLETE",
-      "release_status": "RELEASE_NEUTRAL",
-      "last_receipt_ref": "governance/proofs/BEM932_council_prompt_assembler_receipt.json",
-      "last_verified_at": "2026-06-13"
+      "actual": "prompt_assembler.py real implementation. element_prompt_profiles.json 10 profiles. rule_registry.json has all 3 COUNCIL rules",
+      "remaining_gap": "No runtime trace proving *_stage_runner.py calls assembler (confirmed UNRESOLVED in BEM-010 migration check fragment 2.2-2.4). 5.4 comparative baseline test also UNRESOLVED.",
+      "implementation_status": "IMPLEMENTED", "runtime_status": "WIRED", "evidence_status": "RECEIPT_INCOMPLETE", "release_status": "RELEASE_UNKNOWN",
+      "last_receipt_ref": "governance/proofs/BEM932_council_prompt_assembler_receipt.json", "last_verified_at": "2026-06-13"
     },
     {
       "area": "Provider routing & cost policy",
-      "planned": "Primary=Claude Code Action, honest mechanical fallback, paid OpenAI API permanently prohibited",
-      "actual": "provider_config.json v1.5 reclassified with billing_class model. Cost policy guard in provider-router.yml. Invalid workflows archived",
-      "remaining_gap": "None known",
-      "implementation_status": "IMPLEMENTED",
-      "runtime_status": "RUNTIME_PROVEN",
-      "evidence_status": "RECEIPT_BACKED",
-      "release_status": "RELEASE_CLEARED",
-      "last_receipt_ref": "governance/proofs/BEM950_t5_provider_router_cost_policy_guard_receipt.json",
-      "last_verified_at": "2026-06-27"
+      "planned": "Primary=Claude Code Action, honest mechanical fallback, paid OpenAI permanently prohibited",
+      "actual": "provider_config.json v1.5, cost policy guard in provider-router.yml, invalid workflows archived",
+      "remaining_gap": "provider_router.py TTL-scoped stale-error-check (fragment 1.B) and the 3 pre-flight tests (fragment 1.C2) UNRESOLVED per BEM-010 migration check — not re-verified after BEM-950",
+      "implementation_status": "IMPLEMENTED", "runtime_status": "RUNTIME_PROVEN", "evidence_status": "RECEIPT_BACKED", "release_status": "RELEASE_LIMITED",
+      "last_receipt_ref": "governance/proofs/BEM950_t5_provider_router_cost_policy_guard_receipt.json", "last_verified_at": "2026-06-27"
     },
     {
       "area": "Rule enforcement RULE-004..012",
       "planned": "Governance rules enforced by runtime code, not just documented",
-      "actual": "RULE-011/012 enforcement verified. Full per-rule matrix now lives in governance/state/rule_enforcement_matrix.json",
-      "remaining_gap": "RULE-004..010 individual bodies not yet resolved post-BEM-950 (see rule_enforcement_matrix.json RV-2)",
-      "implementation_status": "PARTIALLY_IMPLEMENTED",
-      "runtime_status": "WIRED",
-      "evidence_status": "RECEIPT_INCOMPLETE",
-      "release_status": "RELEASE_NEUTRAL",
-      "last_receipt_ref": "governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json",
-      "last_verified_at": "2026-06-20"
+      "actual": "RULE-011/012 verified. Full matrix lives in rule_enforcement_matrix.json",
+      "remaining_gap": "RULE-004..010 enforcement_type still 'unknown' for the group entry — condition 6 of Definition of Working Management Contour NOT satisfied",
+      "implementation_status": "PARTIALLY_IMPLEMENTED", "runtime_status": "WIRED", "evidence_status": "RECEIPT_INCOMPLETE", "release_status": "RELEASE_UNKNOWN",
+      "last_receipt_ref": "governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json", "last_verified_at": "2026-06-20"
     },
     {
       "area": "BEM-949 roadmap closure",
       "planned": "8-stage roadmap P0.5->P7 to reach a working, evidence-backed control contour",
-      "actual": "6/8 DONE. P7 receipt already exists with status BLOCKED",
-      "remaining_gap": "P1 blocked (no run-level evidence). P1-ALT-UNBLOCK attempt 1/3 failed. P2/P3 receipts not clean PASS",
-      "implementation_status": "PARTIALLY_IMPLEMENTED",
-      "runtime_status": "WIRED",
-      "evidence_status": "RECEIPT_INCOMPLETE",
-      "release_status": "RELEASE_BLOCKING",
-      "last_receipt_ref": "governance/proofs/BEM949_p7_external_release_audit_receipt.json",
-      "last_verified_at": "2026-06-23"
+      "actual": "6/8 DONE. P7 receipt exists, status BLOCKED",
+      "remaining_gap": "P1 blocked, P1-ALT attempt 1/3 failed, P2/P3 receipts not clean PASS",
+      "implementation_status": "PARTIALLY_IMPLEMENTED", "runtime_status": "WIRED", "evidence_status": "RECEIPT_INCOMPLETE", "release_status": "RELEASE_BLOCKING",
+      "last_receipt_ref": "governance/proofs/BEM949_p7_external_release_audit_receipt.json", "last_verified_at": "2026-06-23"
     },
     {
       "area": "Repository hygiene / SSOT clarity",
       "planned": "Active workspace contains only canonical, currently-relevant files",
-      "actual": "Hundreds of diagnostic/iteration workflow files and historical MASTER_PROMPT versions remain in active paths",
-      "remaining_gap": "Archival not yet executed. Now gated by runtime_dependency_manifest.json + protocol_supersession_index.json (BEM-009 precondition artifacts)",
-      "implementation_status": "NOT_STARTED",
-      "runtime_status": "NOT_WIRED",
-      "evidence_status": "NO_RECEIPT",
-      "release_status": "RELEASE_NEUTRAL",
-      "last_receipt_ref": null,
-      "last_verified_at": "2026-06-30"
+      "actual": "Hundreds of diagnostic files remain active",
+      "remaining_gap": "Archival blocked by archive_candidate_report.json: live-tree grep (step 1 of dry-run procedure) not yet executed — requires CI checkout access",
+      "implementation_status": "NOT_STARTED", "runtime_status": "NOT_WIRED", "evidence_status": "NO_RECEIPT", "release_status": "RELEASE_NEUTRAL",
+      "last_receipt_ref": "governance/state/archive_candidate_report.json", "last_verified_at": "2026-06-30"
     },
     {
       "area": "AGENT_CONTEXT.md freshness",
-      "planned": "AGENT_CONTEXT.md is a derived briefing artifact, regenerated from SSOT, never a source of truth itself",
-      "actual": "File exists; historically hand-updated during BEM-948 P1",
-      "remaining_gap": "Regeneration mechanism from architecture_plan_fact_gap.json not yet implemented (BEM-009 roadmap task)",
-      "implementation_status": "PARTIALLY_IMPLEMENTED",
-      "runtime_status": "NOT_WIRED",
-      "evidence_status": "NO_RECEIPT",
-      "release_status": "RELEASE_NEUTRAL",
-      "last_receipt_ref": null,
-      "last_verified_at": null
+      "planned": "Derived briefing artifact, regenerated from SSOT, never hand-edited",
+      "actual": "File exists; historically hand-updated",
+      "remaining_gap": "Regeneration pipeline not implemented for ANY derived document, not just AGENT_CONTEXT.md (BEM-010 task DOC-1)",
+      "implementation_status": "NOT_STARTED", "runtime_status": "NOT_WIRED", "evidence_status": "NO_RECEIPT", "release_status": "RELEASE_NEUTRAL",
+      "last_receipt_ref": null, "last_verified_at": null
+    },
+    {
+      "area": "SSOT transaction enforcement",
+      "planned": "Every SSOT write is a logged, hashed, receipt-linked transaction",
+      "actual": "Protocol defined (ssot_transaction_protocol.json); NOT yet enforced — this very protocol's own writes were not logged via the new mechanism, since it did not exist until this commit",
+      "remaining_gap": "No enforcement guard exists yet to reject un-logged SSOT writes. Bootstrap gap: cannot retroactively log the writes that created the protocol itself.",
+      "implementation_status": "PARTIALLY_IMPLEMENTED", "runtime_status": "NOT_WIRED", "evidence_status": "NO_RECEIPT", "release_status": "RELEASE_NEUTRAL",
+      "last_receipt_ref": "governance/state/ssot_transaction_protocol.json", "last_verified_at": "2026-06-30"
+    },
+    {
+      "area": "Dispatch lifecycle completeness",
+      "planned": "PLANNED->DISPATCHED->START_CONFIRMED->COMPLETED/FAILED->STATE_COMMITTED for every dispatch",
+      "actual": "State machine fully specified",
+      "remaining_gap": "Neither dispatch mechanism implements START_CONFIRMED polling. This is the single largest functional gap surfaced by BEM-010.",
+      "implementation_status": "NOT_STARTED", "runtime_status": "NOT_WIRED", "evidence_status": "NO_RECEIPT", "release_status": "RELEASE_BLOCKING",
+      "last_receipt_ref": "governance/state/dispatch_lifecycle_state_machine.json", "last_verified_at": "2026-06-30"
     }
   ]
 }
