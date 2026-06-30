@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-011",
+  "created_at": "2026-06-30T00:00:00Z",
+  "purpose": "Closes the discipline gap GPT flagged in BEM-010 item 5: RELEASE_UNKNOWN and RELEASE_LIMITED need hard rules, not just definitions, or they become dumping grounds.",
+  "release_unknown_sla": {
+    "rule": "RELEASE_UNKNOWN may not persist for more than 1 audit cycle (one P7 pass) without an explicit blocking_justification entry below. If an area is still RELEASE_UNKNOWN at the next audit cycle without justification, it is automatically force-set to RELEASE_BLOCKING.",
+    "blocking_justification_required_fields": ["area", "first_marked_unknown_at", "reason_cannot_resolve_yet", "expected_resolution_task_id", "operator_acknowledged"],
+    "current_unknown_areas_and_justification": [
+      {
+        "area": "Prompt assembly (BEM-932 council mechanism)",
+        "first_marked_unknown_at": "2026-06-30",
+        "reason_cannot_resolve_yet": "Resolution requires live read of *_stage_runner.py source, not yet performed in any audit session",
+        "expected_resolution_task_id": "RV-1 (fragment 2.2-2.4)",
+        "operator_acknowledged": false
+      },
+      {
+        "area": "Rule enforcement RULE-004..010",
+        "first_marked_unknown_at": "2026-06-30",
+        "reason_cannot_resolve_yet": "Individual rule bodies not yet enumerated post-BEM-950",
+        "expected_resolution_task_id": "RV-2",
+        "operator_acknowledged": false
+      }
+    ],
+    "note": "Both current UNKNOWN areas already have a justification and an assigned resolution task as of this protocol's creation, so neither is in SLA violation yet. The 1-cycle clock starts at the NEXT P7 audit pass after this protocol exists."
+  },
+  "release_limited_registry_rule": {
+    "rule": "RELEASE_LIMITED is only valid if the limitation is listed in accepted_limitation_registry below with operator or external-auditor sign-off. An undocumented RELEASE_LIMITED is treated as a misuse of the status and corrected to RELEASE_UNKNOWN until registered.",
+    "accepted_limitation_registry": [
+      {
+        "area": "GD-object governance chain",
+        "limitation": "No START_CONFIRMED polling — dispatch evidence stops at acknowledgement, not completion",
+        "accepted_by": "NOT YET ACCEPTED — this is the DSM-1 gap, currently tracked as a defect, not an accepted permanent limitation",
+        "permanent_or_temporary": "TEMPORARY — pending DSM-1 closure",
+        "reclassification_note": "This row exists to demonstrate the registry mechanism; this particular limitation is NOT eligible for RELEASE_LIMITED sign-off since it is an active blocker, not an accepted scope boundary. It should be reconsidered as RELEASE_BLOCKING once DSM-1 is formally tracked as such everywhere consistently — flagging this as a self-correction for the next SSOT transaction."
+      },
+      {
+        "area": "Provider routing & cost policy",
+        "limitation": "provider_router.py TTL-scoped stale-error check and the 3 pre-flight tests from BEM-932 1.B/1.C2 not re-verified after BEM-950 changes",
+        "accepted_by": "External Auditor (Claude), pending operator review",
+        "permanent_or_temporary": "TEMPORARY — pending RV-1 fragment 1.B/1.C2 closure",
+        "reclassification_note": "Core cost-policy guard (the part that matters most: paid API block) IS verified and RELEASE_CLEARED-grade; only the older TTL-scoping logic is unverified. Limitation accepted as non-blocking because the higher-priority paid-API block does not depend on it."
+      }
+    ]
+  },
+  "self_correction_applied": "Per the rule above, 'GD-object governance chain' in architecture_plan_fact_gap.json should NOT remain RELEASE_LIMITED without a valid registry entry. Since its registry entry above is marked NOT YET ACCEPTED, the next SSOT transaction must reclassify this area's release_status to RELEASE_BLOCKING to be consistent with 'Roadmap dispatch' and 'Dispatch lifecycle completeness', which already correctly carry RELEASE_BLOCKING for the same underlying DSM-1 gap."
+}
