@@ -1,78 +1,130 @@
 {
-  "schema_version": 2,
-  "protocol": "BEM-008",
+  "schema_version": 3,
+  "protocol": "BEM-009",
   "updated_at": "2026-06-30T00:00:00Z",
-  "supersedes_baseline": "pre-BEM-932 architecture_plan_fact_gap v1",
+  "supersedes_baseline": "BEM-008 schema_version 2 (single-column status replaced by 4-field model per GPT audit BEM-008 review)",
   "status": "active",
-  "ssot_chain": [
-    "governance/roadmap/ACTIVE_QUEUE.json",
-    "governance/state/architecture_plan_fact_gap.json",
-    "AGENT_CONTEXT.md",
-    "governance/proofs/*"
-  ],
+  "ssot_update_protocol": {
+    "who_may_update": "Curator-Executor role only, and only as part of a task-closure event with an accompanying receipt",
+    "when_updated": "Atomically with the closing receipt of the task that changes the row's state — never as a standalone narrative edit",
+    "required_fields_per_row": ["planned", "actual", "remaining_gap", "last_receipt_ref", "last_verified_at"],
+    "invalid_update_definition": "Any edit to this file without a receipt path in last_receipt_ref pointing to a real governance/proofs/ file is INVALID and must be reverted by the next auditor pass",
+    "derived_documents_rule": "AGENT_CONTEXT.md and any human-readable canon document are regenerated FROM this file after it changes — never edited first and back-propagated"
+  },
+  "status_model": {
+    "implementation_status": ["NOT_STARTED", "IMPLEMENTED", "PARTIALLY_IMPLEMENTED"],
+    "runtime_status": ["NOT_WIRED", "WIRED", "RUNTIME_PROVEN"],
+    "evidence_status": ["NO_RECEIPT", "RECEIPT_INCOMPLETE", "RECEIPT_BACKED"],
+    "release_status": ["RELEASE_BLOCKING", "RELEASE_NEUTRAL", "RELEASE_CLEARED"]
+  },
   "rows": [
     {
       "area": "Telegram entrypoint",
-      "plan": "Operator message reaches an executing agent reliably and quickly",
-      "fact": "Telegram -> Cloudflare Worker -> claude.yml proven live (BEM-947). Single fully-proven runtime path.",
-      "gap": "None for this path. Other paths (governance chain) are not yet equally proven.",
-      "status": "done"
+      "planned": "Operator message reaches an executing agent reliably and quickly",
+      "actual": "Telegram -> Cloudflare Worker -> claude.yml proven live (BEM-947)",
+      "remaining_gap": "None for this path",
+      "implementation_status": "IMPLEMENTED",
+      "runtime_status": "RUNTIME_PROVEN",
+      "evidence_status": "RECEIPT_BACKED",
+      "release_status": "RELEASE_CLEARED",
+      "last_receipt_ref": "governance/proofs/BEM947_minimal_claude_retry_executed_bem947_minimal_claude_retry_20260619T1958Z.json",
+      "last_verified_at": "2026-06-19"
     },
     {
       "area": "GD-object governance chain",
-      "plan": "object_runner -> dispatch_queue -> dispatch_consumer -> curator_router -> dispatch_executor: route by role/provider with fallback policy, honest planned/dispatched/executed states",
-      "fact": "All components exist as real code (not stubs): object_runner.py, dispatch_consumer.py, curator_router.py, dispatch_executor.py + dispatch_executor_guard.py. dispatch_executor.py repaired after NameError bug (BEM-948), now makes real HTTP calls to GitHub Actions API, writes to dispatch_executed.jsonl.",
-      "gap": "No live end-to-end trace proving object_runner-triggered task reaches executed/completed automatically without manual bridge.",
-      "status": "partial_real"
+      "planned": "object_runner -> dispatch_consumer -> curator_router -> dispatch_executor: route by role/provider with fallback policy, honest planned/dispatched/executed states",
+      "actual": "All components exist as real code. dispatch_executor.py repaired after NameError bug (BEM-948), makes real HTTP calls, writes to dispatch_executed.jsonl",
+      "remaining_gap": "No live end-to-end trace proving object_runner-triggered task reaches executed/completed automatically without manual bridge",
+      "implementation_status": "IMPLEMENTED",
+      "runtime_status": "WIRED",
+      "evidence_status": "RECEIPT_INCOMPLETE",
+      "release_status": "RELEASE_NEUTRAL",
+      "last_receipt_ref": "governance/proofs/BEM948_dispatch_executor_runtime_repair_receipt.json",
+      "last_verified_at": "2026-06-20"
     },
     {
-      "area": "Roadmap dispatch (BEM-949/950 protocol execution)",
-      "plan": "Single universal queue-driven dispatcher reads ACTIVE_QUEUE.json, dispatches next PENDING task workflow, independent of which protocol/stage is queued",
-      "fact": "roadmap-autopilot.yml exists, functional: reads ACTIVE_QUEUE.json, makes direct curl HTTP dispatch to GitHub Actions API (independent of dispatch_executor.py).",
-      "gap": "Does not write to dispatch_executed.jsonl. Its dispatch evidence is not unified with the governance-chain evidence trail. (BEM-007 decision: unify journal, not code.)",
-      "status": "open_gap"
+      "area": "Roadmap dispatch (BEM-949/950)",
+      "planned": "Single universal queue-driven dispatcher reads ACTIVE_QUEUE.json, dispatches next PENDING task workflow",
+      "actual": "roadmap-autopilot.yml exists, functional, makes direct curl HTTP dispatch to GitHub Actions API",
+      "remaining_gap": "Does not write to dispatch_executed.jsonl. Evidence not unified with governance-chain trail (BEM-007 decision: unify journal). Operational Contract for Dispatch not yet formalized (BEM-009 addition).",
+      "implementation_status": "IMPLEMENTED",
+      "runtime_status": "RUNTIME_PROVEN",
+      "evidence_status": "RECEIPT_INCOMPLETE",
+      "release_status": "RELEASE_BLOCKING",
+      "last_receipt_ref": null,
+      "last_verified_at": "2026-06-30"
     },
     {
       "area": "Prompt assembly (BEM-932 council mechanism)",
-      "plan": "prompt_assembler.py composes static role prompt + dynamic rule refs (rule_registry.json) per element_prompt_profiles.json, replacing hardcoded stage-runner prompts",
-      "fact": "scripts/prompt_assembler.py exists, real implementation. governance/registry/element_prompt_profiles.json exists with 10 profiles. governance/registry/rule_registry.json exists with RULE.SYSTEM.COUNCIL_ANALYST/AUDITOR/CURATOR_CANON present and properly cross-referenced.",
-      "gap": "Wired correctly at config level; no runtime trace proving *_stage_runner.py actually calls prompt_assembler.py during a live task instead of legacy hardcoded prompts.",
-      "status": "partial_real"
+      "planned": "prompt_assembler.py composes static+dynamic prompt per element_prompt_profiles.json + rule_registry.json",
+      "actual": "prompt_assembler.py real implementation. element_prompt_profiles.json has 10 profiles. rule_registry.json has all 3 COUNCIL rules present and cross-referenced",
+      "remaining_gap": "Wired correctly at config level; no runtime trace proving *_stage_runner.py actually calls prompt_assembler.py during a live task",
+      "implementation_status": "IMPLEMENTED",
+      "runtime_status": "WIRED",
+      "evidence_status": "RECEIPT_INCOMPLETE",
+      "release_status": "RELEASE_NEUTRAL",
+      "last_receipt_ref": "governance/proofs/BEM932_council_prompt_assembler_receipt.json",
+      "last_verified_at": "2026-06-13"
     },
     {
       "area": "Provider routing & cost policy",
-      "plan": "Primary=Claude Code Action, fallback honest-degraded (mechanical only), paid OpenAI API permanently prohibited",
-      "fact": "provider_config.json reclassified (BEM-950 T2). provider-router.yml has cost policy guard (BEM-950 T5). gpt_codex_cloud workflow archived/quarantined where invalid (BEM-950 T1).",
-      "gap": "None known. This area is the most cleanly closed in the whole system.",
-      "status": "done"
+      "planned": "Primary=Claude Code Action, honest mechanical fallback, paid OpenAI API permanently prohibited",
+      "actual": "provider_config.json v1.5 reclassified with billing_class model. Cost policy guard in provider-router.yml. Invalid workflows archived",
+      "remaining_gap": "None known",
+      "implementation_status": "IMPLEMENTED",
+      "runtime_status": "RUNTIME_PROVEN",
+      "evidence_status": "RECEIPT_BACKED",
+      "release_status": "RELEASE_CLEARED",
+      "last_receipt_ref": "governance/proofs/BEM950_t5_provider_router_cost_policy_guard_receipt.json",
+      "last_verified_at": "2026-06-27"
     },
     {
-      "area": "Rule enforcement (RULE-004..012)",
-      "plan": "Governance rules are enforced by runtime code during task execution, not just documented",
-      "fact": "RULE-011/012 enforcement_runner.py verified working (BEM-948 P2). BEM949-P5-RULE-ENFORCEMENT-COMPLETE marked DONE with receipt.",
-      "gap": "RULE-004..010 enforcement code existence not individually re-verified after BEM-950 changes.",
-      "status": "partial_real"
+      "area": "Rule enforcement RULE-004..012",
+      "planned": "Governance rules enforced by runtime code, not just documented",
+      "actual": "RULE-011/012 enforcement verified. Full per-rule matrix now lives in governance/state/rule_enforcement_matrix.json",
+      "remaining_gap": "RULE-004..010 individual bodies not yet resolved post-BEM-950 (see rule_enforcement_matrix.json RV-2)",
+      "implementation_status": "PARTIALLY_IMPLEMENTED",
+      "runtime_status": "WIRED",
+      "evidence_status": "RECEIPT_INCOMPLETE",
+      "release_status": "RELEASE_NEUTRAL",
+      "last_receipt_ref": "governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json",
+      "last_verified_at": "2026-06-20"
     },
     {
       "area": "BEM-949 roadmap closure",
-      "plan": "8-stage roadmap P0.5->P7 to reach a working, evidence-backed control contour",
-      "fact": "6/8 DONE (P0.5, P2, P3-limited, P5, P6, plus P4 skipped by operator decision). P7 receipt already exists with status BLOCKED.",
-      "gap": "P1 (CI-STABILIZE) blocked: no run-level evidence. P1-ALT-UNBLOCK attempt 1/3 failed (validator_did_not_create_receipt). P7 cannot pass until P1 resolved and P2/P3 receipts upgraded from OBSERVED/LIMITED_SCOPE to clean PASS.",
-      "status": "open_gap"
+      "planned": "8-stage roadmap P0.5->P7 to reach a working, evidence-backed control contour",
+      "actual": "6/8 DONE. P7 receipt already exists with status BLOCKED",
+      "remaining_gap": "P1 blocked (no run-level evidence). P1-ALT-UNBLOCK attempt 1/3 failed. P2/P3 receipts not clean PASS",
+      "implementation_status": "PARTIALLY_IMPLEMENTED",
+      "runtime_status": "WIRED",
+      "evidence_status": "RECEIPT_INCOMPLETE",
+      "release_status": "RELEASE_BLOCKING",
+      "last_receipt_ref": "governance/proofs/BEM949_p7_external_release_audit_receipt.json",
+      "last_verified_at": "2026-06-23"
     },
     {
       "area": "Repository hygiene / SSOT clarity",
-      "plan": "Active workspace contains only canonical, currently-relevant files; historical iteration noise does not obstruct agents reading repo state",
-      "fact": "Hundreds of diagnostic/iteration workflow files (bem934-*, bem865-*, bem866-* etc.) and historical MASTER_PROMPT versions remain in active paths.",
-      "gap": "No archive pass has been executed. This is the subject of the new BEM-008 archival roadmap below.",
-      "status": "open_gap"
+      "planned": "Active workspace contains only canonical, currently-relevant files",
+      "actual": "Hundreds of diagnostic/iteration workflow files and historical MASTER_PROMPT versions remain in active paths",
+      "remaining_gap": "Archival not yet executed. Now gated by runtime_dependency_manifest.json + protocol_supersession_index.json (BEM-009 precondition artifacts)",
+      "implementation_status": "NOT_STARTED",
+      "runtime_status": "NOT_WIRED",
+      "evidence_status": "NO_RECEIPT",
+      "release_status": "RELEASE_NEUTRAL",
+      "last_receipt_ref": null,
+      "last_verified_at": "2026-06-30"
     },
     {
       "area": "AGENT_CONTEXT.md freshness",
-      "plan": "Any new agent reading AGENT_CONTEXT.md first gets accurate current-state picture",
-      "fact": "File exists, was updated at points during BEM-948 (P1 task).",
-      "gap": "Not verified current against BEM-949/950 closure state in this session.",
-      "status": "partial_real"
+      "planned": "AGENT_CONTEXT.md is a derived briefing artifact, regenerated from SSOT, never a source of truth itself",
+      "actual": "File exists; historically hand-updated during BEM-948 P1",
+      "remaining_gap": "Regeneration mechanism from architecture_plan_fact_gap.json not yet implemented (BEM-009 roadmap task)",
+      "implementation_status": "PARTIALLY_IMPLEMENTED",
+      "runtime_status": "NOT_WIRED",
+      "evidence_status": "NO_RECEIPT",
+      "release_status": "RELEASE_NEUTRAL",
+      "last_receipt_ref": null,
+      "last_verified_at": null
     }
   ]
 }
