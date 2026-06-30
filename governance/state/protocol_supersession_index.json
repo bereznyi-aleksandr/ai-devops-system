@@ -1,70 +1,31 @@
 {
-  "schema_version": 1,
-  "protocol": "BEM-009",
+  "schema_version": 2,
+  "protocol": "BEM-010",
   "created_at": "2026-06-30T00:00:00Z",
-  "purpose": "Before archiving any historical protocol document, this index records which of its normative decisions have been migrated into the current canon. archive_allowed=true only when migrated_normative_sections is complete and verified.",
+  "purpose": "Replaces narrow RV-1 (single idempotency fragment check) with a complete normative_fragment_migration_check for every numbered step of BEM-932 v8.3. For each fragment: migrated / implemented / explicitly retired / UNRESOLVED. archive_allowed=true requires zero UNRESOLVED rows.",
   "entries": [
     {
-      "old_protocol": "MASTER_PROMPT_v143_through_v170",
-      "superseded_by": "BEM-009 Architecture Canon (this protocol)",
-      "migrated_normative_sections": [
-        "Role model (curator/analyst/auditor/executor) -> migrated into rule_registry.json RULE.SYSTEM.* entries",
-        "Report canon -> migrated into RULE.SYSTEM.OPERATOR_REPORT_CANON"
-      ],
-      "archive_allowed": true,
-      "notes": "Pre-BEM-932 versions; superseded by multiple subsequent protocols before this canon existed."
-    },
-    {
-      "old_protocol": "MASTER_PROMPT_v171_CANON_FINAL",
-      "superseded_by": "BEM-009 Architecture Canon (this protocol)",
-      "migrated_normative_sections": [
-        "Active runtime declaration (GitHub Actions + Claude Code Action) -> confirmed current in runtime_dependency_manifest.json",
-        "Provider config structure -> superseded by BEM-950 provider_config.json v1.5"
-      ],
-      "archive_allowed": true,
-      "notes": "Last full master-prompt iteration before BEM-932 council model. No normative content found that is not already represented in current canon."
-    },
-    {
       "old_protocol": "BEM-932_v8.3",
-      "superseded_by": "BEM-009 Architecture Canon (this protocol) + runtime code",
-      "migrated_normative_sections": [
-        "provider_config.json schema (primary/fallback) -> migrated into BEM-950 provider_config.json v1.5 (billing_class model)",
-        "scripts/provider_router.py contract -> present in runtime_dependency_manifest.json as active",
-        "AGENTS.md 6-section spec -> file exists, confirmed active in runtime_dependency_manifest.json",
-        "prompt_assembler.py + element_prompt_profiles.json + rule_registry.json design -> all three confirmed FOUND and active in plan/fact/gap register",
-        "RULE.SYSTEM.COUNCIL_ANALYST/AUDITOR/CURATOR_CANON -> confirmed present in rule_registry.json",
-        "Fallback idempotency / honest outbox rules -> not independently re-verified in this protocol; flagged as open verification item, NOT silently dropped"
-      ],
+      "superseded_by": "BEM-009/BEM-010 Architecture Canon + runtime code",
+      "normative_fragment_migration_check": [
+        { "fragment": "1.A provider_config.json primary=gpt_codex/fallback=claude_code", "disposition": "implemented_then_superseded", "evidence": "provider_config.json v1.5 (BEM-950) inverts this: primary=claude_code, gpt_codex_cloud DISABLED_BY_COST_POLICY. This is a deliberate later policy change (BEM-950, operator decision on paid API), not a silently dropped norm." },
+        { "fragment": "1.B provider_router.py JSON contract (provider_selected/fallback_reason/decision_source/trace_id/ttl_seconds/stale_ignored), TTL-scoped error check (not full results/ scan)", "disposition": "UNRESOLVED", "evidence": "scripts/provider_router.py existence confirmed; whether it implements the stale-TTL-scoped check specifically (vs. naive full-folder scan) has NOT been verified by reading its current body in this protocol." },
+        { "fragment": "1.C provider-router.yml routes claude_code to existing claude.yml (not a nonexistent claude-local.yml)", "disposition": "implemented", "evidence": "Confirmed in BEM-008/009 sessions: provider-router.yml exists and claude.yml is the proven live path (BEM-947)." },
+        { "fragment": "1.C2 three pre-flight tests (stale_quota_ignored / same_trace_quota_fallback / no_status_primary) before any live dispatch", "disposition": "UNRESOLVED", "evidence": "No receipt found in this protocol session confirming these three test cases exist as code or have ever passed." },
+        { "fragment": "1.D Cloudflare Worker routes via ROUTER_WORKFLOW_ID feature flag (not hardcoded), with verified rollback path", "disposition": "UNRESOLVED", "evidence": "Not independently re-verified after BEM-950 provider changes. Worker code not re-read in this session." },
+        { "fragment": "1.E idempotent fallback outbox notification (one trace_id -> max one Telegram message)", "disposition": "implemented", "evidence": "Confirmed earlier audit pass: idempotency check present per BEM-932 0bis.4 acceptance, referenced in original migration check that triggered GPT's BEM-009A item 7 critique." },
+        { "fragment": "2.1 AGENTS.md 6 sections (channels/roles/provider-neutrality/provider_config ref/report format/result location)", "disposition": "implemented", "evidence": "AGENTS.md confirmed present and active in runtime_dependency_manifest.json." },
+        { "fragment": "2.2-2.4 analyst/auditor/executor stage runners call provider-router.yml and use prompt_assembler instead of hardcoded prompts", "disposition": "UNRESOLVED", "evidence": "prompt_assembler.py and its config (element_prompt_profiles.json, rule_registry.json) confirmed FOUND/WIRED in architecture_plan_fact_gap.json, but explicit confirmation that *_stage_runner.py CALLS it (vs. legacy hardcoded prompt) remains an open gap — already flagged honestly in plan/fact/gap row 'Prompt assembly'." },
+        { "fragment": "2.5 curator sends final Telegram report per contract v3.0 format A8", "disposition": "UNRESOLVED", "evidence": "Not independently verified in this protocol session." },
+        { "fragment": "3.1 Worker dispatches provider-router.yml not codex-local.yml directly, getWebhookInfo <1s confirmed", "disposition": "UNRESOLVED", "evidence": "Not independently re-verified after subsequent architecture changes." },
+        { "fragment": "4.1 Live Telegram E2E full chain GD->DIR->WRK->WRK-Cx with real LLM", "disposition": "explicitly_carried_forward_as_open_gap", "evidence": "This is the SAME gap already tracked as BEM949-P3 DONE_LIMITED_SCOPE in architecture_plan_fact_gap.json. Not silently dropped — it is the same unresolved item under a different protocol number." },
+        { "fragment": "4.2 RELEASE gate: WORKING_CONTOUR_READY requires external auditor APPROVED + live fallback test + BEM932-EXPERIENCE-FIX (0.3) done", "disposition": "explicitly_carried_forward_as_open_gap", "evidence": "This release gate logic is the direct ancestor of the current BEM-949 P7 gate and BEM-010 release_status model. Not dropped — evolved into the current release decision model." },
+        { "fragment": "5.1-5.4 RULE.SYSTEM.COUNCIL_* rules, profile wiring, prompt_assembler, comparative test vs baseline", "disposition": "implemented", "evidence": "5.1 (rules in registry) and 5.2/5.3 (profiles + assembler) confirmed present in rule_enforcement_matrix.json. 5.4 (comparative baseline test) status UNRESOLVED — no receipt found confirming this specific comparison was run." },
+        { "fragment": "6.1-6.3 SYSTEM_STATUS.md update, AGENT_CONTEXT.md update, final Telegram report per contract A8", "disposition": "superseded_by_new_mechanism", "evidence": "BEM-009/010 replace this with the derived-document regeneration pipeline (BEM-010 task DOC-1) rather than manual SYSTEM_STATUS.md/AGENT_CONTEXT.md edits. Intent preserved (keep status docs current), mechanism modernized." }
+    ],
+      "unresolved_count": 6,
       "archive_allowed": false,
-      "notes": "BLOCKED pending verification of fallback idempotency rule still being enforced in current provider-router.yml. Document stays in active governance/protocols/ until BEM-009 roadmap task RV-1 confirms or formally re-issues this rule. This is a deliberate exception to the otherwise-complete migration."
-    },
-    {
-      "old_protocol": "BEM-948_MANAGEMENT_CONTOUR_CLOSURE_PROTOCOL",
-      "superseded_by": "BEM-009 Architecture Canon, Plan/Fact/Gap row 'GD-object governance chain'",
-      "migrated_normative_sections": [
-        "P0 dispatch_executor requirement -> implemented, confirmed in runtime_dependency_manifest.json",
-        "P1 AGENT_CONTEXT-SYNC rule -> superseded by BEM-009 derived-document regeneration rule",
-        "P2 rule enforcement verification requirement -> migrated into rule_enforcement_matrix.json requirement"
-      ],
-      "archive_allowed": true,
-      "notes": "Fully executed roadmap; all P0-P4 outcomes are reflected as facts in architecture_plan_fact_gap.json rows."
-    },
-    {
-      "old_protocol": "BEM-949_HARD_AUDIT_AND_ROADMAP",
-      "superseded_by": "NOT SUPERSEDED — still active",
-      "migrated_normative_sections": [],
-      "archive_allowed": false,
-      "notes": "BEM-949 roadmap is still IN_PROGRESS (6/8, P1 and P7 open in ACTIVE_QUEUE.json). Must remain active document until closure, not archived."
-    },
-    {
-      "old_protocol": "BEM-950_PROVIDER_POLICY_TASKS",
-      "superseded_by": "N/A — fully merged into provider_config.json v1.5 and ACTIVE_QUEUE.json as completed task records",
-      "migrated_normative_sections": [
-        "Paid API permanent prohibition -> migrated into provider_config.json paid_api_policy block",
-        "Cost policy guard requirement -> implemented in provider-router.yml T5"
-      ],
-      "archive_allowed": true,
-      "notes": "All 6 BEM-950 tasks DONE per ACTIVE_QUEUE.json. Safe to archive as closed protocol; normative content lives in provider_config.json."
+      "notes": "6 of 14 fragments are UNRESOLVED — meaning not verified migrated, implemented, or explicitly retired. Per the archive_allowed rule, BEM-932 v8.3 stays in active governance/protocols/ until each UNRESOLVED fragment is individually checked off by Curator-Executor in roadmap task RV-1 (BEM-010 version, expanded scope)."
     }
   ]
 }
