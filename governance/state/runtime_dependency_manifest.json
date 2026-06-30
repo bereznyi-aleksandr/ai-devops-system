@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-009",
+  "created_at": "2026-06-30T00:00:00Z",
+  "purpose": "Lists every artifact required for an active agent to execute, audit, or replay any current task. Used as the sole basis for archival decisions (BEM-951). A file absent from this manifest AND not referenced by ACTIVE_QUEUE.json AND not listed in protocol_supersession_index.json as migrated-normative is safe to archive.",
+  "active_workflows": [
+    ".github/workflows/claude.yml",
+    ".github/workflows/roadmap-autopilot.yml",
+    ".github/workflows/provider-router.yml",
+    ".github/workflows/gpt-codex-cloud.yml",
+    ".github/workflows/codex-local-assembled.yml",
+    ".github/workflows/governance-dispatch-consumer.yml",
+    ".github/workflows/bem949-p1-alt-unblock.yml",
+    ".github/workflows/bem949-p5-rule-enforcement-complete.yml",
+    ".github/workflows/bem949-p6-learning-loop-drill.yml",
+    ".github/workflows/bem949-p7-release-audit-final.yml",
+    ".github/workflows/bem950-t4-execute.yml",
+    ".github/workflows/bem950-t4-queue-reclassify.yml",
+    ".github/workflows/telegram-webhook.yml",
+    ".github/workflows/telegram-poll.yml",
+    ".github/workflows/active-queue-guard.yml",
+    ".github/workflows/emergency-stop.yml"
+  ],
+  "active_runners": [
+    "governance/runners/object_runner.py",
+    "governance/runners/dispatch_consumer.py",
+    "governance/runners/dispatch_executor.py",
+    "governance/runners/dispatch_executor_guard.py",
+    "governance/runners/curator_router.py",
+    "governance/runners/roadmap_autopilot.py",
+    "governance/runners/bem949-p1-alt-unblock.py",
+    "scripts/prompt_assembler.py",
+    "scripts/provider_router.py",
+    "scripts/curator_router.py",
+    "scripts/bem949_active_scope_validate.py",
+    "scripts/bem949_p2_functional_baseline.py",
+    "scripts/bem949_ci_stabilize.py"
+  ],
+  "active_registries": [
+    "governance/registry/rule_registry.json",
+    "governance/registry/element_prompt_profiles.json",
+    "governance/links/vertical_links.json",
+    "governance/config/provider_config.json",
+    "governance/state/rule_registry.json"
+  ],
+  "active_prompts_profiles": [
+    "AGENTS.md",
+    "governance/prompts/roles/curator.md",
+    "governance/prompts/roles/analyst.md",
+    "governance/prompts/roles/auditor.md",
+    "governance/prompts/roles/executor.md"
+  ],
+  "active_proof_stores": [
+    "governance/proofs/",
+    "governance/state/dispatch_processed.jsonl",
+    "governance/state/dispatch_executed.jsonl",
+    "governance/state/dispatch_queue.jsonl",
+    "governance/state/dispatch_dead_letters.jsonl",
+    "governance/state/object_runner_registry.json",
+    "governance/state/provider_status.json"
+  ],
+  "active_ssot_documents": [
+    "governance/roadmap/ACTIVE_QUEUE.json",
+    "governance/state/architecture_plan_fact_gap.json",
+    "governance/state/runtime_dependency_manifest.json",
+    "governance/state/protocol_supersession_index.json",
+    "governance/state/rule_enforcement_matrix.json",
+    "AGENT_CONTEXT.md"
+  ],
+  "derived_documents_regeneration_rule": "AGENT_CONTEXT.md is a derived briefing artifact. It must be regenerated from architecture_plan_fact_gap.json + ACTIVE_QUEUE.json after every SSOT update, never hand-edited as a source of truth.",
+  "required_for_audit_replay": [
+    "governance/proofs/BEM948_dispatch_executor_runtime_probe_receipt.json",
+    "governance/proofs/BEM948_dispatch_executor_runtime_repair_receipt.json",
+    "governance/proofs/BEM949_p7_external_release_audit_receipt.json",
+    "governance/proofs/BEM949_p1_static_validation_receipt.json"
+  ],
+  "archival_rule": "A file is safe to move to governance/archive/ if and only if ALL of: (1) not present in any list above, (2) not referenced as target_workflow_id or receipt path in ACTIVE_QUEUE.json, (3) not listed in protocol_supersession_index.json under migrated_normative_sections as still-required source."
+}
