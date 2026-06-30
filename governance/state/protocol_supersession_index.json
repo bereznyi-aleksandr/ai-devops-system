@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-009",
+  "created_at": "2026-06-30T00:00:00Z",
+  "purpose": "Before archiving any historical protocol document, this index records which of its normative decisions have been migrated into the current canon. archive_allowed=true only when migrated_normative_sections is complete and verified.",
+  "entries": [
+    {
+      "old_protocol": "MASTER_PROMPT_v143_through_v170",
+      "superseded_by": "BEM-009 Architecture Canon (this protocol)",
+      "migrated_normative_sections": [
+        "Role model (curator/analyst/auditor/executor) -> migrated into rule_registry.json RULE.SYSTEM.* entries",
+        "Report canon -> migrated into RULE.SYSTEM.OPERATOR_REPORT_CANON"
+      ],
+      "archive_allowed": true,
+      "notes": "Pre-BEM-932 versions; superseded by multiple subsequent protocols before this canon existed."
+    },
+    {
+      "old_protocol": "MASTER_PROMPT_v171_CANON_FINAL",
+      "superseded_by": "BEM-009 Architecture Canon (this protocol)",
+      "migrated_normative_sections": [
+        "Active runtime declaration (GitHub Actions + Claude Code Action) -> confirmed current in runtime_dependency_manifest.json",
+        "Provider config structure -> superseded by BEM-950 provider_config.json v1.5"
+      ],
+      "archive_allowed": true,
+      "notes": "Last full master-prompt iteration before BEM-932 council model. No normative content found that is not already represented in current canon."
+    },
+    {
+      "old_protocol": "BEM-932_v8.3",
+      "superseded_by": "BEM-009 Architecture Canon (this protocol) + runtime code",
+      "migrated_normative_sections": [
+        "provider_config.json schema (primary/fallback) -> migrated into BEM-950 provider_config.json v1.5 (billing_class model)",
+        "scripts/provider_router.py contract -> present in runtime_dependency_manifest.json as active",
+        "AGENTS.md 6-section spec -> file exists, confirmed active in runtime_dependency_manifest.json",
+        "prompt_assembler.py + element_prompt_profiles.json + rule_registry.json design -> all three confirmed FOUND and active in plan/fact/gap register",
+        "RULE.SYSTEM.COUNCIL_ANALYST/AUDITOR/CURATOR_CANON -> confirmed present in rule_registry.json",
+        "Fallback idempotency / honest outbox rules -> not independently re-verified in this protocol; flagged as open verification item, NOT silently dropped"
+      ],
+      "archive_allowed": false,
+      "notes": "BLOCKED pending verification of fallback idempotency rule still being enforced in current provider-router.yml. Document stays in active governance/protocols/ until BEM-009 roadmap task RV-1 confirms or formally re-issues this rule. This is a deliberate exception to the otherwise-complete migration."
+    },
+    {
+      "old_protocol": "BEM-948_MANAGEMENT_CONTOUR_CLOSURE_PROTOCOL",
+      "superseded_by": "BEM-009 Architecture Canon, Plan/Fact/Gap row 'GD-object governance chain'",
+      "migrated_normative_sections": [
+        "P0 dispatch_executor requirement -> implemented, confirmed in runtime_dependency_manifest.json",
+        "P1 AGENT_CONTEXT-SYNC rule -> superseded by BEM-009 derived-document regeneration rule",
+        "P2 rule enforcement verification requirement -> migrated into rule_enforcement_matrix.json requirement"
+      ],
+      "archive_allowed": true,
+      "notes": "Fully executed roadmap; all P0-P4 outcomes are reflected as facts in architecture_plan_fact_gap.json rows."
+    },
+    {
+      "old_protocol": "BEM-949_HARD_AUDIT_AND_ROADMAP",
+      "superseded_by": "NOT SUPERSEDED — still active",
+      "migrated_normative_sections": [],
+      "archive_allowed": false,
+      "notes": "BEM-949 roadmap is still IN_PROGRESS (6/8, P1 and P7 open in ACTIVE_QUEUE.json). Must remain active document until closure, not archived."
+    },
+    {
+      "old_protocol": "BEM-950_PROVIDER_POLICY_TASKS",
+      "superseded_by": "N/A — fully merged into provider_config.json v1.5 and ACTIVE_QUEUE.json as completed task records",
+      "migrated_normative_sections": [
+        "Paid API permanent prohibition -> migrated into provider_config.json paid_api_policy block",
+        "Cost policy guard requirement -> implemented in provider-router.yml T5"
+      ],
+      "archive_allowed": true,
+      "notes": "All 6 BEM-950 tasks DONE per ACTIVE_QUEUE.json. Safe to archive as closed protocol; normative content lives in provider_config.json."
+    }
+  ]
+}
