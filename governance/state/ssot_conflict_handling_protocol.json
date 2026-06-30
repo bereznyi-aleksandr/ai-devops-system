@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-011",
+  "created_at": "2026-06-30T00:00:00Z",
+  "purpose": "Operational response procedure when ssot_precedence_order.json detects two SSOT files claiming authority over the same fact. Closes the gap flagged in GPT audit BEM-010 item 3: precedence alone is not a response procedure.",
+  "conflict_record_schema": {
+    "conflict_id": "uuid4, one per detected conflict",
+    "detected_at": "ISO 8601 timestamp",
+    "detected_by": "role that found it — typically Auditor or External Auditor during a read pass",
+    "conflict_detected": "human-readable one-line description of the contradiction",
+    "affected_files": "array of exact repo paths making the conflicting claims",
+    "winning_source": "the file that wins per ssot_precedence_order.json domain rule — filled automatically by applying that file's domain table",
+    "blocked_transitions": "array of release_status or task_status transitions that are frozen for the affected area until resolved — minimum: any RELEASE_* upgrade for the affected area",
+    "repair_required_by": "role responsible for closing the conflict — always Curator-Executor, never the Auditor who found it",
+    "repair_deadline_audit_cycles": 1,
+    "audit_visibility": "the conflict_id MUST appear in every subsequent P7 audit package until status=RESOLVED, even if unrelated to the current audit's primary scope",
+    "status": "OPEN | RESOLVED",
+    "resolution_transaction_ref": "once resolved, the state_change_id from ssot_transaction_log.jsonl that removed the duplicate/contradicting claim from the non-owning file"
+  },
+  "procedure": [
+    "1. Any reader (Auditor, External Auditor, Curator-Executor) that observes two SSOT files asserting different values for the same fact in the same domain MUST create a conflict record before proceeding with any judgment that depends on that fact.",
+    "2. The system enters STATE_INCONSISTENT for the affected area immediately: this means the area's release_status is frozen at its last RESOLVED value and cannot be upgraded (only downgraded) until the conflict record reaches status=RESOLVED.",
+    "3. winning_source is determined mechanically by applying domain_separation rules from ssot_precedence_order.json — this is not a judgment call, it is a lookup.",
+    "4. The losing/non-owning file's contradicting claim must be removed via a valid SSOT transaction (ssot_transaction_protocol.json), not silently overwritten.",
+    "5. The conflict record stays visible in P7 audit packages until resolved, regardless of whether the current audit cycle's scope touches that area."
+  ],
+  "open_conflicts": [],
+  "hard_rule": "A conflict record with status=OPEN for more than repair_deadline_audit_cycles (1) automatically escalates: the affected area's release_status is force-set to RELEASE_BLOCKING regardless of its prior value, and the conflict is flagged BLOCKED_OPERATOR_DECISION."
+}
