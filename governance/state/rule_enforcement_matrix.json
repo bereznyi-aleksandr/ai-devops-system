@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-009",
+  "created_at": "2026-06-30T00:00:00Z",
+  "purpose": "Permanent control register: every governance rule mapped to its enforcement reality. Lives in canon, not in roadmap, because it is a standing audit instrument, not a one-time task.",
+  "rules": [
+    {
+      "rule_id": "RULE.SYSTEM.CURATOR_INTERFACE",
+      "rule_summary": "Curator assigns to analyst; feedback flows from auditor after ACCEPTED",
+      "enforcement_type": "declarative",
+      "enforcement_path": null,
+      "receipt_ref": null,
+      "verification_date": null,
+      "gap_type": "no_runtime_enforcement_code_found"
+    },
+    {
+      "rule_id": "RULE.SYSTEM.INTERNAL_LOOP",
+      "rule_summary": "Analyst prepares, auditor confirms pre-execution, executor executes, auditor accepts result",
+      "enforcement_type": "declarative",
+      "enforcement_path": null,
+      "receipt_ref": null,
+      "verification_date": null,
+      "gap_type": "no_runtime_enforcement_code_found"
+    },
+    {
+      "rule_id": "RULE.SYSTEM.HORIZONTAL_EXCHANGE",
+      "rule_summary": "Cross-contour exchange only via curator + exchange registry; no direct role-to-role channel",
+      "enforcement_type": "declarative",
+      "enforcement_path": null,
+      "receipt_ref": "governance/proofs/BEM932_horizontal_exchange_run51_receipt.json",
+      "verification_date": "2026-06-13",
+      "gap_type": "single_historical_proof_only_not_continuous_guard"
+    },
+    {
+      "rule_id": "RULE.SYSTEM.OPERATOR_REPORT_CANON",
+      "rule_summary": "Hourly report format: stage %, roadmap %, checklist, question if any",
+      "enforcement_type": "workflow",
+      "enforcement_path": "scripts/render_curator_hourly_report.py",
+      "receipt_ref": "governance/state/curator_hourly_report_state.json",
+      "verification_date": "2026-06-13",
+      "gap_type": "none_known"
+    },
+    {
+      "rule_id": "RULE.SYSTEM.PAID_API_FORBIDDEN",
+      "rule_summary": "Paid metered OpenAI/Gemini API not a standard runtime path",
+      "enforcement_type": "code",
+      "enforcement_path": ".github/workflows/provider-router.yml (BEM-950 T5 cost policy guard)",
+      "receipt_ref": "governance/proofs/BEM950_t5_provider_router_cost_policy_guard_receipt.json",
+      "verification_date": "2026-06-27",
+      "gap_type": "none_known"
+    },
+    {
+      "rule_id": "RULE.SYSTEM.COUNCIL_ANALYST",
+      "rule_summary": "Analyst council: Critic/Strategist/Executor sub-roles, output includes risks+alternatives+acceptance",
+      "enforcement_type": "code",
+      "enforcement_path": "scripts/prompt_assembler.py + element_prompt_profiles.json",
+      "receipt_ref": "governance/proofs/BEM932_council_prompt_assembler_receipt.json",
+      "verification_date": "2026-06-13",
+      "gap_type": "wired_but_no_live_runtime_trace_of_stage_runner_invocation"
+    },
+    {
+      "rule_id": "RULE.SYSTEM.COUNCIL_AUDITOR",
+      "rule_summary": "Auditor council: Risk critic/Tester/Architect + Chair synthesis to APPROVED/NEEDS_REVISION/BLOCKED",
+      "enforcement_type": "code",
+      "enforcement_path": "scripts/prompt_assembler.py + element_prompt_profiles.json",
+      "receipt_ref": "governance/proofs/BEM932_council_prompt_assembler_receipt.json",
+      "verification_date": "2026-06-13",
+      "gap_type": "wired_but_no_live_runtime_trace_of_stage_runner_invocation"
+    },
+    {
+      "rule_id": "RULE.SYSTEM.COUNCIL_CURATOR_CANON",
+      "rule_summary": "Curator output canon: architect/business-analyst/risk-critic/tester/implementer/chair-auditor roles",
+      "enforcement_type": "code",
+      "enforcement_path": "scripts/prompt_assembler.py + element_prompt_profiles.json",
+      "receipt_ref": "governance/proofs/BEM932_council_prompt_assembler_receipt.json",
+      "verification_date": "2026-06-13",
+      "gap_type": "wired_but_no_live_runtime_trace_of_stage_runner_invocation"
+    },
+    {
+      "rule_id": "RULE-011",
+      "rule_summary": "Evidence rule (sha_type explicit, no PASS without executed/completed proof)",
+      "enforcement_type": "guard",
+      "enforcement_path": "governance/runners/enforcement_runner.py",
+      "receipt_ref": "governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json",
+      "verification_date": "2026-06-20",
+      "gap_type": "none_known"
+    },
+    {
+      "rule_id": "RULE-012",
+      "rule_summary": "Continuity rule (no silent history rewrite, blockers preserved across closures)",
+      "enforcement_type": "guard",
+      "enforcement_path": "governance/runners/enforcement_runner.py",
+      "receipt_ref": "governance/proofs/BEM948_p2_rule_enforcement_runtime_receipt.json",
+      "verification_date": "2026-06-20",
+      "gap_type": "none_known"
+    },
+    {
+      "rule_id": "RULE-004..010",
+      "rule_summary": "Documented as COMPLETED in earlier registries; specific bodies not enumerated in this matrix yet",
+      "enforcement_type": "unknown",
+      "enforcement_path": null,
+      "receipt_ref": "governance/proofs/BEM949_p5_rule_source_catalog.json",
+      "verification_date": null,
+      "gap_type": "individual_rule_bodies_not_yet_resolved_post_bem950 — open task RV-2 in BEM-009 roadmap"
+    }
+  ]
+}
