@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "protocol": "BEM-010",
+  "schema_version": 2,
+  "protocol": "BEM-011",
   "created_at": "2026-06-30T00:00:00Z",
   "purpose": "Formal contract for every write to any SSOT file. Every change is one transaction: identified, hashed before/after, receipt-linked, attributable, and reversible by rule. Source of truth for the rule referenced by architecture_plan_fact_gap.json ssot_update_protocol.",
   "transaction_required_fields": {
@@ -14,7 +14,8 @@
     "applied_at": "ISO 8601 timestamp",
     "rollback_rule": "one of: REVERT_TO_PRE_STATE_HASH | MANUAL_OPERATOR_DECISION | NO_ROLLBACK_TERMINAL_STATE"
   },
-  "validity_rule": "A change to any file listed in ssot_canonical_files (see ssot_precedence_order.json) without a corresponding entry in governance/state/ssot_transaction_log.jsonl bearing all 9 fields above is INVALID and must be flagged STATE_INCONSISTENT by the next auditor pass.",
+  "validity_rule": "A change to any file listed in ssot_canonical_files (see ssot_precedence_order.json) without a corresponding entry in governance/state/ssot_transaction_log.jsonl bearing all 9 fields above is INVALID.",
+  "hard_norm_per_bem010_audit_item_4": "This is not merely 'detected by the next auditor pass.' Any SSOT-file write lacking a matching ssot_transaction_log.jsonl entry is, by definition and without exception, an automatic protocol violation that downgrades the affected area's release_status to STATE_INCONSISTENT immediately upon detection — not as a discretionary auditor judgment, but as a mechanical rule identical in force to the STATE_INCONSISTENT trigger in ssot_conflict_handling_protocol.json. The untransacted write itself is the violation; no separate finding is required to trigger the downgrade.",
   "log_location": "governance/state/ssot_transaction_log.jsonl",
   "log_entry_example": {
     "state_change_id": "a3f1e9c2-...",
@@ -26,5 +27,6 @@
     "applied_by": "Curator-Executor",
     "applied_at": "2026-06-30T00:00:00Z",
     "rollback_rule": "REVERT_TO_PRE_STATE_HASH"
-  }
+  },
+  "known_bootstrap_exception": "All SSOT writes made during BEM-008 through BEM-011 sessions (prior to this protocol's own creation and TXN-1 enforcement implementation) are retroactively grandfathered as pre-enforcement and are NOT flagged STATE_INCONSISTENT. This exception applies only to writes with timestamps before TXN-1 enforcement guard is implemented and logged as such in ssot_transaction_log.jsonl. Any write after that point without a transaction entry is a full violation with no exception."
 }
