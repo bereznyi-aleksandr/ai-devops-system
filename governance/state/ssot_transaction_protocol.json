@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-010",
+  "created_at": "2026-06-30T00:00:00Z",
+  "purpose": "Formal contract for every write to any SSOT file. Every change is one transaction: identified, hashed before/after, receipt-linked, attributable, and reversible by rule. Source of truth for the rule referenced by architecture_plan_fact_gap.json ssot_update_protocol.",
+  "transaction_required_fields": {
+    "state_change_id": "uuid4, generated per transaction, never reused",
+    "trace_id": "links to the task/dispatch event that caused this change",
+    "target_ssot_file": "exact repo path of the file being changed",
+    "pre_state_hash": "sha256 of target file content immediately before change",
+    "post_state_hash": "sha256 of target file content immediately after change",
+    "receipt_ref": "path to governance/proofs/ file justifying this change; MUST exist before transaction is considered valid",
+    "applied_by": "role, not persona — Curator-Executor | Auditor | External Auditor | Operator",
+    "applied_at": "ISO 8601 timestamp",
+    "rollback_rule": "one of: REVERT_TO_PRE_STATE_HASH | MANUAL_OPERATOR_DECISION | NO_ROLLBACK_TERMINAL_STATE"
+  },
+  "validity_rule": "A change to any file listed in ssot_canonical_files (see ssot_precedence_order.json) without a corresponding entry in governance/state/ssot_transaction_log.jsonl bearing all 9 fields above is INVALID and must be flagged STATE_INCONSISTENT by the next auditor pass.",
+  "log_location": "governance/state/ssot_transaction_log.jsonl",
+  "log_entry_example": {
+    "state_change_id": "a3f1e9c2-...",
+    "trace_id": "BEM010-RV1-001",
+    "target_ssot_file": "governance/state/architecture_plan_fact_gap.json",
+    "pre_state_hash": "sha256:...",
+    "post_state_hash": "sha256:...",
+    "receipt_ref": "governance/proofs/BEM010_example_receipt.json",
+    "applied_by": "Curator-Executor",
+    "applied_at": "2026-06-30T00:00:00Z",
+    "rollback_rule": "REVERT_TO_PRE_STATE_HASH"
+  }
+}
