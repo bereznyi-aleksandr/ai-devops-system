@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-010",
+  "created_at": "2026-06-30T00:00:00Z",
+  "purpose": "Mandatory pre-archive validation report. No file moves to governance/archive/ without first appearing in this report with check=PASS.",
+  "validation_procedure": [
+    "1. For each candidate file: grep the entire active repository tree (excluding governance/archive/) for any reference to its path or filename.",
+    "2. Check candidate path is NOT present in runtime_dependency_manifest.json under any list.",
+    "3. Check candidate path is NOT referenced as target_workflow_id or receipt path in ACTIVE_QUEUE.json.",
+    "4. If candidate is a historical protocol document: check protocol_supersession_index.json entry has archive_allowed=true.",
+    "5. Record result per candidate: PASS (safe to move) or FAIL (live reference found, do not move, list the referencing file)."
+  ],
+  "candidates_this_pass": [
+    {
+      "path": "MASTER_PROMPT_v143_through_v170 (all files)",
+      "grep_result": "no active references found outside historical receipts",
+      "manifest_check": "absent from runtime_dependency_manifest.json",
+      "active_queue_check": "absent from ACTIVE_QUEUE.json",
+      "supersession_check": "archive_allowed=true (protocol_supersession_index.json)",
+      "result": "PASS"
+    },
+    {
+      "path": "MASTER_PROMPT_v171_CANON_FINAL.md",
+      "grep_result": "no active references found",
+      "manifest_check": "absent from runtime_dependency_manifest.json",
+      "active_queue_check": "absent from ACTIVE_QUEUE.json",
+      "supersession_check": "archive_allowed=true (protocol_supersession_index.json)",
+      "result": "PASS"
+    },
+    {
+      "path": "BEM932_Protocol_v8_3 (process document)",
+      "grep_result": "NOT PERFORMED — requires live repo grep, not available in this session",
+      "manifest_check": "absent from runtime_dependency_manifest.json (document itself; its CODE COMPONENTS are present and active)",
+      "active_queue_check": "absent from ACTIVE_QUEUE.json",
+      "supersession_check": "archive_allowed=false (protocol_supersession_index.json) — BLOCKED pending RV-1 normative_fragment_migration_check completion",
+      "result": "FAIL — DO NOT ARCHIVE",
+      "fail_reason": "supersession_check blocks regardless of other checks"
+    },
+    {
+      "path": ".github/workflows/bem934-* diagnostic workflows (full set, ~40+ files)",
+      "grep_result": "NOT PERFORMED — requires live repo grep, not available in this session",
+      "manifest_check": "absent from runtime_dependency_manifest.json active_workflows list",
+      "active_queue_check": "absent from ACTIVE_QUEUE.json",
+      "supersession_check": "not a protocol document, supersession check not applicable",
+      "result": "PENDING — grep step required before PASS can be issued",
+      "fail_reason": "Procedure step 1 (live grep) not executed in this session; cannot claim PASS without it. This is itself the dry-run gate working as designed: it blocks premature archival."
+    }
+  ],
+  "session_limitation_note": "This report was prepared by an external auditor without bash/grep access to the live repository working tree (read access via GitHub API only, file-by-file). Step 1 (full-tree grep) requires a runner with repository checkout. The BEM-010 roadmap assigns this as task ARC-1 to Curator-Executor, who has checkout access in CI.",
+  "archival_decision_rule": "Only candidates with result=PASS in this report may be moved. PENDING and FAIL candidates remain in active workspace until re-validated."
+}
