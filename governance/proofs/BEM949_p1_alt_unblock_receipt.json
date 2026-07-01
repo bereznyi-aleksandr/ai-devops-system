@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "task_id": "BEM949-P1-ALT-UNBLOCK",
+  "receipt_id": "BEM949_p1_alt_unblock_receipt",
+  "created_at": "2026-07-01T00:00:00Z",
+  "auditor": "Claude External Auditor",
+  "bem_ref": "BEM-011 Class 5 / P1",
+  "status": "DONE_STATIC_ONLY",
+  "sha_type": "static_compile_gate",
+  "broad_release_pass_claimed": false,
+  "evidence": {
+    "total_workflows": 257,
+    "valid_workflows": 256,
+    "invalid_workflows": 1,
+    "invalid_workflow": ".github/workflows/bem949-p4-live-llm-fallback-v2.yml",
+    "invalid_workflow_archived": true,
+    "archive_path": "governance/archive/disabled-workflows/bem949-p4-live-llm-fallback-v2.yml",
+    "active_workflows_all_valid": true,
+    "source_receipt": "governance/proofs/BEM949_p1_ci_static_validation.json",
+    "p1_workflows_count": 14,
+    "p1_workflows_all_valid": true
+  },
+  "classification": "DONE_STATIC_ONLY",
+  "notes": "Единственный невалидный файл уже в архиве. Активное дерево .github/workflows/ полностью проходит YAML + Python heredoc compile-gate. Blocker P1 снят как DONE_STATIC_ONLY. Broad release PASS не выдаётся — требуется закрытие DSM-1 (Runtime Hardening) согласно BEM-011.",
+  "remaining_blockers": [
+    "DSM-1: START_CONFIRMED polling не реализован",
+    "TXN-1-CODE: enforcement guard отсутствует"
+  ]
+}
