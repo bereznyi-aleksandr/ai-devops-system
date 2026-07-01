@@ -1,16 +1,16 @@
 {
-  "version": 41,
-  "updated_at": "2026-06-27T12:00:00Z",
+  "version": 42,
+  "updated_at": "2026-07-01T19:30:00Z",
   "queue_state": "IN_PROGRESS",
-  "current_task": "BEM949-P1-ALT-UNBLOCK",
-  "system_status": "BEM949_P1_ALTERNATIVE_UNBLOCK_ATTEMPT",
+  "current_task": "BEM949-P7-RELEASE-AUDIT-FINAL",
+  "system_status": "BEM949_P1_RESOLVED_P7_PENDING",
   "release_status": "VERIFIED_WITH_LIMITATIONS",
   "protocol": "BEM-949",
   "protocol_path": "governance/protocols/BEM949_HARD_AUDIT_AND_ROADMAP.md",
   "progress": {
-    "tasks_done": 6,
+    "tasks_done": 7,
     "tasks_total": 8,
-    "percent": 75.0
+    "percent": 87.5
   },
   "tasks": [
     {
@@ -29,17 +29,17 @@
     },
     {
       "id": "BEM949-P1-ALT-UNBLOCK",
-      "status": "PENDING",
-      "priority": "CRITICAL",
-      "assigned_to": "GPT",
-      "description": "P1 заблокирован из-за отсутствия run-level evidence. Альтернативный путь разблокировки: (1) Прочитать governance/proofs/BEM949_p1_ci_stabilize_receipt.json напрямую из репозитория. (2) Найти в .github/workflows/ все файлы из scope P1 (bem949-p1-*.yml). (3) Для каждого workflow: проверить yaml.safe_load() — валиден ли синтаксис. (4) Записать результат статической валидации как partial P1 evidence в governance/proofs/BEM949_p1_static_validation_receipt.json с sha_type=git_blob для каждого файла. (5) Если все workflows валидны статически — создать receipt с outcome=static_pass_only и пометить P1 как DONE_STATIC_ONLY. (6) Если хотя бы один невалиден — зафиксировать как BLOCKED с точным файлом и ошибкой.",
-      "acceptance": [
-        "governance/proofs/BEM949_p1_static_validation_receipt.json создан с sha_type",
-        "Каждый bem949-p1-*.yml проверен yaml.safe_load()",
-        "outcome зафиксирован: static_pass_only ИЛИ blocked_with_detail",
-        "P1 переведён в DONE_STATIC_ONLY или оставлен BLOCKED с точным blocker_detail"
-      ],
-      "circuit_breaker": "Максимум 3 попытки. После 3 — BLOCKED_OPERATOR_DECISION с точным blocker."
+      "status": "DONE_STATIC_ONLY",
+      "receipt": "governance/proofs/BEM949_p1_alt_unblock_receipt.json",
+      "receipt_sha": "2b44ef8f4244d186078d0c4730381cd23fe5baa2",
+      "receipt_sha_type": "git_blob",
+      "completed_by": "Claude External Auditor",
+      "completed_at": "2026-07-01T19:16:19Z",
+      "evidence_summary": "256/257 workflows valid. Единственный невалидный (bem949-p4-live-llm-fallback-v2.yml) уже в архиве. Активное дерево .github/workflows/ полностью проходит compile-gate.",
+      "remaining_blockers": [
+        "DSM-1: START_CONFIRMED polling не реализован",
+        "TXN-1-CODE: enforcement guard отсутствует"
+      ]
     },
     {
       "id": "BEM949-P2-FUNCTIONAL-RESTORE",
@@ -84,7 +84,7 @@
       "status": "PENDING",
       "assigned_to": "GPT_PREPARE_THEN_CLAUDE_AUDIT",
       "priority": "HIGH",
-      "precondition": "BEM949-P1-ALT-UNBLOCK must be DONE_STATIC_ONLY or BLOCKED_OPERATOR_DECISION with full detail before P7 can start",
+      "precondition": "BEM949-P1-ALT-UNBLOCK DONE_STATIC_ONLY — выполнено. P7 разблокирован.",
       "description": "GPT готовит пакет для финального аудита Claude: (1) Прочитать все receipts P0.5, P2, P3, P5, P6 из governance/proofs/ напрямую. (2) Составить сводную таблицу: этап → receipt_path → receipt_sha → outcome → limitations. (3) Записать в governance/proofs/BEM949_p7_audit_package.json. (4) После создания пакета — уведомить оператора в Telegram: 'P7 audit package ready. Claude auditor required.' (5) Claude (внешний аудитор) читает пакет и все receipts напрямую из репозитория и выдаёт финальный вердикт.",
       "acceptance": [
         "governance/proofs/BEM949_p7_audit_package.json создан с sha_type для каждого receipt",
@@ -92,7 +92,7 @@
         "Telegram-уведомление доставлено оператору",
         "Claude (внешний чат) прочитал пакет напрямую и выдал вердикт APPROVED или BLOCKED"
       ],
-      "blockers": ["BEM949-P1-ALT-UNBLOCK"],
+      "blockers": [],
       "note": "P4 SKIPPED_BY_OPERATOR — не блокирует P7. Broad Release PASS выдаётся только Claude-аудитором после прямой верификации."
     },
     {
@@ -138,12 +138,12 @@
       "scope": "prescribed active routing/config source audit"
     }
   ],
-  "open_blockers": ["BEM949-P1-ALT-UNBLOCK"],
+  "open_blockers": [],
   "paid_api_policy": {
     "openai_api_key": "PERMANENTLY_PROHIBITED",
     "automatic_paid_fallback": "PERMANENTLY_PROHIBITED",
     "violation_action": "BLOCKED_COST_POLICY",
     "scope_clarification": "Prohibition covers metered_api_default and automatic_paid_fallback only. GPT provider-class reactivation via verified subscription, OAuth, or interactive adapter remains valid under BEM-950."
   },
-  "next_action": "GPT: выполнить BEM949-P1-ALT-UNBLOCK (статическая валидация P1 workflows). После DONE_STATIC_ONLY — подготовить BEM949-P7 audit package и уведомить оператора."
+  "next_action": "GPT: выполнить BEM949-P7 — подготовить audit package из всех receipts и записать в governance/proofs/BEM949_p7_audit_package.json. После — уведомить оператора в Telegram."
 }
