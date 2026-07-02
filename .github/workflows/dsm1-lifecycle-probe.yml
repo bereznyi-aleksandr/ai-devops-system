@@ -1,0 +1,36 @@
+name: BEM949 DSM-1 Lifecycle Probe
+run-name: BEM949 DSM-1 | ${{ inputs.trace_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      trace_id:
+        required: true
+        type: string
+      task_id:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emit trace-bound probe
+        env:
+          TRACE_ID: ${{ inputs.trace_id }}
+          TASK_ID: ${{ inputs.task_id }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          print(json.dumps({
+              "protocol": "BEM-949",
+              "task_id": os.environ["TASK_ID"],
+              "trace_id": os.environ["TRACE_ID"],
+              "purpose": "START_CONFIRMED lifecycle probe",
+          }, sort_keys=True))
+          PY
