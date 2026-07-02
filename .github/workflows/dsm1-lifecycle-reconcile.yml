@@ -1,0 +1,90 @@
+name: BEM949 DSM-1 Lifecycle Reconcile
+run-name: BEM949 DSM-1 reconcile
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/dsm1-lifecycle-reconcile.yml
+      - governance/runners/dispatch_executor.py
+      - governance/runners/dsm1_finalize.py
+      - governance/proofs/BEM949_dsm1_static_implementation_receipt.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: bem949-dsm1-lifecycle
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - id: context
+        name: Read active DSM-1 trace
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > /tmp/dsm1_context.json
+          import json
+          from pathlib import Path
+          queue = json.loads(Path("governance/roadmap/ACTIVE_QUEUE.json").read_text())
+          task = next((t for t in queue.get("tasks", []) if t.get("id") == "BEM949-DSM-1"), {})
+          eligible = task.get("status") == "IN_PROGRESS" and isinstance(task.get("trace_id"), str) and bool(task["trace_id"])
+          print(json.dumps({"eligible": eligible, "trace_id": task.get("trace_id", "")}))
+          PY
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          item = json.loads(Path("/tmp/dsm1_context.json").read_text())
+          print("eligible=" + str(bool(item["eligible"])).lower())
+          print("trace_id=" + item["trace_id"])
+          PY
+
+      - name: Confirm existing Actions run
+        if: steps.context.outputs.eligible == 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TRACE_ID: ${{ steps.context.outputs.trace_id }}
+        run: |
+          set -euo pipefail
+          python3 governance/runners/dispatch_executor.py \
+            --confirm-only --trace-id "$TRACE_ID" \
+            --dispatch-id "BEM949-DSM-1" \
+            --workflow-id "dsm1-lifecycle-probe.yml" \
+            --repository "$REPOSITORY" \
+            --poll-timeout-seconds 300 \
+            --poll-interval-seconds 5 \
+            --output /tmp/lifecycle_result.json
+
+      - name: Persist terminal lifecycle evidence
+        if: always() && steps.context.outputs.eligible == 'true'
+        env:
+          TRACE_ID: ${{ steps.context.outputs.trace_id }}
+        run: |
+          set -euo pipefail
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git pull --rebase origin main
+          python3 governance/runners/dsm1_finalize.py \
+            --task-id "BEM949-DSM-1" \
+            --trace-id "$TRACE_ID" \
+            --workflow-id "dsm1-lifecycle-probe.yml" \
+            --result /tmp/lifecycle_result.json
+          git add governance/state/dispatch_lifecycle.jsonl \
+            governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json \
+            governance/roadmap/ACTIVE_QUEUE.json \
+            governance/state/ssot_transaction_log.jsonl 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "AUTOPILOT: reconcile DSM-1 lifecycle"
+          git push origin HEAD:main
