@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "conflict_id": "BEM011-SSOT-CONFLICT-001",
+  "created_at": "2026-07-02T00:00:00Z",
+  "detected_by": "GPT Curator-Executor",
+  "status": "STATE_INCONSISTENT",
+  "scope": "BEM-949 P7 release-audit eligibility",
+  "sources": [
+    {
+      "source_type": "repository_ssot",
+      "path": "governance/roadmap/ACTIVE_QUEUE.json",
+      "blob_sha": "c072927aed388949adc760721779cb271e052200",
+      "sha_type": "git_blob",
+      "observed_rule": "P7 is current PENDING task with P1 alternative as its stated precondition."
+    },
+    {
+      "source_type": "knowledge_operational_canon",
+      "document": "BEM-011_OPERATIONAL_CANON.docx",
+      "document_date": "2026-06-30",
+      "observed_rule": "P7 may be rebuilt and sent for external audit only after DSM-1, RV-1, RV-2, and P1 are closed."
+    }
+  ],
+  "conflict": {
+    "field": "P7 eligibility/preconditions",
+    "repository_value": "P1 alternative resolved; P7 pending",
+    "operational_canon_value": "DSM-1 + RV-1 + RV-2 + P1 required before P7",
+    "impact": "The existing P7 audit package cannot be treated as a final-audit input or produce a Broad Release PASS."
+  },
+  "containment": {
+    "release_status_must_not_increase": true,
+    "p7_audit_package": {
+      "path": "governance/proofs/BEM949_p7_audit_package.json",
+      "blob_sha": "3fecf9f16d252b36f1aa4b4da42e48f17ad05f61",
+      "sha_type": "git_blob",
+      "classification": "QUARANTINED_PRECONDITIONALLY_INCOMPLETE"
+    }
+  },
+  "repair_required_by": "Curator-Executor",
+  "required_repair": [
+    "Materialize DSM-1, RV-1, and RV-2 as canonical queue tasks with acceptance criteria and evidence paths.",
+    "Resolve or supersede the conflicting P7 precondition in ACTIVE_QUEUE through a transaction-backed state change.",
+    "Rebuild the P7 audit package only after all four prerequisites are evidenced."
+  ],
+  "non_claim": "This record does not assert that DSM-1, RV-1, RV-2, or P7 is complete. It records a precondition conflict and freezes release-status advancement for this scope."
+}
