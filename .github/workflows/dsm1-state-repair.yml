@@ -1,0 +1,126 @@
+name: BEM949 DSM-1 State Repair
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/dsm1-state-repair.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem949-dsm1-state-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Repair invalid DSM-1 completion state
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import uuid
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          queue_path = Path("governance/roadmap/ACTIVE_QUEUE.json")
+          runtime_path = Path("governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json")
+          repair_path = Path("governance/proofs/BEM949_dsm1_state_repair_receipt.json")
+          log_path = Path("governance/state/ssot_transaction_log.jsonl")
+          stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          before = queue_path.read_bytes()
+          queue = json.loads(before)
+          dsm = next(t for t in queue["tasks"] if t.get("id") == "BEM949-DSM-1")
+          rv1 = next(t for t in queue["tasks"] if t.get("id") == "BEM949-RV-1")
+          invalid = json.loads(runtime_path.read_text()) if runtime_path.exists() else {}
+          invalid_task = invalid.get("task_id")
+          invalid_status = invalid.get("status")
+          needs_repair = dsm.get("status") == "DONE" and (
+              invalid_task != "BEM949-DSM-1" or invalid_status != "PASS")
+          if not needs_repair:
+              print("state_repair=not_required")
+              raise SystemExit(0)
+          prior = {
+              "path": str(runtime_path),
+              "blob_sha": "3babd10301ba9083d02cfe49488ca3c13b1e0066",
+              "sha_type": "git_blob",
+              "task_id": invalid_task,
+              "status": invalid.status,
+          }
+          repair = {
+              "schema_version": 1,
+              "protocol": "BEM-949",
+              "task_id": "BEM949-DSM-1",
+              "receipt_id": "BEM949_dsm1_state_repair_receipt",
+              "created_at": stamp,
+              "status": "REPAIRED_TO_PENDING",
+              "reason": "DSM-1 queue completion referenced a receipt whose task_id/status did not prove DSM-1 PASS.",
+              "invalidated_receipt": prior,
+              "queue_pre_blob_sha": "133284472f8bfef83a1ca4be674430daa7cd20a1",
+              "queue_pre_blob_sha_type": "git_blob",
+              "next_state": "PENDING",
+              "non_claim": "This repair does not claim DSM-1 runtime success.",
+          }
+          repair_path.parent.mkdir(parents=True, exist_ok=True)
+          repair_path.write_text(json.dumps(repair, ensure_ascii=False, indent=2) + "\n")
+          dsm["status"] = "PENDING"
+          dsm["attempt_count"] = int(dsm.get("attempt_count", 0)) + 1
+          dsm["last_failure"] = {
+              "at": stamp,
+              "code": "receipt_task_id_or_status_mismatch",
+              "invalidated_receipt": str(runtime_path),
+              "invalidated_receipt_task_id": invalid_task,
+              "invalidated_receipt_status": invalid_status,
+          }
+          dsm["state_repair_receipt"] = str(repair_path)
+          for key in ("receipt", "receipt_sha", "receipt_sha_type", "completed_at", "trace_id"):
+              dsm.pop(key, None)
+          if rv1.get("status") == "IN_PROGRESS" and str(rv1.get("trace_id", "")).startswith("autopilot_bem949_rv_1_"):
+              rv1["status"] = "PENDING"
+              rv1["interrupted_by"] = "BEM949_DSM1_STATE_REPAIR"
+              rv1["interrupted_at"] = stamp
+              rv1["interrupted_trace_id"] = rv1.pop("trace_id", "")
+              rv1.pop("started_at", None)
+          queue["current_task"] = None
+          queue["queue_state"] = "READY"
+          queue["updated_at"] = stamp
+          queue["version"] = int(queue.get("version", 0)) + 1
+          queue["progress"]["tasks_done"] = max(0, int(queue["progress"]["tasks_done"]) - 1)
+          queue["progress"]["percent"] = round(
+              queue["progress"]["tasks_done"] / queue["progress"]["tasks_total"] * 100, 1)
+          queue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + "\n")
+          after = queue_path.read_bytes()
+          log_path.parent.mkdir(parents=True, exist_ok=True)
+          txn = {
+              "state_change_id": str(uuid.uuid4()),
+              "trace_id": "bem949_dsm1_state_repair",
+              "target_ssot_file": str(queue_path),
+              "pre_state_hash": "sha256:" + hashlib.sha256(before).hexdigest(),
+              "post_state_hash": "sha256:" + hashlib.sha256(after).hexdigest(),
+              "receipt_ref": str(repair_path),
+              "applied_by": "dsm1-state-repair",
+              "applied_at": stamp,
+              "rollback_rule": "REVERT_TO_PRE_STATE_HASH",
+          }
+          with log_path.open("a", encoding="utf-8") as handle:
+              handle.write(json.dumps(txn, ensure_ascii=False) + "\n")
+          print("state_repair=applied")
+          PY
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add governance/roadmap/ACTIVE_QUEUE.json \
+            governance/proofs/BEM949_dsm1_state_repair_receipt.json \
+            governance/state/ssot_transaction_log.jsonl 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "AUTOPILOT: repair DSM-1 queue state"
+          git push origin HEAD:main
