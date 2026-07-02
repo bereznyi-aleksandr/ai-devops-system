@@ -1,9 +1,9 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "protocol": "BEM-949",
   "task_id": "BEM949-DSM-1",
   "receipt_id": "BEM949_dsm1_static_implementation_receipt",
-  "created_at": "2026-07-02T18:54:55Z",
+  "created_at": "2026-07-02T19:03:00Z",
   "status": "IMPLEMENTED_STATIC_PENDING_RUNTIME",
   "runtime_execution_claim": false,
   "evidence_kind": "static_implementation_and_compile_gate",
@@ -12,41 +12,61 @@
       "path": "governance/runners/dispatch_executor.py",
       "blob_sha": "721f8abbae231cb4170328afe82c96e341ace5f6",
       "sha_type": "git_blob",
-      "claim": "Records DISPATCHED, polls Actions runs for a trace-bound run_id, then records START_CONFIRMED and terminal COMPLETED or FAILED."
+      "claim": "Records DISPATCHED, polls GitHub Actions by trace-bound run metadata, records START_CONFIRMED and terminal COMPLETED or FAILED."
     },
     {
       "path": "governance/runners/roadmap_autopilot.py",
-      "blob_sha": "b6b79302670527314bb9817fc7c1ebc8a561fdab",
+      "blob_sha": "4e5d16b9000f796259370e1c519013e75ded4f40",
       "sha_type": "git_blob",
-      "claim": "Binds BEM949-DSM-1 to dsm1-lifecycle-probe.yml with trace_id and task_id inputs."
+      "claim": "Restricts automated selection to BEM949-DSM-1 while the lifecycle-recovery implementation is being proven."
     },
     {
       "path": ".github/workflows/roadmap-autopilot.yml",
-      "blob_sha": "a9caa706f1f589171b21796a1bcc46ca04f7b8b1",
+      "blob_sha": "3511df5d659fb9fb1ca7e2b81c5f7f13622c3163",
       "sha_type": "git_blob",
-      "claim": "After a 204 dispatch, invokes the lifecycle confirmer and persists lifecycle evidence."
+      "claim": "Compiles DSM-1 lifecycle code, dispatches only the DSM-1 probe, invokes confirmation polling, and finalizes only a valid DSM-1 terminal receipt."
     },
     {
       "path": "governance/runners/dsm1_finalize.py",
       "blob_sha": "1737c25ee99cd44030df75a04233db25f97a417e",
       "sha_type": "git_blob",
-      "claim": "Writes the runtime receipt and updates ACTIVE_QUEUE only after successful STATE_COMMITTED evidence."
+      "claim": "Writes the DSM-1 runtime receipt and updates ACTIVE_QUEUE only after STATE_COMMITTED with terminal COMPLETED/success."
     },
     {
       "path": ".github/workflows/dsm1-lifecycle-probe.yml",
       "blob_sha": "33643f3c41e702bdcb9c1f7e95fc31c080838d95",
       "sha_type": "git_blob",
-      "claim": "Provides a trace-bound workflow_dispatch target with a run-name containing trace_id."
+      "claim": "Provides a trace-bound workflow_dispatch target with trace_id and task_id inputs."
+    },
+    {
+      "path": ".github/workflows/dsm1-lifecycle-reconcile.yml",
+      "blob_sha": "98e01daa2f50cf4733d26eb243ac38b3702cc87f",
+      "sha_type": "git_blob",
+      "claim": "Reconciles an already active DSM-1 trace and persists only terminal lifecycle evidence."
+    },
+    {
+      "path": ".github/workflows/dsm1-state-repair.yml",
+      "blob_sha": "6f3c04f83dc5660c420c11845fe220dd993845ee",
+      "sha_type": "git_blob",
+      "claim": "Repairs a DSM-1 DONE state when the pointed runtime receipt is not a DCM-1 PASS, and records an SSOT transaction."
     }
   ],
   "checks": {
-    "roadmap_autopilot_py_compile": true,
     "dispatch_executor_py_compile": true,
+    "roadmap_autopilot_py_compile": true,
     "dsm1_finalize_py_compile": true,
     "roadmap_autopilot_yaml_safe_load": true,
     "roadmap_autopilot_parsed_run_bash_n": true,
+    "roadmap_autopilot_heredoc_python_compile": true,
     "dsm1_probe_yaml_safe_load": true,
-    "dsm1_probe_heredoc_py_compile": true
+    "dsm1_probe_parsed_run_bash_n": true,
+    "dsm1_probe_heredoc_python_compile": true,
+    "dsm1_reconcile_yaml_safe_load": true,
+    "dsm1_reconcile_parsed_run_bash_ne": true,
+    "dsm1_reconcile_heredoc_python_compile": true,
+    "dsm1_state_repair_yaml_safe_load": true,
+    "dsm1_state_repair_parsed_run_bash_ne": true,
+    "dsm1_state_repair_heredoc_python_compile": true
   },
   "acceptance": {
     "http_204_not_treated_as_completion": true,
@@ -54,12 +74,21 @@
     "trace_bound_probe_implemented": true,
     "runtime_lifecycle_observed": false,
     "state_committed_observed": false,
-    "active_queue_terminal_update_observed": false
+    "active_queue_terminal_update_observed": false,
+    "invalid_terminal_state_detected": true
+  },
+  "invalid_evidence_detected": {
+    "path": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
+    "blob_sha": "3babd10301ba9083d02cfe49488ca3c13b1e0066",
+    "sha_type": "git_blob",
+    "observed_task_id": "BEM949-RV-1",
+    "observed_status": "BLOCKED",
+    "admissible_for_dsm1_completion": false
   },
   "expected_runtime_receipt": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
   "limitations": [
-    "No GitHub Actions run, run_id, terminal conclusion, or STATE_COMMITTED record has been observed in this session.",
-    "ACTIVE_QUEUE must remain non-terminal until the autopilot produces trace-bound runtime evidence.",
-    "The static implementation receipt is not a substitute for the required runtime receipt."
+    "No trace-bound GitHub Actions run for BEM949-DSM-1 with run_id, terminal conclusion, and STATE_COMMITTED has been observed in this session.",
+    "The current DSM-1 runtime receipt path points to a BLOCKED BEM949-RV-1 record and cannot prove DSM-1 completion.",
+    "ACTIVE_QUEUE must not be treated as terminally correct until the state-repair workflow emits its repair receipt and SSOT transaction."
   ]
 }
