@@ -1,8 +1,8 @@
 {
-  "version": 43,
-  "updated_at": "2026-07-02T18:55:06Z",
+  "version": 44,
+  "updated_at": "2026-07-02T18:59:15Z",
   "queue_state": "ACTIVE",
-  "current_task": "BEM949-DSM-1",
+  "current_task": null,
   "system_status": "BEM011_CONFLICT_RESOLVED_NEW_TASKS_MATERIALIZED",
   "release_status": "RELEASE_BLOCKING",
   "protocol": "BEM-949 / BEM-011",
@@ -18,9 +18,9 @@
     "resolved_at": "2026-07-02T03:00:00Z"
   },
   "progress": {
-    "tasks_done": 7,
+    "tasks_done": 8,
     "tasks_total": 11,
-    "percent": 63.6,
+    "percent": 72.7,
     "note": "P7 разморожен только после закрытия DSM-1 + RV-1 + RV-2 + P1"
   },
   "tasks": [
@@ -86,7 +86,7 @@
     },
     {
       "id": "BEM949-DSM-1",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "assigned_to": "GPT",
       "priority": "CRITICAL",
       "class": "Класс 1 — Runtime Hardening",
@@ -100,7 +100,11 @@
       "evidence_path": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
       "circuit_breaker": "3 попытки → BLOCKED_OPERATOR_DECISION",
       "started_at": "2026-07-02T18:55:06Z",
-      "trace_id": "autopilot_bem949_dsm_1_20260702T185506Z"
+      "trace_id": "autopilot_bem949_dsm_1_20260702T185506Z",
+      "receipt": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
+      "receipt_sha": "6d16012d12bab7ae29b5dc083405651058e2cb5ca8a452f6134d9b80fc246d94",
+      "receipt_sha_type": "sha256_content",
+      "completed_at": "2026-07-02T18:59:15Z"
     },
     {
       "id": "BEM949-RV-1",

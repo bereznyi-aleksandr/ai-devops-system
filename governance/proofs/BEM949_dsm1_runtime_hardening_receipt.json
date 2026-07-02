@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-DSM-1",
+  "created_at": "2026-07-02T18:59:15Z",
+  "trace_id": "autopilot_bem949_dsm_1_20260702T185506Z",
+  "status": "PASS",
+  "runtime_execution_claim": true,
+  "evidence_kind": "github_actions_api_lifecycle_poll",
+  "executor_path": "governance/runners/dispatch_executor.py",
+  "autopilot_path": ".github/workflows/roadmap-autopilot.yml",
+  "target_workflow": "dsm1-lifecycle-probe.yml",
+  "lifecycle_result": {
+    "state": "STATE_COMMITTED",
+    "terminal_state": "COMPLETED",
+    "run_id": 28614313748,
+    "conclusion": "success",
+    "html_url": "https://github.com/bereznyi-aleksandr/ai-devops-system/actions/runs/28614313748"
+  },
+  "acceptance": {
+    "http_204_not_treated_as_completion": true,
+    "dispatched_to_start_confirmed_to_terminal_observed": true,
+    "state_committed_recorded": true
+  },
+  "blockers": []
+}
