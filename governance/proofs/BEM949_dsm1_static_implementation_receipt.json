@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-DSM-1",
+  "receipt_id": "BEM949_dsm1_static_implementation_receipt",
+  "created_at": "2026-07-02T18:54:55Z",
+  "status": "IMPLEMENTED_STATIC_PENDING_RUNTIME",
+  "runtime_execution_claim": false,
+  "evidence_kind": "static_implementation_and_compile_gate",
+  "implementation": [
+    {
+      "path": "governance/runners/dispatch_executor.py",
+      "blob_sha": "721f8abbae231cb4170328afe82c96e341ace5f6",
+      "sha_type": "git_blob",
+      "claim": "Records DISPATCHED, polls Actions runs for a trace-bound run_id, then records START_CONFIRMED and terminal COMPLETED or FAILED."
+    },
+    {
+      "path": "governance/runners/roadmap_autopilot.py",
+      "blob_sha": "b6b79302670527314bb9817fc7c1ebc8a561fdab",
+      "sha_type": "git_blob",
+      "claim": "Binds BEM949-DSM-1 to dsm1-lifecycle-probe.yml with trace_id and task_id inputs."
+    },
+    {
+      "path": ".github/workflows/roadmap-autopilot.yml",
+      "blob_sha": "a9caa706f1f589171b21796a1bcc46ca04f7b8b1",
+      "sha_type": "git_blob",
+      "claim": "After a 204 dispatch, invokes the lifecycle confirmer and persists lifecycle evidence."
+    },
+    {
+      "path": "governance/runners/dsm1_finalize.py",
+      "blob_sha": "1737c25ee99cd44030df75a04233db25f97a417e",
+      "sha_type": "git_blob",
+      "claim": "Writes the runtime receipt and updates ACTIVE_QUEUE only after successful STATE_COMMITTED evidence."
+    },
+    {
+      "path": ".github/workflows/dsm1-lifecycle-probe.yml",
+      "blob_sha": "33643f3c41e702bdcb9c1f7e95fc31c080838d95",
+      "sha_type": "git_blob",
+      "claim": "Provides a trace-bound workflow_dispatch target with a run-name containing trace_id."
+    }
+  ],
+  "checks": {
+    "roadmap_autopilot_py_compile": true,
+    "dispatch_executor_py_compile": true,
+    "dsm1_finalize_py_compile": true,
+    "roadmap_autopilot_yaml_safe_load": true,
+    "roadmap_autopilot_parsed_run_bash_n": true,
+    "dsm1_probe_yaml_safe_load": true,
+    "dsm1_probe_heredoc_py_compile": true
+  },
+  "acceptance": {
+    "http_204_not_treated_as_completion": true,
+    "start_confirmed_polling_implemented": true,
+    "trace_bound_probe_implemented": true,
+    "runtime_lifecycle_observed": false,
+    "state_committed_observed": false,
+    "active_queue_terminal_update_observed": false
+  },
+  "expected_runtime_receipt": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
+  "limitations": [
+    "No GitHub Actions run, run_id, terminal conclusion, or STATE_COMMITTED record has been observed in this session.",
+    "ACTIVE_QUEUE must remain non-terminal until the autopilot produces trace-bound runtime evidence.",
+    "The static implementation receipt is not a substitute for the required runtime receipt."
+  ]
+}
