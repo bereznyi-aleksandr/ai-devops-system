@@ -1,8 +1,8 @@
 {
   "version": 44,
-  "updated_at": "2026-07-02T18:59:15Z",
+  "updated_at": "2026-07-02T18:59:31Z",
   "queue_state": "ACTIVE",
-  "current_task": null,
+  "current_task": "BEM949-RV-1",
   "system_status": "BEM011_CONFLICT_RESOLVED_NEW_TASKS_MATERIALIZED",
   "release_status": "RELEASE_BLOCKING",
   "protocol": "BEM-949 / BEM-011",
@@ -108,7 +108,7 @@
     },
     {
       "id": "BEM949-RV-1",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "assigned_to": "GPT",
       "priority": "HIGH",
       "class": "Класс 3 — Archive & Supersession",
@@ -120,7 +120,9 @@
       ],
       "evidence_path": "governance/proofs/BEM949_rv1_bem932_resolution_receipt.json",
       "blocked_by": [],
-      "circuit_breaker": "3 попытки → BLOCKED_OPERATOR_DECISION"
+      "circuit_breaker": "3 попытки → BLOCKED_OPERATOR_DECISION",
+      "started_at": "2026-07-02T18:59:31Z",
+      "trace_id": "autopilot_bem949_rv_1_20260702T185931Z"
     },
     {
       "id": "BEM949-RV-2",
