@@ -1,7 +1,7 @@
 {
   "version": 43,
-  "updated_at": "2026-07-02T03:00:00Z",
-  "queue_state": "IN_PROGRESS",
+  "updated_at": "2026-07-02T18:55:06Z",
+  "queue_state": "ACTIVE",
   "current_task": "BEM949-DSM-1",
   "system_status": "BEM011_CONFLICT_RESOLVED_NEW_TASKS_MATERIALIZED",
   "release_status": "RELEASE_BLOCKING",
@@ -86,7 +86,7 @@
     },
     {
       "id": "BEM949-DSM-1",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "assigned_to": "GPT",
       "priority": "CRITICAL",
       "class": "Класс 1 — Runtime Hardening",
@@ -98,7 +98,9 @@
         "HTTP 204 больше не трактуется как completion"
       ],
       "evidence_path": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
-      "circuit_breaker": "3 попытки → BLOCKED_OPERATOR_DECISION"
+      "circuit_breaker": "3 попытки → BLOCKED_OPERATOR_DECISION",
+      "started_at": "2026-07-02T18:55:06Z",
+      "trace_id": "autopilot_bem949_dsm_1_20260702T185506Z"
     },
     {
       "id": "BEM949-RV-1",
