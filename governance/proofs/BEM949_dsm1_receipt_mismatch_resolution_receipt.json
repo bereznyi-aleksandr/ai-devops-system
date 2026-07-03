@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "DSM1-RUNTIME-RECEIPT-MISMATCH-001",
+  "receipt_id": "BEM949_dsm1_receipt_mismatch_resolution_receipt",
+  "status": "RESOLVED_BY_REFILING_AND_GUARDRAIL",
+  "runtime_execution_claim": false,
+  "root_cause": {
+    "finding": "The previous finalizer wrote every result to governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json while taking task_id and workflow_id from unrestricted CLI arguments.",
+    "source": {
+      "path": "governance/runners/dsm1_finalize.py",
+      "prior_blob_sha": "1737c25ee99cd44030df75a04233db25f97a417e",
+      "sha_type": "git_blob"
+    },
+    "observed_misfile": {
+      "path": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
+      "blob_sha": "3babd10301ba9083d02cfe49488ca3c13b1e0066",
+      "sha_type": "git_blob",
+      "observed_task_id": "BEM949-RV-1",
+      "observed_status": "BLOCKED"
+    }
+  },
+  "remediation": {
+    "identity_guard": {
+      "path": "governance/runners/dsm1_finalize.py",
+      "blob_sha": "08a00561ab8253977f93dc31fd937f3c5083289d",
+      "sha_type": "git_blob",
+      "controls": [
+        "requires task_id BEM949-DSM-1",
+        "requires workflow_id dsm1-lifecycle-probe.yml",
+        "rejects result task_id or trace_id mismatch",
+        "writes only BEM949_dsm1_runtime_execution_receipt.json"
+      ]
+    },
+    "workflow_persistence": {
+      "path": ".github/workflows/roadmap-autopilot.yml",
+      "blob_sha": "e8106cbda4f27dc9ed44f16da1d9600af76aa3fa",
+      "sha_type": "git_blob",
+      "controls": [
+        "persists the new DSM-1 runtime receipt path",
+        "captures finalizer exit status after staging evidence"
+      ]
+    },
+    "refiled_record": "governance/proofs/BEM949_rv1_lifecycle_poll_blocked_receipt.json",
+    "invalidated_notice": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json"
+  },
+  "acceptance": {
+    "misfile_explained": true,
+    "misfile_refiled": true,
+    "future_cross_task_filing_rejected": true,
+    "genuine_dsm1_runtime_evidence_present": false,
+    "queue_must_not_mark_dsm1_done": true
+  },
+  "limitations": [
+    "No trace-bound DSM-1 run_id or terminal success conclusion is available in this session.",
+    "This resolves the filing conflict, not the DSM-1 runtime-completion requirement.",
+    "P7 remains blocked until a new genuine DSM-1 runtime receipt is produced and externally audited."
+  ]
+}
