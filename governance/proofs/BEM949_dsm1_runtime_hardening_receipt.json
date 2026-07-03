@@ -1,25 +1,19 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "protocol": "BEM-949",
-  "task_id": "BEM949-RV-1",
-  "created_at": "2026-07-02T18:59:32Z",
-  "trace_id": "autopilot_bem949_rv_1_20260702T185931Z",
-  "status": "BLOCKED",
+  "task_id": "BEM949-DSM-1",
+  "receipt_id": "BEM949_dsm1_runtime_hardening_receipt_invalidated_notice",
+  "status": "INVALIDATED_MISFILED_RECORD",
   "runtime_execution_claim": false,
-  "evidence_kind": "github_actions_api_lifecycle_poll",
-  "executor_path": "governance/runners/dispatch_executor.py",
-  "autopilot_path": ".github/workflows/roadmap-autopilot.yml",
-  "target_workflow": "bem949-rv-1.yml",
-  "lifecycle_result": {
-    "state": "FAILED",
-    "blocker": "lifecycle_result_missing"
+  "conflict_id": "DSM1-RUNTIME-RECEIPT-MISMATCH-001",
+  "supersedes_interpretation": {
+    "prior_blob_sha": "3babd10301ba9083d02cfe49488ca3c13b1e0066",
+    "sha_type": "git_blob",
+    "reason": "Prior content described BEM949-RV-1 BLOCKED, not DSM-1."
   },
-  "acceptance": {
-    "http_204_not_treated_as_completion": true,
-    "dispatched_to_start_confirmed_to_terminal_observed": false,
-    "state_committed_recorded": false
+  "correct_filing": {
+    "refiled_rv1_record": "governance/proofs/BEM949_rv1_lifecycle_poll_blocked_receipt.json",
+    "future_dsm1_runtime_receipt": "governance/proofs/BEM949_dsm1_runtime_execution_receipt.json"
   },
-  "blockers": [
-    "lifecycle_result_missing"
-  ]
+  "non_claim": "No DSM-1 GitHub Actions lifecycle completion has been established by this notice."
 }
