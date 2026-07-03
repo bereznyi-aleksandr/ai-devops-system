@@ -56,7 +56,7 @@ jobs:
           from pathlib import Path
           item = json.loads(Path("/tmp/dispatch.json").read_text())
           for key in ("action", "task_id", "workflow_id", "trace_id"):
-              print(f"{}{key}={item.get(key, '')}}")
+              print(f"{key}={item.get(key, '')}")
           print("queue_changed=" + str(bool(item.get("queue_changed"))).lower())
           PY
 
