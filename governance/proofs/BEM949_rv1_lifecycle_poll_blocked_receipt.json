@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-RV-1",
+  "receipt_id": "BEM949_rv1_lifecycle_poll_blocked_receipt",
+  "status": "ARCHIVED_MISFILED_RECORD",
+  "runtime_execution_claim": false,
+  "classification": "HISTORICAL_RV1_POLL_RESULT_REFILLED",
+  "source_misfile": {
+    "path": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
+    "blob_sha": "3babd10301ba9083d02cfe49488ca3c13b1e0066",
+    "sha_type": "git_blob"
+  },
+  "observed_payload": {
+    "task_id": "BEM949-RV-1",
+    "trace_id": "autopilot_bem949_rv_1_20260702T185931Z",
+    "status": "BLOCKED",
+    "blocker": "lifecycle_result_missing",
+    "target_workflow": "bem949-rv-1.yml"
+  },
+  "filing": {
+    "correct_record_path": "governance/proofs/BEM949_rv1_lifecycle_poll_blocked_receipt.json",
+    "reason": "The original DSM-1 finalizer accepted arbitrary task arguments but wrote to a DSM-1-fixed receipt path."
+  },
+  "non_claim": "This is not DSM-1 runtime evidence and does not alter the separately audited RV-1 archival-closure receipt."
+}
