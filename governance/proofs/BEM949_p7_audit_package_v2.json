@@ -1,0 +1,134 @@
+{
+  "schema_version": 2,
+  "package_id": "BEM949_p7_audit_package_v2",
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P7-RELEASE-AUDIT-FINAL",
+  "prepared_on": "2026-07-03",
+  "prepared_by": "GPT",
+  "status": "PREPARED_FOR_EXTERNAL_AUDIT",
+  "final_verdict": null,
+  "final_verdict_authority": "EXTERNAL_AUDITOR_CLAUDE",
+  "release_status": "RELEASE_BLOCKING",
+  "evidence_policy": {
+    "http_204_is_not_completion": true,
+    "runtime_receipt_required_for_runtime_claim": true,
+    "broad_release_pass_claimed": false,
+    "package_is_not_a_verdict": true
+  },
+  "evidence": [
+    {
+      "stage": "P0.5",
+      "path": "governance/proofs/BEM949_p05_text_integrity_receipt.json",
+      "sha": "2b09e1f683f16ac2b0fd977dd331bad9a90863ec",
+      "sha_type": "git_blob",
+      "reported_outcome": "PASS_TEXT_ONLY"
+    },
+    {
+      "stage": "P1_ALT",
+      "path": "governance/proofs/BEM949_p1_alt_unblock_receipt.json",
+      "sha": "2b44ef8f4244d186078d0c4730381cd23fe5baa2",
+      "sha_type": "git_blob",
+      "reported_outcome": "DONE_STATIC_ONLY"
+    },
+    {
+      "stage": "P2",
+      "path": "governance/proofs/BEM949_p2_functional_restore_receipt.json",
+      "sha": "de2f6e62c11132188a275530cd5623eaf5810b09",
+      "sha_type": "git_blob",
+      "reported_outcome": "DONE"
+    },
+    {
+      "stage": "P3",
+      "path": "governance/proofs/BEM949_p3_all_role_e2e_receipt.json",
+      "sha": "bfb0a31f50271cb765c64c664b0fe1fa46b22e6f4",
+      "sha_type": "git_blob",
+      "reported_outcome": "DONE_LIMITED_SCOPE"
+    },
+    {
+      "stage": "P5",
+      "path": "governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json",
+      "sha": "d31be705d9c595c828c987648eed9bca5e2fd885",
+      "sha_type": "git_blob",
+      "reported_outcome": "PASS_RULE_004_010_RUNTIME"
+    },
+    {
+      "stage": "P6",
+      "path": "governance/proofs/BEM949_p6_learning_loop_receipt.json",
+      "sha": "6b1cdeda966db43830556bcc0304219de9148fe9080e45141c1e377e9419ae94ef",
+      "sha_type": "sha256_content",
+      "reported_outcome": "PASS_ERROR_TO_RULE_TO_REFRESH"
+    },
+    {
+      "stage": "RV1",
+      "path": "governance/proofs/BEM949_rv1_bem932_resolution_receipt.json",
+      "sha": "709223cdfc1594e3fa99605ce04528361d7d8d05",
+      "sha_type": "git_blob",
+      "reported_outcome": "DONE_ARCHIVAL_CLOSURE"
+    },
+    {
+      "stage": "RV2",
+      "path": "governance/proofs/BEM949_rv2_rule_enforcement_receipt.json",
+      "sha": "55fc2fd7847e4bbc410b623b0c9b4bdded94ec8f",
+      "sha_type": "git_blob",
+      "reported_outcome": "PASS_CLASSIFICATION_ONLY"
+    }
+  ],
+  "evidence_conflicts": [
+    {
+      "id": "DSM1-RUNTIME-RECEIPT-MISMATCH-001",
+      "severity": "CRITICAL",
+      "queue_claim": {
+        "task_id": "BEM949-DSM-1",
+        "status": "DONE",
+        "receipt_path": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
+        "receipt_sha": "6d16012d12bab7ae29b5dc083405651058e2cb5ca8a452f6134d9b80fc246d94",
+        "receipt_sha_type": "sha256_content"
+      },
+      "observed_receipt": {
+        "path": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt.json",
+        "sha": "3babd10301ba9083d02cfe49488ca3c13b1e0066",
+        "sha_type": "git_blob",
+        "task_id": "BEM949-RV-1",
+        "status": "BLOCKED",
+        "runtime_execution_claim": false,
+        "blocker": "lifecycle_result_missing"
+      },
+      "audit_effect": "DSM-1 is not admitted by this package as a valid runtime-completion prerequisite. External auditor must resolve the contradiction before any P7 PASS/FAIL verdict."
+    }
+  ],
+  "precondition_review": {
+    "P1_ALT": {
+      "queue_status": "DONE_STATIC_ONLY",
+      "package_admissible": true,
+      "limitation": "static-only; no run-level evidence"
+    },
+    "RV1": {
+      "queue_status": "DONE",
+      "package_admissible": true,
+      "limitation": "archival closure, not functional remediation"
+    },
+    "RV2": {
+      "queue_status": "DONE",
+      "package_admissible": true,
+      "limitation": "classification only; RULE-005..010 policy-only and runtime NOT_ENFORCED"
+    },
+    "DSM1": {
+      "queue_status": "DONE",
+      "package_admissible": false,
+      "limitation": "receipt content contradicts the queue's claimed DSM-1 completion"
+    }
+  },
+  "external_audit_checklist": [
+    "Verify every referenced path and SHA against the repository.",
+    "Resolve DSM1-RUNTIME-RECEIPT-MISMATCH-001 from source evidence, not from this package.",
+    "Confirm P1_ALT is treated as static-only and does not substitute for run-level evidence.",
+    "Confirm RV2 is treated as classification-only and that RULE-005..010 remain runtime NOT_ENFORCED.",
+    "Issue the sole final P7 verdict: APPROVED or BLOCKED."
+  ],
+  "limitations": [
+    "This package does not assert a Broad Release PASS.",
+    "This package does not send Telegram or dispatch GitHub Actions.",
+    "This package does not repair or validate the separate DSM-1 runtime receipt.",
+    "P7 is not completed by preparing this package."
+  ]
+}
