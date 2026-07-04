@@ -1,0 +1,113 @@
+{
+  "schema_version": 3,
+  "package_id": "BEM949_p7_audit_package_v3",
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P7-RELEASE-AUDIT-FINAL",
+  "prepared_on": "2026-07-04",
+  "prepared_by": "GPT",
+  "status": "PREPARED_FOR_EXTERNAL_AUDIT",
+  "final_verdict": null,
+  "final_verdict_authority": "EXTERNAL_AUDITOR_CLAUDE",
+  "release_status": "RELEASE_BLOCING",
+  "supersedes": {
+    "path": "governance/proofs/BEM949_p7_audit_package_v2.json",
+    "sha": "bdc178a738641be4c9a0a0c80d8dfce617035174",
+    "sha_type": "git_blob",
+    "reason": "v3 incorporates verified DSM-1 evidence and the P5/RV2 scope-overclaim investigation."
+  },
+  "evidence_policy": {
+    "http_204_is_not_completion": true,
+    "runtime_receipt_required_for_runtime_claim": true,
+    "broad_release_pass_claimed": false,
+    "package_is_not_a_verdict": true,
+    "historical_receipts_immutable": true
+  },
+  "evidence": [
+    {
+      "stage": "DSM1",
+      "path": "governance/proofs/BEM949_dsm1_runtime_hardening_receipt_verified.json",
+      "sha": "8724708f39bf657390e3ec231aefffecbd84127d",
+      "sha_type": "git_blob",
+      "reported_outcome": "PASS_GENUINE_RUNTIME_DUAL_SOURCE_VERIFIED",
+      "run_id": 28614313748,
+      "limitation": "Receipt was reconstructed after the run by the external auditor from repository lifecycle evidence plus the operator-supplied job log."
+    },
+    {
+      "stage": "RV1",
+      "path": "governance/proofs/BEM949_rv1_bem932_resolution_receipt.json",
+      "sha": "709223cdfc1594e3fa99605ce04528361d7d8d05",
+      "sha_type": "git_blob",
+      "reported_outcome": "DONE_ARCHIVAL_CLOSURE_ONLY"
+    },
+    {
+      "stage": "RV2",
+      "path": "governance/proofs/BEM949_rv2_rule_enforcement_receipt.json",
+      "sha": "55fc2fd7847e4bbc410b623b0c9b4bdded94ec8f",
+      "sha_type": "git_blob",
+      "reported_outcome": "PASS_CLASSIFICATION_ONLY",
+      "limitation": "RULE-005..RULE-010 are policy-only and runtime NOT_ENFORCED."
+    },
+    {
+      "stage": "P5_RV2_INVESTIGATION",
+      "path": "governance/proofs/BEM949_p5_rv2_contradiction_investigation_receipt.json",
+      "sha_type": "git_blob",
+      "reported_outcome": "RESOLVED_SCOPE_OVERCLAIM_NO_REGRESSION_EVIDENCE",
+      "require_external_blob_verification": true,
+      "sha": "e5e3acc2786a139823e1207444b2649774414434"
+    },
+    {
+      "stage": "P1_ALT",
+      "path": "governance/proofs/BEM949_p1_alt_unblock_receipt.json",
+      "sha": "2b44ef8f4244d186078d0c4730381cd23fe5baa2",
+      "sha_type": "git_blob",
+      "reported_outcome": "DONE_STATIC_ONLY",
+      "limitation": "Static-only; not a substitute for run-level evidence."
+    }
+  ],
+  "precondition_review": {
+    "DSM1": {
+      "queue_status": "DONE",
+      "package_admissible": true
+    },
+    "RV1": {
+      "queue_status": "DONE",
+      "package_admissible": true
+    },
+    "RV2": {
+      "queue_status": "DONE",
+      "package_admissible": true
+    },
+    "P1_ALT": {
+      "queue_status": "DONE_STATIC_ONLY",
+      "package_admissible": true
+    }
+  },
+  "critical_findings": [
+    {
+      "id": "P5-RV2-SCOPE-OVERCLAIM-001",
+      "severity": "CRITICAL",
+      "finding": "P5's all_target_rules_enforced=true is not evidence of operational runtime enforcement for RULE-005..RULE-010. The runner only validates the registry schema and mutations of that schema.",
+      "effect": "P5 cannot be used to claim broad all-rule operational enforcement; RV2's narrow classification is controlling for release audit.",
+      "resolution_reference": "governance/proofs/BEM949_p5_rv2_contradiction_investigation_receipt.json",
+      "resolution_receipt": {
+        "path": "governance/proofs/BEM949_p5_rv2_contradiction_investigation_receipt.json",
+        "sha": "e5e3acc2786a139823e1207444b2649774414434",
+        "sha_type": "git_blob"
+      }
+    }
+  ],
+  "external_audit_checklist": [
+    "Verify all paths and blob SHA values against the repository.",
+    "Verify the DSM1 trace/task/run correspondence and the dual-source provenance.",
+    "Verify the P5/RV2 investigation conclusion from the runner source and both historical receipts.",
+    "Treat RULE-005..RULE-010 as runtime NOT_ENFORCED unless new operational guard evidence is produced.",
+    "Issue the sole P7 verdict: APPROVED or BLOCKED."
+  ],
+  "limitations": [
+    "This package does not assert a Broad Release PASS.",
+    "This package does not close T7 or rely on live concurrency evidence.",
+    "This package does not change the historical P5 or RV2 artifacts.",
+    "Only EXTERNAL_AUDITOR_CLAUDE may issue the final P7 verdict."
+  ],
+  "prepared_at": "2026-07-04T07:23:00Z"
+}
