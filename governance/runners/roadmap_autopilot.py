@@ -15,8 +15,9 @@ RECEIPT = ROOT / "governance/proofs/BEM949_dsm1_runtime_execution_receipt.json"
 
 TASK_ID = "BEM949-DSM-1"
 WORKFLOW_ID = "dsm1-lifeycle-probe.yml"
-ELIGIBLE = {"PENDING", "AWAITING_GENUINE_RECEIPT", "EVIDENCE_MISMATCH"}
+ELIGIBLE_STATUSES = {"PENDING", "AWAITING_GENUINE_RECEIPT", "EVIDENCE_MISMATCH"}
 MAX_GENUINE_ATTEMPTS = 3
+
 
 def now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -38,10 +39,6 @@ def write_queue(queue: dict[str, Any]) -> None:
     )
 
 
-def output(action: str, **values: object) -> dict[str, object]:
-    return {"action": action, "task_id": TASK_ID, **values}
-
-
 def find_task(queue: dict[str, Any]) -> dict[str, Any]:
     for item in queue.get("tasks", []):
         if isinstance(item, dict) and item.get("id") == TASK_ID:
@@ -49,14 +46,78 @@ def find_task(queue: dict[str, Any]) -> dict[str, Any]:
     raise ValueError("dsm1_task_missing")
 
 
-def current_receipt_matches(task: dict[str, Any]) -> bool:
-    """Return true only for a terminal blocked receipt bound to this exact trace."""
+def result(action: str, **fields: object) -> dict[str, object]:
+    return {"action": action, "task_id": TASK_ID, **fields}
+
+
+def matching_terminal_blocked_receipt(task: dict[str, Any]) -> bool:
+    """Only accept a terminal BLOCKED receipt bound to the selected trace."""
     receipt = read_json(RECEIPT)
     return (
         receipt.get("task_id") == TASK_ID
-        and receipt.get("trace_id") == task.get("trace_id")
+        and receipt.get("race_id") == task.get("trace_id")
         and receipt.get("status") == "BLOCKED"
         and receipt.get("runtime_execution_claim") is False
+    )
+
+
+def rearm_or_stop(queue: dict[str, Any], task: dict[str, Any]) -> dict[str, object]:
+    prior_trace_id = str(task.get("trace_id", "") or "")
+    terminal_blocked = matching_terminal_blocked_receipt(task)
+    attempts = int(task.get("genuine_lifecycle_attempt_count", 0) or 0)
+    stamp = now()
+
+    task["stale_selection"] = {
+        "trace_id": prior_trace_id,
+        "rearmed_at": stamp,
+        "reason": (
+            "trace_bound_terminal_blocked_receipt_seen"
+            if terminal_blocked
+            else "no_trace_bound_terminal_receipt"
+        ),
+    }
+
+    if terminal_blocked and attempts >= MAX_GENUINE_ATTEMPTS:
+        task.update(
+            {
+                "status": "BLOCKED_OPERATOR_DECISION",
+                "blocked_at": stamp,
+                "blocked_by": "DSM1_RUNTIME_ATTEMPT_LIMIT",
+                "blocker": "three_genuine_lifecycle_attempts_without_terminal_success",
+            }
+        )
+        queue.update(
+            {
+                "current_task": None,
+                "queue_state": "BLOCKED",
+                "updated_at": stamp,
+            }
+        )
+        write_queue(queue)
+        return result(
+            "stop",
+            queue_changed=True,
+            reason="genuine_attempt_limit_reached",
+        )
+
+    task["status"] = "AWAITING_GENUINE_RECEIPT"
+    queue.update(
+        {
+            "current_task": None,
+            "queue_state": "READY",
+            "updated_at": stamp,
+            "version": int(queue.get("version", 0)) + 1,
+        }
+    )
+    write_queue(queue)
+    return result(
+        "rearm",
+        queue_changed=True,
+        reason=(
+            "terminal_blocked_receipt_rearmed"
+            if terminal_blocked
+            else "stale_selection_rearmed"
+        ),
     )
 
 
@@ -68,78 +129,14 @@ def main(force_task_id: str) -> dict[str, object]:
     task = find_task(queue)
     status = str(task.get("status", "")).upper()
 
-    # A selected task is not a completed lifecycle attempt. Re-arm it only after
-    # recording whether a trace-bound terminal blocked receipt was actually seen.
     if status == "IN_PROGRESS":
-        prior_trace_id = str(task.get("trace_id", "") or "")
-        terminal_blocked = current_receipt_matches(task)
-        genuine_attempts = int(task.get("genuine_lifecycle_attempt_count", 0) or 0)
+        return rearm_or_stop(queue, task)
 
-        task["stale_selection"] = {
-            "trace_id": prior_trace_id,
-            "rearmed_at": now(),
-            "reason": (
-                "trace_bound_terminal_blocked_receipt_seen"
-                if terminal_blocked
-                else "no_trace_bound_terminal_receipt"
-            ),
-        }
+    if status not in ELIGIBLE_STATUSES:
+        return result("stop", queue_changed=False, reason="dsm1_not_eligible")
 
-        if terminal_blocked and genuine_attempts >= MAX_GENUINE_ATTEMPTS:
-            stamp = now()
-            task.update(
-                {
-                    "status": "BLOCKED_OPERATOR_DECISION",
-                    "blocked_at": stamp,
-                    "blocked_by": "DSM1_RUNTIME_ATTEMPT_LIMIT",
-                    "blocker": (
-                        "three_genuine_lifecycle_attempts_without_terminal_success"
-                    ),
-                }
-            )
-            queue.update(
-                {
-                    "current_task": None,
-                    "queue_state": "BLOCKED",
-                    "updated_at": stamp,
-                }
-            )
-            write_queue(queue)
-            return output(
-                "stop",
-                queue_changed=True,
-                reason="genuine_attempt_limit_reached",
-            )
-
-        task["status"] = "AWAITING_GENUINE_RECEIPT"
-        queue.update(
-            {
-                "current_task": None,
-                "queue_state": "READY",
-                "updated_at": now(),
-                "version": int(queue.get("version", 0)) + 1,
-            }
-        )
-        write_queue(queue)
-        return output(
-            "rearm",
-            queue_changed=True,
-            reason=(
-                "terminal_blocked_receipt_rearmed"
-                if terminal_blocked
-                else "stale_selection_rearmed"
-            ),
-        )
-
-    if status not in ELIGIBLE:
-        return output(
-            "stop",
-            queue_changed=False,
-            reason="dsm1_not_eligible",
-        )
-
-    genuine_attempts = int(task.get("genuine_lifecycle_attempt_count", 0) or 0)
-    if genuine_attempts >= MAX_GENUINE_ATTEMPTS:
+    attempts = int(task.get("genuine_lifecycle_attempt_count", 0) or 0)
+    if attempts >= MAX_GENUINE_ATTEMPTS:
         stamp = now()
         task.update(
             {
@@ -157,7 +154,7 @@ def main(force_task_id: str) -> dict[str, object]:
             }
         )
         write_queue(queue)
-        return output(
+        return result(
             "stop",
             queue_changed=True,
             reason="genuine_attempt_limit_reached",
@@ -166,7 +163,7 @@ def main(force_task_id: str) -> dict[str, object]:
     stamp = now()
     trace_id = (
         "autopilot_bem949_dsm1_"
-        + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        + datetime.now(timezoe.utc).strftime("%Y%m%dT%H%M%SZ")
     )
     task.update(
         {
@@ -174,7 +171,7 @@ def main(force_task_id: str) -> dict[str, object]:
             "started_at": stamp,
             "trace_id": trace_id,
             "dispatch_intent": "GENUINE_GITHUB_ACTIONS_LIFECYCLE_PROBE",
-            "genuine_lifecycle_attempt_count": genuine_attempts + 1,
+            "genuine_lifecycle_attempt_count": attempts + 1,
         }
     )
     queue.update(
@@ -185,12 +182,12 @@ def main(force_task_id: str) -> dict[str, object]:
         }
     )
     write_queue(queue)
-    return output(
+    return result(
         "dispatch",
         trace_id=trace_id,
         workflow_id=WORKFLOW_ID,
-        inputs={"trace_id": trace_id, "task_id": TASK_ID},
-        genuine_lifecycle_attempt_count=genuine_attempts + 1,
+        inputs={"trace_id: trace_id, "task_id": TASK_ID},
+        genuine_lifeycle_attempt_count=attempts + 1,
         queue_changed=True,
     )
 
@@ -200,9 +197,9 @@ if __name__ == "__main__":
     parser.add_argument("--force-task-id", default="")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
-    result = main(args.force_task_id.strip())
+    selected = main(args.force_task_id.strip())
     Path(args.output).write_text(
-        json.dumps(result, ensure_ascii=False, indent=2) + "\n",
+        json.dumps(selected, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    print(json.dumps(selected, ensure_ascii=False, sort_keys=True))
