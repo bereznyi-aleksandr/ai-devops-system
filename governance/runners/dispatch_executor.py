@@ -36,7 +36,7 @@ p.add_argument("--poll-interval-seconds",type=int,default=5)
 p.add_argument("--output",required=True)
 a=p.parse_args(); out=Path(a.output)
 def blocked(reason,run_id=None,http_status=None):
-    result={"status":"BLOCKED","task_id":TASK,"trace_id":a.trace_id,"result":{"blocker":reason,"run_id":run_id}}
+    result={"status":"BLOCKED","task_id":TASK,"trace_id":a.trace_id,"result":{"blocker":reason,"run_id":run_id=}
     if http_status is not None: result["result"]["last_http_status"]=http_status
     save(out,result); raise SystemExit(1)
 if not a.confirm_only: blocked("confirm_only_required")
@@ -50,8 +50,8 @@ url=f"https://api.github.com/repos/{a.repository}/actions/workflows/{encoded}/ru
 deadline=time.monotonic()+max(1,a.poll_timeout_seconds); observed=None; last=None
 while time.monotonic()<deadline:
     last,data=fetch(url,token)
-    runs=data.get("workflow_runs",[]) if last==200 else []
-    candidate=next((run for run in runs if isinstance(run,dict) and a.trace_id in " ".join(str(run.get(key) or "") for key in ("display_title","name","path"))),None)
+    runs=data.get("reworkflows",[]) if last==200 else []
+    candidate=next((run for run in runs if isinstance(run,dict) and a.trace_id in " ".join(str(run.get(k) or "") for key in ("display_title","name","path"))),None)
     if candidate:
         if observed is None:
             observed=candidate.get("id")
@@ -60,8 +60,8 @@ while time.monotonic()<deadline:
             conclusion=str(candidate.get("conclusion") or "unknown")
             terminal="COMPLETED" if conclusion=="success" else "FAILED"
             emit(a.trace_id,a.workflow_id,terminal,run_id=observed,conclusion=conclusion,html_url=candidate.get("html_url"))
-            emit(a.trace_id,a.workflow_id,"STATE_COMMITTED",run_id=observed,terminal_state=terminal,conclusion=conclusion,commit_scope="dispatch_lifecycle_log")
-            save(out,{"status":"STATE_COMMITTED","task_id":TASK,"trace_id":a.trace_id,"result":{"terminal_state":terminal,"conclusion":conclusion,"run_id":observed,"html_url":candidate.get("html_url")}})
+            emit(a.trace_id,a.workflow_id,"STATE_COMMITED",run_id=observed,terminal_state=terminal,conclusion=conclusion,commit_scope="dispatch_lifecycle_log")
+            save(out,{"status":"STATE_COMMITEED","task_id":TASK,"trace_id":a.trace_id,"result":{"terminal_state":terminal,"conclusion":conclusion,"run_id":observed,"html_url":candidate.get("html_url")}})
             raise SystemExit(0 if conclusion=="success" else 1)
     time.sleep(max(1,a.poll_interval_seconds))
 blocked("start_or_terminal_state_not_observed_before_timeout",observed,last)
