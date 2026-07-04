@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-DSM-1",
+  "created_at": "2026-07-04T04:51:12Z",
+  "trace_id": "autopilot_bem949_dsm1_20260704T045110Z",
+  "status": "BLOCKED",
+  "runtime_execution_claim": false,
+  "evidence_kind": "github_actions_api_lifecycle_poll",
+  "target_workflow": "dsm1-lifecycle-probe.yml",
+  "lifecycle_result": {
+    "state": "FAILED",
+    "blocker": "confirm_credentials_repository_or_workflow_missing"
+  },
+  "acceptance": {
+    "http_204_not_treated_as_completion": true,
+    "dispatched_to_start_confirmed_to_terminal_observed": false,
+    "state_committed_recorded": false,
+    "task_identity_bound": true,
+    "workflow_identity_bound": true,
+    "trace_identity_bound": true
+  },
+  "blockers": [
+    "confirm_credentials_repository_or_workflow_missing"
+  ]
+}
