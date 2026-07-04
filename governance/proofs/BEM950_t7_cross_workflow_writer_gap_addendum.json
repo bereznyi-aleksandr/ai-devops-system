@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-950",
+  "receipt_id": "BEM950_t7_cross_workflow_writer_gap_addendum",
+  "created_at": "2026-07-04T06:19:12Z",
+  "scope": "Cross-workflow writer review after T7.",
+  "finding": "T7 repairs Roadmap Autopilot only; it does not establish shared queue-writer serialization across every workflow that mutates ACTIVE_QUEUE.json.",
+  "evidence": [
+    {
+      "path": ".github/workflows/roadmap-autopilot.yml",
+      "sha": "eb033fd4bf7736bfce4e5f6cc1fe05e889a4ec53",
+      "sha_type": "git_blob",
+      "observation": "uses concurrency group bem949-queue-writer and retry/rebase"
+    },
+    {
+      "path": ".github/workflows/dsm1-rearm.yml",
+      "sha": "44f2238d50cce6b4823c1014614fc1983bc58221",
+      "sha_type": "git_blob",
+      "observation": "writes ACTIVE_QUEUE.json and pushes directly, with no concurrency group or retry loop"
+    },
+    {
+      "path": ".github/workflows/dsm1-lifecycle-reconcile.yml",
+      "sha": "98e01daa2f50cf4733d26eb243ac38b3702cc87f",
+      "sha_type": "git_blob",
+      "observation": "uses a different concurrency group and direct push; its persist step includes git pull --rebase"
+    }
+  ],
+  "status": "OPEN_SYSTEMIC_GAP",
+  "runtime_execution_claim": false,
+  "limitations": [
+    "No shared cross-workflow lock or live cross-workflow race test exists.",
+    "This addendum does not invalidate the narrower T7 static repair evidence."
+  ],
+  "required_before_unattended_queue_mutation": "Put every queue-writing workflows in one shared serialization/retry protocol, or disable the other writers."
+}
