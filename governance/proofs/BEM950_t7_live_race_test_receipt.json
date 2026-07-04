@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-950",
+  "task_id": "BEM950-T7-LIVE-RACE-TEST-PENDING",
+  "receipt_id": "BEM950_t7_live_race_test_receipt",
+  "created_at": "2026-07-04T10:41:00Z",
+  "status": "LIVE_EXECUTED_SCOPED_EVIDENCE_AWAITING_EXTERNAL_AUDIT",
+  "runtime_execution_claim": true,
+  "evidence_kind": "github_actions_live_workflow_runs",
+  "test_workflow": {
+    "path": ".github/workflows/t7-live-race-test.yml",
+    "sha": "28874254ecc0431744f7b0c740976bfdb4a96c40",
+    "sha_type": "git_blob",
+    "implementation_commit": "3b460304dbdc1454167548bfbff9146dd1df36d0",
+    "implementation_commit_sha_type": "commit",
+    "concurrency_group": "bem949-queue-writer",
+    "cancel_in_progress": false
+  },
+  "dispatches": [
+    {
+      "workflow_id": "t7-live-race-test.yml",
+      "dispatch_accepted": true,
+      "http_status": 204
+    },
+    {
+      "workflow_id": "t7-live-race-test.yml",
+      "dispatch_accepted": true,
+      "http_status": 204
+    }
+  ],
+  "runs": [
+    {
+      "run_id": 28703591441,
+      "trace_id": "t7_live_race_28703591441_1",
+      "event": "workflow_dispatch",
+      "status": "success",
+      "duration_seconds": 18,
+      "queue_evidence_path": "governance/roadmap/ACTIVE_QUEUE.json",
+      "queue_writer_group": "bem949-queue-writer"
+    },
+    {
+      "run_id": 28703593865,
+      "trace_id": "t7_live_race_28703593865_1",
+      "event": "workflow_dispatch",
+      "status": "success",
+      "duration_seconds": 30,
+      "queue_evidence_path": "governance/roadmap/ACTIVE_QUEUE.json",
+      "queue_writer_group": "bem949-queue-writer"
+    }
+  ],
+  "queue_after_runs": {
+    "path": "governance/roadmap/ACTIVE_QUEUE.json",
+    "sha": "7e1a6c59e8e3cf9802993cc6928b73c4bcb153ca",
+    "sha_type": "git_blob",
+    "version": 60,
+    "trace_bound_events": 2,
+    "mutation_scope": "append_only_t7_live_race_evidence"
+  },
+  "observed_result": {
+    "both_live_workflow_runs_succeeded": true,
+    "both_trace_bound_queue_writes_were_committed": true,
+    "push_or_rebase_conflict_observed": false
+  },
+  "scope_limitations": [
+    "The runs use the production queue-writer concurrency group and perform real commits to the canonical queue.",
+    "This controlled workflow tests serialization and the production-style push/rebase retry loop, but it is not itself a pair of roadmap-autopilot.yml runs.",
+    "No conclusion is made about an unobserved retry branch because neither live run encountered a rejected push.",
+    "T7 is not marked DONE by this receipt; external audit must decide whether this scoped live evidence meets the original autopilot-specific acceptance criterion."
+  ],
+  "non_claims": [
+    "This receipt does not claim a Broad Release PASS.",
+    "This receipt does not claim that T7 is closed.",
+    "This receipt does not infer completion merely from HTTP 204."
+  ]
+}
