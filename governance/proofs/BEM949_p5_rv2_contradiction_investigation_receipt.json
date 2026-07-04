@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-949",
+  "task_id": "BEM949-P5-RV2-CONTRADICTION-INVESTIGATION",
+  "receipt_id": "BEM949_p5_rv2_contradiction_investigation_receipt",
+  "created_at": "2026-07-04T07:22:00Z",
+  "status": "RESOLVED_SCOPE_OVERCLAIM_NO_REGRESSION_EVIDENCE",
+  "runtime_execution_claim": false,
+  "sources": {
+    "p5_receipt": {
+      "path": "governance/proofs/BEM949_p5_rule_enforcement_complete_receipt.json",
+      "sha": "d31be705d9c595c828c987648eed9bca5e2fd885",
+      "sha_type": "git_blob"
+    },
+    "p5_runner_currently_available": {
+      "path": "governance/runners/bem949_rule_enforcement_runner.py",
+      "sha": "73bfe9b44d18725e88af2501183cb30647b93a59",
+      "sha_type": "git_blob"
+    },
+    "rv2_receipt": {
+      "path": "governance/proofs/BEM949_rv2_rule_enforcement_receipt.json",
+      "sha": "55fc2fd7847e4bbc410b623b0c9b4bdded94ec8f",
+      "sha_type": "git_blob"
+    },
+    "rv2_matrix": {
+      "path": "governance/state/rule_enforcement_matrix.json",
+      "sha": "ae37b5f33577cf91b2179d476e4a043b7b4b6fab",
+      "sha_type": "git_blob"
+    },
+    "registry": {
+      "path": "governance/state/rule_registry.json",
+      "sha": "0a71c395088bafe08dfa2d2c0a0634b2442b6690",
+      "sha_type": "git_blob"
+    }
+  },
+  "forensic_findings": [
+    {
+      "id": "F1",
+      "finding": "P5's executed checks validate only registry-entry schema completeness.",
+      "evidence": [
+        "The runner's validate_registry() requires one entry per RULE-004..RULE-010 and requires fields id, owner, scope, condition, approved_action, prohibited_action, version.",
+        "The runner's negative_tests() only removes prohibited_action from an in-memory registry candidate and expects schema validation to reject it."
+      ]
+    },
+    {
+      "id": "F2",
+      "finding": "P5 provides no execution path that exercises workspace promotion, managed-channel transport, rule-update dedup/version conflict, independent test assignment, director conflict/global policy mutation, or product-feedback application.",
+      "affected_rules": [
+        "RULE-005",
+        "RULE-006",
+        "RULE-007",
+        "RULE-008",
+        "RULE-009",
+        "RULE-010"
+      ]
+    },
+    {
+      "id": "F3",
+      "finding": "P5's own non_claim limits the evidence to registry schema enforcement and mutation rejection, while its acceptance field all_target_rules_enforced=true is broader than that stated scope.",
+      "classification": "internal scope overclaim"
+    },
+    {
+      "id": "F4",
+      "finding": "RV2's classification matches the actual P5 test scope: RULE-004 is code-enforced only for registry schema; RULE-005..RULE-010 are policy-only and runtime NOT_ENFORCED.",
+      "classification": "classification correction, not demonstrated regression"
+    }
+  ],
+  "resolution": {
+    "historical_p5_receipt_modified": false,
+    "p5_runtime_execution_happened": "A runner execution may have happened, but the available evidence establishes registry-schema validation only.",
+    "broad_all_rules_operational_enforcement_proven": false,
+    "regression_between_2026_06_22_and_2026_07_03_proven": false,
+    "root_cause": "P5 conflated successful registry-schema validation for each rule record with operational enforcement of each rule's approved/prohibited actions.",
+    "binding_classification": {
+      "RULE-004": {
+        "enforcement_type": "code_enforced",
+        "scope": "registry_schema_only"
+      },
+      "RULE-005..RULE-010": {
+        "enforcement_type": "policy_only",
+        "runtime": "NOT_ENFORCED"
+      }
+    }
+  },
+  "release_effect": {
+    "broad_release_pass_claimed": false,
+    "p5_may_not_be_used_for": "A claim that RULE-005..RULE-010 are operationally runtime-enforced.",
+    "rv2_remains_admissible_as": "Classification-only evidence with explicit limitations.",
+    "p7_external_verdict_required": true
+  },
+  "non_claims": [
+    "This receipt does not rewrite either historical P5 or RV2 artifact.",
+    "This receipt does not establish a live regression, because no evidence shows that operational guards ever existed and were later removed.",
+    "This receipt does not issue a P7 PASS or FAIL verdict."
+  ]
+}
