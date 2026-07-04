@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-950",
+  "task_id": "BEM950-T7-AUTOPILOT-GIT-RACE-CONDITION",
+  "receipt_id": "BEM950_t7_autopilot_git_race_repair",
+  "created_at": "2026-07-04T06:16:07Z",
+  "status": "IMPLEMENTED_STATIC_GATED",
+  "runtime_execution_claim": false,
+  "implementation": [
+    {
+      "path": "governance/runners/roadmap_autopilot.py",
+      "sha": "c86a08e0cf3fbf38eed95735863d879ed554e6c2",
+      "sha_type": "git_blob",
+      "commit": "377ecb0b8d2ad643be3e002a4e8b51c0d23c0ea3",
+      "commit_sha_type": "commit"
+    },
+    {
+      "path": "governance/runners/dispatch_executor.py",
+      "sha": "8c06e59c3c00a56d3f20d29e09d851b640918205",
+      "sha_type": "git_blob",
+      "commit": "e805fe4bf3759abca18af6071c08fdbffad8126b",
+      "commit_sha_type": "commit"
+    },
+    {
+      "path": "governance/runners/dsm1_finalize.py",
+      "sha": "f5b48a6f683a99acc02e3e9b06ac811e347333ce",
+      "sha_type": "git_blob",
+      "commit": "bb284c74cd6a9c7aea48d905dda8cef317b69090",
+      "commit_sha_type": "commit"
+    },
+    {
+      "path": ".github/workflows/roadmap-autopilot.yml",
+      "sha": "eb033fd4bf7736bfce4e5f6cc1fe05e889a4ec53",
+      "sha_type": "git_blob",
+      "commit": "338986896d1609598cda4ab339215ca4547ac52b",
+      "commit_sha_type": "commit"
+    }
+  ],
+  "gates": {
+    "python3_m_py_compile": {
+      "governance/runners/roadmap_autopilot.py": true,
+      "governance/runners/dispatch_executor.py": true,
+      "governance/runners/dsm1_finalize.py": true
+    },
+    "workflow_yaml_safe_load": true,
+    "workflow_bash_n": {
+      "run_blocks_checked": 5,
+      "passed": true
+    },
+    "controlled_non_live_paths": {
+      "selector_dispatch_inputs_identity_bound": true,
+      "observer_without_credentials": {
+        "status": "BLOCKED",
+        "blocker": "confirm_credentials_repository_or_workflow_missing",
+        "runtime_execution_claim": false
+      },
+      "finalizer_blocked_path_does_not_mark_done": true
+    }
+  },
+  "acceptance": {
+    "syntax_defects_corrected_in_one_pass": true,
+    "trace_id_binding_corrected": true,
+    "workflow_identity": "dsm1-lifecycle-probe.yml",
+    "dirty_worktree_pull_removed": true,
+    "push_retry_rebase_uses_autostash": true,
+    "force_push_absent": true,
+    "queue_writer_concurrency_group": "bem949-queue-writer"
+  },
+  "limitations": [
+    "No live GitHub Actions race reproduction is claimed.",
+    "No new DSM-1 lifecycle execution is claimed or dispatched by this task.",
+    "A future Actions run must independently demonstrate the workflow under real repository concurrency.",
+    "This receipt does not alter the P7 verdict or resolve the separate P5/RV2 evidence contradiction."
+  ]
+}
