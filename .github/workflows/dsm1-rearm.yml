@@ -1,0 +1,32 @@
+name: BEM949 DSM-1 Rearm
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/dsm1-rearm.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rearm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - name: Re-arm stale DSM-1 attempt
+        run: |
+          set -euo pipefail
+          python3 -m py_compile governance/runners/rearm_dsm1.py
+          python3 governance/runners/rearm_dsm1.py
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add governance/roadmap/ACTIVE_QUEUE.json governance/proofs/BEM949_dsm1_rearm_receipt.json
+          git diff --cached --quiet || git commit -m "AUTOPILOT: rearm DSM-1 genuine lifecycle"
+          git push origin HEAD:main
