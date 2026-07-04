@@ -1,53 +1,13 @@
 {
-  "schema_version": 1,
+  "created_at": "2026-07-04T04:43:02Z",
+  "github_run_attempt": "1",
+  "github_run_id": "28695227594",
+  "github_run_number": "400",
+  "github_sha": "8959b070b6e954f014482590512d369c76e9b09a",
   "protocol": "BEM-931 v3.6",
+  "receipt_type": "live_github_actions_validator",
   "roadmap_item": "RM-04-RUNNERS",
-  "receipt_type": "static_runner_validation",
   "status": "PASS",
-  "created_at": "2026-07-04T04:31:47Z",
-  "checked_runners": [
-    {
-      "path": "governance/runners/gd_curator_runner.py",
-      "sha256": "7e2d9a3cab6ea67595a8a1e3599e49049c542f659e5de923fdea63911cd8ae5e",
-      "sha_type": "sha256_content",
-      "python_compiled": true,
-      "has_main": true
-    },
-    {
-      "path": "governance/runners/dir_curator_runner.py",
-      "sha256": "ad6887e02e81a75ca7df50d22dc55e89295ee7bff68de1041138609c7c8f51aa",
-      "sha_type": "sha256_content",
-      "python_compiled": true,
-      "has_main": true
-    },
-    {
-      "path": "governance/runners/wrk_curator_runner.py",
-      "sha256": "e71555371d2859ec6efe8fceafe22f40643f10ab11c067da4c0c64bf6f53d2ca",
-      "sha_type": "sha256_content",
-      "python_compiled": true,
-      "has_main": true
-    },
-    {
-      "path": "governance/runners/analyst_stage_runner.py",
-      "sha256": "204e41fd5a7dfc6957a49e6ad17492f47d1458d63aa64da58dfcbd2e82183507",
-      "sha_type": "sha256_content",
-      "python_compiled": true,
-      "has_main": true
-    },
-    {
-      "path": "governance/runners/auditor_stage_runner.py",
-      "sha256": "1f4400bb188bfb165f7a3f04f15c678e41d95a3265de8dc9cc39b47ddbfd1015",
-      "sha_type": "sha256_content",
-      "python_compiled": true,
-      "has_main": true
-    },
-    {
-      "path": "governance/runners/executor_stage_runner.py",
-      "sha256": "3b2f133981c9b1ed3811c4c9345bcab7e0b32563dd70fcb462a61ff57efcda7e",
-      "sha_type": "sha256_content",
-      "python_compiled": true,
-      "has_main": true
-    }
-  ],
-  "non_claim": "This receipt establishes Python compilation and main() entrypoints only; it does not establish live provider dispatch."
+  "validator": "governance/validators/bem931_v36_rm04_runners_validate.py",
+  "workflow": "BEM-931 v3.6 Live Receipt Proof"
 }
