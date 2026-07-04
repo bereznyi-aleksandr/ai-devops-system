@@ -1,0 +1,98 @@
+name: BEM-950 T7 Live Queue Writer Race Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bem949-queue-writer
+  cancel-in-progress: false
+
+jobs:
+  race:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+
+      - id: trace
+        name: Bind trace
+        run: |
+          set -euo pipefail
+          trace_id="t7_live_race_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          echo "trace_id=${trace_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Record a serialized real queue write
+        env:
+          TRACE_ID: ${{ steps.trace.outputs.trace_id }}
+          WORKFLOW_ID: t7-live-race-test.yml
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path("governance/roadmap/ACTIVE_QUEUE.json")
+          queue = json.loads(path.read_text(encoding="utf-8"))
+          if not isinstance(queue, dict):
+              raise SystemExit("queue_not_object")
+
+          trace_id = os.environ["TRACE_ID"]
+          events = queue.setdefault("t7_live_race_evidence", [])
+          if not isinstance(events, list):
+              raise SystemExit("t7_live_race_evidence_not_list")
+
+          events.append(
+              {
+                  "trace_id": trace_id,
+                  "workflow_id": os.environ["WORKFLOW_ID"],
+                  "run_id": os.environ["GITHUB_RUN_ID"],
+                  "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+                  "event": "workflow_dispatch",
+                  "queue_writer_group": "bem949-queue-writer",
+                  "observed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                  "mutation_scope": "append_only_t7_live_race_evidence",
+              }
+          )
+          queue["version"] = int(queue.get("version", 0) or 0) + 1
+          queue["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          path.write_text(
+              json.dumps(queue, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add governance/roadmap/ACTIVE_QUEUE.json
+          git diff --cached --quiet || git commit -m "T7 live race evidence: ${TRACE_ID}"
+
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git fetch origin main
+            git rebase --autostash origin/main || {
+              git rebase --abort || true
+              exit 1
+            }
+          done
+          exit 1
+
+      - name: Emit trace-bound result
+        env:
+          TRACE_ID: ${{ steps.trace.outputs.trace_id }}
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg trace_id "${TRACE_ID}" \
+            --arg workflow_id "t7-live-race-test.yml" \
+            --arg run_id "${GITHUB_RUN_ID}" \
+            --arg writer_group "bem949-queue-writer" \
+            '{trace_id:$trace_id,workflow_id:$workflow_id,run_id:$run_id,queue_writer_group:$writer_group,terminal_state:"COMPLETED",conclusion:"success"}'
