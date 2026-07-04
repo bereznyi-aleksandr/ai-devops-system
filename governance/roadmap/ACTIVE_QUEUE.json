@@ -1,8 +1,8 @@
 {
-  "version": 49,
-  "updated_at": "2026-07-04T04:55:17Z",
-  "queue_state": "ACTIVE",
-  "current_task": "BEM949-DSM-1",
+  "version": 50,
+  "updated_at": "2026-07-04T05:04:09Z",
+  "queue_state": "READY",
+  "current_task": null,
   "system_status": "BEM949_P7_BLOCKED_ON_DSM1_EVIDENCE_CONFLICT",
   "release_status": "RELEASE_BLOCKING",
   "protocol": "BEM-949 / BEM-011",
@@ -83,7 +83,7 @@
     },
     {
       "id": "BEM949-DSM-1",
-      "status": "IN_PROGRESS",
+      "status": "AWAITING_GENUINE_RECEIPT",
       "previous_status": "EVIDENCE_MISMATCH",
       "resolution": {
         "rv1_refiled_to": "governance/proofs/BEM949_rv1_lifecycle_poll_blocked_receipt.json",
@@ -101,7 +101,10 @@
       "started_at": "2026-07-04T04:55:17Z",
       "trace_id": "autopilot_bem949_dsm1_20260704T045517Z",
       "dispatch_intent": "GENUINE_GITHUB_ACTIONS_LIFECYCLE_PROBE",
-      "attempt_count": 2
+      "attempt_count": 2,
+      "rearmed_at": "2026-07-04T05:04:09Z",
+      "stale_trace_id": "autopilot_bem949_dsm1_20260704T045517Z",
+      "stale_reason": "terminal_receipt_absent_for_active_trace"
     },
     {
       "id": "BEM949-RV-1",
