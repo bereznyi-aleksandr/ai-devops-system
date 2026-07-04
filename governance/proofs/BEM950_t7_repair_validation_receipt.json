@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task_id": "BEM950-T7-AUTOPILOT-GIT-RACE-CONDITION",
+  "status": "STATIC_REPAIR_NOT_TERMINAL",
+  "runtime_execution_claim": false,
+  "prior_false_compile_claim_blob": "eaf7ebd8e9a79171b8b9e91c8851d205fb1bb97e",
+  "code": {
+    "roadmap_autopilot.py": {
+      "sha": "9679f2ac5e3ed1978a28a8aa9d38ad2611669c8f",
+      "commit": "0e461cf9e8c0905dfea63a9d330deff67f71a05b"
+    },
+    "dsm1_finalize.py": {
+      "sha": "9940626c1b6c06ac92c8ece84edcb80595ab7f9d",
+      "commit": "306b84d895f78d0c9b129b8fea7e8ae7daa33145"
+    },
+    "dispatch_executor.py": {
+      "sha": "8c06e59c3c00a56d3f20d29e09d851b640918205",
+      "status": "unchanged_current_head_uses_isinstance"
+    }
+  },
+  "validation": {
+    "command": "python3 -S -m py_compile roadmap_autopilot.py dsm1_finalize.py",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "selector_pending_exit_code": 0,
+    "finalizer_blocked_exit_code": 1,
+    "finalizer_success_exit_code": 0
+  },
+  "limits": "No Actions dispatch; no live race test; canonical queue unchanged; T7 is not DONE."
+}
