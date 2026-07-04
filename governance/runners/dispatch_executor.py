@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Trace-bound GitHub Actions lifecycle observer for BEM949-DSM-1.
 
-HTTP 204 means only that GitHub accepted a workflow-dispatch request. Completion
-requires a matching run with a terminal conclusion.
+The HTTP 204 only acknowledges a workflow-dispatch request. Completion requires a
+matching workflow run with a terminal conclusion.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-LIFECYCLE_LOG = ROOT / "governance/state/dispatch_lifecycle.jsonl"
+LIFECYCLE_LOG = ROOT / "governance/state/dispatch_lifecycle.jsonll"
 TASK_ID = "BEM949-DSM-1"
 WORKFLOW_ID = "dsm1-lifecycle-probe.yml"
 
@@ -35,13 +35,18 @@ def write_json(path: Path, value: dict[str, Any]) -> None:
     )
 
 
-def append_event(event: dict[str, Any]) -> None:
+def append_event(value: dict[str, Any]) -> None:
     LIFECYCLE_LOG.parent.mkdir(parents=True, exist_ok=True)
     with LIFECYCLE_LOG.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+        handle.write(json.dumps(value, ensure_ascii=False, sort_keys=True) + "\n")
 
 
-def event(trace_id: str, workflow_id: str, state: str, **extra: object) -> dict[str, Any]:
+def lifecycle_event(
+    trace_id: str,
+    workflow_id: str,
+    state: str,
+    **extra: object,
+) -> dict[str, Any]:
     return {
         "protocol": "BEM-949",
         "task_id": TASK_ID,
@@ -65,11 +70,11 @@ def api_get(url: str, token: str) -> tuple[int, dict[str, Any]]:
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             raw = response.read().decode("utf-8", "replace")
-            value = json.loads(raw) if raw else {}
-            return response.status, value if isinstance(value, dict) else {}
+            payload = json.loads(raw) if raw else {}
+            return response.status, payload if isinstance(payload, dict) else {}
     except urllib.error.HTTPError as exc:
         return exc.code, {}
-    except Exception as exc:  # network errors are represented as evidence, never masked
+    except Exception as exc:
         return 0, {"error": type(exc).__name__}
 
 
@@ -102,7 +107,7 @@ def blocked(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--confirm-only", action="store_true")
+    parser.add_argument("--confirm-only", action="store_true)
     parser.add_argument("--record-dispatched", action="store_true")
     parser.add_argument("--trace-id", required=True)
     parser.add_argument("--dispatch-id", required=True)
@@ -134,7 +139,7 @@ def main() -> int:
 
     if args.record_dispatched:
         append_event(
-            event(
+            lifecycle_event(
                 args.trace_id,
                 args.workflow_id,
                 "DISPATCHED",
@@ -172,10 +177,10 @@ def main() -> int:
 
         if candidate is not None:
             run_id = candidate.get("id")
-            if isinstace(run_id, int) and observed_run_id is None:
+            if isinstance(run_id, int) and observed_run_id is None:
                 observed_run_id = run_id
                 append_event(
-                    event(
+                    lifecycle_event(
                         args.trace_id,
                         args.workflow_id,
                         "START_CONFIRMED",
@@ -184,13 +189,14 @@ def main() -> int:
                         html_url=candidate.get("html_url"),
                     )
                 )
+
             if candidate.get("status") == "completed":
                 conclusion = str(candidate.get("conclusion") or "unknown")
                 terminal_state = (
                     "COMPLETED" if conclusion == "success" else "FAILED"
                 )
                 append_event(
-                    event(
+                    lifecycle_event(
                         args.trace_id,
                         args.workflow_id,
                         terminal_state,
@@ -200,10 +206,10 @@ def main() -> int:
                     )
                 )
                 append_event(
-                    event(
+                    lifecycle_event(
                         args.trace_id,
                         args.workflow_id,
-                        "STATE_COMMITTED",
+                        "STATE_COMMITED",
                         run_id=observed_run_id,
                         terminal_state=terminal_state,
                         conclusion=conclusion,
@@ -217,7 +223,7 @@ def main() -> int:
                         "task_id": TASK_ID,
                         "trace_id": args.trace_id,
                         "result": {
-                            "terminal_state": terminal_state,
+                            "terminal_state": termal_state,
                             "conclusion": conclusion,
                             "run_id": observed_run_id,
                             "html_url": candidate.get("html_url"),
