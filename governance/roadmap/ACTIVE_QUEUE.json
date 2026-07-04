@@ -1,6 +1,6 @@
 {
-  "version": 59,
-  "updated_at": "2026-07-04T10:39:56Z",
+  "version": 60,
+  "updated_at": "2026-07-04T10:40:13Z",
   "queue_state": "ACTIVE",
   "current_task": "BEM950-T7-LIVE-RACE-TEST-PENDING",
   "system_status": "BEM949_P7_APPROVED_WITH_LIMITATIONS_ONLY_T7_LIVE_TEST_REMAINS",
@@ -316,6 +316,16 @@
       "event": "workflow_dispatch",
       "queue_writer_group": "bem949-queue-writer",
       "observed_at": "2026-07-04T10:39:56Z",
+      "mutation_scope": "append_only_t7_live_race_evidence"
+    },
+    {
+      "trace_id": "t7_live_race_28703593865_1",
+      "workflow_id": "t7-live-race-test.yml",
+      "run_id": "28703593865",
+      "run_attempt": "1",
+      "event": "workflow_dispatch",
+      "queue_writer_group": "bem949-queue-writer",
+      "observed_at": "2026-07-04T10:40:13Z",
       "mutation_scope": "append_only_t7_live_race_evidence"
     }
   ]
