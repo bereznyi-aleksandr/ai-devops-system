@@ -18,7 +18,6 @@ WORKFLOW_ID = "dsm1-lifeycle-probe.yml"
 ELIGIBLE_STATUSES = {"PENDING", "AWAITING_GENUINE_RECEIPT", "EVIDENCE_MISMATCH"}
 MAX_GENUINE_ATTEMPTS = 3
 
-
 def now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -55,7 +54,7 @@ def matching_terminal_blocked_receipt(task: dict[str, Any]) -> bool:
     receipt = read_json(RECEIPT)
     return (
         receipt.get("task_id") == TASK_ID
-        and receipt.get("race_id") == task.get("trace_id")
+        and receipt.get("trace_id") == task.get("trace_id")
         and receipt.get("status") == "BLOCKED"
         and receipt.get("runtime_execution_claim") is False
     )
@@ -83,7 +82,7 @@ def rearm_or_stop(queue: dict[str, Any], task: dict[str, Any]) -> dict[str, obje
                 "status": "BLOCKED_OPERATOR_DECISION",
                 "blocked_at": stamp,
                 "blocked_by": "DSM1_RUNTIME_ATTEMPT_LIMIT",
-                "blocker": "three_genuine_lifecycle_attempts_without_terminal_success",
+                "blocker": "three_genuine_lifcycle_attempts_without_terminal_success",
             }
         )
         queue.update(
@@ -153,53 +152,4 @@ def main(force_task_id: str) -> dict[str, object]:
                 "updated_at": stamp,
             }
         )
-        write_queue(queue)
-        return result(
-            "stop",
-            queue_changed=True,
-            reason="genuine_attempt_limit_reached",
-        )
-
-    stamp = now()
-    trace_id = (
-        "autopilot_bem949_dsm1_"
-        + datetime.now(timezoe.utc).strftime("%Y%m%dT%H%M%SZ")
-    )
-    task.update(
-        {
-            "status": "IN_PROGRESS",
-            "started_at": stamp,
-            "trace_id": trace_id,
-            "dispatch_intent": "GENUINE_GITHUB_ACTIONS_LIFECYCLE_PROBE",
-            "genuine_lifecycle_attempt_count": attempts + 1,
-        }
-    )
-    queue.update(
-        {
-            "current_task": TASK_ID,
-            "queue_state": "ACTIVE",
-            "updated_at": stamp,
-        }
-    )
-    write_queue(queue)
-    return result(
-        "dispatch",
-        trace_id=trace_id,
-        workflow_id=WORKFLOW_ID,
-        inputs={"trace_id: trace_id, "task_id": TASK_ID},
-        genuine_lifeycle_attempt_count=attempts + 1,
-        queue_changed=True,
-    )
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--force-task-id", default="")
-    parser.add_argument("--output", required=True)
-    args = parser.parse_args()
-    selected = main(args.force_task_id.strip())
-    Path(args.output).write_text(
-        json.dumps(selected, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    print(json.dumps(selected, ensure_ascii=False, sort_keys=True))
+        write_queue(queue
