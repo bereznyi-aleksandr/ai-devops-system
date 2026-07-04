@@ -1,6 +1,6 @@
 {
   "version": 49,
-  "updated_at": "2026-07-04T04:51:10Z",
+  "updated_at": "2026-07-04T04:55:17Z",
   "queue_state": "ACTIVE",
   "current_task": "BEM949-DSM-1",
   "system_status": "BEM949_P7_BLOCKED_ON_DSM1_EVIDENCE_CONFLICT",
@@ -98,9 +98,10 @@
       "conflict_id": "DSM1-RUNTIME-RECEIPT-MISMATCH-001",
       "blocked_by": null,
       "note": "Finalizer bug (BEM950-T6) fixed and verified. No genuine DSM-1 GitHub Actions lifecycle receipt exists yet. Next: a real trace-bound run of dsm1-lifecycle-probe.yml through roadmap-autopilot producing STATE_COMMITTED/COMPLETED/success (or an honest BLOCKED outcome), followed by external audit.",
-      "started_at": "2026-07-04T04:51:10Z",
-      "trace_id": "autopilot_bem949_dsm1_20260704T045110Z",
-      "dispatch_intent": "GENUINE_GITHUB_ACTIONS_LIFECYCLE_PROBE"
+      "started_at": "2026-07-04T04:55:17Z",
+      "trace_id": "autopilot_bem949_dsm1_20260704T045517Z",
+      "dispatch_intent": "GENUINE_GITHUB_ACTIONS_LIFECYCLE_PROBE",
+      "attempt_count": 2
     },
     {
       "id": "BEM949-RV-1",
