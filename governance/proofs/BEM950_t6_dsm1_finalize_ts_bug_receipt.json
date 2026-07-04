@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "protocol": "BEM-950",
+  "task_id": "BEM950-T6-DSM1-FINALIZE-TS-BUG",
+  "created_at": "2026-07-04T04:31:32Z",
+  "status": "DONE_STATIC_AND_CONTROLLED_BLOCKED_PATH",
+  "runtime_execution_claim": false,
+  "implementation": {
+    "path": "governance/runners/dsm1_finalize.py",
+    "sha": "9a54a761a0e1455462cff54dc1673c535e57e281",
+    "sha_type": "git_blob",
+    "commit": "9bc2a28bcd8d907cecbb75bed4951f418c5dc53e",
+    "commit_sha_type": "commit",
+    "change": "Replaced the undefined timestamp call with now() and retained identity-bound task, workflow, and trace validation."
+  },
+  "checks": {
+    "python3_m_py_compile": true,
+    "undefined_ts_call_present": false,
+    "controlled_end_to_end_blocked_path": {
+      "input_sha": "f9844f65ae11acf389a9241ef13e7cad85aa21b24e46f364ad9a9489bbbeead0",
+      "input_sha_type": "sha256_content",
+      "task_id": "BEM949-DSM-1",
+      "workflow_id": "dsm1-lifecycle-probe.yml",
+      "trace_id": "bem950_t6_controlled_blocked",
+      "expected_exit_code": 1,
+      "observed_exit_code": 1,
+      "receipt_written": true,
+      "written_path": "governance/proofs/BEM949_dsm1_runtime_execution_receipt.json",
+      "written_receipt_status": "BLOCKED",
+      "name_error_observed": false
+    }
+  },
+  "acceptance": {
+    "finalizer_no_longer_crashes_at_timestamp_construction": true,
+    "blocked_outcome_writes_a_receipt": true,
+    "cross_task_identity_guard_retained": true,
+    "genuine_dsm1_runtime_evidence_present": false
+  },
+  "limitations": [
+    "The controlled execution used a synthetic BLOCKED lifecycle result and is not GitHub Actions runtime evidence.",
+    "DSM-1 remains non-terminal until roadmap-autopilot observes a trace-bound START_CONFIRMED to COMPLETED/success lifecycle and an external auditor verifies the resulting receipt.",
+    "This receipt does not permit P7 to be unblocked or a Broad Release PASS to be claimed."
+  ]
+}
