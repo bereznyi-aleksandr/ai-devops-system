@@ -1,4 +1,5 @@
 name: Roadmap Autopilot
+
 on:
   workflow_dispatch:
     inputs:
@@ -15,12 +16,17 @@ on:
       - governance/runners/dsm1_finalize.py
       - .github/workflows/roadmap-autopilot.yml
       - .github/workflows/dsm1-lifecycle-probe.yml
+  schedule:
+    - cron: "*/5 * * * *"
+
 permissions:
   contents: write
   actions: write
+
 concurrency:
   group: roadmap-autopilot
   cancel-in-progress: false
+
 jobs:
   advance:
     runs-on: ubuntu-latest
@@ -31,47 +37,60 @@ jobs:
           ref: main
           fetch-depth: 0
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
-      - name: Compile DSM-1 code
+
+      - name: Compile lifecycle executors
         run: |
           set -euo pipefail
           python3 -m py_compile governance/runners/roadmap_autopilot.py
           python3 -m py_compile governance/runners/dispatch_executor.py
           python3 -m py_compile governance/runners/dsm1_finalize.py
+
       - id: choose
-        name: Select DSM-1
+        name: Select eligible DSM-1 lifecycle run
         env:
           FORCE_TASK_ID: ${{ inputs.force_task_id || '' }}
         run: |
           set -euo pipefail
           python3 governance/runners/roadmap_autopilot.py --force-task-id "$FORCE_TASK_ID" --output /tmp/dispatch.json
-          echo "action=$(jq -r '.action // ""' /tmp/dispatch.json)" >> "$GITHUB_OUTPUT"
-          echo "task_id=$(jq -r '.task_id // ""' /tmp/dispatch.json)" >> "$GITHUB_OUTPUT"
-          echo "workflow_id=$(jq -r '.workflow_id // ""' /tmp/dispatch.json)" >> "$GITHUB_OUTPUT"
-          echo "trace_id=$(jq -r '.trace_id // ""' /tmp/dispatch.json)" >> "$GITHUB_OUTPUT"
-          echo "queue_changed=$(jq -r '.queue_changed // false' /tmp/dispatch.json)" >> "$GITHUB_OUTPUT"
-      - name: Persist selection
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          item = json.loads(Path("/tmp/dispatch.json").read_text(encoding="utf-8"))
+          for key in ("action", "task_id", "workflow_id", "trace_id"):
+              print(f"{key}={item.get(key, '')}")
+          print("queue_changed=" + str(bool(item.get("queue_changed"))).lower())
+          PY
+
+      - name: Persist DSM-1 selection
         if: steps.choose.outputs.queue_changed == 'true'
         run: |
           set -euo pipefail
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git add governance/roadmap/ACTIVE_QUEUE.json
-          git diff --cached --quiet || git commit -m "AUTOPILOT: select DSM-1"
+          git diff --cached --quiet || git commit -m "AUTOPILOT: select DSM-1 lifecycle probe"
           git push origin HEAD:main
+
       - name: Dispatch and confirm DSM-1 lifecycle
         if: steps.choose.outputs.action == 'dispatch'
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
+          GITHUB_TOKEN: ${{ secrets.AI_SYSTEM_GITHUB_PAT || github.token }}
           REPOSITORY: ${{ github.repository }}
           TRACE_ID: ${{ steps.choose.outputs.trace_id }}
           TASK_ID: ${{ steps.choose.outputs.task_id }}
           WORKFLOW_ID: ${{ steps.choose.outputs.workflow_id }}
         run: |
           set -euo pipefail
-          jq -n --argjson inputs "$(jq -c '.inputs' /tmp/dispatch.json)" '{ref:"main",inputs:$inputs}' > /tmp/payload.json
+          python3 - <<'PY' > /tmp/payload.json
+          import json, os
+          print(json.dumps({"ref": "main", "inputs": {
+              "trace_id": os.environ["TRACE_ID"], "task_id": os.environ["TASK_ID"]
+          }}))
+          PY
           code="$(curl -sS -o /tmp/dispatch_response.txt -w '%{http_code}' -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
             -H "Content-Type: application/json" \
             "https://api.github.com/repos/$REPOSITORY/actions/workflows/$WORKFLOW_ID/dispatches" \
             --data @/tmp/payload.json)"
@@ -80,8 +99,8 @@ jobs:
             --trace-id "$TRACE_ID" --dispatch-id "$TASK_ID" --workflow-id "$WORKFLOW_ID" \
             --repository "$REPOSITORY" --poll-timeout-seconds 300 --poll-interval-seconds 5 \
             --output /tmp/lifecycle_result.json
-      - name: Persist DSM-1 evidence
-        if: always() && steps.choose.outputs.action == 'dispatch'
+      - name: Persist terminal DSM-1 evidence
+        if: always() && steps.choose.outputs.raction == 'dispatch'
         env:
           TASK_ID: ${{ steps.choose.outputs.task_id }}
           TRACE_ID: ${{ steps.choose.outputs.trace_id }}
@@ -93,12 +112,13 @@ jobs:
           git pull --rebase origin main
           set +e
           python3 governance/runners/dsm1_finalize.py --task-id "$TASK_ID" \
-            --trace-id "$TRACE_ID" --workflow-id "$WORKFLOW_ID" --result /tmp/lifecycle_result.json
-          result_status=$?
+            --trace-id "$TRACE_ID" --workflow-id "$WORKFLOW_ID" \
+            --result /tmp/lifecycle_result.json
+          finalizer_status=$?
           set -e
           git add governance/state/dispatch_lifecycle.jsonl \
             governance/proofs/BEM949_dsm1_runtime_execution_receipt.json \
             governance/roadmap/ACTIVE_QUEUE.json 2>/dev/null || true
           git diff --cached --quiet || git commit -m "AUTOPILOT: record DSM-1 lifecycle evidence"
           git push origin HEAD:main
-          exit "$result_status"
+          exit "$finalizer_status"
