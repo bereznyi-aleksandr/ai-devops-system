@@ -103,8 +103,29 @@ jobs:
           #   2. Сам gpt-hosted-roles.yml заархивирован ещё в BEM-931: он печатает
           #      "ARCHIVED" и выходит, то есть работу не выполнял в любом случае.
           # Новый маршрут исполнения назначается первой волной дорожной карты BEM-954.
-          # До этого цикл честно сообщает, что задача не отправлена, вместо того
-          # чтобы отчитываться об успехе, ничего не сделав.
-          print(f'BLOCKED: маршрут исполнения не назначен. Задача {task_id} не отправлена.')
-          print(f'trace_id: {trace_id}')
+          #
+          # Пока маршрута нет, задача остаётся активной в очереди. Молча выйти с
+          # успехом здесь нельзя: прогон стал бы зелёным, очередь бы не двигалась,
+          # и на следующем часе тот же таск выбрался бы заново — ровно тот дефект,
+          # ради устранения которого правка и делалась.
+          # Поэтому попытка записывается в сводку прогона и завершается отказом.
+          blocker = {
+              'status': 'BLOCKED_NO_ROUTE',
+              'task_id': task_id,
+              'trace_id': trace_id,
+              'reason': 'Маршрут исполнения не назначен: прежний вёл в заархивированный gpt-hosted-roles.yml',
+              'next_action': 'Назначить маршрут первой волной дорожной карты BEM-954',
+              'recorded_at': datetime.now(timezone.utc).isoformat(),
+          }
+          line = json.dumps(blocker, ensure_ascii=False)
+          print(line)
+
+          summary = os.environ.get('GITHUB_STEP_SUMMARY')
+          if summary:
+              with open(summary, 'a', encoding='utf-8') as fh:
+                  fh.write('### BLOCKED_NO_ROUTE\n\n')
+                  fh.write(f'Задача `{task_id}` не отправлена: маршрут исполнения не назначен.\n\n')
+                  fh.write(f'```json\n{line}\n```\n')
+
+          raise SystemExit(1)
           PY
