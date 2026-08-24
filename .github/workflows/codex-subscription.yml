@@ -1,0 +1,283 @@
+name: Codex Provider (subscription)
+
+# Второй провайдер внутри GitHub без платного маршрута.
+#
+# Зачем он есть.
+#   claude.yml ходит через claude_code_oauth_token — токен подписки, счётчик не
+#   тикает. Для Codex официального аналога нет: openai/codex-action принимает
+#   только ключ API (оплата по счётчику), а документированный безлюдный вход
+#   `codex login --with-access-token` выдаётся лишь рабочим пространствам
+#   ChatGPT Business и Enterprise. На тарифе Plus остаётся один рабочий путь —
+#   перенести на runner учётные данные, созданные обычным входом
+#   «Sign in with ChatGPT», и указать на них через CODEX_HOME.
+#
+# Условия, без которых процесс не работает (проверяются шагом preflight):
+#   1. секрет CODEX_AUTH_JSON содержит содержимое ~/.codex/auth.json с машины,
+#      где выполнен `codex login`;
+#   2. секрет AI_SYSTEM_GITHUB_PAT существует;
+#   3. переменная OPENAI_API_KEY НЕ задана — иначе возможен молчаливый переход
+#      на платный маршрут.
+#
+# Известные ограничения, названные честно:
+#   - способ не описан в документации OpenAI и может перестать работать после
+#     любого обновления Codex CLI;
+#   - учётные данные обновляются, поэтому секрет придётся периодически
+#     пересоздавать; признак протухания — BLOCKED_AUTH в квитанции;
+#   - репозиторий публичный, поэтому запуск разрешён ТОЛЬКО вручную
+#     (workflow_dispatch). Триггеры pull_request_target, issue_comment и любые
+#     события из чужих копий добавлять запрещено: секрет утечёт.
+#
+# Запуск не автоматический и ничего не делает, пока его не вызовут руками.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'exec — выполнить задачу; review — проверить изменения'
+        required: true
+        default: 'review'
+        type: choice
+        options:
+          - exec
+          - review
+      trace_id:
+        description: 'Trace id'
+        required: true
+        type: string
+      task:
+        description: 'Текст задачи или предмет проверки'
+        required: true
+        type: string
+      sandbox:
+        description: 'Права Codex на файлы'
+        required: false
+        default: 'read-only'
+        type: choice
+        options:
+          - read-only
+          - workspace-write
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: codex-subscription-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  codex:
+    name: Codex ${{ inputs.mode }} (ubuntu-latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      CODEX_HOME: ${{ github.workspace }}/.codex-home
+      TRACE_ID: ${{ inputs.trace_id }}
+      MODE: ${{ inputs.mode }}
+      SANDBOX: ${{ inputs.sandbox }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
+
+      # Проверка стоимости идёт ДО установки и до любого вызова модели.
+      - name: Cost policy preflight
+        shell: bash
+        env:
+          HAS_AUTH: ${{ secrets.CODEX_AUTH_JSON != '' }}
+          HAS_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT != '' }}
+        run: |
+          set -euo pipefail
+          fail=0
+          if [ "${HAS_AUTH}" != "true" ]; then
+            echo "BLOCKED: секрет CODEX_AUTH_JSON не задан."
+            fail=1
+          fi
+          if [ "${HAS_PAT}" != "true" ]; then
+            echo "BLOCKED: секрет AI_SYSTEM_GITHUB_PAT не задан."
+            fail=1
+          fi
+          # Ключ платного API не должен присутствовать ни в каком виде.
+          for name in OPENAI_API_KEY OPENAI_CODEX_API_KEY AZURE_OPENAI_API_KEY; do
+            if [ -n "${!name:-}" ]; then
+              echo "BLOCKED_COST_POLICY: переменная ${name} задана в окружении."
+              fail=1
+            fi
+          done
+          if [ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ]; then
+            echo "BLOCKED: разрешён только ручной запуск, получено ${GITHUB_EVENT_NAME}."
+            fail=1
+          fi
+          [ "$fail" -eq 0 ] || exit 1
+          echo "Preflight PASS: платный маршрут закрыт, секреты на месте."
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Codex CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g @openai/codex
+          codex --version
+
+      # Значение секрета не печатается: вывод шага отключён, файл создаётся
+      # через переменную окружения, а не через аргумент командной строки.
+      - name: Restore Codex credentials
+        shell: bash
+        env:
+          CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p "${CODEX_HOME}"
+          printf '%s' "${CODEX_AUTH_JSON}" > "${CODEX_HOME}/auth.json"
+          chmod 600 "${CODEX_HOME}/auth.json"
+          if [ ! -s "${CODEX_HOME}/auth.json" ]; then
+            echo "BLOCKED_AUTH: файл учётных данных пуст."
+            exit 1
+          fi
+          python3 -c "import json,os,sys; json.load(open(os.environ['CODEX_HOME']+'/auth.json')); print('Учётные данные разобраны как JSON.')" \
+            || { echo 'BLOCKED_AUTH: содержимое секрета не является корректным JSON.'; exit 1; }
+
+      - name: Verify login is a subscription, not an API key
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          # Признак платного маршрута внутри учётных данных. Значение не печатаем.
+          if python3 - <<'PY'
+          import json, os, sys
+          data = json.load(open(os.environ["CODEX_HOME"] + "/auth.json"))
+          flat = json.dumps(data)
+          sys.exit(0 if ("OPENAI_API_KEY" in flat or '"api_key"' in flat) else 1)
+          PY
+          then
+            echo "BLOCKED_COST_POLICY: в учётных данных найден ключ API. Нужен вход по подписке."
+            exit 1
+          fi
+          echo "Проверка пройдена: признаков ключа API нет."
+
+      - name: Run Codex
+        id: run_codex
+        continue-on-error: true
+        shell: bash
+        env:
+          TASK: ${{ inputs.task }}
+        run: |
+          set -euo pipefail
+          mkdir -p governance/proofs
+          OUT="governance/proofs/codex_${TRACE_ID}_last_message.txt"
+          if [ "${MODE}" = "review" ]; then
+            codex review --json > "governance/proofs/codex_${TRACE_ID}_events.jsonl" 2>&1 || true
+            cp "governance/proofs/codex_${TRACE_ID}_events.jsonl" "${OUT}" || true
+          else
+            codex exec \
+              --sandbox "${SANDBOX}" \
+              --skip-git-repo-check \
+              --json \
+              --output-last-message "${OUT}" \
+              "${TASK}" \
+              > "governance/proofs/codex_${TRACE_ID}_events.jsonl" 2>&1 || true
+          fi
+          echo "OUT_PATH=${OUT}" >> "$GITHUB_ENV"
+
+      - name: Write receipt
+        if: always()
+        shell: bash
+        env:
+          STEP_OUTCOME: ${{ steps.run_codex.outcome }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          trace = os.environ["TRACE_ID"]
+          out_path = os.environ.get("OUT_PATH", "")
+          body = ""
+          if out_path and Path(out_path).exists():
+              body = Path(out_path).read_text(encoding="utf-8", errors="replace")[:4000]
+
+          low = body.lower()
+          if "401" in body or "unauthorized" in low or "not logged in" in low:
+              status, blocker = "BLOCKED_AUTH", "Учётные данные не приняты — вероятно, секрет протух."
+          elif os.environ.get("STEP_OUTCOME") == "success" and body.strip():
+              status, blocker = "PASS", None
+          else:
+              status, blocker = "FAILED", "Codex не вернул результат."
+
+          receipt = {
+              "schema_version": 1,
+              "provider": "gpt_codex_subscription",
+              "billing_class": "subscription_included",
+              "paid_api_used": False,
+              "trace_id": trace,
+              "mode": os.environ.get("MODE"),
+              "sandbox": os.environ.get("SANDBOX"),
+              "status": status,
+              "blocker": blocker,
+              "github_hosted": True,
+              "self_hosted": False,
+              "response_preview": body[:1000],
+              "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "non_claims": [
+                  "Квитанция подтверждает запуск, а не корректность результата.",
+                  "Независимость аудита доказывает отдельная квитанция автор/аудитор, а не этот файл.",
+              ],
+          }
+          p = Path(f"governance/proofs/codex_subscription_{trace}_receipt.json")
+          p.parent.mkdir(parents=True, exist_ok=True)
+          p.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          print("Квитанция: " + str(p) + " status=" + status)
+          PY
+
+      # Учётные данные не должны попасть ни в коммит, ни в артефакты.
+      - name: Remove credentials from workspace
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          shred -u "${CODEX_HOME}/auth.json" 2>/dev/null || rm -f "${CODEX_HOME}/auth.json"
+          rm -rf "${CODEX_HOME}"
+          echo "Учётные данные с runner удалены."
+
+      - name: Commit receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "codex-subscription@ai-devops-system"
+          git config user.name "Codex Provider (subscription)"
+          git add governance/proofs/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Нечего фиксировать."
+          else
+            git commit -m "CODEX-SUBSCRIPTION: trace=${TRACE_ID} mode=${MODE}"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: Job summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## Codex Provider (subscription) — ${TRACE_ID}"
+            echo ""
+            echo "| Поле | Значение |"
+            echo "|---|---|"
+            echo "| Режим | ${MODE} |"
+            echo "| Права на файлы | ${SANDBOX} |"
+            echo "| Платный API | не использован |"
+            echo "| Квитанция | governance/proofs/codex_subscription_${TRACE_ID}_receipt.json |"
+          } >> "$GITHUB_STEP_SUMMARY"
