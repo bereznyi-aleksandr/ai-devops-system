@@ -151,18 +151,37 @@ jobs:
         run: |
           set -euo pipefail
           set +x
-          # Признак платного маршрута внутри учётных данных. Значение не печатаем.
+          # Ищем не имя поля, а заполненное значение. Обычный вход по подписке
+          # оставляет поле ключа пустым, и это не повод блокировать запуск.
+          # Печатаем только путь до поля, никогда его значение.
           if python3 - <<'PY'
           import json, os, sys
+
           data = json.load(open(os.environ["CODEX_HOME"] + "/auth.json"))
-          flat = json.dumps(data)
-          sys.exit(0 if ("OPENAI_API_KEY" in flat or '"api_key"' in flat) else 1)
+          filled = []
+
+          def walk(node, path=""):
+              if isinstance(node, dict):
+                  for k, v in node.items():
+                      name = k.lower().replace("-", "_")
+                      if "api_key" in name or "apikey" in name:
+                          if isinstance(v, str) and v.strip():
+                              filled.append(path + "/" + k)
+                      walk(v, path + "/" + k)
+              elif isinstance(node, list):
+                  for i, v in enumerate(node):
+                      walk(v, path + "[" + str(i) + "]")
+
+          walk(data)
+          for p in filled:
+              print("заполненное поле ключа: " + p, file=sys.stderr)
+          sys.exit(0 if filled else 1)
           PY
           then
-            echo "BLOCKED_COST_POLICY: в учётных данных найден ключ API. Нужен вход по подписке."
+            echo "BLOCKED_COST_POLICY: в учётных данных есть заполненный ключ API. Нужен вход по подписке."
             exit 1
           fi
-          echo "Проверка пройдена: признаков ключа API нет."
+          echo "Проверка пройдена: заполненного ключа API нет."
 
       - name: Run Codex
         id: run_codex
