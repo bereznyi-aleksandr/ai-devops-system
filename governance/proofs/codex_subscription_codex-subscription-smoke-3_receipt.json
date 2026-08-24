@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "provider": "gpt_codex_subscription",
+  "billing_class": "subscription_included",
+  "paid_api_used": false,
+  "trace_id": "codex-subscription-smoke-3",
+  "mode": "review",
+  "sandbox": "read-only",
+  "codex_exit_code": "2",
+  "status": "FAILED_USAGE",
+  "blocker": "Команда собрана неверно: Codex отверг аргументы.",
+  "github_hosted": true,
+  "self_hosted": false,
+  "response_preview": "error: the argument '--commit <SHA>' cannot be used with '[PROMPT]'\n\nUsage: codex review --commit <SHA> [PROMPT]\n\nFor more information, try '--help'.\n",
+  "created_at": "2026-08-24T11:49:07Z",
+  "non_claims": [
+    "Квитанция подтверждает запуск, а не корректность результата.",
+    "Независимость аудита доказывает отдельная квитанция автор/аудитор, а не этот файл."
+  ]
+}
