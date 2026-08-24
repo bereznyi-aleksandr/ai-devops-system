@@ -190,22 +190,34 @@ jobs:
         env:
           TASK: ${{ inputs.task }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mkdir -p governance/proofs
           OUT="governance/proofs/codex_${TRACE_ID}_last_message.txt"
+          EVENTS="governance/proofs/codex_${TRACE_ID}_events.log"
+          : > "${OUT}"
+          # Код возврата обязателен: непустой вывод доказательством успеха не является,
+          # сообщение об ошибке использования — тоже вывод.
+          set +e
           if [ "${MODE}" = "review" ]; then
-            codex review --json > "governance/proofs/codex_${TRACE_ID}_events.jsonl" 2>&1 || true
-            cp "governance/proofs/codex_${TRACE_ID}_events.jsonl" "${OUT}" || true
+            # У review нет --json и --output-last-message; это флаги exec.
+            codex review --commit HEAD "${TASK}" > "${EVENTS}" 2>&1
+            RC=$?
+            cp "${EVENTS}" "${OUT}"
           else
             codex exec \
               --sandbox "${SANDBOX}" \
               --skip-git-repo-check \
               --json \
               --output-last-message "${OUT}" \
-              "${TASK}" \
-              > "governance/proofs/codex_${TRACE_ID}_events.jsonl" 2>&1 || true
+              "${TASK}" > "${EVENTS}" 2>&1
+            RC=$?
           fi
+          set -e
+          echo "Код возврата Codex: ${RC}"
           echo "OUT_PATH=${OUT}" >> "$GITHUB_ENV"
+          echo "EVENTS_PATH=${EVENTS}" >> "$GITHUB_ENV"
+          echo "CODEX_RC=${RC}" >> "$GITHUB_ENV"
+          exit 0
 
       - name: Write receipt
         if: always()
@@ -221,17 +233,26 @@ jobs:
 
           trace = os.environ["TRACE_ID"]
           out_path = os.environ.get("OUT_PATH", "")
+          rc_raw = os.environ.get("CODEX_RC", "")
           body = ""
           if out_path and Path(out_path).exists():
               body = Path(out_path).read_text(encoding="utf-8", errors="replace")[:4000]
 
           low = body.lower()
-          if "401" in body or "unauthorized" in low or "not logged in" in low:
+          # Порядок важен. Код возврата главнее непустого вывода: сообщение об
+          # ошибке использования тоже непустое, и раньше оно проходило как PASS.
+          if rc_raw == "":
+              status, blocker = "FAILED", "Шаг запуска не сообщил код возврата."
+          elif "401" in body or "unauthorized" in low or "not logged in" in low or "please run" in low and "login" in low:
               status, blocker = "BLOCKED_AUTH", "Учётные данные не приняты — вероятно, секрет протух."
-          elif os.environ.get("STEP_OUTCOME") == "success" and body.strip():
-              status, blocker = "PASS", None
+          elif "unexpected argument" in low or "usage: codex" in low:
+              status, blocker = "FAILED_USAGE", "Команда собрана неверно: Codex отверг аргументы."
+          elif rc_raw != "0":
+              status, blocker = "FAILED", "Codex завершился с кодом " + rc_raw + "."
+          elif not body.strip():
+              status, blocker = "FAILED", "Codex завершился успешно, но ничего не вернул."
           else:
-              status, blocker = "FAILED", "Codex не вернул результат."
+              status, blocker = "PASS", None
 
           receipt = {
               "schema_version": 1,
@@ -241,6 +262,7 @@ jobs:
               "trace_id": trace,
               "mode": os.environ.get("MODE"),
               "sandbox": os.environ.get("SANDBOX"),
+              "codex_exit_code": rc_raw or None,
               "status": status,
               "blocker": blocker,
               "github_hosted": True,
