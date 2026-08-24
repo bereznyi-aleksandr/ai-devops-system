@@ -200,7 +200,10 @@ jobs:
           set +e
           if [ "${MODE}" = "review" ]; then
             # У review нет --json и --output-last-message; это флаги exec.
-            codex review --commit HEAD "${TASK}" > "${EVENTS}" 2>&1
+            # И --commit нельзя сочетать с текстом задания: либо коммит, либо
+            # свои указания. Предмет проверки задаётся коммитом, а текст
+            # задания сохраняется в квитанции.
+            codex review --commit HEAD > "${EVENTS}" 2>&1
             RC=$?
             cp "${EVENTS}" "${OUT}"
           else
