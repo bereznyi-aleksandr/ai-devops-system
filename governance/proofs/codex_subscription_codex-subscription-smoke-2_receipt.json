@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "provider": "gpt_codex_subscription",
+  "billing_class": "subscription_included",
+  "paid_api_used": false,
+  "trace_id": "codex-subscription-smoke-2",
+  "mode": "review",
+  "sandbox": "read-only",
+  "status": "PASS",
+  "blocker": null,
+  "github_hosted": true,
+  "self_hosted": false,
+  "response_preview": "error: unexpected argument '--json' found\n\n  tip: to pass '--json' as a value, use '-- --json'\n\nUsage: codex review [OPTIONS] [PROMPT]\n\nFor more information, try '--help'.\n",
+  "created_at": "2026-08-24T11:40:53Z",
+  "non_claims": [
+    "Квитанция подтверждает запуск, а не корректность результата.",
+    "Независимость аудита доказывает отдельная квитанция автор/аудитор, а не этот файл."
+  ]
+}
