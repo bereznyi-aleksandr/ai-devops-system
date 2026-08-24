@@ -24,11 +24,12 @@ jobs:
         with:
           token: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
 
+      # Поставщик Gemini отменён решением оператора 2026-08-24 и из системы удалён.
+      # Ключ Gemini больше не передаётся в этот шаг.
       - name: Read ACTIVE_QUEUE and dispatch GPT role
         env:
           GH_PAT: ${{ secrets.AI_SYSTEM_GITHUB_PAT }}
           REPO: ${{ github.repository }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python3 - <<'PY'
           import json, os, urllib.request, urllib.error
@@ -96,17 +97,14 @@ jobs:
           # Запускаем GPT analyst для анализа задачи
           task_body = f'TASK_ID: {task_id}\nTITLE: {task_title}\n\nDETAIL:\n{task_detail}'
 
-          dispatched = dispatch('gpt-hosted-roles.yml', {
-              'role': 'analyst',
-              'provider': 'gemini',
-              'trace_id': trace_id,
-              'cycle_id': task_id,
-              'task_type': 'active_queue_task',
-              'task': task_body
-          })
-
-          if dispatched:
-              print(f'GPT analyst dispatched for task {task_id}')
-          else:
-              print(f'Failed to dispatch GPT for task {task_id}')
+          # Прежний маршрут вёл в gpt-hosted-roles.yml с поставщиком Gemini.
+          # Он закрыт по двум причинам сразу:
+          #   1. Gemini отменён решением оператора 2026-08-24 и из системы удалён.
+          #   2. Сам gpt-hosted-roles.yml заархивирован ещё в BEM-931: он печатает
+          #      "ARCHIVED" и выходит, то есть работу не выполнял в любом случае.
+          # Новый маршрут исполнения назначается первой волной дорожной карты BEM-954.
+          # До этого цикл честно сообщает, что задача не отправлена, вместо того
+          # чтобы отчитываться об успехе, ничего не сделав.
+          print(f'BLOCKED: маршрут исполнения не назначен. Задача {task_id} не отправлена.')
+          print(f'trace_id: {trace_id}')
           PY
