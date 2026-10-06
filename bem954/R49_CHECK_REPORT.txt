@@ -1,0 +1,58 @@
+R49 CHECK REPORT v1
+ДОКУМЕНТ: R49_CHECK_REPORT.txt
+ВЕРСИЯ: v1.0
+СТАТУС: CANDIDATE
+ДАТА СОЗДАНИЯ: 2026-10-06 22:20 +03:00
+ИСПОЛНИТЕЛЬ: Claude, сессия f19e07a7-6edd-48a5-9ede-88086c949326
+ROLE=CLAUDE_DEVELOPER
+SELF_ACCEPTANCE=NO
+INDEPENDENT_CONTENT_AUDIT=CHATGPT_PENDING
+
+INPUT_H1_28=..\R48_FIX_20261006\101_CLAUDE_ARCHITECT_PROPOSAL_H1_28_R48_v1_28.md
+INPUT_H1_28_BYTES=1887718
+INPUT_H1_28_SHA256=cad2131cd8be7907ae49b4ee5dbbc391d6a94e8af9fb3334dd707e4b8b03d338
+INPUT_AUDIT_R48=ChatGPT APPROVE 0/0/0 (ANSWER_BEM954_CHATGPT_AUDIT_R48_H1_28_20261006.txt, Диск 1n9xDSdQHmk-ZFPPyVFKXK7LFJz41Vl_H, 16366 байт); ответы В1 и В2 — согласен.
+REASON=пункт 5 раздела 22 (kill -9 движка и перезапуск) повторён на PostgreSQL 16 после загрузки драйвера JDBC (согласие оператора на загрузку 2026-10-06).
+
+OUTPUT_DOCUMENT=101_CLAUDE_ARCHITECT_PROPOSAL_H1_29_R49_v1_29.md
+OUTPUT_DOCUMENT_BYTES=1893470
+OUTPUT_DOCUMENT_SHA256=d50ffc15c63b9fc85947f3484ec7b530dd10f27d0b81c6a68ac834a4e93598ea
+OUTPUT_DOCUMENT_GENERATOR=work\make_h1_29.mjs (23427 байт, a0b9943d84f6cc8b970fe934ad2da0be89639d246f13cfad5f6bb5655a5b49a1); каждая правка сверяет прежний текст и число вхождений, вход — по SHA-256.
+OUTPUT_PACKAGE=H1_29_PACKAGE_R49.zip (21 файл в корне, состав R48)
+OUTPUT_PACKAGE_BYTES=264029
+OUTPUT_PACKAGE_SHA256=daa937e014ea2d02ebaaacf3f827b1797ca135d5904f2dca6c9f6d3ba89f7a05
+MIGRATION_MANIFEST_SHA256=376f7791c1f00044116197e57c64722cbc7071eba0ec76f6cc0b86880dac1a7d
+PACKAGE_MANIFEST_SHA256=0b90a227884d05587ea1262f77da76110e8ee74902bcfa885ef95ebe529bed39
+PACKAGE_REPORT_SHA256=ee4189f7b7953ddfd4437919f4045e18620255494a24654eeed3ebdb607dfa22
+TAMPER_REPORT_SHA256=32cb9893182406fade5b53e7d526d37a86d75afeb676973f498dbb4e8327228c
+PG16_EVIDENCE_SHA256=35dc309dde9ded98186f4dd3b4c8f45b4a9e0836d735210ae69cc255e3a04070
+
+ПРАВКИ H1.28 -> H1.29 (только текст; SQL 00–05 побайтно равны R46–R48)
+- 22.2: решение 5 — проба пункта 5 на PostgreSQL выполнена в R49 и прошла; новый абзац «Повтор пункта 5 на PostgreSQL 16 (раунд R49)».
+- 15.41 -> история R48 (HISTORICAL_ROUND_FACT); 15.42 (новый) — текущий пакет R49, ROUND_FACT BASELINE H1.28 / EXPECTED H1.29, «Где идут проверки».
+- 0 (абзац R49, R48 — история), 23.5, вопрос 2 раздела 24, последний абзац, паспорт v1.29.
+- Программы пакета: имена редакции/раунда, базовая пара H1.28/cad2131c, якоря подделок; логика не менялась. Реестр 346 строк, подделок 247 — без изменений.
+
+ПРОБА ДВИЖКА НА POSTGRESQL 16 (пункт 5 раздела 22)
+ENGINE_PG_RUN=GitHub Actions, bereznyi-aleksandr/ai-devops-system, прогон 37502687910, коммит 43cd7cc0c3eb93ef2d6e420fa88ea33477c88e31, задание engine-pg, success.
+ENGINE_PG_SCRIPT=ci/engine_pg.sh v1.2: Flowable 8.0.0 (архив d0f9ad0b…, war 9d49ea5d…), pgjdbc 42.7.13 (SHA-1 Maven совпал; SHA-256 6e0e4cc2d8cae902084f8a2b18728b073a6fd9d1f87c9d8bff8f298c18185b93, 1220948 байт), схема bem_engine.
+ENGINE_PG_RESULT=экземпляр жив; исполнитель B получил ту же работу через 59 с; эффект один (от A); процесс дошёл до конца; таблиц ACT_* в bem_engine 56, в public 0; ENGINE_PG_RESULT=PASS.
+ENGINE_PG_LOG=work\ci_engine_pg_job.log, 39601 байт, SHA-256 728ae49284a9b4feeb309c598558b99dd3aa1f1436eb035f41bfb6876f981aef (пароль администратора одноразовый, скрыт маской; в журнале значения нет).
+
+CHECK-01=PASS: вход H1.28 сверен по SHA-256 до правок (генератор).
+CHECK-02=PASS: bem954_registry_check и bem954_semantic_check — реестр 0, смысл 0 (шаг сборщика, work\final_build_r49.log eb5ce304…).
+CHECK-03=PASS: chk_tamper28: всего 247, ожидаемо 247, якорь потерян 0, OK.
+CHECK-04=PASS: build_package --expect-edition H1.29 --pg16-evidence work\EVIDENCE_PG16_D05_20261006T181413Z.txt --out H1_29_PACKAGE_R49: 21 файл, «ПАКЕТ СОБРАН И ПРОВЕРЕН». Сборщик извлечён из самой H1.29 (work\bootstrap_extract_r49.mjs).
+CHECK-05=PASS: verify_package --expect-edition H1.29: G 21 из 21, OK (work\v_norm.log 060c1ed1…); с --previous H1.28: H реестр 346 сохранено, 0 новых, 0 повторов, OK (work\v_prev.log fd9865f7…).
+CHECK-06=PASS: verify_package --selftest: S00–S18, OK (work\v_self.log 7fbf90a7…).
+CHECK-07=PASS: chk_round_facts: ключей 5, проблем 0 (work\rf.log 73850cf0…).
+CHECK-08=PASS: PG16_D05 заново на живой базе: новый чистый кластер data18 (127.0.0.1:54333), 00 + обёртка H1.29 дважды — код 0; D-05 положительный код 0, отрицательный код 3 TRIGGER_TGQUAL_MISMATCH; сырые выводы побайтно равны R48 (pg16\run27_r49_live_20261006\r49_transcript.log 9a333827…, скрипт run_r49_live_d05_v10.sh 25025c04…).
+CHECK-09=PASS: доставка частями: R49_APPLY.py поверх R48_APPLY.py на копии папки Диска — RESULT ALL_OK (H1.29 и 21 файл пакета, все суммы).
+CHECK-10=PASS: GitHub Actions на ветке clean/h1-29 (коммит 6cee95dad, H1.29 и пакет R49): прогон 37510980450 — static, pg16, engine-pg — success.
+
+NOT_DONE
+- остальные пробы движка (пункты 1–4, 6–9, 12–14) на PostgreSQL — выполнены только на H2 в R47.
+- пункты 10 и 11 раздела 22 — как в R46–R48.
+
+FINAL_DEVELOPER_CHECK=PASS
+INDEPENDENT_ACCEPTANCE=NOT_PERFORMED
