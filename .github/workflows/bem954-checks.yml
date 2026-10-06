@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/bem954-checks.yml
-# ВЕРСИЯ: v1.0
+# ВЕРСИЯ: v1.1 (v1.1: задание engine-pg — Flowable на PostgreSQL 16, проба п.5)
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-06 19:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 19:35 +03:00
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 19:58 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия 4401918c-de88-4db7-841e-b418568ae069)
 # НАЗНАЧЕНИЕ: Официальная проверка пакета BEM-954 H1.28 (ответ ChatGPT R48, В2):
 #   static — сверщики, самопроверка, 247 подделок, факты раунда;
@@ -98,4 +98,56 @@ jobs:
         with:
           name: pg16-d05
           path: ${{ runner.temp }}/d05
+          if-no-files-found: ignore
+
+  engine-pg:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: psql client
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: One-time engine admin (not a stored secret)
+        shell: bash
+        run: |
+          P=$(openssl rand -hex 24)
+          echo "::add-mask::$P"
+          {
+            echo "ENGINE_USER=ci-admin"
+            echo "ENGINE_PASS=$P"
+            echo "FLOWABLE_REST_APP_ADMIN_USERID=ci-admin"
+            echo "FLOWABLE_REST_APP_ADMIN_PASSWORD=$P"
+          } >> "$GITHUB_ENV"
+      - name: Flowable on PostgreSQL 16, kill -9 and restart (section 22 item 5)
+        shell: bash
+        run: bash ci/engine_pg.sh "$RUNNER_TEMP/engine" | tee "$RUNNER_TEMP/engine_transcript.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: engine-pg
+          path: |
+            ${{ runner.temp }}/engine/run/*.log
+            ${{ runner.temp }}/engine/run/*.json
+            ${{ runner.temp }}/engine_transcript.log
           if-no-files-found: ignore
