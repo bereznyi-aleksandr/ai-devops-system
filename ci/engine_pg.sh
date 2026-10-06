@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/engine_pg.sh
-# ВЕРСИЯ: v1.0
+# ВЕРСИЯ: v1.1 (v1.1: путь war в архиве — wars/flowable-rest.war)
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-06 19:55 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 19:55 +03:00
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 20:10 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия 4401918c-de88-4db7-841e-b418568ae069)
 # НАЗНАЧЕНИЕ: проба движка процессов Flowable 8.0.0 на PostgreSQL 16 (схема bem_engine, H1.28 §8.4, §22.2):
 #   сверка сумм архива Flowable и war; JDBC-драйвер PostgreSQL из Maven Central (сверка SHA-1 Maven,
@@ -25,7 +25,7 @@ fail() { echo "::error::$1"; FAIL=1; }
 cd "$W/dl" || exit 9
 curl -fsSL -o flowable-8.0.0.zip "$FLOWABLE_ZIP_URL" || { echo "::error::flowable download"; exit 1; }
 echo "$FLOWABLE_ZIP_SHA256  flowable-8.0.0.zip" | sha256sum -c - || { echo "::error::flowable zip sha256"; exit 1; }
-unzip -q -j flowable-8.0.0.zip 'flowable-8.0.0/wars/flowable-rest.war' -d . || { echo "::error::war not in zip"; exit 1; }
+unzip -q -j flowable-8.0.0.zip 'wars/flowable-rest.war' -d . || { echo "::error::war not in zip"; exit 1; }
 echo "$WAR_SHA256  flowable-rest.war" | sha256sum -c - || { echo "::error::war sha256"; exit 1; }
 curl -fsSL -o "postgresql-$PGJDBC_VER.jar" "$PGJDBC_URL" && curl -fsSL -o pgjdbc.sha1 "$PGJDBC_URL.sha1" || { echo "::error::pgjdbc download"; exit 1; }
 echo "$(cut -c1-40 pgjdbc.sha1)  postgresql-$PGJDBC_VER.jar" | sha1sum -c - || { echo "::error::pgjdbc sha1 (Maven)"; exit 1; }
