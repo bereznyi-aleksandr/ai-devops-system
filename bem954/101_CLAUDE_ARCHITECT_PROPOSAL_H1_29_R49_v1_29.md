@@ -1,8 +1,8 @@
 ДОКУМЕНТ:
-Архитектурное предложение BEM-954, редакция H1.28 / раунд R48
+Архитектурное предложение BEM-954, редакция H1.29 / раунд R49
 
 ВЕРСИЯ:
-v1.28
+v1.29
 
 СТАТУС:
 CANDIDATE
@@ -11,31 +11,33 @@ CANDIDATE
 2026-10-06
 
 ДАТА ОБНОВЛЕНИЯ:
-2026-10-06 14:25 +03:00
+2026-10-06 21:09 +03:00
 
 ИСПОЛНИТЕЛЬ:
-Claude (Anthropic), роль DEVELOPER R42–R48; редакции до H1.21 включительно — ChatGPT (OpenAI)
+Claude (Anthropic), роль DEVELOPER R42–R49; редакции до H1.21 включительно — ChatGPT (OpenAI)
 
 АКТУАЛЬНОСТЬ:
-кандидат H1.28 для независимого содержательного аудита ChatGPT
+кандидат H1.29 для независимого содержательного аудита ChatGPT
 
 ЗАМЕНЯЕТ:
-H1.27 (101_CLAUDE_ARCHITECT_PROPOSAL_H1_27_R47_v1_27.md): SHA-256 `8c0170701ed7c9737f230d0926279be91b9c9ef8035b54b7fece74c948bfae36`, 1883810 байт. H1.27 и пакет R47 не изменялись.
+H1.28 (101_CLAUDE_ARCHITECT_PROPOSAL_H1_28_R48_v1_28.md): SHA-256 `cad2131cd8be7907ae49b4ee5dbbc391d6a94e8af9fb3334dd707e4b8b03d338`, 1887718 байт. H1.28 и пакет R48 не изменялись.
 
 ЗАМЕНЁН НА:
 N/A
 
 НАЗНАЧЕНИЕ:
-Раунд R48: исправление двух лёгких замечаний аудита ChatGPT R47 (REVISE 0/0/2). L-R47-01 — раздел 15.40 верно описывает улику D-05 пакета R47; L-R47-02 — исправлен отдельным файлом отчёта проб v1.1. Содержание проб движка и решений раздела 22.2 не менялось. SQL пакета не менялся.
+Раунд R49: пункт 5 раздела 22 повторён на PostgreSQL 16 (GitHub Actions, Flowable 8.0.0 и драйвер JDBC 42.7.13, схема bem_engine) и прошёл; снята граница «движок на PostgreSQL не проверен» для этого пункта. SQL пакета не менялся.
 
 ОГРАНИЧЕНИЯ:
-Это авторская редакция Claude, а не независимый аудит и не самоприёмка. Независимый содержательный аудит выполняет ChatGPT; транспорт и контроль доказательств в R48 выполняет Claude (вариант C схемы Б), это не приёмка. Пробы движка выполнены на базе H2; работа движка на PostgreSQL не проверена.
+Это авторская редакция Claude, а не независимый аудит и не самоприёмка. Независимый содержательный аудит выполняет ChatGPT; транспорт и контроль доказательств в R49 выполняет Claude (вариант C схемы Б), это не приёмка. На PostgreSQL повторён только пункт 5; остальные пробы движка R47 выполнены на H2.
 
 ---
 
 # 0. Вывод для оператора простыми словами
 
-**Раунд R48 (H1.28).** Независимый аудит подтвердил все пробы движка и решения раунда R47 и нашёл две описки в ссылках на доказательства. Первая исправлена здесь: раздел 15.40 теперь верно говорит, что проверка D-05 повторена для H1.27 и в пакете R47 лежит её новая улика. Вторая — неверный номер раздела в отчёте проб — исправлена новой версией отчёта. Схема базы и логика программ не менялись; проверка D-05 повторена ещё раз для этой редакции. Подробно — раздел 15.41.
+**Раунд R49 (H1.29).** Движок процессов впервые проверен на настоящей базе PostgreSQL, а не на временной базе H2. Проверка шла в GitHub: движок принудительно останавливали посреди работы и запускали заново. Работа не потерялась, второй исполнитель получил её же, действие выполнилось один раз, процесс дошёл до конца. Все таблицы движка лежат в отдельной схеме, как задумано. Схема базы и логика программ не менялись. Подробно — разделы 22.2 и 15.42.
+
+**Раунд R48 (H1.28) — история.** Независимый аудит подтвердил все пробы движка и решения раунда R47 и нашёл две описки в ссылках на доказательства. Первая исправлена здесь: раздел 15.40 теперь верно говорит, что проверка D-05 повторена для H1.27 и в пакете R47 лежит её новая улика. Вторая — неверный номер раздела в отчёте проб — исправлена новой версией отчёта. Схема базы и логика программ не менялись; проверка D-05 повторена ещё раз для этой редакции. Подробно — раздел 15.41.
 
 **Раунд R47 (H1.27) — история.** Движок процессов Flowable впервые запущен на этом компьютере, и двенадцать пунктов проверки движка выполнены вживую: подзадачи, развилка и слияние, ожидание аудита, аренда работы, перезапуск после падения и три сигнала работают так, как описано. Нашлись три вещи, которые держит наш код, а не движок: движок принимает испорченную схему процесса, разрешает запуск процесса в обход входного шлюза и не записывает автора шага. Ещё одна находка: тестовая база H2 при падении теряет последние записи, поэтому рабочей базой движка остаётся только PostgreSQL; проверка движка на PostgreSQL ждёт загрузки драйвера оператором. Подробно — разделы 22.2 и 15.40.
 
@@ -2136,9 +2138,9 @@ TEST_ROWS=346
 BEM954-PACKAGE-REGISTRY-LISTING-BEGIN
 ```javascript
 // bem954_registry_check.mjs — статический сверщик реестра тестов.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // Сверяет раздел 15 с каноническим кодом того же документа.
 // Ничего не запускает и к базе не подключается.
 // ИСТОРИЯ: прежний активный паспорт. Раунд R33 (решение D-05, замечание L-H117-R17-01):
@@ -2152,11 +2154,11 @@ BEM954-PACKAGE-REGISTRY-LISTING-BEGIN
 // Там же: строки реестра со статусами EXECUTED_STATIC и
 // EXECUTED_PACKAGE считаются в TEST_ROWS наравне с DESIGNED_NOT_EXECUTED.
 //
-//   node bem954_registry_check.mjs H1_28.md
+//   node bem954_registry_check.mjs H1_29.md
 //   0 — расхождений нет; 1 — расхождения есть, и каждое названо.
 import { readFileSync } from 'node:fs';
 
-const doc = readFileSync(process.argv[2] || 'H1_28.md', 'utf8');
+const doc = readFileSync(process.argv[2] || 'H1_29.md', 'utf8');
 const sql = (doc.match(/```sql\n([\s\S]*?)\n```/g) || [])
   .map((b) => b.replace(/^```sql\n/, '').replace(/\n```$/, ''))
   .join('\n');
@@ -2243,9 +2245,9 @@ const keywords = new Set([
   'APP', 'WITHDRAWN', 'EXTERNAL', 'MISSING',
   // ярлык из блока чисел BEM954-H1-<номер>-COUNTS
   'TEST_ROWS',
-  // служебные идентификаторы раундов R38, R42–R48, а не имена ошибок SQL
+  // служебные идентификаторы раундов R38, R42–R49, а не имена ошибок SQL
   'BASELINE_EDITION', 'DEFERRED_PG16_D05', 'EXPECTED_EDITION',
-  'H1_20_PACKAGE_R36', 'H1_21_PACKAGE_R38', 'H1_22_PACKAGE_R42', 'H1_23_PACKAGE_R43', 'H1_24_PACKAGE_R44', 'H1_25_PACKAGE_R45', 'H1_26_PACKAGE_R46', 'H1_27_PACKAGE_R47', 'H1_28_PACKAGE_R48', 'PG16_D05', 'ROUND_FACT', 'TAMPER_CASES_TOTAL', 'TAMPER_CASES_RANGE',
+  'H1_20_PACKAGE_R36', 'H1_21_PACKAGE_R38', 'H1_22_PACKAGE_R42', 'H1_23_PACKAGE_R43', 'H1_24_PACKAGE_R44', 'H1_25_PACKAGE_R45', 'H1_26_PACKAGE_R46', 'H1_27_PACKAGE_R47', 'H1_28_PACKAGE_R48', 'H1_29_PACKAGE_R49', 'PG16_D05', 'ROUND_FACT', 'TAMPER_CASES_TOTAL', 'TAMPER_CASES_RANGE',
 ]);
 
 // Листинг программы — это код, а не утверждение о реестре. Ограда из
@@ -3021,9 +3023,9 @@ SELECT encode(sha256(convert_to( coalesce(string_agg(row_text, E'\n' ORDER BY ro
 BEM954-PACKAGE-SEMANTIC-LISTING-BEGIN
 ````js
 // bem954_semantic_check.mjs — смысловой сверщик канонического кода.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // ИСТОРИЯ: прежний активный паспорт. Версия 6.3, раунд R32 (РАУНД-R32-СВЕРЩИК; РАУНД-R32-РЕДАКЦИЯ —
 // последний абзац документа называет только текущую редакцию; РАУНД-R32-ТЕКСТ —
 // текст раздела 5 о записи доказательства сверяется с каноном; и
@@ -6306,10 +6308,10 @@ node chk_tamper27.mjs H1_13.md --report r27_tamper_report.json
 
 BEM954-PACKAGE-TAMPER-SUITE-LISTING-BEGIN
 ````javascript
-// chk_tamper28.mjs — прогон набора подделок H1.28.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// chk_tamper28.mjs — прогон набора подделок H1.29.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // ИСТОРИЯ: прежний активный паспорт. Версия 5.0, раунд R33 (РАУНД-R33-РЕДАКЦИЯ: ожидаемая
 // редакция документа для смыслового сверщика приходит только извне — ключом
 // --expect-edition обязателен и передаётся при каждом
@@ -6330,9 +6332,9 @@ BEM954-PACKAGE-TAMPER-SUITE-LISTING-BEGIN
 // (РАУНД-R33-ПЕРЕНОС-ИМЁН: имя документа H1.18, рабочая папка r33;
 // соответствующая логика переноса тоже не менялась, а версия 5.0 поднята
 // по другой причине, названной выше.)
-// Запуск: node chk_tamper28.mjs <файл H1.28> [--expect-edition H1.28] [--report отчёт.json] [--work папка]
-//         node chk_tamper28.mjs <файл H1.28> --print-table   (таблица 15.18)
-//         node chk_tamper28.mjs <файл H1.28> --print-rows    (строки реестра)
+// Запуск: node chk_tamper28.mjs <файл H1.29> [--expect-edition H1.29] [--report отчёт.json] [--work папка]
+//         node chk_tamper28.mjs <файл H1.29> --print-table   (таблица 15.18)
+//         node chk_tamper28.mjs <файл H1.29> --print-rows    (строки реестра)
 //
 // Что изменилось против версии 2.0 и зачем.
 //
@@ -6388,7 +6390,7 @@ const argAfter = (flag) => {
   const i = process.argv.indexOf(flag);
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : null;
 };
-const file = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : 'H1_28.md';
+const file = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : 'H1_29.md';
 const base = readFileSync(file, 'utf8');
 const sha = (t) => createHash('sha256').update(t, 'utf8').digest('hex');
 
@@ -6401,10 +6403,10 @@ const sha = (t) => createHash('sha256').update(t, 'utf8').digest('hex');
 // смыслового сверщика — и по чистому документу, и по каждой подделанной
 // копии, — поэтому подделка текста копии его не меняет.
 const EXPECT_EDITION = argAfter('--expect-edition');
-if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.28'); process.exit(2); }
-if (EXPECT_EDITION !== 'H1.28') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.28'); process.exit(2); }
+if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.29'); process.exit(2); }
+if (EXPECT_EDITION !== 'H1.29') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.29'); process.exit(2); }
 const _passportText = base;
-if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.28(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.28'); process.exit(2); }
+if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.29(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.29'); process.exit(2); }
 
 const WORK = resolve(argAfter('--work') || join(tmpdir(), 'bem954_tamper_r38'));
 if (WORK === resolve(HERE) || WORK.startsWith(resolve(HERE) + sep)) {
@@ -6690,13 +6692,13 @@ const tamperCasesRange = aNumbers.length
 
 const report = {
   suite: 'chk_tamper28',
-  passport: 'ACTIVE vR48.1, раунд R48, H1.28',
+  passport: 'ACTIVE vR49.1, раунд R49, H1.29',
   manifest: 'tamper_manifest28.mjs',
   document: basename(file),
   document_sha256: sha(base),
   expected_edition: EXPECT_EDITION,
   expected_edition_source: 'cli',
-  round_facts: ['ROUND_FACT[BASELINE_EDITION]=H1.27', 'ROUND_FACT[EXPECTED_EDITION]=' + EXPECT_EDITION, 'ROUND_FACT[TAMPER_CASES_TOTAL]=' + cases.length, 'ROUND_FACT[TAMPER_CASES_RANGE]=' + tamperCasesRange, 'ROUND_FACT[PG16_D05]=' + ((base.match(/^ROUND_FACT\[PG16_D05\]=(\S+)$/m) || [])[1] || 'MISSING')],
+  round_facts: ['ROUND_FACT[BASELINE_EDITION]=H1.28', 'ROUND_FACT[EXPECTED_EDITION]=' + EXPECT_EDITION, 'ROUND_FACT[TAMPER_CASES_TOTAL]=' + cases.length, 'ROUND_FACT[TAMPER_CASES_RANGE]=' + tamperCasesRange, 'ROUND_FACT[PG16_D05]=' + ((base.match(/^ROUND_FACT\[PG16_D05\]=(\S+)$/m) || [])[1] || 'MISSING')],
   tamper_cases_range: tamperCasesRange,
   stripped_regions: stripped.cut,
   stripped_input: basename(cleanFile),
@@ -6775,10 +6777,10 @@ BEM954-PACKAGE-TAMPER-SUITE-LISTING-END
 
 BEM954-PACKAGE-TAMPER-MANIFEST-BEGIN
 ````javascript
-// tamper_manifest28.mjs — машинный манифест подделок H1.28.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// tamper_manifest28.mjs — машинный манифест подделок H1.29.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // ИСТОРИЯ: прежний активный паспорт. Версия 4.0, раунд R33 (случаи A58–A65 и строки K-R17-01…03;
 // замечания M-H117-R17-01=B-01, M-H117-R17-02=B-02, L-H117-R17-01=L-C-02;
 // решение D-08). Строка K-R17-04 (правка 4, `--expect-edition`) добавляется
@@ -7602,9 +7604,9 @@ export const fresh = [
   // --- РАУНД-R32-РЕДАКЦИЯ. Последний абзац документа называет только текущую редакцию ---
   // Замечание L-H116-R16-02. Якоря лежат в последнем абзаце документа.
   L("A55: последний абзац называет прежнюю редакцию H1.16 в первой фразе", "K-R16-10", "edition_problems: последний абзац называет чужую редакцию H1.16",
-    plain("Оно не означает, что H1.28 верна", "Оно не означает, что H1.16 верна")),
+    plain("Оно не означает, что H1.29 верна", "Оно не означает, что H1.16 верна")),
   L("A56: последний абзац называет редакцию H1.14 в последней фразе", "K-R16-10", "edition_problems: последний абзац называет чужую редакцию H1.14",
-    plain("Принять или отклонить H1.28 может", "Принять или отклонить H1.14 может")),
+    plain("Принять или отклонить H1.29 может", "Принять или отклонить H1.14 может")),
   L("A57: последняя фраза последнего абзаца переписана", "K-R16-10", null,
     plain("Старые номера редакций выше остаются только как явно исторические входы.", "Старые номера редакций выше остаются только как исторические входы."), 0),
 
@@ -7645,12 +7647,12 @@ export const fresh = [
   // --- R33. Правка 4 (L-H117-R17-02 = B-04, решение D-08): ожидаемая
   // редакция независима от документа - совместный откат паспорта и
   // последнего абзаца разом всё равно ловится -------------------------
-  L("A65: совместная подделка - паспорт и последний абзац разом откатываются на H1.27", "K-R17-04",
-    "edition_problems: паспорт называет редакцию H1.27, а ожидается H1.28",
+  L("A65: совместная подделка - паспорт и последний абзац разом откатываются на H1.28", "K-R17-04",
+    "edition_problems: паспорт называет редакцию H1.28, а ожидается H1.29",
     pair([
-      plain("ВЕРСИЯ:\nv1.28", "ВЕРСИЯ:\nv1.27"),
-      plain("Оно не означает, что H1.28 верна или принята.",
-            "Оно не означает, что H1.27 верна или принята."),
+      plain("ВЕРСИЯ:\nv1.29", "ВЕРСИЯ:\nv1.28"),
+      plain("Оно не означает, что H1.29 верна или принята.",
+            "Оно не означает, что H1.28 верна или принята."),
     ])),
 
   // --- R44. M-R43-01 (аудит R43): права роли проверки восстановления на
@@ -8671,10 +8673,10 @@ constraint-триггера на `WHEN (true)` и проходила все тр
 
 BEM954-PACKAGE-PKG-EXTRACT-LISTING-BEGIN
 ````js
-// pkg_extract.mjs — извлечение файлов пакета из документа H1.28.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// pkg_extract.mjs — извлечение файлов пакета из документа H1.29.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // ИСТОРИЯ: прежний активный паспорт. Версия 2.2, раунд R33 (РАУНД-R33-ПЕРЕНОС-ИМЁН: метки
 // программ H1-18, имя документа H1.20; логика не менялась). Версия 2.1 —
 // раунд R32 (РАУНД-R32-ПЕРЕНОС-ИМЁН: метки программ H1-17, имя
@@ -8819,7 +8821,7 @@ export function badNameReason(name) {
 const self = resolve(fileURLToPath(import.meta.url)).toLowerCase();
 if (process.argv[1] && resolve(process.argv[1]).toLowerCase() === self) {
   const file = process.argv[2];
-  if (!file) { console.error('нужен путь к документу H1.28'); process.exit(2); }
+  if (!file) { console.error('нужен путь к документу H1.29'); process.exit(2); }
   const { files, problems } = extract(readFileSync(file, 'utf8'));
   for (const [name, text] of files) {
     const b = Buffer.from(text, 'utf8');
@@ -8836,10 +8838,10 @@ BEM954-PACKAGE-PKG-EXTRACT-LISTING-END
 
 BEM954-PACKAGE-BUILD-PACKAGE-LISTING-BEGIN
 ````js
-// build_package.mjs — воспроизводимый сборщик пакета H1.28.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// build_package.mjs — воспроизводимый сборщик пакета H1.29.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // ИСТОРИЯ: прежний активный паспорт. Версия 2.2, раунд R33 (РАУНД-R33-ПЕРЕНОС-ИМЁН: имена
 // H1.18 и пакета H1_18_PACKAGE_R33; логика не менялась, кроме
 // --expect-edition — тот же раунд, замечание L-H117-R17-02 = B-04).
@@ -8849,8 +8851,8 @@ BEM954-PACKAGE-BUILD-PACKAGE-LISTING-BEGIN
 // раунд R30, замечание M-H114-R14-03.
 //
 // Запуск из папки пакета:
-//   node build_package.mjs <путь к H1.28>                 — пересборка на месте
-//   node build_package.mjs <путь к H1.28> --out <папка>   — сборка в новую папку
+//   node build_package.mjs <путь к H1.29>                 — пересборка на месте
+//   node build_package.mjs <путь к H1.29> --out <папка>   — сборка в новую папку
 //   необязательно: --work <папка> — куда набор подделок кладёт копии документа.
 //
 // Пакет — чистая функция документа. Всё, что в нём лежит, либо извлечено
@@ -8894,15 +8896,15 @@ const argAfter = (flag) => {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : null;
 };
 const DOC = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : null;
-if (!DOC) { console.error('нужен путь к документу H1.28: node build_package.mjs <путь>'); process.exit(2); }
+if (!DOC) { console.error('нужен путь к документу H1.29: node build_package.mjs <путь>'); process.exit(2); }
 const OUT = resolve(argAfter('--out') || HERE);
 const WORK = resolve(argAfter('--work') || join(tmpdir(), 'bem954_tamper_r38'));
 const EXPECT_EDITION = argAfter('--expect-edition');
-if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.28'); process.exit(2); }
-if (EXPECT_EDITION !== 'H1.28') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.28'); process.exit(2); }
+if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.29'); process.exit(2); }
+if (EXPECT_EDITION !== 'H1.29') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.29'); process.exit(2); }
 const _passportText = readFileSync(DOC, 'utf8');
-if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.28(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.28'); process.exit(2); }
-const PACKAGE = 'H1_28_PACKAGE_R48';
+if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.29(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.29'); process.exit(2); }
+const PACKAGE = 'H1_29_PACKAGE_R49';
 // H1.24, PG16_D05: улика живого прогона D-05; обязательна, когда документ
 // называет ROUND_FACT[PG16_D05]=EXECUTED_PASS.
 const PG16_ARG = argAfter('--pg16-evidence');
@@ -8947,7 +8949,7 @@ const суммы = {};
 for (const f of SQL_FILES) суммы[f] = sha(Buffer.from(files.get(f), 'utf8'));
 шаг(3, 'опись migration_manifest.json');
 const описьТекст = JSON.stringify({
-  document: 'H1.28 R48',
+  document: 'H1.29 R49',
   note: 'опись покрывает только шесть файлов SQL; обёртка в неё не входит намеренно',
   reproducible: 'времени сборки здесь нет: опись обязана быть чистой функцией документа',
   files: суммы,
@@ -9070,9 +9072,9 @@ const лист = [
   'Команды запускаются из этой папки. Node — любой версии не ниже 20.',
   '',
   '```text',
-  'node verify_package.mjs "<путь к H1.28>" --expect-edition H1.28',
-  'node build_package.mjs "<путь к H1.28>" --expect-edition H1.28 --pg16-evidence EVIDENCE_PG16_D05.txt',
-  'node build_package.mjs "<путь к H1.28>" --expect-edition H1.28 --pg16-evidence EVIDENCE_PG16_D05.txt --out "<новая пустая папка>"',
+  'node verify_package.mjs "<путь к H1.29>" --expect-edition H1.29',
+  'node build_package.mjs "<путь к H1.29>" --expect-edition H1.29 --pg16-evidence EVIDENCE_PG16_D05.txt',
+  'node build_package.mjs "<путь к H1.29>" --expect-edition H1.29 --pg16-evidence EVIDENCE_PG16_D05.txt --out "<новая пустая папка>"',
   '```',
   '',
   'Первая команда — независимая проверка: состав папки против описи,',
@@ -9111,14 +9113,14 @@ console.log('  README_PACKAGE.md: ' + положить('README_PACKAGE.md', ли
 
 const отчёт = JSON.stringify({
   package: PACKAGE,
-  builder_passport: 'ACTIVE vR48.1, раунд R48, H1.28',
-  baseline_edition: 'H1.27',
-  baseline_sha256: '8c0170701ed7c9737f230d0926279be91b9c9ef8035b54b7fece74c948bfae36',
+  builder_passport: 'ACTIVE vR49.1, раунд R49, H1.29',
+  baseline_edition: 'H1.28',
+  baseline_sha256: 'cad2131cd8be7907ae49b4ee5dbbc391d6a94e8af9fb3334dd707e4b8b03d338',
   document: basename(DOC),
   document_sha256: sha(docBuf),
   expected_edition: EXPECT_EDITION,
   expected_edition_source: 'cli',
-  round_facts: ['ROUND_FACT[BASELINE_EDITION]=H1.27', 'ROUND_FACT[EXPECTED_EDITION]=' + EXPECT_EDITION, 'ROUND_FACT[TAMPER_CASES_TOTAL]=' + (прогонObj ? прогонObj.tampers_total : 'MISSING'), 'ROUND_FACT[TAMPER_CASES_RANGE]=' + (прогонObj ? прогонObj.tamper_cases_range : 'MISSING'), 'ROUND_FACT[PG16_D05]=' + pg16Live],
+  round_facts: ['ROUND_FACT[BASELINE_EDITION]=H1.28', 'ROUND_FACT[EXPECTED_EDITION]=' + EXPECT_EDITION, 'ROUND_FACT[TAMPER_CASES_TOTAL]=' + (прогонObj ? прогонObj.tampers_total : 'MISSING'), 'ROUND_FACT[TAMPER_CASES_RANGE]=' + (прогонObj ? прогонObj.tamper_cases_range : 'MISSING'), 'ROUND_FACT[PG16_D05]=' + pg16Live],
   tamper_cases_range: прогонObj ? прогонObj.tamper_cases_range : null,
   manifest_sha256: суммаОписи,
   wrapper_sha256: sha(Buffer.from(обёрткаСДиска, 'utf8')),
@@ -9131,7 +9133,7 @@ const отчёт = JSON.stringify({
   pg16_evidence_format: 'EVIDENCE_PG16_D05_FORMAT_v1_0.md v1.0',
   pg16_evidence_format_sha256: '8e4285d75033a5133259f45c816cce717c2a2d69d3b5a851ad64435a2f0a1f45',
   c1_9_expected_sha256: 'f88fdb9d4ee6cd6ae3488360a8868b74492a7a91a94eb831f94616c5d5e0cd23',
-  c1_9_sha256_source: 'contract_constant_not_measured_in_R48',
+  c1_9_sha256_source: 'contract_constant_not_measured_in_R49',
   pg16_evidence_sha256: pg16Sha,
   line_rule: 'число переводов строки; завершающий перевод пустой строки не добавляет',
   files: состав,
@@ -9179,10 +9181,10 @@ BEM954-PACKAGE-BUILD-PACKAGE-LISTING-END
 
 BEM954-PACKAGE-VERIFY-PACKAGE-LISTING-BEGIN
 ````js
-// verify_package.mjs — проверка пакета H1.28.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// verify_package.mjs — проверка пакета H1.29.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // ИСТОРИЯ: прежний активный паспорт. Версия 1.2, раунд R33 (РАУНД-R33-ПЕРЕНОС-ИМЁН: имена
 // H1.18 и пакета R33, прежний документ — H1.17; логика не менялась).
 // Версия 1.1 — раунд R32 (РАУНД-R32-ПЕРЕНОС-ИМЁН: имена H1.17 и пакета
@@ -9190,9 +9192,9 @@ BEM954-PACKAGE-VERIFY-PACKAGE-LISTING-BEGIN
 // раунд R31, замечания M-H115-R15-02 и L-H115-R15-01.
 //
 // Запуск из папки пакета:
-//   node verify_package.mjs <путь к H1.28>
-//   node verify_package.mjs <путь к H1.28> --previous <путь к H1.27>
-//   node verify_package.mjs <путь к H1.28> --selftest
+//   node verify_package.mjs <путь к H1.29>
+//   node verify_package.mjs <путь к H1.29> --previous <путь к H1.28>
+//   node verify_package.mjs <путь к H1.29> --selftest
 // Необязательно: --dir <папка пакета> (по умолчанию — папка этой
 // программы), --work <папка> (по умолчанию — временная папка системы),
 // --report <файл.json>, --no-rebuild (без повторной сборки).
@@ -9239,12 +9241,12 @@ const argAfter = (flag) => {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : null;
 };
 const DOC = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : null;
-if (!DOC) { console.error('нужен путь к документу H1.28: node verify_package.mjs <путь>'); process.exit(2); }
+if (!DOC) { console.error('нужен путь к документу H1.29: node verify_package.mjs <путь>'); process.exit(2); }
 const EXPECT_EDITION = argAfter('--expect-edition');
-if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.28'); process.exit(2); }
-if (EXPECT_EDITION !== 'H1.28') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.28'); process.exit(2); }
+if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.29'); process.exit(2); }
+if (EXPECT_EDITION !== 'H1.29') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.29'); process.exit(2); }
 const _passportText = readFileSync(DOC, 'utf8');
-if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.28(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.28'); process.exit(2); }
+if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.29(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.29'); process.exit(2); }
 const DIR = resolve(argAfter('--dir') || HERE);
 const WORK = resolve(argAfter('--work') || join(tmpdir(), 'bem954_verify_r38'));
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
@@ -9306,9 +9308,9 @@ export function checkFolder(dir) {
       беды.push('состав отчёта package_report.json расходится с папкой');
     }
     if (отчёт.problems && отчёт.problems.length) беды.push('отчёт сборки содержит беды: ' + отчёт.problems.length);
-    if (отчёт.expected_edition !== 'H1.28' || отчёт.expected_edition_source !== 'cli') беды.push('package_report.json: expected_edition не H1.28/cli');
+    if (отчёт.expected_edition !== 'H1.29' || отчёт.expected_edition_source !== 'cli') беды.push('package_report.json: expected_edition не H1.29/cli');
     // H1.23, M-R42-01: базовая редакция и её сумма сверяются парой.
-    if (отчёт.baseline_edition !== 'H1.27' || отчёт.baseline_sha256 !== '8c0170701ed7c9737f230d0926279be91b9c9ef8035b54b7fece74c948bfae36') беды.push('package_report.json: базовая редакция не H1.27/8c017070');
+    if (отчёт.baseline_edition !== 'H1.28' || отчёт.baseline_sha256 !== 'cad2131cd8be7907ae49b4ee5dbbc391d6a94e8af9fb3334dd707e4b8b03d338') беды.push('package_report.json: базовая редакция не H1.28/cad2131c');
     // H1.24, PG16_D05: живой прогон D-05 выполнен; его улика лежит в пакете,
     // и её сумма записана в отчёте сборки. Содержание улики против файла 01
     // и документа сверяет chk_round_facts.mjs (F2).
@@ -9494,10 +9496,10 @@ const FAULTS = [
     (d) => rewritePackageReport(d, (o) => { o.tamper_run.total = 234; })],
   ['S15', 'tamper_run verdict не OK', 'package_report.json: tamper_run verdict не OK',
     (d) => rewritePackageReport(d, (o) => { o.tamper_run.verdict = 'ПРОВАЛ'; })],
-  ['S16', 'сумма базовой редакции от другого документа', 'package_report.json: базовая редакция не H1.27/8c017070',
-    (d) => rewritePackageReport(d, (o) => { o.baseline_sha256 = 'f9afae488e072484aaf557ee948211eb9ebe0b0ca165f219911ce0b15fb45093'; })],
-  ['S17', 'имя базовой редакции неверно', 'package_report.json: базовая редакция не H1.27/8c017070',
-    (d) => rewritePackageReport(d, (o) => { o.baseline_edition = 'H1.26'; })],
+  ['S16', 'сумма базовой редакции от другого документа', 'package_report.json: базовая редакция не H1.28/cad2131c',
+    (d) => rewritePackageReport(d, (o) => { o.baseline_sha256 = '8c0170701ed7c9737f230d0926279be91b9c9ef8035b54b7fece74c948bfae36'; })],
+  ['S17', 'имя базовой редакции неверно', 'package_report.json: базовая редакция не H1.28/cad2131c',
+    (d) => rewritePackageReport(d, (o) => { o.baseline_edition = 'H1.27'; })],
   ['S18', 'улика PG16_D05 изменена', 'pg16 evidence: файл пакета не совпадает с pg16_evidence_sha256 отчёта',
     (d) => {
       const p = join(d, PG16_EVIDENCE);
@@ -9526,7 +9528,7 @@ function selftest(dir) {
 
 // --- Прогон ---------------------------------------------------------------
 const docBuf = readFileSync(DOC);
-const итог = { tool: 'verify_package', passport: 'ACTIVE vR48.1, раунд R48, H1.28',
+const итог = { tool: 'verify_package', passport: 'ACTIVE vR49.1, раунд R49, H1.29',
                package: basename(DIR), document: basename(DOC), document_sha256: sha(docBuf),
                expected_edition: EXPECT_EDITION, expected_edition_source: 'cli' };
 const все = [];
@@ -9856,10 +9858,10 @@ OK. Все 227 прежних подделок сохранены с прежн�
 
 BEM954-PACKAGE-ROUND-FACTS-LISTING-BEGIN
 ````js
-// chk_round_facts.mjs — сверка фактов раунда R48 между документом и двумя отчётами.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// chk_round_facts.mjs — сверка фактов раунда R49 между документом и двумя отчётами.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // Читает только строки вида ROUND_FACT[key]=value; затем сверяет их с измеренными полями.
 import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -9956,7 +9958,7 @@ if (fact('PG16_D05') !== 'DESIGNED_NOT_EXECUTED') {
         || field('SECRETS_INCLUDED') !== 'NO') problems.push('PG16 evidence: итог не PASS/PASS/PASS/NO');
   }
 }
-if (fact('BASELINE_EDITION') !== 'H1.27') problems.push('BASELINE_EDITION должен быть H1.27 для R48');
+if (fact('BASELINE_EDITION') !== 'H1.28') problems.push('BASELINE_EDITION должен быть H1.28 для R49');
 for (const p of problems) console.error(p);
 console.log('ROUND_FACT keys: ' + keys.size + '; problems: ' + problems.length);
 process.exit(problems.length ? 1 : 0);
@@ -10204,7 +10206,7 @@ HISTORICAL_ROUND_FACT[TAMPER_CASES_TOTAL]=247
 HISTORICAL_ROUND_FACT[TAMPER_CASES_RANGE]=A01-A77
 HISTORICAL_ROUND_FACT[PG16_D05]=EXECUTED_PASS
 
-## 15.41. Текущий пакет — раунд R48, H1.28
+## 15.41. История R48 — H1.28 и пакет H1_28_PACKAGE_R48
 
 Пакет текущей редакции называется `H1_28_PACKAGE_R48`. Он собирается из этого документа тем же сборщиком в новую пустую папку с ключом `--pg16-evidence`; `H1_27_PACKAGE_R47` не меняется.
 
@@ -10214,10 +10216,30 @@ HISTORICAL_ROUND_FACT[PG16_D05]=EXECUTED_PASS
 
 **PG16_D05.** Файл `01` не менялся, но улика D-05 привязана к SHA-256 документа, поэтому D-05 повторён на живой базе для H1.28 на новом чистом кластере. Пакет R48 несёт новую улику, привязанную к H1.28; улики R46 и R47 в него не входят.
 
-Активные машинные факты R48:
+Исторические машинные факты R48 (в R48 были активными):
 
-ROUND_FACT[BASELINE_EDITION]=H1.27
-ROUND_FACT[EXPECTED_EDITION]=H1.28
+HISTORICAL_ROUND_FACT[BASELINE_EDITION]=H1.27
+HISTORICAL_ROUND_FACT[EXPECTED_EDITION]=H1.28
+HISTORICAL_ROUND_FACT[TAMPER_CASES_TOTAL]=247
+HISTORICAL_ROUND_FACT[TAMPER_CASES_RANGE]=A01-A77
+HISTORICAL_ROUND_FACT[PG16_D05]=EXECUTED_PASS
+
+## 15.42. Текущий пакет — раунд R49, H1.29
+
+Пакет текущей редакции называется `H1_29_PACKAGE_R49`. Он собирается из этого документа тем же сборщиком в новую пустую папку с ключом `--pg16-evidence`; `H1_28_PACKAGE_R48` не меняется.
+
+**Основание раунда.** Аудит ChatGPT по R48 вернул APPROVE 0/0/0. После него пункт 5 раздела 22 (жёсткое убийство движка и перезапуск) повторён на PostgreSQL 16 — это была единственная проба, для которой не хватало драйвера JDBC. Итог и доказательства — раздел 22.2, абзац «Повтор пункта 5 на PostgreSQL 16».
+
+**Что изменилось.** Только текст: раздел 0, 15.41 (перевод в историю), этот раздел, 22.2 (решение 5 и новый абзац), 23.5, вопрос 2 раздела 24, последний абзац и паспорт; в программах пакета — имена редакции и раунда и базовая пара H1.28. Файлы SQL `00`–`05` побайтно равны R48, R47 и R46. Строк реестра и подделок не добавлено; набор подделок прежний — 247.
+
+**Где идут проверки.** По решению оператора 2026-10-06 официальный результат проверок даёт GitHub Actions (сверщики, самопроверка, 247 подделок, установка SQL и D-05 на PostgreSQL 16, проба движка на PostgreSQL 16) на каждое изменение основной ветки; локальный стенд — по желанию. Постоянная база и движок работают на сервере, не в GitHub (разделы 14 и 18 не меняются).
+
+**PG16_D05.** Файл `01` не менялся, но улика D-05 привязана к SHA-256 документа, поэтому D-05 повторён на живой базе для H1.29 на новом чистом кластере. Пакет R49 несёт новую улику, привязанную к H1.29; улики R46–R48 в него не входят.
+
+Активные машинные факты R49:
+
+ROUND_FACT[BASELINE_EDITION]=H1.28
+ROUND_FACT[EXPECTED_EDITION]=H1.29
 ROUND_FACT[TAMPER_CASES_TOTAL]=247
 ROUND_FACT[TAMPER_CASES_RANGE]=A01-A77
 ROUND_FACT[PG16_D05]=EXECUTED_PASS
@@ -10641,9 +10663,11 @@ Caddy (Apache 2.0) или nginx (BSD 2-Clause) как обратный прок�
 2. **Старт — только через Intake Gateway.** REST движка доступен только Kernel; учётная запись Kernel — единственная, кто может стартовать экземпляр, и делает это только сообщением `bemIntake`. Сигнал 3 сверяет обе стороны: работа без экземпляра и экземпляр без работы.
 3. **Сигнал 1 — с учётной записью только для чтения.** Проверка здоровья Flowable без авторизации отвечает 401; сторож получает отдельную учётную запись только на эту проверку.
 4. **Сигнал 2 учитывает цикл сброса аренды.** Истёкшая аренда возвращается в очередь до минуты спустя; порог «работа без владельца» — не меньше длины аренды плюс 60 с.
-5. **H2 запрещён вне проб.** Отложенная запись H2 теряет фиксации при падении процесса. Рабочая база движка — только PostgreSQL (схема `bem_engine`); проба пункта 5 на PostgreSQL повторяется после загрузки JDBC-драйвера оператором.
+5. **H2 запрещён вне проб.** Отложенная запись H2 теряет фиксации при падении процесса. Рабочая база движка — только PostgreSQL (схема `bem_engine`); проба пункта 5 на PostgreSQL выполнена в раунде R49 и прошла (ниже).
 
 Пункты, отмеченные здесь выполненными, подтверждены живым движком. Как и в разделе 22.1, статусы строк покрытия раздела 15 этим не меняются.
+
+**Повтор пункта 5 на PostgreSQL 16 (раунд R49).** Выполнен 2026-10-06 в GitHub Actions (официальная проверка проекта по решению оператора 2026-10-06): репозиторий bereznyi-aleksandr/ai-devops-system, коммит 43cd7cc0c3eb93ef2d6e420fa88ea33477c88e31, прогон 37502687910, задание engine-pg, итог success. Одноразовый PostgreSQL 16 в служебном контейнере; Flowable REST 8.0.0 из того же архива релиза (сумма d0f9ad0b… совпала, war 9d49ea5d… совпал); драйвер JDBC PostgreSQL 42.7.13 из Maven Central (контрольная сумма SHA-1 Maven совпала; SHA-256 6e0e4cc2d8cae902084f8a2b18728b073a6fd9d1f87c9d8bff8f298c18185b93, 1220948 байт, закреплена в проверке). Драйвер добавлен в копию war; база движка — схема `bem_engine` (параметр currentSchema и flowable.database-schema). Порядок тот же, что у пробы R47: развёртывание графа, экземпляр доведён до подпроцесса, исполнитель A захватил работу и записал эффект, процесс java убит принудительно (kill -9), движок перезапущен. Итог: экземпляр жив (стоит в узле 7), исполнитель B получил **ту же** работу через 59 с, адаптер не создал второго эффекта (эффект один, от A), процесс дошёл до конца. Таблиц движка в схеме `bem_engine` — 56, в схеме public — 0. Потерь фиксаций, как у H2 с отложенной записью, нет. Журнал задания сохранён локально (39601 байт, SHA-256 728ae49284a9b4feeb309c598558b99dd3aa1f1436eb035f41bfb6876f981aef). Пароль администратора движка в прогоне одноразовый и скрыт маской; секретов проект не хранит.
 
 ---
 
@@ -10678,7 +10702,7 @@ V-01: наиболее вероятная причина смерти прежн
 
 ## 23.5. Чего этот документ не доказывает
 
-**Состояние на H1.28.** Абзац ниже написан для H1.6 и сохранён как история. С раунда R42 пакет прогоняется на PostgreSQL 16.15, раунд R46 выполнил пункты 15–21 раздела 22 на живой базе (раздел 22.1), а раунд R47 — пункты 1–9 и 12–14 на живом движке Flowable 8.0.0 с базой H2 (раздел 22.2). Не проверены по-прежнему: движок процессов на PostgreSQL (нужен JDBC-драйвер), запуск Claude без окна командой из консоли (пункт 10), провайдеры входа, Telegram и деплой на деле (пункт 11), путь обновления со старых форм H1.6–H1.9 на файлах этой редакции.
+**Состояние на H1.29.** Абзац ниже написан для H1.6 и сохранён как история. С раунда R42 пакет прогоняется на PostgreSQL 16.15, раунд R46 выполнил пункты 15–21 раздела 22 на живой базе (раздел 22.1), а раунд R47 — пункты 1–9 и 12–14 на живом движке Flowable 8.0.0 с базой H2 (раздел 22.2), раунд R49 — пункт 5 на том же движке с базой PostgreSQL 16 (раздел 22.2). Не проверены по-прежнему: остальные пункты движка на PostgreSQL, запуск Claude без окна командой из консоли (пункт 10), провайдеры входа, Telegram и деплой на деле (пункт 11), путь обновления со старых форм H1.6–H1.9 на файлах этой редакции.
 
 Ни одна SQL-конструкция, ни один BPMN-граф и ни одна из 142 строк покрытия на живом стенде не выполнялись: стенда нет. Три файла разделов 25, 26 и 27 написаны повторяемыми и обоснованы документацией, но ни разу не запущены — именно поэтому они стоят первыми строками `K-R6-01`…`K-R6-04`. Отдельно подчёркиваю: исправление пяти критических замечаний этого раунда проверено чтением кода, а не прогоном. Строка «права выданы верно» остаётся проектным утверждением до первого запуска. Документ описывает проект и критерии приёмки, а не работающую систему. Успешный ответ по мосту также ничего не доказывает о работоспособности архитектуры.
 
@@ -10687,7 +10711,7 @@ V-01: наиболее вероятная причина смерти прежн
 # 24. Открытые вопросы
 
 1. **Режим одного поставщика в runtime** — `OPERATOR-GATE-H14-01`, раздел 13.3. До ответа действует безопасный вариант A. К протоколу BEM-954 этот вопрос не относится: там два проверяющих обязательны всегда (раздел 13.5).
-2. **Выбор движка процессов** — Flowable 8.0.0 прошёл пробы R47 на базе H2 (раздел 22.2) с тремя оговорками, закрытыми нашим кодом: проверщик графа, запуск только через Kernel, автор шага из `Evidence`. Окончательный выбор — после повтора пункта 5 на PostgreSQL; для этого нужен JDBC-драйвер PostgreSQL, загрузку выполняет оператор (защитный фильтр проекта запрещает скачивание из консоли).
+2. **Выбор движка процессов** — Flowable 8.0.0 прошёл пробы R47 на базе H2 (раздел 22.2) с тремя оговорками, закрытыми нашим кодом: проверщик графа, запуск только через Kernel, автор шага из `Evidence`. Пункт 5 повторён на PostgreSQL 16 в раунде R49 и прошёл (раздел 22.2); препятствий к выбору Flowable со стороны проб больше нет, окончательный выбор — решение оператора.
 3. **Поведение «много экземпляров» и настоящей пары развилка/слияние на выбранном движке** — спайк, пункт 14.
 4. **Связка служебной функции выборки и защиты строк на живой базе** — закрыт пробой R46, пункт 15 (раздел 22.1).
 5. **Программный асинхронный вызов субагента** — внутри сессии подтверждён пробой R46 (пункты 10 и 21); запуск без окна командой из консоли не проверен, раздел 22.1.
@@ -11167,9 +11191,9 @@ $$;
 
 ```javascript
 // run_migration.mjs — внешняя обёртка окна мигратора.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // Запуск: node run_migration.mjs --files 01_database_migration.sql
 //         node run_migration.mjs --files 02_upgrade_to_h110.sql,01_database_migration.sql
 // Подключение: администратор кластера. Паролей в файле нет — они берутся
@@ -20175,4 +20199,4 @@ TAMPER_CASES_ADDED_IN_R33=7
 MACHINE_BLOCK_NAMES_MOVED_TO_H1_18=YES
 ```
 
-**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.28 к независимой проверке. Оно не означает, что H1.28 верна или принята. Принять или отклонить H1.28 может только независимый содержательный аудит ChatGPT; транспорт и контроль доказательств в R48 выполняет Claude (вариант C схемы Б, решение оператора 2026-10-06), это не приёмка. Старые номера редакций выше остаются только как явно исторические входы.
+**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.29 к независимой проверке. Оно не означает, что H1.29 верна или принята. Принять или отклонить H1.29 может только независимый содержательный аудит ChatGPT; транспорт и контроль доказательств в R49 выполняет Claude (вариант C схемы Б, решение оператора 2026-10-06), это не приёмка. Старые номера редакций выше остаются только как явно исторические входы.

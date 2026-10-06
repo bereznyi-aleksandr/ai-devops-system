@@ -1,7 +1,7 @@
-// verify_package.mjs — проверка пакета H1.28.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// verify_package.mjs — проверка пакета H1.29.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // ИСТОРИЯ: прежний активный паспорт. Версия 1.2, раунд R33 (РАУНД-R33-ПЕРЕНОС-ИМЁН: имена
 // H1.18 и пакета R33, прежний документ — H1.17; логика не менялась).
 // Версия 1.1 — раунд R32 (РАУНД-R32-ПЕРЕНОС-ИМЁН: имена H1.17 и пакета
@@ -9,9 +9,9 @@
 // раунд R31, замечания M-H115-R15-02 и L-H115-R15-01.
 //
 // Запуск из папки пакета:
-//   node verify_package.mjs <путь к H1.28>
-//   node verify_package.mjs <путь к H1.28> --previous <путь к H1.27>
-//   node verify_package.mjs <путь к H1.28> --selftest
+//   node verify_package.mjs <путь к H1.29>
+//   node verify_package.mjs <путь к H1.29> --previous <путь к H1.28>
+//   node verify_package.mjs <путь к H1.29> --selftest
 // Необязательно: --dir <папка пакета> (по умолчанию — папка этой
 // программы), --work <папка> (по умолчанию — временная папка системы),
 // --report <файл.json>, --no-rebuild (без повторной сборки).
@@ -58,12 +58,12 @@ const argAfter = (flag) => {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : null;
 };
 const DOC = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : null;
-if (!DOC) { console.error('нужен путь к документу H1.28: node verify_package.mjs <путь>'); process.exit(2); }
+if (!DOC) { console.error('нужен путь к документу H1.29: node verify_package.mjs <путь>'); process.exit(2); }
 const EXPECT_EDITION = argAfter('--expect-edition');
-if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.28'); process.exit(2); }
-if (EXPECT_EDITION !== 'H1.28') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.28'); process.exit(2); }
+if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.29'); process.exit(2); }
+if (EXPECT_EDITION !== 'H1.29') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.29'); process.exit(2); }
 const _passportText = readFileSync(DOC, 'utf8');
-if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.28(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.28'); process.exit(2); }
+if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.29(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.29'); process.exit(2); }
 const DIR = resolve(argAfter('--dir') || HERE);
 const WORK = resolve(argAfter('--work') || join(tmpdir(), 'bem954_verify_r38'));
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
@@ -125,9 +125,9 @@ export function checkFolder(dir) {
       беды.push('состав отчёта package_report.json расходится с папкой');
     }
     if (отчёт.problems && отчёт.problems.length) беды.push('отчёт сборки содержит беды: ' + отчёт.problems.length);
-    if (отчёт.expected_edition !== 'H1.28' || отчёт.expected_edition_source !== 'cli') беды.push('package_report.json: expected_edition не H1.28/cli');
+    if (отчёт.expected_edition !== 'H1.29' || отчёт.expected_edition_source !== 'cli') беды.push('package_report.json: expected_edition не H1.29/cli');
     // H1.23, M-R42-01: базовая редакция и её сумма сверяются парой.
-    if (отчёт.baseline_edition !== 'H1.27' || отчёт.baseline_sha256 !== '8c0170701ed7c9737f230d0926279be91b9c9ef8035b54b7fece74c948bfae36') беды.push('package_report.json: базовая редакция не H1.27/8c017070');
+    if (отчёт.baseline_edition !== 'H1.28' || отчёт.baseline_sha256 !== 'cad2131cd8be7907ae49b4ee5dbbc391d6a94e8af9fb3334dd707e4b8b03d338') беды.push('package_report.json: базовая редакция не H1.28/cad2131c');
     // H1.24, PG16_D05: живой прогон D-05 выполнен; его улика лежит в пакете,
     // и её сумма записана в отчёте сборки. Содержание улики против файла 01
     // и документа сверяет chk_round_facts.mjs (F2).
@@ -313,10 +313,10 @@ const FAULTS = [
     (d) => rewritePackageReport(d, (o) => { o.tamper_run.total = 234; })],
   ['S15', 'tamper_run verdict не OK', 'package_report.json: tamper_run verdict не OK',
     (d) => rewritePackageReport(d, (o) => { o.tamper_run.verdict = 'ПРОВАЛ'; })],
-  ['S16', 'сумма базовой редакции от другого документа', 'package_report.json: базовая редакция не H1.27/8c017070',
-    (d) => rewritePackageReport(d, (o) => { o.baseline_sha256 = 'f9afae488e072484aaf557ee948211eb9ebe0b0ca165f219911ce0b15fb45093'; })],
-  ['S17', 'имя базовой редакции неверно', 'package_report.json: базовая редакция не H1.27/8c017070',
-    (d) => rewritePackageReport(d, (o) => { o.baseline_edition = 'H1.26'; })],
+  ['S16', 'сумма базовой редакции от другого документа', 'package_report.json: базовая редакция не H1.28/cad2131c',
+    (d) => rewritePackageReport(d, (o) => { o.baseline_sha256 = '8c0170701ed7c9737f230d0926279be91b9c9ef8035b54b7fece74c948bfae36'; })],
+  ['S17', 'имя базовой редакции неверно', 'package_report.json: базовая редакция не H1.28/cad2131c',
+    (d) => rewritePackageReport(d, (o) => { o.baseline_edition = 'H1.27'; })],
   ['S18', 'улика PG16_D05 изменена', 'pg16 evidence: файл пакета не совпадает с pg16_evidence_sha256 отчёта',
     (d) => {
       const p = join(d, PG16_EVIDENCE);
@@ -345,7 +345,7 @@ function selftest(dir) {
 
 // --- Прогон ---------------------------------------------------------------
 const docBuf = readFileSync(DOC);
-const итог = { tool: 'verify_package', passport: 'ACTIVE vR48.1, раунд R48, H1.28',
+const итог = { tool: 'verify_package', passport: 'ACTIVE vR49.1, раунд R49, H1.29',
                package: basename(DIR), document: basename(DOC), document_sha256: sha(docBuf),
                expected_edition: EXPECT_EDITION, expected_edition_source: 'cli' };
 const все = [];

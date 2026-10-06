@@ -1,10 +1,10 @@
 # ДОКУМЕНТ: .github/workflows/bem954-checks.yml
-# ВЕРСИЯ: v1.1 (v1.1: задание engine-pg — Flowable на PostgreSQL 16, проба п.5)
+# ВЕРСИЯ: v1.2 (v1.2: редакция задаётся переменной EDITION, сейчас H1.29; v1.1: задание engine-pg)
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-06 19:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 19:58 +03:00
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 21:40 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия 4401918c-de88-4db7-841e-b418568ae069)
-# НАЗНАЧЕНИЕ: Официальная проверка пакета BEM-954 H1.28 (ответ ChatGPT R48, В2):
+# НАЗНАЧЕНИЕ: Официальная проверка пакета BEM-954 (редакция — EDITION) (ответ ChatGPT R48, В2):
 #   static — сверщики, самопроверка, 247 подделок, факты раунда;
 #   pg16   — установка SQL на одноразовом PostgreSQL 16 и проба D-05.
 #   Данные PostgreSQL здесь одноразовые; рабочая база и движок живут на сервере.
@@ -25,9 +25,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DOC: 101_CLAUDE_ARCHITECT_PROPOSAL_H1_28_R48_v1_28.md
-  DOC_SHA256: cad2131cd8be7907ae49b4ee5dbbc391d6a94e8af9fb3334dd707e4b8b03d338
-  PKG: bem954/H1_28_PACKAGE_R48
+  EDITION: H1.29
+  DOC: 101_CLAUDE_ARCHITECT_PROPOSAL_H1_29_R49_v1_29.md
+  DOC_SHA256: d50ffc15c63b9fc85947f3484ec7b530dd10f27d0b81c6a68ac834a4e93598ea
+  PKG: bem954/H1_29_PACKAGE_R49
 
 jobs:
   static:
@@ -42,10 +43,10 @@ jobs:
         run: echo "$DOC_SHA256  bem954/$DOC" | sha256sum -c -
       - name: verify_package (composition, sums, clean rebuild)
         working-directory: ${{ env.PKG }}
-        run: node verify_package.mjs "../$DOC" --expect-edition H1.28
+        run: node verify_package.mjs "../$DOC" --expect-edition "$EDITION"
       - name: verify_package selftest (S00-S18)
         working-directory: ${{ env.PKG }}
-        run: node verify_package.mjs "../$DOC" --expect-edition H1.28 --selftest
+        run: node verify_package.mjs "../$DOC" --expect-edition "$EDITION" --selftest
       - name: Registry and semantic checkers
         working-directory: ${{ env.PKG }}
         run: |
@@ -53,7 +54,7 @@ jobs:
           node bem954_semantic_check.mjs "../$DOC"
       - name: Tamper set (247 cases)
         working-directory: ${{ env.PKG }}
-        run: node chk_tamper28.mjs "../$DOC" --expect-edition H1.28 --report "$RUNNER_TEMP/tamper_report_ci.json" --work "$RUNNER_TEMP/tamper"
+        run: node chk_tamper28.mjs "../$DOC" --expect-edition "$EDITION" --report "$RUNNER_TEMP/tamper_report_ci.json" --work "$RUNNER_TEMP/tamper"
       - name: Round facts
         working-directory: ${{ env.PKG }}
         run: node chk_round_facts.mjs "../$DOC" tamper_report.json package_report.json --pg16-evidence EVIDENCE_PG16_D05.txt

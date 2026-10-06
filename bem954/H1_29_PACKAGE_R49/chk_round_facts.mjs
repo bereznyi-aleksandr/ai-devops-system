@@ -1,7 +1,7 @@
-// chk_round_facts.mjs — сверка фактов раунда R48 между документом и двумя отчётами.
-// PASSPORT: ACTIVE vR48.1, раунд R48, H1.28.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R48 (РАУНД-R48-ПЕРЕНОС-ИМЁН: H1.28; логика программ в R47 и R48 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.27/R47; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 — раздел 22.2, остальное — раздел 15.41.
+// chk_round_facts.mjs — сверка фактов раунда R49 между документом и двумя отчётами.
+// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
 // Читает только строки вида ROUND_FACT[key]=value; затем сверяет их с измеренными полями.
 import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -98,7 +98,7 @@ if (fact('PG16_D05') !== 'DESIGNED_NOT_EXECUTED') {
         || field('SECRETS_INCLUDED') !== 'NO') problems.push('PG16 evidence: итог не PASS/PASS/PASS/NO');
   }
 }
-if (fact('BASELINE_EDITION') !== 'H1.27') problems.push('BASELINE_EDITION должен быть H1.27 для R48');
+if (fact('BASELINE_EDITION') !== 'H1.28') problems.push('BASELINE_EDITION должен быть H1.28 для R49');
 for (const p of problems) console.error(p);
 console.log('ROUND_FACT keys: ' + keys.size + '; problems: ' + problems.length);
 process.exit(problems.length ? 1 : 0);
