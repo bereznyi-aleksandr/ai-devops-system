@@ -1,0 +1,129 @@
+{
+  "package": "H1_28_PACKAGE_R48",
+  "document": "101_CLAUDE_ARCHITECT_PROPOSAL_H1_28_R48_v1_28.md",
+  "document_sha256": "cad2131cd8be7907ae49b4ee5dbbc391d6a94e8af9fb3334dd707e4b8b03d338",
+  "note": "каждый файл пакета, кроме самой описи; её сумму закрепляет малый манифест ответа",
+  "line_rule": "число переводов строки; завершающий перевод пустой строки не добавляет",
+  "files": [
+    {
+      "name": "00_cluster_bootstrap.sql",
+      "bytes": 23335,
+      "sha256": "f8c06c159c81b3facf191ab564a8b56ecc153b3106d9fc5c014f94abeec51d2e",
+      "lines": 395
+    },
+    {
+      "name": "01_database_migration.sql",
+      "bytes": 299608,
+      "sha256": "ce75f3c9978d9ef470ba4c9f9c9f84985c27b603f5d7576951d007492145a7e5",
+      "lines": 5345
+    },
+    {
+      "name": "02_upgrade_to_h110.sql",
+      "bytes": 41197,
+      "sha256": "90940a752a78aa6a5e7dc01ee9814ac7e7d857c45cbd5d3b102a2e54f38d1bb2",
+      "lines": 777
+    },
+    {
+      "name": "03_restore_verifier.sql",
+      "bytes": 12112,
+      "sha256": "2ea94a34df3b3ea0ef03d590609aa42cf394088ac724646b99fb94b2a7d84f61",
+      "lines": 230
+    },
+    {
+      "name": "04_backup_window.sql",
+      "bytes": 10075,
+      "sha256": "e4041fd4f6831a5f185bef5451fb0fa344b02ffcc59da7cd7ea3880844085b23",
+      "lines": 224
+    },
+    {
+      "name": "05_final_state_check.sql",
+      "bytes": 95558,
+      "sha256": "1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1",
+      "lines": 1263
+    },
+    {
+      "name": "EVIDENCE_PG16_D05.txt",
+      "bytes": 4471,
+      "sha256": "1d5fd9a0c20d2678e326c5052279b21283f024f76c7137ce7b6ce627c51ee2af",
+      "lines": 37
+    },
+    {
+      "name": "README_PACKAGE.md",
+      "bytes": 3132,
+      "sha256": "94800143b820b5ad38c32feb2f5d9e53de1f54cf62ed05f4da4d59ca3f7bad16",
+      "lines": 64
+    },
+    {
+      "name": "bem954_registry_check.mjs",
+      "bytes": 17835,
+      "sha256": "962abae2aa54586b3f778b505c7f9323bf4799424ed777fc0508d8d585dc02e3",
+      "lines": 294
+    },
+    {
+      "name": "bem954_semantic_check.mjs",
+      "bytes": 182031,
+      "sha256": "cee02fa275f2864a9b27317ce0800701c42c512a19244cdd8a3cee1879727e23",
+      "lines": 3085
+    },
+    {
+      "name": "build_package.mjs",
+      "bytes": 22896,
+      "sha256": "cabd5ced24494baa2a40c45a7609acbe3498ee05e04cadf730ada95d5f822000",
+      "lines": 336
+    },
+    {
+      "name": "chk_round_facts.mjs",
+      "bytes": 7647,
+      "sha256": "51ea4eb81a846a262abba23e52a97484be32351e30ad145fb6f256c1ceafc6af",
+      "lines": 104
+    },
+    {
+      "name": "chk_tamper28.mjs",
+      "bytes": 27564,
+      "sha256": "94fd94c230d36634acd5ee3f95d16a5d72ee96fd43a202c09a458ea90eb76a4a",
+      "lines": 456
+    },
+    {
+      "name": "migration_manifest.json",
+      "bytes": 940,
+      "sha256": "e14e08fad2255c3fc0779bb5090803dcb03ac2adc15b581bc8928d4fb27f5929",
+      "lines": 13
+    },
+    {
+      "name": "package_report.json",
+      "bytes": 2444,
+      "sha256": "02ba95610ca5a9c2e63ff55369ad390e19cc0b88d2570fb4797f85382b0adff5",
+      "lines": 61
+    },
+    {
+      "name": "pkg_extract.mjs",
+      "bytes": 10480,
+      "sha256": "f520fcc5c0137cd1cc349a41b892b2e28f138b9e4bab3dd0aa35459a4b836dfd",
+      "lines": 158
+    },
+    {
+      "name": "run_migration.mjs",
+      "bytes": 17701,
+      "sha256": "152efbefeeac0839c7ee53ddebda17b93b2c72df4c757aa07597d3ca21b92203",
+      "lines": 345
+    },
+    {
+      "name": "tamper_manifest28.mjs",
+      "bytes": 111273,
+      "sha256": "08a1f0e97335ff8d94d613822d701bbff3943cf32f4b95cbb7d181190c3aaf16",
+      "lines": 970
+    },
+    {
+      "name": "tamper_report.json",
+      "bytes": 309187,
+      "sha256": "e117aba91f6b0ae1f9541b473a4716edabe94a1d7ee6a0fda0fa8ae650f56ca4",
+      "lines": 8510
+    },
+    {
+      "name": "verify_package.mjs",
+      "bytes": 29104,
+      "sha256": "54962623a635cfbccf384ad43a0b54ab6f53963b3db3df686b77b045ee0e7f12",
+      "lines": 425
+    }
+  ]
+}

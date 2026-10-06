@@ -1,0 +1,52 @@
+R48 CHECK REPORT v1
+ДОКУМЕНТ: R48_CHECK_REPORT.txt
+ВЕРСИЯ: v1.0
+СТАТУС: CANDIDATE
+ДАТА СОЗДАНИЯ: 2026-10-06 17:50 +03:00
+ИСПОЛНИТЕЛЬ: Claude, сессия 4401918c-de88-4db7-841e-b418568ae069
+ROLE=CLAUDE_DEVELOPER
+SELF_ACCEPTANCE=NO
+INDEPENDENT_CONTENT_AUDIT=CHATGPT_PENDING
+
+INPUT_H1_27=..\R47_ENGINE_SPIKES_20261005\101_CLAUDE_ARCHITECT_PROPOSAL_H1_27_R47_v1_27.md
+INPUT_H1_27_BYTES=1883810
+INPUT_H1_27_SHA256=8c0170701ed7c9737f230d0926279be91b9c9ef8035b54b7fece74c948bfae36
+INPUT_AUDIT_R47=ChatGPT REVISE 0/0/2 (ANSWER_BEM954_CHATGPT_AUDIT_R47_H1_27_20261005.txt, f4578ba2052690d57c2f80c1c4d86c808d365eaa98c8f6fe32bfa495e6d7a6e4): L-R47-01 (§15.40, улика D-05), L-R47-02 (RESULTS v1.0, 22.1 -> 22.2).
+
+OUTPUT_DOCUMENT=101_CLAUDE_ARCHITECT_PROPOSAL_H1_28_R48_v1_28.md
+OUTPUT_DOCUMENT_BYTES=1887718
+OUTPUT_DOCUMENT_SHA256=cad2131cd8be7907ae49b4ee5dbbc391d6a94e8af9fb3334dd707e4b8b03d338
+OUTPUT_DOCUMENT_GENERATOR=work\make_h1_28.mjs v1.1 (19793 байт, a6f2edfc749206cc44c0159bdc628d0de4e1ac2cd2f974ed9a3252e99331e294); каждая правка сверяет прежний текст и число вхождений, вход — по SHA-256.
+OUTPUT_PACKAGE=H1_28_PACKAGE_R48.zip (21 файл в корне, состав R47)
+OUTPUT_PACKAGE_BYTES=263979
+OUTPUT_PACKAGE_SHA256=7929abcd302cdb43561922bbd5b221efd2c716ab2564cdd87540f6ef13e81095
+MIGRATION_MANIFEST_SHA256=e14e08fad2255c3fc0779bb5090803dcb03ac2adc15b581bc8928d4fb27f5929
+PACKAGE_MANIFEST_SHA256=c3c8bfc7d13d0644edeca1c2d700111236f832cc33e95cfe9b731e788e6cc85c
+PACKAGE_REPORT_SHA256=02ba95610ca5a9c2e63ff55369ad390e19cc0b88d2570fb4797f85382b0adff5
+TAMPER_REPORT_SHA256=e117aba91f6b0ae1f9541b473a4716edabe94a1d7ee6a0fda0fa8ae650f56ca4
+PG16_EVIDENCE_SHA256=1d5fd9a0c20d2678e326c5052279b21283f024f76c7137ce7b6ce627c51ee2af
+ENGINE_SPIKES_RESULTS=R47_ENGINE_SPIKES_RESULTS_v1_1.md v1.1 (8940 байт, 8c6c6dae4e5f85c96a5cc70a4cdbb6d172ae409264f2d4a27e55cecfb7c1d659); v1.0 (a0035dd9…) не изменялся.
+
+ПРАВКИ H1.27 -> H1.28 (только текст; SQL 00–05 побайтно равны R46 и R47)
+- L-R47-01: 15.40 -> история R47 с исправленной фразой о D-05 (пакет R47 несёт новую улику EVIDENCE_PG16_D05_20261005T184932Z, 1a7343bd…); 15.41 (новый) — текущий пакет R48.
+- 0 (абзац R48), 23.5, последний абзац (транспорт — Claude, вариант C), паспорт.
+- Программы пакета: имена редакции/раунда, базовая пара H1.27/8c017070; логика не менялась. Реестр 346 строк, подделок 247 — без изменений.
+- L-R47-02: отдельный файл R47_ENGINE_SPIKES_RESULTS_v1_1.md, ссылка 22.1 -> 22.2.
+
+CHECK-01=PASS: вход H1.27 сверен по SHA-256 до правок (генератор).
+CHECK-02=PASS: bem954_registry_check и bem954_semantic_check — реестр 0, смысл 0 (шаг 8 сборщика, work\final_build_r48.log).
+CHECK-03=PASS: chk_tamper28 (шаг 9 сборщика): всего 247, ожидаемо 247, якорь потерян 0, OK.
+CHECK-04=PASS: build_package --expect-edition H1.28 --pg16-evidence work\EVIDENCE_PG16_D05_20261006T112835Z.txt --out H1_28_PACKAGE_R48: 21 файл, «ПАКЕТ СОБРАН И ПРОВЕРЕН», код 0. Сборщик взят из самой H1.28 извлекателем R46 (work\bootstrap_extract.mjs; повторное извлечение из cad2131c побайтно равно).
+CHECK-05=PASS: verify_package --expect-edition H1.28: G 21 из 21, итог OK; с --previous H1.27: H реестр 346 сохранено, 0 новых, 0 повторов, OK (work\v_norm.log, work\v_prev.log).
+CHECK-06=PASS: verify_package --selftest: случаи S00–S18, итог OK (work\v_self.log).
+CHECK-07=PASS: chk_round_facts <документ> tamper_report.json package_report.json --pg16-evidence: ключей 5, проблем 0 (work\rf.log).
+CHECK-08=PASS: PG16_D05 заново на живой базе: новый чистый кластер data17 (127.0.0.1:54332), 00 + обёртка H1.28 дважды — код 0, ошибок 0; D-05 положительный код 0, отрицательный код 3 TRIGGER_TGQUAL_MISMATCH; сырые выводы побайтно равны R47 (pg16\run26_r48_live_20261006\r48_transcript.log dd0030e2…, скрипт run_r48_live_d05_v11.sh 42d16c3b…).
+CHECK-09=PASS: доставка частями: R48_APPLY.py поверх R47_APPLY.py на копии папки Диска — RESULT ALL_OK (H1.28 и 21 файл пакета, все суммы).
+CHECK-10=INFO: первая H1.28 (809c50f5…) не прошла сверщик реестра — имена улики в обратных кавычках в разделе 15 читались как имена ошибок; заархивирована (…FAILED_REGISTRY_809c50f5.ARCHIVED.md), фраза переписана без кавычек. Её прогон D-05 (data16, run25) — история. Прерванная сборка — work\H1_28_PACKAGE_R48.INTERRUPTED_BUILD.ARCHIVED.
+
+NOT_DONE
+- движок на PostgreSQL (схема bem_engine): нет JDBC-драйвера PostgreSQL; загрузку выполняет оператор.
+- пункты 10 и 11 раздела 22 — как в R46/R47.
+
+FINAL_DEVELOPER_CHECK=PASS
+INDEPENDENT_ACCEPTANCE=NOT_PERFORMED

@@ -1,0 +1,13 @@
+{
+  "document": "H1.28 R48",
+  "note": "опись покрывает только шесть файлов SQL; обёртка в неё не входит намеренно",
+  "reproducible": "времени сборки здесь нет: опись обязана быть чистой функцией документа",
+  "files": {
+    "00_cluster_bootstrap.sql": "f8c06c159c81b3facf191ab564a8b56ecc153b3106d9fc5c014f94abeec51d2e",
+    "01_database_migration.sql": "ce75f3c9978d9ef470ba4c9f9c9f84985c27b603f5d7576951d007492145a7e5",
+    "02_upgrade_to_h110.sql": "90940a752a78aa6a5e7dc01ee9814ac7e7d857c45cbd5d3b102a2e54f38d1bb2",
+    "03_restore_verifier.sql": "2ea94a34df3b3ea0ef03d590609aa42cf394088ac724646b99fb94b2a7d84f61",
+    "04_backup_window.sql": "e4041fd4f6831a5f185bef5451fb0fa344b02ffcc59da7cd7ea3880844085b23",
+    "05_final_state_check.sql": "1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1"
+  }
+}

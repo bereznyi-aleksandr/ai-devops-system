@@ -1,0 +1,101 @@
+# ДОКУМЕНТ: .github/workflows/bem954-checks.yml
+# ВЕРСИЯ: v1.0
+# СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-06 19:35 +03:00
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 19:35 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 4401918c-de88-4db7-841e-b418568ae069)
+# НАЗНАЧЕНИЕ: Официальная проверка пакета BEM-954 H1.28 (ответ ChatGPT R48, В2):
+#   static — сверщики, самопроверка, 247 подделок, факты раунда;
+#   pg16   — установка SQL на одноразовом PostgreSQL 16 и проба D-05.
+#   Данные PostgreSQL здесь одноразовые; рабочая база и движок живут на сервере.
+# ОГРАНИЧЕНИЯ: секретов не использует; права только на чтение.
+name: BEM-954 package checks
+
+on:
+  push:
+    branches: [main, 'clean/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bem954-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOC: 101_CLAUDE_ARCHITECT_PROPOSAL_H1_28_R48_v1_28.md
+  DOC_SHA256: cad2131cd8be7907ae49b4ee5dbbc391d6a94e8af9fb3334dd707e4b8b03d338
+  PKG: bem954/H1_28_PACKAGE_R48
+
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Document SHA-256
+        run: echo "$DOC_SHA256  bem954/$DOC" | sha256sum -c -
+      - name: verify_package (composition, sums, clean rebuild)
+        working-directory: ${{ env.PKG }}
+        run: node verify_package.mjs "../$DOC" --expect-edition H1.28
+      - name: verify_package selftest (S00-S18)
+        working-directory: ${{ env.PKG }}
+        run: node verify_package.mjs "../$DOC" --expect-edition H1.28 --selftest
+      - name: Registry and semantic checkers
+        working-directory: ${{ env.PKG }}
+        run: |
+          node bem954_registry_check.mjs "../$DOC"
+          node bem954_semantic_check.mjs "../$DOC"
+      - name: Tamper set (247 cases)
+        working-directory: ${{ env.PKG }}
+        run: node chk_tamper28.mjs "../$DOC" --expect-edition H1.28 --report "$RUNNER_TEMP/tamper_report_ci.json" --work "$RUNNER_TEMP/tamper"
+      - name: Round facts
+        working-directory: ${{ env.PKG }}
+        run: node chk_round_facts.mjs "../$DOC" tamper_report.json package_report.json --pg16-evidence EVIDENCE_PG16_D05.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: static-reports
+          path: ${{ runner.temp }}/tamper_report_ci.json
+          if-no-files-found: ignore
+
+  pg16:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: psql client
+        run: |
+          command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+          psql --version
+      - name: Install SQL twice and run D-05
+        shell: bash
+        run: bash ci/d05_live.sh "$PKG" "$RUNNER_TEMP/d05" | tee "$RUNNER_TEMP/d05_transcript.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pg16-d05
+          path: ${{ runner.temp }}/d05
+          if-no-files-found: ignore
