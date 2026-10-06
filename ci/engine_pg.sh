@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/engine_pg.sh
-# ВЕРСИЯ: v1.1 (v1.1: путь war в архиве — wars/flowable-rest.war)
+# ВЕРСИЯ: v1.2 (v1.2: SHA-256 драйвера закреплена по прогону 37502140080; v1.1: путь war в архиве)
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-06 19:55 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 20:10 +03:00
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 20:18 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия 4401918c-de88-4db7-841e-b418568ae069)
 # НАЗНАЧЕНИЕ: проба движка процессов Flowable 8.0.0 на PostgreSQL 16 (схема bem_engine, H1.28 §8.4, §22.2):
 #   сверка сумм архива Flowable и war; JDBC-драйвер PostgreSQL из Maven Central (сверка SHA-1 Maven,
@@ -18,6 +18,7 @@ FLOWABLE_ZIP_URL=https://github.com/flowable/flowable-engine/releases/download/f
 FLOWABLE_ZIP_SHA256=d0f9ad0b7b2170881d66928178cf31c66084f1d6e3ffe6237afb32d8e9f4ad1d
 WAR_SHA256=9d49ea5ddd8ecd1220c9f42978f8dfb4576399f5830b92a5b7ae872f2f9947e4
 PGJDBC_VER=42.7.13
+PGJDBC_SHA256=6e0e4cc2d8cae902084f8a2b18728b073a6fd9d1f87c9d8bff8f298c18185b93
 PGJDBC_URL=https://repo1.maven.org/maven2/org/postgresql/postgresql/$PGJDBC_VER/postgresql-$PGJDBC_VER.jar
 FAIL=0
 fail() { echo "::error::$1"; FAIL=1; }
@@ -30,6 +31,7 @@ echo "$WAR_SHA256  flowable-rest.war" | sha256sum -c - || { echo "::error::war s
 curl -fsSL -o "postgresql-$PGJDBC_VER.jar" "$PGJDBC_URL" && curl -fsSL -o pgjdbc.sha1 "$PGJDBC_URL.sha1" || { echo "::error::pgjdbc download"; exit 1; }
 echo "$(cut -c1-40 pgjdbc.sha1)  postgresql-$PGJDBC_VER.jar" | sha1sum -c - || { echo "::error::pgjdbc sha1 (Maven)"; exit 1; }
 echo "=== PGJDBC_SHA256 $(sha256sum "postgresql-$PGJDBC_VER.jar" | cut -c1-64) postgresql-$PGJDBC_VER.jar ($(wc -c < "postgresql-$PGJDBC_VER.jar") bytes)"
+echo "$PGJDBC_SHA256  postgresql-$PGJDBC_VER.jar" | sha256sum -c - || { echo "::error::pgjdbc sha256 pin"; exit 1; }
 
 # Копия war с драйвером: вложенный jar кладётся без сжатия (-0) и вписывается в WEB-INF/classpath.idx.
 mkdir -p inj/WEB-INF/lib && cp "postgresql-$PGJDBC_VER.jar" inj/WEB-INF/lib/ && cp flowable-rest.war "$W/run/flowable-rest-pg.war"
