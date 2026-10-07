@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/kernel.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:25 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 16:22 +03:00 (v0.2: отрицательные случаи §6.1 для обеих областей)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: тесты Kernel этапа 3 (протокол Z1, E3-1, E3-4) на живом PG16 с пакетом H1.31.
 // ЗАПУСК: PGHOST=127.0.0.1 PGPORT=54337 node --test tests/
@@ -241,14 +241,16 @@ test('доставщик забирает строку outbox и фиксиру�
   assert.equal(repeated.length, 0, 'finished rows are not claimed again');
 });
 
-// ---------- §6.1 протокола Z1 v1.1: отрицательные случаи серверного выпуска ----------
+// ---------- §6.1 протокола Z1 v1.2: отрицательные случаи серверного выпуска ----------
+// Каждый случай — для обеих областей с правилом ровно {anthropic, openai}: протокол BEM954_PROTOCOL
+// (H1.31 §13.5) и выпуск продукта ZAVOD_PRODUCT_RELEASE (Z-EXT-01, аудит Z2 M-Z2-01).
 
-async function publishProtocolSubject(authors = [ids.author]) {
+async function publishProtocolSubject(authors = [ids.author], scope = 'BEM954_PROTOCOL') {
   const wi = await newItem();
   const subj = uuid();
   const head = 'sha-' + uuid().slice(0, 8);
   const pub = await kernel.execute(as(ids.author), { type: 'PublishSubject', actor_id: ids.author, tenant_id: ids.tenantA,
-    payload: { subject_id: subj, work_item_id: wi, head_sha: head, criticality: 'CRITICAL', scope: 'BEM954_PROTOCOL',
+    payload: { subject_id: subj, work_item_id: wi, head_sha: head, criticality: 'CRITICAL', scope,
       authors, evidence: { test: 'publish' } } });
   assert.equal(pub.ok, true, JSON.stringify(pub.error));
   return { subj, head };
@@ -258,8 +260,9 @@ const verdict = (aud, subj, head, v = 'ACCEPT') => kernel.execute(as(aud), { typ
 const release = (subj, head) => kernel.execute(as(ids.author), { type: 'ReleaseSubject', actor_id: ids.author,
   tenant_id: ids.tenantA, payload: { subject_id: subj, head_sha: head } });
 
-test('§6.1 один ACCEPT (только openai) — выпуск отклонён', async () => {
-  const { subj, head } = await publishProtocolSubject();
+for (const scope of ['BEM954_PROTOCOL', 'ZAVOD_PRODUCT_RELEASE']) {
+test(`§6.1 ${scope}: один ACCEPT (только openai) — выпуск отклонён`, async () => {
+  const { subj, head } = await publishProtocolSubject(undefined, scope);
   await assignAuditor(ids.tenantA, subj, ids.audOpenai);
   assert.equal((await verdict(ids.audOpenai, subj, head)).ok, true);
   const r = await release(subj, head);
@@ -267,8 +270,8 @@ test('§6.1 один ACCEPT (только openai) — выпуск отклон�
   assert.equal(r.error.code, 'BEM954_PROVIDER_SET_MISMATCH');
 });
 
-test('§6.1 вердикт по другой версии не принимается, выпуск по чужой версии отклонён', async () => {
-  const { subj, head } = await publishProtocolSubject();
+test(`§6.1 ${scope}: вердикт по другой версии не принимается, выпуск по чужой версии отклонён`, async () => {
+  const { subj, head } = await publishProtocolSubject(undefined, scope);
   await assignAuditor(ids.tenantA, subj, ids.audOpenai);
   const v = await verdict(ids.audOpenai, subj, head + '-other');
   assert.equal(v.ok, false);
@@ -278,8 +281,8 @@ test('§6.1 вердикт по другой версии не принимае�
   assert.equal(r.error.code, 'HEAD_MISMATCH');
 });
 
-test('§6.1 автор не может быть проверяющим своего предмета', async () => {
-  const { subj, head } = await publishProtocolSubject([ids.author, ids.audAnthropic]);
+test(`§6.1 ${scope}: автор не может быть проверяющим своего предмета`, async () => {
+  const { subj, head } = await publishProtocolSubject([ids.author, ids.audAnthropic], scope);
   let assignErr = null;
   try { await assignAuditor(ids.tenantA, subj, ids.audAnthropic); } catch (e) { assignErr = e; }
   if (!assignErr) {
@@ -293,9 +296,9 @@ test('§6.1 автор не может быть проверяющим свое�
   }
 });
 
-test('§6.1 один отрицательный вердикт при паре ACCEPT — выпуска нет, открыто разногласие', async () => {
-  const { subj, head } = await publishProtocolSubject();
-  const third = `codex:aud3-${ids.run}`;
+test(`§6.1 ${scope}: один отрицательный вердикт при паре ACCEPT — выпуска нет, открыто разногласие`, async () => {
+  const { subj, head } = await publishProtocolSubject(undefined, scope);
+  const third = `codex:aud3-${scope === 'BEM954_PROTOCOL' ? 'p' : 'z'}-${ids.run}`;
   await withRole('bem_bootstrap_admin', async (c) => {
     await c.query('SELECT bem_control.create_actor($1, $2, NULL, NULL)', [third, 'openai']);
     await c.query("SELECT bem_control.grant_delegation('bem_kernel_rw', $1, 'zavod 6.1 test')", [third]);
@@ -308,3 +311,11 @@ test('§6.1 один отрицательный вердикт при паре A
   assert.equal(r.ok, true, JSON.stringify(r.error));
   assert.equal(r.result.released, false);
 });
+test(`§6.1 ${scope}: 0 вердиктов и вердикт без назначения — отказ`, async () => {
+  const { subj, head } = await publishProtocolSubject(undefined, scope);
+  assert.equal((await release(subj, head)).error.code, 'WAITING_AUDIT');
+  const v = await verdict(ids.audOpenai, subj, head);
+  assert.equal(v.ok, false);
+  assert.equal(v.error.code, 'AUDITOR_NOT_ASSIGNED');
+});
+}
