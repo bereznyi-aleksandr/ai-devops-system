@@ -1,7 +1,7 @@
 // run_migration.mjs — внешняя обёртка окна мигратора.
-// PASSPORT: ACTIVE vR50.1, раунд R50, H1.30.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R50 (РАУНД-R50-ПЕРЕНОС-ИМЁН: H1.30; логика программ в R47–R50 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.29/R49; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47, R49 и R50 — раздел 22.2, остальное — раздел 15.43.
+// PASSPORT: ACTIVE vR51.1, раунд R51, H1.31.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R51 (РАУНД-R51-ПЕРЕНОС-ИМЁН: H1.31; логика программ в R47–R51 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.30/R50; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47, R49, R50 и R51 — раздел 22.2, остальное — раздел 15.44.
 // Запуск: node run_migration.mjs --files 01_database_migration.sql
 //         node run_migration.mjs --files 02_upgrade_to_h110.sql,01_database_migration.sql
 // Подключение: администратор кластера. Паролей в файле нет — они берутся
@@ -24,7 +24,7 @@ const FINAL_CHECK_FILE   = '05_final_state_check.sql';
 // Подменить опись, не тронув обёртку, нельзя. В документе на этом месте
 // стоят нули: настоящее значение проставляет шаг нарезки пакета, а пока
 // стоят нули, обёртка запускаться отказывается.
-const MANIFEST_SHA256 = '470c46d3700e26e6e1a27491fd768ceb704bcb7b2ac1db655e06a6ef9d928c4d';
+const MANIFEST_SHA256 = '41f2f59d4d944f5020ec0e70503de4fc19b20dfb75de74b64ecb86ab446811eb';
 
 const ZEROS = /^0{64}$/;
 const HEX64 = /^[0-9a-f]{64}$/;

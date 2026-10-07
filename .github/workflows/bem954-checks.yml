@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/bem954-checks.yml
-# ВЕРСИЯ: v1.4 (v1.4: редакция H1.30; v1.3: задание engine-pg-probes — пункты 1–4, 6–9, 12–14 раздела 22 на PostgreSQL; v1.2: редакция задаётся переменной EDITION, сейчас H1.29; v1.1: задание engine-pg)
+# ВЕРСИЯ: v1.5 (v1.5: редакция H1.31; v1.4: редакция H1.30; v1.3: задание engine-pg-probes — пункты 1–4, 6–9, 12–14 раздела 22 на PostgreSQL; v1.2: редакция задаётся переменной EDITION, сейчас H1.29; v1.1: задание engine-pg)
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-06 19:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-07 06:45 +03:00
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-07 07:40 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (сессии 4401918c-de88-4db7-841e-b418568ae069 и f19e07a7-6edd-48a5-9ede-88086c949326)
 # НАЗНАЧЕНИЕ: Официальная проверка пакета BEM-954 (редакция — EDITION) (ответ ChatGPT R48, В2):
 #   static — сверщики, самопроверка, 247 подделок, факты раунда;
@@ -25,10 +25,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  EDITION: H1.30
-  DOC: 101_CLAUDE_ARCHITECT_PROPOSAL_H1_30_R50_v1_30.md
-  DOC_SHA256: 4cbdb4241ca26817f5787016c734af5c1a12a366f7ac2c4102c7282edbc8f5c8
-  PKG: bem954/H1_30_PACKAGE_R50
+  EDITION: H1.31
+  DOC: 101_CLAUDE_ARCHITECT_PROPOSAL_H1_31_R51_v1_31.md
+  DOC_SHA256: d653f8f5653c61c5a81385d788a67fbf9b4451556f028df7456007ad96eec05c
+  PKG: bem954/H1_31_PACKAGE_R51
 
 jobs:
   static:

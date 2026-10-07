@@ -1,14 +1,14 @@
 {
  "suite": "chk_tamper28",
- "passport": "ACTIVE vR50.1, раунд R50, H1.30",
+ "passport": "ACTIVE vR51.1, раунд R51, H1.31",
  "manifest": "tamper_manifest28.mjs",
- "document": "101_CLAUDE_ARCHITECT_PROPOSAL_H1_30_R50_v1_30.md",
- "document_sha256": "4cbdb4241ca26817f5787016c734af5c1a12a366f7ac2c4102c7282edbc8f5c8",
- "expected_edition": "H1.30",
+ "document": "101_CLAUDE_ARCHITECT_PROPOSAL_H1_31_R51_v1_31.md",
+ "document_sha256": "d653f8f5653c61c5a81385d788a67fbf9b4451556f028df7456007ad96eec05c",
+ "expected_edition": "H1.31",
  "expected_edition_source": "cli",
  "round_facts": [
-  "ROUND_FACT[BASELINE_EDITION]=H1.29",
-  "ROUND_FACT[EXPECTED_EDITION]=H1.30",
+  "ROUND_FACT[BASELINE_EDITION]=H1.30",
+  "ROUND_FACT[EXPECTED_EDITION]=H1.31",
   "ROUND_FACT[TAMPER_CASES_TOTAL]=247",
   "ROUND_FACT[TAMPER_CASES_RANGE]=A01-A77",
   "ROUND_FACT[PG16_D05]=EXECUTED_PASS"
@@ -16,7 +16,7 @@
  "tamper_cases_range": "A01-A77",
  "stripped_regions": 4,
  "stripped_input": "chk_tamper28_clean.md",
- "stripped_input_sha256": "b268a636583e3470e300f22ba8aba1cdf70a832ac9931eb5a9cfe80350b69a57",
+ "stripped_input_sha256": "0d0f21ad1c143177638d09dc7bce8d1f57208a78c98018621b1f397d1e31481e",
  "work_dir": "вне папки прогона; путь в отчёт не пишется",
  "document_registry_exit": 0,
  "document_semantic_exit": 0,
@@ -25,50 +25,50 @@
  "listings": [
   {
    "file": "bem954_registry_check.mjs",
-   "embedded_sha256": "380e2cd8da444b0eb01918039c79cf0c217f6182659426af725b11ab78079248",
-   "file_sha256": "380e2cd8da444b0eb01918039c79cf0c217f6182659426af725b11ab78079248",
+   "embedded_sha256": "c773e2564e14e16d900e02de8047e370a22a609d63c1006e46e2a264a4293e10",
+   "file_sha256": "c773e2564e14e16d900e02de8047e370a22a609d63c1006e46e2a264a4293e10",
    "equal": true
   },
   {
    "file": "bem954_semantic_check.mjs",
-   "embedded_sha256": "066d625773f38d550985a07f52bf9ceda6df9cb66921e6f3a2a7208151f54b3d",
-   "file_sha256": "066d625773f38d550985a07f52bf9ceda6df9cb66921e6f3a2a7208151f54b3d",
+   "embedded_sha256": "23aee2b132342e5dc39d0bd0fadb31ae30c0a6b5e9fc154ffe99182861bd8bee",
+   "file_sha256": "23aee2b132342e5dc39d0bd0fadb31ae30c0a6b5e9fc154ffe99182861bd8bee",
    "equal": true
   },
   {
    "file": "chk_tamper28.mjs",
-   "embedded_sha256": "406fdcde971a6ee3511fe64c689a24b6e8e0b9792ebb08a3f56e5cc220abc6a5",
-   "file_sha256": "406fdcde971a6ee3511fe64c689a24b6e8e0b9792ebb08a3f56e5cc220abc6a5",
+   "embedded_sha256": "354ee4e375aa62e289f558acf5051706add9861580cbf35e67ad3c596b9744ef",
+   "file_sha256": "354ee4e375aa62e289f558acf5051706add9861580cbf35e67ad3c596b9744ef",
    "equal": true
   },
   {
    "file": "tamper_manifest28.mjs",
-   "embedded_sha256": "dd56cf6c641a0ec3d349ef60cace239c0d240296339bf22dfe756a1bdcf6a2a8",
-   "file_sha256": "dd56cf6c641a0ec3d349ef60cace239c0d240296339bf22dfe756a1bdcf6a2a8",
+   "embedded_sha256": "1abd5c580fa1aa2dd95369db0f518fbcf826aac94af42e03c29fc294e8fcbc23",
+   "file_sha256": "1abd5c580fa1aa2dd95369db0f518fbcf826aac94af42e03c29fc294e8fcbc23",
    "equal": true
   },
   {
    "file": "pkg_extract.mjs",
-   "embedded_sha256": "040b130014b402de54ce6316a931314682ed36fa1517f3c28ccf82f38e41db09",
-   "file_sha256": "040b130014b402de54ce6316a931314682ed36fa1517f3c28ccf82f38e41db09",
+   "embedded_sha256": "698df0d009db0ba1a79c950bfe99eb67a534b42d715a17fb6caa44109e9b893d",
+   "file_sha256": "698df0d009db0ba1a79c950bfe99eb67a534b42d715a17fb6caa44109e9b893d",
    "equal": true
   },
   {
    "file": "build_package.mjs",
-   "embedded_sha256": "aa97e7b14cc3ae2a72026c9b79397e308d449f726e0703358cccd6e09883b7ea",
-   "file_sha256": "aa97e7b14cc3ae2a72026c9b79397e308d449f726e0703358cccd6e09883b7ea",
+   "embedded_sha256": "38df60a71de7194a5d76682674d1311dc6e2adcd92cfcb8deccac1369dcf3f30",
+   "file_sha256": "38df60a71de7194a5d76682674d1311dc6e2adcd92cfcb8deccac1369dcf3f30",
    "equal": true
   },
   {
    "file": "verify_package.mjs",
-   "embedded_sha256": "637aef42f0947e698de3e84ff81c2a2687620682614c8285c560d05bd5528859",
-   "file_sha256": "637aef42f0947e698de3e84ff81c2a2687620682614c8285c560d05bd5528859",
+   "embedded_sha256": "26ad9e042fd6f86ce9c1ae682f8f4728d6b13561a2aaa0de259edb9df772f4b2",
+   "file_sha256": "26ad9e042fd6f86ce9c1ae682f8f4728d6b13561a2aaa0de259edb9df772f4b2",
    "equal": true
   },
   {
    "file": "chk_round_facts.mjs",
-   "embedded_sha256": "60699a3fa25e7def74f44855f2b9e0c41375c694a4717c1213a0b26ef9e694fc",
-   "file_sha256": "60699a3fa25e7def74f44855f2b9e0c41375c694a4717c1213a0b26ef9e694fc",
+   "embedded_sha256": "cac163a26363069d158386beb860760483ce56146f9817fb72f335c37f6e963a",
+   "file_sha256": "cac163a26363069d158386beb860760483ce56146f9817fb72f335c37f6e963a",
    "equal": true
   }
  ],
@@ -90,9 +90,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs",
    "copy": "chk_tamper28_T28-L01.md",
-   "sha256": "c3a5c35aa0ba962c737c14f3a1572e6afc89612bb876161ae39e1a4d5ab3594a",
+   "sha256": "6e414dd0773e924f768ca1194670da650b3798dbaea2d778096aa90a6161ecc0",
    "mutation": {
-    "line": 2033,
+    "line": 2035,
     "removed": [
      "| `K-R8-06` | участник со связанной личностью, состоящий в группе `bem_governance`, но без строки полномочия `AUDIT_C..."
     ],
@@ -124,9 +124,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs",
    "copy": "chk_tamper28_T28-L02.md",
-   "sha256": "b9c4d866ddc8e218fbd481ad3d24fb863f3d527ec7ad175b0b36cef8709f1240",
+   "sha256": "bdfb5fdf65039ee6bb81d12ef594f5622ecfbd9027fd0bf4425373bf9d11ecd1",
    "mutation": {
-    "line": 2033,
+    "line": 2035,
     "removed": [
      "| `K-R8-06` | участник со связанной личностью, состоящий в группе `bem_governance`, но без строки полномочия `AUDIT_C..."
     ],
@@ -158,9 +158,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs",
    "copy": "chk_tamper28_T28-L03.md",
-   "sha256": "89e576d8d66c0550e689fbc15a0f89aecf191b85791d7ae8cdf2b07757c4fa20",
+   "sha256": "9953ec4533cb89684102e32fae68d0721d386daf562c3fc3be233d792bc76b1b",
    "mutation": {
-    "line": 2033,
+    "line": 2035,
     "removed": [
      "| `K-R8-06` | участник со связанной личностью, состоящий в группе `bem_governance`, но без строки полномочия `AUDIT_C..."
     ],
@@ -192,9 +192,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs",
    "copy": "chk_tamper28_T28-L04.md",
-   "sha256": "793b80c5acd0fbd8756af57e152c52403c376465ce0fdbe25c139e66c0e9fdc3",
+   "sha256": "54d5058e26cfae239577e7011fd2998618e5223310076f6577df138b399fd5a2",
    "mutation": {
-    "line": 2095,
+    "line": 2097,
     "removed": [
      "CONTROL_FUNCTIONS=42"
     ],
@@ -226,9 +226,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs",
    "copy": "chk_tamper28_T28-L05.md",
-   "sha256": "359022a204a45b6e39a0ab971cb1ed428f8ebdb16dfa4e84d5993c7662fc5441",
+   "sha256": "b8b27fa9bf2a9454b57541f70523939a2e5e8599e50a85efa0c8d50ca896fac9",
    "mutation": {
-    "line": 13808,
+    "line": 13832,
     "removed": [
      "GRANT  EXECUTE ON FUNCTION bem_control.create_tenant(uuid, text, text, uuid, jsonb)",
      "       TO bem_governance;"
@@ -261,9 +261,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs",
    "copy": "chk_tamper28_T28-L06.md",
-   "sha256": "aa7be499179d6c0868d7644bc982c7f4c6edb6d5e0b2c6aab24b948be2dbfe99",
+   "sha256": "a79471f0f217fffbc94c9eccaedb8333a8b6aef0d3d194fcd364be28d1db6550",
    "mutation": {
-    "line": 2033,
+    "line": 2035,
     "removed": [
      "| `K-R8-06` | участник со связанной личностью, состоящий в группе `bem_governance`, но без строки полномочия `AUDIT_C..."
     ],
@@ -295,9 +295,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs",
    "copy": "chk_tamper28_T28-L07.md",
-   "sha256": "a7cca97d1d7949fee431743e05a24180a9afcd482a328d137f0fa5b91c8c875e",
+   "sha256": "d10da7ac0b7b9825640495c8f5641e5772080db15c12ec478255c6d3578024a5",
    "mutation": {
-    "line": 2070,
+    "line": 2072,
     "removed": [
      "MISSING=K-TENANT-01,K-TENANT-04,K-MIG-01,K-MIG-04,K-SYNC-01,K-SYNC-02,K-SYNC-03,K-OBS-01,K-OBS-04,K-NET-01,K-AUD-05"
     ],
@@ -329,9 +329,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs",
    "copy": "chk_tamper28_T28-L08.md",
-   "sha256": "e2bf04c05104c1d3535e414667c4117682912d602eb3ced3938a45e41293b946",
+   "sha256": "63aebb2bebfa28abe5e9e3f64e3b04dbeb8cf22608889ff2641a7e4a0cd40986",
    "mutation": {
-    "line": 2439,
+    "line": 2441,
     "removed": [],
     "added": [
      "| `K-R8-18` | строка-двойник | пояснение |",
@@ -362,9 +362,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L09.md",
-   "sha256": "7f25eceee1baece0831fec75bde10290c51ca5d928ce8f8da3f64510b1026d92",
+   "sha256": "2b95d5e4b74ae39182c50be5cbcbe13b3afa119758b9397a5321cc78a799450f",
    "mutation": {
-    "line": 14425,
+    "line": 14449,
     "removed": [
      "    PERFORM bem_control.assert_tenant(p_tenant_id);   -- граница заказчика, C-H17-R7-04"
     ],
@@ -396,9 +396,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L10.md",
-   "sha256": "eaa6249e54678ab85c4b1fb00e5d8f92ba999df4e86038a15a52d3f3295294ff",
+   "sha256": "a39b6141f819ad69fe165153ad6604bc9adca1860cd9ce287e0697859e7ed580",
    "mutation": {
-    "line": 14425,
+    "line": 14449,
     "removed": [
      "    PERFORM bem_control.assert_tenant(p_tenant_id);   -- граница заказчика, C-H17-R7-04",
      "    SELECT out_actor_id INTO v_actor",
@@ -434,9 +434,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L11.md",
-   "sha256": "1895e50d5beacd34006371cd339d8b0ffaa4b62cf5e01633d091d0651dad309c",
+   "sha256": "a7d14e1ac7210eedd48d1d67e7bd45f22d14978e739242b7db68487223e7f14e",
    "mutation": {
-    "line": 14369,
+    "line": 14393,
     "removed": [],
     "added": [
      "    INSERT INTO bem_core.evidence (id) VALUES (gen_random_uuid());"
@@ -466,9 +466,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L12.md",
-   "sha256": "a6595ded947fcc89ad2d5bded7da68c2a57745edfefc161348d876e1aac14895",
+   "sha256": "dbd6d032574f6dc3885fadcd345113e2a7ad9fa35bfc9215867af6479b3f6db3",
    "mutation": {
-    "line": 2034,
+    "line": 2036,
     "removed": [
      "| `K-R8-07` | строка `outbox` в состоянии `UNKNOWN_OUTCOME`; участника `human:fake` в справочнике нет; участник `huma..."
     ],
@@ -500,9 +500,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L13.md",
-   "sha256": "a25c5dabf41a7b6deb07fde86c377d91777356195bd28125646730d961046a8c",
+   "sha256": "f7c2e9597f2ea7fcf9ebea0d4d179ea5d8355ea8fc4ab9402bfbada4105b8850",
    "mutation": {
-    "line": 1904,
+    "line": 1906,
     "removed": [
      "| K-R4-02 | Схема раздела 9.2 развёрнута | Пять попыток: `subject` без единой строки `subject_author` с фиксацией тра..."
     ],
@@ -534,9 +534,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L14.md",
-   "sha256": "e6a6c6ba9aeb7d65572beb6cd24b91c3225613e47065ad83cc218a6da4e94741",
+   "sha256": "fe24a71b90f71b920cbf2d690cfe36947cf39e93016b4e2154914566ac174add",
    "mutation": {
-    "line": 2029,
+    "line": 2031,
     "removed": [
      "| `K-R8-02` | база формы H1.8; вручную добавлена вторая **разрешающая** политика другого имени на `bem_core.work_item..."
     ],
@@ -568,9 +568,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L15.md",
-   "sha256": "50d58b9b430b4904f1648ba85537d50c9644142ff87d3197cc3aa5123130b05c",
+   "sha256": "477b48f55c040a9cccd28e03dd5623b17a6e3f9e65c144eb1091adbb46f243fa",
    "mutation": {
-    "line": 2648,
+    "line": 2650,
     "removed": [
      "TENANT_HELPER=evidence_write,command_fingerprint,assert_command_identity,lock_subject"
     ],
@@ -602,9 +602,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L16.md",
-   "sha256": "91b2a48197076be6603edf92c2cf7d8c67684964c46c079fd0ba47ae3bf5fe0e",
+   "sha256": "69cd3d1aeeb9be2dc268058a11c4d5b5b606ae962969bc244a70eff87195d130",
    "mutation": {
-    "line": 2649,
+    "line": 2651,
     "removed": [
      "NO_REVOKE=current_tenant"
     ],
@@ -636,9 +636,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L17.md",
-   "sha256": "a48db0f52c585543c4e1302f401f941e46b67b6581bda1baaa65668b2db501e0",
+   "sha256": "59a1a9fb38748e0df810c33bfb1c3c5945fdcc4aa639af6ab062bdbe09497854",
    "mutation": {
-    "line": 13499,
+    "line": 13523,
     "removed": [
      "GRANT  EXECUTE ON FUNCTION bem_control.evidence_write(uuid, text, jsonb) TO bem_control_owner;"
     ],
@@ -671,9 +671,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L18.md",
-   "sha256": "d3ca9e785124e3a5d7ab1bb0173812c62e483c87831f1bceea5e198a91173e1e",
+   "sha256": "34adac6612473e02c8436a3d5fbc198c7f8ed23f763442f60890ed31f28ea381",
    "mutation": {
-    "line": 17542,
+    "line": 17566,
     "removed": [
      "AS $$ SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid $$;"
     ],
@@ -705,9 +705,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L19.md",
-   "sha256": "d1cc875e7ad2dc173fb775414b45a2720986adecff79fde3fc858178baa0ba3d",
+   "sha256": "cf2dd7b64febb547c8357015d87069d7ac45fd7498f8ef8cf0a5896fa651529e",
    "mutation": {
-    "line": 1450,
+    "line": 1452,
     "removed": [],
     "added": [
      "GRANT INSERT ON bem_core.evidence TO bem_kernel_rw;"
@@ -737,9 +737,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L20.md",
-   "sha256": "550a841072eaff181ced07bae4c5ad55eea4e8279f51a6f695e2f1765b843dfb",
+   "sha256": "86018c7fd5083076c3f7bb072e1199263b81fca7fbc1042836fc9f544282342d",
    "mutation": {
-    "line": 1470,
+    "line": 1472,
     "removed": [],
     "added": [
      "CREATE OR REPLACE FUNCTION bem_control.shadow_writer()",
@@ -770,9 +770,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L21.md",
-   "sha256": "3b415373f83159d3bebe5f038eff9631a3dc7d2955306436afeb5f60847deea5",
+   "sha256": "47f881ab97f2de89a3b9c4508c7700422e46fd3a4113fea966c2a9b9d6b9d83f",
    "mutation": {
-    "line": 12933,
+    "line": 12957,
     "removed": [
      "GRANT INSERT ON bem_core.actor            TO bem_control_owner;"
     ],
@@ -804,9 +804,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L22.md",
-   "sha256": "430a7db65efb4ac1c77f7c518e66e763b88531e1992602ae131fee3c964b66a6",
+   "sha256": "1c804e49abb963163e9b2dde75a12df5ac3e4ea1966f2b10503a5f83c7b6ebbf",
    "mutation": {
-    "line": 12934,
+    "line": 12958,
     "removed": [],
     "added": [
      "GRANT DELETE ON bem_core.evidence        TO bem_control_owner;"
@@ -836,9 +836,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L23.md",
-   "sha256": "a93e7048d29c1a84464b92adb799c7963f2051ab9a4ec1b8375e578202add018",
+   "sha256": "2bd580436a1395b63f7056736b74b54a6d787fecb59cf8505f5fc3b44a083d36",
    "mutation": {
-    "line": 12901,
+    "line": 12925,
     "removed": [
      "GRANT INSERT ON bem_core.tenant        TO bem_control_owner;"
     ],
@@ -870,9 +870,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L24.md",
-   "sha256": "c5629d2abc93d608b03a9550f633394a62817de38931d3aa49e7cf10f09b6140",
+   "sha256": "7dfe2f05b664b7a640bd157d71ce99655296ce84111d8cc8057d761b1d72b1f6",
    "mutation": {
-    "line": 12945,
+    "line": 12969,
     "removed": [
      "    GRANT SELECT ON TABLES TO backup_reader, bem_kernel_rw, bem_control_owner;"
     ],
@@ -904,9 +904,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L25.md",
-   "sha256": "5ad2ce5ebf774cca9c7c767251a9a1b595786faf258e68f6c89039864e07991e",
+   "sha256": "fa3404a73a055baa541d00c156ee501eeea33e3e830d8acab207755f30d116a8",
    "mutation": {
-    "line": 13854,
+    "line": 13878,
     "removed": [],
     "added": [
      "    UPDATE bem_core.actor SET is_active = false WHERE false;"
@@ -936,9 +936,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L26.md",
-   "sha256": "d4b54924d67391db4538cdf51b1c7e9246b36f0dbe3e9d40f5459fbba2b87f15",
+   "sha256": "d54c65d3a6073927d27bf4710ebd6bf0118eb03a2ad84652b6903a75c8e3d6b3",
    "mutation": {
-    "line": 16139,
+    "line": 16163,
     "removed": [
      "        'bem_control_owner|bem_core.actor|INSERT|',"
     ],
@@ -968,9 +968,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L27.md",
-   "sha256": "40e0f34468f3d63590a11bd5edf3c783d17e7993ed6ad4cc2338f586c896fa2c",
+   "sha256": "04fead8e4672f93ab35eaca3baa62ee4aadd40f35d11c095aaba1bbd8eb6242e",
    "mutation": {
-    "line": 2650,
+    "line": 2652,
     "removed": [
      "CROSS_TENANT=claim_outbox_batch,finish_outbox_row"
     ],
@@ -1002,9 +1002,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L28.md",
-   "sha256": "01b8535dd2976e0b79560f4fb21a45b2121b43d1e27a79f54b850fdb7471b71f",
+   "sha256": "c5ff96dbd6f93da67a1cb330d03d9b7a7def2c2e2b2c74fca4f383f6e46ceb27",
    "mutation": {
-    "line": 2650,
+    "line": 2652,
     "removed": [
      "CROSS_TENANT=claim_outbox_batch,finish_outbox_row"
     ],
@@ -1036,9 +1036,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L29.md",
-   "sha256": "854c84f77600f65ee8fe1791a8e34557067d1cc2e76620784c304efa2290331c",
+   "sha256": "13435a6761885effa717682150f0fe701e20560cc372e54b55c06f6c170f1dce",
    "mutation": {
-    "line": 12880,
+    "line": 12904,
     "removed": [],
     "added": [
      "GRANT TRUNCATE ON bem_core.evidence TO bem_control_owner;"
@@ -1068,9 +1068,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L30.md",
-   "sha256": "34231956e71920fd91ac6de07b2c1b34ac342c9e7cbe5a4e012853419b1636dc",
+   "sha256": "9811d29f5c9f8de45b4683eb0d89ebacfe9cb89d2e10685fadd79d3a4c56bb56",
    "mutation": {
-    "line": 12880,
+    "line": 12904,
     "removed": [],
     "added": [
      "GRANT REFERENCES ON bem_core.actor TO bem_kernel_rw;"
@@ -1100,9 +1100,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L31.md",
-   "sha256": "8483adc7dba6191013d74be5a28462ad813c6f0f7c2e5782b60684513e3e5872",
+   "sha256": "83db3383f1608f89338bd0497506c9f87807bf558538ef128efdcdf8b941588c",
    "mutation": {
-    "line": 12880,
+    "line": 12904,
     "removed": [],
     "added": [
      "GRANT TRIGGER ON bem_core.evidence TO bem_kernel_rw;"
@@ -1132,9 +1132,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L32.md",
-   "sha256": "a4b55cd5939c921a7aa937182508c7c6b95c234bbd8ddbe314e321305a8470e7",
+   "sha256": "9e0f0ca42501c499b479e8856ec660682d93a968655980ae4424584e0c1b7898",
    "mutation": {
-    "line": 12880,
+    "line": 12904,
     "removed": [],
     "added": [
      "GRANT ALL ON bem_core.evidence TO bem_kernel_rw;"
@@ -1164,9 +1164,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L33.md",
-   "sha256": "bf4154bbc28c9b55038fb72e30161fff24735fafe27add02ca6871d41219bea7",
+   "sha256": "23cc145dc822a2232d7c55043139b0ee86015d72101e0ca83293a76a538f0f49",
    "mutation": {
-    "line": 12880,
+    "line": 12904,
     "removed": [],
     "added": [
      "GRANT MAINTAIN ON bem_core.evidence TO bem_kernel_rw;"
@@ -1196,9 +1196,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L34.md",
-   "sha256": "edd7ba98886154bc2746230b3e5187cd39e8c2b7807f5dd04883a4c6ff875607",
+   "sha256": "5be60a5774c287b2bab035e3b5fd5bbfcf20c5da7a0a868baf15e5d51a06a361",
    "mutation": {
-    "line": 12880,
+    "line": 12904,
     "removed": [],
     "added": [
      "GRANT UPDATE ON ALL SEQUENCES IN SCHEMA bem_core TO bem_kernel_rw;"
@@ -1228,9 +1228,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L35.md",
-   "sha256": "821e79a818ad8781365927d546218d8e8e1f61ce879e58e67260cb01091ffe42",
+   "sha256": "c70e9bbed42263aaea6fe529982a862fb6b5347a3f31fb38fbc5d7cad256cc19",
    "mutation": {
-    "line": 12947,
+    "line": 12971,
     "removed": [
      "    GRANT SELECT ON SEQUENCES TO backup_reader, bem_kernel_rw, bem_control_owner;"
     ],
@@ -1262,9 +1262,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L36.md",
-   "sha256": "3246a48fd6b1bacb5be95f3b37ed07699dc22b7537514b30385b5cad6cbc7649",
+   "sha256": "fbe0a134cdd8811c82c9867f2b333aaf64b7d2c78f89dd9d449c0cc25eed318c",
    "mutation": {
-    "line": 12879,
+    "line": 12903,
     "removed": [
      "GRANT SELECT ON ALL TABLES    IN SCHEMA bem_core TO bem_kernel_rw;"
     ],
@@ -1296,9 +1296,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L37.md",
-   "sha256": "6c55c79d5a4ca317d2f65d6a6efc6d8599946a8bc30352dbbb4f43223a7c545b",
+   "sha256": "573383a68ff44b49e76bc5dafef227fad340c9bb2e4b9b8509045af1d65472f8",
    "mutation": {
-    "line": 2735,
+    "line": 2737,
     "removed": [],
     "added": [
      "bem_engine_rw|ALLTABLES:bem_core|SELECT"
@@ -1328,9 +1328,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L38.md",
-   "sha256": "267f210cd16feb9d32d29351cd961810b496cc4e1f2f0038924ca381bb8fb894",
+   "sha256": "fdd18f1d6421b8e2d9d7d218dd348775bb857b51d8781009e7ed1826b6d70e7d",
    "mutation": {
-    "line": 2762,
+    "line": 2764,
     "removed": [
      "bem_control.create_tenant(uuid, text, text, uuid, jsonb) -> bem_governance"
     ],
@@ -1362,9 +1362,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L39.md",
-   "sha256": "bed7664194a9caaad882559d3d1cb9281a2fd1ad1d0956130c1bf70ad2f597ba",
+   "sha256": "6045b53357e7bd8c9ed362bba991dbb347f3d6aca87bcbe9f47d884a49fe9877",
    "mutation": {
-    "line": 2762,
+    "line": 2764,
     "removed": [
      "bem_control.create_tenant(uuid, text, text, uuid, jsonb) -> bem_governance"
     ],
@@ -1396,9 +1396,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L40.md",
-   "sha256": "fbd75897900b005e09f70f6efbff16345cdd02c5adbf47715e586dae1f0e896c",
+   "sha256": "05e27da446c03e9f8a391949b713f1e57edd15501ab61ebf1ef13b050c1dfb93",
    "mutation": {
-    "line": 13948,
+    "line": 13972,
     "removed": [
      "GRANT  EXECUTE ON FUNCTION bem_control.grant_authority(text, text, uuid) TO bem_governance;"
     ],
@@ -1430,9 +1430,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L41.md",
-   "sha256": "b2b15ce0ff8e0b57a9dbd0b27b937c96237558cb210b4f9819c412e494c64eb6",
+   "sha256": "56635c528ad6135527c90aca7279f718e505b2e87db2eaec39c6c432c82ebccb",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "GRANT bem_core_owner TO bem_kernel_rw;"
@@ -1462,9 +1462,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L42.md",
-   "sha256": "fbd3622c3d52985c66d8d1bb99d755ffb1cc17f88cb5810d6751cadbad7779ac",
+   "sha256": "0628d3003c7ae8cfe469924af5b09f8d68bc7a5d187b6ba30bfd2a765701a891",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "GRANT bem_core_owner TO bem_kernel_rw;"
@@ -1494,9 +1494,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L43.md",
-   "sha256": "f0cac15646d95024b59d87716aa512eb3ac41abea80d9b0f77c389fa25a1e28f",
+   "sha256": "e279f588fedabe34aca001c601e2fd22cefe6e055b24376a5a8e3a1e5297e6e7",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw SUPERUSER;"
@@ -1526,9 +1526,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L44.md",
-   "sha256": "4067b5e6774193afd9360935d815c9a914052778d70305a10c5d3aeee89066eb",
+   "sha256": "d72a6471f91595f537207ba50be671016851e80d81b2745f32d26d2e545b8ffa",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw SUPERUSER;"
@@ -1558,9 +1558,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L45.md",
-   "sha256": "7aa96f9ff057ed98ef59873724db0958bf37586466a400d277275ddaa50ebf61",
+   "sha256": "01f7968ec54d888913ed0bbf7cac795f4a4b1a4bd7e863e539cb726e8687c83a",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw BYPASSRLS;"
@@ -1590,9 +1590,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L46.md",
-   "sha256": "ea00e6fa452c2739835e958e9c1c8d62e230f8ffaed039549eecc75ab896e385",
+   "sha256": "4101b1b9c27df4a8f531923a185c4f1b7ef46cfd813cd71e9e5e2e2b9d046c25",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw BYPASSRLS;"
@@ -1622,9 +1622,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L47.md",
-   "sha256": "56e9738c08a73d01cd8f2aa87dea2cff006a229b0576bf8d8fb1a76f55fc123d",
+   "sha256": "c17d5a25321322314cb60f0ba0cb526596b197c6fd93f127aff8418bd57cc044",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "REVOKE SELECT ON ALL TABLES IN SCHEMA bem_core FROM bem_kernel_rw;"
@@ -1654,9 +1654,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L48.md",
-   "sha256": "54572df3530cc3fbae44ab7a96c4d77bea0cbe68691d7f6a1644717a93b38e9f",
+   "sha256": "8441f36988790b008ae3d3f267bcdc9473405adfae3fb055df48d1eea8753fa9",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "REVOKE SELECT ON ALL TABLES IN SCHEMA bem_core FROM bem_kernel_rw;"
@@ -1686,9 +1686,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L49.md",
-   "sha256": "6f6d5e50cb5f3c67e458b2f708a910654926573e268105ceed330e435aba98f0",
+   "sha256": "a299d7174e3ccbd7a983cec6017013d4ce65852fc719e658d573c6e2714cc2b1",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "REVOKE EXECUTE ON FUNCTION bem_control.record_evidence(uuid, text, jsonb) FROM bem_kernel_rw;"
@@ -1718,9 +1718,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L50.md",
-   "sha256": "efcbf23109df3c7c269fde7333c902adfe31ac3d16fe62476f15c0f49f5bf658",
+   "sha256": "894338460695c7125a4485d36022f704de49e8095aa95eecf802d66c785bede3",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "REVOKE EXECUTE ON FUNCTION bem_control.record_evidence(uuid, text, jsonb) FROM bem_kernel_rw;"
@@ -1750,9 +1750,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L51.md",
-   "sha256": "c71c9b90d7edc8f6df1f4ac67f5377cb4456b07337c5e019d4acd70624f5eaa6",
+   "sha256": "9c60f2553a8b57d38ff8a8ae391a341f9c5ebdba45ca8305028716428fe1fadf",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "REVOKE ALL ON ALL TABLES IN SCHEMA bem_core FROM bem_kernel_rw;"
@@ -1782,9 +1782,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L52.md",
-   "sha256": "822832a833af7eb698b97a2aa716924c4300485e9196435a5652674f0e337f07",
+   "sha256": "192d1a486ae7435773112912fe1d965b4e4c6cd038f5fe422346d7e03c7bd4d9",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "REVOKE ALL ON ALL TABLES IN SCHEMA bem_core FROM bem_kernel_rw;"
@@ -1814,9 +1814,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L53.md",
-   "sha256": "3ad0569c9538458d15b33037d334957495aa77093f85b356a1ccfe02a8716b82",
+   "sha256": "9856c10ae8c7464c385b4c5b0352d5d0e486e4e9a87d0ca18addf24e8f236c91",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER TABLE bem_core.evidence OWNER TO bem_kernel_rw;"
@@ -1846,9 +1846,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L54.md",
-   "sha256": "3f955ecc07eeccd062fc5fdb16e4a92bcf694bcb8f2bdf069d36470ff2a2345a",
+   "sha256": "ea18f00eaf04c88e7987851bf8d104645d60c41b748b3e4034fcd1911827a0c1",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "SET ROLE bem_core_owner;"
@@ -1878,9 +1878,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L55.md",
-   "sha256": "6860a0df2bdbc36c9aaac89b441759e7be504e3b48b44e1f180a69196ae960b7",
+   "sha256": "494c1239ba328bf014d208743afbb680df0191931038e2eb94ed64d6642862cd",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER DEFAULT PRIVILEGES IN SCHEMA bem_core GRANT INSERT ON TABLES TO bem_kernel_rw;"
@@ -1910,9 +1910,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L56.md",
-   "sha256": "55bc736cd1f5f86b296c7ef452c0c406b974560c1ad064a2f8d2ecc855a59906",
+   "sha256": "48ec8531057e84160ed7ca7a18f6dab41ffccec0ce0c75dfb09edafc12ac4042",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "REASSIGN OWNED BY bem_core_owner TO bem_kernel_rw;"
@@ -1942,9 +1942,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L57.md",
-   "sha256": "06759e557a74a50a398ea47edb6399bd025dc9996d02024596888b35f1608676",
+   "sha256": "9b4a1f40d5fb3c1b5ca8e497b6f3bd7993ed96dc7388dce192d0cc50e4fa4ae0",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "REVOKE SELECT ON ALL TABLES IN SCHEMA bem_core FROM bem_kernel_rw;",
@@ -1975,9 +1975,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L58.md",
-   "sha256": "20571673b172d5d415f3911a43a95ad6b8f66386c3a58e87319cab9b68f412d4",
+   "sha256": "910b5d24ac373856a6b13179fbb084e3ddc3767783fd9d3e3bb3b55e41358230",
    "mutation": {
-    "line": 2797,
+    "line": 2799,
     "removed": [],
     "added": [
      "REVOKE SELECT ON ALL TABLES IN SCHEMA bem_core FROM bem_engine_rw"
@@ -2007,9 +2007,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L59.md",
-   "sha256": "127f57447e0f6d0267a0a729704b714ea1d6dbdfc3d46da5094fccaedb6afe82",
+   "sha256": "094d579b08684b0f29e8480865aa4270dd1d535652269ea0966482f73de23528",
    "mutation": {
-    "line": 15156,
+    "line": 15180,
     "removed": [
      "       TO bem_kernel_rw, bem_backup_admin;"
     ],
@@ -2041,9 +2041,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L60.md",
-   "sha256": "64e2382340323135265b8e8656483d046083581ecdd18a0da453305f606c986e",
+   "sha256": "8294198b069f0a2b9d0cffe54b036f96db271abdb3c20f2f52f699196df5e4d5",
    "mutation": {
-    "line": 18121,
+    "line": 18145,
     "removed": [
      "-- BEM954-FINAL-SECURITY-CHECKPOINT: 02_upgrade_to_h110.sql"
     ],
@@ -2075,9 +2075,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L61.md",
-   "sha256": "47ae1d4536fe23e1fb379bc12b7767425dc2e18cb719c50525f6f6f45aad6080",
+   "sha256": "28bfe869e5bf941c2c285d67f63a7c1dec9b4e81185b9afc29087e8896826e56",
    "mutation": {
-    "line": 10661,
+    "line": 10685,
     "removed": [
      "        'bem_kernel_rw|ALLTABLES:bem_core|SELECT',"
     ],
@@ -2107,9 +2107,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L62.md",
-   "sha256": "0ca1f24c30343ae6d4768decfd6764027a12fb82d530a5123c234eb87ba8e1c9",
+   "sha256": "8ed04308178664ee5d62352a20b43489875a3ae94d0f110c92792edb9dbfb7be",
    "mutation": {
-    "line": 10662,
+    "line": 10686,
     "removed": [],
     "added": [
      "        'bem_engine_rw|ALLTABLES:bem_core|SELECT',"
@@ -2139,9 +2139,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L63.md",
-   "sha256": "c14c7ae6caab32651ccacbb9cd73c636937c305377a56fe81e6a53e7864276a9",
+   "sha256": "4a67f1f246edaec8b60482bf80b4d2b56c2f19589f8ce05c93c6dec2b82e974c",
    "mutation": {
-    "line": 10669,
+    "line": 10693,
     "removed": [
      "        'bem_control.accept_handoff(uuid, uuid, integer, text)|bem_kernel_rw',"
     ],
@@ -2173,9 +2173,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-L64.md",
-   "sha256": "be70084db6ec1d7ca2f35e432f6af58a825c9f921cbfb1d06989680a6212f4ca",
+   "sha256": "c0a57a672b675c8459a89dbaee49d31107104f70957136e8fc94c97f56588f56",
    "mutation": {
-    "line": 10669,
+    "line": 10693,
     "removed": [
      "        'bem_control.accept_handoff(uuid, uuid, integer, text)|bem_kernel_rw',"
     ],
@@ -2205,9 +2205,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N01.md",
-   "sha256": "30f25335f1df97eb5ceb5d27170dcc983b6b7d66ac82f14cb672a725eb20e7cc",
+   "sha256": "23e00c89c6b7c36fe01593f69a6a009c6788145ac1a594e997ecf495b51e8a69",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "ALTER USER bem_kernel_rw SUPERUSER;"
@@ -2237,9 +2237,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N02.md",
-   "sha256": "f2c867c6f17ec2255898c533b327f407288201490e369b1645d5f88b1e221a63",
+   "sha256": "39fffe802c8d2457219b45ff33a7ef1632efe5b66827961465dc85f2af08d545",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE \"bem_kernel_rw\" SUPERUSER;"
@@ -2269,9 +2269,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N03.md",
-   "sha256": "438776d7b5f303ed7e0dd2faa991dbceb4237a5a507ff425b48a1414d68eaee7",
+   "sha256": "7281c132c93d30b08e4c75cd431995042c9093358c50caff5f183a712c01b490",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "DO $tamper$ BEGIN EXECUTE format('ALTER ROLE %I SUPERUSER', 'bem_kernel_rw'); END $tamper$;"
@@ -2301,9 +2301,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N04.md",
-   "sha256": "e12a6105c66013c0515bfa6c4f5ac323ba279336aae57cb5e85ff032833f9a1a",
+   "sha256": "6c92c235d18286f9605269629b8993d8ac1dcdd127ed72d4826d774921dd9d1a",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "GRANT \"bem_core_owner\" TO bem_kernel_rw;"
@@ -2333,9 +2333,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N05.md",
-   "sha256": "d60d8371b6974bb4bb23c28812139564d23f00e17e77780588b8dd641cce1935",
+   "sha256": "2a7deb61abe87f7eea80061e0f9e34e5658d6c0806a507dbbe651e2a4786a9e0",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "DO $tamper$ BEGIN EXECUTE format('GRANT %I TO %I', 'bem_core_owner', 'bem_kernel_rw'); END $tamper$;"
@@ -2365,9 +2365,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N06.md",
-   "sha256": "a2fbc0a6e80ac87ba98500f6fcfcd4605a62d9904bd661936e07154ddd09e4e3",
+   "sha256": "234098c3b701ae148e3200df75f5f1a4227a02317b82986fb6d6199cc92c90f7",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw RENAME TO bem_kernel_admin;"
@@ -2397,9 +2397,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N07.md",
-   "sha256": "076d5e72d511bb34ff619bf46cef9f295916f8e1be1ee7fc8d3e40e703ccac38",
+   "sha256": "84cdf9ddd36c2b4ca3a8e962aa1a18e8269bdc3a277aef63957e987c82791de4",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "ALTER FUNCTION bem_control.assert_tenant(uuid) SECURITY INVOKER;"
@@ -2429,9 +2429,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N08.md",
-   "sha256": "ffcc1a921da8074e2d39b750a26c3986df208f29d1aabdfa59ea52e9fa6104c2",
+   "sha256": "9ef9d47bdd93ed015fb0e579a3fd073487c4dfe6088030c24024731a79e8e099",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "ALTER FUNCTION bem_control.assert_tenant(uuid) SET search_path = public;"
@@ -2461,9 +2461,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N09.md",
-   "sha256": "4c97b6fbdc795ed558211fe8ab6a10a7166c2279078af7d23bbbad438abc5ed6",
+   "sha256": "2ca8f29c92d92885b2fcb83ca99f2704eb7816f1388baeea9356688463a840e6",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "ALTER USER bem_kernel_rw SUPERUSER;"
@@ -2493,9 +2493,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N10.md",
-   "sha256": "4850100e6f30fcb8804629e22bf884fc8afc53a677ef01098b9601a971e04922",
+   "sha256": "faced1c1aa063f3c3f6ac461d25d5edd9dd76f3621641686ef124e0f44163e2a",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "DO $tamper$ BEGIN EXECUTE format('ALTER ROLE %I CREATEROLE', 'bem_kernel_rw'); END $tamper$;"
@@ -2525,9 +2525,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N11.md",
-   "sha256": "37331c4304522bd381a22b5819dbcfc99b1ea0ebcb2a637a187566f5343a1761",
+   "sha256": "b5d7d0a3f12d612f77fb850a55bea8b10d87b600d454bcc7bd3a305a5efd22d8",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw -- обычная правка",
@@ -2558,9 +2558,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N12.md",
-   "sha256": "bfa3886779c7857357201e65334734cfe286fa16f03a551a64a3be1d85fc87ee",
+   "sha256": "bd1ca165b2c66fc4005518a44306ca28705a6df02249ad1be0d6bf32dda4124d",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "GRANT bem_governance TO bem_bootstrap_admin WITH ADMIN FALSE;"
@@ -2590,9 +2590,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N13.md",
-   "sha256": "7f188d79f2dafe1ff1b1fb7a13008ead3271c0881f7ea11d0124f21dfaef2856",
+   "sha256": "d56cae3b39acad4e67956f2f3403e5023be2dc6cb91b055f9d3d738a1018e7c1",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw PASSWORD 'подделка-не-настоящий-пароль';"
@@ -2622,9 +2622,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N14.md",
-   "sha256": "ec709ce3776154e1101cbd6ab60bc4559a4c98a6b84bf6fc7d1868fb5c5fa3c9",
+   "sha256": "fa38beea8d13ae5653a59addd4a0954ce244c0db497dea8b61552f39901ad773",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "ALTER TABLE bem_core.evidence DISABLE ROW LEVEL SECURITY;"
@@ -2654,9 +2654,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N15.md",
-   "sha256": "f0a2053b09484edcb0110ce6eef557dae14a11662161e6c6cea199be736c1af4",
+   "sha256": "037ed3035a295cff1e2aff48b098d157bc6f30f88058f29ce44455e22f2a2fc0",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "ALTER TABLE bem_core.evidence NO FORCE ROW LEVEL SECURITY;"
@@ -2686,9 +2686,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N16.md",
-   "sha256": "05c1786be5d416944cc44d3d1c7f50a77a4a810fca1d00b4886435b00d127c36",
+   "sha256": "5120e35368fcd4edcf7794402f9e27fe027f00458df14846fd1a63ee020d9c67",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "DROP POLICY tenant_isolation ON bem_core.evidence;"
@@ -2718,9 +2718,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N17.md",
-   "sha256": "3aecfa7b5fd6bd0df61c1bd4d09cc7e377b3ab1cede4248e1024f5484147ffa4",
+   "sha256": "92f18d39ce1b81bd169add6f2c0ddfe22a7f3b4cda90380a914efbc796885485",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "DROP TRIGGER audit_record_append_only ON bem_core.audit_record;"
@@ -2750,9 +2750,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N18.md",
-   "sha256": "4163bdcaea6c478fde156b2d603682be76173a94c196b133b233cfc75c820a0b",
+   "sha256": "71113fc546ac652811ed3e7700a67dfdfbe6b355364af2a2caf4146f02b668dc",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "ALTER FUNCTION bem_control.record_evidence(uuid, text, jsonb) SECURITY INVOKER;"
@@ -2782,9 +2782,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N19.md",
-   "sha256": "20a08d824237a489295caf9430e575f0eeb05f915e7581faf5195c1a606244ca",
+   "sha256": "fa6e6a59632d00b4fe20b7610541c62179758aa65d20f575229eb956248a2d6f",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "SET ROLE bem_backup_ctl_owner;",
@@ -2816,9 +2816,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N20.md",
-   "sha256": "7e96e6c0da918450f7df6a0d6579395b96d5880c23fca7ef115468b3cf9f33a7",
+   "sha256": "308b3b7d4c083afb97746f1c73a39f98e086d45a25024fd4762cf67250f49d7a",
    "mutation": {
-    "line": 9548,
+    "line": 9572,
     "removed": [
      "    GRANT bem_core_owner, bem_engine_owner, bem_control_owner",
      "          TO schema_migrator;`);"
@@ -2852,9 +2852,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N21.md",
-   "sha256": "c4a389d60f1045faff15160bbdacf6667296190854cfafe493b67a6c2cfc44df",
+   "sha256": "0bd02aeceb1d55fdaaf5c6287aa2c47f4d6ddad81680f038daa74ff37df93806",
    "mutation": {
-    "line": 2951,
+    "line": 2953,
     "removed": [],
     "added": [
      "bem_backup_ctl_owner"
@@ -2884,9 +2884,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N22.md",
-   "sha256": "1f1a6c62fe1bc5a5acc65308d1f0a24701b8b5d83239d8c35c706f604ef34073",
+   "sha256": "a781d9a91c55908e10073997e3d4112e7f7d41f41bca2383aed09ff8599418d1",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "SET ROLE bem_backup_ctl_owner;"
@@ -2916,9 +2916,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N23.md",
-   "sha256": "dd233791ca3ae51acaf6ccdf0030ce85d2b83fff87b798819c2248882b423654",
+   "sha256": "496a3d741e4dd85e28faf3165bbff763756b9494ac9e4dbbd0fcd2ba4a39fd8e",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "CREATE PUBLICATION bem_all FOR ALL TABLES;"
@@ -2948,9 +2948,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N24.md",
-   "sha256": "ab338e7f79270f3404e967a4a5f30b8c2e8a0c84e502c6417e21a5a22c733096",
+   "sha256": "4e6851f3b7b82064e0658cc6c63c7ab5d34d4d6c1115cdbd228a23c877287fbe",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "GRANT SELECT ON bem_core.evidence TO bem_kernel_rw WITH GRANT OPTION;"
@@ -2980,9 +2980,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N25.md",
-   "sha256": "5051f349141b2f63f9993866af4191e31e699f44da3b073a4517d92500bd0404",
+   "sha256": "8d813a1ffa9a0128e182c4c683ade0f2fd1a59afc1af0a4175f30d2b4a7a198b",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw SET search_path = public;"
@@ -3012,9 +3012,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N26.md",
-   "sha256": "58e7d3b87959d025aef8866a058239ea9854d22870a5a8b5152ff88d0f855a93",
+   "sha256": "3005d60b3c8ce183ad3ec89104d9798e52dc2b96a7e7e4d53d9718ff34549581",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw VALID UNTIL '2030-01-01';"
@@ -3044,9 +3044,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N27.md",
-   "sha256": "85f1f5a813e5127969998cbab24d45b48ee6ff1947bb52bd7fa9b5d4cdc3da0b",
+   "sha256": "76c9a5e784831518da1b3b0f804a9840ec60cd763763112096cc2285f80eeb37",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw RESET search_path;"
@@ -3076,9 +3076,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N28.md",
-   "sha256": "62052817047058bdb90550a8533d681061f3d962a7459e169b620ef55036f368",
+   "sha256": "5bde302e4baea2f7bfdc4883b7c29876389175c2880bb425bcbcf645d10df0f3",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "DROP OWNED BY bem_kernel_rw;"
@@ -3108,9 +3108,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N29.md",
-   "sha256": "9f9b9558426deb3232c493ef05975f31cfa6fa79b18a05e27d96813a5050d847",
+   "sha256": "5c70894449e0cb9805093ade6d0824ac02aee25b2684ad96a9c56a80c6756028",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER SYSTEM SET log_statement = 'none';"
@@ -3140,9 +3140,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N30.md",
-   "sha256": "2f9f80df064b24e58a5686d14cd65d00a9a86e7e0d9c26f926c61fe424881da8",
+   "sha256": "b25e130e2fece7a75997fffdfeb7f5ba20bd4744e218ad122f53a696503c6d62",
    "mutation": {
-    "line": 12821,
+    "line": 12845,
     "removed": [],
     "added": [
      "        EXECUTE format('GRANT SELECT ON bem_core.%I TO backup_reader', t);"
@@ -3172,9 +3172,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N31.md",
-   "sha256": "9929fe144b62825468995806609829967c78278c6e361661b6e4eba400c0ce1a",
+   "sha256": "ec3653a54b54cc7e2fe982cefe608cf337b6522ecd4cf74a477fa49e18a0d233",
    "mutation": {
-    "line": 10101,
+    "line": 10125,
     "removed": [
      "    EXECUTE format('ALTER ROLE backup_reader LOGIN CONNECTION LIMIT %s', p_limit);"
     ],
@@ -3206,9 +3206,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N32.md",
-   "sha256": "2dd07fcdf10f6dafa5c450de4e205488a09787f8d4a5242e950ece597454c63c",
+   "sha256": "0aab891dd3bc947668ba0eba7aaad1d55e4d1901e7354157aee8f151265d4391",
    "mutation": {
-    "line": 2980,
+    "line": 2982,
     "removed": [],
     "added": [
      "ALTER ROLE %I SUPERUSER"
@@ -3238,9 +3238,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N33.md",
-   "sha256": "d5e10c0b44d9cc076d424c4b4025ceef90d19e13f31cc2171642692f35708771",
+   "sha256": "921d54578c6e06be80eaeedd504a7c8f28a99c9e3824b3c7d3c07c43675879b4",
    "mutation": {
-    "line": 9371,
+    "line": 9395,
     "removed": [
      "       AND m.grantor <> 10"
     ],
@@ -3272,9 +3272,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N34.md",
-   "sha256": "2c04239393453dc66976d1db59a0a881a56059d33f7967942029b883467de734",
+   "sha256": "142bb8880f1e65fef88a9f7f188ecce888c7d9770c0f5992341d56fe3c8b4229",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "/* тихо */ GRANT bem_core_owner TO bem_kernel_rw;"
@@ -3304,9 +3304,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N35.md",
-   "sha256": "655ca16bfb0737a2488b4b252a4e9fbb22561537b5c33f77fe7262648bbbfaa7",
+   "sha256": "27e2e2c15e0aa3e72e13eb53d2461029fc033efcd1ac71f77ef0f8cc7a1ea913",
    "mutation": {
-    "line": 9247,
+    "line": 9271,
     "removed": [],
     "added": [
      "INSERT INTO bem_core.tenant (id, name) VALUES ('00000000-0000-0000-0000-000000000000', 'don''t');",
@@ -3337,9 +3337,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N36.md",
-   "sha256": "5eefbf9299677b639f9f67c9b5856a93cfced7af77cbb345b753d875fd448b82",
+   "sha256": "471f9896051b1c4090ffff0e794ac70efe82420a57eadf5ba5423943bda47c35",
    "mutation": {
-    "line": 11586,
+    "line": 11610,
     "removed": [],
     "added": [
      "GRANT SELECT ON bem_core.evidence TO bem_kernel_rw;"
@@ -3369,9 +3369,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N37.md",
-   "sha256": "6b833e6cd65e562a5066778bf4ad962567d0f9927f642c981b80ce3ad5c186a7",
+   "sha256": "14045f812016fc601216b1f1bd2a52893133cdc9303ef7d345d7da7cd4fc4124",
    "mutation": {
-    "line": 10285,
+    "line": 10309,
     "removed": [
      "-- BEM954-FINAL-SECURITY-CHECKPOINT: 04_backup_window.sql"
     ],
@@ -3403,9 +3403,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N38.md",
-   "sha256": "6bc606564efb4f21a80f95fce1faaa01dcdd708ed5d75ca39a6cd73c226b468f",
+   "sha256": "1f7442ae97ed04a12203fe6c72e5b8b504d4e594235e8e77bd61bb085d4e036a",
    "mutation": {
-    "line": 10627,
+    "line": 10651,
     "removed": [
      "        'backup_reader|ALLSEQUENCES:bem_control|SELECT',"
     ],
@@ -3435,9 +3435,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N39.md",
-   "sha256": "a609f87981c16fb6476d638eefe6371c84fa1f104e4ec5d76395ee7ed33b98da",
+   "sha256": "dc424c89612ca5cc70782156c9243593740b93023de5b9cb5bbe92620f189258",
    "mutation": {
-    "line": 10501,
+    "line": 10525,
     "removed": [],
     "added": [
      "        'backup_reader',"
@@ -3467,9 +3467,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N40.md",
-   "sha256": "8358c84c735959e00e23ccdc0dc8ef764334e8fce4c47ff63ac3dc4b950f9b76",
+   "sha256": "726b88e8795439c223d307761b5821f254b1272fa9e5d59be5cca4aa81325eaf",
    "mutation": {
-    "line": 2939,
+    "line": 2941,
     "removed": [
      "bem_kernel_rw|password:none|valid_until:none|config:none"
     ],
@@ -3501,9 +3501,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N41.md",
-   "sha256": "bd2564867aa72470583fdd790c559b8b0af64fa86a0ef38c8d2a06ea0ee4e69e",
+   "sha256": "267cda31626032aaeccf49cc076d2c57ca647ee41f09062748d339c3c21d3db2",
    "mutation": {
-    "line": 10527,
+    "line": 10551,
     "removed": [
      "        'bem_core.evidence|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current..."
     ],
@@ -3535,9 +3535,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N42.md",
-   "sha256": "332717af40ab2f0edf5fa4058e76b32995c054c33c34a1f17ba9442e5f379447",
+   "sha256": "5aa730ea3185a9510afff8b47c6da5ba4fe35284f91ac22afe5b7ea4bd6091f3",
    "mutation": {
-    "line": 10536,
+    "line": 10560,
     "removed": [
      "        'bem_core.audit_record|audit_record_append_only|27||bem_core.forbid_update_delete()|O|f|f|f|f|0',"
     ],
@@ -3567,9 +3567,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N43.md",
-   "sha256": "b9b6b149283da22bbe3c0c72746dca12a97e348b6550f8ec858087ef69ea1a8b",
+   "sha256": "fe7336c4f9b9e3da47115631881815ba6b6dfa9a7f16136be6cc298dbde31546",
    "mutation": {
-    "line": 10578,
+    "line": 10602,
     "removed": [
      "        'bem_control.assert_authority(text, uuid)|bem_control_owner|invoker|search_path=bem_core, pg_catalog, pg_temp',"
     ],
@@ -3601,9 +3601,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N44.md",
-   "sha256": "eadb88243324a793c95b3adab38404bb78baab2aa384efa185994b38dc7dc76c",
+   "sha256": "f42d55a4898f3497cc616d3e5985e7e435f4eed7296169006750887ca319229a",
    "mutation": {
-    "line": 9632,
+    "line": 9656,
     "removed": [
      "                        '-U', user, '-d', TARGET_DB, '-f', '-'],"
     ],
@@ -3635,9 +3635,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N45.md",
-   "sha256": "81a5da416af8bc4b7ae743a30254963468d5897914391abceb1a2ed9aecaddba",
+   "sha256": "cbb0d8257d6f71f79f7e5789c243075af280f3d8afec4d85c8692ad20ae486b2",
    "mutation": {
-    "line": 9482,
+    "line": 9506,
     "removed": [
      "  if (got !== MANIFEST_SHA256) {"
     ],
@@ -3669,9 +3669,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N46.md",
-   "sha256": "bb84acd9d9f1fd7e60b0894b1bac1adfdb361848c76a50280a617cf917fd42b6",
+   "sha256": "69ff87ce254ad695c10b2b67ceb2b8c81b856874f853926cc0cbd314c838ca64",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "DROP TRIGGER IF EXISTS audit_record_guard ON bem_core.audit_record;"
@@ -3701,9 +3701,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N47.md",
-   "sha256": "63f6c48eb6e412e4592c2bfd80a89495019a5dc5a2df373474eccd581e3180d2",
+   "sha256": "5a3670cb8f3162b9fff96c65341abf14ef83efd0f807b151ca8b47c0faf7d6ea",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw CREATEROLE;"
@@ -3733,9 +3733,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N48.md",
-   "sha256": "993975d77b00c77e2f595fcfbfa95cc397a80a7fbcdd75f40fa7b6fae764e4fe",
+   "sha256": "e3602084e7f6ba455241dbb26821a80c67460560033c9170974f0871807f04d2",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw REPLICATION;"
@@ -3765,9 +3765,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N49.md",
-   "sha256": "b65889f671a03d341248ba6d957ca33c0f63896d3e5c7ce4a18f7217ff16bb21",
+   "sha256": "ee824d16f2301f1977753a594f54b1815db5349f51074de42ccdb3c9c467ff42",
    "mutation": {
-    "line": 9100,
+    "line": 9124,
     "removed": [
      "GRANT backup_reader TO bem_backup_ctl_owner WITH ADMIN OPTION;"
     ],
@@ -3799,9 +3799,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N50.md",
-   "sha256": "07d6032b80edec0e9e2da7ee2bb754ff5fe5e2598789e1e65a96a6a6ed23224f",
+   "sha256": "e42c5f98fc69b75a1d1e1a228893df017fa131705fcffb2603ba759f57c05f6c",
    "mutation": {
-    "line": 9101,
+    "line": 9125,
     "removed": [
      "GRANT backup_reader TO bem_backup_ctl_owner WITH INHERIT FALSE;"
     ],
@@ -3833,9 +3833,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N51.md",
-   "sha256": "3185bc0fb65778cd485505049d56b750b4fe97d9b2d76d4043ebdaf93ec7e6df",
+   "sha256": "6f44004ae2fb0d6793a347e5301202c8ec498b10fc0bd0c2544faaa78dcab0bc",
    "mutation": {
-    "line": 9102,
+    "line": 9126,
     "removed": [
      "GRANT backup_reader TO bem_backup_ctl_owner WITH SET FALSE;"
     ],
@@ -3867,9 +3867,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N52.md",
-   "sha256": "cf010452814a2108535538ff2ace4688a93403a0edb4fe33a329c18ae57f2a13",
+   "sha256": "dd8b8630a60b00ad370814dacea82a6be5e0b3c7705f75b42ae273f2966a0bea",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER FUNCTION bem_control.assert_tenant(uuid) OWNER TO bem_kernel_rw;"
@@ -3899,9 +3899,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N53.md",
-   "sha256": "86b57a138c6587fdb968ed418be24cc6fd90547912879fff826a9d35aca9e105",
+   "sha256": "941ad5665e8cf134ef5733f91602e5ec2991db863848f7d7a8238c55e56b4c80",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER FUNCTION bem_control.record_evidence(uuid, text, jsonb) SECURITY INVOKER;"
@@ -3931,11 +3931,11 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N54.md",
-   "sha256": "a7f811fbe8a4e292ebf9eb75a188b057c966f8735f540654c817a668c943f1e8",
+   "sha256": "d9dc1ff23a3dc21c2f2735ad9e012fee76cfa98dadefe57cbba48a9f464ffe7f",
    "mutation": {
     "parts": [
      {
-      "line": 12901,
+      "line": 12925,
       "removed": [],
       "added": [
        "REVOKE SELECT ON ALL TABLES IN SCHEMA bem_core FROM bem_control_owner;",
@@ -3943,7 +3943,7 @@
       ]
      },
      {
-      "line": 2801,
+      "line": 2803,
       "removed": [],
       "added": [
        "REVOKE SELECT ON ALL TABLES IN SCHEMA bem_core FROM bem_control_owner"
@@ -3975,9 +3975,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N55.md",
-   "sha256": "41beeb62542a7f19727b6cc84cee468ecc0d4898b8d23c7264953939b59063b2",
+   "sha256": "f482ea4b5ee9c8e49ec80a0bde2fda5e656327cf163ef3e3cea39e94f82a8516",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "-- GRANT bem_core_owner TO bem_kernel_rw;"
@@ -4007,9 +4007,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N56.md",
-   "sha256": "ba617ab529bd868da5312cc5bee23a3b0bd73ee70981e6ca9aa5a7a1ae367c57",
+   "sha256": "4fb84249c7c8cb58f4a4d63077571f71093d1bca4761619056c0ee4197ce401c",
    "mutation": {
-    "line": 9389,
+    "line": 9413,
     "removed": [],
     "added": [
      "ALTER ROLE bem_kernel_rw RESET ALL;"
@@ -4039,9 +4039,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N57.md",
-   "sha256": "b4f02001910645cdcd0b0fa186d2b05ef20e7f31dc822c709a2d9a917cd93846",
+   "sha256": "f1ca080dd3c57792bcea345c351c34b83c759fc01d12dfeb14dc1351657c076e",
    "mutation": {
-    "line": 9738,
+    "line": 9762,
     "removed": [
      "  runAs(ADMIN_USER, finalText);"
     ],
@@ -4073,9 +4073,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N58.md",
-   "sha256": "b10ab5eff082cdf13c1a75615cd2dfaeefc3331d44fad2ec88ff2b4782188994",
+   "sha256": "03834d83025b48d2f52d7d9d5fe1008c75396e00831ae608a2ba18cba4496d37",
    "mutation": {
-    "line": 9734,
+    "line": 9758,
     "removed": [],
     "added": [
      "if (finalReceipt.backup_window_applied) {",
@@ -4108,11 +4108,11 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N59.md",
-   "sha256": "90ece0558f194dacc00634560a7db29f0f516d45a33484696d51eca7a4588549",
+   "sha256": "bde6d4ff622fb7b74f0ed970c72571bd28b7d23d63adf854a4cae97856b5f959",
    "mutation": {
     "parts": [
      {
-      "line": 9724,
+      "line": 9748,
       "removed": [
        "try {",
        "  runAs(ADMIN_USER, backupText);",
@@ -4129,7 +4129,7 @@
       ]
      },
      {
-      "line": 9747,
+      "line": 9771,
       "removed": [],
       "added": [
        "try {",
@@ -4170,9 +4170,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N60.md",
-   "sha256": "fabfc53efe5a732357f4c8487dcaf371e0d801fd11074d3dcb6f0376a73bf4e4",
+   "sha256": "d8428410e1910495ed38bf8671a236a3c313b348d8beb09ae5539972c2c2f789",
    "mutation": {
-    "line": 9738,
+    "line": 9762,
     "removed": [
      "  runAs(ADMIN_USER, finalText);",
      "  finalReceipt.terminal_check_passed = true;"
@@ -4207,9 +4207,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N61.md",
-   "sha256": "620a969b4065c08cef1438a7ccb357694c77db99d417da73681cef50a226e60b",
+   "sha256": "2594e5de2f4a11dcd5afb556576da6c22e987fc83a63290786323c3083c7e9bc",
    "mutation": {
-    "line": 9727,
+    "line": 9751,
     "removed": [],
     "added": [
      "  finalReceipt.terminal_check_passed = true;"
@@ -4239,9 +4239,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N62.md",
-   "sha256": "0477eb714ade3c42582f8a9f23dd056b50f58590d37d951559dc1cbd0c3e4a94",
+   "sha256": "e3cb0ee492a2390f86f47ed18df7e81530fead3c1483cb28ba95058632364de2",
    "mutation": {
-    "line": 9714,
+    "line": 9738,
     "removed": [
      "// На путях отказа код возврата уже ненулевой, и осечка записи его не"
     ],
@@ -4273,9 +4273,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N63.md",
-   "sha256": "46d2b6e5c7827452b19800f868c2f4dddefef7496e403c0436391f65c449e73a",
+   "sha256": "7c5a48004807d56d9d753c8efcb57969835ce01ae58f917c2eaa916e00d8aa7e",
    "mutation": {
-    "line": 9757,
+    "line": 9781,
     "removed": [
      "  process.exit(7);"
     ],
@@ -4307,9 +4307,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N64.md",
-   "sha256": "ec0e31bf82f4f75336c84e1107d63077142acbdb7d18ba98fdbc1bfb1f4bed39",
+   "sha256": "f57a9f94dd0f05f02c2cb041ce6540aad4aa1c78fa6b8aed4c56ffd91be743bb",
    "mutation": {
-    "line": 9699,
+    "line": 9723,
     "removed": [
      "  const back = readFileSync(RECEIPT_FILE, 'utf8');"
     ],
@@ -4341,9 +4341,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N65.md",
-   "sha256": "e68ea9ad192680b55fad7ca37a4cbb40835f42c5ae4763f3e8a8d96d8fcf3ecc",
+   "sha256": "2c6ebdff618e37e80ed2ce7cf305eaeb79232cbce2c0530ea4c148145d7e3d50",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT SELECT ON bem_core.evidence TO bem_engine_rw;"
@@ -4373,9 +4373,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N66.md",
-   "sha256": "af1f3d9f8dbb38cfc8e03df1366bcbc5fa88c5e2429181a539277c7c7a7b1af5",
+   "sha256": "21af58371c9a99d3e9dc9c201d17383eb0ffd92638a1ded973489b451cdf22c6",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT INSERT ON bem_core.audit_record TO bem_kernel_rw;"
@@ -4405,9 +4405,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N67.md",
-   "sha256": "0cc2cfe61e8b587f736303dc85cfc38f5f0274de7c7ab21e189a64a81361da96",
+   "sha256": "db3026773e13e67cfc427a0c9ccebbf8080a648bf8a8b7e73ebb94a8c20cf316",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT UPDATE ON bem_core.evidence TO bem_kernel_rw;"
@@ -4437,9 +4437,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N68.md",
-   "sha256": "32fd8e9e59955bba9097dbe12a25b75be31e860e77d72dfb3c7d2def183be640",
+   "sha256": "92955d0089e8d6ce0113bed4d013a38083ecc27d5d5d3aa490fc6046dbfa7747",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT DELETE ON bem_core.command_log TO bem_kernel_rw;"
@@ -4469,9 +4469,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N69.md",
-   "sha256": "96169c09c169c5a79d21a537b5a2fff80f71882bb65ba9a64db1bc8342ab7829",
+   "sha256": "4a9d114595cc081c5b4631eaec2952448a89be4de452f088782b3ea69ce0b50c",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT TRUNCATE ON bem_core.evidence TO bem_kernel_rw;"
@@ -4501,9 +4501,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N70.md",
-   "sha256": "a18fb4e8a8874df9365929ebb3fe323be8060384e1b7e3715dfcb9929778d5b3",
+   "sha256": "467d23625cb242b9708d92e7d6a3a5ace65252c5f511591f4287550d51cd92b1",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT REFERENCES ON bem_core.evidence TO bem_kernel_rw;"
@@ -4533,9 +4533,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N71.md",
-   "sha256": "c8f136e307d7301b4417cb5059fb691442c3615903bb8c939056280d4de99602",
+   "sha256": "9115f2a5e7d291fce539f506e979e1a04bc18efb3ae5e1c891331f202aef829c",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT TRIGGER ON bem_core.evidence TO bem_kernel_rw;"
@@ -4565,9 +4565,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N72.md",
-   "sha256": "2316178dc4ccc52672654dae6c4baf9733d9eecfa731e9d9c8415d3fd51aebec",
+   "sha256": "13d24f91cab75fe8c54e10bcb2e22298251d28aff34f662b259dadef25e3f9b6",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT USAGE ON SCHEMA bem_core TO bem_engine_rw;"
@@ -4597,9 +4597,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N73.md",
-   "sha256": "c0a2919c68037248674346c63ac0ce2052ee70e8c709d4cab5fab35ada202663",
+   "sha256": "f2abfe92072f830f728ea98e803b6d6b465ed61eea0ffc4bd297b56e3b41b309",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT CREATE ON SCHEMA bem_core TO bem_kernel_rw;"
@@ -4629,9 +4629,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N74.md",
-   "sha256": "62a20c69e201a43aac2bf5ce2aa532918450390720c33d3eb80d0375894448fd",
+   "sha256": "1bb3075e76149fab8269e6946dc5241db14c56b4c865a6ac7484eaf0974a79af",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT EXECUTE ON FUNCTION bem_control.assert_tenant(uuid) TO bem_engine_rw;"
@@ -4661,9 +4661,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N75.md",
-   "sha256": "d3de3ff323b6211d1f9f4ff352847b245739a72188667f42707d31ac23e905f6",
+   "sha256": "0a6f486d082cccb1aa086944ed6e45a24e387e75591a7f01d72697b73bab4c08",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT SELECT ON bem_core.evidence TO PUBLIC;"
@@ -4693,9 +4693,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N76.md",
-   "sha256": "c5cedecad9c9f5d16369807517d6aa7da72295ae5e78afd194fc36bb12f1ae70",
+   "sha256": "337b38e70b8b1e4b7fd3015e25fdb4f8f14c4801fce3e9e9b0c3f1f68da8e6a0",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT UPDATE (tenant_id) ON bem_core.work_item TO bem_kernel_rw;"
@@ -4725,9 +4725,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N77.md",
-   "sha256": "15b2d93d5c700dc9d4c797b591b9ddb762e04eb37ef7dd17071937012a87a705",
+   "sha256": "b7da324b6add6af3162eb6e8ab8b637199807cb058d13091d152c9eee4310e51",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT SELECT ON bem_core.evidence TO backup_reader WITH GRANT OPTION;"
@@ -4757,9 +4757,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N78.md",
-   "sha256": "575ae8992729faf273916124de84d1f82ed4d299d97080755e955620820b67a3",
+   "sha256": "671cc64afccdda3af3b1e07a63e77e4409661bcb69dad2ea83a3411a54aa249d",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "ALTER DEFAULT PRIVILEGES FOR ROLE bem_control_owner IN SCHEMA bem_core GRANT SELECT ON TABLES TO backup_reader;"
@@ -4789,9 +4789,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N79.md",
-   "sha256": "b3ff5f5fae5990987b6e72ea58ecf4c7a319b5b0fa4ee4e14aa83428e1e7afa1",
+   "sha256": "f377839beb841af607975eada87bcf3614da654ed5a6fe7a3ad587e8d924f3b9",
    "mutation": {
-    "line": 10956,
+    "line": 10980,
     "removed": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_core_owner',"
     ],
@@ -4821,9 +4821,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N80.md",
-   "sha256": "94161d86b1db20c770cc5ad8bc5bc6e7f1ab317c456b25cbf7024744b2d195a5",
+   "sha256": "3c2b5e1635fbd7dfab36c7bd3c271a7cd0e4d2527ea777d3ea204f6a50edaf7a",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT SELECT ON ALL TABLES IN SCHEMA bem_core TO bem_control_owner;"
@@ -4853,9 +4853,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N81.md",
-   "sha256": "6ba961f16132bfa39e4fe2d4e58249962dc82c7f37965ab6074f005e23938735",
+   "sha256": "4fc8cbf7dde5acbb7db87eea15798a5a2b3d81a7f8f2ae873abdce7d4f252147",
    "mutation": {
-    "line": 12548,
+    "line": 12572,
     "removed": [
      "             'BEFORE UPDATE OR DELETE ON bem_core.audit_record FOR EACH ROW EXECUTE FUNCTION bem_core.forbid_update_d..."
     ],
@@ -4887,9 +4887,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N82.md",
-   "sha256": "fa52a8ca3b36c9eb494fe5897db321aa028af6d8ba36bb34a08c9f678d93c863",
+   "sha256": "9e3eba463bbf28e917ed9f81c0efd224d2ccab21a5733bf69acbed6d4c6e434c",
    "mutation": {
-    "line": 12563,
+    "line": 12587,
     "removed": [
      "             'BEFORE INSERT ON bem_core.evidence FOR EACH ROW EXECUTE FUNCTION bem_core.evidence_identity()',"
     ],
@@ -4921,9 +4921,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N83.md",
-   "sha256": "941472ebe7fe7b0e260ed2eaf74a4c700b8afc398299cd203458188e87dff448",
+   "sha256": "f4217a3f7bd10fc9b577c8193976c1382c9b857cb631db8070582c124124dbdc",
    "mutation": {
-    "line": 12563,
+    "line": 12587,
     "removed": [
      "             'BEFORE INSERT ON bem_core.evidence FOR EACH ROW EXECUTE FUNCTION bem_core.evidence_identity()',"
     ],
@@ -4955,9 +4955,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N84.md",
-   "sha256": "4b4842029944399c151d4c1a79dd6ada03fd0d692243d9f65c854c207822d66c",
+   "sha256": "480745d845857329086f33474ff74a0a83e1cd9a3afcba18d3eadbadaf7071da",
    "mutation": {
-    "line": 12568,
+    "line": 12592,
     "removed": [
      "             'BEFORE DELETE ON bem_core.command_log FOR EACH ROW EXECUTE FUNCTION bem_core.forbid_update_delete()',"
     ],
@@ -4989,9 +4989,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N85.md",
-   "sha256": "3c5a35c40226e2866ad68f1bc1a5480f628bae483439d5f9ee4464bee6bac942",
+   "sha256": "c3b6c205231893af2a669c41228268c2866917df2b10b8d86f25bcf85ca42481",
    "mutation": {
-    "line": 10541,
+    "line": 10565,
     "removed": [
      "        'bem_core.evidence|evidence_identity|7||bem_core.evidence_identity()|O|f|f|f|f|0',"
     ],
@@ -5021,9 +5021,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N86.md",
-   "sha256": "d78a4d02b43102177111727d6ef3d92039b1592ec9a025f0bea32f1fdcbdbcf6",
+   "sha256": "120130297cd9092e70efe677351f8409749edb153cfaed10d7bc9a1097ab66b6",
    "mutation": {
-    "line": 10537,
+    "line": 10561,
     "removed": [
      "        'bem_core.audit_record|audit_record_head_match|7||bem_core.audit_head_matches_subject()|O|f|f|f|f|0',",
      "        'bem_core.audit_record|audit_record_no_self_audit|7||bem_core.forbid_self_audit()|O|f|f|f|f|0',"
@@ -5057,9 +5057,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N87.md",
-   "sha256": "836b2f180459d26427df993e08ab85c55d5ca6e98740974fed052400f9ad8094",
+   "sha256": "7685ea66ef1b52ecac714cadf99d29db49183991198b427f9bced661bf9e8ca5",
    "mutation": {
-    "line": 12832,
+    "line": 12856,
     "removed": [
      "                ' USING (tenant_id = bem_core.current_tenant())'"
     ],
@@ -5091,11 +5091,11 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N88.md",
-   "sha256": "7fdbc4b7d2bbc45a7bb1050b9f3b9ada03147945b063a363c43b76a7a872e5e0",
+   "sha256": "afd1f6220d76a39caa0cb4074bfcf2019f3f8164fc34dd1e3b6a020a056ed8a1",
    "mutation": {
     "parts": [
      {
-      "line": 12832,
+      "line": 12856,
       "removed": [
        "                ' USING (tenant_id = bem_core.current_tenant())'",
        "                ' WITH CHECK (tenant_id = bem_core.current_tenant())', t);"
@@ -5106,7 +5106,7 @@
       ]
      },
      {
-      "line": 12855,
+      "line": 12879,
       "removed": [
        "                    ' USING (tenant_id = bem_core.current_tenant())'",
        "                    ' WITH CHECK (tenant_id = bem_core.current_tenant())', t);"
@@ -5117,7 +5117,7 @@
       ]
      },
      {
-      "line": 17635,
+      "line": 17659,
       "removed": [
        "                ' USING (tenant_id = bem_core.current_tenant())'",
        "                ' WITH CHECK (tenant_id = bem_core.current_tenant())', t);"
@@ -5128,7 +5128,7 @@
       ]
      },
      {
-      "line": 17640,
+      "line": 17664,
       "removed": [
        "                ' USING (tenant_id = bem_core.current_tenant())'",
        "                ' WITH CHECK (tenant_id = bem_core.current_tenant())', t);"
@@ -5164,9 +5164,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N89.md",
-   "sha256": "3f693d2cd9c13ed1f8fbdfb90bda17a9b9ae635147000f3fc13950b394f8d8bd",
+   "sha256": "896a45a9e2877e62d3a6a2bbe69065696e600202a009b37b7e05e43b2a51ee34",
    "mutation": {
-    "line": 10527,
+    "line": 10551,
     "removed": [
      "        'bem_core.evidence|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current..."
     ],
@@ -5196,9 +5196,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N90.md",
-   "sha256": "bd2564867aa72470583fdd790c559b8b0af64fa86a0ef38c8d2a06ea0ee4e69e",
+   "sha256": "267cda31626032aaeccf49cc076d2c57ca647ee41f09062748d339c3c21d3db2",
    "mutation": {
-    "line": 10527,
+    "line": 10551,
     "removed": [
      "        'bem_core.evidence|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current..."
     ],
@@ -5230,9 +5230,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N91.md",
-   "sha256": "3f0e1a4b16c21d6a4f4b6e05bd637c42425d7d7a86457b79bd5ede3ecbd2e1a5",
+   "sha256": "8809c510f55ff7877621ccdccada42a7dad82538a12e4447be0cfb29e75b6012",
    "mutation": {
-    "line": 12383,
+    "line": 12407,
     "removed": [
      "SET search_path = bem_core, pg_catalog, pg_temp"
     ],
@@ -5262,9 +5262,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N92.md",
-   "sha256": "abfc2c21f2d07fa6beb02612902d497ad153ef5709c7fbcd05c60898b0260eeb",
+   "sha256": "a3dcecadabe35747f943aa927eca0624dfbf830bd6b5b9c622470eb3fdee813e",
    "mutation": {
-    "line": 12383,
+    "line": 12407,
     "removed": [
      "SET search_path = bem_core, pg_catalog, pg_temp"
     ],
@@ -5296,9 +5296,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N93.md",
-   "sha256": "9be6d4d60a827168c10a8a372ff404ed0d878c84d91dd3d6cb245f61d56c5207",
+   "sha256": "78b290213ab86d08f9b889a15d25c6a2911a7c6c544ee6c1cf58924bd63a7b7e",
    "mutation": {
-    "line": 10578,
+    "line": 10602,
     "removed": [
      "        'bem_control.assert_authority(text, uuid)|bem_control_owner|invoker|search_path=bem_core, pg_catalog, pg_temp',"
     ],
@@ -5330,9 +5330,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N94.md",
-   "sha256": "6d80e9818f7fa2000480b101ba1f4943c1373ae34812fd08e6d3c70e5db5f24f",
+   "sha256": "748eb7f4aa50ca2d2e9bf6e5b98b7ec8c941bfc50e59f2d47410f6de3d33fb29",
    "mutation": {
-    "line": 11208,
+    "line": 11232,
     "removed": [
      "        IF v_got IS DISTINCT FROM v_row THEN"
     ],
@@ -5364,9 +5364,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N95.md",
-   "sha256": "b0cb7b94fd7b857a2aa3c2cefa6461c97e89ed3e0d6dff7c85984f626af04774",
+   "sha256": "52ba856b6677b9012cc21a3def3b7acfc7e39e19aded2643e114504d09d46a70",
    "mutation": {
-    "line": 12839,
+    "line": 12863,
     "removed": [
      "            IF v_cmd <> 'ALL' OR v_perm <> 'PERMISSIVE' THEN"
     ],
@@ -5398,9 +5398,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N96.md",
-   "sha256": "eed1c2eb9575238d8b538c0a75e5a62e861fce592299882c4efaca2f56fb8c8c",
+   "sha256": "cbf72be4bafaa1ab354b843739d1bc221c1be4329f13887c9777e1dbc3ef5373",
    "mutation": {
-    "line": 9704,
+    "line": 9728,
     "removed": [
      "  for (const f of RECEIPT_FIELDS) {",
      "    if (!(f in parsed)) throw new Error('в квитанции нет обязательного поля ' + f);",
@@ -5432,9 +5432,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N97.md",
-   "sha256": "a2cc7f6e01547ba781603757ab240c94dd27c5b9c6a081824f9ad15e5124c492",
+   "sha256": "7d2976b774cf3d7b186749472107fe20901bfb3207c90d1ac4da2a4f2f62ede0",
    "mutation": {
-    "line": 9708,
+    "line": 9732,
     "removed": [
      "  if (sha !== sumOf(readFileSync(RECEIPT_FILE))) {",
      "    throw new Error('сумма квитанции на диске не совпала с записанной');",
@@ -5466,9 +5466,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N98.md",
-   "sha256": "3b3b0afa7ec593f336064ef093bcfbe026b807710869318a3f35033fec85e9e1",
+   "sha256": "fa21e0ca42fe699b160657d9fd3fef4462f82808586b157f94c3fb4fabe18ead",
    "mutation": {
-    "line": 9698,
+    "line": 9722,
     "removed": [
      "  renameSync(tmp, RECEIPT_FILE);"
     ],
@@ -5500,9 +5500,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N99.md",
-   "sha256": "c5625bfb7ee54779935f235cef07abe977a14238278e4237610e4b23744c3325",
+   "sha256": "f30bff96dab55685a0353ea0e874fd3b3004698fea22860395ba1ff763c2fcaa",
    "mutation": {
-    "line": 9697,
+    "line": 9721,
     "removed": [
      "  try { writeSync(fd, text); fsyncSync(fd); } finally { closeSync(fd); }"
     ],
@@ -5537,9 +5537,9 @@
    },
    "checker": "bem954_registry_check.mjs + bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N100.md",
-   "sha256": "eda086ef4810992fbf6b9a0ba109b7018fb7b347cb04312d194c4317f2921cd7",
+   "sha256": "208c7b86295038d6666c2fe75c638412b7ad5da27738871dab2453d2abe8cbee",
    "mutation": {
-    "line": 12662,
+    "line": 12686,
     "removed": [
      "        WHEN (NEW.published_at IS NOT NULL)"
     ],
@@ -5582,9 +5582,9 @@
    },
    "checker": "bem954_registry_check.mjs + bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N101.md",
-   "sha256": "1c046c25732779c6f141c8b5da525ff4d0093a06d04fd57b8ea027a9b8e503a9",
+   "sha256": "f8ab8cb0e80a659e5fc5b6621fe2479448744c3322fb8ffcb26c68f6b05d52bd",
    "mutation": {
-    "line": 12662,
+    "line": 12686,
     "removed": [
      "        WHEN (NEW.published_at IS NOT NULL)"
     ],
@@ -5627,9 +5627,9 @@
    },
    "checker": "bem954_registry_check.mjs + bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N102.md",
-   "sha256": "319845bd34db7ce66a372eea9f00c619dd2584cace687192d3fbdaef0d9b2736",
+   "sha256": "c2029ef57f8c41bc5c5decab82f0c852e5b7483118842208600fcd76039bd571",
    "mutation": {
-    "line": 12563,
+    "line": 12587,
     "removed": [
      "             'BEFORE INSERT ON bem_core.evidence FOR EACH ROW EXECUTE FUNCTION bem_core.evidence_identity()',"
     ],
@@ -5672,9 +5672,9 @@
    },
    "checker": "bem954_registry_check.mjs + bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N103.md",
-   "sha256": "4b9233e98d1ed8cf7dc4313db8b9d38b5a2751390c4541f0150ab06e75b1eeb9",
+   "sha256": "1282cca019b725054cf3aecc56332d6fd7955ba74743ac3ba7316b9639f95e91",
    "mutation": {
-    "line": 10566,
+    "line": 10590,
     "removed": [
      "        'bem_core.subject|subject_requires_author|new.published_at IS NOT NULL||CREATE CONSTRAINT TRIGGER subject_req..."
     ],
@@ -5714,9 +5714,9 @@
    "level": "trigger_definition_problems: файл 01: немедленная сверка не сравнивает условие WHEN",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N104.md",
-   "sha256": "24ab2c84fe9fb2b9166cb7ad8bda80c4f2485ac8f63b588fd846fd2a49ebaf77",
+   "sha256": "76c25dfce0ab34d6e262860937733506820e27cae81caa55e7cb464e5c63d551",
    "mutation": {
-    "line": 12633,
+    "line": 12657,
     "removed": [
      "                 WHEN v_when <> r.want_when",
      "                   THEN 'условие WHEN (' || v_when || ') вместо (' || r.want_when || ')'"
@@ -5747,9 +5747,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs + bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N105.md",
-   "sha256": "5f955443d8342d14931511c31bee543a110d1cba1cc7a01173e8906cc5966dae",
+   "sha256": "b96d227116b949344729d221485aa46ee0b8064e1653dfa67a2d509b86e06f56",
    "mutation": {
-    "line": 12662,
+    "line": 12686,
     "removed": [
      "        WHEN (NEW.published_at IS NOT NULL)"
     ],
@@ -5789,9 +5789,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs + bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N106.md",
-   "sha256": "605f5334a729c935441afa9c4333e4d76e7957be4d22f44256b8ddbd6ba056f6",
+   "sha256": "0d8175ef36268a77b9f459b5ae088896e4288644120f6ef34ea91a94c0e4a575",
    "mutation": {
-    "line": 12662,
+    "line": 12686,
     "removed": [
      "        WHEN (NEW.published_at IS NOT NULL)"
     ],
@@ -5831,9 +5831,9 @@
    "level": "trigger_definition_problems: файл 01, пункт 15, отпечатки: не хватает bem_core.subject|subject_requires_author",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N107.md",
-   "sha256": "ec9c5be744dd0bcc9b6773257f9083ea142db22dc7e57c3f399c6397918259a2",
+   "sha256": "727f7110b89f290564fc7d4f66d7db70a537f4fdb613947292b28177d105956c",
    "mutation": {
-    "line": 12663,
+    "line": 12687,
     "removed": [
      "        EXECUTE FUNCTION bem_core.require_at_least_one_author();"
     ],
@@ -5865,9 +5865,9 @@
    "level": "trigger_definition_problems: файл 01, пункт 15, отпечатки: не хватает bem_core.subject|subject_requires_author",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N108.md",
-   "sha256": "1c2febfb3eb4b84b0305e8fc8101f440ac83c0ee8d312d2f7ad26eea3069a25c",
+   "sha256": "ea4872e45a534131d1f13f9cf828c23e45fb83e82b04eea35f73f86de39535da",
    "mutation": {
-    "line": 12659,
+    "line": 12683,
     "removed": [
      "        AFTER INSERT OR UPDATE OF published_at ON bem_core.subject"
     ],
@@ -5899,9 +5899,9 @@
    "level": "trigger_definition_problems: файл 01, пункт 15, отпечатки: не хватает bem_core.subject|subject_requires_author",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N109.md",
-   "sha256": "257d7124b11549c7da872b7429a4df477413fb40c6e1b420a67fe533b8426758",
+   "sha256": "704a18f87aead59c3fca19b8c7fd2e8d7418af5e81ae9ac8264b86fc3b16d0d7",
    "mutation": {
-    "line": 12659,
+    "line": 12683,
     "removed": [
      "        AFTER INSERT OR UPDATE OF published_at ON bem_core.subject"
     ],
@@ -5933,9 +5933,9 @@
    "level": "trigger_definition_problems: файл 01, пункт 15, отпечатки: не хватает bem_core.subject|subject_requires_author",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N110.md",
-   "sha256": "85f7afd3d08ac581ef0f6b0ac433db481a21740576ba5ddd0a17857e2d72b178",
+   "sha256": "89fdee72f7759611dfec2d66b2022665ca91b3a8c2aa6fdfe79a64635a2ee2fc",
    "mutation": {
-    "line": 12663,
+    "line": 12687,
     "removed": [
      "        EXECUTE FUNCTION bem_core.require_at_least_one_author();"
     ],
@@ -5967,9 +5967,9 @@
    "level": "trigger_definition_problems: файл 01, пункт 15, отпечатки: не хватает bem_core.subject|subject_requires_author",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N111.md",
-   "sha256": "87facf856602834a2a3b7037da626285b357fc02c01bfbe8487646d74c2a428a",
+   "sha256": "fe78d121a4922f473110bcc67bb92be27680d9f633a35a673464e7fb2f0f6677",
    "mutation": {
-    "line": 12660,
+    "line": 12684,
     "removed": [
      "        DEFERRABLE INITIALLY DEFERRED"
     ],
@@ -6001,9 +6001,9 @@
    "level": "trigger_definition_problems: файл 01, пункт 15, отпечатки: не хватает bem_core.subject|subject_requires_author",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N112.md",
-   "sha256": "1fca1225f3d9582bf2870929d60c9fb1b07bd6d9c12979edecb88d10f3b17f45",
+   "sha256": "2ab73fb88d173be2d31c7022543eea44391a5d176e8debb9580480f1365a1724",
    "mutation": {
-    "line": 12660,
+    "line": 12684,
     "removed": [
      "        DEFERRABLE INITIALLY DEFERRED"
     ],
@@ -6035,9 +6035,9 @@
    "level": "trigger_definition_problems: файл 01, пункт 15, отпечатки: не хватает bem_core.subject|subject_requires_author",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N113.md",
-   "sha256": "ab2b5d0b67c4bcc3f6a29a3cf5083849d4135e0c1a3898df83f48cf5f433695d",
+   "sha256": "b2941af22e32e1f63a99a8d31498335686627160fe70f11b901e67c76503fac6",
    "mutation": {
-    "line": 12658,
+    "line": 12682,
     "removed": [
      "    CREATE CONSTRAINT TRIGGER subject_requires_author",
      "        AFTER INSERT OR UPDATE OF published_at ON bem_core.subject",
@@ -6072,9 +6072,9 @@
    "level": "trigger_definition_problems: файл 01: по команде определение",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N114.md",
-   "sha256": "d76c817b861de496de3e09ef0572dfadb568d3ebfa223bd59757505b936e3a0e",
+   "sha256": "ff9729aff81788afd0610f8d18b6d0ed1bf3b9d747c0244ccef1d85164530cee",
    "mutation": {
-    "line": 12679,
+    "line": 12703,
     "removed": [
      "    v_want_def  := 'CREATE CONSTRAINT TRIGGER subject_requires_author AFTER INSERT OR UPDATE OF published_at ON bem_c..."
     ],
@@ -6106,9 +6106,9 @@
    "level": "terminal_problems: v_trigger_def: не хватает bem_core.evidence|evidence_identity",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N115.md",
-   "sha256": "99148ed42c3f0f83949ae4ffcaa7b67addc387b0bd4d8857bfe3e07cbb2de1a8",
+   "sha256": "21751092e10540677a25dab97aebb2d391ce9bdff477965b4f9fd82a7d60d000",
    "mutation": {
-    "line": 10563,
+    "line": 10587,
     "removed": [
      "        'bem_core.evidence|evidence_identity|||CREATE TRIGGER evidence_identity BEFORE INSERT ON bem_core.evidence FO..."
     ],
@@ -6140,9 +6140,9 @@
    "level": "trigger_definition_problems: файл 01, пункт 15, определения: не хватает bem_core.evidence|evidence_identity",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N116.md",
-   "sha256": "c3d819e9b29e408b767b93b7a6600a863f46deb589c2f510c890a890c6581dee",
+   "sha256": "33c68687ebe676a13ef268791193a9fc3ac9eb0037fc2c493b07d98befd6251b",
    "mutation": {
-    "line": 16868,
+    "line": 16892,
     "removed": [
      "            'bem_core.evidence|evidence_identity|||CREATE TRIGGER evidence_identity BEFORE INSERT ON bem_core.evidenc..."
     ],
@@ -6174,9 +6174,9 @@
    "level": "trigger_definition_problems: файл 05 читает определение без закреплённого пути поиска",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N117.md",
-   "sha256": "c893c97ff4e85872246bb70b7564cf3ecfa9fbe28cb39a2d4f0669af59c7c591",
+   "sha256": "9c41ae22f7d07af9859c7307e0fb6f9a1383e8ccf30ad603cfe9ca5ffd03e992",
    "mutation": {
-    "line": 11286,
+    "line": 11310,
     "removed": [
      "    PERFORM set_config('search_path', 'pg_catalog, pg_temp', true);"
     ],
@@ -6206,9 +6206,9 @@
    "level": "trigger_definition_problems: файл 05 не читает определение триггера у сервера",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N118.md",
-   "sha256": "807c030d30b296cfc6fd058255045a41b9477527b9f3af2ae244e22a7abb260f",
+   "sha256": "6f6035cf3e44c51c5786540ec6159471b54145f9720516c65f4fd060b5df4ead",
    "mutation": {
-    "line": 11297,
+    "line": 11321,
     "removed": [
      "          CROSS JOIN LATERAL (SELECT regexp_replace(pg_get_triggerdef(tg.oid, true), '\\s+', ' ', 'g') AS d) AS td"
     ],
@@ -6240,9 +6240,9 @@
    "level": null,
    "checker": "bem954_registry_check.mjs + bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N119.md",
-   "sha256": "b4a9d8bad88d12465950d12ea7ff892f8f24d0cc29b3d7480266b0c1148dda9f",
+   "sha256": "a155b4fdc7105421570205887ce6aa1ea5317f4966a90bbc9f52723bc7d040c9",
    "mutation": {
-    "line": 12654,
+    "line": 12678,
     "removed": [
      "    -- Constraint-триггер пересоздаётся так же безусловно. У него"
     ],
@@ -6282,9 +6282,9 @@
    "level": "vocabulary_problems: запрещённая форма — отключение триггера",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N120.md",
-   "sha256": "04c407dd86daee5c11787c5f1c5ee65d4210ab4023db97db0295cde1e6bae118",
+   "sha256": "2bd983aae863626238ad889a60249550dbc5e955ce376c5da3728ae6a1504a8d",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "ALTER TABLE bem_core.subject DISABLE TRIGGER subject_requires_author;"
@@ -6314,9 +6314,9 @@
    "level": "vocabulary_problems: запрещённая форма — смена режима триггера",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N121.md",
-   "sha256": "a76708df96e9588bda50f6e078dd91576b72688b089c3e232a817272d262b653",
+   "sha256": "4d470271285378d9b1062349798df5782bb65fc754ff10225ad45b3846a2f7cc",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "ALTER TABLE bem_core.subject ENABLE REPLICA TRIGGER subject_requires_author;"
@@ -6346,9 +6346,9 @@
    "level": "trigger_definition_problems: файл 01_database_migration.sql: меняется режим срабатывания триггеров: DISABLE TRIGGER",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N122.md",
-   "sha256": "b23f93d801a3f29f90cb067f8592157c13e7a138a30c1090580cdd20cc6984c6",
+   "sha256": "d3f4a11a798a9210ca9b2fcb19aa5fce4790f8944dac83e6cf5db7945209a7d3",
    "mutation": {
-    "line": 12664,
+    "line": 12688,
     "removed": [],
     "added": [
      "    ALTER TABLE bem_core.subject DISABLE TRIGGER subject_requires_author;"
@@ -6378,9 +6378,9 @@
    "level": "terminal_problems: v_acl: лишнее TABLE|bem_core.evidence|backup_reader|SELECT|bem_control_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N123.md",
-   "sha256": "ed6223f11ad9eace758324a82fe7dffe190568fe44c03e1d8eb168963c9d0f03",
+   "sha256": "d9855abbfd6b47b3b15955cdf643259661f26d81574d053a719d95e9ad16e4c6",
    "mutation": {
-    "line": 10956,
+    "line": 10980,
     "removed": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_core_owner',"
     ],
@@ -6412,9 +6412,9 @@
    "level": "terminal_problems: v_acl: лишнее DEFAULT|bem_core_owner|bem_core|r|backup_reader|SELECT|bem_control_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N124.md",
-   "sha256": "13c2f6e1b9d77fa7ef1ec6118496b91de1dc96e2fb185795917e29ddcfe40510",
+   "sha256": "419405de98e228308d335495073c7718a106205180e9d3fc0a457f198745d115",
    "mutation": {
-    "line": 10767,
+    "line": 10791,
     "removed": [
      "        'DEFAULT|bem_core_owner|bem_core|r|backup_reader|SELECT|bem_core_owner',"
     ],
@@ -6446,9 +6446,9 @@
    "level": "vocabulary_problems: команда безопасности вне закрытого списка: GRANT SELECT ON bem_core.evidence TO backup_reader GRANTED BY",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N125.md",
-   "sha256": "55c8f55b55cdea31ba3f4162c5d182c07239e4f75454dcb29ab95c08cc2558c0",
+   "sha256": "bac4aeb12625112f8bc2d1832b46687e45dbec5e49b2743496aad37595772b41",
    "mutation": {
-    "line": 17275,
+    "line": 17299,
     "removed": [],
     "added": [
      "GRANT SELECT ON bem_core.evidence TO backup_reader GRANTED BY bem_core_owner;"
@@ -6478,9 +6478,9 @@
    "level": "acl_grantor_problems: файл 05: выдавший читается не во всех списках прав",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N126.md",
-   "sha256": "39c21fe503575a585299f9b671219e993e30fa74fab221871d161fb08c754d7d",
+   "sha256": "c676042341a00123598067ab91fef49543e71ca6830a6b3754c427a918a4d2db",
    "mutation": {
-    "line": 11488,
+    "line": 11512,
     "removed": [
      "               || '|' || coalesce(gr.rolname, a.grantor::text)"
     ],
@@ -6510,9 +6510,9 @@
    "level": "acl_grantor_problems: в самопроверке файла 01 нет правила",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N127.md",
-   "sha256": "d0b6b97d069db79b1b5d70a1f37b97350edb110605af368e5ef901f80cc2027d",
+   "sha256": "ed569df8e4f467ac4d4c7f912c0c3ca6074b5ed3a7aa1b1e8c6a2b133e6446f1",
    "mutation": {
-    "line": 17168,
+    "line": 17192,
     "removed": [
      "     WHERE i.grantor <> i.owner OR i.is_grantable"
     ],
@@ -6544,9 +6544,9 @@
    "level": "terminal_problems: v_acl: лишнее TABLE|bem_core.evidence|backup_reader|SELECT|bem_control_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N128.md",
-   "sha256": "11dc352c8ee2a366690e2e7e87b675d84fabbf62dfbfe548b52c2f2fef14bee8",
+   "sha256": "cfff5e3619f75343114ada517c385520b258d9e70bb049375e3f18e1f6021f26",
    "mutation": {
-    "line": 10956,
+    "line": 10980,
     "removed": [],
     "added": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_control_owner',"
@@ -6576,9 +6576,9 @@
    "level": "terminal_problems: v_acl: повтор строки",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N129.md",
-   "sha256": "cd8e3fbb223738e5c834ccd605d8036098548221d08c48924bea2eb0b3399603",
+   "sha256": "4ae9b2070ad62384cd25258bff2481df11f89fcb369394b93426cf2bd1338e31",
    "mutation": {
-    "line": 10957,
+    "line": 10981,
     "removed": [],
     "added": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_core_owner',"
@@ -6608,9 +6608,9 @@
    "level": "acl_grantor_problems: файл 05: права сравниваются через EXCEPT",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N130.md",
-   "sha256": "b50a6f176be421f553dde234b4fa58ceb6a325fc1817073ae492eafb143f9166",
+   "sha256": "0e4d1ad5243380cdbce35ca6228f6c135b57eab211f0bd2d4d7e8e6334ccad7b",
    "mutation": {
-    "line": 11538,
+    "line": 11562,
     "removed": [
      "    SELECT count(*), left(coalesce(string_agg(x.r || ' x' || (x.n_got - x.n_want), ', '",
      "                                              ORDER BY x.r COLLATE \"C\"), ''), 600)",
@@ -6651,9 +6651,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N131.md",
-   "sha256": "699bab44e4adc653edb8dbd397472a99c151f10488efbc480a6c082979ac3806",
+   "sha256": "8f6bb5bc633a60a090d5b776b761dc647fd8b16c883eb5e7f0a67384dd4c9f80",
    "mutation": {
-    "line": 11451,
+    "line": 11475,
     "removed": [
      "    --     R31 (замечание M-H115-R15-01). Последнее поле строки — кто"
     ],
@@ -6685,9 +6685,9 @@
    "level": "terminal_problems: v_acl: лишнее TABLE|bem_core.evidence|backup_reader|SELECT*|bem_core_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N132.md",
-   "sha256": "48a036a0968a90c67a166261f820428997c2a0ee1a4dff9a0d42f21514bff138",
+   "sha256": "cdc56bf69ce74a99a95e7e5bca4977efe19f603346db3c6e8fe425c330490796",
    "mutation": {
-    "line": 10956,
+    "line": 10980,
     "removed": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_core_owner',"
     ],
@@ -6719,9 +6719,9 @@
    "level": "terminal_problems: v_acl: лишнее TABLE|bem_core.evidence|PUBLIC|SELECT|bem_core_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N133.md",
-   "sha256": "7caaae94fb0bf2533ef15a928b4b692c8bd42738e11e2b5ea527c8b6710ca32f",
+   "sha256": "5f4c317e49f37a51a9a0dfb5dbc390b2c659ab66ffc5ace56abb0d0a40a0004a",
    "mutation": {
-    "line": 10956,
+    "line": 10980,
     "removed": [],
     "added": [
      "        'TABLE|bem_core.evidence|PUBLIC|SELECT|bem_core_owner',"
@@ -6751,9 +6751,9 @@
    "level": "selfcheck_problems: v_acl: лишнее TABLE|bem_core.evidence|backup_reader|SELECT|bem_control_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N134.md",
-   "sha256": "16aa6aab4f3d38a7ff4d6881abb70d73ebf40af0b354cab6c3ecd43f125b334e",
+   "sha256": "ded877967a2369e1142d8dd4ac3162b6ac9ddb45d1c4684a297b8a8978529079",
    "mutation": {
-    "line": 16428,
+    "line": 16452,
     "removed": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_core_owner',"
     ],
@@ -6785,9 +6785,9 @@
    "level": "selfcheck_problems: v_acl: лишнее DEFAULT|bem_core_owner|bem_core|r|backup_reader|SELECT|bem_control_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N135.md",
-   "sha256": "35d40eb34bf4a2d1fa9e2d0adf78265869000ae2fda9bad60c28b79a698a8ffd",
+   "sha256": "66724b6e3a8a2aab516a4f821b95f3108da4f0dad5fcadcf458bef604d3cdd96",
    "mutation": {
-    "line": 16247,
+    "line": 16271,
     "removed": [
      "        'DEFAULT|bem_core_owner|bem_core|r|backup_reader|SELECT|bem_core_owner',"
     ],
@@ -6819,9 +6819,9 @@
    "level": "selfcheck_problems: v_acl_04: лишнее FUNCTION|bem_control.backup_window_drain()|bem_backup_admin|EXECUTE|bem_control_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N136.md",
-   "sha256": "43d879382b07899b6062e2e77bb69b9e12d7489e2106c29275b507efc9f0f68f",
+   "sha256": "acfb30fb45b0dbd0f5af8dbbc71c0f300333c16e4e3bfd0719cf27ae39478a45",
    "mutation": {
-    "line": 16540,
+    "line": 16564,
     "removed": [
      "        'FUNCTION|bem_control.backup_window_drain()|bem_backup_admin|EXECUTE|bem_backup_ctl_owner',"
     ],
@@ -6853,9 +6853,9 @@
    "level": "acl_grantor_problems: файл 01: выдавший читается не во всех списках прав",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N137.md",
-   "sha256": "966a4e7c48533c6e1415062b5bd24974f54911afd6d52c7104b7ed78bc218541",
+   "sha256": "8a8df2526025ba49e24a42efbc97cbea1f23277c6e8ed3a5eca616aeb11b0ea3",
    "mutation": {
-    "line": 17009,
+    "line": 17033,
     "removed": [
      "               || '|' || coalesce(gr.rolname, a.grantor::text)"
     ],
@@ -6885,9 +6885,9 @@
    "level": "selfcheck_problems: v_acl: лишнее TABLE|bem_core.evidence|backup_reader|SELECT|bem_control_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N138.md",
-   "sha256": "f1e68a17d650fa6262ab1fbde43c016f353e2057d935e9baed086f2792e27a14",
+   "sha256": "6c75a4e10bef10c2261391106bd15038cdff21e5550c3b27cb8cde1d25e02f12",
    "mutation": {
-    "line": 16428,
+    "line": 16452,
     "removed": [],
     "added": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_control_owner',"
@@ -6917,9 +6917,9 @@
    "level": "selfcheck_problems: v_acl: повтор строки",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N139.md",
-   "sha256": "bb5a955b6513c741cbd0dd252828f473f879bacb576dafe14168ecb42a20b62a",
+   "sha256": "3fa43cb514a0e7064e02429a448285b7407d235e6e073c42875e33cb6f75c3c2",
    "mutation": {
-    "line": 16429,
+    "line": 16453,
     "removed": [],
     "added": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_core_owner',"
@@ -6949,9 +6949,9 @@
    "level": "acl_grantor_problems: файл 01: права сравниваются через EXCEPT",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N140.md",
-   "sha256": "b09763a14c83b70a32f2a0e5e96d8d7df4812b2cef09ec36d24d8744a3abd038",
+   "sha256": "0ad846d1e8774255cd54eaecb035a5270bafba8420897514e85c5e8e554f7367",
    "mutation": {
-    "line": 17080,
+    "line": 17104,
     "removed": [
      "    SELECT count(*), left(coalesce(string_agg(x.r || ' x' || (x.n_got - x.n_want), ', '",
      "                                              ORDER BY x.r COLLATE \"C\"), ''), 600)",
@@ -6992,9 +6992,9 @@
    "level": "acl_grantor_problems: файл 01: права сравниваются не с учётом повторов: нет WHERE x.n_want > x.n_got",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N141.md",
-   "sha256": "a22f54953205f5ec480ff51791d1528c88e5b2aad2d9de762da7d62539d61212",
+   "sha256": "f649baeab8dfa555cc2e295579e734527060f629949777b3eb45f80055f747ec",
    "mutation": {
-    "line": 17091,
+    "line": 17115,
     "removed": [
      "    SELECT count(*), left(coalesce(string_agg(x.r || ' x' || (x.n_want - x.n_got), ', '",
      "                                              ORDER BY x.r COLLATE \"C\"), ''), 600)",
@@ -7034,9 +7034,9 @@
    "level": "selfcheck_problems: v_acl: лишнее TABLE|bem_core.evidence|backup_reader|SELECT*|bem_core_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N142.md",
-   "sha256": "b6f6d4c0b3f02cff42f5c654627d67bfce52e8771e5d135088082a0154436071",
+   "sha256": "74f766f007e892b8034740a4d4e1250cacfa098bfbd8cfe1ee3cb6179c23d019",
    "mutation": {
-    "line": 16428,
+    "line": 16452,
     "removed": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_core_owner',"
     ],
@@ -7068,9 +7068,9 @@
    "level": "selfcheck_problems: v_acl: лишнее TABLE|bem_core.evidence|PUBLIC|SELECT|bem_core_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N143.md",
-   "sha256": "ef7805f99612ab0b94a3160ade611ccc301b9a35916c2da0be21ff45fcebb2e7",
+   "sha256": "103c4e4cf4a61b75d1ee4af115b7c7f277cbdf6afd419c836e5db4b49906d4f1",
    "mutation": {
-    "line": 16428,
+    "line": 16452,
     "removed": [],
     "added": [
      "        'TABLE|bem_core.evidence|PUBLIC|SELECT|bem_core_owner',"
@@ -7100,9 +7100,9 @@
    "level": "selfcheck_problems: v_acl: не хватает TABLE|bem_core.evidence|backup_reader|SELECT|bem_core_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N144.md",
-   "sha256": "55135f059c7685fef9d037fee7e0d6c7a5fb405936e0224b2a204359b26e775c",
+   "sha256": "fc22c4619af71a3ac439c4f72a186d98e6fa2b8ac82bba4daa9ebb84e983c7dd",
    "mutation": {
-    "line": 16428,
+    "line": 16452,
     "removed": [
      "        'TABLE|bem_core.evidence|backup_reader|SELECT|bem_core_owner',"
     ],
@@ -7132,9 +7132,9 @@
    "level": "selfcheck_problems: v_acl_04: не хватает FUNCTION|bem_control.backup_window_assert_closed()|bem_backup_admin|EXECUTE|bem_backup_ctl_owner",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N145.md",
-   "sha256": "498de10a59d86b2e48cdb77105146fd63e42198096c819739e57a39da719d1f2",
+   "sha256": "7d01319ef90ddb08e7dde3b0e144ccaee0014a708f2f5af8647bc5d356e37893",
    "mutation": {
-    "line": 16538,
+    "line": 16562,
     "removed": [
      "        'FUNCTION|bem_control.backup_window_assert_closed()|bem_backup_admin|EXECUTE|bem_backup_ctl_owner',"
     ],
@@ -7164,9 +7164,9 @@
    "level": "selfcheck_problems: v_acl: массива в файле 01 нет",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N146.md",
-   "sha256": "c93aea28d758c491d808612fb6ae67016ce5099ca7aab16bce6d0676ebe7d75a",
+   "sha256": "bdc3701509a091f09a006684dd5839921c96867dbb1d1af60fa207355d58882d",
    "mutation": {
-    "line": 16193,
+    "line": 16217,
     "removed": [
      "    v_acl    constant text[] := ARRAY["
     ],
@@ -7198,9 +7198,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N147.md",
-   "sha256": "899498bd6ae7c684dc3a75ada6fe5943f3606d4d1e1d8d3040b11371db57d6a6",
+   "sha256": "771e6d77e818efee58e6dfccb2993ee8f15a8e49166558efc4fb7a363cb1cac5",
    "mutation": {
-    "line": 16194,
+    "line": 16218,
     "removed": [
      "        'COLUMN|bem_control.backup_window.closed_at|bem_backup_ctl_owner|UPDATE|bem_control_owner',",
      "        'COLUMN|bem_control.backup_window.locked_at|bem_backup_ctl_owner|UPDATE|bem_control_owner',"
@@ -7234,9 +7234,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N148.md",
-   "sha256": "6571f660a6251d07ce86c15bcadb263c94a40746001aecd974b418bf4de67929",
+   "sha256": "2e84ab2a14493d2e39c28e8d213fdefbd41a425bf8fed132946fc8bf473c9fda",
    "mutation": {
-    "line": 16194,
+    "line": 16218,
     "removed": [],
     "added": [
      "        -- пояснение внутри списка"
@@ -7266,9 +7266,9 @@
    "level": "acl_grantor_problems: файл 01: нет охраны «все или ни одной» для прав функций окна: нет IF v_cnt NOT IN (0, cardinality(v_acl_04)) THEN",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N149.md",
-   "sha256": "cca1cfddb1396e8bd07fed33a8449925c87a3de2b0810307c49110ddece32b7e",
+   "sha256": "0d8e0b15e88753bb06d1c40abaa526fbd4afcba849748d1390a6bcf00cb97b46",
    "mutation": {
-    "line": 17064,
+    "line": 17088,
     "removed": [
      "    IF v_cnt NOT IN (0, cardinality(v_acl_04)) THEN"
     ],
@@ -7300,9 +7300,9 @@
    "level": "acl_grantor_problems: файл 01: нет охраны «все или ни одной» для прав функций окна: нет IF v_cnt = 0 THEN",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N150.md",
-   "sha256": "445ee26149cec1aab7301d582917231b49f90b4528a04370d96af8219b289c31",
+   "sha256": "1e017503f04ae2bac3f121a7643a7a98e309c86c7f92c1a09295ac4f5a8c0644",
    "mutation": {
-    "line": 17070,
+    "line": 17094,
     "removed": [
      "        v_acl_want := v_acl;",
      "    ELSE",
@@ -7338,9 +7338,9 @@
    "level": "acl_grantor_problems: файл 01: запрос прав каталога не совпадает с запросом шага 10 файла 05",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N151.md",
-   "sha256": "5137b80535c98db69b57129e2cabd673311ca1638c4cb5f31935d85e5b30bee0",
+   "sha256": "23312c937bec0a8b1c8914a73c4c668777bf427baf7e94fb20ae5d6c4fd54db6",
    "mutation": {
-    "line": 16982,
+    "line": 17006,
     "removed": [
      "           AND nspname NOT LIKE 'pg\\_toast%'",
      "           AND nspname NOT LIKE 'pg\\_temp%'"
@@ -7371,9 +7371,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N152.md",
-   "sha256": "972e3efa1c29b09f694a3e0353c1d8ac189335a3e985c2c67fc000e1b7f3934c",
+   "sha256": "6095374d90a3bfb4545af017035ecd52fd84802c7a40c1d84f46b8f579c5c7ab",
    "mutation": {
-    "line": 16974,
+    "line": 16998,
     "removed": [
      "    --     разницу, а не выпасть из рассмотрения вместе со схемой. Запрос"
     ],
@@ -7405,9 +7405,9 @@
    "level": "declaration_duplicate_problems: файл 01_database_migration.sql: имя v_read объявлено 2 раза",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N153.md",
-   "sha256": "72df90f682a05afd6da215aa3add3d96921f2b24695149835637cad308fbd103",
+   "sha256": "70bf1db42105e46611478302395bc9fc4bb7f43342cf38f19f02a00127cff1e4",
    "mutation": {
-    "line": 16033,
+    "line": 16057,
     "removed": [],
     "added": [
      "    v_read  constant text[] := ARRAY['x'];"
@@ -7437,9 +7437,9 @@
    "level": "prose_problems: раздел 5.2: право на запись доказательства названо выданным",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N154.md",
-   "sha256": "c292bbcac3c280ce896971f66af9c2f5feaf3678f43dfabdd5a61d1b4180050a",
+   "sha256": "09f6b09578ceb6278053e5441decf39a684ddc57d83cab0095d603320b8dfe1f",
    "mutation": {
-    "line": 803,
+    "line": 805,
     "removed": [
      "| Записать доказательство | нет: право `INSERT` на `bem_core.evidence` отозвано (замечание `C-H18-R8-05`) | `bem_cont..."
     ],
@@ -7471,9 +7471,9 @@
    "level": "prose_problems: раздел 5: запись доказательства «оставлена прямой»",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N155.md",
-   "sha256": "0366b4a29671e7a6d3f56a68bd5de26ebdc96074b67e64f9f259645980e75fe3",
+   "sha256": "ea079960e8dbaeab4df983a413cc6f724906a0986b22ec86392037e5c9645bd4",
    "mutation": {
-    "line": 807,
+    "line": 809,
     "removed": [
      "## 5.3. Почему запись доказательства идёт только через функцию"
     ],
@@ -7505,9 +7505,9 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N156.md",
-   "sha256": "a2192711089fcebd6804351c6cb0d703bde00e1ea01fe0ed6922d1b72e7eabed",
+   "sha256": "1992e15b553d6466609d5bcb69bbf67df76efdccb99cec80f0c3e7986ec033bc",
    "mutation": {
-    "line": 809,
+    "line": 811,
     "removed": [
      "Прежние редакции называли эту запись прямой, и это противоречило разделу 4.3: прямая вставка обходила проверку личнос..."
     ],
@@ -7539,9 +7539,9 @@
    "level": "acl_grantor_problems: сравнение прав в файле 01 (пункт 22) и в файле 05 (шаг 10) разошлось",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N157.md",
-   "sha256": "608808a04bf4e8e8efd12ffb62f2473dfceb7c899ec01b77f6853a7b8edb55e1",
+   "sha256": "14d6ea62cca6f8786daa56c2ff94c2a95161a56e57051477105bcfa052d4b240",
    "mutation": {
-    "line": 17085,
+    "line": 17109,
     "removed": [
      "              FULL JOIN (SELECT r, count(*) AS n FROM unnest(v_acl_want) AS r GROUP BY r) w"
     ],
@@ -7573,9 +7573,9 @@
    "level": "acl_grantor_problems: сравнение прав в файле 01 (пункт 22) и в файле 05 (шаг 10) разошлось",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N158.md",
-   "sha256": "eb74daca627e393b8566dc39d6c0ba7d91fe003ceb99847cb3f288a4cf8cdcbc",
+   "sha256": "8e756596e97e8142bdb12bc1b465b55b69abcb0845b9cc05e1b02e302bc41889",
    "mutation": {
-    "line": 11543,
+    "line": 11567,
     "removed": [
      "              FULL JOIN (SELECT r, count(*) AS n FROM unnest(v_acl) AS r GROUP BY r) w"
     ],
@@ -7607,9 +7607,9 @@
    "level": "acl_grantor_problems: сравнение прав в файле 01 (пункт 22) и в файле 05 (шаг 10) разошлось",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N159.md",
-   "sha256": "59e2038c9524d9de868873cdf1048f3c8ece891ee4d53d5bab654108afa1a3f3",
+   "sha256": "ae21c92d873451603d23b14087606850d58b7d750dc8cd1f3f133eafd315fbad",
    "mutation": {
-    "line": 17088,
+    "line": 17112,
     "removed": [
      "    IF v_cnt <> 0 THEN"
     ],
@@ -7641,9 +7641,9 @@
    "level": "acl_grantor_problems: сравнение прав в файле 01 (пункт 22) и в файле 05 (шаг 10) разошлось",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N160.md",
-   "sha256": "e61a28cc1c94e5a7bdf2e5b3add2932fdab8f62bf3f9cbee0301eee315297147",
+   "sha256": "74c32a7cd493ce59b0adf36a73f92379030a4d12b6c89fffcd7d481b98287183",
    "mutation": {
-    "line": 11558,
+    "line": 11582,
     "removed": [
      "        RAISE EXCEPTION 'FINAL_ACL_MISSING: объявленных прав нет %: %', v_cnt, v_got;"
     ],
@@ -7675,14 +7675,14 @@
    "level": "edition_problems: последний абзац называет чужую редакцию H1.16",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N161.md",
-   "sha256": "4cf408dea77e2b7bcb3f530ed64b5950451459a62e5368c291a4cf6d21ef0c37",
+   "sha256": "cf31b15796bf33f848c5c522f23822ade0675d8558554b6b63007a7aa1906121",
    "mutation": {
-    "line": 18429,
+    "line": 18453,
     "removed": [
-     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.30 к независимой проверке. О..."
+     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.31 к независимой проверке. О..."
     ],
     "added": [
-     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.30 к независимой проверке. О..."
+     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.31 к независимой проверке. О..."
     ]
    },
    "expected": 1,
@@ -7692,13 +7692,13 @@
     {
      "checker": "bem954_semantic_check.mjs",
      "actual": 1,
-     "reason": "edition_problems: последний абзац называет чужую редакцию H1.16, а ожидается H1.30",
+     "reason": "edition_problems: последний абзац называет чужую редакцию H1.16, а ожидается H1.31",
      "level": "edition_problems: последний абзац называет чужую редакцию H1.16",
-     "level_hit": "edition_problems: последний абзац называет чужую редакцию H1.16, а ожидается H1.30",
+     "level_hit": "edition_problems: последний абзац называет чужую редакцию H1.16, а ожидается H1.31",
      "level_ok": true
     }
    ],
-   "reason": "edition_problems: последний абзац называет чужую редакцию H1.16, а ожидается H1.30",
+   "reason": "edition_problems: последний абзац называет чужую редакцию H1.16, а ожидается H1.31",
    "status": "поймана"
   },
   {
@@ -7709,14 +7709,14 @@
    "level": "edition_problems: последний абзац называет чужую редакцию H1.14",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N162.md",
-   "sha256": "6824f060c458eb2e501e4f9636d380c9bba3475752486edf14a361601ea6a9c5",
+   "sha256": "2059f7134fa5bce2790d1cb5d669a6b37b24f092fa5e8fab9464093db9ca0c99",
    "mutation": {
-    "line": 18429,
+    "line": 18453,
     "removed": [
-     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.30 к независимой проверке. О..."
+     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.31 к независимой проверке. О..."
     ],
     "added": [
-     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.30 к независимой проверке. О..."
+     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.31 к независимой проверке. О..."
     ]
    },
    "expected": 1,
@@ -7726,13 +7726,13 @@
     {
      "checker": "bem954_semantic_check.mjs",
      "actual": 1,
-     "reason": "edition_problems: последний абзац называет чужую редакцию H1.14, а ожидается H1.30",
+     "reason": "edition_problems: последний абзац называет чужую редакцию H1.14, а ожидается H1.31",
      "level": "edition_problems: последний абзац называет чужую редакцию H1.14",
-     "level_hit": "edition_problems: последний абзац называет чужую редакцию H1.14, а ожидается H1.30",
+     "level_hit": "edition_problems: последний абзац называет чужую редакцию H1.14, а ожидается H1.31",
      "level_ok": true
     }
    ],
-   "reason": "edition_problems: последний абзац называет чужую редакцию H1.14, а ожидается H1.30",
+   "reason": "edition_problems: последний абзац называет чужую редакцию H1.14, а ожидается H1.31",
    "status": "поймана"
   },
   {
@@ -7743,14 +7743,14 @@
    "level": null,
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N163.md",
-   "sha256": "9ed0521609f8a98c8c1de9888b828c14d71bc3a88fc0d394283777e1ed7ba00c",
+   "sha256": "86b6f9dd2b1978f64c8ff2ae7fe71771be65b4d85a19d412802e7d256af99988",
    "mutation": {
-    "line": 18429,
+    "line": 18453,
     "removed": [
-     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.30 к независимой проверке. О..."
+     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.31 к независимой проверке. О..."
     ],
     "added": [
-     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.30 к независимой проверке. О..."
+     "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.31 к независимой проверке. О..."
     ]
    },
    "expected": 0,
@@ -7777,11 +7777,11 @@
    "level": "acl_grantor_problems: файл 01 (пункт 22): сравнение прав использует не два FULL JOIN",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N164.md",
-   "sha256": "391620fa707ca7c69ce6212390cb69a518aa9740ef35d3333e8ab01589ebf71c",
+   "sha256": "e39ae07ce2229d2e64cad30fd2d012715d5db7cace6f506da12237bb9d30e6f4",
    "mutation": {
     "parts": [
      {
-      "line": 11543,
+      "line": 11567,
       "removed": [
        "              FULL JOIN (SELECT r, count(*) AS n FROM unnest(v_acl) AS r GROUP BY r) w"
       ],
@@ -7790,7 +7790,7 @@
       ]
      },
      {
-      "line": 17085,
+      "line": 17109,
       "removed": [
        "              FULL JOIN (SELECT r, count(*) AS n FROM unnest(v_acl_want) AS r GROUP BY r) w"
       ],
@@ -7824,9 +7824,9 @@
    "level": "declaration_duplicate_problems: файл 01_database_migration.sql: имя v_dupq1 объявлено 2 раза",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N165.md",
-   "sha256": "092e7dc8ab6bca0975fe58c635f5bf7f06b659b2685b33d3a84bcc3c26be207a",
+   "sha256": "5e79e5129da9d1ed2f9336252e4f20a345a0db5e005f28887c365a162652d388",
    "mutation": {
-    "line": 16033,
+    "line": 16057,
     "removed": [],
     "added": [
      "    \"v_dupq1\" text;",
@@ -7857,9 +7857,9 @@
    "level": "declaration_duplicate_problems: файл 01_database_migration.sql: имя v_dupq2 объявлено 2 раза",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N166.md",
-   "sha256": "f40d052c436ccc476cb51cb3187fd5d5e1caa0d3c6c71d25332a194ad9882ba0",
+   "sha256": "b4659c4c424f3bf6363e03fe87df529f0018e00a817c6ba4db7e8f2d73dbf411",
    "mutation": {
-    "line": 16033,
+    "line": 16057,
     "removed": [],
     "added": [
      "    v_dupq2 text;",
@@ -7890,9 +7890,9 @@
    "level": "trigger_definition_problems: файл 01: нет эталонного триггера subject_requires_author_ref",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N167.md",
-   "sha256": "e06b3f6f9684c377e3bab276a041d62f41bec5c318eb864dac97b7ebf076f4a5",
+   "sha256": "c687ef6799911e7452cf46b2a4198ae3e8dec20214b4f77cab043480bf61b289",
    "mutation": {
-    "line": 12743,
+    "line": 12767,
     "removed": [
      "    DROP TABLE IF EXISTS pg_temp.subject_reference_shape;",
      "    CREATE TEMP TABLE subject_reference_shape (LIKE bem_core.subject);",
@@ -7953,9 +7953,9 @@
    "level": "trigger_definition_problems: файл 01: сравнение tgqual::text ослаблено",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N168.md",
-   "sha256": "ac5482e205f7139b01c0b984e91a91c7cf0e5690525fbc4c55285748494f486e",
+   "sha256": "522f4887ce00cbf90dba9bf9f6cd5855171a024310391d8154f2a364596b0552",
    "mutation": {
-    "line": 12768,
+    "line": 12792,
     "removed": [
      "    IF v_tgqual_real IS DISTINCT FROM v_tgqual_ref THEN"
     ],
@@ -7987,9 +7987,9 @@
    "level": "trigger_definition_problems: файл 01: расхождение tgqual::text не приводит к отказу",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N169.md",
-   "sha256": "ec2ea34cd021ca81754c4a07e18c00e7ba20029b1f0ae4bd5beba5a83ae62caa",
+   "sha256": "8237afdbb4626ab01d49b906adbe6146481d0fa3757bdc1919e172d6ab71d3a7",
    "mutation": {
-    "line": 12769,
+    "line": 12793,
     "removed": [
      "        RAISE EXCEPTION 'TRIGGER_TGQUAL_MISMATCH: subject_requires_author: % вместо %',"
     ],
@@ -8021,9 +8021,9 @@
    "level": "trigger_definition_problems: файл 01: сравнение tgqual::text не читает настоящий и эталонный триггер",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N170.md",
-   "sha256": "41da14e8826592627ce157296d1eddc264e41f5f2971f8559336ffbe55c532f5",
+   "sha256": "7dd808aab2b0c8bde404111745324bbc72dc5a7d4e2a6d120d8e3ef3fad04ce9",
    "mutation": {
-    "line": 12764,
+    "line": 12788,
     "removed": [
      "     WHERE tg.tgname = 'subject_requires_author_ref'",
      "       AND tg.tgrelid = 'pg_temp.subject_reference_shape'::regclass"
@@ -8052,30 +8052,30 @@
   {
    "id": "T28-N171",
    "kind": "смысл",
-   "name": "A65: совместная подделка - паспорт и последний абзац разом откатываются на H1.29",
+   "name": "A65: совместная подделка - паспорт и последний абзац разом откатываются на H1.30",
    "row": "K-R17-04",
-   "level": "edition_problems: паспорт называет редакцию H1.29, а ожидается H1.30",
+   "level": "edition_problems: паспорт называет редакцию H1.30, а ожидается H1.31",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N171.md",
-   "sha256": "3d23c523ea4aeff4d591357a4c4b90e318d0e57779705cdc9748c4b6da4f5240",
+   "sha256": "3cfd56069bd45912373fce4546a776670dad7b85518a6ffc8ef7f1f4a5f35acf",
    "mutation": {
     "parts": [
      {
       "line": 5,
       "removed": [
-       "v1.30"
+       "v1.31"
       ],
       "added": [
-       "v1.29"
+       "v1.30"
       ]
      },
      {
-      "line": 18429,
+      "line": 18453,
       "removed": [
-       "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.30 к независимой проверке. О..."
+       "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.31 к независимой проверке. О..."
       ],
       "added": [
-       "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.30 к независимой проверке. О..."
+       "**Последнее и главное.** `READY_FOR_REAUDIT=YES` означает только готовность авторской H1.31 к независимой проверке. О..."
       ]
      }
     ]
@@ -8087,13 +8087,13 @@
     {
      "checker": "bem954_semantic_check.mjs",
      "actual": 1,
-     "reason": "edition_problems: паспорт называет редакцию H1.29, а ожидается H1.30",
-     "level": "edition_problems: паспорт называет редакцию H1.29, а ожидается H1.30",
-     "level_hit": "edition_problems: паспорт называет редакцию H1.29, а ожидается H1.30",
+     "reason": "edition_problems: паспорт называет редакцию H1.30, а ожидается H1.31",
+     "level": "edition_problems: паспорт называет редакцию H1.30, а ожидается H1.31",
+     "level_hit": "edition_problems: паспорт называет редакцию H1.30, а ожидается H1.31",
      "level_ok": true
     }
    ],
-   "reason": "edition_problems: паспорт называет редакцию H1.29, а ожидается H1.30",
+   "reason": "edition_problems: паспорт называет редакцию H1.30, а ожидается H1.31",
    "status": "поймана"
   },
   {
@@ -8104,9 +8104,9 @@
    "level": "restore_acl_problems: файл 01: свёртка схем убирает не ровно одно право",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N172.md",
-   "sha256": "10e91a2e0a6049879719807e0401320967ac7f1d399995e301c9bdb919204906",
+   "sha256": "d0ddde4639d10b601846146a9801add0be09f43844e484837c03d369c7544dee",
    "mutation": {
-    "line": 15229,
+    "line": 15253,
     "removed": [
      "                                                WHERE NOT (n.nspname = 'bem_control'"
     ],
@@ -8138,9 +8138,9 @@
    "level": "restore_acl_problems: файл 03: прежние права роли на три схемы не сняты",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N173.md",
-   "sha256": "9d64947a7dabaab3d80c98dc68f15ab14d5906509da3a5258d92f2966e3c9e05",
+   "sha256": "68fd078bf392a8a01a5ee88c20a36f088b9fece9c624135852be8a682696ece7",
    "mutation": {
-    "line": 9925,
+    "line": 9949,
     "removed": [
      "REVOKE CREATE, USAGE ON SCHEMA bem_control FROM restore_verifier;"
     ],
@@ -8170,9 +8170,9 @@
    "level": "restore_acl_problems: файл 03: нет отказа при праве CREATE",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N174.md",
-   "sha256": "59e6306a4932476501458ca760ce0d818db7e8bc3002c63268038328e4da6046",
+   "sha256": "8799bccbac5957b3df06cf28f632655cc4cc3e9391648822f07614f0eaa49cbb",
    "mutation": {
-    "line": 9970,
+    "line": 9994,
     "removed": [
      "    IF has_schema_privilege('restore_verifier', 'bem_control', 'CREATE')"
     ],
@@ -8204,9 +8204,9 @@
    "level": "restore_acl_problems: файл 03: нет сверки точного списка прав",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N175.md",
-   "sha256": "830dbdcb4209b4ab078544099121a3b8ed69c77f0585000f76e36e9daf3b6d24",
+   "sha256": "049a9f72c845626cb9c67c0936b4f50089ee35bad5fda6f986bde9be1a56569c",
    "mutation": {
-    "line": 9991,
+    "line": 10015,
     "removed": [
      "        RAISE EXCEPTION 'RESTORE_VERIFIER_TOO_WIDE: лишних прав роли на схемы: %', v_cnt;"
     ],
@@ -8238,9 +8238,9 @@
    "level": "restore_acl_problems: файл 01: свёртка схем убирает не ровно одно право",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N176.md",
-   "sha256": "55f9fcf72dcaba0c5defcd8f8631eaeea70574c8c9e027d04d4d28fd73bd17f9",
+   "sha256": "572958e24911e09e492ee9476f5ae32ab3cf8fbe199a5198e777ea0362d96b2b",
    "mutation": {
-    "line": 15233,
+    "line": 15257,
     "removed": [
      "                                                           AND NOT e.is_grantable",
      "                                                           AND e.grantor = n.nspowner)) z), '-')) AS line"
@@ -8273,9 +8273,9 @@
    "level": "restore_acl_problems: файл 03: нет сверки точного списка прав",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N177.md",
-   "sha256": "7a8aa824c720f1168d5dc6daf5af12ac69348a618c5bbc2fb05af166f1e23724",
+   "sha256": "4dea967176c98f7f314a2670d2efd4b6f08f52edb60fb14487ec21940e900d0d",
    "mutation": {
-    "line": 9988,
+    "line": 10012,
     "removed": [
      "                AND NOT e.is_grantable",
      "                AND e.grantor = n.nspowner);"
@@ -8308,9 +8308,9 @@
    "level": "constraint_problems: файл 01: нет ограничения ровно одним кортежем",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N178.md",
-   "sha256": "9e28f8f0917511d4983935531b09d89bad69f4d78eed8c9e69622ca9854cc076",
+   "sha256": "edda990d75f8298878ffd087b43dca9bcca24c129cc22a6d529ec6cd62329f19",
    "mutation": {
-    "line": 12176,
+    "line": 12200,
     "removed": [
      "            ('bem_core.outbox', 'outbox_idem_uniq', 'UNIQUE (tenant_id, kind, idempotency_key)'),"
     ],
@@ -8340,9 +8340,9 @@
    "level": "constraint_problems: файл 05: нет отказа",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N179.md",
-   "sha256": "3d1cf204897a602c23098e863538d1115d796156428af6ab0d43a2e8dffbe6b2",
+   "sha256": "022efea4e4ee3923effc1980cc1baa60fbf0e0fc293774d3200a75b1a173877f",
    "mutation": {
-    "line": 10464,
+    "line": 10488,
     "removed": [
      "        RAISE EXCEPTION 'FINAL_CONSTRAINT_MISMATCH: ограничений сверх договора: %', v_extra;"
     ],
@@ -8374,9 +8374,9 @@
    "level": "constraint_problems: файл 01: ветвей",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N180.md",
-   "sha256": "f56234e1b9f06ff9b7fcfd1d693ca98f6758bc02a308c2048934eb0be8d6a88b",
+   "sha256": "1078cd900a142eec62fdc1904fe701a7f769094b8cac0ac18d744cc97fa97c1c",
    "mutation": {
-    "line": 12230,
+    "line": 12254,
     "removed": [
      "        ELSIF v_def IS DISTINCT FROM r.def THEN"
     ],
@@ -8408,9 +8408,9 @@
    "level": "constraint_problems: файл 01: нет ограничения домена",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N181.md",
-   "sha256": "229785d5c6a20e19d8bb93a69c19155fffd8ea65a43ef2c8d6752db0816ce070",
+   "sha256": "686d115511b2ffa750d7ca8d92dadc835154bf823709469f5f072c5c504c2c17",
    "mutation": {
-    "line": 11742,
+    "line": 11766,
     "removed": [
      "        ALTER DOMAIN bem_core.actor_id ADD CONSTRAINT actor_id_check"
     ],
@@ -8442,9 +8442,9 @@
    "level": "bem954_assign_problems: assign_auditor: снова запрет",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N182.md",
-   "sha256": "f8b9cf83f2d81fca885f2a3d7383c912f5f319973749f6b06b069b09d810a069",
+   "sha256": "d0a5bb9b4f97f24ae9d609f9e60965ac7d949d441aa9ad9e35be70555cee16a4",
    "mutation": {
-    "line": 15389,
+    "line": 15413,
     "removed": [],
     "added": [
      "    IF v_subject.scope = 'BEM954_PROTOCOL' AND EXISTS (SELECT 1 FROM bem_core.subject_author sa",
@@ -8479,9 +8479,9 @@
    "level": "bem954_assign_problems: assign_auditor: нет проверки",
    "checker": "bem954_semantic_check.mjs",
    "copy": "chk_tamper28_T28-N183.md",
-   "sha256": "70bb8805c404b16927841deea1257b80852b0535fb3362244152a49c5800d5bb",
+   "sha256": "c1555945ee53d05b745d2c5c0872a94078891831713898be7dd8140ba522891e",
    "mutation": {
-    "line": 15370,
+    "line": 15394,
     "removed": [
      "        RAISE EXCEPTION 'SELF_AUDIT_FORBIDDEN: %', p_auditor;"
     ],

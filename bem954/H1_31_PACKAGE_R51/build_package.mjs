@@ -1,7 +1,7 @@
-// build_package.mjs — воспроизводимый сборщик пакета H1.30.
-// PASSPORT: ACTIVE vR50.1, раунд R50, H1.30.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R50 (РАУНД-R50-ПЕРЕНОС-ИМЁН: H1.30; логика программ в R47–R50 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.29/R49; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47, R49 и R50 — раздел 22.2, остальное — раздел 15.43.
+// build_package.mjs — воспроизводимый сборщик пакета H1.31.
+// PASSPORT: ACTIVE vR51.1, раунд R51, H1.31.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R51 (РАУНД-R51-ПЕРЕНОС-ИМЁН: H1.31; логика программ в R47–R51 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.30/R50; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47, R49, R50 и R51 — раздел 22.2, остальное — раздел 15.44.
 // ИСТОРИЯ: прежний активный паспорт. Версия 2.2, раунд R33 (РАУНД-R33-ПЕРЕНОС-ИМЁН: имена
 // H1.18 и пакета H1_18_PACKAGE_R33; логика не менялась, кроме
 // --expect-edition — тот же раунд, замечание L-H117-R17-02 = B-04).
@@ -11,8 +11,8 @@
 // раунд R30, замечание M-H114-R14-03.
 //
 // Запуск из папки пакета:
-//   node build_package.mjs <путь к H1.30>                 — пересборка на месте
-//   node build_package.mjs <путь к H1.30> --out <папка>   — сборка в новую папку
+//   node build_package.mjs <путь к H1.31>                 — пересборка на месте
+//   node build_package.mjs <путь к H1.31> --out <папка>   — сборка в новую папку
 //   необязательно: --work <папка> — куда набор подделок кладёт копии документа.
 //
 // Пакет — чистая функция документа. Всё, что в нём лежит, либо извлечено
@@ -56,15 +56,15 @@ const argAfter = (flag) => {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : null;
 };
 const DOC = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : null;
-if (!DOC) { console.error('нужен путь к документу H1.30: node build_package.mjs <путь>'); process.exit(2); }
+if (!DOC) { console.error('нужен путь к документу H1.31: node build_package.mjs <путь>'); process.exit(2); }
 const OUT = resolve(argAfter('--out') || HERE);
 const WORK = resolve(argAfter('--work') || join(tmpdir(), 'bem954_tamper_r38'));
 const EXPECT_EDITION = argAfter('--expect-edition');
-if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.30'); process.exit(2); }
-if (EXPECT_EDITION !== 'H1.30') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.30'); process.exit(2); }
+if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.31'); process.exit(2); }
+if (EXPECT_EDITION !== 'H1.31') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.31'); process.exit(2); }
 const _passportText = readFileSync(DOC, 'utf8');
-if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.30(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.30'); process.exit(2); }
-const PACKAGE = 'H1_30_PACKAGE_R50';
+if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.31(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.31'); process.exit(2); }
+const PACKAGE = 'H1_31_PACKAGE_R51';
 // H1.24, PG16_D05: улика живого прогона D-05; обязательна, когда документ
 // называет ROUND_FACT[PG16_D05]=EXECUTED_PASS.
 const PG16_ARG = argAfter('--pg16-evidence');
@@ -109,7 +109,7 @@ const суммы = {};
 for (const f of SQL_FILES) суммы[f] = sha(Buffer.from(files.get(f), 'utf8'));
 шаг(3, 'опись migration_manifest.json');
 const описьТекст = JSON.stringify({
-  document: 'H1.30 R50',
+  document: 'H1.31 R51',
   note: 'опись покрывает только шесть файлов SQL; обёртка в неё не входит намеренно',
   reproducible: 'времени сборки здесь нет: опись обязана быть чистой функцией документа',
   files: суммы,
@@ -232,9 +232,9 @@ const лист = [
   'Команды запускаются из этой папки. Node — любой версии не ниже 20.',
   '',
   '```text',
-  'node verify_package.mjs "<путь к H1.30>" --expect-edition H1.30',
-  'node build_package.mjs "<путь к H1.30>" --expect-edition H1.30 --pg16-evidence EVIDENCE_PG16_D05.txt',
-  'node build_package.mjs "<путь к H1.30>" --expect-edition H1.30 --pg16-evidence EVIDENCE_PG16_D05.txt --out "<новая пустая папка>"',
+  'node verify_package.mjs "<путь к H1.31>" --expect-edition H1.31',
+  'node build_package.mjs "<путь к H1.31>" --expect-edition H1.31 --pg16-evidence EVIDENCE_PG16_D05.txt',
+  'node build_package.mjs "<путь к H1.31>" --expect-edition H1.31 --pg16-evidence EVIDENCE_PG16_D05.txt --out "<новая пустая папка>"',
   '```',
   '',
   'Первая команда — независимая проверка: состав папки против описи,',
@@ -273,14 +273,14 @@ console.log('  README_PACKAGE.md: ' + положить('README_PACKAGE.md', ли
 
 const отчёт = JSON.stringify({
   package: PACKAGE,
-  builder_passport: 'ACTIVE vR50.1, раунд R50, H1.30',
-  baseline_edition: 'H1.29',
-  baseline_sha256: 'd50ffc15c63b9fc85947f3484ec7b530dd10f27d0b81c6a68ac834a4e93598ea',
+  builder_passport: 'ACTIVE vR51.1, раунд R51, H1.31',
+  baseline_edition: 'H1.30',
+  baseline_sha256: '4cbdb4241ca26817f5787016c734af5c1a12a366f7ac2c4102c7282edbc8f5c8',
   document: basename(DOC),
   document_sha256: sha(docBuf),
   expected_edition: EXPECT_EDITION,
   expected_edition_source: 'cli',
-  round_facts: ['ROUND_FACT[BASELINE_EDITION]=H1.29', 'ROUND_FACT[EXPECTED_EDITION]=' + EXPECT_EDITION, 'ROUND_FACT[TAMPER_CASES_TOTAL]=' + (прогонObj ? прогонObj.tampers_total : 'MISSING'), 'ROUND_FACT[TAMPER_CASES_RANGE]=' + (прогонObj ? прогонObj.tamper_cases_range : 'MISSING'), 'ROUND_FACT[PG16_D05]=' + pg16Live],
+  round_facts: ['ROUND_FACT[BASELINE_EDITION]=H1.30', 'ROUND_FACT[EXPECTED_EDITION]=' + EXPECT_EDITION, 'ROUND_FACT[TAMPER_CASES_TOTAL]=' + (прогонObj ? прогонObj.tampers_total : 'MISSING'), 'ROUND_FACT[TAMPER_CASES_RANGE]=' + (прогонObj ? прогонObj.tamper_cases_range : 'MISSING'), 'ROUND_FACT[PG16_D05]=' + pg16Live],
   tamper_cases_range: прогонObj ? прогонObj.tamper_cases_range : null,
   manifest_sha256: суммаОписи,
   wrapper_sha256: sha(Buffer.from(обёрткаСДиска, 'utf8')),
@@ -293,7 +293,7 @@ const отчёт = JSON.stringify({
   pg16_evidence_format: 'EVIDENCE_PG16_D05_FORMAT_v1_0.md v1.0',
   pg16_evidence_format_sha256: '8e4285d75033a5133259f45c816cce717c2a2d69d3b5a851ad64435a2f0a1f45',
   c1_9_expected_sha256: 'f88fdb9d4ee6cd6ae3488360a8868b74492a7a91a94eb831f94616c5d5e0cd23',
-  c1_9_sha256_source: 'contract_constant_not_measured_in_R50',
+  c1_9_sha256_source: 'contract_constant_not_measured_in_R51',
   pg16_evidence_sha256: pg16Sha,
   line_rule: 'число переводов строки; завершающий перевод пустой строки не добавляет',
   files: состав,

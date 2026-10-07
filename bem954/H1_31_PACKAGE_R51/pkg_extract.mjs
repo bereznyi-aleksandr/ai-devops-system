@@ -1,7 +1,7 @@
-// pkg_extract.mjs — извлечение файлов пакета из документа H1.30.
-// PASSPORT: ACTIVE vR50.1, раунд R50, H1.30.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R50 (РАУНД-R50-ПЕРЕНОС-ИМЁН: H1.30; логика программ в R47–R50 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.29/R49; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47, R49 и R50 — раздел 22.2, остальное — раздел 15.43.
+// pkg_extract.mjs — извлечение файлов пакета из документа H1.31.
+// PASSPORT: ACTIVE vR51.1, раунд R51, H1.31.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R51 (РАУНД-R51-ПЕРЕНОС-ИМЁН: H1.31; логика программ в R47–R51 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.30/R50; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47, R49, R50 и R51 — раздел 22.2, остальное — раздел 15.44.
 // ИСТОРИЯ: прежний активный паспорт. Версия 2.2, раунд R33 (РАУНД-R33-ПЕРЕНОС-ИМЁН: метки
 // программ H1-18, имя документа H1.20; логика не менялась). Версия 2.1 —
 // раунд R32 (РАУНД-R32-ПЕРЕНОС-ИМЁН: метки программ H1-17, имя
@@ -146,7 +146,7 @@ export function badNameReason(name) {
 const self = resolve(fileURLToPath(import.meta.url)).toLowerCase();
 if (process.argv[1] && resolve(process.argv[1]).toLowerCase() === self) {
   const file = process.argv[2];
-  if (!file) { console.error('нужен путь к документу H1.30'); process.exit(2); }
+  if (!file) { console.error('нужен путь к документу H1.31'); process.exit(2); }
   const { files, problems } = extract(readFileSync(file, 'utf8'));
   for (const [name, text] of files) {
     const b = Buffer.from(text, 'utf8');

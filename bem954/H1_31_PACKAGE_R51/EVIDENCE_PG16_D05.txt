@@ -1,0 +1,39 @@
+ДОКУМЕНТ: EVIDENCE_PG16_D05_20261007T042410Z.txt
+ВЕРСИЯ: v1.0
+СТАТУС: CANDIDATE
+ДАТА СОЗДАНИЯ: 2026-10-07 07:30 +03:00
+ИСПОЛНИТЕЛЬ: Claude, сессия f19e07a7-6edd-48a5-9ede-88086c949326 (самоприёмки нет; независимая проверка — ChatGPT)
+ФОРМАТ: EVIDENCE_PG16_D05_FORMAT_v1_0.md v1.0, SHA-256 8e4285d75033a5133259f45c816cce717c2a2d69d3b5a851ad64435a2f0a1f45
+
+EVIDENCE_ID=EVIDENCE_PG16_D05_20261007T042410Z
+STATUS=EXECUTED_PASS
+POSTGRESQL_VERSION=PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit
+EXECUTED_AT_UTC=2026-10-07T04:24:10Z
+EXECUTOR_ROLE=CLAUDE_DEVELOPER; СУБД: суперпользователь postgres локального стенда (trust, только 127.0.0.1), новый чистый кластер data21 (127.0.0.1:54336), база bem после установки предварительной сборки H1.31 (run30: 00, обёртка дважды отдельными копиями, оба раза код 0)
+SOURCE_DOCUMENT_PATH=C:\AI\multiagent-runtime\state\continuation_20261004\R51_H1_31_20261007\101_CLAUDE_ARCHITECT_PROPOSAL_H1_31_R51_v1_31.md
+SOURCE_DOCUMENT_SHA256=d653f8f5653c61c5a81385d788a67fbf9b4451556f028df7456007ad96eec05c
+SQL_FILE_PATH=C:\AI\multiagent-runtime\pg16\run30_r51_live_20261007\first\01_database_migration.sql (предварительная сборка того же документа: сборщик H1.31 остановился только на улике PG16_D05; окончательный пакет H1_31_PACKAGE_R51 несёт файл 01 с той же суммой — сборка это сверяет)
+SQL_FILE_SHA256=ce75f3c9978d9ef470ba4c9f9c9f84985c27b603f5d7576951d007492145a7e5
+SQL_BLOCK=строки 1117-1148 файла 01 побайтно (d05_block_from_01.sql, SHA-256 e57f557d9df93dfb63a19d54e24543d5b082d1d24c3cbcbf8710e872de623f87 — побайтно равен блоку R43–R50), обёрнуты в DO с выводом двух значений
+POSITIVE_TEST_COMMAND=psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 54336 -U postgres -d bem -f d05_positive.sql (SHA-256 4123a67c30e3d839adeeec1d350c4dd44bc2a961db3ec13c8b25953d82a787c4)
+POSITIVE_TEST_EXIT_CODE=0
+POSITIVE_TEST_RAW_OUTPUT_PATH=C:\AI\multiagent-runtime\pg16\run30_r51_live_20261007\d05\d05_positive.out
+POSITIVE_TEST_RAW_OUTPUT_SHA256=6562026f59c04434b0e1b966b3385871bb9c08a56c0f2596efc9a22b3489d320
+NEGATIVE_TEST_COMMAND=psql -v ON_ERROR_STOP=1 --single-transaction -h 127.0.0.1 -p 54336 -U postgres -d bem -f d05_negative.sql (SHA-256 6c6ffe789803c4403523cc6134f38015f07287d4bafebee6c4d04fe102501801); триггер пересоздан с WHEN (NEW.published_at IS NULL), транзакция откатилась
+NEGATIVE_TEST_EXIT_CODE=3
+NEGATIVE_TEST_RAW_OUTPUT_PATH=C:\AI\multiagent-runtime\pg16\run30_r51_live_20261007\d05\d05_negative.out
+NEGATIVE_TEST_RAW_OUTPUT_SHA256=0923a56f7ae8b0d6ca597ac28298aa74c4e0d29f617e48e901c1add9f7e03000
+TGQUAL_ACTUAL={NULLTEST :arg {VAR :varno 2 :varattno 7 :vartype 1184 :vartypmod -1 :varcollid 0 :varnullingrels (b) :varlevelsup 0 :varnosyn 2 :varattnosyn 7 :location X} :nulltesttype 1 :argisrow false :location X}
+TGQUAL_REFERENCE={NULLTEST :arg {VAR :varno 2 :varattno 7 :vartype 1184 :vartypmod -1 :varcollid 0 :varnullingrels (b) :varlevelsup 0 :varnosyn 2 :varattnosyn 7 :location X} :nulltesttype 1 :argisrow false :location X}
+NORMALIZATION_APPLIED=regexp_replace(tgqual::text, ':location -?[0-9]+', ':location X', 'g'); PostgreSQL 16.15 поле :location пишет (в VAR и в NULLTEST)
+POSITIVE_RESULT=PASS
+NEGATIVE_RESULT=PASS
+FINAL_RESULT=PASS
+SECRETS_INCLUDED=NO
+
+ПРИМЕЧАНИЯ
+- Отрицательный тест получил TRIGGER_TGQUAL_MISMATCH: настоящее :nulltesttype 0 против эталонного 1.
+- Полный файл 01 этой сборки прошёл на той же базе в run30: установка и повтор обёртки — код 0, ошибок 0; файлы SQL H1.31 побайтно равны R46–R50 (01 — ce75f3c9…). Сырые выводы обоих тестов побайтно равны R49 и run29.
+- Скрипт: C:\AI\multiagent-runtime\pg16\run_r51_live_d05_v10.sh (SHA-256 0da2df80106213f0ecd10df32485f13a8a23e9dbc037c9817a5a8592d4a5ca71); журнал run30_r51_live_20261007\r51_transcript.log (4593 байта, SHA-256 bdb21a2573e3563d92b3dcd15329f8775991cca51463b9e202d75a23f6753a7e). Строка 4 скрипта (комментарий «НАЗНАЧЕНИЕ») унаследована от run29 и называет R50; команды скрипта отличаются от run29 только портом, папкой и заголовком журнала.
+- УТРАТА run28 (замечание M-R50-03). Улика R50 EVIDENCE_PG16_D05_20261007T030627Z ссылается на журнал run28_r50_live_20261007\r50_transcript.log (SHA-256 a8e39c7b…). Этот журнал и сырые файлы run28 перезаписаны 2026-10-07 в 06:32 +03:00 устаревшей фоновой задачей исполнителя; папка переименована в run28_r50_live_20261007.CLOBBERED_20261007T0632_by_stale_task_bp8hb7ihk, ничего не удалено. Сумма a8e39c7b… по сохранённым файлам больше не проверяется.
+- ПОВТОР run29 (для H1.30 4cbdb424): кластер data20 (127.0.0.1:54335), скрипт run_r50b_live_d05_v10.sh (SHA-256 30d90d128d026207cd8f89a8ae411b9f737b58232f034ef1a9a838fc3b981b97), журнал run29_r50_rerun_20261007\r50b_transcript.log (4599 байт, SHA-256 5239f76b01d6e234e84e0955653ea9c4745e086c55483e680355c61eedbfc45f); коды 0, 0, 0, 3; сырые d05_positive.out и d05_negative.out побайтно равны этому прогону run30 (суммы выше). Сырые файлы run29 и run30 передаются аудитору R51 отдельным набором.
