@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/engine_pg_probes.sh
-# ВЕРСИЯ: v1.0
+# ВЕРСИЯ: v1.1 (v1.1, R51: база bem_probe_ci для внешнего эффекта п.7; сигнал 1 разделён на доступность (любой код) и
+#   здоровье (с учёткой, 200 и UP до остановки и после перезапуска) — ответ на L-R50-01; ожидается 50 проверок)
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 06:35 +03:00
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-07 07:30 +03:00 (сессия f19e07a7-6edd-48a5-9ede-88086c949326)
 # ИСПОЛНИТЕЛЬ: Claude (сессия f19e07a7-6edd-48a5-9ede-88086c949326)
 # НАЗНАЧЕНИЕ: остальные пробы движка раздела 22 (пункты 1–4, 6–9, 12–14) на Flowable 8.0.0 + PostgreSQL 16, схема bem_engine.
 #   Пункт 5 — отдельным заданием (ci/engine_pg.sh). Загрузки и их суммы — как в ci/engine_pg.sh v1.2.
@@ -43,6 +45,8 @@ printf -- '- "WEB-INF/lib/postgresql-%s.jar"\n' "$PGJDBC_VER" >> inj/WEB-INF/cla
 
 psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c "CREATE DATABASE bem_engine_ci" -q || exit 1
 psql -v ON_ERROR_STOP=1 -U postgres -d bem_engine_ci -c "CREATE SCHEMA bem_engine" -q || exit 1
+# Отдельная база — «внешняя система» для эффекта п.7 (не схема движка).
+psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c "CREATE DATABASE bem_probe_ci" -q || exit 1
 
 HEALTH=http://127.0.0.1:8091/flowable-rest/actuator/health
 start_engine() {
@@ -68,14 +72,26 @@ node "$HERE/engine/p02_p14.mjs" || echo "::warning::p02_p14 exit $?"
 node "$HERE/engine/p07_p08.mjs" || echo "::warning::p07_p08 exit $?"
 node "$HERE/engine/p12.mjs" || echo "::warning::p12 exit $?"
 
-# п.12(б): сигнал 1 — health без учётки отвечает (жив); убитый движок не отвечает; после перезапуска снова отвечает.
+# п.12(б): сигнал 1 — две разные проверки.
+#   Доступность: порт отвечает любым HTTP-кодом (без учётки — 401); убитый движок не отвечает; после перезапуска отвечает.
+#   Здоровье: с учёткой — 200 и статус UP до остановки и после перезапуска.
+health_up() { # печатает «код статус»
+  local body code
+  body=$(curl -s -m 5 -u "$ENGINE_USER:$ENGINE_PASS" -w '\n%{http_code}' "$HEALTH" || true)
+  code=$(printf '%s' "$body" | tail -n1)
+  printf '%s %s' "$code" "$(printf '%s' "$body" | head -n -1 | grep -o '"status":"[A-Z_]*"' | head -1 | cut -d'"' -f4)"
+}
 H1=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "$HEALTH" || true)
+U1=$(health_up)
 kill -9 "$ENGINE_PID"; wait "$ENGINE_PID" 2>/dev/null
 H2=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "$HEALTH"); RC2=$?
 start_engine run2 || exit 1
 H3=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "$HEALTH" || true)
+U3=$(health_up)
 [ "$H1" != "000" ] && [ "$RC2" -ne 0 ] && [ "$H3" != "000" ] && ok=1 || ok=0
-shcheck p12b_signal1_health "$ok" "живой ${H1}; убит kill -9: curl rc ${RC2} код ${H2}; после перезапуска ${H3}"
+shcheck p12b_signal1_reachability "$ok" "без учётки: живой ${H1}; убит kill -9: curl rc ${RC2} код ${H2}; после перезапуска ${H3}"
+[ "$U1" = "200 UP" ] && [ "$U3" = "200 UP" ] && ok=1 || ok=0
+shcheck p12b_signal1_health_up "$ok" "с учёткой: до остановки ${U1}; после перезапуска ${U3}"
 ALIVE=$(curl -s -u "$ENGINE_USER:$ENGINE_PASS" "http://127.0.0.1:8091/flowable-rest/service/runtime/process-instances?businessKey=W-CI-12a" | grep -o '"total":[0-9]*' | cut -d: -f2)
 [ "${ALIVE:-0}" = 1 ] && ok=1 || ok=0
 shcheck p12b_instance_survives_restart "$ok" "W-CI-12a после kill -9 и перезапуска: найдено ${ALIVE:-0}"
@@ -87,10 +103,10 @@ TABLES_PUBLIC=$(psql -U postgres -d bem_engine_ci -Atc "select count(*) from inf
 shcheck schema_bem_engine_only "$ok" "таблиц ACT_* в bem_engine ${TABLES_ENGINE}; в public ${TABLES_PUBLIC}"
 
 TOTAL=$(grep -c . "$CHECKS"); FAILED=$(grep -c '"ok":false' "$CHECKS")
-echo "=== проверок: $TOTAL из ожидаемых 45; не прошло: $FAILED"
+echo "=== проверок: $TOTAL из ожидаемых 50; не прошло: $FAILED"
 grep '"ok":false' "$CHECKS" | cut -c1-400
-# Ожидаемый состав — 45 проверок: p01_p13 17, p02_p14 15, p07_p08 7, p12 3, этот сценарий 3.
-# Меньше 45 — программа упала посреди проб; это тоже FAIL.
-EXPECTED=45
+# Ожидаемый состав — 50 проверок: p01_p13 17, p02_p14 15, p07_p08 11, p12 3, этот сценарий 4.
+# Меньше 50 — программа упала посреди проб; это тоже FAIL.
+EXPECTED=50
 [ "$FAILED" -eq 0 ] && [ "$TOTAL" -eq "$EXPECTED" ] && { echo "=== ENGINE_PG_PROBES_RESULT=PASS"; exit 0; }
 echo "=== ENGINE_PG_PROBES_RESULT=FAIL"; exit 1
