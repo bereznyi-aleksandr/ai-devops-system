@@ -1,7 +1,7 @@
 // bem954_registry_check.mjs — статический сверщик реестра тестов.
-// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
+// PASSPORT: ACTIVE vR50.1, раунд R50, H1.30.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R50 (РАУНД-R50-ПЕРЕНОС-ИМЁН: H1.30; логика программ в R47–R50 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.29/R49; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47, R49 и R50 — раздел 22.2, остальное — раздел 15.43.
 // Сверяет раздел 15 с каноническим кодом того же документа.
 // Ничего не запускает и к базе не подключается.
 // ИСТОРИЯ: прежний активный паспорт. Раунд R33 (решение D-05, замечание L-H117-R17-01):
@@ -15,11 +15,11 @@
 // Там же: строки реестра со статусами EXECUTED_STATIC и
 // EXECUTED_PACKAGE считаются в TEST_ROWS наравне с DESIGNED_NOT_EXECUTED.
 //
-//   node bem954_registry_check.mjs H1_29.md
+//   node bem954_registry_check.mjs H1_30.md
 //   0 — расхождений нет; 1 — расхождения есть, и каждое названо.
 import { readFileSync } from 'node:fs';
 
-const doc = readFileSync(process.argv[2] || 'H1_29.md', 'utf8');
+const doc = readFileSync(process.argv[2] || 'H1_30.md', 'utf8');
 const sql = (doc.match(/```sql\n([\s\S]*?)\n```/g) || [])
   .map((b) => b.replace(/^```sql\n/, '').replace(/\n```$/, ''))
   .join('\n');
@@ -106,9 +106,9 @@ const keywords = new Set([
   'APP', 'WITHDRAWN', 'EXTERNAL', 'MISSING',
   // ярлык из блока чисел BEM954-H1-<номер>-COUNTS
   'TEST_ROWS',
-  // служебные идентификаторы раундов R38, R42–R49, а не имена ошибок SQL
+  // служебные идентификаторы раундов R38, R42–R50, а не имена ошибок SQL
   'BASELINE_EDITION', 'DEFERRED_PG16_D05', 'EXPECTED_EDITION',
-  'H1_20_PACKAGE_R36', 'H1_21_PACKAGE_R38', 'H1_22_PACKAGE_R42', 'H1_23_PACKAGE_R43', 'H1_24_PACKAGE_R44', 'H1_25_PACKAGE_R45', 'H1_26_PACKAGE_R46', 'H1_27_PACKAGE_R47', 'H1_28_PACKAGE_R48', 'H1_29_PACKAGE_R49', 'PG16_D05', 'ROUND_FACT', 'TAMPER_CASES_TOTAL', 'TAMPER_CASES_RANGE',
+  'H1_20_PACKAGE_R36', 'H1_21_PACKAGE_R38', 'H1_22_PACKAGE_R42', 'H1_23_PACKAGE_R43', 'H1_24_PACKAGE_R44', 'H1_25_PACKAGE_R45', 'H1_26_PACKAGE_R46', 'H1_27_PACKAGE_R47', 'H1_28_PACKAGE_R48', 'H1_29_PACKAGE_R49', 'H1_30_PACKAGE_R50', 'PG16_D05', 'ROUND_FACT', 'TAMPER_CASES_TOTAL', 'TAMPER_CASES_RANGE',
 ]);
 
 // Листинг программы — это код, а не утверждение о реестре. Ограда из

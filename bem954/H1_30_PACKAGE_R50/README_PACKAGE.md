@@ -1,15 +1,15 @@
-# Пакет H1_29_PACKAGE_R49
+# Пакет H1_30_PACKAGE_R50
 
-Документ: `101_CLAUDE_ARCHITECT_PROPOSAL_H1_29_R49_v1_29.md`, SHA-256 `d50ffc15c63b9fc85947f3484ec7b530dd10f27d0b81c6a68ac834a4e93598ea`.
+Документ: `101_CLAUDE_ARCHITECT_PROPOSAL_H1_30_R50_v1_30.md`, SHA-256 `4cbdb4241ca26817f5787016c734af5c1a12a366f7ac2c4102c7282edbc8f5c8`.
 
 ## Как проверить и пересобрать
 
 Команды запускаются из этой папки. Node — любой версии не ниже 20.
 
 ```text
-node verify_package.mjs "<путь к H1.29>" --expect-edition H1.29
-node build_package.mjs "<путь к H1.29>" --expect-edition H1.29 --pg16-evidence EVIDENCE_PG16_D05.txt
-node build_package.mjs "<путь к H1.29>" --expect-edition H1.29 --pg16-evidence EVIDENCE_PG16_D05.txt --out "<новая пустая папка>"
+node verify_package.mjs "<путь к H1.30>" --expect-edition H1.30
+node build_package.mjs "<путь к H1.30>" --expect-edition H1.30 --pg16-evidence EVIDENCE_PG16_D05.txt
+node build_package.mjs "<путь к H1.30>" --expect-edition H1.30 --pg16-evidence EVIDENCE_PG16_D05.txt --out "<новая пустая папка>"
 ```
 
 Первая команда — независимая проверка: состав папки против описи,

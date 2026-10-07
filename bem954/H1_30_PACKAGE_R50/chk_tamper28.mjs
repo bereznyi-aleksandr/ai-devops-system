@@ -1,7 +1,7 @@
-// chk_tamper28.mjs — прогон набора подделок H1.29.
-// PASSPORT: ACTIVE vR49.1, раунд R49, H1.29.
-// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R49 (РАУНД-R49-ПЕРЕНОС-ИМЁН: H1.29; логика программ в R47–R49 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
-// SUPERSEDES: версия из H1.28/R48; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47 и R49 — раздел 22.2, остальное — раздел 15.42.
+// chk_tamper28.mjs — прогон набора подделок H1.30.
+// PASSPORT: ACTIVE vR50.1, раунд R50, H1.30.
+// AUTHOR: ChatGPT, DEVELOPER R38; Claude, DEVELOPER R42–R50 (РАУНД-R50-ПЕРЕНОС-ИМЁН: H1.30; логика программ в R47–R50 не менялась, последняя правка логики — D1 и D2 проб R46; базовая пара — в build_package, verify_package, chk_round_facts); UPDATED: 2026-10-05.
+// SUPERSEDES: версия из H1.29/R49; LIVE_POSTGRESQL_16: PG16_D05=EXECUTED_PASS, пробы R46 — раздел 22.1, пробы движка R47, R49 и R50 — раздел 22.2, остальное — раздел 15.43.
 // ИСТОРИЯ: прежний активный паспорт. Версия 5.0, раунд R33 (РАУНД-R33-РЕДАКЦИЯ: ожидаемая
 // редакция документа для смыслового сверщика приходит только извне — ключом
 // --expect-edition обязателен и передаётся при каждом
@@ -22,9 +22,9 @@
 // (РАУНД-R33-ПЕРЕНОС-ИМЁН: имя документа H1.18, рабочая папка r33;
 // соответствующая логика переноса тоже не менялась, а версия 5.0 поднята
 // по другой причине, названной выше.)
-// Запуск: node chk_tamper28.mjs <файл H1.29> [--expect-edition H1.29] [--report отчёт.json] [--work папка]
-//         node chk_tamper28.mjs <файл H1.29> --print-table   (таблица 15.18)
-//         node chk_tamper28.mjs <файл H1.29> --print-rows    (строки реестра)
+// Запуск: node chk_tamper28.mjs <файл H1.30> [--expect-edition H1.30] [--report отчёт.json] [--work папка]
+//         node chk_tamper28.mjs <файл H1.30> --print-table   (таблица 15.18)
+//         node chk_tamper28.mjs <файл H1.30> --print-rows    (строки реестра)
 //
 // Что изменилось против версии 2.0 и зачем.
 //
@@ -80,7 +80,7 @@ const argAfter = (flag) => {
   const i = process.argv.indexOf(flag);
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : null;
 };
-const file = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : 'H1_29.md';
+const file = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : 'H1_30.md';
 const base = readFileSync(file, 'utf8');
 const sha = (t) => createHash('sha256').update(t, 'utf8').digest('hex');
 
@@ -93,10 +93,10 @@ const sha = (t) => createHash('sha256').update(t, 'utf8').digest('hex');
 // смыслового сверщика — и по чистому документу, и по каждой подделанной
 // копии, — поэтому подделка текста копии его не меняет.
 const EXPECT_EDITION = argAfter('--expect-edition');
-if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.29'); process.exit(2); }
-if (EXPECT_EDITION !== 'H1.29') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.29'); process.exit(2); }
+if (!EXPECT_EDITION) { console.error('обязателен --expect-edition H1.30'); process.exit(2); }
+if (EXPECT_EDITION !== 'H1.30') { console.error('неверный --expect-edition: ' + EXPECT_EDITION + '; ожидается H1.30'); process.exit(2); }
 const _passportText = base;
-if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.29(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.29'); process.exit(2); }
+if (!/ВЕРСИЯ:\s*\r?\n\s*v1\.30(?:\s|$)/.test(_passportText)) { console.error('паспорт документа не H1.30'); process.exit(2); }
 
 const WORK = resolve(argAfter('--work') || join(tmpdir(), 'bem954_tamper_r38'));
 if (WORK === resolve(HERE) || WORK.startsWith(resolve(HERE) + sep)) {
@@ -382,13 +382,13 @@ const tamperCasesRange = aNumbers.length
 
 const report = {
   suite: 'chk_tamper28',
-  passport: 'ACTIVE vR49.1, раунд R49, H1.29',
+  passport: 'ACTIVE vR50.1, раунд R50, H1.30',
   manifest: 'tamper_manifest28.mjs',
   document: basename(file),
   document_sha256: sha(base),
   expected_edition: EXPECT_EDITION,
   expected_edition_source: 'cli',
-  round_facts: ['ROUND_FACT[BASELINE_EDITION]=H1.28', 'ROUND_FACT[EXPECTED_EDITION]=' + EXPECT_EDITION, 'ROUND_FACT[TAMPER_CASES_TOTAL]=' + cases.length, 'ROUND_FACT[TAMPER_CASES_RANGE]=' + tamperCasesRange, 'ROUND_FACT[PG16_D05]=' + ((base.match(/^ROUND_FACT\[PG16_D05\]=(\S+)$/m) || [])[1] || 'MISSING')],
+  round_facts: ['ROUND_FACT[BASELINE_EDITION]=H1.29', 'ROUND_FACT[EXPECTED_EDITION]=' + EXPECT_EDITION, 'ROUND_FACT[TAMPER_CASES_TOTAL]=' + cases.length, 'ROUND_FACT[TAMPER_CASES_RANGE]=' + tamperCasesRange, 'ROUND_FACT[PG16_D05]=' + ((base.match(/^ROUND_FACT\[PG16_D05\]=(\S+)$/m) || [])[1] || 'MISSING')],
   tamper_cases_range: tamperCasesRange,
   stripped_regions: stripped.cut,
   stripped_input: basename(cleanFile),

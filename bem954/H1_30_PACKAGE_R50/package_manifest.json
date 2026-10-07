@@ -1,7 +1,7 @@
 {
-  "package": "H1_29_PACKAGE_R49",
-  "document": "101_CLAUDE_ARCHITECT_PROPOSAL_H1_29_R49_v1_29.md",
-  "document_sha256": "d50ffc15c63b9fc85947f3484ec7b530dd10f27d0b81c6a68ac834a4e93598ea",
+  "package": "H1_30_PACKAGE_R50",
+  "document": "101_CLAUDE_ARCHITECT_PROPOSAL_H1_30_R50_v1_30.md",
+  "document_sha256": "4cbdb4241ca26817f5787016c734af5c1a12a366f7ac2c4102c7282edbc8f5c8",
   "note": "каждый файл пакета, кроме самой описи; её сумму закрепляет малый манифест ответа",
   "line_rule": "число переводов строки; завершающий перевод пустой строки не добавляет",
   "files": [
@@ -44,85 +44,85 @@
     {
       "name": "EVIDENCE_PG16_D05.txt",
       "bytes": 4472,
-      "sha256": "35dc309dde9ded98186f4dd3b4c8f45b4a9e0836d735210ae69cc255e3a04070",
+      "sha256": "30b94714ef220a79501d0d13bc417da15722fa9b466be8ec011c49a2e8b272b6",
       "lines": 37
     },
     {
       "name": "README_PACKAGE.md",
       "bytes": 3132,
-      "sha256": "c43f5b64bb935d20b977e45661bd59932169aa64f3ca4fee4f3e11dd3e7afe3b",
+      "sha256": "cbb5ad01e72976e8b433f53ad022c8ff86def5b91a5ab831b0558a8b10e5ba57",
       "lines": 64
     },
     {
       "name": "bem954_registry_check.mjs",
-      "bytes": 17862,
-      "sha256": "17477def5e75aa50140099cce1379a9ba9df207ecc252da4bded8337b089d508",
+      "bytes": 17888,
+      "sha256": "380e2cd8da444b0eb01918039c79cf0c217f6182659426af725b11ab78079248",
       "lines": 294
     },
     {
       "name": "bem954_semantic_check.mjs",
-      "bytes": 182037,
-      "sha256": "01662a08543767432c99801b712311108698acd8dee8a48e3360af8605639689",
+      "bytes": 182042,
+      "sha256": "066d625773f38d550985a07f52bf9ceda6df9cb66921e6f3a2a7208151f54b3d",
       "lines": 3085
     },
     {
       "name": "build_package.mjs",
-      "bytes": 22902,
-      "sha256": "be60e0a6da0b18914f0034e416a44e9606dc705257219780c5ef91511d3ee478",
+      "bytes": 22907,
+      "sha256": "aa97e7b14cc3ae2a72026c9b79397e308d449f726e0703358cccd6e09883b7ea",
       "lines": 336
     },
     {
       "name": "chk_round_facts.mjs",
-      "bytes": 7653,
-      "sha256": "b9b4cf3477898cabf70d7323752f0c8d4d7806fd016fb92adda42746846f0906",
+      "bytes": 7658,
+      "sha256": "60699a3fa25e7def74f44855f2b9e0c41375c694a4717c1213a0b26ef9e694fc",
       "lines": 104
     },
     {
       "name": "chk_tamper28.mjs",
-      "bytes": 27570,
-      "sha256": "9b66e4ec331baf7bc87bd4be0658e380492ea1f1b466eef81c54de8bb34ed527",
+      "bytes": 27575,
+      "sha256": "406fdcde971a6ee3511fe64c689a24b6e8e0b9792ebb08a3f56e5cc220abc6a5",
       "lines": 456
     },
     {
       "name": "migration_manifest.json",
       "bytes": 940,
-      "sha256": "376f7791c1f00044116197e57c64722cbc7071eba0ec76f6cc0b86880dac1a7d",
+      "sha256": "470c46d3700e26e6e1a27491fd768ceb704bcb7b2ac1db655e06a6ef9d928c4d",
       "lines": 13
     },
     {
       "name": "package_report.json",
       "bytes": 2444,
-      "sha256": "ee4189f7b7953ddfd4437919f4045e18620255494a24654eeed3ebdb607dfa22",
+      "sha256": "f826ccba728c494e81941132bb75a0b2a4c4796f156649a94cf2109c630c586f",
       "lines": 61
     },
     {
       "name": "pkg_extract.mjs",
-      "bytes": 10486,
-      "sha256": "6520ca046e1ab5dc4375e51696702f2236590a77d469b28e82a628c197b5a07e",
+      "bytes": 10491,
+      "sha256": "040b130014b402de54ce6316a931314682ed36fa1517f3c28ccf82f38e41db09",
       "lines": 158
     },
     {
       "name": "run_migration.mjs",
-      "bytes": 17707,
-      "sha256": "5d3fbb0dfef6402d5b9c14997eec7a3316495ee5ba9fb2e24e436b100ca4b87c",
+      "bytes": 17712,
+      "sha256": "d554642f29d0268ebe3f582e635454c6ecce53b6d3c5a02a89946a9a06b0f9a7",
       "lines": 345
     },
     {
       "name": "tamper_manifest28.mjs",
-      "bytes": 111279,
-      "sha256": "3884b0847a622af853db8e2f534c7e1058ef343aacb37e1d57860a17e6bfa661",
+      "bytes": 111284,
+      "sha256": "dd56cf6c641a0ec3d349ef60cace239c0d240296339bf22dfe756a1bdcf6a2a8",
       "lines": 970
     },
     {
       "name": "tamper_report.json",
       "bytes": 309187,
-      "sha256": "32cb9893182406fade5b53e7d526d37a86d75afeb676973f498dbb4e8327228c",
+      "sha256": "62bf733018bd96f990e5e1c932a7c667c34a7a2903d1ab0e310fd1d2a3a8d752",
       "lines": 8510
     },
     {
       "name": "verify_package.mjs",
-      "bytes": 29110,
-      "sha256": "3707e37b126a5206bd302d6aa3e18be58a352092687d55aa07d5efdb4233f489",
+      "bytes": 29115,
+      "sha256": "637aef42f0947e698de3e84ff81c2a2687620682614c8285c560d05bd5528859",
       "lines": 425
     }
   ]
