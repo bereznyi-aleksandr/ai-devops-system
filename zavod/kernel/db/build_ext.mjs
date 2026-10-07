@@ -1,7 +1,8 @@
 // ДОКУМЕНТ: db/build_ext.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 14:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:08 +03:00 (v0.2: reconcile_unknown_outcome
-//   с условием ограждения — аудит Z3 M-Z3-03; самопроверка новых объектов)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 14:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.3: аудит Z4 M-Z4-01 —
+//   ограждение сверяется и с экземпляром среды исполнения; новые подписи в самопроверке;
+//   v0.2: reconcile_unknown_outcome с условием ограждения — аудит Z3 M-Z3-03)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: собрать db/02_zavod_ext_01.sql = неизменная часть + функции publish_subject,
 //   release_subject и reconcile_unknown_outcome из 01 H1.31 дословно с заменами. Каждая замена
@@ -57,8 +58,9 @@ const rec = replaceOnce(
            AND o.send_started_epoch IS NOT NULL
            AND NOT EXISTS (SELECT 1
                              FROM bem_control.outbox_send_fence f
-                            WHERE f.outbox_id   = o.id
-                              AND f.lease_epoch = o.send_started_epoch))
+                            WHERE f.outbox_id        = o.id
+                              AND f.lease_epoch      = o.send_started_epoch
+                              AND f.runtime_instance = o.send_runtime_instance))
     THEN
         RAISE EXCEPTION 'RECONCILE_NOT_FENCED: исполнитель, начавший отправку, не огражден';
     END IF;
@@ -87,8 +89,9 @@ BEGIN
   IF v <> 1 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: scope check'; END IF;
   SELECT count(*) INTO v FROM information_schema.columns
    WHERE table_schema = 'bem_core' AND table_name = 'outbox'
-     AND column_name IN ('send_started_epoch', 'send_policy_version', 'send_policy_idempotent');
-  IF v <> 3 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: outbox columns'; END IF;
+     AND column_name IN ('send_started_epoch', 'send_policy_version', 'send_policy_idempotent',
+                         'send_runtime_instance');
+  IF v <> 4 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: outbox columns'; END IF;
   SELECT count(*) INTO v FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
    WHERE n.nspname = 'bem_control'
      AND p.proname IN ('mark_outbox_send_started', 'set_outbox_kind_policy', 'claim_outbox_batch',
@@ -101,12 +104,19 @@ BEGIN
   IF v <> 1 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: reconcile fence'; END IF;
   IF has_function_privilege('bem_kernel_rw', 'bem_control.set_outbox_kind_policy(text, boolean, text, text, text)', 'EXECUTE')
   THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: kernel may set policy'; END IF;
-  IF has_function_privilege('bem_kernel_rw', 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, jsonb)', 'EXECUTE')
+  IF has_function_privilege('bem_kernel_rw', 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)', 'EXECUTE')
   THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: kernel may record fence'; END IF;
   IF has_table_privilege('bem_kernel_rw', 'bem_control.outbox_kind_policy', 'INSERT')
   THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: kernel may write policy'; END IF;
   IF has_table_privilege('bem_kernel_rw', 'bem_control.outbox_send_fence', 'INSERT')
   THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: kernel may write fence'; END IF;
+  IF to_regprocedure('bem_control.mark_outbox_send_started(uuid, bigint, text)') IS NOT NULL
+  THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: mark without runtime instance'; END IF;
+  SELECT count(*) INTO v FROM pg_proc
+   WHERE oid = 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)'::regprocedure
+     AND prosrc LIKE '%FENCE_RUNTIME_MISMATCH%' AND prosrc LIKE '%FENCE_EVIDENCE_INCOMPLETE%'
+     AND prosrc LIKE '%FENCE_SELF_REPORT%';
+  IF v <> 1 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: fence checks'; END IF;
 END
 $chk$;
 COMMIT;

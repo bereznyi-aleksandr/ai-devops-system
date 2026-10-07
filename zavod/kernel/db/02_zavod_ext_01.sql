@@ -1,12 +1,13 @@
 -- ДОКУМЕНТ: db/02_zavod_ext_01.sql — СОБРАН db/build_ext.mjs, руками не править
 -- ИСТОЧНИК H1.31 01: sha256 ce75f3c9978d9ef470ba4c9f9c9f84985c27b603f5d7576951d007492145a7e5
--- НЕИЗМЕННАЯ ЧАСТЬ: db/zavod_ext_01_static.sql sha256 9c07e2550660ffd53f61ec00c8e49f8d428e10fe0ef260ffb752f1c061f72189
+-- НЕИЗМЕННАЯ ЧАСТЬ: db/zavod_ext_01_static.sql sha256 1f28b1aa80a4bb592c68d34916227d5eb26e18198adf603061166d3c2486e031
 \set ON_ERROR_STOP on
 BEGIN;
 -- ДОКУМЕНТ: db/zavod_ext_01_static.sql (неизменная часть расширения Z-EXT-01)
--- ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
--- ДАТА СОЗДАНИЯ: 2026-10-07 14:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:08 +03:00 (v0.3: ответ на аудит Z3 —
---   версионная политика видов закрепляется за строкой при первой отметке; ограждение исполнителя перед сверкой)
+-- ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+-- ДАТА СОЗДАНИЯ: 2026-10-07 14:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.4: ответ на аудит Z4 M-Z4-01 —
+--   отметка привязана к экземпляру среды исполнения; ограждение принимается только от надзирателя
+--   с доказательством наблюдённого завершения именно этого экземпляра; v0.3 — ответ на Z3)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 -- НАЗНАЧЕНИЕ: добавочное расширение схемы H1.31 для Завода:
 --   (1) M-Z2-01: отдельная область ZAVOD_PRODUCT_RELEASE для выпуска продукта покупателю
@@ -20,6 +21,12 @@ BEGIN;
 --   (4) M-Z3-03: сверка CONFIRMED_NOT_SENT строки, у которой отправка начиналась, возможна только
 --       после записи об ограждении исполнителя (процесс или контейнер завершён и не оживёт).
 --       Условие вставлено в reconcile_unknown_outcome (делает db/build_ext.mjs, одной заменой).
+--   (5) M-Z4-01: запись в базе сама по себе не ограждение. Каждая попытка отправки идёт в своём
+--       экземпляре среды исполнения (send_runtime_instance, задаёт надзиратель src/fencer.mjs).
+--       Ограждение записывает только надзиратель (роль bem_governance) ПОСЛЕ того, как сам
+--       завершил этот экземпляр, дождался его выхода и проверил, что он не жив; база сверяет
+--       экземпляр с отметкой и требует в доказательстве наблюдателя (не сам исполнитель),
+--       exit_observed=true, время выхода и тот же экземпляр.
 -- ОГРАНИЧЕНИЯ: не удаляет данных и объектов; не меняет существующие строки; ставится
 --   после 01 одной транзакцией. Функции publish_subject, release_subject и reconcile_unknown_outcome
 --   в итоговом файле взяты из 01 дословно с заменами, которые делает db/build_ext.mjs и сверяет
@@ -34,8 +41,9 @@ ALTER TABLE bem_core.subject ADD CONSTRAINT subject_scope_check
 ALTER TABLE bem_core.outbox ADD COLUMN send_started_epoch bigint;
 ALTER TABLE bem_core.outbox ADD COLUMN send_policy_version integer;
 ALTER TABLE bem_core.outbox ADD COLUMN send_policy_idempotent boolean;
+ALTER TABLE bem_core.outbox ADD COLUMN send_runtime_instance text;
 -- Как у остальных колонок исхода в H1.31: право на правку колонки только у владельца функций.
-GRANT UPDATE (send_started_epoch, send_policy_version, send_policy_idempotent)
+GRANT UPDATE (send_started_epoch, send_policy_version, send_policy_idempotent, send_runtime_instance)
     ON bem_core.outbox TO bem_control_owner;
 
 -- Версии политики только добавляются; правки и удаления строк функциями нет.
@@ -89,9 +97,10 @@ GRANT  EXECUTE ON FUNCTION bem_control.set_outbox_kind_policy(text, boolean, tex
 -- Исполнитель отправки ставит отметку ДО внешнего вызова. Отметка возможна только
 -- в живой аренде своего поколения; false — отправлять нельзя. Первая отметка строки
 -- закрепляет последнюю версию политики её вида (нет версии — неидемпотентный);
--- последующие отметки закреплённое не меняют.
+-- последующие отметки закреплённое не меняют. Отметка запоминает экземпляр среды исполнения
+-- попытки (M-Z4-01); в одном поколении аренды повторная отметка другим экземпляром — false.
 CREATE FUNCTION bem_control.mark_outbox_send_started(
-    p_outbox_id uuid, p_lease_epoch bigint, p_worker text)
+    p_outbox_id uuid, p_lease_epoch bigint, p_worker text, p_runtime_instance text)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -101,6 +110,9 @@ DECLARE
     v_version    integer;
     v_idempotent boolean;
 BEGIN
+    IF p_runtime_instance IS NULL OR btrim(p_runtime_instance) = '' THEN
+        RAISE EXCEPTION 'RUNTIME_INSTANCE_REQUIRED';
+    END IF;
     SELECT p.version, p.idempotent_adapter INTO v_version, v_idempotent
       FROM bem_core.outbox o
       JOIN bem_control.outbox_kind_policy p ON p.kind = o.kind
@@ -113,18 +125,21 @@ BEGIN
                                          THEN v_version ELSE o.send_policy_version END,
            send_policy_idempotent = CASE WHEN o.send_started_epoch IS NULL
                                          THEN coalesce(v_idempotent, false)
-                                         ELSE o.send_policy_idempotent END
+                                         ELSE o.send_policy_idempotent END,
+           send_runtime_instance  = p_runtime_instance
      WHERE o.id           = p_outbox_id
        AND o.lease_epoch  = p_lease_epoch
        AND o.leased_by    = p_worker
        AND o.status       = 'LEASED'
-       AND o.leased_until > clock_timestamp();
+       AND o.leased_until > clock_timestamp()
+       AND (o.send_started_epoch IS DISTINCT FROM o.lease_epoch
+            OR o.send_runtime_instance = p_runtime_instance);
     RETURN FOUND;
 END;
 $$;
-ALTER FUNCTION bem_control.mark_outbox_send_started(uuid, bigint, text) OWNER TO bem_control_owner;
-REVOKE EXECUTE ON FUNCTION bem_control.mark_outbox_send_started(uuid, bigint, text) FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION bem_control.mark_outbox_send_started(uuid, bigint, text) TO bem_kernel_rw;
+ALTER FUNCTION bem_control.mark_outbox_send_started(uuid, bigint, text, text) OWNER TO bem_control_owner;
+REVOKE EXECUTE ON FUNCTION bem_control.mark_outbox_send_started(uuid, bigint, text, text) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION bem_control.mark_outbox_send_started(uuid, bigint, text, text) TO bem_kernel_rw;
 
 -- Захват партии: сначала строки с истёкшей арендой после начала отправки, у которых
 -- ЗАКРЕПЛЁННЫЙ признак не идемпотентный, — в UNKNOWN_OUTCOME (сверка reconcile решает исход);
@@ -146,6 +161,7 @@ BEGIN
                             'reason',         'LEASE_EXPIRED_AFTER_SEND_START',
                             'lease_epoch',    o.lease_epoch,
                             'leased_by',      o.leased_by,
+                            'runtime_instance', o.send_runtime_instance,
                             'policy_version', o.send_policy_version,
                             'detected_by',    p_worker),
            leased_until = NULL,
@@ -184,14 +200,16 @@ ALTER FUNCTION bem_control.claim_outbox_batch(integer, interval, text) OWNER TO 
 REVOKE EXECUTE ON FUNCTION bem_control.claim_outbox_batch(integer, interval, text) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION bem_control.claim_outbox_batch(integer, interval, text) TO bem_kernel_rw;
 
--- (4) Ограждение исполнителя. Запись делает управление (надзиратель рабочих) после того, как
--- процесс или контейнер исполнителя, начавшего отправку в этом поколении, завершён и не может
--- возобновиться. Без записи сверка не вернёт строку в очередь (reconcile_unknown_outcome).
+-- (4), (5) Ограждение исполнителя. Запись делает только надзиратель рабочих (src/fencer.mjs,
+-- роль bem_governance) после того, как сам завершил экземпляр среды исполнения, начавший
+-- отправку в этом поколении, дождался его выхода и проверил, что экземпляр не жив.
+-- Без записи сверка не вернёт строку в очередь (reconcile_unknown_outcome).
 CREATE TABLE bem_control.outbox_send_fence (
     outbox_id   uuid NOT NULL,
     lease_epoch bigint NOT NULL,
     tenant_id   uuid NOT NULL,
     worker      text NOT NULL CHECK (btrim(worker) <> ''),
+    runtime_instance text NOT NULL CHECK (btrim(runtime_instance) <> ''),
     method      text NOT NULL CHECK (method IN ('PROCESS_TERMINATED', 'CONTAINER_TERMINATED')),
     evidence_id uuid NOT NULL,
     fenced_at   timestamptz NOT NULL DEFAULT now(),
@@ -204,7 +222,7 @@ GRANT SELECT ON bem_control.outbox_send_fence TO backup_reader;
 
 CREATE FUNCTION bem_control.record_outbox_fence(
     p_tenant_id uuid, p_outbox_id uuid, p_lease_epoch bigint,
-    p_worker text, p_method text, p_evidence jsonb)
+    p_worker text, p_runtime_instance text, p_method text, p_evidence jsonb)
 RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -214,13 +232,15 @@ DECLARE
     v_status text;
     v_epoch  bigint;
     v_result jsonb;
+    v_rt     text;
     v_ev     uuid;
 BEGIN
     PERFORM bem_control.assert_tenant(p_tenant_id);
     IF p_evidence IS NULL OR p_evidence = '{}'::jsonb THEN
         RAISE EXCEPTION 'FENCE_EVIDENCE_REQUIRED';
     END IF;
-    SELECT o.status, o.send_started_epoch, o.result INTO v_status, v_epoch, v_result
+    SELECT o.status, o.send_started_epoch, o.result, o.send_runtime_instance
+      INTO v_status, v_epoch, v_result, v_rt
       FROM bem_core.outbox o
      WHERE o.id = p_outbox_id AND o.tenant_id = p_tenant_id
        FOR UPDATE;
@@ -234,18 +254,35 @@ BEGIN
     IF v_result ? 'leased_by' AND (v_result ->> 'leased_by') IS DISTINCT FROM p_worker THEN
         RAISE EXCEPTION 'FENCE_WORKER_MISMATCH: %', v_result ->> 'leased_by';
     END IF;
+    -- M-Z4-01: ограждается именно тот экземпляр, который поставил отметку.
+    IF v_rt IS NULL OR v_rt IS DISTINCT FROM p_runtime_instance THEN
+        RAISE EXCEPTION 'FENCE_RUNTIME_MISMATCH: marked=% argument=%', v_rt, p_runtime_instance;
+    END IF;
+    -- Доказательство — наблюдение надзирателя: выход этого экземпляра увиден со стороны.
+    -- Самоотчёт исполнителя («я остановился») не принимается.
+    IF jsonb_typeof(p_evidence -> 'exit_observed') IS DISTINCT FROM 'boolean'
+       OR NOT (p_evidence ->> 'exit_observed')::boolean
+       OR coalesce(btrim(p_evidence ->> 'observer'), '') = ''
+       OR coalesce(btrim(p_evidence ->> 'exit_observed_at'), '') = ''
+       OR (p_evidence ->> 'runtime_instance') IS DISTINCT FROM p_runtime_instance THEN
+        RAISE EXCEPTION 'FENCE_EVIDENCE_INCOMPLETE';
+    END IF;
+    IF (p_evidence ->> 'observer') IN (p_worker, p_runtime_instance) THEN
+        RAISE EXCEPTION 'FENCE_SELF_REPORT';
+    END IF;
     v_ev := bem_control.evidence_write(p_tenant_id, 'OUTBOX_SEND_FENCED',
               p_evidence || jsonb_build_object('outbox_id', p_outbox_id, 'lease_epoch', p_lease_epoch,
-                                               'worker', p_worker, 'method', p_method));
+                                               'worker', p_worker, 'runtime_instance', p_runtime_instance,
+                                               'method', p_method));
     INSERT INTO bem_control.outbox_send_fence
-           (outbox_id, lease_epoch, tenant_id, worker, method, evidence_id)
-    VALUES (p_outbox_id, p_lease_epoch, p_tenant_id, p_worker, p_method, v_ev);
+           (outbox_id, lease_epoch, tenant_id, worker, runtime_instance, method, evidence_id)
+    VALUES (p_outbox_id, p_lease_epoch, p_tenant_id, p_worker, p_runtime_instance, p_method, v_ev);
     RETURN v_ev;
 END;
 $$;
-ALTER FUNCTION bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, jsonb) OWNER TO bem_control_owner;
-REVOKE EXECUTE ON FUNCTION bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, jsonb) FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, jsonb) TO bem_governance;
+ALTER FUNCTION bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb) OWNER TO bem_control_owner;
+REVOKE EXECUTE ON FUNCTION bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb) TO bem_governance;
 
 -- Функции H1.31 дословно, заменены только условие области и условие сверки (build_ext.mjs, по одной замене).
 CREATE OR REPLACE FUNCTION bem_control.publish_subject(
@@ -635,8 +672,9 @@ BEGIN
            AND o.send_started_epoch IS NOT NULL
            AND NOT EXISTS (SELECT 1
                              FROM bem_control.outbox_send_fence f
-                            WHERE f.outbox_id   = o.id
-                              AND f.lease_epoch = o.send_started_epoch))
+                            WHERE f.outbox_id        = o.id
+                              AND f.lease_epoch      = o.send_started_epoch
+                              AND f.runtime_instance = o.send_runtime_instance))
     THEN
         RAISE EXCEPTION 'RECONCILE_NOT_FENCED: исполнитель, начавший отправку, не огражден';
     END IF;
@@ -692,8 +730,9 @@ BEGIN
   IF v <> 1 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: scope check'; END IF;
   SELECT count(*) INTO v FROM information_schema.columns
    WHERE table_schema = 'bem_core' AND table_name = 'outbox'
-     AND column_name IN ('send_started_epoch', 'send_policy_version', 'send_policy_idempotent');
-  IF v <> 3 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: outbox columns'; END IF;
+     AND column_name IN ('send_started_epoch', 'send_policy_version', 'send_policy_idempotent',
+                         'send_runtime_instance');
+  IF v <> 4 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: outbox columns'; END IF;
   SELECT count(*) INTO v FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
    WHERE n.nspname = 'bem_control'
      AND p.proname IN ('mark_outbox_send_started', 'set_outbox_kind_policy', 'claim_outbox_batch',
@@ -706,12 +745,19 @@ BEGIN
   IF v <> 1 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: reconcile fence'; END IF;
   IF has_function_privilege('bem_kernel_rw', 'bem_control.set_outbox_kind_policy(text, boolean, text, text, text)', 'EXECUTE')
   THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: kernel may set policy'; END IF;
-  IF has_function_privilege('bem_kernel_rw', 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, jsonb)', 'EXECUTE')
+  IF has_function_privilege('bem_kernel_rw', 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)', 'EXECUTE')
   THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: kernel may record fence'; END IF;
   IF has_table_privilege('bem_kernel_rw', 'bem_control.outbox_kind_policy', 'INSERT')
   THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: kernel may write policy'; END IF;
   IF has_table_privilege('bem_kernel_rw', 'bem_control.outbox_send_fence', 'INSERT')
   THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: kernel may write fence'; END IF;
+  IF to_regprocedure('bem_control.mark_outbox_send_started(uuid, bigint, text)') IS NOT NULL
+  THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: mark without runtime instance'; END IF;
+  SELECT count(*) INTO v FROM pg_proc
+   WHERE oid = 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)'::regprocedure
+     AND prosrc LIKE '%FENCE_RUNTIME_MISMATCH%' AND prosrc LIKE '%FENCE_EVIDENCE_INCOMPLETE%'
+     AND prosrc LIKE '%FENCE_SELF_REPORT%';
+  IF v <> 1 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: fence checks'; END IF;
 END
 $chk$;
 COMMIT;

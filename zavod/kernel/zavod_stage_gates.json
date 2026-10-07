@@ -1,10 +1,10 @@
 {
   "_passport": {
     "document": "zavod_stage_gates.json",
-    "version": "v0.3",
+    "version": "v0.4",
     "status": "CANDIDATE",
     "created_at": "2026-10-07 13:47 +03:00",
-    "updated_at": "2026-10-07 16:26 +03:00 (v0.3: протокол v1.2 — E3-4 разделён на E3-4a/E3-4b (гейт OD-1a), этапу 4 добавлен OD-2; E3-2 по прогону 37628048413)",
+    "updated_at": "2026-10-07 17:38 +03:00 (v0.4: решения оператора OD-8 = Flowable (PASS), OD-2 = WSL2 выбран, установка не выполнена)",
     "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)",
     "purpose": "Состояние критериев этапов Завода и правила начала этапов (протокол Z1 v1.2, раздел 9). Проверяет src/stage_gates.mjs.",
     "limits": "PASS ставит не автор работы; у PASS обязательна ссылка на доказательство. Файл не разрешает деньги, секреты и удаление."
@@ -109,11 +109,12 @@
           "status": "OPEN"
         },
         "OD-8": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "оператор 2026-10-07 в чате: Flowable 8.0.0; operator_decisions/OD_2_OD_8_DECISION_20261007.txt"
         },
         "OD-2": {
           "status": "OPEN",
-          "evidence": "установка WSL2/Docker — решение оператора; без неё E4-2 не закрывается"
+          "evidence": "оператор 2026-10-07 выбрал WSL2 (operator_decisions/OD_2_OD_8_DECISION_20261007.txt); установка не выполнена — OPEN до установки и проверки"
         }
       },
       "start_requires": [

@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: tests/ext01.test.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:08 +03:00 (v0.2: аудит Z3 —
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.3: аудит Z4 M-Z4-01 —
+//   отметка и ограждение с экземпляром среды исполнения; сценарий на настоящем процессе — fencer.test.mjs;
+//   v0.2: аудит Z3 —
 //   M-Z3-02 версии политики и закрепление за строкой; M-Z3-03 ограждение перед сверкой)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: расширение Z-EXT-01 (ответ на аудит Z2):
@@ -20,6 +22,7 @@ let ids;
 let kernel;
 const as = (actor) => ({ actor_id: actor });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const RT1 = 'runtime:ext01-w1';   // экземпляр среды исполнения исполнителя w1 (M-Z4-01)
 
 before(async () => {
   ids = await bootFixture();
@@ -115,7 +118,7 @@ test('M-Z2-02 неидемпотентный вид: аренда истекла
   const id = await outboxRow(`zavod.nonidem.${ids.run}`);
   const a = await claim('w1', '1 second', id);
   assert.ok(a, 'first worker claims the row');
-  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, a.lease_epoch, 'w1'])).ok, true);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok', [id, a.lease_epoch, 'w1', RT1])).ok, true);
   await sleep(1500);
   const b = await claim('w2', '30 seconds', id);
   assert.equal(b, undefined, 'second worker must not get the row');
@@ -130,7 +133,7 @@ test('M-Z2-02 отметка после истечения аренды откл
   const id = await outboxRow(`zavod.nonidem2.${ids.run}`);
   const a = await claim('w1', '1 second', id);
   await sleep(1500);
-  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, a.lease_epoch, 'w1'])).ok, false);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok', [id, a.lease_epoch, 'w1', RT1])).ok, false);
   const b = await claim('w2', '30 seconds', id);
   assert.ok(b, 'not started -> reclaim is safe');
   assert.equal(Number(b.lease_epoch), Number(a.lease_epoch) + 1);
@@ -148,7 +151,7 @@ test('M-Z2-02 идемпотентный вид (запись управлени
   assert.equal(await setPolicy(kind, true, 'adapter dedups by idempotency_key'), 1);
   const id = await outboxRow(kind);
   const a = await claim('w1', '1 second', id);
-  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, a.lease_epoch, 'w1'])).ok, true);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok', [id, a.lease_epoch, 'w1', RT1])).ok, true);
   assert.deepEqual(await pinOf(id), { send_policy_version: 1, send_policy_idempotent: true });
   await sleep(1500);
   const b = await claim('w2', '30 seconds', id);
@@ -180,7 +183,7 @@ test('M-Z3-02 строка начала отправку при неидемпо
   assert.equal(await setPolicy(kind, false, 'v1 non-idempotent'), 1);
   const id = await outboxRow(kind);
   const a = await claim('w1', '1 second', id);
-  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, a.lease_epoch, 'w1'])).ok, true);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok', [id, a.lease_epoch, 'w1', RT1])).ok, true);
   assert.deepEqual(await pinOf(id), { send_policy_version: 1, send_policy_idempotent: false });
   // внешний эффект «принят без ответа»; управление регистрирует идемпотентную v2 того же вида
   assert.equal(await setPolicy(kind, true, 'v2 idempotent'), 2);
@@ -192,7 +195,7 @@ test('M-Z3-02 строка начала отправку при неидемпо
   // новая строка того же вида закрепляет v2 и повторяется
   const id2 = await outboxRow(kind);
   const c1 = await claim('w1', '1 second', id2);
-  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id2, c1.lease_epoch, 'w1'])).ok, true);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok', [id2, c1.lease_epoch, 'w1', RT1])).ok, true);
   assert.deepEqual(await pinOf(id2), { send_policy_version: 2, send_policy_idempotent: true });
   await sleep(1500);
   assert.ok(await claim('w2', '30 seconds', id2), 'v2 row is retried');
@@ -206,13 +209,16 @@ const gov = (sql, args) => withRole('bem_bootstrap_admin', async (c) => {
 });
 const reconcile = (id, outcome) => gov('SELECT bem_control.reconcile_unknown_outcome($1, $2, $3, $4) AS s',
   [ids.tenantA, id, outcome, { test: 'ext01 reconcile' }]);
-const fence = (id, epoch, worker, method = 'PROCESS_TERMINATED', ev = { killed: 'SIGKILL', exit_seen: true }) =>
-  gov('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6) AS e', [ids.tenantA, id, epoch, worker, method, ev]);
+const OBSERVED = { observer: 'fencer:ext01', exit_observed: true, exit_observed_at: '2026-10-07T17:55:00Z',
+  runtime_instance: RT1 };
+const fence = (id, epoch, worker, method = 'PROCESS_TERMINATED', ev = OBSERVED) =>
+  gov('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7) AS e',
+    [ids.tenantA, id, epoch, worker, RT1, method, ev]);
 
 async function unknownRow(tag) {
   const id = await outboxRow(`zavod.fence.${tag}.${ids.run}`);
   const a = await claim('w1', '1 second', id);
-  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, a.lease_epoch, 'w1'])).ok, true);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok', [id, a.lease_epoch, 'w1', RT1])).ok, true);
   await sleep(1500);
   assert.equal(await claim('w2', '30 seconds', id), undefined);
   assert.equal((await rowOf(id)).status, 'UNKNOWN_OUTCOME');
@@ -227,15 +233,15 @@ test('M-Z3-03 CONFIRMED_NOT_SENT без ограждения — отказ; о�
   await assert.rejects(fence(id, epoch, 'w9'), /FENCE_WORKER_MISMATCH/);
   await assert.rejects(fence(id, epoch, 'w1', 'PROCESS_TERMINATED', {}), /FENCE_EVIDENCE_REQUIRED/);
   await assert.rejects(fence(id, epoch, 'w1', 'ASKED_NICELY'), /outbox_send_fence_method_check/);
-  await assert.rejects(kq('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6)',
-    [ids.tenantA, id, epoch, 'w1', 'PROCESS_TERMINATED', { self: true }]), (e) => e.code === '42501');
+  await assert.rejects(kq('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7)',
+    [ids.tenantA, id, epoch, 'w1', RT1, 'PROCESS_TERMINATED', OBSERVED]), (e) => e.code === '42501');
   assert.ok((await fence(id, epoch, 'w1')).e);
   assert.equal((await reconcile(id, 'CONFIRMED_NOT_SENT')).s, 'PENDING');
   // строка снова в очереди новым поколением; поздний старый исполнитель ничего не может
   const b = await claim('w2', '30 seconds', id);
   assert.ok(b);
   assert.equal(Number(b.lease_epoch), Number(epoch) + 1);
-  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, epoch, 'w1'])).ok, false);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok', [id, epoch, 'w1', RT1])).ok, false);
   assert.equal((await kq('SELECT bem_control.finish_outbox_row($1, $2, $3, \'SENT\', $4) AS ok', [id, epoch, 'w1', {}])).ok, false);
   assert.deepEqual(await pinOf(id), { send_policy_version: null, send_policy_idempotent: false });
 });

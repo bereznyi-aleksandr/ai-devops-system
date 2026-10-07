@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 16:14 +03:00 (v0.2: расширение Z-EXT-01 — отметка начала отправки, аудит Z2 M-Z2-02)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.3: аудит Z4 M-Z4-01 — отметка
+//   начала отправки несёт экземпляр среды исполнения; v0.2: Z-EXT-01 — отметка начала отправки, аудит Z2 M-Z2-02)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: BEM Control Kernel Завода — единственный писатель bem_core (H1.31 §5).
 //   Пишет только через функции bem_control, ролью bem_kernel_rw, с контекстом
@@ -11,10 +12,12 @@
 //   проверенного вызывающего (caller) и требует caller.actor_id === req.actor_id.
 
 import pg from 'pg';
+import { randomUUID } from 'node:crypto';
+import { hostname } from 'node:os';
 import { allowedFrom, STATUSES, INITIAL_STATUS } from './transitions.mjs';
 import { findSecret, isStopped } from './guards.mjs';
 
-export const KERNEL_VERSION = '0.2.0';
+export const KERNEL_VERSION = '0.3.0';
 export const KERNEL_ROLE = 'bem_kernel_rw';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -49,6 +52,7 @@ export class Kernel {
     // Только для теста перезапуска E3-3: вызывается внутри транзакции перед COMMIT.
     this._beforeCommit = typeof opts.testBeforeCommit === 'function' ? opts.testBeforeCommit : null;
     this.startedAt = new Date().toISOString();
+    this.runtimeInstance = `process:${hostname()}:${process.pid}:${randomUUID()}`;
     this.lastCommandAt = null;
     this.counters = { ok: 0, rejected: 0 };
   }
@@ -67,7 +71,7 @@ export class Kernel {
     }
     // Без расширения Z-EXT-01 доставщик не может отметить начало отправки — работать нельзя.
     const ext = await this.pool.query(
-      "SELECT to_regprocedure('bem_control.mark_outbox_send_started(uuid,bigint,text)') IS NOT NULL AS ok");
+      "SELECT to_regprocedure('bem_control.mark_outbox_send_started(uuid,bigint,text,text)') IS NOT NULL AS ok");
     if (!ext.rows[0].ok) throw new KernelError('KERNEL_EXT_MISSING', 'Z-EXT-01 not installed');
     return true;
   }
@@ -131,7 +135,12 @@ export class Kernel {
 
   // Доставщик (H1.31 §7.4): внутренний модуль Kernel, то же подключение.
   // egress(row) — внешний исполнитель без доступа к базе; возвращает { outcome, detail }.
-  async dispatchOnce(egress, { limit = 10, lease = '60 seconds', worker = 'kernel-dispatcher' } = {}) {
+  // runtimeInstance (M-Z4-01) — экземпляр среды исполнения этой попытки. Под надзирателем
+  // (src/fencer.mjs) его задаёт надзиратель через ZAVOD_RUNTIME_INSTANCE, по одному на попытку.
+  // Без надзирателя — экземпляр этого процесса; такой экземпляр надзиратель не знает и оградить
+  // не может, поэтому неясный исход такой строки обратно в очередь не вернётся (только UNRESOLVED).
+  async dispatchOnce(egress, { limit = 10, lease = '60 seconds', worker = 'kernel-dispatcher',
+    runtimeInstance = process.env.ZAVOD_RUNTIME_INSTANCE || this.runtimeInstance } = {}) {
     if (isStopped(this.stopFile)) return { stopped: true, claimed: 0 };
     const { rows } = await this.pool.query('SELECT * FROM bem_control.claim_outbox_batch($1, $2::interval, $3)',
       [limit, lease, worker]);
@@ -139,8 +148,8 @@ export class Kernel {
     for (const row of rows) {
       // Z-EXT-01: отметка начала отправки ДО внешнего вызова. Не удалась (аренда
       // потеряна) — не отправлять: строкой уже распоряжается другой исполнитель или сверка.
-      const mark = await this.pool.query('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok',
-        [row.outbox_id, row.lease_epoch, worker]);
+      const mark = await this.pool.query('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok',
+        [row.outbox_id, row.lease_epoch, worker, runtimeInstance]);
       if (!mark.rows[0].ok) {
         results.push({ outbox_id: row.outbox_id, outcome: 'NOT_SENT_LEASE_LOST', finished: false });
         continue;

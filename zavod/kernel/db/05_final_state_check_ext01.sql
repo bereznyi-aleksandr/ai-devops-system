@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/05_final_state_check_ext01.sql — СОБРАН db/build_final_ext.mjs, руками не править
 -- ИСТОЧНИК H1.31 05: sha256 1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1
--- РАСШИРЕНИЕ 02: sha256 4581e58fb3c4760774bcebfa0a8db58fafee80ee750a55c6b80fc3a8c7faaf73
+-- РАСШИРЕНИЕ 02: sha256 02619df434209f8c53b6d916209d866996e69274939a1e19b60de0f03158634e
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 (см. сборщик).
 \set ON_ERROR_STOP on
 
@@ -56,6 +56,7 @@ DECLARE
         'TABLE|bem_control.outbox_kind_policy|outbox_kind_policy_evidence_check|CHECK ((btrim(evidence) <> ''''::text))',
         'TABLE|bem_control.outbox_send_fence|outbox_send_fence_pkey|PRIMARY KEY (outbox_id, lease_epoch)',
         'TABLE|bem_control.outbox_send_fence|outbox_send_fence_worker_check|CHECK ((btrim(worker) <> ''''::text))',
+        'TABLE|bem_control.outbox_send_fence|outbox_send_fence_runtime_instance_check|CHECK ((btrim(runtime_instance) <> ''''::text))',
         'TABLE|bem_control.outbox_send_fence|outbox_send_fence_method_check|CHECK ((method = ANY (ARRAY[''PROCESS_TERMINATED''::text, ''CONTAINER_TERMINATED''::text])))',
         'TABLE|bem_core.schema_migration|schema_migration_pkey|PRIMARY KEY (version)',
         'TABLE|bem_core.subject|subject_pkey|PRIMARY KEY (id)',
@@ -424,6 +425,7 @@ DECLARE
         'COLUMN|bem_core.outbox.send_started_epoch|bem_control_owner|UPDATE|bem_core_owner',
         'COLUMN|bem_core.outbox.send_policy_version|bem_control_owner|UPDATE|bem_core_owner',
         'COLUMN|bem_core.outbox.send_policy_idempotent|bem_control_owner|UPDATE|bem_core_owner',
+        'COLUMN|bem_core.outbox.send_runtime_instance|bem_control_owner|UPDATE|bem_core_owner',
         'COLUMN|bem_core.outbox.leased_by|bem_control_owner|UPDATE|bem_core_owner',
         'COLUMN|bem_core.outbox.leased_until|bem_control_owner|UPDATE|bem_core_owner',
         'COLUMN|bem_core.outbox.next_attempt_at|bem_control_owner|UPDATE|bem_core_owner',
@@ -488,12 +490,12 @@ DECLARE
         'FUNCTION|bem_control.bind_process_instance(uuid, uuid, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
-        'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text)|bem_control_owner|EXECUTE|bem_control_owner',
-        'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.set_outbox_kind_policy(text, boolean, text, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.set_outbox_kind_policy(text, boolean, text, text, text)|bem_governance|EXECUTE|bem_control_owner',
-        'FUNCTION|bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
-        'FUNCTION|bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, jsonb)|bem_governance|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)|bem_governance|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.command_fingerprint(uuid, uuid, text, integer, text[], text, text, jsonb, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.create_actor(text, bem_core.provider, uuid, name)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.create_actor(text, bem_core.provider, uuid, name)|bem_governance|EXECUTE|bem_control_owner',
@@ -1308,11 +1310,11 @@ BEGIN
     FOR r IN SELECT * FROM (VALUES
         ('publish_subject', 'e834b723066588f462d3208af12eb9c4e8e06c125640eb37d7e9caf0df68a996'),
         ('release_subject', '9672b176c80839b9286f4a8e20b4fadd54d921827f5eb5075bf0966a4a586bee'),
-        ('reconcile_unknown_outcome', 'c9963de562d50e3eeaf10933979e9a99e71d824f5bb3877d0b782f2c78b34d22'),
-        ('claim_outbox_batch', '994372401f2f19757be8fd1e716763c364a75d4a21aec27c4e353339e30231ff'),
-        ('mark_outbox_send_started', '5671652c79fb438710c008caae5f85f4eeee2a8f5241002c5bc76afb8702a9d9'),
+        ('reconcile_unknown_outcome', '1e1ecfe0d412fa3e1f35ec605ff31d0ab6d8971af753b4fac1829ffc2e84a296'),
+        ('claim_outbox_batch', '2f99d0cf2e2e42edb0e613002ac34c9206395ddc611a7e8ed4d5c5a20e0c4be4'),
+        ('mark_outbox_send_started', '098dec5ed40550b6bf674e9ba584988840ac4afa681c48cd25281f69631d8b7b'),
         ('set_outbox_kind_policy', '96ab2b4d3c9edfc20d3ba5a2837845a8efd37aa2eb5c306d0d4df7cf04f5c9a9'),
-        ('record_outbox_fence', 'ca1c9f3484c38459db5b1d818eb51940c93c00b237ef08c6d15cb35185287311')
+        ('record_outbox_fence', '3cbc8636386f6f16755ef3cab7f68a546ad85b35c6b0159a7510c32647ed0a0a')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got

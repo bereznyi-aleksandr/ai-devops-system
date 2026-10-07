@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:08 +03:00 (v0.2: аудит Z3 M-Z3-01 —
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.3: аудит Z4 M-Z4-01 —
+//   колонка send_runtime_instance, новые подписи отметки и ограждения, проверка экземпляра;
+//   v0.2: аудит Z3 M-Z3-01 —
 //   отпечатки тел всех функций, которые создаёт или меняет Z-EXT-01, включая claim_outbox_batch;
 //   объекты v0.3 расширения: версии политики, закреплённые колонки, ограждение)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -47,6 +49,7 @@ t = after(t, 'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)', [
   "TABLE|bem_control.outbox_kind_policy|outbox_kind_policy_evidence_check|CHECK ((btrim(evidence) <> ''''::text))",
   'TABLE|bem_control.outbox_send_fence|outbox_send_fence_pkey|PRIMARY KEY (outbox_id, lease_epoch)',
   "TABLE|bem_control.outbox_send_fence|outbox_send_fence_worker_check|CHECK ((btrim(worker) <> ''''::text))",
+  "TABLE|bem_control.outbox_send_fence|outbox_send_fence_runtime_instance_check|CHECK ((btrim(runtime_instance) <> ''''::text))",
   "TABLE|bem_control.outbox_send_fence|outbox_send_fence_method_check|CHECK ((method = ANY (ARRAY[''PROCESS_TERMINATED''::text, ''CONTAINER_TERMINATED''::text])))",
 ]);
 // Права (ACL): колонки отметки и закреплённой политики, новые функции, новые таблицы.
@@ -54,14 +57,15 @@ t = after(t, 'COLUMN|bem_core.outbox.lease_epoch|bem_control_owner|UPDATE|bem_co
   'COLUMN|bem_core.outbox.send_started_epoch|bem_control_owner|UPDATE|bem_core_owner',
   'COLUMN|bem_core.outbox.send_policy_version|bem_control_owner|UPDATE|bem_core_owner',
   'COLUMN|bem_core.outbox.send_policy_idempotent|bem_control_owner|UPDATE|bem_core_owner',
+  'COLUMN|bem_core.outbox.send_runtime_instance|bem_control_owner|UPDATE|bem_core_owner',
 ]);
 t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner', [
-  'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text)|bem_control_owner|EXECUTE|bem_control_owner',
-  'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+  'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+  'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
   'FUNCTION|bem_control.set_outbox_kind_policy(text, boolean, text, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
   'FUNCTION|bem_control.set_outbox_kind_policy(text, boolean, text, text, text)|bem_governance|EXECUTE|bem_control_owner',
-  'FUNCTION|bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
-  'FUNCTION|bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, jsonb)|bem_governance|EXECUTE|bem_control_owner',
+  'FUNCTION|bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
+  'FUNCTION|bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)|bem_governance|EXECUTE|bem_control_owner',
 ]);
 // Права владельца на свою таблицу — полный стандартный набор PostgreSQL (как у authority_guard в 05).
 const OWNER_PRIVS = ['DELETE', 'INSERT', 'REFERENCES', 'SELECT', 'TRIGGER', 'TRUNCATE', 'UPDATE'];
