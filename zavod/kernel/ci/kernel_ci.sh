@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+# v0.4 (2026-10-07 16:19 +03:00): парная дельта-проверка 05 + отличия Z-EXT-01 после установки расширения.
 # v0.3 (2026-10-07 16:16 +03:00): установка расширения Z-EXT-01 после 01 со сверкой сборки.
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:49 +03:00 (v0.2: копия с сортировкой bem; штамп исправлен по реальному времени)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -35,6 +36,11 @@ tail -1 chain_wrapper.out
 "$NODE" "$HERE/db/build_ext.mjs" 01_database_migration.sql --check || fail "Z-EXT-01 build stale"
 psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/02_zavod_ext_01.sql" > chain_ext.out 2>&1 || { tail -5 chain_ext.out; fail "Z-EXT-01 failed"; }
 tail -1 chain_ext.out
+# Парная дельта-проверка: терминальная проверка H1.31 05 (её прошла обёртка ДО расширения) плюс
+# точный список отличий Z-EXT-01; лишнее право или объект — отказ. До подъёма предела admin.
+"$NODE" "$HERE/db/build_final_ext.mjs" 05_final_state_check.sql --check || fail "Z-EXT-01 final check build stale"
+psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/05_final_state_check_ext01.sql" > chain_final_ext.out 2>&1 || { grep -m3 -E 'ERROR|ОШИБКА' chain_final_ext.out; fail "Z-EXT-01 final state check"; }
+echo "ZAVOD_FINAL_EXT_CHECK=done"
 q bem "ALTER ROLE bem_bootstrap_admin CONNECTION LIMIT 2" >/dev/null || fail "cannot open bootstrap admin"
 
 cd "$HERE" || exit 9

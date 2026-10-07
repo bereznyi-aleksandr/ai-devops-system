@@ -1,11 +1,11 @@
 -- ДОКУМЕНТ: db/02_zavod_ext_01.sql — СОБРАН db/build_ext.mjs, руками не править
 -- ИСТОЧНИК H1.31 01: sha256 ce75f3c9978d9ef470ba4c9f9c9f84985c27b603f5d7576951d007492145a7e5
--- НЕИЗМЕННАЯ ЧАСТЬ: db/zavod_ext_01_static.sql sha256 1d30292fa4d5dab0eb709df510bf42231670e09cb3d54e10bfe546fcf3b59395
+-- НЕИЗМЕННАЯ ЧАСТЬ: db/zavod_ext_01_static.sql sha256 d196b2eadf34d3dcd98e9c5f50cf3de45b4526766d14f30edafba10f8b7e4224
 \set ON_ERROR_STOP on
 BEGIN;
 -- ДОКУМЕНТ: db/zavod_ext_01_static.sql (неизменная часть расширения Z-EXT-01)
--- ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
--- ДАТА СОЗДАНИЯ: 2026-10-07 14:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 14:18 +03:00
+-- ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+-- ДАТА СОЗДАНИЯ: 2026-10-07 14:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 16:19 +03:00 (v0.2: право SELECT для backup_reader на таблицу политики)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 -- НАЗНАЧЕНИЕ: добавочное расширение схемы H1.31 для Завода (ответ на аудит Z2):
 --   (1) M-Z2-01: отдельная область ZAVOD_PRODUCT_RELEASE для выпуска продукта покупателю
@@ -40,6 +40,9 @@ CREATE TABLE bem_control.outbox_kind_policy (
 ALTER TABLE bem_control.outbox_kind_policy OWNER TO bem_control_owner;
 REVOKE ALL ON bem_control.outbox_kind_policy FROM PUBLIC;
 GRANT SELECT ON bem_control.outbox_kind_policy TO bem_kernel_rw;
+-- Как ALTER DEFAULT PRIVILEGES H1.31 для bem_control: копия базы читает каждую таблицу
+-- (таблица создана не владельцем, поэтому право по умолчанию не сработало; найдено дельта-проверкой 05).
+GRANT SELECT ON bem_control.outbox_kind_policy TO backup_reader;
 
 -- Регистрация вида действия — путь управления, не Kernel: Kernel не может сам
 -- объявить свой адаптер идемпотентным и тем разрешить себе повтор.

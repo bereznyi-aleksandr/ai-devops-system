@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/zavod_ext_01_static.sql (неизменная часть расширения Z-EXT-01)
--- ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
--- ДАТА СОЗДАНИЯ: 2026-10-07 14:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 14:18 +03:00
+-- ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+-- ДАТА СОЗДАНИЯ: 2026-10-07 14:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 16:19 +03:00 (v0.2: право SELECT для backup_reader на таблицу политики)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 -- НАЗНАЧЕНИЕ: добавочное расширение схемы H1.31 для Завода (ответ на аудит Z2):
 --   (1) M-Z2-01: отдельная область ZAVOD_PRODUCT_RELEASE для выпуска продукта покупателю
@@ -35,6 +35,9 @@ CREATE TABLE bem_control.outbox_kind_policy (
 ALTER TABLE bem_control.outbox_kind_policy OWNER TO bem_control_owner;
 REVOKE ALL ON bem_control.outbox_kind_policy FROM PUBLIC;
 GRANT SELECT ON bem_control.outbox_kind_policy TO bem_kernel_rw;
+-- Как ALTER DEFAULT PRIVILEGES H1.31 для bem_control: копия базы читает каждую таблицу
+-- (таблица создана не владельцем, поэтому право по умолчанию не сработало; найдено дельта-проверкой 05).
+GRANT SELECT ON bem_control.outbox_kind_policy TO backup_reader;
 
 -- Регистрация вида действия — путь управления, не Kernel: Kernel не может сам
 -- объявить свой адаптер идемпотентным и тем разрешить себе повтор.
