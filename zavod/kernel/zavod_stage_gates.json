@@ -1,10 +1,10 @@
 {
   "_passport": {
     "document": "zavod_stage_gates.json",
-    "version": "v0.1",
+    "version": "v0.2",
     "status": "CANDIDATE",
     "created_at": "2026-10-07 13:47 +03:00",
-    "updated_at": "2026-10-07 13:47 +03:00",
+    "updated_at": "2026-10-07 13:50 +03:00 (v0.2: E3-2 — прогон 37609953783 после исправления копии)",
     "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)",
     "purpose": "Состояние критериев этапов Завода и правила начала этапов (протокол Z1 v1.1, раздел 9). Проверяет src/stage_gates.mjs.",
     "limits": "PASS ставит не автор работы; у PASS обязательна ссылка на доказательство. Файл не разрешает деньги, секреты и удаление."
@@ -33,7 +33,7 @@
       "name": "Kernel",
       "criteria": {
         "E3-1": { "status": "PASS", "evidence": "tests/kernel.test.mjs E3-1a/E3-1b; CI run 37607728735" },
-        "E3-2": { "status": "PASS", "evidence": "CI run 37607728735, три прогона зелёные" },
+        "E3-2": { "status": "PASS", "evidence": "CI run 37607728735 и 37609953783 (dbc70578f), по три прогона зелёные" },
         "E3-3": { "status": "PASS", "evidence": "tests/restart.test.mjs E3-3a/E3-3b; CI run 37607728735" },
         "E3-4": { "status": "OPEN", "evidence": "SR-03 (защита main) ждёт OD-1; остальные SR пройдены" },
         "E3-5": { "status": "OPEN", "evidence": "независимый аудит кода Kernel — после APPROVE этапа 1" }
