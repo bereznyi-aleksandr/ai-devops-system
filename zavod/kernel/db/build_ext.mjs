@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: db/build_ext.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 14:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.3: аудит Z4 M-Z4-01 —
+// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 14:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:25 +03:00 (v0.4: аудит Z5 —
+//   самопроверка: пустая единица, запрет способа, полномочие OPERATOR, точный список вызывающих;
+//   v0.3: аудит Z4 M-Z4-01 —
 //   ограждение сверяется и с экземпляром среды исполнения; новые подписи в самопроверке;
 //   v0.2: reconcile_unknown_outcome с условием ограждения — аудит Z3 M-Z3-03)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -115,8 +117,16 @@ BEGIN
   SELECT count(*) INTO v FROM pg_proc
    WHERE oid = 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)'::regprocedure
      AND prosrc LIKE '%FENCE_RUNTIME_MISMATCH%' AND prosrc LIKE '%FENCE_EVIDENCE_INCOMPLETE%'
-     AND prosrc LIKE '%FENCE_SELF_REPORT%';
+     AND prosrc LIKE '%FENCE_SELF_REPORT%' AND prosrc LIKE '%FENCE_UNIT_NOT_EMPTY%'
+     AND prosrc LIKE '%FENCE_METHOD_FORBIDDEN%'
+     AND prosrc LIKE '%assert_authority(''OPERATOR'', p_tenant_id)%';
   IF v <> 1 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: fence checks'; END IF;
+  -- M-Z5-02: точный список тех, кто может вызвать запись ограждения: владелец и bem_governance.
+  SELECT count(*) INTO v FROM pg_proc p, aclexplode(p.proacl) a
+   WHERE p.oid = 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)'::regprocedure
+     AND a.privilege_type = 'EXECUTE'
+     AND a.grantee NOT IN ('bem_control_owner'::regrole, 'bem_governance'::regrole);
+  IF v <> 0 THEN RAISE EXCEPTION 'ZAVOD_EXT_FAILED: fence callers whitelist'; END IF;
 END
 $chk$;
 COMMIT;

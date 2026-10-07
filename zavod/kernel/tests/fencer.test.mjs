@@ -1,12 +1,16 @@
 // ДОКУМЕНТ: tests/fencer.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:20 +03:00 (v0.2: аудит Z5 —
+//   M-Z5-01: живой потомок исполнителя, ограждение всей единицы cgroup v2, мутация «только родитель»;
+//   M-Z5-02: только оператор (bem_governance + полномочие OPERATOR) пишет ограждение, точный список)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
-// НАЗНАЧЕНИЕ: аудит Z4 M-Z4-01, сценарий E4-8 на настоящем процессе. Исполнитель ставит отметку
-//   начала отправки и замирает перед адаптером; аренда истекает → UNKNOWN_OUTCOME; сверка без
-//   ограждения — отказ; «доказательство есть, среда жива» — отказ без записи в базу; надзиратель
-//   завершает экземпляр, видит выход и только тогда пишет ограждение; команда GO мёртвому
-//   исполнителю эффекта не даёт; новая попытка отправляет — итог ровно один внешний эффект.
+// НАЗНАЧЕНИЕ: сценарий E4-8 на настоящих процессах. Исполнитель ставит отметку начала отправки,
+//   порождает потомка с доступом к адаптеру (отдельная сессия setsid) и замирает; аренда истекает →
+//   UNKNOWN_OUTCOME; сверка без ограждения — отказ; живая единица — отказ без записи в базу;
+//   мутация «завершить только родителя» — отказ, потомок жив и даёт эффект; настоящее ограждение
+//   единицы — в ней нет ни одного процесса, GO эффекта не даёт, новая попытка — ровно один эффект.
+//   Тесты на процессах требуют Linux и ZAVOD_CGROUP_ROOT; при CI=true пропуск запрещён (падение).
+//   Проверки базы (E4-7) от процессов не зависят и идут везде.
 
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,7 +19,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Kernel } from '../src/kernel.mjs';
-import { SendSupervisor, pidAlive } from '../src/fencer.mjs';
+import { SendSupervisor, CgroupUnit, pidAlive } from '../src/fencer.mjs';
 import { CONN, bootFixture, withRole, uuid } from './helpers.mjs';
 
 let ids;
@@ -25,6 +29,10 @@ let dir;
 const as = (actor) => ({ actor_id: actor });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const CHILD = fileURLToPath(new URL('./paused_sender.mjs', import.meta.url));
+const UNIT = CgroupUnit.supported();
+const IN_CI = process.env.CI === 'true';
+// Пропуск теста на процессах вне Linux допустим только локально; в CI — падение.
+const unitSkip = UNIT ? false : (IN_CI ? false : 'нет cgroup v2 (ZAVOD_CGROUP_ROOT) — только локально');
 
 before(async () => {
   ids = await bootFixture();
@@ -36,7 +44,9 @@ before(async () => {
   sup = new SendSupervisor({ connection: { ...CONN, user: 'bem_bootstrap_admin' } });
 });
 after(async () => {
-  for (const r of sup?.runtimes.values() ?? []) if (!r.exit) r.child.kill('SIGKILL');
+  for (const r of sup?.runtimes.values() ?? []) {
+    try { if (r.unit.populated()) await r.unit.kill(5000); } catch { /* единица уже пуста */ }
+  }
   await sup?.close();
   await kernel?.close();
 });
@@ -57,7 +67,7 @@ const rowOf = (id) => withRole('postgres', async (c) => (await c.query(
   'SELECT status, lease_epoch, send_started_epoch, send_runtime_instance, result FROM bem_core.outbox WHERE id = $1',
   [id])).rows[0]);
 const fenceRows = (id) => withRole('postgres', async (c) =>
-  (await c.query('SELECT runtime_instance FROM bem_control.outbox_send_fence WHERE outbox_id = $1', [id])).rows);
+  (await c.query('SELECT runtime_instance, method FROM bem_control.outbox_send_fence WHERE outbox_id = $1', [id])).rows);
 const kq = (sql, args) => withRole('bem_kernel_rw', async (c) => (await c.query(sql, args)).rows[0]);
 const gov = (sql, args) => withRole('bem_bootstrap_admin', async (c) => {
   await c.query("SELECT set_config('app.tenant_id', $1, false)", [ids.tenantA]);
@@ -65,9 +75,9 @@ const gov = (sql, args) => withRole('bem_bootstrap_admin', async (c) => {
 });
 const reconcile = (id, outcome) => gov('SELECT bem_control.reconcile_unknown_outcome($1, $2, $3, $4) AS s',
   [ids.tenantA, id, outcome, { test: 'fencer reconcile' }]);
-const dbFence = (id, epoch, worker, rt, ev) => gov(
+const dbFence = (id, epoch, worker, rt, ev, method = 'CGROUP_KILLED') => gov(
   'SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7) AS e',
-  [ids.tenantA, id, epoch, worker, rt, 'PROCESS_TERMINATED', ev]);
+  [ids.tenantA, id, epoch, worker, rt, method, ev]);
 // Захват другим исполнителем: чужие строки сразу возвращаются как FAILED.
 async function claim(worker, lease, mine) {
   return withRole('bem_kernel_rw', async (c) => {
@@ -79,104 +89,145 @@ async function claim(worker, lease, mine) {
     return rows.find((x) => x.outbox_id === mine);
   });
 }
-function waitMessage(child, ev, ms = 20000) {
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error(`no ${ev} from child`)), ms);
-    child.on('message', (m) => { if (m?.ev === ev) { clearTimeout(t); resolve(m); } });
-    child.once('exit', (code) => { clearTimeout(t); reject(new Error(`child exited ${code} before ${ev}`)); });
-  });
-}
 const effects = (file) => (existsSync(file) ? readFileSync(file, 'utf8').split('\n').filter(Boolean) : []);
+const key = (id, epoch, runtimeInstance) => ({ tenantId: ids.tenantA, outboxId: id, leaseEpoch: epoch, worker: 'w1', runtimeInstance });
 
-test('M-Z4-01 / E4-8: исполнитель замер после отметки; ограждение — настоящее завершение; эффект ровно один', async () => {
-  const counter = join(dir, `effects-${ids.run}.txt`);
-  const id = await outboxRow(`zavod.fencer.${ids.run}`);
-  const { runtimeInstance, child, pid } = sup.spawnAttempt(CHILD, [counter, 'w1', '1 second', id]);
-  const m = await waitMessage(child, 'MARKED');
+// Попытка в своей единице: отметка поставлена, потомок с адаптером жив, исполнитель замер; аренда истекла.
+async function pausedAttempt(tag) {
+  const counter = join(dir, `effects-${tag}-${ids.run}.txt`);
+  const go = join(dir, `GO-${tag}-${ids.run}`);
+  const id = await outboxRow(`zavod.fencer.${tag}.${ids.run}`);
+  const { runtimeInstance } = sup.spawnAttempt(CHILD, [counter, 'w1', '1 second', id, go, '1']);
+  const desc = sup.waitMessage(runtimeInstance, 'DESCENDANT');
+  const m = await sup.waitMessage(runtimeInstance, 'MARKED');
+  const { pid: descPid } = await desc;
   assert.equal(m.outbox_id, id);
   assert.equal(m.runtime_instance, runtimeInstance);
-  let st = await rowOf(id);
-  assert.equal(st.send_runtime_instance, runtimeInstance, 'mark pinned to this runtime instance');
-  const epoch = m.lease_epoch;
-
-  // Аренда истекла: второй исполнитель строку не получает, она в UNKNOWN_OUTCOME с экземпляром.
+  assert.equal((await rowOf(id)).send_runtime_instance, runtimeInstance, 'mark pinned to this runtime instance');
   await sleep(1500);
   assert.equal(await claim('w2', '30 seconds', id), undefined);
-  st = await rowOf(id);
+  const st = await rowOf(id);
   assert.equal(st.status, 'UNKNOWN_OUTCOME');
   assert.equal(st.result.runtime_instance, runtimeInstance);
-  await assert.rejects(reconcile(id, 'CONFIRMED_NOT_SENT'), /RECONCILE_NOT_FENCED/);
+  return { id, epoch: m.lease_epoch, runtimeInstance, descPid, counter, go };
+}
 
-  // Негативная проба: доказательство есть, а среда жива — надзиратель отказывает, база не тронута.
-  await assert.rejects(sup.fence({ tenantId: ids.tenantA, outboxId: id, leaseEpoch: epoch, worker: 'w1',
-    runtimeInstance }, { terminate: false }), /FENCE_RUNTIME_ALIVE/);
-  assert.equal(pidAlive(pid), true);
-  assert.deepEqual(await fenceRows(id), []);
-  await assert.rejects(reconcile(id, 'CONFIRMED_NOT_SENT'), /RECONCILE_NOT_FENCED/);
-  // Неизвестный надзирателю экземпляр оградить нельзя.
-  await assert.rejects(sup.fence({ tenantId: ids.tenantA, outboxId: id, leaseEpoch: epoch, worker: 'w1',
-    runtimeInstance: 'runtime:unknown' }), /FENCE_RUNTIME_UNKNOWN/);
+test('M-Z5-01 / E4-8: живой потомок; ограждение всей единицы; GO эффекта не даёт; эффект ровно один',
+  { skip: unitSkip }, async () => {
+    assert.ok(UNIT, 'CI must run the process-tree test: ZAVOD_CGROUP_ROOT with cgroup v2 is required');
+    const a = await pausedAttempt('tree');
+    assert.equal(pidAlive(a.descPid), true, 'descendant with adapter access is alive');
+    await assert.rejects(reconcile(a.id, 'CONFIRMED_NOT_SENT'), /RECONCILE_NOT_FENCED/);
 
-  // Настоящее ограждение: завершить, дождаться выхода, проверить отсутствие процесса, затем запись.
-  const f = await sup.fence({ tenantId: ids.tenantA, outboxId: id, leaseEpoch: epoch, worker: 'w1', runtimeInstance });
-  assert.ok(f.evidenceId);
-  assert.equal(f.evidence.exit_observed, true);
-  assert.equal(f.evidence.terminated_by, 'fencer');
-  assert.equal(pidAlive(pid), false, 'old executor process is gone');
-  assert.deepEqual(await fenceRows(id), [{ runtime_instance: runtimeInstance }]);
+    // Негативная проба: единица жива (родитель и потомок) — отказ, база не тронута.
+    await assert.rejects(sup.fence(key(a.id, a.epoch, a.runtimeInstance), { terminate: false }), /FENCE_RUNTIME_ALIVE/);
+    assert.deepEqual(await fenceRows(a.id), []);
+    await assert.rejects(reconcile(a.id, 'CONFIRMED_NOT_SENT'), /RECONCILE_NOT_FENCED/);
+    await assert.rejects(sup.fence(key(a.id, a.epoch, 'runtime:unknown')), /FENCE_RUNTIME_UNKNOWN/);
 
-  // Поздняя команда «продолжай» старому исполнителю эффекта не даёт: процесса нет.
-  const sendErr = await new Promise((r) => {
-    try { child.send('GO', (e) => r(e || null)); } catch (e) { r(e); }
+    // Настоящее ограждение: cgroup.kill, единица пуста, затем запись.
+    const f = await sup.fence(key(a.id, a.epoch, a.runtimeInstance));
+    assert.ok(f.evidenceId);
+    assert.equal(f.evidence.unit_kind, 'CGROUP_V2');
+    assert.equal(f.evidence.unit_empty_observed, true);
+    assert.equal(f.evidence.terminated_by, 'fencer');
+    assert.ok(f.evidence.pids_before.includes(a.descPid), 'descendant was inside the unit');
+    assert.equal(pidAlive(a.descPid), false, 'descendant is gone');
+    assert.deepEqual(await fenceRows(a.id), [{ runtime_instance: a.runtimeInstance, method: 'CGROUP_KILLED' }]);
+
+    // Поздняя команда «продолжай» ни родителю, ни потомку эффекта не даёт: их нет.
+    writeFileSync(a.go, 'GO\n');
+    await sleep(600);
+    assert.equal(effects(a.counter).length, 0, 'fenced unit never reached the adapter');
+
+    assert.equal((await reconcile(a.id, 'CONFIRMED_NOT_SENT')).s, 'PENDING');
+    const d = await kernel.dispatchOnce(async (row) => {
+      if (row.outbox_id !== a.id) return { outcome: 'FAILED', detail: { released_by_test: 'fencer' } };
+      writeFileSync(a.counter, 'retry\n', { flag: 'a' });
+      return { outcome: 'SENT', detail: { stub: true } };
+    }, { limit: 500, worker: 'w3' });
+    assert.ok(d.results.some((x) => x.outbox_id === a.id && x.finished === true));
+    assert.deepEqual(effects(a.counter), ['retry'], 'exactly one external effect');
+    assert.equal((await rowOf(a.id)).status, 'SENT');
   });
-  assert.equal(sendErr?.code, 'ERR_IPC_CHANNEL_CLOSED', 'no live executor to receive GO');
-  await sleep(300);
-  assert.equal(effects(counter).length, 0, 'fenced executor never reached the adapter');
 
-  assert.equal((await reconcile(id, 'CONFIRMED_NOT_SENT')).s, 'PENDING');
-  const d = await kernel.dispatchOnce(async (row) => {
-    if (row.outbox_id !== id) return { outcome: 'FAILED', detail: { released_by_test: 'fencer' } };
-    writeFileSync(counter, 'retry\n', { flag: 'a' });
-    return { outcome: 'SENT', detail: { stub: true } };
-  }, { limit: 500, worker: 'w3' });
-  assert.ok(d.results.some((x) => x.outbox_id === id && x.finished === true));
-  assert.deepEqual(effects(counter), ['retry'], 'exactly one external effect');
-  assert.equal((await rowOf(id)).status, 'SENT');
+test('M-Z5-01 мутация E4-8: «завершить только родителя» — отказ, потомок жив и даёт эффект',
+  { skip: unitSkip }, async () => {
+    assert.ok(UNIT, 'CI must run the parent-only mutation test');
+    const a = await pausedAttempt('mut');
+    await assert.rejects(sup.fence(key(a.id, a.epoch, a.runtimeInstance), { strategy: 'leader-only' }),
+      /FENCE_RUNTIME_ALIVE/);
+    const rec = sup.runtimes.get(a.runtimeInstance);
+    assert.ok(rec.exit, 'leader process has exited');
+    assert.equal(pidAlive(a.descPid), true, 'descendant survived the parent-only kill');
+    assert.deepEqual(await fenceRows(a.id), []);
+    await assert.rejects(reconcile(a.id, 'CONFIRMED_NOT_SENT'), /RECONCILE_NOT_FENCED/);
+    // Опасность доказана: выживший потомок отправляет.
+    writeFileSync(a.go, 'GO\n');
+    for (let i = 0; i < 40 && effects(a.counter).length === 0; i += 1) await sleep(50);
+    assert.deepEqual(effects(a.counter), [`descendant:${a.runtimeInstance}`]);
+    // Уборка: единица гасится целиком; строка остаётся UNKNOWN_OUTCOME (эффект был).
+    await rec.unit.kill(5000);
+    assert.equal(rec.unit.populated(), false);
+    assert.equal((await rowOf(a.id)).status, 'UNKNOWN_OUTCOME');
+  });
+
+test('FENCE_UNIT_UNSUPPORTED: без единицы исполнения попытка не запускается', () => {
+  const s = new SendSupervisor({ connection: { ...CONN, user: 'bem_bootstrap_admin' }, cgroupRoot: '' });
+  assert.throws(() => s.spawnAttempt(CHILD, []), /FENCE_UNIT_UNSUPPORTED/);
+  return s.close();
 });
 
-test('M-Z4-01 база принимает ограждение только того же экземпляра и только с наблюдённым выходом', async () => {
-  const counter = join(dir, `effects-b-${ids.run}.txt`);
-  const id = await outboxRow(`zavod.fencer.b.${ids.run}`);
-  const { runtimeInstance, child } = sup.spawnAttempt(CHILD, [counter, 'w1', '1 second', id]);
-  const m = await waitMessage(child, 'MARKED');
-  const epoch = m.lease_epoch;
-  // В том же поколении другой экземпляр отметку не ставит; пустой экземпляр — отказ.
-  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok',
-    [id, epoch, 'w1', 'runtime:other'])).ok, false);
-  await assert.rejects(kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok',
-    [id, epoch, 'w1', ' ']), /RUNTIME_INSTANCE_REQUIRED/);
-  await sleep(1500);
-  assert.equal(await claim('w2', '30 seconds', id), undefined);
-  const good = { observer: 'fencer:test', exit_observed: true, exit_observed_at: new Date().toISOString(),
-    runtime_instance: runtimeInstance };
-  await assert.rejects(dbFence(id, epoch, 'w1', 'runtime:other', { ...good, runtime_instance: 'runtime:other' }),
-    /FENCE_RUNTIME_MISMATCH/);
-  await assert.rejects(dbFence(id, epoch, 'w1', runtimeInstance, { ...good, exit_observed: false }),
-    /FENCE_EVIDENCE_INCOMPLETE/);
-  await assert.rejects(dbFence(id, epoch, 'w1', runtimeInstance, { ...good, exit_observed: 'true' }),
-    /FENCE_EVIDENCE_INCOMPLETE/);
-  await assert.rejects(dbFence(id, epoch, 'w1', runtimeInstance, { ...good, exit_observed_at: '' }),
-    /FENCE_EVIDENCE_INCOMPLETE/);
-  await assert.rejects(dbFence(id, epoch, 'w1', runtimeInstance, { ...good, runtime_instance: 'runtime:other' }),
-    /FENCE_EVIDENCE_INCOMPLETE/);
-  await assert.rejects(dbFence(id, epoch, 'w1', runtimeInstance, { ...good, observer: 'w1' }), /FENCE_SELF_REPORT/);
-  await assert.rejects(dbFence(id, epoch, 'w1', runtimeInstance, { ...good, observer: runtimeInstance }),
-    /FENCE_SELF_REPORT/);
-  // Исполнитель (роль Kernel) записать ограждение не может вовсе.
-  await assert.rejects(kq('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7)',
-    [ids.tenantA, id, epoch, 'w1', runtimeInstance, 'PROCESS_TERMINATED', good]), (e) => e.code === '42501');
-  assert.deepEqual(await fenceRows(id), []);
-  const f = await sup.fence({ tenantId: ids.tenantA, outboxId: id, leaseEpoch: epoch, worker: 'w1', runtimeInstance });
-  assert.ok(f.evidenceId);
-  assert.equal(effects(counter).length, 0);
-});
+test('M-Z4-01 / M-Z5-01 / M-Z5-02 / E4-7: база принимает ограждение только от оператора, того же экземпляра, пустой единицы',
+  async () => {
+    const id = await outboxRow(`zavod.fencer.db.${ids.run}`);
+    const rt = `runtime:${uuid()}`;
+    const row = await claim('w1', '1 second', id);
+    const epoch = row.lease_epoch;
+    assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok', [id, epoch, 'w1', rt])).ok, true);
+    // В том же поколении другой экземпляр отметку не ставит; пустой экземпляр — отказ.
+    assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok',
+      [id, epoch, 'w1', 'runtime:other'])).ok, false);
+    await assert.rejects(kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok',
+      [id, epoch, 'w1', ' ']), /RUNTIME_INSTANCE_REQUIRED/);
+    await sleep(1500);
+    assert.equal(await claim('w2', '30 seconds', id), undefined);
+    assert.equal((await rowOf(id)).status, 'UNKNOWN_OUTCOME');
+    const good = { observer: 'fencer:test', exit_observed: true, exit_observed_at: new Date().toISOString(),
+      runtime_instance: rt, unit_kind: 'CGROUP_V2', unit_id: '/sys/fs/cgroup/zavod/test', unit_empty_observed: true };
+    await assert.rejects(dbFence(id, epoch, 'w1', 'runtime:other', { ...good, runtime_instance: 'runtime:other' }),
+      /FENCE_RUNTIME_MISMATCH/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, exit_observed: false }), /FENCE_EVIDENCE_INCOMPLETE/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, exit_observed: 'true' }), /FENCE_EVIDENCE_INCOMPLETE/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, exit_observed_at: '' }), /FENCE_EVIDENCE_INCOMPLETE/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, runtime_instance: 'runtime:other' }),
+      /FENCE_EVIDENCE_INCOMPLETE/);
+    // M-Z5-01: единица не пуста, не та или не указана — отказ; способ «один процесс» запрещён схемой.
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, unit_empty_observed: false }), /FENCE_UNIT_NOT_EMPTY/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, unit_empty_observed: 'true' }), /FENCE_UNIT_NOT_EMPTY/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, unit_id: ' ' }), /FENCE_UNIT_NOT_EMPTY/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, unit_kind: 'PROCESS' }), /FENCE_UNIT_NOT_EMPTY/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, good, 'CONTAINER_TERMINATED'), /FENCE_UNIT_NOT_EMPTY/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, good, 'PROCESS_TERMINATED'), /FENCE_METHOD_FORBIDDEN/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, observer: 'w1' }), /FENCE_SELF_REPORT/);
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, { ...good, observer: rt }), /FENCE_SELF_REPORT/);
+    // E4-7 / M-Z5-02: Kernel (через него — любой рабочий) записать ограждение не может вовсе.
+    await assert.rejects(kq('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7)',
+      [ids.tenantA, id, epoch, 'w1', rt, 'CGROUP_KILLED', good]), (e) => e.code === '42501');
+    // Точный список вызывающих: владелец функции и bem_governance (канон §16 «Оператор»).
+    const acl = await withRole('postgres', async (c) => (await c.query(
+      `SELECT array_agg(a.grantee::regrole::text ORDER BY a.grantee::regrole::text) AS g
+         FROM pg_proc p, aclexplode(p.proacl) a
+        WHERE p.oid = 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)'::regprocedure
+          AND a.privilege_type = 'EXECUTE'`)).rows[0].g);
+    assert.deepEqual(acl, ['bem_control_owner', 'bem_governance']);
+    const src = await withRole('postgres', async (c) => (await c.query(
+      "SELECT prosrc FROM pg_proc WHERE oid = 'bem_control.record_outbox_fence(uuid, uuid, bigint, text, text, text, jsonb)'::regprocedure"))
+      .rows[0].prosrc);
+    assert.match(src, /assert_authority\('OPERATOR', p_tenant_id\)/);
+    assert.deepEqual(await fenceRows(id), []);
+    // Оператор с полным доказательством пустой единицы — принято.
+    assert.ok((await dbFence(id, epoch, 'w1', rt, good)).e);
+    assert.deepEqual(await fenceRows(id), [{ runtime_instance: rt, method: 'CGROUP_KILLED' }]);
+    assert.equal((await reconcile(id, 'CONFIRMED_NOT_SENT')).s, 'PENDING');
+  });

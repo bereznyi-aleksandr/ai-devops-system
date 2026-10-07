@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+# v0.6 (2026-10-07 21:30 +03:00): в CI тесты дерева процессов M-Z5-01 обязаны пройти, пропуск — отказ (аудит Z5).
 # v0.5 (2026-10-07 17:08 +03:00): проба подмены claim_outbox_batch — итоговая проверка обязана упасть (аудит Z3 M-Z3-01).
 # v0.4 (2026-10-07 16:19 +03:00): парная дельта-проверка 05 + отличия Z-EXT-01 после установки расширения.
 # v0.3 (2026-10-07 16:16 +03:00): установка расширения Z-EXT-01 после 01 со сверкой сборки.
@@ -75,6 +76,13 @@ echo "=== Тесты Kernel"
 RC=$?
 grep -E '^\s*(✔|✖)|^ℹ (tests|pass|fail)' "$WORK/tests.out"
 [ "$RC" -eq 0 ] || { cat "$WORK/tests.out"; fail "kernel tests rc=$RC"; }
+# Аудит Z5 M-Z5-01: в CI сценарий с живым потомком и мутация «только родитель» обязаны реально пройти.
+if [ "${CI:-}" = "true" ]; then
+  for T in "M-Z5-01 / E4-8" "M-Z5-01 мутация E4-8"; do
+    grep -F "$T" "$WORK/tests.out" | grep -q '✔' && ! grep -F "$T" "$WORK/tests.out" | grep -q 'SKIP' \
+      && echo "ZAVOD_TREE_TEST_RAN=$T" || fail "process-tree test did not run: $T"
+  done
+fi
 
 echo "=== SR-09: копия → восстановление → сверка"
 cd "$WORK/backup" || exit 9

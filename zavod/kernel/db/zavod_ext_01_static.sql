@@ -1,6 +1,10 @@
 -- ДОКУМЕНТ: db/zavod_ext_01_static.sql (неизменная часть расширения Z-EXT-01)
--- ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
--- ДАТА СОЗДАНИЯ: 2026-10-07 14:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.4: ответ на аудит Z4 M-Z4-01 —
+-- ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+-- ДАТА СОЗДАНИЯ: 2026-10-07 14:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 19:05 +03:00 (v0.5: ответ на аудит Z5 —
+--   M-Z5-01: ограждается вся единица исполнения (cgroup v2 / Job Object / контейнер), способ
+--   «один процесс» запрещён; доказательство обязано показать пустую единицу;
+--   M-Z5-02: запись ограждения требует полномочия OPERATOR (канон §16 «Оператор», как у сверки);
+--   v0.4: ответ на аудит Z4 M-Z4-01 —
 --   отметка привязана к экземпляру среды исполнения; ограждение принимается только от надзирателя
 --   с доказательством наблюдённого завершения именно этого экземпляра; v0.3 — ответ на Z3)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -195,9 +199,11 @@ ALTER FUNCTION bem_control.claim_outbox_batch(integer, interval, text) OWNER TO 
 REVOKE EXECUTE ON FUNCTION bem_control.claim_outbox_batch(integer, interval, text) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION bem_control.claim_outbox_batch(integer, interval, text) TO bem_kernel_rw;
 
--- (4), (5) Ограждение исполнителя. Запись делает только надзиратель рабочих (src/fencer.mjs,
--- роль bem_governance) после того, как сам завершил экземпляр среды исполнения, начавший
--- отправку в этом поколении, дождался его выхода и проверил, что экземпляр не жив.
+-- (4), (5) Ограждение исполнителя. Запись делает только надзиратель рабочих (src/fencer.mjs)
+-- под входом с полномочием OPERATOR (канон H1.31 §16: «Оператор»; роль bem_governance) после того,
+-- как сам завершил ВСЮ единицу исполнения (cgroup v2 / Job Object / контейнер) экземпляра среды,
+-- начавшего отправку в этом поколении, и увидел, что в единице не осталось ни одного процесса.
+-- Завершение одного процесса не принимается (M-Z5-01): потомок мог пережить родителя.
 -- Без записи сверка не вернёт строку в очередь (reconcile_unknown_outcome).
 CREATE TABLE bem_control.outbox_send_fence (
     outbox_id   uuid NOT NULL,
@@ -205,7 +211,7 @@ CREATE TABLE bem_control.outbox_send_fence (
     tenant_id   uuid NOT NULL,
     worker      text NOT NULL CHECK (btrim(worker) <> ''),
     runtime_instance text NOT NULL CHECK (btrim(runtime_instance) <> ''),
-    method      text NOT NULL CHECK (method IN ('PROCESS_TERMINATED', 'CONTAINER_TERMINATED')),
+    method      text NOT NULL CHECK (method IN ('CGROUP_KILLED', 'JOB_OBJECT_TERMINATED', 'CONTAINER_TERMINATED')),
     evidence_id uuid NOT NULL,
     fenced_at   timestamptz NOT NULL DEFAULT now(),
     fenced_by   text NOT NULL DEFAULT session_user,
@@ -229,8 +235,14 @@ DECLARE
     v_result jsonb;
     v_rt     text;
     v_ev     uuid;
+    v_kind   text;
 BEGIN
     PERFORM bem_control.assert_tenant(p_tenant_id);
+    -- M-Z5-02: ограждение открывает сверке путь CONFIRMED_NOT_SENT — это акт оператора (§16).
+    PERFORM bem_control.assert_authority('OPERATOR', p_tenant_id);
+    IF p_method IS NULL OR p_method NOT IN ('CGROUP_KILLED', 'JOB_OBJECT_TERMINATED', 'CONTAINER_TERMINATED') THEN
+        RAISE EXCEPTION 'FENCE_METHOD_FORBIDDEN: %', p_method;
+    END IF;
     IF p_evidence IS NULL OR p_evidence = '{}'::jsonb THEN
         RAISE EXCEPTION 'FENCE_EVIDENCE_REQUIRED';
     END IF;
@@ -261,6 +273,16 @@ BEGIN
        OR coalesce(btrim(p_evidence ->> 'exit_observed_at'), '') = ''
        OR (p_evidence ->> 'runtime_instance') IS DISTINCT FROM p_runtime_instance THEN
         RAISE EXCEPTION 'FENCE_EVIDENCE_INCOMPLETE';
+    END IF;
+    -- M-Z5-01: единица исполнения целиком пуста — вид единицы совпадает со способом.
+    v_kind := CASE p_method WHEN 'CGROUP_KILLED' THEN 'CGROUP_V2'
+                            WHEN 'JOB_OBJECT_TERMINATED' THEN 'JOB_OBJECT'
+                            WHEN 'CONTAINER_TERMINATED' THEN 'CONTAINER' END;
+    IF coalesce(btrim(p_evidence ->> 'unit_id'), '') = ''
+       OR (p_evidence ->> 'unit_kind') IS DISTINCT FROM v_kind
+       OR jsonb_typeof(p_evidence -> 'unit_empty_observed') IS DISTINCT FROM 'boolean'
+       OR NOT (p_evidence ->> 'unit_empty_observed')::boolean THEN
+        RAISE EXCEPTION 'FENCE_UNIT_NOT_EMPTY';
     END IF;
     IF (p_evidence ->> 'observer') IN (p_worker, p_runtime_instance) THEN
         RAISE EXCEPTION 'FENCE_SELF_REPORT';

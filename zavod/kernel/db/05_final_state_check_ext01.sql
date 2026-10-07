@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/05_final_state_check_ext01.sql — СОБРАН db/build_final_ext.mjs, руками не править
 -- ИСТОЧНИК H1.31 05: sha256 1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1
--- РАСШИРЕНИЕ 02: sha256 02619df434209f8c53b6d916209d866996e69274939a1e19b60de0f03158634e
+-- РАСШИРЕНИЕ 02: sha256 b9440025f460ff30cedeb06ec7ce81d76da474a93839caa7741bd00846f60fda
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 (см. сборщик).
 \set ON_ERROR_STOP on
 
@@ -57,7 +57,7 @@ DECLARE
         'TABLE|bem_control.outbox_send_fence|outbox_send_fence_pkey|PRIMARY KEY (outbox_id, lease_epoch)',
         'TABLE|bem_control.outbox_send_fence|outbox_send_fence_worker_check|CHECK ((btrim(worker) <> ''''::text))',
         'TABLE|bem_control.outbox_send_fence|outbox_send_fence_runtime_instance_check|CHECK ((btrim(runtime_instance) <> ''''::text))',
-        'TABLE|bem_control.outbox_send_fence|outbox_send_fence_method_check|CHECK ((method = ANY (ARRAY[''PROCESS_TERMINATED''::text, ''CONTAINER_TERMINATED''::text])))',
+        'TABLE|bem_control.outbox_send_fence|outbox_send_fence_method_check|CHECK ((method = ANY (ARRAY[''CGROUP_KILLED''::text, ''JOB_OBJECT_TERMINATED''::text, ''CONTAINER_TERMINATED''::text])))',
         'TABLE|bem_core.schema_migration|schema_migration_pkey|PRIMARY KEY (version)',
         'TABLE|bem_core.subject|subject_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.subject_author|subject_author_pkey|PRIMARY KEY (subject_id, actor_id)',
@@ -1314,7 +1314,7 @@ BEGIN
         ('claim_outbox_batch', '2f99d0cf2e2e42edb0e613002ac34c9206395ddc611a7e8ed4d5c5a20e0c4be4'),
         ('mark_outbox_send_started', '098dec5ed40550b6bf674e9ba584988840ac4afa681c48cd25281f69631d8b7b'),
         ('set_outbox_kind_policy', '96ab2b4d3c9edfc20d3ba5a2837845a8efd37aa2eb5c306d0d4df7cf04f5c9a9'),
-        ('record_outbox_fence', '3cbc8636386f6f16755ef3cab7f68a546ad85b35c6b0159a7510c32647ed0a0a')
+        ('record_outbox_fence', '2ccfcb67f8b13b8ee8aa08ad2b9386c788bf4a9f579cd17140fa73946c1a6349')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got

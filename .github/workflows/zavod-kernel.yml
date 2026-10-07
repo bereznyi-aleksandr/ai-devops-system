@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.1
+# ВЕРСИЯ: v0.2
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:35 +03:00
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:30 +03:00 (v0.2: аудит Z5 M-Z5-01 — корневая cgroup v2 Завода
+#   для ограждения единиц исполнения; ZAVOD_CGROUP_ROOT)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: Завод, этап 3 — Kernel на чистом PostgreSQL 16, три независимых прогона
 #   (критерий E3-2: три прогона подряд зелёные). Каждый прогон — свой одноразовый контейнер.
@@ -50,6 +51,7 @@ jobs:
       PGHOST: localhost
       PGPORT: '5432'
       PGUSER: postgres
+      ZAVOD_CGROUP_ROOT: /sys/fs/cgroup/zavod
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -57,6 +59,12 @@ jobs:
           node-version: '22'
       - name: psql client
         run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: cgroup v2 unit root (M-Z5-01)
+        run: |
+          test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
+          sudo mkdir -p "$ZAVOD_CGROUP_ROOT"
+          cat "$ZAVOD_CGROUP_ROOT/cgroup.procs" >/dev/null
+          command -v setpriv
       - name: Kernel CI (H1.31 install, SR-08, SR-02, tests, SR-09)
         shell: bash
         working-directory: zavod/kernel

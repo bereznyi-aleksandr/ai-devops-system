@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: tests/ext01.test.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.3: аудит Z4 M-Z4-01 —
+// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:25 +03:00 (v0.4: аудит Z5 —
+//   ограждение только целой единицы (CGROUP_KILLED + доказательство пустой единицы);
+//   v0.3: аудит Z4 M-Z4-01 —
 //   отметка и ограждение с экземпляром среды исполнения; сценарий на настоящем процессе — fencer.test.mjs;
 //   v0.2: аудит Z3 —
 //   M-Z3-02 версии политики и закрепление за строкой; M-Z3-03 ограждение перед сверкой)
@@ -210,8 +212,8 @@ const gov = (sql, args) => withRole('bem_bootstrap_admin', async (c) => {
 const reconcile = (id, outcome) => gov('SELECT bem_control.reconcile_unknown_outcome($1, $2, $3, $4) AS s',
   [ids.tenantA, id, outcome, { test: 'ext01 reconcile' }]);
 const OBSERVED = { observer: 'fencer:ext01', exit_observed: true, exit_observed_at: '2026-10-07T17:55:00Z',
-  runtime_instance: RT1 };
-const fence = (id, epoch, worker, method = 'PROCESS_TERMINATED', ev = OBSERVED) =>
+  runtime_instance: RT1, unit_kind: 'CGROUP_V2', unit_id: '/sys/fs/cgroup/zavod/ext01', unit_empty_observed: true };
+const fence = (id, epoch, worker, method = 'CGROUP_KILLED', ev = OBSERVED) =>
   gov('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7) AS e',
     [ids.tenantA, id, epoch, worker, RT1, method, ev]);
 
@@ -231,10 +233,11 @@ test('M-Z3-03 CONFIRMED_NOT_SENT без ограждения — отказ; о�
   assert.equal((await rowOf(id)).status, 'UNKNOWN_OUTCOME');
   await assert.rejects(fence(id, Number(epoch) + 1, 'w1'), /FENCE_EPOCH_MISMATCH/);
   await assert.rejects(fence(id, epoch, 'w9'), /FENCE_WORKER_MISMATCH/);
-  await assert.rejects(fence(id, epoch, 'w1', 'PROCESS_TERMINATED', {}), /FENCE_EVIDENCE_REQUIRED/);
-  await assert.rejects(fence(id, epoch, 'w1', 'ASKED_NICELY'), /outbox_send_fence_method_check/);
+  await assert.rejects(fence(id, epoch, 'w1', 'CGROUP_KILLED', {}), /FENCE_EVIDENCE_REQUIRED/);
+  await assert.rejects(fence(id, epoch, 'w1', 'ASKED_NICELY'), /FENCE_METHOD_FORBIDDEN/);
+  await assert.rejects(fence(id, epoch, 'w1', 'PROCESS_TERMINATED'), /FENCE_METHOD_FORBIDDEN/);
   await assert.rejects(kq('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7)',
-    [ids.tenantA, id, epoch, 'w1', RT1, 'PROCESS_TERMINATED', OBSERVED]), (e) => e.code === '42501');
+    [ids.tenantA, id, epoch, 'w1', RT1, 'CGROUP_KILLED', OBSERVED]), (e) => e.code === '42501');
   assert.ok((await fence(id, epoch, 'w1')).e);
   assert.equal((await reconcile(id, 'CONFIRMED_NOT_SENT')).s, 'PENDING');
   // строка снова в очереди новым поколением; поздний старый исполнитель ничего не может

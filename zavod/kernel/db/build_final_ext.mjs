@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.3: аудит Z4 M-Z4-01 —
+// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:25 +03:00 (v0.4: аудит Z5 —
+//   новый набор способов ограждения: CGROUP_KILLED / JOB_OBJECT_TERMINATED / CONTAINER_TERMINATED;
+//   v0.3: аудит Z4 M-Z4-01 —
 //   колонка send_runtime_instance, новые подписи отметки и ограждения, проверка экземпляра;
 //   v0.2: аудит Z3 M-Z3-01 —
 //   отпечатки тел всех функций, которые создаёт или меняет Z-EXT-01, включая claim_outbox_batch;
@@ -50,7 +52,7 @@ t = after(t, 'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)', [
   'TABLE|bem_control.outbox_send_fence|outbox_send_fence_pkey|PRIMARY KEY (outbox_id, lease_epoch)',
   "TABLE|bem_control.outbox_send_fence|outbox_send_fence_worker_check|CHECK ((btrim(worker) <> ''''::text))",
   "TABLE|bem_control.outbox_send_fence|outbox_send_fence_runtime_instance_check|CHECK ((btrim(runtime_instance) <> ''''::text))",
-  "TABLE|bem_control.outbox_send_fence|outbox_send_fence_method_check|CHECK ((method = ANY (ARRAY[''PROCESS_TERMINATED''::text, ''CONTAINER_TERMINATED''::text])))",
+  "TABLE|bem_control.outbox_send_fence|outbox_send_fence_method_check|CHECK ((method = ANY (ARRAY[''CGROUP_KILLED''::text, ''JOB_OBJECT_TERMINATED''::text, ''CONTAINER_TERMINATED''::text])))",
 ]);
 // Права (ACL): колонки отметки и закреплённой политики, новые функции, новые таблицы.
 t = after(t, 'COLUMN|bem_core.outbox.lease_epoch|bem_control_owner|UPDATE|bem_core_owner', [
