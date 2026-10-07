@@ -240,3 +240,71 @@ test('доставщик забирает строку outbox и фиксиру�
   const repeated = again.results.filter((x) => seen.includes(x.outbox_id));
   assert.equal(repeated.length, 0, 'finished rows are not claimed again');
 });
+
+// ---------- §6.1 протокола Z1 v1.1: отрицательные случаи серверного выпуска ----------
+
+async function publishProtocolSubject(authors = [ids.author]) {
+  const wi = await newItem();
+  const subj = uuid();
+  const head = 'sha-' + uuid().slice(0, 8);
+  const pub = await kernel.execute(as(ids.author), { type: 'PublishSubject', actor_id: ids.author, tenant_id: ids.tenantA,
+    payload: { subject_id: subj, work_item_id: wi, head_sha: head, criticality: 'CRITICAL', scope: 'BEM954_PROTOCOL',
+      authors, evidence: { test: 'publish' } } });
+  assert.equal(pub.ok, true, JSON.stringify(pub.error));
+  return { subj, head };
+}
+const verdict = (aud, subj, head, v = 'ACCEPT') => kernel.execute(as(aud), { type: 'RecordVerdict', actor_id: aud,
+  tenant_id: ids.tenantA, payload: { subject_id: subj, head_sha: head, verdict: v, evidence: { reviewed: head } } });
+const release = (subj, head) => kernel.execute(as(ids.author), { type: 'ReleaseSubject', actor_id: ids.author,
+  tenant_id: ids.tenantA, payload: { subject_id: subj, head_sha: head } });
+
+test('§6.1 один ACCEPT (только openai) — выпуск отклонён', async () => {
+  const { subj, head } = await publishProtocolSubject();
+  await assignAuditor(ids.tenantA, subj, ids.audOpenai);
+  assert.equal((await verdict(ids.audOpenai, subj, head)).ok, true);
+  const r = await release(subj, head);
+  assert.equal(r.ok, false);
+  assert.equal(r.error.code, 'BEM954_PROVIDER_SET_MISMATCH');
+});
+
+test('§6.1 вердикт по другой версии не принимается, выпуск по чужой версии отклонён', async () => {
+  const { subj, head } = await publishProtocolSubject();
+  await assignAuditor(ids.tenantA, subj, ids.audOpenai);
+  const v = await verdict(ids.audOpenai, subj, head + '-other');
+  assert.equal(v.ok, false);
+  assert.equal(v.error.code, 'HEAD_MISMATCH');
+  const r = await release(subj, head + '-other');
+  assert.equal(r.ok, false);
+  assert.equal(r.error.code, 'HEAD_MISMATCH');
+});
+
+test('§6.1 автор не может быть проверяющим своего предмета', async () => {
+  const { subj, head } = await publishProtocolSubject([ids.author, ids.audAnthropic]);
+  let assignErr = null;
+  try { await assignAuditor(ids.tenantA, subj, ids.audAnthropic); } catch (e) { assignErr = e; }
+  if (!assignErr) {
+    await assignAuditor(ids.tenantA, subj, ids.audOpenai);
+    await verdict(ids.audAnthropic, subj, head);
+    await verdict(ids.audOpenai, subj, head);
+    const r = await release(subj, head);
+    assert.equal(r.ok, false, 'author-auditor verdict must not count');
+  } else {
+    assert.ok(/AUTHOR|SELF/i.test(assignErr.message), assignErr.message);
+  }
+});
+
+test('§6.1 один отрицательный вердикт при паре ACCEPT — выпуска нет, открыто разногласие', async () => {
+  const { subj, head } = await publishProtocolSubject();
+  const third = `codex:aud3-${ids.run}`;
+  await withRole('bem_bootstrap_admin', async (c) => {
+    await c.query('SELECT bem_control.create_actor($1, $2, NULL, NULL)', [third, 'openai']);
+    await c.query("SELECT bem_control.grant_delegation('bem_kernel_rw', $1, 'zavod 6.1 test')", [third]);
+  });
+  for (const a of [ids.audOpenai, ids.audAnthropic, third]) await assignAuditor(ids.tenantA, subj, a);
+  assert.equal((await verdict(ids.audOpenai, subj, head)).ok, true);
+  assert.equal((await verdict(ids.audAnthropic, subj, head)).ok, true);
+  assert.equal((await verdict(third, subj, head, 'REVISE')).ok, true);
+  const r = await release(subj, head);
+  assert.equal(r.ok, true, JSON.stringify(r.error));
+  assert.equal(r.result.released, false);
+});
