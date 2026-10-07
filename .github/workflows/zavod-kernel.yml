@@ -1,0 +1,73 @@
+# ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
+# ВЕРСИЯ: v0.1
+# СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:35 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+# НАЗНАЧЕНИЕ: Завод, этап 3 — Kernel на чистом PostgreSQL 16, три независимых прогона
+#   (критерий E3-2: три прогона подряд зелёные). Каждый прогон — свой одноразовый контейнер.
+# ОГРАНИЧЕНИЯ: секретов не использует; права только на чтение; платных маршрутов нет.
+name: Zavod Kernel
+
+on:
+  push:
+    branches: [main, 'zavod/**']
+    paths: ['zavod/**', 'bem954/H1_31_PACKAGE_R51/**', '.github/workflows/zavod-kernel.yml']
+  pull_request:
+    paths: ['zavod/**', 'bem954/H1_31_PACKAGE_R51/**', '.github/workflows/zavod-kernel.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zavod-kernel-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PKG: bem954/H1_31_PACKAGE_R51
+
+jobs:
+  kernel:
+    name: kernel (run ${{ matrix.run }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        run: [1, 2, 3]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: psql client
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Kernel CI (H1.31 install, SR-08, SR-02, tests, SR-09)
+        shell: bash
+        working-directory: zavod/kernel
+        run: |
+          set -o pipefail
+          bash ci/kernel_ci.sh "$GITHUB_WORKSPACE/$PKG" "$RUNNER_TEMP/kernel" | tee "$RUNNER_TEMP/kernel_transcript.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zavod-kernel-run-${{ matrix.run }}
+          path: |
+            ${{ runner.temp }}/kernel_transcript.log
+            ${{ runner.temp }}/kernel/tests.out
+          if-no-files-found: ignore

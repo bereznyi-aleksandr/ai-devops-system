@@ -1,0 +1,17 @@
+{
+  "name": "zavod-kernel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BEM-954 Zavod Kernel: single writer over H1.31 bem_control functions",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs"
+  },
+  "dependencies": {
+    "pg": "8.23.0"
+  }
+}
