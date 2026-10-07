@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:30 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:58 +03:00 (v0.2: копия с сортировкой bem)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: Завод, этап 3 — полный прогон Kernel на чистом PostgreSQL 16:
 #   установка пакета H1.31 (00 + обёртка), SR-08 (npm ci по блокировке, npm audit),
@@ -57,7 +57,13 @@ cd "$WORK/backup" || exit 9
 DIG="select md5(string_agg(table_name||shape_sha256||data_sha256, ',' order by table_name)) from bem_control.database_digest()"
 pg_dump -U postgres -d bem -Fc -f bem.dump || fail "pg_dump"
 RDB="bem_restore_ci_$(date +%s)"   # новое имя на каждый прогон: ничего не удаляется
-createdb -U postgres "$RDB" || fail "createdb"
+# Копия создаётся с той же кодировкой и сортировкой, что у bem (00: UTF8, C, template0):
+# data_digest сортирует строки по тексту, и при другой сортировке отпечаток расходится
+# (CI run 37609718755: копия по умолчанию en_US.utf8 -> «restore digest differs»).
+read -r ENC COLL CTYPE <<< "$(q bem "select pg_encoding_to_char(encoding)||' '||datcollate||' '||datctype from pg_database where datname = current_database()")"
+echo "restore db: encoding=$ENC collate=$COLL ctype=$CTYPE"
+createdb -U postgres --template=template0 --encoding="$ENC" --lc-collate="$COLL" --lc-ctype="$CTYPE" "$RDB" || fail "createdb"
+[ "$(q "$RDB" "select datcollate||' '||datctype from pg_database where datname = current_database()")" = "$COLL $CTYPE" ] || fail "restore db collation differs"
 pg_restore -U postgres -d "$RDB" --exit-on-error bem.dump > restore.log 2>&1 || { tail -5 restore.log; fail "pg_restore"; }
 D1=$(psql -U bem_kernel_rw -d bem -Atc "$DIG"); D2=$(psql -U bem_kernel_rw -d "$RDB" -Atc "$DIG")
 echo "digest bem=$D1 restore=$D2"
