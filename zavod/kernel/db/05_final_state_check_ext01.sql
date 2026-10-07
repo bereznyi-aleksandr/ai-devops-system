@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/05_final_state_check_ext01.sql — СОБРАН db/build_final_ext.mjs, руками не править
 -- ИСТОЧНИК H1.31 05: sha256 1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1
--- РАСШИРЕНИЕ 02: sha256 b9440025f460ff30cedeb06ec7ce81d76da474a93839caa7741bd00846f60fda
+-- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 (см. сборщик).
 \set ON_ERROR_STOP on
 
