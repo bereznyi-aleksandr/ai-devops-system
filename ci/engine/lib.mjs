@@ -1,7 +1,8 @@
 // ДОКУМЕНТ: ci/engine/lib.mjs
-// ВЕРСИЯ: v1.0
+// ВЕРСИЯ: v1.1 (v1.1: общие помощники проб R50 — waitFor, acts, pvars, history, check; поведение v1.0 не менялось)
 // СТАТУС: CANDIDATE
 // ДАТА СОЗДАНИЯ: 2026-10-06 19:55 +03:00
+// ДАТА ОБНОВЛЕНИЯ: 2026-10-07 06:10 +03:00 (сессия f19e07a7-6edd-48a5-9ede-88086c949326)
 // ИСПОЛНИТЕЛЬ: Claude (сессия 4401918c-de88-4db7-841e-b418568ae069)
 // НАЗНАЧЕНИЕ: клиент REST Flowable 8.0.0 для пробы движка на PostgreSQL в GitHub Actions.
 //   Перенос R47 work/lib.mjs: пути и учётка администратора берутся из окружения задания.
@@ -65,3 +66,22 @@ export async function procInstances(q = {}) {
 }
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+export async function waitFor(fn, what, ms = 30000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) { const v = await fn().catch(() => null); if (v) return v; await sleep(400); }
+  log(`  !! не дождались: ${what}`); return null;
+}
+export const acts = async (pid) => (await executions({ processInstanceId: pid })).filter((e) => e.activityId).map((e) => e.activityId).sort();
+export const pvars = async (pid) => Object.fromEntries(((await api("GET", `/service/runtime/process-instances/${pid}/variables`)).json ?? []).map((v) => [v.name, v.value]));
+export async function history(processInstanceId) {
+  const qs = new URLSearchParams({ processInstanceId, size: "1000", sort: "startTime", order: "asc" }).toString();
+  return (await api("GET", `/service/history/historic-activity-instances?${qs}`)).json?.data ?? [];
+}
+// Проверка с ожидаемым итогом: строка в checks.jsonl; итог задания — все строки ok.
+export function check(id, ok, detail) {
+  const rec = { id, ok: !!ok, detail };
+  log(`${ok ? "CHECK_PASS" : "CHECK_FAIL"} ${id}:`, detail);
+  appendFileSync(`${S}/checks.jsonl`, JSON.stringify(rec) + "\n");
+  return !!ok;
+}

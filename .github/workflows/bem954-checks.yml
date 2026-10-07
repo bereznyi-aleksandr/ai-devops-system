@@ -1,9 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/bem954-checks.yml
-# ВЕРСИЯ: v1.2 (v1.2: редакция задаётся переменной EDITION, сейчас H1.29; v1.1: задание engine-pg)
+# ВЕРСИЯ: v1.3 (v1.3: задание engine-pg-probes — пункты 1–4, 6–9, 12–14 раздела 22 на PostgreSQL; v1.2: редакция задаётся переменной EDITION, сейчас H1.29; v1.1: задание engine-pg)
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-06 19:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-06 21:40 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (сессия 4401918c-de88-4db7-841e-b418568ae069)
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-07 06:40 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (сессии 4401918c-de88-4db7-841e-b418568ae069 и f19e07a7-6edd-48a5-9ede-88086c949326)
 # НАЗНАЧЕНИЕ: Официальная проверка пакета BEM-954 (редакция — EDITION) (ответ ChatGPT R48, В2):
 #   static — сверщики, самопроверка, 247 подделок, факты раунда;
 #   pg16   — установка SQL на одноразовом PostgreSQL 16 и проба D-05.
@@ -150,5 +150,60 @@ jobs:
           path: |
             ${{ runner.temp }}/engine/run/*.log
             ${{ runner.temp }}/engine/run/*.json
+            ${{ runner.temp }}/engine_transcript.log
+          if-no-files-found: ignore
+
+  engine-pg-probes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: psql client
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: One-time engine admin (not a stored secret)
+        shell: bash
+        run: |
+          P=$(openssl rand -hex 24)
+          echo "::add-mask::$P"
+          {
+            echo "ENGINE_USER=ci-admin"
+            echo "ENGINE_PASS=$P"
+            echo "FLOWABLE_REST_APP_ADMIN_USERID=ci-admin"
+            echo "FLOWABLE_REST_APP_ADMIN_PASSWORD=$P"
+          } >> "$GITHUB_ENV"
+      - name: Flowable on PostgreSQL 16, section 22 items 1-4, 6-9, 12-14
+        shell: bash
+        run: |
+          set -o pipefail
+          bash ci/engine_pg_probes.sh "$RUNNER_TEMP/engine" | tee "$RUNNER_TEMP/engine_transcript.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: engine-pg-probes
+          path: |
+            ${{ runner.temp }}/engine/run/*.log
+            ${{ runner.temp }}/engine/run/*.json
+            ${{ runner.temp }}/engine/run/*.jsonl
             ${{ runner.temp }}/engine_transcript.log
           if-no-files-found: ignore
