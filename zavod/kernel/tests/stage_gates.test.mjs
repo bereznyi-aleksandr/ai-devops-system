@@ -1,9 +1,9 @@
 // ДОКУМЕНТ: tests/stage_gates.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:47 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 16:26 +03:00 (v0.2: E3-4a/E3-4b, OD-2)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
-// НАЗНАЧЕНИЕ: протокол Z1 v1.1 раздел 9 — этап 4 не начинается при OPEN/FAIL у APPROVE этапа 1,
-//   E3-4 или E3-5; испорченный файл состояния даёт отказ. База не нужна.
+// НАЗНАЧЕНИЕ: протокол Z1 v1.2 раздел 9 — этап 4 не начинается при OPEN/FAIL у APPROVE этапа 1,
+//   E3-4a, E3-4b (гейт OD-1a) или E3-5; этап 5 — при OPEN у OD-2 или OD-8; испорченный файл — отказ.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,16 +20,16 @@ test('файл состояния корректен', () => {
   assert.deepEqual(validateGates(load()), []);
 });
 
-test('этап 4 сейчас запрещён: APPROVE этапа 1, E3-4, E3-5 не PASS', () => {
+test('этап 4 сейчас запрещён: APPROVE этапа 1, E3-4b (OD-1a), E3-5 не PASS', () => {
   const r = checkStage(load(), 4);
   assert.equal(r.allow, false);
-  for (const b of ['1:APPROVE=OPEN', '3:E3-4=OPEN', '3:E3-5=OPEN']) assert.ok(r.blockers.includes(b), b);
+  for (const b of ['1:APPROVE=OPEN', '3:E3-4b=OPEN', '3:E3-5=OPEN']) assert.ok(r.blockers.includes(b), b);
 });
 
 test('этап 4 разрешён, только когда всё требуемое PASS', () => {
   const g = load(); passAll(g, '1'); passAll(g, '3');
   assert.equal(checkStage(g, 4).allow, true);
-  for (const [sid, cid] of [['1', 'APPROVE'], ['3', 'E3-4'], ['3', 'E3-5']]) {
+  for (const [sid, cid] of [['1', 'APPROVE'], ['3', 'E3-4a'], ['3', 'E3-4b'], ['3', 'E3-5']]) {
     for (const bad of ['OPEN', 'FAIL']) {
       const h = structuredClone(g); h.stages[sid].criteria[cid].status = bad;
       const r = checkStage(h, 4);
@@ -68,4 +68,13 @@ test('командная строка: DENY и код 1 для этапа 4', ()
   const p = spawnSync(process.execPath, [fileURLToPath(new URL('../src/stage_gates.mjs', import.meta.url)), FILE, '4'], { encoding: 'utf8' });
   assert.equal(p.status, 1);
   assert.match(p.stdout, /STAGE_GATE=DENY stage=4 phase=start/);
+});
+
+test('этап 5 не начинается без OD-2 (изоляция) и OD-8 (движок), даже если E4-1…E4-8 PASS', () => {
+  const g = load(); for (const s of ['1', '3', '4']) passAll(g, s);
+  assert.equal(checkStage(g, 5).allow, true);
+  for (const od of ['OD-2', 'OD-8']) {
+    const h = structuredClone(g); h.stages['4'].criteria[od].status = 'OPEN';
+    assert.deepEqual(checkStage(h, 5).blockers, [`4:${od}=OPEN`]);
+  }
 });

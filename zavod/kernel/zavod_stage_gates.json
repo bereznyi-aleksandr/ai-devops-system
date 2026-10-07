@@ -1,79 +1,209 @@
 {
   "_passport": {
     "document": "zavod_stage_gates.json",
-    "version": "v0.2",
+    "version": "v0.3",
     "status": "CANDIDATE",
     "created_at": "2026-10-07 13:47 +03:00",
-    "updated_at": "2026-10-07 13:50 +03:00 (v0.2: E3-2 — прогон 37609953783 после исправления копии)",
+    "updated_at": "2026-10-07 16:26 +03:00 (v0.3: протокол v1.2 — E3-4 разделён на E3-4a/E3-4b (гейт OD-1a), этапу 4 добавлен OD-2; E3-2 по прогону 37628048413)",
     "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)",
-    "purpose": "Состояние критериев этапов Завода и правила начала этапов (протокол Z1 v1.1, раздел 9). Проверяет src/stage_gates.mjs.",
+    "purpose": "Состояние критериев этапов Завода и правила начала этапов (протокол Z1 v1.2, раздел 9). Проверяет src/stage_gates.mjs.",
     "limits": "PASS ставит не автор работы; у PASS обязательна ссылка на доказательство. Файл не разрешает деньги, секреты и удаление."
   },
-  "statuses": ["PASS", "FAIL", "OPEN"],
+  "statuses": [
+    "PASS",
+    "FAIL",
+    "OPEN"
+  ],
   "stages": {
     "1": {
       "name": "Протокол и дорожная карта",
       "criteria": {
-        "APPROVE": { "status": "OPEN", "evidence": "Z1 REVISE (Диск 1FRKl1MRSY8HJceEjT1ejmTOeAKISA5N5); Z2 отправлен 2026-10-07 13:46" }
+        "APPROVE": {
+          "status": "OPEN",
+          "evidence": "Z1 REVISE 8/2 (Диск 1FRKl1MRSY8HJceEjT1ejmTOeAKISA5N5); Z2 REVISE 4/3 (Диск 1X0xAt1Pxjr7baGXA-_fxkSmTamGwHZ0Z); v1.2 — раунд Z3"
+        }
       },
       "start_requires": []
     },
     "2": {
       "name": "Волна 0",
       "criteria": {
-        "E2-1": { "status": "PASS", "evidence": "stage2_wave0/WAVE0_REPORT.md, опись скриптом" },
-        "E2-2": { "status": "PASS", "evidence": "stage2_wave0/WAVE0_REPORT.md, числа H1.31 §3" },
-        "E2-3": { "status": "PASS", "evidence": "stage2_wave0/WAVE0_REPORT.md, ничего не удалено" },
-        "E2-4": { "status": "PASS", "evidence": "stage2_wave0/WAVE0_REPORT.md раздел 4, остаточный риск" },
-        "E2-5": { "status": "OPEN", "evidence": "гейт OD-1: защита main и архивных веток, отзыв секретов" }
+        "E2-1": {
+          "status": "PASS",
+          "evidence": "stage2_wave0/WAVE0_REPORT.md, опись скриптом"
+        },
+        "E2-2": {
+          "status": "PASS",
+          "evidence": "stage2_wave0/WAVE0_REPORT.md, числа H1.31 §3"
+        },
+        "E2-3": {
+          "status": "PASS",
+          "evidence": "stage2_wave0/WAVE0_REPORT.md, ничего не удалено"
+        },
+        "E2-4": {
+          "status": "PASS",
+          "evidence": "stage2_wave0/WAVE0_REPORT.md раздел 4, остаточный риск"
+        },
+        "E2-5": {
+          "status": "OPEN",
+          "evidence": "гейты OD-1a (защита main и архивных веток) и OD-1b (отзыв секретов)"
+        }
       },
       "start_requires": []
     },
     "3": {
       "name": "Kernel",
       "criteria": {
-        "E3-1": { "status": "PASS", "evidence": "tests/kernel.test.mjs E3-1a/E3-1b; CI run 37607728735" },
-        "E3-2": { "status": "PASS", "evidence": "CI run 37607728735 и 37609953783 (dbc70578f), по три прогона зелёные" },
-        "E3-3": { "status": "PASS", "evidence": "tests/restart.test.mjs E3-3a/E3-3b; CI run 37607728735" },
-        "E3-4": { "status": "OPEN", "evidence": "SR-03 (защита main) ждёт OD-1; остальные SR пройдены" },
-        "E3-5": { "status": "OPEN", "evidence": "независимый аудит кода Kernel — после APPROVE этапа 1" }
+        "E3-1": {
+          "status": "PASS",
+          "evidence": "tests/kernel.test.mjs E3-1a/E3-1b; CI run 37607728735"
+        },
+        "E3-2": {
+          "status": "PASS",
+          "evidence": "CI run 37628048413 (7accc4260): три прогона на чистом PG16, 44/44, Z-EXT-01 и дельта-проверка 05; ранее 37607728735, 37609953783"
+        },
+        "E3-3": {
+          "status": "PASS",
+          "evidence": "tests/restart.test.mjs E3-3a/E3-3b; CI run 37607728735"
+        },
+        "E3-4a": {
+          "status": "PASS",
+          "evidence": "SR-01/02/08/09/10/11: tests/kernel.test.mjs, leak_scan, npm ci/audit, копия-восстановление; CI run 37628048413 (7accc4260), 3 прогона 44/44 — PASS ставит аудитор E3-5, до него это самоотчёт автора"
+        },
+        "E3-4b": {
+          "status": "OPEN",
+          "evidence": "SR-03: gh api .../branches/main .protected=false (2026-10-07); ждёт гейт OD-1a"
+        },
+        "E3-5": {
+          "status": "OPEN",
+          "evidence": "независимый аудит кода Kernel и Z-EXT-01 — после APPROVE этапа 1"
+        }
       },
       "start_requires": []
     },
     "4": {
       "name": "Движок и рабочие",
       "criteria": {
-        "E4-1": { "status": "OPEN" }, "E4-2": { "status": "OPEN" }, "E4-3": { "status": "OPEN" },
-        "E4-4": { "status": "OPEN" }, "E4-5": { "status": "OPEN" }, "E4-6": { "status": "OPEN" },
-        "E4-7": { "status": "OPEN" }, "E4-8": { "status": "OPEN" }, "OD-8": { "status": "OPEN" }
+        "E4-1": {
+          "status": "OPEN"
+        },
+        "E4-2": {
+          "status": "OPEN"
+        },
+        "E4-3": {
+          "status": "OPEN"
+        },
+        "E4-4": {
+          "status": "OPEN"
+        },
+        "E4-5": {
+          "status": "OPEN"
+        },
+        "E4-6": {
+          "status": "OPEN"
+        },
+        "E4-7": {
+          "status": "OPEN"
+        },
+        "E4-8": {
+          "status": "OPEN"
+        },
+        "OD-8": {
+          "status": "OPEN"
+        },
+        "OD-2": {
+          "status": "OPEN",
+          "evidence": "установка WSL2/Docker — решение оператора; без неё E4-2 не закрывается"
+        }
       },
-      "start_requires": ["1:APPROVE", "3:*"]
+      "start_requires": [
+        "1:APPROVE",
+        "3:*"
+      ]
     },
     "5": {
       "name": "Пилот P1",
       "criteria": {
-        "E5-1": { "status": "OPEN" }, "E5-2": { "status": "OPEN" }, "E5-3": { "status": "OPEN" },
-        "E5-4": { "status": "OPEN" }, "E5-5": { "status": "OPEN" }, "E5-6": { "status": "OPEN" },
-        "E5-7": { "status": "OPEN" }, "OD-3": { "status": "OPEN" }, "OD-4": { "status": "OPEN" }
+        "E5-1": {
+          "status": "OPEN"
+        },
+        "E5-2": {
+          "status": "OPEN"
+        },
+        "E5-3": {
+          "status": "OPEN"
+        },
+        "E5-4": {
+          "status": "OPEN"
+        },
+        "E5-5": {
+          "status": "OPEN"
+        },
+        "E5-6": {
+          "status": "OPEN"
+        },
+        "E5-7": {
+          "status": "OPEN"
+        },
+        "OD-3": {
+          "status": "OPEN"
+        },
+        "OD-4": {
+          "status": "OPEN"
+        }
       },
-      "start_requires": ["4:*"]
+      "start_requires": [
+        "4:*"
+      ]
     },
     "6": {
       "name": "Сервер и выпуск",
       "criteria": {
-        "E6-1": { "status": "OPEN" }, "E6-2": { "status": "OPEN" }, "E6-3": { "status": "OPEN" },
-        "E6-4": { "status": "OPEN" }, "E6-5": { "status": "OPEN" }, "OD-5": { "status": "OPEN" }
+        "E6-1": {
+          "status": "OPEN"
+        },
+        "E6-2": {
+          "status": "OPEN"
+        },
+        "E6-3": {
+          "status": "OPEN"
+        },
+        "E6-4": {
+          "status": "OPEN"
+        },
+        "E6-5": {
+          "status": "OPEN"
+        },
+        "OD-5": {
+          "status": "OPEN"
+        }
       },
-      "start_requires": ["4:*"],
-      "release_requires": ["5:*"]
+      "start_requires": [
+        "4:*"
+      ],
+      "release_requires": [
+        "5:*"
+      ]
     },
     "7": {
       "name": "Каталог и продажа",
       "criteria": {
-        "E7-2": { "status": "OPEN" }, "E7-3": { "status": "OPEN" }, "E7-4": { "status": "OPEN" },
-        "OD-6": { "status": "OPEN" }
+        "E7-2": {
+          "status": "OPEN"
+        },
+        "E7-3": {
+          "status": "OPEN"
+        },
+        "E7-4": {
+          "status": "OPEN"
+        },
+        "OD-6": {
+          "status": "OPEN"
+        }
       },
-      "start_requires": ["6:*"]
+      "start_requires": [
+        "6:*"
+      ]
     }
   }
 }
