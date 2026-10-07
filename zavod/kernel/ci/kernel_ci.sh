@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+# v0.5 (2026-10-07 17:08 +03:00): проба подмены claim_outbox_batch — итоговая проверка обязана упасть (аудит Z3 M-Z3-01).
 # v0.4 (2026-10-07 16:19 +03:00): парная дельта-проверка 05 + отличия Z-EXT-01 после установки расширения.
 # v0.3 (2026-10-07 16:16 +03:00): установка расширения Z-EXT-01 после 01 со сверкой сборки.
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:49 +03:00 (v0.2: копия с сортировкой bem; штамп исправлен по реальному времени)
@@ -41,6 +42,17 @@ tail -1 chain_ext.out
 "$NODE" "$HERE/db/build_final_ext.mjs" 05_final_state_check.sql --check || fail "Z-EXT-01 final check build stale"
 psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/05_final_state_check_ext01.sql" > chain_final_ext.out 2>&1 || { grep -m3 -E 'ERROR|ОШИБКА' chain_final_ext.out; fail "Z-EXT-01 final state check"; }
 echo "ZAVOD_FINAL_EXT_CHECK=done"
+# Проба (аудит Z3 M-Z3-01): подменённое тело claim_outbox_batch ловит именно итоговая проверка,
+# без функциональных тестов. Подмена в транзакции и не фиксируется.
+if psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/probe_final_ext_mutation.sql" > chain_probe_ext.out 2>&1; then
+  fail "Z-EXT-01 mutation of claim_outbox_batch not caught"
+elif grep -q "FINAL_ZAVOD_FN_BODY_MISMATCH: claim_outbox_batch" chain_probe_ext.out; then
+  echo "ZAVOD_FINAL_EXT_MUTATION_PROBE=caught"
+else
+  grep -m3 -E "ERROR|ОШИБКА" chain_probe_ext.out; fail "Z-EXT-01 mutation probe: wrong failure"
+fi
+# После пробы исходное тело на месте: итоговая проверка снова проходит.
+psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/05_final_state_check_ext01.sql" > chain_final_ext2.out 2>&1 || fail "Z-EXT-01 final check after probe"
 q bem "ALTER ROLE bem_bootstrap_admin CONNECTION LIMIT 2" >/dev/null || fail "cannot open bootstrap admin"
 
 cd "$HERE" || exit 9

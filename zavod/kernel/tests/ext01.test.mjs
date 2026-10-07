@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/ext01.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 16:15 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:08 +03:00 (v0.2: аудит Z3 —
+//   M-Z3-02 версии политики и закрепление за строкой; M-Z3-03 ограждение перед сверкой)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: расширение Z-EXT-01 (ответ на аудит Z2):
 //   M-Z2-01 — область ZAVOD_PRODUCT_RELEASE выпускается только при ровно {anthropic, openai};
@@ -135,13 +136,20 @@ test('M-Z2-02 отметка после истечения аренды откл
   assert.equal(Number(b.lease_epoch), Number(a.lease_epoch) + 1);
 });
 
+// Регистрация версии политики — путь управления (bem_governance; в тесте — bem_bootstrap_admin).
+const setPolicy = (kind, idem, note) => withRole('bem_bootstrap_admin', async (c) =>
+  (await c.query('SELECT bem_control.set_outbox_kind_policy($1, $2, $3, $4, $5) AS v',
+    [kind, idem, 'stub-adapter 1.0', 'outbox_id', `ext01 test: ${note}`])).rows[0].v);
+const pinOf = (id) => withRole('postgres', async (c) =>
+  (await c.query('SELECT send_policy_version, send_policy_idempotent FROM bem_core.outbox WHERE id = $1', [id])).rows[0]);
+
 test('M-Z2-02 идемпотентный вид (запись управления) после начала отправки повторяется тем же ключом', async () => {
   const kind = `zavod.idem.${ids.run}`;
-  await withRole('bem_bootstrap_admin', (c) =>
-    c.query('SELECT bem_control.set_outbox_kind_policy($1, true, $2)', [kind, 'ext01 test: adapter dedups by idempotency_key']));
+  assert.equal(await setPolicy(kind, true, 'adapter dedups by idempotency_key'), 1);
   const id = await outboxRow(kind);
   const a = await claim('w1', '1 second', id);
   assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, a.lease_epoch, 'w1'])).ok, true);
+  assert.deepEqual(await pinOf(id), { send_policy_version: 1, send_policy_idempotent: true });
   await sleep(1500);
   const b = await claim('w2', '30 seconds', id);
   assert.ok(b, 'idempotent kind is retried');
@@ -149,8 +157,94 @@ test('M-Z2-02 идемпотентный вид (запись управлени
 });
 
 test('M-Z2-02 Kernel не может объявить вид идемпотентным и не пишет таблицу политики', async () => {
-  await assert.rejects(kq('SELECT bem_control.set_outbox_kind_policy($1, true, $2)', ['x.y', 'self']), (e) => e.code === '42501');
-  await assert.rejects(kq('INSERT INTO bem_control.outbox_kind_policy VALUES ($1, true, $2)', ['x.z', 'self']), (e) => e.code === '42501');
+  await assert.rejects(kq('SELECT bem_control.set_outbox_kind_policy($1, true, $2, $3, $4)', ['x.y', 'a', 'k', 'self']),
+    (e) => e.code === '42501');
+  await assert.rejects(kq('INSERT INTO bem_control.outbox_kind_policy (kind, version, idempotent_adapter, adapter_version, key_scheme, evidence) VALUES ($1, 1, true, $2, $2, $2)', ['x.z', 'self']),
+    (e) => e.code === '42501');
+  await assert.rejects(kq('UPDATE bem_control.outbox_kind_policy SET idempotent_adapter = true', []), (e) => e.code === '42501');
+});
+
+// ---------- M-Z3-02: политика закреплена за строкой, новая версия не действует назад ----------
+
+test('M-Z3-02 версии политики только добавляются; номер растёт без пропусков', async () => {
+  const kind = `zavod.ver.${ids.run}`;
+  assert.equal(await setPolicy(kind, false, 'v1'), 1);
+  assert.equal(await setPolicy(kind, true, 'v2'), 2);
+  const rows = await withRole('postgres', async (c) => (await c.query(
+    'SELECT version, idempotent_adapter FROM bem_control.outbox_kind_policy WHERE kind = $1 ORDER BY version', [kind])).rows);
+  assert.deepEqual(rows, [{ version: 1, idempotent_adapter: false }, { version: 2, idempotent_adapter: true }]);
+});
+
+test('M-Z3-02 строка начала отправку при неидемпотентной v1; v2 «идемпотентный» после этого — всё равно UNKNOWN_OUTCOME', async () => {
+  const kind = `zavod.pin.${ids.run}`;
+  assert.equal(await setPolicy(kind, false, 'v1 non-idempotent'), 1);
+  const id = await outboxRow(kind);
+  const a = await claim('w1', '1 second', id);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, a.lease_epoch, 'w1'])).ok, true);
+  assert.deepEqual(await pinOf(id), { send_policy_version: 1, send_policy_idempotent: false });
+  // внешний эффект «принят без ответа»; управление регистрирует идемпотентную v2 того же вида
+  assert.equal(await setPolicy(kind, true, 'v2 idempotent'), 2);
+  await sleep(1500);
+  assert.equal(await claim('w2', '30 seconds', id), undefined, 'old row must not be retried after policy change');
+  const st = await rowOf(id);
+  assert.equal(st.status, 'UNKNOWN_OUTCOME');
+  assert.equal(st.result.policy_version, 1);
+  // новая строка того же вида закрепляет v2 и повторяется
+  const id2 = await outboxRow(kind);
+  const c1 = await claim('w1', '1 second', id2);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id2, c1.lease_epoch, 'w1'])).ok, true);
+  assert.deepEqual(await pinOf(id2), { send_policy_version: 2, send_policy_idempotent: true });
+  await sleep(1500);
+  assert.ok(await claim('w2', '30 seconds', id2), 'v2 row is retried');
+});
+
+// ---------- M-Z3-03: сверка требует ограждения исполнителя ----------
+
+const gov = (sql, args) => withRole('bem_bootstrap_admin', async (c) => {
+  await c.query("SELECT set_config('app.tenant_id', $1, false)", [ids.tenantA]);
+  return (await c.query(sql, args)).rows[0];
+});
+const reconcile = (id, outcome) => gov('SELECT bem_control.reconcile_unknown_outcome($1, $2, $3, $4) AS s',
+  [ids.tenantA, id, outcome, { test: 'ext01 reconcile' }]);
+const fence = (id, epoch, worker, method = 'PROCESS_TERMINATED', ev = { killed: 'SIGKILL', exit_seen: true }) =>
+  gov('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6) AS e', [ids.tenantA, id, epoch, worker, method, ev]);
+
+async function unknownRow(tag) {
+  const id = await outboxRow(`zavod.fence.${tag}.${ids.run}`);
+  const a = await claim('w1', '1 second', id);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, a.lease_epoch, 'w1'])).ok, true);
+  await sleep(1500);
+  assert.equal(await claim('w2', '30 seconds', id), undefined);
+  assert.equal((await rowOf(id)).status, 'UNKNOWN_OUTCOME');
+  return { id, epoch: a.lease_epoch };
+}
+
+test('M-Z3-03 CONFIRMED_NOT_SENT без ограждения — отказ; ограждение сверяет поколение, исполнителя и доказательство', async () => {
+  const { id, epoch } = await unknownRow('a');
+  await assert.rejects(reconcile(id, 'CONFIRMED_NOT_SENT'), /RECONCILE_NOT_FENCED/);
+  assert.equal((await rowOf(id)).status, 'UNKNOWN_OUTCOME');
+  await assert.rejects(fence(id, Number(epoch) + 1, 'w1'), /FENCE_EPOCH_MISMATCH/);
+  await assert.rejects(fence(id, epoch, 'w9'), /FENCE_WORKER_MISMATCH/);
+  await assert.rejects(fence(id, epoch, 'w1', 'PROCESS_TERMINATED', {}), /FENCE_EVIDENCE_REQUIRED/);
+  await assert.rejects(fence(id, epoch, 'w1', 'ASKED_NICELY'), /outbox_send_fence_method_check/);
+  await assert.rejects(kq('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6)',
+    [ids.tenantA, id, epoch, 'w1', 'PROCESS_TERMINATED', { self: true }]), (e) => e.code === '42501');
+  assert.ok((await fence(id, epoch, 'w1')).e);
+  assert.equal((await reconcile(id, 'CONFIRMED_NOT_SENT')).s, 'PENDING');
+  // строка снова в очереди новым поколением; поздний старый исполнитель ничего не может
+  const b = await claim('w2', '30 seconds', id);
+  assert.ok(b);
+  assert.equal(Number(b.lease_epoch), Number(epoch) + 1);
+  assert.equal((await kq('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok', [id, epoch, 'w1'])).ok, false);
+  assert.equal((await kq('SELECT bem_control.finish_outbox_row($1, $2, $3, \'SENT\', $4) AS ok', [id, epoch, 'w1', {}])).ok, false);
+  assert.deepEqual(await pinOf(id), { send_policy_version: null, send_policy_idempotent: false });
+});
+
+test('M-Z3-03 CONFIRMED_SENT и UNRESOLVED ограждения не требуют: строка не возвращается в очередь', async () => {
+  const s = await unknownRow('s');
+  assert.equal((await reconcile(s.id, 'CONFIRMED_SENT')).s, 'SENT');
+  const u = await unknownRow('u');
+  assert.equal((await reconcile(u.id, 'UNRESOLVED')).s, 'DEAD_LETTER');
 });
 
 test('M-Z2-02 доставщик Kernel ставит отметку до внешнего вызова', async () => {
