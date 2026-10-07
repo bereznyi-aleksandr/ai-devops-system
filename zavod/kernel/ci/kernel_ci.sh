@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+# v0.3 (2026-10-07 16:16 +03:00): установка расширения Z-EXT-01 после 01 со сверкой сборки.
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:49 +03:00 (v0.2: копия с сортировкой bem; штамп исправлен по реальному времени)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: Завод, этап 3 — полный прогон Kernel на чистом PostgreSQL 16:
@@ -29,6 +30,11 @@ cd "$WORK/pkg" || exit 9
 psql -v ON_ERROR_STOP=1 -U postgres -d postgres -f 00_cluster_bootstrap.sql > chain_00.out 2>&1 || { tail -5 chain_00.out; fail "00 failed"; }
 "$NODE" run_migration.mjs --files 01_database_migration.sql > chain_wrapper.out 2>&1 || { tail -5 chain_wrapper.out; fail "wrapper failed"; }
 tail -1 chain_wrapper.out
+# Расширение Завода Z-EXT-01 поверх H1.31 (аудит Z2: M-Z2-01, M-Z2-02). Сначала сверка, что
+# файл собран из этого же 01 и не правлен руками, затем установка одной транзакцией.
+"$NODE" "$HERE/db/build_ext.mjs" 01_database_migration.sql --check || fail "Z-EXT-01 build stale"
+psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/02_zavod_ext_01.sql" > chain_ext.out 2>&1 || { tail -5 chain_ext.out; fail "Z-EXT-01 failed"; }
+tail -1 chain_ext.out
 q bem "ALTER ROLE bem_bootstrap_admin CONNECTION LIMIT 2" >/dev/null || fail "cannot open bootstrap admin"
 
 cd "$HERE" || exit 9

@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:25 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 16:14 +03:00 (v0.2: расширение Z-EXT-01 — отметка начала отправки, аудит Z2 M-Z2-02)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: BEM Control Kernel Завода — единственный писатель bem_core (H1.31 §5).
 //   Пишет только через функции bem_control, ролью bem_kernel_rw, с контекстом
@@ -14,7 +14,7 @@ import pg from 'pg';
 import { allowedFrom, STATUSES, INITIAL_STATUS } from './transitions.mjs';
 import { findSecret, isStopped } from './guards.mjs';
 
-export const KERNEL_VERSION = '0.1.0';
+export const KERNEL_VERSION = '0.2.0';
 export const KERNEL_ROLE = 'bem_kernel_rw';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -65,6 +65,10 @@ export class Kernel {
     if (r.rolsuper || r.rolbypassrls || r.rolcreaterole) {
       throw new KernelError('KERNEL_ROLE_TOO_STRONG', `${KERNEL_ROLE} has elevated attributes`);
     }
+    // Без расширения Z-EXT-01 доставщик не может отметить начало отправки — работать нельзя.
+    const ext = await this.pool.query(
+      "SELECT to_regprocedure('bem_control.mark_outbox_send_started(uuid,bigint,text)') IS NOT NULL AS ok");
+    if (!ext.rows[0].ok) throw new KernelError('KERNEL_EXT_MISSING', 'Z-EXT-01 not installed');
     return true;
   }
 
@@ -133,6 +137,14 @@ export class Kernel {
       [limit, lease, worker]);
     const results = [];
     for (const row of rows) {
+      // Z-EXT-01: отметка начала отправки ДО внешнего вызова. Не удалась (аренда
+      // потеряна) — не отправлять: строкой уже распоряжается другой исполнитель или сверка.
+      const mark = await this.pool.query('SELECT bem_control.mark_outbox_send_started($1, $2, $3) AS ok',
+        [row.outbox_id, row.lease_epoch, worker]);
+      if (!mark.rows[0].ok) {
+        results.push({ outbox_id: row.outbox_id, outcome: 'NOT_SENT_LEASE_LOST', finished: false });
+        continue;
+      }
       let outcome = 'UNKNOWN_OUTCOME';
       let detail = {};
       try {
