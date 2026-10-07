@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: win/build_jobhost.sh
 # ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-07 22:45 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 23:05 +03:00 (DRAFT → CANDIDATE: тесты jobhost и fencer прошли на Windows)
+# ДАТА СОЗДАНИЯ: 2026-10-07 22:20 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 22:39 +03:00 (DRAFT → CANDIDATE: тесты jobhost и fencer прошли на Windows)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: сборка win/zavod_jobhost.exe компилятором C# из .NET Framework 4 (есть в Windows,
 #   установка не нужна). Печатает SHA-256 собранного файла.
