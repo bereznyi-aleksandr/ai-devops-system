@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/fencer.test.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:15 +03:00 (v0.2: аудит Z5 —
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 22:50 +03:00 (v0.3: те же тесты на
+//   Windows Job Object; вид единицы и способ берутся из найденной единицы. v0.2: аудит Z5 —
 //   M-Z5-01: живой потомок исполнителя, ограждение всей единицы cgroup v2, мутация «только родитель»;
 //   M-Z5-02: только оператор (bem_governance + полномочие OPERATOR) пишет ограждение, точный список)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -9,7 +10,8 @@
 //   UNKNOWN_OUTCOME; сверка без ограждения — отказ; живая единица — отказ без записи в базу;
 //   мутация «завершить только родителя» — отказ, потомок жив и даёт эффект; настоящее ограждение
 //   единицы — в ней нет ни одного процесса, GO эффекта не даёт, новая попытка — ровно один эффект.
-//   Тесты на процессах требуют Linux и ZAVOD_CGROUP_ROOT; при CI=true пропуск запрещён (падение).
+//   Тесты на процессах требуют единицу: Linux cgroup v2 (ZAVOD_CGROUP_ROOT) или Windows Job Object
+//   (win/zavod_jobhost.exe); при CI=true пропуск запрещён (падение).
 //   Проверки базы (E4-7) от процессов не зависят и идут везде.
 
 import { test, before, after } from 'node:test';
@@ -19,7 +21,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Kernel } from '../src/kernel.mjs';
-import { SendSupervisor, CgroupUnit, pidAlive } from '../src/fencer.mjs';
+import { SendSupervisor, CgroupUnit, JobObjectUnit, pidAlive } from '../src/fencer.mjs';
 import { CONN, bootFixture, withRole, uuid } from './helpers.mjs';
 
 let ids;
@@ -29,10 +31,11 @@ let dir;
 const as = (actor) => ({ actor_id: actor });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const CHILD = fileURLToPath(new URL('./paused_sender.mjs', import.meta.url));
-const UNIT = CgroupUnit.supported();
+const UNIT = CgroupUnit.supported() ? { kind: 'CGROUP_V2', method: 'CGROUP_KILLED' }
+  : JobObjectUnit.supported() ? { kind: 'JOB_OBJECT', method: 'JOB_OBJECT_TERMINATED' } : null;
 const IN_CI = process.env.CI === 'true';
 // Пропуск теста на процессах вне Linux допустим только локально; в CI — падение.
-const unitSkip = UNIT ? false : (IN_CI ? false : 'нет cgroup v2 (ZAVOD_CGROUP_ROOT) — только локально');
+const unitSkip = UNIT ? false : (IN_CI ? false : 'нет единицы исполнения (cgroup v2 / Job Object) — только локально');
 
 before(async () => {
   ids = await bootFixture();
@@ -114,7 +117,7 @@ async function pausedAttempt(tag) {
 
 test('M-Z5-01 / E4-8: живой потомок; ограждение всей единицы; GO эффекта не даёт; эффект ровно один',
   { skip: unitSkip }, async () => {
-    assert.ok(UNIT, 'CI must run the process-tree test: ZAVOD_CGROUP_ROOT with cgroup v2 is required');
+    assert.ok(UNIT, 'CI must run the process-tree test: cgroup v2 or Job Object unit is required');
     const a = await pausedAttempt('tree');
     assert.equal(pidAlive(a.descPid), true, 'descendant with adapter access is alive');
     await assert.rejects(reconcile(a.id, 'CONFIRMED_NOT_SENT'), /RECONCILE_NOT_FENCED/);
@@ -128,12 +131,12 @@ test('M-Z5-01 / E4-8: живой потомок; ограждение всей �
     // Настоящее ограждение: cgroup.kill, единица пуста, затем запись.
     const f = await sup.fence(key(a.id, a.epoch, a.runtimeInstance));
     assert.ok(f.evidenceId);
-    assert.equal(f.evidence.unit_kind, 'CGROUP_V2');
+    assert.equal(f.evidence.unit_kind, UNIT.kind);
     assert.equal(f.evidence.unit_empty_observed, true);
     assert.equal(f.evidence.terminated_by, 'fencer');
     assert.ok(f.evidence.pids_before.includes(a.descPid), 'descendant was inside the unit');
     assert.equal(pidAlive(a.descPid), false, 'descendant is gone');
-    assert.deepEqual(await fenceRows(a.id), [{ runtime_instance: a.runtimeInstance, method: 'CGROUP_KILLED' }]);
+    assert.deepEqual(await fenceRows(a.id), [{ runtime_instance: a.runtimeInstance, method: UNIT.method }]);
 
     // Поздняя команда «продолжай» ни родителю, ни потомку эффекта не даёт: их нет.
     writeFileSync(a.go, 'GO\n');
@@ -173,7 +176,7 @@ test('M-Z5-01 мутация E4-8: «завершить только родит�
   });
 
 test('FENCE_UNIT_UNSUPPORTED: без единицы исполнения попытка не запускается', () => {
-  const s = new SendSupervisor({ connection: { ...CONN, user: 'bem_bootstrap_admin' }, cgroupRoot: '' });
+  const s = new SendSupervisor({ connection: { ...CONN, user: 'bem_bootstrap_admin' }, cgroupRoot: '', jobHost: '' });
   assert.throws(() => s.spawnAttempt(CHILD, []), /FENCE_UNIT_UNSUPPORTED/);
   return s.close();
 });
