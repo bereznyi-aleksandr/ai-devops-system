@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: tests/kernel.test.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 16:22 +03:00 (v0.2: отрицательные случаи §6.1 для обеих областей)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:30 +03:00 (v0.3: аудит E3-5 —
+//   M-E35-01: подмена входа после старта ловится в каждой команде и каждом проходе доставщика;
+//   M-E35-05: SR-10 закрыт по умолчанию, server.mjs без стоп-файла не стартует;
+//   v0.2: отрицательные случаи §6.1 для обеих областей)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: тесты Kernel этапа 3 (протокол Z1, E3-1, E3-4) на живом PG16 с пакетом H1.31.
 // ЗАПУСК: PGHOST=127.0.0.1 PGPORT=54337 node --test tests/
@@ -10,7 +13,10 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { stopState } from '../src/guards.mjs';
 import { Kernel, KERNEL_ROLE } from '../src/kernel.mjs';
 import { allowedFrom } from '../src/transitions.mjs';
 import { CONN, bootFixture, withRole, assignAuditor, uuid } from './helpers.mjs';
@@ -319,3 +325,94 @@ test(`§6.1 ${scope}: 0 вердиктов и вердикт без назнач
   assert.equal(v.error.code, 'AUDITOR_NOT_ASSIGNED');
 });
 }
+
+// ---------- M-E35-01: роль сверяется на каждом рабочем клиенте ----------
+
+// Пул-подмена: первое подключение — честный bem_kernel_rw (старт проходит), дальше — чужой вход.
+class SwitchPool {
+  constructor(steps) { this.steps = steps; this.n = 0; this.released = []; }
+  async connect() {
+    const step = this.steps[Math.min(this.n++, this.steps.length - 1)];
+    const c = new pg.Client({ ...CONN, user: step.user });
+    await c.connect();
+    if (step.setRole) await c.query(`SET ROLE ${step.setRole}`);
+    c.release = (broken) => { this.released.push(Boolean(broken)); return c.end(); };
+    return c;
+  }
+  async end() {}
+}
+
+test('M-E35-01 подмена входа после старта: команда и доставщик отказывают, данных не появляется', async () => {
+  for (const bad of [{ user: 'postgres' }, { user: 'postgres', setRole: KERNEL_ROLE },
+    { user: 'postgres', setRole: 'bem_control_owner' }]) {
+    const tag = JSON.stringify(bad);
+    const pool = new SwitchPool([{ user: KERNEL_ROLE }, bad]);
+    const k = new Kernel({ pool, stopFile });
+    assert.equal(await k.assertIdentity(), true, tag);
+    const wi = uuid();
+    const r = await k.execute(as(ids.author), { type: 'CreateWorkItem', actor_id: ids.author, tenant_id: ids.tenantA,
+      payload: { work_item_id: wi, evidence: { test: 'M-E35-01' } } });
+    assert.equal(r.ok, false, tag);
+    assert.equal(r.error.code, 'KERNEL_WRONG_ROLE', tag);
+    const n = await withRole('postgres', async (c) =>
+      (await c.query('SELECT count(*)::int AS n FROM bem_core.work_item WHERE id = $1', [wi])).rows[0].n);
+    assert.equal(n, 0, `${tag}: no work item`);
+    let egressCalled = false;
+    await assert.rejects(k.dispatchOnce(async () => { egressCalled = true; return { outcome: 'SENT' }; }),
+      (e) => e.code === 'KERNEL_WRONG_ROLE', tag);
+    assert.equal(egressCalled, false, `${tag}: egress must not run`);
+    // Клиент с чужой ролью в пул не возвращается (release(true)); проверенный при старте — возвращается.
+    assert.deepEqual(pool.released, [false, true, true], tag);
+  }
+});
+
+// ---------- M-E35-05: SR-10 закрыт по умолчанию ----------
+
+test('M-E35-05 SR-10: нет пути, нет файла, не читается, пустой, непонятный — отказ с причиной', async () => {
+  const d = mkdtempSync(join(tmpdir(), 'zavod-sr10-'));
+  const file = (name, text) => { const f = join(d, name); writeFileSync(f, text); return f; };
+  const cases = [
+    [undefined, 'NO_STOP_FILE'], ['', 'NO_STOP_FILE'], ['   ', 'NO_STOP_FILE'],
+    [join(d, 'missing'), 'STOP_FILE_UNREADABLE'], [d, 'STOP_FILE_UNREADABLE'],
+    [file('empty', ''), 'STOP_FILE_UNKNOWN'], [file('blank', '\n  \n'), 'STOP_FILE_UNKNOWN'],
+    [file('junk', 'maybe\nRUN\n'), 'STOP_FILE_UNKNOWN'], [file('stop', 'STOP\nоператор\n'), 'STOP'],
+  ];
+  for (const [f, reason] of cases) {
+    const s = stopState(f);
+    assert.equal(s.stopped, true, `${f}`);
+    assert.equal(s.reason, reason, `${f}`);
+    const k = new Kernel({ connection: CONN, stopFile: f });
+    const r = await k.execute(as(ids.author), { type: 'CreateWorkItem', actor_id: ids.author, tenant_id: ids.tenantA,
+      payload: { work_item_id: uuid(), evidence: { test: 'M-E35-05' } } });
+    assert.equal(r.ok, false);
+    assert.equal(r.error.code, 'KERNEL_STOPPED');
+    assert.ok(r.error.message.includes(reason), r.error.message);
+    const dd = await k.dispatchOnce(async () => { throw new Error('egress must not run'); });
+    assert.deepEqual(dd, { stopped: true, stop_reason: reason, claimed: 0 });
+    assert.equal(k.health().stopped, true);
+    assert.equal(k.health().stop_reason, reason);
+    await k.close();
+  }
+  // Нет прав на чтение (Linux, не root) — тоже отказ.
+  if (process.platform !== 'win32' && process.getuid?.() !== 0) {
+    const { chmodSync } = await import('node:fs');
+    const f = file('noread', 'RUN\n'); chmodSync(f, 0o000);
+    const s = stopState(f);
+    assert.deepEqual([s.stopped, s.reason, s.errno], [true, 'STOP_FILE_UNREADABLE', 'EACCES']);
+    chmodSync(f, 0o600);
+  }
+  // Работа открывается только строкой RUN.
+  for (const t of ['RUN\n', '  run  \r\nкомментарий\n']) assert.deepEqual(stopState(file('run', t)), { stopped: false, reason: 'RUN' });
+});
+
+test('M-E35-05 server.mjs без KERNEL_STOP_FILE не стартует (код 3) и к базе не подключается', () => {
+  const SERVER = fileURLToPath(new URL('../src/server.mjs', import.meta.url));
+  for (const v of [undefined, '', '   ']) {
+    const env = { ...process.env, PGHOST: '127.0.0.1', PGPORT: '1' };
+    if (v === undefined) delete env.KERNEL_STOP_FILE; else env.KERNEL_STOP_FILE = v;
+    const p = spawnSync(process.execPath, [SERVER], { env, encoding: 'utf8', timeout: 20000 });
+    assert.equal(p.status, 3, `${JSON.stringify(v)}: ${p.stdout}${p.stderr}`);
+    assert.match(p.stdout, /KERNEL_STOP_FILE_REQUIRED/);
+    assert.doesNotMatch(p.stdout + p.stderr, /ECONNREFUSED|connect/i);
+  }
+});

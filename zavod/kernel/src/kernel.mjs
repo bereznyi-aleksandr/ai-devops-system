@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 17:55 +03:00 (v0.3: аудит Z4 M-Z4-01 — отметка
+// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 22:46 +03:00 (v0.4: аудит E3-5 —
+//   M-E35-01 роль проверяется на том же клиенте в каждой транзакции и у доставщика; M-E35-05 SR-10
+//   закрыт по умолчанию; v0.3: аудит Z4 M-Z4-01 — отметка
 //   начала отправки несёт экземпляр среды исполнения; v0.2: Z-EXT-01 — отметка начала отправки, аудит Z2 M-Z2-02)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: BEM Control Kernel Завода — единственный писатель bem_core (H1.31 §5).
@@ -15,9 +17,9 @@ import pg from 'pg';
 import { randomUUID } from 'node:crypto';
 import { hostname } from 'node:os';
 import { allowedFrom, STATUSES, INITIAL_STATUS } from './transitions.mjs';
-import { findSecret, isStopped } from './guards.mjs';
+import { findSecret, isStopped, stopState } from './guards.mjs';
 
-export const KERNEL_VERSION = '0.3.0';
+export const KERNEL_VERSION = '0.4.0';
 export const KERNEL_ROLE = 'bem_kernel_rw';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -41,6 +43,9 @@ function mapDbError(err) {
 }
 
 function need(cond, code, msg) { if (!cond) throw new KernelError(code, msg); }
+// Клиент с чужой или слишком сильной ролью уничтожается, а не возвращается в пул.
+const IDENTITY_CODES = new Set(['KERNEL_WRONG_ROLE', 'KERNEL_ROLE_TOO_STRONG']);
+const isIdentityError = (e) => e instanceof KernelError && IDENTITY_CODES.has(e.code);
 function needUuid(v, name) { need(typeof v === 'string' && UUID.test(v), 'BAD_REQUEST', `${name} must be uuid`); }
 
 export class Kernel {
@@ -58,22 +63,46 @@ export class Kernel {
   }
 
   // E3-1: Kernel работает только ролью bem_kernel_rw без SUPERUSER/BYPASSRLS/CREATEROLE.
-  async assertIdentity() {
-    const { rows } = await this.pool.query(
+  // Аудит E3-5 M-E35-01: проверка идёт на том самом клиенте, которым выполняется работа, —
+  // в каждой транзакции команды и в каждом проходе доставщика, а не один раз при старте.
+  // Подменённый или неверно настроенный пул (вход postgres, SET ROLE на владельца) даёт отказ
+  // до первого изменения данных.
+  async _assertClientIdentity(client) {
+    const { rows } = await client.query(
       `SELECT current_user AS cu, session_user AS su, r.rolsuper, r.rolbypassrls, r.rolcreaterole
          FROM pg_roles r WHERE r.rolname = session_user`);
     const r = rows[0];
     if (!r || r.cu !== KERNEL_ROLE || r.su !== KERNEL_ROLE) {
-      throw new KernelError('KERNEL_WRONG_ROLE', `connected as ${r?.su}, need ${KERNEL_ROLE}`);
+      throw new KernelError('KERNEL_WRONG_ROLE', `connected as ${r?.su}/${r?.cu}, need ${KERNEL_ROLE}`);
     }
     if (r.rolsuper || r.rolbypassrls || r.rolcreaterole) {
       throw new KernelError('KERNEL_ROLE_TOO_STRONG', `${KERNEL_ROLE} has elevated attributes`);
     }
-    // Без расширения Z-EXT-01 доставщик не может отметить начало отправки — работать нельзя.
-    const ext = await this.pool.query(
-      "SELECT to_regprocedure('bem_control.mark_outbox_send_started(uuid,bigint,text,text)') IS NOT NULL AS ok");
-    if (!ext.rows[0].ok) throw new KernelError('KERNEL_EXT_MISSING', 'Z-EXT-01 not installed');
-    return true;
+  }
+
+  // Проверенный клиент на время fn; сломанный клиент в пул не возвращается.
+  async _withClient(fn) {
+    const client = await this.pool.connect();
+    let broken = false;
+    try {
+      await this._assertClientIdentity(client);
+      return await fn(client);
+    } catch (e) {
+      broken = isIdentityError(e);
+      throw e;
+    } finally {
+      client.release(broken);
+    }
+  }
+
+  async assertIdentity() {
+    return this._withClient(async (client) => {
+      // Без расширения Z-EXT-01 доставщик не может отметить начало отправки — работать нельзя.
+      const ext = await client.query(
+        "SELECT to_regprocedure('bem_control.mark_outbox_send_started(uuid,bigint,text,text)') IS NOT NULL AS ok");
+      if (!ext.rows[0].ok) throw new KernelError('KERNEL_EXT_MISSING', 'Z-EXT-01 not installed');
+      return true;
+    });
   }
 
   async close() { await this.pool.end(); }
@@ -82,16 +111,19 @@ export class Kernel {
     return {
       service: 'zavod-kernel', version: KERNEL_VERSION, started_at: this.startedAt,
       last_command_at: this.lastCommandAt, stopped: isStopped(this.stopFile),
+      stop_reason: stopState(this.stopFile).reason,
       counters: { ...this.counters },
     };
   }
 
   // Одна транзакция = один контекст. set_config(..., true) — это SET LOCAL.
+  // M-E35-01: роль сверяется на этом же клиенте сразу после BEGIN, до контекста и обработчика.
   async _tx(actorId, tenantId, fn) {
     const client = await this.pool.connect();
     let broken = false;
     try {
       await client.query('BEGIN');
+      await this._assertClientIdentity(client);
       await client.query(`SELECT set_config('app.actor_id', $1, true), set_config('app.tenant_id', $2, true)`,
         [actorId, tenantId ?? '']);
       const out = await fn(client);
@@ -100,6 +132,7 @@ export class Kernel {
       return out;
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch { broken = true; }
+      if (isIdentityError(e)) broken = true;
       throw e;
     } finally {
       client.release(broken);
@@ -111,7 +144,8 @@ export class Kernel {
   async execute(caller, req) {
     try {
       need(req && typeof req === 'object', 'BAD_REQUEST', 'request must be object');
-      need(!isStopped(this.stopFile), 'KERNEL_STOPPED', 'stop file says STOP (SR-10)');
+      const ss = stopState(this.stopFile);
+      need(!ss.stopped, 'KERNEL_STOPPED', `SR-10 ${ss.reason}`);
       need(caller && typeof caller.actor_id === 'string', 'UNAUTHENTICATED', 'no caller');
       need(caller.actor_id === req.actor_id, 'ACTOR_MISMATCH', 'caller differs from request actor');
       needUuid(req.tenant_id, 'tenant_id');
@@ -141,14 +175,20 @@ export class Kernel {
   // не может, поэтому неясный исход такой строки обратно в очередь не вернётся (только UNRESOLVED).
   async dispatchOnce(egress, { limit = 10, lease = '60 seconds', worker = 'kernel-dispatcher',
     runtimeInstance = process.env.ZAVOD_RUNTIME_INSTANCE || this.runtimeInstance } = {}) {
-    if (isStopped(this.stopFile)) return { stopped: true, claimed: 0 };
-    const { rows } = await this.pool.query('SELECT * FROM bem_control.claim_outbox_batch($1, $2::interval, $3)',
+    const ss = stopState(this.stopFile);
+    if (ss.stopped) return { stopped: true, stop_reason: ss.reason, claimed: 0 };
+    // M-E35-01: весь проход — одна проверенная сессия bem_kernel_rw (захват, отметка, итог).
+    return this._withClient((db) => this._dispatchWith(db, egress, { limit, lease, worker, runtimeInstance }));
+  }
+
+  async _dispatchWith(db, egress, { limit, lease, worker, runtimeInstance }) {
+    const { rows } = await db.query('SELECT * FROM bem_control.claim_outbox_batch($1, $2::interval, $3)',
       [limit, lease, worker]);
     const results = [];
     for (const row of rows) {
       // Z-EXT-01: отметка начала отправки ДО внешнего вызова. Не удалась (аренда
       // потеряна) — не отправлять: строкой уже распоряжается другой исполнитель или сверка.
-      const mark = await this.pool.query('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok',
+      const mark = await db.query('SELECT bem_control.mark_outbox_send_started($1, $2, $3, $4) AS ok',
         [row.outbox_id, row.lease_epoch, worker, runtimeInstance]);
       if (!mark.rows[0].ok) {
         results.push({ outbox_id: row.outbox_id, outcome: 'NOT_SENT_LEASE_LOST', finished: false });
@@ -165,7 +205,7 @@ export class Kernel {
         detail = { error: String(e?.message || e).slice(0, 200) };
       }
       if (findSecret(detail)) detail = { redacted: 'SECRET_IN_EGRESS_DETAIL' };
-      const fin = await this.pool.query('SELECT bem_control.finish_outbox_row($1, $2, $3, $4, $5) AS ok',
+      const fin = await db.query('SELECT bem_control.finish_outbox_row($1, $2, $3, $4, $5) AS ok',
         [row.outbox_id, row.lease_epoch, worker, outcome, detail]);
       results.push({ outbox_id: row.outbox_id, outcome, finished: fin.rows[0].ok });
     }

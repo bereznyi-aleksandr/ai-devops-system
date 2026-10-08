@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/restart.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:25 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.2: стоп-файл RUN — M-E35-05)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: E3-3 — Kernel убит посреди перехода; после нового старта состояние
 //   согласовано, а повтор той же команды не задваивает переход и строку outbox.
@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Kernel } from '../src/kernel.mjs';
-import { CONN, bootFixture, uuid, withRole } from './helpers.mjs';
+import { CONN, bootFixture, uuid, withRole, runStopFile } from './helpers.mjs';
 
 const countOutbox = (tenant, wi) => withRole('bem_kernel_rw', async (c) => {
   await c.query("SELECT set_config('app.tenant_id', $1, false)", [tenant]);
@@ -22,7 +22,7 @@ const CHILD = fileURLToPath(new URL('./crash_child.mjs', import.meta.url));
 let ids;
 let kernel;
 
-before(async () => { ids = await bootFixture(); kernel = new Kernel({ connection: CONN }); });
+before(async () => { ids = await bootFixture(); kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-restart-') }); });
 after(async () => { await kernel?.close(); });
 
 // Запускает дочерний Kernel, ждёт маркер и убивает процесс жёстко.

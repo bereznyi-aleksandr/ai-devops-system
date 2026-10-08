@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+# ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+# v0.7 (2026-10-08 23:05 +03:00): аудит E3-5 — M-E35-04 сканер утечек идёт и по workflow, исключения только
+#   точной строкой, неиспользованное исключение — отказ; L-E35-01 проверка закреплений workflow.
 # v0.6 (2026-10-07 21:15 +03:00): в CI тесты дерева процессов M-Z5-01 обязаны пройти, пропуск — отказ (аудит Z5).
 # v0.5 (2026-10-07 17:08 +03:00): проба подмены claim_outbox_batch — итоговая проверка обязана упасть (аудит Z3 M-Z3-01).
 # v0.4 (2026-10-07 16:19 +03:00): парная дельта-проверка 05 + отличия Z-EXT-01 после установки расширения.
@@ -69,7 +71,10 @@ fi
 tail -1 "$WORK/npm_audit.out"
 
 echo "=== SR-02: сканер утечек"
-"$NODE" ci/leak_scan.mjs . --allow ci/leak_scan_allow.txt || fail "leak scan"
+WF="$HERE/../../.github/workflows/zavod-kernel.yml"
+"$NODE" ci/leak_scan.mjs . "$WF" --allow ci/leak_scan_allow.txt --strict-allow || fail "leak scan"
+echo "=== SR-08: закрепления workflow (L-E35-01)"
+"$NODE" ci/workflow_pins.mjs "$WF" || fail "workflow pins"
 
 echo "=== Тесты Kernel"
 "$NODE" --test --test-concurrency=1 --test-reporter=spec tests/*.test.mjs > "$WORK/tests.out" 2>&1

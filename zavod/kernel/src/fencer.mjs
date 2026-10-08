@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: src/fencer.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:15 +03:00 (v0.2: ответ на аудит Z5 —
+// ВЕРСИЯ: v0.2.1  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 22:55 +03:00 (v0.2.1: аудит E3-5 M-E35-02 —
+//   надзиратель работает только под входом-членом bem_governance: проверка роли до гашения единицы и на
+//   клиенте транзакции записи; вход первой установки bem_bootstrap_admin, Kernel, суперпользователь — отказ;
+//   v0.2: ответ на аудит Z5 —
 //   M-Z5-01: ограждается вся единица исполнения (cgroup v2), а не один процесс; способ «один процесс»
 //   убран совсем; M-Z5-02: запись идёт под входом с полномочием OPERATOR, канон §16 «Оператор»)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -30,7 +33,11 @@ import { randomUUID } from 'node:crypto';
 import { hostname } from 'node:os';
 import { join } from 'node:path';
 
-export const FENCER_VERSION = '0.2.0';
+export const FENCER_VERSION = '0.2.1';
+// Канон §16 «Оператор»: вход надзирателя — член этой группы; полномочие OPERATOR проверяет база.
+export const FENCER_GROUP = 'bem_governance';
+// Вход первой установки H1.31 — не рабочий вход оператора; Kernel и рабочие — не оператор.
+const FORBIDDEN_LOGINS = new Set(['bem_bootstrap_admin', 'bem_kernel_rw', 'bem_engine_rw', 'postgres']);
 // Переменные, которые передаются исполнителю. Пароли сюда не входят никогда.
 const PASS_ENV = ['PATH', 'HOME', 'LANG', 'PGHOST', 'PGPORT', 'PGDATABASE', 'PGUSER', 'CI'];
 
@@ -92,6 +99,9 @@ export class CgroupUnit {
 export class SendSupervisor {
   constructor({ connection, killTimeoutMs = 10000, observer, cgroupRoot = process.env.ZAVOD_CGROUP_ROOT } = {}) {
     if (!connection?.user) throw new FencerError('FENCER_CONNECTION_REQUIRED', 'operator connection with user');
+    if (FORBIDDEN_LOGINS.has(connection.user)) {
+      throw new FencerError('FENCER_WRONG_ROLE', `${connection.user} is not an operator login of ${FENCER_GROUP}`);
+    }
     this.pool = new pg.Pool({ ...connection, max: 2 });
     this.killTimeoutMs = killTimeoutMs;
     this.observer = observer || `fencer:${hostname()}:${process.pid}`;
@@ -100,6 +110,26 @@ export class SendSupervisor {
   }
 
   async close() { await this.pool.end(); }
+
+  // M-E35-02: вход — член bem_governance, session_user = current_user, без SUPERUSER/BYPASSRLS/CREATEROLE,
+  // не вход первой установки, не член bem_kernel_rw. Полномочие OPERATOR сверяет сама
+  // record_outbox_fence (assert_authority) — без него AUTHORITY_REQUIRED.
+  async assertOperatorIdentity(client = null) {
+    const q = (sql) => (client ? client.query(sql) : this.pool.query(sql));
+    const { rows } = await q(
+      `SELECT current_user AS cu, session_user AS su, r.rolsuper, r.rolbypassrls, r.rolcreaterole,
+              pg_has_role(session_user, '${FENCER_GROUP}', 'USAGE') AS gov,
+              pg_has_role(session_user, 'bem_kernel_rw', 'MEMBER') AS kern
+         FROM pg_roles r WHERE r.rolname = session_user`);
+    const r = rows[0];
+    if (!r || r.cu !== r.su || FORBIDDEN_LOGINS.has(r.su) || !r.gov || r.kern) {
+      throw new FencerError('FENCER_WRONG_ROLE', `login ${r?.su}/${r?.cu} is not an operator login of ${FENCER_GROUP}`);
+    }
+    if (r.rolsuper || r.rolbypassrls || r.rolcreaterole) {
+      throw new FencerError('FENCER_ROLE_TOO_STRONG', `login ${r.su} has elevated attributes`);
+    }
+    return r.su;
+  }
 
   // Новый экземпляр среды исполнения и новая единица на одну попытку отправки.
   // Исполнитель сообщает о себе строками JSON в stdout ({"ev": ...}).
@@ -161,6 +191,7 @@ export class SendSupervisor {
   async fence({ tenantId, outboxId, leaseEpoch, worker, runtimeInstance }, { terminate = true, strategy = 'unit' } = {}) {
     const rec = this.runtimes.get(runtimeInstance);
     if (!rec) throw new FencerError('FENCE_RUNTIME_UNKNOWN', 'runtime instance was not started by this supervisor');
+    await this.assertOperatorIdentity();      // M-E35-02: до гашения единицы
     const pidsBefore = rec.unit.pids();
     let terminatedBy = 'self';
     if (terminate && (rec.unit.populated() || !rec.exit)) {
@@ -188,6 +219,7 @@ export class SendSupervisor {
     let broken = false;
     try {
       await c.query('BEGIN');
+      await this.assertOperatorIdentity(c);   // M-E35-02: тот же клиент, что пишет ограждение
       await c.query("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
       const { rows } = await c.query('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7) AS e',
         [tenantId, outboxId, leaseEpoch, worker, runtimeInstance, 'CGROUP_KILLED', evidence]);
