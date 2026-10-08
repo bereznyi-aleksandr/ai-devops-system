@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/stage_gates.test.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 16:26 +03:00 (v0.2: E3-4a/E3-4b, OD-2)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.3: аудит E3-5 M-E35-03 —
+//   удаление, добавление или правка обязательного критерия или зависимости — INVALID, отказ; v0.2: E3-4a/E3-4b, OD-2)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: протокол Z1 v1.2 раздел 9 — этап 4 не начинается при OPEN/FAIL у APPROVE этапа 1,
 //   E3-4a, E3-4b (гейт OD-1a) или E3-5; этап 5 — при OPEN у OD-2 или OD-8; испорченный файл — отказ.
@@ -10,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { checkStage, validateGates } from '../src/stage_gates.mjs';
+import { checkStage, validateGates, CANON } from '../src/stage_gates.mjs';
 
 const FILE = fileURLToPath(new URL('../zavod_stage_gates.json', import.meta.url));
 const load = () => JSON.parse(readFileSync(FILE, 'utf8'));
@@ -77,4 +78,39 @@ test('этап 5 не начинается без OD-2 (изоляция) и OD-
     const h = structuredClone(g); h.stages['4'].criteria[od].status = 'OPEN';
     assert.deepEqual(checkStage(h, 5).blockers, [`4:${od}=OPEN`]);
   }
+});
+
+test('M-E35-03 удаление или правка обязательного критерия или зависимости — отказ, а не разрешение', () => {
+  const ready = () => { const g = load(); for (const s of ['1', '3', '4']) passAll(g, s); return g; };
+  assert.equal(checkStage(ready(), 4).allow, true);
+  assert.equal(checkStage(ready(), 5).allow, true);
+  const cases = [
+    ['удалить 3:E3-5', 4, (g) => { delete g.stages['3'].criteria['E3-5']; }],
+    ['удалить 3:E3-4b', 4, (g) => { delete g.stages['3'].criteria['E3-4b']; }],
+    ['удалить stage4.start_requires', 4, (g) => { delete g.stages['4'].start_requires; }],
+    ['пустой stage4.start_requires', 4, (g) => { g.stages['4'].start_requires = []; }],
+    ['убрать 1:APPROVE из зависимостей', 4, (g) => { g.stages['4'].start_requires = ['3:*']; }],
+    ['сузить 3:* до одного критерия', 4, (g) => { g.stages['4'].start_requires = ['1:APPROVE', '3:E3-1']; }],
+    ['удалить 4:OD-2', 5, (g) => { delete g.stages['4'].criteria['OD-2']; }],
+    ['удалить 4:OD-8', 5, (g) => { delete g.stages['4'].criteria['OD-8']; }],
+    ['удалить stage5.start_requires', 5, (g) => { delete g.stages['5'].start_requires; }],
+    ['удалить stage6.release_requires', 6, (g) => { passAll(g, '5'); g.stages['5'].criteria['E5-1'].status = 'OPEN'; delete g.stages['6'].release_requires; }],
+    ['добавить лишний критерий', 4, (g) => { g.stages['3'].criteria['E3-X'] = { status: 'PASS', evidence: 't' }; }],
+    ['удалить этап 7', 4, (g) => { delete g.stages['7']; }],
+    ['добавить этап 8', 4, (g) => { g.stages['8'] = { name: 'x', criteria: { X: { status: 'PASS', evidence: 't' } }, start_requires: [] }; }],
+  ];
+  for (const [name, stage, mutate] of cases) {
+    const g = ready(); mutate(g);
+    const r = checkStage(g, stage, stage === 6 ? 'release' : 'start');
+    assert.equal(r.allow, false, name);
+    assert.ok(r.blockers.some((b) => b.startsWith('INVALID')), `${name}: ${r.blockers.join(';')}`);
+  }
+});
+
+test('M-E35-03 канон в коде совпадает с файлом состояния и заморожен', () => {
+  const g = load();
+  for (const [sid, c] of Object.entries(CANON)) {
+    assert.deepEqual(Object.keys(g.stages[sid].criteria).sort(), [...c.criteria].sort(), sid);
+  }
+  assert.ok(Object.isFrozen(CANON));
 });

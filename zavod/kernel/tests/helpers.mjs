@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: tests/helpers.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:25 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.2: аудит E3-5 —
+//   runStopFile: Kernel без стоп-файла RUN закрыт (M-E35-05); operatorLogin: штатный вход оператора
+//   H1.31 — своя роль входа, член bem_governance, связанный участник, полномочие OPERATOR (M-E35-02))
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: стенд тестов Kernel. Участники и заказчики создаются штатными функциями
 //   управления от bem_bootstrap_admin (как fixture_boot R46). Kernel этой ролью не пользуется.
@@ -9,6 +11,9 @@
 
 import pg from 'pg';
 import { randomUUID } from 'node:crypto';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 export const CONN = {
   host: process.env.PGHOST || '127.0.0.1',
@@ -62,3 +67,30 @@ export async function assignAuditor(tenant, subject, auditor) {
 }
 
 export const uuid = randomUUID;
+
+// SR-10: стоп-файл со строкой RUN в своей папке прогона (файл не удаляется, P4.702).
+export function runStopFile(prefix = 'zavod-stop-') {
+  const f = join(mkdtempSync(join(tmpdir(), prefix)), 'KERNEL_STOP');
+  writeFileSync(f, 'RUN\n');
+  return f;
+}
+
+// M-E35-02: вход оператора по канону H1.31 §16 (стенд с trust, без пароля). Роль входа создаёт
+// администратор кластера (postgres), участника и полномочие — штатные функции управления.
+// Полномочие OPERATOR — на весь кластер (tenant NULL): оператор по должности работает во всех
+// заказчиках (H1.31, триггер EVIDENCE_ACTOR_NOT_IN_TENANT). withOperator=false — тот же вход без
+// полномочия OPERATOR (для отказа AUTHORITY_REQUIRED).
+export async function operatorLogin({ withOperator = true } = {}) {
+  const tag = randomUUID().slice(0, 8);
+  const role = `zavod_op_${tag}`;
+  const actor = `human:zavod-op-${tag}`;
+  await withRole('postgres', async (c) => {
+    await c.query(`CREATE ROLE ${role} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS INHERIT IN ROLE bem_governance`);
+    await c.query(`GRANT CONNECT ON DATABASE ${CONN.database} TO ${role}`);
+  });
+  await withRole('bem_bootstrap_admin', async (c) => {
+    await c.query('SELECT bem_control.create_actor($1, $2, $3, $4)', [actor, 'human', randomUUID(), role]);
+    if (withOperator) await c.query("SELECT bem_control.grant_authority($1, 'OPERATOR', NULL)", [actor]);
+  });
+  return { role, actor };
+}

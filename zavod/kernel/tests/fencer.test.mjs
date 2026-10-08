@@ -1,7 +1,11 @@
 // ДОКУМЕНТ: tests/fencer.test.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 22:39 +03:00 (v0.3: те же тесты на
-//   Windows Job Object; вид единицы и способ берутся из найденной единицы. v0.2: аудит Z5 —
+// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.4: слияние —
+//   v0.3 (этап 3, аудит E3-5 M-E35-02): надзиратель и запись ограждения идут от штатного входа оператора H1.31
+//   (своя роль входа, член bem_governance, связанный участник, OPERATOR), не от bem_bootstrap_admin; вход
+//   первой установки, Kernel и postgres надзиратель не принимает; член governance без OPERATOR —
+//   AUTHORITY_REQUIRED; v0.3 (этап 4): те же тесты на Windows Job Object; вид единицы и способ берутся
+//   из найденной единицы. v0.2: аудит Z5 —
 //   M-Z5-01: живой потомок исполнителя, ограждение всей единицы cgroup v2, мутация «только родитель»;
 //   M-Z5-02: только оператор (bem_governance + полномочие OPERATOR) пишет ограждение, точный список)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -22,12 +26,14 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Kernel } from '../src/kernel.mjs';
 import { SendSupervisor, CgroupUnit, JobObjectUnit, pidAlive } from '../src/fencer.mjs';
-import { CONN, bootFixture, withRole, uuid } from './helpers.mjs';
+import { CONN, bootFixture, withRole, uuid, operatorLogin } from './helpers.mjs';
 
 let ids;
 let kernel;
 let sup;
 let dir;
+let op;      // вход оператора с полномочием OPERATOR (кластер)
+let opNo;    // тот же вид входа без полномочия
 const as = (actor) => ({ actor_id: actor });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const CHILD = fileURLToPath(new URL('./paused_sender.mjs', import.meta.url));
@@ -44,7 +50,9 @@ before(async () => {
   writeFileSync(stopFile, 'RUN\n');
   kernel = new Kernel({ connection: CONN, stopFile });
   await kernel.assertIdentity();
-  sup = new SendSupervisor({ connection: { ...CONN, user: 'bem_bootstrap_admin' } });
+  op = await operatorLogin();
+  opNo = await operatorLogin({ withOperator: false });
+  sup = new SendSupervisor({ connection: { ...CONN, user: op.role } });
 });
 after(async () => {
   for (const r of sup?.runtimes.values() ?? []) {
@@ -72,15 +80,15 @@ const rowOf = (id) => withRole('postgres', async (c) => (await c.query(
 const fenceRows = (id) => withRole('postgres', async (c) =>
   (await c.query('SELECT runtime_instance, method FROM bem_control.outbox_send_fence WHERE outbox_id = $1', [id])).rows);
 const kq = (sql, args) => withRole('bem_kernel_rw', async (c) => (await c.query(sql, args)).rows[0]);
-const gov = (sql, args) => withRole('bem_bootstrap_admin', async (c) => {
+const gov = (sql, args, role = op.role) => withRole(role, async (c) => {
   await c.query("SELECT set_config('app.tenant_id', $1, false)", [ids.tenantA]);
   return (await c.query(sql, args)).rows[0];
 });
 const reconcile = (id, outcome) => gov('SELECT bem_control.reconcile_unknown_outcome($1, $2, $3, $4) AS s',
   [ids.tenantA, id, outcome, { test: 'fencer reconcile' }]);
-const dbFence = (id, epoch, worker, rt, ev, method = 'CGROUP_KILLED') => gov(
+const dbFence = (id, epoch, worker, rt, ev, method = 'CGROUP_KILLED', role = op.role) => gov(
   'SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7) AS e',
-  [ids.tenantA, id, epoch, worker, rt, method, ev]);
+  [ids.tenantA, id, epoch, worker, rt, method, ev], role);
 // Захват другим исполнителем: чужие строки сразу возвращаются как FAILED.
 async function claim(worker, lease, mine) {
   return withRole('bem_kernel_rw', async (c) => {
@@ -176,7 +184,7 @@ test('M-Z5-01 мутация E4-8: «завершить только родит�
   });
 
 test('FENCE_UNIT_UNSUPPORTED: без единицы исполнения попытка не запускается', () => {
-  const s = new SendSupervisor({ connection: { ...CONN, user: 'bem_bootstrap_admin' }, cgroupRoot: '', jobHost: '' });
+  const s = new SendSupervisor({ connection: { ...CONN, user: op.role }, cgroupRoot: '', jobHost: '' });
   assert.throws(() => s.spawnAttempt(CHILD, []), /FENCE_UNIT_UNSUPPORTED/);
   return s.close();
 });
@@ -217,6 +225,9 @@ test('M-Z4-01 / M-Z5-01 / M-Z5-02 / E4-7: база принимает ограж
     // E4-7 / M-Z5-02: Kernel (через него — любой рабочий) записать ограждение не может вовсе.
     await assert.rejects(kq('SELECT bem_control.record_outbox_fence($1, $2, $3, $4, $5, $6, $7)',
       [ids.tenantA, id, epoch, 'w1', rt, 'CGROUP_KILLED', good]), (e) => e.code === '42501');
+    // M-E35-02: член bem_governance без полномочия OPERATOR — отказ; вход первой установки тоже не оператор.
+    await assert.rejects(dbFence(id, epoch, 'w1', rt, good, 'CGROUP_KILLED', opNo.role), /AUTHORITY_REQUIRED/);
+    assert.deepEqual(await fenceRows(id), []);
     // Точный список вызывающих: владелец функции и bem_governance (канон §16 «Оператор»).
     const acl = await withRole('postgres', async (c) => (await c.query(
       `SELECT array_agg(a.grantee::regrole::text ORDER BY a.grantee::regrole::text) AS g
@@ -234,3 +245,21 @@ test('M-Z4-01 / M-Z5-01 / M-Z5-02 / E4-7: база принимает ограж
     assert.deepEqual(await fenceRows(id), [{ runtime_instance: rt, method: 'CGROUP_KILLED' }]);
     assert.equal((await reconcile(id, 'CONFIRMED_NOT_SENT')).s, 'PENDING');
   });
+
+test('M-E35-02 надзиратель принимает только вход оператора из bem_governance', async () => {
+  for (const user of ['bem_bootstrap_admin', 'bem_kernel_rw', 'bem_engine_rw', 'postgres']) {
+    assert.throws(() => new SendSupervisor({ connection: { ...CONN, user } }), /FENCER_WRONG_ROLE/, user);
+  }
+  assert.throws(() => new SendSupervisor({ connection: { ...CONN } }), /FENCER_CONNECTION_REQUIRED/);
+  // Вход вне bem_governance — отказ до гашения единицы.
+  const plain = `zavod_plain_${uuid().slice(0, 8)}`;
+  await withRole('postgres', async (c) => {
+    await c.query(`CREATE ROLE ${plain} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS`);
+    await c.query(`GRANT CONNECT ON DATABASE ${CONN.database} TO ${plain}`);
+  });
+  const s = new SendSupervisor({ connection: { ...CONN, user: plain }, cgroupRoot: '' });
+  await assert.rejects(s.assertOperatorIdentity(), /FENCER_WRONG_ROLE/);
+  await s.close();
+  // Штатный вход оператора проходит; полномочие OPERATOR сверяет сама база (см. тест E4-7).
+  assert.equal(await sup.assertOperatorIdentity(), op.role);
+});

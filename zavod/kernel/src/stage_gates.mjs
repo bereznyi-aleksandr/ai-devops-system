@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: src/stage_gates.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:47 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 22:55 +03:00 (v0.2: аудит E3-5 M-E35-03 —
+//   файл состояния сверяется с неизменяемым каноном в коде: точный набор этапов и критериев,
+//   точные start_requires/release_requires; удаление, добавление или правка — INVALID, отказ)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: механическая проверка зависимостей этапов (протокол Z1 v1.1, раздел 9):
 //   этап нельзя начать, пока любой требуемый критерий не PASS. Ошибка в файле состояния —
@@ -11,12 +13,46 @@ import { fileURLToPath } from 'node:url';
 
 const STATUSES = new Set(['PASS', 'FAIL', 'OPEN']);
 
-// Проверка формы файла: неизвестный статус, PASS без доказательства, ссылка на
-// несуществующий этап или критерий — ошибки. Возвращает список ошибок.
-export function validateGates(gates) {
+// Канон протокола Z1 (раздел 9). Файл состояния меняет только статусы и доказательства;
+// состав критериев и зависимости меняются только правкой этого кода (ревью и аудит).
+export const CANON = Object.freeze({
+  1: { criteria: ['APPROVE'], start: [], release: [] },
+  2: { criteria: ['E2-1', 'E2-2', 'E2-3', 'E2-4', 'E2-5'], start: [], release: [] },
+  3: { criteria: ['E3-1', 'E3-2', 'E3-3', 'E3-4a', 'E3-4b', 'E3-5'], start: [], release: [] },
+  4: { criteria: ['E4-1', 'E4-2', 'E4-3', 'E4-4', 'E4-5', 'E4-6', 'E4-7', 'E4-8', 'OD-8', 'OD-2'],
+    start: ['1:APPROVE', '3:*'], release: [] },
+  5: { criteria: ['E5-1', 'E5-2', 'E5-3', 'E5-4', 'E5-5', 'E5-6', 'E5-7', 'OD-3', 'OD-4'], start: ['4:*'], release: [] },
+  6: { criteria: ['E6-1', 'E6-2', 'E6-3', 'E6-4', 'E6-5', 'OD-5'], start: ['4:*'], release: ['5:*'] },
+  7: { criteria: ['E7-2', 'E7-3', 'E7-4', 'OD-6'], start: ['6:*'], release: [] },
+});
+
+const sameSet = (a, b) => a.length === b.length && [...a].sort().join('\n') === [...b].sort().join('\n');
+
+// M-E35-03: сверка с каноном. Любое расхождение — ошибка (а не «этого требования нет»).
+export function canonErrors(gates) {
   const errors = [];
   const stages = gates?.stages;
   if (!stages || typeof stages !== 'object') return ['stages missing'];
+  if (!sameSet(Object.keys(stages), Object.keys(CANON))) errors.push('stage set differs from canon');
+  for (const [sid, canon] of Object.entries(CANON)) {
+    const st = stages[sid];
+    if (!st || typeof st !== 'object') { errors.push(`${sid}: stage missing`); continue; }
+    const crit = st.criteria && typeof st.criteria === 'object' ? Object.keys(st.criteria) : [];
+    if (!sameSet(crit, canon.criteria)) errors.push(`${sid}: criteria differ from canon`);
+    for (const [key, want] of [['start_requires', canon.start], ['release_requires', canon.release]]) {
+      const have = st[key] === undefined ? [] : st[key];
+      if (!Array.isArray(have) || !sameSet(have.map(String), want)) errors.push(`${sid}: ${key} differs from canon`);
+    }
+  }
+  return errors;
+}
+
+// Проверка формы файла: неизвестный статус, PASS без доказательства, ссылка на
+// несуществующий этап или критерий — ошибки. Возвращает список ошибок.
+export function validateGates(gates) {
+  const errors = canonErrors(gates);
+  const stages = gates?.stages;
+  if (!stages || typeof stages !== 'object') return errors;
   for (const [sid, st] of Object.entries(stages)) {
     const crit = st?.criteria;
     if (!crit || typeof crit !== 'object' || !Object.keys(crit).length) { errors.push(`${sid}: no criteria`); continue; }

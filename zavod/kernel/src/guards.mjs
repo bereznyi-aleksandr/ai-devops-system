@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/guards.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:25 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 22:46 +03:00 (v0.2: аудит E3-5 M-E35-05 —
+//   SR-10 закрыт по умолчанию: нет пути, ошибка чтения, пусто или неизвестный текст — STOP; работа только при RUN)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: проверки до базы — SR-01 (секрет в команде), SR-10 (выключатель).
 // ОГРАНИЧЕНИЯ: поиск секретов по образцам ловит известные виды ключей, а не любой секрет.
@@ -31,12 +32,21 @@ export function findSecret(value) {
   return null;
 }
 
-// SR-10. Стоп-файл: первая непустая строка «STOP» — приём команд закрыт.
-// Снятие — перезапись строкой «RUN» (файл не удаляется, правило P4.702).
-export function isStopped(stopFile) {
-  if (!stopFile) return false;
+// SR-10. Стоп-файл: первая непустая строка «RUN» — приём команд открыт, «STOP» — закрыт.
+// Всё прочее закрывает приём (аудит E3-5 M-E35-05): путь не задан, файл не читается
+// (ENOENT, EACCES, EISDIR и любая другая ошибка), файл пуст, первая строка не RUN и не STOP.
+// Снятие остановки — перезапись строкой «RUN» (файл не удаляется, правило P4.702).
+// reason: RUN | STOP | NO_STOP_FILE | STOP_FILE_UNREADABLE | STOP_FILE_UNKNOWN.
+export function stopState(stopFile) {
+  if (typeof stopFile !== 'string' || !stopFile.trim()) return { stopped: true, reason: 'NO_STOP_FILE' };
   let text;
-  try { text = readFileSync(stopFile, 'utf8'); } catch { return false; }
-  const first = text.split(/\r?\n/).map((s) => s.trim()).find(Boolean) || '';
-  return first.toUpperCase() === 'STOP';
+  try { text = readFileSync(stopFile, 'utf8'); } catch (e) {
+    return { stopped: true, reason: 'STOP_FILE_UNREADABLE', errno: String(e?.code || 'ERROR') };
+  }
+  const first = (text.split(/\r?\n/).map((s) => s.trim()).find(Boolean) || '').toUpperCase();
+  if (first === 'RUN') return { stopped: false, reason: 'RUN' };
+  if (first === 'STOP') return { stopped: true, reason: 'STOP' };
+  return { stopped: true, reason: 'STOP_FILE_UNKNOWN' };
 }
+
+export function isStopped(stopFile) { return stopState(stopFile).stopped; }

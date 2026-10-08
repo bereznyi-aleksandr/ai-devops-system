@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/crash_child.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:25 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.2: стоп-файл RUN — M-E35-05)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: дочерний процесс теста E3-3. Выполняет переход через Kernel и замирает
 //   в точке, заданной режимом, чтобы родитель убил процесс жёстко (TerminateProcess / SIGKILL).
@@ -8,13 +8,14 @@
 //         after-commit  — переход зафиксирован, замереть до выдачи ответа.
 
 import { Kernel } from '../src/kernel.mjs';
-import { CONN } from './helpers.mjs';
+import { CONN, runStopFile } from './helpers.mjs';
 
 const [mode, actor, tenant, wi, rev, status, cmd] = process.argv.slice(2);
 const hang = () => new Promise(() => {});
 
 const kernel = new Kernel({
   connection: CONN,
+  stopFile: runStopFile('zavod-crash-'),
   testBeforeCommit: mode === 'before-commit'
     ? async () => { process.stdout.write('IN_TX\n'); await hang(); }
     : null,

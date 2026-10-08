@@ -1,9 +1,11 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.3
+# ВЕРСИЯ: v0.4
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-07 22:39 +03:00 (v0.3: задание jobobject на windows-latest — сборка
-#   win/zavod_jobhost.exe и тест единицы Job Object; v0.2: аудит Z5 M-Z5-01 — корневая cgroup v2
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.4: слияние — закрепления L-E35-01 этапа 3 и задание
+#   jobobject этапа 4; v0.3 (этап 3): аудит E3-5 L-E35-01 — действия по SHA коммита, образ PostgreSQL по
+#   digest, Node точной версией, psql из того же образа; v0.3 (этап 4): задание jobobject на windows-latest —
+#   сборка win/zavod_jobhost.exe и тест единицы Job Object; v0.2: аудит Z5 M-Z5-01 — корневая cgroup v2
 #   Завода для ограждения единиц исполнения; ZAVOD_CGROUP_ROOT)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: Завод, этап 3 — Kernel на чистом PostgreSQL 16, три независимых прогона
@@ -40,7 +42,7 @@ jobs:
         run: [1, 2, 3]
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
@@ -53,13 +55,26 @@ jobs:
       PGPORT: '5432'
       PGUSER: postgres
       ZAVOD_CGROUP_ROOT: /sys/fs/cgroup/zavod
+      # Клиент psql/pg_dump/pg_restore/createdb — из того же образа, что и сервер (L-E35-01).
+      ZAVOD_PG_IMAGE: postgres:16@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '22'
-      - name: psql client
-        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+          node-version: '22.23.3'
+      - name: pinned PostgreSQL client (same image digest as the server)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pgbin"
+          for t in psql pg_dump pg_restore createdb; do
+            printf '#!/usr/bin/env bash\nexec docker run --rm -i --network host -e PGHOST -e PGPORT -e PGUSER -e PGDATABASE -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$ZAVOD_PG_IMAGE" %s "$@"\n' "$t" > "$RUNNER_TEMP/pgbin/$t"
+            chmod +x "$RUNNER_TEMP/pgbin/$t"
+          done
+          echo "$RUNNER_TEMP/pgbin" >> "$GITHUB_PATH"
+          PATH="$RUNNER_TEMP/pgbin:$PATH" psql --version | tee /dev/stderr | grep -q 'PostgreSQL) 16\.'
+      - name: workflow pins (L-E35-01)
+        run: node zavod/kernel/ci/workflow_pins.mjs .github/workflows/zavod-kernel.yml
       - name: cgroup v2 unit root (M-Z5-01)
         run: |
           test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
@@ -72,7 +87,7 @@ jobs:
         run: |
           set -o pipefail
           bash ci/kernel_ci.sh "$GITHUB_WORKSPACE/$PKG" "$RUNNER_TEMP/kernel" | tee "$RUNNER_TEMP/kernel_transcript.log"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: zavod-kernel-run-${{ matrix.run }}
@@ -86,10 +101,10 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '22'
+          node-version: '22.23.3'
       - name: Job Object unit (Windows; M-Z5-01, раздел 18)
         shell: bash
         working-directory: zavod/kernel

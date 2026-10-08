@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/server.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 13:30 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 22:46 +03:00 (v0.2: аудит E3-5 M-E35-05 —
+//   KERNEL_STOP_FILE обязателен: без него процесс не стартует и к базе не подключается)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: процесс Kernel: проверка роли при старте, GET /internal/health на 127.0.0.1
 //   (H1.31 §7.7, сигнал 1), цикл доставщика outbox. Приём команд по сети — этап 4
@@ -17,17 +18,24 @@ const PORT = Number(process.env.KERNEL_HEALTH_PORT || 18954);
 const TICK_MS = Number(process.env.KERNEL_DISPATCH_MS || 5000);
 
 const log = (o) => process.stdout.write(JSON.stringify({ t: new Date().toISOString(), ...o }) + '\n');
+// SR-10 (M-E35-05): выключатель обязателен. Без пути процесс завершается с кодом 3 до подключения
+// к базе; при нечитаемом или неизвестном файле Kernel стартует остановленным (stopState).
+if (!process.env.KERNEL_STOP_FILE || !process.env.KERNEL_STOP_FILE.trim()) {
+  log({ ev: 'kernel_refused', code: 'KERNEL_STOP_FILE_REQUIRED' });
+  process.exit(3);
+}
 const kernel = new Kernel({
   connection: {
     host: process.env.PGHOST || '127.0.0.1',
     port: Number(process.env.PGPORT || 5432),
     database: process.env.PGDATABASE || 'bem',
   },
-  stopFile: process.env.KERNEL_STOP_FILE || null,
+  stopFile: process.env.KERNEL_STOP_FILE,
   log,
 });
 
 await kernel.assertIdentity();
+log({ ev: 'stop_state', reason: kernel.health().stop_reason });
 let lastDispatch = null;
 
 // Заглушка Egress: внешних действий нет, исход честно неизвестен (не SENT).

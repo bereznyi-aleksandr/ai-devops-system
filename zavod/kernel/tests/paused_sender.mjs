@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/paused_sender.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:15 +03:00 (v0.2: аудит Z5 M-Z5-01 —
+// ВЕРСИЯ: v0.2.1  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.2.1: стоп-файл RUN — M-E35-05;
+//   v0.2: аудит Z5 M-Z5-01 —
 //   после отметки исполнитель порождает потомка с доступом к адаптеру, отделённого через setsid;
 //   связь с надзирателем — строки JSON в stdout и файл GO, без IPC: исполнитель запущен через sudo)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -14,7 +15,7 @@
 import { appendFileSync, existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { Kernel } from '../src/kernel.mjs';
-import { CONN } from './helpers.mjs';
+import { CONN, runStopFile } from './helpers.mjs';
 
 const [counterFile, worker, lease, mine, goFile, descendant] = process.argv.slice(2);
 const rt = process.env.ZAVOD_RUNTIME_INSTANCE;
@@ -30,7 +31,7 @@ const t = setInterval(() => { if (existsSync(go)) { appendFileSync(counter, 'des
 `;
 
 say({ ev: 'READY', pid: process.pid, runtime_instance: rt });
-const kernel = new Kernel({ connection: CONN });
+const kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-sender-') });
 await kernel.dispatchOnce(async (row) => {
   // Чужие строки сразу возвращаются как FAILED, чтобы не держать их (как claim() в ext01).
   if (row.outbox_id !== mine) return { outcome: 'FAILED', detail: { released_by_test: 'paused_sender' } };
