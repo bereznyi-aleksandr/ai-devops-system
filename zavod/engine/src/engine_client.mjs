@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/src/engine_client.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:10 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:25 +03:00 (v0.2: failJob, deadLetterJobs — E4-5)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:10 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 11:21 +03:00 (v0.3: адресная доставка и
+//   trigger повторяются при оптимистической блокировке Flowable (CI 37904024472, прогон 1: два подпроцесса
+//   одновременно обновили родителя n7) — отказавшая транзакция движка откатана целиком, повтор безопасен; v0.2: failJob, deadLetterJobs — E4-5)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: клиент REST Flowable 8.0.0 для Завода (этап 4). Движок слушает только 127.0.0.1;
 //   учётку движка знает только Kernel-оркестратор (H1.31 §12.1 п.5: REST движка закрыт для всех,
@@ -93,13 +95,29 @@ export class EngineClient {
     return (await this.must('GET', `/service/runtime/process-instances?${qs}`))?.data ?? [];
   }
 
+  // Оптимистическая блокировка Flowable: «was updated by another transaction concurrently» — транзакция
+  // движка откатана целиком (сообщение не принято, переход не сделан), повтор того же запроса безопасен.
+  // Любой другой отказ — сразу наверх. Не больше attempts попыток; последняя ошибка — наверх.
+  async mustOnConflictRetry(method, path, body, attempts = 6) {
+    for (let i = 1; ; i += 1) {
+      const r = await this.api(method, path, body);
+      if ([200, 201, 204].includes(r.status)) return r.json;
+      const conflict = (r.status === 409 || r.status === 500) && /updated by another transaction concurrently/.test(r.text);
+      if (!conflict || i >= attempts) {
+        throw new EngineError('ENGINE_HTTP', `${method} ${path} -> ${r.status} ${r.text}`, { status: r.status, attempts: i });
+      }
+      this.conflictRetries = (this.conflictRetries || 0) + 1;
+      await new Promise((res) => setTimeout(res, 50 * i));
+    }
+  }
+
   // Адресная доставка (§12.1 п.4): только по идентификатору исполнения, без рассылки-сигнала.
   messageToExecution(executionId, messageName) {
-    return this.must('PUT', `/service/runtime/executions/${executionId}`, { action: 'messageEventReceived', messageName });
+    return this.mustOnConflictRetry('PUT', `/service/runtime/executions/${executionId}`, { action: 'messageEventReceived', messageName });
   }
 
   trigger(executionId, variables) {
-    return this.must('PUT', `/service/runtime/executions/${executionId}`, { action: 'trigger', variables: EngineClient.vars(variables) });
+    return this.mustOnConflictRetry('PUT', `/service/runtime/executions/${executionId}`, { action: 'trigger', variables: EngineClient.vars(variables) });
   }
 
   async tasks(q) {
