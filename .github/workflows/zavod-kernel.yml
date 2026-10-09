@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.7.1
+# ВЕРСИЯ: v0.8
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-09 11:23 +03:00 (v0.7.1: слияние v0.6.1 этапа 4 — проверка версии psql без /dev/stderr;
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-09 13:16 +03:00 (v0.8: этап 5 E5-6 — самопроверка сканера продукта
+#   catalog/ci/product_scan.mjs и SR-02 по zavod/catalog без исключений; v0.7.1: слияние v0.6.1 этапа 4 — проверка версии psql без /dev/stderr;
 #   v0.7: слияние этапов 4 и 5 — задание jobobject (M-E46-03, PG16 + полный
 #   fencer.test.mjs на Job Object) и самопроверка приёмки P1; v0.6 (этап 4): аудит E4-6 M-E46-03;
 #   v0.6 (этап 5): самопроверка приёмки P1 (заглушка Bot API, плохой бот обязан не пройти); v0.5: E4-8 — единица «контейнер»: ZAVOD_CONTAINER_IMAGE — тот же
@@ -161,7 +162,7 @@ jobs:
           if-no-files-found: ignore
 
   catalog_p1:
-    name: catalog P1 acceptance selftest
+    name: catalog P1 acceptance and product scanner selftest
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -175,3 +176,10 @@ jobs:
           set -o pipefail
           node --test zavod/catalog/P1_telegram_bot/acceptance/selftest/selftest.test.mjs | tee "$RUNNER_TEMP/p1_selftest.out"
           grep -q '^# pass 2$' "$RUNNER_TEMP/p1_selftest.out" && grep -q '^# fail 0$' "$RUNNER_TEMP/p1_selftest.out"
+      - name: product scanner selftest (E5-6) and SR-02 over zavod/catalog
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test zavod/catalog/ci/product_scan.test.mjs | tee "$RUNNER_TEMP/pscan_selftest.out"
+          grep -q '^# pass 12$' "$RUNNER_TEMP/pscan_selftest.out" && grep -q '^# fail 0$' "$RUNNER_TEMP/pscan_selftest.out"
+          node zavod/kernel/ci/leak_scan.mjs zavod/catalog
