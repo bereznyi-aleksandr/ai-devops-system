@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/engine/ci/engine_ci.sh
-# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:45 +03:00 (v0.2: E4-5 e45_limits.mjs; точный префикс act_)
+# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 08:05 +03:00 (v0.3: E4-4 e44_hostile_request.mjs; v0.2: E4-5 e45_limits.mjs; точный префикс act_)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: Завод, этап 4, E4-3 на чистом PostgreSQL 16: установка H1.31 + Z-EXT-01 (как kernel_ci.sh),
 #   тесты проверщика графа, Flowable 8.0.0 на PostgreSQL (схема bem_engine в отдельной базе, как
@@ -94,6 +94,9 @@ if [ "$UP" -eq 1 ]; then
   echo "=== E4-5 предел попыток и расход (SR-07)"
   PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
     "$NODE" ci/e45_limits.mjs || fail "E4-5 SR-07 limits"
+  echo "=== E4-4 вредная заявка (T1)"
+  PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
+    "$NODE" ci/e44_hostile_request.mjs || fail "E4-4 T1 hostile request"
 fi
 kill "$ENGINE_PID" 2>/dev/null
 TABLES_ENGINE=$(q bem_engine_e43 "select count(*) from information_schema.tables where table_schema='bem_engine' and left(table_name, 4) = 'act_'")

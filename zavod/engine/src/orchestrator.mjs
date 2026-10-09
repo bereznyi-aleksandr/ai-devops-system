@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:05 +03:00 (v0.3: E4-7 — роль вызывающего в каждой
+// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:40 +03:00 (v0.4: E4-4 — текст заявки
+//   (request) пишется в доказательство CreateWorkItem, Kernel проверяет его на секреты (SECRET_IN_REQUEST); в движок
+//   текст не попадает; рабочий получает его в пакете задачи как данные; v0.3: E4-7 — роль вызывающего в каждой
 //   команде Kernel: kernel, auditor, operator; v0.2: E4-5 — SR-07:
 //   каждая попытка рабочего пишется в журнал расхода (RecordUsage); предел неудачных попыток и бюджет
 //   токенов на работу; превышение — работа BLOCKED через Kernel, задание движка снимается без повторов;
@@ -21,7 +23,7 @@ import { randomUUID } from 'node:crypto';
 import { TOPICS } from './graph_check.mjs';
 import { EngineError } from './engine_client.mjs';
 
-export const ORCH_VERSION = '0.2.0';
+export const ORCH_VERSION = '0.4.0';
 export const DEFAULT_LIMITS = Object.freeze({ maxFailedAttempts: 3, tokenBudget: 200000 });
 export const EXEC_TOPICS = Object.freeze(['exec-anthropic', 'exec-openai']);
 const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
@@ -36,7 +38,7 @@ export async function stubWorker() {
 export class Orchestrator {
   // kernel: Kernel; engine: EngineClient; actor: исполнитель-автор работы (делегирован Kernel);
   // tenantId: заказчик; governance: { assignAuditors(tenantId, subjectId) }; egress(row): внешний исполнитель.
-  // runWorker({ provider, workKey, subIndex, attempt_no }) → { outcome: 'OK'|'PROVIDER_ERROR', usage: {...} };
+  // runWorker({ provider, workKey, subIndex, attempt_no, request }) → { outcome: 'OK'|'PROVIDER_ERROR', usage: {...} };
   // по умолчанию — учебная заглушка без модели. limits — SR-07.
   constructor({ kernel, engine, actor, tenantId, governance, egress, providers = ['anthropic', 'openai'],
     runWorker = stubWorker, limits = DEFAULT_LIMITS, log = () => {} }) {
@@ -46,6 +48,7 @@ export class Orchestrator {
     this.pendingAcks = new Set(); // подпроцессы, у которых результат записан и ждёт подтверждения
     this.handled = [];          // { node, pid, ok }
     this.refused = [];          // { node, pid, code, reason } — задания, снятые без повторов (SR-07)
+    this.requests = new Map();  // work_item_id → текст заявки (данные для рабочего, не команды)
   }
 
   // role — роль вызывающего по таблице 3.1 (src/roles.mjs Kernel); шаги оркестратора — роль kernel.
@@ -71,8 +74,10 @@ export class Orchestrator {
   evidence(kind, payload) { return this.cmd('RecordEvidence', { kind, payload }); }
 
   // §12.1 п.5: сначала работа в Kernel, затем старт экземпляра сообщением bemIntake.
-  async startWork({ work_item_id = randomUUID(), criticality = 'NORMAL', note = 'E4-3' } = {}) {
-    await this.cmd('CreateWorkItem', { work_item_id, criticality, evidence: { zavod: 'E4-3', note } });
+  async startWork({ work_item_id = randomUUID(), criticality = 'NORMAL', note = 'E4-3', request = null } = {}) {
+    const evidence = request === null ? { zavod: 'E4-3', note } : { zavod: 'E4-3', note, request: String(request) };
+    await this.cmd('CreateWorkItem', { work_item_id, criticality, evidence });
+    if (request !== null) this.requests.set(work_item_id, String(request));
     const pi = await this.engine.startByMessage('bemIntake', { workKey: work_item_id, tenantId: this.tenantId, pass: 0 }, work_item_id);
     return { work_item_id, pid: pi.id };
   }
@@ -208,7 +213,8 @@ export class Orchestrator {
       const attempt_no = u.last_attempt + 1;
       let r;
       try {
-        r = await this.runWorker({ provider: v.provider, workKey: wi, subIndex: v.subIndex, attempt_no });
+        r = await this.runWorker({ provider: v.provider, workKey: wi, subIndex: v.subIndex, attempt_no,
+          request: this.requests.get(wi) ?? null });
       } catch (e) {
         r = { outcome: 'PROVIDER_ERROR', usage: {}, error: String(e?.message || e).slice(0, 200) };
       }
