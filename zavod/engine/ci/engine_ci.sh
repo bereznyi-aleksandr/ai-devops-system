@@ -93,8 +93,8 @@ if [ "$UP" -eq 1 ]; then
     "$NODE" ci/e43_training_order.mjs || fail "E4-3 training order"
 fi
 kill "$ENGINE_PID" 2>/dev/null
-TABLES_ENGINE=$(q bem_engine_e43 "select count(*) from information_schema.tables where table_schema='bem_engine' and table_name like 'act_%'")
-TABLES_BEM=$(q bem "select count(*) from information_schema.tables where table_name like 'act_%'")
+TABLES_ENGINE=$(q bem_engine_e43 "select count(*) from information_schema.tables where table_schema='bem_engine' and left(table_name, 4) = 'act_'")
+TABLES_BEM=$(q bem "select count(*) from information_schema.tables where left(table_name, 4) = 'act_'")
 echo "=== таблиц ACT_* в bem_engine_e43.bem_engine: $TABLES_ENGINE; в базе bem: $TABLES_BEM"
 [ "${TABLES_ENGINE:-0}" -gt 0 ] && [ "${TABLES_BEM:-1}" -eq 0 ] || fail "engine tables misplaced"
 
