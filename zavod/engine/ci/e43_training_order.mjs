@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: zavod/engine/ci/e43_training_order.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:25 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:40 +03:00 (v0.2: проверка журнала расхода SR-07; v0.1: E4-3)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: критерий E4-3 протокола Z1 v1.9 — учебный заказ на заглушке продукта проходит узлы 1–20
 //   графа H1.31 §12; все переходы — через Kernel. Два заказа:
@@ -129,7 +129,11 @@ const wis = [A.work_item_id, B.work_item_id];
 const st = (await sa.query('SELECT id, status, revision, criticality FROM bem_core.work_item WHERE id = ANY($1)', [wis])).rows;
 const cl = (await sa.query('SELECT * FROM bem_core.command_log WHERE work_item_id = ANY($1) ORDER BY created_at, command_id', [wis])).rows;
 const ob = (await sa.query('SELECT * FROM bem_core.outbox WHERE work_item_id = ANY($1)', [wis])).rows;
+const usage = (await sa.query('SELECT work_item_id, attempt_no, provider, outcome FROM bem_core.usage_record WHERE work_item_id = ANY($1)', [wis])).rows;
 await sa.end();
+const uA = usage.filter((r) => r.work_item_id === A.work_item_id && r.outcome === 'OK').length;
+const uB = usage.filter((r) => r.work_item_id === B.work_item_id && r.outcome === 'OK').length;
+check('e43_usage_recorded', uA === 6 && uB === 2 && usage.length === 8, `расход: A ${uA} попыток OK (3 прохода × 2), B ${uB}; всего строк ${usage.length}`);
 writeFileSync(join(OUT, 'e43_command_log.json'), JSON.stringify({ work_items: st, command_log: cl, outbox: ob, kernel_transitions: orch.transitions }, null, 1));
 const stOf = (id) => st.find((r) => r.id === id)?.status;
 check('e43_A_released', stOf(A.work_item_id) === 'RELEASED', `A status ${stOf(A.work_item_id)}`);

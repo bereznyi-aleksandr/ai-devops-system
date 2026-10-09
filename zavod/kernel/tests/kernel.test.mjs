@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/kernel.test.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:30 +03:00 (v0.3: аудит E3-5 —
+// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:45 +03:00 (v0.4: этап 4 — GetUsage, SR-07; v0.3: аудит E3-5 —
 //   M-E35-01: подмена входа после старта ловится в каждой команде и каждом проходе доставщика;
 //   M-E35-05: SR-10 закрыт по умолчанию, server.mjs без стоп-файла не стартует;
 //   v0.2: отрицательные случаи §6.1 для обеих областей)
@@ -228,6 +228,24 @@ test('журнал расхода пишется функцией record_usage',
     payload: { work_item_id: wi, provider: 'anthropic', model: 'claude-subscription', input_tokens: 1200,
       output_tokens: 300, context_estimate: 5000, context_limit: 200000 } });
   assert.equal(r.ok, true, JSON.stringify(r.error));
+});
+
+test('SR-07 / E4-5: GetUsage сводит расход своей работы; чужой заказчик работы не видит', async () => {
+  const wi = await newItem();
+  const rec = (attempt_no, outcome, tokens) => kernel.execute(as(ids.author), { type: 'RecordUsage', actor_id: ids.author,
+    tenant_id: ids.tenantA, payload: { work_item_id: wi, attempt_no, provider: 'anthropic', model: 'stub',
+      input_tokens: tokens, output_tokens: 10, outcome } });
+  assert.equal((await rec(1, 'PROVIDER_ERROR', 100)).ok, true);
+  assert.equal((await rec(2, 'OK', 200)).ok, true);
+  const u = await kernel.execute(as(ids.author), { type: 'GetUsage', actor_id: ids.author, tenant_id: ids.tenantA,
+    payload: { work_item_id: wi } });
+  assert.equal(u.ok, true, JSON.stringify(u.error));
+  assert.deepEqual(u.result, { attempts: 2, failed: 1, tokens: 320, last_attempt: 2 });
+  const other = await kernel.execute(as(ids.author), { type: 'GetUsage', actor_id: ids.author, tenant_id: ids.tenantB,
+    payload: { work_item_id: wi } });
+  assert.equal(other.ok, false);
+  assert.ok(['NOT_FOUND', 'TENANT_FORBIDDEN', 'NOT_A_MEMBER', 'PERMISSION_DENIED'].includes(other.error.code) || /tenant|member/i.test(other.error.message),
+    JSON.stringify(other.error));
 });
 
 test('доставщик забирает строку outbox и фиксирует исход; неоднозначный исход не повторяется сам', async () => {

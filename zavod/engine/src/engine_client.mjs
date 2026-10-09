@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: zavod/engine/src/engine_client.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:10 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:10 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:10 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:25 +03:00 (v0.2: failJob, deadLetterJobs — E4-5)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: клиент REST Flowable 8.0.0 для Завода (этап 4). Движок слушает только 127.0.0.1;
 //   учётку движка знает только Kernel-оркестратор (H1.31 §12.1 п.5: REST движка закрыт для всех,
@@ -66,6 +66,16 @@ export class EngineClient {
 
   completeJob(jobId, workerId, variables = {}) {
     return this.must('POST', `/external-job-api/acquire/jobs/${jobId}/complete`, { workerId, variables: EngineClient.vars(variables) });
+  }
+
+  // Снять задание без повторов (retries 0): движок не продвигается, задание уходит в «мёртвые».
+  failJob(jobId, workerId, errorMessage) {
+    return this.must('POST', `/external-job-api/acquire/jobs/${jobId}/fail`, { workerId, errorMessage, retries: 0, retryTimeout: 'PT0S' });
+  }
+
+  async deadLetterJobs(q) {
+    const qs = new URLSearchParams({ size: '500', ...q }).toString();
+    return (await this.must('GET', `/service/management/deadletter-jobs?${qs}`))?.data ?? [];
   }
 
   async executions(q) {

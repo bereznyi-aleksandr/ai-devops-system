@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 22:46 +03:00 (v0.4: аудит E3-5 —
+// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:20 +03:00 (v0.5: этап 4 E4-5 —
+//   команда чтения GetUsage для предела попыток и расхода SR-07; записи не меняются; v0.4: аудит E3-5 —
 //   M-E35-01 роль проверяется на том же клиенте в каждой транзакции и у доставщика; M-E35-05 SR-10
 //   закрыт по умолчанию; v0.3: аудит Z4 M-Z4-01 — отметка
 //   начала отправки несёт экземпляр среды исполнения; v0.2: Z-EXT-01 — отметка начала отправки, аудит Z2 M-Z2-02)
@@ -19,7 +20,7 @@ import { hostname } from 'node:os';
 import { allowedFrom, STATUSES, INITIAL_STATUS } from './transitions.mjs';
 import { findSecret, isStopped, stopState } from './guards.mjs';
 
-export const KERNEL_VERSION = '0.4.0';
+export const KERNEL_VERSION = '0.5.0';
 export const KERNEL_ROLE = 'bem_kernel_rw';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -295,6 +296,21 @@ const HANDLERS = {
         p.output_tokens ?? 0, p.cached_tokens ?? 0, p.tool_overhead ?? 0, p.context_estimate ?? 0,
         p.context_limit ?? 0, p.measured_by || 'LOCAL_ESTIMATE', p.outcome || 'OK']);
     return { usage_id: rows[0].id };
+  },
+
+  // SR-07 (этап 4, E4-5): сводка расхода по работе — попытки, неудачные попытки, токены.
+  // Только чтение; заказчик сверяется явно и через видимость работы (H1.31 §8.2).
+  async GetUsage(c, req, p) {
+    needUuid(p.work_item_id, 'work_item_id');
+    const wi = await c.query('SELECT 1 FROM bem_core.work_item WHERE id = $1 AND tenant_id = $2', [p.work_item_id, req.tenant_id]);
+    need(wi.rows.length === 1, 'NOT_FOUND', 'work item not visible');
+    const { rows } = await c.query(
+      `SELECT count(*)::int AS attempts,
+              count(*) FILTER (WHERE outcome <> 'OK')::int AS failed,
+              coalesce(sum(coalesce(input_tokens, 0) + coalesce(output_tokens, 0)), 0)::bigint AS tokens,
+              coalesce(max(attempt_no), 0)::int AS last_attempt
+         FROM bem_core.usage_record WHERE work_item_id = $1 AND tenant_id = $2`, [p.work_item_id, req.tenant_id]);
+    return { ...rows[0], tokens: Number(rows[0].tokens) };
   },
 
   async GetWorkItem(c, req, p) {

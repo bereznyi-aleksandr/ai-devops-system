@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:15 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:25 +03:00 (v0.2: E4-5 — SR-07:
+//   каждая попытка рабочего пишется в журнал расхода (RecordUsage); предел неудачных попыток и бюджет
+//   токенов на работу; превышение — работа BLOCKED через Kernel, задание движка снимается без повторов;
+//   рабочий для работы не в PLANNED/IN_PROGRESS не запускается)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: оркестратор Kernel над движком (Завод, этап 4, E4-3). Движок хранит только положение
 //   в графе H1.31 §12; каждое изменение работы (статус, доказательство, предмет, вердикт, выпуск,
@@ -17,19 +20,31 @@ import { randomUUID } from 'node:crypto';
 import { TOPICS } from './graph_check.mjs';
 import { EngineError } from './engine_client.mjs';
 
-export const ORCH_VERSION = '0.1.0';
+export const ORCH_VERSION = '0.2.0';
+export const DEFAULT_LIMITS = Object.freeze({ maxFailedAttempts: 3, tokenBudget: 200000 });
 export const EXEC_TOPICS = Object.freeze(['exec-anthropic', 'exec-openai']);
 const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
+const REFUSE_CODES = new Set(['SR07_BLOCKED', 'WORK_NOT_RUNNABLE']);
+
+// Учебная заглушка рабочего: без модели и сети, расход — оценка.
+export async function stubWorker() {
+  return { outcome: 'OK', usage: { model: 'zavod-stub', input_tokens: 1000, output_tokens: 200, context_estimate: 1200,
+    context_limit: 200000, measured_by: 'LOCAL_ESTIMATE' } };
+}
 
 export class Orchestrator {
   // kernel: Kernel; engine: EngineClient; actor: исполнитель-автор работы (делегирован Kernel);
   // tenantId: заказчик; governance: { assignAuditors(tenantId, subjectId) }; egress(row): внешний исполнитель.
-  constructor({ kernel, engine, actor, tenantId, governance, egress, providers = ['anthropic', 'openai'], log = () => {} }) {
-    Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, log });
+  // runWorker({ provider, workKey, subIndex, attempt_no }) → { outcome: 'OK'|'PROVIDER_ERROR', usage: {...} };
+  // по умолчанию — учебная заглушка без модели. limits — SR-07.
+  constructor({ kernel, engine, actor, tenantId, governance, egress, providers = ['anthropic', 'openai'],
+    runWorker = stubWorker, limits = DEFAULT_LIMITS, log = () => {} }) {
+    Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log });
     this.workerId = `zavod-kernel-orch-${process.pid}`;
     this.transitions = [];      // { work_item_id, from, to, command_id, node }
     this.pendingAcks = new Set(); // подпроцессы, у которых результат записан и ждёт подтверждения
     this.handled = [];          // { node, pid, ok }
+    this.refused = [];          // { node, pid, code, reason } — задания, снятые без повторов (SR-07)
   }
 
   async cmd(type, payload, { caller = this.actor, command_id } = {}) {
@@ -67,7 +82,17 @@ export class Orchestrator {
       const jobs = await this.engine.acquire(topic, this.workerId);
       for (const job of jobs) {
         const vars = await this.engine.processVars(job.processInstanceId);
-        const out = await this.handle(topic, job, vars);
+        let out;
+        try {
+          out = await this.handle(topic, job, vars);
+        } catch (e) {
+          if (!REFUSE_CODES.has(e?.code)) throw e;
+          // SR-07: задание снимается без повторов; движок не продвигается, работа ждёт решения.
+          await this.engine.failJob(job.id, this.workerId, `${e.code}: ${e.message}`.slice(0, 250));
+          this.refused.push({ node: job.elementId, pid: job.processInstanceId, code: e.code, reason: e.message });
+          n += 1;
+          continue;
+        }
         await this.engine.completeJob(job.id, this.workerId, out);
         this.handled.push({ node: job.elementId, pid: job.processInstanceId, topic });
         n += 1;
@@ -86,11 +111,8 @@ export class Orchestrator {
   async handle(topic, job, v) {
     const node = job.elementId;
     if (EXEC_TOPICS.includes(topic)) {
-      // Подзадача у поставщика: учебная заглушка без модели; результат — запись Evidence через Kernel.
       if (node !== 's2' || `exec-${v.provider}` !== topic) throw new EngineError('JOB_UNEXPECTED', `${topic} ${node}`);
-      await this.evidence('E43_SUBTASK_RESULT', { work_item_id: v.workKey, provider: v.provider, sub_index: v.subIndex, stub: true });
-      this.pendingAcks.add(job.processInstanceId);
-      return {};
+      return this.runSubtask(job, v);
     }
     if (TOPICS[node] !== topic) throw new EngineError('JOB_UNEXPECTED', `${topic} ${node}`);
     const wi = v.workKey;
@@ -159,6 +181,47 @@ export class Orchestrator {
       }
       default:
         throw new EngineError('JOB_UNEXPECTED', `${topic} ${node}`);
+    }
+  }
+
+  // SR-07: попытки рабочего до успеха или до предела. Каждая попытка — строка журнала расхода.
+  limitReason(u) {
+    if (u.failed >= this.limits.maxFailedAttempts) return `failed attempts ${u.failed} >= ${this.limits.maxFailedAttempts}`;
+    if (u.tokens > this.limits.tokenBudget) return `tokens ${u.tokens} > budget ${this.limits.tokenBudget}`;
+    return null;
+  }
+
+  async runSubtask(job, v) {
+    const wi = v.workKey;
+    const s = await this.status(wi);
+    if (!['PLANNED', 'IN_PROGRESS'].includes(s.status)) throw new EngineError('WORK_NOT_RUNNABLE', `${wi} ${s.status}`);
+    for (;;) {
+      const u = await this.cmd('GetUsage', { work_item_id: wi });
+      const why = this.limitReason(u);
+      if (why) {
+        await this.move(wi, 'BLOCKED', 's2', { evidence: { zavod: 'SR-07', node: 's2', reason: why, usage: u } });
+        await this.evidence('SR07_LIMIT_EXCEEDED', { work_item_id: wi, reason: why, usage: u, limits: this.limits });
+        throw new EngineError('SR07_BLOCKED', why, { work_item_id: wi });
+      }
+      const attempt_no = u.last_attempt + 1;
+      let r;
+      try {
+        r = await this.runWorker({ provider: v.provider, workKey: wi, subIndex: v.subIndex, attempt_no });
+      } catch (e) {
+        r = { outcome: 'PROVIDER_ERROR', usage: {}, error: String(e?.message || e).slice(0, 200) };
+      }
+      const outcome = r?.outcome === 'OK' ? 'OK' : 'PROVIDER_ERROR';
+      const us = r?.usage || {};
+      await this.cmd('RecordUsage', { work_item_id: wi, attempt_no, provider: v.provider, model: us.model || 'zavod-stub',
+        input_tokens: us.input_tokens ?? 0, output_tokens: us.output_tokens ?? 0, cached_tokens: us.cached_tokens ?? 0,
+        tool_overhead: us.tool_overhead ?? 0, context_estimate: us.context_estimate ?? 0, context_limit: us.context_limit ?? 0,
+        measured_by: us.measured_by === 'PROVIDER_REPORTED' ? 'PROVIDER_REPORTED' : 'LOCAL_ESTIMATE', outcome });
+      if (outcome !== 'OK') continue;
+      const after = await this.cmd('GetUsage', { work_item_id: wi });
+      if (this.limitReason(after)) continue;   // результат записан, но бюджет превышен — на следующем круге BLOCKED
+      await this.evidence('E43_SUBTASK_RESULT', { work_item_id: wi, provider: v.provider, sub_index: v.subIndex, attempt_no });
+      this.pendingAcks.add(job.processInstanceId);
+      return {};
     }
   }
 
