@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/crash_child.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.2: стоп-файл RUN — M-E35-05)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: явная роль вызывающего; прежнее 2026-10-08 23:12 +03:00) (v0.2: стоп-файл RUN — M-E35-05)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: дочерний процесс теста E3-3. Выполняет переход через Kernel и замирает
 //   в точке, заданной режимом, чтобы родитель убил процесс жёстко (TerminateProcess / SIGKILL).
@@ -21,7 +21,7 @@ const kernel = new Kernel({
     : null,
 });
 
-const r = await kernel.execute({ actor_id: actor }, {
+const r = await kernel.execute({ actor_id: actor, role: 'kernel' }, {
   type: 'Transition', actor_id: actor, tenant_id: tenant, command_id: cmd,
   payload: { work_item_id: wi, expected_revision: Number(rev), new_status: status,
     outbox_kind: 'notify.send', outbox_payload: { crash: mode }, evidence: { crash: mode } },

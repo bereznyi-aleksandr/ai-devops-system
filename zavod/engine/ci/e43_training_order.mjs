@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: zavod/engine/ci/e43_training_order.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:40 +03:00 (v0.2: проверка журнала расхода SR-07; v0.1: E4-3)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: флаг requireRole снят — роль обязательна в Kernel всегда; прежнее 2026-10-09 06:40 +03:00) (v0.2: проверка журнала расхода SR-07; v0.1: E4-3)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: критерий E4-3 протокола Z1 v1.9 — учебный заказ на заглушке продукта проходит узлы 1–20
 //   графа H1.31 §12; все переходы — через Kernel. Два заказа:
@@ -41,7 +41,7 @@ log('=== E4-3 training order', new Date().toISOString());
 const engine = new EngineClient({ base: process.env.ZAVOD_ENGINE_BASE || 'http://127.0.0.1:8091/flowable-rest',
   user: process.env.ZAVOD_ENGINE_USER, pass: process.env.ZAVOD_ENGINE_PASS });
 const ids = await bootFixture();
-const kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-e43-stop-'), requireRole: true });
+const kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-e43-stop-') });
 await kernel.assertIdentity();
 const egressCalls = [];
 const orch = new Orchestrator({

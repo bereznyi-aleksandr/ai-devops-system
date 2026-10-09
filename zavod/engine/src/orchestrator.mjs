@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:40 +03:00 (v0.4: E4-4 — текст заявки
+// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (v0.5: аудит E4-6 —
+//   M-E46-01 узел 17 — одна команда Kernel ReleaseAndTransition (выпуск, RELEASED, outbox в одной транзакции),
+//   отступление DEV-E43-02 снято; M-E46-02 роль шагов — поле kernelRole без подстановки в cmd; v0.4: E4-4 — текст заявки
 //   (request) пишется в доказательство CreateWorkItem, Kernel проверяет его на секреты (SECRET_IN_REQUEST); в движок
 //   текст не попадает; рабочий получает его в пакете задачи как данные; v0.3: E4-7 — роль вызывающего в каждой
 //   команде Kernel: kernel, auditor, operator; v0.2: E4-5 — SR-07:
@@ -15,15 +17,13 @@
 //   после успеха команды Kernel; отказ Kernel — задание не закрывается, ошибка наверх.
 // ОГРАНИЧЕНИЯ: назначение проверяющих — путь управления (bem_governance): оркестратор вызывает
 //   переданный обработчик governance.assignAuditors и сам ролью управления не пользуется.
-//   Отступление DEV-E43-02: §12.2 узел 17 требует выпуск и строку outbox в одной транзакции;
-//   Kernel v0.4 даёт их двумя командами (ReleaseSubject, затем Transition с outbox) — строка outbox
-//   создаётся только после успешного выпуска, обратного порядка нет. Объединение — отдельная задача.
+//   Узел 17 (§12.2): выпуск и строка outbox — одна транзакция Kernel (ReleaseAndTransition, M-E46-01).
 
 import { randomUUID } from 'node:crypto';
 import { TOPICS } from './graph_check.mjs';
 import { EngineError } from './engine_client.mjs';
 
-export const ORCH_VERSION = '0.4.0';
+export const ORCH_VERSION = '0.5.0';
 export const DEFAULT_LIMITS = Object.freeze({ maxFailedAttempts: 3, tokenBudget: 200000 });
 export const EXEC_TOPICS = Object.freeze(['exec-anthropic', 'exec-openai']);
 const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
@@ -43,6 +43,7 @@ export class Orchestrator {
   constructor({ kernel, engine, actor, tenantId, governance, egress, providers = ['anthropic', 'openai'],
     runWorker = stubWorker, limits = DEFAULT_LIMITS, log = () => {} }) {
     Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log });
+    this.kernelRole = 'kernel';  // роль шагов оркестратора по таблице 3.1; Kernel без роли отказывает
     this.workerId = `zavod-kernel-orch-${process.pid}`;
     this.transitions = [];      // { work_item_id, from, to, command_id, node }
     this.pendingAcks = new Set(); // подпроцессы, у которых результат записан и ждёт подтверждения
@@ -52,7 +53,7 @@ export class Orchestrator {
   }
 
   // role — роль вызывающего по таблице 3.1 (src/roles.mjs Kernel); шаги оркестратора — роль kernel.
-  async cmd(type, payload, { caller = this.actor, role = 'kernel', command_id } = {}) {
+  async cmd(type, payload, { caller = this.actor, role = this.kernelRole, command_id } = {}) {
     const req = { type, actor_id: caller, tenant_id: this.tenantId, payload };
     if (command_id) req.command_id = command_id;
     const r = await this.kernel.execute({ actor_id: caller, role }, req);
@@ -174,10 +175,16 @@ export class Orchestrator {
         return {};
       }
       case 'n17': {
-        const rel = await this.cmd('ReleaseSubject', { subject_id: v.subjectId, head_sha: v.headSha });
-        if (rel.released !== true) throw new EngineError('RELEASE_FAILED', JSON.stringify(rel));
-        const t = await this.move(wi, 'RELEASED', node, { outbox_kind: 'zavod.e43.deliver',
-          outbox_payload: { subject_id: v.subjectId, head_sha: v.headSha } });
+        // M-E46-01: выпуск, RELEASED и outbox — одна команда, одна транзакция Kernel.
+        const cur = await this.status(wi);
+        const command_id = randomUUID();
+        const t = await this.cmd('ReleaseAndTransition', { work_item_id: wi, subject_id: v.subjectId, head_sha: v.headSha,
+          expected_revision: cur.revision, outbox_kind: 'zavod.e43.deliver',
+          outbox_payload: { subject_id: v.subjectId, head_sha: v.headSha },
+          evidence: { zavod: 'E4-3', node, from: cur.status } }, { command_id });
+        if (t.released !== true) throw new EngineError('RELEASE_FAILED', JSON.stringify(t));
+        this.transitions.push({ work_item_id: wi, from: cur.status, to: 'RELEASED', command_id, node,
+          outbox_id: t.outbox_id ?? null });
         return { outboxId: t.outbox_id };
       }
       case 'n18': {

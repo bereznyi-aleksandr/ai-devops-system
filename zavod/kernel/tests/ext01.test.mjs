@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/ext01.test.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:15 +03:00 (v0.4: аудит Z5 —
+// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: явная роль вызывающего; прежнее 2026-10-07 21:15 +03:00) (v0.4: аудит Z5 —
 //   ограждение только целой единицы (CGROUP_KILLED + доказательство пустой единицы);
 //   v0.3: аудит Z4 M-Z4-01 —
 //   отметка и ограждение с экземпляром среды исполнения; сценарий на настоящем процессе — fencer.test.mjs;
@@ -22,7 +22,8 @@ import { CONN, bootFixture, withRole, assignAuditor, uuid } from './helpers.mjs'
 
 let ids;
 let kernel;
-const as = (actor) => ({ actor_id: actor });
+// M-E46-02: роль обязательна; по умолчанию — kernel, вердикт — auditor, решение — operator.
+const as = (actor, role = 'kernel') => ({ actor_id: actor, role });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const RT1 = 'runtime:ext01-w1';   // экземпляр среды исполнения исполнителя w1 (M-Z4-01)
 
@@ -54,7 +55,7 @@ async function publish(scope, criticality = 'CRITICAL') {
       authors: [ids.author], evidence: { test: 'ext01 publish' } } });
   return { r, subj, head };
 }
-const verdict = (aud, subj, head) => kernel.execute(as(aud), { type: 'RecordVerdict', actor_id: aud,
+const verdict = (aud, subj, head) => kernel.execute(as(aud, 'auditor'), { type: 'RecordVerdict', actor_id: aud,
   tenant_id: ids.tenantA, payload: { subject_id: subj, head_sha: head, verdict: 'ACCEPT', evidence: { reviewed: head } } });
 const release = (subj, head) => kernel.execute(as(ids.author), { type: 'ReleaseSubject', actor_id: ids.author,
   tenant_id: ids.tenantA, payload: { subject_id: subj, head_sha: head } });

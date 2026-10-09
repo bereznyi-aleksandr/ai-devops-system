@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: zavod/engine/ci/e44_hostile_request.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:50 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:50 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:50 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: флаг requireRole снят — роль обязательна в Kernel всегда; прежнее 2026-10-09 07:50 +03:00)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: критерий E4-4 протокола Z1 v1.9 (угроза T1, вредная заявка): рабочий — отдельный процесс
 //   (src/worker_sandbox.mjs) с окружением из белого списка; рабочий-вредитель ci/t1_hostile_worker.mjs.
@@ -46,7 +46,7 @@ const FAKE = ['gh', 'p_'].join('') + 'Z'.repeat(36);   // как в рабоче
 const engine = new EngineClient({ base: process.env.ZAVOD_ENGINE_BASE || 'http://127.0.0.1:8091/flowable-rest',
   user: process.env.ZAVOD_ENGINE_USER, pass: ENGINE_PASS });
 const ids = await bootFixture();
-const kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-e44-stop-'), requireRole: true });
+const kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-e44-stop-') });
 await kernel.assertIdentity();
 const defs = await engine.api('GET', '/service/repository/process-definitions?key=bem_work');
 if (!(defs.json?.data?.length > 0)) await engine.deployChecked('zavod_bem_work.bpmn20.xml',
