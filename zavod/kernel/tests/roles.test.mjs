@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: tests/roles.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:10 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:10 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:10 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (v0.2: аудит E4-6
+//   M-E46-02 — роль обязательна безусловно: без флага и с requireRole:false отказ ROLE_REQUIRED до первого
+//   подключения к базе; мутационная проверка пути оркестратора и источника Kernel)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: критерий E4-7 протокола Z1 v1.9 — машинный список ролей Kernel (src/roles.mjs) сверен с
 //   таблицей 3.1 (копия canon/Z1_v1_9_table_3_1.md, сумма закреплена); неизвестная роль и право сверх
@@ -11,6 +13,7 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { Orchestrator } from '../../engine/src/orchestrator.mjs';
 import { createHash } from 'node:crypto';
 import { Kernel, COMMAND_TYPES } from '../src/kernel.mjs';
 import { ROLES, authorize, TABLE_3_1_SECTION_SHA256 } from '../src/roles.mjs';
@@ -54,7 +57,7 @@ let ids;
 let kernel;
 before(async () => {
   ids = await bootFixture();
-  kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-roles-'), requireRole: true });
+  kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-roles-') });
   await kernel.assertIdentity();
 });
 after(async () => { await kernel?.close(); });
@@ -101,4 +104,55 @@ test('E4-7: надзиратель — EXECUTE record_outbox_fence только 
      ORDER BY 1`)).rows.map((x) => x.rolname));
   // Члены bem_governance (входы операторов) наследуют право группы и в список не входят.
   assert.deepEqual(rows, ['bem_control_owner', 'bem_governance']);
+});
+
+// ---------- M-E46-02: роль обязательна безусловно ----------
+
+// Пул-ловушка: любое подключение к базе считается и отклоняется.
+function trapPool() {
+  const p = { connects: 0, async connect() { p.connects += 1; throw new Error('DB_TOUCHED: no query allowed'); },
+    async end() {} };
+  return p;
+}
+const req = (type = 'CreateWorkItem') => ({ type, actor_id: 'claude:m46', tenant_id: uuid(),
+  payload: { work_item_id: uuid(), evidence: { t: 'm46-02' } } });
+
+test('M-E46-02: без флага, с requireRole:false и :true — без роли ROLE_REQUIRED, до базы', async () => {
+  for (const opts of [{}, { requireRole: false }, { requireRole: true }]) {
+    const pool = trapPool();
+    const k = new Kernel({ pool, stopFile: runStopFile('zavod-m46-02-'), ...opts });
+    for (const role of [undefined, null, '', 0, false, ['kernel'], { role: 'kernel' }]) {
+      const caller = role === undefined ? { actor_id: 'claude:m46' } : { actor_id: 'claude:m46', role };
+      const r = await k.execute(caller, req());
+      assert.equal(r.error.code, 'ROLE_REQUIRED', `${JSON.stringify(opts)} ${JSON.stringify(role)}`);
+    }
+    assert.equal((await k.execute({ actor_id: 'claude:m46', role: 'superuser' }, req())).error.code, 'ROLE_UNKNOWN');
+    assert.equal((await k.execute({ actor_id: 'claude:m46', role: 'auditor' }, req())).error.code, 'ROLE_FORBIDDEN');
+    assert.equal(pool.connects, 0, `${JSON.stringify(opts)}: no DB connection before role check`);
+    // Контроль: с правильной ролью запрос доходит до базы (ловушка срабатывает) — отказ давала именно роль.
+    const r = await k.execute({ actor_id: 'claude:m46', role: 'kernel' }, req());
+    assert.equal(r.error.code, 'DB_TOUCHED');
+    assert.equal(pool.connects, 1);
+  }
+});
+
+test('M-E46-02 мутация: путь оркестратора без роли и источник Kernel без условной проверки', async () => {
+  const pool = trapPool();
+  const k = new Kernel({ pool, stopFile: runStopFile('zavod-m46-02o-') });
+  const o = new Orchestrator({ kernel: k, engine: null, actor: 'claude:m46', tenantId: uuid(), governance: null,
+    egress: null });
+  for (const role of [undefined, null, '']) {
+    o.kernelRole = role;
+    await assert.rejects(o.status(uuid()), (e) => e.kernelCode === 'ROLE_REQUIRED', String(role));
+  }
+  assert.equal(pool.connects, 0);
+  o.kernelRole = 'kernel';
+  await assert.rejects(o.status(uuid()), (e) => e.kernelCode === 'DB_TOUCHED');
+  // Источник: флага отключения нет, проверка роли не стоит под условием.
+  const src = readFileSync(new URL('../src/kernel.mjs', import.meta.url), 'utf8');
+  assert.ok(!/this\.requireRole/.test(src), 'no opt-out flag');
+  assert.ok(!/if \([^)]*caller\.role !== undefined/.test(src), 'role check is not conditional');
+  // Сервер Kernel не принимает команд по сети и флаг роли не передаёт.
+  const srv = readFileSync(new URL('../src/server.mjs', import.meta.url), 'utf8');
+  assert.ok(!/requireRole/.test(srv) && !/\.execute\(/.test(srv), 'server has no command intake and no role switch');
 });

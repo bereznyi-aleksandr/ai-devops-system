@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/release_egress.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:37 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:37 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:37 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 11:19 +03:00 (v0.2: слияние с аудитом E4-6
+//   M-E46-02 — явная роль вызывающего в каждой команде)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: E5-7 и §5.2 протокола Z1 v1.9 на Kernel (PG16 + Z-EXT-01): выпуск продукта по цепочке
 //   «предмет ZAVOD_PRODUCT_RELEASE → ACCEPT {anthropic, openai} → выпуск → решение оператора-человека →
@@ -32,8 +33,10 @@ before(async () => {
 });
 after(async () => { await kernel?.close(); });
 
+// M-E46-02: роль вызывающего обязательна — по таблице 3.1: вердикт — auditor, решение — operator, остальное — kernel.
+const ROLE_OF = { RecordVerdict: 'auditor', OperatorDecision: 'operator' };
 async function ex(actor, type, payload, { tenant = ids.tenantA, command_id } = {}) {
-  const r = await kernel.execute({ actor_id: actor }, { type, actor_id: actor, tenant_id: tenant, payload,
+  const r = await kernel.execute({ actor_id: actor, role: ROLE_OF[type] || 'kernel' }, { type, actor_id: actor, tenant_id: tenant, payload,
     ...(command_id ? { command_id } : {}) });
   assert.equal(r.ok, true, `${type}: ${JSON.stringify(r.error)}`);
   return r.result;

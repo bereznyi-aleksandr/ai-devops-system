@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/container_unit.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 09:05 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 09:05 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 09:05 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: явная роль вызывающего; прежнее 2026-10-09 09:05 +03:00)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: E4-8, единица «контейнер» (CONTAINER_TERMINATED) — тот же сценарий, что fencer.test.mjs для
 //   cgroup v2: отметка → исполнитель порождает потомка с доступом к адаптеру (setsid) → пауза до вызова →
@@ -51,10 +51,10 @@ after(async () => {
 
 async function outboxRow(kind) {
   const wi = uuid();
-  let r = await kernel.execute({ actor_id: ids.author }, { type: 'CreateWorkItem', actor_id: ids.author, tenant_id: ids.tenantA,
+  let r = await kernel.execute({ actor_id: ids.author, role: 'kernel' }, { type: 'CreateWorkItem', actor_id: ids.author, tenant_id: ids.tenantA,
     payload: { work_item_id: wi, evidence: { test: 'container' } } });
   assert.equal(r.ok, true, JSON.stringify(r.error));
-  r = await kernel.execute({ actor_id: ids.author }, { type: 'Transition', actor_id: ids.author, tenant_id: ids.tenantA,
+  r = await kernel.execute({ actor_id: ids.author, role: 'kernel' }, { type: 'Transition', actor_id: ids.author, tenant_id: ids.tenantA,
     command_id: uuid(), payload: { work_item_id: wi, expected_revision: 1, new_status: 'PLANNED',
       evidence: { test: 'container outbox' }, outbox_kind: kind, outbox_payload: { t: kind } } });
   assert.equal(r.ok, true, JSON.stringify(r.error));

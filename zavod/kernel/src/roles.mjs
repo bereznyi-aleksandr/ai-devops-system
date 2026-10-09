@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/roles.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:00 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (v0.2: аудит E4-6
+//   M-E46-01 — команда ReleaseAndTransition только у роли kernel)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: машинный список ролей Kernel (этап 4, критерий E4-7) — таблица 3.1 протокола Z1 v1.9,
 //   копия в canon/Z1_v1_9_table_3_1.md (сумма раздела закреплена ниже). Для каждой роли — какие команды
@@ -26,7 +27,7 @@ export const ROLES = Object.freeze({
   analyst_executor: { z1: 'Аналитик, Исполнитель', commands: ['RecordEvidence', 'RecordUsage', ...READ] },
   auditor: { z1: 'Аудитор', commands: ['RecordVerdict', ...READ] },
   kernel: { z1: 'Kernel, Egress, доставщик, сторож', commands: ['CreateWorkItem', 'Transition', 'RecordEvidence',
-    'PublishSubject', 'ReleaseSubject', 'RecordUsage', ...READ] },
+    'PublishSubject', 'ReleaseSubject', 'ReleaseAndTransition', 'RecordUsage', ...READ] },
   egress: { z1: 'Kernel, Egress, доставщик, сторож', commands: [] },
   dispatcher: { z1: 'Kernel, Egress, доставщик, сторож', commands: [] },
   watchdog: { z1: 'Kernel, Egress, доставщик, сторож', commands: [] },

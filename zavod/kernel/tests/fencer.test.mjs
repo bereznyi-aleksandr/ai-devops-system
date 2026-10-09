@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/fencer.test.mjs
-// ВЕРСИЯ: v0.4.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 09:00 +03:00 (v0.4.1: проба
+// ВЕРСИЯ: v0.4.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: явная роль вызывающего; M-E46-03: строки ZAVOD_E48_EVIDENCE для журнала CI Windows; прежнее 2026-10-09 09:00 +03:00) (v0.4.1: проба
 //   FENCE_UNIT_UNSUPPORTED выключает и единицу-контейнер; v0.4: слияние —
 //   v0.3 (этап 3, аудит E3-5 M-E35-02): надзиратель и запись ограждения идут от штатного входа оператора H1.31
 //   (своя роль входа, член bem_governance, связанный участник, OPERATOR), не от bem_bootstrap_admin; вход
@@ -35,7 +35,8 @@ let sup;
 let dir;
 let op;      // вход оператора с полномочием OPERATOR (кластер)
 let opNo;    // тот же вид входа без полномочия
-const as = (actor) => ({ actor_id: actor });
+// M-E46-02: роль обязательна; по умолчанию — kernel, вердикт — auditor, решение — operator.
+const as = (actor, role = 'kernel') => ({ actor_id: actor, role });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const CHILD = fileURLToPath(new URL('./paused_sender.mjs', import.meta.url));
 const UNIT = CgroupUnit.supported() ? { kind: 'CGROUP_V2', method: 'CGROUP_KILLED' }
@@ -125,7 +126,7 @@ async function pausedAttempt(tag) {
 }
 
 test('M-Z5-01 / E4-8: живой потомок; ограждение всей единицы; GO эффекта не даёт; эффект ровно один',
-  { skip: unitSkip }, async () => {
+  { skip: unitSkip }, async (t) => {
     assert.ok(UNIT, 'CI must run the process-tree test: cgroup v2 or Job Object unit is required');
     const a = await pausedAttempt('tree');
     assert.equal(pidAlive(a.descPid), true, 'descendant with adapter access is alive');
@@ -161,10 +162,14 @@ test('M-Z5-01 / E4-8: живой потомок; ограждение всей �
     assert.ok(d.results.some((x) => x.outbox_id === a.id && x.finished === true));
     assert.deepEqual(effects(a.counter), ['retry'], 'exactly one external effect');
     assert.equal((await rowOf(a.id)).status, 'SENT');
+    // M-E46-03: строка-доказательство для журнала CI — печатается, только если все проверки выше прошли.
+    t.diagnostic(`ZAVOD_E48_EVIDENCE scenario=tree unit=${UNIT.kind} lease_expired=UNKNOWN_OUTCOME `
+      + `reconcile_unfenced=RECONCILE_NOT_FENCED fence_method=${f.evidence.unit_kind === UNIT.kind ? UNIT.method : '?'} `
+      + `unit_empty=${f.evidence.unit_empty_observed} go_after_fence_effects=0 effects=${effects(a.counter).length}`);
   });
 
 test('M-Z5-01 мутация E4-8: «завершить только родителя» — отказ, потомок жив и даёт эффект',
-  { skip: unitSkip }, async () => {
+  { skip: unitSkip }, async (t) => {
     assert.ok(UNIT, 'CI must run the parent-only mutation test');
     const a = await pausedAttempt('mut');
     await assert.rejects(sup.fence(key(a.id, a.epoch, a.runtimeInstance), { strategy: 'leader-only' }),
@@ -182,6 +187,8 @@ test('M-Z5-01 мутация E4-8: «завершить только родит�
     await rec.unit.kill(5000);
     assert.equal(rec.unit.populated(), false);
     assert.equal((await rowOf(a.id)).status, 'UNKNOWN_OUTCOME');
+    t.diagnostic(`ZAVOD_E48_EVIDENCE scenario=leader_only unit=${UNIT.kind} fence=FENCE_RUNTIME_ALIVE `
+      + `descendant_effects=${effects(a.counter).length} status=UNKNOWN_OUTCOME`);
   });
 
 test('FENCE_UNIT_UNSUPPORTED: без единицы исполнения попытка не запускается', () => {
