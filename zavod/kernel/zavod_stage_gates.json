@@ -1,10 +1,10 @@
 {
   "_passport": {
     "document": "zavod_stage_gates.json",
-    "version": "v0.5",
+    "version": "v0.6",
     "status": "CANDIDATE",
     "created_at": "2026-10-07 13:47 +03:00",
-    "updated_at": "2026-10-09 05:15 +03:00 (v0.5: APPROVE этапа 1 по Z10, E3-4a/E3-5 по ACCEPT ChatGPT E3-5 раунд 5, E3-4b по защите main; OD-2: WSL2 отпал)",
+    "updated_at": "2026-10-09 13:13 +03:00 (v0.6: E4-3..E4-8 PASS по ACCEPT ChatGPT E46 раунд 2; E4-1, E4-2/OD-2/OD-9 OPEN; v0.5: APPROVE этапа 1 по Z10, E3-4a/E3-5 по ACCEPT E3-5 раунд 5)",
     "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)",
     "purpose": "Состояние критериев этапов Завода и правила начала этапов (протокол Z1 v1.2, раздел 9). Проверяет src/stage_gates.mjs.",
     "limits": "PASS ставит не автор работы; у PASS обязательна ссылка на доказательство. Файл не разрешает деньги, секреты и удаление."
@@ -85,28 +85,36 @@
       "name": "Движок и рабочие",
       "criteria": {
         "E4-1": {
-          "status": "OPEN"
+          "status": "OPEN",
+          "evidence": "нужен вход claude auth login (подписка) — действие оператора"
         },
         "E4-2": {
-          "status": "OPEN"
+          "status": "OPEN",
+          "evidence": "OD-9 машинная учётная запись GitHub и OD-2 изоляция рабочих — решение оператора"
         },
         "E4-3": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361; M-E46-01 и DEV-E43-02 закрыты"
         },
         "E4-4": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361"
         },
         "E4-5": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361"
         },
         "E4-6": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361; независимый аудит E46, E46_ACCEPTED=YES"
         },
         "E4-7": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361; M-E46-02 закрыто, D-2 принят"
         },
         "E4-8": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361; M-E46-03 закрыто (Job Object в CI, PG16)"
         },
         "OD-8": {
           "status": "PASS",
