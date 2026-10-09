@@ -1,10 +1,10 @@
 {
   "_passport": {
     "document": "zavod_stage_gates.json",
-    "version": "v0.4",
+    "version": "v0.5",
     "status": "CANDIDATE",
     "created_at": "2026-10-07 13:47 +03:00",
-    "updated_at": "2026-10-07 17:38 +03:00 (v0.4: решения оператора OD-8 = Flowable (PASS), OD-2 = WSL2 выбран, установка не выполнена)",
+    "updated_at": "2026-10-09 05:15 +03:00 (v0.5: APPROVE этапа 1 по Z10, E3-4a/E3-5 по ACCEPT ChatGPT E3-5 раунд 5, E3-4b по защите main; OD-2: WSL2 отпал)",
     "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)",
     "purpose": "Состояние критериев этапов Завода и правила начала этапов (протокол Z1 v1.2, раздел 9). Проверяет src/stage_gates.mjs.",
     "limits": "PASS ставит не автор работы; у PASS обязательна ссылка на доказательство. Файл не разрешает деньги, секреты и удаление."
@@ -19,8 +19,8 @@
       "name": "Протокол и дорожная карта",
       "criteria": {
         "APPROVE": {
-          "status": "OPEN",
-          "evidence": "Z1 REVISE 8/2 (Диск 1FRKl1MRSY8HJceEjT1ejmTOeAKISA5N5); Z2 REVISE 4/3 (Диск 1X0xAt1Pxjr7baGXA-_fxkSmTamGwHZ0Z); v1.2 — раунд Z3"
+          "status": "PASS",
+          "evidence": "Z10 APPROVE 0/0/1, ChatGPT (Диск 1xYRJ_12x-S9wqBVZPrIWvqKi_v9bh09J); протокол v1.9 SHA-256 2ed9b75a…; stage1_protocol/ZAVOD_PROTOCOL_v1_9_APPROVAL_RECEIPT.md"
         }
       },
       "start_requires": []
@@ -68,15 +68,15 @@
         },
         "E3-4a": {
           "status": "PASS",
-          "evidence": "SR-01/02/08/09/10/11: tests/kernel.test.mjs, leak_scan, npm ci/audit, копия-восстановление; CI run 37628048413 (7accc4260), 3 прогона 44/44 — PASS ставит аудитор E3-5, до него это самоотчёт автора"
+          "evidence": "аудитор E3-5 (ChatGPT, openai) ACCEPT раунд 5: SR-01/02/08/09/10/11 проверены; CI run 37836114549 (8a46b1a3a), 3 прогона 63/63"
         },
         "E3-4b": {
-          "status": "OPEN",
-          "evidence": "SR-03: gh api .../branches/main .protected=false (2026-10-07); ждёт гейт OD-1a"
+          "status": "PASS",
+          "evidence": "SR-03 / OD-1a: gh api repos/bereznyi-aleksandr/ai-devops-system/branches/main .protected=true (2026-10-09); operator_decisions/OD_1A_MAIN_PROTECTION_EVIDENCE_20261007.txt"
         },
         "E3-5": {
-          "status": "OPEN",
-          "evidence": "независимый аудит кода Kernel и Z-EXT-01 — после APPROVE этапа 1"
+          "status": "PASS",
+          "evidence": "ChatGPT ACCEPT 0/0/0, E35_ACCEPTED=YES, head 8a46b1a3a, NONCE 1d753b70… (Диск ANSWER_ZAVOD_CHATGPT_AUDIT_E35_KERNEL_20261008_v5.txt, 1z5NO4qxFoKy-dcLfa-MVGnN-GsOEH_TF)"
         }
       },
       "start_requires": []
@@ -114,7 +114,7 @@
         },
         "OD-2": {
           "status": "OPEN",
-          "evidence": "оператор 2026-10-07 выбрал WSL2 (operator_decisions/OD_2_OD_8_DECISION_20261007.txt); установка не выполнена — OPEN до установки и проверки"
+          "evidence": "оператор 2026-10-07 18:20: WSL2 отпал (нет прав администратора); изоляция рабочих — другой способ, OPEN до решения и проверки"
         }
       },
       "start_requires": [
