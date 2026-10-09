@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ДОКУМЕНТ: zavod/engine/bpmn/bem_work.bpmn20.xml
+ВЕРСИЯ: v1.1
+СТАТУС: CANDIDATE
+ДАТА СОЗДАНИЯ: 2026-10-05 21:15 +03:00
+ДАТА ОБНОВЛЕНИЯ: 2026-10-09 05:55 +03:00 (v1.1: перенос в Завод для E4-3; граф не менялся, только паспорт)
+ИСПОЛНИТЕЛЬ: Claude, сессия 6a25edc4-e1c6-4158-b060-d972fa8747db (v1.0); сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf (v1.1)
+ЗАМЕНЯЕТ: N/A (ci/engine/bem_work.bpmn20.xml v1.0 остаётся для проб R50, не менялся)
+НАЗНАЧЕНИЕ: граф H1.31 раздела 12 (узлы 1-20, потоки f01-f24) для учебного заказа E4-3 протокола Z1 v1.9.
+  Разворачивается только после PASS проверщика zavod/engine/src/graph_check.mjs.
+ОГРАНИЧЕНИЯ: шаги Kernel - внешние исполнители (external-worker), их исполняет оркестратор Kernel;
+  узел 4 - Service Task вместо Business Rule Task (отступление DEV-E43-01, в проверщике).
+-->
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://bem954/spike">
+  <message id="msgIntake" name="bemIntake"/>
+
+  <process id="bem_work" name="BEM work (section 12)" isExecutable="true">
+    <startEvent id="n1" name="1 Поступление запроса">
+      <messageEventDefinition messageRef="msgIntake"/>
+    </startEvent>
+    <serviceTask id="n2" name="2 Проверка и нормализация" flowable:type="external-worker" flowable:topic="kernel"/>
+    <serviceTask id="n3" name="3 Определение заказчика" flowable:type="external-worker" flowable:topic="kernel"/>
+    <serviceTask id="n4" name="4 Оценка критичности" flowable:type="external-worker" flowable:topic="kernel"/>
+    <exclusiveGateway id="n5" name="5 Развилка по критичности"/>
+    <serviceTask id="n6" name="6 Планирование работ" flowable:type="external-worker" flowable:topic="kernel"/>
+    <callActivity id="n7" name="7 Исполнение подзадач" calledElement="bem_subtask">
+      <extensionElements>
+        <flowable:in sourceExpression="${providers.split(',')[loopCounter]}" target="provider"/>
+        <flowable:in source="workKey" target="workKey"/>
+        <flowable:in sourceExpression="${loopCounter}" target="subIndex"/>
+      </extensionElements>
+      <multiInstanceLoopCharacteristics isSequential="false">
+        <loopCardinality>${subtaskCount}</loopCardinality>
+      </multiInstanceLoopCharacteristics>
+    </callActivity>
+    <serviceTask id="n8" name="8 Сбор результатов" flowable:type="external-worker" flowable:topic="kernel"/>
+    <serviceTask id="n9" name="9 Слияние изменений" flowable:type="external-worker" flowable:topic="kernel"/>
+    <parallelGateway id="n10" name="10 Развилка качества"/>
+    <serviceTask id="n11" name="11 Системная проверка" flowable:type="external-worker" flowable:topic="kernel-check"/>
+    <serviceTask id="n12" name="12 Публикация предмета аудита" flowable:type="external-worker" flowable:topic="kernel-publish"/>
+    <parallelGateway id="n13" name="13 Слияние качества"/>
+    <serviceTask id="n14" name="14 Назначение проверяющих" flowable:type="external-worker" flowable:topic="kernel-assign"/>
+    <receiveTask id="n15" name="15 Ожидание аудита"/>
+    <exclusiveGateway id="n16" name="16 Развилка по вердикту"/>
+    <serviceTask id="n17" name="17 Подготовка внешнего действия" flowable:type="external-worker" flowable:topic="kernel"/>
+    <serviceTask id="n18" name="18 Внешнее действие" flowable:type="external-worker" flowable:topic="egress"/>
+    <userTask id="n19" name="19 Решение оператора" flowable:assignee="operator"/>
+    <endEvent id="n20" name="20 Завершение"/>
+
+    <sequenceFlow id="f01" sourceRef="n1" targetRef="n2"/>
+    <sequenceFlow id="f02" sourceRef="n2" targetRef="n3"/>
+    <sequenceFlow id="f03" sourceRef="n3" targetRef="n4"/>
+    <sequenceFlow id="f04" sourceRef="n4" targetRef="n5"/>
+    <sequenceFlow id="f05" sourceRef="n5" targetRef="n6"><conditionExpression xsi:type="tFormalExpression">${criticality == 'NORMAL'}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f06" sourceRef="n5" targetRef="n6"><conditionExpression xsi:type="tFormalExpression">${criticality == 'CRITICAL'}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f07" sourceRef="n6" targetRef="n7"/>
+    <sequenceFlow id="f08" sourceRef="n7" targetRef="n8"/>
+    <sequenceFlow id="f09" sourceRef="n8" targetRef="n9"/>
+    <sequenceFlow id="f10" sourceRef="n9" targetRef="n10"/>
+    <sequenceFlow id="f11" sourceRef="n10" targetRef="n11"/>
+    <sequenceFlow id="f12" sourceRef="n10" targetRef="n12"/>
+    <sequenceFlow id="f13" sourceRef="n11" targetRef="n13"/>
+    <sequenceFlow id="f14" sourceRef="n12" targetRef="n13"/>
+    <sequenceFlow id="f15" sourceRef="n13" targetRef="n14"/>
+    <sequenceFlow id="f16" sourceRef="n14" targetRef="n15"/>
+    <sequenceFlow id="f17" sourceRef="n15" targetRef="n16"/>
+    <sequenceFlow id="f18" sourceRef="n16" targetRef="n17"><conditionExpression xsi:type="tFormalExpression">${verdict == 'ACCEPT'}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f19" sourceRef="n16" targetRef="n6"><conditionExpression xsi:type="tFormalExpression">${verdict == 'REVISE' || verdict == 'REJECT'}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f20" sourceRef="n16" targetRef="n19"><conditionExpression xsi:type="tFormalExpression">${verdict == 'BLOCKED'}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f21" sourceRef="n17" targetRef="n18"/>
+    <sequenceFlow id="f22" sourceRef="n18" targetRef="n20"/>
+    <sequenceFlow id="f23" sourceRef="n19" targetRef="n20"><conditionExpression xsi:type="tFormalExpression">${operatorChoice == 'CANCEL'}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f24" sourceRef="n19" targetRef="n6"><conditionExpression xsi:type="tFormalExpression">${operatorChoice == 'CONTINUE'}</conditionExpression></sequenceFlow>
+  </process>
+
+  <message id="msgSubAck" name="subtaskAck"/>
+  <process id="bem_subtask" name="Рабочий контур (подзадача)" isExecutable="true">
+    <startEvent id="s1"/>
+    <serviceTask id="s2" name="Исполнение у поставщика" flowable:type="external-worker" flowable:topic="exec-${provider}"/>
+    <intermediateCatchEvent id="s3" name="Подтверждение результата">
+      <messageEventDefinition messageRef="msgSubAck"/>
+    </intermediateCatchEvent>
+    <endEvent id="s4"/>
+    <sequenceFlow id="g1" sourceRef="s1" targetRef="s2"/>
+    <sequenceFlow id="g2" sourceRef="s2" targetRef="s3"/>
+    <sequenceFlow id="g3" sourceRef="s3" targetRef="s4"/>
+  </process>
+</definitions>
