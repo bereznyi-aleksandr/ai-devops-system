@@ -135,5 +135,5 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          node --test zavod/catalog/P1_telegram_bot/acceptance/selftest/ | tee "$RUNNER_TEMP/p1_selftest.out"
+          node --test zavod/catalog/P1_telegram_bot/acceptance/selftest/selftest.test.mjs | tee "$RUNNER_TEMP/p1_selftest.out"
           grep -q '^# pass 2$' "$RUNNER_TEMP/p1_selftest.out" && grep -q '^# fail 0$' "$RUNNER_TEMP/p1_selftest.out"
