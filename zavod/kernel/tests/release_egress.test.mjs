@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/release_egress.test.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:37 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 11:19 +03:00 (v0.2: слияние с аудитом E4-6
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:37 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 13:17 +03:00 (v0.3: E5-7 манифест другого репозитория;
+//   E5-3 предмет BEM954_PROTOCOL с парой ACCEPT; v0.2: слияние с аудитом E4-6
 //   M-E46-02 — явная роль вызывающего в каждой команде)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: E5-7 и §5.2 протокола Z1 v1.9 на Kernel (PG16 + Z-EXT-01): выпуск продукта по цепочке
@@ -43,12 +44,12 @@ async function ex(actor, type, payload, { tenant = ids.tenantA, command_id } = {
 }
 
 // Выпущенный предмет: scope и число ACCEPT задаются; вердикты — проверяющие, не автор.
-async function releasedSubject(tenant, scope = RELEASE_SCOPE, auditors = ['audOpenai', 'audAnthropic']) {
+async function releasedSubject(tenant, scope = RELEASE_SCOPE, auditors = ['audOpenai', 'audAnthropic'], criticality = 'NORMAL') {
   const wi = uuid();
   await ex(ids.author, 'CreateWorkItem', { work_item_id: wi, evidence: { test: 'E5-7' } }, { tenant });
   const subj = uuid();
   const head = sha(subj).slice(0, 40);
-  await ex(ids.author, 'PublishSubject', { subject_id: subj, work_item_id: wi, head_sha: head, criticality: 'NORMAL',
+  await ex(ids.author, 'PublishSubject', { subject_id: subj, work_item_id: wi, head_sha: head, criticality,
     scope, authors: [ids.author], evidence: { test: 'E5-7' } }, { tenant });
   for (const a of auditors) {
     await assignAuditor(tenant, subj, ids[a]);
@@ -157,6 +158,17 @@ test('§5.2 строка без решения оператора-человек
   const other = await decision(ids.tenantA, s2, 'OD-OTHER');
   const r2 = await chain({ subject: s2, decisionId: other });
   await refused(r2.outboxId, 'NO_OPERATOR_DECISION');
+});
+
+test('E5-7 верный артефакт, манифест другого репозитория — отказ до вызова', async () => {
+  const { outboxId } = await chain({ manifest: { repo_id: 900000001, repo_full_name: 'other-org/other-bot' } });
+  await refused(outboxId, 'REPO_MISMATCH');
+});
+
+test('E5-3 предмет BEM954_PROTOCOL, выпущенный парой ACCEPT, — отказ до вызова', async () => {
+  const s = await releasedSubject(ids.tenantA, 'BEM954_PROTOCOL', ['audOpenai', 'audAnthropic'], 'CRITICAL');
+  const { outboxId } = await chain({ subject: s });
+  await refused(outboxId, 'BAD_SCOPE');
 });
 
 test('SR-13 строка outbox без ссылки на манифест — отказ до вызова', async () => {
