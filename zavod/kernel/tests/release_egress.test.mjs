@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/release_egress.test.mjs
 // ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:37 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 13:17 +03:00 (v0.3: E5-7 манифест другого репозитория;
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:37 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 13:17 +03:00 (v0.3: E5-2 выгрузка авторства живого предмета; E5-7 манифест другого репозитория;
 //   E5-3 предмет BEM954_PROTOCOL с парой ACCEPT; v0.2: слияние с аудитом E4-6
 //   M-E46-02 — явная роль вызывающего в каждой команде)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -19,6 +19,7 @@ import { createHash } from 'node:crypto';
 import { Kernel } from '../src/kernel.mjs';
 import { CONN, bootFixture, withRole, assignAuditor, runStopFile, uuid } from './helpers.mjs';
 import { sealManifest, loadReleaseRows, releaseViaEgress, MANIFEST_KIND, RELEASE_SCOPE } from '../src/release_manifest.mjs';
+import { checkAuthorship, loadAuthorship } from '../src/authorship_check.mjs';
 
 let ids;
 let kernel;
@@ -169,6 +170,16 @@ test('E5-3 предмет BEM954_PROTOCOL, выпущенный парой ACCEP
   const s = await releasedSubject(ids.tenantA, 'BEM954_PROTOCOL', ['audOpenai', 'audAnthropic'], 'CRITICAL');
   const { outboxId } = await chain({ subject: s });
   await refused(outboxId, 'BAD_SCOPE');
+});
+
+test('E5-2 выгрузка авторства выпущенного предмета из Kernel — PASS, сумма SHA-256', async () => {
+  const s = await releasedSubject(ids.tenantA);
+  const rows = await withRole('bem_kernel_rw', (c) => loadAuthorship(c, ids.tenantA, s.subj));
+  assert.equal(rows.subject.head_sha, s.head);
+  assert.deepEqual(rows.authors.map((a) => a.actor_id), [ids.author]);
+  const r = checkAuthorship(rows);
+  assert.deepEqual(r.problems, []);
+  assert.match(r.sha256, /^[0-9a-f]{64}$/);
 });
 
 test('SR-13 строка outbox без ссылки на манифест — отказ до вызова', async () => {
