@@ -1,10 +1,10 @@
 {
   "_passport": {
     "document": "zavod_stage_gates.json",
-    "version": "v0.6",
+    "version": "v0.7",
     "status": "CANDIDATE",
     "created_at": "2026-10-07 13:47 +03:00",
-    "updated_at": "2026-10-09 13:13 +03:00 (v0.6: E4-3..E4-8 PASS по ACCEPT ChatGPT E46 раунд 2; E4-1, E4-2/OD-2/OD-9 OPEN; v0.5: APPROVE этапа 1 по Z10, E3-4a/E3-5 по ACCEPT E3-5 раунд 5)",
+    "updated_at": "2026-10-09 18:39 +03:00 (v0.7: E4-1 — три запуска прошли, вывод В1 неоднозначен, OPEN до решения оператора; v0.6: E4-3..E4-8 PASS по ACCEPT E46 раунд 2)",
     "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)",
     "purpose": "Состояние критериев этапов Завода и правила начала этапов (протокол Z1 v1.2, раздел 9). Проверяет src/stage_gates.mjs.",
     "limits": "PASS ставит не автор работы; у PASS обязательна ссылка на доказательство. Файл не разрешает деньги, секреты и удаление."
@@ -86,7 +86,7 @@
       "criteria": {
         "E4-1": {
           "status": "OPEN",
-          "evidence": "нужен вход claude auth login (подписка) — действие оператора"
+          "evidence": "3/3 запуска без окна по подписке Pro (claude.ai, без --bare и ключа API) 2026-10-09T15:37Z; В1 НЕОДНОЗНАЧНО — нужно решение оператора о риске; stage4_engine/e41_probe/E41_EVIDENCE_V1_20261009.md SHA-256 4e84e0bd…"
         },
         "E4-2": {
           "status": "OPEN",
