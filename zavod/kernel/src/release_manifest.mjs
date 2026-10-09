@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: src/release_manifest.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:35 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:55 +03:00 (v0.2: строка outbox
+//   указывается command_id — он известен до записи манифеста, id строки выдаёт база позже; чтение строк
+//   из Kernel loadReleaseRows; манифест — Evidence вида ZAVOD_RELEASE_MANIFEST)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: SR-13 протокола Z1 v1.9 (угроза T14, критерий E5-7) — манифест выпуска и его сверка
 //   Egress до внешнего действия. Манифест связывает числовой id и полное имя репозитория продукта,
@@ -12,11 +14,13 @@
 //   (OPERATOR_DECISION с автором-человеком, называющее этот предмет и head_sha).
 // ОГРАНИЧЕНИЯ: модуль чистый — данные строк передаёт вызывающий (Egress читает их из Kernel). Неизменяемость
 //   записи Evidence манифеста обеспечивает база (H1.31: Evidence только добавляется); здесь — сверка.
-//   Подключение к Egress выпуска и запись манифеста в Evidence — следующий шаг этапа 5.
+//   Порядок записи: решение оператора → Evidence манифеста → переход со строкой outbox, в payload которой
+//   ссылка на Evidence манифеста и его печать.
 
 import { createHash } from 'node:crypto';
 
 export const RELEASE_SCOPE = 'ZAVOD_PRODUCT_RELEASE';
+export const MANIFEST_KIND = 'ZAVOD_RELEASE_MANIFEST';
 
 export class ReleaseRefused extends Error {
   constructor(code, detail) { super(`${code}: ${detail}`); this.code = code; }
@@ -39,7 +43,7 @@ const SHAPE = {
   build_run: posInt,
   test_run: posInt,
   verdict_ids: (v) => Array.isArray(v) && v.length > 0 && v.every((x) => UUID.test(x)),
-  outbox_id: (v) => UUID.test(v),
+  outbox_command_id: (v) => UUID.test(v),
   decision_evidence_id: (v) => UUID.test(v),
 };
 export const MANIFEST_FIELDS = Object.keys(SHAPE).sort();
@@ -89,7 +93,7 @@ export function verifyRelease({ manifest, artifact, subject, outbox, decision })
   need(subject.tenant_id === manifest.tenant_id, 'TENANT_MISMATCH', 'subject tenant_id');
   need(subject.work_item_id === manifest.work_item_id, 'ORDER_MISMATCH', 'subject work_item_id');
 
-  need(outbox && outbox.id === manifest.outbox_id, 'OUTBOX_MISMATCH', 'outbox id');
+  need(outbox && outbox.command_id === manifest.outbox_command_id, 'OUTBOX_MISMATCH', 'outbox command_id');
   need(outbox.tenant_id === manifest.tenant_id, 'TENANT_MISMATCH', 'outbox tenant_id');
   need(outbox.work_item_id === manifest.work_item_id, 'ORDER_MISMATCH', 'outbox work_item_id');
   const p = outbox.payload || {};
@@ -114,4 +118,27 @@ export function verifyRelease({ manifest, artifact, subject, outbox, decision })
 export async function releaseViaEgress(rows, send) {
   const seal = verifyRelease(rows);
   return send({ manifest_sha256: seal, outbox_id: rows.outbox.id });
+}
+
+// Строки для сверки из Kernel. c — клиент роли Egress; tenant_id берётся из строки, выданной
+// claim_outbox_batch. Нет манифеста нужного вида у того же заказчика — отказ до внешнего действия.
+export async function loadReleaseRows(c, claimed) {
+  await c.query("SELECT set_config('app.tenant_id', $1, false)", [claimed.tenant_id]);
+  const one = async (sql, args) => (await c.query(sql, args)).rows[0];
+  const outbox = await one(`SELECT id, tenant_id, work_item_id, command_id, kind, payload
+                              FROM bem_core.outbox WHERE id = $1`, [claimed.outbox_id]);
+  need(outbox, 'OUTBOX_MISMATCH', 'outbox row not found');
+  const ref = outbox.payload?.manifest_evidence_id;
+  need(UUID.test(ref || ''), 'NO_MANIFEST', 'outbox has no manifest reference');
+  const ev = await one('SELECT id, tenant_id, kind, payload FROM bem_core.evidence WHERE id = $1', [ref]);
+  need(ev && ev.kind === MANIFEST_KIND && ev.tenant_id === outbox.tenant_id, 'NO_MANIFEST', 'manifest evidence');
+  const manifest = ev.payload;
+  const subject = UUID.test(manifest?.subject_id || '') ? await one(
+    `SELECT id, tenant_id, work_item_id, head_sha, scope, released_at FROM bem_core.subject WHERE id = $1`,
+    [manifest.subject_id]) : null;
+  const decision = UUID.test(manifest?.decision_evidence_id || '') ? await one(
+    `SELECT e.id, e.tenant_id, e.kind, e.actor_id::text AS actor_id, e.payload, a.provider::text AS provider
+       FROM bem_core.evidence e JOIN bem_core.actor a ON a.actor_id = e.actor_id WHERE e.id = $1`,
+    [manifest.decision_evidence_id]) : null;
+  return { manifest, subject, outbox, decision };
 }

@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/release_manifest.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:36 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:36 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:36 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:55 +03:00 (v0.2: строка outbox по command_id)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: критерий E5-7 протокола Z1 v1.9 (SR-13, T14) на уровне сверки: подмена одного байта
 //   артефакта после ACCEPT блокирует выпуск; верный артефакт с манифестом другого репозитория, tenant_id
@@ -26,14 +26,14 @@ function rows() {
     repo_id: 812345678, repo_full_name: 'zavod-products/p1-bot', tenant_id: T, work_item_id: W,
     subject_id: S, head_sha: HEAD, lock_sha256: sha('lock'), artifact_sha256: sha(ARTIFACT),
     build_run: 37900000001, test_run: 37900000002, verdict_ids: [randomUUID(), randomUUID()],
-    outbox_id: O, decision_evidence_id: D,
+    outbox_command_id: O, decision_evidence_id: D,
   });
   return {
     manifest,
     artifact: Buffer.from(ARTIFACT),
     subject: { id: S, scope: 'ZAVOD_PRODUCT_RELEASE', released_at: '2026-10-09T04:30:00Z', head_sha: HEAD,
       tenant_id: T, work_item_id: W },
-    outbox: { id: O, tenant_id: T, work_item_id: W, kind: 'ZAVOD_PRODUCT_RELEASE',
+    outbox: { id: randomUUID(), command_id: O, tenant_id: T, work_item_id: W, kind: 'ZAVOD_PRODUCT_RELEASE',
       payload: { repo_id: 812345678, repo_full_name: 'zavod-products/p1-bot',
         manifest_sha256: manifest.manifest_sha256, artifact_sha256: manifest.artifact_sha256 } },
     decision: { id: D, kind: 'OPERATOR_DECISION', tenant_id: T, actor_id: 'human:operator', provider: 'human',
@@ -118,7 +118,7 @@ test('§5.2 предмет WORKING и BEM954_PROTOCOL, невыпущенный 
   await refused(r2, 'HEAD_MISMATCH');
   const r3 = rows(); r3.subject.id = randomUUID();
   await refused(r3, 'SUBJECT_MISMATCH');
-  const r4 = rows(); r4.outbox.id = randomUUID();
+  const r4 = rows(); r4.outbox.command_id = randomUUID();
   await refused(r4, 'OUTBOX_MISMATCH');
 });
 
