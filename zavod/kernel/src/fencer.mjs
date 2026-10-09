@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: src/fencer.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.4: слияние v0.3 (Job Object) и
+// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 08:55 +03:00 (v0.5: E4-8 — единица «контейнер»
+//   (ContainerUnit, способ CONTAINER_TERMINATED): PID 1 контейнера — держатель src/container_holder.mjs, исполнитель
+//   и его потомки внутри; ограждение — docker kill и ожидание остановки; выбор единицы — параметр unit;
+//   мутация leader-only гасит ведущий процесс средствами самой единицы (killLeader). v0.4: слияние v0.3 (Job Object) и
 //   v0.2.1 (аудит E3-5 M-E35-02 — надзиратель работает только под входом-членом bem_governance: проверка
 //   роли до гашения единицы и на клиенте транзакции записи; вход первой установки, Kernel, суперпользователь —
 //   отказ). v0.3: единица Windows — Job Object через хозяина win/zavod_jobhost.exe, способ
@@ -23,7 +26,11 @@
 //       ограждение — TerminateJobObject и ожидание ActiveProcesses=0). Гибель хозяина или
 //       надзирателя гасит единицу целиком (KILL_ON_JOB_CLOSE).
 //   (5) Нет ни cgroup v2, ни хозяина Job Object — FENCE_UNIT_UNSUPPORTED: попытка
-//       неидемпотентной отправки не запускается. Контейнер — этап 4 (E4-2).
+//       неидемпотентной отправки не запускается.
+//   (6) Контейнер (E4-8): docker run, PID 1 — держатель; исполнитель и все потомки в пространстве
+//       процессов контейнера, выйти из него нельзя; ограждение — docker kill (ядро гасит всё пространство)
+//       и ожидание State.Running=false. Образ — ZAVOD_CONTAINER_IMAGE (закреплён суммой), node и код Kernel
+//       подключаются только на чтение, сеть — хоста (до изоляции OD-2), без прав (--cap-drop ALL).
 // ОГРАНИЧЕНИЯ: Linux — cgroup v2 с cgroup.kill (ядро 5.14+), `sudo -n` без пароля для создания единицы
 //   и записи cgroup.kill; код исполнителя после этого работает с uid/gid надзирателя
 //   (setpriv --no-new-privs). Пустые каталоги единиц не убираются (правило «ничего не удалять»).
@@ -36,11 +43,11 @@ import { spawn, spawnSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { readFileSync, existsSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { hostname } from 'node:os';
+import { hostname, tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const FENCER_VERSION = '0.4.0';
+export const FENCER_VERSION = '0.5.0';
 // Канон §16 «Оператор»: вход надзирателя — член этой группы; полномочие OPERATOR проверяет база.
 export const FENCER_GROUP = 'bem_governance';
 // Вход первой установки H1.31 — не рабочий вход оператора; Kernel и рабочие — не оператор.
@@ -49,6 +56,8 @@ const FORBIDDEN_LOGINS = new Set(['bem_bootstrap_admin', 'bem_kernel_rw', 'bem_e
 const PASS_ENV = ['PATH', 'HOME', 'LANG', 'PGHOST', 'PGPORT', 'PGDATABASE', 'PGUSER', 'CI',
   ...(process.platform === 'win32' ? ['SYSTEMROOT', 'TEMP', 'TMP'] : [])];
 export const DEFAULT_JOBHOST = join(dirname(fileURLToPath(import.meta.url)), '..', 'win', 'zavod_jobhost.exe');
+const KERNEL_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
+const HOLDER = join(KERNEL_DIR, 'src', 'container_holder.mjs');
 
 export class FencerError extends Error {
   constructor(code, message) {
@@ -164,9 +173,67 @@ export class JobObjectUnit {
   }
 }
 
+// Единица исполнения — контейнер. PID 1 — держатель (src/container_holder.mjs): он запускает исполнителя,
+// сообщает JOB_LEADER_EXIT и живёт до docker kill, поэтому потомки исполнителя не гибнут вместе с ним
+// (иначе мутация «только ведущий» ничего бы не проверяла). Номера процессов исполнителя — внутри контейнера.
+export class ContainerUnit {
+  static supported(image = process.env.ZAVOD_CONTAINER_IMAGE) {
+    if (process.platform !== 'linux' || !image) return false;
+    return spawnSync('docker', ['version', '--format', '{{.Server.Version}}'], { encoding: 'utf8' }).status === 0;
+  }
+
+  constructor(image, runtimeInstance) {
+    this.kind = 'CONTAINER';
+    this.method = 'CONTAINER_TERMINATED';
+    this.image = image;
+    this.name = `zavod-unit-${runtimeInstance.replace(/[^A-Za-z0-9_-]/g, '_')}`;
+    this.path = `container:${this.name}`;
+  }
+
+  docker(args) { return spawnSync('docker', args, { encoding: 'utf8' }); }
+
+  spawn(argv, env) {
+    const ro = [dirname(dirname(process.execPath)), KERNEL_DIR];
+    const args = ['run', '-i', '--name', this.name, '--network', 'host', '--cap-drop', 'ALL',
+      '--security-opt', 'no-new-privileges', '--pids-limit', '64', '-u', `${process.getuid()}:${process.getgid()}`,
+      ...ro.flatMap((d) => ['-v', `${d}:${d}:ro`]), '-v', `${tmpdir()}:${tmpdir()}`, '-w', KERNEL_DIR,
+      ...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
+      this.image, process.execPath, HOLDER, ...argv];
+    return spawn('docker', args, { stdio: ['pipe', 'pipe', 'pipe'] });
+  }
+
+  // Не удалось спросить docker — единица считается непустой (отказ в безопасную сторону).
+  populated() {
+    const r = this.docker(['inspect', '-f', '{{.State.Running}}', this.name]);
+    return r.status !== 0 || r.stdout.trim() !== 'false';
+  }
+
+  pids() {
+    const r = this.docker(['top', this.name, '-eo', 'pid']);
+    return r.status === 0 ? r.stdout.split('\n').slice(1).map((x) => Number(x.trim())).filter(Boolean) : [];
+  }
+
+  // Жив ли процесс с номером внутри контейнера (для теста; остановленный контейнер — нет).
+  nsAlive(pid) { return this.docker(['exec', this.name, 'sh', '-c', `kill -0 ${Number(pid)}`]).status === 0; }
+
+  async refresh() { /* состояние читается у docker напрямую */ }
+  handle() { /* сообщения держателя: только JOB_LEADER_EXIT */ }
+
+  // Только для мутации E4-8: завершить ведущий процесс внутри контейнера.
+  async killLeader(pid) { this.docker(['exec', this.name, 'sh', '-c', `kill -9 ${Number(pid)}`]); }
+
+  async kill(timeoutMs) {
+    const r = this.docker(['kill', this.name]);
+    if (r.status !== 0 && this.populated()) throw new FencerError('FENCE_UNIT_KILL_FAILED', (r.stderr || '').trim());
+    const until = Date.now() + timeoutMs;
+    while (this.populated() && Date.now() < until) await timeout(100);
+  }
+}
+
 export class SendSupervisor {
   constructor({ connection, killTimeoutMs = 10000, observer, cgroupRoot = process.env.ZAVOD_CGROUP_ROOT,
-    jobHost = process.env.ZAVOD_JOBHOST ?? DEFAULT_JOBHOST } = {}) {
+    jobHost = process.env.ZAVOD_JOBHOST ?? DEFAULT_JOBHOST, containerImage = process.env.ZAVOD_CONTAINER_IMAGE,
+    unit = 'auto' } = {}) {
     if (!connection?.user) throw new FencerError('FENCER_CONNECTION_REQUIRED', 'operator connection with user');
     if (FORBIDDEN_LOGINS.has(connection.user)) {
       throw new FencerError('FENCER_WRONG_ROLE', `${connection.user} is not an operator login of ${FENCER_GROUP}`);
@@ -176,6 +243,8 @@ export class SendSupervisor {
     this.observer = observer || `fencer:${hostname()}:${process.pid}`;
     this.cgroupRoot = cgroupRoot;
     this.jobHost = jobHost;
+    this.containerImage = containerImage;
+    this.unitKind = unit;   // auto | cgroup | job | container
     this.runtimes = new Map();
   }
 
@@ -210,9 +279,11 @@ export class SendSupervisor {
   spawnAttempt(modulePath, args = [], { env = {} } = {}) {
     const runtimeInstance = `runtime:${randomUUID()}`;
     let unit;
-    if (CgroupUnit.supported(this.cgroupRoot)) unit = new CgroupUnit(this.cgroupRoot, runtimeInstance);
-    else if (JobObjectUnit.supported(this.jobHost)) unit = new JobObjectUnit(this.jobHost, runtimeInstance);
-    else throw new FencerError('FENCE_UNIT_UNSUPPORTED', 'no cgroup v2 or Job Object unit available; non-idempotent send is not started');
+    const want = (k) => this.unitKind === 'auto' || this.unitKind === k;
+    if (want('cgroup') && CgroupUnit.supported(this.cgroupRoot)) unit = new CgroupUnit(this.cgroupRoot, runtimeInstance);
+    else if (want('job') && JobObjectUnit.supported(this.jobHost)) unit = new JobObjectUnit(this.jobHost, runtimeInstance);
+    else if (want('container') && ContainerUnit.supported(this.containerImage)) unit = new ContainerUnit(this.containerImage, runtimeInstance);
+    else throw new FencerError('FENCE_UNIT_UNSUPPORTED', 'no cgroup v2, Job Object or container unit available; non-idempotent send is not started');
     const base = Object.fromEntries(PASS_ENV.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]]));
     const child = unit.spawn([process.execPath, modulePath, ...args],
       { ...base, ...env, ZAVOD_RUNTIME_INSTANCE: runtimeInstance });
@@ -284,7 +355,8 @@ export class SendSupervisor {
     if (terminate && (rec.unit.populated() || !rec.exit)) {
       terminatedBy = 'fencer';
       if (strategy === 'leader-only') {
-        if (rec.leaderPid && pidAlive(rec.leaderPid)) process.kill(rec.leaderPid, 'SIGKILL');
+        if (rec.unit.killLeader) await rec.unit.killLeader(rec.leaderPid);
+        else if (rec.leaderPid && pidAlive(rec.leaderPid)) process.kill(rec.leaderPid, 'SIGKILL');
       } else {
         await rec.unit.kill(this.killTimeoutMs);
       }

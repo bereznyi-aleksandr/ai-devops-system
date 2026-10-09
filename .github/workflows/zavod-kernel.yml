@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.4
+# ВЕРСИЯ: v0.5
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.4: слияние — закрепления L-E35-01 этапа 3 и задание
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-09 09:10 +03:00 (v0.5: E4-8 — единица «контейнер»: ZAVOD_CONTAINER_IMAGE — тот же
+#   закреплённый образ, что у сервера; v0.4: слияние — закрепления L-E35-01 этапа 3 и задание
 #   jobobject этапа 4; v0.3 (этап 3): аудит E3-5 L-E35-01 — действия по SHA коммита, образ PostgreSQL по
 #   digest, Node точной версией, psql из того же образа; v0.3 (этап 4): задание jobobject на windows-latest —
 #   сборка win/zavod_jobhost.exe и тест единицы Job Object; v0.2: аудит Z5 M-Z5-01 — корневая cgroup v2
@@ -57,6 +58,8 @@ jobs:
       ZAVOD_CGROUP_ROOT: /sys/fs/cgroup/zavod
       # Клиент psql/pg_dump/pg_restore/createdb — из того же образа, что и сервер (L-E35-01).
       ZAVOD_PG_IMAGE: postgres:16@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
+      # Единица «контейнер» (E4-8): образ с glibc; node и код Kernel подключаются только на чтение.
+      ZAVOD_CONTAINER_IMAGE: postgres:16@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0

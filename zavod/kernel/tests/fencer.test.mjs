@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/fencer.test.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.4: слияние —
+// ВЕРСИЯ: v0.4.1  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 09:00 +03:00 (v0.4.1: проба
+//   FENCE_UNIT_UNSUPPORTED выключает и единицу-контейнер; v0.4: слияние —
 //   v0.3 (этап 3, аудит E3-5 M-E35-02): надзиратель и запись ограждения идут от штатного входа оператора H1.31
 //   (своя роль входа, член bem_governance, связанный участник, OPERATOR), не от bem_bootstrap_admin; вход
 //   первой установки, Kernel и postgres надзиратель не принимает; член governance без OPERATOR —
@@ -184,7 +185,7 @@ test('M-Z5-01 мутация E4-8: «завершить только родит�
   });
 
 test('FENCE_UNIT_UNSUPPORTED: без единицы исполнения попытка не запускается', () => {
-  const s = new SendSupervisor({ connection: { ...CONN, user: op.role }, cgroupRoot: '', jobHost: '' });
+  const s = new SendSupervisor({ connection: { ...CONN, user: op.role }, cgroupRoot: '', jobHost: '', containerImage: '' });
   assert.throws(() => s.spawnAttempt(CHILD, []), /FENCE_UNIT_UNSUPPORTED/);
   return s.close();
 });
