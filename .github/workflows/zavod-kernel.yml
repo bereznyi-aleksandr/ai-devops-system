@@ -1,11 +1,12 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.3
+# ВЕРСИЯ: v0.4
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:05 +03:00 (v0.3: аудит E3-5 L-E35-01 — действия по SHA коммита, образ
-#   PostgreSQL по digest, Node точной версией, psql из того же образа; проверяет ci/workflow_pins.mjs;
-#   v0.2: аудит Z5 M-Z5-01 — корневая cgroup v2 Завода
-#   для ограждения единиц исполнения; ZAVOD_CGROUP_ROOT)
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.4: слияние — закрепления L-E35-01 этапа 3 и задание
+#   jobobject этапа 4; v0.3 (этап 3): аудит E3-5 L-E35-01 — действия по SHA коммита, образ PostgreSQL по
+#   digest, Node точной версией, psql из того же образа; v0.3 (этап 4): задание jobobject на windows-latest —
+#   сборка win/zavod_jobhost.exe и тест единицы Job Object; v0.2: аудит Z5 M-Z5-01 — корневая cgroup v2
+#   Завода для ограждения единиц исполнения; ZAVOD_CGROUP_ROOT)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: Завод, этап 3 — Kernel на чистом PostgreSQL 16, три независимых прогона
 #   (критерий E3-2: три прогона подряд зелёные). Каждый прогон — свой одноразовый контейнер.
@@ -94,3 +95,25 @@ jobs:
             ${{ runner.temp }}/kernel_transcript.log
             ${{ runner.temp }}/kernel/tests.out
           if-no-files-found: ignore
+
+  jobobject:
+    name: windows job object unit
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.23.3'
+      - name: Job Object unit (Windows; M-Z5-01, раздел 18)
+        shell: bash
+        working-directory: zavod/kernel
+        env:
+          CI: 'true'
+        run: |
+          set -o pipefail
+          npm ci --ignore-scripts
+          bash win/build_jobhost.sh
+          node --test tests/jobhost.test.mjs | tee "$RUNNER_TEMP/jobhost.out"
+          grep -q '^# pass 2$' "$RUNNER_TEMP/jobhost.out" && grep -q '^# skipped 0$' "$RUNNER_TEMP/jobhost.out"
+          echo "ZAVOD_JOBOBJECT_TEST_RAN=2"
