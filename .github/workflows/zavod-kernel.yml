@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.5
+# ВЕРСИЯ: v0.6
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-09 09:10 +03:00 (v0.5: E4-8 — единица «контейнер»: ZAVOD_CONTAINER_IMAGE — тот же
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:50 +03:00 (v0.6: этап 5 — самопроверка приёмки P1 (заглушка Bot API,
+#   плохой бот обязан не пройти); v0.5: E4-8 — единица «контейнер»: ZAVOD_CONTAINER_IMAGE — тот же
 #   закреплённый образ, что у сервера; v0.4: слияние — закрепления L-E35-01 этапа 3 и задание
 #   jobobject этапа 4; v0.3 (этап 3): аудит E3-5 L-E35-01 — действия по SHA коммита, образ PostgreSQL по
 #   digest, Node точной версией, psql из того же образа; v0.3 (этап 4): задание jobobject на windows-latest —
@@ -120,3 +121,19 @@ jobs:
           node --test tests/jobhost.test.mjs | tee "$RUNNER_TEMP/jobhost.out"
           grep -q '^# pass 2$' "$RUNNER_TEMP/jobhost.out" && grep -q '^# skipped 0$' "$RUNNER_TEMP/jobhost.out"
           echo "ZAVOD_JOBOBJECT_TEST_RAN=2"
+
+  catalog_p1:
+    name: catalog P1 acceptance selftest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.23.3'
+      - name: P1 acceptance harness selftest (E5-4)
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test zavod/catalog/P1_telegram_bot/acceptance/selftest/ | tee "$RUNNER_TEMP/p1_selftest.out"
+          grep -q '^# pass 2$' "$RUNNER_TEMP/p1_selftest.out" && grep -q '^# fail 0$' "$RUNNER_TEMP/p1_selftest.out"
