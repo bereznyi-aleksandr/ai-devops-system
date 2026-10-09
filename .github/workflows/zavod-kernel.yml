@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.6
+# ВЕРСИЯ: v0.6.1
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-09 11:16 +03:00 (v0.6: аудит E4-6 M-E46-03 — задание jobobject на windows-latest
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-09 11:21 +03:00 (v0.6.1: проверка версии psql без /dev/stderr — его нет в Git Bash Windows;
+#   v0.6: аудит E4-6 M-E46-03 — задание jobobject на windows-latest
 #   ставит PostgreSQL 16 (архив EDB 16.15-5, сумма закреплена), H1.31 и Z-EXT-01 и гонит полный fencer.test.mjs
 #   на Job Object без пропусков (ci/windows_fencer_ci.sh); v0.5: E4-8 — единица «контейнер»: ZAVOD_CONTAINER_IMAGE — тот же
 #   закреплённый образ, что у сервера; v0.4: слияние — закрепления L-E35-01 этапа 3 и задание
@@ -146,7 +147,8 @@ jobs:
           CI: 'true'
         run: |
           set -o pipefail
-          psql --version | tee /dev/stderr | grep -q 'PostgreSQL) 16\.'
+          psql --version
+          psql --version | grep -q 'PostgreSQL) 16\.'
           bash ci/windows_fencer_ci.sh "$GITHUB_WORKSPACE/$PKG" "$RUNNER_TEMP/winfencer" | tee "$RUNNER_TEMP/win_fencer_transcript.log"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
