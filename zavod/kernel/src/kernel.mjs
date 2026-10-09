@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:20 +03:00 (v0.5: этап 4 E4-5 —
+// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:05 +03:00 (v0.6: этап 4 E4-7 — роль вызывающего сверяется
+//   с машинным списком src/roles.mjs (таблица 3.1): неизвестная — ROLE_UNKNOWN, сверх канона — ROLE_FORBIDDEN;
+//   при requireRole роль обязательна; v0.5: этап 4 E4-5 —
 //   команда чтения GetUsage для предела попыток и расхода SR-07; записи не меняются; v0.4: аудит E3-5 —
 //   M-E35-01 роль проверяется на том же клиенте в каждой транзакции и у доставщика; M-E35-05 SR-10
 //   закрыт по умолчанию; v0.3: аудит Z4 M-Z4-01 — отметка
@@ -19,8 +21,9 @@ import { randomUUID } from 'node:crypto';
 import { hostname } from 'node:os';
 import { allowedFrom, STATUSES, INITIAL_STATUS } from './transitions.mjs';
 import { findSecret, isStopped, stopState } from './guards.mjs';
+import { authorize } from './roles.mjs';
 
-export const KERNEL_VERSION = '0.5.0';
+export const KERNEL_VERSION = '0.6.0';
 export const KERNEL_ROLE = 'bem_kernel_rw';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -54,6 +57,8 @@ export class Kernel {
   constructor(opts = {}) {
     this.pool = opts.pool || new pg.Pool({ ...(opts.connection || {}), user: KERNEL_ROLE, max: opts.max || 5 });
     this.stopFile = opts.stopFile || null;
+    // E4-7: роль вызывающего обязательна (этап 4). Без флага роль проверяется, только если передана.
+    this.requireRole = opts.requireRole === true;
     this.log = opts.log || (() => {});
     // Только для теста перезапуска E3-3: вызывается внутри транзакции перед COMMIT.
     this._beforeCommit = typeof opts.testBeforeCommit === 'function' ? opts.testBeforeCommit : null;
@@ -149,6 +154,10 @@ export class Kernel {
       need(!ss.stopped, 'KERNEL_STOPPED', `SR-10 ${ss.reason}`);
       need(caller && typeof caller.actor_id === 'string', 'UNAUTHENTICATED', 'no caller');
       need(caller.actor_id === req.actor_id, 'ACTOR_MISMATCH', 'caller differs from request actor');
+      if (this.requireRole || caller.role !== undefined) {
+        need(typeof caller.role === 'string', 'ROLE_REQUIRED', 'caller role required');
+        try { authorize(caller.role, req.type); } catch (e) { throw new KernelError(e.code, e.message.replace(/^[A-Z_]+: /, '')); }
+      }
       needUuid(req.tenant_id, 'tenant_id');
       const secret = findSecret(req);
       need(!secret, 'SECRET_IN_REQUEST', `pattern ${secret} (value not logged, SR-01)`);

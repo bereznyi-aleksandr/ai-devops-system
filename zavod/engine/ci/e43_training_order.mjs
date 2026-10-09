@@ -41,7 +41,7 @@ log('=== E4-3 training order', new Date().toISOString());
 const engine = new EngineClient({ base: process.env.ZAVOD_ENGINE_BASE || 'http://127.0.0.1:8091/flowable-rest',
   user: process.env.ZAVOD_ENGINE_USER, pass: process.env.ZAVOD_ENGINE_PASS });
 const ids = await bootFixture();
-const kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-e43-stop-') });
+const kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-e43-stop-'), requireRole: true });
 await kernel.assertIdentity();
 const egressCalls = [];
 const orch = new Orchestrator({

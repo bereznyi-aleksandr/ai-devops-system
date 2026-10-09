@@ -33,7 +33,7 @@ log('=== E4-5 SR-07 limits', new Date().toISOString());
 const engine = new EngineClient({ base: process.env.ZAVOD_ENGINE_BASE || 'http://127.0.0.1:8091/flowable-rest',
   user: process.env.ZAVOD_ENGINE_USER, pass: process.env.ZAVOD_ENGINE_PASS });
 const ids = await bootFixture();
-const kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-e45-stop-') });
+const kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-e45-stop-'), requireRole: true });
 await kernel.assertIdentity();
 const defs = await engine.api('GET', '/service/repository/process-definitions?key=bem_work');
 if (!(defs.json?.data?.length > 0)) await engine.deployChecked('zavod_bem_work.bpmn20.xml',

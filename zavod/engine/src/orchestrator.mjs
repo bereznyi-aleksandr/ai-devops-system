@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:25 +03:00 (v0.2: E4-5 — SR-07:
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:05 +03:00 (v0.3: E4-7 — роль вызывающего в каждой
+//   команде Kernel: kernel, auditor, operator; v0.2: E4-5 — SR-07:
 //   каждая попытка рабочего пишется в журнал расхода (RecordUsage); предел неудачных попыток и бюджет
 //   токенов на работу; превышение — работа BLOCKED через Kernel, задание движка снимается без повторов;
 //   рабочий для работы не в PLANNED/IN_PROGRESS не запускается)
@@ -47,10 +48,11 @@ export class Orchestrator {
     this.refused = [];          // { node, pid, code, reason } — задания, снятые без повторов (SR-07)
   }
 
-  async cmd(type, payload, { caller = this.actor, command_id } = {}) {
+  // role — роль вызывающего по таблице 3.1 (src/roles.mjs Kernel); шаги оркестратора — роль kernel.
+  async cmd(type, payload, { caller = this.actor, role = 'kernel', command_id } = {}) {
     const req = { type, actor_id: caller, tenant_id: this.tenantId, payload };
     if (command_id) req.command_id = command_id;
-    const r = await this.kernel.execute({ actor_id: caller }, req);
+    const r = await this.kernel.execute({ actor_id: caller, role }, req);
     if (!r.ok) throw new EngineError('KERNEL_REJECTED', `${type}: ${r.error.code} ${r.error.message}`, { kernelCode: r.error.code });
     return r.result;
   }
@@ -233,7 +235,7 @@ export class Orchestrator {
     if (!ex) throw new EngineError('NOT_WAITING_AUDIT', pid);
     for (const aud of auditors) {
       await this.cmd('RecordVerdict', { subject_id: v.subjectId, head_sha: v.headSha, verdict,
-        evidence: { zavod: 'E4-3', reviewed: v.headSha } }, { caller: aud });
+        evidence: { zavod: 'E4-3', reviewed: v.headSha } }, { caller: aud, role: 'auditor' });
     }
     if (verdict === 'ACCEPT') await this.move(v.workKey, 'ACCEPTED', 'n15');
     if (verdict === 'BLOCKED') await this.move(v.workKey, 'BLOCKED', 'n15');
@@ -246,7 +248,7 @@ export class Orchestrator {
     const v = await this.engine.processVars(pid);
     const task = (await this.engine.tasks({ processInstanceId: pid, taskDefinitionKey: 'n19' }))[0];
     if (!task) throw new EngineError('NO_OPERATOR_TASK', pid);
-    await this.cmd('OperatorDecision', { decision_code: 'ZAVOD-E43-N19', decision: choice, note: v.workKey }, { caller: human });
+    await this.cmd('OperatorDecision', { decision_code: 'ZAVOD-E43-N19', decision: choice, note: v.workKey }, { caller: human, role: 'operator' });
     if (choice === 'CANCEL') await this.move(v.workKey, 'CANCELLED', 'n19');
     await this.engine.completeTask(task.id, { operatorChoice: choice });
   }
