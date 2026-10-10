@@ -1,9 +1,10 @@
 // ДОКУМЕНТ: tests/stage_gates.test.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 05:15 +03:00 (v0.4: файл состояния v0.5 —
+// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-10 14:38 +03:00 (v0.5: файл состояния v1.0 —
+//   OD-2 PASS, этап 5 запрещён до E4-2; v0.4: файл состояния v0.5 —
 //   этап 4 разрешён, этап 5 запрещён до OD-2; v0.3: аудит E3-5 M-E35-03 —
 //   удаление, добавление или правка обязательного критерия или зависимости — INVALID, отказ; v0.2: E3-4a/E3-4b, OD-2)
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.4; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.5)
 // НАЗНАЧЕНИЕ: протокол Z1 v1.2 раздел 9 — этап 4 не начинается при OPEN/FAIL у APPROVE этапа 1,
 //   E3-4a, E3-4b (гейт OD-1a) или E3-5; этап 5 — при OPEN у OD-2 или OD-8; испорченный файл — отказ.
 
@@ -22,11 +23,12 @@ test('файл состояния корректен', () => {
   assert.deepEqual(validateGates(load()), []);
 });
 
-test('сейчас: этап 4 разрешён (этапы 1 и 3 PASS), этап 5 запрещён — OD-2 OPEN', () => {
+test('сейчас: этап 4 разрешён (этапы 1 и 3 PASS), этап 5 запрещён — E4-2 OPEN, OD-2 PASS', () => {
   assert.deepEqual(checkStage(load(), 4), { allow: true, blockers: [] });
   const r = checkStage(load(), 5);
   assert.equal(r.allow, false);
-  assert.ok(r.blockers.includes('4:OD-2=OPEN'), r.blockers.join(';'));
+  assert.ok(r.blockers.includes('4:E4-2=OPEN'), r.blockers.join(';'));
+  assert.ok(!r.blockers.some((b) => b.startsWith('4:OD-2=')), r.blockers.join(';'));
 });
 
 test('этап 4 разрешён, только когда всё требуемое PASS', () => {
