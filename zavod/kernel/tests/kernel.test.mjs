@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/kernel.test.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:30 +03:00 (v0.3: аудит E3-5 —
+// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: явная роль вызывающего; прежнее 2026-10-09 06:45 +03:00) (v0.4: этап 4 — GetUsage, SR-07; v0.3: аудит E3-5 —
 //   M-E35-01: подмена входа после старта ловится в каждой команде и каждом проходе доставщика;
 //   M-E35-05: SR-10 закрыт по умолчанию, server.mjs без стоп-файла не стартует;
 //   v0.2: отрицательные случаи §6.1 для обеих областей)
@@ -24,7 +24,8 @@ import { CONN, bootFixture, withRole, assignAuditor, uuid } from './helpers.mjs'
 let ids;
 let kernel;
 let stopFile;
-const as = (actor) => ({ actor_id: actor });
+// M-E46-02: роль обязательна; по умолчанию — kernel, вердикт — auditor, решение — operator.
+const as = (actor, role = 'kernel') => ({ actor_id: actor, role });
 
 before(async () => {
   ids = await bootFixture();
@@ -173,11 +174,11 @@ test('SR-10 стоп-файл закрывает приём команд без 
 // ---------- SR-11 решение оператора ----------
 
 test('SR-11 решение оператора пишется только от человека', async () => {
-  const bad = await kernel.execute(as(ids.author), { type: 'OperatorDecision', actor_id: ids.author, tenant_id: ids.tenantA,
+  const bad = await kernel.execute(as(ids.author, 'operator'), { type: 'OperatorDecision', actor_id: ids.author, tenant_id: ids.tenantA,
     payload: { decision_code: 'OD-TEST' } });
   assert.equal(bad.ok, false);
   assert.equal(bad.error.code, 'OPERATOR_MUST_BE_HUMAN');
-  const good = await kernel.execute(as(ids.humanA), { type: 'OperatorDecision', actor_id: ids.humanA, tenant_id: ids.tenantA,
+  const good = await kernel.execute(as(ids.humanA, 'operator'), { type: 'OperatorDecision', actor_id: ids.humanA, tenant_id: ids.tenantA,
     payload: { decision_code: 'OD-TEST', decision: 'APPROVE' } });
   assert.equal(good.ok, true, JSON.stringify(good.error));
   const spoof = await kernel.execute(as(ids.author), { type: 'RecordEvidence', actor_id: ids.author, tenant_id: ids.tenantA,
@@ -202,7 +203,7 @@ test('§9.4 предмет протокола выпускается тольк�
   assert.equal(early.ok, false, 'release without verdicts must fail');
   assert.equal(early.error.code, 'WAITING_AUDIT');
 
-  const unassigned = await kernel.execute(as(ids.audOpenai), { type: 'RecordVerdict', actor_id: ids.audOpenai,
+  const unassigned = await kernel.execute(as(ids.audOpenai, 'auditor'), { type: 'RecordVerdict', actor_id: ids.audOpenai,
     tenant_id: ids.tenantA, payload: { subject_id: subj, head_sha: head, verdict: 'ACCEPT', evidence: { r: 1 } } });
   assert.equal(unassigned.ok, false, 'verdict from unassigned auditor must fail');
   assert.equal(unassigned.error.code, 'AUDITOR_NOT_ASSIGNED');
@@ -210,7 +211,7 @@ test('§9.4 предмет протокола выпускается тольк�
   await assignAuditor(ids.tenantA, subj, ids.audOpenai);
   await assignAuditor(ids.tenantA, subj, ids.audAnthropic);
   for (const aud of [ids.audOpenai, ids.audAnthropic]) {
-    const v = await kernel.execute(as(aud), { type: 'RecordVerdict', actor_id: aud, tenant_id: ids.tenantA,
+    const v = await kernel.execute(as(aud, 'auditor'), { type: 'RecordVerdict', actor_id: aud, tenant_id: ids.tenantA,
       payload: { subject_id: subj, head_sha: head, verdict: 'ACCEPT', evidence: { reviewed: head } } });
     assert.equal(v.ok, true, JSON.stringify(v.error));
   }
@@ -228,6 +229,24 @@ test('журнал расхода пишется функцией record_usage',
     payload: { work_item_id: wi, provider: 'anthropic', model: 'claude-subscription', input_tokens: 1200,
       output_tokens: 300, context_estimate: 5000, context_limit: 200000 } });
   assert.equal(r.ok, true, JSON.stringify(r.error));
+});
+
+test('SR-07 / E4-5: GetUsage сводит расход своей работы; чужой заказчик работы не видит', async () => {
+  const wi = await newItem();
+  const rec = (attempt_no, outcome, tokens) => kernel.execute(as(ids.author), { type: 'RecordUsage', actor_id: ids.author,
+    tenant_id: ids.tenantA, payload: { work_item_id: wi, attempt_no, provider: 'anthropic', model: 'stub',
+      input_tokens: tokens, output_tokens: 10, outcome } });
+  assert.equal((await rec(1, 'PROVIDER_ERROR', 100)).ok, true);
+  assert.equal((await rec(2, 'OK', 200)).ok, true);
+  const u = await kernel.execute(as(ids.author), { type: 'GetUsage', actor_id: ids.author, tenant_id: ids.tenantA,
+    payload: { work_item_id: wi } });
+  assert.equal(u.ok, true, JSON.stringify(u.error));
+  assert.deepEqual(u.result, { attempts: 2, failed: 1, tokens: 320, last_attempt: 2 });
+  const other = await kernel.execute(as(ids.author), { type: 'GetUsage', actor_id: ids.author, tenant_id: ids.tenantB,
+    payload: { work_item_id: wi } });
+  assert.equal(other.ok, false);
+  assert.ok(['NOT_FOUND', 'TENANT_FORBIDDEN', 'NOT_A_MEMBER', 'PERMISSION_DENIED'].includes(other.error.code) || /tenant|member/i.test(other.error.message),
+    JSON.stringify(other.error));
 });
 
 test('доставщик забирает строку outbox и фиксирует исход; неоднозначный исход не повторяется сам', async () => {
@@ -261,7 +280,7 @@ async function publishProtocolSubject(authors = [ids.author], scope = 'BEM954_PR
   assert.equal(pub.ok, true, JSON.stringify(pub.error));
   return { subj, head };
 }
-const verdict = (aud, subj, head, v = 'ACCEPT') => kernel.execute(as(aud), { type: 'RecordVerdict', actor_id: aud,
+const verdict = (aud, subj, head, v = 'ACCEPT') => kernel.execute(as(aud, 'auditor'), { type: 'RecordVerdict', actor_id: aud,
   tenant_id: ids.tenantA, payload: { subject_id: subj, head_sha: head, verdict: v, evidence: { reviewed: head } } });
 const release = (subj, head) => kernel.execute(as(ids.author), { type: 'ReleaseSubject', actor_id: ids.author,
   tenant_id: ids.tenantA, payload: { subject_id: subj, head_sha: head } });

@@ -1,6 +1,15 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 22:46 +03:00 (v0.4: аудит E3-5 —
+// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 11:10 +03:00 (v0.7: аудит E4-6 —
+//   M-E46-02 роль вызывающего обязательна всегда (флага requireRole нет), ROLE_REQUIRED до базы;
+//   M-E46-01 команда ReleaseAndTransition: выпуск предмета, переход работы в RELEASED и строка outbox
+//   одной транзакцией; обычный Transition в RELEASED запрещён (RELEASE_VIA_RELEASE_COMMAND); найдено при
+//   проверке: доставщик падал на строке, исчерпавшей попытки (тупик пишет доказательство и требует контекст
+//   заказчика и участника) — итог строки теперь пишется в своей транзакции с контекстом её заказчика и
+//   автора команды, сбой одной строки не останавливает проход (DISPATCH_FINISH_FAILED); v0.6: этап 4 E4-7 — роль вызывающего сверяется
+//   с машинным списком src/roles.mjs (таблица 3.1): неизвестная — ROLE_UNKNOWN, сверх канона — ROLE_FORBIDDEN;
+//   при requireRole роль обязательна; v0.5: этап 4 E4-5 —
+//   команда чтения GetUsage для предела попыток и расхода SR-07; записи не меняются; v0.4: аудит E3-5 —
 //   M-E35-01 роль проверяется на том же клиенте в каждой транзакции и у доставщика; M-E35-05 SR-10
 //   закрыт по умолчанию; v0.3: аудит Z4 M-Z4-01 — отметка
 //   начала отправки несёт экземпляр среды исполнения; v0.2: Z-EXT-01 — отметка начала отправки, аудит Z2 M-Z2-02)
@@ -18,8 +27,9 @@ import { randomUUID } from 'node:crypto';
 import { hostname } from 'node:os';
 import { allowedFrom, STATUSES, INITIAL_STATUS } from './transitions.mjs';
 import { findSecret, isStopped, stopState } from './guards.mjs';
+import { authorize } from './roles.mjs';
 
-export const KERNEL_VERSION = '0.4.0';
+export const KERNEL_VERSION = '0.7.0';
 export const KERNEL_ROLE = 'bem_kernel_rw';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -53,6 +63,7 @@ export class Kernel {
   constructor(opts = {}) {
     this.pool = opts.pool || new pg.Pool({ ...(opts.connection || {}), user: KERNEL_ROLE, max: opts.max || 5 });
     this.stopFile = opts.stopFile || null;
+    // M-E46-02: роль вызывающего обязательна всегда; отключить проверку нельзя (opts.requireRole не читается).
     this.log = opts.log || (() => {});
     // Только для теста перезапуска E3-3: вызывается внутри транзакции перед COMMIT.
     this._beforeCommit = typeof opts.testBeforeCommit === 'function' ? opts.testBeforeCommit : null;
@@ -148,6 +159,8 @@ export class Kernel {
       need(!ss.stopped, 'KERNEL_STOPPED', `SR-10 ${ss.reason}`);
       need(caller && typeof caller.actor_id === 'string', 'UNAUTHENTICATED', 'no caller');
       need(caller.actor_id === req.actor_id, 'ACTOR_MISMATCH', 'caller differs from request actor');
+      need(typeof caller.role === 'string' && caller.role.length > 0, 'ROLE_REQUIRED', 'caller role required');
+      try { authorize(caller.role, req.type); } catch (e) { throw new KernelError(e.code, e.message.replace(/^[A-Z_]+: /, '')); }
       needUuid(req.tenant_id, 'tenant_id');
       const secret = findSecret(req);
       need(!secret, 'SECRET_IN_REQUEST', `pattern ${secret} (value not logged, SR-01)`);
@@ -205,11 +218,40 @@ export class Kernel {
         detail = { error: String(e?.message || e).slice(0, 200) };
       }
       if (findSecret(detail)) detail = { redacted: 'SECRET_IN_EGRESS_DETAIL' };
-      const fin = await db.query('SELECT bem_control.finish_outbox_row($1, $2, $3, $4, $5) AS ok',
-        [row.outbox_id, row.lease_epoch, worker, outcome, detail]);
-      results.push({ outbox_id: row.outbox_id, outcome, finished: fin.rows[0].ok });
+      try {
+        const finished = await this._finishRow(db, row, worker, outcome, detail);
+        results.push({ outbox_id: row.outbox_id, outcome, finished });
+      } catch (e) {
+        // Сбой записи итога одной строки не останавливает проход. Строка остаётся LEASED с отметкой
+        // начала отправки; по истечении аренды она уходит в UNKNOWN_OUTCOME и сама не повторяется.
+        if (isIdentityError(e)) throw e;
+        const err = mapDbError(e);
+        this.log({ ev: 'dispatch_finish_failed', outbox_id: row.outbox_id, code: err.code });
+        results.push({ outbox_id: row.outbox_id, outcome, finished: false, error: 'DISPATCH_FINISH_FAILED',
+          cause: err.code });
+      }
     }
     return { stopped: false, claimed: rows.length, results };
+  }
+
+  // Итог строки — своя транзакция с контекстом её заказчика и автора команды, создавшей строку
+  // (command_log.outbox_id). Нужен для тупика: finish_outbox_row пишет доказательство OUTBOX_DEAD_LETTER,
+  // а запись доказательства требует заказчика и участника (H1.31 evidence_write, current_actor_checked).
+  async _finishRow(db, row, worker, outcome, detail) {
+    await db.query('BEGIN');
+    try {
+      await db.query("SELECT set_config('app.tenant_id', $1, true)", [row.tenant_id]);
+      const a = await db.query('SELECT actor_id FROM bem_core.command_log WHERE outbox_id = $1 AND tenant_id = $2',
+        [row.outbox_id, row.tenant_id]);
+      if (a.rows.length === 1) await db.query("SELECT set_config('app.actor_id', $1, true)", [a.rows[0].actor_id]);
+      const fin = await db.query('SELECT bem_control.finish_outbox_row($1, $2, $3, $4, $5) AS ok',
+        [row.outbox_id, row.lease_epoch, worker, outcome, detail]);
+      await db.query('COMMIT');
+      return fin.rows[0].ok;
+    } catch (e) {
+      await db.query('ROLLBACK');
+      throw e;
+    }
   }
 }
 
@@ -227,6 +269,8 @@ const HANDLERS = {
     needUuid(p.work_item_id, 'work_item_id');
     need(Number.isInteger(p.expected_revision) && p.expected_revision > 0, 'BAD_REQUEST', 'expected_revision');
     need(STATUSES.includes(p.new_status), 'UNKNOWN_STATUS', String(p.new_status));
+    // M-E46-01: в RELEASED ведёт только ReleaseAndTransition — без выпуска предмета перехода нет.
+    need(p.new_status !== 'RELEASED', 'RELEASE_VIA_RELEASE_COMMAND', 'use ReleaseAndTransition');
     const from = allowedFrom(p.new_status);
     need(from.length > 0, 'TRANSITION_NOT_ALLOWED', `nothing leads to ${p.new_status}`);
     need(p.evidence && typeof p.evidence === 'object', 'BAD_REQUEST', 'evidence required');
@@ -286,6 +330,36 @@ const HANDLERS = {
     return { released: rows[0].ok };
   },
 
+  // M-E46-01 (§12.2 узел 17): выпуск предмета, переход работы в RELEASED и строка outbox — одна
+  // транзакция _tx: либо всё, либо ничего. Предмет обязан принадлежать этой работе. Повтор с тем же
+  // command_id — честный повтор apply_transition: та же строка outbox, второй не появляется.
+  // Предмет, выпущенный раньше другой командой, этой командой не «довыпускается» — ALREADY_RELEASED.
+  async ReleaseAndTransition(c, req, p) {
+    needUuid(req.command_id, 'command_id');
+    needUuid(p.work_item_id, 'work_item_id');
+    needUuid(p.subject_id, 'subject_id');
+    need(typeof p.head_sha === 'string' && p.head_sha.length > 0, 'BAD_REQUEST', 'head_sha');
+    need(Number.isInteger(p.expected_revision) && p.expected_revision > 0, 'BAD_REQUEST', 'expected_revision');
+    need(typeof p.outbox_kind === 'string' && p.outbox_kind.length > 0, 'BAD_REQUEST', 'outbox_kind required');
+    need(p.evidence && typeof p.evidence === 'object', 'BAD_REQUEST', 'evidence required');
+    const s = await c.query('SELECT work_item_id FROM bem_core.subject WHERE id = $1 AND tenant_id = $2',
+      [p.subject_id, req.tenant_id]);
+    need(s.rows.length === 1, 'NOT_FOUND', 'subject not visible');
+    need(s.rows[0].work_item_id === p.work_item_id, 'SUBJECT_WORK_MISMATCH', 'subject belongs to another work item');
+    const prev = await c.query('SELECT 1 FROM bem_core.command_log WHERE command_id = $1', [req.command_id]);
+    const replay = prev.rows.length === 1;
+    const rel = await c.query('SELECT bem_control.release_subject($1, $2, $3) AS ok',
+      [req.tenant_id, p.subject_id, p.head_sha]);
+    need(rel.rows[0].ok === true || replay, 'ALREADY_RELEASED', 'subject released outside this command');
+    const { rows } = await c.query(
+      'SELECT * FROM bem_control.apply_transition($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+      [req.tenant_id, p.work_item_id, p.expected_revision, allowedFrom('RELEASED'), 'RELEASED', req.command_id,
+        p.outbox_kind, p.outbox_payload || {}, p.evidence]);
+    const r = rows[0];
+    return { released: rel.rows[0].ok === true, replay, work_item_id: r.work_item_id, new_revision: r.new_revision,
+      outbox_id: r.outbox_id };
+  },
+
   // Журнал расхода (H1.31 §16; SR-07 на этапе 4 читает его для предела).
   async RecordUsage(c, req, p) {
     needUuid(p.work_item_id, 'work_item_id');
@@ -295,6 +369,21 @@ const HANDLERS = {
         p.output_tokens ?? 0, p.cached_tokens ?? 0, p.tool_overhead ?? 0, p.context_estimate ?? 0,
         p.context_limit ?? 0, p.measured_by || 'LOCAL_ESTIMATE', p.outcome || 'OK']);
     return { usage_id: rows[0].id };
+  },
+
+  // SR-07 (этап 4, E4-5): сводка расхода по работе — попытки, неудачные попытки, токены.
+  // Только чтение; заказчик сверяется явно и через видимость работы (H1.31 §8.2).
+  async GetUsage(c, req, p) {
+    needUuid(p.work_item_id, 'work_item_id');
+    const wi = await c.query('SELECT 1 FROM bem_core.work_item WHERE id = $1 AND tenant_id = $2', [p.work_item_id, req.tenant_id]);
+    need(wi.rows.length === 1, 'NOT_FOUND', 'work item not visible');
+    const { rows } = await c.query(
+      `SELECT count(*)::int AS attempts,
+              count(*) FILTER (WHERE outcome <> 'OK')::int AS failed,
+              coalesce(sum(coalesce(input_tokens, 0) + coalesce(output_tokens, 0)), 0)::bigint AS tokens,
+              coalesce(max(attempt_no), 0)::int AS last_attempt
+         FROM bem_core.usage_record WHERE work_item_id = $1 AND tenant_id = $2`, [p.work_item_id, req.tenant_id]);
+    return { ...rows[0], tokens: Number(rows[0].tokens) };
   },
 
   async GetWorkItem(c, req, p) {

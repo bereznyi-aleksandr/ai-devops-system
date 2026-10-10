@@ -1,11 +1,11 @@
 {
   "_passport": {
     "document": "zavod_stage_gates.json",
-    "version": "v0.5",
+    "version": "v1.0",
     "status": "CANDIDATE",
     "created_at": "2026-10-07 13:47 +03:00",
-    "updated_at": "2026-10-09 05:15 +03:00 (v0.5: APPROVE этапа 1 по Z10, E3-4a/E3-5 по ACCEPT ChatGPT E3-5 раунд 5, E3-4b по защите main; OD-2: WSL2 отпал)",
-    "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)",
+    "updated_at": "2026-10-10 14:36 +03:00 (v1.0: OD-2 PASS по ChatGPT E42 раунд 4 OD2_ACCEPTED=YES; E4-2 OPEN — CONDITIONAL до R5; v0.9: E4-2/OD-2 — пробы а–з и запрет коннекторов PASS, OPEN до независимого аудита; v0.8: E4-1 PASS по ACCEPT ChatGPT E41; v0.7: E4-1 — три запуска прошли, вывод В1 неоднозначен, OPEN до решения оператора; v0.6: E4-3..E4-8 PASS по ACCEPT E46 раунд 2)",
+    "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.9; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v1.0)",
     "purpose": "Состояние критериев этапов Завода и правила начала этапов (протокол Z1 v1.2, раздел 9). Проверяет src/stage_gates.mjs.",
     "limits": "PASS ставит не автор работы; у PASS обязательна ссылка на доказательство. Файл не разрешает деньги, секреты и удаление."
   },
@@ -85,36 +85,44 @@
       "name": "Движок и рабочие",
       "criteria": {
         "E4-1": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E41 раунд 1 ACCEPT 0/0/0 (Диск 1gFMd2xwL_ZSp1WS5MOA20xICq46Zo3E1, SHA-256 30fac225…); 3/3 запуска по подписке Pro; решение оператора А о риске В1 (OD_E41_V1_RISK_DECISION_20261009.txt c06470fb…)"
         },
         "E4-2": {
-          "status": "OPEN"
+          "status": "OPEN",
+          "evidence": "OD-9 zavod-worker-bereznyi (id 340276649); проба 2 zavod-worker-probe c4a53ec (probe_out SHA-256 c18d3518…): а–з PASS, MCP none после .claude/settings.json; E42_PROBE1_EVIDENCE_20261009.txt v1.1; ChatGPT R4 (43c8fe4b…): E42_ACCEPTED=CONDITIONAL, M-E42-01 OPEN до R5 (проба новой учётки, worker tamper, generic MCP)"
         },
         "E4-3": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361; M-E46-01 и DEV-E43-02 закрыты"
         },
         "E4-4": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361"
         },
         "E4-5": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361"
         },
         "E4-6": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361; независимый аудит E46, E46_ACCEPTED=YES"
         },
         "E4-7": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361; M-E46-02 закрыто, D-2 принят"
         },
         "E4-8": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E46 раунд 2 ACCEPT 0/0/0 (Диск 1JArZpeJKM3_0-KK_IneT_NLlV70EOLNp, SHA-256 4e22cb1b…), предмет 3a090b24b; CI 37904465314/37904465361; M-E46-03 закрыто (Job Object в CI, PG16)"
         },
         "OD-8": {
           "status": "PASS",
           "evidence": "оператор 2026-10-07 в чате: Flowable 8.0.0; operator_decisions/OD_2_OD_8_DECISION_20261007.txt"
         },
         "OD-2": {
-          "status": "OPEN",
-          "evidence": "оператор 2026-10-07 18:20: WSL2 отпал (нет прав администратора); изоляция рабочих — другой способ, OPEN до решения и проверки"
+          "status": "PASS",
+          "evidence": "ChatGPT E42 раунд 4 OD2_ACCEPTED=YES, M-E42-02 CLOSED (ANSWER Диск 1qoGyPC1clj_Wmf9k-_347QvQdkEH407h, SHA-256 43c8fe4b…); Only select 3 repo (63b769de…); оператор 2026-10-07 18:20: WSL2 отпал (нет прав администратора); изоляция рабочих — облачные сессии claude.ai: ВМ Anthropic, среда zavod-worker Custom (только registry.npmjs.org), GitHub через OD-9; пробы E4-2 PASS; OPEN до аудита"
         }
       },
       "start_requires": [
