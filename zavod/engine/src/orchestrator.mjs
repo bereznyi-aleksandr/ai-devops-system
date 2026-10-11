@@ -1,6 +1,10 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (v0.5: аудит E4-6 —
+// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-11 19:37 +03:00 (v0.6: этап 5,
+//   пилот P1 — необязательный объект pilot: head_sha берётся из результата рабочего (узел 9), системная
+//   проверка узла 11 — pilot.systemCheck, предмет узла 12 — ZAVOD_PRODUCT_RELEASE, узел 17 — pilot.prepareRelease
+//   (решение оператора W3 и манифест SR-13 до ReleaseAndTransition), вердикты — по одному на проверяющего
+//   (deliverVerdicts, id записей — audit_record_id), блокировка задания движка у пилота 12 часов (рабочий и решение W3 длятся часами); без pilot поведение v0.5 не меняется; v0.5: аудит E4-6 —
 //   M-E46-01 узел 17 — одна команда Kernel ReleaseAndTransition (выпуск, RELEASED, outbox в одной транзакции),
 //   отступление DEV-E43-02 снято; M-E46-02 роль шагов — поле kernelRole без подстановки в cmd; v0.4: E4-4 — текст заявки
 //   (request) пишется в доказательство CreateWorkItem, Kernel проверяет его на секреты (SECRET_IN_REQUEST); в движок
@@ -9,7 +13,7 @@
 //   каждая попытка рабочего пишется в журнал расхода (RecordUsage); предел неудачных попыток и бюджет
 //   токенов на работу; превышение — работа BLOCKED через Kernel, задание движка снимается без повторов;
 //   рабочий для работы не в PLANNED/IN_PROGRESS не запускается)
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6)
 // НАЗНАЧЕНИЕ: оркестратор Kernel над движком (Завод, этап 4, E4-3). Движок хранит только положение
 //   в графе H1.31 §12; каждое изменение работы (статус, доказательство, предмет, вердикт, выпуск,
 //   внешнее действие) делает Kernel своими командами. Экземпляр процесса запускает только Kernel и
@@ -23,7 +27,8 @@ import { randomUUID } from 'node:crypto';
 import { TOPICS } from './graph_check.mjs';
 import { EngineError } from './engine_client.mjs';
 
-export const ORCH_VERSION = '0.5.0';
+export const ORCH_VERSION = '0.6.0';
+export const PILOT_SCOPE = 'ZAVOD_PRODUCT_RELEASE';
 export const DEFAULT_LIMITS = Object.freeze({ maxFailedAttempts: 3, tokenBudget: 200000 });
 export const EXEC_TOPICS = Object.freeze(['exec-anthropic', 'exec-openai']);
 const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
@@ -41,8 +46,11 @@ export class Orchestrator {
   // runWorker({ provider, workKey, subIndex, attempt_no, request }) → { outcome: 'OK'|'PROVIDER_ERROR', usage: {...} };
   // по умолчанию — учебная заглушка без модели. limits — SR-07.
   constructor({ kernel, engine, actor, tenantId, governance, egress, providers = ['anthropic', 'openai'],
-    runWorker = stubWorker, limits = DEFAULT_LIMITS, log = () => {} }) {
-    Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log });
+    runWorker = stubWorker, limits = DEFAULT_LIMITS, log = () => {}, pilot = null }) {
+    // pilot (v0.6, этап 5): { systemCheck({ orch, work_item_id, head_sha }) → { result: 'PASS'|'FAIL', ... },
+    //   prepareRelease({ orch, work_item_id, subject_id, head_sha, command_id }) → { outbox_kind, outbox_payload } }
+    Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log, pilot });
+    this.heads = new Map();     // work_item_id → head_sha из результата рабочего (только pilot)
     this.kernelRole = 'kernel';  // роль шагов оркестратора по таблице 3.1; Kernel без роли отказывает
     this.workerId = `zavod-kernel-orch-${process.pid}`;
     this.transitions = [];      // { work_item_id, from, to, command_id, node }
@@ -87,7 +95,8 @@ export class Orchestrator {
   async pump() {
     let n = 0;
     for (const topic of ALL_TOPICS) {
-      const jobs = await this.engine.acquire(topic, this.workerId);
+      // v0.6: у пилота шаги длинные (рабочий — часы, решение оператора W3) — блокировка задания 12 часов.
+      const jobs = await this.engine.acquire(topic, this.workerId, this.pilot ? 'PT12H' : undefined);
       for (const job of jobs) {
         const vars = await this.engine.processVars(job.processInstanceId);
         let out;
@@ -156,17 +165,28 @@ export class Orchestrator {
         return {};
       }
       case 'n9': {
+        if (this.pilot) {
+          const head = this.heads.get(wi);
+          if (!/^[0-9a-f]{40}$/.test(head || '')) throw new EngineError('NO_WORKER_HEAD', `${wi}`);
+          await this.evidence('ZAVOD_P1_MERGED', { work_item_id: wi, head_sha: head });
+          return { headSha: head };
+        }
         await this.evidence('E43_MERGED', { work_item_id: wi, head_sha: v.headSha });
         return {};
       }
       case 'n11': {
+        if (this.pilot) {
+          const r = await this.pilot.systemCheck({ orch: this, work_item_id: wi, head_sha: v.headSha });
+          await this.evidence('ZAVOD_P1_SYSTEM_CHECK', { work_item_id: wi, head_sha: v.headSha, ...r });
+          return { systemCheck: r.result };
+        }
         await this.evidence('E43_SYSTEM_CHECK', { work_item_id: wi, head_sha: v.headSha, result: 'PASS', stub: true });
         return {};
       }
       case 'n12': {
         const subject_id = randomUUID();
         await this.cmd('PublishSubject', { subject_id, work_item_id: wi, head_sha: v.headSha, criticality: v.criticality,
-          scope: 'WORKING', authors: [this.actor], evidence: { zavod: 'E4-3', node } });
+          scope: this.pilot ? PILOT_SCOPE : 'WORKING', authors: [this.actor], evidence: { zavod: this.pilot ? 'E5' : 'E4-3', node } });
         return { subjectId: subject_id };
       }
       case 'n14': {
@@ -176,11 +196,15 @@ export class Orchestrator {
       }
       case 'n17': {
         // M-E46-01: выпуск, RELEASED и outbox — одна команда, одна транзакция Kernel.
-        const cur = await this.status(wi);
         const command_id = randomUUID();
+        // v0.6: у пилота решение оператора (W3) и манифест (SR-13) пишутся до выпуска; манифест называет command_id строки outbox.
+        const rel = this.pilot
+          ? await this.pilot.prepareRelease({ orch: this, work_item_id: wi, subject_id: v.subjectId, head_sha: v.headSha, command_id })
+          : { outbox_kind: 'zavod.e43.deliver', outbox_payload: { subject_id: v.subjectId, head_sha: v.headSha } };
+        const cur = await this.status(wi);
         const t = await this.cmd('ReleaseAndTransition', { work_item_id: wi, subject_id: v.subjectId, head_sha: v.headSha,
-          expected_revision: cur.revision, outbox_kind: 'zavod.e43.deliver',
-          outbox_payload: { subject_id: v.subjectId, head_sha: v.headSha },
+          expected_revision: cur.revision, outbox_kind: rel.outbox_kind,
+          outbox_payload: rel.outbox_payload,
           evidence: { zavod: 'E4-3', node, from: cur.status } }, { command_id });
         if (t.released !== true) throw new EngineError('RELEASE_FAILED', JSON.stringify(t));
         this.transitions.push({ work_item_id: wi, from: cur.status, to: 'RELEASED', command_id, node,
@@ -232,6 +256,7 @@ export class Orchestrator {
         tool_overhead: us.tool_overhead ?? 0, context_estimate: us.context_estimate ?? 0, context_limit: us.context_limit ?? 0,
         measured_by: us.measured_by === 'PROVIDER_REPORTED' ? 'PROVIDER_REPORTED' : 'LOCAL_ESTIMATE', outcome });
       if (outcome !== 'OK') continue;
+      if (this.pilot) this.heads.set(wi, r?.head_sha ?? null);
       const after = await this.cmd('GetUsage', { work_item_id: wi });
       if (this.limitReason(after)) continue;   // результат записан, но бюджет превышен — на следующем круге BLOCKED
       await this.evidence('E43_SUBTASK_RESULT', { work_item_id: wi, provider: v.provider, sub_index: v.subIndex, attempt_no });
@@ -253,6 +278,27 @@ export class Orchestrator {
     if (verdict === 'ACCEPT') await this.move(v.workKey, 'ACCEPTED', 'n15');
     if (verdict === 'BLOCKED') await this.move(v.workKey, 'BLOCKED', 'n15');
     await this.engine.trigger(ex.id, { verdict });
+  }
+
+  // v0.6 (пилот): у каждого проверяющего свой вердикт и своё доказательство. Итог для движка: ACCEPT — только если
+  // приняли все; BLOCKED — если хоть один BLOCKED; иначе REVISE. Вердикт пишет Kernel от имени проверяющего.
+  async deliverVerdicts(pid, items) {
+    const v = await this.engine.processVars(pid);
+    const ex = (await this.engine.executions({ processInstanceId: pid, activityId: 'n15' }))[0];
+    if (!ex) throw new EngineError('NOT_WAITING_AUDIT', pid);
+    const ids = [];
+    for (const it of items) {
+      if (!['ACCEPT', 'REVISE', 'BLOCKED'].includes(it.verdict)) throw new EngineError('BAD_VERDICT', it.verdict);
+      const r = await this.cmd('RecordVerdict', { subject_id: v.subjectId, head_sha: v.headSha, verdict: it.verdict,
+        evidence: { zavod: 'E5', reviewed: v.headSha, ...(it.evidence || {}) } }, { caller: it.auditor, role: 'auditor' });
+      ids.push(r?.audit_record_id ?? null);
+    }
+    const all = items.map((x) => x.verdict);
+    const verdict = all.every((x) => x === 'ACCEPT') ? 'ACCEPT' : all.includes('BLOCKED') ? 'BLOCKED' : 'REVISE';
+    if (verdict === 'ACCEPT') await this.move(v.workKey, 'ACCEPTED', 'n15');
+    if (verdict === 'BLOCKED') await this.move(v.workKey, 'BLOCKED', 'n15');
+    await this.engine.trigger(ex.id, { verdict });
+    return { verdict, verdict_ids: ids };
   }
 
   // Узел 19: решение оператора — Kernel OperatorDecision от человека; отмена — переход CANCELLED.
