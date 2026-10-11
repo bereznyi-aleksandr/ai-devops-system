@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.8
+# ВЕРСИЯ: v0.9
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-09 13:16 +03:00 (v0.8: этап 5 E5-6 — самопроверка сканера продукта
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-11 18:45 +03:00 (v0.9: E5-5 заготовка — журнал инъекций выпуска пилота грузится артефактом прогона; v0.8: этап 5 E5-6 — самопроверка сканера продукта
 #   catalog/ci/product_scan.mjs и SR-02 по zavod/catalog без исключений; v0.7.1: слияние v0.6.1 этапа 4 — проверка версии psql без /dev/stderr;
 #   v0.7: слияние этапов 4 и 5 — задание jobobject (M-E46-03, PG16 + полный
 #   fencer.test.mjs на Job Object) и самопроверка приёмки P1; v0.6 (этап 4): аудит E4-6 M-E46-03;
@@ -101,6 +101,8 @@ jobs:
           path: |
             ${{ runner.temp }}/kernel_transcript.log
             ${{ runner.temp }}/kernel/tests.out
+            ${{ runner.temp }}/kernel/e55_injection_journal.jsonl
+            ${{ runner.temp }}/kernel/e55_injection_journal.jsonl.sha256
           if-no-files-found: ignore
 
   jobobject:

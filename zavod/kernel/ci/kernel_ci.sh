@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
+# ВЕРСИЯ: v0.9  СТАТУС: CANDIDATE
+# v0.9 (2026-10-11 18:45 +03:00): E5-5 заготовка — журнал инъекций tests/e55_pilot_release_injection.test.mjs (ZAVOD_E55_JOURNAL), проверка 9/9 PASS и SHA-256 после тестов.
 # v0.8 (2026-10-09 09:10 +03:00): E4-8 — в CI сценарий и мутация на единице «контейнер» обязаны пройти.
 # v0.7 (2026-10-08 23:05 +03:00): аудит E3-5 — M-E35-04 сканер утечек идёт и по workflow, исключения только
 #   точной строкой, неиспользованное исключение — отказ; L-E35-01 проверка закреплений workflow.
@@ -78,6 +79,8 @@ echo "=== SR-08: закрепления workflow (L-E35-01)"
 "$NODE" ci/workflow_pins.mjs "$WF" || fail "workflow pins"
 
 echo "=== Тесты Kernel"
+# E5-5 (заготовка на заглушке): журнал инъекций пишет tests/e55_pilot_release_injection.test.mjs.
+export ZAVOD_E55_JOURNAL="$WORK/e55_injection_journal.jsonl"
 "$NODE" --test --test-concurrency=1 --test-reporter=spec tests/*.test.mjs > "$WORK/tests.out" 2>&1
 RC=$?
 grep -E '^\s*(✔|✖)|^ℹ (tests|pass|fail)' "$WORK/tests.out"
@@ -88,6 +91,20 @@ if [ "${CI:-}" = "true" ]; then
     grep -F "$T" "$WORK/tests.out" | grep -q '✔' && ! grep -F "$T" "$WORK/tests.out" | grep -q 'SKIP' \
       && echo "ZAVOD_TREE_TEST_RAN=$T" || fail "process-tree test did not run: $T"
   done
+fi
+
+# E5-5 заготовка: журнал инъекций обязан существовать, все 9 точек отказа PASS, сумма SHA-256 сходится
+# с файлом .sha256, который записал тест. Это заготовка на заглушке; E5-5 остаётся OPEN до реального конвейера.
+J="$WORK/e55_injection_journal.jsonl"
+if [ -f "$J" ] && [ -f "$J.sha256" ]; then
+  E55_SHA=$(sha256sum "$J" | cut -d' ' -f1)
+  [ "$E55_SHA" = "$(cut -d' ' -f1 "$J.sha256")" ] || fail "E5-5 journal sha256 differs from sidecar"
+  E55_N=$(wc -l < "$J" | tr -d ' ')
+  E55_PASS=$(grep -c '"verdict":"PASS"' "$J")
+  [ "$E55_N" = 9 ] && [ "$E55_PASS" = 9 ] || fail "E5-5 journal: entries=$E55_N pass=$E55_PASS (need 9/9)"
+  echo "ZAVOD_E55_JOURNAL_SHA256=$E55_SHA entries=$E55_N pass=$E55_PASS (stub draft; E5-5 stays OPEN)"
+else
+  fail "E5-5 injection journal was not written"
 fi
 
 echo "=== SR-09: копия → восстановление → сверка"
