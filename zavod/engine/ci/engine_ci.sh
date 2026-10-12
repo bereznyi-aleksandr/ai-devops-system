@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/engine/ci/engine_ci.sh
-# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:12 +03:00 (v0.6: оркестратор v0.9 — темы движка
+# ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:22 +03:00 (v0.7: последним шагом
+#   e5_rollout_gate.mjs — переход со старой модели блокируется; v0.6 от 2026-10-12 07:12 +03:00 (v0.6: оркестратор v0.9 — темы движка
 #   у каждого заказчика свои, e5_tenant_isolation v0.2 с 210 чужими заданиями; порядок шагов не менялся; v0.5: аудит ChatGPT v0.7 — проверка гейта снова после E4-4, на очереди с
 #   чужими оставшимися заданиями; новая e5_tenant_isolation.mjs — два заказчика с ожидающими заданиями одновременно;
 #   v0.4: E5 e5_system_check_gate.mjs — узел 11 без PASS не даёт выпуска; v0.3: E4-4 e44_hostile_request.mjs; v0.2: E4-5 e45_limits.mjs; точный префикс act_)
@@ -106,6 +107,9 @@ if [ "$UP" -eq 1 ]; then
   echo "=== E5 два заказчика: чужие задания не видны и не захватываются, свои не заслоняются"
   PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
     "$NODE" ci/e5_tenant_isolation.mjs || fail "E5 tenant isolation"
+  echo "=== E5 переход со старой модели: оркестратор не работает рядом с экземплярами старой модели (последний шаг)"
+  PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
+    "$NODE" ci/e5_rollout_gate.mjs || fail "E5 rollout gate"
 fi
 kill "$ENGINE_PID" 2>/dev/null
 TABLES_ENGINE=$(q bem_engine_e43 "select count(*) from information_schema.tables where table_schema='bem_engine' and left(table_name, 4) = 'act_'")

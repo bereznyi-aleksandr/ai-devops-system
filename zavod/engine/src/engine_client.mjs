@@ -1,10 +1,12 @@
 // ДОКУМЕНТ: zavod/engine/src/engine_client.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:10 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:49 +03:00 (v0.4: unacquireJob — отпустить
+// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:10 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:22 +03:00 (v0.5: для проверки перехода
+//   оркестратора v0.10 — allProcessInstances (постранично), definitionXml (текст модели целиком), latestDefinitions;
+//   v0.4: unacquireJob — отпустить
 //   захваченное задание без продвижения (оркестратор v0.8, чужие заказчики); v0.3: адресная доставка и
 //   trigger повторяются при оптимистической блокировке Flowable (CI 37904024472, прогон 1: два подпроцесса
 //   одновременно обновили родителя n7) — отказавшая транзакция движка откатана целиком, повтор безопасен; v0.2: failJob, deadLetterJobs — E4-5)
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.4 — сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.4–v0.5 — сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: клиент REST Flowable 8.0.0 для Завода (этап 4). Движок слушает только 127.0.0.1;
 //   учётку движка знает только Kernel-оркестратор (H1.31 §12.1 п.5: REST движка закрыт для всех,
 //   кроме Kernel). Развёртывание модели — только через deployChecked: сначала наш проверщик графа.
@@ -100,6 +102,31 @@ export class EngineClient {
   async processInstances(q = {}) {
     const qs = new URLSearchParams({ size: '500', ...q }).toString();
     return (await this.must('GET', `/service/runtime/process-instances?${qs}`))?.data ?? [];
+  }
+
+  // v0.5: все активные экземпляры модели по ключу — постранично, без предела одной страницы.
+  async allProcessInstances(processDefinitionKey) {
+    const out = [];
+    for (let start = 0; ; start += 500) {
+      const qs = new URLSearchParams({ processDefinitionKey, size: '500', start: String(start), sort: 'id' }).toString();
+      const data = (await this.must('GET', `/service/runtime/process-instances?${qs}`))?.data ?? [];
+      out.push(...data);
+      if (data.length < 500) return out;
+    }
+  }
+
+  // v0.5: последняя версия определения по ключу.
+  async latestDefinitions(key) {
+    return (await this.must('GET', `/service/repository/process-definitions?${new URLSearchParams({ key, latest: 'true' })}`))?.data ?? [];
+  }
+
+  // v0.5: текст модели определения целиком (api() обрезает текст ответа) — для сверки проверщиком графа.
+  async definitionXml(processDefinitionId) {
+    const r = await fetch(`${this.base}/service/repository/process-definitions/${encodeURIComponent(processDefinitionId)}/resourcedata`,
+      { headers: { Authorization: this._auth } });
+    const text = await r.text();
+    if (r.status !== 200) throw new EngineError('ENGINE_HTTP', `GET resourcedata ${processDefinitionId} -> ${r.status}`, { status: r.status });
+    return text;
   }
 
   // Оптимистическая блокировка Flowable: «was updated by another transaction concurrently» — транзакция

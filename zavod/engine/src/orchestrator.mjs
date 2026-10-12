@@ -1,6 +1,12 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.9  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:11 +03:00 (v0.9: аудит ChatGPT v0.8, MAJOR —
+// ВЕРСИЯ: v0.10  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:22 +03:00 (v0.10: аудит ChatGPT v0.9,
+//   MAJOR — переход со старой модели: экземпляры модели до v1.2 создают задания на общих темах, которые v0.9 не
+//   захватывает, — они бы зависли. Теперь до первой работы (startWork, pump) проверяется движок: последняя версия
+//   bem_work и модель каждого активного экземпляра bem_work/bem_subtask обязаны пройти проверщик графа v0.2; иначе
+//   отказ ROLLOUT_BLOCKED_LEGACY без изменения движка и Kernel. Путь перехода: дождаться завершения старых
+//   экземпляров старым оркестратором (drain) или запускать на чистом движке (пилот: свой файл H2 на прогон);
+//   v0.9 2026-10-12 07:11 +03:00 (v0.9: аудит ChatGPT v0.8, MAJOR —
 //   корректность зависела от предела 20 пачек: при 200+ чужих заданиях перед своим своё не бралось, чужие
 //   захватывались повторно на каждом проходе; MINOR — чужое задание могло остаться захваченным до 12 ч при сбое.
 //   Теперь у каждого заказчика свои темы движка (<тема>-<tenantId>, модель v1.2, проверщик v0.2): оркестратор
@@ -27,7 +33,7 @@
 //   каждая попытка рабочего пишется в журнал расхода (RecordUsage); предел неудачных попыток и бюджет
 //   токенов на работу; превышение — работа BLOCKED через Kernel, задание движка снимается без повторов;
 //   рабочий для работы не в PLANNED/IN_PROGRESS не запускается)
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6–v0.9)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6–v0.10)
 // НАЗНАЧЕНИЕ: оркестратор Kernel над движком (Завод, этап 4, E4-3). Движок хранит только положение
 //   в графе H1.31 §12; каждое изменение работы (статус, доказательство, предмет, вердикт, выпуск,
 //   внешнее действие) делает Kernel своими командами. Экземпляр процесса запускает только Kernel и
@@ -38,10 +44,10 @@
 //   Узел 17 (§12.2): выпуск и строка outbox — одна транзакция Kernel (ReleaseAndTransition, M-E46-01).
 
 import { randomUUID } from 'node:crypto';
-import { TOPICS, TENANT_SUFFIX } from './graph_check.mjs';
+import { TOPICS, TENANT_SUFFIX, PROCESS_ID, SUBPROCESS_ID, checkGraph } from './graph_check.mjs';
 import { EngineError } from './engine_client.mjs';
 
-export const ORCH_VERSION = '0.9.0';
+export const ORCH_VERSION = '0.10.0';
 export const PILOT_SCOPE = 'ZAVOD_PRODUCT_RELEASE';
 export const DEFAULT_LIMITS = Object.freeze({ maxFailedAttempts: 3, tokenBudget: 200000 });
 export const EXEC_TOPICS = Object.freeze(['exec-anthropic', 'exec-openai']);
@@ -78,6 +84,7 @@ export class Orchestrator {
     this.refused = [];          // { node, pid, code, reason } — задания, снятые без повторов (SR-07)
     this.released = 0;          // отпущено заданий с чужим или неизвестным заказчиком (v0.9: при своих темах — 0, это защита)
     this.requests = new Map();  // work_item_id → текст заявки (данные для рабочего, не команды)
+    this.rolloutChecked = false; // v0.10: движок проверен на экземпляры старой модели
   }
 
   // role — роль вызывающего по таблице 3.1 (src/roles.mjs Kernel); шаги оркестратора — роль kernel.
@@ -104,6 +111,7 @@ export class Orchestrator {
 
   // §12.1 п.5: сначала работа в Kernel, затем старт экземпляра сообщением bemIntake.
   async startWork({ work_item_id = randomUUID(), criticality = 'NORMAL', note = 'E4-3', request = null } = {}) {
+    await this.assertRolloutSafe();   // v0.10: до записи работы в Kernel
     const evidence = request === null ? { zavod: 'E4-3', note } : { zavod: 'E4-3', note, request: String(request) };
     await this.cmd('CreateWorkItem', { work_item_id, criticality, evidence });
     if (request !== null) this.requests.set(work_item_id, String(request));
@@ -113,6 +121,7 @@ export class Orchestrator {
 
   // Один проход по всем темам. Возвращает число обработанных заданий и подтверждений.
   async pump() {
+    await this.assertRolloutSafe();   // v0.10: до первого захвата
     let n = 0;
     for (const topic of ALL_TOPICS) {
       for (let round = 0; round < ACQUIRE_ROUNDS; round += 1) {
@@ -129,6 +138,28 @@ export class Orchestrator {
       n += 1;
     }
     return n;
+  }
+
+  // v0.10: переход со старой модели. Экземпляр модели без тем заказчика (до v1.2) создаёт задания на общих темах,
+  // которые этот оркестратор не захватывает, — такой экземпляр завис бы. Поэтому один раз до первой работы:
+  // последняя версия bem_work (по ней стартуют новые работы) и модель каждого активного экземпляра bem_work и
+  // bem_subtask обязаны пройти проверщик графа v0.2. Иначе — отказ; движок и Kernel не меняются.
+  // Новую старую модель после проверки развернуть нельзя: deployChecked её отклоняет (проверщик v0.2).
+  async assertRolloutSafe() {
+    if (this.rolloutChecked) return;
+    const legacy = new Map();
+    const isLegacy = async (defId) => {
+      if (!legacy.has(defId)) legacy.set(defId, !checkGraph(await this.engine.definitionXml(defId)).ok);
+      return legacy.get(defId);
+    };
+    for (const d of await this.engine.latestDefinitions(PROCESS_ID))
+      if (await isLegacy(d.id)) throw new EngineError('ROLLOUT_BLOCKED_LEGACY', `последняя версия ${PROCESS_ID} — старая модель (${d.id})`);
+    const old = [];
+    for (const key of [PROCESS_ID, SUBPROCESS_ID])
+      for (const pi of await this.engine.allProcessInstances(key)) if (await isLegacy(pi.processDefinitionId)) old.push(pi.id);
+    if (old.length) throw new EngineError('ROLLOUT_BLOCKED_LEGACY',
+      `активных экземпляров старой модели: ${old.length} (${old.slice(0, 5).join(',')}); сначала завершить их старым оркестратором`);
+    this.rolloutChecked = true;
   }
 
   // Свои захваченные задания одной пачки — по очереди. Отказ SR-07 снимает задание без повторов; любая другая
