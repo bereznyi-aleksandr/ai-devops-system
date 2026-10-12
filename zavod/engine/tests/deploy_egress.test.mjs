@@ -1,6 +1,11 @@
 // ДОКУМЕНТ: zavod/engine/tests/deploy_egress.test.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:16 +03:00 (v0.3: аудит ChatGPT
+// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:45 +03:00 (v0.4: аудит ChatGPT S6-prep R3,
+//   M-S6-R3-01 — sshSigner убран; operatorSigner: билет в папке запроса, команда оператору, подпись «оператора»
+//   (тестовый ключ под паролем, ssh-keygen с SSH_ASKPASS) принимается только после -Y verify; чужой ключ, подпись
+//   другого билета, другое пространство имён — TICKET_BAD_OPERATOR_SIGNATURE; нет подписи до срока —
+//   TICKET_NOT_SIGNED_IN_TIME; другие байты в папке запроса — TICKET_REQUEST_CONFLICT; повтор тех же байтов
+//   берёт готовую подпись; в коде Engine нет вызова ssh-keygen -Y sign; срок билета 3600 с. v0.3: аудит ChatGPT
 //   S6-prep R2 — билет выпуска: без функции подписи адаптер не создаётся; билет несёт поля манифеста и outbox_id,
 //   срок 900 с; sshSigner — настоящая подпись ssh-keygen -Y, проверка -Y verify; ghDeployInstall (L-S6-R2-01):
 //   прогон до запуска, прогон не workflow_dispatch, строка из исходника шага и строка чужого outbox — не
@@ -18,13 +23,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, readFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, writeFileSync, realpathSync, readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sealManifest, RELEASE_SCOPE } from '../../kernel/src/release_manifest.mjs';
-import { deployEgress, ghDeployInstall, localInstall, sshSigner, TICKET_NAMESPACE } from '../src/deploy_egress.mjs';
+import * as egress from '../src/deploy_egress.mjs';
+import { deployEgress, ghDeployInstall, localInstall, operatorSigner, TICKET_NAMESPACE } from '../src/deploy_egress.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const sha = (b) => createHash('sha256').update(b).digest('hex');
@@ -66,7 +72,7 @@ test('точный деплой: одна установка, ответ сер�
   const t = JSON.parse(f.jobs[0].ticket.toString('utf8'));
   assert.equal(t.v, 1);
   assert.equal(t.ticket_id, r.outbox.id);
-  assert.equal(t.expires_at - t.issued_at, 900);
+  assert.equal(t.expires_at - t.issued_at, 3600);
   for (const k of ['head_sha', 'artifact_sha256', 'manifest_sha256', 'repo_id', 'repo_full_name', 'tenant_id', 'work_item_id']) assert.equal(t[k], r.manifest[k], k);
   assert.equal(f.jobs[0].ticket_sig.toString(), `sig:${sha(f.jobs[0].ticket)}`);
 });
@@ -178,21 +184,98 @@ test('ghDeployInstall L-S6-R2-01: два своих прогона, чужой o
   await assert.rejects(gh(late)({ manifest: rows().manifest, outbox_id: randomUUID() }), TypeError);
 });
 
-test('sshSigner: настоящая подпись ssh-keygen -Y, проверка -Y verify', async (t) => {
-  try { execFileSync('ssh-keygen', ['-V'], { stdio: 'ignore' }); } catch { try { execFileSync('ssh-keygen', ['-?'], { stdio: 'ignore' }); } catch (e) { if (e.code === 'ENOENT') { t.skip('no ssh-keygen'); return; } } }
-  const d = mkdtempSync(join(tmpdir(), 'zavod-sign-'));
-  const key = join(d, 'k');
-  execFileSync('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-C', 'test', '-f', key]);
-  const signers = join(d, 'signers');
-  writeFileSync(signers, `zavod-release namespaces="${TICKET_NAMESPACE}" ${readFileSync(`${key}.pub`, 'utf8').trim()}\n`);
-  const body = Buffer.from('{"v":1}');
-  const sig = await sshSigner({ keyPath: key })(body);
-  const sp = join(d, 'b.sig');
+function hasKeygen() {
+  try { execFileSync('ssh-keygen', ['-V'], { stdio: 'ignore' }); return true; } catch (e) { return e.code !== 'ENOENT'; }
+}
+// «Оператор» тестов: ключ под паролем (как в OD-5 v1.4), подпись ssh-keygen -Y sign; пароль подаёт SSH_ASKPASS.
+function operatorKey(d, name = 'op') {
+  const key = join(d, name);
+  execFileSync('ssh-keygen', ['-q', '-t', 'ed25519', '-a', '16', '-N', 'test-pass-zavod', '-C', name, '-f', key]);
+  const ask = join(d, `${name}_askpass.sh`);
+  writeFileSync(ask, '#!/bin/sh\necho test-pass-zavod\n');
+  chmodSync(ask, 0o755);
+  const sign = (file, ns = TICKET_NAMESPACE) => execFileSync('ssh-keygen', ['-Y', 'sign', '-q', '-n', ns, '-f', key, file],
+    { env: { ...process['env'], SSH_ASKPASS: ask, SSH_ASKPASS_REQUIRE: 'force', DISPLAY: 'zavod-test' }, stdio: ['ignore', 'ignore', 'pipe'] });
+  return { key, sign, pub: readFileSync(`${key}.pub`, 'utf8').trim() };
+}
+function signersFile(d, pub) {
+  const f = join(d, 'release_signers');
+  writeFileSync(f, `zavod-release namespaces="${TICKET_NAMESPACE}" ${pub}\n`);
+  return f;
+}
+const ticketFor = (r, now = Date.now()) => egress.releaseTicket({ manifest: r.manifest, outbox_id: r.outbox.id, now });
+
+test('operatorSigner M-S6-R3-01: подпись только оператором, проверка -Y verify до приёма', { skip: !hasKeygen() }, async () => {
+  const d = mkdtempSync(join(tmpdir(), 'zavod-opsign-'));
+  const op = operatorKey(d);
+  const signers = signersFile(d, op.pub);
+  const req = join(d, 'requests');
+  const seen = [];
+  const signer = operatorSigner({ requestsDir: req, allowedSigners: signers, wait: async () => {},
+    notify: async (n) => { seen.push(n); op.sign(join(n.dir, 'ticket.json')); } });
+  const ticket = ticketFor(rows());
+  const sig = await signer(ticket);
+  assert.equal(seen.length, 1);
+  assert.equal(readFileSync(join(seen[0].dir, 'ticket.json')).equals(ticket), true);
+  const cmd = readFileSync(join(seen[0].dir, 'SIGN_COMMAND.txt'), 'utf8');
+  assert.ok(cmd.includes(`ssh-keygen -Y sign -n ${TICKET_NAMESPACE} -f $HOME\\.ssh\\zavod_release_sign`) && cmd.includes(seen[0].dir), cmd);
+  const sp = join(d, 'check.sig');
   writeFileSync(sp, sig);
-  execFileSync('ssh-keygen', ['-Y', 'verify', '-f', signers, '-I', 'zavod-release', '-n', TICKET_NAMESPACE, '-s', sp], { input: body });
-  assert.throws(() => execFileSync('ssh-keygen', ['-Y', 'verify', '-f', signers, '-I', 'zavod-release', '-n', TICKET_NAMESPACE, '-s', sp],
-    { input: Buffer.from('{"v":2}'), stdio: ['pipe', 'ignore', 'ignore'] }));
-  assert.throws(() => sshSigner({ keyPath: '' }), TypeError);
+  execFileSync('ssh-keygen', ['-Y', 'verify', '-f', signers, '-I', 'zavod-release', '-n', TICKET_NAMESPACE, '-s', sp], { input: ticket, stdio: ['pipe', 'ignore', 'ignore'] });
+  // повтор тех же байтов: та же папка, готовая подпись, оператора второй раз не трогаем
+  const again = await operatorSigner({ requestsDir: req, allowedSigners: signers, wait: async () => {} })(ticket);
+  assert.equal(again.equals(sig), true);
+});
+
+test('operatorSigner: чужой ключ, подпись другого билета, другое пространство имён — отказ', { skip: !hasKeygen() }, async () => {
+  const d = mkdtempSync(join(tmpdir(), 'zavod-opsign-bad-'));
+  const op = operatorKey(d, 'op');
+  const agent = operatorKey(d, 'agent');
+  const signers = signersFile(d, op.pub);
+  const bad = async (notify) => assert.rejects(
+    operatorSigner({ requestsDir: join(d, 'requests'), allowedSigners: signers, wait: async () => {}, notify })(ticketFor(rows())),
+    (e) => e.code === 'TICKET_BAD_OPERATOR_SIGNATURE');
+  await bad(async (n) => { agent.sign(join(n.dir, 'ticket.json')); });
+  await bad(async (n) => {
+    const other = join(d, `other_${n.ticket_id}.json`);
+    writeFileSync(other, ticketFor(rows()));
+    op.sign(other);
+    writeFileSync(join(n.dir, 'ticket.json.sig'), readFileSync(`${other}.sig`));
+  });
+  await bad(async (n) => { op.sign(join(n.dir, 'ticket.json'), 'zavod-other@v1'); });
+  await bad(async (n) => { writeFileSync(join(n.dir, 'ticket.json.sig'), 'not a signature'); });
+});
+
+test('operatorSigner: нет подписи до срока, чужие байты в папке запроса, плохие входы', async () => {
+  const d = mkdtempSync(join(tmpdir(), 'zavod-opsign-late-'));
+  const signers = join(d, 'release_signers');
+  writeFileSync(signers, '');
+  const t0 = Date.now();
+  let clock = t0;
+  const late = operatorSigner({ requestsDir: join(d, 'r1'), allowedSigners: signers, now: () => clock,
+    wait: async () => { clock += 60000; } });
+  const tk = ticketFor(rows(), t0);
+  await assert.rejects(late(tk), (e) => e.code === 'TICKET_NOT_SIGNED_IN_TIME');
+  assert.ok(clock - t0 <= (3600 - 600) * 1000 + 60000, 'ждали дольше срока билета минус запас');
+  const r = rows();
+  const tk2 = ticketFor(r, t0);
+  const name = `${r.outbox.id}_${sha(tk2).slice(0, 12)}`;
+  mkdirSync(join(d, 'r2', name), { recursive: true });
+  writeFileSync(join(d, 'r2', name, 'ticket.json'), '{"v":1,"forged":true}');
+  await assert.rejects(operatorSigner({ requestsDir: join(d, 'r2'), allowedSigners: signers })(tk2),
+    (e) => e.code === 'TICKET_REQUEST_CONFLICT');
+  assert.equal(existsSync(join(d, 'r2', name, 'SIGN_COMMAND.txt')), false);
+  assert.throws(() => operatorSigner({ requestsDir: '', allowedSigners: signers }), TypeError);
+  assert.throws(() => operatorSigner({ requestsDir: "C:\\x'; Remove-Item", allowedSigners: signers }), TypeError);
+  assert.throws(() => operatorSigner({ requestsDir: join(d, 'r3') }), TypeError);
+  await assert.rejects(operatorSigner({ requestsDir: join(d, 'r4'), allowedSigners: signers })(Buffer.from('{"v":1}')), TypeError);
+});
+
+test('M-S6-R3-01: в Engine нет функции подписи ключом и нет вызова ssh-keygen -Y sign', () => {
+  assert.equal('sshSigner' in egress, false);
+  const src = readFileSync(join(HERE, '..', 'src', 'deploy_egress.mjs'), 'utf8');
+  assert.equal(/'-Y',\s*'sign'/.test(src), false);
+  assert.equal(/keyPath/.test(src), false);
 });
 
 test('Linux: сквозной деплой через настоящий install_release.sh', { skip: process.platform === 'win32' }, async () => {
@@ -201,13 +284,14 @@ test('Linux: сквозной деплой через настоящий install
   mkdirSync(join(root, 'releases'), { recursive: true });
   writeFileSync(join(d, 'target.env'),
     `REPO_ID="${TARGET.repo_id}"\nREPO_FULL_NAME="${TARGET.repo_full_name}"\nTENANT_ID="${TENANT}"\n`);
-  const key = join(d, 'release_key');
-  execFileSync('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-C', 'test', '-f', key]);
-  writeFileSync(join(d, 'release_signers'), `zavod-release namespaces="${TICKET_NAMESPACE}" ${readFileSync(`${key}.pub`, 'utf8').trim()}\n`);
+  const op = operatorKey(d);
+  signersFile(d, op.pub);
   const install = localInstall({ script: join(HERE, '..', '..', 'ops', 'server', 'install_release.sh'),
     env: { ROOT: root, TARGET_ENV: join(d, 'target.env'), JOURNAL: join(d, 'install.jsonl'), RESTART: 'true',
       RELEASE_SIGNERS: join(d, 'release_signers'), TICKETS: join(d, 'tickets') } });
-  const eg = deployEgress(TARGET, install, { sign: sshSigner({ keyPath: key }) });
+  const sign = operatorSigner({ requestsDir: join(d, 'requests'), allowedSigners: join(d, 'release_signers'), wait: async () => {},
+    notify: async (n) => { op.sign(join(n.dir, 'ticket.json')); } });
+  const eg = deployEgress(TARGET, install, { sign });
   const src = join(d, 'src');
   mkdirSync(join(src, 'bot'), { recursive: true });
   writeFileSync(join(src, 'bot', '__main__.py'), 'print("p1")\n');
