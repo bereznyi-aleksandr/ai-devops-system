@@ -1,0 +1,54 @@
+# ДОКУМЕНТ: .github/workflows/zavod-p1-uptime.yml
+# ВЕРСИЯ: v0.1
+# СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
+# НАЗНАЧЕНИЕ: этап 6, E6-4 (аудит ChatGPT S6-prep M-S6-04) — внешний сторож сервера продукта P1. Сторож на самом
+#   сервере (liveness_watch.py) не может сообщить о смерти всего сервера; этот workflow смотрит снаружи, с машин
+#   GitHub, раз в 30 минут: порт 22 сервера отвечает. Три неудачи подряд с паузой — прогон падает: GitHub шлёт письмо
+#   о сбое, и если заданы секреты ALERT_BOT_TOKEN/ALERT_CHAT_ID — сообщение оператору в Telegram.
+# ОГРАНИЧЕНИЯ: репозиторий публичный — минуты Actions бесплатны. Адрес сервера — переменная ZAVOD_P1_HOST (не
+#   секрет, но маскируется в журнале). Пока переменная не задана, задание пропускается. Расписание GitHub
+#   работает только в ветке по умолчанию (после слияния). Ничего на сервере не меняет; ключей SSH не использует.
+name: zavod-p1-uptime
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zavod-p1-uptime
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: vars.ZAVOD_P1_HOST != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: server answers on port 22 (3 tries)
+        shell: bash
+        env:
+          HOST: ${{ vars.ZAVOD_P1_HOST }}
+        run: |
+          echo "::add-mask::$HOST"
+          [[ "$HOST" =~ ^[A-Za-z0-9.:-]+$ ]] || { echo 'UPTIME bad host value'; exit 2; }
+          for i in 1 2 3; do
+            if nc -z -w 5 "$HOST" 22; then echo "UPTIME UP try=$i"; exit 0; fi
+            [ "$i" -lt 3 ] && sleep 30
+          done
+          echo 'UPTIME DOWN tries=3'
+          exit 1
+      - name: alert operator in Telegram
+        if: failure()
+        shell: bash
+        env:
+          ALERT_BOT_TOKEN: ${{ secrets.ALERT_BOT_TOKEN }}
+          ALERT_CHAT_ID: ${{ secrets.ALERT_CHAT_ID }}
+        run: |
+          if [ -z "$ALERT_BOT_TOKEN" ] || [ -z "$ALERT_CHAT_ID" ]; then echo 'no Telegram alert secrets; GitHub failure mail only'; exit 0; fi
+          python3 -I -c 'import os,urllib.parse,urllib.request; u="https://api.telegram.org/bot"+os.environ["ALERT_BOT_TOKEN"]+"/sendMessage"; d=urllib.parse.urlencode({"chat_id":os.environ["ALERT_CHAT_ID"],"text":"Завод P1: сервер не отвечает снаружи (порт 22, 3 попытки)."}).encode(); print(urllib.request.urlopen(u,d,timeout=15).status)'

@@ -1,7 +1,9 @@
 // ДОКУМЕНТ: zavod/engine/src/graph_check.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 05:50 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 05:50 +03:00
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 05:50 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:11 +03:00 (v0.2: тема каждого внешнего
+//   задания обязана нести заказчика — <тема>-${tenantId}, у подзадачи s2 — exec-${provider}-${tenantId}; n7 обязан
+//   передавать подзадаче tenantId. Аудит ChatGPT оркестратора v0.8: захват по общей теме не знает заказчика)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, v0.1; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.2)
 // НАЗНАЧЕНИЕ: проверщик графа процесса Завода по H1.31 §12 (критерий E4-3 протокола Z1 v1.9).
 //   Развёртывание модели в движок — только после успеха этой проверки (H1.31 §12.1 п.6, R47 §22.2:
 //   валидатор Flowable принял все испорченные копии). Сверяется точная таблица узлов §12.2 и потоков
@@ -15,7 +17,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-export const GRAPH_CHECK_VERSION = '0.1.0';
+export const GRAPH_CHECK_VERSION = '0.2.0';
 export const PROCESS_ID = 'bem_work';
 export const SUBPROCESS_ID = 'bem_subtask';
 
@@ -46,6 +48,11 @@ export const TOPICS = Object.freeze({
   n2: 'kernel', n3: 'kernel', n4: 'kernel', n6: 'kernel', n8: 'kernel', n9: 'kernel', n11: 'kernel-check',
   n12: 'kernel-publish', n14: 'kernel-assign', n17: 'kernel', n18: 'egress',
 });
+
+// v0.2: тема задания в модели = базовая тема + суффикс заказчика (выражение Flowable, вычисляется по переменной
+// экземпляра). Оркестратор заказчика захватывает только свои темы — чужие задания ему не видны.
+export const TENANT_SUFFIX = '-${tenantId}';
+export const SUB_TOPIC = 'exec-${provider}' + TENANT_SUFFIX;
 
 const SUB_NODES = Object.freeze({ s1: 'startEvent', s2: 'serviceTask', s3: 'intermediateCatchEvent', s4: 'endEvent' });
 const SUB_FLOWS = Object.freeze({ g1: ['s1', 's2'], g2: ['s2', 's3'], g3: ['s3', 's4'] });
@@ -190,6 +197,9 @@ function checkProcess(p, wantNodes, wantFlows, isMain, messages, errs) {
     const md = s3 ? kids(s3, 'messageEventDefinition') : [];
     if (md.length !== 1 || messages[md[0].attrs.messageRef] !== 'subtaskAck') errs.push(`${tag} s3 ждёт не subtaskAck`);
     if (nodes.s1 && nodes.s1.el.children.length) errs.push(`${tag} s1 должен быть простым стартом`);
+    const s2 = nodes.s2?.el;
+    if (s2 && (s2.attrs['flowable:type'] !== 'external-worker' || s2.attrs['flowable:topic'] !== SUB_TOPIC))
+      errs.push(`${tag} s2 исполнитель ${s2.attrs['flowable:type']}/${s2.attrs['flowable:topic']} (надо external-worker/${SUB_TOPIC})`);
     return;
   }
   // Машинные инварианты §12.3.
@@ -202,6 +212,10 @@ function checkProcess(p, wantNodes, wantFlows, isMain, messages, errs) {
     const mi = kids(n7, 'multiInstanceLoopCharacteristics');
     if (mi.length !== 1 || mi[0].attrs.isSequential !== 'false') errs.push('n7 не объявлен isSequential="false"');
     if (n7.attrs.calledElement !== SUBPROCESS_ID) errs.push(`n7 calledElement ${n7.attrs.calledElement} (надо ${SUBPROCESS_ID})`);
+    // v0.2: без tenantId тема подзадачи не вычисляется — подзадача обязана получить заказчика от родителя.
+    const ins = kids(n7, 'extensionElements').flatMap((e) => kids(e, 'in'));
+    if (!ins.some((i) => i.attrs.source === 'tenantId' && i.attrs.target === 'tenantId' && !i.attrs.sourceExpression))
+      errs.push('n7 не передаёт подзадаче tenantId');
   }
   for (const [a, ts] of [['n17', ['n18', 'n20']], ['n16', ['n17', 'n19', 'n6']]]) {
     const ra = reach(a); for (const t of ts) if (!ra.has(t)) errs.push(`из ${a} недостижим ${t}`);
@@ -214,8 +228,8 @@ function checkProcess(p, wantNodes, wantFlows, isMain, messages, errs) {
   for (const [id, topic] of Object.entries(TOPICS)) {
     const el = nodes[id]?.el;
     if (!el) continue;
-    if (el.attrs['flowable:type'] !== 'external-worker' || el.attrs['flowable:topic'] !== topic)
-      errs.push(`${id} исполнитель ${el.attrs['flowable:type']}/${el.attrs['flowable:topic']} (надо external-worker/${topic})`);
+    if (el.attrs['flowable:type'] !== 'external-worker' || el.attrs['flowable:topic'] !== topic + TENANT_SUFFIX)
+      errs.push(`${id} исполнитель ${el.attrs['flowable:type']}/${el.attrs['flowable:topic']} (надо external-worker/${topic}${TENANT_SUFFIX})`);
   }
   for (const el of descendants(p)) {
     const nm = local(el.name);

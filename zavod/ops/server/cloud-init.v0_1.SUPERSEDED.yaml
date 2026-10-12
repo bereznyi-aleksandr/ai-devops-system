@@ -1,0 +1,49 @@
+#cloud-config
+# ДОКУМЕНТ: zavod/ops/server/cloud-init.yaml
+# ВЕРСИЯ: v0.1  СТАТУС: SUPERSEDED
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:35 +03:00 (SUPERSEDED: аудит
+#   ChatGPT S6-prep M-S6-02/M-S6-03 — NOPASSWD:ALL и нет папки приёма; ЗАМЕНЁН НА: render_user_data.py v0.1)
+# ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
+# НАЗНАЧЕНИЕ: этап 6, E6-1 — первая настройка сервера продукта (Ubuntu 24.04): пользователь zavod без пароля,
+#   вход только по открытому ключу оператора, root и пароль отключены, ufw — входящие закрыты, кроме 22/tcp;
+#   служебный пользователь p1 для продукта без входа; автообновления безопасности.
+# ОГРАНИЧЕНИЯ: __OPERATOR_PUBKEY__ — место для ОТКРЫТОГО ключа (строка ssh-ed25519 ...); закрытый ключ сюда не
+#   попадает никогда. Подстановку делает ГД при создании сервера. Секретов в файле нет.
+users:
+  - name: zavod
+    groups: [sudo]
+    shell: /bin/bash
+    lock_passwd: true
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - __OPERATOR_PUBKEY__
+  - name: p1
+    system: true
+    shell: /usr/sbin/nologin
+    lock_passwd: true
+    homedir: /var/lib/zavod-p1
+disable_root: true
+ssh_pwauth: false
+package_update: true
+packages: [ufw, unattended-upgrades, sqlite3]
+write_files:
+  - path: /etc/ssh/sshd_config.d/10-zavod.conf
+    permissions: '0644'
+    content: |
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin no
+      PubkeyAuthentication yes
+      AuthenticationMethods publickey
+      AllowUsers zavod
+      X11Forwarding no
+      MaxAuthTries 3
+runcmd:
+  - [ufw, default, deny, incoming]
+  - [ufw, default, allow, outgoing]
+  - [ufw, limit, 22/tcp]
+  - [ufw, --force, enable]
+  - [install, -d, -o, p1, -g, p1, -m, '0750', /var/lib/zavod-p1, /var/lib/zavod-p1/backups]
+  - [install, -d, -o, root, -g, root, -m, '0755', /opt/zavod-p1, /opt/zavod-p1/releases, /opt/zavod-ops]
+  - [sshd, -t]
+  - [systemctl, reload, ssh]

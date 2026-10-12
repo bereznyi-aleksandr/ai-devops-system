@@ -1,6 +1,30 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (v0.5: аудит E4-6 —
+// ВЕРСИЯ: v0.10  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:22 +03:00 (v0.10: аудит ChatGPT v0.9,
+//   MAJOR — переход со старой модели: экземпляры модели до v1.2 создают задания на общих темах, которые v0.9 не
+//   захватывает, — они бы зависли. Теперь до первой работы (startWork, pump) проверяется движок: последняя версия
+//   bem_work и модель каждого активного экземпляра bem_work/bem_subtask обязаны пройти проверщик графа v0.2; иначе
+//   отказ ROLLOUT_BLOCKED_LEGACY без изменения движка и Kernel. Путь перехода: дождаться завершения старых
+//   экземпляров старым оркестратором (drain) или запускать на чистом движке (пилот: свой файл H2 на прогон);
+//   v0.9 2026-10-12 07:11 +03:00 (v0.9: аудит ChatGPT v0.8, MAJOR —
+//   корректность зависела от предела 20 пачек: при 200+ чужих заданиях перед своим своё не бралось, чужие
+//   захватывались повторно на каждом проходе; MINOR — чужое задание могло остаться захваченным до 12 ч при сбое.
+//   Теперь у каждого заказчика свои темы движка (<тема>-<tenantId>, модель v1.2, проверщик v0.2): оркестратор
+//   захватывает только темы своего заказчика, чужие задания ему не видны и не захватываются вообще. Захват — по
+//   одной пачке с обработкой сразу (блокировка не истекает на очереди); предел пачек за проход ограничивает только
+//   объём своей работы, остаток берётся следующим проходом. Проверка заказчика после захвата оставлена как защита;
+//   v0.8: аудит ChatGPT v0.7, MAJOR —
+//   захват задания движка не знает заказчика: оркестратор брал чужое задание, держал его захваченным и обрывал
+//   проход на TENANT_MISMATCH/NOT_FOUND. Теперь заказчик задания определяется до любой работы (у подпроцесса
+//   bem_subtask — по родительскому экземпляру), чужие задания отпускаются (unacquire) без продвижения, захват
+//   повторяется, пока пачка полная, чтобы чужие не заслонили свои; v0.7: пилот — условие выхода узла 11 (§12.2:
+//   «тесты пройдены»): при системной проверке не PASS итог ACCEPT проверяющих превращается в REVISE (возврат к 6),
+//   доказательство ZAVOD_P1_SYSTEM_CHECK_GATE; без этого пилот p1_20261011_real дошёл до узла 17 с FAIL 16/17 и
+//   выпуск был отклонён только защитой prepareRelease; v0.6: этап 5,
+//   пилот P1 — необязательный объект pilot: head_sha берётся из результата рабочего (узел 9), системная
+//   проверка узла 11 — pilot.systemCheck, предмет узла 12 — ZAVOD_PRODUCT_RELEASE, узел 17 — pilot.prepareRelease
+//   (решение оператора W3 и манифест SR-13 до ReleaseAndTransition), вердикты — по одному на проверяющего
+//   (deliverVerdicts, id записей — audit_record_id), блокировка задания движка у пилота 12 часов (рабочий и решение W3 длятся часами); без pilot поведение v0.5 не меняется; v0.5: аудит E4-6 —
 //   M-E46-01 узел 17 — одна команда Kernel ReleaseAndTransition (выпуск, RELEASED, outbox в одной транзакции),
 //   отступление DEV-E43-02 снято; M-E46-02 роль шагов — поле kernelRole без подстановки в cmd; v0.4: E4-4 — текст заявки
 //   (request) пишется в доказательство CreateWorkItem, Kernel проверяет его на секреты (SECRET_IN_REQUEST); в движок
@@ -9,7 +33,7 @@
 //   каждая попытка рабочего пишется в журнал расхода (RecordUsage); предел неудачных попыток и бюджет
 //   токенов на работу; превышение — работа BLOCKED через Kernel, задание движка снимается без повторов;
 //   рабочий для работы не в PLANNED/IN_PROGRESS не запускается)
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6–v0.10)
 // НАЗНАЧЕНИЕ: оркестратор Kernel над движком (Завод, этап 4, E4-3). Движок хранит только положение
 //   в графе H1.31 §12; каждое изменение работы (статус, доказательство, предмет, вердикт, выпуск,
 //   внешнее действие) делает Kernel своими командами. Экземпляр процесса запускает только Kernel и
@@ -20,14 +44,19 @@
 //   Узел 17 (§12.2): выпуск и строка outbox — одна транзакция Kernel (ReleaseAndTransition, M-E46-01).
 
 import { randomUUID } from 'node:crypto';
-import { TOPICS } from './graph_check.mjs';
+import { TOPICS, TENANT_SUFFIX, PROCESS_ID, SUBPROCESS_ID, checkGraph } from './graph_check.mjs';
 import { EngineError } from './engine_client.mjs';
 
-export const ORCH_VERSION = '0.5.0';
+export const ORCH_VERSION = '0.10.0';
+export const PILOT_SCOPE = 'ZAVOD_PRODUCT_RELEASE';
 export const DEFAULT_LIMITS = Object.freeze({ maxFailedAttempts: 3, tokenBudget: 200000 });
 export const EXEC_TOPICS = Object.freeze(['exec-anthropic', 'exec-openai']);
 const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
 const REFUSE_CODES = new Set(['SR07_BLOCKED', 'WORK_NOT_RUNNABLE']);
+const ACQUIRE_BATCH = 10;     // v0.8: размер пачки захвата
+const ACQUIRE_ROUNDS = 20;    // v0.9: не больше пачек своей темы за проход; остаток — следующим проходом (не граница корректности)
+// v0.9: заказчик входит в имя темы движка — только безопасные символы, без выражений.
+const TENANT_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
 
 // Учебная заглушка рабочего: без модели и сети, расход — оценка.
 export async function stubWorker() {
@@ -41,15 +70,21 @@ export class Orchestrator {
   // runWorker({ provider, workKey, subIndex, attempt_no, request }) → { outcome: 'OK'|'PROVIDER_ERROR', usage: {...} };
   // по умолчанию — учебная заглушка без модели. limits — SR-07.
   constructor({ kernel, engine, actor, tenantId, governance, egress, providers = ['anthropic', 'openai'],
-    runWorker = stubWorker, limits = DEFAULT_LIMITS, log = () => {} }) {
-    Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log });
+    runWorker = stubWorker, limits = DEFAULT_LIMITS, log = () => {}, pilot = null }) {
+    // pilot (v0.6, этап 5): { systemCheck({ orch, work_item_id, head_sha }) → { result: 'PASS'|'FAIL', ... },
+    //   prepareRelease({ orch, work_item_id, subject_id, head_sha, command_id }) → { outbox_kind, outbox_payload } }
+    if (typeof tenantId !== 'string' || !TENANT_RE.test(tenantId)) throw new EngineError('BAD_TENANT_ID', 'tenantId для темы движка');
+    Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log, pilot });
+    this.heads = new Map();     // work_item_id → head_sha из результата рабочего (только pilot)
     this.kernelRole = 'kernel';  // роль шагов оркестратора по таблице 3.1; Kernel без роли отказывает
     this.workerId = `zavod-kernel-orch-${process.pid}`;
     this.transitions = [];      // { work_item_id, from, to, command_id, node }
     this.pendingAcks = new Set(); // подпроцессы, у которых результат записан и ждёт подтверждения
     this.handled = [];          // { node, pid, ok }
     this.refused = [];          // { node, pid, code, reason } — задания, снятые без повторов (SR-07)
+    this.released = 0;          // отпущено заданий с чужим или неизвестным заказчиком (v0.9: при своих темах — 0, это защита)
     this.requests = new Map();  // work_item_id → текст заявки (данные для рабочего, не команды)
+    this.rolloutChecked = false; // v0.10: движок проверен на экземпляры старой модели
   }
 
   // role — роль вызывающего по таблице 3.1 (src/roles.mjs Kernel); шаги оркестратора — роль kernel.
@@ -76,6 +111,7 @@ export class Orchestrator {
 
   // §12.1 п.5: сначала работа в Kernel, затем старт экземпляра сообщением bemIntake.
   async startWork({ work_item_id = randomUUID(), criticality = 'NORMAL', note = 'E4-3', request = null } = {}) {
+    await this.assertRolloutSafe();   // v0.10: до записи работы в Kernel
     const evidence = request === null ? { zavod: 'E4-3', note } : { zavod: 'E4-3', note, request: String(request) };
     await this.cmd('CreateWorkItem', { work_item_id, criticality, evidence });
     if (request !== null) this.requests.set(work_item_id, String(request));
@@ -85,25 +121,13 @@ export class Orchestrator {
 
   // Один проход по всем темам. Возвращает число обработанных заданий и подтверждений.
   async pump() {
+    await this.assertRolloutSafe();   // v0.10: до первого захвата
     let n = 0;
     for (const topic of ALL_TOPICS) {
-      const jobs = await this.engine.acquire(topic, this.workerId);
-      for (const job of jobs) {
-        const vars = await this.engine.processVars(job.processInstanceId);
-        let out;
-        try {
-          out = await this.handle(topic, job, vars);
-        } catch (e) {
-          if (!REFUSE_CODES.has(e?.code)) throw e;
-          // SR-07: задание снимается без повторов; движок не продвигается, работа ждёт решения.
-          await this.engine.failJob(job.id, this.workerId, `${e.code}: ${e.message}`.slice(0, 250));
-          this.refused.push({ node: job.elementId, pid: job.processInstanceId, code: e.code, reason: e.message });
-          n += 1;
-          continue;
-        }
-        await this.engine.completeJob(job.id, this.workerId, out);
-        this.handled.push({ node: job.elementId, pid: job.processInstanceId, topic });
-        n += 1;
+      for (let round = 0; round < ACQUIRE_ROUNDS; round += 1) {
+        const { own, got } = await this.acquireOwn(topic);
+        n += await this.handleBatch(topic, own);
+        if (got < ACQUIRE_BATCH) break;
       }
     }
     for (const sub of [...this.pendingAcks]) {
@@ -114,6 +138,92 @@ export class Orchestrator {
       n += 1;
     }
     return n;
+  }
+
+  // v0.10: переход со старой модели. Экземпляр модели без тем заказчика (до v1.2) создаёт задания на общих темах,
+  // которые этот оркестратор не захватывает, — такой экземпляр завис бы. Поэтому один раз до первой работы:
+  // последняя версия bem_work (по ней стартуют новые работы) и модель каждого активного экземпляра bem_work и
+  // bem_subtask обязаны пройти проверщик графа v0.2. Иначе — отказ; движок и Kernel не меняются.
+  // Новую старую модель после проверки развернуть нельзя: deployChecked её отклоняет (проверщик v0.2).
+  async assertRolloutSafe() {
+    if (this.rolloutChecked) return;
+    const legacy = new Map();
+    const isLegacy = async (defId) => {
+      if (!legacy.has(defId)) legacy.set(defId, !checkGraph(await this.engine.definitionXml(defId)).ok);
+      return legacy.get(defId);
+    };
+    for (const d of await this.engine.latestDefinitions(PROCESS_ID))
+      if (await isLegacy(d.id)) throw new EngineError('ROLLOUT_BLOCKED_LEGACY', `последняя версия ${PROCESS_ID} — старая модель (${d.id})`);
+    const old = [];
+    for (const key of [PROCESS_ID, SUBPROCESS_ID])
+      for (const pi of await this.engine.allProcessInstances(key)) if (await isLegacy(pi.processDefinitionId)) old.push(pi.id);
+    if (old.length) throw new EngineError('ROLLOUT_BLOCKED_LEGACY',
+      `активных экземпляров старой модели: ${old.length} (${old.slice(0, 5).join(',')}); сначала завершить их старым оркестратором`);
+    this.rolloutChecked = true;
+  }
+
+  // Свои захваченные задания одной пачки — по очереди. Отказ SR-07 снимает задание без повторов; любая другая
+  // ошибка отпускает ещё не начатые задания пачки (v0.8) и уходит наверх.
+  async handleBatch(topic, own) {
+    let n = 0;
+    for (let i = 0; i < own.length; i += 1) {
+      const { job, vars } = own[i];
+      let out;
+      try {
+        out = await this.handle(topic, job, vars);
+      } catch (e) {
+        if (!REFUSE_CODES.has(e?.code)) {
+          for (const r of own.slice(i + 1)) await this.engine.unacquireJob(r.job.id, this.workerId);
+          throw e;
+        }
+        // SR-07: задание снимается без повторов; движок не продвигается, работа ждёт решения.
+        await this.engine.failJob(job.id, this.workerId, `${e.code}: ${e.message}`.slice(0, 250));
+        this.refused.push({ node: job.elementId, pid: job.processInstanceId, code: e.code, reason: e.message });
+        n += 1;
+        continue;
+      }
+      await this.engine.completeJob(job.id, this.workerId, out);
+      this.handled.push({ node: job.elementId, pid: job.processInstanceId, topic });
+      n += 1;
+    }
+    return n;
+  }
+
+  // v0.9: тема движка своего заказчика. Модель v1.2 задаёт темы как <тема>-${tenantId}: задание другого заказчика
+  // лежит в другой теме и этим оркестратором не захватывается.
+  topicOf(topic) {
+    return topic + TENANT_SUFFIX.replace('${tenantId}', this.tenantId);
+  }
+
+  // Одна пачка своей темы. Заказчик каждого задания сверяется до любой работы (защита: при своих темах чужих
+  // быть не может); задание с чужим или неизвестным заказчиком отпускается без продвижения и считается в released.
+  // Ошибка при разборе — отпускается вся пачка, ошибка наверх.
+  async acquireOwn(topic) {
+    // v0.6: у пилота шаги длинные (рабочий — часы, решение оператора W3) — блокировка задания 12 часов.
+    const jobs = await this.engine.acquire(this.topicOf(topic), this.workerId, this.pilot ? 'PT12H' : undefined, ACQUIRE_BATCH);
+    const own = [];
+    try {
+      for (const job of jobs) {
+        const { vars, tenant } = await this.jobTenant(job);
+        if (tenant === this.tenantId) own.push({ job, vars });
+      }
+    } catch (e) {
+      for (const job of jobs) await this.engine.unacquireJob(job.id, this.workerId);
+      throw e;
+    }
+    const mine = new Set(own.map((o) => o.job.id));
+    for (const job of jobs) {
+      if (mine.has(job.id)) continue;
+      await this.engine.unacquireJob(job.id, this.workerId);
+      this.released += 1;
+    }
+    return { own, got: jobs.length };
+  }
+
+  // v0.9: заказчик задания — переменная tenantId экземпляра (подзадача получает её от n7, модель v1.2).
+  async jobTenant(job) {
+    const vars = await this.engine.processVars(job.processInstanceId);
+    return { vars, tenant: vars.tenantId ?? null };
   }
 
   async handle(topic, job, v) {
@@ -156,17 +266,28 @@ export class Orchestrator {
         return {};
       }
       case 'n9': {
+        if (this.pilot) {
+          const head = this.heads.get(wi);
+          if (!/^[0-9a-f]{40}$/.test(head || '')) throw new EngineError('NO_WORKER_HEAD', `${wi}`);
+          await this.evidence('ZAVOD_P1_MERGED', { work_item_id: wi, head_sha: head });
+          return { headSha: head };
+        }
         await this.evidence('E43_MERGED', { work_item_id: wi, head_sha: v.headSha });
         return {};
       }
       case 'n11': {
+        if (this.pilot) {
+          const r = await this.pilot.systemCheck({ orch: this, work_item_id: wi, head_sha: v.headSha });
+          await this.evidence('ZAVOD_P1_SYSTEM_CHECK', { work_item_id: wi, head_sha: v.headSha, ...r });
+          return { systemCheck: r.result };
+        }
         await this.evidence('E43_SYSTEM_CHECK', { work_item_id: wi, head_sha: v.headSha, result: 'PASS', stub: true });
         return {};
       }
       case 'n12': {
         const subject_id = randomUUID();
         await this.cmd('PublishSubject', { subject_id, work_item_id: wi, head_sha: v.headSha, criticality: v.criticality,
-          scope: 'WORKING', authors: [this.actor], evidence: { zavod: 'E4-3', node } });
+          scope: this.pilot ? PILOT_SCOPE : 'WORKING', authors: [this.actor], evidence: { zavod: this.pilot ? 'E5' : 'E4-3', node } });
         return { subjectId: subject_id };
       }
       case 'n14': {
@@ -176,11 +297,15 @@ export class Orchestrator {
       }
       case 'n17': {
         // M-E46-01: выпуск, RELEASED и outbox — одна команда, одна транзакция Kernel.
-        const cur = await this.status(wi);
         const command_id = randomUUID();
+        // v0.6: у пилота решение оператора (W3) и манифест (SR-13) пишутся до выпуска; манифест называет command_id строки outbox.
+        const rel = this.pilot
+          ? await this.pilot.prepareRelease({ orch: this, work_item_id: wi, subject_id: v.subjectId, head_sha: v.headSha, command_id })
+          : { outbox_kind: 'zavod.e43.deliver', outbox_payload: { subject_id: v.subjectId, head_sha: v.headSha } };
+        const cur = await this.status(wi);
         const t = await this.cmd('ReleaseAndTransition', { work_item_id: wi, subject_id: v.subjectId, head_sha: v.headSha,
-          expected_revision: cur.revision, outbox_kind: 'zavod.e43.deliver',
-          outbox_payload: { subject_id: v.subjectId, head_sha: v.headSha },
+          expected_revision: cur.revision, outbox_kind: rel.outbox_kind,
+          outbox_payload: rel.outbox_payload,
           evidence: { zavod: 'E4-3', node, from: cur.status } }, { command_id });
         if (t.released !== true) throw new EngineError('RELEASE_FAILED', JSON.stringify(t));
         this.transitions.push({ work_item_id: wi, from: cur.status, to: 'RELEASED', command_id, node,
@@ -232,6 +357,7 @@ export class Orchestrator {
         tool_overhead: us.tool_overhead ?? 0, context_estimate: us.context_estimate ?? 0, context_limit: us.context_limit ?? 0,
         measured_by: us.measured_by === 'PROVIDER_REPORTED' ? 'PROVIDER_REPORTED' : 'LOCAL_ESTIMATE', outcome });
       if (outcome !== 'OK') continue;
+      if (this.pilot) this.heads.set(wi, r?.head_sha ?? null);
       const after = await this.cmd('GetUsage', { work_item_id: wi });
       if (this.limitReason(after)) continue;   // результат записан, но бюджет превышен — на следующем круге BLOCKED
       await this.evidence('E43_SUBTASK_RESULT', { work_item_id: wi, provider: v.provider, sub_index: v.subIndex, attempt_no });
@@ -253,6 +379,33 @@ export class Orchestrator {
     if (verdict === 'ACCEPT') await this.move(v.workKey, 'ACCEPTED', 'n15');
     if (verdict === 'BLOCKED') await this.move(v.workKey, 'BLOCKED', 'n15');
     await this.engine.trigger(ex.id, { verdict });
+  }
+
+  // v0.6 (пилот): у каждого проверяющего свой вердикт и своё доказательство. Итог для движка: ACCEPT — только если
+  // приняли все; BLOCKED — если хоть один BLOCKED; иначе REVISE. Вердикт пишет Kernel от имени проверяющего.
+  async deliverVerdicts(pid, items) {
+    const v = await this.engine.processVars(pid);
+    const ex = (await this.engine.executions({ processInstanceId: pid, activityId: 'n15' }))[0];
+    if (!ex) throw new EngineError('NOT_WAITING_AUDIT', pid);
+    const ids = [];
+    for (const it of items) {
+      if (!['ACCEPT', 'REVISE', 'BLOCKED'].includes(it.verdict)) throw new EngineError('BAD_VERDICT', it.verdict);
+      const r = await this.cmd('RecordVerdict', { subject_id: v.subjectId, head_sha: v.headSha, verdict: it.verdict,
+        evidence: { zavod: 'E5', reviewed: v.headSha, ...(it.evidence || {}) } }, { caller: it.auditor, role: 'auditor' });
+      ids.push(r?.audit_record_id ?? null);
+    }
+    const all = items.map((x) => x.verdict);
+    let verdict = all.every((x) => x === 'ACCEPT') ? 'ACCEPT' : all.includes('BLOCKED') ? 'BLOCKED' : 'REVISE';
+    // v0.7: §12.2 узел 11 — без PASS системной проверки работа не принята, даже если приняли все проверяющие.
+    if (verdict === 'ACCEPT' && this.pilot && v.systemCheck !== 'PASS') {
+      verdict = 'REVISE';
+      await this.evidence('ZAVOD_P1_SYSTEM_CHECK_GATE', { work_item_id: v.workKey, head_sha: v.headSha,
+        system_check: v.systemCheck ?? null, auditors: all, verdict });
+    }
+    if (verdict === 'ACCEPT') await this.move(v.workKey, 'ACCEPTED', 'n15');
+    if (verdict === 'BLOCKED') await this.move(v.workKey, 'BLOCKED', 'n15');
+    await this.engine.trigger(ex.id, { verdict });
+    return { verdict, verdict_ids: ids };
   }
 
   // Узел 19: решение оператора — Kernel OperatorDecision от человека; отмена — переход CANCELLED.

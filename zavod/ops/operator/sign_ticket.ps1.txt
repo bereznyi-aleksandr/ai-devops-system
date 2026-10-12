@@ -1,0 +1,55 @@
+# ДОКУМЕНТ: zavod/ops/operator/sign_ticket.ps1.txt
+# ВЕРСИЯ: v0.2  СТАТУС: SUPERSEDED
+# ЗАМЕНЁН НА: zavod/ops/operator/zsign_phone.sh (подпись на телефоне оператора, Termux) — 2026-10-12 16:19 +03:00: аудит ChatGPT
+#   S6-prep R10 M-S6-R10-01 — ключ и пароль на компьютере с агентом перехватываемы; решение оператора 2026-10-12:
+#   ключи на телефоне. Функция больше не используется в OD-5; файл и его проверки Engine оставлены как история.
+# ДАТА СОЗДАНИЯ: 2026-10-12 13:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 15:15 +03:00 (v0.2: остаток S6-prep R9 — подписывает программа
+#   Windows C:\Windows\System32\OpenSSH\ssh-keygen.exe (папку System32 программа учётной записи пользователя изменить не может), а не первая
+#   ssh-keygen из PATH: PATH и папки пользователя (Git) агент той же учётной записи мог бы подменить. Путь
+#   показывается перед подписью; параметр -Keygen нужен только тестам, оператор его не указывает.)
+# ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
+# НАЗНАЧЕНИЕ: аудит ChatGPT S6-prep R4, M-S6-R4-01 — постоянная функция оператора для подписи билета выпуска.
+#   Заменяет команду из SIGN_COMMAND.txt (её больше нет). Функция читает ticket.json ОДИН раз в память, показывает
+#   поля и SHA-256, просит ввести первые 8 знаков SHA-256 и передаёт ssh-keygen -Y sign ТЕ ЖЕ байты из памяти
+#   через стандартный вход; подпись пишет в <ticket.json>.sig. Подмена файла после чтения ничего не меняет:
+#   подписываются показанные байты. Подмена до чтения видна (другие поля и SHA-256), а Engine примет подпись только
+#   над своим билетом из памяти.
+# КАК ПОЛЬЗОВАТЬСЯ: текст функции вставляется в окно PowerShell ИЗ GitHub по закреплённому коммиту (OD-5 v1.5, шаг
+#   10), не из локальной копии: локальный файл может изменить процесс той же учётной записи. Файл назван .txt,
+#   чтобы его нельзя было запустить как сценарий; политика AllSigned машины запускать .ps1 и не даёт.
+# ОГРАНИЧЕНИЯ: ключ $HOME\.ssh\zavod_release_sign под паролем (OD-5 шаг 3а); пароль спрашивает сам ssh-keygen.
+#   Остаточный риск — перехват ввода с клавиатуры или вмешательство в окно процессом той же учётной записи
+#   (как у zadmin); последняя граница — сервер: root-owned /etc/zavod-p1/release_signers.
+function Sign-ZavodTicket {
+  param([Parameter(Mandatory = $true)][string]$Path,
+        [string]$Key = (Join-Path $HOME '.ssh\zavod_release_sign'),
+        [string]$Keygen = 'C:\Windows\System32\OpenSSH\ssh-keygen.exe')
+  $ns = 'zavod-release-ticket@v1'
+  if (-not [System.IO.File]::Exists($Keygen)) { throw ('Нет программы подписи ' + $Keygen + '. Не подписано.') }
+  $keygen = $Keygen
+  Write-Host ('Программа подписи: ' + $keygen)
+  $b = [System.IO.File]::ReadAllBytes($Path)
+  $t = [System.Text.Encoding]::UTF8.GetString($b) | ConvertFrom-Json
+  $h = -join ([System.Security.Cryptography.SHA256]::Create().ComputeHash($b) | ForEach-Object { $_.ToString('x2') })
+  $t | Format-List | Out-Host
+  $left = $t.expires_at - [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+  Write-Host ("SHA-256 билета: " + $h)
+  Write-Host ("До конца срока, минут: " + [math]::Floor($left / 60))
+  if ($left -le 0) { throw 'Билет просрочен. Не подписано.' }
+  $ans = Read-Host 'Для подписи введите первые 8 знаков SHA-256'
+  if ($ans -ne $h.Substring(0, 8)) { throw 'Код не совпал. Не подписано.' }
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = $keygen
+  $psi.Arguments = '-Y sign -n ' + $ns + ' -f "' + $Key + '"'
+  $psi.UseShellExecute = $false
+  $psi.RedirectStandardInput = $true
+  $psi.RedirectStandardOutput = $true
+  $p = [System.Diagnostics.Process]::Start($psi)
+  $p.StandardInput.BaseStream.Write($b, 0, $b.Length)
+  $p.StandardInput.Close()
+  $sig = $p.StandardOutput.ReadToEnd()
+  $p.WaitForExit()
+  if ($p.ExitCode -ne 0 -or -not $sig.StartsWith('-----BEGIN SSH SIGNATURE-----')) { throw ('ssh-keygen не подписал, код ' + $p.ExitCode) }
+  [System.IO.File]::WriteAllText($Path + '.sig', $sig, (New-Object System.Text.UTF8Encoding $false))
+  Write-Host ('Подписано: ' + $Path + '.sig')
+}

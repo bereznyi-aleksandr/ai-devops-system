@@ -1,6 +1,12 @@
 // ДОКУМЕНТ: zavod/engine/ci/e43_training_order.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: флаг requireRole снят — роль обязательна в Kernel всегда; прежнее 2026-10-09 06:40 +03:00) (v0.2: проверка журнала расхода SR-07; v0.1: E4-3)
+// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 13:43 +03:00 (v0.7: аудит ChatGPT S6-prep R4, L-S6-R4-01 —
+//   stallWatch пассивный: без orch.pump, только чтение блокировок; Claude, сессия 9951b86f; v0.6: после «не дождались» —
+//   снимок блокировок из базы движка и stallWatch: сколько секунд до самостоятельного сдвига; проверка остаётся
+//   проваленной; Claude, сессия 9951b86f; v0.5: при «не дождались» в журнал пишется снимок stallDiag (узлы исполнений, задания движка, блокировки, ошибки) — разбор редкого зависания n15 на dc06d397/4b235aa0; Claude, сессия 9951b86f;
+//   v0.4: слияние — аудит E4-6 M-E46-02:
+//   флаг requireRole снят, роль обязательна в Kernel всегда; v0.3: E5-1 — история
+//   каждого заказа без ручного переноса, kernel/src/order_history.mjs; v0.2: проверка журнала расхода SR-07; v0.1: E4-3)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: критерий E4-3 протокола Z1 v1.9 — учебный заказ на заглушке продукта проходит узлы 1–20
 //   графа H1.31 §12; все переходы — через Kernel. Два заказа:
@@ -21,6 +27,8 @@ import { CONN, bootFixture, assignAuditor, runStopFile, uuid } from '../../kerne
 import { EngineClient } from '../src/engine_client.mjs';
 import { Orchestrator } from '../src/orchestrator.mjs';
 import { NODES, FLOWS } from '../src/graph_check.mjs';
+import { checkOrderHistory } from '../../kernel/src/order_history.mjs';
+import { stallDiag, stallWatch } from './stall_diag.mjs';
 
 // pg — из зависимостей Kernel (zavod/kernel/package-lock.json), своей блокировки у engine нет.
 const pg = createRequire(new URL('../../kernel/package.json', import.meta.url))('pg');
@@ -69,6 +77,9 @@ async function pumpUntil(what, pred, ms = 60000) {
     await sleep(300);
   }
   log(`  !! не дождались: ${what}`);
+  const diag = await stallDiag(engine);
+  log(`  STALL_DIAG ${JSON.stringify(diag)}`);
+  await stallWatch({ t0, sleep, log, pids: diag.instances.map((i) => i.pid).filter(Boolean) });
   return false;
 }
 const atN15 = (pid) => async () => (await engine.executions({ processInstanceId: pid, activityId: 'n15' })).length > 0;
@@ -145,6 +156,11 @@ const pathA = orch.transitions.filter((t) => t.work_item_id === A.work_item_id).
 check('e43_A_status_path', pathA === 'PLANNED>IN_PROGRESS>IN_REVIEW>IN_PROGRESS>IN_REVIEW>BLOCKED>PLANNED>IN_PROGRESS>IN_REVIEW>ACCEPTED>RELEASED', pathA);
 const pathB = orch.transitions.filter((t) => t.work_item_id === B.work_item_id).map((t) => t.to).join('>');
 check('e43_B_status_path', pathB === 'PLANNED>IN_PROGRESS>IN_REVIEW>BLOCKED>CANCELLED', pathB);
+// E5-1 (W1): в истории заказа человек — только автор заявки; решения узла 19 — Evidence, не переходы.
+for (const [k, o] of Object.entries({ A, B })) {
+  const h = checkOrderHistory(cl.filter((r) => r.work_item_id === o.work_item_id), o.work_item_id);
+  check(`e51_${k}_no_manual_relay`, h.ok, `${h.problems.join('; ') || 'ручного переноса нет'}; sha256 ${h.sha256}`);
+}
 // Доставщик Kernel общий: на долгоживущем стенде он забирает и чужие давние строки outbox (на чистой базе CI их нет).
 const own = egressCalls.filter((c) => wis.includes(c.work_item_id));
 check('e43_egress_once', own.length === 1 && own[0].work_item_id === A.work_item_id && ob.length === 1 && ob[0].status === 'SENT',

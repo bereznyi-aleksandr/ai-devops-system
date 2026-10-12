@@ -1,0 +1,30 @@
+# ДОКУМЕНТ: zavod/ops/server/zavod-p1-watch.service
+# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
+# НАЗНАЧЕНИЕ: этап 6, E6-4 — сторож живости zavod/ops/liveness_watch.py: каждые 15 с проверяет службу zavod-p1,
+#   при простое дольше 60 с шлёт тревогу оператору в Telegram, повтор не чаще 30 мин, при возврате — «снова работает».
+# ОГРАНИЧЕНИЯ: ALERT_BOT_TOKEN и ALERT_CHAT_ID — в /etc/zavod-p1/watch.env (0600, root); значения здесь не пишутся.
+[Unit]
+Description=Zavod P1 liveness watch
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=true
+Environment=WATCH_JOURNAL=/var/lib/zavod-p1-watch/watch.jsonl
+Environment=WATCH_PERIOD=15
+Environment=WATCH_GRACE=60
+Environment=WATCH_REPEAT=1800
+EnvironmentFile=/etc/zavod-p1/watch.env
+StateDirectory=zavod-p1-watch
+ExecStart=/usr/bin/python3 /opt/zavod-ops/liveness_watch.py zavod-p1 "systemctl is-active --quiet zavod-p1"
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

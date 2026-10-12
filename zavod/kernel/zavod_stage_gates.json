@@ -1,11 +1,11 @@
 {
   "_passport": {
     "document": "zavod_stage_gates.json",
-    "version": "v1.1",
+    "version": "v1.3",
     "status": "CANDIDATE",
     "created_at": "2026-10-07 13:47 +03:00",
-    "updated_at": "2026-10-11 18:09 +03:00 (v1.1: E4-2 PASS по ChatGPT E42 раунд 6 ACCEPT 0/0/0, M-E42-01 CLOSED; v1.0: OD-2 PASS по ChatGPT E42 раунд 4 OD2_ACCEPTED=YES; E4-2 OPEN — CONDITIONAL до R5; v0.9: E4-2/OD-2 — пробы а–з и запрет коннекторов PASS, OPEN до независимого аудита; v0.8: E4-1 PASS по ACCEPT ChatGPT E41; v0.7: E4-1 — три запуска прошли, вывод В1 неоднозначен, OPEN до решения оператора; v0.6: E4-3..E4-8 PASS по ACCEPT E46 раунд 2)",
-    "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.9; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v1.0-v1.1)",
+    "updated_at": "2026-10-12 10:19 +03:00 (v1.3: E5-4 PASS по ACCEPT ChatGPT — этап 5 закрыт, выпуск этапа 6 разрешён; v1.2: этап 5 — E5-1/2/3/5/6/7, OD-3, OD-4 PASS по аудиту ChatGPT E5 гейтов; E5-4 OPEN по его MAJOR; v1.1: E4-2 PASS по ChatGPT E42 раунд 6 ACCEPT 0/0/0, M-E42-01 CLOSED; v1.0: OD-2 PASS по ChatGPT E42 раунд 4 OD2_ACCEPTED=YES; E4-2 OPEN — CONDITIONAL до R5; v0.9: E4-2/OD-2 — пробы а–з и запрет коннекторов PASS, OPEN до независимого аудита; v0.8: E4-1 PASS по ACCEPT ChatGPT E41; v0.7: E4-1 — три запуска прошли, вывод В1 неоднозначен, OPEN до решения оператора; v0.6: E4-3..E4-8 PASS по ACCEPT E46 раунд 2)",
+    "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.9; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v1.0-v1.3)",
     "purpose": "Состояние критериев этапов Завода и правила начала этапов (протокол Z1 v1.2, раздел 9). Проверяет src/stage_gates.mjs.",
     "limits": "PASS ставит не автор работы; у PASS обязательна ссылка на доказательство. Файл не разрешает деньги, секреты и удаление."
   },
@@ -134,31 +134,40 @@
       "name": "Пилот P1",
       "criteria": {
         "E5-1": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E5 гейты (ZAVOD_CHATGPT_AUDIT_E5_GATES_20261012, ANSWER Диск 145nbKTzhRqmDWyoFgpn4_6vC67dLd__2, SHA-256 83b4a1c0…): пункт PASS при общем REVISE 0/1/0 из-за E5-4; прогон p1_20261012_v010, head fd567865, e51_no_manual_relay PASS, выгрузка e5_pilot_export.json e7f1b119…"
         },
         "E5-2": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E5 гейты (ZAVOD_CHATGPT_AUDIT_E5_GATES_20261012, ANSWER Диск 145nbKTzhRqmDWyoFgpn4_6vC67dLd__2, SHA-256 83b4a1c0…): пункт PASS при общем REVISE 0/1/0 из-за E5-4; прогон p1_20261012_v010, head fd567865, e52_authorship_export.json (checkAuthorship sha256 915f9e0a…), вердикты anthropic+openai ACCEPT на fd567865"
         },
         "E5-3": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E5 гейты (ZAVOD_CHATGPT_AUDIT_E5_GATES_20261012, ANSWER Диск 145nbKTzhRqmDWyoFgpn4_6vC67dLd__2, SHA-256 83b4a1c0…): пункт PASS при общем REVISE 0/1/0 из-за E5-4; прогон p1_20261012_v010, head fd567865, тег p1-v0.1.0 по решению оператора «ВЫПУСТИТЬ» (outbox 7f96b421…, манифест 5d9fac98…); отказы WORKING/BEM954_PROTOCOL/без решения — e5_egress_refusals v0.2 15/15"
         },
         "E5-4": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT ZAVOD_CHATGPT_AUDIT_E5_4_LIVE_20261012 ACCEPT 0/0/0 (ANSWER SHA-256 7a38ff1a…, nonce 1d4e5d34…): p1-live v0.2 (продукт main a7b68105) прогон 38216151717 на fd567865, expect_start=yes — LIVE_START_SEEN=YES, LIVE_MENU_REPLY=OK (ответ Telegram ok=true, меню, тот же личный чат), TOKEN_IN_LOGS=NO, журнал посредника 1657892b…; приёмка A1–A8 17/17"
         },
         "E5-5": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E5 гейты (ZAVOD_CHATGPT_AUDIT_E5_GATES_20261012, ANSWER Диск 145nbKTzhRqmDWyoFgpn4_6vC67dLd__2, SHA-256 83b4a1c0…): пункт PASS при общем REVISE 0/1/0 из-за E5-4; прогон p1_20261012_v010, head fd567865, e55 v0.2 режим реального пути 10/10, журнал e5de22f6…; внешняя система — счётчик; ai-devops-system 7466b9026"
         },
         "E5-6": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E5 гейты (ZAVOD_CHATGPT_AUDIT_E5_GATES_20261012, ANSWER Диск 145nbKTzhRqmDWyoFgpn4_6vC67dLd__2, SHA-256 83b4a1c0…): пункт PASS при общем REVISE 0/1/0 из-за E5-4; прогон p1_20261012_v010, head fd567865, product_scan_fd567865.json 0 находок (0f8a1b37…), stdlib only"
         },
         "E5-7": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E5 гейты (ZAVOD_CHATGPT_AUDIT_E5_GATES_20261012, ANSWER Диск 145nbKTzhRqmDWyoFgpn4_6vC67dLd__2, SHA-256 83b4a1c0…): пункт PASS при общем REVISE 0/1/0 из-за E5-4; прогон p1_20261012_v010, head fd567865, e5_egress_refusals v0.2: байт/чужой репозиторий (TARGET_MISMATCH, адаптер product_egress v0.1)/чужой заказчик и заказ — отказ до вызова; точный проходит"
         },
         "OD-3": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E5 гейты (ZAVOD_CHATGPT_AUDIT_E5_GATES_20261012, ANSWER Диск 145nbKTzhRqmDWyoFgpn4_6vC67dLd__2, SHA-256 83b4a1c0…): пункт PASS при общем REVISE 0/1/0 из-за E5-4; прогон p1_20261012_v010, head fd567865, operator_decisions/OD_9_OD_2_OD_3_EVIDENCE_20261009.txt (6737eee4…), telegram-check GETME=OK SEND=OK"
         },
         "OD-4": {
-          "status": "OPEN"
+          "status": "PASS",
+          "evidence": "ChatGPT E5 гейты (ZAVOD_CHATGPT_AUDIT_E5_GATES_20261012, ANSWER Диск 145nbKTzhRqmDWyoFgpn4_6vC67dLd__2, SHA-256 83b4a1c0…): пункт PASS при общем REVISE 0/1/0 из-за E5-4; прогон p1_20261012_v010, head fd567865, operator_decisions/OD_4_REPO_CREATED_EVIDENCE_20261009.txt (f3113f1c…), private=true repo_id 1412203481"
         }
       },
       "start_requires": [
