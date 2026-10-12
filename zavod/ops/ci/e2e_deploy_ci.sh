@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/ci/e2e_deploy_ci.sh
 # ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.2: shellcheck SC2024/SC2015 исправлены; пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: только для CI. Сквозная проверка реальной схемы прав сервера (аудит ChatGPT S6-prep M-S6-02/03/05)
 #   на одноразовой машине GitHub после apply_user_data_ci.py:
@@ -30,7 +30,8 @@ ssh-keyscan -t ed25519 127.0.0.1 2>/dev/null > "$T/kh"
 [ -s "$T/kh" ] || fail known_hosts
 
 sudo visudo -c >/dev/null && pass visudo
-sudo -l -U zavod > "$T/sudo_l.out"
+SUDO_L=$(sudo -l -U zavod)
+printf '%s\n' "$SUDO_L" > "$T/sudo_l.out"
 grep -q '(root) NOPASSWD: /opt/zavod-ops/install_release.sh' "$T/sudo_l.out" || fail sudo_rule
 if grep -Eq 'NOPASSWD: *ALL|\(ALL( : ALL)?\) *ALL' "$T/sudo_l.out"; then fail sudo_no_all; fi
 pass sudo_only_install
@@ -78,7 +79,8 @@ DEPLOY_KEY_FILE="$DKEY" KNOWN_HOSTS_FILE="$T/kh" bash "$PUSH" 127.0.0.1 "$T/mani
 rc=$?
 set -e
 cat "$T/deploy3.out"
-[ "$rc" -ne 0 ] && grep -q '^INSTALL_REFUSED code=ARTIFACT_MISMATCH$' "$T/deploy3.out" || fail tampered_refused
+[ "$rc" -ne 0 ] || fail tampered_rc
+grep -q '^INSTALL_REFUSED code=ARTIFACT_MISMATCH$' "$T/deploy3.out" || fail tampered_refused
 [ "$(readlink -f /opt/zavod-p1/current)" = "/opt/zavod-p1/releases/$HEAD" ] || fail current_kept
 pass tampered_refused
 echo "E2E_DEPLOY_CI PASS head=$HEAD"
