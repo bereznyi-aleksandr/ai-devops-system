@@ -1,7 +1,10 @@
 // ДОКУМЕНТ: tests/e55_pilot_release_injection.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-11 18:45 +03:00
-// ИСПОЛНИТЕЛЬ: Claude (сессия по задаче E5-5, заготовка)
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-11 18:45 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 08:19 +03:00 (v0.2, шаг S8 пилота: режим
+//   реального пути ZAVOD_E55_REAL_PATH=1 — байты артефакта = git archive принятого head_sha продукта (ZAVOD_E55_ARTIFACT,
+//   ZAVOD_E55_HEAD), цель = репозиторий пилота, сверка через адаптер engine/src/product_egress.mjs, неидемпотентные
+//   строки — настоящий вид zavod.product.release с политикой Kernel пилота; без ключа — прежняя заглушка v0.1)
+// ИСПОЛНИТЕЛЬ: Claude (сессия по задаче E5-5, заготовка v0.1; v0.2 — ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: заготовка критерия E5-5 протокола Z1 v1.10 (§8.1: «инъекции 6.2 на конвейере пилота» —
 //   работа не потеряна, нет задвоения, нет автоповтора; доказательство: журнал инъекций, SHA-256,
 //   head_sha, outbox id). Матрица отказов 6.2 прогоняется на ПУТИ ВЫПУСКА ПИЛОТА P1: строка outbox
@@ -31,17 +34,25 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, basename } from 'node:path';
 import { Kernel } from '../src/kernel.mjs';
 import { CONN, bootFixture, withRole, assignAuditor, runStopFile, uuid } from './helpers.mjs';
-import { sealManifest, loadReleaseRows, releaseViaEgress, MANIFEST_KIND, RELEASE_SCOPE } from '../src/release_manifest.mjs';
+import { sealManifest, loadReleaseRows, MANIFEST_KIND, RELEASE_SCOPE } from '../src/release_manifest.mjs';
+import { productEgress } from '../../engine/src/product_egress.mjs';
 
 const CHILD = fileURLToPath(new URL('./e55_crash_child.mjs', import.meta.url));
 const sha = (b) => createHash('sha256').update(b).digest('hex');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const ARTIFACT = Buffer.from('zavod p1 bot release artifact\n'.repeat(32));
+// v0.2: режим реального пути — настоящие байты, head_sha и цель пилота; внешняя система остаётся заглушкой.
+const REAL = process.env.ZAVOD_E55_REAL_PATH === '1';
+const ARTIFACT = REAL ? readFileSync(process.env.ZAVOD_E55_ARTIFACT) : Buffer.from('zavod p1 bot release artifact\n'.repeat(32));
+const REAL_HEAD = REAL ? process.env.ZAVOD_E55_HEAD : null;
+if (REAL && !/^[0-9a-f]{40}$/.test(REAL_HEAD || '')) throw new Error('ZAVOD_E55_HEAD: need 40 hex');
+const TARGET = REAL ? { repo_id: 1412203481, repo_full_name: 'bereznyi-aleksandr/zavod-p1-bot' }
+  : { repo_id: 812345678, repo_full_name: 'zavod-products/p1-bot' };
+const EGRESS = productEgress(TARGET);
 const RT = 'runtime:e55-w1';
 const EXPECTED = ['I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7n', 'I7i', 'I8'];
 
@@ -93,7 +104,7 @@ async function prepareRelease(kind) {
   const wi = uuid();
   await ex(ids.author, 'CreateWorkItem', { work_item_id: wi, evidence: { test: 'E5-5' } });
   const subj = uuid();
-  const head = sha(subj).slice(0, 40);
+  const head = REAL_HEAD || sha(subj).slice(0, 40);
   await ex(ids.author, 'PublishSubject', { subject_id: subj, work_item_id: wi, head_sha: head, criticality: 'NORMAL',
     scope: RELEASE_SCOPE, authors: [ids.author], evidence: { test: 'E5-5' } });
   for (const a of [ids.audOpenai, ids.audAnthropic]) {
@@ -105,14 +116,14 @@ async function prepareRelease(kind) {
     decision: { subject_id: subj, head_sha: head }, note: 'E5-5 test' })).evidence_id;
   const cmd = uuid();
   const manifest = sealManifest({
-    repo_id: 812345678, repo_full_name: 'zavod-products/p1-bot', tenant_id: ids.tenantA, work_item_id: wi,
+    ...TARGET, tenant_id: ids.tenantA, work_item_id: wi,
     subject_id: subj, head_sha: head, lock_sha256: sha('package-lock'), artifact_sha256: sha(ARTIFACT),
     build_run: 37900000001, test_run: 37900000002, verdict_ids: [uuid(), uuid()],
     outbox_command_id: cmd, decision_evidence_id: decisionId,
   });
   const manifestId = (await ex(ids.author, 'RecordEvidence', { kind: MANIFEST_KIND, payload: manifest })).evidence_id;
-  const payload = { manifest_evidence_id: manifestId, manifest_sha256: manifest.manifest_sha256, repo_id: 812345678,
-    repo_full_name: 'zavod-products/p1-bot', artifact_sha256: manifest.artifact_sha256 };
+  const payload = { manifest_evidence_id: manifestId, manifest_sha256: manifest.manifest_sha256, ...TARGET,
+    artifact_sha256: manifest.artifact_sha256 };
   return { wi, head, cmd, kind, payload, manifest_sha256: manifest.manifest_sha256 };
 }
 
@@ -180,7 +191,7 @@ async function egressAttempt(row, claimRow, worker, { stage = 'ok', idempotent =
   try {
     if (stage === 'crash_before_mark') return 'CRASHED';
     const rows = await withRole('bem_kernel_rw', (c) => loadReleaseRows(c, claimRow));
-    return await releaseViaEgress({ ...rows, artifact: Buffer.from(ARTIFACT) }, async () => {
+    return await EGRESS.release({ ...rows, artifact: Buffer.from(ARTIFACT) }, async () => {
       if (!(await mark(row.id, claimRow.lease_epoch, worker))) return 'MARK_REFUSED';   // внешнего вызова нет
       if (stage === 'crash_before_call') throw new Crash();
       ext.send(row.id, row.idempotency_key, idempotent);
@@ -205,7 +216,8 @@ async function kernelRounds(mine, n = 3) {
 
 // --- Журнал и три свойства E5-5.
 async function injection(id, point, expectation, fn) {
-  const entry = { injection: id, point, expectation, verdict: 'FAIL' };
+  const entry = { injection: id, point, expectation, verdict: 'FAIL', mode: REAL ? 'real_path' : 'stub',
+    repo: TARGET.repo_full_name, artifact_sha256: sha(ARTIFACT) };
   journal.push(entry);
   try { await fn(entry); entry.verdict = 'PASS'; } catch (e) { entry.error = String(e.message).slice(0, 300); throw e; }
   finally { entry.at = new Date().toISOString(); }
@@ -236,7 +248,7 @@ async function checkProperties(entry, p, { status, maxCalls = 1 }) {
   entry.actual = { status, rows: rows.length, calls: entry.calls, effects: entry.effects, lease_epoch: Number(row.lease_epoch) };
 }
 
-const kindN = () => `zavod.product.release.e55n.${ids.run}`;
+const kindN = () => (REAL ? 'zavod.product.release' : `zavod.product.release.e55n.${ids.run}`);
 const kindI = () => `zavod.product.release.e55i.${ids.run}`;
 let idemReady = false;
 async function idemKind() {
@@ -357,7 +369,7 @@ for (const idem of [false, true]) {
         const d = await kernel.dispatchOnce(async (r) => {
           if (r.outbox_id !== row.id) return { outcome: 'SENT', detail: { stub: 'E5-5' } };
           const rows = await withRole('bem_kernel_rw', (c) => loadReleaseRows(c, r));
-          await releaseViaEgress({ ...rows, artifact: Buffer.from(ARTIFACT) }, async () => {
+          await EGRESS.release({ ...rows, artifact: Buffer.from(ARTIFACT) }, async () => {
             ext.send(row.id, row.idempotency_key, idem);
             throw new Error('reply lost after external accept');
           });
