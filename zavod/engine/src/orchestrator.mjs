@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-11 19:37 +03:00 (v0.6: этап 5,
+// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:32 +03:00 (v0.7: пилот — условие выхода узла 11 (§12.2:
+//   «тесты пройдены»): при системной проверке не PASS итог ACCEPT проверяющих превращается в REVISE (возврат к 6),
+//   доказательство ZAVOD_P1_SYSTEM_CHECK_GATE; без этого пилот p1_20261011_real дошёл до узла 17 с FAIL 16/17 и
+//   выпуск был отклонён только защитой prepareRelease; v0.6: этап 5,
 //   пилот P1 — необязательный объект pilot: head_sha берётся из результата рабочего (узел 9), системная
 //   проверка узла 11 — pilot.systemCheck, предмет узла 12 — ZAVOD_PRODUCT_RELEASE, узел 17 — pilot.prepareRelease
 //   (решение оператора W3 и манифест SR-13 до ReleaseAndTransition), вердикты — по одному на проверяющего
@@ -13,7 +16,7 @@
 //   каждая попытка рабочего пишется в журнал расхода (RecordUsage); предел неудачных попыток и бюджет
 //   токенов на работу; превышение — работа BLOCKED через Kernel, задание движка снимается без повторов;
 //   рабочий для работы не в PLANNED/IN_PROGRESS не запускается)
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6–v0.7)
 // НАЗНАЧЕНИЕ: оркестратор Kernel над движком (Завод, этап 4, E4-3). Движок хранит только положение
 //   в графе H1.31 §12; каждое изменение работы (статус, доказательство, предмет, вердикт, выпуск,
 //   внешнее действие) делает Kernel своими командами. Экземпляр процесса запускает только Kernel и
@@ -27,7 +30,7 @@ import { randomUUID } from 'node:crypto';
 import { TOPICS } from './graph_check.mjs';
 import { EngineError } from './engine_client.mjs';
 
-export const ORCH_VERSION = '0.6.0';
+export const ORCH_VERSION = '0.7.0';
 export const PILOT_SCOPE = 'ZAVOD_PRODUCT_RELEASE';
 export const DEFAULT_LIMITS = Object.freeze({ maxFailedAttempts: 3, tokenBudget: 200000 });
 export const EXEC_TOPICS = Object.freeze(['exec-anthropic', 'exec-openai']);
@@ -294,7 +297,13 @@ export class Orchestrator {
       ids.push(r?.audit_record_id ?? null);
     }
     const all = items.map((x) => x.verdict);
-    const verdict = all.every((x) => x === 'ACCEPT') ? 'ACCEPT' : all.includes('BLOCKED') ? 'BLOCKED' : 'REVISE';
+    let verdict = all.every((x) => x === 'ACCEPT') ? 'ACCEPT' : all.includes('BLOCKED') ? 'BLOCKED' : 'REVISE';
+    // v0.7: §12.2 узел 11 — без PASS системной проверки работа не принята, даже если приняли все проверяющие.
+    if (verdict === 'ACCEPT' && this.pilot && v.systemCheck !== 'PASS') {
+      verdict = 'REVISE';
+      await this.evidence('ZAVOD_P1_SYSTEM_CHECK_GATE', { work_item_id: v.workKey, head_sha: v.headSha,
+        system_check: v.systemCheck ?? null, auditors: all, verdict });
+    }
     if (verdict === 'ACCEPT') await this.move(v.workKey, 'ACCEPTED', 'n15');
     if (verdict === 'BLOCKED') await this.move(v.workKey, 'BLOCKED', 'n15');
     await this.engine.trigger(ex.id, { verdict });
