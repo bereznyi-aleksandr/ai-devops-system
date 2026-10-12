@@ -1,8 +1,11 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.18
+# ВЕРСИЯ: v0.19
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 15:07 +03:00 (v0.18: аудит ChatGPT S6-prep R8 M-S6-R8-01 — user-data применяется на машине GitHub
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 15:26 +03:00 (v0.19: аудит ChatGPT S6-prep R9 L-S6-R9-01 — после стартера CI проверяет действующие
+#   настройки sshd (`sshd -T`: root и пароль запрещены) и что apply_user_data отказывает, если вставка sshd с
+#   меньшим номером разрешает вход root (SSHD_EFFECTIVE_CI PASS); M-S6-R9-01 — проверки происхождения ключей;
+#   54 модульные проверки ops; v0.18: аудит ChatGPT S6-prep R8 M-S6-R8-01 — user-data применяется на машине GitHub
 #   тем же стартером, что оператор вставит у провайдера с телефона: стартер берёт user-data и apply_user_data.py,
 #   сверяет полные SHA-256 и только тогда применяет от root; подменённый файл — отказ до применения, zadmin не
 #   создан (STARTER_CI PASS); CI-помощник apply_user_data_ci.py больше не вызывается; 46 модульных проверок ops;
@@ -256,8 +259,22 @@ jobs:
           if id zadmin 2>/dev/null; then echo 'zadmin exists after a refused starter'; exit 1; fi
           cp "$RUNNER_TEMP/good.yaml" "$R/p1/user-data.yaml"
           sudo -E ZAVOD_APPLY_CI_SKIP_FIREWALL=1 sh "$RUNNER_TEMP/starter.sh" | tee "$RUNNER_TEMP/starter.out"
-          grep -q '"applied": "apply_user_data v0.1"' "$RUNNER_TEMP/starter.out"
+          grep -q '"applied": "apply_user_data v0.2"' "$RUNNER_TEMP/starter.out"
           echo 'STARTER_CI PASS'
+          # L-S6-R9-01: disable_root/ssh_pwauth действуют на деле, и программа применения это проверяет
+          sudo sshd -T > "$RUNNER_TEMP/sshd_T.out"
+          grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|authenticationmethods) ' "$RUNNER_TEMP/sshd_T.out"
+          grep -qx 'permitrootlogin no' "$RUNNER_TEMP/sshd_T.out"
+          grep -qx 'passwordauthentication no' "$RUNNER_TEMP/sshd_T.out"
+          CHECK="import sys; sys.path.insert(0, 'zavod/ops/server'); import apply_user_data as a; a.check_sshd(); print('SSHD_CHECK_OK')"
+          sudo python3 -I -c "$CHECK" | grep -qx SSHD_CHECK_OK
+          printf 'PermitRootLogin yes\nPasswordAuthentication yes\n' | sudo tee /etc/ssh/sshd_config.d/05-ci-weaker.conf
+          if sudo python3 -I -c "$CHECK" > "$RUNNER_TEMP/sshd_bad.out" 2>&1; then echo 'weaker sshd accepted'; exit 1; fi
+          cat "$RUNNER_TEMP/sshd_bad.out"
+          grep -q 'REFUSED: effective sshd settings' "$RUNNER_TEMP/sshd_bad.out"
+          sudo mv /etc/ssh/sshd_config.d/05-ci-weaker.conf "$RUNNER_TEMP/05-ci-weaker.conf.moved"
+          sudo python3 -I -c "$CHECK" | grep -qx SSHD_CHECK_OK
+          echo 'SSHD_EFFECTIVE_CI PASS'
           sudo sshd -t
           sudo systemctl restart ssh || sudo systemctl restart ssh.socket
       - name: shellcheck and systemd-analyze verify (E6-2, E6-4)
@@ -281,5 +298,5 @@ jobs:
           set -o pipefail
           command -v pwsh
           python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
-          grep -q '^Ran 46 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 54 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/ops
