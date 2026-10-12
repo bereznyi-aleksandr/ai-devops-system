@@ -1,6 +1,8 @@
 # ДОКУМЕНТ: zavod/ops/ci/apply_user_data_ci.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00
+# ВЕРСИЯ: v0.1  СТАТУС: SUPERSEDED
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 15:07 +03:00 (статус SUPERSEDED: заменён
+#   zavod/ops/server/apply_user_data.py v0.1, который CI запускает через стартер оператора; файл не вызывается)
+# ЗАМЕНЁН НА: zavod/ops/server/apply_user_data.py
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: только для CI (задание ops в zavod-kernel.yml). Применяет на одноразовой машине GitHub тот же
 #   user-data, что собирает server/render_user_data.py для настоящего сервера: пользователи admin/zavod/p1, их

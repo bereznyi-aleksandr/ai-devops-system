@@ -1,8 +1,12 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.17
+# ВЕРСИЯ: v0.18
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:50 +03:00 (v0.17: 40 модульных проверок ops (отпечаток ключа zadmin во 2-й строке user-data); v0.16: аудит ChatGPT S6-prep R7 M-S6-R7-01 — собранный user-data проверяется
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 15:07 +03:00 (v0.18: аудит ChatGPT S6-prep R8 M-S6-R8-01 — user-data применяется на машине GitHub
+#   тем же стартером, что оператор вставит у провайдера с телефона: стартер берёт user-data и apply_user_data.py,
+#   сверяет полные SHA-256 и только тогда применяет от root; подменённый файл — отказ до применения, zadmin не
+#   создан (STARTER_CI PASS); CI-помощник apply_user_data_ci.py больше не вызывается; 46 модульных проверок ops;
+#   v0.17: 40 модульных проверок ops (отпечаток ключа zadmin во 2-й строке user-data); v0.16: аудит ChatGPT S6-prep R7 M-S6-R7-01 — собранный user-data проверяется
 #   verify_user_data.py (USERDATA_OK), подделка (disable_root false) — USERDATA_MISMATCH; 39 модульных проверок ops,
 #   включая функцию оператора Copy-ZavodUserData в pwsh; v0.15: аудит ChatGPT S6-prep R6 — 34 модульных проверки ops (строгий ключ
 #   подписи, строка отпечатка для оператора); v0.14: аудит ChatGPT S6-prep R5 M-S6-R5-01 — render_user_data получает
@@ -233,11 +237,27 @@ jobs:
           grep -q '^USERDATA_MISMATCH' "$RUNNER_TEMP/forged.out"
           echo 'USERDATA_PIN_CI PASS'
           cloud-init schema --config-file "$RUNNER_TEMP/user-data.yaml"
-      - name: apply the same user-data on the runner (users, files, sudoers, sshd; ufw skipped)
+      - name: apply the same user-data on the runner through the operator starter (full SHA-256 pin; ufw skipped)
         shell: bash
         run: |
           set -euo pipefail
-          sudo -E python3 -I zavod/ops/ci/apply_user_data_ci.py "$RUNNER_TEMP/user-data.yaml"
+          R="$RUNNER_TEMP/raw"
+          mkdir -p "$R/p1" "$R/server"
+          cp "$RUNNER_TEMP/user-data.yaml" "$R/p1/user-data.yaml"
+          cp zavod/ops/server/apply_user_data.py "$R/server/apply_user_data.py"
+          python3 -I zavod/ops/server/render_starter.py --commit "$GITHUB_SHA" --user-data "$R/p1/user-data.yaml" --base "file://$R" --proto =file > "$RUNNER_TEMP/starter.sh"
+          cat "$RUNNER_TEMP/starter.sh"
+          # M-S6-R8-01: файл, подменённый после проверки, не применяется
+          cp "$R/p1/user-data.yaml" "$RUNNER_TEMP/good.yaml"
+          printf ' ' >> "$R/p1/user-data.yaml"
+          if sudo -E ZAVOD_APPLY_CI_SKIP_FIREWALL=1 sh "$RUNNER_TEMP/starter.sh" > "$RUNNER_TEMP/starter_bad.out" 2>&1; then echo 'tampered user-data applied'; exit 1; fi
+          cat "$RUNNER_TEMP/starter_bad.out"
+          grep -q 'user-data.yaml: FAILED' "$RUNNER_TEMP/starter_bad.out"
+          if id zadmin 2>/dev/null; then echo 'zadmin exists after a refused starter'; exit 1; fi
+          cp "$RUNNER_TEMP/good.yaml" "$R/p1/user-data.yaml"
+          sudo -E ZAVOD_APPLY_CI_SKIP_FIREWALL=1 sh "$RUNNER_TEMP/starter.sh" | tee "$RUNNER_TEMP/starter.out"
+          grep -q '"applied": "apply_user_data v0.1"' "$RUNNER_TEMP/starter.out"
+          echo 'STARTER_CI PASS'
           sudo sshd -t
           sudo systemctl restart ssh || sudo systemctl restart ssh.socket
       - name: shellcheck and systemd-analyze verify (E6-2, E6-4)
@@ -261,5 +281,5 @@ jobs:
           set -o pipefail
           command -v pwsh
           python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
-          grep -q '^Ran 40 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 46 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/ops
