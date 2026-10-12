@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_render_user_data.py
-# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:22 +03:00 (v0.5: R6 — синтетические ключи стали
+# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:49 +03:00 (v0.6: R7 — во 2-й строке и отпечаток ключа
+#   zadmin; ключ с опциями перед типом в render() — отказ; v0.5: R6 — синтетические ключи стали
 #   настоящими по форме блоками ssh-ed25519; неканонический base64 (TR== вместо TQ==, лишние биты), битый блок,
 #   хвост после ключа — отказ; вторая строка user-data несёт RELEASE_KEY_FINGERPRINT для сверки оператором; v0.4: M-S6-R5-01 — отпечаток оператора
 #   обязателен: нет/не того вида/не совпал с .pub (подменённый ключ при отпечатке оператора) — отказ до вывода
@@ -175,7 +176,11 @@ class RenderUserDataTest(unittest.TestCase):
         out = ru.render(A, D, S, *TGT, release_fp=FS)
         second = out.split('\n')[1]
         self.assertTrue(second.startswith('# '))
-        self.assertIn('RELEASE_KEY_FINGERPRINT ' + FS, second)
+        self.assertIn('RELEASE_KEY_FINGERPRINT ' + FS + ';', second)
+        self.assertIn('ADMIN_KEY_FINGERPRINT ' + ru.fingerprint(A) + ' ', second)
+        for bad in ['from="1.2.3.4" ' + A, A + '\nssh-ed25519 ' + S.split()[1]]:
+            with self.assertRaises(SystemExit):
+                ru.render(bad, D, S, *TGT, release_fp=FS)
 
     def test_embedded_files_match_sources(self):
         cfg = parse(ru.render(A, D, S, *TGT, release_fp=FS))

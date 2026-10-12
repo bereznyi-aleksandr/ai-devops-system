@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_verify_user_data.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 14:42 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 14:42 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:49 +03:00 (v0.2: ключ zadmin с опциями — MISMATCH;
+#   согласованная подмена ключа zadmin видна оператору во 2-й строке)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: аудит ChatGPT S6-prep R7, M-S6-R7-01, критерий R8-3 — подделки user-data (лишний ключ zadmin, ключ root,
 #   широкий sudo, служба от root, лишняя команда, изменённый файл) ловятся до вставки: verify_user_data.py отвечает
@@ -55,6 +56,7 @@ FORGERIES = {
                                                           '[Service]\nUser=root\nExecStart=/bin/sh -c id\n')),
                                c['runcmd'].append(['systemctl', 'enable', '--now', 'x.service'])),
     'extra runcmd': lambda c: c['runcmd'].append(['usermod', '-aG', 'sudo', 'zavod']),
+    'zadmin key with options': lambda c: c['users'][0].update({'ssh_authorized_keys': ['from="0.0.0.0/0" ' + A]}),
     'changed installer': lambda c: c['write_files'][2].update(
         {'content': base64.b64encode(b'#!/bin/sh\nexit 0\n').decode('ascii')}),
 }
@@ -77,6 +79,15 @@ class VerifyUserDataTest(unittest.TestCase):
                 self.assertNotEqual(hashlib.sha256(bad).digest(), hashlib.sha256(GOOD.encode('utf-8')).digest())
                 with self.assertRaises(vu.Mismatch):
                     vu.verify(bad)
+
+    def test_swapped_admin_key_visible_in_line_2(self):
+        # согласованная подмена ключа zadmin (весь файл пересобран с ключом агента) проходит verify — не граница;
+        # её видит оператор: во 2-й строке другой ADMIN_KEY_FINGERPRINT, чем у его закрытого ключа (OD-5 шаг 7)
+        swapped = ru.render(AGENT, D, S, *TGT, release_fp=ru.fingerprint(S))
+        self.assertIn('USERDATA_OK', vu.verify(swapped.encode('utf-8')))
+        self.assertIn('ADMIN_KEY_FINGERPRINT ' + ru.fingerprint(AGENT), swapped.split('\n')[1])
+        self.assertNotIn(ru.fingerprint(A), swapped.split('\n')[1])
+        self.assertIn('ADMIN_KEY_FINGERPRINT ' + ru.fingerprint(A), GOOD.split('\n')[1])
 
     def test_byte_level_changes_detected(self):
         for bad in [GOOD.replace('\n', '\r\n'), GOOD + '\n', GOOD.replace('"disable_root": true', '"disable_root": false'),

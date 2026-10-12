@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/ops/server/render_user_data.py
-# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:22 +03:00 (v0.5: аудит ChatGPT S6-prep R6 —
+# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:49 +03:00 (v0.6: аудит ChatGPT S6-prep R7, M-S6-R7-01 —
+#   вторая строка user-data несёт и ADMIN_KEY_FINGERPRINT (ключ входа zadmin = путь к root): оператор сверяет его с
+#   отпечатком своего закрытого ключа zavod_p1_admin до вставки (OD-5 v1.9 шаги 4 и 7), подмена ключа zadmin видна;
+#   render сам проверяет вид всех трёх строк ключей (без опций перед типом ключа), а не только read_pub; v0.5: аудит ChatGPT S6-prep R6 —
 #   L-S6-R6-01: ключ подписи разбирается строго (канонический base64 «туда-обратно», блок ssh-ed25519, 32 байта, без
 #   хвоста). M-S6-R6-01: сверка «ключ = отпечаток» в этой программе — только защита от ошибки: её запускает агент, и
 #   он мог бы подать свою пару. Поэтому отпечаток ключа подписи печатается во ВТОРОЙ строке user-data, и оператор
@@ -35,7 +38,7 @@ import os
 import re
 import sys
 
-VERSION = 'v0.5'
+VERSION = 'v0.6'
 NAMESPACE = 'zavod-release-ticket@v1'
 HERE = os.path.dirname(os.path.abspath(__file__))
 OPS = os.path.dirname(HERE)
@@ -131,6 +134,8 @@ def src(rel):
 def render(admin_pub, deploy_pub, release_pub, repo_id, repo, tenant, *, release_fp):
     if not (isinstance(repo_id, int) and repo_id > 0 and REPO.match(repo) and UUID.match(tenant)):
         raise SystemExit('REFUSED: bad target')
+    if not all(isinstance(k, str) and PUB.match(k) for k in (admin_pub, deploy_pub, release_pub)):
+        raise SystemExit('REFUSED: not a single OpenSSH public key line')
     if len({admin_pub.split()[1], deploy_pub.split()[1], release_pub.split()[1]}) != 3:
         raise SystemExit('REFUSED: admin, deploy and release signer keys must differ')
     check_release_key(release_pub, release_fp)
@@ -178,7 +183,8 @@ def render(admin_pub, deploy_pub, release_pub, repo_id, repo, tenant, *, release
     }
     head = (f'#cloud-config\n# zavod/ops/server/render_user_data.py {VERSION}; секретов нет; '
             f'ключи открытые; repo {repo} ({repo_id}); tenant {tenant}; '
-            f'RELEASE_KEY_FINGERPRINT {release_fp} (сверить со своим экраном до вставки)\n')
+            f'RELEASE_KEY_FINGERPRINT {release_fp}; ADMIN_KEY_FINGERPRINT {fingerprint(admin_pub)} '
+            f'(сверить оба со своими записями до вставки)\n')
     return head + json.dumps(cfg, ensure_ascii=False, indent=1) + '\n'
 
 

@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/server/verify_user_data.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 14:42 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 14:42 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:49 +03:00 (v0.2: отпечаток ключа zadmin во 2-й строке
+#   и в перечне; ключ с опциями перед типом — отказ render, значит MISMATCH)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: аудит ChatGPT S6-prep R7, M-S6-R7-01 — проверка готового user-data.yaml ДО вставки у провайдера.
 #   Файл первичной настройки сервера собирает агент, и он мог бы, сохранив верный ключ подписи, добавить себе путь к
@@ -22,7 +23,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import render_user_data as ru  # noqa: E402
 
-VERSION = 'v0.1'
+VERSION = 'v0.2'
 
 
 class Mismatch(Exception):
@@ -33,7 +34,7 @@ def inputs(text):
     lines = text.split('\n')
     if len(lines) < 3 or lines[0] != '#cloud-config':
         raise Mismatch('first line is not #cloud-config')
-    m = re.search(r'RELEASE_KEY_FINGERPRINT (SHA256:[A-Za-z0-9+/]{43}) ', lines[1])
+    m = re.search(r'RELEASE_KEY_FINGERPRINT (SHA256:[A-Za-z0-9+/]{43})(?![A-Za-z0-9+/])', lines[1])
     if not m:
         raise Mismatch('no RELEASE_KEY_FINGERPRINT in line 2')
     try:
@@ -66,7 +67,7 @@ def verify(data):
         raise Mismatch(f'differs from the audited render at line {n + 1}')
     report = [f'USERDATA_OK sha256={hashlib.sha256(data).hexdigest()} bytes={len(data)} '
               f'render={ru.VERSION} verify={VERSION}',
-              f'USER zadmin key {ru.fingerprint(admin)} sudo ALL (личный вход оператора)',
+              f'USER zadmin key {ru.fingerprint(admin)} sudo ALL (личный вход оператора = путь к root)',
               f'USER zavod key {ru.fingerprint(deploy)} restrict; sudo только /opt/zavod-ops/install_release.sh',
               'USER p1 системный, без входа',
               f'RELEASE_SIGNER {fp}',
