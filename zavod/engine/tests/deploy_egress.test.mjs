@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/tests/deploy_egress.test.mjs
-// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:22 +03:00 (v0.7: аудит ChatGPT S6-prep R6, M-S6-R6-01 —
+// ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 15:15 +03:00 (v0.8: Sign-ZavodTicket по умолчанию берёт
+//   ssh-keygen из System32 (тест проверяет путь по умолчанию и показ программы); тестовый ключ под паролем
+//   подписывается ssh-keygen из PATH через -Keygen, потому что SSH_ASKPASS со сценарием .sh работает только у него; v0.7: аудит ChatGPT S6-prep R6, M-S6-R6-01 —
 //   сквозной тест Linux: агент создаёт operatorSigner со СВОЕЙ парой «ключ + отпечаток» и подписывает билет своим
 //   ключом без пароля оператора — Engine это не останавливает (не граница), настоящий install_release.sh с
 //   release_signers оператора отказывает SERVER_TICKET_BAD_SIGNATURE, текущая версия не меняется; v0.6: аудит ChatGPT S6-prep R5, M-S6-R5-01 —
@@ -319,8 +321,12 @@ test('Windows: Sign-ZavodTicket подписывает показанные ба
   const op = operatorKey(d);
   const fn = join(HERE, '..', '..', 'ops', 'operator', 'sign_ticket.ps1.txt');
   const ask = join(d, 'op_askpass.sh');
+  const src = readFileSync(fn, 'utf8');
+  assert.match(src, /\[string\]\$Keygen = 'C:\\Windows\\System32\\OpenSSH\\ssh-keygen\.exe'\)/);
+  assert.doesNotMatch(src, /Get-Command ssh-keygen/);
+  const kg = execFileSync('where', ['ssh-keygen'], { encoding: 'utf8' }).split(/\r?\n/)[0].trim();
   const run = (path, code) => spawnSync('powershell', ['-NoProfile', '-Command',
-    `. ([scriptblock]::Create((Get-Content -Raw -Encoding UTF8 '${fn}'))); Sign-ZavodTicket -Path '${path}' -Key '${op.key}'`],
+    `. ([scriptblock]::Create((Get-Content -Raw -Encoding UTF8 '${fn}'))); Sign-ZavodTicket -Path '${path}' -Key '${op.key}' -Keygen '${kg}'`],
     { input: `${code}\n`, encoding: 'utf8', env: { ...process['env'], SSH_ASKPASS: ask, SSH_ASKPASS_REQUIRE: 'force', DISPLAY: 'zavod-test' } });
   const seen = [];
   const sign = operatorSigner({ requestsDir: join(d, 'requests'), releasePublicKey: op.pub, operatorFingerprint: op.fp, wait: async () => {},
@@ -329,6 +335,7 @@ test('Windows: Sign-ZavodTicket подписывает показанные ба
       assert.equal(run(n.path, 'deadbeef').status !== 0 && !existsSync(`${n.path}.sig`), true);
       const r = run(n.path, n.ticket_sha256.slice(0, 8));
       assert.equal(r.status, 0, r.stderr);
+      assert.ok(r.stdout.includes(`: ${kg}`), r.stdout); // строка «Программа подписи: <путь>»; русский текст — в кодировке консоли
     } });
   const ticket = ticketFor(rows());
   const sig = await sign(ticket);
