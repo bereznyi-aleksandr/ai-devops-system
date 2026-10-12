@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: zavod/engine/tests/deploy_egress.test.mjs
-// ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 15:15 +03:00 (v0.8: Sign-ZavodTicket по умолчанию берёт
+// ВЕРСИЯ: v0.9  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:01 +03:00 (v0.9: L-S6-R10-01 — отдельная проверка
+//   Sign-ZavodTicket без -Keygen: ключ создан и подпись сделана программой System32, подпись принята; v0.8: Sign-ZavodTicket по умолчанию берёт
 //   ssh-keygen из System32 (тест проверяет путь по умолчанию и показ программы); тестовый ключ под паролем
 //   подписывается ssh-keygen из PATH через -Keygen, потому что SSH_ASKPASS со сценарием .sh работает только у него; v0.7: аудит ChatGPT S6-prep R6, M-S6-R6-01 —
 //   сквозной тест Linux: агент создаёт operatorSigner со СВОЕЙ парой «ключ + отпечаток» и подписывает билет своим
@@ -340,6 +341,30 @@ test('Windows: Sign-ZavodTicket подписывает показанные ба
   const ticket = ticketFor(rows());
   const sig = await sign(ticket);
   assert.equal(seen.length, 1);
+  assert.match(sig.toString('latin1'), /^-----BEGIN SSH SIGNATURE-----/);
+});
+
+// L-S6-R10-01: путь по умолчанию — именно программа Windows из System32, без -Keygen (ключ без пароля: SSH_ASKPASS
+// со сценарием .sh эта программа не исполняет).
+const S32_KEYGEN = 'C:\\Windows\\System32\\OpenSSH\\ssh-keygen.exe';
+test('Windows: Sign-ZavodTicket без -Keygen подписывает программой System32', { skip: process.platform !== 'win32' || !existsSync(S32_KEYGEN) }, async () => {
+  const d = mkdtempSync(join(tmpdir(), 'zavod-opsign-s32-'));
+  const key = join(d, 'op');
+  execFileSync(S32_KEYGEN, ['-q', '-t', 'ed25519', '-N', '', '-C', 'op', '-f', key]);
+  const pub = readFileSync(`${key}.pub`, 'utf8').trim();
+  const fp = execFileSync(S32_KEYGEN, ['-lf', `${key}.pub`], { encoding: 'utf8' }).split(' ')[1];
+  const fn = join(HERE, '..', '..', 'ops', 'operator', 'sign_ticket.ps1.txt');
+  const run = (path, code) => spawnSync('powershell', ['-NoProfile', '-Command',
+    `. ([scriptblock]::Create((Get-Content -Raw -Encoding UTF8 '${fn}'))); Sign-ZavodTicket -Path '${path}' -Key '${key}'`],
+    { input: `${code}\n`, encoding: 'utf8' });
+  const sign = operatorSigner({ requestsDir: join(d, 'requests'), releasePublicKey: pub, operatorFingerprint: fp, wait: async () => {},
+    notify: async (n) => {
+      assert.equal(run(n.path, 'deadbeef').status !== 0 && !existsSync(`${n.path}.sig`), true);
+      const r = run(n.path, n.ticket_sha256.slice(0, 8));
+      assert.equal(r.status, 0, r.stderr);
+      assert.ok(r.stdout.includes(`: ${S32_KEYGEN}`), r.stdout);
+    } });
+  const sig = await sign(ticketFor(rows()));
   assert.match(sig.toString('latin1'), /^-----BEGIN SSH SIGNATURE-----/);
 });
 

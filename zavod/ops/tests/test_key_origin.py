@@ -1,6 +1,8 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_key_origin.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 15:26 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 15:26 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:01 +03:00 (v0.2: аудит R10 L-S6-R10-01 — на
+#   Windows проверки идут именно программой C:\Windows\System32\OpenSSH\ssh-keygen.exe, если она есть, а не первой
+#   из PATH; на Linux — ssh-keygen из PATH.)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: аудит ChatGPT S6-prep R9, M-S6-R9-01, критерии R10-1 и R10-2 — источник отпечатка ключа не файл.
 #   OD-5 v2.2: оператор переписывает отпечаток из вывода ssh-keygen В МОМЕНТ СОЗДАНИЯ ключа (строка после
@@ -28,8 +30,11 @@ TGT = (1412203481, 'bereznyi-aleksandr/zavod-p1-bot', '48d39de1-2c46-4deb-8557-f
 GEN_FP = re.compile(r'The key fingerprint is:\s*(SHA256:[A-Za-z0-9+/]{43}) ')
 
 
+S32 = r'C:\Windows\System32\OpenSSH\ssh-keygen.exe'
+
+
 def keygen():
-    return shutil.which('ssh-keygen')
+    return S32 if os.name == 'nt' and os.path.exists(S32) else shutil.which('ssh-keygen')
 
 
 @unittest.skipUnless(keygen(), 'нужен ssh-keygen')
