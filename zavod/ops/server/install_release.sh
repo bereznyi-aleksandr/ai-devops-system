@@ -85,7 +85,7 @@ M_REPO=$(read_field repo_full_name)
 M_TENANT=$(read_field tenant_id)
 
 # Билет: поля = манифест, срок, порядок. Печатает «OK <ticket_id> <sha256 билета>» или «ERR <код>».
-mkdir -p -m 0700 "$TICKETS"
+[[ -d "$TICKETS" ]] || install -d -m 0700 "$TICKETS"
 TCHECK=$(python3 -I - "$TICKET" "$MANIFEST" "$TICKETS/last_ticket.json" "$(date -u +%s)" <<'PY'
 import hashlib, json, re, sys
 tp, mp, lp, now = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4])
