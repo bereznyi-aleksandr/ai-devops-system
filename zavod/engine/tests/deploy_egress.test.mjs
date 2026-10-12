@@ -1,10 +1,12 @@
 // ДОКУМЕНТ: zavod/engine/tests/deploy_egress.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:39 +03:00 (v0.2: sshInstall заменён
+//   ghDeployInstall — аудит ChatGPT S6-prep M-S6-05/L-S6-01)
 // ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: проверки src/deploy_egress.mjs (E6-2): точный деплой — одна установка; чужой заказчик, чужой
 //   репозиторий, подмена байта — отказ до передачи на сервер; отказ сервера и подтверждение чужой версии —
-//   отказ адаптера; sshInstall — только BatchMode и строгая проверка ключа хоста; на Linux — сквозной прогон с
+//   отказ адаптера; ghDeployInstall — запуск workflow продукта с манифестом и request_id, поиск своего прогона,
+//   разбор только строк ZAVOD_RESULT, ни одного вызова ssh; на Linux — сквозной прогон с
 //   настоящим zavod/ops/server/install_release.sh (установка, повтор = already_present, текущая версия).
 // ОГРАНИЧЕНИЯ: сети нет; временные папки остаются в tmpdir ОС (ничего не удаляется).
 import { test } from 'node:test';
@@ -15,7 +17,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sealManifest, RELEASE_SCOPE } from '../../kernel/src/release_manifest.mjs';
-import { deployEgress, sshInstall, localInstall } from '../src/deploy_egress.mjs';
+import { deployEgress, ghDeployInstall, localInstall } from '../src/deploy_egress.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const sha = (b) => createHash('sha256').update(b).digest('hex');
@@ -78,17 +80,47 @@ test('отказ сервера и подтверждение чужой вер�
   await assert.rejects(deployEgress(TARGET, async () => '').deploy(rows()), (e) => e.code === 'SERVER_NO_CONFIRMATION');
 });
 
-test('sshInstall: BatchMode, строгая проверка ключа хоста, плохой адрес — отказ', async () => {
+function ghFake({ log, polls = 1 }) {
   const calls = [];
-  const exec = async (cmd, args) => { calls.push([cmd, args]); return { stdout: cmd === 'ssh' ? `INSTALL_OK state=installed head=${'a'.repeat(40)}\n` : '' }; };
-  const res = await deployEgress(TARGET, sshInstall({ host: '203.0.113.10', exec })).deploy(rows());
+  let views = 0;
+  let title = null;
+  const exec = async (cmd, args) => {
+    calls.push([cmd, args]);
+    assert.equal(cmd, 'gh');
+    if (args[0] === 'workflow') {
+      title = `p1-deploy ${args.find((x) => x.startsWith('request_id=')).slice('request_id='.length)}`;
+      return { stdout: '' };
+    }
+    if (args[0] === 'run' && args[1] === 'list') return { stdout: JSON.stringify([{ databaseId: 9, displayTitle: 'p1-deploy other' }, { databaseId: 77, displayTitle: title }]) };
+    if (args.includes('--json')) { views += 1; return { stdout: JSON.stringify({ status: views > polls ? 'completed' : 'in_progress' }) }; }
+    return { stdout: log };
+  };
+  return { calls, exec };
+}
+
+test('ghDeployInstall: выкладку делает workflow продукта, ключа у Завода нет', async () => {
+  const r = rows();
+  const h = r.manifest.head_sha;
+  const f = ghFake({ log: `deploy\tpush\t2026-10-12T10:00:00Z ZAVOD_RESULT INSTALL_OK state=installed head=${h}\n`, polls: 2 });
+  const res = await deployEgress(TARGET, ghDeployInstall({ repo_full_name: TARGET.repo_full_name, exec: f.exec, wait: async () => {} })).deploy(r);
   assert.equal(res.state, 'installed');
-  assert.deepEqual(calls.map((c) => c[0]), ['scp', 'ssh']);
-  for (const [, args] of calls) {
-    assert.ok(args.includes('BatchMode=yes') && args.includes('StrictHostKeyChecking=yes'), args.join(' '));
-  }
-  assert.ok(calls[1][1].includes('zavod@203.0.113.10'));
-  assert.throws(() => sshInstall({ host: 'x; rm' }), TypeError);
+  const run = f.calls[0][1];
+  assert.deepEqual(run.slice(0, 5), ['workflow', 'run', 'p1-deploy.yml', '-R', TARGET.repo_full_name]);
+  assert.ok(run.includes(`head_sha=${h}`) && run.includes(`request_id=${res.outbox_id}`));
+  const b64 = run.find((x) => x.startsWith('manifest_b64=')).slice('manifest_b64='.length);
+  assert.deepEqual(JSON.parse(Buffer.from(b64, 'base64').toString('utf8')).manifest, r.manifest);
+  assert.ok(f.calls.some(([, a]) => a[0] === 'run' && a[1] === 'view' && a[2] === '77' && a.includes('--log')));
+  for (const [, a] of f.calls) assert.ok(!a.some((x) => /ssh|BatchMode|PRIVATE/.test(x)), a.join(' '));
+});
+
+test('ghDeployInstall: отказ сервера, пустой журнал, плохой репозиторий', async () => {
+  const deny = ghFake({ log: 'x\ty\tZAVOD_RESULT INSTALL_REFUSED code=TENANT_MISMATCH\n' });
+  await assert.rejects(deployEgress(TARGET, ghDeployInstall({ repo_full_name: TARGET.repo_full_name, exec: deny.exec, wait: async () => {} })).deploy(rows()),
+    (e) => e.code === 'SERVER_TENANT_MISMATCH');
+  const quiet = ghFake({ log: 'INSTALL_OK state=installed head=' + 'a'.repeat(40) + '\n' });
+  await assert.rejects(deployEgress(TARGET, ghDeployInstall({ repo_full_name: TARGET.repo_full_name, exec: quiet.exec, wait: async () => {} })).deploy(rows()),
+    (e) => e.code === 'SERVER_NO_CONFIRMATION');
+  assert.throws(() => ghDeployInstall({ repo_full_name: 'x; rm' }), TypeError);
 });
 
 test('Linux: сквозной деплой через настоящий install_release.sh', { skip: process.platform === 'win32' }, async () => {

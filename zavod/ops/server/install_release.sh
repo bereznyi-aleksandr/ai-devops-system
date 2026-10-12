@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_release.sh
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:32 +03:00 (v0.2: аудит ChatGPT
+#   S6-prep M-S6-02/M-S6-03 — скрипт запускается через узкое правило sudo от пользователя zavod; оба аргумента
+#   обязаны быть обычными файлами (не ссылками) прямо в папке приёма INCOMING=/var/lib/zavod-incoming, иначе
+#   отказ BAD_INPUT_PATH; файлы сразу копируются в папку root (открытие без перехода по ссылке, O_NOFOLLOW),
+#   дальше скрипт работает только с копиями — подмена файла в папке zavod после проверки не действует;
+#   переменные окружения под sudo сбрасываются, поэтому на сервере действуют только значения по умолчанию)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: этап 6, E6-2 — установка выпуска на сервере; вызывается адаптером Egress (одна строка outbox =
 #   один вызов). Вторая линия сверки манифеста SR-13 на самом сервере: SHA-256 архива = artifact_sha256,
@@ -9,7 +14,8 @@
 #   Любое несовпадение — отказ с кодом до распаковки. Распаковка в releases/<head_sha>.partial → переименование
 #   → атомарная смена ссылки current → перезапуск службы → запись в журнал. Повтор той же версии ничего не
 #   меняет (идемпотентно: повторный вызов даёт тот же результат). Старые версии не удаляются — откат = ссылка.
-# ВЫЗОВ: install_release.sh <manifest.json> <artifact.tar>; ROOT, TARGET_ENV, SERVICE, JOURNAL — для проверок.
+# ВЫЗОВ: sudo /opt/zavod-ops/install_release.sh /var/lib/zavod-incoming/<manifest.json> /var/lib/zavod-incoming/<artifact.tar>;
+#   ROOT, TARGET_ENV, SERVICE, JOURNAL, INCOMING, RESTART — только для проверок без sudo.
 # ОГРАНИЧЕНИЯ: секретов не читает; ничего не удаляет.
 set -euo pipefail
 MANIFEST=${1:?manifest}
@@ -19,8 +25,24 @@ TARGET_ENV=${TARGET_ENV:-/etc/zavod-p1/target.env}
 SERVICE=${SERVICE:-zavod-p1}
 JOURNAL=${JOURNAL:-/var/lib/zavod-p1/install.jsonl}
 RESTART=${RESTART:-systemctl restart}
+INCOMING=${INCOMING:-/var/lib/zavod-incoming}
 
 refuse() { echo "INSTALL_REFUSED code=$1"; exit 3; }
+
+STAGE=$(mktemp -d "${TMPDIR:-/tmp}/zavod-install.XXXXXX")
+take() {
+  [[ "$(dirname -- "$1")" == "$INCOMING" ]] || return 1
+  python3 -I -c 'import os,stat,sys
+fd = os.open(sys.argv[1], os.O_RDONLY | os.O_NOFOLLOW)
+if not stat.S_ISREG(os.fstat(fd).st_mode): sys.exit(1)
+with os.fdopen(fd, "rb") as src, open(sys.argv[2], "xb") as dst:
+    dst.write(src.read())' "$1" "$2" 2>/dev/null
+}
+if ! take "$MANIFEST" "$STAGE/manifest.json" || ! take "$ARTIFACT" "$STAGE/artifact.tar"; then
+  refuse BAD_INPUT_PATH
+fi
+MANIFEST="$STAGE/manifest.json"
+ARTIFACT="$STAGE/artifact.tar"
 
 # shellcheck source=/dev/null
 . "$TARGET_ENV"

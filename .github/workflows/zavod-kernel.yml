@@ -1,8 +1,11 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.11
+# ВЕРСИЯ: v0.12
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 08:42 +03:00 (v0.11: задание ops этапа 6 — модульные проверки zavod/ops
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:39 +03:00 (v0.12: аудит ChatGPT S6-prep — задание ops собирает user-data
+#   render_user_data.py с одноразовыми ключами CI, применяет его на машине GitHub и проверяет реальную схему прав:
+#   sudo zavod только на install_release.sh, выкладка deploy_push.sh по ssh как zavod до активной службы, подмена
+#   архива — отказ; 28 модульных проверок; v0.11: задание ops этапа 6 — модульные проверки zavod/ops
 #   (копия SQLite E6-3, сторож E6-4, установка выпуска E6-2, внешний сканер E6-1), схема cloud-init, sshd -t
 #   с настройками 10-zavod.conf и отказ входа по паролю на 127.0.0.1, shellcheck, systemd-analyze verify;
 #   Claude, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1; v0.10: самопроверка приёмки P1 ждёт 3 теста — добавлен тест заглушки v0.2 (399c0823c); v0.9: E5-5 заготовка — журнал инъекций выпуска пилота грузится артефактом прогона; v0.8: этап 5 E5-6 — самопроверка сканера продукта
@@ -195,33 +198,40 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: tools (cloud-init schema, sshd)
+      - name: tools (cloud-init schema, sshd, shellcheck)
         shell: bash
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq cloud-init openssh-server > /dev/null
-      - name: cloud-init schema (E6-1)
-        shell: bash
-        run: cloud-init schema --config-file zavod/ops/server/cloud-init.yaml
-      - name: sshd with 10-zavod.conf on 127.0.0.1 (E6-1)
+      - name: render user-data with one-time CI keys, cloud-init schema (E6-1, M-S6-02/03/05)
         shell: bash
         run: |
           set -euo pipefail
-          python3 -I -c 'import yaml,sys; c=yaml.safe_load(open("zavod/ops/server/cloud-init.yaml")); w=[f for f in c["write_files"] if f["path"]=="/etc/ssh/sshd_config.d/10-zavod.conf"][0]; sys.stdout.write(w["content"])' > "$RUNNER_TEMP/10-zavod.conf"
-          sudo install -m 0644 "$RUNNER_TEMP/10-zavod.conf" /etc/ssh/sshd_config.d/10-zavod.conf
-          id zavod >/dev/null 2>&1 || sudo useradd -m -s /bin/bash zavod
-          sudo mkdir -p /run/sshd
+          ssh-keygen -q -t ed25519 -N '' -C ci-admin -f "$RUNNER_TEMP/ci_admin"
+          ssh-keygen -q -t ed25519 -N '' -C ci-deploy -f "$RUNNER_TEMP/ci_deploy"
+          python3 -I zavod/ops/server/render_user_data.py --admin-pubkey "$RUNNER_TEMP/ci_admin.pub"             --deploy-pubkey "$RUNNER_TEMP/ci_deploy.pub" --repo-id 1412203481             --repo bereznyi-aleksandr/zavod-p1-bot --tenant 48d39de1-2c46-4deb-8557-fec866f2e810 > "$RUNNER_TEMP/user-data.yaml"
+          if grep -q 'PRIVATE KEY' "$RUNNER_TEMP/user-data.yaml"; then echo 'private key in user-data'; exit 1; fi
+          cloud-init schema --config-file "$RUNNER_TEMP/user-data.yaml"
+      - name: apply the same user-data on the runner (users, files, sudoers, sshd; ufw skipped)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -E python3 -I zavod/ops/ci/apply_user_data_ci.py "$RUNNER_TEMP/user-data.yaml"
           sudo sshd -t
           sudo systemctl restart ssh || sudo systemctl restart ssh.socket
-          for i in 1 2 3 4 5; do nc -z 127.0.0.1 22 && break; sleep 1; done
-          nc -z 127.0.0.1 22
       - name: shellcheck and systemd-analyze verify (E6-2, E6-4)
         shell: bash
         run: |
           set -euo pipefail
-          shellcheck zavod/ops/server/install_release.sh
-          id p1 >/dev/null 2>&1 || sudo useradd -r -s /usr/sbin/nologin p1
+          shellcheck zavod/ops/server/install_release.sh zavod/ops/deploy_push.sh zavod/ops/ci/e2e_deploy_ci.sh
           systemd-analyze verify --man=no zavod/ops/server/zavod-p1.service zavod/ops/server/zavod-p1-watch.service
+      - name: real permission schema and deploy as zavod end to end (E6-2, M-S6-02/03)
+        shell: bash
+        run: |
+          set -o pipefail
+          bash zavod/ops/ci/e2e_deploy_ci.sh "$RUNNER_TEMP/ci_deploy" "$RUNNER_TEMP/ci_admin" 1412203481             bereznyi-aleksandr/zavod-p1-bot 48d39de1-2c46-4deb-8557-fec866f2e810 | tee "$RUNNER_TEMP/e2e.out"
+          test "$(grep -c '^CHECK .* PASS$' "$RUNNER_TEMP/e2e.out")" -eq 9
+          grep -q '^E2E_DEPLOY_CI PASS head=' "$RUNNER_TEMP/e2e.out"
       - name: ops unit tests (E6-1..E6-4), no skips
         shell: bash
         env:
@@ -229,5 +239,5 @@ jobs:
         run: |
           set -o pipefail
           python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
-          grep -q '^Ran 19 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 28 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/ops

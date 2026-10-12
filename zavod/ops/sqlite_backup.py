@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/ops/sqlite_backup.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:38 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:38 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:32 +03:00 (v0.2: аудит ChatGPT
+#   S6-prep L-S6-02 — восстановление обязательно получает ожидаемый SHA-256 манифеста из доверенного места
+#   (журнал копий, evidence Kernel); не совпал — MANIFEST_UNTRUSTED до любой записи: согласованная подмена
+#   копии и манифеста больше не проходит)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: этап 6, критерий E6-3 — копия базы SQLite продукта и восстановление на чистом месте со сверкой
 #   отпечатков. Копия снимается онлайн-API SQLite (Connection.backup), а не копированием файла на ходу.
@@ -106,7 +109,10 @@ def backup(db_path, out_dir, now=None):
     return manifest, out, mpath
 
 
-def restore(backup_path, manifest_path, target_dir, target_name='restored.sqlite'):
+def restore(backup_path, manifest_path, target_dir, expected_manifest_sha256, target_name='restored.sqlite'):
+    if not (isinstance(expected_manifest_sha256, str) and len(expected_manifest_sha256) == 64
+            and file_sha256(manifest_path) == expected_manifest_sha256):
+        raise RestoreRefused('MANIFEST_UNTRUSTED', 'manifest differs from the trusted manifest sha256')
     with open(manifest_path, encoding='utf-8') as f:
         m = json.load(f)
     if os.path.basename(backup_path) != m.get('backup_file'):
@@ -144,14 +150,14 @@ def main(argv):
             m, out, mpath = backup(argv[1], argv[2])
             print(json.dumps({'result': 'BACKUP_OK', **m, 'manifest_sha256': file_sha256(mpath)}, ensure_ascii=False))
             return 0
-        if len(argv) == 4 and argv[0] == 'restore':
-            r = restore(argv[1], argv[2], argv[3])
+        if len(argv) == 5 and argv[0] == 'restore':
+            r = restore(argv[1], argv[2], argv[4], argv[3])
             print(json.dumps({'result': 'RESTORE_OK', **r}, ensure_ascii=False))
             return 0
     except RestoreRefused as e:
         print(json.dumps({'result': 'RESTORE_REFUSED', 'code': e.code}))
         return 3
-    print('usage: sqlite_backup.py backup DB OUT_DIR | restore BACKUP MANIFEST TARGET_DIR', file=sys.stderr)
+    print('usage: sqlite_backup.py backup DB OUT_DIR | restore BACKUP MANIFEST MANIFEST_SHA256 TARGET_DIR', file=sys.stderr)
     return 2
 
 

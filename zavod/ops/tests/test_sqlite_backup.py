@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_sqlite_backup.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:38 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:38 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:32 +03:00 (v0.2: L-S6-02 —
+#   восстановление с ожидаемым SHA-256 манифеста; согласованная подмена копии и манифеста — MANIFEST_UNTRUSTED)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: модульные проверки zavod/ops/sqlite_backup.py (E6-3): точная копия восстанавливается с тем же
 #   отпечатком; копия снимается при открытой пишущей базе в режиме WAL; порча байта копии, чужой манифест,
@@ -51,7 +52,7 @@ class SqliteBackupTest(unittest.TestCase):
         fp0, counts0 = sb.fingerprint(self.db)
         self.assertEqual(m['fingerprint'], fp0)
         self.assertEqual(m['rows'], {'applications': 20})
-        r = sb.restore(out, mp, os.path.join(self.d, 'clean'))
+        r = sb.restore(out, mp, os.path.join(self.d, 'clean'), sb.file_sha256(mp))
         self.assertEqual(r['fingerprint'], fp0)
         self.assertEqual(r['integrity'], 'ok')
         self.assertEqual(sorted(os.listdir(os.path.join(self.d, 'clean'))), ['restored.sqlite'])
@@ -64,7 +65,7 @@ class SqliteBackupTest(unittest.TestCase):
         try:
             m, out, mp = self.bk()
             self.assertEqual(m['rows'], {'applications': 21})
-            r = sb.restore(out, mp, os.path.join(self.d, 'clean'))
+            r = sb.restore(out, mp, os.path.join(self.d, 'clean'), sb.file_sha256(mp))
             self.assertEqual(r['fingerprint'], sb.fingerprint(self.db)[0])
         finally:
             w.close()
@@ -78,7 +79,7 @@ class SqliteBackupTest(unittest.TestCase):
             f.write(bytes([b[0] ^ 1]))
         target = os.path.join(self.d, 'clean')
         with self.assertRaises(sb.RestoreRefused) as c:
-            sb.restore(out, mp, target)
+            sb.restore(out, mp, target, sb.file_sha256(mp))
         self.assertEqual(c.exception.code, 'SHA_MISMATCH')
         self.assertFalse(os.path.exists(target))
 
@@ -88,7 +89,7 @@ class SqliteBackupTest(unittest.TestCase):
         os.makedirs(target)
         open(os.path.join(target, 'live.sqlite'), 'wb').close()
         with self.assertRaises(sb.RestoreRefused) as c:
-            sb.restore(out, mp, target)
+            sb.restore(out, mp, target, sb.file_sha256(mp))
         self.assertEqual(c.exception.code, 'TARGET_NOT_CLEAN')
 
     def test_manifest_of_other_file_refused(self):
@@ -99,7 +100,7 @@ class SqliteBackupTest(unittest.TestCase):
         with open(mp, 'w', encoding='utf-8') as f:
             json.dump(j, f)
         with self.assertRaises(sb.RestoreRefused) as c:
-            sb.restore(out, mp, os.path.join(self.d, 'clean'))
+            sb.restore(out, mp, os.path.join(self.d, 'clean'), sb.file_sha256(mp))
         self.assertEqual(c.exception.code, 'MANIFEST_OTHER_FILE')
 
     def test_fingerprint_mismatch_refused_and_kept_as_refused(self):
@@ -111,9 +112,31 @@ class SqliteBackupTest(unittest.TestCase):
             json.dump(j, f)
         target = os.path.join(self.d, 'clean')
         with self.assertRaises(sb.RestoreRefused) as c:
-            sb.restore(out, mp, target)
+            sb.restore(out, mp, target, sb.file_sha256(mp))
         self.assertEqual(c.exception.code, 'FINGERPRINT_MISMATCH')
         self.assertEqual(os.listdir(target), ['restored.sqlite.refused'])
+
+    def test_consistent_substitution_needs_trusted_manifest(self):
+        m, out, mp = self.bk()
+        trusted = sb.file_sha256(mp)
+        con = sqlite3.connect(out)
+        con.execute("UPDATE applications SET phone = '+380440000000' WHERE id = 1")
+        con.commit()
+        con.close()
+        fp, counts = sb.fingerprint(out)
+        with open(mp, encoding='utf-8') as f:
+            j = json.load(f)
+        j.update(backup_sha256=sb.file_sha256(out), fingerprint=fp)
+        with open(mp, 'w', encoding='utf-8') as f:
+            json.dump(j, f)
+        target = os.path.join(self.d, 'clean')
+        with self.assertRaises(sb.RestoreRefused) as c:
+            sb.restore(out, mp, target, trusted)
+        self.assertEqual(c.exception.code, 'MANIFEST_UNTRUSTED')
+        self.assertFalse(os.path.exists(target))
+        with self.assertRaises(sb.RestoreRefused) as c:
+            sb.restore(out, mp, target, None)
+        self.assertEqual(c.exception.code, 'MANIFEST_UNTRUSTED')
 
     def test_fingerprint_ignores_layout_but_sees_one_row(self):
         fp0 = sb.fingerprint(self.db)[0]

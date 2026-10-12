@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_install_release.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:32 +03:00 (v0.2: M-S6-02 —
+#   файл вне папки приёма и ссылка в папке приёма — отказ BAD_INPUT_PATH до распаковки)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: проверки zavod/ops/server/install_release.sh (E6-2, вторая линия сверки на сервере): точный выпуск
 #   ставится и переключает current; повтор — already_present без изменений; подмена байта архива, чужой
@@ -57,7 +58,7 @@ class InstallReleaseTest(unittest.TestCase):
 
     def run_install(self, mp, ap):
         env = dict(os.environ, ROOT=self.root, TARGET_ENV=self.env, SERVICE='zavod-p1',
-                   JOURNAL=os.path.join(self.d, 'install.jsonl'), RESTART='true')
+                   JOURNAL=os.path.join(self.d, 'install.jsonl'), RESTART='true', INCOMING=self.d)
         return subprocess.run(['bash', SCRIPT, mp, ap], capture_output=True, text=True, env=env)
 
     def test_exact_installs_then_repeat_is_noop_then_second_keeps_first(self):
@@ -107,6 +108,20 @@ class InstallReleaseTest(unittest.TestCase):
         a, s = self.artifact('a.tar', 'x\n')
         self.assertEqual(self.refused(self.manifest('m.json', s, 'c' * 40, tenant_id='00000000-0000-0000-0000-000000000000'), a),
                          'INSTALL_REFUSED code=TENANT_MISMATCH')
+
+    def test_input_outside_incoming_or_symlink(self):
+        a, s = self.artifact('a.tar', 'x\n')
+        mp = self.manifest('m.json', s, 'c' * 40)
+        other = os.path.join(self.d, 'other')
+        os.makedirs(other)
+        a2 = os.path.join(other, 'a.tar')
+        with open(a, 'rb') as f, open(a2, 'wb') as g:
+            g.write(f.read())
+        self.assertEqual(self.refused(mp, a2), 'INSTALL_REFUSED code=BAD_INPUT_PATH')
+        link = os.path.join(self.d, 'link.tar')
+        os.symlink(a, link)
+        self.assertEqual(self.refused(mp, link), 'INSTALL_REFUSED code=BAD_INPUT_PATH')
+        self.assertEqual(self.refused(mp, os.path.join(other, '..', 'a.tar')), 'INSTALL_REFUSED code=BAD_INPUT_PATH')
 
     def test_bad_head(self):
         a, s = self.artifact('a.tar', 'x\n')
