@@ -1,0 +1,32 @@
+# ДОКУМЕНТ: zavod/ops/server/zavod-p1.service
+# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
+# НАЗНАЧЕНИЕ: этап 6 — служба продукта P1 (Telegram-бот, long polling): запускается из /opt/zavod-p1/current
+#   (ссылку переключает install_release.sh только после сверки манифеста), перезапуск после сбоя, без прав root.
+# ОГРАНИЧЕНИЯ: токен и чат администратора — в /etc/zavod-p1/secrets.env (0600, root), файл кладёт оператор или
+#   ГД без показа значений; здесь только имя файла.
+[Unit]
+Description=Zavod P1 product bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=p1
+Group=p1
+WorkingDirectory=/opt/zavod-p1/current
+Environment=DATABASE_PATH=/var/lib/zavod-p1/p1.sqlite
+Environment=CONTENT_PATH=/etc/zavod-p1/content.json
+EnvironmentFile=/etc/zavod-p1/secrets.env
+ExecStart=/usr/bin/python3 -m bot
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/zavod-p1
+
+[Install]
+WantedBy=multi-user.target

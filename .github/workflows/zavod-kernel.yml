@@ -1,8 +1,11 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.10
+# ВЕРСИЯ: v0.11
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:27 +03:00 (v0.10: самопроверка приёмки P1 ждёт 3 теста — добавлен тест заглушки v0.2 (399c0823c); v0.9: E5-5 заготовка — журнал инъекций выпуска пилота грузится артефактом прогона; v0.8: этап 5 E5-6 — самопроверка сканера продукта
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 08:42 +03:00 (v0.11: задание ops этапа 6 — модульные проверки zavod/ops
+#   (копия SQLite E6-3, сторож E6-4, установка выпуска E6-2, внешний сканер E6-1), схема cloud-init, sshd -t
+#   с настройками 10-zavod.conf и отказ входа по паролю на 127.0.0.1, shellcheck, systemd-analyze verify;
+#   Claude, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1; v0.10: самопроверка приёмки P1 ждёт 3 теста — добавлен тест заглушки v0.2 (399c0823c); v0.9: E5-5 заготовка — журнал инъекций выпуска пилота грузится артефактом прогона; v0.8: этап 5 E5-6 — самопроверка сканера продукта
 #   catalog/ci/product_scan.mjs и SR-02 по zavod/catalog без исключений; v0.7.1: слияние v0.6.1 этапа 4 — проверка версии psql без /dev/stderr;
 #   v0.7: слияние этапов 4 и 5 — задание jobobject (M-E46-03, PG16 + полный
 #   fencer.test.mjs на Job Object) и самопроверка приёмки P1; v0.6 (этап 4): аудит E4-6 M-E46-03;
@@ -185,3 +188,46 @@ jobs:
           node --test zavod/catalog/ci/product_scan.test.mjs | tee "$RUNNER_TEMP/pscan_selftest.out"
           grep -q '^# pass 12$' "$RUNNER_TEMP/pscan_selftest.out" && grep -q '^# fail 0$' "$RUNNER_TEMP/pscan_selftest.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/catalog
+
+  ops:
+    name: stage 6 ops (E6-1..E6-4) local checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: tools (cloud-init schema, sshd)
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cloud-init openssh-server > /dev/null
+      - name: cloud-init schema (E6-1)
+        shell: bash
+        run: cloud-init schema --config-file zavod/ops/server/cloud-init.yaml
+      - name: sshd with 10-zavod.conf on 127.0.0.1 (E6-1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -I -c 'import yaml,sys; c=yaml.safe_load(open("zavod/ops/server/cloud-init.yaml")); w=[f for f in c["write_files"] if f["path"]=="/etc/ssh/sshd_config.d/10-zavod.conf"][0]; sys.stdout.write(w["content"])' > "$RUNNER_TEMP/10-zavod.conf"
+          sudo install -m 0644 "$RUNNER_TEMP/10-zavod.conf" /etc/ssh/sshd_config.d/10-zavod.conf
+          id zavod >/dev/null 2>&1 || sudo useradd -m -s /bin/bash zavod
+          sudo mkdir -p /run/sshd
+          sudo sshd -t
+          sudo systemctl restart ssh || sudo systemctl restart ssh.socket
+          for i in 1 2 3 4 5; do nc -z 127.0.0.1 22 && break; sleep 1; done
+          nc -z 127.0.0.1 22
+      - name: shellcheck and systemd-analyze verify (E6-2, E6-4)
+        shell: bash
+        run: |
+          set -euo pipefail
+          shellcheck zavod/ops/server/install_release.sh
+          id p1 >/dev/null 2>&1 || sudo useradd -r -s /usr/sbin/nologin p1
+          systemd-analyze verify --man=no zavod/ops/server/zavod-p1.service zavod/ops/server/zavod-p1-watch.service
+      - name: ops unit tests (E6-1..E6-4), no skips
+        shell: bash
+        env:
+          ZAVOD_OPS_SSHD: '1'
+        run: |
+          set -o pipefail
+          python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 19 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          node zavod/kernel/ci/leak_scan.mjs zavod/ops
