@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/stage_gates.test.mjs
-// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 08:33 +03:00 (v0.7: файл состояния v1.2 —
+// ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:19 +03:00 (v0.8: файл состояния v1.3 —
+//   этап 5 закрыт (E5-4 PASS), выпуск этапа 6 разрешён, этап 7 запрещён до закрытия этапа 6; v0.7: файл состояния v1.2 —
 //   этап 5: восемь пунктов PASS по аудиту ChatGPT, выпуск этапа 6 запрещён только из-за E5-4; v0.6: файл состояния v1.1 —
 //   E4-2 PASS (ChatGPT E42 R6 ACCEPT), этап 5 разрешён, выпуск этапа 6 запрещён до закрытия этапа 5; v0.5: файл состояния v1.0 —
 //   OD-2 PASS, этап 5 запрещён до E4-2; v0.4: файл состояния v0.5 —
@@ -25,13 +26,13 @@ test('файл состояния корректен', () => {
   assert.deepEqual(validateGates(load()), []);
 });
 
-test('сейчас: этапы 4 и 5 разрешены, выпуск этапа 6 запрещён — в этапе 5 открыт только E5-4', () => {
+test('сейчас: этап 5 закрыт — выпуск этапа 6 разрешён, этап 7 запрещён до закрытия этапа 6', () => {
   assert.deepEqual(checkStage(load(), 4), { allow: true, blockers: [] });
   assert.deepEqual(checkStage(load(), 5), { allow: true, blockers: [] });
-  const r = checkStage(load(), 6, 'release');
+  assert.deepEqual(checkStage(load(), 6, 'release'), { allow: true, blockers: [] });
+  const r = checkStage(load(), 7);
   assert.equal(r.allow, false);
-  assert.deepEqual(r.blockers.filter((b) => b.startsWith('5:')), ['5:E5-4=OPEN'], r.blockers.join(';'));
-  assert.ok(!r.blockers.some((b) => b.startsWith('4:')), r.blockers.join(';'));
+  assert.ok(r.blockers.length > 0 && r.blockers.every((b) => b.startsWith('6:')), r.blockers.join(';'));
 });
 
 test('этап 4 разрешён, только когда всё требуемое PASS', () => {
@@ -49,8 +50,9 @@ test('этап 4 разрешён, только когда всё требуем
 
 test('выпуск этапа 6 требует закрытого этапа 5, начало — нет', () => {
   const g = load(); for (const s of ['1', '3', '4']) passAll(g, s);
+  g.stages['5'].criteria['E5-4'].status = 'OPEN';
   assert.equal(checkStage(g, 6, 'start').allow, true);
-  assert.equal(checkStage(g, 6, 'release').allow, false);
+  assert.deepEqual(checkStage(g, 6, 'release'), { allow: false, blockers: ['5:E5-4=OPEN'] });
   passAll(g, '5');
   assert.equal(checkStage(g, 6, 'release').allow, true);
 });
@@ -72,16 +74,19 @@ test('испорченный файл — отказ, а не разрешени
   assert.equal(checkStage(load(), 42).allow, false);
 });
 
-test('командная строка: ALLOW и код 0 для этапов 4 и 5, DENY и код 1 для выпуска этапа 6', () => {
+test('командная строка: ALLOW и код 0 для этапов 4, 5 и выпуска 6, DENY и код 1 для этапа 7', () => {
   const run = (...a) => spawnSync(process.execPath, [fileURLToPath(new URL('../src/stage_gates.mjs', import.meta.url)), FILE, ...a], { encoding: 'utf8' });
   for (const st of ['4', '5']) {
     const q = run(st);
     assert.equal(q.status, 0, st);
     assert.match(q.stdout, new RegExp(`STAGE_GATE=ALLOW stage=${st} phase=start`));
   }
-  const p = run('6', 'release');
+  const q6 = run('6', 'release');
+  assert.equal(q6.status, 0);
+  assert.match(q6.stdout, /STAGE_GATE=ALLOW stage=6 phase=release/);
+  const p = run('7');
   assert.equal(p.status, 1);
-  assert.match(p.stdout, /STAGE_GATE=DENY stage=6 phase=release/);
+  assert.match(p.stdout, /STAGE_GATE=DENY stage=7 phase=start/);
 });
 
 test('этап 5 не начинается без OD-2 (изоляция) и OD-8 (движок), даже если E4-1…E4-8 PASS', () => {
