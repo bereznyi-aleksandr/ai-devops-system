@@ -1,6 +1,10 @@
 // ДОКУМЕНТ: zavod/engine/ci/stall_diag.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 11:04 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:54 +03:00 (v0.2: CI 38225551966 прогон 1 поймал
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 11:04 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 13:43 +03:00 (v0.3: аудит ChatGPT S6-prep R4, L-S6-R4-01 —
+//   stallWatch стал пассивным: ничего не качает (orch.pump больше не вызывается) и в движок не пишет; до 150 с раз в
+//   2 с читает базой движка блокировки исполнений и внешних заданий (только SELECT) и пишет, когда блокировка
+//   экземпляра снялась (STALL_LOCK_CLEARED) или что держалась до конца (STALL_LOCK_HELD); о «сдвиге экземпляра»
+//   ничего не утверждает. v0.2: CI 38225551966 прогон 1 поймал
 //   зависание: заказ B стоит на n8, внешнее задание без владельца и без срока блокировки, 60 с ни один захват его не
 //   взял. REST движка блокировку экземпляра (ACT_RU_EXECUTION.LOCK_TIME_/LOCK_OWNER_) не показывает — sqlDiag
 //   читает её прямо из базы движка (только SELECT) вместе со строками ACT_RU_EXTERNAL_JOB; stallWatch после
@@ -37,19 +41,25 @@ export async function sqlDiag(pids) {
   }
 }
 
-// После «не дождались»: качать дальше до extraMs и записать, через сколько секунд от начала ожидания экземпляр
-// сдвинулся сам (или что не сдвинулся). Итог проверки это не меняет — она уже провалена.
-export async function stallWatch({ pump, pred, t0, extraMs = 150000, sleep, log, engine, pids }) {
+// После «не дождались» — только наблюдение (L-S6-R4-01): ничего не качает и в движок не пишет. До extraMs раз в
+// 2 с читает блокировки (sqlDiag, только SELECT). Блокировки исполнений (lock_time_) пропали —
+// STALL_LOCK_CLEARED с секундами от начала ожидания; держались до конца — STALL_LOCK_HELD. Итог проверки не
+// меняется — она уже провалена.
+const locks = (d) => (d.executions || []).filter((e) => e.lock_time_ != null).map((e) => `${e.id_}@${e.lock_time_}`).sort().join(',');
+export async function stallWatch({ t0, extraMs = 150000, sleep, log, pids }) {
+  const first = await sqlDiag(pids);
+  const held = locks(first);
   const until = Date.now() + extraMs;
-  while (Date.now() < until) {
-    await pump();
-    if (await pred()) {
-      log(`  STALL_RECOVERED after ${Math.round((Date.now() - t0) / 1000)} s ${JSON.stringify(await sqlDiag(pids))}`);
+  let last = first;
+  while (held && Date.now() < until) {
+    await sleep(2000);
+    last = await sqlDiag(pids);
+    if (locks(last) !== held) {
+      log(`  STALL_LOCK_CLEARED after ${Math.round((Date.now() - t0) / 1000)} s ${JSON.stringify(last)}`);
       return true;
     }
-    await sleep(1000);
   }
-  log(`  STALL_PERSISTS after ${Math.round((Date.now() - t0) / 1000)} s ${JSON.stringify(await stallDiag(engine))}`);
+  log(`  STALL_LOCK_HELD after ${Math.round((Date.now() - t0) / 1000)} s held=${held || 'none'} ${JSON.stringify(last)}`);
   return false;
 }
 

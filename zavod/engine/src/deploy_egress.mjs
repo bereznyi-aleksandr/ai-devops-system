@@ -1,6 +1,12 @@
 // ДОКУМЕНТ: zavod/engine/src/deploy_egress.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:44 +03:00 (v0.4: аудит ChatGPT S6-prep R3,
+// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 13:39 +03:00 (v0.5: аудит ChatGPT S6-prep R4,
+//   M-S6-R4-01 — operatorSigner больше не берёт путь к allowed_signers и не зовёт ssh-keygen: открытый ключ выпуска
+//   передаётся строкой при создании (закреплённый источник — у вызывающего), разбирается один раз и держится в
+//   памяти; подпись проверяется в памяти (sshsig.mjs, формат SSHSIG) по байтам билета из памяти кода. Файл
+//   SIGN_COMMAND.txt убран: оператор не исполняет команду из общей папки, у него одна постоянная функция
+//   Sign-ZavodTicket (zavod/ops/operator/sign_ticket.ps1.txt), которая читает билет один раз и подписывает те же
+//   байты, что показала. v0.4: аудит ChatGPT S6-prep R3,
 //   M-S6-R3-01 — sshSigner убран: у агентов больше нет функции, которая подписывает произвольные байты ключом
 //   выпуска. Подпись билета — только явное действие оператора: operatorSigner кладёт билет в папку запроса, пишет
 //   точную команду для оператора и ждёт файл подписи; подпись принимается только после ssh-keygen -Y verify
@@ -27,7 +33,7 @@
 //   localInstall для проверок). Ключей SSH сервера нет ни у адаптера, ни у агента: ключ живёт только в секрете
 //   окружения GitHub. Ключа подписи билетов у кода нет совсем: он под паролем у оператора, подписывает оператор.
 //   Временные файлы остаются в tmpdir ОС (ничего не удаляется).
-import { execFile, spawn } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -35,6 +41,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { ReleaseRefused } from '../../kernel/src/release_manifest.mjs';
 import { productEgress } from './product_egress.mjs';
+import { fingerprint, parseEd25519PublicKey, verifySshSig } from './sshsig.mjs';
 
 const run = promisify(execFile);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -84,36 +91,36 @@ export function deployEgress({ repo_id, repo_full_name, tenant_id }, install, { 
   };
 }
 
-// Подпись билета (v0.4, аудит ChatGPT S6-prep R3, M-S6-R3-01) — только явное действие оператора. У кода нет ни
-// закрытого ключа выпуска, ни вызова ssh-keygen -Y sign. Код кладёт билет в новую папку запроса
-// <requestsDir>/<ticket_id>_<sha256[:12]>/ticket.json (другие байты под тем же именем — TICKET_REQUEST_CONFLICT,
-// те же байты — повтор того же запроса), пишет рядом SIGN_COMMAND.txt с точной командой для оператора, сообщает
-// notify(...) и ждёт ticket.json.sig до конца срока билета минус SIGN_MARGIN_S. Подпись принимается только после
-// ssh-keygen -Y verify (открытый ключ выпуска, имя zavod-release, пространство имён билета) по байтам билета из
-// памяти кода: подпись другого ключа, другого билета или другого пространства имён — TICKET_BAD_OPERATOR_SIGNATURE.
+// Подпись билета (v0.5, аудит ChatGPT S6-prep R4, M-S6-R4-01; v0.4 — R3, M-S6-R3-01) — только явное действие
+// оператора. У кода нет ни закрытого ключа выпуска, ни вызова ssh-keygen. Открытый ключ выпуска (строка
+// «ssh-ed25519 …») передаётся при создании и держится в памяти: подменить его файлом нельзя. Код кладёт билет в
+// новую папку запроса <requestsDir>/<ticket_id>_<sha256[:12]>/ticket.json (другие байты под тем же именем —
+// TICKET_REQUEST_CONFLICT, те же байты — повтор того же запроса), сообщает notify(...) путь, SHA-256 билета и
+// отпечаток ключа и ждёт ticket.json.sig до конца срока билета минус SIGN_MARGIN_S. Подпись проверяется в памяти по
+// байтам билета из памяти кода: не тот ключ, не тот билет, не то пространство имён — TICKET_BAD_OPERATOR_SIGNATURE.
+// Оператор подписывает постоянной функцией Sign-ZavodTicket: она читает файл один раз, показывает поля и SHA-256 и
+// подписывает те же байты из памяти. Подмена ticket.json до чтения видна оператору (другие поля и SHA-256), а
+// подпись подменённых байтов код не примет: они не совпадут с билетом в памяти.
 const SIGN_MARGIN_S = 600;
 const sha256 = (b) => createHash('sha256').update(b).digest('hex');
-function verifyInput(cmd, args, input) {
-  return new Promise((resolve) => {
-    const p = spawn(cmd, args, { stdio: ['pipe', 'ignore', 'ignore'] });
-    p.on('error', () => resolve(false));
-    p.on('close', (code) => resolve(code === 0));
-    p.stdin.on('error', () => {});
-    p.stdin.end(input);
-  });
-}
-export function operatorSigner({ requestsDir, allowedSigners, notify = async () => {}, verify = verifyInput,
-  namespace = TICKET_NAMESPACE, principal = 'zavod-release', keyHint = '$HOME\\.ssh\\zavod_release_sign',
-  now = () => Date.now(), wait = (ms) => new Promise((r) => setTimeout(r, ms)), pollMs = 5000 }) {
-  if (typeof requestsDir !== 'string' || requestsDir.length === 0 || /['"`$\r\n]/.test(requestsDir)
-    || typeof allowedSigners !== 'string' || allowedSigners.length === 0) {
-    throw new TypeError('operatorSigner: bad requests dir or allowed signers');
+// expectFingerprint (необязательно) — отпечаток ключа из второго, независимого источника (решение оператора OD-5):
+// ключ с другим отпечатком не принимается при создании.
+export function operatorSigner({ requestsDir, releasePublicKey, expectFingerprint, notify = async () => {},
+  namespace = TICKET_NAMESPACE, now = () => Date.now(), wait = (ms) => new Promise((r) => setTimeout(r, ms)), pollMs = 5000 }) {
+  if (typeof requestsDir !== 'string' || requestsDir.length === 0 || /['"`$\r\n]/.test(requestsDir)) {
+    throw new TypeError('operatorSigner: bad requests dir');
+  }
+  const rawKey = parseEd25519PublicKey(releasePublicKey);
+  const key_fingerprint = fingerprint(rawKey);
+  if (expectFingerprint !== undefined && expectFingerprint !== key_fingerprint) {
+    throw new TypeError('operatorSigner: release key fingerprint mismatch');
   }
   return async (bytes) => {
     const ticket = Buffer.from(bytes);
     const t = JSON.parse(ticket.toString('utf8'));
     if (!UUID.test(t.ticket_id || '') || !Number.isInteger(t.expires_at)) throw new TypeError('operatorSigner: bad ticket');
-    const dir = join(requestsDir, `${t.ticket_id}_${sha256(ticket).slice(0, 12)}`);
+    const ticket_sha256 = sha256(ticket);
+    const dir = join(requestsDir, `${t.ticket_id}_${ticket_sha256.slice(0, 12)}`);
     const f = join(dir, 'ticket.json');
     mkdirSync(dir, { recursive: true });
     try {
@@ -123,22 +130,16 @@ export function operatorSigner({ requestsDir, allowedSigners, notify = async () 
         throw new ReleaseRefused('TICKET_REQUEST_CONFLICT', 'request folder holds other bytes');
       }
     }
-    const command = `Get-Content -Raw '${f}'; ssh-keygen -Y sign -n ${namespace} -f ${keyHint} '${f}'`;
-    writeFileSync(join(dir, 'SIGN_COMMAND.txt'), `${command}\n`);
-    await notify({ ticket_id: t.ticket_id, dir, command, ticket: t });
+    await notify({ ticket_id: t.ticket_id, path: f, ticket_sha256, key_fingerprint, ticket: t });
     const sigPath = `${f}.sig`;
     const deadline = (t.expires_at - SIGN_MARGIN_S) * 1000;
     while (now() < deadline) {
       if (existsSync(sigPath)) {
         const sig = readFileSync(sigPath);
-        const copy = join(mkdtempSync(join(tmpdir(), 'zavod-sig-')), 'ticket.sig');
-        writeFileSync(copy, sig);
-        if (await verify('ssh-keygen', ['-Y', 'verify', '-f', allowedSigners, '-I', principal, '-n', namespace, '-s', copy], ticket)) {
-          return sig;
-        }
+        if (verifySshSig({ armored: sig, message: ticket, namespace, rawKey })) return sig;
         // файл подписи мог быть дописан в момент чтения — тогда ждём; тот же файл и не проходит — отказ
         if (readFileSync(sigPath).equals(sig)) {
-          throw new ReleaseRefused('TICKET_BAD_OPERATOR_SIGNATURE', 'signature does not verify for this ticket');
+          throw new ReleaseRefused('TICKET_BAD_OPERATOR_SIGNATURE', 'signature does not verify for this ticket and key');
         }
       }
       await wait(pollMs);

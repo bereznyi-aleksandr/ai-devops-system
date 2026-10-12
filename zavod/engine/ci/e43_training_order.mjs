@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: zavod/engine/ci/e43_training_order.mjs
-// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:54 +03:00 (v0.6: после «не дождались» —
+// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 13:43 +03:00 (v0.7: аудит ChatGPT S6-prep R4, L-S6-R4-01 —
+//   stallWatch пассивный: без orch.pump, только чтение блокировок; Claude, сессия 9951b86f; v0.6: после «не дождались» —
 //   снимок блокировок из базы движка и stallWatch: сколько секунд до самостоятельного сдвига; проверка остаётся
 //   проваленной; Claude, сессия 9951b86f; v0.5: при «не дождались» в журнал пишется снимок stallDiag (узлы исполнений, задания движка, блокировки, ошибки) — разбор редкого зависания n15 на dc06d397/4b235aa0; Claude, сессия 9951b86f;
 //   v0.4: слияние — аудит E4-6 M-E46-02:
@@ -78,7 +79,7 @@ async function pumpUntil(what, pred, ms = 60000) {
   log(`  !! не дождались: ${what}`);
   const diag = await stallDiag(engine);
   log(`  STALL_DIAG ${JSON.stringify(diag)}`);
-  await stallWatch({ pump: () => orch.pump(), pred, t0, sleep, log, engine, pids: diag.instances.map((i) => i.pid).filter(Boolean) });
+  await stallWatch({ t0, sleep, log, pids: diag.instances.map((i) => i.pid).filter(Boolean) });
   return false;
 }
 const atN15 = (pid) => async () => (await engine.executions({ processInstanceId: pid, activityId: 'n15' })).length > 0;
