@@ -1,8 +1,10 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.12
+# ВЕРСИЯ: v0.13
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:39 +03:00 (v0.12: аудит ChatGPT S6-prep — задание ops собирает user-data
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:15 +03:00 (v0.13: аудит ChatGPT S6-prep R2 — третий одноразовый ключ CI
+#   ci_release (подпись билетов выпуска) идёт в render_user_data.py и e2e_deploy_ci.sh; e2e — 13 проверок (чужая
+#   подпись билета, архив с suid root, старый билет, безопасное дерево выпусков); 30 модульных проверок; v0.12: аудит ChatGPT S6-prep — задание ops собирает user-data
 #   render_user_data.py с одноразовыми ключами CI, применяет его на машине GitHub и проверяет реальную схему прав:
 #   sudo zavod только на install_release.sh, выкладка deploy_push.sh по ssh как zavod до активной службы, подмена
 #   архива — отказ; 28 модульных проверок; v0.11: задание ops этапа 6 — модульные проверки zavod/ops
@@ -209,7 +211,8 @@ jobs:
           set -euo pipefail
           ssh-keygen -q -t ed25519 -N '' -C ci-admin -f "$RUNNER_TEMP/ci_admin"
           ssh-keygen -q -t ed25519 -N '' -C ci-deploy -f "$RUNNER_TEMP/ci_deploy"
-          python3 -I zavod/ops/server/render_user_data.py --admin-pubkey "$RUNNER_TEMP/ci_admin.pub"             --deploy-pubkey "$RUNNER_TEMP/ci_deploy.pub" --repo-id 1412203481             --repo bereznyi-aleksandr/zavod-p1-bot --tenant 48d39de1-2c46-4deb-8557-fec866f2e810 > "$RUNNER_TEMP/user-data.yaml"
+          ssh-keygen -q -t ed25519 -N '' -C ci-release -f "$RUNNER_TEMP/ci_release"
+          python3 -I zavod/ops/server/render_user_data.py --admin-pubkey "$RUNNER_TEMP/ci_admin.pub"             --deploy-pubkey "$RUNNER_TEMP/ci_deploy.pub" --release-signer-pubkey "$RUNNER_TEMP/ci_release.pub" --repo-id 1412203481             --repo bereznyi-aleksandr/zavod-p1-bot --tenant 48d39de1-2c46-4deb-8557-fec866f2e810 > "$RUNNER_TEMP/user-data.yaml"
           if grep -q 'PRIVATE KEY' "$RUNNER_TEMP/user-data.yaml"; then echo 'private key in user-data'; exit 1; fi
           cloud-init schema --config-file "$RUNNER_TEMP/user-data.yaml"
       - name: apply the same user-data on the runner (users, files, sudoers, sshd; ufw skipped)
@@ -225,12 +228,12 @@ jobs:
           set -euo pipefail
           shellcheck zavod/ops/server/install_release.sh zavod/ops/deploy_push.sh zavod/ops/ci/e2e_deploy_ci.sh
           systemd-analyze verify --man=no zavod/ops/server/zavod-p1.service zavod/ops/server/zavod-p1-watch.service
-      - name: real permission schema and deploy as zavod end to end (E6-2, M-S6-02/03)
+      - name: real permission schema and deploy as zavod end to end (E6-2, M-S6-02/03, M-S6-R2-01/02)
         shell: bash
         run: |
           set -o pipefail
-          bash zavod/ops/ci/e2e_deploy_ci.sh "$RUNNER_TEMP/ci_deploy" "$RUNNER_TEMP/ci_admin" 1412203481             bereznyi-aleksandr/zavod-p1-bot 48d39de1-2c46-4deb-8557-fec866f2e810 | tee "$RUNNER_TEMP/e2e.out"
-          test "$(grep -c '^CHECK .* PASS$' "$RUNNER_TEMP/e2e.out")" -eq 9
+          bash zavod/ops/ci/e2e_deploy_ci.sh "$RUNNER_TEMP/ci_deploy" "$RUNNER_TEMP/ci_admin" 1412203481             bereznyi-aleksandr/zavod-p1-bot 48d39de1-2c46-4deb-8557-fec866f2e810 "$RUNNER_TEMP/ci_release" | tee "$RUNNER_TEMP/e2e.out"
+          test "$(grep -c '^CHECK .* PASS$' "$RUNNER_TEMP/e2e.out")" -eq 13
           grep -q '^E2E_DEPLOY_CI PASS head=' "$RUNNER_TEMP/e2e.out"
       - name: ops unit tests (E6-1..E6-4), no skips
         shell: bash
@@ -239,5 +242,5 @@ jobs:
         run: |
           set -o pipefail
           python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
-          grep -q '^Ran 28 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 30 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/ops

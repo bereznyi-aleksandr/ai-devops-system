@@ -1,6 +1,8 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_render_user_data.py
-# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
+# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:11 +03:00 (v0.3: M-S6-R2-02 — третий ключ
+#   (подпись билетов): совпадение любых двух ключей — отказ; release_signers — одна строка с namespaces;
+#   папка билетов root 0700; v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: проверки zavod/ops/server/render_user_data.py (аудит ChatGPT S6-prep M-S6-02/03/05): закрытый ключ —
 #   отказ; одинаковые ключи admin/zavod — отказ; у zavod нет группы sudo и нет NOPASSWD:ALL; правило sudoers
@@ -20,6 +22,7 @@ import render_user_data as ru  # noqa: E402
 
 A = 'ssh-ed25519 ' + 'A' * 68 + ' admin@test'
 D = 'ssh-ed25519 ' + 'B' * 68 + ' deploy@test'
+S = 'ssh-ed25519 ' + 'C' * 68 + ' release@test'
 TGT = (1412203481, 'bereznyi-aleksandr/zavod-p1-bot', '48d39de1-2c46-4deb-8557-fec866f2e810')
 
 
@@ -56,17 +59,22 @@ class RenderUserDataTest(unittest.TestCase):
 
     def test_same_keys_refused(self):
         with self.assertRaises(SystemExit) as c:
-            ru.render(A, A.replace('admin', 'other'), *TGT)
+            ru.render(A, A.replace('admin', 'other'), S, *TGT)
         self.assertIn('differ', str(c.exception))
+        with self.assertRaises(SystemExit):
+            ru.render(A, D, D.replace('deploy', 'x'), *TGT)
+        with self.assertRaises(SystemExit):
+            ru.render(A, D, A, *TGT)
 
     def test_bad_target_refused(self):
         with self.assertRaises(SystemExit):
-            ru.render(A, D, 0, TGT[1], TGT[2])
+            ru.render(A, D, S, 0, TGT[1], TGT[2])
         with self.assertRaises(SystemExit):
-            ru.render(A, D, TGT[0], 'a b/c', TGT[2])
+            ru.render(A, D, S, TGT[0], 'a b/c', TGT[2])
 
     def test_permission_schema(self):
-        out = ru.render(ru.read_pub(self.key('a.pub', A + '\n')), ru.read_pub(self.key('d.pub', D + '\n')), *TGT)
+        out = ru.render(ru.read_pub(self.key('a.pub', A + '\n')), ru.read_pub(self.key('d.pub', D + '\n')),
+                        ru.read_pub(self.key('s.pub', S + '\n')), *TGT)
         self.assertNotIn('PRIVATE KEY', out)
         cfg = parse(out)
         users = {u['name']: u for u in cfg['users']}
@@ -89,9 +97,13 @@ class RenderUserDataTest(unittest.TestCase):
         self.assertEqual(inc, [['install', '-d', '-o', 'zavod', '-g', 'zavod', '-m', '0700', ru.INCOMING]])
         tenv = base64.b64decode(files['/etc/zavod-p1/target.env']['content']).decode('utf-8')
         self.assertIn('TENANT_ID="48d39de1-2c46-4deb-8557-fec866f2e810"', tenv)
+        sig = base64.b64decode(files['/etc/zavod-p1/release_signers']['content']).decode('utf-8')
+        self.assertEqual(sig, 'zavod-release namespaces="zavod-release-ticket@v1" ' + ' '.join(S.split()[:2]) + '\n')
+        self.assertEqual(files['/etc/zavod-p1/release_signers']['permissions'], '0644')
+        self.assertIn(['install', '-d', '-o', 'root', '-g', 'root', '-m', '0700', '/var/lib/zavod-p1/tickets'], cfg['runcmd'])
 
     def test_embedded_files_match_sources(self):
-        cfg = parse(ru.render(A, D, *TGT))
+        cfg = parse(ru.render(A, D, S, *TGT))
         files = {f['path']: f for f in cfg['write_files']}
         for path, rel in [('/opt/zavod-ops/install_release.sh', 'server/install_release.sh'),
                           ('/opt/zavod-ops/sqlite_backup.py', 'sqlite_backup.py'),

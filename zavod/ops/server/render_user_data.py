@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/ops/server/render_user_data.py
-# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
+# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:11 +03:00 (v0.3: аудит ChatGPT S6-prep R2 M-S6-R2-02 —
+#   третий открытый ключ --release-signer-pubkey: ключ подписи билетов выпуска Завода; кладётся в
+#   /etc/zavod-p1/release_signers (root 0644) с ограничением namespaces="zavod-release-ticket@v1"; все три ключа
+#   обязаны различаться; папка билетов /var/lib/zavod-p1/tickets root 0700; v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # ЗАМЕНЯЕТ: server/cloud-init.v0_1.SUPERSEDED.yaml (аудит ChatGPT S6-prep M-S6-02, M-S6-03, M-S6-05)
 # НАЗНАЧЕНИЕ: этап 6, E6-1/E6-2 — собирает один файл user-data (cloud-init) для сервера продукта. Оператор вставляет
@@ -12,7 +15,7 @@
 #   В файл встраиваются (base64) install_release.sh, liveness_watch.py, sqlite_backup.py, службы, sshd, sudoers,
 #   target.env (номер и имя репозитория, tenant — не секреты). Секретов в результате нет: токен бота оператор
 #   кладёт сам в /etc/zavod-p1/secrets.env и watch.env после создания сервера.
-# ВЫЗОВ: python3 render_user_data.py --admin-pubkey F --deploy-pubkey F --repo-id N --repo O/R --tenant UUID > user-data.yaml
+# ВЫЗОВ: python3 render_user_data.py --admin-pubkey F --deploy-pubkey F --release-signer-pubkey F --repo-id N --repo O/R --tenant UUID > user-data.yaml
 # ОГРАНИЧЕНИЯ: закрытый ключ (строка с PRIVATE KEY) — отказ; принимаются только ssh-ed25519 / ecdsa / rsa открытые ключи.
 import argparse
 import base64
@@ -21,7 +24,8 @@ import os
 import re
 import sys
 
-VERSION = 'v0.2'
+VERSION = 'v0.3'
+NAMESPACE = 'zavod-release-ticket@v1'
 HERE = os.path.dirname(os.path.abspath(__file__))
 OPS = os.path.dirname(HERE)
 PUB = re.compile(r'^(ssh-ed25519|ecdsa-sha2-nistp256|ssh-rsa) [A-Za-z0-9+/=]{40,}( [^\r\n]{0,80})?$')
@@ -68,11 +72,12 @@ def src(rel):
         return f.read()
 
 
-def render(admin_pub, deploy_pub, repo_id, repo, tenant):
+def render(admin_pub, deploy_pub, release_pub, repo_id, repo, tenant):
     if not (isinstance(repo_id, int) and repo_id > 0 and REPO.match(repo) and UUID.match(tenant)):
         raise SystemExit('REFUSED: bad target')
-    if admin_pub.split()[1] == deploy_pub.split()[1]:
-        raise SystemExit('REFUSED: admin and deploy keys must differ')
+    if len({admin_pub.split()[1], deploy_pub.split()[1], release_pub.split()[1]}) != 3:
+        raise SystemExit('REFUSED: admin, deploy and release signer keys must differ')
+    signers = f'zavod-release namespaces="{NAMESPACE}" {" ".join(release_pub.split()[:2])}\n'
     target = f'REPO_ID="{repo_id}"\nREPO_FULL_NAME="{repo}"\nTENANT_ID="{tenant}"\n'
     cfg = {
         'users': [
@@ -96,11 +101,13 @@ def render(admin_pub, deploy_pub, repo_id, repo, tenant):
             wf('/etc/systemd/system/zavod-p1.service', src('server/zavod-p1.service'), '0644'),
             wf('/etc/systemd/system/zavod-p1-watch.service', src('server/zavod-p1-watch.service'), '0644'),
             wf('/etc/zavod-p1/target.env', target, '0644'),
+            wf('/etc/zavod-p1/release_signers', signers, '0644'),
             wf('/etc/zavod-p1/content.json', json.dumps(CONTENT, ensure_ascii=False), '0644'),
         ],
         'runcmd': [
             ['install', '-d', '-o', 'p1', '-g', 'p1', '-m', '0750', '/var/lib/zavod-p1', '/var/lib/zavod-p1/backups'],
             ['install', '-d', '-o', 'zavod', '-g', 'zavod', '-m', '0700', INCOMING],
+            ['install', '-d', '-o', 'root', '-g', 'root', '-m', '0700', '/var/lib/zavod-p1/tickets'],
             ['install', '-d', '-o', 'root', '-g', 'root', '-m', '0755', '/opt/zavod-p1', '/opt/zavod-p1/releases'],
             ['visudo', '-cf', '/etc/sudoers.d/90-zavod-deploy'],
             ['sshd', '-t'],
@@ -121,11 +128,12 @@ def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument('--admin-pubkey', required=True)
     ap.add_argument('--deploy-pubkey', required=True)
+    ap.add_argument('--release-signer-pubkey', required=True)
     ap.add_argument('--repo-id', type=int, required=True)
     ap.add_argument('--repo', required=True)
     ap.add_argument('--tenant', required=True)
     a = ap.parse_args(argv)
-    sys.stdout.write(render(read_pub(a.admin_pubkey), read_pub(a.deploy_pubkey), a.repo_id, a.repo, a.tenant))
+    sys.stdout.write(render(read_pub(a.admin_pubkey), read_pub(a.deploy_pubkey), read_pub(a.release_signer_pubkey), a.repo_id, a.repo, a.tenant))
     return 0
 
 

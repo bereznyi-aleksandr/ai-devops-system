@@ -1,19 +1,28 @@
 // ДОКУМЕНТ: zavod/engine/src/deploy_egress.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:39 +03:00 (v0.2: аудит ChatGPT S6-prep
-//   M-S6-05/L-S6-01 — sshInstall (ssh с агентом ключей оператора) убран; транспорт сервера — ghDeployInstall:
-//   workflow выкладки репозитория продукта с ключом из секрета GitHub; localInstall передаёт INCOMING)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:16 +03:00 (v0.3: аудит ChatGPT S6-prep R2.
+//   M-S6-R2-02 — после verifyRelease адаптер выпускает билет выпуска (v=1, ticket_id = outbox_id, head_sha,
+//   artifact_sha256, manifest_sha256, repo_id, repo_full_name, tenant_id, work_item_id, issued_at, expires_at
+//   не больше часа) и подписывает его функцией sign (sshSigner: ssh-keygen -Y sign, пространство имён
+//   zavod-release-ticket@v1, ключ выпуска Завода — путь к файлу, сам ключ код не читает). Без подписи сервер и
+//   workflow ничего не ставят. L-S6-R2-01 — ghDeployInstall берёт только прогоны workflow_dispatch, созданные
+//   после запуска, с точным именем «p1-deploy <outbox_id>»; два таких прогона — отказ DEPLOY_RUN_AMBIGUOUS; строка
+//   результата обязана нести тот же outbox_id и быть ровно одна; INSTALL_OK при неуспешном прогоне — отказ
+//   DEPLOY_RUN_FAILED; не нашли прогон или не дождались — DEPLOY_RUN_TIMEOUT.
+//   v0.2: M-S6-05/L-S6-01 — sshInstall убран; транспорт сервера — workflow продукта с ключом из секрета GitHub)
 // ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: этап 6, E6-2 — адаптер Egress деплоя продукта на сервер. Одна строка outbox выпуска → одна
 //   установка. Порядок: цель сервера (repo_id, repo_full_name, tenant_id — сервер принадлежит одному
 //   заказчику; чужой tenant — DEPLOY_TENANT_MISMATCH до всего остального) → productEgress (цель репозитория,
-//   verifyRelease: печать, байты артефакта, предмет, заказ, outbox, решение оператора) → install(...) — передача
-//   манифеста и архива на сервер, где install_release.sh сверяет их второй раз. Ответ сервера разбирается
-//   строго: INSTALL_OK state=installed|already_present head=<head_sha манифеста>; иначе — отказ.
+//   verifyRelease: печать, байты артефакта, предмет, заказ, outbox, решение оператора) → билет и подпись →
+//   install(...) — передача манифеста, архива, билета и подписи на сервер, где install_release.sh сверяет их
+//   второй раз. Ответ сервера разбирается строго: INSTALL_OK state=installed|already_present head=<head_sha>.
 // ОГРАНИЧЕНИЯ: адаптер сам сеть не открывает: install — функция вызывающего (ghDeployInstall для сервера,
-//   localInstall для проверок). Ключей SSH нет ни у адаптера, ни у агента: ключ живёт только в секрете GitHub.
+//   localInstall для проверок). Ключей SSH сервера нет ни у адаптера, ни у агента: ключ живёт только в секрете
+//   окружения GitHub. Ключ подписи билетов — отдельный ключ Завода; код передаёт ssh-keygen только путь к нему.
+//   Временные файлы остаются в tmpdir ОС (ничего не удаляется).
 import { execFile } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -24,11 +33,27 @@ const run = promisify(execFile);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const OK_LINE = /^INSTALL_OK state=(installed|already_present) head=([0-9a-f]{40})$/m;
 const REFUSED_LINE = /^INSTALL_REFUSED code=([A-Z_]+)$/m;
+export const TICKET_NAMESPACE = 'zavod-release-ticket@v1';
+const TICKET_FIELDS = ['head_sha', 'artifact_sha256', 'manifest_sha256', 'repo_id', 'repo_full_name', 'tenant_id', 'work_item_id'];
 
-export function deployEgress({ repo_id, repo_full_name, tenant_id }, install) {
+// Билет выпуска: что именно разрешено поставить, кем (подпись) и до какого времени.
+export function releaseTicket({ manifest, outbox_id, now = Date.now(), ttlSec = 900 }) {
+  if (!UUID.test(outbox_id || '')) throw new TypeError('releaseTicket: bad outbox_id');
+  if (!Number.isInteger(ttlSec) || ttlSec <= 0 || ttlSec > 3600) throw new TypeError('releaseTicket: bad ttl');
+  const issued_at = Math.floor(now / 1000);
+  const t = { v: 1, ticket_id: outbox_id, issued_at, expires_at: issued_at + ttlSec };
+  for (const k of TICKET_FIELDS) {
+    if (manifest?.[k] === undefined) throw new TypeError(`releaseTicket: manifest has no ${k}`);
+    t[k] = manifest[k];
+  }
+  return Buffer.from(JSON.stringify(t), 'utf8');
+}
+
+export function deployEgress({ repo_id, repo_full_name, tenant_id }, install, { sign, now = () => Date.now(), ttlSec = 900 } = {}) {
   if (typeof tenant_id !== 'string' || !UUID.test(tenant_id) || typeof install !== 'function') {
     throw new TypeError('deployEgress: bad target');
   }
+  if (typeof sign !== 'function') throw new TypeError('deployEgress: no ticket signer');
   const repo = productEgress({ repo_id, repo_full_name });
   const target = Object.freeze({ ...repo.target, tenant_id });
   return {
@@ -38,66 +63,107 @@ export function deployEgress({ repo_id, repo_full_name, tenant_id }, install) {
         throw new ReleaseRefused('DEPLOY_TENANT_MISMATCH', 'manifest names another tenant than this server');
       }
       return repo.release(rows, async ({ manifest_sha256, outbox_id }) => {
-        const out = await install({ manifest: rows.manifest, artifact: rows.artifact, manifest_sha256, outbox_id });
+        const ticket = releaseTicket({ manifest: rows.manifest, outbox_id, now: now(), ttlSec });
+        const ticket_sig = Buffer.from(await sign(ticket));
+        if (ticket_sig.length === 0) throw new ReleaseRefused('TICKET_NOT_SIGNED', 'signer returned nothing');
+        const out = await install({ manifest: rows.manifest, artifact: rows.artifact, manifest_sha256, outbox_id, ticket, ticket_sig });
         const refused = REFUSED_LINE.exec(out || '');
         if (refused) throw new ReleaseRefused(`SERVER_${refused[1]}`, 'server refused the release');
         const ok = OK_LINE.exec(out || '');
         if (!ok || ok[2] !== rows.manifest.head_sha) throw new ReleaseRefused('SERVER_NO_CONFIRMATION', 'no INSTALL_OK for this head');
-        return { state: ok[1], head_sha: ok[2], manifest_sha256, outbox_id };
+        return { state: ok[1], head_sha: ok[2], manifest_sha256, outbox_id, ticket_id: outbox_id };
       });
     },
   };
 }
 
-function stage({ manifest, artifact }) {
+// Подпись билета ключом выпуска Завода: ssh-keygen -Y sign. Ключ код не открывает — только передаёт путь.
+export function sshSigner({ keyPath, exec = run, namespace = TICKET_NAMESPACE }) {
+  if (typeof keyPath !== 'string' || keyPath.length === 0) throw new TypeError('sshSigner: no key path');
+  return async (bytes) => {
+    const dir = mkdtempSync(join(tmpdir(), 'zavod-ticket-'));
+    const f = join(dir, 'ticket.json');
+    writeFileSync(f, bytes);
+    await exec('ssh-keygen', ['-Y', 'sign', '-q', '-n', namespace, '-f', keyPath, f]);
+    return readFileSync(`${f}.sig`);
+  };
+}
+
+function stage({ manifest, artifact, ticket, ticket_sig }) {
   const dir = mkdtempSync(join(tmpdir(), 'zavod-deploy-'));
-  const m = join(dir, `manifest_${manifest.head_sha.slice(0, 8)}.json`);
-  const a = join(dir, `artifact_${manifest.head_sha.slice(0, 8)}.tar`);
+  const h8 = manifest.head_sha.slice(0, 8);
+  const m = join(dir, `manifest_${h8}.json`);
+  const a = join(dir, `artifact_${h8}.tar`);
+  const t = join(dir, `ticket_${h8}.json`);
+  const s = join(dir, `ticket_${h8}.sig`);
   writeFileSync(m, JSON.stringify({ manifest }, null, 2));
   writeFileSync(a, artifact);
-  return { dir, m, a };
+  writeFileSync(t, ticket);
+  writeFileSync(s, ticket_sig);
+  return { dir, m, a, t, s };
 }
 
 // Сервер (v0.2, аудит ChatGPT S6-prep M-S6-05, L-S6-01): Завод не держит ключ сервера и не ходит на сервер сам.
-// Он запускает workflow выкладки в репозитории продукта (gh workflow run): workflow сам собирает архив git archive
-// на head_sha, сверяет его SHA-256 с манифестом и передаёт на сервер ключом из секрета GitHub (deploy_push.sh).
-// Ответ сервера workflow печатает строкой ZAVOD_RESULT <строка сервера>; адаптер находит прогон по request_id
-// (= outbox_id, конец имени прогона), ждёт завершения и возвращает только эти строки — разбор строгий, как раньше.
-const RESULT = /ZAVOD_RESULT (INSTALL_(?:OK|REFUSED) [^\r\n]*)/g;
+// Он запускает workflow выкладки в репозитории продукта (gh workflow run): workflow проверяет подпись билета, сам
+// собирает архив git archive на head_sha, сверяет его SHA-256 с манифестом и передаёт на сервер ключом из секрета
+// окружения GitHub (deploy_push.sh). Ответ сервера workflow печатает строкой ZAVOD_RESULT <outbox_id> <строка>.
+// v0.3 (L-S6-R2-01): свой прогон — ровно один прогон workflow_dispatch, созданный после запуска, с точным именем;
+// строка результата — ровно одна и с тем же outbox_id; успех сервера при неуспешном прогоне — отказ.
+const RESULT = /ZAVOD_RESULT ([0-9a-f-]{36}) (INSTALL_OK state=(?:installed|already_present) head=[0-9a-f]{40}|INSTALL_REFUSED code=[A-Z_]+)\r?$/gm;
+const SKEW_MS = 60000;
 export function ghDeployInstall({ repo_full_name, workflow = 'p1-deploy.yml', ref = 'main', exec = run,
-  wait = (ms) => new Promise((r) => setTimeout(r, ms)), pollMs = 10000, maxPolls = 90 }) {
+  wait = (ms) => new Promise((r) => setTimeout(r, ms)), now = () => Date.now(), pollMs = 10000, maxPolls = 90 }) {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo_full_name || '')) throw new TypeError('ghDeployInstall: bad repo');
   const R = ['-R', repo_full_name];
-  return async ({ manifest, outbox_id }) => {
+  const mine = async (title, since) => {
+    const { stdout } = await exec('gh', ['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
+      '--json', 'databaseId,displayTitle,createdAt,event']);
+    return JSON.parse(stdout || '[]').filter((x) => x.displayTitle === title && x.event === 'workflow_dispatch'
+      && Date.parse(x.createdAt) >= since - SKEW_MS);
+  };
+  return async ({ manifest, outbox_id, ticket, ticket_sig }) => {
     if (!UUID.test(outbox_id || '')) throw new TypeError('ghDeployInstall: bad outbox_id');
-    const b64 = Buffer.from(JSON.stringify({ manifest })).toString('base64');
+    if (!ticket?.length || !ticket_sig?.length) throw new TypeError('ghDeployInstall: no signed ticket');
+    const b64 = (x) => Buffer.from(x).toString('base64');
+    const title = `p1-deploy ${outbox_id}`;
+    const since = now();
     await exec('gh', ['workflow', 'run', workflow, ...R, '--ref', ref, '-f', `head_sha=${manifest.head_sha}`,
-      '-f', `manifest_b64=${b64}`, '-f', `request_id=${outbox_id}`]);
+      '-f', `manifest_b64=${b64(JSON.stringify({ manifest }))}`, '-f', `request_id=${outbox_id}`,
+      '-f', `ticket_b64=${b64(ticket)}`, '-f', `sig_b64=${b64(ticket_sig)}`]);
     let id = null;
     for (let i = 0; i < maxPolls; i += 1) {
-      if (id === null) {
-        const { stdout } = await exec('gh', ['run', 'list', ...R, '-w', workflow, '-L', '20', '--json', 'databaseId,displayTitle']);
-        const hit = JSON.parse(stdout || '[]').find((x) => String(x.displayTitle).endsWith(` ${outbox_id}`));
-        if (hit) id = String(hit.databaseId);
+      const hits = await mine(title, since);
+      if (hits.length > 1) throw new ReleaseRefused('DEPLOY_RUN_AMBIGUOUS', `${hits.length} runs named ${title}`);
+      if (id !== null && (hits.length === 0 || String(hits[0].databaseId) !== id)) {
+        throw new ReleaseRefused('DEPLOY_RUN_AMBIGUOUS', 'run list changed under us');
       }
+      if (hits.length === 1) id = String(hits[0].databaseId);
       if (id !== null) {
-        const { stdout } = await exec('gh', ['run', 'view', id, ...R, '--json', 'status,conclusion']);
-        if (JSON.parse(stdout).status === 'completed') {
+        const { stdout } = await exec('gh', ['run', 'view', id, ...R, '--json', 'status,conclusion,event,displayTitle']);
+        const v = JSON.parse(stdout);
+        if (v.event !== 'workflow_dispatch' || v.displayTitle !== title) throw new ReleaseRefused('DEPLOY_RUN_AMBIGUOUS', 'run changed');
+        if (v.status === 'completed') {
           const log = await exec('gh', ['run', 'view', id, ...R, '--log']).catch((e) => ({ stdout: e.stdout || '' }));
-          return [...String(log.stdout).matchAll(RESULT)].map((m) => m[1].trim()).join('\n') + '\n';
+          const lines = [...String(log.stdout).matchAll(RESULT)].filter((m) => m[1] === outbox_id).map((m) => m[2]);
+          if (lines.length !== 1) throw new ReleaseRefused('DEPLOY_RUN_NO_RESULT', `${lines.length} result lines`);
+          if (lines[0].startsWith('INSTALL_OK') && v.conclusion !== 'success') {
+            throw new ReleaseRefused('DEPLOY_RUN_FAILED', `run ${v.conclusion} but server line is INSTALL_OK`);
+          }
+          return `${lines[0]}\n`;
         }
       }
       await wait(pollMs);
     }
-    return '';
+    throw new ReleaseRefused('DEPLOY_RUN_TIMEOUT', id === null ? 'run not found' : 'run did not complete');
   };
 }
 
-// Проверки: тот же install_release.sh локально (Linux), с переменными ROOT/TARGET_ENV/JOURNAL/RESTART.
+// Проверки: тот же install_release.sh локально (Linux), с переменными ROOT/TARGET_ENV/JOURNAL/RESTART/
+// RELEASE_SIGNERS/TICKETS.
 export function localInstall({ script, env }) {
   return async (job) => {
-    const { dir, m, a } = stage(job);
-    const r = await run('bash', [script, m, a], { env: { ...process.env, ...env, INCOMING: dir } }).catch((e) => ({ stdout: e.stdout || '' }));
+    const { dir, m, a, t, s } = stage(job);
+    const r = await run('bash', [script, m, a, t, s], { env: { ...process.env, ...env, INCOMING: dir } }).catch((e) => ({ stdout: e.stdout || '' }));
     return r.stdout;
   };
 }
