@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/ci/e2e_deploy_ci.sh
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: только для CI. Сквозная проверка реальной схемы прав сервера (аудит ChatGPT S6-prep M-S6-02/03/05)
 #   на одноразовой машине GitHub после apply_user_data_ci.py:
 #   1) sudoers: zavod может только install_release.sh; sudo -n id и sudo -n cat /etc/shadow — отказ;
 #   2) zavod не может править установщик и /etc/zavod-p1; папка приёма zavod 0700;
-#   3) ключ выкладки не входит как admin;
+#   3) ключ выкладки не входит как zadmin;
 #   4) выкладка deploy_push.sh по ssh/scp как zavod: INSTALL_OK, служба zavod-p1 активна; повтор — already_present;
 #   5) подмена байта архива — INSTALL_REFUSED code=ARTIFACT_MISMATCH, current не меняется.
 # ВЫЗОВ: e2e_deploy_ci.sh DEPLOY_KEY ADMIN_KEY REPO_ID REPO TENANT   (ключи — одноразовые, созданы в этом прогоне CI)
@@ -42,8 +42,8 @@ if sudo -u zavod test -w /etc/zavod-p1/target.env; then fail target_writable; fi
 [ "$(stat -c '%U %a' /var/lib/zavod-incoming)" = "zavod 700" ] || fail incoming_mode
 pass file_modes
 
-if ssh -i "$DKEY" "${OPTS[@]}" admin@127.0.0.1 true 2>/dev/null; then fail deploy_key_as_admin; fi
-ssh -i "$AKEY" "${OPTS[@]}" admin@127.0.0.1 true || fail admin_login
+if ssh -i "$DKEY" "${OPTS[@]}" zadmin@127.0.0.1 true 2>/dev/null; then fail deploy_key_as_admin; fi
+ssh -i "$AKEY" "${OPTS[@]}" zadmin@127.0.0.1 true || fail admin_login
 pass key_separation
 if ssh -i "$DKEY" "${OPTS[@]}" zavod@127.0.0.1 sudo -n /bin/cat /etc/shadow >/dev/null 2>&1; then fail ssh_zavod_shadow; fi
 pass ssh_zavod_no_shadow

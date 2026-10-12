@@ -1,13 +1,14 @@
 # ДОКУМЕНТ: zavod/ops/external_check.py
-# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:32 +03:00 (v0.2: аудит ChatGPT
+# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.3: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184);
+#   v0.2: аудит ChatGPT
 #   S6-prep M-S6-01 — сканируются ВСЕ порты 1–65535, а не 1–1024 и список; 512 потоков, ожидание 0.7 с; пользователи
-#   по умолчанию admin, zavod, root)
+#   по умолчанию zadmin, zavod, root)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: этап 6, E6-1 — проверка сервера СНАРУЖИ: (1) все TCP-порты 1–65535 — открыты только объявленные;
 #   (2) вход по паролю невозможен: клиент ssh без ключа получает отказ, в котором сервер предлагает только publickey
-#   (для пользователей admin, zavod и root). Итог — одна строка JSON и код 0|1.
-# ВЫЗОВ: python3 external_check.py HOST [--declared 22] [--users admin,zavod,root] [--timeout 0.7]
+#   (для пользователей zadmin, zavod и root). Итог — одна строка JSON и код 0|1.
+# ВЫЗОВ: python3 external_check.py HOST [--declared 22] [--users zadmin,zavod,root] [--timeout 0.7]
 # ОГРАНИЧЕНИЯ: только stdlib и клиент ssh. Ключи не используются (PubkeyAuthentication=no), пароль не вводится
 #   (BatchMode=yes). Адрес сервера секретом не считается. Сканировать только свой сервер.
 import argparse
@@ -18,7 +19,7 @@ import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
-VERSION = 'v0.2'
+VERSION = 'v0.3'
 ALL_PORTS = range(1, 65536)
 
 
@@ -51,7 +52,7 @@ def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument('host')
     ap.add_argument('--declared', default='22')
-    ap.add_argument('--users', default='admin,zavod,root')
+    ap.add_argument('--users', default='zadmin,zavod,root')
     ap.add_argument('--timeout', type=float, default=0.7)
     a = ap.parse_args(argv)
     declared = sorted(int(x) for x in a.declared.split(',') if x)

@@ -1,7 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_external_check.py
-# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:32 +03:00 (v0.2: M-S6-01 —
-#   main сканирует все 65535 портов, открытый порт выше 1024 даёт FAIL; пользователи admin, zavod, root)
+# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.3: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184);
+#   v0.2: M-S6-01 — main сканирует все 65535 портов, открытый порт выше 1024 даёт FAIL; пользователи zadmin, zavod, root)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: проверки zavod/ops/external_check.py (E6-1): сканер видит открытый порт и не видит закрытый;
 #   при ZAVOD_OPS_SSHD=1 (CI с sshd на 127.0.0.1 и настройками 10-zavod.conf) вход по паролю для zavod и root
@@ -53,7 +53,7 @@ class ScanTest(unittest.TestCase):
 @unittest.skipUnless(os.environ.get('ZAVOD_OPS_SSHD') == '1', 'needs local sshd configured with 10-zavod.conf')
 class PasswordLoginTest(unittest.TestCase):
     def test_password_refused_publickey_only(self):
-        for user in ('admin', 'zavod', 'root'):
+        for user in ('zadmin', 'zavod', 'root'):
             r = ec.password_refused('127.0.0.1', user)
             self.assertTrue(r['refused'], r)
             self.assertEqual(r['methods'], 'publickey', r)

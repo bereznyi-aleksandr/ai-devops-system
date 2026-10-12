@@ -1,11 +1,11 @@
 # ДОКУМЕНТ: zavod/ops/server/render_user_data.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # ЗАМЕНЯЕТ: server/cloud-init.v0_1.SUPERSEDED.yaml (аудит ChatGPT S6-prep M-S6-02, M-S6-03, M-S6-05)
 # НАЗНАЧЕНИЕ: этап 6, E6-1/E6-2 — собирает один файл user-data (cloud-init) для сервера продукта. Оператор вставляет
 #   его в поле «User data» при создании сервера. Два входа, два ключа, оба ОТКРЫТЫЕ:
-#   admin — личный вход оператора, полный sudo; ключ агентам не передаётся и ими не используется;
+#   zadmin — личный вход оператора, полный sudo; ключ агентам не передаётся и ими не используется;
 #   zavod — только выкладка: ключ с опцией restrict (без проброса и терминала), sudo только на
 #   /opt/zavod-ops/install_release.sh, запись только в папку приёма /var/lib/zavod-incoming (zavod:zavod 0700).
 #   Закрытый ключ zavod оператор кладёт в секрет GitHub (выкладку делает workflow, не агент).
@@ -21,7 +21,7 @@ import os
 import re
 import sys
 
-VERSION = 'v0.1'
+VERSION = 'v0.2'
 HERE = os.path.dirname(os.path.abspath(__file__))
 OPS = os.path.dirname(HERE)
 PUB = re.compile(r'^(ssh-ed25519|ecdsa-sha2-nistp256|ssh-rsa) [A-Za-z0-9+/=]{40,}( [^\r\n]{0,80})?$')
@@ -34,7 +34,7 @@ KbdInteractiveAuthentication no
 PermitRootLogin no
 PubkeyAuthentication yes
 AuthenticationMethods publickey
-AllowUsers admin zavod
+AllowUsers zadmin zavod
 X11Forwarding no
 AllowAgentForwarding no
 AllowTcpForwarding no
@@ -76,7 +76,7 @@ def render(admin_pub, deploy_pub, repo_id, repo, tenant):
     target = f'REPO_ID="{repo_id}"\nREPO_FULL_NAME="{repo}"\nTENANT_ID="{tenant}"\n'
     cfg = {
         'users': [
-            {'name': 'admin', 'groups': ['sudo'], 'shell': '/bin/bash', 'lock_passwd': True,
+            {'name': 'zadmin', 'groups': ['sudo'], 'shell': '/bin/bash', 'lock_passwd': True,
              'sudo': ['ALL=(ALL) NOPASSWD:ALL'], 'ssh_authorized_keys': [admin_pub]},
             {'name': 'zavod', 'shell': '/bin/bash', 'lock_passwd': True,
              'ssh_authorized_keys': ['restrict ' + deploy_pub]},

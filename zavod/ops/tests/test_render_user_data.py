@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_render_user_data.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: проверки zavod/ops/server/render_user_data.py (аудит ChatGPT S6-prep M-S6-02/03/05): закрытый ключ —
 #   отказ; одинаковые ключи admin/zavod — отказ; у zavod нет группы sudo и нет NOPASSWD:ALL; правило sudoers
@@ -70,12 +70,12 @@ class RenderUserDataTest(unittest.TestCase):
         self.assertNotIn('PRIVATE KEY', out)
         cfg = parse(out)
         users = {u['name']: u for u in cfg['users']}
-        self.assertEqual(set(users), {'admin', 'zavod', 'p1'})
+        self.assertEqual(set(users), {'zadmin', 'zavod', 'p1'})
         z = users['zavod']
         self.assertNotIn('sudo', z)
         self.assertNotIn('groups', z)
         self.assertEqual(z['ssh_authorized_keys'], ['restrict ' + D])
-        self.assertEqual(users['admin']['ssh_authorized_keys'], [A])
+        self.assertEqual(users['zadmin']['ssh_authorized_keys'], [A])
         self.assertEqual(users['p1']['shell'], '/usr/sbin/nologin')
         files = {f['path']: f for f in cfg['write_files']}
         sud = base64.b64decode(files['/etc/sudoers.d/90-zavod-deploy']['content']).decode('utf-8')
@@ -83,7 +83,7 @@ class RenderUserDataTest(unittest.TestCase):
         self.assertEqual(rules, ['zavod ALL=(root) NOPASSWD: /opt/zavod-ops/install_release.sh'])
         self.assertEqual(files['/etc/sudoers.d/90-zavod-deploy']['permissions'], '0440')
         sshd = base64.b64decode(files['/etc/ssh/sshd_config.d/10-zavod.conf']['content']).decode('utf-8')
-        self.assertIn('AllowUsers admin zavod', sshd)
+        self.assertIn('AllowUsers zadmin zavod', sshd)
         self.assertIn('PasswordAuthentication no', sshd)
         inc = [c for c in cfg['runcmd'] if ru.INCOMING in c]
         self.assertEqual(inc, [['install', '-d', '-o', 'zavod', '-g', 'zavod', '-m', '0700', ru.INCOMING]])
