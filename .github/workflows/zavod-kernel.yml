@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.9
+# ВЕРСИЯ: v0.10
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-11 18:45 +03:00 (v0.9: E5-5 заготовка — журнал инъекций выпуска пилота грузится артефактом прогона; v0.8: этап 5 E5-6 — самопроверка сканера продукта
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:27 +03:00 (v0.10: самопроверка приёмки P1 ждёт 3 теста — добавлен тест заглушки v0.2 (399c0823c); v0.9: E5-5 заготовка — журнал инъекций выпуска пилота грузится артефактом прогона; v0.8: этап 5 E5-6 — самопроверка сканера продукта
 #   catalog/ci/product_scan.mjs и SR-02 по zavod/catalog без исключений; v0.7.1: слияние v0.6.1 этапа 4 — проверка версии psql без /dev/stderr;
 #   v0.7: слияние этапов 4 и 5 — задание jobobject (M-E46-03, PG16 + полный
 #   fencer.test.mjs на Job Object) и самопроверка приёмки P1; v0.6 (этап 4): аудит E4-6 M-E46-03;
@@ -177,7 +177,7 @@ jobs:
         run: |
           set -o pipefail
           node --test zavod/catalog/P1_telegram_bot/acceptance/selftest/selftest.test.mjs | tee "$RUNNER_TEMP/p1_selftest.out"
-          grep -q '^# pass 2$' "$RUNNER_TEMP/p1_selftest.out" && grep -q '^# fail 0$' "$RUNNER_TEMP/p1_selftest.out"
+          grep -q '^# pass 3$' "$RUNNER_TEMP/p1_selftest.out" && grep -q '^# fail 0$' "$RUNNER_TEMP/p1_selftest.out"
       - name: product scanner selftest (E5-6) and SR-02 over zavod/catalog
         shell: bash
         run: |
