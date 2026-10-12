@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: zavod/engine/ci/e43_training_order.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 11:19 +03:00 (v0.4: слияние — аудит E4-6 M-E46-02:
+// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:04 +03:00 (v0.5: при «не дождались» в журнал пишется снимок stallDiag (узлы исполнений, задания движка, блокировки, ошибки) — разбор редкого зависания n15 на dc06d397/4b235aa0; Claude, сессия 9951b86f;
+//   v0.4: слияние — аудит E4-6 M-E46-02:
 //   флаг requireRole снят, роль обязательна в Kernel всегда; v0.3: E5-1 — история
 //   каждого заказа без ручного переноса, kernel/src/order_history.mjs; v0.2: проверка журнала расхода SR-07; v0.1: E4-3)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -24,6 +25,7 @@ import { EngineClient } from '../src/engine_client.mjs';
 import { Orchestrator } from '../src/orchestrator.mjs';
 import { NODES, FLOWS } from '../src/graph_check.mjs';
 import { checkOrderHistory } from '../../kernel/src/order_history.mjs';
+import { stallDiag } from './stall_diag.mjs';
 
 // pg — из зависимостей Kernel (zavod/kernel/package-lock.json), своей блокировки у engine нет.
 const pg = createRequire(new URL('../../kernel/package.json', import.meta.url))('pg');
@@ -72,6 +74,7 @@ async function pumpUntil(what, pred, ms = 60000) {
     await sleep(300);
   }
   log(`  !! не дождались: ${what}`);
+  log(`  STALL_DIAG ${JSON.stringify(await stallDiag(engine))}`);
   return false;
 }
 const atN15 = (pid) => async () => (await engine.executions({ processInstanceId: pid, activityId: 'n15' })).length > 0;

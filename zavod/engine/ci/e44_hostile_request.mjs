@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: zavod/engine/ci/e44_hostile_request.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:50 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: флаг requireRole снят — роль обязательна в Kernel всегда; прежнее 2026-10-09 07:50 +03:00)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:50 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:04 +03:00 (v0.3: при «не дождались» в журнал пишется снимок stallDiag (узлы исполнений, задания движка, блокировки, ошибки) — разбор редкого зависания n15 на dc06d397/4b235aa0; Claude, сессия 9951b86f;
+//   v0.2: аудит E4-6 M-E46-02: флаг requireRole снят — роль обязательна в Kernel всегда; прежнее 2026-10-09 07:50 +03:00)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: критерий E4-4 протокола Z1 v1.9 (угроза T1, вредная заявка): рабочий — отдельный процесс
 //   (src/worker_sandbox.mjs) с окружением из белого списка; рабочий-вредитель ci/t1_hostile_worker.mjs.
@@ -25,6 +26,7 @@ import { CONN, bootFixture, assignAuditor, runStopFile } from '../../kernel/test
 import { EngineClient } from '../src/engine_client.mjs';
 import { Orchestrator } from '../src/orchestrator.mjs';
 import { childWorker, WORKER_ENV_ALLOW, PLATFORM_FORCED_ENV } from '../src/worker_sandbox.mjs';
+import { stallDiag } from './stall_diag.mjs';
 
 const pg = createRequire(new URL('../../kernel/package.json', import.meta.url))('pg');
 const OUT = process.env.E43_OUT || join(process.cwd(), 'e43_out');
@@ -68,7 +70,9 @@ const statusOf = async (wi) => (await sa.query('SELECT status FROM bem_core.work
 async function pumpUntil(what, pred, ms = 90000) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) { await orch.pump(); if (await pred()) return true; await sleep(300); }
-  log(`  !! не дождались: ${what}`); return false;
+  log(`  !! не дождались: ${what}`);
+  log(`  STALL_DIAG ${JSON.stringify(await stallDiag(engine))}`);
+  return false;
 }
 const atN15 = (pid) => async () => (await engine.executions({ processInstanceId: pid, activityId: 'n15' })).length > 0;
 const atN19 = (pid) => async () => (await engine.tasks({ processInstanceId: pid, taskDefinitionKey: 'n19' })).length > 0;
