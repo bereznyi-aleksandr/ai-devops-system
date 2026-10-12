@@ -1,6 +1,11 @@
 # ДОКУМЕНТ: zavod/ops/server/render_user_data.py
-# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.4: аудит ChatGPT S6-prep R5 M-S6-R5-01 —
+# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:22 +03:00 (v0.5: аудит ChatGPT S6-prep R6 —
+#   L-S6-R6-01: ключ подписи разбирается строго (канонический base64 «туда-обратно», блок ssh-ed25519, 32 байта, без
+#   хвоста). M-S6-R6-01: сверка «ключ = отпечаток» в этой программе — только защита от ошибки: её запускает агент, и
+#   он мог бы подать свою пару. Поэтому отпечаток ключа подписи печатается во ВТОРОЙ строке user-data, и оператор
+#   сверяет его со своим экраном (ssh-keygen -lf по ЗАКРЫТОМУ ключу) до вставки (OD-5 v1.7 шаг 7) и после создания
+#   сервера — по файлу на сервере (шаг 8а). Граница — это сверка оператора и файл root на сервере; v0.4: аудит ChatGPT S6-prep R5 M-S6-R5-01 —
 #   обязательный --release-signer-fingerprint: отпечаток SHA256 ключа подписи, который оператор прочитал на своём
 #   экране (OD-5 шаг 4). Ключ подписи — только ssh-ed25519; отпечаток не того вида или не совпал с .pub — отказ ДО
 #   вывода user-data: подменённый .pub на сервер не попадёт; v0.3: аудит ChatGPT S6-prep R2 M-S6-R2-02 —
@@ -30,7 +35,7 @@ import os
 import re
 import sys
 
-VERSION = 'v0.4'
+VERSION = 'v0.5'
 NAMESPACE = 'zavod-release-ticket@v1'
 HERE = os.path.dirname(os.path.abspath(__file__))
 OPS = os.path.dirname(HERE)
@@ -70,20 +75,44 @@ def read_pub(path):
 FP = re.compile(r'^SHA256:[A-Za-z0-9+/]{43}$')
 
 
-def fingerprint(pub_line):
-    # тот же отпечаток, что печатает ssh-keygen -lf: SHA-256 от двоичного ключа, base64 без «=»
+def key_blob(pub_line):
+    # строгий base64: алфавит и «=» (validate=True) и каноничность — байты, закодированные обратно, дают ту же строку
     try:
-        blob = base64.b64decode(pub_line.split()[1], validate=True)
+        text = pub_line.split()[1]
+        blob = base64.b64decode(text, validate=True)
     except (binascii.Error, IndexError):
         raise SystemExit('REFUSED: bad public key encoding')
-    return 'SHA256:' + base64.b64encode(hashlib.sha256(blob).digest()).decode('ascii').rstrip('=')
+    if base64.b64encode(blob).decode('ascii') != text:
+        raise SystemExit('REFUSED: non-canonical public key encoding')
+    return blob
+
+
+def ed25519_blob(pub_line):
+    # блок ключа: string "ssh-ed25519", string <32 байта>, ничего после
+    blob = key_blob(pub_line)
+    def take(off):
+        if off + 4 > len(blob):
+            raise SystemExit('REFUSED: bad ssh-ed25519 key blob')
+        n = int.from_bytes(blob[off:off + 4], 'big')
+        if off + 4 + n > len(blob):
+            raise SystemExit('REFUSED: bad ssh-ed25519 key blob')
+        return blob[off + 4:off + 4 + n], off + 4 + n
+    kind, off = take(0)
+    key, off = take(off)
+    if pub_line.split()[0] != 'ssh-ed25519' or kind != b'ssh-ed25519' or len(key) != 32 or off != len(blob):
+        raise SystemExit('REFUSED: release signer key must be a well-formed ssh-ed25519 key')
+    return blob
+
+
+def fingerprint(pub_line):
+    # тот же отпечаток, что печатает ssh-keygen -lf: SHA-256 от двоичного ключа, base64 без «=»
+    return 'SHA256:' + base64.b64encode(hashlib.sha256(key_blob(pub_line)).digest()).decode('ascii').rstrip('=')
 
 
 def check_release_key(release_pub, release_fp):
     if not isinstance(release_fp, str) or not FP.match(release_fp):
         raise SystemExit('REFUSED: release signer fingerprint (SHA256:...) from the operator is required')
-    if release_pub.split()[0] != 'ssh-ed25519':
-        raise SystemExit('REFUSED: release signer key must be ssh-ed25519')
+    ed25519_blob(release_pub)
     if fingerprint(release_pub) != release_fp:
         raise SystemExit('REFUSED: release signer key does not match the operator fingerprint')
 
@@ -148,7 +177,8 @@ def render(admin_pub, deploy_pub, release_pub, repo_id, repo, tenant, *, release
         ],
     }
     head = (f'#cloud-config\n# zavod/ops/server/render_user_data.py {VERSION}; секретов нет; '
-            f'ключи открытые; repo {repo} ({repo_id}); tenant {tenant}\n')
+            f'ключи открытые; repo {repo} ({repo_id}); tenant {tenant}; '
+            f'RELEASE_KEY_FINGERPRINT {release_fp} (сверить со своим экраном до вставки)\n')
     return head + json.dumps(cfg, ensure_ascii=False, indent=1) + '\n'
 
 

@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.14
+# ВЕРСИЯ: v0.15
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.14: аудит ChatGPT S6-prep R5 M-S6-R5-01 — render_user_data получает
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:22 +03:00 (v0.15: аудит ChatGPT S6-prep R6 — 34 модульных проверки ops (строгий ключ
+#   подписи, строка отпечатка для оператора); v0.14: аудит ChatGPT S6-prep R5 M-S6-R5-01 — render_user_data получает
 #   отпечаток ключа подписи (ssh-keygen -lf); подменённый .pub ключа подписи при этом отпечатке — отказ, user-data не
 #   выводится (RELEASE_KEY_PIN_CI PASS); 32 модульных проверки ops; v0.13: аудит ChatGPT S6-prep R2 — третий одноразовый ключ CI
 #   ci_release (подпись билетов выпуска) идёт в render_user_data.py и e2e_deploy_ci.sh; e2e — 13 проверок (чужая
@@ -250,5 +251,5 @@ jobs:
         run: |
           set -o pipefail
           python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
-          grep -q '^Ran 32 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 34 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/ops

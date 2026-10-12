@@ -1,6 +1,8 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_render_user_data.py
-# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.4: M-S6-R5-01 — отпечаток оператора
+# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:22 +03:00 (v0.5: R6 — синтетические ключи стали
+#   настоящими по форме блоками ssh-ed25519; неканонический base64 (TR== вместо TQ==, лишние биты), битый блок,
+#   хвост после ключа — отказ; вторая строка user-data несёт RELEASE_KEY_FINGERPRINT для сверки оператором; v0.4: M-S6-R5-01 — отпечаток оператора
 #   обязателен: нет/не того вида/не совпал с .pub (подменённый ключ при отпечатке оператора) — отказ до вывода
 #   user-data, в том числе через командную строку; ключ подписи не ed25519 — отказ; отпечаток совпадает с
 #   ssh-keygen -lf на настоящем ключе; v0.3: M-S6-R2-02 — третий ключ
@@ -27,9 +29,14 @@ from contextlib import redirect_stderr, redirect_stdout
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'server'))
 import render_user_data as ru  # noqa: E402
 
-A = 'ssh-ed25519 ' + 'A' * 68 + ' admin@test'
-D = 'ssh-ed25519 ' + 'B' * 68 + ' deploy@test'
-S = 'ssh-ed25519 ' + 'C' * 68 + ' release@test'
+def ed(fill, comment):
+    raw = len(b'ssh-ed25519').to_bytes(4, 'big') + b'ssh-ed25519' + (32).to_bytes(4, 'big') + bytes([fill]) * 32
+    return 'ssh-ed25519 ' + base64.b64encode(raw).decode('ascii') + ' ' + comment
+
+
+A = ed(1, 'admin@test')
+D = ed(2, 'deploy@test')
+S = ed(3, 'release@test')
 TGT = (1412203481, 'bereznyi-aleksandr/zavod-p1-bot', '48d39de1-2c46-4deb-8557-fec866f2e810')
 FS = ru.fingerprint(S)
 
@@ -118,7 +125,7 @@ class RenderUserDataTest(unittest.TestCase):
             ru.render(A, D, S, *TGT, release_fp=FS[7:])
         with self.assertRaises(TypeError):
             ru.render(A, D, S, *TGT)  # без отпечатка вызвать нельзя вовсе
-        agent = 'ssh-ed25519 ' + 'E' * 68 + ' agent@test'
+        agent = ed(5, 'agent@test')
         with self.assertRaises(SystemExit) as c:
             ru.render(A, D, agent, *TGT, release_fp=FS)  # подменённый .pub при отпечатке оператора
         self.assertIn('does not match', str(c.exception))
@@ -142,6 +149,33 @@ class RenderUserDataTest(unittest.TestCase):
         lf = subprocess.run(['ssh-keygen', '-lf', k + '.pub'], check=True, capture_output=True, text=True).stdout.split()[1]
         self.assertEqual(ru.fingerprint(pub), lf)
         self.assertIn('release_signers', ru.render(A, D, pub, *TGT, release_fp=lf))
+
+    def test_strict_release_key_l_s6_r6_01(self):
+        # настоящий блок ssh-ed25519 — 51 байт, base64 без «=»; неканоничность проверяем на записи с «==»
+        b64 = base64.b64encode(base64.b64decode(S.split()[1]) + b'x').decode('ascii')
+        self.assertTrue(b64.endswith('=='))
+        # те же байты, иная (неканоническая) запись: меняем младшие «лишние» биты последнего значащего символа
+        alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+        body = b64.rstrip('=')
+        pad = b64[len(body):]
+        last = alpha[alpha.index(body[-1]) + 1]
+        loose = 'ssh-ed25519 ' + body[:-1] + last + pad + ' release@test'
+        self.assertEqual(base64.b64decode(loose.split()[1], validate=True), base64.b64decode(b64))
+        for bad, why in [(loose, 'non-canonical'),
+                         ('ssh-ed25519 ' + b64 + ' r', 'well-formed'),
+                         ('ssh-ed25519 ' + base64.b64encode(base64.b64decode(S.split()[1])[:-1]).decode() + ' r', 'blob')]:
+            with self.assertRaises(SystemExit) as c:
+                ru.render(A, D, bad, *TGT, release_fp=FS)
+            self.assertIn(why, str(c.exception))
+        self.assertEqual(base64.b64decode('TR==', validate=True), base64.b64decode('TQ=='))
+        with self.assertRaises(SystemExit):
+            ru.key_blob('ssh-ed25519 TR==')
+
+    def test_fingerprint_line_for_operator(self):
+        out = ru.render(A, D, S, *TGT, release_fp=FS)
+        second = out.split('\n')[1]
+        self.assertTrue(second.startswith('# '))
+        self.assertIn('RELEASE_KEY_FINGERPRINT ' + FS, second)
 
     def test_embedded_files_match_sources(self):
         cfg = parse(ru.render(A, D, S, *TGT, release_fp=FS))

@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: zavod/engine/tests/deploy_egress.test.mjs
-// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.6: аудит ChatGPT S6-prep R5, M-S6-R5-01 —
+// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:22 +03:00 (v0.7: аудит ChatGPT S6-prep R6, M-S6-R6-01 —
+//   сквозной тест Linux: агент создаёт operatorSigner со СВОЕЙ парой «ключ + отпечаток» и подписывает билет своим
+//   ключом без пароля оператора — Engine это не останавливает (не граница), настоящий install_release.sh с
+//   release_signers оператора отказывает SERVER_TICKET_BAD_SIGNATURE, текущая версия не меняется; v0.6: аудит ChatGPT S6-prep R5, M-S6-R5-01 —
 //   каждый operatorSigner создаётся с отпечатком оператора; без отпечатка, с отпечатком не того вида, с ключом агента
 //   при отпечатке оператора — TypeError; точная пара ключ+отпечаток работает; v0.5: аудит ChatGPT S6-prep R4,
 //   M-S6-R4-01 — operatorSigner берёт открытый ключ строкой и проверяет подпись в памяти: файл release_signers с
@@ -356,6 +359,13 @@ test('Linux: сквозной деплой через настоящий install
   assert.equal((await eg.deploy(r)).state, 'already_present');
   await assert.rejects(deployEgress(TARGET, install, opts).deploy(rows({ artifact: tar, head: 'd'.repeat(40) })),
     (e) => e.code === 'SERVER_TICKET_BAD_SIGNATURE');
+  // M-S6-R6-01: согласованная подмена пары «ключ + отпечаток» агентом проходит Engine, но не сервер
+  const agent = operatorKey(d, 'agent');
+  const agentSign = operatorSigner({ requestsDir: join(d, 'requests_agent'), releasePublicKey: agent.pub,
+    operatorFingerprint: agent.fp, wait: async () => {}, notify: async (n) => { agent.sign(n.path); } });
+  await assert.rejects(deployEgress(TARGET, install, { sign: agentSign }).deploy(rows({ artifact: tar, head: 'e'.repeat(40) })),
+    (e) => e.code === 'SERVER_TICKET_BAD_SIGNATURE');
+  assert.equal(existsSync(join(root, 'releases', 'e'.repeat(40))), false);
   assert.equal(realpathSync(join(root, 'current')), realpathSync(join(root, 'releases', 'c'.repeat(40))));
   assert.equal(readFileSync(join(root, 'current', 'bot', '__main__.py'), 'utf8'), 'print("p1")\n');
 });
