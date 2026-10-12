@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/ci/e2e_deploy_ci.sh
 # ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.2: shellcheck SC2024/SC2015 исправлены; пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 10:45 +03:00 (v0.2: visudo проверяет наш файл 90-zavod-deploy (у машины GitHub свой sudoers с плохими правами); shellcheck SC2024/SC2015; пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: только для CI. Сквозная проверка реальной схемы прав сервера (аудит ChatGPT S6-prep M-S6-02/03/05)
 #   на одноразовой машине GitHub после apply_user_data_ci.py:
@@ -29,7 +29,8 @@ for _ in 1 2 3 4 5; do nc -z 127.0.0.1 22 && break; timeout 1 tail -f /dev/null 
 ssh-keyscan -t ed25519 127.0.0.1 2>/dev/null > "$T/kh"
 [ -s "$T/kh" ] || fail known_hosts
 
-sudo visudo -c >/dev/null && pass visudo
+sudo visudo -cf /etc/sudoers.d/90-zavod-deploy >/dev/null || fail visudo
+pass visudo
 SUDO_L=$(sudo -l -U zavod)
 printf '%s\n' "$SUDO_L" > "$T/sudo_l.out"
 grep -q '(root) NOPASSWD: /opt/zavod-ops/install_release.sh' "$T/sudo_l.out" || fail sudo_rule
