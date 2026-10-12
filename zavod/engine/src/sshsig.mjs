@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/src/sshsig.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 13:37 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 13:37 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.2: аудит ChatGPT S6-prep R5, L-S6-R5-01 —
+//   поле reserved обязано быть пустым (как пишет ssh-keygen); base64 брони и открытого ключа обязан быть
+//   каноническим: декодированные байты, закодированные обратно, дают ту же строку — хвост после «=» не принимается)
 // ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: аудит ChatGPT S6-prep R4, M-S6-R4-01 — проверка подписи билета выпуска без файлов: формат SSHSIG
 //   (OpenSSH PROTOCOL.sshsig, тот же, что пишет ssh-keygen -Y sign), только ключ ssh-ed25519. Открытый ключ выпуска
@@ -21,6 +23,12 @@ function reader(buf) {
   };
 }
 const sshString = (b) => { const n = Buffer.alloc(4); n.writeUInt32BE(b.length); return Buffer.concat([n, b]); };
+// Строгий base64: Buffer.from(…, 'base64') молча пропускает лишние символы; принимаем только каноническую запись.
+function strictBase64(text) {
+  const b = Buffer.from(text, 'base64');
+  if (text.length === 0 || b.toString('base64') !== text) throw new Error('non-canonical base64');
+  return b;
+}
 
 // «ssh-ed25519 AAAA… комментарий» → 32 байта ключа. Иной тип или битый блок — TypeError.
 export function parseEd25519PublicKey(line) {
@@ -28,7 +36,7 @@ export function parseEd25519PublicKey(line) {
   if (parts[0] !== 'ssh-ed25519' || !/^[A-Za-z0-9+/]+={0,2}$/.test(parts[1] || '')) throw new TypeError('sshsig: not an ssh-ed25519 key');
   let type, key, done;
   try {
-    const r = reader(Buffer.from(parts[1], 'base64'));
+    const r = reader(strictBase64(parts[1]));
     type = r.str().toString('latin1');
     key = r.str();
     done = r.done();
@@ -51,13 +59,14 @@ export function verifySshSig({ armored, message, namespace, rawKey }) {
     const text = Buffer.from(armored).toString('latin1');
     const m = /^-----BEGIN SSH SIGNATURE-----\r?\n([A-Za-z0-9+/=\r\n]+)-----END SSH SIGNATURE-----\r?\n?$/.exec(text);
     if (!m) return false;
-    const r = reader(Buffer.from(m[1].replace(/[\r\n]/g, ''), 'base64'));
+    const r = reader(strictBase64(m[1].replace(/[\r\n]/g, '')));
     if (!r.raw(6).equals(MAGIC) || r.u32() !== 1) return false;
     const pk = reader(r.str());
     if (pk.str().toString('latin1') !== 'ssh-ed25519' || !pk.str().equals(rawKey) || !pk.done()) return false;
     const ns = r.str();
     if (ns.toString('utf8') !== namespace) return false;
     const reserved = r.str();
+    if (reserved.length !== 0) return false;
     const alg = r.str().toString('latin1');
     if (alg !== 'sha512' && alg !== 'sha256') return false;
     const sig = reader(r.str());

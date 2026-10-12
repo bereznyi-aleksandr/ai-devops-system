@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/tests/sshsig.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 13:39 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 13:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.2: аудит ChatGPT S6-prep R5, L-S6-R5-01 —
+//   подпись, собранная по формату с непустым reserved и верной подписью Ed25519, — false (та же сборка с пустым
+//   reserved — true); верная броня с дописанным после «==» base64-хвостом — false; ключ с хвостом — TypeError)
 // ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: проверки src/sshsig.mjs (аудит ChatGPT S6-prep R4, M-S6-R4-01): подпись ssh-keygen -Y sign (sha512 и
 //   sha256) принимается; другие байты, другой ключ, другое пространство имён, изменённый байт подписи, обрезанная
@@ -10,6 +12,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { createHash, generateKeyPairSync, sign as edSign } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fingerprint, parseEd25519PublicKey, verifySshSig } from '../src/sshsig.mjs';
@@ -64,4 +67,34 @@ test('sshsig: разбор открытого ключа', { skip: !hasKeygen() 
   assert.throws(() => parseEd25519PublicKey(''), TypeError);
   assert.throws(() => parseEd25519PublicKey('ssh-ed25519 AAAA'), TypeError);
   assert.throws(() => parseEd25519PublicKey(`ssh-ed25519 ${Buffer.from('garbage').toString('base64')}`), TypeError);
+});
+
+// Сборка SSHSIG вручную (тот же формат, что пишет ssh-keygen): нужна, чтобы подписать непустой reserved.
+const ss = (b) => { const n = Buffer.alloc(4); n.writeUInt32BE(b.length); return Buffer.concat([n, Buffer.from(b)]); };
+function handSig({ privateKey, raw, message, reserved = '' }) {
+  const pk = Buffer.concat([ss('ssh-ed25519'), ss(raw)]);
+  const toSign = Buffer.concat([Buffer.from('SSHSIG'), ss(NS), ss(reserved), ss('sha512'),
+    ss(createHash('sha512').update(message).digest())]);
+  const sig = Buffer.concat([ss('ssh-ed25519'), ss(edSign(null, toSign, privateKey))]);
+  const v = Buffer.alloc(4); v.writeUInt32BE(1);
+  const blob = Buffer.concat([Buffer.from('SSHSIG'), v, ss(pk), ss(NS), ss(reserved), ss('sha512'), ss(sig)]);
+  return Buffer.from(`-----BEGIN SSH SIGNATURE-----\n${blob.toString('base64').match(/.{1,70}/g).join('\n')}\n-----END SSH SIGNATURE-----\n`);
+}
+
+test('sshsig L-S6-R5-01: непустой reserved и неканонический base64 — false', () => {
+  const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+  const raw = Buffer.from(publicKey.export({ format: 'jwk' }).x, 'base64url');
+  const message = Buffer.from('{"v":1,"ticket":"r5"}');
+  const ok = (armored) => verifySshSig({ armored, message, namespace: NS, rawKey: raw });
+  const good = handSig({ privateKey, raw, message });
+  assert.equal(ok(good), true, 'ручная сборка с пустым reserved должна проходить');
+  assert.equal(ok(handSig({ privateKey, raw, message, reserved: 'x' })), false);
+  const text = good.toString('latin1');
+  const tail = text.replace(/\n-----END SSH SIGNATURE-----\n$/, '');
+  assert.ok(/=$/.test(tail), 'броня этой длины кончается на «=»');
+  assert.equal(ok(Buffer.from(`${tail}QUFB\n-----END SSH SIGNATURE-----\n`)), false);
+  assert.equal(ok(Buffer.from(`${tail}\nQUFB\n-----END SSH SIGNATURE-----\n`)), false);
+  const line = `ssh-ed25519 ${Buffer.concat([ss('ssh-ed25519'), ss(raw)]).toString('base64')}`;
+  assert.equal(parseEd25519PublicKey(line).equals(raw), true);
+  assert.throws(() => parseEd25519PublicKey(`${line}QUFB`), TypeError);
 });

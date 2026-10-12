@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_render_user_data.py
-# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:11 +03:00 (v0.3: M-S6-R2-02 — третий ключ
+# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.4: M-S6-R5-01 — отпечаток оператора
+#   обязателен: нет/не того вида/не совпал с .pub (подменённый ключ при отпечатке оператора) — отказ до вывода
+#   user-data, в том числе через командную строку; ключ подписи не ed25519 — отказ; отпечаток совпадает с
+#   ssh-keygen -lf на настоящем ключе; v0.3: M-S6-R2-02 — третий ключ
 #   (подпись билетов): совпадение любых двух ключей — отказ; release_signers — одна строка с namespaces;
 #   папка билетов root 0700; v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
@@ -11,11 +14,15 @@
 # ОГРАНИЧЕНИЯ: ключи — синтетические строки, не настоящие ключи. Временные файлы — tempfile.TemporaryDirectory,
 #   четыре условия P4.718 как в test_sqlite_backup.py v0.1.
 import base64
+import io
 import json
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'server'))
 import render_user_data as ru  # noqa: E402
@@ -24,6 +31,7 @@ A = 'ssh-ed25519 ' + 'A' * 68 + ' admin@test'
 D = 'ssh-ed25519 ' + 'B' * 68 + ' deploy@test'
 S = 'ssh-ed25519 ' + 'C' * 68 + ' release@test'
 TGT = (1412203481, 'bereznyi-aleksandr/zavod-p1-bot', '48d39de1-2c46-4deb-8557-fec866f2e810')
+FS = ru.fingerprint(S)
 
 
 def parse(text):
@@ -59,22 +67,22 @@ class RenderUserDataTest(unittest.TestCase):
 
     def test_same_keys_refused(self):
         with self.assertRaises(SystemExit) as c:
-            ru.render(A, A.replace('admin', 'other'), S, *TGT)
+            ru.render(A, A.replace('admin', 'other'), S, *TGT, release_fp=FS)
         self.assertIn('differ', str(c.exception))
         with self.assertRaises(SystemExit):
-            ru.render(A, D, D.replace('deploy', 'x'), *TGT)
+            ru.render(A, D, D.replace('deploy', 'x'), *TGT, release_fp=FS)
         with self.assertRaises(SystemExit):
-            ru.render(A, D, A, *TGT)
+            ru.render(A, D, A, *TGT, release_fp=FS)
 
     def test_bad_target_refused(self):
         with self.assertRaises(SystemExit):
-            ru.render(A, D, S, 0, TGT[1], TGT[2])
+            ru.render(A, D, S, 0, TGT[1], TGT[2], release_fp=FS)
         with self.assertRaises(SystemExit):
-            ru.render(A, D, S, TGT[0], 'a b/c', TGT[2])
+            ru.render(A, D, S, TGT[0], 'a b/c', TGT[2], release_fp=FS)
 
     def test_permission_schema(self):
         out = ru.render(ru.read_pub(self.key('a.pub', A + '\n')), ru.read_pub(self.key('d.pub', D + '\n')),
-                        ru.read_pub(self.key('s.pub', S + '\n')), *TGT)
+                        ru.read_pub(self.key('s.pub', S + '\n')), *TGT, release_fp=FS)
         self.assertNotIn('PRIVATE KEY', out)
         cfg = parse(out)
         users = {u['name']: u for u in cfg['users']}
@@ -102,8 +110,41 @@ class RenderUserDataTest(unittest.TestCase):
         self.assertEqual(files['/etc/zavod-p1/release_signers']['permissions'], '0644')
         self.assertIn(['install', '-d', '-o', 'root', '-g', 'root', '-m', '0700', '/var/lib/zavod-p1/tickets'], cfg['runcmd'])
 
+    def test_operator_fingerprint_required_m_s6_r5_01(self):
+        with self.assertRaises(SystemExit) as c:
+            ru.render(A, D, S, *TGT, release_fp=None)
+        self.assertIn('fingerprint', str(c.exception))
+        with self.assertRaises(SystemExit):
+            ru.render(A, D, S, *TGT, release_fp=FS[7:])
+        with self.assertRaises(TypeError):
+            ru.render(A, D, S, *TGT)  # без отпечатка вызвать нельзя вовсе
+        agent = 'ssh-ed25519 ' + 'E' * 68 + ' agent@test'
+        with self.assertRaises(SystemExit) as c:
+            ru.render(A, D, agent, *TGT, release_fp=FS)  # подменённый .pub при отпечатке оператора
+        self.assertIn('does not match', str(c.exception))
+        rsa = 'ssh-rsa ' + 'C' * 68 + ' release@test'
+        with self.assertRaises(SystemExit) as c:
+            ru.render(A, D, rsa, *TGT, release_fp=ru.fingerprint(rsa))
+        self.assertIn('ed25519', str(c.exception))
+        args = ['--admin-pubkey', self.key('a.pub', A), '--deploy-pubkey', self.key('d.pub', D),
+                '--release-signer-pubkey', self.key('s.pub', agent), '--repo-id', str(TGT[0]), '--repo', TGT[1], '--tenant', TGT[2]]
+        out = io.StringIO()
+        for extra in ([], ['--release-signer-fingerprint', FS]):
+            with self.assertRaises(SystemExit), redirect_stdout(out), redirect_stderr(io.StringIO()):
+                ru.main(args + extra)
+        self.assertEqual(out.getvalue(), '', 'при отказе user-data не выводится')
+
+    @unittest.skipUnless(shutil.which('ssh-keygen'), 'нужен ssh-keygen')
+    def test_fingerprint_matches_ssh_keygen(self):
+        k = os.path.join(self.d, 'rk')
+        subprocess.run(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-C', 'r', '-f', k], check=True)
+        pub = ru.read_pub(k + '.pub')
+        lf = subprocess.run(['ssh-keygen', '-lf', k + '.pub'], check=True, capture_output=True, text=True).stdout.split()[1]
+        self.assertEqual(ru.fingerprint(pub), lf)
+        self.assertIn('release_signers', ru.render(A, D, pub, *TGT, release_fp=lf))
+
     def test_embedded_files_match_sources(self):
-        cfg = parse(ru.render(A, D, S, *TGT))
+        cfg = parse(ru.render(A, D, S, *TGT, release_fp=FS))
         files = {f['path']: f for f in cfg['write_files']}
         for path, rel in [('/opt/zavod-ops/install_release.sh', 'server/install_release.sh'),
                           ('/opt/zavod-ops/sqlite_backup.py', 'sqlite_backup.py'),

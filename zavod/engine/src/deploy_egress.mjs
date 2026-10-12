@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: zavod/engine/src/deploy_egress.mjs
-// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 13:39 +03:00 (v0.5: аудит ChatGPT S6-prep R4,
+// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.6: аудит ChatGPT S6-prep R5, M-S6-R5-01 —
+//   отпечаток ключа от оператора ОБЯЗАТЕЛЕН: operatorSigner без operatorFingerprint, с отпечатком не того вида или
+//   с ключом, отпечаток которого не совпал, не создаётся (TypeError) — режима «без закрепления» больше нет;
+//   v0.5: аудит ChatGPT S6-prep R4,
 //   M-S6-R4-01 — operatorSigner больше не берёт путь к allowed_signers и не зовёт ssh-keygen: открытый ключ выпуска
 //   передаётся строкой при создании (закреплённый источник — у вызывающего), разбирается один раз и держится в
 //   памяти; подпись проверяется в памяти (sshsig.mjs, формат SSHSIG) по байтам билета из памяти кода. Файл
@@ -103,16 +106,21 @@ export function deployEgress({ repo_id, repo_full_name, tenant_id }, install, { 
 // подпись подменённых байтов код не примет: они не совпадут с билетом в памяти.
 const SIGN_MARGIN_S = 600;
 const sha256 = (b) => createHash('sha256').update(b).digest('hex');
-// expectFingerprint (необязательно) — отпечаток ключа из второго, независимого источника (решение оператора OD-5):
-// ключ с другим отпечатком не принимается при создании.
-export function operatorSigner({ requestsDir, releasePublicKey, expectFingerprint, notify = async () => {},
+// operatorFingerprint (ОБЯЗАТЕЛЬНО, v0.6, M-S6-R5-01) — отпечаток «SHA256:…» ключа подписи, который оператор сам
+// прочитал на своём экране (OD-5 шаг 4) — второй, независимый источник. Нет отпечатка, не тот вид или ключ с другим
+// отпечатком — отказ при создании: подложенный открытый ключ не совпадёт с отпечатком оператора.
+const FP = /^SHA256:[A-Za-z0-9+/]{43}$/;
+export function operatorSigner({ requestsDir, releasePublicKey, operatorFingerprint, notify = async () => {},
   namespace = TICKET_NAMESPACE, now = () => Date.now(), wait = (ms) => new Promise((r) => setTimeout(r, ms)), pollMs = 5000 }) {
   if (typeof requestsDir !== 'string' || requestsDir.length === 0 || /['"`$\r\n]/.test(requestsDir)) {
     throw new TypeError('operatorSigner: bad requests dir');
   }
   const rawKey = parseEd25519PublicKey(releasePublicKey);
   const key_fingerprint = fingerprint(rawKey);
-  if (expectFingerprint !== undefined && expectFingerprint !== key_fingerprint) {
+  if (typeof operatorFingerprint !== 'string' || !FP.test(operatorFingerprint)) {
+    throw new TypeError('operatorSigner: operator fingerprint is required');
+  }
+  if (operatorFingerprint !== key_fingerprint) {
     throw new TypeError('operatorSigner: release key fingerprint mismatch');
   }
   return async (bytes) => {

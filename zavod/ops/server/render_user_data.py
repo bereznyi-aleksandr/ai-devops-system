@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/ops/server/render_user_data.py
-# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:11 +03:00 (v0.3: аудит ChatGPT S6-prep R2 M-S6-R2-02 —
+# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.4: аудит ChatGPT S6-prep R5 M-S6-R5-01 —
+#   обязательный --release-signer-fingerprint: отпечаток SHA256 ключа подписи, который оператор прочитал на своём
+#   экране (OD-5 шаг 4). Ключ подписи — только ssh-ed25519; отпечаток не того вида или не совпал с .pub — отказ ДО
+#   вывода user-data: подменённый .pub на сервер не попадёт; v0.3: аудит ChatGPT S6-prep R2 M-S6-R2-02 —
 #   третий открытый ключ --release-signer-pubkey: ключ подписи билетов выпуска Завода; кладётся в
 #   /etc/zavod-p1/release_signers (root 0644) с ограничением namespaces="zavod-release-ticket@v1"; все три ключа
 #   обязаны различаться; папка билетов /var/lib/zavod-p1/tickets root 0700; v0.2: пользователь admin переименован в zadmin: в Ubuntu уже есть группа admin, useradd отказывает (CI 38219321184))
@@ -15,16 +18,19 @@
 #   В файл встраиваются (base64) install_release.sh, liveness_watch.py, sqlite_backup.py, службы, sshd, sudoers,
 #   target.env (номер и имя репозитория, tenant — не секреты). Секретов в результате нет: токен бота оператор
 #   кладёт сам в /etc/zavod-p1/secrets.env и watch.env после создания сервера.
-# ВЫЗОВ: python3 render_user_data.py --admin-pubkey F --deploy-pubkey F --release-signer-pubkey F --repo-id N --repo O/R --tenant UUID > user-data.yaml
+# ВЫЗОВ: python3 render_user_data.py --admin-pubkey F --deploy-pubkey F --release-signer-pubkey F
+#   --release-signer-fingerprint SHA256:… --repo-id N --repo O/R --tenant UUID > user-data.yaml
 # ОГРАНИЧЕНИЯ: закрытый ключ (строка с PRIVATE KEY) — отказ; принимаются только ssh-ed25519 / ecdsa / rsa открытые ключи.
 import argparse
 import base64
+import binascii
+import hashlib
 import json
 import os
 import re
 import sys
 
-VERSION = 'v0.3'
+VERSION = 'v0.4'
 NAMESPACE = 'zavod-release-ticket@v1'
 HERE = os.path.dirname(os.path.abspath(__file__))
 OPS = os.path.dirname(HERE)
@@ -61,6 +67,27 @@ def read_pub(path):
     return line
 
 
+FP = re.compile(r'^SHA256:[A-Za-z0-9+/]{43}$')
+
+
+def fingerprint(pub_line):
+    # тот же отпечаток, что печатает ssh-keygen -lf: SHA-256 от двоичного ключа, base64 без «=»
+    try:
+        blob = base64.b64decode(pub_line.split()[1], validate=True)
+    except (binascii.Error, IndexError):
+        raise SystemExit('REFUSED: bad public key encoding')
+    return 'SHA256:' + base64.b64encode(hashlib.sha256(blob).digest()).decode('ascii').rstrip('=')
+
+
+def check_release_key(release_pub, release_fp):
+    if not isinstance(release_fp, str) or not FP.match(release_fp):
+        raise SystemExit('REFUSED: release signer fingerprint (SHA256:...) from the operator is required')
+    if release_pub.split()[0] != 'ssh-ed25519':
+        raise SystemExit('REFUSED: release signer key must be ssh-ed25519')
+    if fingerprint(release_pub) != release_fp:
+        raise SystemExit('REFUSED: release signer key does not match the operator fingerprint')
+
+
 def wf(path, content, perm, owner='root:root'):
     data = content if isinstance(content, bytes) else content.encode('utf-8')
     return {'path': path, 'permissions': perm, 'owner': owner, 'encoding': 'b64',
@@ -72,11 +99,12 @@ def src(rel):
         return f.read()
 
 
-def render(admin_pub, deploy_pub, release_pub, repo_id, repo, tenant):
+def render(admin_pub, deploy_pub, release_pub, repo_id, repo, tenant, *, release_fp):
     if not (isinstance(repo_id, int) and repo_id > 0 and REPO.match(repo) and UUID.match(tenant)):
         raise SystemExit('REFUSED: bad target')
     if len({admin_pub.split()[1], deploy_pub.split()[1], release_pub.split()[1]}) != 3:
         raise SystemExit('REFUSED: admin, deploy and release signer keys must differ')
+    check_release_key(release_pub, release_fp)
     signers = f'zavod-release namespaces="{NAMESPACE}" {" ".join(release_pub.split()[:2])}\n'
     target = f'REPO_ID="{repo_id}"\nREPO_FULL_NAME="{repo}"\nTENANT_ID="{tenant}"\n'
     cfg = {
@@ -129,11 +157,13 @@ def main(argv):
     ap.add_argument('--admin-pubkey', required=True)
     ap.add_argument('--deploy-pubkey', required=True)
     ap.add_argument('--release-signer-pubkey', required=True)
+    ap.add_argument('--release-signer-fingerprint', required=True)
     ap.add_argument('--repo-id', type=int, required=True)
     ap.add_argument('--repo', required=True)
     ap.add_argument('--tenant', required=True)
     a = ap.parse_args(argv)
-    sys.stdout.write(render(read_pub(a.admin_pubkey), read_pub(a.deploy_pubkey), read_pub(a.release_signer_pubkey), a.repo_id, a.repo, a.tenant))
+    sys.stdout.write(render(read_pub(a.admin_pubkey), read_pub(a.deploy_pubkey), read_pub(a.release_signer_pubkey), a.repo_id, a.repo, a.tenant,
+                            release_fp=a.release_signer_fingerprint))
     return 0
 
 

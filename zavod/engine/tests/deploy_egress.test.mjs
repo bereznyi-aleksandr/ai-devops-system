@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/tests/deploy_egress.test.mjs
-// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 13:39 +03:00 (v0.5: аудит ChatGPT S6-prep R4,
+// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:08 +03:00 (v0.6: аудит ChatGPT S6-prep R5, M-S6-R5-01 —
+//   каждый operatorSigner создаётся с отпечатком оператора; без отпечатка, с отпечатком не того вида, с ключом агента
+//   при отпечатке оператора — TypeError; точная пара ключ+отпечаток работает; v0.5: аудит ChatGPT S6-prep R4,
 //   M-S6-R4-01 — operatorSigner берёт открытый ключ строкой и проверяет подпись в памяти: файл release_signers с
 //   ключом агента рядом с запросом ничего не меняет; подмена ticket.json после показа и подпись подменённого файла —
 //   TICKET_BAD_OPERATOR_SIGNATURE; другой отпечаток ключа, не ed25519, нет ключа — TypeError при создании;
@@ -202,7 +204,8 @@ function operatorKey(d, name = 'op') {
   chmodSync(ask, 0o755);
   const sign = (file, ns = TICKET_NAMESPACE) => execFileSync('ssh-keygen', ['-Y', 'sign', '-q', '-n', ns, '-f', key, file],
     { env: { ...process['env'], SSH_ASKPASS: ask, SSH_ASKPASS_REQUIRE: 'force', DISPLAY: 'zavod-test' }, stdio: ['ignore', 'ignore', 'pipe'] });
-  return { key, sign, pub: readFileSync(`${key}.pub`, 'utf8').trim() };
+  const pub = readFileSync(`${key}.pub`, 'utf8').trim();
+  return { key, sign, pub, fp: execFileSync('ssh-keygen', ['-lf', `${key}.pub`], { encoding: 'utf8' }).split(' ')[1] };
 }
 function signersFile(d, pub) {
   const f = join(d, 'release_signers');
@@ -219,7 +222,7 @@ test('operatorSigner M-S6-R4-01: ключ в памяти, подпись опе
   const signers = signersFile(d, op.pub);
   const req = join(d, 'requests');
   const seen = [];
-  const signer = operatorSigner({ requestsDir: req, releasePublicKey: op.pub, expectFingerprint: keyFp(op.pub),
+  const signer = operatorSigner({ requestsDir: req, releasePublicKey: op.pub, operatorFingerprint: op.fp,
     wait: async () => {}, notify: async (n) => { seen.push(n); op.sign(n.path); } });
   const ticket = ticketFor(rows());
   const sig = await signer(ticket);
@@ -232,7 +235,7 @@ test('operatorSigner M-S6-R4-01: ключ в памяти, подпись опе
   writeFileSync(sp, sig);
   execFileSync('ssh-keygen', ['-Y', 'verify', '-f', signers, '-I', 'zavod-release', '-n', TICKET_NAMESPACE, '-s', sp], { input: ticket, stdio: ['pipe', 'ignore', 'ignore'] });
   // повтор тех же байтов: та же папка, готовая подпись, оператора второй раз не трогаем
-  const again = await operatorSigner({ requestsDir: req, releasePublicKey: op.pub, wait: async () => {} })(ticket);
+  const again = await operatorSigner({ requestsDir: req, releasePublicKey: op.pub, operatorFingerprint: op.fp, wait: async () => {} })(ticket);
   assert.equal(again.equals(sig), true);
 });
 
@@ -242,7 +245,7 @@ test('operatorSigner M-S6-R4-01: ключ агента, подмена файл�
   const agent = operatorKey(d, 'agent');
   const req = join(d, 'requests');
   const bad = async (notify) => assert.rejects(
-    operatorSigner({ requestsDir: req, releasePublicKey: op.pub, wait: async () => {}, notify })(ticketFor(rows())),
+    operatorSigner({ requestsDir: req, releasePublicKey: op.pub, operatorFingerprint: op.fp, wait: async () => {}, notify })(ticketFor(rows())),
     (e) => e.code === 'TICKET_BAD_OPERATOR_SIGNATURE');
   await bad(async (n) => { agent.sign(n.path); });
   // агент кладёт «файл доверия» со своим ключом везде, куда дотянется: Engine их не читает
@@ -272,7 +275,7 @@ test('operatorSigner: нет подписи до срока, чужие байт
   const op = operatorKey(d);
   const t0 = Date.now();
   let clock = t0;
-  const late = operatorSigner({ requestsDir: join(d, 'r1'), releasePublicKey: op.pub, now: () => clock,
+  const late = operatorSigner({ requestsDir: join(d, 'r1'), releasePublicKey: op.pub, operatorFingerprint: op.fp, now: () => clock,
     wait: async () => { clock += 60000; } });
   const tk = ticketFor(rows(), t0);
   await assert.rejects(late(tk), (e) => e.code === 'TICKET_NOT_SIGNED_IN_TIME');
@@ -282,16 +285,22 @@ test('operatorSigner: нет подписи до срока, чужие байт
   const name = `${r.outbox.id}_${sha(tk2).slice(0, 12)}`;
   mkdirSync(join(d, 'r2', name), { recursive: true });
   writeFileSync(join(d, 'r2', name, 'ticket.json'), '{"v":1,"forged":true}');
-  await assert.rejects(operatorSigner({ requestsDir: join(d, 'r2'), releasePublicKey: op.pub })(tk2),
+  await assert.rejects(operatorSigner({ requestsDir: join(d, 'r2'), releasePublicKey: op.pub, operatorFingerprint: op.fp })(tk2),
     (e) => e.code === 'TICKET_REQUEST_CONFLICT');
-  assert.throws(() => operatorSigner({ requestsDir: '', releasePublicKey: op.pub }), TypeError);
-  assert.throws(() => operatorSigner({ requestsDir: "C:\\x'; Remove-Item", releasePublicKey: op.pub }), TypeError);
+  assert.throws(() => operatorSigner({ requestsDir: '', releasePublicKey: op.pub, operatorFingerprint: op.fp }), TypeError);
+  assert.throws(() => operatorSigner({ requestsDir: "C:\\x'; Remove-Item", releasePublicKey: op.pub, operatorFingerprint: op.fp }), TypeError);
   assert.throws(() => operatorSigner({ requestsDir: join(d, 'r3') }), TypeError);
   assert.throws(() => operatorSigner({ requestsDir: join(d, 'r3'), releasePublicKey: join(d, 'op.pub') }), TypeError);
   assert.throws(() => operatorSigner({ requestsDir: join(d, 'r3'), releasePublicKey: op.pub.replace('ssh-ed25519', 'ssh-rsa') }), TypeError);
   assert.throws(() => operatorSigner({ requestsDir: join(d, 'r3'), releasePublicKey: op.pub,
-    expectFingerprint: 'SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' }), TypeError);
-  await assert.rejects(operatorSigner({ requestsDir: join(d, 'r4'), releasePublicKey: op.pub })(Buffer.from('{"v":1}')), TypeError);
+    operatorFingerprint: 'SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' }), TypeError);
+  // M-S6-R5-01: без отпечатка оператора, с отпечатком не того вида, ключ агента при отпечатке оператора — отказ
+  const agent = operatorKey(d, 'agent');
+  assert.throws(() => operatorSigner({ requestsDir: join(d, 'r3'), releasePublicKey: op.pub }), /operator fingerprint is required/);
+  assert.throws(() => operatorSigner({ requestsDir: join(d, 'r3'), releasePublicKey: op.pub, operatorFingerprint: op.fp.slice(7) }), /required/);
+  assert.throws(() => operatorSigner({ requestsDir: join(d, 'r3'), releasePublicKey: agent.pub, operatorFingerprint: op.fp }), /mismatch/);
+  assert.equal(typeof operatorSigner({ requestsDir: join(d, 'r3'), releasePublicKey: op.pub, operatorFingerprint: op.fp }), 'function');
+  await assert.rejects(operatorSigner({ requestsDir: join(d, 'r4'), releasePublicKey: op.pub, operatorFingerprint: op.fp })(Buffer.from('{"v":1}')), TypeError);
 });
 
 test('M-S6-R4-01: в Engine нет ключа подписи, файла доверия, команды оператору и вызова ssh-keygen', () => {
@@ -311,7 +320,7 @@ test('Windows: Sign-ZavodTicket подписывает показанные ба
     `. ([scriptblock]::Create((Get-Content -Raw -Encoding UTF8 '${fn}'))); Sign-ZavodTicket -Path '${path}' -Key '${op.key}'`],
     { input: `${code}\n`, encoding: 'utf8', env: { ...process['env'], SSH_ASKPASS: ask, SSH_ASKPASS_REQUIRE: 'force', DISPLAY: 'zavod-test' } });
   const seen = [];
-  const sign = operatorSigner({ requestsDir: join(d, 'requests'), releasePublicKey: op.pub, wait: async () => {},
+  const sign = operatorSigner({ requestsDir: join(d, 'requests'), releasePublicKey: op.pub, operatorFingerprint: op.fp, wait: async () => {},
     notify: async (n) => {
       seen.push(n);
       assert.equal(run(n.path, 'deadbeef').status !== 0 && !existsSync(`${n.path}.sig`), true);
@@ -335,7 +344,7 @@ test('Linux: сквозной деплой через настоящий install
   const install = localInstall({ script: join(HERE, '..', '..', 'ops', 'server', 'install_release.sh'),
     env: { ROOT: root, TARGET_ENV: join(d, 'target.env'), JOURNAL: join(d, 'install.jsonl'), RESTART: 'true',
       RELEASE_SIGNERS: join(d, 'release_signers'), TICKETS: join(d, 'tickets') } });
-  const sign = operatorSigner({ requestsDir: join(d, 'requests'), releasePublicKey: op.pub, wait: async () => {},
+  const sign = operatorSigner({ requestsDir: join(d, 'requests'), releasePublicKey: op.pub, operatorFingerprint: op.fp, wait: async () => {},
     notify: async (n) => { op.sign(n.path); } });
   const eg = deployEgress(TARGET, install, { sign });
   const src = join(d, 'src');
