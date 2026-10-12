@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/ci/e5_pilot_run.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-11 19:18 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-11 19:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 08:16 +03:00 (v0.2, шаг S7: выпуск через
+//   адаптер src/product_egress.mjs v0.1 с неизменяемой целью — манифест, назвавший другой репозиторий, отказ
+//   TARGET_MISMATCH до внешнего вызова; прогон p1_20261012_v010 шёл на v0.1)
 // ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: настоящий прогон пилота P1 (этап 5, протокол Z1 v1.10, критерии E5-1…E5-4, E5-6, E5-7) на
 //   локальном стенде: Kernel (PostgreSQL 16 + Z-EXT-01) и движок Flowable 8.0.0. Один долгоживущий процесс:
@@ -25,10 +27,11 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { Kernel } from '../../kernel/src/kernel.mjs';
 import { CONN, withRole, assignAuditor, runStopFile } from '../../kernel/tests/helpers.mjs';
-import { sealManifest, loadReleaseRows, releaseViaEgress, MANIFEST_KIND, RELEASE_SCOPE } from '../../kernel/src/release_manifest.mjs';
+import { sealManifest, loadReleaseRows, MANIFEST_KIND, RELEASE_SCOPE } from '../../kernel/src/release_manifest.mjs';
 import { checkOrderHistory } from '../../kernel/src/order_history.mjs';
 import { EngineClient, EngineError } from '../src/engine_client.mjs';
 import { Orchestrator, ORCH_VERSION } from '../src/orchestrator.mjs';
+import { productEgress } from '../src/product_egress.mjs';
 
 const pg = createRequire(new URL('../../kernel/package.json', import.meta.url))('pg');
 const RT = 'C:/AI/multiagent-runtime';
@@ -37,6 +40,7 @@ const PRODUCT = 'bereznyi-aleksandr/zavod-p1-bot';
 const PRODUCT_ID = 1412203481;
 const OUTBOX_KIND = 'zavod.product.release';
 const TAG = process.env.P1_TAG || 'p1-v0.1.0';
+const EGRESS = productEgress({ repo_id: PRODUCT_ID, repo_full_name: PRODUCT });
 const RUN = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
 const DIR = process.env.P1_RUN_DIR || `${RT}/state/zavod_20261007/stage5_pilot/runs/${RUN}`;
 const INBOX = join(DIR, 'inbox');
@@ -256,7 +260,7 @@ async function egress(row) {
   try {
     const rows = await withRole('bem_kernel_rw', (c) => loadReleaseRows(c, row));
     const artifact = await artifactOf(rows.manifest.head_sha);
-    const res = await releaseViaEgress({ ...rows, artifact }, async ({ manifest_sha256 }) => {
+    const res = await EGRESS.release({ ...rows, artifact }, async ({ manifest_sha256 }) => {
       const t = await gh(['api', '-X', 'POST', `repos/${PRODUCT}/git/refs`, '-f', `ref=refs/tags/${TAG}`, '-f', `sha=${rows.manifest.head_sha}`, '--jq', '.object.sha']);
       return { ok: t.code === 0 && t.stdout.trim() === rows.manifest.head_sha, manifest_sha256, stderr: t.stderr.slice(0, 200) };
     });
