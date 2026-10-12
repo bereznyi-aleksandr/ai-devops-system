@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/stage_gates.test.mjs
-// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-11 18:09 +03:00 (v0.6: файл состояния v1.1 —
+// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:47 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 08:33 +03:00 (v0.7: файл состояния v1.2 —
+//   этап 5: восемь пунктов PASS по аудиту ChatGPT, выпуск этапа 6 запрещён только из-за E5-4; v0.6: файл состояния v1.1 —
 //   E4-2 PASS (ChatGPT E42 R6 ACCEPT), этап 5 разрешён, выпуск этапа 6 запрещён до закрытия этапа 5; v0.5: файл состояния v1.0 —
 //   OD-2 PASS, этап 5 запрещён до E4-2; v0.4: файл состояния v0.5 —
 //   этап 4 разрешён, этап 5 запрещён до OD-2; v0.3: аудит E3-5 M-E35-03 —
@@ -24,12 +25,12 @@ test('файл состояния корректен', () => {
   assert.deepEqual(validateGates(load()), []);
 });
 
-test('сейчас: этапы 4 и 5 разрешены (E4-2 и OD-2 PASS), выпуск этапа 6 запрещён — этап 5 OPEN', () => {
+test('сейчас: этапы 4 и 5 разрешены, выпуск этапа 6 запрещён — в этапе 5 открыт только E5-4', () => {
   assert.deepEqual(checkStage(load(), 4), { allow: true, blockers: [] });
   assert.deepEqual(checkStage(load(), 5), { allow: true, blockers: [] });
   const r = checkStage(load(), 6, 'release');
   assert.equal(r.allow, false);
-  assert.ok(r.blockers.includes('5:E5-5=OPEN'), r.blockers.join(';'));
+  assert.deepEqual(r.blockers.filter((b) => b.startsWith('5:')), ['5:E5-4=OPEN'], r.blockers.join(';'));
   assert.ok(!r.blockers.some((b) => b.startsWith('4:')), r.blockers.join(';'));
 });
 
