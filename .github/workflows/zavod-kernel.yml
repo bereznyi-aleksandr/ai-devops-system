@@ -1,8 +1,10 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.15
+# ВЕРСИЯ: v0.16
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:22 +03:00 (v0.15: аудит ChatGPT S6-prep R6 — 34 модульных проверки ops (строгий ключ
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:44 +03:00 (v0.16: аудит ChatGPT S6-prep R7 M-S6-R7-01 — собранный user-data проверяется
+#   verify_user_data.py (USERDATA_OK), подделка (disable_root false) — USERDATA_MISMATCH; 39 модульных проверок ops,
+#   включая функцию оператора Copy-ZavodUserData в pwsh; v0.15: аудит ChatGPT S6-prep R6 — 34 модульных проверки ops (строгий ключ
 #   подписи, строка отпечатка для оператора); v0.14: аудит ChatGPT S6-prep R5 M-S6-R5-01 — render_user_data получает
 #   отпечаток ключа подписи (ssh-keygen -lf); подменённый .pub ключа подписи при этом отпечатке — отказ, user-data не
 #   выводится (RELEASE_KEY_PIN_CI PASS); 32 модульных проверки ops; v0.13: аудит ChatGPT S6-prep R2 — третий одноразовый ключ CI
@@ -223,6 +225,13 @@ jobs:
           grep -q 'does not match the operator fingerprint' "$RUNNER_TEMP/swapped.err"
           test ! -s "$RUNNER_TEMP/swapped.yaml"
           echo 'RELEASE_KEY_PIN_CI PASS' 
+          # M-S6-R7-01: файл совпадает с проверенной сборкой; любая добавка (здесь disable_root false) — отказ
+          python3 -I zavod/ops/server/verify_user_data.py "$RUNNER_TEMP/user-data.yaml" | tee "$RUNNER_TEMP/verify.out"
+          grep -q '^USERDATA_OK sha256=' "$RUNNER_TEMP/verify.out"
+          sed 's/"disable_root": true/"disable_root": false/' "$RUNNER_TEMP/user-data.yaml" > "$RUNNER_TEMP/forged.yaml"
+          if python3 -I zavod/ops/server/verify_user_data.py "$RUNNER_TEMP/forged.yaml" > "$RUNNER_TEMP/forged.out"; then echo 'forged user-data accepted'; exit 1; fi
+          grep -q '^USERDATA_MISMATCH' "$RUNNER_TEMP/forged.out"
+          echo 'USERDATA_PIN_CI PASS'
           cloud-init schema --config-file "$RUNNER_TEMP/user-data.yaml"
       - name: apply the same user-data on the runner (users, files, sudoers, sshd; ufw skipped)
         shell: bash
@@ -250,6 +259,7 @@ jobs:
           ZAVOD_OPS_SSHD: '1'
         run: |
           set -o pipefail
+          command -v pwsh
           python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
-          grep -q '^Ran 34 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 39 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/ops
