@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/ci/e5_egress_refusals.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-12 08:16 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-12 08:16 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 08:24 +03:00 (v0.2: на тех же строках
+//   пилота — отказы E5-3 (предмет WORKING, область BEM954_PROTOCOL, нет решения оператора, решение не человека)
+//   и выгрузка авторства E5-2 (subject_author + audit_record, checkAuthorship) с суммой SHA-256)
 // ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: шаг S7 плана пилота (критерий E5-7) на строках Kernel настоящего прогона пилота: три отказа до
 //   внешнего действия — подмена байта артефакта, чужой репозиторий, чужой заказчик/заказ; точный выпуск
@@ -22,6 +24,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { withRole } from '../../kernel/tests/helpers.mjs';
 import { loadReleaseRows, verifyRelease, sealManifest } from '../../kernel/src/release_manifest.mjs';
 import { productEgress } from '../src/product_egress.mjs';
+import { checkAuthorship, loadAuthorship } from '../../kernel/src/authorship_check.mjs';
 
 const RT = 'C:/AI/multiagent-runtime';
 const DIR = process.env.P1_RUN_DIR;
@@ -91,6 +94,25 @@ await refusedBefore('s7_foreign_tenant_manifest', 'TENANT_MISMATCH', () => EG.re
   'манифест назван на другого заказчика');
 await refusedBefore('s7_foreign_order', 'ORDER_MISMATCH', () => EG.release({ ...rows, artifact, manifest: reseal({ work_item_id: foreignWi }) }, counter),
   `манифест назван на заказ ${foreignWi}`);
+
+// E5-3: Egress отклоняет предмет WORKING, область BEM954_PROTOCOL и строку без решения оператора-человека.
+await refusedBefore('s3_working_subject', 'NOT_RELEASED', () => EG.release({ ...rows, artifact, subject: { ...rows.subject, released_at: null } }, counter),
+  'предмет не выпущен (WORKING)');
+await refusedBefore('s3_bem954_scope', 'BAD_SCOPE', () => EG.release({ ...rows, artifact, subject: { ...rows.subject, scope: 'BEM954_PROTOCOL' } }, counter),
+  'предмет области BEM954_PROTOCOL');
+await refusedBefore('s3_no_operator_decision', 'NO_OPERATOR_DECISION', () => EG.release({ ...rows, artifact, decision: null }, counter),
+  'нет решения оператора');
+await refusedBefore('s3_decision_not_human', 'NO_OPERATOR_DECISION', () => EG.release({ ...rows, artifact,
+  decision: { ...rows.decision, provider: 'anthropic', actor_id: 'claude:p1-worker' } }, counter), 'решение записал не человек');
+check('s3_real_decision_human', rows.decision?.provider === 'human' && /^human:/.test(rows.decision?.actor_id || '')
+  && rows.decision?.payload?.decision?.choice === 'RELEASE', `решение ${rows.decision?.id}: ${rows.decision?.actor_id}, ${rows.decision?.payload?.decision?.choice}`);
+
+// E5-2: выгрузка авторства предмета выпуска — автор только рабочий, автор не проверял свою работу, ACCEPT ровно {anthropic, openai}.
+const au = await withRole('bem_kernel_rw', (c) => loadAuthorship(c, ob.tenant_id, rows.manifest.subject_id));
+const ac = checkAuthorship(au);
+writeFileSync(join(OUT, 'e52_authorship_export.json'), JSON.stringify({ ...au, check: ac }, null, 1));
+check('e52_no_self_review', ac.ok, `${ac.problems.join('; ') || 'авторы ' + au.authors.map((a) => a.actor_id).join(',') + '; вердикты '
+  + au.verdicts.map((v) => `${v.auditor_provider}:${v.verdict}@${v.head_sha.slice(0, 8)}`).join(',')}; выгрузка sha256 ${ac.sha256}`);
 
 // Внешнее действие прогона было одно: тег на принятом head_sha.
 const tags = await run('git', ['ls-remote', `https://github.com/${PRODUCT}`, 'refs/tags/*']);
