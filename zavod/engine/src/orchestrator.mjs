@@ -1,6 +1,13 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:49 +03:00 (v0.8: аудит ChatGPT v0.7, MAJOR —
+// ВЕРСИЯ: v0.9  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:11 +03:00 (v0.9: аудит ChatGPT v0.8, MAJOR —
+//   корректность зависела от предела 20 пачек: при 200+ чужих заданиях перед своим своё не бралось, чужие
+//   захватывались повторно на каждом проходе; MINOR — чужое задание могло остаться захваченным до 12 ч при сбое.
+//   Теперь у каждого заказчика свои темы движка (<тема>-<tenantId>, модель v1.2, проверщик v0.2): оркестратор
+//   захватывает только темы своего заказчика, чужие задания ему не видны и не захватываются вообще. Захват — по
+//   одной пачке с обработкой сразу (блокировка не истекает на очереди); предел пачек за проход ограничивает только
+//   объём своей работы, остаток берётся следующим проходом. Проверка заказчика после захвата оставлена как защита;
+//   v0.8: аудит ChatGPT v0.7, MAJOR —
 //   захват задания движка не знает заказчика: оркестратор брал чужое задание, держал его захваченным и обрывал
 //   проход на TENANT_MISMATCH/NOT_FOUND. Теперь заказчик задания определяется до любой работы (у подпроцесса
 //   bem_subtask — по родительскому экземпляру), чужие задания отпускаются (unacquire) без продвижения, захват
@@ -20,7 +27,7 @@
 //   каждая попытка рабочего пишется в журнал расхода (RecordUsage); предел неудачных попыток и бюджет
 //   токенов на работу; превышение — работа BLOCKED через Kernel, задание движка снимается без повторов;
 //   рабочий для работы не в PLANNED/IN_PROGRESS не запускается)
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6–v0.8)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6–v0.9)
 // НАЗНАЧЕНИЕ: оркестратор Kernel над движком (Завод, этап 4, E4-3). Движок хранит только положение
 //   в графе H1.31 §12; каждое изменение работы (статус, доказательство, предмет, вердикт, выпуск,
 //   внешнее действие) делает Kernel своими командами. Экземпляр процесса запускает только Kernel и
@@ -31,17 +38,19 @@
 //   Узел 17 (§12.2): выпуск и строка outbox — одна транзакция Kernel (ReleaseAndTransition, M-E46-01).
 
 import { randomUUID } from 'node:crypto';
-import { TOPICS } from './graph_check.mjs';
+import { TOPICS, TENANT_SUFFIX } from './graph_check.mjs';
 import { EngineError } from './engine_client.mjs';
 
-export const ORCH_VERSION = '0.8.0';
+export const ORCH_VERSION = '0.9.0';
 export const PILOT_SCOPE = 'ZAVOD_PRODUCT_RELEASE';
 export const DEFAULT_LIMITS = Object.freeze({ maxFailedAttempts: 3, tokenBudget: 200000 });
 export const EXEC_TOPICS = Object.freeze(['exec-anthropic', 'exec-openai']);
 const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
 const REFUSE_CODES = new Set(['SR07_BLOCKED', 'WORK_NOT_RUNNABLE']);
 const ACQUIRE_BATCH = 10;     // v0.8: размер пачки захвата
-const ACQUIRE_ROUNDS = 20;    // v0.8: не больше пачек на тему за проход (200 заданий)
+const ACQUIRE_ROUNDS = 20;    // v0.9: не больше пачек своей темы за проход; остаток — следующим проходом (не граница корректности)
+// v0.9: заказчик входит в имя темы движка — только безопасные символы, без выражений.
+const TENANT_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
 
 // Учебная заглушка рабочего: без модели и сети, расход — оценка.
 export async function stubWorker() {
@@ -58,6 +67,7 @@ export class Orchestrator {
     runWorker = stubWorker, limits = DEFAULT_LIMITS, log = () => {}, pilot = null }) {
     // pilot (v0.6, этап 5): { systemCheck({ orch, work_item_id, head_sha }) → { result: 'PASS'|'FAIL', ... },
     //   prepareRelease({ orch, work_item_id, subject_id, head_sha, command_id }) → { outbox_kind, outbox_payload } }
+    if (typeof tenantId !== 'string' || !TENANT_RE.test(tenantId)) throw new EngineError('BAD_TENANT_ID', 'tenantId для темы движка');
     Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log, pilot });
     this.heads = new Map();     // work_item_id → head_sha из результата рабочего (только pilot)
     this.kernelRole = 'kernel';  // роль шагов оркестратора по таблице 3.1; Kernel без роли отказывает
@@ -66,7 +76,7 @@ export class Orchestrator {
     this.pendingAcks = new Set(); // подпроцессы, у которых результат записан и ждёт подтверждения
     this.handled = [];          // { node, pid, ok }
     this.refused = [];          // { node, pid, code, reason } — задания, снятые без повторов (SR-07)
-    this.released = 0;          // v0.8: отпущено чужих заданий (другой заказчик или заказчик не определён)
+    this.released = 0;          // отпущено заданий с чужим или неизвестным заказчиком (v0.9: при своих темах — 0, это защита)
     this.requests = new Map();  // work_item_id → текст заявки (данные для рабочего, не команды)
   }
 
@@ -105,27 +115,10 @@ export class Orchestrator {
   async pump() {
     let n = 0;
     for (const topic of ALL_TOPICS) {
-      const own = await this.acquireOwn(topic);
-      for (let i = 0; i < own.length; i += 1) {
-        const { job, vars } = own[i];
-        let out;
-        try {
-          out = await this.handle(topic, job, vars);
-        } catch (e) {
-          if (!REFUSE_CODES.has(e?.code)) {
-            // v0.8: ещё не начатые свои задания отпускаются, а не висят захваченными до конца блокировки.
-            for (const r of own.slice(i + 1)) await this.engine.unacquireJob(r.job.id, this.workerId);
-            throw e;
-          }
-          // SR-07: задание снимается без повторов; движок не продвигается, работа ждёт решения.
-          await this.engine.failJob(job.id, this.workerId, `${e.code}: ${e.message}`.slice(0, 250));
-          this.refused.push({ node: job.elementId, pid: job.processInstanceId, code: e.code, reason: e.message });
-          n += 1;
-          continue;
-        }
-        await this.engine.completeJob(job.id, this.workerId, out);
-        this.handled.push({ node: job.elementId, pid: job.processInstanceId, topic });
-        n += 1;
+      for (let round = 0; round < ACQUIRE_ROUNDS; round += 1) {
+        const { own, got } = await this.acquireOwn(topic);
+        n += await this.handleBatch(topic, own);
+        if (got < ACQUIRE_BATCH) break;
       }
     }
     for (const sub of [...this.pendingAcks]) {
@@ -138,44 +131,68 @@ export class Orchestrator {
     return n;
   }
 
-  // v0.8: задания движка общие для всех заказчиков, а захват не отбирает по заказчику. Поэтому: захватить пачку,
-  // определить заказчика каждого задания до любой работы, чужие сразу отпустить без продвижения. Пачка полная —
-  // захват повторяется (чужие ещё держатся и не возвращаются снова), чтобы чужие не заслонили свои.
-  // Ошибка при разборе — отпускаются все захваченные этим проходом, ошибка наверх.
+  // Свои захваченные задания одной пачки — по очереди. Отказ SR-07 снимает задание без повторов; любая другая
+  // ошибка отпускает ещё не начатые задания пачки (v0.8) и уходит наверх.
+  async handleBatch(topic, own) {
+    let n = 0;
+    for (let i = 0; i < own.length; i += 1) {
+      const { job, vars } = own[i];
+      let out;
+      try {
+        out = await this.handle(topic, job, vars);
+      } catch (e) {
+        if (!REFUSE_CODES.has(e?.code)) {
+          for (const r of own.slice(i + 1)) await this.engine.unacquireJob(r.job.id, this.workerId);
+          throw e;
+        }
+        // SR-07: задание снимается без повторов; движок не продвигается, работа ждёт решения.
+        await this.engine.failJob(job.id, this.workerId, `${e.code}: ${e.message}`.slice(0, 250));
+        this.refused.push({ node: job.elementId, pid: job.processInstanceId, code: e.code, reason: e.message });
+        n += 1;
+        continue;
+      }
+      await this.engine.completeJob(job.id, this.workerId, out);
+      this.handled.push({ node: job.elementId, pid: job.processInstanceId, topic });
+      n += 1;
+    }
+    return n;
+  }
+
+  // v0.9: тема движка своего заказчика. Модель v1.2 задаёт темы как <тема>-${tenantId}: задание другого заказчика
+  // лежит в другой теме и этим оркестратором не захватывается.
+  topicOf(topic) {
+    return topic + TENANT_SUFFIX.replace('${tenantId}', this.tenantId);
+  }
+
+  // Одна пачка своей темы. Заказчик каждого задания сверяется до любой работы (защита: при своих темах чужих
+  // быть не может); задание с чужим или неизвестным заказчиком отпускается без продвижения и считается в released.
+  // Ошибка при разборе — отпускается вся пачка, ошибка наверх.
   async acquireOwn(topic) {
-    const held = [];
+    // v0.6: у пилота шаги длинные (рабочий — часы, решение оператора W3) — блокировка задания 12 часов.
+    const jobs = await this.engine.acquire(this.topicOf(topic), this.workerId, this.pilot ? 'PT12H' : undefined, ACQUIRE_BATCH);
     const own = [];
     try {
-      for (let round = 0; round < ACQUIRE_ROUNDS; round += 1) {
-        // v0.6: у пилота шаги длинные (рабочий — часы, решение оператора W3) — блокировка задания 12 часов.
-        const jobs = await this.engine.acquire(topic, this.workerId, this.pilot ? 'PT12H' : undefined, ACQUIRE_BATCH);
-        held.push(...jobs);
-        for (const job of jobs) {
-          const { vars, tenant } = await this.jobTenant(job);
-          if (tenant === this.tenantId) own.push({ job, vars });
-        }
-        if (jobs.length < ACQUIRE_BATCH) break;
+      for (const job of jobs) {
+        const { vars, tenant } = await this.jobTenant(job);
+        if (tenant === this.tenantId) own.push({ job, vars });
       }
     } catch (e) {
-      for (const job of held) await this.engine.unacquireJob(job.id, this.workerId);
+      for (const job of jobs) await this.engine.unacquireJob(job.id, this.workerId);
       throw e;
     }
     const mine = new Set(own.map((o) => o.job.id));
-    for (const job of held) {
+    for (const job of jobs) {
       if (mine.has(job.id)) continue;
       await this.engine.unacquireJob(job.id, this.workerId);
       this.released += 1;
     }
-    return own;
+    return { own, got: jobs.length };
   }
 
-  // v0.8: заказчик задания. У подпроцесса bem_subtask своей переменной tenantId нет — берётся у родителя.
+  // v0.9: заказчик задания — переменная tenantId экземпляра (подзадача получает её от n7, модель v1.2).
   async jobTenant(job) {
     const vars = await this.engine.processVars(job.processInstanceId);
-    if (vars.tenantId !== undefined) return { vars, tenant: vars.tenantId };
-    const parent = (await this.engine.processInstances({ subProcessInstanceId: job.processInstanceId }))[0];
-    const pv = parent ? await this.engine.processVars(parent.id) : {};
-    return { vars, tenant: pv.tenantId ?? null };
+    return { vars, tenant: vars.tenantId ?? null };
   }
 
   async handle(topic, job, v) {

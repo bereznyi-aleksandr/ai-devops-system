@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/engine/ci/engine_ci.sh
-# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:49 +03:00 (v0.5: аудит ChatGPT v0.7 — проверка гейта снова после E4-4, на очереди с
+# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:12 +03:00 (v0.6: оркестратор v0.9 — темы движка
+#   у каждого заказчика свои, e5_tenant_isolation v0.2 с 210 чужими заданиями; порядок шагов не менялся; v0.5: аудит ChatGPT v0.7 — проверка гейта снова после E4-4, на очереди с
 #   чужими оставшимися заданиями; новая e5_tenant_isolation.mjs — два заказчика с ожидающими заданиями одновременно;
 #   v0.4: E5 e5_system_check_gate.mjs — узел 11 без PASS не даёт выпуска; v0.3: E4-4 e44_hostile_request.mjs; v0.2: E4-5 e45_limits.mjs; точный префикс act_)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.4–v0.5 — сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
@@ -102,7 +103,7 @@ if [ "$UP" -eq 1 ]; then
   echo "=== E5 узел 11: системная проверка FAIL не даёт выпуска (после E4-4: в очереди есть чужие задания)"
   PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
     "$NODE" ci/e5_system_check_gate.mjs || fail "E5 system check gate"
-  echo "=== E5 два заказчика: чужие задания отпускаются без продвижения, свои не заслоняются"
+  echo "=== E5 два заказчика: чужие задания не видны и не захватываются, свои не заслоняются"
   PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
     "$NODE" ci/e5_tenant_isolation.mjs || fail "E5 tenant isolation"
 fi

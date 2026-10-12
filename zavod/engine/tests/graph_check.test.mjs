@@ -1,7 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/tests/graph_check.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 06:00 +03:00
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:11 +03:00 (v0.2: темы с заказчиком;
+//   три новые копии — тема без заказчика у n2 и s2, n7 без передачи tenantId)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, v0.1; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.2)
 // НАЗНАЧЕНИЕ: E4-3 — проверщик графа H1.31 §12 принимает эталон и отклоняет каждую испорченную копию,
 //   в том числе три копии теста K-R5-11 (R47: валидатор Flowable принял все пять) и копии K-R5-12, K-R3-07.
 // ОГРАНИЧЕНИЯ: движок не нужен; только чтение файла модели.
@@ -47,9 +48,16 @@ const MUTATIONS = [
   ['поток f22 пропал', '<sequenceFlow id="f22" sourceRef="n18" targetRef="n20"/>', ''],
   ['старт без сообщения', '<messageEventDefinition messageRef="msgIntake"/>', ''],
   ['сигнал вместо сообщения', '<message id="msgIntake" name="bemIntake"/>', '<message id="msgIntake" name="bemIntake"/><signal id="sg" name="sync"/>'],
-  ['скрипт в модели', '<serviceTask id="n9" name="9 Слияние изменений" flowable:type="external-worker" flowable:topic="kernel"/>',
+  ['скрипт в модели', '<serviceTask id="n9" name="9 Слияние изменений" flowable:type="external-worker" flowable:topic="kernel-${tenantId}"/>',
     '<scriptTask id="n9" name="9" scriptFormat="groovy"><script>1</script></scriptTask>'],
-  ['исполнитель n18 не Egress', 'flowable:topic="egress"', 'flowable:topic="kernel"'],
+  ['исполнитель n18 не Egress', 'flowable:topic="egress-${tenantId}"', 'flowable:topic="kernel-${tenantId}"'],
+  // v0.2: тема без заказчика — общий захват, чужие задания видны (аудит ChatGPT оркестратора v0.8).
+  ['тема n2 без заказчика', 'id="n2" name="2 Проверка и нормализация" flowable:type="external-worker" flowable:topic="kernel-${tenantId}"',
+    'id="n2" name="2 Проверка и нормализация" flowable:type="external-worker" flowable:topic="kernel"'],
+  ['тема подзадачи s2 без заказчика', 'flowable:topic="exec-${provider}-${tenantId}"', 'flowable:topic="exec-${provider}"'],
+  ['тема чужого заказчика', 'flowable:topic="kernel-check-${tenantId}"', 'flowable:topic="kernel-check-${otherTenant}"'],
+  ['n7 не передаёт tenantId', '<flowable:in source="tenantId" target="tenantId"/>', ''],
+  ['n7 подменяет tenantId', '<flowable:in source="tenantId" target="tenantId"/>', '<flowable:in sourceExpression="${workKey}" target="tenantId"/>'],
   ['default-поток у развилки вердикта', '<exclusiveGateway id="n16" name="16 Развилка по вердикту"/>',
     '<exclusiveGateway id="n16" name="16 Развилка по вердикту" default="f18"/>'],
   ['лишний узел-таймер', '<endEvent id="n20" name="20 Завершение"/>',
