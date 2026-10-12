@@ -1,7 +1,11 @@
 // ДОКУМЕНТ: zavod/catalog/P1_telegram_bot/acceptance/telegram_stub.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:46 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 07:46 +03:00
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:46 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:17 +03:00
+// v0.2: подтверждение обновлений как у Telegram — getUpdates с offset N подтверждает все update_id < N, и они больше
+//   не выдаются никому, в том числе перезапущенному боту без offset. v0.1 выдавала всю историю заново: после
+//   перезапуска (A7) бот повторял старую переписку, и A7 падала или проходила в зависимости от времени
+//   (пилот P1, проход 2, head 54e707dc: FAIL 16/17; повтор того же кода — 17/17 трижды).
+// ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.2 сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: заглушка Telegram Bot API для приёмки P1 (E5-4) без настоящего токена и без сети:
 //   127.0.0.1, пути /bot<токен>/<метод>, тела JSON, form-urlencoded и multipart (sendDocument).
 //   Длинный опрос getUpdates, sendMessage, sendDocument, answerCallbackQuery, getMe, deleteWebhook,
@@ -48,13 +52,13 @@ function parseBody(req, buf) {
 
 export class TelegramStub {
   constructor() {
-    this.bots = new Map(); // токен → { id, updates, nextUpdate, nextMessage }
+    this.bots = new Map(); // токен → { id, updates, nextUpdate, nextMessage, confirmed }
     this.calls = [];
     this.server = null;
   }
 
   addBot(token, id) {
-    this.bots.set(token, { id, updates: [], nextUpdate: 1, nextMessage: 1 });
+    this.bots.set(token, { id, updates: [], nextUpdate: 1, nextMessage: 1, confirmed: 0 });
   }
 
   async start() {
@@ -90,7 +94,10 @@ export class TelegramStub {
       case 'getMe': return ok({ id: bot.id, is_bot: true, first_name: 'P1 test', username: `p1_test_${bot.id}_bot` });
       case 'deleteWebhook': case 'setMyCommands': case 'answerCallbackQuery': return ok(true);
       case 'getUpdates': {
-        const offset = Number(params.offset || 0);
+        // Как у Telegram: offset N подтверждает update_id < N; подтверждённые больше не выдаются.
+        const asked = Number(params.offset || 0);
+        if (asked > bot.confirmed) bot.confirmed = asked;
+        const offset = Math.max(asked, bot.confirmed);
         const wait = Math.min(Number(params.timeout || 0), 2) * 1000;
         const t0 = Date.now();
         let ready = bot.updates.filter((u) => u.update_id >= offset);

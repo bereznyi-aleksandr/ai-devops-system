@@ -47,6 +47,21 @@ test('заглушка Bot API: 401, три вида тела, длинный о
   } finally { await s.close(); }
 });
 
+test('заглушка: offset подтверждает обновления, перезапуск без offset старых не получает', async () => {
+  const s = new TelegramStub();
+  const base = await s.start();
+  s.addBot('1:t', 1);
+  try {
+    s.pushText('1:t', 5, 'one'); s.pushText('1:t', 5, 'two');
+    const a = await (await fetch(`${base}/bot1:t/getUpdates?timeout=0`)).json();
+    assert.equal(a.result.length, 2);
+    await fetch(`${base}/bot1:t/getUpdates?offset=${a.result[1].update_id + 1}&timeout=0`);
+    s.pushText('1:t', 5, 'three');
+    const b = await (await fetch(`${base}/bot1:t/getUpdates?timeout=0`)).json();
+    assert.deepEqual(b.result.map((u) => u.message.text), ['three']);
+  } finally { await s.close(); }
+});
+
 test('плохой бот не проходит приёмку', () => {
   const out = mkdtempSync(join(tmpdir(), 'p1-selftest-'));
   const r = spawnSync(process.execPath, [join(HERE, '..', 'p1_acceptance.mjs'), '--cmd',
