@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.19
+# ВЕРСИЯ: v0.20
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 15:26 +03:00 (v0.19: аудит ChatGPT S6-prep R9 L-S6-R9-01 — после стартера CI проверяет действующие
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:19 +03:00 (v0.20: аудит ChatGPT S6-prep R10 — подпись билета на телефоне zsign_phone.sh,
+#   её проверки идут среди модульных проверок ops (56); v0.19: аудит ChatGPT S6-prep R9 L-S6-R9-01 — после стартера CI проверяет действующие
 #   настройки sshd (`sshd -T`: root и пароль запрещены) и что apply_user_data отказывает, если вставка sshd с
 #   меньшим номером разрешает вход root (SSHD_EFFECTIVE_CI PASS); M-S6-R9-01 — проверки происхождения ключей;
 #   54 модульные проверки ops; v0.18: аудит ChatGPT S6-prep R8 M-S6-R8-01 — user-data применяется на машине GitHub
@@ -298,5 +299,5 @@ jobs:
           set -o pipefail
           command -v pwsh
           python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
-          grep -q '^Ran 54 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 56 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/ops
