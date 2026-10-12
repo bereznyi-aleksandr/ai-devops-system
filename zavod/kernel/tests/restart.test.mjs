@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/restart.test.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 23:12 +03:00 (v0.2: стоп-файл RUN — M-E35-05)
+// ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (аудит E4-6 M-E46-02: явная роль вызывающего; прежнее 2026-10-08 23:12 +03:00) (v0.2: стоп-файл RUN — M-E35-05)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: E3-3 — Kernel убит посреди перехода; после нового старта состояние
 //   согласовано, а повтор той же команды не задваивает переход и строку outbox.
@@ -41,16 +41,16 @@ function runAndKill(args, marker) {
   });
 }
 
-const get = (wi) => kernel.execute({ actor_id: ids.author }, { type: 'GetWorkItem', actor_id: ids.author,
+const get = (wi) => kernel.execute({ actor_id: ids.author, role: 'kernel' }, { type: 'GetWorkItem', actor_id: ids.author,
   tenant_id: ids.tenantA, payload: { work_item_id: wi } });
-const transition = (wi, rev, status, cmd) => kernel.execute({ actor_id: ids.author }, {
+const transition = (wi, rev, status, cmd) => kernel.execute({ actor_id: ids.author, role: 'kernel' }, {
   type: 'Transition', actor_id: ids.author, tenant_id: ids.tenantA, command_id: cmd,
   payload: { work_item_id: wi, expected_revision: rev, new_status: status,
     outbox_kind: 'notify.send', outbox_payload: { crash: 'retry' }, evidence: { crash: 'retry' } } });
 
 async function newItem() {
   const wi = uuid();
-  const r = await kernel.execute({ actor_id: ids.author }, { type: 'CreateWorkItem', actor_id: ids.author,
+  const r = await kernel.execute({ actor_id: ids.author, role: 'kernel' }, { type: 'CreateWorkItem', actor_id: ids.author,
     tenant_id: ids.tenantA, payload: { work_item_id: wi, evidence: { test: 'restart' } } });
   assert.equal(r.ok, true, JSON.stringify(r.error));
   return wi;
@@ -93,7 +93,7 @@ test('E3-3b убит после фиксации до ответа: повтор
   assert.equal(g.result.status, 'PLANNED');
   assert.equal(g.result.revision, 2);
 
-  const retry = await kernel.execute({ actor_id: ids.author }, {
+  const retry = await kernel.execute({ actor_id: ids.author, role: 'kernel' }, {
     type: 'Transition', actor_id: ids.author, tenant_id: ids.tenantA, command_id: cmd,
     payload: { work_item_id: wi, expected_revision: 1, new_status: 'PLANNED',
       outbox_kind: 'notify.send', outbox_payload: { crash: 'after-commit' }, evidence: { crash: 'after-commit' } } });
