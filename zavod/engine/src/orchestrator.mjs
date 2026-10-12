@@ -1,6 +1,10 @@
 // ДОКУМЕНТ: zavod/engine/src/orchestrator.mjs
-// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:32 +03:00 (v0.7: пилот — условие выхода узла 11 (§12.2:
+// ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-09 06:15 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:49 +03:00 (v0.8: аудит ChatGPT v0.7, MAJOR —
+//   захват задания движка не знает заказчика: оркестратор брал чужое задание, держал его захваченным и обрывал
+//   проход на TENANT_MISMATCH/NOT_FOUND. Теперь заказчик задания определяется до любой работы (у подпроцесса
+//   bem_subtask — по родительскому экземпляру), чужие задания отпускаются (unacquire) без продвижения, захват
+//   повторяется, пока пачка полная, чтобы чужие не заслонили свои; v0.7: пилот — условие выхода узла 11 (§12.2:
 //   «тесты пройдены»): при системной проверке не PASS итог ACCEPT проверяющих превращается в REVISE (возврат к 6),
 //   доказательство ZAVOD_P1_SYSTEM_CHECK_GATE; без этого пилот p1_20261011_real дошёл до узла 17 с FAIL 16/17 и
 //   выпуск был отклонён только защитой prepareRelease; v0.6: этап 5,
@@ -16,7 +20,7 @@
 //   каждая попытка рабочего пишется в журнал расхода (RecordUsage); предел неудачных попыток и бюджет
 //   токенов на работу; превышение — работа BLOCKED через Kernel, задание движка снимается без повторов;
 //   рабочий для работы не в PLANNED/IN_PROGRESS не запускается)
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6–v0.7)
+// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf, до v0.5; сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1, v0.6–v0.8)
 // НАЗНАЧЕНИЕ: оркестратор Kernel над движком (Завод, этап 4, E4-3). Движок хранит только положение
 //   в графе H1.31 §12; каждое изменение работы (статус, доказательство, предмет, вердикт, выпуск,
 //   внешнее действие) делает Kernel своими командами. Экземпляр процесса запускает только Kernel и
@@ -30,12 +34,14 @@ import { randomUUID } from 'node:crypto';
 import { TOPICS } from './graph_check.mjs';
 import { EngineError } from './engine_client.mjs';
 
-export const ORCH_VERSION = '0.7.0';
+export const ORCH_VERSION = '0.8.0';
 export const PILOT_SCOPE = 'ZAVOD_PRODUCT_RELEASE';
 export const DEFAULT_LIMITS = Object.freeze({ maxFailedAttempts: 3, tokenBudget: 200000 });
 export const EXEC_TOPICS = Object.freeze(['exec-anthropic', 'exec-openai']);
 const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
 const REFUSE_CODES = new Set(['SR07_BLOCKED', 'WORK_NOT_RUNNABLE']);
+const ACQUIRE_BATCH = 10;     // v0.8: размер пачки захвата
+const ACQUIRE_ROUNDS = 20;    // v0.8: не больше пачек на тему за проход (200 заданий)
 
 // Учебная заглушка рабочего: без модели и сети, расход — оценка.
 export async function stubWorker() {
@@ -60,6 +66,7 @@ export class Orchestrator {
     this.pendingAcks = new Set(); // подпроцессы, у которых результат записан и ждёт подтверждения
     this.handled = [];          // { node, pid, ok }
     this.refused = [];          // { node, pid, code, reason } — задания, снятые без повторов (SR-07)
+    this.released = 0;          // v0.8: отпущено чужих заданий (другой заказчик или заказчик не определён)
     this.requests = new Map();  // work_item_id → текст заявки (данные для рабочего, не команды)
   }
 
@@ -98,15 +105,18 @@ export class Orchestrator {
   async pump() {
     let n = 0;
     for (const topic of ALL_TOPICS) {
-      // v0.6: у пилота шаги длинные (рабочий — часы, решение оператора W3) — блокировка задания 12 часов.
-      const jobs = await this.engine.acquire(topic, this.workerId, this.pilot ? 'PT12H' : undefined);
-      for (const job of jobs) {
-        const vars = await this.engine.processVars(job.processInstanceId);
+      const own = await this.acquireOwn(topic);
+      for (let i = 0; i < own.length; i += 1) {
+        const { job, vars } = own[i];
         let out;
         try {
           out = await this.handle(topic, job, vars);
         } catch (e) {
-          if (!REFUSE_CODES.has(e?.code)) throw e;
+          if (!REFUSE_CODES.has(e?.code)) {
+            // v0.8: ещё не начатые свои задания отпускаются, а не висят захваченными до конца блокировки.
+            for (const r of own.slice(i + 1)) await this.engine.unacquireJob(r.job.id, this.workerId);
+            throw e;
+          }
           // SR-07: задание снимается без повторов; движок не продвигается, работа ждёт решения.
           await this.engine.failJob(job.id, this.workerId, `${e.code}: ${e.message}`.slice(0, 250));
           this.refused.push({ node: job.elementId, pid: job.processInstanceId, code: e.code, reason: e.message });
@@ -126,6 +136,46 @@ export class Orchestrator {
       n += 1;
     }
     return n;
+  }
+
+  // v0.8: задания движка общие для всех заказчиков, а захват не отбирает по заказчику. Поэтому: захватить пачку,
+  // определить заказчика каждого задания до любой работы, чужие сразу отпустить без продвижения. Пачка полная —
+  // захват повторяется (чужие ещё держатся и не возвращаются снова), чтобы чужие не заслонили свои.
+  // Ошибка при разборе — отпускаются все захваченные этим проходом, ошибка наверх.
+  async acquireOwn(topic) {
+    const held = [];
+    const own = [];
+    try {
+      for (let round = 0; round < ACQUIRE_ROUNDS; round += 1) {
+        // v0.6: у пилота шаги длинные (рабочий — часы, решение оператора W3) — блокировка задания 12 часов.
+        const jobs = await this.engine.acquire(topic, this.workerId, this.pilot ? 'PT12H' : undefined, ACQUIRE_BATCH);
+        held.push(...jobs);
+        for (const job of jobs) {
+          const { vars, tenant } = await this.jobTenant(job);
+          if (tenant === this.tenantId) own.push({ job, vars });
+        }
+        if (jobs.length < ACQUIRE_BATCH) break;
+      }
+    } catch (e) {
+      for (const job of held) await this.engine.unacquireJob(job.id, this.workerId);
+      throw e;
+    }
+    const mine = new Set(own.map((o) => o.job.id));
+    for (const job of held) {
+      if (mine.has(job.id)) continue;
+      await this.engine.unacquireJob(job.id, this.workerId);
+      this.released += 1;
+    }
+    return own;
+  }
+
+  // v0.8: заказчик задания. У подпроцесса bem_subtask своей переменной tenantId нет — берётся у родителя.
+  async jobTenant(job) {
+    const vars = await this.engine.processVars(job.processInstanceId);
+    if (vars.tenantId !== undefined) return { vars, tenant: vars.tenantId };
+    const parent = (await this.engine.processInstances({ subProcessInstanceId: job.processInstanceId }))[0];
+    const pv = parent ? await this.engine.processVars(parent.id) : {};
+    return { vars, tenant: pv.tenantId ?? null };
   }
 
   async handle(topic, job, v) {

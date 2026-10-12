@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/engine/ci/engine_ci.sh
-# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:33 +03:00 (v0.4: E5 e5_system_check_gate.mjs — узел 11 без PASS не даёт выпуска, идёт первым до E4-3; v0.3: E4-4 e44_hostile_request.mjs; v0.2: E4-5 e45_limits.mjs; точный префикс act_)
-# ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.4 — сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
+# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 06:49 +03:00 (v0.5: аудит ChatGPT v0.7 — проверка гейта снова после E4-4, на очереди с
+#   чужими оставшимися заданиями; новая e5_tenant_isolation.mjs — два заказчика с ожидающими заданиями одновременно;
+#   v0.4: E5 e5_system_check_gate.mjs — узел 11 без PASS не даёт выпуска; v0.3: E4-4 e44_hostile_request.mjs; v0.2: E4-5 e45_limits.mjs; точный префикс act_)
+# ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.4–v0.5 — сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: Завод, этап 4, E4-3 на чистом PostgreSQL 16: установка H1.31 + Z-EXT-01 (как kernel_ci.sh),
 #   тесты проверщика графа, Flowable 8.0.0 на PostgreSQL (схема bem_engine в отдельной базе, как
 #   ci/engine_pg.sh: суммы архива, war и драйвера сверяются), учебный заказ e43_training_order.mjs.
@@ -88,9 +90,6 @@ done
 
 if [ "$UP" -eq 1 ]; then
   cd "$HERE" || exit 9
-  echo "=== E5 узел 11: системная проверка FAIL не даёт выпуска (первым: оркестратор берёт задания движка любых заказчиков, а E4-4 оставляет свои)"
-  PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
-    "$NODE" ci/e5_system_check_gate.mjs || fail "E5 system check gate"
   echo "=== E4-3 учебный заказ"
   PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
     "$NODE" ci/e43_training_order.mjs || fail "E4-3 training order"
@@ -100,6 +99,12 @@ if [ "$UP" -eq 1 ]; then
   echo "=== E4-4 вредная заявка (T1)"
   PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
     "$NODE" ci/e44_hostile_request.mjs || fail "E4-4 T1 hostile request"
+  echo "=== E5 узел 11: системная проверка FAIL не даёт выпуска (после E4-4: в очереди есть чужие задания)"
+  PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
+    "$NODE" ci/e5_system_check_gate.mjs || fail "E5 system check gate"
+  echo "=== E5 два заказчика: чужие задания отпускаются без продвижения, свои не заслоняются"
+  PGDATABASE=bem E43_OUT="$WORK/e43" ZAVOD_ENGINE_BASE=http://127.0.0.1:8091/flowable-rest \
+    "$NODE" ci/e5_tenant_isolation.mjs || fail "E5 tenant isolation"
 fi
 kill "$ENGINE_PID" 2>/dev/null
 TABLES_ENGINE=$(q bem_engine_e43 "select count(*) from information_schema.tables where table_schema='bem_engine' and left(table_name, 4) = 'act_'")
