@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.20
+# ВЕРСИЯ: v0.21
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:19 +03:00 (v0.20: аудит ChatGPT S6-prep R10 — подпись билета на телефоне zsign_phone.sh,
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:59 +03:00 (v0.21: аудит ChatGPT S6-prep R11A M-S6-R11-01 — сервер сверяет архив с head по git-хешам;
+#   e2e: выпуски — настоящие коммиты, проверок 15 (чужой архив, не тот объект коммита); модульных ops 59; v0.20: аудит ChatGPT S6-prep R10 — подпись билета на телефоне zsign_phone.sh,
 #   её проверки идут среди модульных проверок ops (56); v0.19: аудит ChatGPT S6-prep R9 L-S6-R9-01 — после стартера CI проверяет действующие
 #   настройки sshd (`sshd -T`: root и пароль запрещены) и что apply_user_data отказывает, если вставка sshd с
 #   меньшим номером разрешает вход root (SSHD_EFFECTIVE_CI PASS); M-S6-R9-01 — проверки происхождения ключей;
@@ -289,7 +290,7 @@ jobs:
         run: |
           set -o pipefail
           bash zavod/ops/ci/e2e_deploy_ci.sh "$RUNNER_TEMP/ci_deploy" "$RUNNER_TEMP/ci_admin" 1412203481             bereznyi-aleksandr/zavod-p1-bot 48d39de1-2c46-4deb-8557-fec866f2e810 "$RUNNER_TEMP/ci_release" | tee "$RUNNER_TEMP/e2e.out"
-          test "$(grep -c '^CHECK .* PASS$' "$RUNNER_TEMP/e2e.out")" -eq 13
+          test "$(grep -c '^CHECK .* PASS$' "$RUNNER_TEMP/e2e.out")" -eq 15
           grep -q '^E2E_DEPLOY_CI PASS head=' "$RUNNER_TEMP/e2e.out"
       - name: ops unit tests (E6-1..E6-4), no skips
         shell: bash
@@ -299,5 +300,5 @@ jobs:
           set -o pipefail
           command -v pwsh
           python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
-          grep -q '^Ran 56 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 59 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/ops

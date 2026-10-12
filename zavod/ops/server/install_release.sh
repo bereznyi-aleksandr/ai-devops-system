@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_release.sh
-# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:11 +03:00 (v0.3: аудит ChatGPT
+# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:52 +03:00 (v0.4: аудит ChatGPT S6-prep R11A
+#   M-S6-R11-01 — подпись оператора не доказывала, что архив собран из head: пятый аргумент — объект коммита;
+#   сервер сверяет его git-хеш с head_sha подписанного билета и git-хеш дерева архива со строкой tree; иначе
+#   COMMIT_NOT_HEAD или ARTIFACT_NOT_FROM_HEAD до записи билета и распаковки. v0.3: аудит ChatGPT
 #   S6-prep R2. M-S6-R2-01 — программа tar больше не вызывается: архив читает python tarfile, сначала весь список
 #   проверяется (только обычные файлы и папки; относительный путь без «..», «.», пустых частей, обратной черты и
 #   управляющих знаков; без suid/sgid/sticky; не больше 20000 записей и 64 МиБ), потом файлы создаются заново
@@ -25,8 +28,8 @@
 #   head_sha — 40 hex. Любое несовпадение — отказ с кодом до распаковки. Проверенная запись в
 #   releases/<head_sha>.partial → независимая проверка дерева → переименование → атомарная смена ссылки current →
 #   перезапуск службы → запись в журнал. Повтор той же версии ничего не меняет. Старые версии не удаляются.
-# ВЫЗОВ: sudo /opt/zavod-ops/install_release.sh <manifest.json> <artifact.tar> <ticket.json> <ticket.sig>
-#   (все четыре — прямо в /var/lib/zavod-incoming); ROOT, TARGET_ENV, SERVICE, JOURNAL, INCOMING, RESTART,
+# ВЫЗОВ: sudo /opt/zavod-ops/install_release.sh <manifest.json> <artifact.tar> <ticket.json> <ticket.sig> <commit.obj>
+#   (все пять — прямо в /var/lib/zavod-incoming); ROOT, TARGET_ENV, SERVICE, JOURNAL, INCOMING, RESTART,
 #   RELEASE_SIGNERS, TICKETS — только для проверок без sudo.
 # ОГРАНИЧЕНИЯ: секретов не читает (подпись проверяется открытым ключом); ничего не удаляет.
 set -euo pipefail
@@ -34,6 +37,7 @@ MANIFEST=${1:?manifest}
 ARTIFACT=${2:?artifact}
 TICKET=${3:?ticket}
 SIG=${4:?ticket signature}
+COMMIT=${5:?commit object}
 ROOT=${ROOT:-/opt/zavod-p1}
 TARGET_ENV=${TARGET_ENV:-/etc/zavod-p1/target.env}
 SERVICE=${SERVICE:-zavod-p1}
@@ -59,13 +63,15 @@ with os.fdopen(fd, "rb") as src, open(sys.argv[2], "xb") as dst:
     dst.write(src.read(64 * 1024 * 1024 + 1))' "$1" "$2" 2>/dev/null
 }
 if ! take "$MANIFEST" "$STAGE/manifest.json" || ! take "$ARTIFACT" "$STAGE/artifact.tar" \
-   || ! take "$TICKET" "$STAGE/ticket.json" || ! take "$SIG" "$STAGE/ticket.sig"; then
+   || ! take "$TICKET" "$STAGE/ticket.json" || ! take "$SIG" "$STAGE/ticket.sig" \
+   || ! take "$COMMIT" "$STAGE/commit.obj"; then
   refuse BAD_INPUT_PATH
 fi
 MANIFEST="$STAGE/manifest.json"
 ARTIFACT="$STAGE/artifact.tar"
 TICKET="$STAGE/ticket.json"
 SIG="$STAGE/ticket.sig"
+COMMIT="$STAGE/commit.obj"
 
 [[ -f "$RELEASE_SIGNERS" ]] || refuse NO_RELEASE_SIGNER
 ssh-keygen -Y verify -f "$RELEASE_SIGNERS" -I zavod-release -n "$NAMESPACE" -s "$SIG" < "$TICKET" >/dev/null 2>&1 \
@@ -134,6 +140,78 @@ read -r T_OK T_ID T_SHA T_ISS <<<"$TCHECK"
 [[ "$M_TENANT" == "$TENANT_ID" ]] || refuse TENANT_MISMATCH
 GOT_SHA=$(sha256sum "$ARTIFACT" | cut -d' ' -f1)
 [[ "$GOT_SHA" == "$WANT_SHA" ]] || refuse ARTIFACT_MISMATCH
+
+# M-S6-R11-01 (v0.4): архив обязан быть ровно деревом подписанного коммита head_sha. Пятый файл — объект коммита
+# (`git cat-file commit <head>`): его git-хеш обязан совпасть с head_sha из подписанного оператором билета, а строка
+# tree — с git-хешем дерева, посчитанным здесь из файлов архива (blob/tree как в git: 100644, 100755, 40000).
+# Ключ выкладки позволяет положить любой архив, но поставится только дерево коммита, который оператор сверил на
+# телефоне: другой файл, лишний файл, пустая папка или другие права исполнения меняют хеш дерева. artifact_sha256
+# больше не источник доверия, а только сверка доставки.
+BIND=$(timeout 300 python3 -I - "$ARTIFACT" "$COMMIT" "$HEAD" <<'PY'
+import hashlib, re, sys, tarfile
+art, cp, head = sys.argv[1], sys.argv[2], sys.argv[3]
+MAX_FILES, MAX_BYTES = 20000, 64 * 1024 * 1024
+def err(code):
+    print("ERR " + code)
+    sys.exit(0)
+obj = open(cp, "rb").read((1 << 20) + 1)
+if len(obj) > (1 << 20) or hashlib.sha1(b"commit %d\0" % len(obj) + obj).hexdigest() != head:
+    err("COMMIT_NOT_HEAD")
+first = obj.split(b"\n", 1)[0]
+if not re.fullmatch(rb"tree [0-9a-f]{40}", first):
+    err("COMMIT_NOT_HEAD")
+want = first[5:].decode("ascii")
+root, count, total = {}, 0, 0
+try:
+    with tarfile.open(art, mode="r:") as t:
+        for m in t:
+            count += 1
+            if count > MAX_FILES:
+                err("BAD_ARTIFACT_CONTENT")
+            name = m.name
+            p = name.split("/")
+            if p and p[-1] == "":
+                p = p[:-1]
+            if not p or any(x in ("", ".", "..") for x in p) or name.startswith("/") or m.mode & 0o7000:
+                err("BAD_ARTIFACT_CONTENT")
+            node = root
+            for x in p[:-1]:
+                node = node.setdefault(x, {})
+                if not isinstance(node, dict):
+                    err("BAD_ARTIFACT_CONTENT")
+            leaf = p[-1]
+            if m.type == tarfile.DIRTYPE:
+                if not isinstance(node.setdefault(leaf, {}), dict):
+                    err("BAD_ARTIFACT_CONTENT")
+            elif m.type in (tarfile.REGTYPE, tarfile.AREGTYPE):
+                if leaf in node:
+                    err("BAD_ARTIFACT_CONTENT")
+                total += m.size
+                if total > MAX_BYTES:
+                    err("BAD_ARTIFACT_CONTENT")
+                data = t.extractfile(m).read()
+                node[leaf] = (b"100755" if m.mode & 0o111 else b"100644",
+                              hashlib.sha1(b"blob %d\0" % len(data) + data).digest())
+            else:
+                err("BAD_ARTIFACT_CONTENT")
+except (tarfile.TarError, OSError, EOFError, UnicodeError):
+    err("BAD_ARTIFACT_CONTENT")
+def tree(d):
+    ents = []
+    for n, v in d.items():
+        nb = n.encode("utf-8")
+        if isinstance(v, dict):
+            ents.append((nb + b"/", b"40000 " + nb + b"\0" + tree(v)))
+        else:
+            ents.append((nb, v[0] + b" " + nb + b"\0" + v[1]))
+    body = b"".join(e for _, e in sorted(ents))
+    return hashlib.sha1(b"tree %d\0" % len(body) + body).digest()
+if tree(root).hex() != want:
+    err("ARTIFACT_NOT_FROM_HEAD")
+print("BIND_OK")
+PY
+) || refuse BIND_CHECK_FAILED
+[[ "$BIND" == BIND_OK ]] || refuse "${BIND#ERR }"
 
 # Билет принят: он становится последним (повтор того же билета разрешён, старый — нет).
 printf '{"ticket_id":"%s","ticket_sha256":"%s","issued_at":%s,"head_sha":"%s"}\n' "$T_ID" "$T_SHA" "$T_ISS" "$HEAD" \

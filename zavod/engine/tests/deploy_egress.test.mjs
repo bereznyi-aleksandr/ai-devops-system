@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/tests/deploy_egress.test.mjs
-// ВЕРСИЯ: v0.9  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:01 +03:00 (v0.9: L-S6-R10-01 — отдельная проверка
+// ВЕРСИЯ: v0.10  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:52 +03:00 (v0.10: аудит ChatGPT S6-prep R11A M-S6-R11-01 —
+//   Linux e2e: выпуски — настоящие коммиты git (git archive + объект коммита); верная подпись оператора, верные
+//   repo/head, но чужой архив — SERVER_ARTIFACT_NOT_FROM_HEAD, current прежний; v0.9: L-S6-R10-01 — отдельная проверка
 //   Sign-ZavodTicket без -Keygen: ключ создан и подпись сделана программой System32, подпись принята; v0.8: Sign-ZavodTicket по умолчанию берёт
 //   ssh-keygen из System32 (тест проверяет путь по умолчанию и показ программы); тестовый ключ под паролем
 //   подписывается ssh-keygen из PATH через -Keygen, потому что SSH_ASKPASS со сценарием .sh работает только у него; v0.7: аудит ChatGPT S6-prep R6, M-S6-R6-01 —
@@ -376,17 +378,27 @@ test('Linux: сквозной деплой через настоящий install
     `REPO_ID="${TARGET.repo_id}"\nREPO_FULL_NAME="${TARGET.repo_full_name}"\nTENANT_ID="${TENANT}"\n`);
   const op = operatorKey(d);
   signersFile(d, op.pub);
-  const install = localInstall({ script: join(HERE, '..', '..', 'ops', 'server', 'install_release.sh'),
+  const src = join(d, 'src');
+  const git = (...a) => execFileSync('git', ['-C', src, '-c', 'core.autocrlf=false', '-c', 'user.name=zavod-test',
+    '-c', 'user.email=t@zavod.invalid', ...a]);
+  const commitObject = (h) => { try { return git('cat-file', 'commit', h); } catch { return Buffer.alloc(0); } };
+  const install = localInstall({ script: join(HERE, '..', '..', 'ops', 'server', 'install_release.sh'), commitObject,
     env: { ROOT: root, TARGET_ENV: join(d, 'target.env'), JOURNAL: join(d, 'install.jsonl'), RESTART: 'true',
       RELEASE_SIGNERS: join(d, 'release_signers'), TICKETS: join(d, 'tickets') } });
   const sign = operatorSigner({ requestsDir: join(d, 'requests'), releasePublicKey: op.pub, operatorFingerprint: op.fp, wait: async () => {},
     notify: async (n) => { op.sign(n.path); } });
   const eg = deployEgress(TARGET, install, { sign });
-  const src = join(d, 'src');
   mkdirSync(join(src, 'bot'), { recursive: true });
-  writeFileSync(join(src, 'bot', '__main__.py'), 'print("p1")\n');
-  const tar = execFileSync('tar', ['-cf', '-', '-C', src, 'bot']);
-  const r = rows({ artifact: tar, head: 'c'.repeat(40) });
+  git('init', '-q');
+  const release = (text) => {
+    writeFileSync(join(src, 'bot', '__main__.py'), text);
+    git('add', 'bot');
+    git('commit', '-q', '-m', text);
+    return { head: git('rev-parse', 'HEAD').toString().trim(), tar: git('archive', '--format=tar', 'HEAD') };
+  };
+  const c1 = release('print("p1")\n');
+  const tar = c1.tar;
+  const r = rows({ artifact: tar, head: c1.head });
   assert.equal((await eg.deploy(r)).state, 'installed');
   assert.equal((await eg.deploy(r)).state, 'already_present');
   await assert.rejects(deployEgress(TARGET, install, opts).deploy(rows({ artifact: tar, head: 'd'.repeat(40) })),
@@ -398,6 +410,17 @@ test('Linux: сквозной деплой через настоящий install
   await assert.rejects(deployEgress(TARGET, install, { sign: agentSign }).deploy(rows({ artifact: tar, head: 'e'.repeat(40) })),
     (e) => e.code === 'SERVER_TICKET_BAD_SIGNATURE');
   assert.equal(existsSync(join(root, 'releases', 'e'.repeat(40))), false);
-  assert.equal(realpathSync(join(root, 'current')), realpathSync(join(root, 'releases', 'c'.repeat(40))));
+  assert.equal(realpathSync(join(root, 'current')), realpathSync(join(root, 'releases', c1.head)));
   assert.equal(readFileSync(join(root, 'current', 'bot', '__main__.py'), 'utf8'), 'print("p1")\n');
+  // M-S6-R11-01: подпись оператора верная, repo и head (настоящий коммит 2) верные, манифест и билет согласованы с
+  // чужим архивом — сервер не ставит: дерево архива не дерево head
+  const c2 = release('print("p1 v2")\n');
+  mkdirSync(join(d, 'evil', 'bot'), { recursive: true });
+  writeFileSync(join(d, 'evil', 'bot', '__main__.py'), 'import os\nos.system("id")\n');
+  const evil = execFileSync('tar', ['-cf', '-', '-C', join(d, 'evil'), 'bot']);
+  await assert.rejects(eg.deploy(rows({ artifact: evil, head: c2.head })), (e) => e.code === 'SERVER_ARTIFACT_NOT_FROM_HEAD');
+  assert.equal(existsSync(join(root, 'releases', c2.head)), false);
+  assert.equal((await eg.deploy(rows({ artifact: c2.tar, head: c2.head }))).state, 'installed');
+  assert.equal(realpathSync(join(root, 'current')), realpathSync(join(root, 'releases', c2.head)));
+  assert.equal(readFileSync(join(root, 'current', 'bot', '__main__.py'), 'utf8'), 'print("p1 v2")\n');
 });

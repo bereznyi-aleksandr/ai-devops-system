@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/ci/e2e_deploy_ci.sh
-# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 11:15 +03:00 (v0.3: аудит ChatGPT S6-prep R2 —
+# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:52 +03:00 (v0.4: аудит ChatGPT S6-prep R11A M-S6-R11-01 —
+#   выпуски — настоящие коммиты одноразового git-репозитория (git archive + git cat-file commit); новые проверки:
+#   верная подпись оператора, верные repo/head, но чужой архив — ARTIFACT_NOT_FROM_HEAD; объект другого коммита —
+#   COMMIT_NOT_HEAD; current не меняется. v0.3: аудит ChatGPT S6-prep R2 —
 #   шестой аргумент: одноразовый ключ подписи билетов; каждая выкладка несёт билет с подписью ssh-keygen -Y;
 #   новые проверки: билет, подписанный чужим ключом, — TICKET_BAD_SIGNATURE (M-S6-R2-02); архив с файлом
 #   suid root — BAD_ARTIFACT_CONTENT, current не меняется (M-S6-R2-01); в выпусках нет suid/sgid, записи для
@@ -55,11 +58,11 @@ json.dump(t,open(sys.argv[2],"w"))' "$1" "$2" "$TN"
 push() {
   DEPLOY_KEY_FILE="$DKEY" KNOWN_HOSTS_FILE="$T/kh" bash "$PUSH" 127.0.0.1 "$@"
 }
-refused() {  # refused NAME CODE MANIFEST ARTIFACT TICKET — отказ с кодом, current прежний
+refused() {  # refused NAME CODE MANIFEST ARTIFACT TICKET COMMIT — отказ с кодом, current прежний
   local name=$1 code=$2 rc
   shift 2
   set +e
-  push "$1" "$2" "$3" "$3.sig" > "$T/$name.out"
+  push "$1" "$2" "$3" "$3.sig" "$4" > "$T/$name.out"
   rc=$?
   set -e
   cat "$T/$name.out"
@@ -96,22 +99,31 @@ if ssh -i "$DKEY" "${OPTS[@]}" zavod@127.0.0.1 sudo -n /bin/cat /etc/shadow >/de
 pass ssh_zavod_no_shadow
 
 sudo install -m 0600 -o root -g root /dev/null /etc/zavod-p1/secrets.env
+# release N — коммит одноразового репозитория продукта: артефакт = git archive, объект = git cat-file commit
+G=(git -C "$T/rel" -c user.name=zavod-ci -c user.email=ci@zavod.invalid)
+git init -q "$T/rel"
 mkdir -p "$T/rel/bot"
-printf 'import time\nwhile True:\n    time.sleep(60)\n' > "$T/rel/bot/__main__.py"
-tar -C "$T/rel" -cf "$T/artifact.tar" bot
+release() {
+  printf 'import time\nwhile True:\n    time.sleep(%s)\n' "$2" > "$T/rel/bot/__main__.py"
+  "${G[@]}" add bot
+  "${G[@]}" commit -q -m "release $1"
+  "${G[@]}" archive --format=tar HEAD > "$T/artifact$1.tar"
+  "${G[@]}" cat-file commit HEAD > "$T/commit$1.obj"
+  "${G[@]}" rev-parse HEAD
+}
+HEAD=$(release '' 60)
 SHA=$(sha256sum "$T/artifact.tar" | cut -d' ' -f1)
-HEAD=$(git rev-parse HEAD)
 manifest "$SHA" "$HEAD" "$T/manifest.json"
 ticket "$T/manifest.json" "$T/ticket1.json" "$SKEY"
 
-push "$T/manifest.json" "$T/artifact.tar" "$T/ticket1.json" "$T/ticket1.json.sig" | tee "$T/deploy1.out"
+push "$T/manifest.json" "$T/artifact.tar" "$T/ticket1.json" "$T/ticket1.json.sig" "$T/commit.obj" | tee "$T/deploy1.out"
 grep -q "^INSTALL_OK state=installed head=$HEAD$" "$T/deploy1.out" || fail deploy_installed
 timeout 3 tail -f /dev/null || true
 systemctl is-active --quiet zavod-p1 || { sudo systemctl status zavod-p1 --no-pager || true; fail service_active; }
 [ "$(readlink -f /opt/zavod-p1/current)" = "/opt/zavod-p1/releases/$HEAD" ] || fail current_link
 pass deploy_as_zavod
 
-push "$T/manifest.json" "$T/artifact.tar" "$T/ticket1.json" "$T/ticket1.json.sig" | tee "$T/deploy2.out"
+push "$T/manifest.json" "$T/artifact.tar" "$T/ticket1.json" "$T/ticket1.json.sig" "$T/commit.obj" | tee "$T/deploy2.out"
 grep -q "^INSTALL_OK state=already_present head=$HEAD$" "$T/deploy2.out" || fail deploy_repeat
 pass deploy_repeat_noop
 
@@ -119,11 +131,11 @@ cp "$T/artifact.tar" "$T/artifact_bad.tar"
 python3 -I -c 'import sys; p=sys.argv[1]; b=bytearray(open(p,"rb").read()); b[600]^=1; open(p,"wb").write(b)' "$T/artifact_bad.tar"
 manifest "$SHA" "$(printf '%040d' 7)" "$T/manifest_bad.json"
 ticket "$T/manifest_bad.json" "$T/ticket_bad.json" "$SKEY"
-refused tampered_refused ARTIFACT_MISMATCH "$T/manifest_bad.json" "$T/artifact_bad.tar" "$T/ticket_bad.json"
+refused tampered_refused ARTIFACT_MISMATCH "$T/manifest_bad.json" "$T/artifact_bad.tar" "$T/ticket_bad.json" "$T/commit.obj"
 
 manifest "$SHA" "$(printf '%040d' 8)" "$T/manifest_forged.json"
 ticket "$T/manifest_forged.json" "$T/ticket_forged.json" "$DKEY"
-refused forged_ticket_refused TICKET_BAD_SIGNATURE "$T/manifest_forged.json" "$T/artifact.tar" "$T/ticket_forged.json"
+refused forged_ticket_refused TICKET_BAD_SIGNATURE "$T/manifest_forged.json" "$T/artifact.tar" "$T/ticket_forged.json" "$T/commit.obj"
 
 python3 -I -c 'import io,sys,tarfile
 with tarfile.open(sys.argv[1], "w") as t:
@@ -131,21 +143,35 @@ with tarfile.open(sys.argv[1], "w") as t:
         ti = tarfile.TarInfo(name); ti.size = 2; ti.mode = mode; ti.uid = 0; ti.gid = 0
         t.addfile(ti, io.BytesIO(b"x\n"))' "$T/artifact_suid.tar"
 SUID_SHA=$(sha256sum "$T/artifact_suid.tar" | cut -d' ' -f1)
-manifest "$SUID_SHA" "$(printf '%040d' 9)" "$T/manifest_suid.json"
+HEAD3=$(release 3 62)
+manifest "$SUID_SHA" "$HEAD3" "$T/manifest_suid.json"
 ticket "$T/manifest_suid.json" "$T/ticket_suid.json" "$SKEY"
-refused setuid_tar_refused BAD_ARTIFACT_CONTENT "$T/manifest_suid.json" "$T/artifact_suid.tar" "$T/ticket_suid.json"
-[ ! -e "/opt/zavod-p1/releases/$(printf '%040d' 9)" ] || fail setuid_release_dir
+refused setuid_tar_refused BAD_ARTIFACT_CONTENT "$T/manifest_suid.json" "$T/artifact_suid.tar" "$T/ticket_suid.json" "$T/commit3.obj"
+[ ! -e "/opt/zavod-p1/releases/$HEAD3" ] || fail setuid_release_dir
 
-printf 'import time\nwhile True:\n    time.sleep(61)\n' > "$T/rel/bot/__main__.py"
-tar -C "$T/rel" -cf "$T/artifact2.tar" bot
+# M-S6-R11-01: подпись оператора верная, repo и head (настоящий коммит 3) верные, манифест и билет согласованы с
+# чужим архивом (тот же путь, другой код) — сервер не ставит: дерево архива не дерево head
+mkdir -p "$T/evil/bot"
+printf 'import os\nos.system("id")\n' > "$T/evil/bot/__main__.py"
+tar -C "$T/evil" -cf "$T/artifact_evil.tar" bot
+EVIL_SHA=$(sha256sum "$T/artifact_evil.tar" | cut -d' ' -f1)
+manifest "$EVIL_SHA" "$HEAD3" "$T/manifest_evil.json"
+ticket "$T/manifest_evil.json" "$T/ticket_evil.json" "$SKEY"
+refused foreign_artifact_refused ARTIFACT_NOT_FROM_HEAD "$T/manifest_evil.json" "$T/artifact_evil.tar" "$T/ticket_evil.json" "$T/commit3.obj"
+[ ! -e "/opt/zavod-p1/releases/$HEAD3" ] || fail foreign_release_dir
+# объект другого коммита (1) при билете на коммит 3 — не тот head
+manifest "$(sha256sum "$T/artifact3.tar" | cut -d' ' -f1)" "$HEAD3" "$T/manifest_c3.json"
+ticket "$T/manifest_c3.json" "$T/ticket_c3.json" "$SKEY"
+refused commit_not_head_refused COMMIT_NOT_HEAD "$T/manifest_c3.json" "$T/artifact3.tar" "$T/ticket_c3.json" "$T/commit.obj"
+
+HEAD2=$(release 2 61)
 SHA2=$(sha256sum "$T/artifact2.tar" | cut -d' ' -f1)
-HEAD2=$(printf '%040d' 2)
 manifest "$SHA2" "$HEAD2" "$T/manifest2.json"
 ticket "$T/manifest2.json" "$T/ticket2.json" "$SKEY"
-push "$T/manifest2.json" "$T/artifact2.tar" "$T/ticket2.json" "$T/ticket2.json.sig" | tee "$T/deploy4.out"
+push "$T/manifest2.json" "$T/artifact2.tar" "$T/ticket2.json" "$T/ticket2.json.sig" "$T/commit2.obj" | tee "$T/deploy4.out"
 grep -q "^INSTALL_OK state=installed head=$HEAD2$" "$T/deploy4.out" || fail deploy_second
 HEAD=$HEAD2
-refused stale_ticket_refused TICKET_STALE "$T/manifest.json" "$T/artifact.tar" "$T/ticket1.json"
+refused stale_ticket_refused TICKET_STALE "$T/manifest.json" "$T/artifact.tar" "$T/ticket1.json" "$T/commit.obj"
 
 BAD_TREE=$(sudo find /opt/zavod-p1/releases -mindepth 1 \( -perm /7022 -o ! -user root -o ! \( -type f -o -type d \) \) -print)
 [ -z "$BAD_TREE" ] || { printf '%s\n' "$BAD_TREE"; fail release_tree_safe; }

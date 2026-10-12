@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/src/deploy_egress.mjs
-// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:22 +03:00 (v0.7: аудит ChatGPT S6-prep R6, M-S6-R6-01 —
+// ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:52 +03:00 (v0.8: аудит ChatGPT S6-prep R11A M-S6-R11-01 —
+//   сервер (install_release.sh v0.4) требует пятый файл: объект коммита head; localInstall берёт его функцией
+//   commitObject(head) и кладёт рядом (commit_<h8>.obj); в боевом пути его делает workflow продукта; v0.7: аудит ChatGPT S6-prep R6, M-S6-R6-01 —
 //   исполняемый код не менялся; комментарий честно называет роль проверки: Engine запускает агент той же учётной
 //   записи, он же может изменить и этот файл, поэтому сверка «ключ = отпечаток» здесь — ранний отказ при ошибке,
 //   а не граница. Граница — файл root на сервере (/etc/zavod-p1/release_signers), который оператор сверяет по
@@ -163,7 +165,7 @@ export function operatorSigner({ requestsDir, releasePublicKey, operatorFingerpr
   };
 }
 
-function stage({ manifest, artifact, ticket, ticket_sig }) {
+function stage({ manifest, artifact, ticket, ticket_sig, commit }) {
   const dir = mkdtempSync(join(tmpdir(), 'zavod-deploy-'));
   const h8 = manifest.head_sha.slice(0, 8);
   const m = join(dir, `manifest_${h8}.json`);
@@ -174,7 +176,9 @@ function stage({ manifest, artifact, ticket, ticket_sig }) {
   writeFileSync(a, artifact);
   writeFileSync(t, ticket);
   writeFileSync(s, ticket_sig);
-  return { dir, m, a, t, s };
+  const c = join(dir, `commit_${h8}.obj`);
+  writeFileSync(c, commit);
+  return { dir, m, a, t, s, c };
 }
 
 // Сервер (v0.2, аудит ChatGPT S6-prep M-S6-05, L-S6-01): Завод не держит ключ сервера и не ходит на сервер сам.
@@ -233,11 +237,12 @@ export function ghDeployInstall({ repo_full_name, workflow = 'p1-deploy.yml', re
 }
 
 // Проверки: тот же install_release.sh локально (Linux), с переменными ROOT/TARGET_ENV/JOURNAL/RESTART/
-// RELEASE_SIGNERS/TICKETS.
-export function localInstall({ script, env }) {
+// RELEASE_SIGNERS/TICKETS. commitObject(head) — байты `git cat-file commit <head>` (v0.8, M-S6-R11-01).
+export function localInstall({ script, env, commitObject }) {
+  if (typeof commitObject !== 'function') throw new TypeError('localInstall: commitObject is required');
   return async (job) => {
-    const { dir, m, a, t, s } = stage(job);
-    const r = await run('bash', [script, m, a, t, s], { env: { ...process.env, ...env, INCOMING: dir } }).catch((e) => ({ stdout: e.stdout || '' }));
+    const { dir, m, a, t, s, c } = stage({ ...job, commit: commitObject(job.manifest.head_sha) });
+    const r = await run('bash', [script, m, a, t, s, c], { env: { ...process.env, ...env, INCOMING: dir } }).catch((e) => ({ stdout: e.stdout || '' }));
     return r.stdout;
   };
 }
