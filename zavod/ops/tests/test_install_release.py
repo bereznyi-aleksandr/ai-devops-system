@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_install_release.py
-# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:35 +03:00 (v0.5: L-S6-R12-01 —
+# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:53 +03:00 (v0.6: M-R13-01 аудита Codex —
+#   выпуск из 1200 файлов в 1600 папках ставится не больше чем за три запуска git hash-object. v0.5: L-S6-R12-01 —
 #   три проверки git с SHA1DC: настоящий git сообщает SHA1_DC или ничего; git без SHA1DC — GIT_NO_SHA1DC; отказ или
 #   ложный хеш git — SHA1_GUARD_FAILED. v0.4: аудит ChatGPT S6-prep R11A
 #   M-S6-R11-01 — install_release.sh v0.4 сверяет архив с подписанным head по git-хешам: выпуски в проверках —
@@ -362,6 +363,22 @@ class InstallReleaseTest(unittest.TestCase):
         r = self.run_install(*self.release())
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn('INSTALL_OK state=installed', r.stdout)
+
+    def test_git_batched_for_large_release_m_r13_01(self):
+        # M-R13-01: git считает объекты пачками — коммит, файлы, деревья; не по запуску на объект
+        log = os.path.join(self.d, 'git_calls.log')
+        self.git_bin = self.fake_git('SHA-1: SHA1_DC', 'echo "$*" >> %s; exec /usr/bin/git "$@"' % log)
+        files = {f'bot/d{i // 3}/s{i % 3}/f{i}.py': (f'print({i})\n'.encode(), i % 7 == 0) for i in range(1200)}
+        head, a, s, cp = self.commit(files)
+        started = time.monotonic()
+        r = self.run_install(*self.signed(a, s, head, cp))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn(f'INSTALL_OK state=installed head={head}', r.stdout)
+        self.assertLess(time.monotonic() - started, 120)
+        with open(log) as f:
+            calls = [x for x in f.read().splitlines() if x.startswith('hash-object')]
+        self.assertLessEqual(len(calls), 3, calls)
+        self.assertEqual(sorted(x.split()[3] for x in calls), ['blob', 'commit', 'tree'])
 
 
 if __name__ == '__main__':

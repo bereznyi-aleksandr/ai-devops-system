@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_release.sh
-# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:35 +03:00 (v0.5: аудит ChatGPT S6-prep R12
+# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:53 +03:00 (v0.6: аудит Codex
+#   CODEX_ZAVOD_S6_L_S6_R12_01_SHA1DC_REVISE_R13_20261016, M-R13-01 — git считает объекты пачками: по одному
+#   запуску hash-object --stdin-paths на коммит, файлы и деревья (не больше трёх запусков на выпуск), объекты
+#   пишутся в STAGE/.sha1dc-objects (O_EXCL|O_NOFOLLOW, 0600); иначе 20000 файлов и папок не укладывались
+#   в предел 300 секунд. v0.5: аудит ChatGPT S6-prep R12
 #   L-S6-R12-01 — хеши git в BIND считал обычный hashlib.sha1, у которого нет защиты от подобранных коллизий SHA-1.
 #   Теперь после совпадения дерева каждый объект (коммит, все деревья, все файлы) пересчитывает сам git
 #   (hash-object, детектор коллизий SHA1DC, тот же, что у GitHub); сбой git или расхождение — SHA1_GUARD_FAILED.
@@ -225,14 +229,32 @@ if tree(root).hex() != want:
     err("ARTIFACT_NOT_FROM_HEAD")
 ENV = {"PATH": "/usr/bin:/bin", "HOME": "/nonexistent", "LC_ALL": "C", "GIT_CONFIG_NOSYSTEM": "1",
        "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CEILING_DIRECTORIES": os.path.dirname(os.getcwd())}
-for kind, data, want_hex in [("commit", obj, head)] + objs:
-    try:
-        r = subprocess.run([git, "hash-object", "--no-filters", "-t", kind, "--stdin"], input=data,
-                           capture_output=True, env=ENV, timeout=60)
-    except (OSError, subprocess.SubprocessError):
-        err("SHA1_GUARD_FAILED")
-    if r.returncode != 0 or r.stdout.strip().decode("ascii", "replace") != want_hex:
-        err("SHA1_GUARD_FAILED")
+groups = {"commit": [(obj, head)], "blob": [], "tree": []}
+for kind, data, want_hex in objs:
+    groups[kind].append((data, want_hex))
+check_dir = ".sha1dc-objects"
+try:
+    os.mkdir(check_dir, 0o700)
+    for kind in ("commit", "blob", "tree"):
+        names, wants = [], []
+        for number, (data, want_hex) in enumerate(groups[kind]):
+            name = "%s-%d" % (kind, number)
+            path = os.path.join(check_dir, name)
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(data)
+            names.append(name)
+            wants.append(want_hex)
+        if not names:
+            continue
+        r = subprocess.run([git, "hash-object", "--no-filters", "-t", kind, "--stdin-paths"],
+                           input=("\n".join(names) + "\n").encode("ascii"), capture_output=True,
+                           cwd=check_dir, env=ENV, timeout=240)
+        got = r.stdout.decode("ascii", "replace").splitlines()
+        if r.returncode != 0 or got != wants:
+            err("SHA1_GUARD_FAILED")
+except (OSError, subprocess.SubprocessError):
+    err("SHA1_GUARD_FAILED")
 print("BIND_OK")
 PY
 ) || refuse BIND_CHECK_FAILED

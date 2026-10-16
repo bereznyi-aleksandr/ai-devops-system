@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_render_user_data.py
-# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:49 +03:00 (v0.6: R7 — во 2-й строке и отпечаток ключа
+# ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:53 +03:00 (v0.7: M-R13-02 аудита
+#   Codex — версия v0.7 видна в созданном cloud-config и в отчёте verify_user_data; пакет git. v0.6: R7 — во 2-й строке и отпечаток ключа
 #   zadmin; ключ с опциями перед типом в render() — отказ; v0.5: R6 — синтетические ключи стали
 #   настоящими по форме блоками ssh-ed25519; неканонический base64 (TR== вместо TQ==, лишние биты), битый блок,
 #   хвост после ключа — отказ; вторая строка user-data несёт RELEASE_KEY_FINGERPRINT для сверки оператором; v0.4: M-S6-R5-01 — отпечаток оператора
@@ -29,6 +30,7 @@ from contextlib import redirect_stderr, redirect_stdout
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'server'))
 import render_user_data as ru  # noqa: E402
+import verify_user_data as vu  # noqa: E402
 
 def ed(fill, comment):
     raw = len(b'ssh-ed25519').to_bytes(4, 'big') + b'ssh-ed25519' + (32).to_bytes(4, 'big') + bytes([fill]) * 32
@@ -190,6 +192,13 @@ class RenderUserDataTest(unittest.TestCase):
                           ('/opt/zavod-ops/liveness_watch.py', 'liveness_watch.py')]:
             self.assertEqual(base64.b64decode(files[path]['content']), ru.src(rel), path)
         self.assertEqual(files['/opt/zavod-ops/install_release.sh']['permissions'], '0755')
+
+    def test_version_in_cloud_config_and_report_m_r13_02(self):
+        out = ru.render(A, D, S, *TGT, release_fp=FS)
+        self.assertEqual(ru.VERSION, 'v0.7')
+        self.assertIn('# zavod/ops/server/render_user_data.py v0.7;', out.split('\n')[1])
+        self.assertIn(' render=v0.7 ', vu.verify(out.encode('utf-8')).split('\n')[0] + ' ')
+        self.assertIn('git', parse(out)['packages'])
 
 
 if __name__ == '__main__':

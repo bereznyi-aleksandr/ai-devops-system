@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/render_user_data.py
 # ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:35 +03:00 (v0.7: L-S6-R12-01 —
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:53 +03:00 (v0.7: L-S6-R12-01 и M-R13-02 аудита Codex — VERSION = v0.7 в выводе;
 #   пакет git: install_release.sh v0.5 пересчитывает хеши выпуска через git с детектором коллизий SHA1DC; v0.6: аудит ChatGPT S6-prep R7, M-S6-R7-01 —
 #   вторая строка user-data несёт и ADMIN_KEY_FINGERPRINT (ключ входа zadmin = путь к root): оператор сверяет его с
 #   отпечатком своего закрытого ключа zavod_p1_admin до вставки (OD-5 v1.9 шаги 4 и 7), подмена ключа zadmin видна;
@@ -39,7 +39,7 @@ import os
 import re
 import sys
 
-VERSION = 'v0.6'
+VERSION = 'v0.7'
 NAMESPACE = 'zavod-release-ticket@v1'
 HERE = os.path.dirname(os.path.abspath(__file__))
 OPS = os.path.dirname(HERE)
