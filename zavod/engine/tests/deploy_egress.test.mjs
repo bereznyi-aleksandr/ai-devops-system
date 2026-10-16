@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/tests/deploy_egress.test.mjs
-// ВЕРСИЯ: v0.10  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:52 +03:00 (v0.10: аудит ChatGPT S6-prep R11A M-S6-R11-01 —
+// ВЕРСИЯ: v0.11  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 20:09 +03:00 (v0.11: Linux e2e —
+//   часы билетов идут вперёд на 2 с за выпуск: сервер принимает только билет новее последнего по секундам, и два
+//   билета в одну секунду давали случайный SERVER_TICKET_STALE (падало на main 12.10 и в PR #41); v0.10: аудит ChatGPT S6-prep R11A M-S6-R11-01 —
 //   Linux e2e: выпуски — настоящие коммиты git (git archive + объект коммита); верная подпись оператора, верные
 //   repo/head, но чужой архив — SERVER_ARTIFACT_NOT_FROM_HEAD, current прежний; v0.9: L-S6-R10-01 — отдельная проверка
 //   Sign-ZavodTicket без -Keygen: ключ создан и подпись сделана программой System32, подпись принята; v0.8: Sign-ZavodTicket по умолчанию берёт
@@ -387,7 +389,9 @@ test('Linux: сквозной деплой через настоящий install
       RELEASE_SIGNERS: join(d, 'release_signers'), TICKETS: join(d, 'tickets') } });
   const sign = operatorSigner({ requestsDir: join(d, 'requests'), releasePublicKey: op.pub, operatorFingerprint: op.fp, wait: async () => {},
     notify: async (n) => { op.sign(n.path); } });
-  const eg = deployEgress(TARGET, install, { sign });
+  // сервер принимает только билет с issued_at строго больше прошлого (секунды); часы теста идут вперёд на 2 с за выпуск
+  let clock = Date.now();
+  const eg = deployEgress(TARGET, install, { sign, now: () => (clock += 2000) });
   mkdirSync(join(src, 'bot'), { recursive: true });
   git('init', '-q');
   const release = (text) => {
