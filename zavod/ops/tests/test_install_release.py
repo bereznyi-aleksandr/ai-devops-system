@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_install_release.py
-# ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 20:02 +03:00 (v0.7: M-R14-01 аудита Codex —
+# ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 20:19 +03:00 (v0.8: L-R15-01 аудита Codex —
+#   помощники закрывают файлы (sha256_file, load_json): в журнале нет ResourceWarning. v0.7: M-R14-01 аудита Codex —
 #   во временных репозиториях проверок запрещено фоновое обслуживание git (gc.auto=0, maintenance.auto=false). v0.6: M-R13-01 аудита Codex —
 #   выпуск из 1200 файлов в 1600 папках ставится не больше чем за три запуска git hash-object. v0.5: L-S6-R12-01 —
 #   три проверки git с SHA1DC: настоящий git сообщает SHA1_DC или ничего; git без SHA1DC — GIT_NO_SHA1DC; отказ или
@@ -37,6 +38,16 @@ TARGET = {'REPO_ID': '1412203481', 'REPO_FULL_NAME': 'bereznyi-aleksandr/zavod-p
           'TENANT_ID': '48d39de1-2c46-4deb-8557-fec866f2e810'}
 NS = 'zavod-release-ticket@v1'
 WORK_ITEM = '3f1c2b9e-7d4a-4c1e-9b8f-2a6d5e4c3b21'
+
+
+def sha256_file(path):
+    with open(path, 'rb') as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def load_json(path):
+    with open(path) as f:
+        return json.load(f)
 
 
 def keygen(path):
@@ -99,14 +110,14 @@ class InstallReleaseTest(unittest.TestCase):
         cp = self.name('c') + '.obj'
         with open(cp, 'wb') as f:
             f.write(self.git(repo, 'cat-file', 'commit', head))
-        return head, a, hashlib.sha256(open(a, 'rb').read()).hexdigest(), cp
+        return head, a, sha256_file(a), cp
 
     def tar_of(self, members):
         p = self.name('a') + '.tar'
         with tarfile.open(p, 'w', format=tarfile.PAX_FORMAT) as t:
             for ti, data in members:
                 t.addfile(ti, io.BytesIO(data) if data is not None else None)
-        return p, hashlib.sha256(open(p, 'rb').read()).hexdigest()
+        return p, sha256_file(p)
 
     def manifest(self, sha, head, **over):
         m = {'artifact_sha256': sha, 'head_sha': head, 'repo_id': int(TARGET['REPO_ID']),
@@ -158,7 +169,7 @@ class InstallReleaseTest(unittest.TestCase):
 
     def test_exact_installs_then_repeat_is_noop_then_second_keeps_first(self):
         mp1, a1, tp1, sp1, cp1 = self.release('print(1)\n', ex=True)
-        h1 = json.load(open(mp1))['manifest']['head_sha']
+        h1 = load_json(mp1)['manifest']['head_sha']
         r = self.run_install(mp1, a1, tp1, sp1, cp1)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn('INSTALL_OK state=installed', r.stdout)
@@ -170,7 +181,7 @@ class InstallReleaseTest(unittest.TestCase):
         r = self.run_install(mp1, a1, tp1, sp1, cp1)
         self.assertIn('INSTALL_OK state=already_present', r.stdout, r.stdout + r.stderr)
         mp2, a2, *rest2 = self.release('print(2)\n')
-        h2 = json.load(open(mp2))['manifest']['head_sha']
+        h2 = load_json(mp2)['manifest']['head_sha']
         r = self.run_install(mp2, a2, *rest2)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(os.path.realpath(cur), os.path.realpath(os.path.join(self.root, 'releases', h2)))
