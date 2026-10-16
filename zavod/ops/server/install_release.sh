@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_release.sh
-# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:52 +03:00 (v0.4: аудит ChatGPT S6-prep R11A
+# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:35 +03:00 (v0.5: аудит ChatGPT S6-prep R12
+#   L-S6-R12-01 — хеши git в BIND считал обычный hashlib.sha1, у которого нет защиты от подобранных коллизий SHA-1.
+#   Теперь после совпадения дерева каждый объект (коммит, все деревья, все файлы) пересчитывает сам git
+#   (hash-object, детектор коллизий SHA1DC, тот же, что у GitHub); сбой git или расхождение — SHA1_GUARD_FAILED.
+#   git без SHA1DC в --build-options — GIT_NO_SHA1DC до чтения архива. Пакет git добавлен в user-data. v0.4: аудит ChatGPT S6-prep R11A
 #   M-S6-R11-01 — подпись оператора не доказывала, что архив собран из head: пятый аргумент — объект коммита;
 #   сервер сверяет его git-хеш с head_sha подписанного билета и git-хеш дерева архива со строкой tree; иначе
 #   COMMIT_NOT_HEAD или ARTIFACT_NOT_FROM_HEAD до записи билета и распаковки. v0.3: аудит ChatGPT
@@ -45,6 +49,7 @@ JOURNAL=${JOURNAL:-/var/lib/zavod-p1/install.jsonl}
 RESTART=${RESTART:-systemctl restart}
 INCOMING=${INCOMING:-/var/lib/zavod-incoming}
 RELEASE_SIGNERS=${RELEASE_SIGNERS:-/etc/zavod-p1/release_signers}
+GIT=${GIT:-/usr/bin/git}
 TICKETS=${TICKETS:-/var/lib/zavod-p1/tickets}
 NAMESPACE=zavod-release-ticket@v1
 
@@ -147,9 +152,16 @@ GOT_SHA=$(sha256sum "$ARTIFACT" | cut -d' ' -f1)
 # Ключ выкладки позволяет положить любой архив, но поставится только дерево коммита, который оператор сверил на
 # телефоне: другой файл, лишний файл, пустая папка или другие права исполнения меняют хеш дерева. artifact_sha256
 # больше не источник доверия, а только сверка доставки.
-BIND=$(timeout 300 python3 -I - "$ARTIFACT" "$COMMIT" "$HEAD" <<'PY'
-import hashlib, re, sys, tarfile
-art, cp, head = sys.argv[1], sys.argv[2], sys.argv[3]
+# L-S6-R12-01 (v0.5): hashlib.sha1 не замечает подобранную коллизию SHA-1 (два разных файла с одним хешем). GitHub
+# такие объекты отвергает детектором SHA1DC, поэтому коммит head на GitHub чистый, но двойник мог бы прийти только
+# на сервер. Поэтому после совпадения дерева каждый объект пересчитывает git этого сервера, собранный с SHA1DC:
+# на половине пары коллизии git падает, и выпуск не ставится. Окружение git пустое: без чужих настроек; репозиторий
+# не ищется выше своей папки STAGE (mktemp, владелец root), поэтому чужая /tmp/.git не подхватывается.
+GITB=$("$GIT" version --build-options 2>/dev/null) || refuse GIT_NO_SHA1DC
+if grep -Eiq '^(sha1|sha-1): ' <<<"$GITB"; then grep -Eiq '^(sha1|sha-1): SHA1_DC$' <<<"$GITB" || refuse GIT_NO_SHA1DC; fi
+BIND=$(cd "$STAGE" && timeout 300 python3 -I - "$ARTIFACT" "$COMMIT" "$HEAD" "$GIT" <<'PY'
+import hashlib, os, re, subprocess, sys, tarfile
+art, cp, head, git = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 MAX_FILES, MAX_BYTES = 20000, 64 * 1024 * 1024
 def err(code):
     print("ERR " + code)
@@ -161,7 +173,7 @@ first = obj.split(b"\n", 1)[0]
 if not re.fullmatch(rb"tree [0-9a-f]{40}", first):
     err("COMMIT_NOT_HEAD")
 want = first[5:].decode("ascii")
-root, count, total = {}, 0, 0
+root, count, total, objs = {}, 0, 0, []
 try:
     with tarfile.open(art, mode="r:") as t:
         for m in t:
@@ -192,6 +204,7 @@ try:
                 data = t.extractfile(m).read()
                 node[leaf] = (b"100755" if m.mode & 0o111 else b"100644",
                               hashlib.sha1(b"blob %d\0" % len(data) + data).digest())
+                objs.append(("blob", data, node[leaf][1].hex()))
             else:
                 err("BAD_ARTIFACT_CONTENT")
 except (tarfile.TarError, OSError, EOFError, UnicodeError):
@@ -205,9 +218,21 @@ def tree(d):
         else:
             ents.append((nb, v[0] + b" " + nb + b"\0" + v[1]))
     body = b"".join(e for _, e in sorted(ents))
-    return hashlib.sha1(b"tree %d\0" % len(body) + body).digest()
+    h = hashlib.sha1(b"tree %d\0" % len(body) + body).digest()
+    objs.append(("tree", body, h.hex()))
+    return h
 if tree(root).hex() != want:
     err("ARTIFACT_NOT_FROM_HEAD")
+ENV = {"PATH": "/usr/bin:/bin", "HOME": "/nonexistent", "LC_ALL": "C", "GIT_CONFIG_NOSYSTEM": "1",
+       "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CEILING_DIRECTORIES": os.path.dirname(os.getcwd())}
+for kind, data, want_hex in [("commit", obj, head)] + objs:
+    try:
+        r = subprocess.run([git, "hash-object", "--no-filters", "-t", kind, "--stdin"], input=data,
+                           capture_output=True, env=ENV, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        err("SHA1_GUARD_FAILED")
+    if r.returncode != 0 or r.stdout.strip().decode("ascii", "replace") != want_hex:
+        err("SHA1_GUARD_FAILED")
 print("BIND_OK")
 PY
 ) || refuse BIND_CHECK_FAILED

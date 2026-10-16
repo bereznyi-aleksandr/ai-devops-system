@@ -1,6 +1,8 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_install_release.py
-# ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:55 +03:00 (v0.4: аудит ChatGPT S6-prep R11A
+# ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:35 +03:00 (v0.5: L-S6-R12-01 —
+#   три проверки git с SHA1DC: настоящий git сообщает SHA1_DC или ничего; git без SHA1DC — GIT_NO_SHA1DC; отказ или
+#   ложный хеш git — SHA1_GUARD_FAILED. v0.4: аудит ChatGPT S6-prep R11A
 #   M-S6-R11-01 — install_release.sh v0.4 сверяет архив с подписанным head по git-хешам: выпуски в проверках —
 #   настоящие коммиты git (git archive + git cat-file commit), пятый аргумент — объект коммита. Новые проверки:
 #   верная подпись и верные repo/head, но чужой архив, лишний файл, другой бит исполнения — ARTIFACT_NOT_FROM_HEAD;
@@ -136,6 +138,8 @@ class InstallReleaseTest(unittest.TestCase):
         env = dict(os.environ, ROOT=self.root, TARGET_ENV=self.env, SERVICE='zavod-p1',
                    JOURNAL=os.path.join(self.d, 'install.jsonl'), RESTART='true', INCOMING=self.d,
                    RELEASE_SIGNERS=self.signers, TICKETS=os.path.join(self.d, 'tickets'))
+        if getattr(self, 'git_bin', None):
+            env['GIT'] = self.git_bin
         return subprocess.run(['bash', SCRIPT, mp, ap, tp, sp, cp], capture_output=True, text=True, env=env)
 
     def refused(self, *args):
@@ -321,6 +325,43 @@ class InstallReleaseTest(unittest.TestCase):
             st = os.lstat(p)
             self.assertEqual(st.st_mode & 0o7777, mode, p)
             self.assertEqual(st.st_uid, me, p)
+
+
+    # L-S6-R12-01 (v0.5): каждый объект пересчитывает git с детектором коллизий SHA1DC; без него или при его отказе — не ставится
+    def fake_git(self, version_line, hash_body):
+        p = self.name('git')
+        with open(p, 'w') as f:
+            f.write('#!/bin/sh\nif [ "$1" = version ]; then echo "git version 2.99"; echo "%s"; exit 0; fi\n%s\n'
+                    % (version_line, hash_body))
+        os.chmod(p, 0o755)
+        return p
+
+    def test_real_git_reports_sha1dc_or_nothing(self):
+        out = subprocess.run(['/usr/bin/git', 'version', '--build-options'], capture_output=True, text=True,
+                             check=True).stdout.lower().splitlines()
+        lines = [x for x in out if x.startswith(('sha1:', 'sha-1:'))]
+        self.assertTrue(all(x.split(':', 1)[1].strip() == 'sha1_dc' for x in lines), lines)
+
+    def test_git_without_sha1dc_refused_l_s6_r12_01(self):
+        self.git_bin = self.fake_git('SHA-1: OpenSSL', 'exec /usr/bin/git "$@"')
+        self.assertEqual(self.refused(*self.release()), 'INSTALL_REFUSED code=GIT_NO_SHA1DC')
+        self.git_bin = os.path.join(self.d, 'no-such-git')
+        self.assertEqual(self.refused(*self.release()), 'INSTALL_REFUSED code=GIT_NO_SHA1DC')
+        self.assertFalse(os.path.lexists(os.path.join(self.root, 'current')))
+
+    def test_git_collision_or_lie_refused_l_s6_r12_01(self):
+        # git с SHA1DC на половине пары коллизии печатает ошибку и выходит с кодом 128 — так его и имитируем
+        self.git_bin = self.fake_git('SHA-1: SHA1_DC',
+                                     'echo "fatal: SHA-1 appears to be part of a collision attack" >&2; exit 128')
+        self.assertEqual(self.refused(*self.release()), 'INSTALL_REFUSED code=SHA1_GUARD_FAILED')
+        self.git_bin = self.fake_git('SHA-1: SHA1_DC', 'echo 0000000000000000000000000000000000000000')
+        self.assertEqual(self.refused(*self.release()), 'INSTALL_REFUSED code=SHA1_GUARD_FAILED')
+        self.assertFalse(os.path.lexists(os.path.join(self.root, 'current')))
+        # git без строки SHA-1 в --build-options (старые версии) допускается, но хеши всё равно считает он
+        self.git_bin = self.fake_git('built from commit: x', 'exec /usr/bin/git "$@"')
+        r = self.run_install(*self.release())
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn('INSTALL_OK state=installed', r.stdout)
 
 
 if __name__ == '__main__':

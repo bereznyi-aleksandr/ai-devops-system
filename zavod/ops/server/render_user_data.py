@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/server/render_user_data.py
-# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:49 +03:00 (v0.6: аудит ChatGPT S6-prep R7, M-S6-R7-01 —
+# ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 10:35 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:35 +03:00 (v0.7: L-S6-R12-01 —
+#   пакет git: install_release.sh v0.5 пересчитывает хеши выпуска через git с детектором коллизий SHA1DC; v0.6: аудит ChatGPT S6-prep R7, M-S6-R7-01 —
 #   вторая строка user-data несёт и ADMIN_KEY_FINGERPRINT (ключ входа zadmin = путь к root): оператор сверяет его с
 #   отпечатком своего закрытого ключа zavod_p1_admin до вставки (OD-5 v1.9 шаги 4 и 7), подмена ключа zadmin видна;
 #   render сам проверяет вид всех трёх строк ключей (без опций перед типом ключа), а не только read_pub; v0.5: аудит ChatGPT S6-prep R6 —
@@ -153,7 +154,7 @@ def render(admin_pub, deploy_pub, release_pub, repo_id, repo, tenant, *, release
         'disable_root': True,
         'ssh_pwauth': False,
         'package_update': True,
-        'packages': ['ufw', 'unattended-upgrades', 'sqlite3'],
+        'packages': ['ufw', 'unattended-upgrades', 'sqlite3', 'git'],
         'write_files': [
             wf('/etc/ssh/sshd_config.d/10-zavod.conf', SSHD, '0644'),
             wf('/etc/sudoers.d/90-zavod-deploy', SUDOERS, '0440'),
