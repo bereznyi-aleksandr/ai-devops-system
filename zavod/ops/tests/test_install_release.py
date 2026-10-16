@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_install_release.py
-# ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 19:53 +03:00 (v0.6: M-R13-01 аудита Codex —
+# ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-12 08:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-16 20:02 +03:00 (v0.7: M-R14-01 аудита Codex —
+#   во временных репозиториях проверок запрещено фоновое обслуживание git (gc.auto=0, maintenance.auto=false). v0.6: M-R13-01 аудита Codex —
 #   выпуск из 1200 файлов в 1600 папках ставится не больше чем за три запуска git hash-object. v0.5: L-S6-R12-01 —
 #   три проверки git с SHA1DC: настоящий git сообщает SHA1_DC или ничего; git без SHA1DC — GIT_NO_SHA1DC; отказ или
 #   ложный хеш git — SHA1_GUARD_FAILED. v0.4: аудит ChatGPT S6-prep R11A
@@ -74,8 +75,10 @@ class InstallReleaseTest(unittest.TestCase):
         return os.path.join(self.d, f'{stem}_{self.n}')
 
     def git(self, repo, *a):
-        return subprocess.run(['git', '-C', repo, '-c', 'core.autocrlf=false', '-c', 'user.name=zavod-test',
-                               '-c', 'user.email=t@zavod.invalid', *a], check=True, capture_output=True).stdout
+        return subprocess.run(['git', '-C', repo, '-c', 'core.autocrlf=false',
+                               '-c', 'gc.auto=0', '-c', 'maintenance.auto=false',
+                               '-c', 'user.name=zavod-test', '-c', 'user.email=t@zavod.invalid', *a],
+                              check=True, capture_output=True).stdout
 
     def commit(self, files):
         """files: {путь: (байты, исполняемый)} → (head, путь архива git archive, его sha256, путь объекта коммита)"""

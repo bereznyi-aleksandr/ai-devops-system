@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.21
+# ВЕРСИЯ: v0.22
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:59 +03:00 (v0.21: аудит ChatGPT S6-prep R11A M-S6-R11-01 — сервер сверяет архив с head по git-хешам;
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-16 20:02 +03:00 (v0.22: L-S6-R12-01 и аудит Codex R14 — модульных ops 64; число проверок
+#   и строка OK сверяются отдельными командами: внутри цепочки && провал первой проверки шаг не останавливал; v0.21: аудит ChatGPT S6-prep R11A M-S6-R11-01 — сервер сверяет архив с head по git-хешам;
 #   e2e: выпуски — настоящие коммиты, проверок 15 (чужой архив, не тот объект коммита); модульных ops 59; v0.20: аудит ChatGPT S6-prep R10 — подпись билета на телефоне zsign_phone.sh,
 #   её проверки идут среди модульных проверок ops (56); v0.19: аудит ChatGPT S6-prep R9 L-S6-R9-01 — после стартера CI проверяет действующие
 #   настройки sshd (`sshd -T`: root и пароль запрещены) и что apply_user_data отказывает, если вставка sshd с
@@ -300,5 +301,6 @@ jobs:
           set -o pipefail
           command -v pwsh
           python3 -I -m unittest discover -s zavod/ops/tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/ops_tests.out"
-          grep -q '^Ran 59 tests' "$RUNNER_TEMP/ops_tests.out" && grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^Ran 64 tests' "$RUNNER_TEMP/ops_tests.out"
+          grep -q '^OK$' "$RUNNER_TEMP/ops_tests.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/ops
