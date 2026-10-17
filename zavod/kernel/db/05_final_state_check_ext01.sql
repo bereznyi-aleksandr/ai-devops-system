@@ -1,7 +1,7 @@
 -- ДОКУМЕНТ: db/05_final_state_check_ext01.sql — СОБРАН db/build_final_ext.mjs, руками не править
 -- ИСТОЧНИК H1.31 05: sha256 1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
--- РАСШИРЕНИЕ 03: sha256 f6440a2294a78bf2eb791f76dd610c5a35a4df3202461f136d4409b71553fe64
+-- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 и Z-EXT-02 (см. сборщик).
 \set ON_ERROR_STOP on
 
@@ -208,6 +208,7 @@ DECLARE
         'bem_engine_rw|yes|no|no|no|no|no|yes|-1',
         'bem_governance|no|no|no|no|no|no|yes|-1',
         'bem_kernel_rw|yes|no|no|no|no|no|yes|-1',
+        'bem_rules_gate|yes|no|no|no|no|no|yes|-1',
         'schema_migrator|no|no|no|no|no|no|yes|-1'];
     v_members constant text[] := ARRAY[
         'backup_reader|bem_backup_ctl_owner|BOOTSTRAP_SUPERUSER|yes|no|no',
@@ -224,12 +225,14 @@ DECLARE
         'bem_engine_rw|password:none|valid_until:none|config:none',
         'bem_governance|password:none|valid_until:none|config:none',
         'bem_kernel_rw|password:none|valid_until:none|config:none',
+        'bem_rules_gate|password:none|valid_until:none|config:none',
         'schema_migrator|password:none|valid_until:none|config:none'];
     v_login   constant text[] := ARRAY[
         'bem_backup_admin',
         'bem_bootstrap_admin',
         'bem_engine_rw',
-        'bem_kernel_rw'];
+        'bem_kernel_rw',
+        'bem_rules_gate'];
     v_rls     constant text[] := ARRAY[
         'bem_core.audit_assignment',
         'bem_core.audit_record',
@@ -490,6 +493,7 @@ DECLARE
         'DATABASE|bem|bem_core_owner|TEMPORARY|bem_core_owner',
         'DATABASE|bem|bem_engine_rw|CONNECT|bem_core_owner',
         'DATABASE|bem|bem_kernel_rw|CONNECT|bem_core_owner',
+        'DATABASE|bem|bem_rules_gate|CONNECT|bem_core_owner',
         'DATABASE|bem|schema_migrator|CONNECT|bem_core_owner',
         'DEFAULT|bem_control_owner|bem_control|S|backup_reader|SELECT|bem_control_owner',
         'DEFAULT|bem_control_owner|bem_control|r|backup_reader|SELECT|bem_control_owner',
@@ -528,7 +532,7 @@ DECLARE
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
-        'FUNCTION|bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb)|bem_rules_gate|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.open_chat_lease(uuid, text, uuid, text, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.open_chat_lease(uuid, text, uuid, text, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.record_lease_evidence(uuid, uuid, integer, text, text, text, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
@@ -537,6 +541,7 @@ DECLARE
         'FUNCTION|bem_control.file_lease_report(uuid, uuid, integer, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb)|bem_rules_gate|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.complete_chat_lease(uuid, uuid, integer, text, uuid, uuid, uuid, uuid)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.complete_chat_lease(uuid, uuid, integer, text, uuid, uuid, uuid, uuid)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
@@ -608,6 +613,7 @@ DECLARE
         'SCHEMA|bem_control|bem_control_owner|USAGE|bem_control_owner',
         'SCHEMA|bem_control|bem_governance|USAGE|bem_control_owner',
         'SCHEMA|bem_control|bem_kernel_rw|USAGE|bem_control_owner',
+        'SCHEMA|bem_control|bem_rules_gate|USAGE|bem_control_owner',
         'SCHEMA|bem_core|backup_reader|USAGE|bem_core_owner',
         'SCHEMA|bem_core|bem_control_owner|USAGE|bem_core_owner',
         'SCHEMA|bem_core|bem_core_owner|CREATE|bem_core_owner',
@@ -630,6 +636,7 @@ DECLARE
         'TABLE|bem_control.rules_activation|bem_control_owner|UPDATE|bem_control_owner',
         'TABLE|bem_control.rules_activation|backup_reader|SELECT|bem_control_owner',
         'TABLE|bem_control.rules_activation|bem_kernel_rw|SELECT|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_rules_gate|SELECT|bem_control_owner',
         'TABLE|bem_control.chat_lease|bem_control_owner|DELETE|bem_control_owner',
         'TABLE|bem_control.chat_lease|bem_control_owner|INSERT|bem_control_owner',
         'TABLE|bem_control.chat_lease|bem_control_owner|REFERENCES|bem_control_owner',
@@ -1405,8 +1412,8 @@ BEGIN
         ('open_chat_lease', 'e14d6fe3efb4288198d4df164a220bb79ef2a4f03722a5203ce255ff90b4c51d'),
         ('record_lease_evidence', 'e8590ecb07c577448ef210bd54fef42d581e81e322184ceaa801bc26f1634f8e'),
         ('file_lease_report', 'f38266ef5b22a89f3771bc1ec608f5815a36d34c0382381fc3b82a14a8336e0d'),
-        ('acknowledge_lease_report', '984c3c17e7fc1fe2df9ac8bec82734ca32b9dd7d789afd5480070b6886d8c07d'),
-        ('complete_chat_lease', 'ef21fd9fa995f4023600d86f041c442e606af5e5b603c6607b07057181f00ab0')
+        ('acknowledge_lease_report', '12b3bfdb610db919113cb7434bff953d2c8ae06a3f60aa22013b62759a42693d'),
+        ('complete_chat_lease', 'ee858e12c0a68b2bf94474592c4dc61344b0e35be0705ebc4fa07b3061dd9f35')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got

@@ -1,13 +1,20 @@
 -- ДОКУМЕНТ: db/03_zavod_ext_02.sql (расширение Z-EXT-02: пакеты Z-RULES-01 и Z-HANDOFF-01)
--- ВЕРСИЯ: v0.3  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-10-17 23:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-17 23:51 +03:00 (v0.3: проект v1.2 по ChatGPT R13 —
+-- ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-10-17 23:39 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 02:21 +03:00 (v0.4: ChatGPT R14B —
+--   RG14-01 включение правил и подтверждение отчёта оператору — только отдельная входная роль bem_rules_gate
+--   (у bem_kernel_rw права вызова activate_rules нет, путь оператора в acknowledge_lease_report сверяет
+--   session_user); RG14-02 смена аренды адресата проверяется до повтора подтверждения; RG14-03 завершение
+--   заново сверяет аренду, поколение и сессию адресата подтверждённого отчёта.
+--   v0.3: проект v1.2 по ChatGPT R13 —
 --   RG13-01 доказательства аренды пишет только держатель через record_lease_evidence в отдельную таблицу;
 --   RG13-02 отчёт выше с адресатом, закреплённым при создании по иерархии ролей из подписанных правил;
 --   RG13-03 порядок завершения и четыре номера в строке аренды; RG13-04 подробности каждой проверки GitHub
 --   и назначенный источник; факты GitHub и подписи пишет сама activate_rules.
 --   v0.2: одна действующая версия на заказчика, сессия держателя, ожидаемая версия правил, повтор завершения)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
--- ЗАМЕНЯЕТ: v0.2, SHA-256 1da56fb21eb1404f… (копия — state/zavod_20261007/kernel_rules_handoff_20261017/03_zavod_ext_02_v0_2.SUPERSEDED.sql)
+-- ЗАМЕНЯЕТ: v0.3, SHA-256 f6440a2294a78bf2eb791f76dd610c5a35a4df3202461f136d4409b71553fe64
+--   (копия — state/zavod_20261007/kernel_rules_handoff_20261017/03_zavod_ext_02_v0_3.SUPERSEDED.sql;
+--   v0.2 — 03_zavod_ext_02_v0_2.SUPERSEDED.sql, 1da56fb21eb1404f…)
 -- НАЗНАЧЕНИЕ: протокол Завода v2.5.
 --   (1) Z-RULES-01 (П.3, Д.7, Е.2): действующая версия правил заказчика (полный номер коммита) и история
 --       включений. Включение — одно действие activate_rules: факты GitHub (слияние в main, четыре обязательные
@@ -21,8 +28,17 @@
 --       complete_chat_lease сверяет всё это по таблицам, а не по видам доказательств.
 -- ОГРАНИЧЕНИЯ: ставится после 02_zavod_ext_01.sql одной транзакцией; не удаляет данных и объектов, не меняет
 --   существующие строки и функции H1.31/Z-EXT-01. Текст правил в базе не хранится (П.3). GitHub, git и подпись
---   проверяет ядро (src/rules_gate.mjs); сессию вызывающего даёт посредник ядра (проект §3.2). База верит
---   роли bem_kernel_rw так же, как во всём H1.31: подделка фактов этой ролью — вне границы базы (проект §1).
+--   проверяет ядро (src/rules_gate.mjs); сессию вызывающего даёт посредник ядра (проект §3.2). Факты GitHub и
+--   подпись оператора база принимает только от входной роли bem_rules_gate (RG14-01): общая роль ядра
+--   bem_kernel_rw включить правила и подтвердить отчёт за оператора не может. Вход bem_rules_gate выдаётся
+--   только изолированной проверке правил (строка pg_hba.conf и сертификат клиента — у администратора, как у
+--   остальных входных ролей H1.31); пока этого нет, граница честно описана в проекте §1 и §7.
+
+-- (0) Входная роль проверки правил (RG14-01). Без пароля, без особых признаков, без членств; права — ровно
+--     подключение, схема bem_control, чтение rules_activation и вызов двух функций ниже.
+CREATE ROLE bem_rules_gate LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS INHERIT;
+GRANT CONNECT ON DATABASE bem TO bem_rules_gate;
+GRANT USAGE ON SCHEMA bem_control TO bem_rules_gate;
 
 -- (1) Действующая версия правил и история включений.
 CREATE TABLE bem_control.rules_activation (
@@ -51,6 +67,7 @@ ALTER TABLE bem_control.rules_activation OWNER TO bem_control_owner;
 REVOKE ALL ON bem_control.rules_activation FROM PUBLIC;
 GRANT SELECT ON bem_control.rules_activation TO bem_kernel_rw;
 GRANT SELECT ON bem_control.rules_activation TO backup_reader;
+GRANT SELECT ON bem_control.rules_activation TO bem_rules_gate;
 
 -- Включение версии правил одним действием. Возвращает номер доказательства RULES_ACTIVATED.
 --   p_role_parents — иерархия ролей из реестра правил: роль -> вышестоящая роль или 'OPERATOR'.
@@ -202,7 +219,8 @@ END;
 $$;
 ALTER FUNCTION bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb) OWNER TO bem_control_owner;
 REVOKE EXECUTE ON FUNCTION bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb) FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb) TO bem_kernel_rw;
+-- RG14-01: вызывает только bem_rules_gate; у общей роли ядра права нет.
+GRANT  EXECUTE ON FUNCTION bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb) TO bem_rules_gate;
 
 -- (2) Аренда чата роли.
 CREATE TABLE bem_control.chat_lease (
@@ -473,7 +491,8 @@ GRANT  EXECUTE ON FUNCTION bem_control.file_lease_report(uuid, uuid, integer, te
 -- сумма отчёта и проверенный посредником вызывающий сверяются с закреплённым адресатом. Для адресата
 -- 'OPERATOR' вызывающий — 'OPERATOR', а p_operator_signature — проверенная ядром подпись билета
 -- {tenant_id, report_id, report_sha256} в пространстве имён zavod-report-ack@v1. Повтор тем же адресатом
--- возвращает прежнее подтверждение без записи.
+-- возвращает прежнее подтверждение без записи. Путь оператора принимается только от входной роли
+-- bem_rules_gate (RG14-01). Смена аренды адресата проверяется раньше повтора (RG14-02).
 CREATE FUNCTION bem_control.acknowledge_lease_report(
     p_tenant_id uuid, p_report_id uuid, p_report_sha256 text, p_caller_role_key text, p_caller_session text,
     p_operator_signature jsonb)
@@ -496,6 +515,7 @@ BEGIN
     IF p_report_sha256 IS DISTINCT FROM v_rep.report_sha256 THEN RAISE EXCEPTION 'REPORT_SHA_MISMATCH'; END IF;
     IF p_caller_role_key IS DISTINCT FROM v_rep.recipient_role_key THEN RAISE EXCEPTION 'REPORT_NOT_RECIPIENT'; END IF;
     IF v_rep.recipient_role_key = 'OPERATOR' THEN
+        IF session_user IS DISTINCT FROM 'bem_rules_gate' THEN RAISE EXCEPTION 'REPORT_OPERATOR_ACK_UNTRUSTED'; END IF;
         IF p_caller_session IS DISTINCT FROM 'OPERATOR'
            OR p_operator_signature IS NULL OR jsonb_typeof(p_operator_signature) <> 'object'
            OR p_operator_signature->>'namespace' IS DISTINCT FROM 'zavod-report-ack@v1'
@@ -510,18 +530,19 @@ BEGIN
         IF p_caller_session IS DISTINCT FROM v_rep.recipient_session THEN RAISE EXCEPTION 'REPORT_NOT_RECIPIENT'; END IF;
         v_sess := v_rep.recipient_session;
     END IF;
-    IF v_rep.ack_evidence_id IS NOT NULL THEN
-        IF v_rep.ack_session = v_sess THEN RETURN v_rep.ack_evidence_id; END IF;   -- честный повтор
-        RAISE EXCEPTION 'REPORT_ALREADY_ACKNOWLEDGED';
-    END IF;
     IF v_rep.recipient_role_key <> 'OPERATOR' THEN
         -- Адресат обязан всё ещё держать ту же аренду того же поколения; сменился чат — отчёт подаётся заново.
+        -- Проверка стоит до повтора: подтверждение ушедшего чата не возвращается (RG14-02).
         SELECT * INTO v_up FROM bem_control.chat_lease
          WHERE tenant_id = p_tenant_id AND lease_id = v_rep.recipient_lease_id FOR SHARE;
         IF v_up.status IS DISTINCT FROM 'OPEN' OR v_up.generation IS DISTINCT FROM v_rep.recipient_generation
            OR v_up.holder_session IS DISTINCT FROM v_rep.recipient_session THEN
             RAISE EXCEPTION 'REPORT_RECIPIENT_CHANGED';
         END IF;
+    END IF;
+    IF v_rep.ack_evidence_id IS NOT NULL THEN
+        IF v_rep.ack_session = v_sess THEN RETURN v_rep.ack_evidence_id; END IF;   -- честный повтор
+        RAISE EXCEPTION 'REPORT_ALREADY_ACKNOWLEDGED';
     END IF;
 
     v_ev := bem_control.evidence_write(p_tenant_id, 'REPORT_ACKNOWLEDGED', jsonb_build_object(
@@ -536,11 +557,13 @@ $$;
 ALTER FUNCTION bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb) OWNER TO bem_control_owner;
 REVOKE EXECUTE ON FUNCTION bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb) TO bem_kernel_rw;
+GRANT  EXECUTE ON FUNCTION bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb) TO bem_rules_gate;
 
 -- Завершение задачи (Л.12, RG13-03). Возвращает номер доказательства CHAT_LEASE_COMPLETED — квитанцию.
 -- Порядок: блокировка аренды по (заказчик, номер аренды) -> сессия держателя -> поколение (старое поколение —
 -- отказ в обоих случаях) -> COMPLETED: те же четыре номера — прежняя квитанция без записи, иначе отказ;
--- OPEN: работа завершена, три записи держателя и подтверждённый отчёт этой аренды и поколения -> одна запись.
+-- OPEN: работа завершена, три записи держателя и подтверждённый отчёт этой аренды и поколения, адресат которого
+-- всё ещё держит ту же аренду того же поколения той же сессией (RG14-03) -> одна запись.
 CREATE FUNCTION bem_control.complete_chat_lease(
     p_tenant_id uuid, p_lease_id uuid, p_generation integer, p_caller_session text,
     p_result_evidence uuid, p_memory_evidence uuid, p_next_evidence uuid, p_report_id uuid)
@@ -553,6 +576,7 @@ DECLARE
     v_lease  bem_control.chat_lease;
     v_status text;
     v_rep    bem_control.lease_report;
+    v_up     bem_control.chat_lease;
     r        record;
     v_ev     uuid;
 BEGIN
@@ -592,6 +616,15 @@ BEGIN
         RAISE EXCEPTION 'LEASE_EVIDENCE_MISSING: REPORTED_UP';
     END IF;
     IF v_rep.ack_evidence_id IS NULL THEN RAISE EXCEPTION 'LEASE_REPORT_NOT_ACKNOWLEDGED'; END IF;
+    IF v_rep.recipient_role_key <> 'OPERATOR' THEN
+        -- Подтвердивший чат сменился — подтверждение больше не действует, нужен новый отчёт (RG14-03).
+        SELECT * INTO v_up FROM bem_control.chat_lease
+         WHERE tenant_id = p_tenant_id AND lease_id = v_rep.recipient_lease_id FOR SHARE;
+        IF v_up.status IS DISTINCT FROM 'OPEN' OR v_up.generation IS DISTINCT FROM v_rep.recipient_generation
+           OR v_up.holder_session IS DISTINCT FROM v_rep.recipient_session THEN
+            RAISE EXCEPTION 'LEASE_REPORT_RECIPIENT_CHANGED';
+        END IF;
+    END IF;
 
     v_ev := bem_control.evidence_write(p_tenant_id, 'CHAT_LEASE_COMPLETED', jsonb_build_object(
         'lease_id', p_lease_id, 'role_key', v_lease.role_key, 'chat_number', v_lease.chat_number,

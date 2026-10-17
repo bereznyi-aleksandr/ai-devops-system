@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 00:08 +03:00 (v0.5: Z-EXT-02 (db/03_zavod_ext_02.sql,
+// ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 02:21 +03:00 (v0.6: ChatGPT R14B RG14-01 —
+//   входная роль bem_rules_gate: признаки, отсутствие пароля, право входа, подключение к bem, схема bem_control,
+//   чтение rules_activation, вызов activate_rules (у bem_kernel_rw права больше нет) и acknowledge_lease_report;
+//   v0.5: Z-EXT-02 (db/03_zavod_ext_02.sql,
 //   пакеты Z-RULES-01 и Z-HANDOFF-01) — ограничения четырёх новых таблиц, права на таблицы и шесть функций, отпечатки
 //   их тел; итоговая проверка идёт после установки 03;
 //   v0.4: аудит Z5 —
@@ -129,7 +132,16 @@ t = after(t, 'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control
   ...OWNER_PRIVS.map((p) => `TABLE|bem_control.${n}|bem_control_owner|${p}|bem_control_owner`),
   `TABLE|bem_control.${n}|backup_reader|SELECT|bem_control_owner`,
   `TABLE|bem_control.${n}|bem_kernel_rw|SELECT|bem_control_owner`,
+  ...(n === 'rules_activation' ? [`TABLE|bem_control.${n}|bem_rules_gate|SELECT|bem_control_owner`] : []),
 ]));
+// RG14-01: входная роль проверки правил — объявлена во всех списках ролей 05 и в правах на базу и схему.
+t = after(t, 'bem_kernel_rw|yes|no|no|no|no|no|yes|-1', ['bem_rules_gate|yes|no|no|no|no|no|yes|-1']);
+t = after(t, 'bem_kernel_rw|password:none|valid_until:none|config:none',
+  ['bem_rules_gate|password:none|valid_until:none|config:none']);
+t = once(t, "        'bem_kernel_rw'];\n    v_rls", "        'bem_kernel_rw',\n        'bem_rules_gate'];\n    v_rls");
+t = after(t, 'DATABASE|bem|bem_kernel_rw|CONNECT|bem_core_owner', ['DATABASE|bem|bem_rules_gate|CONNECT|bem_core_owner']);
+t = after(t, 'SCHEMA|bem_control|bem_kernel_rw|USAGE|bem_control_owner',
+  ['SCHEMA|bem_control|bem_rules_gate|USAGE|bem_control_owner']);
 const EXT02_FUNCS = {
   activate_rules: 'uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb',
   open_chat_lease: 'uuid, text, uuid, text, text, text',
@@ -138,8 +150,17 @@ const EXT02_FUNCS = {
   acknowledge_lease_report: 'uuid, uuid, text, text, text, jsonb',
   complete_chat_lease: 'uuid, uuid, integer, text, uuid, uuid, uuid, uuid',
 };
+// Кто вызывает (RG14-01): activate_rules — только bem_rules_gate; acknowledge_lease_report — ядро и, для пути
+// оператора, bem_rules_gate; остальное — ядро.
+const KR = ['bem_control_owner', 'bem_kernel_rw'];
+const EXT02_CALLERS = {
+  activate_rules: ['bem_control_owner', 'bem_rules_gate'],
+  open_chat_lease: KR, record_lease_evidence: KR, file_lease_report: KR,
+  acknowledge_lease_report: [...KR, 'bem_rules_gate'],
+  complete_chat_lease: KR,
+};
 t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
-  Object.entries(EXT02_FUNCS).flatMap(([n, a]) => ['bem_control_owner', 'bem_kernel_rw']
+  Object.entries(EXT02_FUNCS).flatMap(([n, a]) => EXT02_CALLERS[n]
     .map((who) => `FUNCTION|bem_control.${n}(${a})|${who}|EXECUTE|bem_control_owner`)));
 
 // Отпечатки тел функций расширения: исходный текст между ограничителями $tag$ последнего

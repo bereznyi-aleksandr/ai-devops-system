@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.8.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 00:15 +03:00 (v0.8.1: RulesError из rules_error.mjs — ядро в контейнере рабочего не тянет engine/src/sshsig.mjs; v0.8: пакеты Z-RULES-01 и
+// ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 02:21 +03:00 (v0.9: ChatGPT R14B RG14-01 — ActivateRules и
+//   AcknowledgeReport оператора идут отдельным пулом входной роли bem_rules_gate (opts.rulesConnection /
+//   opts.rulesPool), личность клиента сверяется так же, как у bem_kernel_rw; без пула — RULES_GATE_UNSET;
+//   v0.8.1: RulesError из rules_error.mjs — ядро в контейнере рабочего не тянет engine/src/sshsig.mjs; v0.8: пакеты Z-RULES-01 и
 //   Z-HANDOFF-01, проект v1.2 — ActivateRules (факты GitHub, git и подпись оператора собирает src/rules_gate.mjs,
 //   не веря вызывающему), GetActiveRules, GetChatLease; команды аренды OpenChatLease, RecordLeaseEvidence,
 //   FileLeaseReport, AcknowledgeReport, CompleteChatLease принимаются только через посредника transport.verify,
@@ -35,8 +38,11 @@ import { findSecret, isStopped, stopState } from './guards.mjs';
 import { authorize } from './roles.mjs';
 import { RulesError } from './rules_error.mjs';
 
-export const KERNEL_VERSION = '0.8.1';
+export const KERNEL_VERSION = '0.9.0';
 export const KERNEL_ROLE = 'bem_kernel_rw';
+// RG14-01: входная роль проверки правил — только она вызывает activate_rules и путь оператора в
+// acknowledge_lease_report. Общая роль ядра включить правила и подтвердить отчёт за оператора не может.
+export const RULES_GATE_ROLE = 'bem_rules_gate';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SHA256 = /^[0-9a-f]{64}$/;
@@ -79,6 +85,10 @@ export class Kernel {
   // opts: { pool?, connection?, stopFile?, log? }
   constructor(opts = {}) {
     this.pool = opts.pool || new pg.Pool({ ...(opts.connection || {}), user: KERNEL_ROLE, max: opts.max || 5 });
+    // RG14-01: отдельный пул bem_rules_gate. Его вход выдаётся только изолированной проверке правил; без него
+    // ActivateRules и подтверждение отчёта оператором — RULES_GATE_UNSET.
+    this.rulesPool = opts.rulesPool || (opts.rulesConnection
+      ? new pg.Pool({ ...opts.rulesConnection, user: RULES_GATE_ROLE, max: 2 }) : null);
     this.stopFile = opts.stopFile || null;
     // M-E46-02: роль вызывающего обязательна всегда; отключить проверку нельзя (opts.requireRole не читается).
     this.log = opts.log || (() => {});
@@ -100,16 +110,16 @@ export class Kernel {
   // в каждой транзакции команды и в каждом проходе доставщика, а не один раз при старте.
   // Подменённый или неверно настроенный пул (вход postgres, SET ROLE на владельца) даёт отказ
   // до первого изменения данных.
-  async _assertClientIdentity(client) {
+  async _assertClientIdentity(client, role = KERNEL_ROLE) {
     const { rows } = await client.query(
       `SELECT current_user AS cu, session_user AS su, r.rolsuper, r.rolbypassrls, r.rolcreaterole
          FROM pg_roles r WHERE r.rolname = session_user`);
     const r = rows[0];
-    if (!r || r.cu !== KERNEL_ROLE || r.su !== KERNEL_ROLE) {
-      throw new KernelError('KERNEL_WRONG_ROLE', `connected as ${r?.su}/${r?.cu}, need ${KERNEL_ROLE}`);
+    if (!r || r.cu !== role || r.su !== role) {
+      throw new KernelError('KERNEL_WRONG_ROLE', `connected as ${r?.su}/${r?.cu}, need ${role}`);
     }
     if (r.rolsuper || r.rolbypassrls || r.rolcreaterole) {
-      throw new KernelError('KERNEL_ROLE_TOO_STRONG', `${KERNEL_ROLE} has elevated attributes`);
+      throw new KernelError('KERNEL_ROLE_TOO_STRONG', `${role} has elevated attributes`);
     }
   }
 
@@ -138,7 +148,7 @@ export class Kernel {
     });
   }
 
-  async close() { await this.pool.end(); }
+  async close() { await this.pool.end(); if (this.rulesPool) await this.rulesPool.end(); }
 
   health() {
     return {
@@ -151,12 +161,14 @@ export class Kernel {
 
   // Одна транзакция = один контекст. set_config(..., true) — это SET LOCAL.
   // M-E35-01: роль сверяется на этом же клиенте сразу после BEGIN, до контекста и обработчика.
-  async _tx(actorId, tenantId, fn) {
-    const client = await this.pool.connect();
+  // gate = true: клиент пула bem_rules_gate (RG14-01), личность сверяется с этой ролью.
+  async _tx(actorId, tenantId, fn, gate = false) {
+    need(!gate || this.rulesPool, 'RULES_GATE_UNSET', 'kernel has no rules gate connection');
+    const client = await (gate ? this.rulesPool : this.pool).connect();
     let broken = false;
     try {
       await client.query('BEGIN');
-      await this._assertClientIdentity(client);
+      await this._assertClientIdentity(client, gate ? RULES_GATE_ROLE : KERNEL_ROLE);
       await client.query(`SELECT set_config('app.actor_id', $1, true), set_config('app.tenant_id', $2, true)`,
         [actorId, tenantId ?? '']);
       const out = await fn(client);
@@ -190,7 +202,8 @@ export class Kernel {
       const handler = HANDLERS[req.type];
       need(handler, 'UNKNOWN_COMMAND', String(req.type));
       const p = req.payload || {};
-      const result = await this._tx(req.actor_id, req.tenant_id, (c) => handler(c, req, p, this));
+      const result = await this._tx(req.actor_id, req.tenant_id, (c) => handler(c, req, p, this),
+        req.type === 'ActivateRules');
       this.counters.ok += 1;
       this.lastCommandAt = new Date().toISOString();
       this.log({ ev: 'command_ok', type: req.type, actor: req.actor_id, tenant: req.tenant_id });
@@ -218,7 +231,8 @@ export class Kernel {
         session: v.session });
       const vreq = { type: req.type, tenant_id: verified.tenant_id, actor_id: verified.actor_id,
         command_id: req.command_id, payload: req.payload || {}, verified };
-      const result = await this._tx(vreq.actor_id, vreq.tenant_id, (c) => HANDLERS[req.type](c, vreq, vreq.payload, this));
+      const result = await this._tx(vreq.actor_id, vreq.tenant_id, (c) => HANDLERS[req.type](c, vreq, vreq.payload, this),
+        req.type === 'AcknowledgeReport' && verified.role_key === 'OPERATOR');
       this.counters.ok += 1;
       this.lastCommandAt = new Date().toISOString();
       this.log({ ev: 'command_ok', type: req.type, actor: vreq.actor_id, tenant: vreq.tenant_id });

@@ -1,7 +1,9 @@
 // ДОКУМЕНТ: tests/rules_handoff.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 00:08 +03:00 (v0.1: пакеты Z-RULES-01 и Z-HANDOFF-01,
-//   проект v1.2 §6)
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 02:25 +03:00 (v0.2: ChatGPT R14B —
+//   RG14-01 прямой вызов activate_rules и путь оператора общей ролью ядра — отказ, база не меняется; ядро без пула
+//   bem_rules_gate — RULES_GATE_UNSET; RG14-02/03 подтверждение и завершение после смены чата адресата — отказ;
+//   v0.1: пакеты Z-RULES-01 и Z-HANDOFF-01, проект v1.2 §6)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: проверки Z-EXT-02 через Kernel на чистом PostgreSQL 16. Проверки GitHub, git и подписи заменены подставным
 //   объектом rules (их проверяет tests/rules_gate.test.mjs), поэтому здесь видно, что база сама отклоняет каждый
@@ -75,6 +77,17 @@ async function refused(fn, code) {
 }
 const ok = (r) => { assert.equal(r.ok, true, JSON.stringify(r.error)); return r.result; };
 const pg = (sql, args) => withRole('postgres', async (c) => (await c.query(sql, args)).rows);
+// RG14-01: вызов функции базы напрямую, мимо ядра, с контекстом участника. Возвращает ошибку базы (или null).
+async function direct(role, sql, args, tenant = ids.tenantA) {
+  return withRole(role, async (c) => {
+    await c.query('BEGIN');
+    try {
+      await c.query("SELECT set_config('app.actor_id', $1, true), set_config('app.tenant_id', $2, true)", [ids.author, tenant]);
+      await c.query(sql, args);
+      return null;
+    } catch (e) { return e; } finally { await c.query('ROLLBACK'); }
+  });
+}
 
 const activate = (f, tenant = ids.tenantA, subject = f.signature.ticket.subject_id, k = kernel) => {
   gate.next = () => f;
@@ -119,7 +132,10 @@ async function subject({ release = true, tenant = ids.tenantA } = {}) {
 let released;
 before(async () => {
   ids = await bootFixture();
-  kernel = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-rules-'), rules: gate, transport });
+  // RG14-01: у входной роли проверки правил своя доверенность говорить за автора, как у bem_kernel_rw (H1.31).
+  await withRole('bem_bootstrap_admin', (c) => c.query("SELECT bem_control.grant_delegation('bem_rules_gate', $1, $2)",
+    [ids.author, `zavod rules gate test ${ids.run}`]));
+  kernel = new Kernel({ connection: CONN, rulesConnection: CONN, stopFile: runStopFile('zavod-rules-'), rules: gate, transport });
   await kernel.assertIdentity();
   const who = (tenant, role, session) => ({ tenant_id: tenant, actor_id: ids.author, role_key: role, session });
   Object.assign(SESS, {
@@ -153,6 +169,24 @@ test('Z-RULES-01: без проверок правил и при отказе п
   gate.next = () => { throw new RulesError('RULES_PR_NOT_MERGED', '7'); };
   await refused(() => kernel.execute(as(ids.author), { type: 'ActivateRules', actor_id: ids.author, tenant_id: ids.tenantA,
     payload: { pr_number: 7, subject_id: released.subj, ticket: '{}', signature: 's' } }), 'RULES_PR_NOT_MERGED');
+});
+
+test('RG14-01: включить правила может только входная роль bem_rules_gate; общая роль ядра — отказ', async () => {
+  const f = facts({ tenant: ids.tenantA, subject: released.subj, head: released.head });
+  // Ядро с проверками, но без пула bem_rules_gate — отказ до базы.
+  const k1 = new Kernel({ connection: CONN, stopFile: runStopFile('zavod-rules1-'), rules: gate, transport });
+  try {
+    await refused(() => activate(f, ids.tenantA, released.subj, k1), 'RULES_GATE_UNSET');
+  } finally { await k1.close(); }
+  // Прямой вызов bem_kernel_rw с полностью верными по виду фактами — нет права вызова, база не меняется.
+  const before0 = await snap();
+  const e = await direct('bem_kernel_rw', 'SELECT bem_control.activate_rules($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+    [ids.tenantA, f.commit, f.head_sha, f.pr_number, f.registry_digest, released.subj, f.role_parents, f.github, f.signature]);
+  assert.equal(e?.code, '42501', `ожидался отказ в праве вызова, получено ${e?.code} ${e?.message}`);
+  assert.deepEqual(await snap(), before0, 'прямой вызов: база изменилась');
+  const [acl] = await pg(`SELECT has_function_privilege('bem_kernel_rw', 'bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb)', 'EXECUTE') AS kr,
+    has_function_privilege('bem_rules_gate', 'bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb)', 'EXECUTE') AS rg`);
+  assert.deepEqual(acl, { kr: false, rg: true });
 });
 
 test('Z-RULES-01: база сама отклоняет каждый неверный факт, база не меняется', async () => {
@@ -337,7 +371,8 @@ test('RG13-02/RG13-03: отчёт выше — адресат закреплён
   const [row] = await pg('SELECT status, completion_evidence_id, report_id FROM bem_control.chat_lease WHERE lease_id = $1', [L.p.lease_id]);
   assert.deepEqual(row, { status: 'COMPLETED', completion_evidence_id: receipt, report_id: L.report });
   // Следующий чат роли — следующий номер и поколение.
-  L.p2 = ok(await lease('p1', 'OpenChatLease', { work_item_id: await newItem() }));
+  L.wiP2 = await newItem();
+  L.p2 = ok(await lease('p1', 'OpenChatLease', { work_item_id: L.wiP2 }));
   assert.equal(L.p2.chat_number, 'A00002');
   assert.equal(L.p2.generation, 2);
 });
@@ -352,19 +387,45 @@ test('RG13-02: отчёт оператору подтверждается под
   const [row] = await pg('SELECT recipient_role_key, recipient_session FROM bem_control.lease_report WHERE report_id = $1', [rep]);
   assert.deepEqual(row, { recipient_role_key: 'OPERATOR', recipient_session: null });
   await refused(() => lease('g2', 'AcknowledgeReport', { report_id: rep, report_sha256: sum }), 'REPORT_NOT_RECIPIENT');
+  // RG14-01: подтверждение за оператора общей ролью ядра напрямую — отказ, база не меняется.
+  const opSig = { namespace: 'zavod-report-ack@v1', key_fingerprint: FP, signed_ticket_sha256: hex(64),
+    ticket: { tenant_id: ids.tenantA, report_id: rep, report_sha256: sum } };
+  const beforeOp = await snap();
+  const eOp = await direct('bem_kernel_rw', 'SELECT bem_control.acknowledge_lease_report($1, $2, $3, $4, $5, $6)',
+    [ids.tenantA, rep, sum, 'OPERATOR', 'OPERATOR', opSig]);
+  assert.match(String(eOp?.message), /REPORT_OPERATOR_ACK_UNTRUSTED/);
+  assert.deepEqual(await snap(), beforeOp, 'путь оператора ролью ядра: база изменилась');
   ok(await lease('op', 'AcknowledgeReport', { report_id: rep, report_sha256: sum, ticket: '{}', signature: 's' }));
   const [ack] = await pg('SELECT ack_session FROM bem_control.lease_report WHERE report_id = $1', [rep]);
   assert.equal(ack.ack_session, 'OPERATOR');
 
-  // Отчёт второй роли адресован открытому чату ГД; после завершения ГД подтверждать его некому.
+  // Отчёт второй роли адресован открытому чату ГД и подтверждён им; затем чат ГД завершается.
   const sum2 = hex(64);
   const rep2 = ok(await lease('p1', 'FileLeaseReport', { lease_id: L.p2.lease_id, generation: 2, report_sha256: sum2 })).report_id;
+  ok(await lease('g1', 'AcknowledgeReport', { report_id: rep2, report_sha256: sum2 }));
+  const recP = (kind) => lease('p1', 'RecordLeaseEvidence', { lease_id: L.p2.lease_id, generation: 2, kind, content_sha256: hex(64) });
+  const [pr, pm, pn] = [ok(await recP('TASK_RESULT')).evidence_id, ok(await recP('ROLE_MEMORY')).evidence_id,
+    ok(await recP('NEXT_STEP')).evidence_id];
+  await finish(L.wiP2);
   await finish(L.wiG);
   ok(await lease('g1', 'CompleteChatLease', { lease_id: L.g.lease_id, generation: 1, result_evidence_id: gr,
     memory_evidence_id: gm, next_evidence_id: gn, report_id: rep }));
+  // RG14-02: повтор подтверждения ушедшим чатом — отказ, а не прежнее подтверждение.
   await refused(() => lease('g1', 'AcknowledgeReport', { report_id: rep2, report_sha256: sum2 }), 'REPORT_RECIPIENT_CHANGED');
+  // RG14-03: завершение по отчёту, подтверждённому ушедшим чатом, — отказ; нужен новый отчёт.
+  const doneP = (report_id) => lease('p1', 'CompleteChatLease', { lease_id: L.p2.lease_id, generation: 2,
+    result_evidence_id: pr, memory_evidence_id: pm, next_evidence_id: pn, report_id });
+  await refused(() => doneP(rep2), 'LEASE_REPORT_RECIPIENT_CHANGED');
   await refused(() => lease('p1', 'FileLeaseReport', { lease_id: L.p2.lease_id, generation: 2, report_sha256: hex(64) }),
     'REPORT_RECIPIENT_NOT_AVAILABLE');
+  // Новый чат ГД (поколение 2) получает новый отчёт, подтверждает его — завершение проходит.
+  const g2 = ok(await lease('g2', 'OpenChatLease', { work_item_id: await newItem() }));
+  assert.equal(g2.generation, 2);
+  const sum3 = hex(64);
+  const rep3 = ok(await lease('p1', 'FileLeaseReport', { lease_id: L.p2.lease_id, generation: 2, report_sha256: sum3 })).report_id;
+  await refused(() => lease('g1', 'AcknowledgeReport', { report_id: rep3, report_sha256: sum3 }), 'REPORT_NOT_RECIPIENT');
+  ok(await lease('g2', 'AcknowledgeReport', { report_id: rep3, report_sha256: sum3 }));
+  ok(await doneP(rep3));
 });
 
 test('RG12-04: две одновременные выдачи одной роли — одна аренда, второй отказ LEASE_ROLE_BUSY', async () => {
