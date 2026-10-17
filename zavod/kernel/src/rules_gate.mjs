@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: src/rules_gate.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-17 23:51 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-17 23:51 +03:00 (v0.1: пакет Z-RULES-01, проект v1.2)
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-17 23:51 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 00:15 +03:00 (v0.2: RulesError вынесен в rules_error.mjs; v0.1: пакет Z-RULES-01, проект v1.2)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: проверки правил Завода, которые ядро делает само, не веря вызывающему (проект §3.1, §3.3).
 //   collectActivation — факты для включения версии правил: PR слит в main (GitHub читает программа gh, только
@@ -16,6 +16,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { parseEd25519PublicKey, fingerprint, verifySshSig } from '../../engine/src/sshsig.mjs';
+import { RulesError } from './rules_error.mjs';
 
 export const REGISTRY_PATH = 'zavod/rules/RULES_REGISTRY.json';
 export const RULES_KEY_PATH = 'zavod/rules/OPERATOR_RULES_KEY.pub';
@@ -30,9 +31,7 @@ const ISO_Z = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 // Путь файла реестра: относительный, без «..», без обратной черты, без пустых частей.
 const SAFE_PATH = /^(?!.*(?:^|\/)\.\.?(?:\/|$))[^\\/\0][^\\\0]*$/;
 
-export class RulesError extends Error {
-  constructor(code, message) { super(message); this.code = code; }
-}
+export { RulesError };
 const fail = (code, msg = '') => { throw new RulesError(code, msg); };
 const sha256 = (b) => createHash('sha256').update(b).digest('hex');
 

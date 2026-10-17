@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.8  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-17 23:51 +03:00 (v0.8: пакеты Z-RULES-01 и
+// ВЕРСИЯ: v0.8.1  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 00:15 +03:00 (v0.8.1: RulesError из rules_error.mjs — ядро в контейнере рабочего не тянет engine/src/sshsig.mjs; v0.8: пакеты Z-RULES-01 и
 //   Z-HANDOFF-01, проект v1.2 — ActivateRules (факты GitHub, git и подпись оператора собирает src/rules_gate.mjs,
 //   не веря вызывающему), GetActiveRules, GetChatLease; команды аренды OpenChatLease, RecordLeaseEvidence,
 //   FileLeaseReport, AcknowledgeReport, CompleteChatLease принимаются только через посредника transport.verify,
@@ -33,9 +33,9 @@ import { hostname } from 'node:os';
 import { allowedFrom, STATUSES, INITIAL_STATUS } from './transitions.mjs';
 import { findSecret, isStopped, stopState } from './guards.mjs';
 import { authorize } from './roles.mjs';
-import { RulesError } from './rules_gate.mjs';
+import { RulesError } from './rules_error.mjs';
 
-export const KERNEL_VERSION = '0.8.0';
+export const KERNEL_VERSION = '0.8.1';
 export const KERNEL_ROLE = 'bem_kernel_rw';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
