@@ -1,7 +1,8 @@
 -- ДОКУМЕНТ: db/05_final_state_check_ext01.sql — СОБРАН db/build_final_ext.mjs, руками не править
 -- ИСТОЧНИК H1.31 05: sha256 1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
--- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 (см. сборщик).
+-- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
+-- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 и Z-EXT-02 (см. сборщик).
 \set ON_ERROR_STOP on
 
 -- 05_final_state_check.sql — терминальная административная проверка.
@@ -48,6 +49,42 @@ DECLARE
         'TABLE|bem_core.evidence|evidence_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.handoff_packet|handoff_packet_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)',
+        'TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_content_sha256_check|CHECK ((content_sha256 ~ ''^[0-9a-f]{64}$''::text))',
+        'TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_generation_check|CHECK ((generation >= 1))',
+        'TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_holder_session_check|CHECK ((btrim(holder_session) <> ''''::text))',
+        'TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_kind_check|CHECK ((kind = ANY (ARRAY[''TASK_RESULT''::text, ''ROLE_MEMORY''::text, ''NEXT_STEP''::text])))',
+        'TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)',
+        'TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_pkey|PRIMARY KEY (evidence_id)',
+        'TABLE|bem_control.chat_lease|chat_lease_chat_number_check|CHECK (((chat_number ~ ''^[A-Z][0-9]{5}$''::text) AND (substr(chat_number, 2) <> ''00000''::text)))',
+        'TABLE|bem_control.chat_lease|chat_lease_closed_pair|CHECK (((status = ''COMPLETED''::text) = ((closed_at IS NOT NULL) AND (completion_evidence_id IS NOT NULL) AND (result_evidence_id IS NOT NULL) AND (memory_evidence_id IS NOT NULL) AND (next_evidence_id IS NOT NULL) AND (report_id IS NOT NULL))))',
+        'TABLE|bem_control.chat_lease|chat_lease_code_commit_check|CHECK ((code_commit ~ ''^[0-9a-f]{40}$''::text))',
+        'TABLE|bem_control.chat_lease|chat_lease_generation_check|CHECK ((generation >= 1))',
+        'TABLE|bem_control.chat_lease|chat_lease_generation_unique|UNIQUE (tenant_id, role_key, generation)',
+        'TABLE|bem_control.chat_lease|chat_lease_holder_session_check|CHECK (((btrim(holder_session) <> ''''::text) AND (holder_session <> ''OPERATOR''::text)))',
+        'TABLE|bem_control.chat_lease|chat_lease_number_unique|UNIQUE (tenant_id, role_key, chat_number)',
+        'TABLE|bem_control.chat_lease|chat_lease_opened_by_check|CHECK ((btrim(opened_by) <> ''''::text))',
+        'TABLE|bem_control.chat_lease|chat_lease_pkey|PRIMARY KEY (lease_id)',
+        'TABLE|bem_control.chat_lease|chat_lease_role_key_check|CHECK ((role_key ~ ''^0[1-9]_[^/\\]{1,60}$''::text))',
+        'TABLE|bem_control.chat_lease|chat_lease_rules_commit_check|CHECK ((rules_commit ~ ''^[0-9a-f]{40}$''::text))',
+        'TABLE|bem_control.chat_lease|chat_lease_status_check|CHECK ((status = ANY (ARRAY[''OPEN''::text, ''COMPLETED''::text])))',
+        'TABLE|bem_control.lease_report|lease_report_ack_triple|CHECK ((((ack_evidence_id IS NULL) = (ack_session IS NULL)) AND ((ack_session IS NULL) = (acked_at IS NULL))))',
+        'TABLE|bem_control.lease_report|lease_report_from_session_check|CHECK ((btrim(from_session) <> ''''::text))',
+        'TABLE|bem_control.lease_report|lease_report_generation_check|CHECK ((generation >= 1))',
+        'TABLE|bem_control.lease_report|lease_report_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)',
+        'TABLE|bem_control.lease_report|lease_report_pkey|PRIMARY KEY (report_id)',
+        'TABLE|bem_control.lease_report|lease_report_recipient_shape|CHECK ((((recipient_role_key = ''OPERATOR''::text) AND (recipient_lease_id IS NULL) AND (recipient_generation IS NULL) AND (recipient_session IS NULL)) OR ((recipient_role_key ~ ''^0[1-9]_[^/\\]{1,60}$''::text) AND (recipient_lease_id IS NOT NULL) AND (recipient_generation IS NOT NULL) AND (recipient_session IS NOT NULL))))',
+        'TABLE|bem_control.lease_report|lease_report_report_sha256_check|CHECK ((report_sha256 ~ ''^[0-9a-f]{64}$''::text))',
+        'TABLE|bem_control.rules_activation|rules_activation_activated_by_check|CHECK ((btrim(activated_by) <> ''''::text))',
+        'TABLE|bem_control.rules_activation|rules_activation_head_sha_check|CHECK ((head_sha ~ ''^[0-9a-f]{40}$''::text))',
+        'TABLE|bem_control.rules_activation|rules_activation_key_fingerprint_check|CHECK ((key_fingerprint ~ ''^SHA256:[A-Za-z0-9+/]{43}$''::text))',
+        'TABLE|bem_control.rules_activation|rules_activation_pkey|PRIMARY KEY (tenant_id, rules_commit)',
+        'TABLE|bem_control.rules_activation|rules_activation_pr_number_check|CHECK ((pr_number >= 1))',
+        'TABLE|bem_control.rules_activation|rules_activation_pr_url_check|CHECK ((pr_url ~ ''^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[1-9][0-9]*$''::text))',
+        'TABLE|bem_control.rules_activation|rules_activation_registry_digest_check|CHECK ((registry_digest ~ ''^[0-9a-f]{64}$''::text))',
+        'TABLE|bem_control.rules_activation|rules_activation_role_parents_check|CHECK ((jsonb_typeof(role_parents) = ''object''::text))',
+        'TABLE|bem_control.rules_activation|rules_activation_rules_commit_check|CHECK ((rules_commit ~ ''^[0-9a-f]{40}$''::text))',
+        'TABLE|bem_control.rules_activation|rules_activation_superseded_by_check|CHECK ((superseded_by ~ ''^[0-9a-f]{40}$''::text))',
+        'TABLE|bem_control.rules_activation|rules_activation_superseded_pair|CHECK (((superseded_at IS NULL) = (superseded_by IS NULL)))',
         'TABLE|bem_control.outbox_kind_policy|outbox_kind_policy_pkey|PRIMARY KEY (kind, version)',
         'TABLE|bem_control.outbox_kind_policy|outbox_kind_policy_kind_check|CHECK ((kind ~ ''^[A-Za-z][A-Za-z0-9_.:-]{0,127}$''::text))',
         'TABLE|bem_control.outbox_kind_policy|outbox_kind_policy_version_check|CHECK ((version >= 1))',
@@ -171,6 +208,7 @@ DECLARE
         'bem_engine_rw|yes|no|no|no|no|no|yes|-1',
         'bem_governance|no|no|no|no|no|no|yes|-1',
         'bem_kernel_rw|yes|no|no|no|no|no|yes|-1',
+        'bem_rules_gate|yes|no|no|no|no|no|yes|-1',
         'schema_migrator|no|no|no|no|no|no|yes|-1'];
     v_members constant text[] := ARRAY[
         'backup_reader|bem_backup_ctl_owner|BOOTSTRAP_SUPERUSER|yes|no|no',
@@ -187,12 +225,14 @@ DECLARE
         'bem_engine_rw|password:none|valid_until:none|config:none',
         'bem_governance|password:none|valid_until:none|config:none',
         'bem_kernel_rw|password:none|valid_until:none|config:none',
+        'bem_rules_gate|password:none|valid_until:none|config:none',
         'schema_migrator|password:none|valid_until:none|config:none'];
     v_login   constant text[] := ARRAY[
         'bem_backup_admin',
         'bem_bootstrap_admin',
         'bem_engine_rw',
-        'bem_kernel_rw'];
+        'bem_kernel_rw',
+        'bem_rules_gate'];
     v_rls     constant text[] := ARRAY[
         'bem_core.audit_assignment',
         'bem_core.audit_record',
@@ -453,6 +493,7 @@ DECLARE
         'DATABASE|bem|bem_core_owner|TEMPORARY|bem_core_owner',
         'DATABASE|bem|bem_engine_rw|CONNECT|bem_core_owner',
         'DATABASE|bem|bem_kernel_rw|CONNECT|bem_core_owner',
+        'DATABASE|bem|bem_rules_gate|CONNECT|bem_core_owner',
         'DATABASE|bem|schema_migrator|CONNECT|bem_core_owner',
         'DEFAULT|bem_control_owner|bem_control|S|backup_reader|SELECT|bem_control_owner',
         'DEFAULT|bem_control_owner|bem_control|r|backup_reader|SELECT|bem_control_owner',
@@ -490,6 +531,19 @@ DECLARE
         'FUNCTION|bem_control.bind_process_instance(uuid, uuid, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb)|bem_rules_gate|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.open_chat_lease(uuid, text, uuid, text, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.open_chat_lease(uuid, text, uuid, text, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.record_lease_evidence(uuid, uuid, integer, text, text, text, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.record_lease_evidence(uuid, uuid, integer, text, text, text, jsonb)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.file_lease_report(uuid, uuid, integer, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.file_lease_report(uuid, uuid, integer, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.acknowledge_lease_report(uuid, uuid, text, text, text, jsonb)|bem_rules_gate|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.complete_chat_lease(uuid, uuid, integer, text, uuid, uuid, uuid, uuid)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.complete_chat_lease(uuid, uuid, integer, text, uuid, uuid, uuid, uuid)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.mark_outbox_send_started(uuid, bigint, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.set_outbox_kind_policy(text, boolean, text, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
@@ -559,6 +613,7 @@ DECLARE
         'SCHEMA|bem_control|bem_control_owner|USAGE|bem_control_owner',
         'SCHEMA|bem_control|bem_governance|USAGE|bem_control_owner',
         'SCHEMA|bem_control|bem_kernel_rw|USAGE|bem_control_owner',
+        'SCHEMA|bem_control|bem_rules_gate|USAGE|bem_control_owner',
         'SCHEMA|bem_core|backup_reader|USAGE|bem_core_owner',
         'SCHEMA|bem_core|bem_control_owner|USAGE|bem_core_owner',
         'SCHEMA|bem_core|bem_core_owner|CREATE|bem_core_owner',
@@ -572,6 +627,43 @@ DECLARE
         'SCHEMA|public|pg_database_owner|CREATE|pg_database_owner',
         'SCHEMA|public|pg_database_owner|USAGE|pg_database_owner',
         'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.rules_activation|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_kernel_rw|SELECT|bem_control_owner',
+        'TABLE|bem_control.rules_activation|bem_rules_gate|SELECT|bem_control_owner',
+        'TABLE|bem_control.chat_lease|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.chat_lease|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.chat_lease|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.chat_lease|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.chat_lease|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.chat_lease|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.chat_lease|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.chat_lease|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.chat_lease|bem_kernel_rw|SELECT|bem_control_owner',
+        'TABLE|bem_control.chat_lease_evidence|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.chat_lease_evidence|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.chat_lease_evidence|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.chat_lease_evidence|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.chat_lease_evidence|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.chat_lease_evidence|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.chat_lease_evidence|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.chat_lease_evidence|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.chat_lease_evidence|bem_kernel_rw|SELECT|bem_control_owner',
+        'TABLE|bem_control.lease_report|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.lease_report|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.lease_report|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.lease_report|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.lease_report|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.lease_report|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.lease_report|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.lease_report|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.lease_report|bem_kernel_rw|SELECT|bem_control_owner',
         'TABLE|bem_control.outbox_kind_policy|bem_control_owner|DELETE|bem_control_owner',
         'TABLE|bem_control.outbox_kind_policy|bem_control_owner|INSERT|bem_control_owner',
         'TABLE|bem_control.outbox_kind_policy|bem_control_owner|REFERENCES|bem_control_owner',
@@ -1299,7 +1391,8 @@ BEGIN
 END
 $$;
 
--- Z-EXT-01 (аудит Z3 M-Z3-01): тела функций расширения совпадают с db/02_zavod_ext_01.sql.
+-- Z-EXT-01 (аудит Z3 M-Z3-01) и Z-EXT-02: тела функций расширений совпадают с db/02_zavod_ext_01.sql
+-- и db/03_zavod_ext_02.sql.
 -- У каждого имени ровно одна функция в bem_control; лишняя перегрузка или подменённое тело — отказ.
 DO $zavod_fp$
 DECLARE
@@ -1314,7 +1407,13 @@ BEGIN
         ('claim_outbox_batch', '2f99d0cf2e2e42edb0e613002ac34c9206395ddc611a7e8ed4d5c5a20e0c4be4'),
         ('mark_outbox_send_started', '098dec5ed40550b6bf674e9ba584988840ac4afa681c48cd25281f69631d8b7b'),
         ('set_outbox_kind_policy', '96ab2b4d3c9edfc20d3ba5a2837845a8efd37aa2eb5c306d0d4df7cf04f5c9a9'),
-        ('record_outbox_fence', '2ccfcb67f8b13b8ee8aa08ad2b9386c788bf4a9f579cd17140fa73946c1a6349')
+        ('record_outbox_fence', '2ccfcb67f8b13b8ee8aa08ad2b9386c788bf4a9f579cd17140fa73946c1a6349'),
+        ('activate_rules', '4992d9c5adf6e4e03ba51e30ec26ee23b95e2b3a5ebfd8054d9a6bda7a8514e4'),
+        ('open_chat_lease', 'e14d6fe3efb4288198d4df164a220bb79ef2a4f03722a5203ce255ff90b4c51d'),
+        ('record_lease_evidence', 'e8590ecb07c577448ef210bd54fef42d581e81e322184ceaa801bc26f1634f8e'),
+        ('file_lease_report', 'f38266ef5b22a89f3771bc1ec608f5815a36d34c0382381fc3b82a14a8336e0d'),
+        ('acknowledge_lease_report', '12b3bfdb610db919113cb7434bff953d2c8ae06a3f60aa22013b62759a42693d'),
+        ('complete_chat_lease', 'ee858e12c0a68b2bf94474592c4dc61344b0e35be0705ebc4fa07b3061dd9f35')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got
