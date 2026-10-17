@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.9  СТАТУС: CANDIDATE
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# v0.10 (2026-10-18 00:08 +03:00): Z-EXT-02 — установка db/03_zavod_ext_02.sql после 02 и до итоговой проверки; проба подмены activate_rules.
 # v0.9 (2026-10-11 18:45 +03:00): E5-5 заготовка — журнал инъекций tests/e55_pilot_release_injection.test.mjs (ZAVOD_E55_JOURNAL), проверка 9/9 PASS и SHA-256 после тестов.
 # v0.8 (2026-10-09 09:10 +03:00): E4-8 — в CI сценарий и мутация на единице «контейнер» обязаны пройти.
 # v0.7 (2026-10-08 23:05 +03:00): аудит E3-5 — M-E35-04 сканер утечек идёт и по workflow, исключения только
@@ -42,6 +43,9 @@ tail -1 chain_wrapper.out
 "$NODE" "$HERE/db/build_ext.mjs" 01_database_migration.sql --check || fail "Z-EXT-01 build stale"
 psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/02_zavod_ext_01.sql" > chain_ext.out 2>&1 || { tail -5 chain_ext.out; fail "Z-EXT-01 failed"; }
 tail -1 chain_ext.out
+# Расширение Z-EXT-02 (пакеты Z-RULES-01 и Z-HANDOFF-01) поверх Z-EXT-01 одной транзакцией.
+psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/03_zavod_ext_02.sql" > chain_ext02.out 2>&1 || { tail -5 chain_ext02.out; fail "Z-EXT-02 failed"; }
+echo "ZAVOD_EXT02=installed"
 # Парная дельта-проверка: терминальная проверка H1.31 05 (её прошла обёртка ДО расширения) плюс
 # точный список отличий Z-EXT-01; лишнее право или объект — отказ. До подъёма предела admin.
 "$NODE" "$HERE/db/build_final_ext.mjs" 05_final_state_check.sql --check || fail "Z-EXT-01 final check build stale"
@@ -56,7 +60,15 @@ elif grep -q "FINAL_ZAVOD_FN_BODY_MISMATCH: claim_outbox_batch" chain_probe_ext.
 else
   grep -m3 -E "ERROR|ОШИБКА" chain_probe_ext.out; fail "Z-EXT-01 mutation probe: wrong failure"
 fi
-# После пробы исходное тело на месте: итоговая проверка снова проходит.
+# Проба Z-EXT-02: activate_rules без проверки выпуска ловит итоговая проверка.
+if psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/probe_final_ext02_mutation.sql" > chain_probe_ext02.out 2>&1; then
+  fail "Z-EXT-02 mutation of activate_rules not caught"
+elif grep -q "FINAL_ZAVOD_FN_BODY_MISMATCH: activate_rules" chain_probe_ext02.out; then
+  echo "ZAVOD_FINAL_EXT02_MUTATION_PROBE=caught"
+else
+  grep -m3 -E "ERROR|ОШИБКА" chain_probe_ext02.out; fail "Z-EXT-02 mutation probe: wrong failure"
+fi
+# После проб исходные тела на месте: итоговая проверка снова проходит.
 psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/05_final_state_check_ext01.sql" > chain_final_ext2.out 2>&1 || fail "Z-EXT-01 final check after probe"
 q bem "ALTER ROLE bem_bootstrap_admin CONNECTION LIMIT 2" >/dev/null || fail "cannot open bootstrap admin"
 

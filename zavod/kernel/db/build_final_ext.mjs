@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-07 21:15 +03:00 (v0.4: аудит Z5 —
+// ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 00:08 +03:00 (v0.5: Z-EXT-02 (db/03_zavod_ext_02.sql,
+//   пакеты Z-RULES-01 и Z-HANDOFF-01) — ограничения четырёх новых таблиц, права на таблицы и шесть функций, отпечатки
+//   их тел; итоговая проверка идёт после установки 03;
+//   v0.4: аудит Z5 —
 //   новый набор способов ограждения: CGROUP_KILLED / JOB_OBJECT_TERMINATED / CONTAINER_TERMINATED;
 //   v0.3: аудит Z4 M-Z4-01 —
 //   колонка send_runtime_instance, новые подписи отметки и ограждения, проверка экземпляра;
@@ -26,6 +29,7 @@ const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const [src, flag] = process.argv.slice(2);
 const base = readFileSync(src, 'utf8').replace(/\r\n/g, '\n');
 const ext = readFileSync(here('./02_zavod_ext_01.sql'), 'utf8').replace(/\r\n/g, '\n');
+const ext02 = readFileSync(here('./03_zavod_ext_02.sql'), 'utf8').replace(/\r\n/g, '\n');
 const sha = (s) => createHash('sha256').update(s).digest('hex');
 
 function once(text, from, to) {
@@ -79,24 +83,85 @@ t = after(t, 'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control
   'TABLE|bem_control.outbox_send_fence|backup_reader|SELECT|bem_control_owner',
 ]);
 
+// Z-EXT-02: ограничения новых таблиц — текст pg_get_constraintdef дословно (кавычки удваиваются для литерала 05).
+const sqlLit = (s) => s.replace(/'/g, "''");
+const EXT02_CONSTRAINTS = [
+  "TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_content_sha256_check|CHECK ((content_sha256 ~ '^[0-9a-f]{64}$'::text))",
+  "TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_generation_check|CHECK ((generation >= 1))",
+  "TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_holder_session_check|CHECK ((btrim(holder_session) <> ''::text))",
+  "TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_kind_check|CHECK ((kind = ANY (ARRAY['TASK_RESULT'::text, 'ROLE_MEMORY'::text, 'NEXT_STEP'::text])))",
+  "TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)",
+  "TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_pkey|PRIMARY KEY (evidence_id)",
+  "TABLE|bem_control.chat_lease|chat_lease_chat_number_check|CHECK (((chat_number ~ '^[A-Z][0-9]{5}$'::text) AND (substr(chat_number, 2) <> '00000'::text)))",
+  "TABLE|bem_control.chat_lease|chat_lease_closed_pair|CHECK (((status = 'COMPLETED'::text) = ((closed_at IS NOT NULL) AND (completion_evidence_id IS NOT NULL) AND (result_evidence_id IS NOT NULL) AND (memory_evidence_id IS NOT NULL) AND (next_evidence_id IS NOT NULL) AND (report_id IS NOT NULL))))",
+  "TABLE|bem_control.chat_lease|chat_lease_code_commit_check|CHECK ((code_commit ~ '^[0-9a-f]{40}$'::text))",
+  "TABLE|bem_control.chat_lease|chat_lease_generation_check|CHECK ((generation >= 1))",
+  "TABLE|bem_control.chat_lease|chat_lease_generation_unique|UNIQUE (tenant_id, role_key, generation)",
+  "TABLE|bem_control.chat_lease|chat_lease_holder_session_check|CHECK (((btrim(holder_session) <> ''::text) AND (holder_session <> 'OPERATOR'::text)))",
+  "TABLE|bem_control.chat_lease|chat_lease_number_unique|UNIQUE (tenant_id, role_key, chat_number)",
+  "TABLE|bem_control.chat_lease|chat_lease_opened_by_check|CHECK ((btrim(opened_by) <> ''::text))",
+  "TABLE|bem_control.chat_lease|chat_lease_pkey|PRIMARY KEY (lease_id)",
+  "TABLE|bem_control.chat_lease|chat_lease_role_key_check|CHECK ((role_key ~ '^0[1-9]_[^/\\\\]{1,60}$'::text))",
+  "TABLE|bem_control.chat_lease|chat_lease_rules_commit_check|CHECK ((rules_commit ~ '^[0-9a-f]{40}$'::text))",
+  "TABLE|bem_control.chat_lease|chat_lease_status_check|CHECK ((status = ANY (ARRAY['OPEN'::text, 'COMPLETED'::text])))",
+  "TABLE|bem_control.lease_report|lease_report_ack_triple|CHECK ((((ack_evidence_id IS NULL) = (ack_session IS NULL)) AND ((ack_session IS NULL) = (acked_at IS NULL))))",
+  "TABLE|bem_control.lease_report|lease_report_from_session_check|CHECK ((btrim(from_session) <> ''::text))",
+  "TABLE|bem_control.lease_report|lease_report_generation_check|CHECK ((generation >= 1))",
+  "TABLE|bem_control.lease_report|lease_report_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)",
+  "TABLE|bem_control.lease_report|lease_report_pkey|PRIMARY KEY (report_id)",
+  "TABLE|bem_control.lease_report|lease_report_recipient_shape|CHECK ((((recipient_role_key = 'OPERATOR'::text) AND (recipient_lease_id IS NULL) AND (recipient_generation IS NULL) AND (recipient_session IS NULL)) OR ((recipient_role_key ~ '^0[1-9]_[^/\\\\]{1,60}$'::text) AND (recipient_lease_id IS NOT NULL) AND (recipient_generation IS NOT NULL) AND (recipient_session IS NOT NULL))))",
+  "TABLE|bem_control.lease_report|lease_report_report_sha256_check|CHECK ((report_sha256 ~ '^[0-9a-f]{64}$'::text))",
+  "TABLE|bem_control.rules_activation|rules_activation_activated_by_check|CHECK ((btrim(activated_by) <> ''::text))",
+  "TABLE|bem_control.rules_activation|rules_activation_head_sha_check|CHECK ((head_sha ~ '^[0-9a-f]{40}$'::text))",
+  "TABLE|bem_control.rules_activation|rules_activation_key_fingerprint_check|CHECK ((key_fingerprint ~ '^SHA256:[A-Za-z0-9+/]{43}$'::text))",
+  "TABLE|bem_control.rules_activation|rules_activation_pkey|PRIMARY KEY (tenant_id, rules_commit)",
+  "TABLE|bem_control.rules_activation|rules_activation_pr_number_check|CHECK ((pr_number >= 1))",
+  "TABLE|bem_control.rules_activation|rules_activation_pr_url_check|CHECK ((pr_url ~ '^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[1-9][0-9]*$'::text))",
+  "TABLE|bem_control.rules_activation|rules_activation_registry_digest_check|CHECK ((registry_digest ~ '^[0-9a-f]{64}$'::text))",
+  "TABLE|bem_control.rules_activation|rules_activation_role_parents_check|CHECK ((jsonb_typeof(role_parents) = 'object'::text))",
+  "TABLE|bem_control.rules_activation|rules_activation_rules_commit_check|CHECK ((rules_commit ~ '^[0-9a-f]{40}$'::text))",
+  "TABLE|bem_control.rules_activation|rules_activation_superseded_by_check|CHECK ((superseded_by ~ '^[0-9a-f]{40}$'::text))",
+  "TABLE|bem_control.rules_activation|rules_activation_superseded_pair|CHECK (((superseded_at IS NULL) = (superseded_by IS NULL)))",
+];
+t = after(t, 'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)', EXT02_CONSTRAINTS.map(sqlLit));
+const EXT02_TABLES = ['rules_activation', 'chat_lease', 'chat_lease_evidence', 'lease_report'];
+t = after(t, 'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner', EXT02_TABLES.flatMap((n) => [
+  ...OWNER_PRIVS.map((p) => `TABLE|bem_control.${n}|bem_control_owner|${p}|bem_control_owner`),
+  `TABLE|bem_control.${n}|backup_reader|SELECT|bem_control_owner`,
+  `TABLE|bem_control.${n}|bem_kernel_rw|SELECT|bem_control_owner`,
+]));
+const EXT02_FUNCS = {
+  activate_rules: 'uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb',
+  open_chat_lease: 'uuid, text, uuid, text, text, text',
+  record_lease_evidence: 'uuid, uuid, integer, text, text, text, jsonb',
+  file_lease_report: 'uuid, uuid, integer, text, text',
+  acknowledge_lease_report: 'uuid, uuid, text, text, text, jsonb',
+  complete_chat_lease: 'uuid, uuid, integer, text, uuid, uuid, uuid, uuid',
+};
+t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+  Object.entries(EXT02_FUNCS).flatMap(([n, a]) => ['bem_control_owner', 'bem_kernel_rw']
+    .map((who) => `FUNCTION|bem_control.${n}(${a})|${who}|EXECUTE|bem_control_owner`)));
+
 // Отпечатки тел функций расширения: исходный текст между ограничителями $tag$ последнего
 // определения функции в 02 — ровно то, что PostgreSQL хранит в pg_proc.prosrc.
 const FUNCS = ['publish_subject', 'release_subject', 'reconcile_unknown_outcome', 'claim_outbox_batch',
   'mark_outbox_send_started', 'set_outbox_kind_policy', 'record_outbox_fence'];
-function body(name) {
+function body(name, src = ext) {
   const re = new RegExp(`CREATE (OR REPLACE )?FUNCTION bem_control\\.${name}\\(`, 'g');
   let last = -1;
-  for (const m of ext.matchAll(re)) last = m.index;
-  if (last < 0) throw new Error(`no function ${name} in 02`);
-  const tag = /\bAS (\$[A-Za-z_]*\$)/.exec(ext.slice(last));
+  for (const m of src.matchAll(re)) last = m.index;
+  if (last < 0) throw new Error(`no function ${name}`);
+  const tag = /\bAS (\$[A-Za-z_]*\$)/.exec(src.slice(last));
   if (!tag) throw new Error(`no body tag for ${name}`);
   const from = last + tag.index + tag[0].length;
-  const to = ext.indexOf(tag[1], from);
+  const to = src.indexOf(tag[1], from);
   if (to < 0) throw new Error(`unterminated body for ${name}`);
-  return ext.slice(from, to);
+  return src.slice(from, to);
 }
-const prints = FUNCS.map((f) => [f, sha(body(f))]);
-const fpBlock = `-- Z-EXT-01 (аудит Z3 M-Z3-01): тела функций расширения совпадают с db/02_zavod_ext_01.sql.
+const prints = [...FUNCS.map((f) => [f, sha(body(f))]),
+  ...Object.keys(EXT02_FUNCS).map((f) => [f, sha(body(f, ext02))])];
+const fpBlock = `-- Z-EXT-01 (аудит Z3 M-Z3-01) и Z-EXT-02: тела функций расширений совпадают с db/02_zavod_ext_01.sql
+-- и db/03_zavod_ext_02.sql.
 -- У каждого имени ровно одна функция в bem_control; лишняя перегрузка или подменённое тело — отказ.
 DO $zavod_fp$
 DECLARE
@@ -125,7 +190,8 @@ t = once(t, '-- Ни одной команды безопасности посл
 const out = `-- ДОКУМЕНТ: db/05_final_state_check_ext01.sql — СОБРАН db/build_final_ext.mjs, руками не править
 -- ИСТОЧНИК H1.31 05: sha256 ${sha(base)}
 -- РАСШИРЕНИЕ 02: sha256 ${sha(ext)}
--- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 (см. сборщик).
+-- РАСШИРЕНИЕ 03: sha256 ${sha(ext02)}
+-- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 и Z-EXT-02 (см. сборщик).
 ${t}`;
 
 const target = here('./05_final_state_check_ext01.sql');

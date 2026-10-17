@@ -1,6 +1,11 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 11:10 +03:00 (v0.7: аудит E4-6 —
+// ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-17 23:51 +03:00 (v0.8: пакеты Z-RULES-01 и
+//   Z-HANDOFF-01, проект v1.2 — ActivateRules (факты GitHub, git и подпись оператора собирает src/rules_gate.mjs,
+//   не веря вызывающему), GetActiveRules, GetChatLease; команды аренды OpenChatLease, RecordLeaseEvidence,
+//   FileLeaseReport, AcknowledgeReport, CompleteChatLease принимаются только через посредника transport.verify,
+//   без него CALLER_NOT_AUTHENTICATED до базы; закрытые для RecordEvidence виды доказательств;
+//   v0.7: аудит E4-6 —
 //   M-E46-02 роль вызывающего обязательна всегда (флага requireRole нет), ROLE_REQUIRED до базы;
 //   M-E46-01 команда ReleaseAndTransition: выпуск предмета, переход работы в RELEASED и строка outbox
 //   одной транзакцией; обычный Transition в RELEASED запрещён (RELEASE_VIA_RELEASE_COMMAND); найдено при
@@ -28,11 +33,22 @@ import { hostname } from 'node:os';
 import { allowedFrom, STATUSES, INITIAL_STATUS } from './transitions.mjs';
 import { findSecret, isStopped, stopState } from './guards.mjs';
 import { authorize } from './roles.mjs';
+import { RulesError } from './rules_gate.mjs';
 
-export const KERNEL_VERSION = '0.7.0';
+export const KERNEL_VERSION = '0.8.0';
 export const KERNEL_ROLE = 'bem_kernel_rw';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SHA256 = /^[0-9a-f]{64}$/;
+const ROLE_KEY = /^0[1-9]_[^/\\]{1,60}$/;
+
+// Виды доказательств, которые пишет только ядро внутри своих команд (проект §2.1, RG13-01, RG13-02).
+export const RESERVED_EVIDENCE_KINDS = Object.freeze(['RULES_PR_MERGED', 'RULES_OPERATOR_SIGNATURE', 'RULES_ACTIVATED',
+  'CHAT_LEASE_OPENED', 'CHAT_LEASE_COMPLETED', 'TASK_RESULT', 'ROLE_MEMORY', 'NEXT_STEP', 'REPORTED_UP',
+  'REPORT_FILED', 'REPORT_ACKNOWLEDGED']);
+// Команды аренды: личность вызывающего (заказчик, участник, роль Завода, сессия) — только от посредника.
+export const TRANSPORT_COMMANDS = Object.freeze(['OpenChatLease', 'RecordLeaseEvidence', 'FileLeaseReport',
+  'AcknowledgeReport', 'CompleteChatLease']);
 
 export class KernelError extends Error {
   constructor(code, message, extra = {}) {
@@ -45,6 +61,7 @@ export class KernelError extends Error {
 // Ошибка базы → код Kernel. Текст исключения bem_control начинается с кода в верхнем регистре.
 function mapDbError(err) {
   if (err instanceof KernelError) return err;
+  if (err instanceof RulesError) return new KernelError(err.code, err.message);
   if (err && err.code === '42501') return new KernelError('PERMISSION_DENIED', err.message, { sqlstate: err.code });
   const m = /^([A-Z][A-Z0-9_]{3,})(?::|\b)/.exec(err?.message || '');
   if (err && err.code === '23503') return new KernelError('NOT_FOUND', 'referenced row not visible in this tenant', { sqlstate: err.code });
@@ -65,6 +82,11 @@ export class Kernel {
     this.stopFile = opts.stopFile || null;
     // M-E46-02: роль вызывающего обязательна всегда; отключить проверку нельзя (opts.requireRole не читается).
     this.log = opts.log || (() => {});
+    // Z-RULES-01: проверки правил (src/rules_gate.mjs createRulesGate). Без них ActivateRules — RULES_GATE_UNSET.
+    this.rules = opts.rules || null;
+    // Z-HANDOFF-01: посредник { verify(req) -> { tenant_id, actor_id, role_key, session } }. Местные входы его не
+    // имеют, поэтому команды аренды у них закрыты (проект §3.2).
+    this.transport = opts.transport || null;
     // Только для теста перезапуска E3-3: вызывается внутри транзакции перед COMMIT.
     this._beforeCommit = typeof opts.testBeforeCommit === 'function' ? opts.testBeforeCommit : null;
     this.startedAt = new Date().toISOString();
@@ -157,6 +179,7 @@ export class Kernel {
       need(req && typeof req === 'object', 'BAD_REQUEST', 'request must be object');
       const ss = stopState(this.stopFile);
       need(!ss.stopped, 'KERNEL_STOPPED', `SR-10 ${ss.reason}`);
+      if (TRANSPORT_COMMANDS.includes(req.type)) return await this._executeVerified(req);
       need(caller && typeof caller.actor_id === 'string', 'UNAUTHENTICATED', 'no caller');
       need(caller.actor_id === req.actor_id, 'ACTOR_MISMATCH', 'caller differs from request actor');
       need(typeof caller.role === 'string' && caller.role.length > 0, 'ROLE_REQUIRED', 'caller role required');
@@ -167,10 +190,38 @@ export class Kernel {
       const handler = HANDLERS[req.type];
       need(handler, 'UNKNOWN_COMMAND', String(req.type));
       const p = req.payload || {};
-      const result = await this._tx(req.actor_id, req.tenant_id, (c) => handler(c, req, p));
+      const result = await this._tx(req.actor_id, req.tenant_id, (c) => handler(c, req, p, this));
       this.counters.ok += 1;
       this.lastCommandAt = new Date().toISOString();
       this.log({ ev: 'command_ok', type: req.type, actor: req.actor_id, tenant: req.tenant_id });
+      return { ok: true, result };
+    } catch (e) {
+      const err = mapDbError(e);
+      this.counters.rejected += 1;
+      this.log({ ev: 'command_rejected', type: req?.type, code: err.code });
+      return { ok: false, error: { code: err.code, message: err.message } };
+    }
+  }
+
+  // Команда аренды (проект §3.2): заказчик, участник, роль Завода и сессия — из посредника, а не из запроса.
+  async _executeVerified(req) {
+    try {
+      need(this.transport && typeof this.transport.verify === 'function', 'CALLER_NOT_AUTHENTICATED', 'no transport');
+      let v;
+      try { v = await this.transport.verify(req); } catch { v = null; }
+      need(v && typeof v.tenant_id === 'string' && UUID.test(v.tenant_id) && typeof v.actor_id === 'string'
+        && v.actor_id.length > 0 && typeof v.role_key === 'string' && (ROLE_KEY.test(v.role_key) || v.role_key === 'OPERATOR')
+        && typeof v.session === 'string' && v.session.trim().length > 0, 'CALLER_NOT_AUTHENTICATED', 'transport refused');
+      const secret = findSecret(req);
+      need(!secret, 'SECRET_IN_REQUEST', `pattern ${secret} (value not logged, SR-01)`);
+      const verified = Object.freeze({ tenant_id: v.tenant_id, actor_id: v.actor_id, role_key: v.role_key,
+        session: v.session });
+      const vreq = { type: req.type, tenant_id: verified.tenant_id, actor_id: verified.actor_id,
+        command_id: req.command_id, payload: req.payload || {}, verified };
+      const result = await this._tx(vreq.actor_id, vreq.tenant_id, (c) => HANDLERS[req.type](c, vreq, vreq.payload, this));
+      this.counters.ok += 1;
+      this.lastCommandAt = new Date().toISOString();
+      this.log({ ev: 'command_ok', type: req.type, actor: vreq.actor_id, tenant: vreq.tenant_id });
       return { ok: true, result };
     } catch (e) {
       const err = mapDbError(e);
@@ -286,6 +337,7 @@ const HANDLERS = {
   async RecordEvidence(c, req, p) {
     need(typeof p.kind === 'string' && /^[A-Z][A-Z0-9_]{2,63}$/.test(p.kind), 'BAD_REQUEST', 'kind');
     need(!p.kind.startsWith('OPERATOR_'), 'RESERVED_KIND', 'use OperatorDecision');
+    need(!RESERVED_EVIDENCE_KINDS.includes(p.kind), 'RESERVED_KIND', `${p.kind} is written by kernel commands only`);
     const { rows } = await c.query('SELECT bem_control.record_evidence($1, $2, $3) AS id',
       [req.tenant_id, p.kind, p.payload || {}]);
     return { evidence_id: rows[0].id };
@@ -393,6 +445,122 @@ const HANDLERS = {
     need(rows.length === 1, 'NOT_FOUND', 'work item not visible');   // H1.31 §8.2
     return rows[0];
   },
+
+  // Z-RULES-01 (проект §3.1): включение версии правил. Заявленная роль ничего не даёт: факты GitHub, git и
+  // подпись оператора ядро собирает само (src/rules_gate.mjs), база сверяет их ещё раз и проверяет выпуск.
+  async ActivateRules(c, req, p, k) {
+    need(k.rules && typeof k.rules.collectActivation === 'function', 'RULES_GATE_UNSET', 'kernel has no rules gate');
+    needUuid(p.subject_id, 'subject_id');
+    need(Number.isInteger(p.pr_number) && p.pr_number > 0, 'BAD_REQUEST', 'pr_number');
+    need(typeof p.ticket === 'string' && typeof p.signature === 'string', 'BAD_REQUEST', 'ticket and signature');
+    const active = await activeRulesCommit(c, req.tenant_id);
+    const f = k.rules.collectActivation({ tenantId: req.tenant_id, prNumber: p.pr_number, subjectId: p.subject_id,
+      ticketText: p.ticket, signature: p.signature, activeRulesCommit: active });
+    const { rows } = await c.query('SELECT bem_control.activate_rules($1, $2, $3, $4, $5, $6, $7, $8, $9) AS id',
+      [req.tenant_id, f.commit, f.head_sha, f.pr_number, f.registry_digest, p.subject_id, f.role_parents,
+        f.github, f.signature]);
+    return { activation_evidence_id: rows[0].id, rules_commit: f.commit, registry_digest: f.registry_digest,
+      previous_rules_commit: active };
+  },
+
+  async GetActiveRules(c, req) {
+    const { rows } = await c.query(
+      `SELECT rules_commit, registry_digest, role_parents, pr_number, pr_url, subject_id, head_sha, key_fingerprint,
+              activation_evidence_id, activated_at
+         FROM bem_control.rules_activation WHERE tenant_id = $1 AND superseded_at IS NULL`, [req.tenant_id]);
+    need(rows.length === 1, 'RULES_NOT_ACTIVE', 'no active rules for tenant');
+    return rows[0];
+  },
+
+  // Аренда по номеру или последняя аренда роли; только этого заказчика.
+  async GetChatLease(c, req, p) {
+    const cols = `lease_id, role_key, chat_number, generation, work_item_id, holder_session, rules_commit, code_commit,
+                  status, opened_at, closed_at, completion_evidence_id, result_evidence_id, memory_evidence_id,
+                  next_evidence_id, report_id`;
+    let rows;
+    if (p.lease_id !== undefined) {
+      needUuid(p.lease_id, 'lease_id');
+      ({ rows } = await c.query(`SELECT ${cols} FROM bem_control.chat_lease WHERE tenant_id = $1 AND lease_id = $2`,
+        [req.tenant_id, p.lease_id]));
+    } else {
+      need(typeof p.role_key === 'string' && ROLE_KEY.test(p.role_key), 'BAD_REQUEST', 'lease_id or role_key');
+      ({ rows } = await c.query(`SELECT ${cols} FROM bem_control.chat_lease WHERE tenant_id = $1 AND role_key = $2
+                                  ORDER BY generation DESC LIMIT 1`, [req.tenant_id, p.role_key]));
+    }
+    need(rows.length === 1, 'NOT_FOUND', 'lease not visible');
+    return rows[0];
+  },
+
+  // Команды аренды (проект §3.2): вызываются только из _executeVerified; req.verified — от посредника.
+  async OpenChatLease(c, req, p, k) {
+    need(k.rules && typeof k.rules.checkWorkingCopy === 'function', 'RULES_GATE_UNSET', 'kernel has no rules gate');
+    needUuid(p.work_item_id, 'work_item_id');
+    const v = req.verified;
+    need(v.role_key !== 'OPERATOR', 'LEASE_BAD_ROLE', 'operator holds no chat lease');
+    const active = await activeRulesCommit(c, req.tenant_id);
+    need(active, 'LEASE_NO_ACTIVE_RULES', 'no active rules for tenant');
+    const gate = k.rules.checkWorkingCopy(active);   // Л.8: проверка перед арендой
+    const { rows } = await c.query('SELECT * FROM bem_control.open_chat_lease($1, $2, $3, $4, $5, $6)',
+      [req.tenant_id, v.role_key, p.work_item_id, v.session, gate.code_commit, gate.rules_commit]);
+    const r = rows[0];
+    return { lease_id: r.out_lease_id, generation: r.out_generation, chat_number: r.out_chat_number,
+      rules_commit: r.out_rules_commit, code_commit: gate.code_commit };
+  },
+
+  async RecordLeaseEvidence(c, req, p) {
+    needUuid(p.lease_id, 'lease_id');
+    need(Number.isInteger(p.generation) && p.generation > 0, 'BAD_REQUEST', 'generation');
+    need(['TASK_RESULT', 'ROLE_MEMORY', 'NEXT_STEP'].includes(p.kind), 'LEASE_EVIDENCE_BAD_KIND', String(p.kind));
+    need(typeof p.content_sha256 === 'string' && SHA256.test(p.content_sha256), 'BAD_REQUEST', 'content_sha256');
+    need(p.payload === undefined || (p.payload && typeof p.payload === 'object' && !Array.isArray(p.payload)),
+      'BAD_REQUEST', 'payload');
+    const { rows } = await c.query('SELECT bem_control.record_lease_evidence($1, $2, $3, $4, $5, $6, $7) AS id',
+      [req.tenant_id, p.lease_id, p.generation, req.verified.session, p.kind, p.content_sha256, p.payload || {}]);
+    return { evidence_id: rows[0].id };
+  },
+
+  async FileLeaseReport(c, req, p) {
+    needUuid(p.lease_id, 'lease_id');
+    need(Number.isInteger(p.generation) && p.generation > 0, 'BAD_REQUEST', 'generation');
+    need(typeof p.report_sha256 === 'string' && SHA256.test(p.report_sha256), 'BAD_REQUEST', 'report_sha256');
+    const { rows } = await c.query('SELECT bem_control.file_lease_report($1, $2, $3, $4, $5) AS id',
+      [req.tenant_id, p.lease_id, p.generation, req.verified.session, p.report_sha256]);
+    return { report_id: rows[0].id };
+  },
+
+  // Адресат-роль подтверждает своей проверенной сессией; адресат-оператор — подписью билета с телефона.
+  async AcknowledgeReport(c, req, p, k) {
+    needUuid(p.report_id, 'report_id');
+    need(typeof p.report_sha256 === 'string' && SHA256.test(p.report_sha256), 'BAD_REQUEST', 'report_sha256');
+    const v = req.verified;
+    let sig = null;
+    let session = v.session;
+    if (v.role_key === 'OPERATOR') {
+      need(k.rules && typeof k.rules.verifyReportAck === 'function', 'RULES_GATE_UNSET', 'kernel has no rules gate');
+      sig = k.rules.verifyReportAck({ tenantId: req.tenant_id, reportId: p.report_id, reportSha256: p.report_sha256,
+        ticketText: p.ticket, signature: p.signature, activeRulesCommit: await activeRulesCommit(c, req.tenant_id) });
+      session = 'OPERATOR';
+    }
+    const { rows } = await c.query('SELECT bem_control.acknowledge_lease_report($1, $2, $3, $4, $5, $6) AS id',
+      [req.tenant_id, p.report_id, p.report_sha256, v.role_key, session, sig]);
+    return { ack_evidence_id: rows[0].id };
+  },
+
+  async CompleteChatLease(c, req, p) {
+    needUuid(p.lease_id, 'lease_id');
+    need(Number.isInteger(p.generation) && p.generation > 0, 'BAD_REQUEST', 'generation');
+    for (const f of ['result_evidence_id', 'memory_evidence_id', 'next_evidence_id', 'report_id']) needUuid(p[f], f);
+    const { rows } = await c.query('SELECT bem_control.complete_chat_lease($1, $2, $3, $4, $5, $6, $7, $8) AS id',
+      [req.tenant_id, p.lease_id, p.generation, req.verified.session, p.result_evidence_id, p.memory_evidence_id,
+        p.next_evidence_id, p.report_id]);
+    return { receipt: rows[0].id };
+  },
 };
+
+async function activeRulesCommit(c, tenantId) {
+  const { rows } = await c.query(
+    'SELECT rules_commit FROM bem_control.rules_activation WHERE tenant_id = $1 AND superseded_at IS NULL', [tenantId]);
+  return rows[0]?.rules_commit ?? null;
+}
 
 export const COMMAND_TYPES = Object.freeze(Object.keys(HANDLERS));
