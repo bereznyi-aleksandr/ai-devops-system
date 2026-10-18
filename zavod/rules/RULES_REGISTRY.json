@@ -1,0 +1,27 @@
+{
+  "document": "zavod/rules/RULES_REGISTRY.json",
+  "version": "v1.1",
+  "status": "CANDIDATE",
+  "created_at": "2026-10-17 22:32 +03:00",
+  "updated_at": "2026-10-18 08:59 +03:00 (v1.1: формат ядра zavod-rules-registry@v1 вместо текстового v1.0 — RULES_REGISTRY_v1_0_txt.SUPERSEDED.txt)",
+  "executor": "Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)",
+  "purpose": "Реестр обязательных файлов правил Завода и иерархия ролей (протокол v2.5 Д.7, Л.8, П.3, Б.7). Изменение реестра или файла из него действует только после включения active_rules_commit. MEMORY.md и HANDOFF.md правилами не являются.",
+  "format": "zavod-rules-registry@v1",
+  "files": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "roles/README.md",
+    "roles/01_Куратор_ГД/ROLE.md",
+    "roles/02_Куратор_производства/ROLE.md",
+    "roles/03_Куратор_качества_и_безопасности/ROLE.md",
+    "roles/04_Куратор_продукта_и_продаж/ROLE.md",
+    "roles/05_Куратор_рабочих_контуров/ROLE.md"
+  ],
+  "role_parents": {
+    "01_Куратор_ГД": "OPERATOR",
+    "02_Куратор_производства": "01_Куратор_ГД",
+    "03_Куратор_качества_и_безопасности": "01_Куратор_ГД",
+    "04_Куратор_продукта_и_продаж": "01_Куратор_ГД",
+    "05_Куратор_рабочих_контуров": "01_Куратор_ГД"
+  }
+}
