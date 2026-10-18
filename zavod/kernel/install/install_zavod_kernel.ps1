@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
 # ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 16:40 +03:00
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 17:23 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f)
 # v0.5: права bin ставятся сразу после программ (служба базы запускает postgres.exe из bin до шага acl); на время
 #   initdb учётке установщика дана запись в data (initdb под администратором работает с урезанным маркером), затем
@@ -220,7 +220,9 @@ try {
 
   Step 'rules'
   $git = Join-Path $P['bin'] 'git\cmd\git.exe'
-  Invoke-Checked $git @('-c', 'core.hooksPath=' + (Join-Path $P['bin'] 'nohooks'), 'clone', '--no-tags', '--single-branch', '--branch', 'main', "https://github.com/$Repo.git", $P['rules']) 'RULES_CLONE'
+  # Строка собирается заранее: внутри @(…) запятая сильнее «+», и путь уходил в git отдельным словом (CI 18.10).
+  $hooksCfg = "core.hooksPath=$(Join-Path $P['bin'] 'nohooks')"
+  Invoke-Checked $git @('-c', $hooksCfg, 'clone', '--no-tags', '--single-branch', '--branch', 'main', "https://github.com/$Repo.git", $P['rules']) 'RULES_CLONE'
   Invoke-Checked $git @('-C', $P['rules'], 'config', 'core.hooksPath', (Join-Path $P['bin'] 'nohooks')) 'RULES_HOOKS'
 
   Step 'config'
