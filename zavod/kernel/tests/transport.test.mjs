@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/transport.test.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 11:12 +03:00 (v0.2: ChatGPT R24 — RG24-01 отзыв между
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 11:38 +03:00 (v0.3: ChatGPT R25 RG25-01 — смена участника оператора
+//   между проверкой и командой и во время команды; v0.2 11:12: ChatGPT R24 — RG24-01 отзыв между
 //   проверкой и командой и отзыв во время команды; RG24-02 повторное предъявление отозванного пропуска без новых строк
 //   доказательства; RG24-03 путь оператора без билета и для команды без билета; тест отзыва во время команды — на своей роли 04)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -464,4 +465,56 @@ test('RG24-03: «оператор» без билета, для команды �
     await refusedSame(async () => ({ body: await kernel.execute(null, { type: 'OpenChatLease', payload: { work_item_id: uuid() } }) }),
       'CALLER_NOT_AUTHENTICATED');
   } finally { kernel.transport = real; }
+});
+
+// RG25-01: смена участника оператора путём управления.
+const setOperator = (actor) => withRole('postgres', async (c) => {
+  await c.query('SET ROLE bem_governance');
+  await c.query("SELECT bem_control.set_role_actor($1, 'OPERATOR', $2)", [ids.tenantA, actor]);
+});
+
+test('RG25-01: смена участника оператора между проверкой и командой — команда по билету отклонена, база без изменений', async () => {
+  const s = await enrolled(sn('q9'), (code) => prepare(S.g1, R03, sn('q9'), code));
+  assert.ok(s.pass);
+  const real = kernel.transport;
+  let afterChange;
+  kernel.transport = { verify: async (req) => {
+    const v = await real.verify(req);
+    await setOperator(ids.author);
+    afterChange = await snap();
+    return v;
+  } };
+  let r;
+  try {
+    r = await kernel.execute(null, real.accept({ type: 'RevokeSession', command_id: uuid(), payload: { tenant_id: ids.tenantA,
+      session: sn('q9'), ticket: 'good', signature: 's' }, auth: { operator: true } }));
+  } finally { kernel.transport = real; await setOperator(ids.humanA); }
+  assert.equal(r.ok, false);
+  assert.equal(r.error.code, 'CALLER_NOT_AUTHENTICATED');
+  const [c] = await pg('SELECT revoked_at FROM bem_control.session_credential WHERE session = $1', [sn('q9')]);
+  assert.equal(c.revoked_at, null, 'пропуск не отозван');
+  assert.ok(afterChange);
+});
+
+test('RG25-01: смена участника оператора во время команды ждёт её конца (строка участника под блокировкой на чтение)', async () => {
+  const s = await enrolled(sn('q10'), (code) => prepare(S.g1, R04, sn('q10'), code));
+  assert.ok(s.pass);
+  let change;
+  let doneEarly = false;
+  kernel._beforeCommit = async () => {
+    kernel._beforeCommit = null;
+    change = setOperator(ids.author).then(() => { doneEarly = true; });
+    await new Promise((res) => setTimeout(res, 700));
+    assert.equal(doneEarly, false, 'смена участника не должна пройти до конца команды');
+  };
+  let rv;
+  try {
+    rv = okk((await opRevoke(sn('q10'))).body);
+  } finally { kernel._beforeCommit = null; }
+  await change;
+  try {
+    assert.equal(rv.revoked, 1);
+    const [a] = await pg("SELECT actor_id FROM bem_control.role_actor WHERE tenant_id = $1 AND role_key = 'OPERATOR'", [ids.tenantA]);
+    assert.equal(a.actor_id, ids.author, 'смена прошла после команды');
+  } finally { await setOperator(ids.humanA); }
 });

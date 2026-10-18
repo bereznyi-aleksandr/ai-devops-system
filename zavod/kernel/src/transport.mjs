@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/transport.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:52 +03:00 (v0.2: ChatGPT R24 — RG24-01 hold: повторная
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 11:38 +03:00 (v0.3: ChatGPT R25 RG25-01 — повтор для оператора через
+//   hold_operator_actor: строка участника под блокировкой на чтение до конца команды; v0.2 10:52: ChatGPT R24 — RG24-01 hold: повторная
 //   проверка пропуска или участника оператора в транзакции команды; RG24-03: путь оператора требует билет и подпись)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: посредник Z-TRANSPORT-01 (проект v0.4 §3.1–§3.3) между местным входом и ядром.
@@ -64,10 +65,10 @@ export function createTransport({ kernel, log = () => {} }) {
         [tenant]);
       if (!rows[0]) return null;
       const actor = rows[0].actor_id;
-      // Повтор в транзакции команды (клиент входной роли): участник оператора не сменился.
+      // Повтор в транзакции команды (клиент входной роли): участник оператора не сменился; строка участника
+      // остаётся под блокировкой на чтение до конца команды (RG25-01).
       const hold = async (c) => {
-        const { rows: r } = await c.query(
-          "SELECT actor_id FROM bem_control.role_actor WHERE tenant_id = $1 AND role_key = 'OPERATOR'", [tenant]);
+        const { rows: r } = await c.query('SELECT bem_control.hold_operator_actor($1) AS actor_id', [tenant]);
         if (r[0]?.actor_id !== actor) throw new KernelError('CALLER_NOT_AUTHENTICATED', 'operator changed');
       };
       return { tenant_id: tenant, actor_id: actor, role_key: 'OPERATOR', session: 'OPERATOR', hold };

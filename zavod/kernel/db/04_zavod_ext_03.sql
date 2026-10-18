@@ -1,6 +1,8 @@
 -- ДОКУМЕНТ: db/04_zavod_ext_03.sql (расширение Z-EXT-03: пакет Z-TRANSPORT-01, привратник)
--- ВЕРСИЯ: v0.2  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-10-18 10:24 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:52 +03:00 (v0.2: ChatGPT R24 — RG24-01 hold_session_credential:
+-- ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-10-18 10:24 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 11:38 +03:00 (v0.3: ChatGPT R25 RG25-01 — hold_operator_actor:
+--   участник оператора читается в транзакции команды под блокировкой на чтение, смена участника ждёт конца команды;
+--   v0.2 10:52: ChatGPT R24 — RG24-01 hold_session_credential:
 --   проверка пропуска в транзакции команды со строкой на чтение под блокировкой; RG24-02 предъявление отозванного пропуска
 --   пишет доказательство только в первый раз, дальше растёт счётчик в строке пропуска; общая проверка срока
 --   credential_expired; v0.1 10:38: пропуск истекает по аренде, закрытой после его выдачи)
@@ -392,6 +394,28 @@ $$;
 ALTER FUNCTION bem_control.hold_session_credential(text, text) OWNER TO bem_control_owner;
 REVOKE EXECUTE ON FUNCTION bem_control.hold_session_credential(text, text) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION bem_control.hold_session_credential(text, text) TO bem_kernel_rw;
+
+-- RG25-01: то же для оператора. Строка участника роли OPERATOR читается с блокировкой FOR SHARE в транзакции
+-- команды по билету (пул входной роли): смена участника (set_role_actor меняет эту строку) ждёт конца команды,
+-- а успевшая раньше смена даёт отказ — посредник сверяет участника. Ничего не пишет; нет участника — NULL.
+CREATE FUNCTION bem_control.hold_operator_actor(p_tenant_id uuid)
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = bem_control, bem_core, pg_catalog, pg_temp
+AS $$
+DECLARE
+    v_actor text;
+BEGIN
+    IF session_user IS DISTINCT FROM 'bem_rules_gate' THEN RAISE EXCEPTION 'OPERATOR_HOLD_UNTRUSTED'; END IF;
+    SELECT actor_id INTO v_actor FROM bem_control.role_actor
+     WHERE tenant_id = p_tenant_id AND role_key = 'OPERATOR' FOR SHARE;
+    RETURN v_actor;
+END;
+$$;
+ALTER FUNCTION bem_control.hold_operator_actor(uuid) OWNER TO bem_control_owner;
+REVOKE EXECUTE ON FUNCTION bem_control.hold_operator_actor(uuid) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION bem_control.hold_operator_actor(uuid) TO bem_rules_gate;
 
 -- Отзыв (§3.1 шаг 3). LEASE_COMPLETED — ядро в транзакции CompleteChatLease, только если аренда этой сессии
 -- завершена и открытой нет; OPERATOR_TICKET — только входная роль bem_rules_gate по проверенному билету.

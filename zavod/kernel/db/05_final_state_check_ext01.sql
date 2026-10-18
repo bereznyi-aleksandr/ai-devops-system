@@ -2,7 +2,7 @@
 -- ИСТОЧНИК H1.31 05: sha256 1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
 -- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
--- РАСШИРЕНИЕ 04: sha256 4ca9b36c8a06566856e9392147c63aa00a4ef9436b742e56cd17a52fd5fea2de
+-- РАСШИРЕНИЕ 04: sha256 fa6bdf4dfcf6717215d2239e99f83ef0870c352d5dc1483ca87e88353098f675
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02 и Z-EXT-03 (см. сборщик).
 \set ON_ERROR_STOP on
 
@@ -567,6 +567,8 @@ DECLARE
         'FUNCTION|bem_control.lookup_session_credential(text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.hold_session_credential(text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.hold_session_credential(text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.hold_operator_actor(uuid)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.hold_operator_actor(uuid)|bem_rules_gate|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.credential_expired(uuid, text, timestamp with time zone)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.revoke_session_credential(uuid, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.revoke_session_credential(uuid, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
@@ -1486,6 +1488,7 @@ BEGIN
         ('claim_session_enrollment', '9879b35d7456b1993acc15a8f31594619858f1da0ac9e792a5f9cbff2d8a77e2'),
         ('lookup_session_credential', '35cc4c5829b396560bae39fddbc8fbd7c74ebd6a6505892dd54f659febae4f4d'),
         ('hold_session_credential', '1b4385c0180525f1010ecb685c98726467a32354467e7eb132f7a9e39eff38eb'),
+        ('hold_operator_actor', 'd74fa66a16593ffd024d958ab1f7413c08ee00c34abd3aa78bc75b49f48b5ea4'),
         ('credential_expired', 'f1c3db18479871a0430733e7f9e222a2a1b4cd4f4aeba63a0361dc7422bd80db'),
         ('revoke_session_credential', 'a79e8b00176a86cbf069d5a8adc95f65b537c1bea2dbb885bf49104756c535aa')
     ) AS x(fn, want) LOOP
@@ -1513,6 +1516,7 @@ BEGIN
         ('claim_session_enrollment', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('lookup_session_credential', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('hold_session_credential', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('hold_operator_actor', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('credential_expired', 'bem_control_owner|invoker|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('revoke_session_credential', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp')
     ) AS x(fn, want) LOOP
