@@ -230,7 +230,8 @@ jobs:
           node zavod/kernel/install/pg_files_check.mjs --make $pgRoot $made
           if ($LASTEXITCODE) { throw 'PG_LIST_MAKE' }
           "PG_LIST_SHA256=$((Get-FileHash -Algorithm SHA256 -LiteralPath $made).Hash.ToLowerInvariant()) lines=$(@(Get-Content -LiteralPath $made).Count)"
-          node zavod/kernel/install/pg_files_check.mjs $pgRoot zavod/kernel/install/pg16_15_files.sha256
+          # Как в установщике: ровно файлы списка копируются (лишнее установщика не берётся), копия сверяется строго.
+          node zavod/kernel/install/pg_files_check.mjs --copy-listed $pgRoot zavod/kernel/install/pg16_15_files.sha256 (Join-Path $env:RUNNER_TEMP 'pg_ref_listed')
           $filesOk = ($LASTEXITCODE -eq 0)
           $m = Select-String -LiteralPath zavod/kernel/install/install_zavod_kernel.ps1 -Pattern "^\s*pgsetup\s*=\s*@\{[^\n]*?\bsha\s*=\s*'([^']*)'"
           $pin = $m.Matches[0].Groups[1].Value

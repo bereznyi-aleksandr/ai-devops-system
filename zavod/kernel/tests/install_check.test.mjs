@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import { createHash, generateKeyPairSync } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -132,4 +132,24 @@ test('pg_files_check: список из дерева (--make) проходит �
   assert.deepEqual([r.mismatch, r.extra], [['lib/x.dll'], ['share/planted.sql']]);
   const empty = mkdtempSync(join(tmpdir(), 'zavod-ic-pg-empty-'));
   assert.throws(() => makeList(empty), /PG_DIR_MISSING/);
+});
+
+test('pg_files_check --copy-listed: копируются ровно файлы списка; подмена у источника — отказ до копирования', async () => {
+  const { makeList, copyListed, verifyTree } = await import('../install/pg_files_check.mjs');
+  const src = mkdtempSync(join(tmpdir(), 'zavod-ic-cl-'));
+  for (const [rel, text] of [['bin/postgres.exe', 'p'], ['lib/x.dll', 'x'], ['share/a/b.sql', 'b']]) {
+    mkdirSync(join(src, dirname(rel)), { recursive: true }); writeFileSync(join(src, rel), text);
+  }
+  const list = makeList(src);
+  mkdirSync(join(src, 'share', 'i18n')); writeFileSync(join(src, 'share', 'i18n', 'StackBuilder.mo'), 'extra');
+  const dst = join(mkdtempSync(join(tmpdir(), 'zavod-ic-cl-dst-')), 'pgsql');
+  const r = copyListed(src, list, dst);
+  assert.deepEqual([r.ok, r.copied, r.extra_ignored], [true, 3, 1]);
+  assert.equal(verifyTree(dst, list).ok, true);
+  assert.equal(copyListed(src, list, dst).stage, 'destination_not_empty');
+  writeFileSync(join(src, 'lib', 'x.dll'), 'patched');
+  const dst2 = join(mkdtempSync(join(tmpdir(), 'zavod-ic-cl-dst-')), 'pgsql');
+  const bad = copyListed(src, list, dst2);
+  assert.deepEqual([bad.ok, bad.stage, bad.mismatch], [false, 'source', ['lib/x.dll']]);
+  assert.equal(existsSync(dst2), false);
 });
