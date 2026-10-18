@@ -1,12 +1,13 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
 # ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:31 +03:00
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:41 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6 сессия 2fc9a1c8)
 # v0.6: учётке ядра выдаётся право «вход как пакетное задание» (secedit, только её SID) — без него задача с паролем не
 #   запускалась (CI 18.10: Ready, 0x41303); в gate_diag добавлены события планировщика. Правка 21:16: учётка узнаётся
 #   в выгрузке и по имени (местные учётки выгружаются именем, не *SID). Правка 21:31: каталог engine\src с
 #   sshsig.mjs (ядро загружает ../../engine/src/sshsig.mjs; CI: ERR_MODULE_NOT_FOUND), права как у app, суммы в квитанции;
-#   хвост gate.log — голые строки (ConvertTo-Json падал с OutOfMemoryException).
+#   хвост gate.log — голые строки (ConvertTo-Json падал с OutOfMemoryException). Правка 21:41: Set-Acl2 -Here снимает
+#   прежние записи учёток перед выдачей (/grant:r оставлял корню (OI)(CI); проверено опытом на пробном каталоге).
 # v0.5: права bin ставятся сразу после программ (служба базы запускает postgres.exe из bin до шага acl); на время
 #   initdb учётке установщика дана запись в data (initdb под администратором работает с урезанным маркером), затем
 #   снимается вместе с Admins; обход каталогов — $P.get_Keys() (у $P есть ключ 'keys').
@@ -93,6 +94,10 @@ function Set-Acl2([string]$dir, [string[]]$grants, [string]$owner = $SID_ADMINS,
   $icacls = "$env:SystemRoot\System32\icacls.exe"
   $rec = if ($Here) { @('/C', '/Q') } else { @('/T', '/C', '/Q') }
   Invoke-Checked $icacls (@($dir, '/setowner', $owner) + $rec) "ACL_OWNER $dir"
+  # -Here: прежние записи тех же учёток снимаются отдельным вызовом. /grant:r не заменил флаги наследования: корень
+  # после «F» без наследования сохранил (OI)(CI) от первой настройки (CI 18.10, прогон 39154616458: acl_._as_plan FAIL).
+  # Владелец (Administrators) сохраняет право менять список, поэтому промежуток между вызовами безопасен.
+  if ($Here) { Invoke-Checked $icacls (@($dir, '/remove:g') + @($grants | ForEach-Object { ($_ -split ':', 2)[0] }) + @('/C', '/Q')) "ACL_CLEAR $dir" }
   $argv = @($dir, '/inheritance:r', '/remove:g', '*S-1-5-11', '*S-1-3-0', '*S-1-3-4')
   $argv += @('/grant:r') + $grants + @('/C', '/Q')
   Invoke-Checked $icacls $argv "ACL $dir"
