@@ -1,12 +1,13 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
 # ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 16:14 +03:00
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 16:40 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f)
 # v0.5: права bin ставятся сразу после программ (служба базы запускает postgres.exe из bin до шага acl); на время
 #   initdb учётке установщика дана запись в data (initdb под администратором работает с урезанным маркером), затем
 #   снимается вместе с Admins; обход каталогов — $P.get_Keys() (у $P есть ключ 'keys').
 #   Список пакетов npm читает install/npm_lock_list.mjs (ConvertFrom-Json PowerShell 5.1 не читает package-lock.json).
 #   Права: записи только на каталог, вложенное — /reset к унаследованным (icacls /T оставлял файлам пустой список).
+#   Admins снимается с data только после схемы (схема пишет pg_hba.conf).
 # v0.4: установщик EDB той же сборки, что архив, — 16.15-5 (CI 18.10: у EDB есть сборки 16.15-1…5; установщик 16.15-1
 #   отличался от архива 16.15-5 в 183 файлах). Тройная сверка (установщик, архив, список коммита) возвращена;
 #   отпечаток сертификата подписи EnterpriseDB закреплён; сумма установщика — из эталонного прогона CI 18.10
@@ -203,8 +204,9 @@ try {
   Invoke-Checked $node @((Join-Path $P['app'] 'install\db_setup.mjs'), 'config', $dbCfg) 'DB_CONFIG'
   Invoke-Checked (Join-Path $P['bin'] 'pgsql\bin\pg_ctl.exe') @('register', '-N', $PgService, '-U', "NT SERVICE\$PgService", '-D', $P['data'], '-S', 'auto', '-w') 'PG_REGISTER'
   Set-Acl2 $P['data'] @("*S-1-5-80-0:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "NT SERVICE\${PgService}:(OI)(CI)F")
-  # S-1-5-80-0 («все службы»), Admins и учётка установщика снимаются сразу: доступ к data — только у службы базы и SYSTEM.
-  Invoke-Checked "$env:SystemRoot\System32\icacls.exe" @($P['data'], '/remove:g', '*S-1-5-80-0', $SID_ADMINS, $me, '/C', '/Q') 'ACL_DATA_TRIM'
+  # S-1-5-80-0 («все службы») и учётка установщика снимаются сразу. Admins остаётся до конца шага: схема (db_setup
+  # schema) открывает и закрывает окно миграции записью pg_hba.conf и pg_ident.conf (CI 18.10: EPERM без Admins).
+  Invoke-Checked "$env:SystemRoot\System32\icacls.exe" @($P['data'], '/remove:g', '*S-1-5-80-0', $me, '/C', '/Q') 'ACL_DATA_TRIM'
   Start-Service -Name $PgService
   $deadline = (Get-Date).AddSeconds(60)
   while (-not (Get-NetTCPConnection -LocalPort $DbPort -State Listen -ErrorAction SilentlyContinue)) {
@@ -213,6 +215,8 @@ try {
   $dbChecks = & $node (Join-Path $P['app'] 'install\pg_probe.mjs') $DbPort (Join-Path $certs 'ca.crt.pem') $certs $foreign | ConvertFrom-Json
   $receipt.db_checks = $dbChecks
   if (-not $dbChecks.ok) { Fail 'DB_CHECKS' }
+  # Схема установлена: доступ к data — только у службы базы и SYSTEM (§2).
+  Invoke-Checked "$env:SystemRoot\System32\icacls.exe" @($P['data'], '/remove:g', $SID_ADMINS, '/C', '/Q') 'ACL_DATA_ADMINS'
 
   Step 'rules'
   $git = Join-Path $P['bin'] 'git\cmd\git.exe'
