@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: ci/service_probe.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 14:27 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:31 +03:00 (v0.2: запись в engine запрещена)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: план установки Z-INSTALL-01 v0.4 §4.C (RG28-02) — проба прав службы: запускается установщиком ОТ ИМЕНИ
 //   zavod-kernel (Start-Process -Credential) и делает настоящие попытки. Обязано дать отказ: чтение admin, data, ключа CA
@@ -34,6 +34,8 @@ export function fsChecks(root) {
     fsRow('write_bin_file_refused', 'refused', attempt(openRw(P('bin', 'node.exe')))),
     fsRow('create_in_bin_refused', 'refused', attempt(() => closeSync(openSync(P('bin', 'service_probe_must_fail.txt'), 'wx')))),
     fsRow('write_app_file_refused', 'refused', attempt(openRw(P('app', 'gate.json')))),
+    fsRow('write_engine_file_refused', 'refused', attempt(openRw(P('engine', 'src', 'sshsig.mjs')))),
+    fsRow('create_in_engine_refused', 'refused', attempt(() => closeSync(openSync(P('engine', 'src', 'service_probe_must_fail.txt'), 'wx')))),
     fsRow('create_in_app_refused', 'refused', attempt(() => closeSync(openSync(P('app', 'service_probe_must_fail.txt'), 'wx')))),
     fsRow('write_public_file_refused', 'refused', attempt(openRw(P('public', 'ca.crt.pem')))),
     fsRow('create_in_public_refused', 'refused', attempt(() => closeSync(openSync(P('public', 'service_probe_must_fail.txt'), 'wx')))),

@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/install_check.test.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:50 +03:00 (v0.2: проверка npm_lock_list)
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:31 +03:00 (v0.3: в пробном корне есть engine/src/sshsig.mjs; v0.2: проверка npm_lock_list)
 // ИСПОЛНИТЕЛЬ: Claude (сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: проверки ci/install_check.mjs без установки: вход привратника (настоящий сервер на свободном порту),
 //   сравнение прав с §2, закреплённые суммы установщика, суммы квитанции (лишний и изменённый файл — FAIL),
@@ -77,7 +77,7 @@ test('installerPins: четыре закреплённые суммы (node, Min
 
 function fakeRoot() {
   const root = mkdtempSync(join(tmpdir(), 'zavod-ic-root-'));
-  const files = { 'bin/node.exe': 'node', 'app/gate.json': '{}', 'app/install/install_zavod_kernel.ps1':
+  const files = { 'bin/node.exe': 'node', 'app/gate.json': '{}', 'engine/src/sshsig.mjs': 'export {}', 'app/install/install_zavod_kernel.ps1':
     `  node    = @{ url = 'u'; sha = '${'a'.repeat(64)}' }\n  mingit  = @{ url = 'u'; sha = '${'b'.repeat(64)}' }\n` +
     `  pgsetup = @{ url = 'u'; sha = '${'c'.repeat(64)}'; signer = 'x' }\n  pgzip   = @{ url = 'u'; sha = '${'d'.repeat(64)}' }\n` };
   const sums = {};

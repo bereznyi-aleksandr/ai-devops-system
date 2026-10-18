@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: ci/install_check.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:00 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:31 +03:00 (v0.2: каталог engine — права как у app, суммы, запись запрещена)
 // ИСПОЛНИТЕЛЬ: Claude (сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: план установки Z-INSTALL-01 v0.4 §4.D — проверка готовой установки из ОБЫЧНОЙ учётки оператора (без
 //   повышения прав, без ключей и без пароля zavod-kernel). Шесть групп: 1) права каталогов ровно как §2 (читаемые —
@@ -30,7 +30,7 @@ import { makeAll } from '../install/make_certs.mjs';
 import { scan } from './leak_scan.mjs';
 
 export const VERSION = 'v0.1';
-export const DIRS = Object.freeze(['.', 'admin', 'admin\\certs', 'admin\\staging', 'app', 'bin', 'data', 'keys', 'keys\\kernel', 'logs', 'public', 'rules', 'run']);
+export const DIRS = Object.freeze(['.', 'admin', 'admin\\certs', 'admin\\staging', 'app', 'bin', 'data', 'engine', 'keys', 'keys\\kernel', 'logs', 'public', 'rules', 'run']);
 const A = 'S-1-5-32-544', S = 'S-1-5-18', U = 'S-1-5-32-545';
 const F = 'FullControl', RX = 'ReadAndExecute, Synchronize', M = 'Modify, Synchronize';
 const OICI = 'ContainerInherit, ObjectInherit', NONE = 'None';
@@ -47,7 +47,7 @@ export function expectedAcl({ K, PG }) {
     admin: { owner: A, protected: true, rules: base },
     'admin\\certs': { owner: A, protected: false, rules: base },
     'admin\\staging': { owner: A, protected: false, rules: base },
-    bin: pub, app: pub, public: pub,
+    bin: pub, app: pub, engine: pub, public: pub,
     keys: { owner: A, protected: true, rules: [...base, [K, RX, NONE]] },
     'keys\\kernel': { owner: A, protected: true, rules: [...base, [K, RX, OICI]] },
     rules: { ...kw, owner: K }, run: kw, logs: kw,
@@ -141,6 +141,8 @@ export function operatorFsChecks(root) {
     no('create_in_bin_refused', attempt(create(P('bin', 'install_check_must_fail.txt')))),
     no('write_app_refused', attempt(openRw(P('app', 'gate.json')))),
     no('create_in_app_refused', attempt(create(P('app', 'install_check_must_fail.txt')))),
+    no('write_engine_refused', attempt(openRw(P('engine', 'src', 'sshsig.mjs')))),
+    no('create_in_engine_refused', attempt(create(P('engine', 'src', 'install_check_must_fail.txt')))),
     no('write_rules_refused', attempt(openRw(P('rules', '.git', 'HEAD')))),
     no('create_in_rules_refused', attempt(create(P('rules', 'install_check_must_fail.txt')))),
     no('write_run_stop_refused', attempt(openRw(P('run', 'STOP')))),
@@ -282,7 +284,7 @@ export function receiptChecks(root, receipt) {
     row('receipt', 'commit_pinned', /^[0-9a-f]{40}$/.test(receipt.commit || ''), receipt.commit ?? null)];
   const want = receipt.file_sums || {};
   const got = {};
-  for (const base of ['bin', 'app']) {
+  for (const base of ['bin', 'app', 'engine']) {
     for (const f of walkFiles(join(root, base))) got[relative(root, f).replace(/\\/g, '/')] = sha256(readFileSync(f));
   }
   const wantKeys = Object.keys(want).sort(), gotKeys = Object.keys(got).sort();

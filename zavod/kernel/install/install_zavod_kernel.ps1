@@ -1,10 +1,12 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
 # ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:16 +03:00
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:31 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6 сессия 2fc9a1c8)
 # v0.6: учётке ядра выдаётся право «вход как пакетное задание» (secedit, только её SID) — без него задача с паролем не
 #   запускалась (CI 18.10: Ready, 0x41303); в gate_diag добавлены события планировщика. Правка 21:16: учётка узнаётся
-#   в выгрузке и по имени (местные учётки выгружаются именем, не *SID).
+#   в выгрузке и по имени (местные учётки выгружаются именем, не *SID). Правка 21:31: каталог engine\src с
+#   sshsig.mjs (ядро загружает ../../engine/src/sshsig.mjs; CI: ERR_MODULE_NOT_FOUND), права как у app, суммы в квитанции;
+#   хвост gate.log — голые строки (ConvertTo-Json падал с OutOfMemoryException).
 # v0.5: права bin ставятся сразу после программ (служба базы запускает postgres.exe из bin до шага acl); на время
 #   initdb учётке установщика дана запись в data (initdb под администратором работает с урезанным маркером), затем
 #   снимается вместе с Admins; обход каталогов — $P.get_Keys() (у $P есть ключ 'keys').
@@ -108,7 +110,7 @@ function Grant-BatchLogon([string]$sid) {
   $me = @("*$sid", $KernelUser, "$env:COMPUTERNAME\$KernelUser")
   $isMe = { param($list) @($list | Where-Object { $me -contains $_ }).Count -gt 0 }
   $cur = Join-Path $P['admin'] 'user_rights_before.inf'
-  Invoke-Checked $secedit @('/export', '/areas', 'USER_RIGHTS', '/cfg', $cur, '/quiet') 'BATCH_RIGHT_EXPORT'
+  Invoke-Checked $secedit @('/export', '/areas', 'USER_RIGHTS', '/cfg', $cur, '/quiet') 'BATCH_RIGHT_EXPORT' | Out-Null
   $line = @(Get-Content -LiteralPath $cur | Where-Object { $_ -match '^\s*SeBatchLogonRight\s*=' })
   $have = if ($line.Count) { @(($line[0] -split '=', 2)[1] -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) } else { @() }
   $deny = @(Get-Content -LiteralPath $cur | Where-Object { $_ -match '^\s*SeDenyBatchLogonRight\s*=' })
@@ -117,9 +119,9 @@ function Grant-BatchLogon([string]$sid) {
   $inf = Join-Path $P['admin'] 'user_rights_batch.inf'
   @('[Unicode]', 'Unicode=yes', '[Version]', 'signature="$CHICAGO$"', 'Revision=1', '[Privilege Rights]',
     "SeBatchLogonRight = $((@($have) + "*$sid") -join ',')") | Set-Content -LiteralPath $inf -Encoding Unicode
-  Invoke-Checked $secedit @('/configure', '/db', (Join-Path $P['admin'] 'user_rights_batch.sdb'), '/cfg', $inf, '/areas', 'USER_RIGHTS', '/quiet') 'BATCH_RIGHT_CONFIGURE'
+  Invoke-Checked $secedit @('/configure', '/db', (Join-Path $P['admin'] 'user_rights_batch.sdb'), '/cfg', $inf, '/areas', 'USER_RIGHTS', '/quiet') 'BATCH_RIGHT_CONFIGURE' | Out-Null
   $chk = Join-Path $P['admin'] 'user_rights_after.inf'
-  Invoke-Checked $secedit @('/export', '/areas', 'USER_RIGHTS', '/cfg', $chk, '/quiet') 'BATCH_RIGHT_VERIFY'
+  Invoke-Checked $secedit @('/export', '/areas', 'USER_RIGHTS', '/cfg', $chk, '/quiet') 'BATCH_RIGHT_VERIFY' | Out-Null
   $after = @(Get-Content -LiteralPath $chk | Where-Object { $_ -match '^\s*SeBatchLogonRight\s*=' })
   # В тексте отказа — только список учёток с правом (имена и SID, без секретов).
   if (-not $after.Count -or -not (& $isMe @(($after[0] -split '=', 2)[1] -split ',' | ForEach-Object { $_.Trim() }))) {
@@ -128,7 +130,7 @@ function Grant-BatchLogon([string]$sid) {
 }
 
 $P = @{}
-foreach ($d in 'admin', 'admin\staging', 'admin\certs', 'bin', 'app', 'rules', 'keys', 'keys\kernel', 'data', 'run', 'logs', 'public') { $P[$d] = Join-Path $Root $d }
+foreach ($d in 'admin', 'admin\staging', 'admin\certs', 'bin', 'app', 'engine', 'rules', 'keys', 'keys\kernel', 'data', 'run', 'logs', 'public') { $P[$d] = Join-Path $Root $d }
 $node = Join-Path $P['bin'] 'node.exe'
 $cred = $null
 try {
@@ -176,6 +178,10 @@ try {
   Step 'programs'
   Copy-Item -LiteralPath (Join-Path $st 'node.exe') -Destination $node
   Copy-Item -Path (Join-Path $repoDir 'zavod\kernel\*') -Destination $P['app'] -Recurse -Exclude 'tests', 'node_modules'
+  # Единственный модуль вне zavod\kernel, который ядро загружает: src/rules_gate.mjs → ../../engine/src/sshsig.mjs
+  # (проверка подписи правил). Раскладка как в репозитории: C:\ZavodKernel\engine\src (CI 18.10: ERR_MODULE_NOT_FOUND).
+  New-Item -ItemType Directory -Path (Join-Path $P['engine'] 'src') | Out-Null
+  Copy-Item -LiteralPath (Join-Path $repoDir 'zavod\engine\src\sshsig.mjs') -Destination (Join-Path $P['engine'] 'src\sshsig.mjs')
   Copy-Item -LiteralPath (Join-Path $st 'mingit') -Destination (Join-Path $P['bin'] 'git') -Recurse
   New-Item -ItemType Directory -Path (Join-Path $P['bin'] 'nohooks') | Out-Null
   # PostgreSQL: подписанный установщик EDB, только извлечение (без служб и реестра); каждый файл bin/lib/share
@@ -275,6 +281,7 @@ try {
   Step 'acl'
   $K = "${KernelUser}"
   Set-Acl2 $P['app'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${SID_USERS}:(OI)(CI)RX")
+  Set-Acl2 $P['engine'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${SID_USERS}:(OI)(CI)RX")
   Set-Acl2 $P['public'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${SID_USERS}:(OI)(CI)RX")
   Set-Acl2 $P['keys'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${K}:(RX)")
   Set-Acl2 $P['keys\kernel'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${K}:(OI)(CI)RX")
@@ -317,7 +324,9 @@ try {
     if (-not $health -and (Get-Date) -gt $deadline) {
       # Следы для разбора: состояние задачи, код последнего запуска и хвост журнала привратника (в нём нет ключей).
       $ti = Get-ScheduledTaskInfo -TaskName $TaskName
-      $tail = if (Test-Path -LiteralPath $gateLog) { @(Get-Content -LiteralPath $gateLog -Tail 20) } else { @() }
+      # "$_" — голая строка: у строк Get-Content есть PSPath/PSDrive/PSProvider, и ConvertTo-Json -Depth 8 на них
+      # падал с OutOfMemoryException (CI 18.10, прогон 39153414444) — квитанция не записывалась.
+      $tail = if (Test-Path -LiteralPath $gateLog) { @(Get-Content -LiteralPath $gateLog -Tail 20 | ForEach-Object { "$_" }) } else { @() }
       $receipt.gate_diag = [ordered]@{ task_state = "$((Get-ScheduledTask -TaskName $TaskName).State)"; last_result = $ti.LastTaskResult
         last_run = "$($ti.LastRunTime)"; log_tail = $tail; events = @() }
       # События планировщика (если журнал Operational включён): номер, код результата и первая строка текста.
@@ -334,7 +343,7 @@ try {
 
   Step 'receipt'
   $sums = [ordered]@{}
-  foreach ($base in 'bin', 'app') {
+  foreach ($base in 'bin', 'app', 'engine') {
     Get-ChildItem -LiteralPath $P[$base] -Recurse -File | Sort-Object FullName | ForEach-Object {
       $sums[$_.FullName.Substring($Root.Length + 1).Replace('\', '/')] = Get-Sha $_.FullName }
   }
