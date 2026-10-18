@@ -69,17 +69,18 @@ test('sameAcl: точный набор записей §2; лишняя запи
   assert.equal(sameAcl(rootRec, want['.']), false);
 });
 
-test('installerPins: четыре закреплённые суммы читаются из установщика', () => {
+test('installerPins: три закреплённые суммы (node, MinGit, установщик EDB) читаются из установщика', () => {
   const pins = installerPins(readFileSync(join(here, '..', 'install', 'install_zavod_kernel.ps1'), 'utf8'));
-  assert.deepEqual(Object.keys(pins).sort(), ['mingit', 'node', 'pgsetup', 'pgzip']);
+  assert.deepEqual(Object.keys(pins).sort(), ['mingit', 'node', 'pgsetup']);
   assert.match(pins.node, /^[0-9a-f]{64}$/);
+  assert.match(pins.pgsetup, /^[0-9a-f]{64}$/);
 });
 
 function fakeRoot() {
   const root = mkdtempSync(join(tmpdir(), 'zavod-ic-root-'));
   const files = { 'bin/node.exe': 'node', 'app/gate.json': '{}', 'app/install/install_zavod_kernel.ps1':
     `  node    = @{ url = 'u'; sha = '${'a'.repeat(64)}' }\n  mingit  = @{ url = 'u'; sha = '${'b'.repeat(64)}' }\n` +
-    `  pgsetup = @{ url = 'u'; sha = '${'c'.repeat(64)}'; signer = 'x' }\n  pgzip   = @{ url = 'u'; sha = '${'d'.repeat(64)}' }\n` };
+    `  pgsetup = @{ url = 'u'; sha = '${'c'.repeat(64)}'; signer = 'x' }\n` };
   const sums = {};
   for (const [rel, text] of Object.entries(files)) {
     mkdirSync(join(root, dirname(rel)), { recursive: true });
@@ -87,7 +88,7 @@ function fakeRoot() {
     sums[rel] = sha(Buffer.from(text));
   }
   const receipt = { status: 'OK', mode_active: false, commit: 'f'.repeat(40), file_sums: sums,
-    sources: { node: { sha256: 'a'.repeat(64) }, mingit: { sha256: 'b'.repeat(64) }, pgsetup: { sha256: 'c'.repeat(64) }, pgzip: { sha256: 'd'.repeat(64) } } };
+    sources: { node: { sha256: 'a'.repeat(64) }, mingit: { sha256: 'b'.repeat(64) }, pgsetup: { sha256: 'c'.repeat(64) } } };
   return { root, receipt };
 }
 
@@ -99,9 +100,9 @@ test('receiptChecks: совпадение проходит; лишний, изм
   assert.equal(r1.pass, false); assert.match(r1.got, /extra=1/);
   const { root: root2, receipt: rec2 } = fakeRoot();
   writeFileSync(join(root2, 'bin', 'node.exe'), 'patched');
-  rec2.sources.pgzip.sha256 = 'e'.repeat(64);
+  rec2.sources.pgsetup.sha256 = 'e'.repeat(64);
   const bad = receiptChecks(root2, rec2).filter((c) => !c.pass).map((c) => c.name).sort();
-  assert.deepEqual(bad, ['file_sums_match', 'source_pgzip_matches_pin']);
+  assert.deepEqual(bad, ['file_sums_match', 'source_pgsetup_matches_pin']);
 });
 
 test('readAclState: PowerShell-часть выполняется и читает права (только Windows)', { skip: process.platform !== 'win32' }, () => {
@@ -114,4 +115,22 @@ test('readAclState: PowerShell-часть выполняется и читает
   assert.ok(Array.isArray(st.dirs.bin.actual.rules));
   assert.equal(st.dirs.admin.actual.readable, false);
   assert.equal(st.pg_service, null);
+});
+
+test('pg_files_check: список из дерева (--make) проходит сверку; подмена, лишний и пропавший файл — отказ', async () => {
+  const { makeList, verifyTree } = await import('../install/pg_files_check.mjs');
+  const root = mkdtempSync(join(tmpdir(), 'zavod-ic-pg-'));
+  for (const [rel, text] of [['bin/postgres.exe', 'p'], ['lib/x.dll', 'x'], ['share/a/b.sql', 'b']]) {
+    mkdirSync(join(root, dirname(rel)), { recursive: true }); writeFileSync(join(root, rel), text);
+  }
+  const list = makeList(root);
+  assert.deepEqual(list.split('\n').filter(Boolean).map((l) => l.slice(66)), ['bin/postgres.exe', 'lib/x.dll', 'share/a/b.sql']);
+  assert.equal(verifyTree(root, list).ok, true);
+  writeFileSync(join(root, 'lib', 'x.dll'), 'patched');
+  writeFileSync(join(root, 'share', 'planted.sql'), 'z');
+  const r = verifyTree(root, list);
+  assert.equal(r.ok, false);
+  assert.deepEqual([r.mismatch, r.extra], [['lib/x.dll'], ['share/planted.sql']]);
+  const empty = mkdtempSync(join(tmpdir(), 'zavod-ic-pg-empty-'));
+  assert.throws(() => makeList(empty), /PG_DIR_MISSING/);
 });

@@ -292,7 +292,7 @@ export function receiptChecks(root, receipt) {
     `files=${gotKeys.length} extra=${extra.length} missing=${missing.length} changed=${changed.length}`));
   const ps1 = join(root, 'app', 'install', 'install_zavod_kernel.ps1');
   const pins = existsSync(ps1) ? installerPins(readFileSync(ps1, 'utf8')) : {};
-  for (const key of ['node', 'mingit', 'pgsetup', 'pgzip']) {
+  for (const key of ['node', 'mingit', 'pgsetup']) {
     const pin = pins[key];
     out.push(row('receipt', `source_${key}_matches_pin`, /^[0-9a-f]{64}$/.test(pin || '') && receipt.sources?.[key]?.sha256 === pin));
   }

@@ -218,7 +218,20 @@ jobs:
           $p = Start-Process -FilePath $exe -ArgumentList @('--mode', 'unattended', '--extract-only', '1', '--prefix', "`"$x`"") -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "PG_EXTRACT exit=$($p.ExitCode)" }
           $pgRoot = if (Test-Path -LiteralPath (Join-Path $x 'bin\postgres.exe')) { $x } else { Join-Path $x 'pgsql' }
-          node zavod/kernel/install/pg_files_check.mjs $pgRoot zavod/kernel/install/pg16_15_files.sha256
+          # Сведения для проверки (не влияют на итог): подписанные exe/dll и соседние сборки установщика у EDB.
+          $bins = @(Get-ChildItem -LiteralPath (Join-Path $pgRoot 'bin'), (Join-Path $pgRoot 'lib') -File | Where-Object { $_.Extension -in '.exe', '.dll' })
+          $signed = @($bins | Where-Object { (Get-AuthenticodeSignature -LiteralPath $_.FullName).Status -eq 'Valid' })
+          "PG_BINARIES total=$($bins.Count) signed_valid=$($signed.Count)"
+          foreach ($n in 1..6) {
+            $u = $env:ZAVOD_PG_SETUP_URL -replace '16\.15-1-', "16.15-$n-"
+            try { $r = Invoke-WebRequest -UseBasicParsing -Method Head -Uri $u; "EDB_BUILD 16.15-$n status=$($r.StatusCode) length=$($r.Headers['Content-Length'])" } catch { "EDB_BUILD 16.15-$n absent" }
+          }
+          # Список файлов bin/lib/share с этого установщика: артефакт прогона; закреплённый в коммите список обязан совпасть.
+          $made = Join-Path $env:RUNNER_TEMP 'pg16_15_1_installer_files.sha256'
+          node zavod/kernel/install/pg_files_check.mjs --make $pgRoot $made
+          if ($LASTEXITCODE) { throw 'PG_LIST_MAKE' }
+          "PG_LIST_SHA256=$((Get-FileHash -Algorithm SHA256 -LiteralPath $made).Hash.ToLowerInvariant()) lines=$(@(Get-Content -LiteralPath $made).Count)"
+          node zavod/kernel/install/pg_files_check.mjs $pgRoot zavod/kernel/install/pg16_15_1_installer_files.sha256
           if ($LASTEXITCODE) { throw 'PG_FILES_INSTALLER' }
           $m = Select-String -LiteralPath zavod/kernel/install/install_zavod_kernel.ps1 -Pattern "^\s*pgsetup\s*=\s*@\{[^\n]*?\bsha\s*=\s*'([^']*)'"
           $pin = $m.Matches[0].Groups[1].Value
@@ -250,6 +263,7 @@ jobs:
         with:
           name: zavod-kernel-windows-install
           path: |
+            ${{ runner.temp }}/pg16_15_1_installer_files.sha256
             C:\ZavodKernel\public\install_receipt.json
             C:\ZavodKernel\logs\service_probe.json
             C:\zavod_ic\install_check.json

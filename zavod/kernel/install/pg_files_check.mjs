@@ -1,14 +1,18 @@
 // ДОКУМЕНТ: install/pg_files_check.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 14:27 +03:00
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:08 +03:00
+// ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2 сессия 9951b86f)
+// v0.2: режим --make (список сумм из дерева, по пути) — эталон списка снимается в CI с подписанного установщика EDB:
+//   CI 18.10 показал, что установщик 16.15-1 и архив binaries 16.15-5 — разные сборки (183 файла различаются).
 // НАЗНАЧЕНИЕ: план установки Z-INSTALL-01 v0.4 §3.2c — сверка файлов PostgreSQL 16.15 (bin, lib, share) со списком сумм
-//   install/pg16_15_files.sha256: каждый файл списка есть и его SHA-256 совпадает, лишних файлов в bin/lib/share нет.
+//   (install/pg16_15_1_installer_files.sha256 — из установщика 16.15-1): каждый файл списка есть и его SHA-256 совпадает, лишних файлов в bin/lib/share нет.
 //   Любое расхождение — отказ (установщик останавливается). Другие каталоги (pgAdmin, StackBuilder, doc, include)
 //   не сверяются и не копируются.
 // ЗАПУСК: node install/pg_files_check.mjs <корень с bin,lib,share> <список сумм>  → JSON; код 3 при расхождении.
+//   node install/pg_files_check.mjs --make <корень> [файл]  → список сумм bin/lib/share (строки «сумма␠␠путь», по пути,
+//   конец строки LF) в новый файл (существующий не перезаписывается) или в stdout.
 
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, existsSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -56,7 +60,23 @@ export function verifyTree(root, listText) {
   return res;
 }
 
-if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+// makeList — список в формате parseList: каждый файл bin/lib/share, сортировка по пути.
+export function makeList(root) {
+  const rows = [];
+  for (const d of PG_DIRS) {
+    if (!existsSync(join(root, d))) throw new Error(`PG_DIR_MISSING ${d}`);
+    for (const p of walk(join(root, d), [])) rows.push([relative(root, p).split(sep).join('/'), createHash('sha256').update(readFileSync(p)).digest('hex')]);
+  }
+  rows.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  const text = rows.map(([rel, sum]) => `${sum}  ${rel}`).join('\n') + '\n';
+  parseList(text);
+  return text;
+}
+
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url && process.argv[2] === '--make') {
+  const text = makeList(process.argv[3] || '');
+  if (process.argv[4]) writeFileSync(process.argv[4], text, { flag: 'wx' }); else process.stdout.write(text);
+} else if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
   try {
     const r = verifyTree(process.argv[2] || '', readFileSync(process.argv[3] || '', 'utf8'));
     const cut = (a) => a.slice(0, 20);
