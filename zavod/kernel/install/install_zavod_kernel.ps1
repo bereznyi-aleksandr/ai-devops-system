@@ -1,10 +1,11 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
 # ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:37 +03:00
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:50 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f)
 # v0.5: права bin ставятся сразу после программ (служба базы запускает postgres.exe из bin до шага acl); на время
 #   initdb учётке установщика дана запись в data (initdb под администратором работает с урезанным маркером), затем
 #   снимается вместе с Admins; обход каталогов — $P.get_Keys() (у $P есть ключ 'keys').
+#   Список пакетов npm читает install/npm_lock_list.mjs (ConvertFrom-Json PowerShell 5.1 не читает package-lock.json).
 # v0.4: установщик EDB той же сборки, что архив, — 16.15-5 (CI 18.10: у EDB есть сборки 16.15-1…5; установщик 16.15-1
 #   отличался от архива 16.15-5 в 183 файлах). Тройная сверка (установщик, архив, список коммита) возвращена;
 #   отпечаток сертификата подписи EnterpriseDB закреплён; сумма установщика — из эталонного прогона CI 18.10
@@ -157,23 +158,22 @@ try {
 
   Step 'npm'
   # Пакеты из package-lock.json коммита: адрес только registry.npmjs.org, integrity sha512 сверяется до распаковки.
-  $lock = Get-Content -Raw -LiteralPath (Join-Path $P['app'] 'package-lock.json') | ConvertFrom-Json
+  # Разбор файла — node (install/npm_lock_list.mjs): ConvertFrom-Json PowerShell 5.1 отказывает на пустом имени ключа.
+  $lockRows = @(& $node (Join-Path $P['app'] 'install\npm_lock_list.mjs') (Join-Path $P['app'] 'package-lock.json'))
+  if ($LASTEXITCODE -ne 0) { Fail "NPM_LOCK $($lockRows -join ' ')" }
   $npmDir = Join-Path $st 'npm'; New-Item -ItemType Directory -Path $npmDir | Out-Null
   $n = 0
-  foreach ($prop in $lock.packages.PSObject.Properties) {
-    if ($prop.Name -eq '') { continue }
-    $pkg = $prop.Value
-    if (-not $pkg.resolved -or $pkg.resolved -notmatch '^https://registry\.npmjs\.org/[^?#]+\.tgz$') { Fail "NPM_RESOLVED $($prop.Name)" }
-    if ($pkg.integrity -notmatch '^sha512-([A-Za-z0-9+/=]+)$') { Fail "NPM_INTEGRITY $($prop.Name)" }
-    $want = $Matches[1]
+  foreach ($row in $lockRows) {
+    $name, $url, $want = $row -split "`t"
+    if ($url -notmatch '^https://registry\.npmjs\.org/[^?#]+\.tgz$' -or $want -notmatch '^[A-Za-z0-9+/]{86}==$') { Fail "NPM_ROW $name" }
     $tgz = Join-Path $npmDir ("{0:d3}.tgz" -f $n); $n++
-    Invoke-WebRequest -UseBasicParsing -Uri $pkg.resolved -OutFile $tgz
+    Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $tgz
     $sha = [Security.Cryptography.SHA512]::Create()
     $got = [Convert]::ToBase64String($sha.ComputeHash([IO.File]::ReadAllBytes($tgz)))
-    if ($got -ne $want) { Fail "NPM_SHA512 $($prop.Name)" }
-    $dest = Join-Path $P['app'] ($prop.Name -replace '/', '\')
+    if ($got -ne $want) { Fail "NPM_SHA512 $name" }
+    $dest = Join-Path $P['app'] ($name -replace '/', '\')
     New-Item -ItemType Directory -Path $dest -Force | Out-Null
-    Invoke-Checked $tar @('-xzf', $tgz, '-C', $dest, '--strip-components=1') "NPM_UNPACK $($prop.Name)"
+    Invoke-Checked $tar @('-xzf', $tgz, '-C', $dest, '--strip-components=1') "NPM_UNPACK $name"
   }
   $receipt.sources['npm'] = [ordered]@{ packages = $n; lock_sha256 = (Get-Sha (Join-Path $P['app'] 'package-lock.json')) }
 

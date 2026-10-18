@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/install_check.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:00 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:50 +03:00 (v0.2: проверка npm_lock_list)
 // ИСПОЛНИТЕЛЬ: Claude (сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 // НАЗНАЧЕНИЕ: проверки ci/install_check.mjs без установки: вход привратника (настоящий сервер на свободном порту),
 //   сравнение прав с §2, закреплённые суммы установщика, суммы квитанции (лишний и изменённый файл — FAIL),
@@ -152,4 +152,17 @@ test('pg_files_check --copy-listed: копируются ровно файлы �
   const bad = copyListed(src, list, dst2);
   assert.deepEqual([bad.ok, bad.stage, bad.mismatch], [false, 'source', ['lib/x.dll']]);
   assert.equal(existsSync(dst2), false);
+});
+
+test('npm_lock_list: настоящий package-lock.json читается; чужой адрес, не sha512 и выход из node_modules — отказ', async () => {
+  const { lockList } = await import('../install/npm_lock_list.mjs');
+  const text = readFileSync(join(here, '..', 'package-lock.json'), 'utf8');
+  const rows = lockList(text);
+  assert.ok(rows.length >= 10);
+  assert.ok(rows.every(([n, u, s]) => n.startsWith('node_modules/') && u.startsWith('https://registry.npmjs.org/') && s.length === 88));
+  const bad = (patch) => { const l = JSON.parse(text); patch(l.packages); return () => lockList(JSON.stringify(l)); };
+  assert.throws(bad((p) => { p['node_modules/pg'].resolved = 'https://evil.example/pg.tgz'; }), /NPM_RESOLVED/);
+  assert.throws(bad((p) => { p['node_modules/pg'].integrity = 'sha1-AAAA'; }), /NPM_INTEGRITY/);
+  assert.throws(bad((p) => { p['node_modules/../x'] = p['node_modules/pg']; }), /NPM_NAME/);
+  assert.throws(bad((p) => { p['node_modules/pg'].link = true; }), /NPM_RESOLVED/);
 });
