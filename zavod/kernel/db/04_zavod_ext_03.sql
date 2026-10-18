@@ -1,16 +1,19 @@
 -- ДОКУМЕНТ: db/04_zavod_ext_03.sql (расширение Z-EXT-03: пакет Z-TRANSPORT-01, привратник)
--- ВЕРСИЯ: v0.1  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-10-18 10:24 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:38 +03:00 (пропуск истекает по аренде, закрытой после его выдачи)
+-- ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-10-18 10:24 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:52 +03:00 (v0.2: ChatGPT R24 — RG24-01 hold_session_credential:
+--   проверка пропуска в транзакции команды со строкой на чтение под блокировкой; RG24-02 предъявление отозванного пропуска
+--   пишет доказательство только в первый раз, дальше растёт счётчик в строке пропуска; общая проверка срока
+--   credential_expired; v0.1 10:38: пропуск истекает по аренде, закрытой после его выдачи)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 -- ОСНОВАНИЕ: проект ПРОЕКТ_Z_TRANSPORT_01_20261018.md v0.4 (ChatGPT R23 APPROVE 0/0/0), §3–§5.
 -- НАЗНАЧЕНИЕ: (1) участник роли role_actor — пишет только путь управления (bem_governance), §4;
 --   (2) выдача пропуска сессии: подготовка (prepare_session_enrollment) держателем той же роли, держателем
 --       роли-начальника или по билету оператора (только входная роль bem_rules_gate), получение
 --       (claim_session_enrollment) по одноразовому коду, §3.1;
---   (3) проверка пропуска (lookup_session_credential), §3.2; отзыв (revoke_session_credential), §3.1 шаг 3.
+--   (3) проверка пропуска (lookup_session_credential, повтор в транзакции команды — hold_session_credential), §3.2; отзыв (revoke_session_credential), §3.1 шаг 3.
 --   В базе только SHA-256 кода выдачи и пропуска; открытые значения сюда не попадают.
 --   Отказы (§3.3): обычный отказ — код возврата без изменений базы; событие безопасности — ровно оговорённые
---   строки и одна строка доказательства SESSION_SECURITY_EVENT, тоже кодом возврата, без исключения.
+--   строки и не больше одной строки доказательства SESSION_SECURITY_EVENT, тоже кодом возврата, без исключения.
 -- ОГРАНИЧЕНИЯ: ставится после 03_zavod_ext_02.sql одной транзакцией; не удаляет данных и объектов, не меняет
 --   существующие строки и функции H1.31/Z-EXT-01/Z-EXT-02. Отзыв при завершении аренды ядро вызывает в той же
 --   транзакции, что и complete_chat_lease (функция Z-EXT-02 не меняется); проверка пропуска дополнительно
@@ -75,7 +78,12 @@ CREATE TABLE bem_control.session_credential (
     issued_at      timestamptz NOT NULL DEFAULT now(),
     revoked_at     timestamptz,
     revoke_reason  text CHECK (revoke_reason IN ('LEASE_COMPLETED', 'OPERATOR_TICKET', 'CLAIM_REPLAY')),
-    CONSTRAINT session_credential_revoke_pair CHECK ((revoked_at IS NULL) = (revoke_reason IS NULL))
+    -- RG24-02: сколько раз и когда последний раз предъявлен уже отозванный пропуск (доказательство — только первое).
+    revoked_seen_count integer NOT NULL DEFAULT 0 CHECK (revoked_seen_count >= 0),
+    revoked_seen_at    timestamptz,
+    CONSTRAINT session_credential_revoke_pair CHECK ((revoked_at IS NULL) = (revoke_reason IS NULL)),
+    CONSTRAINT session_credential_seen_shape CHECK (((revoked_seen_count = 0) = (revoked_seen_at IS NULL))
+        AND (revoked_seen_count = 0 OR revoked_at IS NOT NULL))
 );
 CREATE UNIQUE INDEX session_credential_one_live ON bem_control.session_credential (session)
     WHERE revoked_at IS NULL;
@@ -292,9 +300,28 @@ GRANT  EXECUTE ON FUNCTION bem_control.claim_session_enrollment(text, text, text
 -- Проверка пропуска (§3.2). Возвращает код, без исключений:
 --   OK — заказчик, роль, участник и сессия из записи пропуска (не из запроса);
 --   PASS_UNKNOWN / PASS_EXPIRED — обычный отказ, база не меняется;
---   PASS_REVOKED — предъявлен отозванный пропуск (событие безопасности): только одна строка доказательства.
+--   PASS_REVOKED — предъявлен отозванный пропуск (событие безопасности): при первом предъявлении одна строка
+--     доказательства и счётчик в строке пропуска; дальше — только счётчик (RG24-02).
 -- Недействителен и пропуск сессии, чья аренда завершена (страховка к отзыву в CompleteChatLease), и пропуск
 -- старше 30 суток без открытой аренды этой сессии.
+-- Срок пропуска: у сессии нет открытой аренды и есть аренда, закрытая после выдачи пропуска, или пропуску больше
+-- 30 суток без открытой аренды. Внутренняя: вызывают только функции владельца.
+CREATE FUNCTION bem_control.credential_expired(p_tenant_id uuid, p_session text, p_issued_at timestamptz)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SET search_path = bem_control, bem_core, pg_catalog, pg_temp
+AS $$
+    SELECT NOT EXISTS (SELECT 1 FROM bem_control.chat_lease l
+                        WHERE l.tenant_id = p_tenant_id AND l.holder_session = p_session AND l.status = 'OPEN')
+       AND (EXISTS (SELECT 1 FROM bem_control.chat_lease l
+                     WHERE l.tenant_id = p_tenant_id AND l.holder_session = p_session
+                       AND l.status = 'COMPLETED' AND l.closed_at >= p_issued_at)
+            OR p_issued_at < now() - interval '30 days')
+$$;
+ALTER FUNCTION bem_control.credential_expired(uuid, text, timestamptz) OWNER TO bem_control_owner;
+REVOKE EXECUTE ON FUNCTION bem_control.credential_expired(uuid, text, timestamptz) FROM PUBLIC;
+
 CREATE FUNCTION bem_control.lookup_session_credential(p_session text, p_pass_sha256 text)
 RETURNS TABLE (out_code text, out_tenant_id uuid, out_role_key text, out_actor_id text, out_session text)
 LANGUAGE plpgsql
@@ -303,6 +330,7 @@ SET search_path = bem_control, bem_core, pg_catalog, pg_temp
 AS $$
 DECLARE
     v_cred bem_control.session_credential;
+    v_seen integer;
 BEGIN
     IF session_user IS DISTINCT FROM 'bem_kernel_rw' THEN RAISE EXCEPTION 'PASS_UNTRUSTED'; END IF;
     IF p_session IS NULL OR p_pass_sha256 IS NULL OR p_pass_sha256 !~ '^[0-9a-f]{64}$' THEN
@@ -313,18 +341,20 @@ BEGIN
         RETURN QUERY SELECT 'PASS_UNKNOWN'::text, NULL::uuid, NULL::text, NULL::text, NULL::text; RETURN;
     END IF;
     IF v_cred.revoked_at IS NOT NULL THEN
-        PERFORM bem_control.transport_context(v_cred.tenant_id, v_cred.actor_id);
-        PERFORM bem_control.evidence_write(v_cred.tenant_id, 'SESSION_SECURITY_EVENT', jsonb_build_object(
-            'event', 'REVOKED_PASS_PRESENTED', 'credential_id', v_cred.credential_id, 'role_key', v_cred.role_key,
-            'session', v_cred.session, 'revoke_reason', v_cred.revoke_reason));
+        -- RG24-02: строка пропуска под блокировкой; доказательство только при первом предъявлении.
+        UPDATE bem_control.session_credential
+           SET revoked_seen_count = revoked_seen_count + 1, revoked_seen_at = now()
+         WHERE credential_id = v_cred.credential_id
+        RETURNING revoked_seen_count INTO v_seen;
+        IF v_seen = 1 THEN
+            PERFORM bem_control.transport_context(v_cred.tenant_id, v_cred.actor_id);
+            PERFORM bem_control.evidence_write(v_cred.tenant_id, 'SESSION_SECURITY_EVENT', jsonb_build_object(
+                'event', 'REVOKED_PASS_PRESENTED', 'credential_id', v_cred.credential_id, 'role_key', v_cred.role_key,
+                'session', v_cred.session, 'revoke_reason', v_cred.revoke_reason));
+        END IF;
         RETURN QUERY SELECT 'PASS_REVOKED'::text, NULL::uuid, NULL::text, NULL::text, NULL::text; RETURN;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM bem_control.chat_lease l
-                    WHERE l.tenant_id = v_cred.tenant_id AND l.holder_session = v_cred.session AND l.status = 'OPEN')
-       AND (EXISTS (SELECT 1 FROM bem_control.chat_lease l
-                     WHERE l.tenant_id = v_cred.tenant_id AND l.holder_session = v_cred.session
-                       AND l.status = 'COMPLETED' AND l.closed_at >= v_cred.issued_at)
-            OR v_cred.issued_at < now() - interval '30 days') THEN
+    IF bem_control.credential_expired(v_cred.tenant_id, v_cred.session, v_cred.issued_at) THEN
         RETURN QUERY SELECT 'PASS_EXPIRED'::text, NULL::uuid, NULL::text, NULL::text, NULL::text; RETURN;
     END IF;
     RETURN QUERY SELECT 'OK'::text, v_cred.tenant_id, v_cred.role_key, v_cred.actor_id, v_cred.session;
@@ -333,6 +363,35 @@ $$;
 ALTER FUNCTION bem_control.lookup_session_credential(text, text) OWNER TO bem_control_owner;
 REVOKE EXECUTE ON FUNCTION bem_control.lookup_session_credential(text, text) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION bem_control.lookup_session_credential(text, text) TO bem_kernel_rw;
+
+-- RG24-01: повтор проверки пропуска в транзакции команды. Строка пропуска читается с блокировкой FOR SHARE:
+-- отзыв (UPDATE этой строки) ждёт конца команды, а успевший раньше отзыв даёт отказ. Ничего не пишет.
+CREATE FUNCTION bem_control.hold_session_credential(p_session text, p_pass_sha256 text)
+RETURNS TABLE (out_code text, out_tenant_id uuid, out_role_key text, out_actor_id text, out_session text)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = bem_control, bem_core, pg_catalog, pg_temp
+AS $$
+DECLARE
+    v_cred bem_control.session_credential;
+BEGIN
+    IF session_user IS DISTINCT FROM 'bem_kernel_rw' THEN RAISE EXCEPTION 'PASS_UNTRUSTED'; END IF;
+    SELECT * INTO v_cred FROM bem_control.session_credential WHERE pass_sha256 = p_pass_sha256 FOR SHARE;
+    IF v_cred.credential_id IS NULL OR v_cred.session IS DISTINCT FROM p_session THEN
+        RETURN QUERY SELECT 'PASS_UNKNOWN'::text, NULL::uuid, NULL::text, NULL::text, NULL::text; RETURN;
+    END IF;
+    IF v_cred.revoked_at IS NOT NULL THEN
+        RETURN QUERY SELECT 'PASS_REVOKED'::text, NULL::uuid, NULL::text, NULL::text, NULL::text; RETURN;
+    END IF;
+    IF bem_control.credential_expired(v_cred.tenant_id, v_cred.session, v_cred.issued_at) THEN
+        RETURN QUERY SELECT 'PASS_EXPIRED'::text, NULL::uuid, NULL::text, NULL::text, NULL::text; RETURN;
+    END IF;
+    RETURN QUERY SELECT 'OK'::text, v_cred.tenant_id, v_cred.role_key, v_cred.actor_id, v_cred.session;
+END;
+$$;
+ALTER FUNCTION bem_control.hold_session_credential(text, text) OWNER TO bem_control_owner;
+REVOKE EXECUTE ON FUNCTION bem_control.hold_session_credential(text, text) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION bem_control.hold_session_credential(text, text) TO bem_kernel_rw;
 
 -- Отзыв (§3.1 шаг 3). LEASE_COMPLETED — ядро в транзакции CompleteChatLease, только если аренда этой сессии
 -- завершена и открытой нет; OPERATOR_TICKET — только входная роль bem_rules_gate по проверенному билету.

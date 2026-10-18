@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: tests/transport.test.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:30 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 11:12 +03:00 (v0.2: ChatGPT R24 — RG24-01 отзыв между
+//   проверкой и командой и отзыв во время команды; RG24-02 повторное предъявление отозванного пропуска без новых строк
+//   доказательства; RG24-03 путь оператора без билета и для команды без билета; тест отзыва во время команды — на своей роли 04)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: проверки пакета Z-TRANSPORT-01 на PostgreSQL 16 (проект v0.4 §3, §5): цепочка выдачи пропуска
 //   (билет оператора → ГД → роль ниже → та же роль); получение без кода, с чужим кодом, для чужой сессии; истёкшая
@@ -28,7 +30,8 @@ const FP = `SHA256:${'A'.repeat(43)}`;
 const R01 = '01_Куратор_ГД';
 const R02 = '02_Куратор_производства';
 const R03 = '03_Куратор_качества_и_безопасности';
-const PARENTS = { [R01]: 'OPERATOR', [R02]: R01, [R03]: R01 };
+const R04 = '04_Куратор_проверки_отзыва';
+const PARENTS = { [R01]: 'OPERATOR', [R02]: R01, [R03]: R01, [R04]: R01 };
 const CODE = hex(40);
 const isoNow = (ms = 0) => new Date(Date.now() + ms).toISOString().replace(/\.\d+Z$/, 'Z');
 
@@ -163,7 +166,7 @@ before(async () => {
   await kernel.assertIdentity();
   await withRole('postgres', async (c) => {
     await c.query('SET ROLE bem_governance');
-    for (const r of [R01, R02, R03]) await c.query('SELECT bem_control.set_role_actor($1, $2, $3)', [ids.tenantA, r, ids.author]);
+    for (const r of [R01, R02, R03, R04]) await c.query('SELECT bem_control.set_role_actor($1, $2, $3)', [ids.tenantA, r, ids.author]);
     await c.query("SELECT bem_control.set_role_actor($1, 'OPERATOR', $2)", [ids.tenantA, ids.humanA]);
   });
   await activateRules(ids.tenantA);
@@ -254,7 +257,7 @@ test('§3.3 RG21-01: получение без кода, с чужим кодо�
     'GATE_BAD_REQUEST');
 });
 
-test('§3.3: событие (а) — верный код после выдачи: отзыв, конфликт и одна строка доказательства; событие (б) — только строка', async () => {
+test('§3.3: событие (а) — верный код после выдачи: отзыв, конфликт и одна строка доказательства; событие (б) — строка один раз (RG24-02)', async () => {
   const s = await enrolled(sn('q3'), (code) => prepare(S.g1, R03, sn('q3'), code));
   const before = await snap();
   const r = await claim(sn('q3'), s.code);
@@ -266,12 +269,21 @@ test('§3.3: событие (а) — верный код после выдачи
   assert.equal(c.revoke_reason, 'CLAIM_REPLAY');
   const [e] = await pg('SELECT status FROM bem_control.session_enrollment WHERE enrollment_id = $1', [s.enrollment]);
   assert.equal(e.status, 'CONFLICT');
-  // Отозванный пропуск: отказ ядра и ровно одна строка доказательства.
+  // Отозванный пропуск: отказ ядра, одна строка доказательства и счётчик в строке пропуска.
   const r2 = await cmd(s, 'OpenChatLease', { work_item_id: uuid() });
   assert.equal(r2.body.error.code, 'CALLER_NOT_AUTHENTICATED');
   const after2 = await snap();
-  assert.deepEqual(changed(after1, after2), ['bem_core.evidence']);
+  assert.deepEqual(changed(after1, after2), ['bem_control.session_credential', 'bem_core.evidence']);
   assert.equal(after2['bem_core.evidence'].n - after1['bem_core.evidence'].n, 1);
+  // RG24-02: повторные предъявления новых строк доказательства не дают — растёт только счётчик.
+  for (let i = 0; i < 3; i += 1) {
+    assert.equal((await cmd(s, 'OpenChatLease', { work_item_id: uuid() })).body.error.code, 'CALLER_NOT_AUTHENTICATED');
+  }
+  const after3 = await snap();
+  assert.deepEqual(changed(after2, after3), ['bem_control.session_credential']);
+  assert.equal(after3['bem_core.evidence'].n, after2['bem_core.evidence'].n);
+  const [seen] = await pg('SELECT revoked_seen_count AS n FROM bem_control.session_credential WHERE session = $1', [sn('q3')]);
+  assert.equal(seen.n, 4);
   const [ev] = await pg(`SELECT payload->>'event' AS e FROM bem_core.evidence WHERE kind = 'SESSION_SECURITY_EVENT'
     AND payload->>'session' = $1 ORDER BY created_at DESC LIMIT 1`, [sn('q3')]);
   assert.equal(ev.e, 'REVOKED_PASS_PRESENTED');
@@ -376,4 +388,80 @@ test('сквозной путь: местный вход → посредник 
     const [row] = await pg('SELECT role_key, holder_session FROM bem_control.chat_lease WHERE lease_id = $1', [l.body.result.lease_id]);
     assert.deepEqual(row, { role_key: R03, holder_session: sn('q6') });
   } finally { await g.close(); }
+});
+
+const opRevoke = (session) => send({ type: 'RevokeSession', payload: { tenant_id: ids.tenantA, session, ticket: 'good',
+  signature: 's' }, auth: { operator: true } });
+
+test('RG24-01: отзыв между проверкой пропуска и командой — команда отклонена, база без изменений, кроме отзыва', async () => {
+  const s = await enrolled(sn('q7'), (code) => prepare(S.g1, R03, sn('q7'), code));
+  const wi = await newItem();
+  const real = kernel.transport;
+  let afterRevoke;
+  let first = true;
+  // Отзыв срабатывает один раз — после проверки пропуска команды; сам отзыв идёт обычным путём посредника.
+  kernel.transport = { verify: async (req) => {
+    const v = await real.verify(req);
+    if (first) {
+      first = false;
+      assert.equal(okk((await opRevoke(sn('q7'))).body).revoked, 1);
+      afterRevoke = await snap();
+    }
+    return v;
+  } };
+  let r;
+  try {
+    r = await kernel.execute(null, real.accept({ type: 'OpenChatLease', command_id: uuid(), payload: { work_item_id: wi },
+      auth: { session: s.session, pass: s.pass } }));
+  } finally { kernel.transport = real; }
+  assert.equal(r.ok, false);
+  assert.equal(r.error.code, 'CALLER_NOT_AUTHENTICATED');
+  assert.deepEqual(await snap(), afterRevoke, 'команда после отзыва ничего не записала');
+  const rows = await pg('SELECT 1 FROM bem_control.chat_lease WHERE holder_session = $1', [sn('q7')]);
+  assert.equal(rows.length, 0);
+});
+
+test('RG24-01: отзыв во время команды ждёт её конца (строка пропуска под блокировкой на чтение)', async () => {
+  const s = await enrolled(sn('q8'), (code) => prepare(S.g1, R04, sn('q8'), code)); // своя роль: R03 держит аренда сквозного теста
+  const wi = await newItem();
+  let revoke;
+  let doneEarly = false;
+  kernel._beforeCommit = async () => {
+    kernel._beforeCommit = null;
+    revoke = opRevoke(sn('q8')).then((x) => { doneEarly = true; return x; });
+    await new Promise((res) => setTimeout(res, 700));
+    assert.equal(doneEarly, false, 'отзыв не должен пройти до конца команды');
+  };
+  let lease;
+  try {
+    lease = okk((await cmd(s, 'OpenChatLease', { work_item_id: wi })).body);
+  } finally { kernel._beforeCommit = null; }
+  assert.equal(okk((await revoke).body).revoked, 1);
+  const [row] = await pg('SELECT holder_session FROM bem_control.chat_lease WHERE lease_id = $1', [lease.lease_id]);
+  assert.equal(row.holder_session, sn('q8'));
+  assert.equal((await cmd(s, 'RecordLeaseEvidence', { lease_id: lease.lease_id, generation: lease.generation,
+    kind: 'TASK_RESULT', content_sha256: hex(64) })).body.error.code, 'CALLER_NOT_AUTHENTICATED');
+});
+
+test('RG24-03: «оператор» без билета, для команды без билета, без повторной проверки — отказ без изменений', async () => {
+  // Посредник: без билета или подписи путь оператора не открывается.
+  await refusedSame(() => send({ type: 'RevokeSession', payload: { tenant_id: ids.tenantA, session: sn('g1') },
+    auth: { operator: true } }), 'CALLER_NOT_AUTHENTICATED');
+  await refusedSame(() => send({ type: 'PrepareEnrollment', payload: { tenant_id: ids.tenantA, role_key: R01, session: sn('g7'),
+    claim_sha256: hex(64), ticket: 'good' }, auth: { operator: true } }), 'CALLER_NOT_AUTHENTICATED');
+  await refusedSame(() => send({ type: 'OpenChatLease', payload: { tenant_id: ids.tenantA, work_item_id: uuid(), ticket: 'good',
+    signature: 's' }, auth: { operator: true } }), 'CALLER_NOT_AUTHENTICATED');
+  // Ядро: личность «оператор» для команды без билета и личность без повторной проверки не принимаются.
+  const [{ actor_id: op }] = await pg("SELECT actor_id FROM bem_control.role_actor WHERE tenant_id = $1 AND role_key = 'OPERATOR'",
+    [ids.tenantA]);
+  const real = kernel.transport;
+  const fake = (v) => { kernel.transport = { verify: async () => v }; };
+  try {
+    fake({ tenant_id: ids.tenantA, actor_id: op, role_key: 'OPERATOR', session: 'OPERATOR', hold: async () => {} });
+    await refusedSame(async () => ({ body: await kernel.execute(null, { type: 'OpenChatLease', payload: { work_item_id: uuid() } }) }),
+      'OPERATOR_TICKET_REQUIRED');
+    fake({ tenant_id: ids.tenantA, actor_id: ids.author, role_key: R01, session: sn('g1') });
+    await refusedSame(async () => ({ body: await kernel.execute(null, { type: 'OpenChatLease', payload: { work_item_id: uuid() } }) }),
+      'CALLER_NOT_AUTHENTICATED');
+  } finally { kernel.transport = real; }
 });

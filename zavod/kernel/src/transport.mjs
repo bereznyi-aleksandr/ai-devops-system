@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/transport.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:30 +03:00
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:52 +03:00 (v0.2: ChatGPT R24 — RG24-01 hold: повторная
+//   проверка пропуска или участника оператора в транзакции команды; RG24-03: путь оператора требует билет и подпись)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: посредник Z-TRANSPORT-01 (проект v0.4 §3.1–§3.3) между местным входом и ядром.
 //   handle(body) — разбор запроса входа: EnrollSession (получение пропуска по одноразовому коду) или команда аренды.
@@ -10,7 +11,7 @@
 //   несут подписанный билет, подпись проверяет ядро (src/rules_gate.mjs), запись — пул bem_rules_gate.
 
 import { createHash, randomBytes } from 'node:crypto';
-import { TRANSPORT_COMMANDS } from './kernel.mjs';
+import { TRANSPORT_COMMANDS, KernelError } from './kernel.mjs';
 
 const HEX64 = /^[0-9a-f]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -56,17 +57,38 @@ export function createTransport({ kernel, log = () => {} }) {
       if (!OPERATOR_TYPES.includes(req.type)) return null;
       const tenant = req.payload.tenant_id;
       if (typeof tenant !== 'string' || !UUID.test(tenant)) return null;
+      // RG24-03: без билета и подписи путь оператора не открывается (подпись проверит обработчик ядра).
+      if (typeof req.payload.ticket !== 'string' || !req.payload.ticket || typeof req.payload.signature !== 'string'
+        || !req.payload.signature) return null;
       const rows = await tx("SELECT actor_id FROM bem_control.role_actor WHERE tenant_id = $1 AND role_key = 'OPERATOR'",
         [tenant]);
       if (!rows[0]) return null;
-      return { tenant_id: tenant, actor_id: rows[0].actor_id, role_key: 'OPERATOR', session: 'OPERATOR' };
+      const actor = rows[0].actor_id;
+      // Повтор в транзакции команды (клиент входной роли): участник оператора не сменился.
+      const hold = async (c) => {
+        const { rows: r } = await c.query(
+          "SELECT actor_id FROM bem_control.role_actor WHERE tenant_id = $1 AND role_key = 'OPERATOR'", [tenant]);
+        if (r[0]?.actor_id !== actor) throw new KernelError('CALLER_NOT_AUTHENTICATED', 'operator changed');
+      };
+      return { tenant_id: tenant, actor_id: actor, role_key: 'OPERATOR', session: 'OPERATOR', hold };
     }
     if (Object.keys(auth).length !== 2 || !validSession(auth.session) || typeof auth.pass !== 'string'
       || !HEX64.test(auth.pass)) return null;
     const rows = await tx('SELECT * FROM bem_control.lookup_session_credential($1, $2)', [auth.session, secretHash(auth.pass)]);
     const r = rows[0];
     if (!r || r.out_code !== 'OK') { log({ ev: 'pass_refused', code: r?.out_code || 'PASS_UNKNOWN' }); return null; }
-    return { tenant_id: r.out_tenant_id, actor_id: r.out_actor_id, role_key: r.out_role_key, session: r.out_session };
+    const passSha = secretHash(auth.pass);
+    // RG24-01: в транзакции команды строка пропуска читается снова с блокировкой на чтение — отзыв ждёт конца
+    // команды или, если успел раньше, команда получает отказ.
+    const hold = async (c, v) => {
+      const { rows: h } = await c.query('SELECT * FROM bem_control.hold_session_credential($1, $2)', [auth.session, passSha]);
+      const x = h[0];
+      if (!x || x.out_code !== 'OK' || x.out_tenant_id !== v.tenant_id || x.out_role_key !== v.role_key
+        || x.out_actor_id !== v.actor_id || x.out_session !== v.session) {
+        throw new KernelError('CALLER_NOT_AUTHENTICATED', `pass ${x?.out_code || 'PASS_UNKNOWN'} at command`);
+      }
+    };
+    return { tenant_id: r.out_tenant_id, actor_id: r.out_actor_id, role_key: r.out_role_key, session: r.out_session, hold };
   }
 
   // Получение пропуска (§3.1 шаг 2). Пропуск отдаётся один раз; в базе — только его SHA-256.

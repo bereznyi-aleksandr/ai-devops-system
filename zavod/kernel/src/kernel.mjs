@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.10  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:28 +03:00 (v0.10: Z-TRANSPORT-01, проект v0.4 —
+// ВЕРСИЯ: v0.11  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:28 +03:00 (v0.11: ChatGPT R24 — RG24-01: личность сверяется
+//   повторно внутри транзакции команды (v.hold посредника, строка пропуска на чтение с блокировкой); RG24-03: личность
+//   «оператор» допускается только для команд с билетом, и команда не фиксируется, пока обработчик не проверил билет;
+//   v0.10: Z-TRANSPORT-01, проект v0.4 —
 //   команды PrepareEnrollment и RevokeSession через посредника; держатель готовит выдачу своей проверенной сессией,
 //   оператор — подписанным билетом (пул bem_rules_gate); CompleteChatLease в той же транзакции отзывает пропуск
 //   своей сессии; виды доказательств выдачи и пропуска закрыты для RecordEvidence;
@@ -232,14 +235,25 @@ export class Kernel {
       need(v && typeof v.tenant_id === 'string' && UUID.test(v.tenant_id) && typeof v.actor_id === 'string'
         && v.actor_id.length > 0 && typeof v.role_key === 'string' && (ROLE_KEY.test(v.role_key) || v.role_key === 'OPERATOR')
         && typeof v.session === 'string' && v.session.trim().length > 0, 'CALLER_NOT_AUTHENTICATED', 'transport refused');
+      // RG24-01: проверка личности повторяется в транзакции команды; без неё команда не идёт.
+      need(typeof v.hold === 'function', 'CALLER_NOT_AUTHENTICATED', 'transport gave no in-transaction check');
+      // RG24-03: «оператор» — только для команд с подписанным билетом.
+      const operator = v.role_key === 'OPERATOR';
+      need(!operator || OPERATOR_TICKET_COMMANDS.includes(req.type), 'OPERATOR_TICKET_REQUIRED', String(req.type));
       const secret = findSecret(req);
       need(!secret, 'SECRET_IN_REQUEST', `pattern ${secret} (value not logged, SR-01)`);
       const verified = Object.freeze({ tenant_id: v.tenant_id, actor_id: v.actor_id, role_key: v.role_key,
         session: v.session });
+      const ticket = { checked: false };
       const vreq = { type: req.type, tenant_id: verified.tenant_id, actor_id: verified.actor_id,
-        command_id: req.command_id, payload: req.payload || {}, verified };
-      const result = await this._tx(vreq.actor_id, vreq.tenant_id, (c) => HANDLERS[req.type](c, vreq, vreq.payload, this),
-        OPERATOR_TICKET_COMMANDS.includes(req.type) && verified.role_key === 'OPERATOR');
+        command_id: req.command_id, payload: req.payload || {}, verified, ticket };
+      const result = await this._tx(vreq.actor_id, vreq.tenant_id, async (c) => {
+        await v.hold(c, verified);
+        const out = await HANDLERS[req.type](c, vreq, vreq.payload, this);
+        // Обработчик оператора обязан проверить билет; иначе транзакция откатывается.
+        need(!operator || ticket.checked, 'OPERATOR_TICKET_REQUIRED', String(req.type));
+        return out;
+      }, operator);
       this.counters.ok += 1;
       this.lastCommandAt = new Date().toISOString();
       this.log({ ev: 'command_ok', type: req.type, actor: vreq.actor_id, tenant: vreq.tenant_id });
@@ -560,6 +574,7 @@ const HANDLERS = {
       need(k.rules && typeof k.rules.verifyReportAck === 'function', 'RULES_GATE_UNSET', 'kernel has no rules gate');
       sig = k.rules.verifyReportAck({ tenantId: req.tenant_id, reportId: p.report_id, reportSha256: p.report_sha256,
         ticketText: p.ticket, signature: p.signature, activeRulesCommit: await activeRulesCommit(c, req.tenant_id) });
+      req.ticket.checked = true;
       session = 'OPERATOR';
     }
     const { rows } = await c.query('SELECT bem_control.acknowledge_lease_report($1, $2, $3, $4, $5, $6) AS id',
@@ -596,6 +611,7 @@ const HANDLERS = {
       const t = k.rules.verifyEnrollTicket({ tenantId: req.tenant_id, roleKey: p.role_key, session: p.session,
         claimSha256: p.claim_sha256, ticketText: p.ticket, signature: p.signature,
         activeRulesCommit: await activeRulesCommit(c, req.tenant_id) });
+      req.ticket.checked = true;
       bySession = null;
       nonce = t.nonce;
       expires = t.expires_at;
@@ -613,6 +629,7 @@ const HANDLERS = {
     need(k.rules && typeof k.rules.verifyRevokeTicket === 'function', 'RULES_GATE_UNSET', 'kernel has no rules gate');
     k.rules.verifyRevokeTicket({ tenantId: req.tenant_id, session: p.session, ticketText: p.ticket,
       signature: p.signature, activeRulesCommit: await activeRulesCommit(c, req.tenant_id) });
+    req.ticket.checked = true;
     const { rows } = await c.query("SELECT bem_control.revoke_session_credential($1, $2, 'OPERATOR_TICKET') AS n",
       [req.tenant_id, p.session]);
     return { revoked: rows[0].n };

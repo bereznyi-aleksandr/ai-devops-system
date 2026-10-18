@@ -2,7 +2,7 @@
 -- ИСТОЧНИК H1.31 05: sha256 1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
 -- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
--- РАСШИРЕНИЕ 04: sha256 dc2c0b617d47659e2855bdc620628866de563291667b58ea1f64aced27109535
+-- РАСШИРЕНИЕ 04: sha256 4ca9b36c8a06566856e9392147c63aa00a4ef9436b742e56cd17a52fd5fea2de
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02 и Z-EXT-03 (см. сборщик).
 \set ON_ERROR_STOP on
 
@@ -60,6 +60,8 @@ DECLARE
         'TABLE|bem_control.session_credential|session_credential_pkey|PRIMARY KEY (credential_id)',
         'TABLE|bem_control.session_credential|session_credential_revoke_pair|CHECK (((revoked_at IS NULL) = (revoke_reason IS NULL)))',
         'TABLE|bem_control.session_credential|session_credential_revoke_reason_check|CHECK ((revoke_reason = ANY (ARRAY[''LEASE_COMPLETED''::text, ''OPERATOR_TICKET''::text, ''CLAIM_REPLAY''::text])))',
+        'TABLE|bem_control.session_credential|session_credential_revoked_seen_count_check|CHECK ((revoked_seen_count >= 0))',
+        'TABLE|bem_control.session_credential|session_credential_seen_shape|CHECK ((((revoked_seen_count = 0) = (revoked_seen_at IS NULL)) AND ((revoked_seen_count = 0) OR (revoked_at IS NOT NULL))))',
         'TABLE|bem_control.session_credential|session_credential_role_key_check|CHECK ((role_key ~ ''^0[1-9]_[^/\\]{1,60}$''::text))',
         'TABLE|bem_control.session_credential|session_credential_session_check|CHECK (((btrim(session) <> ''''::text) AND (session <> ''OPERATOR''::text) AND (length(session) <= 200)))',
         'TABLE|bem_control.session_enrollment|session_enrollment_by_shape|CHECK ((((prepared_by = ''OPERATOR_TICKET''::text) AND (ticket_nonce IS NOT NULL) AND (prepared_by_session IS NULL) AND (prepared_by_lease IS NULL)) OR ((prepared_by <> ''OPERATOR_TICKET''::text) AND (ticket_nonce IS NULL) AND (prepared_by_session IS NOT NULL) AND (prepared_by_lease IS NOT NULL))))',
@@ -563,6 +565,9 @@ DECLARE
         'FUNCTION|bem_control.claim_session_enrollment(text, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.lookup_session_credential(text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.lookup_session_credential(text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.hold_session_credential(text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.hold_session_credential(text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.credential_expired(uuid, text, timestamp with time zone)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.revoke_session_credential(uuid, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.revoke_session_credential(uuid, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.revoke_session_credential(uuid, text, text)|bem_rules_gate|EXECUTE|bem_control_owner',
@@ -1479,7 +1484,9 @@ BEGIN
         ('set_role_actor', 'cfb38b1299812ddecc434f1d83e8145a1d74bcd2d264781f7a8142a0325e9712'),
         ('prepare_session_enrollment', '4302866e6fe9cd0118ff3394f05bce8b3c1c8561aae9c9e5ccfdfdd1da1e5ea4'),
         ('claim_session_enrollment', '9879b35d7456b1993acc15a8f31594619858f1da0ac9e792a5f9cbff2d8a77e2'),
-        ('lookup_session_credential', '73d4f7bed8f310b956db239ac593896a89df195542a6f96b8764c8807d1c30ae'),
+        ('lookup_session_credential', '35cc4c5829b396560bae39fddbc8fbd7c74ebd6a6505892dd54f659febae4f4d'),
+        ('hold_session_credential', '1b4385c0180525f1010ecb685c98726467a32354467e7eb132f7a9e39eff38eb'),
+        ('credential_expired', 'f1c3db18479871a0430733e7f9e222a2a1b4cd4f4aeba63a0361dc7422bd80db'),
         ('revoke_session_credential', 'a79e8b00176a86cbf069d5a8adc95f65b537c1bea2dbb885bf49104756c535aa')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
@@ -1493,7 +1500,7 @@ BEGIN
 END
 $zavod_fp$;
 
--- Z-EXT-03: владелец, режим исполнения и все настройки шести функций; точный набор индексов трёх таблиц.
+-- Z-EXT-03: владелец, режим исполнения и все настройки восьми функций; точный набор индексов трёх таблиц.
 DO $zavod_ext03$
 DECLARE
     r     record;
@@ -1505,6 +1512,8 @@ BEGIN
         ('prepare_session_enrollment', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('claim_session_enrollment', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('lookup_session_credential', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('hold_session_credential', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('credential_expired', 'bem_control_owner|invoker|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('revoke_session_credential', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp')
     ) AS x(fn, want) LOOP
         SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'

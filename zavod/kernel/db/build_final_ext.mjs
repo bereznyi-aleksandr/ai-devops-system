@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.7  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:38 +03:00 (v0.7: Z-EXT-03 (db/04_zavod_ext_03.sql,
+// ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:52 +03:00 (v0.8: ChatGPT R24 — функции hold_session_credential и
+//   credential_expired, счётчик предъявлений отозванного пропуска; v0.7: Z-EXT-03 (db/04_zavod_ext_03.sql,
 //   пакет Z-TRANSPORT-01) — ограничения трёх новых таблиц, права на таблицы и шесть функций, отпечатки тел; сверх
 //   списков 05: владелец, режим исполнения и настройки этих шести функций и точный набор индексов их таблиц
 //   (частичные уникальные индексы «одна ожидающая выдача на роль», «билет один раз», «один живой пропуск»);
@@ -180,6 +181,8 @@ const EXT03_CONSTRAINTS = [
   "TABLE|bem_control.session_credential|session_credential_pkey|PRIMARY KEY (credential_id)",
   "TABLE|bem_control.session_credential|session_credential_revoke_pair|CHECK (((revoked_at IS NULL) = (revoke_reason IS NULL)))",
   "TABLE|bem_control.session_credential|session_credential_revoke_reason_check|CHECK ((revoke_reason = ANY (ARRAY['LEASE_COMPLETED'::text, 'OPERATOR_TICKET'::text, 'CLAIM_REPLAY'::text])))",
+  "TABLE|bem_control.session_credential|session_credential_revoked_seen_count_check|CHECK ((revoked_seen_count >= 0))",
+  "TABLE|bem_control.session_credential|session_credential_seen_shape|CHECK ((((revoked_seen_count = 0) = (revoked_seen_at IS NULL)) AND ((revoked_seen_count = 0) OR (revoked_at IS NOT NULL))))",
   "TABLE|bem_control.session_credential|session_credential_role_key_check|CHECK ((role_key ~ '^0[1-9]_[^/\\\\]{1,60}$'::text))",
   "TABLE|bem_control.session_credential|session_credential_session_check|CHECK (((btrim(session) <> ''::text) AND (session <> 'OPERATOR'::text) AND (length(session) <= 200)))",
   "TABLE|bem_control.session_enrollment|session_enrollment_by_shape|CHECK ((((prepared_by = 'OPERATOR_TICKET'::text) AND (ticket_nonce IS NOT NULL) AND (prepared_by_session IS NULL) AND (prepared_by_lease IS NULL)) OR ((prepared_by <> 'OPERATOR_TICKET'::text) AND (ticket_nonce IS NULL) AND (prepared_by_session IS NOT NULL) AND (prepared_by_lease IS NOT NULL))))",
@@ -207,6 +210,8 @@ const EXT03_FUNCS = {
   prepare_session_enrollment: 'uuid, text, text, text, text, text, timestamp with time zone',
   claim_session_enrollment: 'text, text, text',
   lookup_session_credential: 'text, text',
+  hold_session_credential: 'text, text',
+  credential_expired: 'uuid, text, timestamp with time zone',
   revoke_session_credential: 'uuid, text, text',
 };
 // Кто вызывает: участника роли пишет только управление; выдачу готовят ядро (держатель) и входная роль (билет
@@ -215,7 +220,8 @@ const KRG = [...KR, 'bem_rules_gate'];
 const EXT03_CALLERS = {
   transport_context: ['bem_control_owner'],
   set_role_actor: ['bem_control_owner', 'bem_governance'],
-  prepare_session_enrollment: KRG, claim_session_enrollment: KR, lookup_session_credential: KR,
+  prepare_session_enrollment: KRG, claim_session_enrollment: KR, lookup_session_credential: KR, hold_session_credential: KR,
+  credential_expired: ['bem_control_owner'],
   revoke_session_credential: KRG,
 };
 t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
@@ -227,6 +233,7 @@ const EXT03_MODE = {
   transport_context: 'invoker|search_path=pg_catalog, pg_temp',
   set_role_actor: `definer|${DEF_PATH}`, prepare_session_enrollment: `definer|${DEF_PATH}`,
   claim_session_enrollment: `definer|${DEF_PATH}`, lookup_session_credential: `definer|${DEF_PATH}`,
+  hold_session_credential: `definer|${DEF_PATH}`, credential_expired: `invoker|${DEF_PATH}`,
   revoke_session_credential: `definer|${DEF_PATH}`,
 };
 // Индексы таблиц Z-EXT-03 — pg_get_indexdef дословно; лишний или изменённый индекс — отказ.
@@ -282,7 +289,7 @@ ${prints.map(([f, h]) => `        ('${f}', '${h}')`).join(',\n')}
 END
 $zavod_fp$;
 
--- Z-EXT-03: владелец, режим исполнения и все настройки шести функций; точный набор индексов трёх таблиц.
+-- Z-EXT-03: владелец, режим исполнения и все настройки восьми функций; точный набор индексов трёх таблиц.
 DO $zavod_ext03$
 DECLARE
     r     record;
