@@ -1,11 +1,12 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
 # ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:50 +03:00
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 16:14 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f)
 # v0.5: права bin ставятся сразу после программ (служба базы запускает postgres.exe из bin до шага acl); на время
 #   initdb учётке установщика дана запись в data (initdb под администратором работает с урезанным маркером), затем
 #   снимается вместе с Admins; обход каталогов — $P.get_Keys() (у $P есть ключ 'keys').
 #   Список пакетов npm читает install/npm_lock_list.mjs (ConvertFrom-Json PowerShell 5.1 не читает package-lock.json).
+#   Права: записи только на каталог, вложенное — /reset к унаследованным (icacls /T оставлял файлам пустой список).
 # v0.4: установщик EDB той же сборки, что архив, — 16.15-5 (CI 18.10: у EDB есть сборки 16.15-1…5; установщик 16.15-1
 #   отличался от архива 16.15-5 в 183 файлах). Тройная сверка (установщик, архив, список коммита) возвращена;
 #   отпечаток сертификата подписи EnterpriseDB закреплён; сумма установщика — из эталонного прогона CI 18.10
@@ -77,14 +78,18 @@ function Invoke-Checked([string]$exe, [string[]]$argv, [string]$code) {
 
 # Права каталога: наследование выключено, владелец — администраторы, ровно перечисленные записи.
 $SID_ADMINS = '*S-1-5-32-544'; $SID_SYSTEM = '*S-1-5-18'; $SID_USERS = '*S-1-5-32-545'
-# -Here: только сам каталог, без вложенных (для корня: у вложенных каталогов свои права).
+# Записи ставятся только на сам каталог: Windows сама переносит наследуемые записи на вложенное. Ключ /T здесь нельзя —
+# у файла флаги (OI)(CI) недопустимы, и /T оставлял файлам пустой список доступа (CI 18.10: node.exe — Access denied).
+# Без -Here вложенное затем сбрасывается к одним унаследованным записям (/reset); владелец — у всего дерева.
+# -Here: только сам каталог (для корня: у вложенных каталогов свои права).
 function Set-Acl2([string]$dir, [string[]]$grants, [string]$owner = $SID_ADMINS, [switch]$Here) {
+  $icacls = "$env:SystemRoot\System32\icacls.exe"
   $rec = if ($Here) { @('/C', '/Q') } else { @('/T', '/C', '/Q') }
-  Invoke-Checked "$env:SystemRoot\System32\icacls.exe" (@($dir, '/setowner', $owner) + $rec) "ACL_OWNER $dir"
+  Invoke-Checked $icacls (@($dir, '/setowner', $owner) + $rec) "ACL_OWNER $dir"
   $argv = @($dir, '/inheritance:r', '/remove:g', '*S-1-5-11', '*S-1-3-0', '*S-1-3-4')
-  $argv += @('/grant:r') + $grants
-  $argv += $rec
-  Invoke-Checked "$env:SystemRoot\System32\icacls.exe" $argv "ACL $dir"
+  $argv += @('/grant:r') + $grants + @('/C', '/Q')
+  Invoke-Checked $icacls $argv "ACL $dir"
+  if (-not $Here) { Invoke-Checked $icacls @((Join-Path $dir '*'), '/reset', '/T', '/C', '/Q') "ACL_RESET $dir" }
 }
 
 $P = @{}
@@ -199,7 +204,7 @@ try {
   Invoke-Checked (Join-Path $P['bin'] 'pgsql\bin\pg_ctl.exe') @('register', '-N', $PgService, '-U', "NT SERVICE\$PgService", '-D', $P['data'], '-S', 'auto', '-w') 'PG_REGISTER'
   Set-Acl2 $P['data'] @("*S-1-5-80-0:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "NT SERVICE\${PgService}:(OI)(CI)F")
   # S-1-5-80-0 («все службы»), Admins и учётка установщика снимаются сразу: доступ к data — только у службы базы и SYSTEM.
-  Invoke-Checked "$env:SystemRoot\System32\icacls.exe" @($P['data'], '/remove:g', '*S-1-5-80-0', $SID_ADMINS, $me, '/T', '/C', '/Q') 'ACL_DATA_TRIM'
+  Invoke-Checked "$env:SystemRoot\System32\icacls.exe" @($P['data'], '/remove:g', '*S-1-5-80-0', $SID_ADMINS, $me, '/C', '/Q') 'ACL_DATA_TRIM'
   Start-Service -Name $PgService
   $deadline = (Get-Date).AddSeconds(60)
   while (-not (Get-NetTCPConnection -LocalPort $DbPort -State Listen -ErrorAction SilentlyContinue)) {
