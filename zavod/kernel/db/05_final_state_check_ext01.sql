@@ -2,7 +2,8 @@
 -- ИСТОЧНИК H1.31 05: sha256 1e584d2e412103efa5d1acb0c00c761dd82ca086bbd060571dff666146578ea1
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
 -- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
--- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 и Z-EXT-02 (см. сборщик).
+-- РАСШИРЕНИЕ 04: sha256 dc2c0b617d47659e2855bdc620628866de563291667b58ea1f64aced27109535
+-- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02 и Z-EXT-03 (см. сборщик).
 \set ON_ERROR_STOP on
 
 -- 05_final_state_check.sql — терминальная административная проверка.
@@ -49,6 +50,27 @@ DECLARE
         'TABLE|bem_core.evidence|evidence_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.handoff_packet|handoff_packet_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)',
+        'TABLE|bem_control.role_actor|role_actor_actor_id_fkey|FOREIGN KEY (actor_id) REFERENCES bem_core.actor(actor_id)',
+        'TABLE|bem_control.role_actor|role_actor_pkey|PRIMARY KEY (tenant_id, role_key)',
+        'TABLE|bem_control.role_actor|role_actor_role_key_check|CHECK (((role_key ~ ''^0[1-9]_[^/\\]{1,60}$''::text) OR (role_key = ''OPERATOR''::text)))',
+        'TABLE|bem_control.session_credential|session_credential_actor_id_fkey|FOREIGN KEY (actor_id) REFERENCES bem_core.actor(actor_id)',
+        'TABLE|bem_control.session_credential|session_credential_enrollment_id_fkey|FOREIGN KEY (enrollment_id) REFERENCES bem_control.session_enrollment(enrollment_id)',
+        'TABLE|bem_control.session_credential|session_credential_pass_sha256_check|CHECK ((pass_sha256 ~ ''^[0-9a-f]{64}$''::text))',
+        'TABLE|bem_control.session_credential|session_credential_pass_sha256_key|UNIQUE (pass_sha256)',
+        'TABLE|bem_control.session_credential|session_credential_pkey|PRIMARY KEY (credential_id)',
+        'TABLE|bem_control.session_credential|session_credential_revoke_pair|CHECK (((revoked_at IS NULL) = (revoke_reason IS NULL)))',
+        'TABLE|bem_control.session_credential|session_credential_revoke_reason_check|CHECK ((revoke_reason = ANY (ARRAY[''LEASE_COMPLETED''::text, ''OPERATOR_TICKET''::text, ''CLAIM_REPLAY''::text])))',
+        'TABLE|bem_control.session_credential|session_credential_role_key_check|CHECK ((role_key ~ ''^0[1-9]_[^/\\]{1,60}$''::text))',
+        'TABLE|bem_control.session_credential|session_credential_session_check|CHECK (((btrim(session) <> ''''::text) AND (session <> ''OPERATOR''::text) AND (length(session) <= 200)))',
+        'TABLE|bem_control.session_enrollment|session_enrollment_by_shape|CHECK ((((prepared_by = ''OPERATOR_TICKET''::text) AND (ticket_nonce IS NOT NULL) AND (prepared_by_session IS NULL) AND (prepared_by_lease IS NULL)) OR ((prepared_by <> ''OPERATOR_TICKET''::text) AND (ticket_nonce IS NULL) AND (prepared_by_session IS NOT NULL) AND (prepared_by_lease IS NOT NULL))))',
+        'TABLE|bem_control.session_enrollment|session_enrollment_claim_pair|CHECK (((status = ANY (ARRAY[''CLAIMED''::text, ''CONFLICT''::text])) = ((claimed_at IS NOT NULL) AND (credential_id IS NOT NULL))))',
+        'TABLE|bem_control.session_enrollment|session_enrollment_claim_sha256_check|CHECK ((claim_sha256 ~ ''^[0-9a-f]{64}$''::text))',
+        'TABLE|bem_control.session_enrollment|session_enrollment_pkey|PRIMARY KEY (enrollment_id)',
+        'TABLE|bem_control.session_enrollment|session_enrollment_prepared_by_check|CHECK ((prepared_by = ANY (ARRAY[''SAME_ROLE''::text, ''PARENT_ROLE''::text, ''OPERATOR_TICKET''::text])))',
+        'TABLE|bem_control.session_enrollment|session_enrollment_role_key_check|CHECK ((role_key ~ ''^0[1-9]_[^/\\]{1,60}$''::text))',
+        'TABLE|bem_control.session_enrollment|session_enrollment_session_check|CHECK (((btrim(session) <> ''''::text) AND (session <> ''OPERATOR''::text) AND (length(session) <= 200)))',
+        'TABLE|bem_control.session_enrollment|session_enrollment_status_check|CHECK ((status = ANY (ARRAY[''PENDING''::text, ''CLAIMED''::text, ''CONFLICT''::text, ''EXPIRED''::text])))',
+        'TABLE|bem_control.session_enrollment|session_enrollment_ticket_nonce_check|CHECK ((ticket_nonce ~ ''^[0-9a-f]{32,64}$''::text))',
         'TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_content_sha256_check|CHECK ((content_sha256 ~ ''^[0-9a-f]{64}$''::text))',
         'TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_generation_check|CHECK ((generation >= 1))',
         'TABLE|bem_control.chat_lease_evidence|chat_lease_evidence_holder_session_check|CHECK ((btrim(holder_session) <> ''''::text))',
@@ -531,6 +553,19 @@ DECLARE
         'FUNCTION|bem_control.bind_process_instance(uuid, uuid, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.transport_context(uuid, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.set_role_actor(uuid, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.set_role_actor(uuid, text, text)|bem_governance|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.prepare_session_enrollment(uuid, text, text, text, text, text, timestamp with time zone)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.prepare_session_enrollment(uuid, text, text, text, text, text, timestamp with time zone)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.prepare_session_enrollment(uuid, text, text, text, text, text, timestamp with time zone)|bem_rules_gate|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.claim_session_enrollment(text, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.claim_session_enrollment(text, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lookup_session_credential(text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lookup_session_credential(text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.revoke_session_credential(uuid, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.revoke_session_credential(uuid, text, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.revoke_session_credential(uuid, text, text)|bem_rules_gate|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.activate_rules(uuid, text, text, integer, text, uuid, jsonb, jsonb, jsonb)|bem_rules_gate|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.open_chat_lease(uuid, text, uuid, text, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
@@ -627,6 +662,32 @@ DECLARE
         'SCHEMA|public|pg_database_owner|CREATE|pg_database_owner',
         'SCHEMA|public|pg_database_owner|USAGE|pg_database_owner',
         'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.role_actor|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.role_actor|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.role_actor|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.role_actor|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.role_actor|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.role_actor|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.role_actor|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.role_actor|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.role_actor|bem_kernel_rw|SELECT|bem_control_owner',
+        'TABLE|bem_control.role_actor|bem_rules_gate|SELECT|bem_control_owner',
+        'TABLE|bem_control.session_enrollment|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.session_enrollment|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.session_enrollment|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.session_enrollment|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.session_enrollment|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.session_enrollment|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.session_enrollment|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.session_enrollment|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.session_credential|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.session_credential|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.session_credential|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.session_credential|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.session_credential|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.session_credential|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.session_credential|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.session_credential|backup_reader|SELECT|bem_control_owner',
         'TABLE|bem_control.rules_activation|bem_control_owner|DELETE|bem_control_owner',
         'TABLE|bem_control.rules_activation|bem_control_owner|INSERT|bem_control_owner',
         'TABLE|bem_control.rules_activation|bem_control_owner|REFERENCES|bem_control_owner',
@@ -1391,8 +1452,8 @@ BEGIN
 END
 $$;
 
--- Z-EXT-01 (аудит Z3 M-Z3-01) и Z-EXT-02: тела функций расширений совпадают с db/02_zavod_ext_01.sql
--- и db/03_zavod_ext_02.sql.
+-- Z-EXT-01 (аудит Z3 M-Z3-01), Z-EXT-02 и Z-EXT-03: тела функций расширений совпадают с
+-- db/02_zavod_ext_01.sql, db/03_zavod_ext_02.sql и db/04_zavod_ext_03.sql.
 -- У каждого имени ровно одна функция в bem_control; лишняя перегрузка или подменённое тело — отказ.
 DO $zavod_fp$
 DECLARE
@@ -1413,7 +1474,13 @@ BEGIN
         ('record_lease_evidence', 'e8590ecb07c577448ef210bd54fef42d581e81e322184ceaa801bc26f1634f8e'),
         ('file_lease_report', 'f38266ef5b22a89f3771bc1ec608f5815a36d34c0382381fc3b82a14a8336e0d'),
         ('acknowledge_lease_report', '12b3bfdb610db919113cb7434bff953d2c8ae06a3f60aa22013b62759a42693d'),
-        ('complete_chat_lease', 'ee858e12c0a68b2bf94474592c4dc61344b0e35be0705ebc4fa07b3061dd9f35')
+        ('complete_chat_lease', 'ee858e12c0a68b2bf94474592c4dc61344b0e35be0705ebc4fa07b3061dd9f35'),
+        ('transport_context', '2251cafac2d6a66ea899594fff0ce9f50153974af13d687bed4c087fec50ac68'),
+        ('set_role_actor', 'cfb38b1299812ddecc434f1d83e8145a1d74bcd2d264781f7a8142a0325e9712'),
+        ('prepare_session_enrollment', '4302866e6fe9cd0118ff3394f05bce8b3c1c8561aae9c9e5ccfdfdd1da1e5ea4'),
+        ('claim_session_enrollment', '9879b35d7456b1993acc15a8f31594619858f1da0ac9e792a5f9cbff2d8a77e2'),
+        ('lookup_session_credential', '73d4f7bed8f310b956db239ac593896a89df195542a6f96b8764c8807d1c30ae'),
+        ('revoke_session_credential', 'a79e8b00176a86cbf069d5a8adc95f65b537c1bea2dbb885bf49104756c535aa')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got
@@ -1425,6 +1492,39 @@ BEGIN
     END LOOP;
 END
 $zavod_fp$;
+
+-- Z-EXT-03: владелец, режим исполнения и все настройки шести функций; точный набор индексов трёх таблиц.
+DO $zavod_ext03$
+DECLARE
+    r     record;
+    v_got text;
+BEGIN
+    FOR r IN SELECT * FROM (VALUES
+        ('transport_context', 'bem_control_owner|invoker|search_path=pg_catalog, pg_temp'),
+        ('set_role_actor', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('prepare_session_enrollment', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('claim_session_enrollment', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('lookup_session_credential', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('revoke_session_credential', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp')
+    ) AS x(fn, want) LOOP
+        SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'
+                   || coalesce((SELECT string_agg(c, ';' ORDER BY c COLLATE "C") FROM unnest(p.proconfig) c), 'none'))
+          INTO v_got
+          FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'bem_control' AND p.proname = r.fn;
+        IF v_got IS DISTINCT FROM r.want THEN
+            RAISE EXCEPTION 'FINAL_ZAVOD_FN_MODE_MISMATCH: % (найдено %)', r.fn, v_got;
+        END IF;
+    END LOOP;
+    SELECT string_agg(d, ' ; ' ORDER BY d COLLATE "C") INTO v_got
+      FROM (SELECT pg_get_indexdef(i.indexrelid) AS d FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE n.nspname = 'bem_control' AND c.relname IN ('role_actor', 'session_enrollment', 'session_credential')) s;
+    IF v_got IS DISTINCT FROM 'CREATE UNIQUE INDEX role_actor_pkey ON bem_control.role_actor USING btree (tenant_id, role_key) ; CREATE UNIQUE INDEX session_credential_one_live ON bem_control.session_credential USING btree (session) WHERE (revoked_at IS NULL) ; CREATE UNIQUE INDEX session_credential_pass_sha256_key ON bem_control.session_credential USING btree (pass_sha256) ; CREATE UNIQUE INDEX session_credential_pkey ON bem_control.session_credential USING btree (credential_id) ; CREATE UNIQUE INDEX session_enrollment_one_pending ON bem_control.session_enrollment USING btree (tenant_id, role_key) WHERE (status = ''PENDING''::text) ; CREATE UNIQUE INDEX session_enrollment_pkey ON bem_control.session_enrollment USING btree (enrollment_id) ; CREATE UNIQUE INDEX session_enrollment_ticket_once ON bem_control.session_enrollment USING btree (tenant_id, ticket_nonce) WHERE (ticket_nonce IS NOT NULL)' THEN
+        RAISE EXCEPTION 'FINAL_ZAVOD_INDEX_MISMATCH: %', v_got;
+    END IF;
+END
+$zavod_ext03$;
 
 -- Ни одной команды безопасности после этой строки быть не должно.
 -- BEM954-FINAL-SECURITY-CHECKPOINT: 05_final_state_check.sql

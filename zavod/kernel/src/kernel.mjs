@@ -1,6 +1,10 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.9  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 02:21 +03:00 (v0.9: ChatGPT R14B RG14-01 — ActivateRules и
+// ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:28 +03:00 (v0.10: Z-TRANSPORT-01, проект v0.4 —
+//   команды PrepareEnrollment и RevokeSession через посредника; держатель готовит выдачу своей проверенной сессией,
+//   оператор — подписанным билетом (пул bem_rules_gate); CompleteChatLease в той же транзакции отзывает пропуск
+//   своей сессии; виды доказательств выдачи и пропуска закрыты для RecordEvidence;
+//   v0.9: ChatGPT R14B RG14-01 — ActivateRules и
 //   AcknowledgeReport оператора идут отдельным пулом входной роли bem_rules_gate (opts.rulesConnection /
 //   opts.rulesPool), личность клиента сверяется так же, как у bem_kernel_rw; без пула — RULES_GATE_UNSET;
 //   v0.8.1: RulesError из rules_error.mjs — ядро в контейнере рабочего не тянет engine/src/sshsig.mjs; v0.8: пакеты Z-RULES-01 и
@@ -51,10 +55,13 @@ const ROLE_KEY = /^0[1-9]_[^/\\]{1,60}$/;
 // Виды доказательств, которые пишет только ядро внутри своих команд (проект §2.1, RG13-01, RG13-02).
 export const RESERVED_EVIDENCE_KINDS = Object.freeze(['RULES_PR_MERGED', 'RULES_OPERATOR_SIGNATURE', 'RULES_ACTIVATED',
   'CHAT_LEASE_OPENED', 'CHAT_LEASE_COMPLETED', 'TASK_RESULT', 'ROLE_MEMORY', 'NEXT_STEP', 'REPORTED_UP',
-  'REPORT_FILED', 'REPORT_ACKNOWLEDGED']);
+  'REPORT_FILED', 'REPORT_ACKNOWLEDGED', 'SESSION_ENROLLMENT_PREPARED', 'SESSION_ENROLLED', 'SESSION_SECURITY_EVENT',
+  'SESSION_PASS_REVOKED']);
 // Команды аренды: личность вызывающего (заказчик, участник, роль Завода, сессия) — только от посредника.
 export const TRANSPORT_COMMANDS = Object.freeze(['OpenChatLease', 'RecordLeaseEvidence', 'FileLeaseReport',
-  'AcknowledgeReport', 'CompleteChatLease']);
+  'AcknowledgeReport', 'CompleteChatLease', 'PrepareEnrollment', 'RevokeSession']);
+// Команды, которые оператор подаёт подписанным билетом: идут пулом входной роли bem_rules_gate (RG14-01).
+const OPERATOR_TICKET_COMMANDS = Object.freeze(['AcknowledgeReport', 'PrepareEnrollment', 'RevokeSession']);
 
 export class KernelError extends Error {
   constructor(code, message, extra = {}) {
@@ -232,7 +239,7 @@ export class Kernel {
       const vreq = { type: req.type, tenant_id: verified.tenant_id, actor_id: verified.actor_id,
         command_id: req.command_id, payload: req.payload || {}, verified };
       const result = await this._tx(vreq.actor_id, vreq.tenant_id, (c) => HANDLERS[req.type](c, vreq, vreq.payload, this),
-        req.type === 'AcknowledgeReport' && verified.role_key === 'OPERATOR');
+        OPERATOR_TICKET_COMMANDS.includes(req.type) && verified.role_key === 'OPERATOR');
       this.counters.ok += 1;
       this.lastCommandAt = new Date().toISOString();
       this.log({ ev: 'command_ok', type: req.type, actor: vreq.actor_id, tenant: vreq.tenant_id });
@@ -567,7 +574,48 @@ const HANDLERS = {
     const { rows } = await c.query('SELECT bem_control.complete_chat_lease($1, $2, $3, $4, $5, $6, $7, $8) AS id',
       [req.tenant_id, p.lease_id, p.generation, req.verified.session, p.result_evidence_id, p.memory_evidence_id,
         p.next_evidence_id, p.report_id]);
-    return { receipt: rows[0].id };
+    // Z-TRANSPORT-01 §3.1 шаг 3: пропуск сессии гаснет в той же транзакции, что и аренда.
+    const rv = await c.query("SELECT bem_control.revoke_session_credential($1, $2, 'LEASE_COMPLETED') AS n",
+      [req.tenant_id, req.verified.session]);
+    return { receipt: rows[0].id, pass_revoked: rv.rows[0].n };
+  },
+
+  // Z-TRANSPORT-01 §3.1 шаг 1. Держатель открытой аренды той же роли или роли-начальника — своей проверенной
+  // сессией; для роли под оператором — только билет оператора (подпись проверяет rules_gate, база — bem_rules_gate).
+  async PrepareEnrollment(c, req, p, k) {
+    need(typeof p.role_key === 'string' && ROLE_KEY.test(p.role_key), 'ENROLL_BAD_ROLE', String(p.role_key));
+    need(typeof p.session === 'string' && p.session.trim().length > 0 && p.session.length <= 200 && p.session !== 'OPERATOR',
+      'ENROLL_BAD_SESSION', 'session');
+    need(typeof p.claim_sha256 === 'string' && SHA256.test(p.claim_sha256), 'ENROLL_BAD_CODE_HASH', 'claim_sha256');
+    const v = req.verified;
+    let bySession = v.session;
+    let nonce = null;
+    let expires = null;
+    if (v.role_key === 'OPERATOR') {
+      need(k.rules && typeof k.rules.verifyEnrollTicket === 'function', 'RULES_GATE_UNSET', 'kernel has no rules gate');
+      const t = k.rules.verifyEnrollTicket({ tenantId: req.tenant_id, roleKey: p.role_key, session: p.session,
+        claimSha256: p.claim_sha256, ticketText: p.ticket, signature: p.signature,
+        activeRulesCommit: await activeRulesCommit(c, req.tenant_id) });
+      bySession = null;
+      nonce = t.nonce;
+      expires = t.expires_at;
+    }
+    const { rows } = await c.query('SELECT bem_control.prepare_session_enrollment($1, $2, $3, $4, $5, $6, $7) AS id',
+      [req.tenant_id, p.role_key, p.session, p.claim_sha256, bySession, nonce, expires]);
+    return { enrollment_id: rows[0].id, expires_in_seconds: 600 };
+  },
+
+  // Z-TRANSPORT-01 §3.1 шаг 3: отзыв пропуска по билету оператора.
+  async RevokeSession(c, req, p, k) {
+    const v = req.verified;
+    need(v.role_key === 'OPERATOR', 'REVOKE_OPERATOR_ONLY', 'operator ticket required');
+    need(typeof p.session === 'string' && p.session.trim().length > 0, 'BAD_REQUEST', 'session');
+    need(k.rules && typeof k.rules.verifyRevokeTicket === 'function', 'RULES_GATE_UNSET', 'kernel has no rules gate');
+    k.rules.verifyRevokeTicket({ tenantId: req.tenant_id, session: p.session, ticketText: p.ticket,
+      signature: p.signature, activeRulesCommit: await activeRulesCommit(c, req.tenant_id) });
+    const { rows } = await c.query("SELECT bem_control.revoke_session_credential($1, $2, 'OPERATOR_TICKET') AS n",
+      [req.tenant_id, p.session]);
+    return { revoked: rows[0].n };
   },
 };
 

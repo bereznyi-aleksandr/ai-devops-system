@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/rules_gate.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-17 23:51 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 00:15 +03:00 (v0.2: RulesError вынесен в rules_error.mjs; v0.1: пакет Z-RULES-01, проект v1.2)
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-17 23:51 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:28 +03:00 (v0.3: Z-TRANSPORT-01 — билеты оператора на выдачу
+//   пропуска (zavod-session-enroll@v1) и отзыв (zavod-session-revoke@v1): verifyEnrollTicket, verifyRevokeTicket; v0.2: RulesError вынесен в rules_error.mjs; v0.1: пакет Z-RULES-01, проект v1.2)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: проверки правил Завода, которые ядро делает само, не веря вызывающему (проект §3.1, §3.3).
 //   collectActivation — факты для включения версии правил: PR слит в main (GitHub читает программа gh, только
@@ -22,6 +23,9 @@ export const REGISTRY_PATH = 'zavod/rules/RULES_REGISTRY.json';
 export const RULES_KEY_PATH = 'zavod/rules/OPERATOR_RULES_KEY.pub';
 export const RULES_NAMESPACE = 'zavod-rules-activation@v1';
 export const REPORT_ACK_NAMESPACE = 'zavod-report-ack@v1';
+export const ENROLL_NAMESPACE = 'zavod-session-enroll@v1';
+export const REVOKE_NAMESPACE = 'zavod-session-revoke@v1';
+const NONCE = /^[0-9a-f]{32,64}$/;
 export const REQUIRED_CHECKS = Object.freeze(['static', 'pg16', 'engine-pg', 'engine-pg-probes']);
 const TICKET_MAX_AGE_MS = 24 * 3600 * 1000;
 const TICKET_SKEW_MS = 5 * 60 * 1000;
@@ -201,6 +205,36 @@ export function createRulesGate({ repoDir, repo, gh = defaultGh, git = gitRunner
     return { namespace: REPORT_ACK_NAMESPACE, key_fingerprint: key.fp, signed_ticket_sha256, ticket: want };
   }
 
+  // Срок билета выдачи или отзыва: в будущем и не дальше 24 часов (+5 минут на расхождение часов).
+  function ticketExpiry(t) {
+    if (typeof t.expires_at !== 'string' || !ISO_Z.test(t.expires_at)) fail('RULES_SIGNATURE_MISMATCH', 'expires_at');
+    const at = Date.parse(t.expires_at);
+    if (!(at > now()) || at > now() + TICKET_MAX_AGE_MS + TICKET_SKEW_MS) fail('RULES_TICKET_EXPIRED', t.expires_at);
+    if (typeof t.nonce !== 'string' || !NONCE.test(t.nonce)) fail('RULES_SIGNATURE_MISMATCH', 'nonce');
+    return { nonce: t.nonce, expires_at: t.expires_at };
+  }
+
+  // Z-TRANSPORT-01 §3.1: билет оператора на выдачу пропуска роли под оператором —
+  // {tenant_id, role_key, session, claim_sha256, nonce, expires_at}; все поля сверяются с запросом.
+  function verifyEnrollTicket({ tenantId, roleKey, session, claimSha256, ticketText, signature, activeRulesCommit }) {
+    const { ticket, key, signed_ticket_sha256 } = verifyTicket({ ticketText, signature, namespace: ENROLL_NAMESPACE,
+      activeRulesCommit });
+    const { nonce, expires_at } = ticketExpiry(ticket);
+    const want = { tenant_id: tenantId, role_key: roleKey, session, claim_sha256: claimSha256, nonce, expires_at };
+    if (canonicalJson(ticket) !== canonicalJson(want)) fail('RULES_SIGNATURE_MISMATCH', 'enroll ticket');
+    return { namespace: ENROLL_NAMESPACE, key_fingerprint: key.fp, signed_ticket_sha256, nonce, expires_at };
+  }
+
+  // Z-TRANSPORT-01 §3.1 шаг 3: билет оператора на отзыв — {tenant_id, session, nonce, expires_at}.
+  function verifyRevokeTicket({ tenantId, session, ticketText, signature, activeRulesCommit }) {
+    const { ticket, key, signed_ticket_sha256 } = verifyTicket({ ticketText, signature, namespace: REVOKE_NAMESPACE,
+      activeRulesCommit });
+    const { nonce, expires_at } = ticketExpiry(ticket);
+    const want = { tenant_id: tenantId, session, nonce, expires_at };
+    if (canonicalJson(ticket) !== canonicalJson(want)) fail('RULES_SIGNATURE_MISMATCH', 'revoke ticket');
+    return { namespace: REVOKE_NAMESPACE, key_fingerprint: key.fp, signed_ticket_sha256, nonce, expires_at };
+  }
+
   // Проверка перед арендой (Л.8).
   function checkWorkingCopy(rulesCommit) {
     if (!SHA1.test(rulesCommit || '')) fail('LEASE_NO_ACTIVE_RULES', String(rulesCommit));
@@ -214,5 +248,5 @@ export function createRulesGate({ repoDir, repo, gh = defaultGh, git = gitRunner
     return { code_commit: headCommit, rules_commit: rulesCommit };
   }
 
-  return { collectActivation, verifyReportAck, checkWorkingCopy, readRules };
+  return { collectActivation, verifyReportAck, verifyEnrollTicket, verifyRevokeTicket, checkWorkingCopy, readRules };
 }
