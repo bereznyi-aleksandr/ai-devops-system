@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/engine/ci/engine_ci.sh
-# ВЕРСИЯ: v0.7  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 07:22 +03:00 (v0.7: последним шагом
+# ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-10-09 06:40 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 00:15 +03:00 (v0.8: после Z-EXT-01 ставится Z-EXT-02 (03_zavod_ext_02.sql), как в kernel_ci.sh v0.10; v0.7 от 2026-10-12 07:22 +03:00 (v0.7: последним шагом
 #   e5_rollout_gate.mjs — переход со старой модели блокируется; v0.6 от 2026-10-12 07:12 +03:00 (v0.6: оркестратор v0.9 — темы движка
 #   у каждого заказчика свои, e5_tenant_isolation v0.2 с 210 чужими заданиями; порядок шагов не менялся; v0.5: аудит ChatGPT v0.7 — проверка гейта снова после E4-4, на очереди с
 #   чужими оставшимися заданиями; новая e5_tenant_isolation.mjs — два заказчика с ожидающими заданиями одновременно;
@@ -41,6 +41,7 @@ psql -v ON_ERROR_STOP=1 -U postgres -d postgres -f 00_cluster_bootstrap.sql > ch
 tail -1 chain_wrapper.out
 "$NODE" "$KERNEL/db/build_ext.mjs" 01_database_migration.sql --check || fail "Z-EXT-01 build stale"
 psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$KERNEL/db/02_zavod_ext_01.sql" > chain_ext.out 2>&1 || { tail -5 chain_ext.out; fail "Z-EXT-01 failed"; }
+psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$KERNEL/db/03_zavod_ext_02.sql" > chain_ext02.out 2>&1 || { tail -5 chain_ext02.out; fail "Z-EXT-02 failed"; }
 "$NODE" "$KERNEL/db/build_final_ext.mjs" 05_final_state_check.sql --check || fail "Z-EXT-01 final check build stale"
 psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$KERNEL/db/05_final_state_check_ext01.sql" > chain_final_ext.out 2>&1 || { grep -m3 -E 'ERROR|ОШИБКА' chain_final_ext.out; fail "Z-EXT-01 final state check"; }
 [ "$FAIL" -eq 0 ] || { echo "=== ENGINE_CI_RESULT=FAIL"; exit 1; }

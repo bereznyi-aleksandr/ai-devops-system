@@ -1,6 +1,9 @@
 // ДОКУМЕНТ: src/roles.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-09 07:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 10:52 +03:00 (v0.2: аудит E4-6
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-09 07:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-17 23:51 +03:00 (v0.3: пакет Z-RULES-01 —
+//   ActivateRules, GetActiveRules, GetChatLease у всех ролей с командами: включение правил от роли не зависит,
+//   его держат слитый PR, проверки, выпуск и подпись оператора (проект v1.2 §3.1); команды аренды (TRANSPORT_COMMANDS
+//   в kernel.mjs) не принадлежат ни одной роли — их принимает только посредник; v0.2: аудит E4-6
 //   M-E46-01 — команда ReleaseAndTransition только у роли kernel)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: машинный список ролей Kernel (этап 4, критерий E4-7) — таблица 3.1 протокола Z1 v1.9,
@@ -14,20 +17,21 @@
 
 export const TABLE_3_1_SECTION_SHA256 = '1a18a62a280a0f03421a5ec4dee387218469469546a6a4778dfe320264bfb842';
 
-const READ = ['GetWorkItem', 'GetUsage'];
+// Чтение и включение правил: доступны всем ролям с командами.
+const COMMON = ['GetWorkItem', 'GetUsage', 'ActivateRules', 'GetActiveRules', 'GetChatLease'];
 
 // Ключ — машинное имя; z1 — имя строки таблицы 3.1 (столбец «Роль Z1»), дословно.
 export const ROLES = Object.freeze({
-  operator: { z1: 'Оператор', commands: ['OperatorDecision', ...READ] },
-  general_director: { z1: 'Генеральный директор', commands: ['RecordEvidence', ...READ] },
-  director_production: { z1: 'Директор производства', commands: ['CreateWorkItem', 'RecordEvidence', ...READ] },
-  director_quality: { z1: 'Директор качества и безопасности', commands: ['RecordEvidence', ...READ] },
-  director_product: { z1: 'Директор продукта и продаж', commands: ['CreateWorkItem', 'RecordEvidence', ...READ] },
-  worker_curator: { z1: 'Куратор рабочих', commands: ['RecordEvidence', ...READ] },
-  analyst_executor: { z1: 'Аналитик, Исполнитель', commands: ['RecordEvidence', 'RecordUsage', ...READ] },
-  auditor: { z1: 'Аудитор', commands: ['RecordVerdict', ...READ] },
+  operator: { z1: 'Оператор', commands: ['OperatorDecision', ...COMMON] },
+  general_director: { z1: 'Генеральный директор', commands: ['RecordEvidence', ...COMMON] },
+  director_production: { z1: 'Директор производства', commands: ['CreateWorkItem', 'RecordEvidence', ...COMMON] },
+  director_quality: { z1: 'Директор качества и безопасности', commands: ['RecordEvidence', ...COMMON] },
+  director_product: { z1: 'Директор продукта и продаж', commands: ['CreateWorkItem', 'RecordEvidence', ...COMMON] },
+  worker_curator: { z1: 'Куратор рабочих', commands: ['RecordEvidence', ...COMMON] },
+  analyst_executor: { z1: 'Аналитик, Исполнитель', commands: ['RecordEvidence', 'RecordUsage', ...COMMON] },
+  auditor: { z1: 'Аудитор', commands: ['RecordVerdict', ...COMMON] },
   kernel: { z1: 'Kernel, Egress, доставщик, сторож', commands: ['CreateWorkItem', 'Transition', 'RecordEvidence',
-    'PublishSubject', 'ReleaseSubject', 'ReleaseAndTransition', 'RecordUsage', ...READ] },
+    'PublishSubject', 'ReleaseSubject', 'ReleaseAndTransition', 'RecordUsage', ...COMMON] },
   egress: { z1: 'Kernel, Egress, доставщик, сторож', commands: [] },
   dispatcher: { z1: 'Kernel, Egress, доставщик, сторож', commands: [] },
   watchdog: { z1: 'Kernel, Egress, доставщик, сторож', commands: [] },
