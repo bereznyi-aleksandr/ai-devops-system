@@ -1,7 +1,7 @@
 // ДОКУМЕНТ: install/pg_probe.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 14:27 +03:00
-// ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 17:11 +03:00
+// ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2 сессия 9951b86f — запуск из командной строки для установщика)
 // НАЗНАЧЕНИЕ: план установки Z-INSTALL-01 v0.4 §4.C–D — настоящие попытки входа в базу ядра (RG27-04):
 //   что обязано пройти и что обязано получить отказ. Один набор для трёх мест: установщик (у него все ключи
 //   в admin\staging), проба службы под zavod-kernel (ci/service_probe.mjs, только ключи keys\kernel) и проверка
@@ -12,6 +12,7 @@ import pg from 'pg';
 import tls from 'node:tls';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 // tryConnect — одна попытка; sql — запросы после входа (по порядку). Итог: { ok, user?, rows?, code? }.
 export async function tryConnect({ port, user, database = 'bem', ssl = true, caFile, certDir, certRole, password, sql = [] }) {
@@ -101,3 +102,20 @@ export async function adminChecks({ port, caFile, certDir }) {
 
 export const allPass = (rows) => rows.length > 0 && rows.every((r) => r.pass);
 export const haveKeys = (dir, role) => existsSync(join(dir, `${role}.key.pem`));
+
+// Запуск установщиком (шаг database): node install/pg_probe.mjs <порт> <ca.crt.pem> <admin\certs> <чужой CA>
+//   → одна строка JSON { ok, checks } (adminChecks + kernelChecks + keylessChecks); код 3, если хоть одна не прошла.
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  const [port, caFile, certDir, foreignDir] = [Number(process.argv[2]), process.argv[3], process.argv[4], process.argv[5]];
+  let res;
+  try {
+    const checks = [...await adminChecks({ port, caFile, certDir }), ...await kernelChecks({ port, caFile, certDir }),
+      ...await keylessChecks({ port, caFile, foreignDir })];
+    res = { ok: allPass(checks), checks };
+  } catch (e) {
+    // Только код ошибки: в тексте сообщения бывает путь к файлу ключа.
+    res = { ok: false, checks: [], code: (e && e.code) || 'PROBE_ERROR' };
+  }
+  process.stdout.write(`${JSON.stringify(res)}\n`);
+  process.exitCode = res.ok ? 0 : 3;
+}
