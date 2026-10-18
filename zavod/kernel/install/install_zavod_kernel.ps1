@@ -100,7 +100,7 @@ try {
   New-Item -ItemType Directory -Path $Root | Out-Null
   Set-Acl2 $Root @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F") -Here
   if (@(Get-ChildItem -LiteralPath $Root -Force).Count -ne 0) { Fail 'ROOT_NOT_EMPTY_AFTER_ACL' }
-  foreach ($d in $P.Keys | Sort-Object) { New-Item -ItemType Directory -Path $P[$d] | Out-Null }
+  foreach ($d in $P.get_Keys() | Sort-Object) { New-Item -ItemType Directory -Path $P[$d] | Out-Null }
   Set-Acl2 $P['admin'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F")
 
   Step 'account'
@@ -230,7 +230,7 @@ try {
   # Корень: Users только проход и список (без наследования); вложенные каталоги не трогаются.
   Set-Acl2 $Root @("${SID_ADMINS}:F", "${SID_SYSTEM}:F", "${SID_USERS}:RX") -Here
   $acl = [ordered]@{}
-  foreach ($d in @('.') + @($P.Keys | Sort-Object)) {
+  foreach ($d in @('.') + @($P.get_Keys() | Sort-Object)) {
     $path = if ($d -eq '.') { $Root } else { $P[$d] }
     $a = Get-Acl -LiteralPath $path
     $acl[$d] = [ordered]@{ owner = $a.Owner; protected = $a.AreAccessRulesProtected; sddl = $a.Sddl }
