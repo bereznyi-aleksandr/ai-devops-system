@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/rules_handoff.test.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 08:43 +03:00 (v0.3: ChatGPT R15F —
+// ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 08:49 +03:00 (v0.4: ChatGPT R16 RG16-01 —
+//   тест гонок ждёт только соединения, заблокированные держателем; v0.3: 2026-10-18 08:43 +03:00, ChatGPT R15F —
 //   RG15-02 снимок всей базы (каждая таблица несистемных схем) до и после каждого отказа; RG15-03 гонки при смене
 //   адресата с порядком от удержанной транзакции; v0.2: 2026-10-18 02:25 +03:00, ChatGPT R14B —
 //   RG14-01 прямой вызов activate_rules и путь оператора общей ролью ядра — отказ, база не меняется; ядро без пула
@@ -466,14 +467,15 @@ async function report(via, ls, ackVia, ackExtra = {}) {
 }
 const completeArgs = (ls, session, ev, reportId) => [ids.tenantA, ls.lease_id, ls.generation, session,
   ev.result_evidence_id, ev.memory_evidence_id, ev.next_evidence_id, reportId];
-async function lockWaiters() {
+// RG16-01: считаются только соединения, которые ждут именно держателя (его номер процесса базы), а не любые блокировки.
+async function lockWaiters(holderPid) {
   const [{ n }] = await pg(`SELECT count(*)::int AS n FROM pg_stat_activity
-    WHERE datname = current_database() AND wait_event_type = 'Lock'`);
+    WHERE datname = current_database() AND $1 = ANY (pg_blocking_pids(pid))`, [holderPid]);
   return n;
 }
-async function untilWaiting(n) {
+async function untilWaiting(holderPid, n) {
   for (let i = 0; i < 200; i += 1) {
-    if (await lockWaiters() >= n) return;
+    if (await lockWaiters(holderPid) >= n) return;
     await new Promise((r) => setTimeout(r, 50));
   }
   throw new Error(`за 10 с не дождались ${n} ожидающих блокировку`);
@@ -485,8 +487,9 @@ async function heldCompletion(args, during) {
     try {
       await c.query("SELECT set_config('app.actor_id', $1, true), set_config('app.tenant_id', $2, true)", [ids.author, ids.tenantA]);
       await c.query('SELECT bem_control.complete_chat_lease($1, $2, $3, $4, $5, $6, $7, $8)', args);
+      const [{ pid }] = (await c.query('SELECT pg_backend_pid() AS pid')).rows;
       const pending = during();
-      await untilWaiting(pending.length);
+      await untilWaiting(pid, pending.length);
       await c.query('COMMIT');
       return Promise.all(pending);
     } catch (e) { await c.query('ROLLBACK').catch(() => {}); throw e; }
