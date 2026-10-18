@@ -1,7 +1,10 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:15 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.4 сессия 9951b86f)
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:37 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f)
+# v0.5: права bin ставятся сразу после программ (служба базы запускает postgres.exe из bin до шага acl); на время
+#   initdb учётке установщика дана запись в data (initdb под администратором работает с урезанным маркером), затем
+#   снимается вместе с Admins; обход каталогов — $P.get_Keys() (у $P есть ключ 'keys').
 # v0.4: установщик EDB той же сборки, что архив, — 16.15-5 (CI 18.10: у EDB есть сборки 16.15-1…5; установщик 16.15-1
 #   отличался от архива 16.15-5 в 183 файлах). Тройная сверка (установщик, архив, список коммита) возвращена;
 #   отпечаток сертификата подписи EnterpriseDB закреплён; сумма установщика — из эталонного прогона CI 18.10
@@ -148,6 +151,9 @@ try {
   Invoke-Checked $node @($check, (Join-Path $P['bin'] 'pgsql'), $list) 'PG_FILES_INSTALLED'
   Invoke-Checked $node @($check, (Join-Path $st 'pgzip\pgsql'), $list) 'PG_FILES_ZIP'
   $receipt.sources['pg_files'] = [ordered]@{ list_sha256 = (Get-Sha $list); installer = ($copied | ConvertFrom-Json); installed = 'match'; zip = 'match' }
+  # Программы готовы: права bin ставятся сейчас — служба базы (шаг database) запускает postgres.exe из bin\pgsql
+  # под своей виртуальной учёткой, а у корня для Users пока нет записей.
+  Set-Acl2 $P['bin'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${SID_USERS}:(OI)(CI)RX")
 
   Step 'npm'
   # Пакеты из package-lock.json коммита: адрес только registry.npmjs.org, integrity sha512 сверяется до распаковки.
@@ -184,12 +190,16 @@ try {
   $dbCfg = Join-Path $st 'db_setup.json'
   [ordered]@{ pgBin = (Join-Path $P['bin'] 'pgsql\bin'); data = $P['data']; certs = $certs; pkg = (Join-Path $repoDir 'bem954\H1_31_PACKAGE_R51')
     kernelDir = $P['app']; port = $DbPort } | ConvertTo-Json | Set-Content -LiteralPath $dbCfg -Encoding ascii
+  # initdb под администратором сам перезапускается с урезанным маркером (группа Administrators — только для запрета),
+  # поэтому на время init/config учётке установщика даётся явная запись в data; ниже она снимается вместе с Admins.
+  $me = "*$($id.User.Value)"
+  Set-Acl2 $P['data'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${me}:(OI)(CI)F")
   Invoke-Checked $node @((Join-Path $P['app'] 'install\db_setup.mjs'), 'init', $dbCfg) 'DB_INIT'
   Invoke-Checked $node @((Join-Path $P['app'] 'install\db_setup.mjs'), 'config', $dbCfg) 'DB_CONFIG'
   Invoke-Checked (Join-Path $P['bin'] 'pgsql\bin\pg_ctl.exe') @('register', '-N', $PgService, '-U', "NT SERVICE\$PgService", '-D', $P['data'], '-S', 'auto', '-w') 'PG_REGISTER'
   Set-Acl2 $P['data'] @("*S-1-5-80-0:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "NT SERVICE\${PgService}:(OI)(CI)F")
-  # S-1-5-80-0 («все службы») снимается сразу: доступ к data — только у службы базы и SYSTEM.
-  Invoke-Checked "$env:SystemRoot\System32\icacls.exe" @($P['data'], '/remove:g', '*S-1-5-80-0', '/T', '/C', '/Q') 'ACL_DATA_TRIM'
+  # S-1-5-80-0 («все службы»), Admins и учётка установщика снимаются сразу: доступ к data — только у службы базы и SYSTEM.
+  Invoke-Checked "$env:SystemRoot\System32\icacls.exe" @($P['data'], '/remove:g', '*S-1-5-80-0', $SID_ADMINS, $me, '/T', '/C', '/Q') 'ACL_DATA_TRIM'
   Start-Service -Name $PgService
   $deadline = (Get-Date).AddSeconds(60)
   while (-not (Get-NetTCPConnection -LocalPort $DbPort -State Listen -ErrorAction SilentlyContinue)) {
@@ -219,7 +229,6 @@ try {
 
   Step 'acl'
   $K = "${KernelUser}"
-  Set-Acl2 $P['bin'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${SID_USERS}:(OI)(CI)RX")
   Set-Acl2 $P['app'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${SID_USERS}:(OI)(CI)RX")
   Set-Acl2 $P['public'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${SID_USERS}:(OI)(CI)RX")
   Set-Acl2 $P['keys'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${K}:(RX)")
