@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: tests/rules_handoff.test.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 02:25 +03:00 (v0.2: ChatGPT R14B —
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 08:43 +03:00 (v0.3: ChatGPT R15F —
+//   RG15-02 снимок всей базы (каждая таблица несистемных схем) до и после каждого отказа; RG15-03 гонки при смене
+//   адресата с порядком от удержанной транзакции; v0.2: 2026-10-18 02:25 +03:00, ChatGPT R14B —
 //   RG14-01 прямой вызов activate_rules и путь оператора общей ролью ядра — отказ, база не меняется; ядро без пула
 //   bem_rules_gate — RULES_GATE_UNSET; RG14-02/03 подтверждение и завершение после смены чата адресата — отказ;
 //   v0.1: пакеты Z-RULES-01 и Z-HANDOFF-01, проект v1.2 §6)
@@ -8,7 +10,7 @@
 // НАЗНАЧЕНИЕ: проверки Z-EXT-02 через Kernel на чистом PostgreSQL 16. Проверки GitHub, git и подписи заменены подставным
 //   объектом rules (их проверяет tests/rules_gate.test.mjs), поэтому здесь видно, что база сама отклоняет каждый
 //   неверный факт. Посредник — тестовый: личность по полю via запроса. Каждый отказ проверяется вместе с
-//   неизменностью базы (отпечаток новых таблиц и число доказательств до и после).
+//   неизменностью всей базы (число строк и отпечаток каждой таблицы до и после).
 // ОГРАНИЧЕНИЯ: стенд PG16 с H1.31 + Z-EXT-01 + Z-EXT-02, как остальные тесты Kernel; живая база не трогается.
 
 import test, { before, after } from 'node:test';
@@ -59,13 +61,18 @@ function facts({ tenant, subject, head, commit = hex(40), parents = PARENTS, dig
     signature: { namespace: 'zavod-rules-activation@v1', key_fingerprint: FP, signed_ticket_sha256: hex(64), ticket } };
 }
 
+// RG15-02: снимок всей базы — число строк и отпечаток каждой таблицы во всех схемах, кроме системных.
 async function snap() {
-  return withRole('postgres', async (c) => (await c.query(`SELECT
-    (SELECT count(*) FROM bem_core.evidence)::int AS evidence,
-    (SELECT md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM bem_control.rules_activation t) AS ra,
-    (SELECT md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM bem_control.chat_lease t) AS cl,
-    (SELECT md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM bem_control.chat_lease_evidence t) AS ce,
-    (SELECT md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM bem_control.lease_report t) AS lr`)).rows[0]);
+  return withRole('postgres', async (c) => {
+    const { rows: tabs } = await c.query(`SELECT format('%I.%I', schemaname, tablename) AS t FROM pg_tables
+      WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY 1`);
+    const out = {};
+    for (const { t } of tabs) {
+      out[t] = (await c.query(`SELECT count(*)::int AS n, md5(coalesce(string_agg(x::text, '|' ORDER BY x::text), '')) AS h
+        FROM ${t} x`)).rows[0];
+    }
+    return out;
+  });
 }
 async function refused(fn, code) {
   const before = await snap();
@@ -419,8 +426,10 @@ test('RG13-02: отчёт оператору подтверждается под
   await refused(() => lease('p1', 'FileLeaseReport', { lease_id: L.p2.lease_id, generation: 2, report_sha256: hex(64) }),
     'REPORT_RECIPIENT_NOT_AVAILABLE');
   // Новый чат ГД (поколение 2) получает новый отчёт, подтверждает его — завершение проходит.
-  const g2 = ok(await lease('g2', 'OpenChatLease', { work_item_id: await newItem() }));
+  L.wiG2 = await newItem();
+  const g2 = ok(await lease('g2', 'OpenChatLease', { work_item_id: L.wiG2 }));
   assert.equal(g2.generation, 2);
+  L.g2 = g2;
   const sum3 = hex(64);
   const rep3 = ok(await lease('p1', 'FileLeaseReport', { lease_id: L.p2.lease_id, generation: 2, report_sha256: sum3 })).report_id;
   await refused(() => lease('g1', 'AcknowledgeReport', { report_id: rep3, report_sha256: sum3 }), 'REPORT_NOT_RECIPIENT');
@@ -435,4 +444,96 @@ test('RG12-04: две одновременные выдачи одной рол�
   assert.equal(res.find((x) => !x.ok).error.code, 'LEASE_ROLE_BUSY');
   const rows = await pg("SELECT count(*)::int AS n FROM bem_control.chat_lease WHERE tenant_id = $1 AND role_key = $2", [ids.tenantA, R03]);
   assert.equal(rows[0].n, 1);
+});
+
+// ---------- RG15-03: гонки при смене адресата (порядок задаёт удержанная транзакция, а не случай) ----------
+
+// Чат готовится к завершению: итог, память, следующий шаг, работа принята.
+async function ready(via, ls) {
+  const rec = (kind) => lease(via, 'RecordLeaseEvidence', { lease_id: ls.lease_id, generation: ls.generation, kind,
+    content_sha256: hex(64) });
+  const ev = { result_evidence_id: ok(await rec('TASK_RESULT')).evidence_id,
+    memory_evidence_id: ok(await rec('ROLE_MEMORY')).evidence_id, next_evidence_id: ok(await rec('NEXT_STEP')).evidence_id };
+  const [{ work_item_id }] = await pg('SELECT work_item_id FROM bem_control.chat_lease WHERE lease_id = $1', [ls.lease_id]);
+  await finish(work_item_id);
+  return ev;
+}
+async function report(via, ls, ackVia, ackExtra = {}) {
+  const sum = hex(64);
+  const id = ok(await lease(via, 'FileLeaseReport', { lease_id: ls.lease_id, generation: ls.generation, report_sha256: sum })).report_id;
+  if (ackVia) ok(await lease(ackVia, 'AcknowledgeReport', { report_id: id, report_sha256: sum, ...ackExtra }));
+  return { id, sum };
+}
+const completeArgs = (ls, session, ev, reportId) => [ids.tenantA, ls.lease_id, ls.generation, session,
+  ev.result_evidence_id, ev.memory_evidence_id, ev.next_evidence_id, reportId];
+async function lockWaiters() {
+  const [{ n }] = await pg(`SELECT count(*)::int AS n FROM pg_stat_activity
+    WHERE datname = current_database() AND wait_event_type = 'Lock'`);
+  return n;
+}
+async function untilWaiting(n) {
+  for (let i = 0; i < 200; i += 1) {
+    if (await lockWaiters() >= n) return;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  throw new Error(`за 10 с не дождались ${n} ожидающих блокировку`);
+}
+// Транзакция-держатель: завершает чат функцией базы и не фиксирует, пока ждущие не встанут в очередь блокировки.
+async function heldCompletion(args, during) {
+  return withRole('bem_kernel_rw', async (c) => {
+    await c.query('BEGIN');
+    try {
+      await c.query("SELECT set_config('app.actor_id', $1, true), set_config('app.tenant_id', $2, true)", [ids.author, ids.tenantA]);
+      await c.query('SELECT bem_control.complete_chat_lease($1, $2, $3, $4, $5, $6, $7, $8)', args);
+      const pending = during();
+      await untilWaiting(pending.length);
+      await c.query('COMMIT');
+      return Promise.all(pending);
+    } catch (e) { await c.query('ROLLBACK').catch(() => {}); throw e; }
+  });
+}
+const statusOf = async (leaseId) => (await pg('SELECT status FROM bem_control.chat_lease WHERE lease_id = $1', [leaseId]))[0].status;
+
+test('RG15-03: подчинённый завершается, пока адресат держит чат; адресат уходит после — оба завершены', async () => {
+  // Адресат — открытый чат ГД поколения 2 (L.g2). Новый чат второй роли — поколение 3.
+  const p3 = ok(await lease('p2', 'OpenChatLease', { work_item_id: await newItem() }));
+  assert.equal(p3.generation, 3);
+  const evP = await ready('p2', p3);
+  const repP = await report('p2', p3, 'g2');
+  const evG = await ready('g2', L.g2);
+  const repG = await report('g2', L.g2, 'op', { ticket: '{}', signature: 's' });
+  // Держатель завершает подчинённого (его запись блокирует строку адресата на чтение); завершение адресата ждёт.
+  const [gDone] = await heldCompletion(completeArgs(p3, 'sess-p2', evP, repP.id), () => [
+    lease('g2', 'CompleteChatLease', { lease_id: L.g2.lease_id, generation: 2, ...evG, report_id: repG.id })]);
+  ok(gDone);
+  assert.equal(await statusOf(p3.lease_id), 'COMPLETED');
+  assert.equal(await statusOf(L.g2.lease_id), 'COMPLETED');
+});
+
+test('RG15-03: адресат уходит, пока подчинённый завершается и подтверждение идёт, — оба отказа, база не меняется', async () => {
+  const g3 = ok(await lease('g1', 'OpenChatLease', { work_item_id: await newItem() }));
+  assert.equal(g3.generation, 3);
+  const p4 = ok(await lease('p1', 'OpenChatLease', { work_item_id: await newItem() }));
+  const evP = await ready('p1', p4);
+  const repP = await report('p1', p4, 'g1');          // подтверждён адресатом g3 (сессия sess-g1)
+  const repWait = await report('p1', p4, null);       // второй отчёт тому же адресату, ещё не подтверждён
+  const evG = await ready('g1', g3);
+  const repG = await report('g1', g3, 'op', { ticket: '{}', signature: 's' });
+  const before = await snap();
+  let after;
+  // Держатель завершает адресата; завершение подчинённого и подтверждение второго отчёта ждут его строку.
+  const [pDone, ackLate] = await heldCompletion(completeArgs(g3, 'sess-g1', evG, repG.id), () => [
+    lease('p1', 'CompleteChatLease', { lease_id: p4.lease_id, generation: p4.generation, ...evP, report_id: repP.id }),
+    lease('g1', 'AcknowledgeReport', { report_id: repWait.id, report_sha256: repWait.sum })]);
+  assert.equal(pDone.ok, false, JSON.stringify(pDone));
+  assert.equal(pDone.error.code, 'LEASE_REPORT_RECIPIENT_CHANGED');
+  assert.equal(ackLate.ok, false, JSON.stringify(ackLate));
+  assert.equal(ackLate.error.code, 'REPORT_RECIPIENT_CHANGED');
+  assert.equal(await statusOf(g3.lease_id), 'COMPLETED');
+  assert.equal(await statusOf(p4.lease_id), 'OPEN');
+  // Изменилось только то, что записало завершение адресата: его строка аренды и его квитанция.
+  after = await snap();
+  const changed = Object.keys(after).filter((t) => JSON.stringify(after[t]) !== JSON.stringify(before[t])).sort();
+  assert.deepEqual(changed, ['bem_control.chat_lease', 'bem_core.evidence'].sort(), `изменились: ${changed}`);
+  assert.equal(after['bem_core.evidence'].n, before['bem_core.evidence'].n + 1, 'одна новая запись — квитанция адресата');
 });
