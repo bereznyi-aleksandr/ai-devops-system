@@ -5,6 +5,7 @@
 # ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:04 +03:00 (v0.23: план Z-INSTALL-01 §4 — задание install_win на чистой windows-latest:
 #   эталон установщика EDB (сумма, подпись, извлечение без установки, список файлов), полный прогон
 #   install/install_zavod_kernel.ps1 по проверяемому коммиту, ci/install_check.mjs под новой обычной учёткой;
+#   установщик EDB 16.15-5 — та же сборка, что архив jobobject; артефакты одной папкой;
 #   Claude, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1; v0.22: L-S6-R12-01 и аудит Codex R14 — модульных ops 64; число проверок
 #   и строка OK сверяются отдельными командами: внутри цепочки && провал первой проверки шаг не останавливал; v0.21: аудит ChatGPT S6-prep R11A M-S6-R11-01 — сервер сверяет архив с head по git-хешам;
 #   e2e: выпуски — настоящие коммиты, проверок 15 (чужой архив, не тот объект коммита); модульных ops 59; v0.20: аудит ChatGPT S6-prep R10 — подпись билета на телефоне zsign_phone.sh,
@@ -194,7 +195,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 60
     env:
-      ZAVOD_PG_SETUP_URL: https://get.enterprisedb.com/postgresql/postgresql-16.15-1-windows-x64.exe
+      ZAVOD_PG_SETUP_URL: https://get.enterprisedb.com/postgresql/postgresql-16.15-5-windows-x64.exe
       # Код для установщика скачивается с GitHub по коммиту: для PR — голова ветки, для push — сам коммит.
       ZAVOD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
@@ -218,23 +219,22 @@ jobs:
           $p = Start-Process -FilePath $exe -ArgumentList @('--mode', 'unattended', '--extract-only', '1', '--prefix', "`"$x`"") -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "PG_EXTRACT exit=$($p.ExitCode)" }
           $pgRoot = if (Test-Path -LiteralPath (Join-Path $x 'bin\postgres.exe')) { $x } else { Join-Path $x 'pgsql' }
-          # Сведения для проверки (не влияют на итог): подписанные exe/dll и соседние сборки установщика у EDB.
+          # Сведения для проверки (не влияют на итог): сколько exe/dll подписано.
           $bins = @(Get-ChildItem -LiteralPath (Join-Path $pgRoot 'bin'), (Join-Path $pgRoot 'lib') -File | Where-Object { $_.Extension -in '.exe', '.dll' })
           $signed = @($bins | Where-Object { (Get-AuthenticodeSignature -LiteralPath $_.FullName).Status -eq 'Valid' })
           "PG_BINARIES total=$($bins.Count) signed_valid=$($signed.Count)"
-          foreach ($n in 1..6) {
-            $u = $env:ZAVOD_PG_SETUP_URL -replace '16\.15-1-', "16.15-$n-"
-            try { $r = Invoke-WebRequest -UseBasicParsing -Method Head -Uri $u; "EDB_BUILD 16.15-$n status=$($r.StatusCode) length=$($r.Headers['Content-Length'])" } catch { "EDB_BUILD 16.15-$n absent" }
-          }
-          # Список файлов bin/lib/share с этого установщика: артефакт прогона; закреплённый в коммите список обязан совпасть.
-          $made = Join-Path $env:RUNNER_TEMP 'pg16_15_1_installer_files.sha256'
+          # Список файлов bin/lib/share с этого установщика — артефакт прогона; обязан совпасть со списком коммита
+          # (снят с архива binaries той же сборки 16.15-5). Итог печатается до отказа по закреплённой сумме.
+          $made = Join-Path $env:RUNNER_TEMP 'artifacts\pg16_15_5_installer_files.sha256'
+          New-Item -ItemType Directory -Force -Path (Split-Path $made) | Out-Null
           node zavod/kernel/install/pg_files_check.mjs --make $pgRoot $made
           if ($LASTEXITCODE) { throw 'PG_LIST_MAKE' }
           "PG_LIST_SHA256=$((Get-FileHash -Algorithm SHA256 -LiteralPath $made).Hash.ToLowerInvariant()) lines=$(@(Get-Content -LiteralPath $made).Count)"
-          node zavod/kernel/install/pg_files_check.mjs $pgRoot zavod/kernel/install/pg16_15_1_installer_files.sha256
-          if ($LASTEXITCODE) { throw 'PG_FILES_INSTALLER' }
+          node zavod/kernel/install/pg_files_check.mjs $pgRoot zavod/kernel/install/pg16_15_files.sha256
+          $filesOk = ($LASTEXITCODE -eq 0)
           $m = Select-String -LiteralPath zavod/kernel/install/install_zavod_kernel.ps1 -Pattern "^\s*pgsetup\s*=\s*@\{[^\n]*?\bsha\s*=\s*'([^']*)'"
           $pin = $m.Matches[0].Groups[1].Value
+          if (-not $filesOk) { throw 'PG_FILES_INSTALLER' }
           if ($pin -ne $sha) { throw "PGSETUP_PIN_MISMATCH pin=$pin reference=$sha" }
       - name: installer (elevated runner) on the tested commit
         shell: powershell
@@ -258,17 +258,21 @@ jobs:
           $p = Start-Process -FilePath 'C:\ZavodKernel\bin\node.exe' -ArgumentList @('C:\ZavodKernel\app\ci\install_check.mjs', 'C:\ZavodKernel', '--out', "$out\install_check.json") -Credential $cred -WorkingDirectory $out -Wait -PassThru -RedirectStandardOutput "$out\stdout.txt" -RedirectStandardError "$out\stderr.txt"
           Get-Content -LiteralPath "$out\stdout.txt"; Get-Content -LiteralPath "$out\stderr.txt"
           if ($p.ExitCode -ne 0) { throw "INSTALL_CHECK exit=$($p.ExitCode)" }
+      - name: collect artifacts
+        if: always()
+        shell: powershell
+        run: |
+          $dst = Join-Path $env:RUNNER_TEMP 'artifacts'
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
+          foreach ($f in 'C:\ZavodKernel\public\install_receipt.json', 'C:\ZavodKernel\logs\service_probe.json',
+            'C:\zavod_ic\install_check.json', 'C:\zavod_ic\stdout.txt', 'C:\zavod_ic\stderr.txt') {
+            if (Test-Path -LiteralPath $f) { Copy-Item -LiteralPath $f -Destination $dst }
+          }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: zavod-kernel-windows-install
-          path: |
-            ${{ runner.temp }}/pg16_15_1_installer_files.sha256
-            C:\ZavodKernel\public\install_receipt.json
-            C:\ZavodKernel\logs\service_probe.json
-            C:\zavod_ic\install_check.json
-            C:\zavod_ic\stdout.txt
-            C:\zavod_ic\stderr.txt
+          path: ${{ runner.temp }}/artifacts
           if-no-files-found: ignore
 
   catalog_p1:

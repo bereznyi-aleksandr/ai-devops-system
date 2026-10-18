@@ -1,10 +1,10 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:08 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.3 сессия 9951b86f)
-# v0.3: эталон PostgreSQL — только подписанный установщик EDB 16.15-1 (сумма и отпечаток сертификата закреплены по CI
-#   18.10); архив binaries 16.15-5 убран: это другая сборка (183 файла различаются), тройная сверка невозможна.
-#   Список файлов install/pg16_15_1_installer_files.sha256 снят в CI с того же установщика.
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:15 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.4 сессия 9951b86f)
+# v0.4: установщик EDB той же сборки, что архив, — 16.15-5 (CI 18.10: у EDB есть сборки 16.15-1…5; установщик 16.15-1
+#   отличался от архива 16.15-5 в 183 файлах). Тройная сверка (установщик, архив, список коммита) возвращена;
+#   отпечаток сертификата подписи EnterpriseDB закреплён. v0.3 (только установщик 16.15-1) — отменён.
 # v0.2: права корня без рекурсии (v0.1 давал Users чтение admin и data и сбрасывал владельца rules); корень закрыт
 #   сразу после создания (до этого действовали права C:\ — запись для всех вошедших); снимок прав в квитанции.
 # НАЗНАЧЕНИЕ: план установки Z-INSTALL-01 §3–§4.C — один запуск оператора «от администратора»: учётка zavod-kernel,
@@ -39,7 +39,8 @@ $TaskName    = 'ZavodKernel'
 $Src = [ordered]@{
   node    = @{ url = 'https://nodejs.org/dist/v22.23.2/win-x64/node.exe'; sha = '0d0f5e39f9f3d9587bc19f73eab3c2c9c4903fd02d6dbf9c853dd81b3d95fad4'; signer = 'OpenJS Foundation' }
   mingit  = @{ url = 'https://github.com/git-for-windows/git/releases/download/v2.55.0.windows.2/MinGit-2.55.0.2-64-bit.zip'; sha = 'e3ea2944cea4b3fabcd69c7c1669ef69b1b66c05ac7806d81224d0abad2dec31' }
-  pgsetup = @{ url = 'https://get.enterprisedb.com/postgresql/postgresql-16.15-1-windows-x64.exe'; sha = 'de926fefad00e313e212cd438c0f04bf033e200099ad56c012724efcebed79f2'; signer = 'EnterpriseDB Corporation'; thumbprint = '7BEDD1269FCCF7A5D95F18274750B79893C06C70' }
+  pgsetup = @{ url = 'https://get.enterprisedb.com/postgresql/postgresql-16.15-5-windows-x64.exe'; sha = 'PIN_FROM_CI_REFERENCE_RUN'; signer = 'EnterpriseDB Corporation'; thumbprint = '7BEDD1269FCCF7A5D95F18274750B79893C06C70' }
+  pgzip   = @{ url = 'https://get.enterprisedb.com/postgresql/postgresql-16.15-5-windows-x64-binaries.zip'; sha = '43bb45f173a6f08cf1d29a97a6d8deb119e8e8093a24c00d2d1001a0ccaa8281' }
 }
 
 $receipt = [ordered]@{ format = 'zavod-install-receipt@v1'; status = 'IN_PROGRESS'; commit = $Commit; repo = $Repo; root = $Root
@@ -115,11 +116,12 @@ try {
   Save-Verified 'node' (Join-Path $st 'node.exe')
   Save-Verified 'mingit' (Join-Path $st 'mingit.zip')
   Save-Verified 'pgsetup' (Join-Path $st 'pgsetup.exe')
+  Save-Verified 'pgzip' (Join-Path $st 'pgzip.zip')
   $codeZip = Join-Path $st 'code.zip'
   Invoke-WebRequest -UseBasicParsing -Uri "https://codeload.github.com/$Repo/zip/$Commit" -OutFile $codeZip
   $receipt.sources['code'] = [ordered]@{ url = "https://codeload.github.com/$Repo/zip/$Commit"; sha256 = (Get-Sha $codeZip) }
   $tar = "$env:SystemRoot\System32\tar.exe"
-  foreach ($x in @(@('code.zip', 'code'), @('mingit.zip', 'mingit'))) {
+  foreach ($x in @(@('code.zip', 'code'), @('mingit.zip', 'mingit'), @('pgzip.zip', 'pgzip'))) {
     New-Item -ItemType Directory -Path (Join-Path $st $x[1]) | Out-Null
     Invoke-Checked $tar @('-xf', (Join-Path $st $x[0]), '-C', (Join-Path $st $x[1])) "UNPACK_$($x[1])"
   }
@@ -132,16 +134,17 @@ try {
   Copy-Item -LiteralPath (Join-Path $st 'mingit') -Destination (Join-Path $P['bin'] 'git') -Recurse
   New-Item -ItemType Directory -Path (Join-Path $P['bin'] 'nohooks') | Out-Null
   # PostgreSQL: подписанный установщик EDB, только извлечение (без служб и реестра); каждый файл bin/lib/share
-  # сверяется со списком коммита (снят в CI с этого же установщика: сумма и отпечаток подписи закреплены выше).
+  # сверяется со списком коммита, и тот же список обязан совпасть с закреплённым архивом binaries той же сборки.
   $pgx = Join-Path $st 'pg_extract'
   $proc = Start-Process -FilePath (Join-Path $st 'pgsetup.exe') -ArgumentList @('--mode', 'unattended', '--extract-only', '1', '--prefix', "`"$pgx`"") -Wait -PassThru
   if ($proc.ExitCode -ne 0) { Fail "PG_EXTRACT exit=$($proc.ExitCode)" }
-  $list = Join-Path $P['app'] 'install\pg16_15_1_installer_files.sha256'
+  $list = Join-Path $P['app'] 'install\pg16_15_files.sha256'
   $pgRoot = if (Test-Path -LiteralPath (Join-Path $pgx 'bin\postgres.exe')) { $pgx } else { Join-Path $pgx 'pgsql' }
   Invoke-Checked $node @((Join-Path $P['app'] 'install\pg_files_check.mjs'), $pgRoot, $list) 'PG_FILES_INSTALLER'
+  Invoke-Checked $node @((Join-Path $P['app'] 'install\pg_files_check.mjs'), (Join-Path $st 'pgzip\pgsql'), $list) 'PG_FILES_ZIP'
   New-Item -ItemType Directory -Path (Join-Path $P['bin'] 'pgsql') | Out-Null
   foreach ($d in 'bin', 'lib', 'share') { Copy-Item -LiteralPath (Join-Path $pgRoot $d) -Destination (Join-Path $P['bin'] "pgsql\$d") -Recurse }
-  $receipt.sources['pg_files'] = [ordered]@{ list_sha256 = (Get-Sha $list); installer = 'match' }
+  $receipt.sources['pg_files'] = [ordered]@{ list_sha256 = (Get-Sha $list); installer = 'match'; zip = 'match' }
 
   Step 'npm'
   # Пакеты из package-lock.json коммита: адрес только registry.npmjs.org, integrity sha512 сверяется до распаковки.

@@ -69,18 +69,17 @@ test('sameAcl: точный набор записей §2; лишняя запи
   assert.equal(sameAcl(rootRec, want['.']), false);
 });
 
-test('installerPins: три закреплённые суммы (node, MinGit, установщик EDB) читаются из установщика', () => {
+test('installerPins: четыре закреплённые суммы (node, MinGit, установщик и архив EDB) читаются из установщика', () => {
   const pins = installerPins(readFileSync(join(here, '..', 'install', 'install_zavod_kernel.ps1'), 'utf8'));
-  assert.deepEqual(Object.keys(pins).sort(), ['mingit', 'node', 'pgsetup']);
-  assert.match(pins.node, /^[0-9a-f]{64}$/);
-  assert.match(pins.pgsetup, /^[0-9a-f]{64}$/);
+  assert.deepEqual(Object.keys(pins).sort(), ['mingit', 'node', 'pgsetup', 'pgzip']);
+  for (const k of ['node', 'mingit', 'pgzip']) assert.match(pins[k], /^[0-9a-f]{64}$/);
 });
 
 function fakeRoot() {
   const root = mkdtempSync(join(tmpdir(), 'zavod-ic-root-'));
   const files = { 'bin/node.exe': 'node', 'app/gate.json': '{}', 'app/install/install_zavod_kernel.ps1':
     `  node    = @{ url = 'u'; sha = '${'a'.repeat(64)}' }\n  mingit  = @{ url = 'u'; sha = '${'b'.repeat(64)}' }\n` +
-    `  pgsetup = @{ url = 'u'; sha = '${'c'.repeat(64)}'; signer = 'x' }\n` };
+    `  pgsetup = @{ url = 'u'; sha = '${'c'.repeat(64)}'; signer = 'x' }\n  pgzip   = @{ url = 'u'; sha = '${'d'.repeat(64)}' }\n` };
   const sums = {};
   for (const [rel, text] of Object.entries(files)) {
     mkdirSync(join(root, dirname(rel)), { recursive: true });
@@ -88,7 +87,7 @@ function fakeRoot() {
     sums[rel] = sha(Buffer.from(text));
   }
   const receipt = { status: 'OK', mode_active: false, commit: 'f'.repeat(40), file_sums: sums,
-    sources: { node: { sha256: 'a'.repeat(64) }, mingit: { sha256: 'b'.repeat(64) }, pgsetup: { sha256: 'c'.repeat(64) } } };
+    sources: { node: { sha256: 'a'.repeat(64) }, mingit: { sha256: 'b'.repeat(64) }, pgsetup: { sha256: 'c'.repeat(64) }, pgzip: { sha256: 'd'.repeat(64) } } };
   return { root, receipt };
 }
 
