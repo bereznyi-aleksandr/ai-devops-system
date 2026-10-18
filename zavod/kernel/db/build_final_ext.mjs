@@ -1,6 +1,12 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 02:21 +03:00 (v0.6: ChatGPT R14B RG14-01 —
+// ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 11:38 +03:00 (v0.9: ChatGPT R25 — функция hold_operator_actor:
+//   вызывает только входная роль, режим definer; v0.8 10:52: ChatGPT R24 — функции hold_session_credential и
+//   credential_expired, счётчик предъявлений отозванного пропуска; v0.7: Z-EXT-03 (db/04_zavod_ext_03.sql,
+//   пакет Z-TRANSPORT-01) — ограничения трёх новых таблиц, права на таблицы и шесть функций, отпечатки тел; сверх
+//   списков 05: владелец, режим исполнения и настройки этих шести функций и точный набор индексов их таблиц
+//   (частичные уникальные индексы «одна ожидающая выдача на роль», «билет один раз», «один живой пропуск»);
+//   v0.6: ChatGPT R14B RG14-01 —
 //   входная роль bem_rules_gate: признаки, отсутствие пароля, право входа, подключение к bem, схема bem_control,
 //   чтение rules_activation, вызов activate_rules (у bem_kernel_rw права больше нет) и acknowledge_lease_report;
 //   v0.5: Z-EXT-02 (db/03_zavod_ext_02.sql,
@@ -33,6 +39,7 @@ const [src, flag] = process.argv.slice(2);
 const base = readFileSync(src, 'utf8').replace(/\r\n/g, '\n');
 const ext = readFileSync(here('./02_zavod_ext_01.sql'), 'utf8').replace(/\r\n/g, '\n');
 const ext02 = readFileSync(here('./03_zavod_ext_02.sql'), 'utf8').replace(/\r\n/g, '\n');
+const ext03 = readFileSync(here('./04_zavod_ext_03.sql'), 'utf8').replace(/\r\n/g, '\n');
 const sha = (s) => createHash('sha256').update(s).digest('hex');
 
 function once(text, from, to) {
@@ -163,6 +170,86 @@ t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|b
   Object.entries(EXT02_FUNCS).flatMap(([n, a]) => EXT02_CALLERS[n]
     .map((who) => `FUNCTION|bem_control.${n}(${a})|${who}|EXECUTE|bem_control_owner`)));
 
+// Z-EXT-03 (пакет Z-TRANSPORT-01): ограничения трёх новых таблиц — текст pg_get_constraintdef дословно.
+const EXT03_CONSTRAINTS = [
+  "TABLE|bem_control.role_actor|role_actor_actor_id_fkey|FOREIGN KEY (actor_id) REFERENCES bem_core.actor(actor_id)",
+  "TABLE|bem_control.role_actor|role_actor_pkey|PRIMARY KEY (tenant_id, role_key)",
+  "TABLE|bem_control.role_actor|role_actor_role_key_check|CHECK (((role_key ~ '^0[1-9]_[^/\\\\]{1,60}$'::text) OR (role_key = 'OPERATOR'::text)))",
+  "TABLE|bem_control.session_credential|session_credential_actor_id_fkey|FOREIGN KEY (actor_id) REFERENCES bem_core.actor(actor_id)",
+  "TABLE|bem_control.session_credential|session_credential_enrollment_id_fkey|FOREIGN KEY (enrollment_id) REFERENCES bem_control.session_enrollment(enrollment_id)",
+  "TABLE|bem_control.session_credential|session_credential_pass_sha256_check|CHECK ((pass_sha256 ~ '^[0-9a-f]{64}$'::text))",
+  "TABLE|bem_control.session_credential|session_credential_pass_sha256_key|UNIQUE (pass_sha256)",
+  "TABLE|bem_control.session_credential|session_credential_pkey|PRIMARY KEY (credential_id)",
+  "TABLE|bem_control.session_credential|session_credential_revoke_pair|CHECK (((revoked_at IS NULL) = (revoke_reason IS NULL)))",
+  "TABLE|bem_control.session_credential|session_credential_revoke_reason_check|CHECK ((revoke_reason = ANY (ARRAY['LEASE_COMPLETED'::text, 'OPERATOR_TICKET'::text, 'CLAIM_REPLAY'::text])))",
+  "TABLE|bem_control.session_credential|session_credential_revoked_seen_count_check|CHECK ((revoked_seen_count >= 0))",
+  "TABLE|bem_control.session_credential|session_credential_seen_shape|CHECK ((((revoked_seen_count = 0) = (revoked_seen_at IS NULL)) AND ((revoked_seen_count = 0) OR (revoked_at IS NOT NULL))))",
+  "TABLE|bem_control.session_credential|session_credential_role_key_check|CHECK ((role_key ~ '^0[1-9]_[^/\\\\]{1,60}$'::text))",
+  "TABLE|bem_control.session_credential|session_credential_session_check|CHECK (((btrim(session) <> ''::text) AND (session <> 'OPERATOR'::text) AND (length(session) <= 200)))",
+  "TABLE|bem_control.session_enrollment|session_enrollment_by_shape|CHECK ((((prepared_by = 'OPERATOR_TICKET'::text) AND (ticket_nonce IS NOT NULL) AND (prepared_by_session IS NULL) AND (prepared_by_lease IS NULL)) OR ((prepared_by <> 'OPERATOR_TICKET'::text) AND (ticket_nonce IS NULL) AND (prepared_by_session IS NOT NULL) AND (prepared_by_lease IS NOT NULL))))",
+  "TABLE|bem_control.session_enrollment|session_enrollment_claim_pair|CHECK (((status = ANY (ARRAY['CLAIMED'::text, 'CONFLICT'::text])) = ((claimed_at IS NOT NULL) AND (credential_id IS NOT NULL))))",
+  "TABLE|bem_control.session_enrollment|session_enrollment_claim_sha256_check|CHECK ((claim_sha256 ~ '^[0-9a-f]{64}$'::text))",
+  "TABLE|bem_control.session_enrollment|session_enrollment_pkey|PRIMARY KEY (enrollment_id)",
+  "TABLE|bem_control.session_enrollment|session_enrollment_prepared_by_check|CHECK ((prepared_by = ANY (ARRAY['SAME_ROLE'::text, 'PARENT_ROLE'::text, 'OPERATOR_TICKET'::text])))",
+  "TABLE|bem_control.session_enrollment|session_enrollment_role_key_check|CHECK ((role_key ~ '^0[1-9]_[^/\\\\]{1,60}$'::text))",
+  "TABLE|bem_control.session_enrollment|session_enrollment_session_check|CHECK (((btrim(session) <> ''::text) AND (session <> 'OPERATOR'::text) AND (length(session) <= 200)))",
+  "TABLE|bem_control.session_enrollment|session_enrollment_status_check|CHECK ((status = ANY (ARRAY['PENDING'::text, 'CLAIMED'::text, 'CONFLICT'::text, 'EXPIRED'::text])))",
+  "TABLE|bem_control.session_enrollment|session_enrollment_ticket_nonce_check|CHECK ((ticket_nonce ~ '^[0-9a-f]{32,64}$'::text))",
+];
+t = after(t, 'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)', EXT03_CONSTRAINTS.map(sqlLit));
+// Таблицы выдачи и пропусков ядро не читает и не пишет напрямую — только через функции; участника роли
+// читают ядро (посредник: участник оператора) и входная роль.
+const EXT03_TABLES = ['role_actor', 'session_enrollment', 'session_credential'];
+t = after(t, 'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner', EXT03_TABLES.flatMap((n) => [
+  ...OWNER_PRIVS.map((p) => `TABLE|bem_control.${n}|bem_control_owner|${p}|bem_control_owner`),
+  `TABLE|bem_control.${n}|backup_reader|SELECT|bem_control_owner`,
+  ...(n === 'role_actor' ? ['bem_kernel_rw', 'bem_rules_gate'].map((w) => `TABLE|bem_control.${n}|${w}|SELECT|bem_control_owner`) : []),
+]));
+const EXT03_FUNCS = {
+  transport_context: 'uuid, text',
+  set_role_actor: 'uuid, text, text',
+  prepare_session_enrollment: 'uuid, text, text, text, text, text, timestamp with time zone',
+  claim_session_enrollment: 'text, text, text',
+  lookup_session_credential: 'text, text',
+  hold_session_credential: 'text, text',
+  hold_operator_actor: 'uuid',
+  credential_expired: 'uuid, text, timestamp with time zone',
+  revoke_session_credential: 'uuid, text, text',
+};
+// Кто вызывает: участника роли пишет только управление; выдачу готовят ядро (держатель) и входная роль (билет
+// оператора); получение и проверку пропуска — ядро; отзыв — ядро (завершение аренды) и входная роль (билет).
+const KRG = [...KR, 'bem_rules_gate'];
+const EXT03_CALLERS = {
+  transport_context: ['bem_control_owner'],
+  set_role_actor: ['bem_control_owner', 'bem_governance'],
+  prepare_session_enrollment: KRG, claim_session_enrollment: KR, lookup_session_credential: KR, hold_session_credential: KR,
+  hold_operator_actor: ['bem_control_owner', 'bem_rules_gate'],
+  credential_expired: ['bem_control_owner'],
+  revoke_session_credential: KRG,
+};
+t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+  Object.entries(EXT03_FUNCS).flatMap(([n, a]) => EXT03_CALLERS[n]
+    .map((who) => `FUNCTION|bem_control.${n}(${a})|${who}|EXECUTE|bem_control_owner`)));
+// Владелец, режим исполнения и настройки — списков 05 эти функции не касаются, поэтому отдельный блок.
+const DEF_PATH = 'search_path=bem_control, bem_core, pg_catalog, pg_temp';
+const EXT03_MODE = {
+  transport_context: 'invoker|search_path=pg_catalog, pg_temp',
+  set_role_actor: `definer|${DEF_PATH}`, prepare_session_enrollment: `definer|${DEF_PATH}`,
+  claim_session_enrollment: `definer|${DEF_PATH}`, lookup_session_credential: `definer|${DEF_PATH}`,
+  hold_session_credential: `definer|${DEF_PATH}`, hold_operator_actor: `definer|${DEF_PATH}`, credential_expired: `invoker|${DEF_PATH}`,
+  revoke_session_credential: `definer|${DEF_PATH}`,
+};
+// Индексы таблиц Z-EXT-03 — pg_get_indexdef дословно; лишний или изменённый индекс — отказ.
+const EXT03_INDEXES = [
+  "CREATE UNIQUE INDEX role_actor_pkey ON bem_control.role_actor USING btree (tenant_id, role_key)",
+  "CREATE UNIQUE INDEX session_credential_one_live ON bem_control.session_credential USING btree (session) WHERE (revoked_at IS NULL)",
+  "CREATE UNIQUE INDEX session_credential_pass_sha256_key ON bem_control.session_credential USING btree (pass_sha256)",
+  "CREATE UNIQUE INDEX session_credential_pkey ON bem_control.session_credential USING btree (credential_id)",
+  "CREATE UNIQUE INDEX session_enrollment_one_pending ON bem_control.session_enrollment USING btree (tenant_id, role_key) WHERE (status = 'PENDING'::text)",
+  "CREATE UNIQUE INDEX session_enrollment_pkey ON bem_control.session_enrollment USING btree (enrollment_id)",
+  "CREATE UNIQUE INDEX session_enrollment_ticket_once ON bem_control.session_enrollment USING btree (tenant_id, ticket_nonce) WHERE (ticket_nonce IS NOT NULL)",
+];
+
 // Отпечатки тел функций расширения: исходный текст между ограничителями $tag$ последнего
 // определения функции в 02 — ровно то, что PostgreSQL хранит в pg_proc.prosrc.
 const FUNCS = ['publish_subject', 'release_subject', 'reconcile_unknown_outcome', 'claim_outbox_batch',
@@ -180,9 +267,10 @@ function body(name, src = ext) {
   return src.slice(from, to);
 }
 const prints = [...FUNCS.map((f) => [f, sha(body(f))]),
-  ...Object.keys(EXT02_FUNCS).map((f) => [f, sha(body(f, ext02))])];
-const fpBlock = `-- Z-EXT-01 (аудит Z3 M-Z3-01) и Z-EXT-02: тела функций расширений совпадают с db/02_zavod_ext_01.sql
--- и db/03_zavod_ext_02.sql.
+  ...Object.keys(EXT02_FUNCS).map((f) => [f, sha(body(f, ext02))]),
+  ...Object.keys(EXT03_FUNCS).map((f) => [f, sha(body(f, ext03))])];
+const fpBlock = `-- Z-EXT-01 (аудит Z3 M-Z3-01), Z-EXT-02 и Z-EXT-03: тела функций расширений совпадают с
+-- db/02_zavod_ext_01.sql, db/03_zavod_ext_02.sql и db/04_zavod_ext_03.sql.
 -- У каждого имени ровно одна функция в bem_control; лишняя перегрузка или подменённое тело — отказ.
 DO $zavod_fp$
 DECLARE
@@ -204,6 +292,34 @@ ${prints.map(([f, h]) => `        ('${f}', '${h}')`).join(',\n')}
 END
 $zavod_fp$;
 
+-- Z-EXT-03: владелец, режим исполнения и все настройки восьми функций; точный набор индексов трёх таблиц.
+DO $zavod_ext03$
+DECLARE
+    r     record;
+    v_got text;
+BEGIN
+    FOR r IN SELECT * FROM (VALUES
+${Object.entries(EXT03_MODE).map(([f, m]) => `        ('${f}', 'bem_control_owner|${m}')`).join(',\n')}
+    ) AS x(fn, want) LOOP
+        SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'
+                   || coalesce((SELECT string_agg(c, ';' ORDER BY c COLLATE "C") FROM unnest(p.proconfig) c), 'none'))
+          INTO v_got
+          FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'bem_control' AND p.proname = r.fn;
+        IF v_got IS DISTINCT FROM r.want THEN
+            RAISE EXCEPTION 'FINAL_ZAVOD_FN_MODE_MISMATCH: % (найдено %)', r.fn, v_got;
+        END IF;
+    END LOOP;
+    SELECT string_agg(d, ' ; ' ORDER BY d COLLATE "C") INTO v_got
+      FROM (SELECT pg_get_indexdef(i.indexrelid) AS d FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE n.nspname = 'bem_control' AND c.relname IN ('role_actor', 'session_enrollment', 'session_credential')) s;
+    IF v_got IS DISTINCT FROM '${EXT03_INDEXES.map(sqlLit).join(' ; ')}' THEN
+        RAISE EXCEPTION 'FINAL_ZAVOD_INDEX_MISMATCH: %', v_got;
+    END IF;
+END
+$zavod_ext03$;
+
 `;
 t = once(t, '-- Ни одной команды безопасности после этой строки быть не должно.\n',
   fpBlock + '-- Ни одной команды безопасности после этой строки быть не должно.\n');
@@ -212,7 +328,8 @@ const out = `-- ДОКУМЕНТ: db/05_final_state_check_ext01.sql — СОБР
 -- ИСТОЧНИК H1.31 05: sha256 ${sha(base)}
 -- РАСШИРЕНИЕ 02: sha256 ${sha(ext)}
 -- РАСШИРЕНИЕ 03: sha256 ${sha(ext02)}
--- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01 и Z-EXT-02 (см. сборщик).
+-- РАСШИРЕНИЕ 04: sha256 ${sha(ext03)}
+-- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02 и Z-EXT-03 (см. сборщик).
 ${t}`;
 
 const target = here('./05_final_state_check_ext01.sql');

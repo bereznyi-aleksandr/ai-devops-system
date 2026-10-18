@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: tests/rules_handoff.test.mjs
-// ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 08:49 +03:00 (v0.4: ChatGPT R16 RG16-01 —
+// ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 11:12 +03:00 (v0.5: Л.12 ждёт OPERATOR_TICKET_REQUIRED; подставной посредник отдаёт пустую повторную проверку hold (RG24-01); v0.4: ChatGPT R16 RG16-01 —
 //   тест гонок ждёт только соединения, заблокированные держателем; v0.3: 2026-10-18 08:43 +03:00, ChatGPT R15F —
 //   RG15-02 снимок всей базы (каждая таблица несистемных схем) до и после каждого отказа; RG15-03 гонки при смене
 //   адресата с порядком от удержанной транзакции; v0.2: 2026-10-18 02:25 +03:00, ChatGPT R14B —
@@ -48,7 +48,12 @@ const gate = {
   },
 };
 const SESS = {};
-const transport = { verify(req) { if (req.via === 'throw') throw new Error('boom'); return SESS[req.via] ?? null; } };
+// Подставной посредник: личность из SESS; повторная проверка в транзакции команды (RG24-01) здесь пустая.
+const transport = { verify(req) {
+  if (req.via === 'throw') throw new Error('boom');
+  const v = SESS[req.via];
+  return v ? { ...v, hold: async () => {} } : null;
+} };
 
 function facts({ tenant, subject, head, commit = hex(40), parents = PARENTS, digest = hex(64) }) {
   const github = { base: 'main', merged: true, merge_commit: commit, head_sha: head, pr_number: 7,
@@ -298,7 +303,7 @@ test('Л.12: выдача аренды — номер и поколение от
   await refused(() => lease('p1', 'OpenChatLease', { work_item_id: L.wiP }), 'LEASE_RULES_CHANGED');
   gate.wcRules = null;
   await refused(() => lease('x1', 'OpenChatLease', { work_item_id: L.wiP }), 'LEASE_ROLE_NOT_IN_RULES');
-  await refused(() => lease('op', 'OpenChatLease', { work_item_id: L.wiP }), 'LEASE_BAD_ROLE');
+  await refused(() => lease('op', 'OpenChatLease', { work_item_id: L.wiP }), 'OPERATOR_TICKET_REQUIRED'); // RG24-03: ядро отклоняет до базы
   L.g = ok(await lease('g1', 'OpenChatLease', { work_item_id: L.wiG }));
   // Поля заказчика, участника, роли и сессии в запросе не действуют.
   L.p = ok(await lease('p1', 'OpenChatLease', { work_item_id: L.wiP, role_key: R01, session: 'evil' },
