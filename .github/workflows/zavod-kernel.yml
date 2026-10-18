@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.23
+# ВЕРСИЯ: v0.24
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-18 15:04 +03:00 (v0.23: план Z-INSTALL-01 §4 — задание install_win на чистой windows-latest:
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-18 20:11 +03:00 (v0.24: в материалы install_win добавлен logs\gate.log, в журнал — GATE_DIAG из квитанции.
+#   v0.23: план Z-INSTALL-01 §4 — задание install_win на чистой windows-latest:
 #   эталон установщика EDB (сумма, подпись, извлечение без установки, список файлов), полный прогон
 #   install/install_zavod_kernel.ps1 по проверяемому коммиту, ci/install_check.mjs под новой обычной учёткой;
 #   установщик EDB 16.15-5 — та же сборка, что архив jobobject; артефакты одной папкой;
@@ -266,8 +267,13 @@ jobs:
           $dst = Join-Path $env:RUNNER_TEMP 'artifacts'
           New-Item -ItemType Directory -Force -Path $dst | Out-Null
           foreach ($f in 'C:\ZavodKernel\public\install_receipt.json', 'C:\ZavodKernel\logs\service_probe.json',
-            'C:\zavod_ic\install_check.json', 'C:\zavod_ic\stdout.txt', 'C:\zavod_ic\stderr.txt') {
+            'C:\ZavodKernel\logs\gate.log', 'C:\zavod_ic\install_check.json', 'C:\zavod_ic\stdout.txt', 'C:\zavod_ic\stderr.txt') {
             if (Test-Path -LiteralPath $f) { Copy-Item -LiteralPath $f -Destination $dst }
+          }
+          $r = 'C:\ZavodKernel\public\install_receipt.json'
+          if (Test-Path -LiteralPath $r) {
+            $j = Get-Content -Raw -LiteralPath $r | ConvertFrom-Json
+            if ($j.PSObject.Properties['gate_diag']) { Write-Host "GATE_DIAG $($j.gate_diag | ConvertTo-Json -Compress -Depth 4)" }
           }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()

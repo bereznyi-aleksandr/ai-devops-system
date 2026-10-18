@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
 # ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 17:23 +03:00
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 20:11 +03:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f)
 # v0.5: права bin ставятся сразу после программ (служба базы запускает postgres.exe из bin до шага acl); на время
 #   initdb учётке установщика дана запись в data (initdb под администратором работает с урезанным маркером), затем
@@ -8,6 +8,7 @@
 #   Список пакетов npm читает install/npm_lock_list.mjs (ConvertFrom-Json PowerShell 5.1 не читает package-lock.json).
 #   Права: записи только на каталог, вложенное — /reset к унаследованным (icacls /T оставлял файлам пустой список).
 #   Admins снимается с data только после схемы (схема пишет pg_hba.conf).
+#   Задача привратника пишет stdout/stderr в logs\gate.log; при GATE_HEALTH_TIMEOUT в квитанции — gate_diag.
 # v0.4: установщик EDB той же сборки, что архив, — 16.15-5 (CI 18.10: у EDB есть сборки 16.15-1…5; установщик 16.15-1
 #   отличался от архива 16.15-5 в 183 файлах). Тройная сверка (установщик, архив, список коммита) возвращена;
 #   отпечаток сертификата подписи EnterpriseDB закреплён; сумма установщика — из эталонного прогона CI 18.10
@@ -266,7 +267,11 @@ try {
   if ($probe.ExitCode -ne 0 -or $owner -notmatch "\\$([regex]::Escape($KernelUser))$" -or -not $receipt.service_probe.result.ok) { Fail 'SERVICE_PROBE' }
 
   Step 'task'
-  $action = New-ScheduledTaskAction -Execute $node -Argument "`"$(Join-Path $P['app'] 'src\gate_main.mjs')`" `"$(Join-Path $P['app'] 'gate.json')`"" -WorkingDirectory $P['logs']
+  # Журнал привратника (stdout/stderr) дописывается в logs\gate.log: у задачи Windows нет экрана, без файла причина
+  # сбоя не видна (CI 18.10: GATE_HEALTH_TIMEOUT без следов). cmd /d — без AutoRun; внешние кавычки снимает cmd /c.
+  $gateLog = Join-Path $P['logs'] 'gate.log'
+  $gateCmd = "/d /c `"`"$node`" `"$(Join-Path $P['app'] 'src\gate_main.mjs')`" `"$(Join-Path $P['app'] 'gate.json')`" >> `"$gateLog`" 2>&1`""
+  $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\cmd.exe" -Argument $gateCmd -WorkingDirectory $P['logs']
   $triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -AtLogOn))
   $settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
   Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $triggers -Settings $settings -User "$env:COMPUTERNAME\$KernelUser" -Password $plain -RunLevel Limited | Out-Null
@@ -274,7 +279,14 @@ try {
   $health = $null; $deadline = (Get-Date).AddSeconds(60)
   while (-not $health) {
     try { $health = Invoke-RestMethod -UseBasicParsing -Uri "http://127.0.0.1:$HealthPort/internal/health" -TimeoutSec 3 } catch { Start-Sleep -Seconds 2 }
-    if (-not $health -and (Get-Date) -gt $deadline) { Fail 'GATE_HEALTH_TIMEOUT' }
+    if (-not $health -and (Get-Date) -gt $deadline) {
+      # Следы для разбора: состояние задачи, код последнего запуска и хвост журнала привратника (в нём нет ключей).
+      $ti = Get-ScheduledTaskInfo -TaskName $TaskName
+      $tail = if (Test-Path -LiteralPath $gateLog) { @(Get-Content -LiteralPath $gateLog -Tail 20) } else { @() }
+      $receipt.gate_diag = [ordered]@{ task_state = "$((Get-ScheduledTask -TaskName $TaskName).State)"; last_result = $ti.LastTaskResult
+        last_run = "$($ti.LastRunTime)"; log_tail = $tail }
+      Fail 'GATE_HEALTH_TIMEOUT'
+    }
   }
   if ($health.gate_port -ne $GatePort -or $health.os_user -ne $KernelUser) { Fail 'GATE_HEALTH_MISMATCH' }
   $receipt.gate_health = $health
