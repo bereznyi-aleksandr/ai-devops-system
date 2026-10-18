@@ -271,7 +271,8 @@ try {
 }
 catch {
   $receipt.status = 'FAILED'
-  $receipt.error = ($_.Exception.Message -split "`n")[0]
+  # Строка скрипта, где случился сбой, — без значений переменных (пароль в тексте скрипта не встречается).
+  $receipt.error = (($_.Exception.Message -split "`n")[0]) + " @line $($_.InvocationInfo.ScriptLineNumber)"
   if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) { Disable-ScheduledTask -TaskName $TaskName | Out-Null }
 }
 finally {
