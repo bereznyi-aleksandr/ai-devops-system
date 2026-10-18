@@ -1,8 +1,10 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.24
+# ВЕРСИЯ: v0.25
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-18 20:11 +03:00 (v0.24: в материалы install_win добавлен logs\gate.log, в журнал — GATE_DIAG из квитанции.
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-18 20:44 +03:00 (v0.25: перед установщиком включается журнал планировщика Operational,
+#   события запуска задачи привратника попадают в GATE_DIAG.
+#   v0.24: в материалы install_win добавлен logs\gate.log, в журнал — GATE_DIAG из квитанции.
 #   v0.23: план Z-INSTALL-01 §4 — задание install_win на чистой windows-latest:
 #   эталон установщика EDB (сумма, подпись, извлечение без установки, список файлов), полный прогон
 #   install/install_zavod_kernel.ps1 по проверяемому коммиту, ci/install_check.mjs под новой обычной учёткой;
@@ -242,6 +244,7 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
+          wevtutil sl Microsoft-Windows-TaskScheduler/Operational /e:true
           & "$env:GITHUB_WORKSPACE\zavod\kernel\install\install_zavod_kernel.ps1" -Commit $env:ZAVOD_COMMIT
           if ($LASTEXITCODE) { throw "INSTALL exit=$LASTEXITCODE" }
       - name: install_check as a fresh standard user (no admin, no keys, no kernel password)

@@ -1,7 +1,9 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 20:11 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f)
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 20:44 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6 сессия 2fc9a1c8)
+# v0.6: учётке ядра выдаётся право «вход как пакетное задание» (secedit, только её SID) — без него задача с паролем не
+#   запускалась (CI 18.10: Ready, 0x41303); в gate_diag добавлены события планировщика.
 # v0.5: права bin ставятся сразу после программ (служба базы запускает postgres.exe из bin до шага acl); на время
 #   initdb учётке установщика дана запись в data (initdb под администратором работает с урезанным маркером), затем
 #   снимается вместе с Admins; обход каталогов — $P.get_Keys() (у $P есть ключ 'keys').
@@ -92,6 +94,30 @@ function Set-Acl2([string]$dir, [string[]]$grants, [string]$owner = $SID_ADMINS,
   $argv += @('/grant:r') + $grants + @('/C', '/Q')
   Invoke-Checked $icacls $argv "ACL $dir"
   if (-not $Here) { Invoke-Checked $icacls @((Join-Path $dir '*'), '/reset', '/T', '/C', '/Q') "ACL_RESET $dir" }
+}
+
+# Право «вход как пакетное задание» (SeBatchLogonRight) для учётки ядра: без него задача с сохранённым паролем не
+# запускается совсем (CI 18.10: Ready, код 0x41303 «ещё не запускалась», журнала нет). По умолчанию право есть только у
+# Administrators, Backup Operators и Performance Log Users. Добавляется ровно SID учётки; прежний список сохраняется.
+# Шаблон и база secedit остаются в admin (только администраторы); паролей и ключей в них нет.
+function Grant-BatchLogon([string]$sid) {
+  $secedit = "$env:SystemRoot\System32\secedit.exe"
+  $cur = Join-Path $P['admin'] 'user_rights_before.inf'
+  Invoke-Checked $secedit @('/export', '/areas', 'USER_RIGHTS', '/cfg', $cur, '/quiet') 'BATCH_RIGHT_EXPORT'
+  $line = @(Get-Content -LiteralPath $cur | Where-Object { $_ -match '^\s*SeBatchLogonRight\s*=' })
+  $have = if ($line.Count) { @(($line[0] -split '=', 2)[1] -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) } else { @() }
+  $deny = @(Get-Content -LiteralPath $cur | Where-Object { $_ -match '^\s*SeDenyBatchLogonRight\s*=' -and $_ -match [regex]::Escape("*$sid") })
+  if ($deny.Count) { Fail 'BATCH_RIGHT_DENIED' }
+  if ($have -contains "*$sid") { return 'present' }
+  $inf = Join-Path $P['admin'] 'user_rights_batch.inf'
+  @('[Unicode]', 'Unicode=yes', '[Version]', 'signature="$CHICAGO$"', 'Revision=1', '[Privilege Rights]',
+    "SeBatchLogonRight = $((@($have) + "*$sid") -join ',')") | Set-Content -LiteralPath $inf -Encoding Unicode
+  Invoke-Checked $secedit @('/configure', '/db', (Join-Path $P['admin'] 'user_rights_batch.sdb'), '/cfg', $inf, '/areas', 'USER_RIGHTS', '/quiet') 'BATCH_RIGHT_CONFIGURE'
+  $chk = Join-Path $P['admin'] 'user_rights_after.inf'
+  Invoke-Checked $secedit @('/export', '/areas', 'USER_RIGHTS', '/cfg', $chk, '/quiet') 'BATCH_RIGHT_VERIFY'
+  $after = @(Get-Content -LiteralPath $chk | Where-Object { $_ -match '^\s*SeBatchLogonRight\s*=' })
+  if (-not $after.Count -or @(($after[0] -split '=', 2)[1] -split ',' | ForEach-Object { $_.Trim() }) -notcontains "*$sid") { Fail 'BATCH_RIGHT_NOT_SET' }
+  return 'granted'
 }
 
 $P = @{}
@@ -274,7 +300,9 @@ try {
   $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\cmd.exe" -Argument $gateCmd -WorkingDirectory $P['logs']
   $triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -AtLogOn))
   $settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+  $receipt.batch_logon_right = Grant-BatchLogon (Get-LocalUser -Name $KernelUser).SID.Value
   Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $triggers -Settings $settings -User "$env:COMPUTERNAME\$KernelUser" -Password $plain -RunLevel Limited | Out-Null
+  $taskStart = Get-Date
   Start-ScheduledTask -TaskName $TaskName
   $health = $null; $deadline = (Get-Date).AddSeconds(60)
   while (-not $health) {
@@ -284,7 +312,13 @@ try {
       $ti = Get-ScheduledTaskInfo -TaskName $TaskName
       $tail = if (Test-Path -LiteralPath $gateLog) { @(Get-Content -LiteralPath $gateLog -Tail 20) } else { @() }
       $receipt.gate_diag = [ordered]@{ task_state = "$((Get-ScheduledTask -TaskName $TaskName).State)"; last_result = $ti.LastTaskResult
-        last_run = "$($ti.LastRunTime)"; log_tail = $tail }
+        last_run = "$($ti.LastRunTime)"; log_tail = $tail; events = @() }
+      # События планировщика (если журнал Operational включён): номер, код результата и первая строка текста.
+      try {
+        $receipt.gate_diag.events = @(Get-WinEvent -FilterHashtable @{ LogName = 'Microsoft-Windows-TaskScheduler/Operational'; StartTime = $taskStart } -ErrorAction Stop |
+          Where-Object { $_.Message -match [regex]::Escape("\$TaskName") } | Select-Object -First 15 |
+          ForEach-Object { "$($_.Id) $(($_.Message -split "`n")[0].Trim())" })
+      } catch { $receipt.gate_diag.events = @("NO_EVENTS $($_.Exception.GetType().Name)") }
       Fail 'GATE_HEALTH_TIMEOUT'
     }
   }
