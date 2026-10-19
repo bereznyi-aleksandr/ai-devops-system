@@ -1,8 +1,12 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.25
+# ВЕРСИЯ: v0.26
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-18 20:44 +03:00 (v0.25: перед установщиком включается журнал планировщика Operational,
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-19 05:59 +03:00 (v0.26: аудит ChatGPT R30 RG30-01/02 — задание install_win_failsafe:
+#   установщик со сбоем после запуска привратника (-FaultAt task) обязан дать FAILED и безопасное состояние — задача
+#   выключена, служба базы остановлена и выключена, учётка выключена, пакетное право снято, порты свободны, STOP,
+#   ничего не удалено; повторный запуск — отказ ROOT_EXISTS без перезаписи квитанции. Claude, сессия 2fc9a1c8.
+#   v0.25: перед установщиком включается журнал планировщика Operational,
 #   события запуска задачи привратника попадают в GATE_DIAG.
 #   v0.24: в материалы install_win добавлен logs\gate.log, в журнал — GATE_DIAG из квитанции.
 #   v0.23: план Z-INSTALL-01 §4 — задание install_win на чистой windows-latest:
@@ -282,6 +286,82 @@ jobs:
         if: always()
         with:
           name: zavod-kernel-windows-install
+          path: ${{ runner.temp }}/artifacts
+          if-no-files-found: ignore
+
+  install_win_failsafe:
+    name: windows install Z-INSTALL-01 failsafe (fault after gate start, RG30-01/02)
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      ZAVOD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: installer with injected fault after the gate is up (must FAIL and fall back to the safe state)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & "$env:GITHUB_WORKSPACE\zavod\kernel\install\install_zavod_kernel.ps1" -Commit $env:ZAVOD_COMMIT -FaultAt task
+          if ($LASTEXITCODE -ne 3) { throw "FAULT_RUN exit=$LASTEXITCODE (want 3)" }
+      - name: safe state after FAILED, checked independently of the receipt
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bad = @()
+          $r = Get-Content -Raw -LiteralPath 'C:\ZavodKernel\public\install_receipt.json' | ConvertFrom-Json
+          Write-Host "RECEIPT status=$($r.status) error=$($r.error)"
+          Write-Host "FAILSAFE $($r.failsafe | ConvertTo-Json -Compress)"
+          Write-Host "RESIDUAL $($r.residual | ConvertTo-Json -Compress)"
+          if ($r.status -ne 'FAILED' -or $r.error -notmatch 'FAULT_INJECTED_task') { $bad += 'receipt_status' }
+          foreach ($p in $r.failsafe.PSObject.Properties) { if ("$($p.Value)" -match '^ERROR|REVOKE_FAILED') { $bad += "failsafe_$($p.Name)" } }
+          if ($r.residual.task -ne 'Disabled') { $bad += 'residual_task' }
+          if ($r.residual.service -ne 'Stopped/Disabled') { $bad += 'residual_service' }
+          if ($r.residual.user_enabled -ne $false) { $bad += 'residual_user' }
+          if ($r.residual.batch_logon_right -ne $false) { $bad += 'residual_batch' }
+          if (@($r.residual.listening).Count -ne 0) { $bad += 'residual_listening' }
+          # Отдельно от квитанции: состояние Windows.
+          if ((Get-ScheduledTask -TaskName ZavodKernel).State -ne 'Disabled') { $bad += 'task_not_disabled' }
+          $s = Get-Service -Name ZavodKernelPg
+          if ($s.Status -ne 'Stopped' -or "$($s.StartType)" -ne 'Disabled') { $bad += "service $($s.Status)/$($s.StartType)" }
+          if ((Get-LocalUser -Name zavod-kernel).Enabled) { $bad += 'user_enabled' }
+          $inf = Join-Path $env:RUNNER_TEMP 'rights_after.inf'
+          & "$env:SystemRoot\System32\secedit.exe" /export /areas USER_RIGHTS /cfg $inf /quiet | Out-Null
+          $sid = (Get-LocalUser -Name zavod-kernel).SID.Value
+          $line = @(Get-Content -LiteralPath $inf | Where-Object { $_ -match '^\s*SeBatchLogonRight\s*=' })
+          if ($line.Count -and ($line[0] -match [regex]::Escape("*$sid") -or $line[0] -match '(^|[=,]\s*)zavod-kernel(\s*,|\s*$)')) { $bad += 'batch_right_left' }
+          if ((Get-Content -LiteralPath 'C:\ZavodKernel\run\STOP' -TotalCount 1).Trim() -ne 'STOP') { $bad += 'stop_file' }
+          foreach ($port in 54390, 18960, 18961) { if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { $bad += "listening_$port" } }
+          if (@(Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.ExecutablePath -eq 'C:\ZavodKernel\bin\node.exe' }).Count) { $bad += 'gate_node_alive' }
+          # Ничего не удалено: учётка, служба, задача и каталоги на месте (откат выключает, а не удаляет).
+          foreach ($d in 'admin', 'bin', 'app', 'keys', 'data', 'run', 'logs', 'public') { if (-not (Test-Path -LiteralPath "C:\ZavodKernel\$d")) { $bad += "missing_$d" } }
+          if ($bad.Count) { throw "FAILSAFE_CHECK: $($bad -join ', ')" }
+          'FAILSAFE_CHECK=PASS' | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+      - name: second run must refuse at preflight and leave the first receipt and objects untouched
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $rf = 'C:\ZavodKernel\public\install_receipt.json'
+          $before = (Get-FileHash -Algorithm SHA256 -LiteralPath $rf).Hash
+          $out = & "$env:GITHUB_WORKSPACE\zavod\kernel\install\install_zavod_kernel.ps1" -Commit $env:ZAVOD_COMMIT *>&1 | Out-String
+          $code = $LASTEXITCODE
+          Write-Host $out
+          if ($code -ne 3 -or $out -notmatch 'ROOT_EXISTS') { throw "RERUN exit=$code" }
+          if ((Get-FileHash -Algorithm SHA256 -LiteralPath $rf).Hash -ne $before) { throw 'RERUN_OVERWROTE_RECEIPT' }
+          if ((Get-ScheduledTask -TaskName ZavodKernel).State -ne 'Disabled' -or (Get-LocalUser -Name zavod-kernel).Enabled) { throw 'RERUN_TOUCHED_OBJECTS' }
+          'RERUN_CHECK=PASS' | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+      - name: collect artifacts
+        if: always()
+        shell: powershell
+        run: |
+          $dst = Join-Path $env:RUNNER_TEMP 'artifacts'
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
+          foreach ($f in 'C:\ZavodKernel\public\install_receipt.json', 'C:\ZavodKernel\logs\gate.log') {
+            if (Test-Path -LiteralPath $f) { Copy-Item -LiteralPath $f -Destination $dst }
+          }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: zavod-kernel-windows-install-failsafe
           path: ${{ runner.temp }}/artifacts
           if-no-files-found: ignore
 

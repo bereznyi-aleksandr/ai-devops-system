@@ -1,7 +1,7 @@
 // ДОКУМЕНТ: ci/install_check.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:31 +03:00 (v0.2: каталог engine — права как у app, суммы, запись запрещена)
-// ИСПОЛНИТЕЛЬ: Claude (сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-19 05:59 +03:00 (v0.3: аудит R30 RG30-03 — пробная выдача пропуска кодом-меткой, метка ищется в logs/public; v0.2: каталог engine — права как у app, суммы, запись запрещена)
+// ИСПОЛНИТЕЛЬ: Claude (v0.1–v0.2 сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1; v0.3 сессия 2fc9a1c8-7e6e-4e54-beb1-519c0f3cdba1)
 // НАЗНАЧЕНИЕ: план установки Z-INSTALL-01 v0.4 §4.D — проверка готовой установки из ОБЫЧНОЙ учётки оператора (без
 //   повышения прав, без ключей и без пароля zavod-kernel). Шесть групп: 1) права каталогов ровно как §2 (читаемые —
 //   по факту, нечитаемые — по снимку квитанции) и настоящие попытки чтения и записи; итог пробы службы
@@ -13,8 +13,8 @@
 // ЗАПУСК: node ci/install_check.mjs [корень, по умолчанию C:\ZavodKernel] [--out <файл итога>]
 // ОГРАНИЧЕНИЯ: ничего в установке не меняет: проба записи — открытие существующего файла (r+) или создание нового
 //   с флагом wx; неожиданный успех оставляет файл как улику. Чужой CA для отрицательных проверок создаётся во временной
-//   папке ОС и не удаляется (закрытые ключи чужого CA ни к чему не дают доступа). Пробная выдача пропуска (RG21-02)
-//   в v0.1 не проверяется — отдельный пункт.
+//   папке ОС и не удаляется (закрытые ключи чужого CA ни к чему не дают доступа). Пробная выдача пропуска (RG21-02,
+//   RG30-03) — кодом-меткой (отказ, метки нет в logs/public); успешная выдача — в CI ядра и опытом с модом.
 
 import { closeSync, existsSync, mkdtempSync, openSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash, createPublicKey, randomBytes, verify } from 'node:crypto';
@@ -29,7 +29,7 @@ import { keylessChecks, allPass } from '../install/pg_probe.mjs';
 import { makeAll } from '../install/make_certs.mjs';
 import { scan } from './leak_scan.mjs';
 
-export const VERSION = 'v0.1';
+export const VERSION = 'v0.3';
 export const DIRS = Object.freeze(['.', 'admin', 'admin\\certs', 'admin\\staging', 'app', 'bin', 'data', 'engine', 'keys', 'keys\\kernel', 'logs', 'public', 'rules', 'run']);
 const A = 'S-1-5-32-544', S = 'S-1-5-18', U = 'S-1-5-32-545';
 const F = 'FullControl', RX = 'ReadAndExecute, Synchronize', M = 'Modify, Synchronize';
@@ -263,6 +263,49 @@ export async function gateChecks({ port, publicKeyPem, foreignPublicKeyPem }) {
   ];
 }
 
+// 4а. Пробная выдача пропуска (RG21-02, RG30-03) на установленном привратнике из учётки оператора. Настоящий код выдачи
+// создаётся только билетом оператора (ключ на телефоне, OD-5) при действующих правилах — при установке его нет.
+// Поэтому проба идёт случайным кодом-меткой: запрос проходит привратник → ядро → функцию базы и получает отказ
+// ENROLL_NOT_FOUND без пропуска в ответе; кривой код, запрос с auth и подготовка выдачи без пропуска — отказ.
+// Затем leakCanaryChecks ищет сам код-метку и его SHA-256 в logs и public. Успешная выдача проверяется в CI ядра
+// (tests/transport.test.mjs, §3.1, §3.3, gate_main) и опытом с модом до режима active (план транспорта §6 п.5, §7).
+export async function enrollTrialChecks(port) {
+  const H = { 'x-zavod-gate': '1', 'content-type': 'application/json' };
+  const canary = randomBytes(32).toString('hex');
+  const session = `install-check-${randomBytes(8).toString('hex')}`;
+  const st = (r) => `${r.status ?? r.error}${r.json?.error?.code ? ` ${r.json.error.code}` : ''}`;
+  const send = (body) => gateRequest(port, { path: '/command', headers: H, body: JSON.stringify(body) });
+  const noPass = (r) => r.json?.ok === false && r.json?.result === undefined && !JSON.stringify(r.json).includes('"pass"');
+  const unknown = await send({ type: 'EnrollSession', payload: { session, claim_code: canary } });
+  const bad = await send({ type: 'EnrollSession', payload: { session, claim_code: canary.slice(1) } });
+  const withAuth = await send({ type: 'EnrollSession', payload: { session, claim_code: canary }, auth: { session, pass: canary } });
+  const prepare = await send({ type: 'PrepareEnrollment', payload: { role_key: '02_test', session, claim_sha256: canary } });
+  return { canary, rows: [
+    row('enroll', 'trial_unknown_code_refused_403', unknown.status === 403 && unknown.json?.error?.code === 'ENROLL_NOT_FOUND' && noPass(unknown), st(unknown)),
+    row('enroll', 'trial_bad_code_refused_403', bad.status === 403 && bad.json?.error?.code === 'ENROLL_BAD_REQUEST' && noPass(bad), st(bad)),
+    row('enroll', 'trial_with_auth_refused_400', withAuth.status === 400 && withAuth.json?.error?.code === 'GATE_BAD_REQUEST', st(withAuth)),
+    row('enroll', 'trial_prepare_without_pass_refused', prepare.status === 403 && prepare.json?.ok === false, st(prepare)),
+  ] };
+}
+
+// Код-метка и его SHA-256 не встречаются в logs и public; журнал привратника отказ при этом записал (иначе «не найдено»
+// ничего не доказывает).
+export function leakCanaryChecks(root, canary) {
+  const needles = [canary, createHash('sha256').update(Buffer.from(canary, 'hex')).digest('hex')];
+  const found = [];
+  let refusedLogged = false;
+  for (const base of ['logs', 'public']) {
+    for (const f of walkFiles(join(root, base))) {
+      let text;
+      try { text = readFileSync(f, 'utf8'); } catch { continue; }
+      if (needles.some((n) => text.includes(n))) found.push(relative(root, f));
+      if (base === 'logs' && /"ev":"enroll_refused","code":"ENROLL_NOT_FOUND"/.test(text)) refusedLogged = true;
+    }
+  }
+  return [row('leak', 'trial_code_not_in_logs_public', found.length === 0, found.slice(0, 10)),
+    row('leak', 'trial_refusal_logged_without_code', refusedLogged)];
+}
+
 function* walkFiles(dir) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
@@ -314,6 +357,8 @@ export async function installCheck(root) {
   const state = readAclState(root, receiptFile);
   const foreignGate = mkdtempSync(join(tmpdir(), 'zavod-install-check-gate-'));
   makeAll(foreignGate);
+  const trial = await enrollTrialChecks(ports.gate);
+  await new Promise((r) => setTimeout(r, 1500)); // запись журнала привратника после отказа
   const checks = [
     ...aclChecks(state),
     ...operatorFsChecks(root),
@@ -322,8 +367,10 @@ export async function installCheck(root) {
     ...await serviceChecks(state, ports),
     ...await gateChecks({ port: ports.gate, publicKeyPem: readFileSync(join(root, 'public', 'gate_ed25519.pub.pem')),
       foreignPublicKeyPem: readFileSync(join(foreignGate, 'gate_ed25519.pub.pem')) }),
+    ...trial.rows,
     ...receiptChecks(root, receipt),
     ...leakChecks(root),
+    ...leakCanaryChecks(root, trial.canary),
   ];
   return { check: 'zavod_install_check', version: VERSION, at: new Date().toISOString(), root, ports,
     receipt_sha256: sha256(readFileSync(receiptFile)), checks, ok: allPass(checks) };

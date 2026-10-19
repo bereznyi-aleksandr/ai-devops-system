@@ -1,7 +1,13 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:41 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6 сессия 2fc9a1c8)
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-19 05:57 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.7 сессия 2fc9a1c8)
+# v0.7 (аудит ChatGPT R30): безопасное состояние отказа (RG30-01) — при FAILED созданное этим запуском выключается без
+#   удаления: задача остановлена и выключена, процессы привратника завершены, файл run\STOP = STOP, служба базы
+#   остановлена и выключена, учётка zavod-kernel выключена; пакетное право, выданное этим запуском, снимается (RG30-02);
+#   в квитанции failsafe (итог каждого действия) и residual (остаточное состояние отдельной проверкой, порты).
+#   Квитанция пишется только в каталог этого запуска (повтор с ROOT_EXISTS не затирает прежнюю). -FaultAt task — сбой
+#   для проверки отката в CI.
 # v0.6: учётке ядра выдаётся право «вход как пакетное задание» (secedit, только её SID) — без него задача с паролем не
 #   запускалась (CI 18.10: Ready, 0x41303); в gate_diag добавлены события планировщика. Правка 21:16: учётка узнаётся
 #   в выгрузке и по имени (местные учётки выгружаются именем, не *SID). Правка 21:31: каталог engine\src с
@@ -30,14 +36,16 @@
 #   с параметром -Commit <40 знаков коммита слияния>.
 # ОГРАНИЧЕНИЯ: пароль учётки zavod-kernel создаётся случайным в памяти этого процесса, нигде не пишется и никому не
 #   показывается (задача хранит его в LSA Windows). Существующий каталог установки — отказ: ничего не перезаписывается
-#   и не удаляется. Любой сбой проверки — квитанция FAILED, задача не включается.
+#   и не удаляется. Любой сбой проверки — квитанция FAILED и откат Invoke-FailSafe (выключение без удаления).
 
 param(
   [Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-f]{40}$')][string]$Commit,
   [string]$Root = 'C:\ZavodKernel',
   [int]$DbPort = 54390,
   [int]$GatePort = 18960,
-  [int]$HealthPort = 18961
+  [int]$HealthPort = 18961,
+  # Только для проверки отката в CI (задание install_win_failsafe): сбой после запуска привратника. Оператор не задаёт.
+  [ValidateSet('none', 'task')][string]$FaultAt = 'none'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -134,10 +142,80 @@ function Grant-BatchLogon([string]$sid) {
   return 'granted'
 }
 
+# Есть ли у учётки ядра право «вход как пакетное задание» сейчас (свежая выгрузка). Для квитанции и отката.
+function Test-BatchLogon([string]$sid, [string]$tag) {
+  $secedit = "$env:SystemRoot\System32\secedit.exe"
+  $me = @("*$sid", $KernelUser, "$env:COMPUTERNAME\$KernelUser")
+  $f = Join-Path $P['admin'] "user_rights_$tag.inf"
+  Invoke-Checked $secedit @('/export', '/areas', 'USER_RIGHTS', '/cfg', $f, '/quiet') "BATCH_RIGHT_EXPORT_$tag" | Out-Null
+  $line = @(Get-Content -LiteralPath $f | Where-Object { $_ -match '^\s*SeBatchLogonRight\s*=' })
+  $have = if ($line.Count) { @(($line[0] -split '=', 2)[1] -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) } else { @() }
+  return [pscustomobject]@{ present = (@($have | Where-Object { $me -contains $_ }).Count -gt 0); others = @($have | Where-Object { $me -notcontains $_ }) }
+}
+
+# Откат права (RG30-02): только если право выдал этот запуск. Список прочих учёток сохраняется как был.
+function Revoke-BatchLogon([string]$sid) {
+  $now = Test-BatchLogon $sid 'revoke_before'
+  if (-not $now.present) { return 'absent' }
+  $inf = Join-Path $P['admin'] 'user_rights_revoke.inf'
+  @('[Unicode]', 'Unicode=yes', '[Version]', 'signature="$CHICAGO$"', 'Revision=1', '[Privilege Rights]',
+    "SeBatchLogonRight = $($now.others -join ',')") | Set-Content -LiteralPath $inf -Encoding Unicode
+  Invoke-Checked "$env:SystemRoot\System32\secedit.exe" @('/configure', '/db', (Join-Path $P['admin'] 'user_rights_revoke.sdb'), '/cfg', $inf, '/areas', 'USER_RIGHTS', '/quiet') 'BATCH_RIGHT_REVOKE' | Out-Null
+  if ((Test-BatchLogon $sid 'revoke_after').present) { return 'REVOKE_FAILED' }
+  return 'revoked'
+}
+
+# Безопасное состояние отказа (RG30-01). Ничего не удаляется: созданное ЭТИМ запуском выключается, каждое действие
+# отдельно, ошибка одного не мешает остальным. Чужие объекты (сбой проверки «уже существует») не трогаются.
+# Итог каждого действия и остаточное состояние — в квитанции (failsafe, residual).
+function Invoke-FailSafe {
+  $fs = [ordered]@{}
+  $try = { param($name, $block) try { $fs[$name] = (& $block) } catch { $fs[$name] = "ERROR $(($_.Exception.Message -split "`n")[0])" } }
+  if ($Made.task) {
+    & $try 'task' { if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
+        Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue; Disable-ScheduledTask -TaskName $TaskName | Out-Null
+        "$((Get-ScheduledTask -TaskName $TaskName).State)" } else { 'absent' } }
+    # Остановка задачи не обязательно завершает дочерний node.exe привратника: процессы из bin\node.exe завершаются явно.
+    & $try 'gate_process' { $ps = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.ExecutablePath -eq $node })
+      foreach ($pr in $ps) { Invoke-CimMethod -InputObject $pr -MethodName Terminate | Out-Null }
+      Start-Sleep -Seconds 2
+      "terminated=$($ps.Count) left=$(@(Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.ExecutablePath -eq $node }).Count)" }
+  }
+  if ($Made.root -and (Test-Path -LiteralPath $P['run'])) {
+    & $try 'stop_file' { Set-Content -LiteralPath (Join-Path $P['run'] 'STOP') -Value 'STOP' -Encoding ascii; 'STOP' }
+  }
+  if ($Made.service) {
+    & $try 'service' { if (Get-Service -Name $PgService -ErrorAction SilentlyContinue) {
+        Set-Service -Name $PgService -StartupType Disabled; Stop-Service -Name $PgService -Force -ErrorAction Stop
+        $s = Get-Service -Name $PgService; "$($s.Status)/$($s.StartType)" } else { 'absent' } }
+  }
+  if ($Made.user) {
+    & $try 'user' { $u = Get-LocalUser -Name $KernelUser -ErrorAction SilentlyContinue
+      if ($u) { Disable-LocalUser -Name $KernelUser; "enabled=$((Get-LocalUser -Name $KernelUser).Enabled)" } else { 'absent' } }
+  }
+  if ($Made.batch) { & $try 'batch_logon_right' { Revoke-BatchLogon $Made.sid } }
+  $script:receipt.failsafe = $fs
+  # Остаточное состояние — отдельной проверкой после отката, а не по итогам действий выше.
+  $res = [ordered]@{}
+  $t = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+  $res.task = if ($Made.task -and $t) { "$($t.State)" } else { 'not_created' }
+  $s = Get-Service -Name $PgService -ErrorAction SilentlyContinue
+  $res.service = if ($Made.service -and $s) { "$($s.Status)/$($s.StartType)" } else { 'not_created' }
+  $u = Get-LocalUser -Name $KernelUser -ErrorAction SilentlyContinue
+  $res.user_enabled = if ($Made.user -and $u) { $u.Enabled } else { 'not_created' }
+  $res.batch_logon_right = if ($Made.sid -and (Test-Path -LiteralPath $P['admin'])) {
+    try { (Test-BatchLogon $Made.sid 'residual').present } catch { "ERROR $(($_.Exception.Message -split "`n")[0])" } } else { 'not_created' }
+  $res.listening = @(foreach ($port in $DbPort, $GatePort, $HealthPort) {
+      if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { $port } })
+  $script:receipt.residual = $res
+}
+
 $P = @{}
 foreach ($d in 'admin', 'admin\staging', 'admin\certs', 'bin', 'app', 'engine', 'rules', 'keys', 'keys\kernel', 'data', 'run', 'logs', 'public') { $P[$d] = Join-Path $Root $d }
 $node = Join-Path $P['bin'] 'node.exe'
 $cred = $null
+# Что создал этот запуск: флаг ставится ДО создания объекта, откат проверяет и флаг, и наличие объекта.
+$Made = @{ root = $false; user = $false; sid = $null; service = $false; task = $false; batch = $false }
 try {
   Step 'preflight'
   $id = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -148,6 +226,7 @@ try {
   if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) { Fail 'TASK_EXISTS' }
   foreach ($port in $DbPort, $GatePort, $HealthPort) { if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { Fail "PORT_BUSY_$port" } }
   # Корень закрывается сразу: права C:\ дают запись всем вошедшим, а установка кладёт сюда программы.
+  $Made.root = $true
   New-Item -ItemType Directory -Path $Root | Out-Null
   Set-Acl2 $Root @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F") -Here
   if (@(Get-ChildItem -LiteralPath $Root -Force).Count -ne 0) { Fail 'ROOT_NOT_EMPTY_AFTER_ACL' }
@@ -159,7 +238,9 @@ try {
   $bytes = New-Object byte[] 30; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
   $plain = [Convert]::ToBase64String($bytes) + 'a1!'
   $secure = ConvertTo-SecureString -String $plain -AsPlainText -Force
+  $Made.user = $true
   New-LocalUser -Name $KernelUser -Password $secure -PasswordNeverExpires -UserMayNotChangePassword -AccountNeverExpires -Description 'Zavod kernel and gate (Z-INSTALL-01)' | Out-Null
+  $Made.sid = (Get-LocalUser -Name $KernelUser).SID.Value
   Add-LocalGroupMember -SID 'S-1-5-32-545' -Member $KernelUser
   $cred = New-Object Management.Automation.PSCredential ("$env:COMPUTERNAME\$KernelUser", $secure)
 
@@ -247,6 +328,7 @@ try {
   Set-Acl2 $P['data'] @("${SID_ADMINS}:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "${me}:(OI)(CI)F")
   Invoke-Checked $node @((Join-Path $P['app'] 'install\db_setup.mjs'), 'init', $dbCfg) 'DB_INIT'
   Invoke-Checked $node @((Join-Path $P['app'] 'install\db_setup.mjs'), 'config', $dbCfg) 'DB_CONFIG'
+  $Made.service = $true
   Invoke-Checked (Join-Path $P['bin'] 'pgsql\bin\pg_ctl.exe') @('register', '-N', $PgService, '-U', "NT SERVICE\$PgService", '-D', $P['data'], '-S', 'auto', '-w') 'PG_REGISTER'
   Set-Acl2 $P['data'] @("*S-1-5-80-0:(OI)(CI)F", "${SID_SYSTEM}:(OI)(CI)F", "NT SERVICE\${PgService}:(OI)(CI)F")
   # S-1-5-80-0 («все службы») и учётка установщика снимаются сразу. Admins остаётся до конца шага: схема (db_setup
@@ -319,7 +401,10 @@ try {
   $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\cmd.exe" -Argument $gateCmd -WorkingDirectory $P['logs']
   $triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -AtLogOn))
   $settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-  $receipt.batch_logon_right = Grant-BatchLogon (Get-LocalUser -Name $KernelUser).SID.Value
+  # Право выдаётся только этой, только что созданной учёткой (до запуска у неё его не было), поэтому откат его снимает.
+  $Made.batch = $true
+  $receipt.batch_logon_right = Grant-BatchLogon $Made.sid
+  $Made.task = $true
   Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $triggers -Settings $settings -User "$env:COMPUTERNAME\$KernelUser" -Password $plain -RunLevel Limited | Out-Null
   $taskStart = Get-Date
   Start-ScheduledTask -TaskName $TaskName
@@ -345,6 +430,7 @@ try {
   }
   if ($health.gate_port -ne $GatePort -or $health.os_user -ne $KernelUser) { Fail 'GATE_HEALTH_MISMATCH' }
   $receipt.gate_health = $health
+  if ($FaultAt -eq 'task') { Fail 'FAULT_INJECTED_task' }
 
   Step 'receipt'
   $sums = [ordered]@{}
@@ -360,12 +446,15 @@ catch {
   $receipt.status = 'FAILED'
   # Строка скрипта, где случился сбой, — без значений переменных (пароль в тексте скрипта не встречается).
   $receipt.error = (($_.Exception.Message -split "`n")[0]) + " @line $($_.InvocationInfo.ScriptLineNumber)"
-  if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) { Disable-ScheduledTask -TaskName $TaskName | Out-Null }
+  # Откат сам не бросает ошибок наружу: квитанция FAILED пишется в любом случае.
+  try { Invoke-FailSafe } catch { $receipt.failsafe_error = (($_.Exception.Message -split "`n")[0]) }
 }
 finally {
   $plain = $null; $secure = $null; $cred = $null
   $receipt.finished_at = (Get-Date).ToUniversalTime().ToString('o')
-  if (Test-Path -LiteralPath $P['public']) {
+  # Квитанция пишется только в каталог, созданный этим запуском: повторный запуск (ROOT_EXISTS) не затирает квитанцию
+  # прежней установки.
+  if ($Made.root -and (Test-Path -LiteralPath $P['public'])) {
     $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $P['public'] 'install_receipt.json') -Encoding utf8
   }
   Write-Host "INSTALL_STATUS=$($receipt.status) $(if ($receipt.Contains('error')) { $receipt.error })"

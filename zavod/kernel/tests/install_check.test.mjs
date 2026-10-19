@@ -1,7 +1,7 @@
 // ДОКУМЕНТ: tests/install_check.test.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 21:31 +03:00 (v0.3: в пробном корне есть engine/src/sshsig.mjs; v0.2: проверка npm_lock_list)
-// ИСПОЛНИТЕЛЬ: Claude (сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
+// ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 15:00 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-19 05:59 +03:00 (v0.4: пробная выдача и код-метка, RG30-03; v0.3: в пробном корне есть engine/src/sshsig.mjs; v0.2: проверка npm_lock_list)
+// ИСПОЛНИТЕЛЬ: Claude (v0.1–v0.3 сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1; v0.4 сессия 2fc9a1c8-7e6e-4e54-beb1-519c0f3cdba1)
 // НАЗНАЧЕНИЕ: проверки ci/install_check.mjs без установки: вход привратника (настоящий сервер на свободном порту),
 //   сравнение прав с §2, закреплённые суммы установщика, суммы квитанции (лишний и изменённый файл — FAIL),
 //   на Windows — запуск PowerShell-части чтения прав.
@@ -15,7 +15,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createGateServer } from '../src/gate_server.mjs';
-import { expectedAcl, sameAcl, gateChecks, installerPins, receiptChecks, readAclState, DIRS, tryListen } from '../ci/install_check.mjs';
+import { expectedAcl, sameAcl, gateChecks, installerPins, receiptChecks, readAclState, DIRS, tryListen,
+  enrollTrialChecks, leakCanaryChecks } from '../ci/install_check.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const sha = (b) => createHash('sha256').update(b).digest('hex');
@@ -46,6 +47,53 @@ test('gateChecks: настоящий привратник проходит вс�
     const busy = await tryListen('127.0.0.1', port);
     assert.equal(busy.ok, false);
   } finally { await gate.close(); }
+});
+
+// Ответы как у transport.handle для неизвестного кода; leaky — пропуск выдан (обязан не пройти).
+function fakeTransport({ leaky = false } = {}) {
+  const deny = (status, code) => ({ status, body: { ok: false, error: { code } } });
+  return async (body) => {
+    if (body.type === 'EnrollSession') {
+      if (body.auth !== undefined) return deny(400, 'GATE_BAD_REQUEST');
+      if (!/^[0-9a-f]{64}$/.test(body.payload?.claim_code || '')) return deny(403, 'ENROLL_BAD_REQUEST');
+      return leaky ? { status: 200, body: { ok: true, result: { pass: 'ab'.repeat(32) } } } : deny(403, 'ENROLL_NOT_FOUND');
+    }
+    return { status: 403, body: { ok: false, error: { code: 'UNAUTHENTICATED' } } };
+  };
+}
+
+test('enrollTrialChecks: отказ неизвестному коду и прочим попыткам; выданный пропуск — FAIL', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'zavod-ic-enroll-'));
+  const stop = join(dir, 'STOP'); writeFileSync(stop, 'RUN');
+  for (const leaky of [false, true]) {
+    const port = await freePort();
+    const gate = createGateServer({ port, privateKey: generateKeyPairSync('ed25519').privateKey, stopFile: stop, onCommand: fakeTransport({ leaky }) });
+    await gate.start();
+    try {
+      const t = await enrollTrialChecks(port);
+      assert.match(t.canary, /^[0-9a-f]{64}$/);
+      assert.equal(t.rows.length, 4);
+      const failed = t.rows.filter((c) => !c.pass).map((c) => c.name);
+      assert.deepEqual(failed, leaky ? ['trial_unknown_code_refused_403'] : []);
+    } finally { await gate.close(); }
+  }
+});
+
+test('leakCanaryChecks: код-метка или его SHA-256 в logs/public — FAIL; нет записи отказа — FAIL', () => {
+  const canary = 'cd'.repeat(32);
+  const make = (logText, pubText = '{}') => {
+    const root = mkdtempSync(join(tmpdir(), 'zavod-ic-canary-'));
+    mkdirSync(join(root, 'logs')); mkdirSync(join(root, 'public'));
+    writeFileSync(join(root, 'logs', 'gate.log'), logText); writeFileSync(join(root, 'public', 'x.json'), pubText);
+    return root;
+  };
+  const refusal = '{"t":"2026-10-19T00:00:00.000Z","ev":"enroll_refused","code":"ENROLL_NOT_FOUND"}\n';
+  const names = (rows) => rows.filter((c) => !c.pass).map((c) => c.name);
+  assert.deepEqual(names(leakCanaryChecks(make(refusal), canary)), []);
+  assert.deepEqual(names(leakCanaryChecks(make(refusal + canary), canary)), ['trial_code_not_in_logs_public']);
+  const hashed = sha(Buffer.from(canary, 'hex'));
+  assert.deepEqual(names(leakCanaryChecks(make(refusal, hashed), canary)), ['trial_code_not_in_logs_public']);
+  assert.deepEqual(names(leakCanaryChecks(make('{}\n'), canary)), ['trial_refusal_logged_without_code']);
 });
 
 test('sameAcl: точный набор записей §2; лишняя запись, запрет или чужой владелец — расхождение', () => {
