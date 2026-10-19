@@ -1,7 +1,10 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-19 05:57 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.7 сессия 2fc9a1c8)
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-19 11:42 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.8 сессия 2fc9a1c8)
+# v0.8 (аудит ChatGPT R31): откат завершает только процессы bin\node.exe, владелец которых zavod-kernel; чужие
+#   процессы того же файла не трогаются, в квитанции счёт other_owner_untouched (RG31-01). Параметр -FaultAt
+#   (account, database, batch, task) — точки отказа для проверки отката в CI; по умолчанию none (RG31-02).
 # v0.7 (аудит ChatGPT R30): безопасное состояние отказа (RG30-01) — при FAILED созданное этим запуском выключается без
 #   удаления: задача остановлена и выключена, процессы привратника завершены, файл run\STOP = STOP, служба базы
 #   остановлена и выключена, учётка zavod-kernel выключена; пакетное право, выданное этим запуском, снимается (RG30-02);
@@ -44,8 +47,9 @@ param(
   [int]$DbPort = 54390,
   [int]$GatePort = 18960,
   [int]$HealthPort = 18961,
-  # Только для проверки отката в CI (задание install_win_failsafe): сбой после запуска привратника. Оператор не задаёт.
-  [ValidateSet('none', 'task')][string]$FaultAt = 'none'
+  # Только для проверки отката в CI (задание install_win_failsafe): сбой в заданной точке. Оператор не задаёт.
+  # account — после учётки; database — служба базы запущена; batch — право выдано, задачи нет; task — привратник работает.
+  [ValidateSet('none', 'account', 'database', 'batch', 'task')][string]$FaultAt = 'none'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -70,6 +74,7 @@ $receipt = [ordered]@{ format = 'zavod-install-receipt@v1'; status = 'IN_PROGRES
   sources = [ordered]@{}; steps = @(); mode_active = $false }
 function Step([string]$name) { $script:receipt.steps += $name; Write-Host "== $name" }
 function Fail([string]$code) { throw "INSTALL_FAILED: $code" }
+function FaultPoint([string]$name) { if ($FaultAt -eq $name) { Fail "FAULT_INJECTED_$name" } }
 
 function Get-Sha([string]$path) { (Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash.ToLowerInvariant() }
 function Save-Verified([string]$key, [string]$out) {
@@ -175,11 +180,20 @@ function Invoke-FailSafe {
     & $try 'task' { if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
         Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue; Disable-ScheduledTask -TaskName $TaskName | Out-Null
         "$((Get-ScheduledTask -TaskName $TaskName).State)" } else { 'absent' } }
-    # Остановка задачи не обязательно завершает дочерний node.exe привратника: процессы из bin\node.exe завершаются явно.
-    & $try 'gate_process' { $ps = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.ExecutablePath -eq $node })
-      foreach ($pr in $ps) { Invoke-CimMethod -InputObject $pr -MethodName Terminate | Out-Null }
+    # Остановка задачи не обязательно завершает дочерний node.exe привратника: процессы завершаются явно, но только
+    # свои (RG31-01): путь bin\node.exe И владелец — учётка zavod-kernel, созданная этим запуском. Процессы того же
+    # файла под другими учётками (например, install_check оператора) не трогаются и только считаются.
+    & $try 'gate_process' {
+      # Процесс мог завершиться между выборкой и вопросом о владельце — такой просто не считается своим.
+      $isOwn = { param($pr) try { $o = Invoke-CimMethod -InputObject $pr -MethodName GetOwner -ErrorAction Stop
+          $o.ReturnValue -eq 0 -and $o.User -eq $KernelUser } catch { $false } }
+      $byPath = { @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.ExecutablePath -eq $node }) }
+      $all = & $byPath
+      $own = @($all | Where-Object { & $isOwn $_ })
+      foreach ($pr in $own) { try { Invoke-CimMethod -InputObject $pr -MethodName Terminate -ErrorAction Stop | Out-Null } catch { } }
       Start-Sleep -Seconds 2
-      "terminated=$($ps.Count) left=$(@(Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.ExecutablePath -eq $node }).Count)" }
+      $left = @(& $byPath | Where-Object { & $isOwn $_ })
+      "terminated=$($own.Count) left=$($left.Count) other_owner_untouched=$($all.Count - $own.Count)" }
   }
   if ($Made.root -and (Test-Path -LiteralPath $P['run'])) {
     & $try 'stop_file' { Set-Content -LiteralPath (Join-Path $P['run'] 'STOP') -Value 'STOP' -Encoding ascii; 'STOP' }
@@ -243,6 +257,7 @@ try {
   $Made.sid = (Get-LocalUser -Name $KernelUser).SID.Value
   Add-LocalGroupMember -SID 'S-1-5-32-545' -Member $KernelUser
   $cred = New-Object Management.Automation.PSCredential ("$env:COMPUTERNAME\$KernelUser", $secure)
+  FaultPoint 'account'
 
   Step 'download'
   $st = $P['admin\staging']
@@ -344,6 +359,7 @@ try {
   if (-not $dbChecks.ok) { Fail 'DB_CHECKS' }
   # Схема установлена: доступ к data — только у службы базы и SYSTEM (§2).
   Invoke-Checked "$env:SystemRoot\System32\icacls.exe" @($P['data'], '/remove:g', $SID_ADMINS, '/C', '/Q') 'ACL_DATA_ADMINS'
+  FaultPoint 'database'
 
   Step 'rules'
   $git = Join-Path $P['bin'] 'git\cmd\git.exe'
@@ -404,6 +420,7 @@ try {
   # Право выдаётся только этой, только что созданной учёткой (до запуска у неё его не было), поэтому откат его снимает.
   $Made.batch = $true
   $receipt.batch_logon_right = Grant-BatchLogon $Made.sid
+  FaultPoint 'batch'
   $Made.task = $true
   Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $triggers -Settings $settings -User "$env:COMPUTERNAME\$KernelUser" -Password $plain -RunLevel Limited | Out-Null
   $taskStart = Get-Date
@@ -430,7 +447,7 @@ try {
   }
   if ($health.gate_port -ne $GatePort -or $health.os_user -ne $KernelUser) { Fail 'GATE_HEALTH_MISMATCH' }
   $receipt.gate_health = $health
-  if ($FaultAt -eq 'task') { Fail 'FAULT_INJECTED_task' }
+  FaultPoint 'task'
 
   Step 'receipt'
   $sums = [ordered]@{}
