@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.26
+# ВЕРСИЯ: v0.27
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-19 05:59 +03:00 (v0.26: аудит ChatGPT R30 RG30-01/02 — задание install_win_failsafe:
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-19 06:12 +03:00 (v0.27: install_win_failsafe запускает установщик отдельным процессом — прогон 39192685656: откат верный, но шаг вышел с кодом 1; v0.26: аудит ChatGPT R30 RG30-01/02 — задание install_win_failsafe:
 #   установщик со сбоем после запуска привратника (-FaultAt task) обязан дать FAILED и безопасное состояние — задача
 #   выключена, служба базы остановлена и выключена, учётка выключена, пакетное право снято, порты свободны, STOP,
 #   ничего не удалено; повторный запуск — отказ ROOT_EXISTS без перезаписи квитанции. Claude, сессия 2fc9a1c8.
@@ -301,8 +301,12 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          & "$env:GITHUB_WORKSPACE\zavod\kernel\install\install_zavod_kernel.ps1" -Commit $env:ZAVOD_COMMIT -FaultAt task
-          if ($LASTEXITCODE -ne 3) { throw "FAULT_RUN exit=$LASTEXITCODE (want 3)" }
+          # Отдельный процесс: код выхода установщика (3) виден точно (прогон 39192685656: при вызове через & шаг
+          # завершился кодом 1 при верном откате). Шаг сам выходит с 0 после проверки кода.
+          powershell.exe -NoProfile -File "$env:GITHUB_WORKSPACE\zavod\kernel\install\install_zavod_kernel.ps1" -Commit $env:ZAVOD_COMMIT -FaultAt task
+          $code = $LASTEXITCODE
+          if ($code -ne 3) { throw "FAULT_RUN exit=$code (want 3)" }
+          exit 0
       - name: safe state after FAILED, checked independently of the receipt
         shell: powershell
         run: |
@@ -342,13 +346,17 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $rf = 'C:\ZavodKernel\public\install_receipt.json'
           $before = (Get-FileHash -Algorithm SHA256 -LiteralPath $rf).Hash
-          $out = & "$env:GITHUB_WORKSPACE\zavod\kernel\install\install_zavod_kernel.ps1" -Commit $env:ZAVOD_COMMIT *>&1 | Out-String
+          # Строки stderr дочернего процесса при Stop стали бы ошибкой шага — на время вызова Continue.
+          $ErrorActionPreference = 'Continue'
+          $out = powershell.exe -NoProfile -File "$env:GITHUB_WORKSPACE\zavod\kernel\install\install_zavod_kernel.ps1" -Commit $env:ZAVOD_COMMIT 2>&1 | Out-String
           $code = $LASTEXITCODE
+          $ErrorActionPreference = 'Stop'
           Write-Host $out
           if ($code -ne 3 -or $out -notmatch 'ROOT_EXISTS') { throw "RERUN exit=$code" }
           if ((Get-FileHash -Algorithm SHA256 -LiteralPath $rf).Hash -ne $before) { throw 'RERUN_OVERWROTE_RECEIPT' }
           if ((Get-ScheduledTask -TaskName ZavodKernel).State -ne 'Disabled' -or (Get-LocalUser -Name zavod-kernel).Enabled) { throw 'RERUN_TOUCHED_OBJECTS' }
           'RERUN_CHECK=PASS' | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+          exit 0
       - name: collect artifacts
         if: always()
         shell: powershell
