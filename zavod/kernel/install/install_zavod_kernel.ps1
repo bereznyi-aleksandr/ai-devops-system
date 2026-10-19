@@ -1,7 +1,9 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-19 11:42 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.8 сессия 2fc9a1c8)
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-19 15:46 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.9 сессия 2fc9a1c8)
+# v0.9: список процессов отката всегда массив — при одном процессе строгий режим (StrictMode 3) не находил Count
+#   (CI 39225048146, точка отказа task: откат верный, отчёт gate_process = ERROR).
 # v0.8 (аудит ChatGPT R31): откат завершает только процессы bin\node.exe, владелец которых zavod-kernel; чужие
 #   процессы того же файла не трогаются, в квитанции счёт other_owner_untouched (RG31-01). Параметр -FaultAt
 #   (account, database, batch, task) — точки отказа для проверки отката в CI; по умолчанию none (RG31-02).
@@ -188,7 +190,7 @@ function Invoke-FailSafe {
       $isOwn = { param($pr) try { $o = Invoke-CimMethod -InputObject $pr -MethodName GetOwner -ErrorAction Stop
           $o.ReturnValue -eq 0 -and $o.User -eq $KernelUser } catch { $false } }
       $byPath = { @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.ExecutablePath -eq $node }) }
-      $all = & $byPath
+      $all = @(& $byPath)
       $own = @($all | Where-Object { & $isOwn $_ })
       foreach ($pr in $own) { try { Invoke-CimMethod -InputObject $pr -MethodName Terminate -ErrorAction Stop | Out-Null } catch { } }
       Start-Sleep -Seconds 2
