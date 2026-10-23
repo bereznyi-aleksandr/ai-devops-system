@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: tests/transport.test.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 11:38 +03:00 (v0.3: ChatGPT R25 RG25-01 — смена участника оператора
+// ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 10:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 14:02 +03:00 (v0.4: план установки v0.3 §4.A — сквозной путь через
+//   точку входа gate_main (startGate): /hello, получение пропуска, команда аренды; v0.3 11:38: ChatGPT R25 RG25-01 — смена участника оператора
 //   между проверкой и командой и во время команды; v0.2 11:12: ChatGPT R24 — RG24-01 отзыв между
 //   проверкой и командой и отзыв во время команды; RG24-02 повторное предъявление отозванного пропуска без новых строк
 //   доказательства; RG24-03 путь оператора без билета и для команды без билета; тест отзыва во время команды — на своей роли 04)
@@ -22,6 +23,9 @@ import { RulesError } from '../src/rules_gate.mjs';
 import { createTransport, secretHash, newSecret } from '../src/transport.mjs';
 import { createGateServer } from '../src/gate_server.mjs';
 import { createGateClient } from '../src/gate_client.mjs';
+import { parseConfig, startGate } from '../src/gate_main.mjs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { CONN, bootFixture, withRole, assignAuditor, runStopFile, uuid, asRole } from './helpers.mjs';
 
 const hex = (n) => randomBytes(n / 2).toString('hex');
@@ -32,7 +36,8 @@ const R01 = '01_Куратор_ГД';
 const R02 = '02_Куратор_производства';
 const R03 = '03_Куратор_качества_и_безопасности';
 const R04 = '04_Куратор_проверки_отзыва';
-const PARENTS = { [R01]: 'OPERATOR', [R02]: R01, [R03]: R01, [R04]: R01 };
+const R05 = '05_Куратор_точки_входа';
+const PARENTS = { [R01]: 'OPERATOR', [R02]: R01, [R03]: R01, [R04]: R01, [R05]: R01 };
 const CODE = hex(40);
 const isoNow = (ms = 0) => new Date(Date.now() + ms).toISOString().replace(/\.\d+Z$/, 'Z');
 
@@ -167,7 +172,7 @@ before(async () => {
   await kernel.assertIdentity();
   await withRole('postgres', async (c) => {
     await c.query('SET ROLE bem_governance');
-    for (const r of [R01, R02, R03, R04]) await c.query('SELECT bem_control.set_role_actor($1, $2, $3)', [ids.tenantA, r, ids.author]);
+    for (const r of [R01, R02, R03, R04, R05]) await c.query('SELECT bem_control.set_role_actor($1, $2, $3)', [ids.tenantA, r, ids.author]);
     await c.query("SELECT bem_control.set_role_actor($1, 'OPERATOR', $2)", [ids.tenantA, ids.humanA]);
   });
   await activateRules(ids.tenantA);
@@ -517,4 +522,34 @@ test('RG25-01: смена участника оператора во время 
     const [a] = await pg("SELECT actor_id FROM bem_control.role_actor WHERE tenant_id = $1 AND role_key = 'OPERATOR'", [ids.tenantA]);
     assert.equal(a.actor_id, ids.author, 'смена прошла после команды');
   } finally { await setOperator(ids.humanA); }
+});
+
+// План установки v0.3 §4.A: точка входа собирает ядро, посредник и вход так же, как сквозной тест выше.
+test('gate_main: startGate — /hello подписан, пропуск получен, аренда открыта; повторный старт на том же порту — отказ', async () => {
+  const freePort = () => new Promise((resolve) => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => resolve(p)); }); });
+  const [gp, hp] = [await freePort(), await freePort()];
+  const P = (n) => join(tmpdir(), n);
+  const stopFile = runStopFile('zavod-gate-main-');
+  const cfg = parseConfig(JSON.stringify({ db: { host: '127.0.0.1', port: 54390, database: 'bem', ca: P('ca.crt') },
+    kernelCert: { cert: P('k.crt'), key: P('k.key') }, rulesCert: { cert: P('r.crt'), key: P('r.key') },
+    gate: { port: gp, key: P('gate.pem') }, health: { port: hp }, stopFile, expectedUser: 'zavod-kernel',
+    rules: { repo: 'owner/repo', repoDir: P('rules'), git: P('git.exe') } }));
+  const key = generateKeyPairSync('ed25519');
+  const deps = { userInfo: () => ({ username: 'zavod-kernel' }), connection: CONN, rulesConnection: CONN, rules: gate,
+    gateKey: key.privateKey, readFile: () => { throw new Error('ключи в испытании не читаются'); } };
+  const main = await startGate(cfg, deps);
+  try {
+    const client = createGateClient({ port: gp, publicKey: key.publicKey });
+    const code = newSecret();
+    okk((await client.command({ type: 'PrepareEnrollment', command_id: uuid(), payload: { role_key: R05, session: sn('m1'),
+      claim_sha256: secretHash(code) }, auth: { session: sn('g1'), pass: S.g1.pass } })).body);
+    const got = await client.command({ type: 'EnrollSession', payload: { session: sn('m1'), claim_code: code } });
+    assert.equal(got.status, 200, JSON.stringify(got.body));
+    const l = await client.command({ type: 'OpenChatLease', command_id: uuid(), payload: { work_item_id: await newItem() },
+      auth: { session: sn('m1'), pass: got.body.result.pass } });
+    assert.equal(l.status, 200, JSON.stringify(l.body));
+    const h = await fetch(`http://127.0.0.1:${hp}/internal/health`).then((r) => r.json());
+    assert.equal(h.gate_port, gp);
+    await assert.rejects(startGate(cfg, deps), (e) => e.code === 'GATE_PORT_BUSY');
+  } finally { await main.close(); }
 });
