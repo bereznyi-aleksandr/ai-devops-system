@@ -251,6 +251,10 @@ jobs:
           wevtutil sl Microsoft-Windows-TaskScheduler/Operational /e:true
           & "$env:GITHUB_WORKSPACE\zavod\kernel\install\install_zavod_kernel.ps1" -Commit $env:ZAVOD_COMMIT
           if ($LASTEXITCODE) { throw "INSTALL exit=$LASTEXITCODE" }
+          # Р.5 и Р.39 протокола v2.8: до пяти перезапусков с перерывом в одну минуту — читается у Windows.
+          $ts = (Get-ScheduledTask -TaskName ZavodKernel).Settings
+          Write-Host "TASK_RESTART count=$($ts.RestartCount) interval=$($ts.RestartInterval)"
+          if ($ts.RestartCount -ne 5 -or "$($ts.RestartInterval)" -ne 'PT1M') { throw 'TASK_RESTART_NOT_P5' }
       - name: install_check as a fresh standard user (no admin, no keys, no kernel password)
         shell: powershell
         run: |
@@ -267,6 +271,24 @@ jobs:
           $p = Start-Process -FilePath 'C:\ZavodKernel\bin\node.exe' -ArgumentList @('C:\ZavodKernel\app\ci\install_check.mjs', 'C:\ZavodKernel', '--out', "$out\install_check.json") -Credential $cred -WorkingDirectory $out -Wait -PassThru -RedirectStandardOutput "$out\stdout.txt" -RedirectStandardError "$out\stderr.txt"
           Get-Content -LiteralPath "$out\stdout.txt"; Get-Content -LiteralPath "$out\stderr.txt"
           if ($p.ExitCode -ne 0) { throw "INSTALL_CHECK exit=$($p.ExitCode)" }
+      - name: R.5 restart probe (database stopped, the task must retry up to five times)
+        # Опыт для протокола v2.8 Р.5: перезапускает ли Windows задачу после выхода привратника с кодом 3
+        # (база не готова). Пока итог не известен, шаг не блокирует проверку; счёт отказов — в журнале прогона.
+        continue-on-error: true
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $log = 'C:\ZavodKernel\logs\gate.log'
+          Stop-ScheduledTask -TaskName ZavodKernel
+          Stop-Service -Name ZavodKernelPg
+          $before = @(Select-String -LiteralPath $log -Pattern 'gate_main_refused' -SimpleMatch).Count
+          Start-ScheduledTask -TaskName ZavodKernel
+          Start-Sleep -Seconds 420
+          $after = @(Select-String -LiteralPath $log -Pattern 'gate_main_refused' -SimpleMatch).Count
+          $ti = Get-ScheduledTaskInfo -TaskName ZavodKernel
+          Write-Host "RESTART_PROBE refused=$($after - $before) last_result=$($ti.LastTaskResult) state=$((Get-ScheduledTask -TaskName ZavodKernel).State)"
+          Start-Service -Name ZavodKernelPg
+          if (($after - $before) -lt 6) { throw "RESTART_PROBE_FEWER_THAN_6 got=$($after - $before)" }
       - name: collect artifacts
         if: always()
         shell: powershell

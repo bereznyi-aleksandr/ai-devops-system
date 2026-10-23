@@ -1,7 +1,9 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-19 15:46 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.9 сессия 2fc9a1c8)
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-23 03:58 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.9 сессия 2fc9a1c8; v0.10 сессия 8bfd707d)
+# v0.10 (сверка с протоколом v2.8, Р.5 и Р.39): задача ядра перезапускается до пяти раз с перерывом в одну минуту
+#   (было три); настройки перезапуска, прочитанные у Windows после регистрации, пишутся в квитанцию (task_restart).
 # v0.9: список процессов отката всегда массив — при одном процессе строгий режим (StrictMode 3) не находил Count
 #   (CI 39225048146, точка отказа task: откат верный, отчёт gate_process = ERROR).
 # v0.8 (аудит ChatGPT R31): откат завершает только процессы bin\node.exe, владелец которых zavod-kernel; чужие
@@ -418,13 +420,16 @@ try {
   $gateCmd = "/d /c `"`"$node`" `"$(Join-Path $P['app'] 'src\gate_main.mjs')`" `"$(Join-Path $P['app'] 'gate.json')`" >> `"$gateLog`" 2>&1`""
   $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\cmd.exe" -Argument $gateCmd -WorkingDirectory $P['logs']
   $triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -AtLogOn))
-  $settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+  # Р.5 протокола v2.8: до пяти перезапусков с перерывом в одну минуту (настройка установщика, Р.39).
+  $settings = New-ScheduledTaskSettingsSet -RestartCount 5 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
   # Право выдаётся только этой, только что созданной учёткой (до запуска у неё его не было), поэтому откат его снимает.
   $Made.batch = $true
   $receipt.batch_logon_right = Grant-BatchLogon $Made.sid
   FaultPoint 'batch'
   $Made.task = $true
   Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $triggers -Settings $settings -User "$env:COMPUTERNAME\$KernelUser" -Password $plain -RunLevel Limited | Out-Null
+  $ts = (Get-ScheduledTask -TaskName $TaskName).Settings
+  $receipt.task_restart = [ordered]@{ count = $ts.RestartCount; interval = "$($ts.RestartInterval)" }
   $taskStart = Get-Date
   Start-ScheduledTask -TaskName $TaskName
   $health = $null; $deadline = (Get-Date).AddSeconds(60)
