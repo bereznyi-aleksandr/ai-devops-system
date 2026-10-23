@@ -1,7 +1,9 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
-# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-23 03:58 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.9 сессия 2fc9a1c8; v0.10 сессия 8bfd707d)
+# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-23 04:04 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.9 сессия 2fc9a1c8; v0.10–v0.11 сессия 8bfd707d)
+# v0.11: архивы .zip (код, MinGit, PostgreSQL) распаковывает .NET ZipFile, а не tar.exe — новый образ Windows CI
+#   (21.10.2026) пропускал русские имена файлов в архиве кода и выходил с кодом 1 (UNPACK_code, CI 39881464018).
 # v0.10 (сверка с протоколом v2.8, Р.5 и Р.39): задача ядра перезапускается до пяти раз с перерывом в одну минуту
 #   (было три); настройки перезапуска, прочитанные у Windows после регистрации, пишутся в квитанцию (task_restart).
 # v0.9: список процессов отката всегда массив — при одном процессе строгий режим (StrictMode 3) не находил Count
@@ -273,9 +275,12 @@ try {
   Invoke-WebRequest -UseBasicParsing -Uri "https://codeload.github.com/$Repo/zip/$Commit" -OutFile $codeZip
   $receipt.sources['code'] = [ordered]@{ url = "https://codeload.github.com/$Repo/zip/$Commit"; sha256 = (Get-Sha $codeZip) }
   $tar = "$env:SystemRoot\System32\tar.exe"
+  # Архивы .zip распаковывает .NET (имена в UTF-8; выход за папку назначения — исключение), не tar.exe: в образе
+  # windows-2025 от 21.10.2026 tar пропускает русские имена файлов и выходит с кодом 1 (CI 39881464018).
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
   foreach ($x in @(@('code.zip', 'code'), @('mingit.zip', 'mingit'), @('pgzip.zip', 'pgzip'))) {
-    New-Item -ItemType Directory -Path (Join-Path $st $x[1]) | Out-Null
-    Invoke-Checked $tar @('-xf', (Join-Path $st $x[0]), '-C', (Join-Path $st $x[1])) "UNPACK_$($x[1])"
+    try { [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $st $x[0]), (Join-Path $st $x[1]), [Text.Encoding]::UTF8) }
+    catch { Fail "UNPACK_$($x[1]) $($_.Exception.GetType().Name)" }
   }
   $repoDir = Join-Path (Join-Path $st 'code') ("ai-devops-system-$Commit")
   if (-not (Test-Path -LiteralPath (Join-Path $repoDir 'zavod\kernel\src\gate_main.mjs'))) { Fail 'CODE_LAYOUT' }
