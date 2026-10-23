@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.28
+# ВЕРСИЯ: v0.30
 # СТАТУС: CANDIDATE
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-19 11:42 +03:00 (v0.28: аудит ChatGPT R31 — install_win_failsafe стал матрицей из четырёх точек отказа account/database/batch/task (RG31-02) и проверяет, что чужой процесс того же node.exe переживает откат (RG31-01); v0.27: install_win_failsafe запускает установщик отдельным процессом — прогон 39192685656: откат верный, но шаг вышел с кодом 1; v0.26: аудит ChatGPT R30 RG30-01/02 — задание install_win_failsafe:
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-23 04:37 +03:00 (v0.30, сессия 8bfd707d: шаг «R.5 restart probe» обязателен — ровно 6 отказов привратника (запуск и 5 перезапусков gate_run.mjs), запись gate_run_gave_up, после остановки задачи процессов bin\node.exe под zavod-kernel нет; v0.29: install_win сверяет перезапуск задачи 5/PT1M (протокол v2.8 Р.5) и пробует перезапуск при остановленной базе; v0.28: аудит ChatGPT R31 — install_win_failsafe стал матрицей из четырёх точек отказа account/database/batch/task (RG31-02) и проверяет, что чужой процесс того же node.exe переживает откат (RG31-01); v0.27: install_win_failsafe запускает установщик отдельным процессом — прогон 39192685656: откат верный, но шаг вышел с кодом 1; v0.26: аудит ChatGPT R30 RG30-01/02 — задание install_win_failsafe:
 #   установщик со сбоем после запуска привратника (-FaultAt task) обязан дать FAILED и безопасное состояние — задача
 #   выключена, служба базы остановлена и выключена, учётка выключена, пакетное право снято, порты свободны, STOP,
 #   ничего не удалено; повторный запуск — отказ ROOT_EXISTS без перезаписи квитанции. Claude, сессия 2fc9a1c8.
@@ -271,24 +271,33 @@ jobs:
           $p = Start-Process -FilePath 'C:\ZavodKernel\bin\node.exe' -ArgumentList @('C:\ZavodKernel\app\ci\install_check.mjs', 'C:\ZavodKernel', '--out', "$out\install_check.json") -Credential $cred -WorkingDirectory $out -Wait -PassThru -RedirectStandardOutput "$out\stdout.txt" -RedirectStandardError "$out\stderr.txt"
           Get-Content -LiteralPath "$out\stdout.txt"; Get-Content -LiteralPath "$out\stderr.txt"
           if ($p.ExitCode -ne 0) { throw "INSTALL_CHECK exit=$($p.ExitCode)" }
-      - name: R.5 restart probe (database stopped, the task must retry up to five times)
-        # Опыт для протокола v2.8 Р.5: перезапускает ли Windows задачу после выхода привратника с кодом 3
-        # (база не готова). Пока итог не известен, шаг не блокирует проверку; счёт отказов — в журнале прогона.
-        continue-on-error: true
+      - name: R.5 restart probe (database stopped, the gatekeeper is restarted five times)
+        # Протокол v2.8 Р.5: после выхода привратника с кодом 3 (база не готова) gate_run.mjs перезапускает его до пяти
+        # раз через минуту (сама задача Windows этого не делает — прогон 39881988908: один отказ за 7 минут).
+        # Ожидается ровно 6 отказов (запуск и 5 перезапусков), затем gate_run_gave_up и задача в состоянии Ready.
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $log = 'C:\ZavodKernel\logs\gate.log'
+          $count = { param($p) @(Select-String -LiteralPath $log -Pattern $p -SimpleMatch).Count }
+          $own = { @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.ExecutablePath -eq 'C:\ZavodKernel\bin\node.exe' } |
+            Where-Object { (Invoke-CimMethod -InputObject $_ -MethodName GetOwner).User -eq 'zavod-kernel' }) }
           Stop-ScheduledTask -TaskName ZavodKernel
+          Start-Sleep -Seconds 5
+          $left = & $own
+          Write-Host "TASK_STOP left_kernel_node=$($left.Count)"
+          if ($left.Count -ne 0) { throw "TASK_STOP_LEFT_PROCESS count=$($left.Count)" }
           Stop-Service -Name ZavodKernelPg
-          $before = @(Select-String -LiteralPath $log -Pattern 'gate_main_refused' -SimpleMatch).Count
+          $b = @((& $count 'gate_main_refused'), (& $count 'gate_run_restart'), (& $count 'gate_run_gave_up'))
           Start-ScheduledTask -TaskName ZavodKernel
           Start-Sleep -Seconds 420
-          $after = @(Select-String -LiteralPath $log -Pattern 'gate_main_refused' -SimpleMatch).Count
+          $refused = (& $count 'gate_main_refused') - $b[0]; $restart = (& $count 'gate_run_restart') - $b[1]; $gave = (& $count 'gate_run_gave_up') - $b[2]
           $ti = Get-ScheduledTaskInfo -TaskName ZavodKernel
-          Write-Host "RESTART_PROBE refused=$($after - $before) last_result=$($ti.LastTaskResult) state=$((Get-ScheduledTask -TaskName ZavodKernel).State)"
+          $state = (Get-ScheduledTask -TaskName ZavodKernel).State
+          Write-Host "RESTART_PROBE refused=$refused restart=$restart gave_up=$gave last_result=$($ti.LastTaskResult) state=$state"
+          Get-Content -LiteralPath $log -Tail 14 | Where-Object { $_ -match 'gate_run|gate_main_refused' } | ForEach-Object { Write-Host $_ }
           Start-Service -Name ZavodKernelPg
-          if (($after - $before) -lt 6) { throw "RESTART_PROBE_FEWER_THAN_6 got=$($after - $before)" }
+          if ($refused -ne 6 -or $restart -ne 5 -or $gave -ne 1 -or "$state" -ne 'Ready') { throw "RESTART_PROBE_NOT_P5 refused=$refused restart=$restart gave_up=$gave state=$state" }
       - name: collect artifacts
         if: always()
         shell: powershell

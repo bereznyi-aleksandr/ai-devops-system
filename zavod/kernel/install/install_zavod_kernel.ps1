@@ -1,7 +1,9 @@
 # ДОКУМЕНТ: install/install_zavod_kernel.ps1
-# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-23 04:04 +03:00
-# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.9 сессия 2fc9a1c8; v0.10–v0.11 сессия 8bfd707d)
+# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-18 14:27 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-23 04:37 +03:00
+# ИСПОЛНИТЕЛЬ: Claude (v0.1 сессия fd43469f; v0.2–v0.5 сессия 9951b86f; v0.6–v0.9 сессия 2fc9a1c8; v0.10–v0.12 сессия 8bfd707d)
+# v0.12 (Р.5, опыт CI 39881988908): задача запускает src\gate_run.mjs, который перезапускает привратник до пяти раз
+#   через минуту; настройка RestartCount задачи Windows срабатывает только при сбое запуска, не при выходе с кодом 3.
 # v0.11: архивы .zip (код, MinGit, PostgreSQL) распаковывает .NET ZipFile, а не tar.exe — новый образ Windows CI
 #   (21.10.2026) пропускал русские имена файлов в архиве кода и выходил с кодом 1 (UNPACK_code, CI 39881464018).
 # v0.10 (сверка с протоколом v2.8, Р.5 и Р.39): задача ядра перезапускается до пяти раз с перерывом в одну минуту
@@ -422,10 +424,13 @@ try {
   # Журнал привратника (stdout/stderr) дописывается в logs\gate.log: у задачи Windows нет экрана, без файла причина
   # сбоя не видна (CI 18.10: GATE_HEALTH_TIMEOUT без следов). cmd /d — без AutoRun; внешние кавычки снимает cmd /c.
   $gateLog = Join-Path $P['logs'] 'gate.log'
-  $gateCmd = "/d /c `"`"$node`" `"$(Join-Path $P['app'] 'src\gate_main.mjs')`" `"$(Join-Path $P['app'] 'gate.json')`" >> `"$gateLog`" 2>&1`""
+  # Р.5 протокола v2.8: привратник запускает src\gate_run.mjs — он перезапускает gate_main.mjs до пяти раз через минуту
+  # после выхода с ошибкой (Windows сам этого не делает: CI 39881988908, один отказ за 7 минут).
+  $gateCmd = "/d /c `"`"$node`" `"$(Join-Path $P['app'] 'src\gate_run.mjs')`" `"$(Join-Path $P['app'] 'gate.json')`" >> `"$gateLog`" 2>&1`""
   $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\cmd.exe" -Argument $gateCmd -WorkingDirectory $P['logs']
   $triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -AtLogOn))
-  # Р.5 протокола v2.8: до пяти перезапусков с перерывом в одну минуту (настройка установщика, Р.39).
+  # Р.5 и Р.39 протокола v2.8: до пяти перезапусков с перерывом в одну минуту. Настройка задачи действует только при
+  # сбое самого запуска; выход привратника с ошибкой перезапускает gate_run.mjs (выше).
   $settings = New-ScheduledTaskSettingsSet -RestartCount 5 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
   # Право выдаётся только этой, только что созданной учёткой (до запуска у неё его не было), поэтому откат его снимает.
   $Made.batch = $true
