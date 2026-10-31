@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: src/settings.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-31 17:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.1: этап 3.3.2.1 и 3.3.2.4
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-31 17:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:28 +02:00 (v0.2: полный путь проверяется по правилам указанной системы, а не той, где идёт проверка; v0.1: этап 3.3.2.1 и 3.3.2.4
 //   дорожной карты v3.1 — один файл настроек вместо путей в коде, база по сокету Linux по умолчанию)
 // ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 // НАЗНАЧЕНИЕ: настройки Завода приходят только из окружения процесса. Окружение заполняет один файл
@@ -11,7 +11,7 @@
 //   (И.7 п. 4); ключ с PASSWORD, TOKEN, SECRET или KEY в имени — отказ.
 
 import { readFileSync } from 'node:fs';
-import { isAbsolute } from 'node:path';
+import { posix, win32 } from 'node:path';
 
 export class SettingsError extends Error {
   constructor(code, message) { super(message); this.code = code; }
@@ -39,7 +39,7 @@ function checkValue(key, kind, value, platform) {
   const isPath = kind === 'path' || (kind === 'pghost' && (value.startsWith('/') || WINDOWS_PATH.test(value)));
   if (isPath) {
     if (platform !== 'win32' && WINDOWS_PATH.test(value)) throw new SettingsError('SETTING_WINDOWS_PATH', key);
-    if (!isAbsolute(value)) throw new SettingsError('SETTING_PATH_NOT_ABSOLUTE', key);
+    if (!(platform === 'win32' ? win32 : posix).isAbsolute(value)) throw new SettingsError('SETTING_PATH_NOT_ABSOLUTE', key);
   }
   if (kind === 'port' && !(/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= 65535)) {
     throw new SettingsError('SETTING_BAD_PORT', key);
