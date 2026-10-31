@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.23
+# ВЕРСИЯ: v0.24
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.23: этап 3.3.2.3 — systemd-analyze verify и для службы ядра
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:34 +02:00 (v0.24: этап 3.3.2.4 — задание kernel_socket: ядро подключается к PostgreSQL 16 через сокет Linux, вход peer; v0.23: этап 3.3.2.3 — systemd-analyze verify и для службы ядра
 #   zavod-kernel.service; /usr/bin/node на машине GitHub — ссылка на её Node.js; v0.22: L-S6-R12-01 и аудит Codex R14 — модульных ops 64; число проверок
 #   и строка OK сверяются отдельными командами: внутри цепочки && провал первой проверки шаг не останавливал; v0.21: аудит ChatGPT S6-prep R11A M-S6-R11-01 — сервер сверяет архив с head по git-хешам;
 #   e2e: выпуски — настоящие коммиты, проверок 15 (чужой архив, не тот объект коммита); модульных ops 59; v0.20: аудит ChatGPT S6-prep R10 — подпись билета на телефоне zsign_phone.sh,
@@ -209,6 +209,32 @@ jobs:
           node --test zavod/catalog/ci/product_scan.test.mjs | tee "$RUNNER_TEMP/pscan_selftest.out"
           grep -q '^# pass 12$' "$RUNNER_TEMP/pscan_selftest.out" && grep -q '^# fail 0$' "$RUNNER_TEMP/pscan_selftest.out"
           node zavod/kernel/ci/leak_scan.mjs zavod/catalog
+
+  kernel_socket:
+    name: kernel connects to PostgreSQL 16 through the Linux socket (3.3.2.4)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.23.3'
+      - name: PostgreSQL 16 of the runner image, socket only, peer login for the runner user
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -Atc 'select version()' | grep -q 'PostgreSQL 16'
+          sudo -u postgres createuser "$(id -un)"
+          sudo -u postgres createdb -O "$(id -un)" bem
+      - name: socket check (KERNEL_SOCKET=PASS)
+        shell: bash
+        working-directory: zavod/kernel
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-fund > "$RUNNER_TEMP/npm_ci_socket.out"
+          env -u PGHOST node ci/socket_check.mjs | tee "$RUNNER_TEMP/socket_check.out"
+          grep -q '^KERNEL_SOCKET=PASS$' "$RUNNER_TEMP/socket_check.out"
 
   ops:
     name: stage 6 ops (E6-1..E6-4) local checks
