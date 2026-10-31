@@ -1,17 +1,20 @@
 // ДОКУМЕНТ: src/server.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-08 22:46 +03:00 (v0.2: аудит E3-5 M-E35-05 —
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.3: этап 3.3.2 — подключение
+//   к базе из src/settings.mjs, на Linux по умолчанию сокет; v0.2: аудит E3-5 M-E35-05 —
 //   KERNEL_STOP_FILE обязателен: без него процесс не стартует и к базе не подключается)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: процесс Kernel: проверка роли при старте, GET /internal/health на 127.0.0.1
 //   (H1.31 §7.7, сигнал 1), цикл доставщика outbox. Приём команд по сети — этап 4
 //   (нужна проверка подлинности вызывающего; до неё сетевого входа команд нет).
-// ЗАПУСК: PGHOST=127.0.0.1 PGPORT=54337 PGDATABASE=bem KERNEL_STOP_FILE=<путь> node src/server.mjs
+// ЗАПУСК: node --env-file=/etc/zavod/zavod.env src/server.mjs (на сервере — служба systemd с EnvironmentFile=);
+//   вручную также PGHOST=127.0.0.1 PGPORT=54337 PGDATABASE=bem KERNEL_STOP_FILE=<путь> node src/server.mjs
 // ОГРАНИЧЕНИЯ: Egress здесь — заглушка, которая ничего не отправляет и отвечает UNKNOWN_OUTCOME;
 //   настоящий Egress — отдельный процесс без доступа к базе (H1.31 §7.8).
 
 import http from 'node:http';
 import { Kernel } from './kernel.mjs';
+import { pgConnection } from './settings.mjs';
 
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.KERNEL_HEALTH_PORT || 18954);
@@ -25,11 +28,7 @@ if (!process.env.KERNEL_STOP_FILE || !process.env.KERNEL_STOP_FILE.trim()) {
   process.exit(3);
 }
 const kernel = new Kernel({
-  connection: {
-    host: process.env.PGHOST || '127.0.0.1',
-    port: Number(process.env.PGPORT || 5432),
-    database: process.env.PGDATABASE || 'bem',
-  },
+  connection: pgConnection(),
   stopFile: process.env.KERNEL_STOP_FILE,
   log,
 });

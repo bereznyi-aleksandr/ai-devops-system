@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.22
-# СТАТУС: CANDIDATE
+# ВЕРСИЯ: v0.23
+# СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-16 20:02 +03:00 (v0.22: L-S6-R12-01 и аудит Codex R14 — модульных ops 64; число проверок
+# ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.23: этап 3.3.2.3 — systemd-analyze verify и для службы ядра
+#   zavod-kernel.service; /usr/bin/node на машине GitHub — ссылка на её Node.js; v0.22: L-S6-R12-01 и аудит Codex R14 — модульных ops 64; число проверок
 #   и строка OK сверяются отдельными командами: внутри цепочки && провал первой проверки шаг не останавливал; v0.21: аудит ChatGPT S6-prep R11A M-S6-R11-01 — сервер сверяет архив с head по git-хешам;
 #   e2e: выпуски — настоящие коммиты, проверок 15 (чужой архив, не тот объект коммита); модульных ops 59; v0.20: аудит ChatGPT S6-prep R10 — подпись билета на телефоне zsign_phone.sh,
 #   её проверки идут среди модульных проверок ops (56); v0.19: аудит ChatGPT S6-prep R9 L-S6-R9-01 — после стартера CI проверяет действующие
@@ -285,7 +286,9 @@ jobs:
         run: |
           set -euo pipefail
           shellcheck zavod/ops/server/install_release.sh zavod/ops/deploy_push.sh zavod/ops/ci/e2e_deploy_ci.sh
-          systemd-analyze verify --man=no zavod/ops/server/zavod-p1.service zavod/ops/server/zavod-p1-watch.service
+          test -x /usr/bin/node || sudo ln -s "$(command -v node)" /usr/bin/node
+          systemd-analyze verify --man=no zavod/ops/server/zavod-p1.service zavod/ops/server/zavod-p1-watch.service \
+            zavod/ops/server/zavod-kernel.service
       - name: real permission schema and deploy as zavod end to end (E6-2, M-S6-02/03, M-S6-R2-01/02)
         shell: bash
         run: |

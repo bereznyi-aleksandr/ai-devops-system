@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/tests/test_verify_user_data.py
-# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-10-12 14:42 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 14:49 +03:00 (v0.2: ключ zadmin с опциями — MISMATCH;
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-12 14:42 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.3: этап 3.3.2.2 — без PowerShell вне CI
+#   тест функции оператора пропускается, в CI по-прежнему обязателен; v0.2: ключ zadmin с опциями — MISMATCH;
 #   согласованная подмена ключа zadmin видна оператору во 2-й строке)
 # ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
 # НАЗНАЧЕНИЕ: аудит ChatGPT S6-prep R7, M-S6-R7-01, критерий R8-3 — подделки user-data (лишний ключ zadmin, ключ root,
@@ -112,7 +113,11 @@ class VerifyUserDataTest(unittest.TestCase):
         self.assertTrue(r.stdout.startswith('USERDATA_MISMATCH'))
 
     def test_copy_zavod_user_data_pins_audited_hash(self):
+        # Функция оператора работает на его ПК (PowerShell). В проверке GitHub (CI=true) PowerShell обязателен;
+        # на машине Linux без PowerShell (сервер Завода, этап 3.3.2.2) — пропуск с причиной, а не падение.
         ps = shutil.which('pwsh') or shutil.which('powershell')
+        if ps is None and os.environ.get('CI') != 'true':
+            self.skipTest('no PowerShell: operator function is checked only in CI and on the operator PC')
         self.assertIsNotNone(ps, 'PowerShell is required for the operator function test')
         d = tempfile.mkdtemp(prefix='zavod-cud-')
         good, bad, clip = os.path.join(d, 'good.yaml'), os.path.join(d, 'bad.yaml'), os.path.join(d, 'clip.txt')

@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: zavod/engine/ci/e5_pilot_run.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-11 19:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 08:16 +03:00 (v0.2, шаг S7: выпуск через
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-11 19:18 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.3, этап 3.3.2.1:
+//   пути компьютера оператора убраны из кода — только настройки ZAVOD_RUNTIME_DIR, P1_*; v0.2, шаг S7: выпуск через
 //   адаптер src/product_egress.mjs v0.1 с неизменяемой целью — манифест, назвавший другой репозиторий, отказ
 //   TARGET_MISMATCH до внешнего вызова; прогон p1_20261012_v010 шёл на v0.1)
 // ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
@@ -11,8 +12,9 @@
 //   графу H1.31 §12 через оркестратор v0.6 с объектом pilot. Внешние участники (рабочий-рутина, два аудитора,
 //   оператор) отвечают через папку inbox; программа печатает строку NEED_… и ждёт файл. Каждая строка вывода
 //   рассчитана на Monitor (будит ГД).
-// ВЫЗОВ: PGPORT=5436 node ci/e5_pilot_run.mjs  (из zavod/engine; стенд — stage5_pilot/stand/p1_stand.sh up)
-// СРЕДА: P1_RUN_DIR (папка прогона: inbox/, out/), P1_PRODUCT_CLONE (клон продукта), P1_PYTHON (python для бота),
+// ВЫЗОВ: node --env-file=<файл настроек> ci/e5_pilot_run.mjs  (из zavod/engine; стенд — stage5_pilot/stand/p1_stand.sh up)
+// СРЕДА: P1_RUN_DIR (папка прогона: inbox/, out/), P1_PRODUCT_CLONE (клон продукта), P1_PYTHON (python для бота, по умолчанию python3), P1_JAVA (java, по
+//   умолчанию java), P1_FLOWABLE_WAR, ZAVOD_RUNTIME_DIR (корень для путей, не заданных отдельно),
 //   P1_TAG (тег выпуска, по умолчанию p1-v0.1.0), P1_WORKER_TIMEOUT_MIN (240).
 // ОГРАНИЧЕНИЯ: платных API нет; секреты продукта живут в GitHub Secrets и здесь не читаются; учётка движка —
 //   случайная строка этого прогона. Ничего не удаляется: папки проверки (git worktree) и выгрузки остаются.
@@ -32,9 +34,12 @@ import { checkOrderHistory } from '../../kernel/src/order_history.mjs';
 import { EngineClient, EngineError } from '../src/engine_client.mjs';
 import { Orchestrator, ORCH_VERSION } from '../src/orchestrator.mjs';
 import { productEgress } from '../src/product_egress.mjs';
+import { requireSetting } from '../../kernel/src/settings.mjs';
 
 const pg = createRequire(new URL('../../kernel/package.json', import.meta.url))('pg');
-const RT = 'C:/AI/multiagent-runtime';
+// Пути — только из настроек (src/settings.mjs, этап 3.3.2.1): ZAVOD_RUNTIME_DIR или каждый путь отдельно.
+const RT = process.env.ZAVOD_RUNTIME_DIR || '';
+const underRuntime = (key, rel) => process.env[key] || (RT ? `${RT}/${rel}` : requireSetting(key));
 const REPO_ROOT = new URL('../../../', import.meta.url);
 const PRODUCT = 'bereznyi-aleksandr/zavod-p1-bot';
 const PRODUCT_ID = 1412203481;
@@ -42,14 +47,14 @@ const OUTBOX_KIND = 'zavod.product.release';
 const TAG = process.env.P1_TAG || 'p1-v0.1.0';
 const EGRESS = productEgress({ repo_id: PRODUCT_ID, repo_full_name: PRODUCT });
 const RUN = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
-const DIR = process.env.P1_RUN_DIR || `${RT}/state/zavod_20261007/stage5_pilot/runs/${RUN}`;
+const DIR = underRuntime('P1_RUN_DIR', `state/zavod_20261007/stage5_pilot/runs/${RUN}`);
 const INBOX = join(DIR, 'inbox');
 const OUT = join(DIR, 'out');
-const CLONE = process.env.P1_PRODUCT_CLONE || `${RT}/state/zavod_20261007/stage5_pilot/zavod-p1-bot`;
-const PY = process.env.P1_PYTHON || 'C:/Users/o.bereznyi/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe';
+const CLONE = underRuntime('P1_PRODUCT_CLONE', 'state/zavod_20261007/stage5_pilot/zavod-p1-bot');
+const PY = process.env.P1_PYTHON || 'python3';
 const NODE = process.execPath;
-const JAVA = `${RT}/java21/jdk-21.0.12.1+1/bin/java.exe`;
-const WAR = `${RT}/flowable8/wars/flowable-rest.war`;
+const JAVA = process.env.P1_JAVA || 'java';
+const WAR = underRuntime('P1_FLOWABLE_WAR', 'flowable8/wars/flowable-rest.war');
 const WAR_SHA256 = '9d49ea5ddd8ecd1220c9f42978f8dfb4576399f5830b92a5b7ae872f2f9947e4';
 const EPORT = Number(process.env.P1_ENGINE_PORT || 8092);
 const WORKER_TIMEOUT_MS = Number(process.env.P1_WORKER_TIMEOUT_MIN || 240) * 60000;
