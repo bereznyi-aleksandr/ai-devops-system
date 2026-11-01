@@ -78,13 +78,28 @@ sudo mv "$I/manifest/$L.json" "$TMP/root-manifest.json"
 sudo -u zkernel ln -s /etc/passwd "$I/manifest/$L.json"
 [ "$(mcheck)" = "REFUSED MANIFEST_SYMLINK" ] && ok "manifest symlink refused" || bad "manifest symlink: $(mcheck)"
 
+# Диагностика: какой код даёт openat2 вне службы и в службе с разными фильтрами (печатает, не решает).
+openat2_diag() {
+  local probe='import ctypes,os;L=ctypes.CDLL(None,use_errno=True);L.syscall.restype=ctypes.c_long
+class H(ctypes.Structure): _fields_=[("f",ctypes.c_uint64),("m",ctypes.c_uint64),("r",ctypes.c_uint64)]
+h=H(os.O_RDONLY|os.O_CLOEXEC,0,0);fd=L.syscall(ctypes.c_long(437),ctypes.c_int(-100),ctypes.c_char_p(b"/etc/hostname"),ctypes.byref(h),ctypes.c_size_t(24))
+print("fd",fd,"errno",ctypes.get_errno())'
+  echo "OPENAT2_DIAG kernel $(uname -r) $(systemctl --version | head -1)"
+  echo "OPENAT2_DIAG direct: $(sudo python3 -I -c "$probe" 2>&1)"
+  echo "OPENAT2_DIAG nofilter: $(sudo systemd-run -q --wait --pipe python3 -I -c "$probe" 2>&1)"
+  echo "OPENAT2_DIAG system-service: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service python3 -I -c "$probe" 2>&1)"
+  echo "OPENAT2_DIAG +openat2: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service -p SystemCallFilter=openat2 python3 -I -c "$probe" 2>&1)"
+  echo "OPENAT2_DIAG +native: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service -p SystemCallArchitectures=native python3 -I -c "$probe" 2>&1)"
+  echo "OPENAT2_DIAG unit filter has openat2: $(systemctl show zimport@00000000000000000000000000000000.service -p SystemCallFilter | tr ' ' '
+' | grep -cx openat2)"
+}
 echo "=== 3.3.9.2–3.3.9.3 правильный архив: карантин, затем приём"
 L=$(newlease); manifest "$L"; put_tar "$L" ok
 sudo systemctl start "zquarantine@$L.service" || true
 [ "$(jresult quarantine "$L")" = ACCEPTED ] && ok "quarantine accepted ok" || bad "quarantine ok: $(jline quarantine "$L")"
 wait_for 30 import_done "$L" || true
 [ "$(jresult import "$L")" = ACCEPTED ] && ok "import accepted ok" || { bad "import ok: $(jline import "$L")"; sudo journalctl -u "zimport@$L.service" --no-pager | tail -20; }
-jline import "$L" | grep -q '"openat2":[1-9][0-9]*,"fallback":0' && ok "import used openat2 only" || bad "openat2 not used: $(jline import "$L")"
+jline import "$L" | grep -q '"openat2":[1-9][0-9]*,"fallback":0' && ok "import used openat2 only" || { bad "openat2 not used: $(jline import "$L")"; openat2_diag; }
 A=$I/accepted/$L
 [ "$(sudo stat -c '%U:%G %a' "$A")" = 'zimport:zgithub 750' ] && ok "accepted dir 750 zimport:zgithub" || bad "accepted dir $(sudo stat -c '%U:%G %a' "$A" 2>&1)"
 [ "$(sudo stat -c '%a' "$A/tests/run.sh")" = 750 ] && ok "exec only by manifest (run.sh 750)" || bad "run.sh mode"
