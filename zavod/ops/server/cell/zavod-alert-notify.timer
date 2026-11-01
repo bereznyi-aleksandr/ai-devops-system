@@ -1,0 +1,15 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-alert-notify.timer
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 16:14 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: доставка тревог раз в минуту и через минуту после загрузки (аудит M33-06).
+[Unit]
+Description=Zavod cell alerts, delivery every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

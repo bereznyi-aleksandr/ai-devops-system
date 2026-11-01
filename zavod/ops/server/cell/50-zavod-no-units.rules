@@ -1,0 +1,16 @@
+// ДОКУМЕНТ: zavod/ops/server/cell/50-zavod-no-units.rules
+// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+// ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+// НАЗНАЧЕНИЕ: Л.16–Л.28 — ни у одной службы Завода нет прав запуска и остановки служб через polkit.
+//   Учётные записи Завода и динамические сессии (имена с префиксом «zagent») получают отказ без вопроса пароля.
+var ZAVOD_ACCOUNTS = ["zdb", "zkernel", "zgate", "zgithub", "ztelegram", "zquarantine", "zimport", "zbackup", "zbrowser"];
+polkit.addRule(function (action, subject) {
+    if (action.id.indexOf("org.freedesktop.systemd1.") !== 0) {
+        return polkit.Result.NOT_HANDLED;
+    }
+    if (ZAVOD_ACCOUNTS.indexOf(subject.user) >= 0 || String(subject.user).indexOf("zagent") === 0) {
+        return polkit.Result.NO;
+    }
+    return polkit.Result.NOT_HANDLED;
+});

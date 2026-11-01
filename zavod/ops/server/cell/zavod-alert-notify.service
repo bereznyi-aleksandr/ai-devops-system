@@ -1,0 +1,29 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-alert-notify.service
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 16:14 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: один проход доставки тревог клетки оператору (аудит M33-06). Работает от root: вход в базу
+#   ролью zstarter (сопоставление peer root → zstarter). Сеть нужна только программе канала (Telegram).
+# ОГРАНИЧЕНИЯ: пишет только /run/zavod (файл состояния alert-channel); остальная система только для чтения.
+[Unit]
+Description=Zavod cell alerts, delivery to the operator, one pass
+StartLimitIntervalSec=0
+After=postgresql.service network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zavod-alert-notify
+UMask=0022
+ProtectSystem=strict
+ReadWritePaths=/run/zavod
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+TimeoutStartSec=300

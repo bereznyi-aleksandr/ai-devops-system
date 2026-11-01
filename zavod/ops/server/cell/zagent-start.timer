@@ -1,0 +1,17 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zagent-start.timer
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: будит zagent-start после загрузки и каждую минуту (И.12а): оставленные запросы, сроки
+#   «ЗАПУСКАЕТСЯ» (2 минуты), сверка живых сессий с базой.
+[Unit]
+Description=Zavod agent start/stop requests, every minute
+
+[Timer]
+OnBootSec=30s
+OnCalendar=*-*-* *:*:00
+AccuracySec=5s
+Unit=zagent-start.service
+
+[Install]
+WantedBy=timers.target

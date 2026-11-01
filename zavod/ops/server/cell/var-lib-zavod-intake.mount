@@ -1,0 +1,23 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/var-lib-zavod-intake.mount
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 21:12 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.2: аудит M33-R3-04 — запас для root)
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: аудит M33-R2-04 — отдельный раздел для приёма архивов (И.12г, И.12д): файл-образ
+#   /var/lib/zavod/intake-fs.img (ext4) монтируется в /var/lib/zavod/intake. На нём in/, out/, accepted/, archive/
+#   и опись. Предел места задаёт размер образа, предел числа файлов — число inode (запись о файле в ext4), оба
+#   ставит install_cell.sh (--intake-fs-size, --intake-fs-inodes). Архив, раздувшийся при распаковке, и отказы
+#   с переносом в archive/ упираются в этот раздел; диск сервера (база, копии, журналы) остаётся свободным.
+#   Аудит M33-R3-04: 1% места отложен для root (mkfs -m 1): им пользуется только архиватор отказов.
+# ОГРАНИЧЕНИЯ: файлы раздела не запускаются (noexec), бит SUID и устройства не работают (nosuid, nodev).
+#   Журналы приёма лежат на своём разделе: /var/lib/zavod/intake-journal (intake-journal.mount).
+[Unit]
+Description=Zavod archive intake, separate size- and inode-limited filesystem
+
+[Mount]
+What=/var/lib/zavod/intake-fs.img
+Where=/var/lib/zavod/intake
+Type=ext4
+Options=loop,nosuid,nodev,noexec
+
+[Install]
+WantedBy=multi-user.target

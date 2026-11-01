@@ -1,0 +1,57 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zquarantine@.service
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.4: аудит M33-R3-03 — только при смонтированном разделе журналов; v0.3: отказ архивирует служба zintake-archive@ — внутри клетки перенос out/ давал EXDEV; v0.2: аудит M33-R2-04 — только при смонтированном разделе приёма, журнал вне него)
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: карантин архива аренды %i (протокол v3.1 И.12г, Л.22; карта 3.3.9.2). Отдельная клетка: без сети,
+#   без базы, 300 секунд, пределы памяти, процессора и числа процессов; запись только в out/ и свой журнал.
+#   Успех — systemd сам запускает приём zimport@%i только после полной остановки этой службы (OnSuccess=).
+#   Отказ — служба zintake-archive@%i (root, вне клетки) переносит in/ и out/ этой аренды в archive/ (OnFailure=),
+#   приём не запускается.
+# ОГРАНИЧЕНИЯ: запускает только root (polkit-правило 50-zavod-no-units запрещает службам Завода). Кто и когда
+#   запускает карантин после сдачи архива привратнику — шаг привратника (допущение до 3.3.10).
+[Unit]
+# Аудит M33-R2-04: без раздела приёма (var-lib-zavod-intake.mount) служба не стартует.
+RequiresMountsFor=/var/lib/zavod/intake /var/lib/zavod/intake-journal
+Description=Zavod quarantine of archive %i (protocol I.12g)
+OnSuccess=zimport@%i.service
+OnFailure=zintake-archive@%i.service
+
+[Service]
+Type=oneshot
+User=zquarantine
+Group=zquarantine
+UMask=0027
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zavod_intake.py quarantine %i
+RuntimeMaxSec=300
+MemoryMax=512M
+CPUQuota=100%
+TasksMax=8
+LimitFSIZE=4G
+LimitNOFILE=256
+PrivateNetwork=yes
+IPAddressDeny=any
+RestrictAddressFamilies=AF_UNIX
+InaccessiblePaths=-/run/postgresql -/var/run/postgresql -/run/zavod -/var/lib/zavod/start-archive -/var/lib/zavod/start-rejected -/var/lib/zavod/start-state
+ProtectSystem=strict
+ReadWritePaths=/var/lib/zavod/intake/out /var/lib/zavod/intake-journal/quarantine
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateIPC=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectProc=invisible
+ProcSubset=pid
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+SystemCallFilter=@system-service
+SystemCallArchitectures=native

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# v0.12 (2026-11-01 13:47 +02:00): карта 3.3.8.5 — Z-EXT-04 (db/06_zavod_ext_04.sql) после 04, проверка ответов функций запуска и проба подмены lease_reserve_start.
 # v0.11 (2026-10-18 10:38 +03:00): Z-EXT-03 (пакет Z-TRANSPORT-01) — установка db/04_zavod_ext_03.sql после 03 и до итоговой проверки; проба подмены lookup_session_credential.
 # v0.10 (2026-10-18 00:08 +03:00): Z-EXT-02 — установка db/03_zavod_ext_02.sql после 02 и до итоговой проверки; проба подмены activate_rules.
 # v0.9 (2026-10-11 18:45 +03:00): E5-5 заготовка — журнал инъекций tests/e55_pilot_release_injection.test.mjs (ZAVOD_E55_JOURNAL), проверка 9/9 PASS и SHA-256 после тестов.
@@ -50,6 +51,12 @@ echo "ZAVOD_EXT02=installed"
 # Расширение Z-EXT-03 (пакет Z-TRANSPORT-01: выдача и проверка пропусков сессий) поверх Z-EXT-02 одной транзакцией.
 psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/04_zavod_ext_03.sql" > chain_ext03.out 2>&1 || { tail -5 chain_ext03.out; fail "Z-EXT-03 failed"; }
 echo "ZAVOD_EXT03=installed"
+# Расширение Z-EXT-04 (карта 3.3.8.5: запуск сессий агента, роль zstarter) поверх Z-EXT-03 одной транзакцией.
+psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/06_zavod_ext_04.sql" > chain_ext04.out 2>&1 || { tail -5 chain_ext04.out; fail "Z-EXT-04 failed"; }
+echo "ZAVOD_EXT04=installed"
+# Ответы функций запуска и права ролей; всё откатывается.
+psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/test_ext04_session_start.sql" > chain_test_ext04.out 2>&1 || { grep -m3 -E 'ERROR|ОШИБКА' chain_test_ext04.out; fail "Z-EXT-04 session start test"; }
+grep -x 'ZAVOD_EXT04_SESSION_START_TEST=PASS' chain_test_ext04.out || fail "Z-EXT-04 session start test: no PASS line"
 # Парная дельта-проверка: терминальная проверка H1.31 05 (её прошла обёртка ДО расширения) плюс
 # точный список отличий Z-EXT-01; лишнее право или объект — отказ. До подъёма предела admin.
 "$NODE" "$HERE/db/build_final_ext.mjs" 05_final_state_check.sql --check || fail "Z-EXT-01 final check build stale"
@@ -79,6 +86,14 @@ elif grep -q "FINAL_ZAVOD_FN_BODY_MISMATCH: lookup_session_credential" chain_pro
   echo "ZAVOD_FINAL_EXT03_MUTATION_PROBE=caught"
 else
   grep -m3 -E "ERROR|ОШИБКА" chain_probe_ext03.out; fail "Z-EXT-03 mutation probe: wrong failure"
+fi
+# Проба Z-EXT-04: бронь запуска без проверки живой сессии ловится итоговой проверкой.
+if psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/probe_final_ext04_mutation.sql" > chain_probe_ext04.out 2>&1; then
+  fail "Z-EXT-04 mutation of lease_reserve_start not caught"
+elif grep -q "FINAL_ZAVOD_FN_BODY_MISMATCH: lease_reserve_start" chain_probe_ext04.out; then
+  echo "ZAVOD_FINAL_EXT04_MUTATION_PROBE=caught"
+else
+  grep -m3 -E "ERROR|ОШИБКА" chain_probe_ext04.out; fail "Z-EXT-04 mutation probe: wrong failure"
 fi
 # После проб исходные тела на месте: итоговая проверка снова проходит.
 psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/05_final_state_check_ext01.sql" > chain_final_ext2.out 2>&1 || fail "Z-EXT-01 final check after probe"
