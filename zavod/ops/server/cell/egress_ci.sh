@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/egress_ci.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:12 +02:00 (v0.2: учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка шага 3.3.10 на машине GitHub ubuntu-24.04 после install_cell.sh, cell_ci.sh и intake_ci.sh:
 #   привратник (ПБ-5) и выход только через посредника (ПБ-3) — изнутри настоящей клетки zagent@<аренда>
@@ -39,6 +39,10 @@ PY_GATE='import json,socket
 s=socket.socket(socket.AF_UNIX); s.settimeout(10); s.connect("/run/zavod-gate/agent.sock")
 s.sendall(b"{\"v\":1}\n"); print(json.loads(s.recv(200))["result"])'
 
+# Список посредника в поставке пуст (его заполняет оператор); для CI — один учебный адрес без оплаты.
+printf '# CI only\nci example.com\n' | sudo tee /etc/zavod/proxy-allow.conf >/dev/null
+sudo systemctl restart zavod-proxy.service
+
 echo "=== службы 3.3.10 стоят и работают"
 for u in zavod-nft.service zavod-gate.service zavod-proxy.service; do
   [ "$(systemctl is-active "$u")" = active ] && ok "$u active" || { bad "$u $(systemctl is-active "$u" || true)"; sudo journalctl -u "$u" --no-pager | tail -5; }
@@ -46,7 +50,7 @@ done
 [ "$(stat -c '%U:%G %a' /run/zavod-gate)" = 'zgate:zgate 755' ] && ok "gate dir zgate 755" || bad "gate dir $(stat -c '%U:%G %a' /run/zavod-gate)"
 [ "$(stat -c '%U %a %F' /run/zavod-gate/agent.sock)" = 'zgate 666 socket' ] && ok "gate socket" || bad "gate socket $(stat -c '%U %a %F' /run/zavod-gate/agent.sock)"
 [ "$(ps -o user= -C python3 | sort -u | grep -cE '^(zgate|zproxy)$')" = 2 ] && ok "gate and proxy run as zgate, zproxy" || bad "service users: $(ps -o user=,args= -C python3)"
-sudo nft list table inet zavod > "$RUNNER_TEMP/zavod.nft.out"
+sudo nft list table inet zavod | tee "$RUNNER_TEMP/zavod.nft.out" >/dev/null
 grep -q 'policy drop' "$RUNNER_TEMP/zavod.nft.out" && grep -q 'tcp dport 22 accept' "$RUNNER_TEMP/zavod.nft.out" \
   && ok "nft: input policy drop, ssh only" || bad "nft input chain"
 sudo nft -f /etc/zavod/zavod-egress.nft && [ "$(sudo nft list tables | grep -c 'inet zavod')" = 1 ] && ok "nft: reload replaces the table" || bad "nft reload"
@@ -70,6 +74,7 @@ echo "$J" | grep EGRESS_PROBE || true
 want() { # имя ожидаемое — ожидаемое: точное слово или шаблон DENIED_*
   local got
   got=$(echo "$J" | sed -n "s/^EGRESS_PROBE $1=//p" | tail -1)
+  # shellcheck disable=SC2254  # второй аргумент — нарочно шаблон (DENIED_*)
   case "$got" in $2) ok "$1=$got" ;; *) bad "$1=$got (want $2)" ;; esac
 }
 want gate_first ACCEPTED
@@ -134,7 +139,7 @@ r=$(sudo -u zproxy python3 -I -c "$PY_TCP" 8.8.8.8 53); case "$r" in DENIED*) ok
 
 echo "=== посредник: журнал каждого соединения"
 PJ=$(sudo journalctl -u zavod-proxy.service --no-pager -o cat)
-for d in '"decision": "ALLOWED".*"target": "api.anthropic.com:443"' '"decision": "NOT_ALLOWED".*"target": "github.com:443"' \
+for d in '"decision": "ALLOWED".*"target": "example.com:443"' '"decision": "NOT_ALLOWED".*"target": "github.com:443"' \
          '"decision": "NOT_ALLOWED".*"target": "1.1.1.1:443"' '"decision": "METHOD_REFUSED"'; do
   echo "$PJ" | grep -qE "$d" && ok "proxy log: $d" || bad "proxy log missing: $d"
 done

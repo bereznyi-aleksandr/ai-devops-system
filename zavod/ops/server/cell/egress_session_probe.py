@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/egress_session_probe.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:12 +02:00 (v0.2: разрешённый адрес — учебный example.com из списка CI)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: только для CI (egress_ci.sh): запускается ВНУТРИ настоящей клетки zagent@<аренда> вместо заглушки
 #   сессии и пробует двери изнутри: привратник (ПБ-5: повтор номера, чужая аренда, сумма, строгий JSON, текст SQL)
@@ -134,11 +134,11 @@ def main():
     out('net_db_socket', unix('/run/postgresql/.s.PGSQL.5432'))
     out('net_dbus', unix('/run/dbus/system_bus_socket'))
     out('net_resolved_varlink', unix('/run/systemd/resolve/io.systemd.Resolve'))
-    out('proxy_allowed', proxy('CONNECT api.anthropic.com:443 HTTP/1.1\r\nHost: api.anthropic.com:443'))
+    out('proxy_allowed', proxy('CONNECT example.com:443 HTTP/1.1\r\nHost: example.com:443'))
     out('proxy_github', proxy('CONNECT github.com:443 HTTP/1.1\r\nHost: github.com:443'))
     out('proxy_ip_literal', proxy('CONNECT 1.1.1.1:443 HTTP/1.1\r\nHost: 1.1.1.1:443'))
     out('proxy_plain_get', proxy('GET http://example.com/ HTTP/1.1\r\nHost: example.com'))
-    out('proxy_other_port', proxy('CONNECT api.anthropic.com:80 HTTP/1.1\r\nHost: api.anthropic.com:80'))
+    out('proxy_other_port', proxy('CONNECT example.com:80 HTTP/1.1\r\nHost: example.com:80'))
     print('EGRESS_PROBE_DONE', flush=True)
     time.sleep(1800)
 

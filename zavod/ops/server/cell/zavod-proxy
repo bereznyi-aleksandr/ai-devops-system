@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod-proxy
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:12 +02:00 (v0.2: пустой список — служба работает и отказывает всем)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: посредник сети (прокси) для сессий агента (протокол v3.1 И.12в, карта 3.3.10.4, проба ПБ-3).
 #   Слушает 127.0.0.2:3128. Принимает только туннель CONNECT <имя>:443 к имени из списка /etc/zavod/proxy-allow.conf
@@ -40,7 +40,7 @@ def log(**kw):
 
 
 def load_allow():
-    """Строка файла: «группа имя», например «anthropic api.anthropic.com». Пустые и # — пропуск. Плохая строка —
+    """Строка файла: «группа имя», например «docs example.org». Пустые и # — пропуск. Пустой список — все туннели отказ. Плохая строка —
     отказ запуска: лучше ни одного туннеля, чем список, который понят не так."""
     allow = {}
     with open(ALLOW_FILE, encoding='ascii') as f:
@@ -52,8 +52,6 @@ def load_allow():
             if len(parts) != 2 or not re.fullmatch(r'[a-z][a-z0-9-]{0,31}', parts[0]) or not HOST.match(parts[1]):
                 raise SystemExit(f'ZAVOD_PROXY bad line {n} in {ALLOW_FILE}')
             allow[parts[1]] = parts[0]
-    if not allow:
-        raise SystemExit(f'ZAVOD_PROXY empty {ALLOW_FILE}')
     return allow
 
 

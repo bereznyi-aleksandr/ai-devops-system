@@ -1,11 +1,11 @@
 -- ДОКУМЕНТ: db/test_ext05_gate.sql
--- ВЕРСИЯ: v0.1  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+-- ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:12 +02:00 (v0.2: T14 — FORCE проверяется по каталогу и ролью без BYPASSRLS; bem_control_owner по H1.31 4.4 обходит правила строк)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 -- НАЗНАЧЕНИЕ: проверка Z-EXT-05 (карта 3.3.10.1, 3.3.10.3): ответы gate_accept и gate_command_status; повтор
 --   одноразового номера — отказ (ПБ-5); чужая аренда, неверная сумма, закрытая аренда, неработающая сессия,
 --   нестрогий JSON — отказ; текст SQL в теле — только данные; правила строк: чужой заказчик и пустой номер
---   заказчика видят пусто, даже владелец таблицы; кто что может вызвать.
+--   заказчика видят пусто; FORCE включён; кто что может вызвать.
 -- ОГРАНИЧЕНИЯ: всё в одной транзакции и откатывается; база после проверки та же. Запуск от postgres.
 \set ON_ERROR_STOP on
 BEGIN;
@@ -105,10 +105,14 @@ BEGIN
     PERFORM set_config('app.tenant_id', '', true);
     RESET ROLE;
 
-    -- FORCE: и владелец таблицы без номера заказчика видит пусто.
-    SET LOCAL ROLE bem_control_owner;
-    SELECT count(*) INTO n FROM bem_control.gate_command;               IF n <> 0 THEN RAISE EXCEPTION 'T14 owner %', n; END IF;
-    RESET ROLE;
+    -- FORCE включён; владелец bem_control_owner имеет BYPASSRLS по H1.31 4.4 (только владелец функций, входа нет),
+    -- поэтому FORCE проверяется по каталогу, а пустой ответ — ролью без BYPASSRLS выше (T11).
+    IF NOT (SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid = 'bem_control.gate_command'::regclass) THEN
+        RAISE EXCEPTION 'T14 rls not forced';
+    END IF;
+    IF (SELECT rolcanlogin OR NOT rolbypassrls FROM pg_roles WHERE rolname = 'bem_control_owner') THEN
+        RAISE EXCEPTION 'T14 owner role attributes changed';
+    END IF;
 
     -- Привратник: только две функции; таблицы ему закрыты.
     SET LOCAL ROLE zgate;
