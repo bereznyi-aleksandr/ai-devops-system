@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/server.mjs
-// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.3: этап 3.3.2 — подключение
+// ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:30 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:07 +02:00 (v0.4: аудит M33-04 — без проверенного файла
+//   настроек ядро не запускается; v0.3: этап 3.3.2 — подключение
 //   к базе из src/settings.mjs, на Linux по умолчанию сокет; v0.2: аудит E3-5 M-E35-05 —
 //   KERNEL_STOP_FILE обязателен: без него процесс не стартует и к базе не подключается)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
@@ -8,13 +9,13 @@
 //   (H1.31 §7.7, сигнал 1), цикл доставщика outbox. Приём команд по сети — этап 4
 //   (нужна проверка подлинности вызывающего; до неё сетевого входа команд нет).
 // ЗАПУСК: node --env-file=/etc/zavod/zavod.env src/server.mjs (на сервере — служба systemd с EnvironmentFile=);
-//   вручную также PGHOST=127.0.0.1 PGPORT=54337 PGDATABASE=bem KERNEL_STOP_FILE=<путь> node src/server.mjs
+//   вручную: ZAVOD_SETTINGS_FILE=<файл> node --env-file=<тот же файл> src/server.mjs
 // ОГРАНИЧЕНИЯ: Egress здесь — заглушка, которая ничего не отправляет и отвечает UNKNOWN_OUTCOME;
 //   настоящий Egress — отдельный процесс без доступа к базе (H1.31 §7.8).
 
 import http from 'node:http';
 import { Kernel } from './kernel.mjs';
-import { pgConnection } from './settings.mjs';
+import { loadStartupSettings, pgConnection } from './settings.mjs';
 
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.KERNEL_HEALTH_PORT || 18954);
@@ -27,8 +28,16 @@ if (!process.env.KERNEL_STOP_FILE || !process.env.KERNEL_STOP_FILE.trim()) {
   log({ ev: 'kernel_refused', code: 'KERNEL_STOP_FILE_REQUIRED' });
   process.exit(3);
 }
+// Аудит M33-04: единственный файл настроек проверяется до подключения к базе; ошибка — код 3, без запуска.
+let settings;
+try {
+  settings = loadStartupSettings();
+} catch (e) {
+  log({ ev: 'kernel_refused', code: e.code || 'SETTINGS_ERROR', key: e.message });
+  process.exit(3);
+}
 const kernel = new Kernel({
-  connection: pgConnection(),
+  connection: pgConnection(settings),
   stopFile: process.env.KERNEL_STOP_FILE,
   log,
 });

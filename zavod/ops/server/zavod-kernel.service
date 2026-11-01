@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/server/zavod-kernel.service
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-10-31 17:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.1: этап 3.3.2.3)
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-31 17:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:07 +02:00 (v0.2: аудит M33-04 — путь файла настроек для его
+#   обязательной проверки ядром; v0.1: этап 3.3.2.3)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: служба ядра Завода на сервере (протокол v3.1, И.7): учётная запись zkernel без прав администратора,
 #   настройки — единственный файл /etc/zavod/zavod.env, база — только через сокет, перезапуск после сбоя.
@@ -18,6 +19,7 @@ User=zkernel
 Group=zkernel
 WorkingDirectory=/opt/zavod/current/zavod/kernel
 EnvironmentFile=/etc/zavod/zavod.env
+Environment=ZAVOD_SETTINGS_FILE=/etc/zavod/zavod.env
 ExecStart=/usr/bin/node src/server.mjs
 Restart=on-failure
 RestartSec=10
