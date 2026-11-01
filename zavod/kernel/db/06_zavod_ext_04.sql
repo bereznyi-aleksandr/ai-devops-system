@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/06_zavod_ext_04.sql (расширение Z-EXT-04: запуск сессий агента, карта 3.3.8.5)
--- ВЕРСИЯ: v0.1  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+-- ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-01 — живая служба место не освобождает)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 -- ОСНОВАНИЕ: протокол v3.1 И.12а (zagent-start, lease_reserve_start, lease_mark_running, после перезагрузки).
 -- НАЗНАЧЕНИЕ: (1) входная роль zstarter — её получает только root ячейки (peer, сопоставление zavod_cell);
@@ -10,8 +10,10 @@
 --   (3) журнал bem_control.session_start_log — по нему считается предел 6 запусков в минуту;
 --   (4) lease_reserve_start — одной операцией: аренда открыта, запуска у неё не было, нет другой сессии в
 --       STARTING или RUNNING, предел минуты не превышен → STARTING и строка журнала. Ответ — слово, без исключений;
---   (5) lease_mark_running — STARTING → RUNNING не позже 2 минут, иначе START_FAILED (вызывает ядро от сессии);
---   (6) lease_start_reconcile — сверка с живыми службами (вызывает zagent-start каждый проход).
+--   (5) lease_mark_running — STARTING → RUNNING не позже 2 минут, иначе TOO_LATE без смены состояния (вызывает ядро);
+--   (6) lease_start_reconcile — сверка с живыми службами (вызывает zagent-start каждый проход);
+--   (7) lease_start_overdue — брони STARTING старше 2 минут: их живые службы zagent-start останавливает.
+--   Правило аудита C33-01: сессия из списка живых служб место не освобождает никогда.
 -- ОГРАНИЧЕНИЯ: ставится после 04_zavod_ext_03.sql и до итоговой проверки одной транзакцией; не меняет
 --   существующие таблицы, строки и функции. Срока у аренды bem_control.chat_lease нет — условие протокола
 --   «аренда не истекла» сведено к «аренда OPEN» (вопрос аудитору). Повторный запуск той же аренды не
@@ -93,7 +95,8 @@ ALTER FUNCTION bem_control.lease_reserve_start(uuid) OWNER TO bem_control_owner;
 REVOKE EXECUTE ON FUNCTION bem_control.lease_reserve_start(uuid) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION bem_control.lease_reserve_start(uuid) TO zstarter;
 
--- (4) Отметка «сессия работает». Ответы: RUNNING; TOO_LATE (прошло 2 минуты — START_FAILED);
+-- (4) Отметка «сессия работает». Ответы: RUNNING; TOO_LATE (прошло 2 минуты; бронь остаётся STARTING, пока
+--     zagent-start не остановит службу, — аудит C33-01);
 --     NOT_STARTING (нет брони в STARTING).
 CREATE FUNCTION bem_control.lease_mark_running(p_lease_id uuid)
 RETURNS text
@@ -107,9 +110,6 @@ BEGIN
     SELECT * INTO v_row FROM bem_control.session_start WHERE lease_id = p_lease_id FOR UPDATE;
     IF NOT FOUND OR v_row.status <> 'STARTING' THEN RETURN 'NOT_STARTING'; END IF;
     IF v_row.reserved_at <= clock_timestamp() - interval '2 minutes' THEN
-        UPDATE bem_control.session_start SET status = 'START_FAILED', ended_at = clock_timestamp()
-         WHERE lease_id = p_lease_id;
-        INSERT INTO bem_control.session_start_log (lease_id, outcome) VALUES (p_lease_id, 'START_FAILED');
         RETURN 'TOO_LATE';
     END IF;
     UPDATE bem_control.session_start SET status = 'RUNNING', running_at = clock_timestamp()
@@ -122,9 +122,10 @@ ALTER FUNCTION bem_control.lease_mark_running(uuid) OWNER TO bem_control_owner;
 REVOKE EXECUTE ON FUNCTION bem_control.lease_mark_running(uuid) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION bem_control.lease_mark_running(uuid) TO bem_kernel_rw;
 
--- (5) Сверка с живыми службами zagent@. p_boot — первый проход после загрузки: всё STARTING → START_FAILED.
---     Иначе STARTING старше 2 минут → START_FAILED. RUNNING без живой службы → ENDED, если аренда закрыта,
---     иначе INTERRUPTED. Возвращает число изменённых строк.
+-- (5) Сверка с живыми службами zagent@. Сессия из p_live не меняется никогда (аудит C33-01). Без живой службы:
+--     STARTING → START_FAILED в первый проход после загрузки (p_boot) или если бронь старше 2 минут (раньше
+--     служба может ещё стоять в очереди systemd); RUNNING → ENDED, если аренда закрыта, иначе INTERRUPTED.
+--     Возвращает число изменённых строк.
 CREATE FUNCTION bem_control.lease_start_reconcile(p_live uuid[], p_boot boolean)
 RETURNS integer
 LANGUAGE plpgsql
@@ -144,9 +145,11 @@ BEGIN
               WHERE s.status IN ('STARTING', 'RUNNING')
     LOOP
         v_new := NULL;
-        IF r.status = 'STARTING' AND (p_boot OR r.reserved_at <= clock_timestamp() - interval '2 minutes') THEN
+        IF r.lease_id = ANY (p_live) THEN
+            v_new := NULL;
+        ELSIF r.status = 'STARTING' AND (p_boot OR r.reserved_at <= clock_timestamp() - interval '2 minutes') THEN
             v_new := 'START_FAILED';
-        ELSIF r.status = 'RUNNING' AND (p_boot OR NOT (r.lease_id = ANY (p_live))) THEN
+        ELSIF r.status = 'RUNNING' THEN
             v_new := CASE WHEN r.lease_status = 'COMPLETED' THEN 'ENDED' ELSE 'INTERRUPTED' END;
         END IF;
         IF v_new IS NOT NULL THEN
@@ -162,3 +165,21 @@ $$;
 ALTER FUNCTION bem_control.lease_start_reconcile(uuid[], boolean) OWNER TO bem_control_owner;
 REVOKE EXECUTE ON FUNCTION bem_control.lease_start_reconcile(uuid[], boolean) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION bem_control.lease_start_reconcile(uuid[], boolean) TO zstarter;
+
+-- (6) Зависшие запуски (аудит C33-01): брони STARTING старше 2 минут. zagent-start останавливает их живые
+--     службы; место освобождает только сверка (5), когда службы уже нет в списке живых.
+CREATE FUNCTION bem_control.lease_start_overdue()
+RETURNS uuid[]
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = bem_control, bem_core, pg_catalog, pg_temp
+AS $$
+BEGIN
+    RETURN coalesce((SELECT array_agg(lease_id ORDER BY lease_id) FROM bem_control.session_start
+                      WHERE status = 'STARTING' AND reserved_at <= clock_timestamp() - interval '2 minutes'),
+                    '{}'::uuid[]);
+END;
+$$;
+ALTER FUNCTION bem_control.lease_start_overdue() OWNER TO bem_control_owner;
+REVOKE EXECUTE ON FUNCTION bem_control.lease_start_overdue() FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION bem_control.lease_start_overdue() TO zstarter;

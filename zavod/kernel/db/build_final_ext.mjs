@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.10  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00 (v0.10: карта 3.3.8.5 — Z-EXT-04
+// ВЕРСИЯ: v0.11  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.11: аудит C33-01 — функция lease_start_overdue; v0.10: карта 3.3.8.5 — Z-EXT-04
 //   (db/06_zavod_ext_04.sql): входная роль zstarter во всех списках ролей, таблицы session_start и session_start_log,
 //   три функции запуска сессий — права, режим definer, отпечатки тел, точный набор индексов; v0.9 2026-10-18 11:38 +03:00: v0.9: ChatGPT R25 — функция hold_operator_actor:
 //   вызывает только входная роль, режим definer; v0.8 10:52: ChatGPT R24 — функции hold_session_credential и
@@ -276,11 +276,13 @@ t = after(t, 'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control
   `TABLE|bem_control.${n}|backup_reader|SELECT|bem_control_owner`,
 ]));
 // Кто вызывает: бронь и сверку — только root ячейки (zstarter); отметку «работает» — ядро от имени сессии.
-const EXT04_FUNCS = { lease_reserve_start: 'uuid', lease_mark_running: 'uuid', lease_start_reconcile: 'uuid[], boolean' };
+const EXT04_FUNCS = { lease_reserve_start: 'uuid', lease_mark_running: 'uuid', lease_start_reconcile: 'uuid[], boolean',
+  lease_start_overdue: '' };
 const EXT04_CALLERS = {
   lease_reserve_start: ['bem_control_owner', 'zstarter'],
   lease_mark_running: KR,
   lease_start_reconcile: ['bem_control_owner', 'zstarter'],
+  lease_start_overdue: ['bem_control_owner', 'zstarter'],
 };
 t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
   Object.entries(EXT04_FUNCS).flatMap(([n, a]) => EXT04_CALLERS[n]

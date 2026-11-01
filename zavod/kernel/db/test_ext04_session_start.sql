@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/test_ext04_session_start.sql
--- ВЕРСИЯ: v0.1  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+-- ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-01 — живая сессия место не освобождает)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 -- НАЗНАЧЕНИЕ: проверка Z-EXT-04 (карта 3.3.8.5): ответы lease_reserve_start, lease_mark_running,
 --   lease_start_reconcile; одна живая сессия на ячейку; предел 6 запусков в минуту; кто что может вызвать.
@@ -41,16 +41,24 @@ BEGIN
     SELECT status INTO v FROM bem_control.session_start WHERE lease_id = a;
     IF v <> 'INTERRUPTED' THEN RAISE EXCEPTION 'T09 %', v; END IF;
 
-    -- Отметка «работает» позже 2 минут — START_FAILED.
+    -- Отметка «работает» позже 2 минут — TOO_LATE, бронь остаётся (аудит C33-01): место держит, пока служба жива.
     v := bem_control.lease_reserve_start(b);   IF v <> 'RESERVED'        THEN RAISE EXCEPTION 'T10 %', v; END IF;
     UPDATE bem_control.session_start SET reserved_at = clock_timestamp() - interval '3 minutes' WHERE lease_id = b;
     v := bem_control.lease_mark_running(b);    IF v <> 'TOO_LATE'        THEN RAISE EXCEPTION 'T11 %', v; END IF;
     SELECT status INTO v FROM bem_control.session_start WHERE lease_id = b;
-    IF v <> 'START_FAILED' THEN RAISE EXCEPTION 'T12 %', v; END IF;
+    IF v <> 'STARTING' THEN RAISE EXCEPTION 'T12 %', v; END IF;
+    IF bem_control.lease_start_overdue() <> ARRAY[b] THEN RAISE EXCEPTION 'T12a %', bem_control.lease_start_overdue(); END IF;
+    n := bem_control.lease_start_reconcile(ARRAY[b], false); IF n <> 0  THEN RAISE EXCEPTION 'T12b live overdue released %', n; END IF;
+    v := bem_control.lease_reserve_start(c);   IF v <> 'BUSY'            THEN RAISE EXCEPTION 'T12c %', v; END IF;
+    n := bem_control.lease_start_reconcile('{}', false);     IF n <> 1  THEN RAISE EXCEPTION 'T12d %', n; END IF;
+    SELECT status INTO v FROM bem_control.session_start WHERE lease_id = b;
+    IF v <> 'START_FAILED' THEN RAISE EXCEPTION 'T12e %', v; END IF;
+    IF bem_control.lease_start_overdue() <> '{}'::uuid[] THEN RAISE EXCEPTION 'T12f'; END IF;
 
-    -- Первый проход после загрузки: STARTING — START_FAILED.
+    -- Первый проход после загрузки: живую сессию не трогает (аудит C33-01), неживую STARTING — START_FAILED.
     v := bem_control.lease_reserve_start(c);   IF v <> 'RESERVED'        THEN RAISE EXCEPTION 'T13 %', v; END IF;
-    n := bem_control.lease_start_reconcile(ARRAY[c], true);  IF n <> 1  THEN RAISE EXCEPTION 'T14 %', n; END IF;
+    n := bem_control.lease_start_reconcile(ARRAY[c], true);  IF n <> 0  THEN RAISE EXCEPTION 'T14a %', n; END IF;
+    n := bem_control.lease_start_reconcile('{}', true);      IF n <> 1  THEN RAISE EXCEPTION 'T14 %', n; END IF;
 
     -- Предел: 6 броней за 60 секунд (3 настоящие + 3 добавленные) — RATE_LIMITED, без записи.
     INSERT INTO bem_control.session_start_log (lease_id, outcome)
@@ -74,6 +82,7 @@ BEGIN
     -- Права: zstarter бронирует и сверяет, но не отмечает «работает» и не читает таблицы.
     SET LOCAL ROLE zstarter;
     v := bem_control.lease_reserve_start(f);   IF v <> 'RESERVED'        THEN RAISE EXCEPTION 'T22 %', v; END IF;
+    IF bem_control.lease_start_overdue() <> '{}'::uuid[] THEN RAISE EXCEPTION 'T22a'; END IF;
     BEGIN
         PERFORM bem_control.lease_mark_running(f);
         RAISE EXCEPTION 'T23 zstarter marked running';
@@ -99,6 +108,11 @@ BEGIN
     BEGIN
         PERFORM bem_control.lease_start_reconcile('{}', false);
         RAISE EXCEPTION 'T27 kernel reconciled';
+    EXCEPTION WHEN insufficient_privilege THEN NULL;
+    END;
+    BEGIN
+        PERFORM bem_control.lease_start_overdue();
+        RAISE EXCEPTION 'T27a kernel read overdue';
     EXCEPTION WHEN insufficient_privilege THEN NULL;
     END;
     v := bem_control.lease_mark_running(f);    IF v <> 'RUNNING'         THEN RAISE EXCEPTION 'T28 %', v; END IF;

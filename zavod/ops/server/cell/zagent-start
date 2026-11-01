@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zagent-start
 # ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски)
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: один проход по запросам на запуск и остановку сессий агента (протокол v3.1 И.12а, карта 3.3.8.4).
 #   Работает от root (zagent-start.service). Порядок: замок → сверка живых сессий с базой → остановки → запуски.
@@ -236,6 +236,14 @@ def main():
         log(f'ZAGENT_START RECONCILE boot={changed} live={len(live)} changed_rows={n}')
         if changed:
             remember_boot(boot_id, boot_path)
+        # Аудит C33-01: зависший запуск (STARTING дольше 2 минут) сначала останавливается; место освободит
+        # следующая сверка, когда службы не будет в списке живых. Не остановилась — место остаётся занятым.
+        overdue = db("SELECT array_to_string(bem_control.lease_start_overdue(), ' ');\n").split()
+        for u in overdue:
+            name = uuid.UUID(u).hex
+            if name in live:
+                r = systemctl('stop', f'zagent@{name}.service')
+                alert(f'start overdue {name}: stop rc={r.returncode}')
     except DbError as e:
         db_ok = False
         log(f'ZAGENT_START DB_UNAVAILABLE: {e}')

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
 # ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.3: проба C33-02 — сбой systemctl; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -125,12 +125,33 @@ wait_for 30 sudo -u postgres psql -X -d bem -c 'select 1' >/dev/null 2>&1 || bad
 pass
 wait_for 30 is_active "$L3" && ok "db back: started" || bad "L3 not started"
 
-echo "=== первый проход после загрузки"
-echo 00000000-0000-0000-0000-000000000000 | sudo tee /var/lib/zavod/start-state/boot_id >/dev/null
+echo "=== первый проход после загрузки (живая служба место не теряет — аудит C33-01)"
+fakeboot() { echo 00000000-0000-0000-0000-000000000000 | sudo tee /var/lib/zavod/start-state/boot_id >/dev/null; }
+fakeboot; pass
+if [ "$(state "$L3")" = STARTING ] && is_active "$L3"; then ok "boot: live STARTING kept"; else bad "boot live: $(state "$L3")"; fi
+sudo -u zkernel touch "/run/zavod/stop/$L3"; pass
+fakeboot; pass
+[ "$(state "$L3")" = START_FAILED ] && ok "boot: dead STARTING -> START_FAILED" || bad "boot state $(state "$L3")"
+
+echo "=== аудит C33-01: запуск дольше 2 минут — служба останавливается, второй сеанс не стартует"
+older() { pgsu "UPDATE bem_control.session_start SET reserved_at = now() - interval '3 minutes' WHERE lease_id = '$1'::uuid" >/dev/null; }
+L6=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L6"; pass
+wait_for 30 is_active "$L6" && ok "C33-01: L6 started" || bad "C33-01: L6 not started"
+older "$L6"
+[ "$(pgsu "SELECT bem_control.lease_mark_running('$L6'::uuid)")" = TOO_LATE ] && ok "C33-01: late mark refused" || bad "C33-01: late mark"
+[ "$(state "$L6")" = STARTING ] && ok "C33-01: TOO_LATE keeps the slot" || bad "C33-01: L6 state $(state "$L6")"
+L7=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L7"
 pass
-[ "$(state "$L3")" = START_FAILED ] && ok "boot: STARTING -> START_FAILED" || bad "boot state $(state "$L3")"
-sudo -u zkernel touch "/run/zavod/stop/$L3"
+[ "$(active "$L6")" != active ] && ok "C33-01: overdue session stopped" || bad "C33-01: L6 still active"
+[ "$(state "$L6")" = STARTING ] && ok "C33-01: slot held until service gone" || bad "C33-01: L6 state $(state "$L6")"
+if [ "$(active "$L7")" != active ] && sudo test -e "/run/zavod/start/$L7"; then ok "C33-01: no second session"; else bad "C33-01: second session"; fi
+sudo journalctl -t zagent-start --no-pager | grep -q "ZAVOD_ALERT start overdue $L6" && ok "C33-01: alert" || bad "C33-01: no alert"
 pass
+[ "$(state "$L6")" = START_FAILED ] && ok "C33-01: released after stop" || bad "C33-01: L6 state $(state "$L6")"
+wait_for 30 is_active "$L7" && ok "C33-01: next lease started" || bad "C33-01: L7 not started"
+sudo -u zkernel touch "/run/zavod/stop/$L7"; pass
+older "$L7"; pass
+[ "$(state "$L7")" = START_FAILED ] && ok "C33-01: stopped L7 released" || bad "C33-01: L7 state $(state "$L7")"
 
 echo "=== аудит C33-02: сбой systemctl — живая сессия не теряется, новых запусков нет"
 # Подменный systemctl только для прохода zagent-start (через PATH службы): list-units падает или даёт мусор.
