@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod_intake.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:33 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:45 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # ОСНОВАНИЕ: протокол v3.1, И.12г (опись ядра и карантин), И.12д (доверенный приём), Л.44 (правило имён),
 #   Л.22–Л.23 (zquarantine, zimport); карта 3.3.9.1–3.3.9.3.
@@ -58,7 +58,7 @@ RESOLVE_ALL = 0x01 | 0x02 | 0x04 | 0x08  # NO_XDEV | NO_MAGICLINKS | NO_SYMLINKS
 SYS_OPENAT2 = 437
 RENAME_NOREPLACE = 1
 LIBC = ctypes.CDLL(None, use_errno=True)
-CALLS = {"openat2": 0, "fallback": 0}
+CALLS = {"openat2": 0, "fallback": 0, "fallback_errno": 0}
 
 
 class Refuse(Exception):
@@ -445,6 +445,7 @@ def open_beneath(dirfd, rel, flags, use_openat2):
             CALLS["openat2"] += 1
             return fd, True
         e = ctypes.get_errno()
+        CALLS["fallback_errno"] = e
         if e not in (errno.ENOSYS, errno.EPERM):
             if e in (errno.ELOOP, errno.EXDEV, errno.ENOTDIR):
                 raise Refuse("PATH_ESCAPE_OR_LINK")
