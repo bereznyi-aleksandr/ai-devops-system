@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:36 +02:00 (v0.5: предел раздела сеансов — по размеру образа; v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -117,10 +117,11 @@ echo "=== раздел сеансов с пределом места (вопро
 [ "$(findmnt -n -o FSTYPE /var/lib/private/zagent)" = ext4 ] && ok "session fs: ext4 mounted" || bad "session fs not mounted"
 [ "$(sudo findmnt -n -o TARGET -T "/var/lib/private/zagent/$L1")" = /var/lib/private/zagent ] \
   && ok "session fs: workdir of $L1 on it" || bad "session fs: workdir elsewhere"
-fs_bytes=$(findmnt -n -b -o SIZE /var/lib/private/zagent)
+# Предел — размер файла-образа раздела (папка закрыта 0700, findmnt без root размер не видит).
+fs_bytes=$(sudo stat -c %s /var/lib/zavod/session-fs.img)
 if sudo dd if=/dev/zero of=/var/lib/private/zagent/ci-fill bs=1M count=200 status=none 2>/dev/null; then fill_rc=0; else fill_rc=1; fi
 filled=$(sudo stat -c %s /var/lib/private/zagent/ci-fill)
-[ "$fill_rc" = 1 ] && [ "$filled" -le "$fs_bytes" ] && ok "session fs: write stops at the limit ($filled of 200M)" \
+[ "$fill_rc" = 1 ] && [ -n "$fs_bytes" ] && [ "$filled" -le "$fs_bytes" ] && ok "session fs: write stops at the limit ($filled of 200M)" \
   || bad "session fs: no limit (rc=$fill_rc, $filled bytes)"
 sudo truncate -s 0 /var/lib/private/zagent/ci-fill
 [ "$(pgsu "SELECT bem_control.lease_mark_running('$L1'::uuid)")" = RUNNING ] && ok "marked RUNNING" || bad "mark running"
