@@ -1,0 +1,17 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zagent-start.path
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: будит zagent-start, когда в папке запросов на запуск или остановку что-то появилось (И.12а).
+#   Не DirectoryNotEmpty: оставленный до следующей минуты запрос будил бы службу без конца; оставшееся
+#   подбирает таймер раз в минуту.
+[Unit]
+Description=Zavod agent start/stop requests watcher
+
+[Path]
+PathChanged=/run/zavod/start
+PathChanged=/run/zavod/stop
+Unit=zagent-start.service
+
+[Install]
+WantedBy=paths.target

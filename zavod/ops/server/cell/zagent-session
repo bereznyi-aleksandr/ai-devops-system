@@ -1,0 +1,25 @@
+#!/bin/sh
+# ДОКУМЕНТ: zavod/ops/server/cell/zagent-session
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: заглушка сессии агента для шага 3.3.8: сама Claude Code в клетке подключается позже.
+#   Печатает в журнал, что видит изнутри клетки (пробы стен), и ждёт остановки или RuntimeMaxSec.
+# ОГРАНИЧЕНИЯ: ничего не пишет вне своей папки; сетевые пробы — одна попытка, без повторов.
+set -u
+id_hex=${1:-}
+echo "ZAGENT_SESSION start id=$id_hex uid=$(id -u) gid=$(id -g) cwd=$(pwd)"
+probe() { # $1 — имя пробы, остальное — команда; ожидается отказ
+  name=$1; shift
+  if "$@" >/dev/null 2>&1; then echo "ZAGENT_PROBE $name=OPEN"; else echo "ZAGENT_PROBE $name=DENIED"; fi
+}
+probe write_etc touch /etc/zavod-session-probe
+probe write_var_lib touch /var/lib/zavod-session-probe
+probe write_home touch /root/zavod-session-probe
+probe read_shadow cat /etc/shadow
+probe net_public timeout 5 bash -c 'exec 3<>/dev/tcp/1.1.1.1/443'
+probe net_db timeout 5 bash -c 'exec 3<>/dev/tcp/127.0.0.1/5432'
+probe sudo sudo -n true
+if touch ./workdir-probe 2>/dev/null; then echo "ZAGENT_PROBE write_own=OK"; else echo "ZAGENT_PROBE write_own=FAILED"; fi
+echo "ZAGENT_SESSION ready id=$id_hex"
+exec sleep 14400

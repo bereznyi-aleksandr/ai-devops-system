@@ -1,0 +1,30 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zagent-start.service
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: разовый проход по запросам (И.12а). Работает от root: только root запускает zagent@ и входит в
+#   базу ролью zstarter (сопоставление peer root → zstarter). Никакая другая служба прав запуска не имеет.
+# ОГРАНИЧЕНИЯ: StartLimitIntervalSec=0 — частые пробуждения от папки не выключают службу.
+[Unit]
+Description=Zavod agent start/stop requests, one pass
+StartLimitIntervalSec=0
+After=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zagent-start
+UMask=0077
+ProtectSystem=strict
+ReadWritePaths=/run/zavod /var/lib/zavod/start-rejected /var/lib/zavod/start-archive /var/lib/zavod/start-state
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX
+IPAddressDeny=any
+TimeoutStartSec=120

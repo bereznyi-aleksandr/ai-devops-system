@@ -1,0 +1,235 @@
+#!/usr/bin/python3 -I
+# ДОКУМЕНТ: zavod/ops/server/cell/zagent-start
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: один проход по запросам на запуск и остановку сессий агента (протокол v3.1 И.12а, карта 3.3.8.4).
+#   Работает от root (zagent-start.service). Порядок: замок → сверка живых сессий с базой → остановки → запуски.
+#   Из папки читаются только имена, содержимое — никогда. Папка открывается один раз (O_DIRECTORY|O_NOFOLLOW),
+#   дальше всё относительно неё. Плохое имя или не обычный файл — в отказ; больше 100 записей — все в отказ
+#   с причиной OVERFLOW и тревога. Запуск — только после lease_reserve_start (роль zstarter): база сама
+#   держит «одна сессия за раз», «не больше 6 запусков в минуту» и состояние аренды. База недоступна —
+#   ничего не запускается. Остановке база не нужна: проверяется только вид имени.
+# ОГРАНИЧЕНИЯ: ничего не удаляет. Разобранная запись переносится в /run/zavod/held (та же файловая система,
+#   любой вид записи), отметка с причиной — файлом в /var/lib/zavod/start-archive или start-rejected.
+import errno
+import fcntl
+import json
+import os
+import re
+import stat
+import subprocess
+import sys
+import time
+import uuid
+
+RUN = '/run/zavod'
+START, STOP, HELD = RUN + '/start', RUN + '/stop', RUN + '/held'
+LIB = '/var/lib/zavod'
+ARCHIVE, REJECTED, STATE = LIB + '/start-archive', LIB + '/start-rejected', LIB + '/start-state'
+NAME = re.compile(r'\A[0-9a-f]{32}\Z')
+MAX_ENTRIES = 100
+PSQL = ['psql', '-X', '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1', '-U', 'zstarter', '-d', 'bem', '-f', '-']
+OPEN_DIR = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+
+
+class DbError(Exception):
+    pass
+
+
+def log(msg):
+    print(msg, flush=True)
+
+
+def stamp():
+    return time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
+
+
+def db(sql, **params):
+    args = list(PSQL)
+    for k, v in params.items():
+        args[1:1] = ['-v', f'{k}={v}']
+    try:
+        r = subprocess.run(args, input=sql, capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise DbError(type(e).__name__) from None
+    if r.returncode != 0:
+        raise DbError(r.stderr.strip().splitlines()[-1][:200] if r.stderr.strip() else f'rc={r.returncode}')
+    return r.stdout.strip()
+
+
+def as_uuid(name):
+    return str(uuid.UUID(hex=name))
+
+
+class Mover:
+    """Переносит запись из папки запросов в held и оставляет отметку с причиной. Ничего не удаляет."""
+
+    def __init__(self):
+        self.held = os.open(HELD, OPEN_DIR)
+        self.seq = 0
+
+    def move(self, dfd, name, where, reason, kind):
+        self.seq += 1
+        tag = f'{stamp()}_{os.getpid()}_{self.seq:04d}'
+        os.rename(name, os.fsencode(tag), src_dir_fd=dfd, dst_dir_fd=self.held)
+        text = name.decode('utf-8', 'backslashreplace') if isinstance(name, bytes) else name
+        mark_dir = os.open(where, OPEN_DIR)
+        try:
+            safe = text if NAME.match(text) else 'BADNAME'
+            fd = os.open(f'{tag}_{safe}_{reason}', os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600,
+                         dir_fd=mark_dir)
+            with os.fdopen(fd, 'w') as f:
+                json.dump({'name': repr(text), 'kind': kind, 'reason': reason, 'held': tag}, f, ensure_ascii=True)
+                f.write('\n')
+                f.flush()
+                os.fsync(f.fileno())
+            os.fsync(mark_dir)
+        finally:
+            os.close(mark_dir)
+        log(f'ZAGENT_START {reason} {safe} -> {where}')
+
+
+def entries(dfd):
+    """Имена записей папки без чтения содержимого: (имя-байты, вид). Ссылки не разыменовываются."""
+    out = []
+    with os.scandir(dfd) as it:
+        for e in it:
+            name = os.fsencode(e.name)
+            try:
+                st = os.stat(name, dir_fd=dfd, follow_symlinks=False)
+                kind = 'file' if stat.S_ISREG(st.st_mode) and st.st_nlink == 1 else stat.filemode(st.st_mode)[0]
+            except FileNotFoundError:
+                continue
+            out.append((name, kind))
+    return sorted(out)
+
+
+def screen(dfd, mover, alert_name):
+    """Отказы по виду записи и переполнение. Возвращает годные имена по порядку."""
+    items = entries(dfd)
+    if len(items) > MAX_ENTRIES:
+        for name, kind in items:
+            mover.move(dfd, name, REJECTED, 'OVERFLOW', kind)
+        alert(f'{alert_name}: {len(items)} entries > {MAX_ENTRIES}, all rejected')
+        return []
+    good = []
+    for name, kind in items:
+        text = name.decode('ascii', 'replace')
+        if kind != 'file':
+            mover.move(dfd, name, REJECTED, 'NOT_REGULAR', kind)
+        elif not NAME.match(text):
+            mover.move(dfd, name, REJECTED, 'BAD_NAME', kind)
+        else:
+            good.append(text)
+    return good
+
+
+def alert(msg):
+    # Тревога оператору: строка журнала systemd с высоким приоритетом и отметка в папке отказов.
+    # Доставка в Telegram — через очередь ядра на следующих шагах карты (вопрос аудитору).
+    subprocess.run(['logger', '-p', 'auth.crit', '-t', 'zagent-start', f'ZAVOD_ALERT {msg}'], check=False)
+    log(f'ZAVOD_ALERT {msg}')
+
+
+def systemctl(*args):
+    return subprocess.run(['systemctl', *args], capture_output=True, text=True, timeout=60)
+
+
+def live_sessions():
+    r = systemctl('list-units', '--plain', '--no-legend', '--all', '--state=active,activating,deactivating',
+                  'zagent@*.service')
+    found = []
+    for line in r.stdout.splitlines():
+        m = re.match(r'\Azagent@([0-9a-f]{32})\.service\s', line.strip() + ' ')
+        if m:
+            found.append(m.group(1))
+    return found
+
+
+def boot_changed():
+    with open('/proc/sys/kernel/random/boot_id', encoding='ascii') as f:
+        now = f.read().strip()
+    path = STATE + '/boot_id'
+    try:
+        with open(path, encoding='ascii') as f:
+            seen = f.read().strip()
+    except FileNotFoundError:
+        seen = ''
+    return now != seen, now, path
+
+
+def remember_boot(now, path):
+    tmp = path + '.new'
+    with open(tmp, 'w', encoding='ascii') as f:
+        f.write(now + '\n')
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
+def do_stops(mover):
+    dfd = os.open(STOP, OPEN_DIR)
+    try:
+        for name in screen(dfd, mover, 'stop'):
+            r = systemctl('stop', f'zagent@{name}.service')
+            mover.move(dfd, os.fsencode(name), ARCHIVE, 'STOPPED' if r.returncode == 0 else 'STOP_FAILED', 'file')
+    finally:
+        os.close(dfd)
+
+
+def do_starts(mover, db_ok):
+    dfd = os.open(START, OPEN_DIR)
+    try:
+        for name in screen(dfd, mover, 'start'):
+            if not db_ok:
+                log('ZAGENT_START DB_UNAVAILABLE: nothing started')
+                return
+            try:
+                res = db("SELECT bem_control.lease_reserve_start(:'lease'::uuid);\n", lease=as_uuid(name))
+            except DbError as e:
+                log(f'ZAGENT_START DB_UNAVAILABLE: {e}')
+                return
+            if res == 'RESERVED':
+                r = systemctl('start', '--no-block', f'zagent@{name}.service')
+                mover.move(dfd, os.fsencode(name), ARCHIVE, 'STARTED' if r.returncode == 0 else 'START_CALL_FAILED',
+                           'file')
+            elif res in ('ALREADY_STARTED', 'LEASE_NOT_OPEN'):
+                mover.move(dfd, os.fsencode(name), ARCHIVE, res, 'file')
+            elif res in ('BUSY', 'RATE_LIMITED'):
+                log(f'ZAGENT_START {res} {name}: left for the next pass')
+                return
+            else:
+                log(f'ZAGENT_START UNKNOWN_ANSWER {res!r}: stop')
+                return
+    finally:
+        os.close(dfd)
+
+
+def main():
+    lock = os.open(STATE + '/lock', os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    mover = Mover()
+    changed, boot_id, boot_path = boot_changed()
+    live = live_sessions()
+    db_ok = True
+    try:
+        n = db("SELECT bem_control.lease_start_reconcile(:'live'::uuid[], :'boot'::boolean);\n",
+               live='{' + ','.join(as_uuid(x) for x in live) + '}', boot='true' if changed else 'false')
+        log(f'ZAGENT_START RECONCILE boot={changed} live={len(live)} changed_rows={n}')
+        if changed:
+            remember_boot(boot_id, boot_path)
+    except DbError as e:
+        db_ok = False
+        log(f'ZAGENT_START DB_UNAVAILABLE: {e}')
+    do_stops(mover)
+    do_starts(mover, db_ok)
+    return 0
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except OSError as e:
+        log(f'ZAGENT_START FAILED {errno.errorcode.get(e.errno, e.errno)}: {e.strerror}')
+        sys.exit(1)

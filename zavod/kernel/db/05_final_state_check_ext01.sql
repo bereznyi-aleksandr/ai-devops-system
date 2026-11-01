@@ -3,7 +3,8 @@
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
 -- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
 -- РАСШИРЕНИЕ 04: sha256 fa6bdf4dfcf6717215d2239e99f83ef0870c352d5dc1483ca87e88353098f675
--- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02 и Z-EXT-03 (см. сборщик).
+-- РАСШИРЕНИЕ 06: sha256 270fc70fd18f060c03323fd12066604426768f4611216476be3caface5e15580
+-- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03 и Z-EXT-04 (см. сборщик).
 \set ON_ERROR_STOP on
 
 -- 05_final_state_check.sql — терминальная административная проверка.
@@ -50,6 +51,12 @@ DECLARE
         'TABLE|bem_core.evidence|evidence_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.handoff_packet|handoff_packet_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)',
+        'TABLE|bem_control.session_start|session_start_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)',
+        'TABLE|bem_control.session_start|session_start_pkey|PRIMARY KEY (lease_id)',
+        'TABLE|bem_control.session_start|session_start_shape|CHECK ((((status = ''STARTING''::text) AND (running_at IS NULL) AND (ended_at IS NULL)) OR ((status = ''RUNNING''::text) AND (running_at IS NOT NULL) AND (ended_at IS NULL)) OR ((status = ''START_FAILED''::text) AND (running_at IS NULL) AND (ended_at IS NOT NULL)) OR ((status = ANY (ARRAY[''INTERRUPTED''::text, ''ENDED''::text])) AND (running_at IS NOT NULL) AND (ended_at IS NOT NULL))))',
+        'TABLE|bem_control.session_start|session_start_status_check|CHECK ((status = ANY (ARRAY[''STARTING''::text, ''RUNNING''::text, ''START_FAILED''::text, ''INTERRUPTED''::text, ''ENDED''::text])))',
+        'TABLE|bem_control.session_start_log|session_start_log_outcome_check|CHECK ((outcome = ANY (ARRAY[''RESERVED''::text, ''ALREADY_STARTED''::text, ''LEASE_NOT_OPEN''::text, ''RUNNING''::text, ''START_FAILED''::text, ''INTERRUPTED''::text, ''ENDED''::text])))',
+        'TABLE|bem_control.session_start_log|session_start_log_pkey|PRIMARY KEY (log_id)',
         'TABLE|bem_control.role_actor|role_actor_actor_id_fkey|FOREIGN KEY (actor_id) REFERENCES bem_core.actor(actor_id)',
         'TABLE|bem_control.role_actor|role_actor_pkey|PRIMARY KEY (tenant_id, role_key)',
         'TABLE|bem_control.role_actor|role_actor_role_key_check|CHECK (((role_key ~ ''^0[1-9]_[^/\\]{1,60}$''::text) OR (role_key = ''OPERATOR''::text)))',
@@ -233,6 +240,7 @@ DECLARE
         'bem_governance|no|no|no|no|no|no|yes|-1',
         'bem_kernel_rw|yes|no|no|no|no|no|yes|-1',
         'bem_rules_gate|yes|no|no|no|no|no|yes|-1',
+        'zstarter|yes|no|no|no|no|no|yes|-1',
         'schema_migrator|no|no|no|no|no|no|yes|-1'];
     v_members constant text[] := ARRAY[
         'backup_reader|bem_backup_ctl_owner|BOOTSTRAP_SUPERUSER|yes|no|no',
@@ -250,13 +258,15 @@ DECLARE
         'bem_governance|password:none|valid_until:none|config:none',
         'bem_kernel_rw|password:none|valid_until:none|config:none',
         'bem_rules_gate|password:none|valid_until:none|config:none',
+        'zstarter|password:none|valid_until:none|config:none',
         'schema_migrator|password:none|valid_until:none|config:none'];
     v_login   constant text[] := ARRAY[
         'bem_backup_admin',
         'bem_bootstrap_admin',
         'bem_engine_rw',
         'bem_kernel_rw',
-        'bem_rules_gate'];
+        'bem_rules_gate',
+        'zstarter'];
     v_rls     constant text[] := ARRAY[
         'bem_core.audit_assignment',
         'bem_core.audit_record',
@@ -518,6 +528,7 @@ DECLARE
         'DATABASE|bem|bem_engine_rw|CONNECT|bem_core_owner',
         'DATABASE|bem|bem_kernel_rw|CONNECT|bem_core_owner',
         'DATABASE|bem|bem_rules_gate|CONNECT|bem_core_owner',
+        'DATABASE|bem|zstarter|CONNECT|bem_core_owner',
         'DATABASE|bem|schema_migrator|CONNECT|bem_core_owner',
         'DEFAULT|bem_control_owner|bem_control|S|backup_reader|SELECT|bem_control_owner',
         'DEFAULT|bem_control_owner|bem_control|r|backup_reader|SELECT|bem_control_owner',
@@ -555,6 +566,12 @@ DECLARE
         'FUNCTION|bem_control.bind_process_instance(uuid, uuid, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lease_reserve_start(uuid)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lease_reserve_start(uuid)|zstarter|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lease_mark_running(uuid)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lease_mark_running(uuid)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lease_start_reconcile(uuid[], boolean)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lease_start_reconcile(uuid[], boolean)|zstarter|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.transport_context(uuid, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.set_role_actor(uuid, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.set_role_actor(uuid, text, text)|bem_governance|EXECUTE|bem_control_owner',
@@ -656,6 +673,7 @@ DECLARE
         'SCHEMA|bem_control|bem_governance|USAGE|bem_control_owner',
         'SCHEMA|bem_control|bem_kernel_rw|USAGE|bem_control_owner',
         'SCHEMA|bem_control|bem_rules_gate|USAGE|bem_control_owner',
+        'SCHEMA|bem_control|zstarter|USAGE|bem_control_owner',
         'SCHEMA|bem_core|backup_reader|USAGE|bem_core_owner',
         'SCHEMA|bem_core|bem_control_owner|USAGE|bem_core_owner',
         'SCHEMA|bem_core|bem_core_owner|CREATE|bem_core_owner',
@@ -669,6 +687,22 @@ DECLARE
         'SCHEMA|public|pg_database_owner|CREATE|pg_database_owner',
         'SCHEMA|public|pg_database_owner|USAGE|pg_database_owner',
         'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.session_start|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.session_start|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.session_start|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.session_start|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.session_start|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.session_start|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.session_start|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.session_start|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.session_start_log|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.session_start_log|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.session_start_log|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.session_start_log|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.session_start_log|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.session_start_log|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.session_start_log|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.session_start_log|backup_reader|SELECT|bem_control_owner',
         'TABLE|bem_control.role_actor|bem_control_owner|DELETE|bem_control_owner',
         'TABLE|bem_control.role_actor|bem_control_owner|INSERT|bem_control_owner',
         'TABLE|bem_control.role_actor|bem_control_owner|REFERENCES|bem_control_owner',
@@ -1490,7 +1524,10 @@ BEGIN
         ('hold_session_credential', '1b4385c0180525f1010ecb685c98726467a32354467e7eb132f7a9e39eff38eb'),
         ('hold_operator_actor', 'd74fa66a16593ffd024d958ab1f7413c08ee00c34abd3aa78bc75b49f48b5ea4'),
         ('credential_expired', 'f1c3db18479871a0430733e7f9e222a2a1b4cd4f4aeba63a0361dc7422bd80db'),
-        ('revoke_session_credential', 'a79e8b00176a86cbf069d5a8adc95f65b537c1bea2dbb885bf49104756c535aa')
+        ('revoke_session_credential', 'a79e8b00176a86cbf069d5a8adc95f65b537c1bea2dbb885bf49104756c535aa'),
+        ('lease_reserve_start', '646283c2a704babe1d83c66c6096a348102c5752dbff5aed560de826a9870958'),
+        ('lease_mark_running', '9fd984b7412caf786bd7c434adf14199d26b5d927dd4beb96b0406a33dd197c0'),
+        ('lease_start_reconcile', 'e4c53ca56467e137773504daa354fc1fe293bc8d37315aea2b41d90e69cf7cc3')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got
@@ -1538,6 +1575,36 @@ BEGIN
     END IF;
 END
 $zavod_ext03$;
+
+-- Z-EXT-04: владелец, режим исполнения и настройки трёх функций запуска; точный набор индексов двух таблиц.
+DO $zavod_ext04$
+DECLARE
+    r     record;
+    v_got text;
+BEGIN
+    FOR r IN SELECT * FROM (VALUES
+        ('lease_reserve_start', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('lease_mark_running', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('lease_start_reconcile', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp')
+    ) AS x(fn, want) LOOP
+        SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'
+                   || coalesce((SELECT string_agg(c, ';' ORDER BY c COLLATE "C") FROM unnest(p.proconfig) c), 'none'))
+          INTO v_got
+          FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'bem_control' AND p.proname = r.fn;
+        IF v_got IS DISTINCT FROM r.want THEN
+            RAISE EXCEPTION 'FINAL_ZAVOD_FN_MODE_MISMATCH: % (найдено %)', r.fn, v_got;
+        END IF;
+    END LOOP;
+    SELECT string_agg(d, ' ; ' ORDER BY d COLLATE "C") INTO v_got
+      FROM (SELECT pg_get_indexdef(i.indexrelid) AS d FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE n.nspname = 'bem_control' AND c.relname IN ('session_start', 'session_start_log')) s;
+    IF v_got IS DISTINCT FROM 'CREATE INDEX session_start_log_at ON bem_control.session_start_log USING btree (at) WHERE (outcome = ''RESERVED''::text) ; CREATE UNIQUE INDEX session_start_log_pkey ON bem_control.session_start_log USING btree (log_id) ; CREATE UNIQUE INDEX session_start_one_live ON bem_control.session_start USING btree ((true)) WHERE (status = ANY (ARRAY[''STARTING''::text, ''RUNNING''::text])) ; CREATE UNIQUE INDEX session_start_pkey ON bem_control.session_start USING btree (lease_id)' THEN
+        RAISE EXCEPTION 'FINAL_ZAVOD_INDEX_MISMATCH: %', v_got;
+    END IF;
+END
+$zavod_ext04$;
 
 -- Ни одной команды безопасности после этой строки быть не должно.
 -- BEM954-FINAL-SECURITY-CHECKPOINT: 05_final_state_check.sql

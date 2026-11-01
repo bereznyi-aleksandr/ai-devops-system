@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.9  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 11:38 +03:00 (v0.9: ChatGPT R25 — функция hold_operator_actor:
+// ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00 (v0.10: карта 3.3.8.5 — Z-EXT-04
+//   (db/06_zavod_ext_04.sql): входная роль zstarter во всех списках ролей, таблицы session_start и session_start_log,
+//   три функции запуска сессий — права, режим definer, отпечатки тел, точный набор индексов; v0.9 2026-10-18 11:38 +03:00: v0.9: ChatGPT R25 — функция hold_operator_actor:
 //   вызывает только входная роль, режим definer; v0.8 10:52: ChatGPT R24 — функции hold_session_credential и
 //   credential_expired, счётчик предъявлений отозванного пропуска; v0.7: Z-EXT-03 (db/04_zavod_ext_03.sql,
 //   пакет Z-TRANSPORT-01) — ограничения трёх новых таблиц, права на таблицы и шесть функций, отпечатки тел; сверх
@@ -250,6 +252,46 @@ const EXT03_INDEXES = [
   "CREATE UNIQUE INDEX session_enrollment_ticket_once ON bem_control.session_enrollment USING btree (tenant_id, ticket_nonce) WHERE (ticket_nonce IS NOT NULL)",
 ];
 
+// Z-EXT-04 (карта 3.3.8.5, протокол И.12а): входная роль zstarter — во всех списках ролей 05, подключение к bem,
+// схема bem_control; ограничения и права двух таблиц запуска; три функции, их вызывающие, режим и индексы.
+const ext04 = readFileSync(here('./06_zavod_ext_04.sql'), 'utf8').replace(/\r\n/g, '\n');
+t = after(t, 'bem_rules_gate|yes|no|no|no|no|no|yes|-1', ['zstarter|yes|no|no|no|no|no|yes|-1']);
+t = after(t, 'bem_rules_gate|password:none|valid_until:none|config:none', ['zstarter|password:none|valid_until:none|config:none']);
+t = once(t, "        'bem_rules_gate'];\n    v_rls", "        'bem_rules_gate',\n        'zstarter'];\n    v_rls");
+t = after(t, 'DATABASE|bem|bem_rules_gate|CONNECT|bem_core_owner', ['DATABASE|bem|zstarter|CONNECT|bem_core_owner']);
+t = after(t, 'SCHEMA|bem_control|bem_rules_gate|USAGE|bem_control_owner', ['SCHEMA|bem_control|zstarter|USAGE|bem_control_owner']);
+const EXT04_CONSTRAINTS = [
+  "TABLE|bem_control.session_start|session_start_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)",
+  "TABLE|bem_control.session_start|session_start_pkey|PRIMARY KEY (lease_id)",
+  "TABLE|bem_control.session_start|session_start_shape|CHECK ((((status = 'STARTING'::text) AND (running_at IS NULL) AND (ended_at IS NULL)) OR ((status = 'RUNNING'::text) AND (running_at IS NOT NULL) AND (ended_at IS NULL)) OR ((status = 'START_FAILED'::text) AND (running_at IS NULL) AND (ended_at IS NOT NULL)) OR ((status = ANY (ARRAY['INTERRUPTED'::text, 'ENDED'::text])) AND (running_at IS NOT NULL) AND (ended_at IS NOT NULL))))",
+  "TABLE|bem_control.session_start|session_start_status_check|CHECK ((status = ANY (ARRAY['STARTING'::text, 'RUNNING'::text, 'START_FAILED'::text, 'INTERRUPTED'::text, 'ENDED'::text])))",
+  "TABLE|bem_control.session_start_log|session_start_log_outcome_check|CHECK ((outcome = ANY (ARRAY['RESERVED'::text, 'ALREADY_STARTED'::text, 'LEASE_NOT_OPEN'::text, 'RUNNING'::text, 'START_FAILED'::text, 'INTERRUPTED'::text, 'ENDED'::text])))",
+  "TABLE|bem_control.session_start_log|session_start_log_pkey|PRIMARY KEY (log_id)",
+];
+t = after(t, 'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)', EXT04_CONSTRAINTS.map(sqlLit));
+// Таблицы запуска никто не читает и не пишет напрямую — только функции; копия читает.
+const EXT04_TABLES = ['session_start', 'session_start_log'];
+t = after(t, 'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner', EXT04_TABLES.flatMap((n) => [
+  ...OWNER_PRIVS.map((p) => `TABLE|bem_control.${n}|bem_control_owner|${p}|bem_control_owner`),
+  `TABLE|bem_control.${n}|backup_reader|SELECT|bem_control_owner`,
+]));
+// Кто вызывает: бронь и сверку — только root ячейки (zstarter); отметку «работает» — ядро от имени сессии.
+const EXT04_FUNCS = { lease_reserve_start: 'uuid', lease_mark_running: 'uuid', lease_start_reconcile: 'uuid[], boolean' };
+const EXT04_CALLERS = {
+  lease_reserve_start: ['bem_control_owner', 'zstarter'],
+  lease_mark_running: KR,
+  lease_start_reconcile: ['bem_control_owner', 'zstarter'],
+};
+t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+  Object.entries(EXT04_FUNCS).flatMap(([n, a]) => EXT04_CALLERS[n]
+    .map((who) => `FUNCTION|bem_control.${n}(${a})|${who}|EXECUTE|bem_control_owner`)));
+const EXT04_INDEXES = [
+  "CREATE INDEX session_start_log_at ON bem_control.session_start_log USING btree (at) WHERE (outcome = 'RESERVED'::text)",
+  "CREATE UNIQUE INDEX session_start_log_pkey ON bem_control.session_start_log USING btree (log_id)",
+  "CREATE UNIQUE INDEX session_start_one_live ON bem_control.session_start USING btree ((true)) WHERE (status = ANY (ARRAY['STARTING'::text, 'RUNNING'::text]))",
+  "CREATE UNIQUE INDEX session_start_pkey ON bem_control.session_start USING btree (lease_id)",
+];
+
 // Отпечатки тел функций расширения: исходный текст между ограничителями $tag$ последнего
 // определения функции в 02 — ровно то, что PostgreSQL хранит в pg_proc.prosrc.
 const FUNCS = ['publish_subject', 'release_subject', 'reconcile_unknown_outcome', 'claim_outbox_batch',
@@ -268,7 +310,8 @@ function body(name, src = ext) {
 }
 const prints = [...FUNCS.map((f) => [f, sha(body(f))]),
   ...Object.keys(EXT02_FUNCS).map((f) => [f, sha(body(f, ext02))]),
-  ...Object.keys(EXT03_FUNCS).map((f) => [f, sha(body(f, ext03))])];
+  ...Object.keys(EXT03_FUNCS).map((f) => [f, sha(body(f, ext03))]),
+  ...Object.keys(EXT04_FUNCS).map((f) => [f, sha(body(f, ext04))])];
 const fpBlock = `-- Z-EXT-01 (аудит Z3 M-Z3-01), Z-EXT-02 и Z-EXT-03: тела функций расширений совпадают с
 -- db/02_zavod_ext_01.sql, db/03_zavod_ext_02.sql и db/04_zavod_ext_03.sql.
 -- У каждого имени ровно одна функция в bem_control; лишняя перегрузка или подменённое тело — отказ.
@@ -320,6 +363,34 @@ ${Object.entries(EXT03_MODE).map(([f, m]) => `        ('${f}', 'bem_control_owne
 END
 $zavod_ext03$;
 
+-- Z-EXT-04: владелец, режим исполнения и настройки трёх функций запуска; точный набор индексов двух таблиц.
+DO $zavod_ext04$
+DECLARE
+    r     record;
+    v_got text;
+BEGIN
+    FOR r IN SELECT * FROM (VALUES
+${Object.keys(EXT04_FUNCS).map((f) => `        ('${f}', 'bem_control_owner|definer|${DEF_PATH}')`).join(',\n')}
+    ) AS x(fn, want) LOOP
+        SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'
+                   || coalesce((SELECT string_agg(c, ';' ORDER BY c COLLATE "C") FROM unnest(p.proconfig) c), 'none'))
+          INTO v_got
+          FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'bem_control' AND p.proname = r.fn;
+        IF v_got IS DISTINCT FROM r.want THEN
+            RAISE EXCEPTION 'FINAL_ZAVOD_FN_MODE_MISMATCH: % (найдено %)', r.fn, v_got;
+        END IF;
+    END LOOP;
+    SELECT string_agg(d, ' ; ' ORDER BY d COLLATE "C") INTO v_got
+      FROM (SELECT pg_get_indexdef(i.indexrelid) AS d FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE n.nspname = 'bem_control' AND c.relname IN ('session_start', 'session_start_log')) s;
+    IF v_got IS DISTINCT FROM '${EXT04_INDEXES.map(sqlLit).join(' ; ')}' THEN
+        RAISE EXCEPTION 'FINAL_ZAVOD_INDEX_MISMATCH: %', v_got;
+    END IF;
+END
+$zavod_ext04$;
+
 `;
 t = once(t, '-- Ни одной команды безопасности после этой строки быть не должно.\n',
   fpBlock + '-- Ни одной команды безопасности после этой строки быть не должно.\n');
@@ -329,7 +400,8 @@ const out = `-- ДОКУМЕНТ: db/05_final_state_check_ext01.sql — СОБР
 -- РАСШИРЕНИЕ 02: sha256 ${sha(ext)}
 -- РАСШИРЕНИЕ 03: sha256 ${sha(ext02)}
 -- РАСШИРЕНИЕ 04: sha256 ${sha(ext03)}
--- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02 и Z-EXT-03 (см. сборщик).
+-- РАСШИРЕНИЕ 06: sha256 ${sha(ext04)}
+-- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03 и Z-EXT-04 (см. сборщик).
 ${t}`;
 
 const target = here('./05_final_state_check_ext01.sql');

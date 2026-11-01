@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.24
+# ВЕРСИЯ: v0.25
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:34 +02:00 (v0.24: этап 3.3.2.4 — задание kernel_socket: ядро подключается к PostgreSQL 16 через сокет Linux, вход peer; v0.23: этап 3.3.2.3 — systemd-analyze verify и для службы ядра
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00 (v0.25: карта 3.3.8 — задание cell: цепочка базы с Z-EXT-04 на PostgreSQL 16 машины,
+#   установщик ячейки дважды, запуск сессии по файлу ядра, стены клетки, отказы; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.24: этап 3.3.2.4 — задание kernel_socket: ядро подключается к PostgreSQL 16 через сокет Linux, вход peer; v0.23: этап 3.3.2.3 — systemd-analyze verify и для службы ядра
 #   zavod-kernel.service; /usr/bin/node на машине GitHub — ссылка на её Node.js; v0.22: L-S6-R12-01 и аудит Codex R14 — модульных ops 64; число проверок
 #   и строка OK сверяются отдельными командами: внутри цепочки && провал первой проверки шаг не останавливал; v0.21: аудит ChatGPT S6-prep R11A M-S6-R11-01 — сервер сверяет архив с head по git-хешам;
 #   e2e: выпуски — настоящие коммиты, проверок 15 (чужой архив, не тот объект коммита); модульных ops 59; v0.20: аудит ChatGPT S6-prep R10 — подпись билета на телефоне zsign_phone.sh,
@@ -235,6 +236,61 @@ jobs:
           npm ci --ignore-scripts --no-fund > "$RUNNER_TEMP/npm_ci_socket.out"
           env -u PGHOST node ci/socket_check.mjs | tee "$RUNNER_TEMP/socket_check.out"
           grep -q '^KERNEL_SOCKET=PASS$' "$RUNNER_TEMP/socket_check.out"
+
+  cell:
+    name: Linux cell installer, session start and refusals (3.3.8)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.23.3'
+      - name: PostgreSQL 16 of the runner image with the bem chain (H1.31, Z-EXT-01..04, final check)
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONF=/etc/postgresql/16/main
+          sudo systemctl start postgresql.service
+          # Только на время установки цепочки: вход trust через сокет (одноразовая машина CI), потом строка убирается.
+          sudo sed -i '1i local all all trust # zavod-ci-chain' "$CONF/pg_hba.conf"
+          sudo systemctl reload postgresql.service
+          PKG="$RUNNER_TEMP/pkg"
+          K="$GITHUB_WORKSPACE/zavod/kernel"
+          mkdir -p "$PKG"
+          cp -R bem954/H1_31_PACKAGE_R51/. "$PKG/"
+          cd "$PKG"
+          psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -f 00_cluster_bootstrap.sql > chain_00.out
+          node run_migration.mjs --files 01_database_migration.sql > chain_wrapper.out
+          node "$K/db/build_ext.mjs" 01_database_migration.sql --check
+          psql -X -v ON_ERROR_STOP=1 -U postgres -d bem -f "$K/db/02_zavod_ext_01.sql" > chain_ext.out
+          for f in 03_zavod_ext_02 04_zavod_ext_03 06_zavod_ext_04; do
+            psql -X -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$K/db/$f.sql" > "chain_$f.out"
+          done
+          node "$K/db/build_final_ext.mjs" 05_final_state_check.sql --check
+          psql -X -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$K/db/05_final_state_check_ext01.sql" > chain_final.out
+          sudo sed -i '/# zavod-ci-chain$/d' "$CONF/pg_hba.conf"
+          sudo systemctl reload postgresql.service
+          echo CELL_DB_CHAIN=OK
+      - name: install the cell twice (same result), shellcheck, python syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          C=zavod/ops/server/cell
+          shellcheck -S warning "$C/install_cell.sh" "$C/cell_ci.sh" "$C/zagent-session"
+          python3 -I -c 'import ast, sys; ast.parse(open(sys.argv[1], encoding="utf-8").read())' "$C/zagent-start"
+          sudo bash "$C/install_cell.sh" --pg-conf-dir /etc/postgresql/16/main | tee "$RUNNER_TEMP/install1.out"
+          grep -qx ZAVOD_CELL_INSTALL=OK "$RUNNER_TEMP/install1.out"
+          sudo bash "$C/install_cell.sh" --pg-conf-dir /etc/postgresql/16/main | tee "$RUNNER_TEMP/install2.out"
+          grep -qx ZAVOD_CELL_INSTALL=OK "$RUNNER_TEMP/install2.out"
+          test "$(sudo grep -c 'map=zavod_cell' /etc/postgresql/16/main/pg_hba.conf)" = 1
+          test "$(sudo grep -c '^zavod_cell' /etc/postgresql/16/main/pg_ident.conf)" = 1
+      - name: cell checks (CELL_CI=PASS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash zavod/ops/server/cell/cell_ci.sh | tee "$RUNNER_TEMP/cell_ci.out"
+          grep -qx CELL_CI=PASS "$RUNNER_TEMP/cell_ci.out"
 
   ops:
     name: stage 6 ops (E6-1..E6-4) local checks
