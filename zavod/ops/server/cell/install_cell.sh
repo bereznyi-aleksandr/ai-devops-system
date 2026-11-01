@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
 # ВЕРСИЯ: v0.7  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:12 +02:00 (v0.7: аудит M33-R2-04 — приём на своём разделе
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:32 +02:00 (v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
 #   /var/lib/zavod/intake-fs.img с пределом места и inode, журналы приёма в /var/lib/zavod/intake-journal; v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
 #   v0.5: аудит M33-03 — база
 #   под zdb, свои папки служб; вопрос аудитора «д» — раздел сеансов /var/lib/zavod/session-fs.img; v0.4: аудит M33-06 — очередь
@@ -150,7 +150,7 @@ dir /var/lib/zavod/intake-journal/quarantine zquarantine zquarantine 0750
 dir /var/lib/zavod/intake-journal/import zimport zimport 0750
 dir /var/lib/zavod/intake/archive root root 0700
 install -o root -g root -m 0755 "$HERE/zavod_intake.py" /usr/local/lib/zavod/zavod_intake.py
-for u in zquarantine@.service zimport@.service; do
+for u in zquarantine@.service zimport@.service zintake-archive@.service; do
   install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
 done
 # Л.16–Л.28: ни у одной службы нет прав запуска через polkit. По умолчанию polkit спрашивает пароль
@@ -223,5 +223,6 @@ systemd-analyze verify --man=no /etc/systemd/system/zagent-start.service /etc/sy
   /etc/systemd/system/zavod-alert-notify.service /etc/systemd/system/zavod-alert-notify.timer \
   /etc/systemd/system/var-lib-private-zagent.mount /etc/systemd/system/var-lib-zavod-intake.mount \
   /etc/systemd/system/zagent-start.timer /etc/systemd/system/zagent.slice "zagent@00000000000000000000000000000000.service" \
-  "zquarantine@00000000000000000000000000000000.service" "zimport@00000000000000000000000000000000.service"
+  "zquarantine@00000000000000000000000000000000.service" "zimport@00000000000000000000000000000000.service" \
+  "zintake-archive@00000000000000000000000000000000.service"
 echo "ZAVOD_CELL_INSTALL=OK"

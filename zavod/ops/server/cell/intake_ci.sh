@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/intake_ci.sh
 # ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:19 +02:00 (v0.2: пробы M33-R2-03 — карантин после проверки приёма
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:32 +02:00 (v0.2: отказ карантина проверяет пустую out/; пробы M33-R2-03 — карантин после проверки приёма
 #   ждёт; M33-R2-04 — раздел приёма: предел inode и места, диск сервера не тратится)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проба ПБ-4 (протокол v3.1 И.13; карта 3.3.9.4) на машине GitHub ubuntu-24.04 после install_cell.sh:
@@ -31,7 +31,8 @@ put_tar() { # аренда случай — архив кладёт «привр
 jline() { sudo grep -h "\"lease\":\"$2\"" "/var/lib/zavod/intake-journal/$1/$1.jsonl" 2>/dev/null | tail -1 || true; }
 jreason() { jline "$1" "$2" | sed -n 's/.*"reason":"\([^"]*\)".*/\1/p'; }
 jresult() { jline "$1" "$2" | sed -n 's/.*"result":"\([^"]*\)".*/\1/p'; }
-archived() { sudo find "$I/archive" -maxdepth 1 -name "$1-*-$2" | wc -l; }
+archived() { sudo find "$I/archive" -maxdepth 1 -name "$1-*-$2*" | wc -l; }
+archived_now() { [ "$(archived "$1" "$2")" -ge 1 ] && ! sudo test -e "$I/out/$1.partial" && ! sudo test -e "$I/out/$1"; }
 wait_for() { local n=$1; shift; for _ in $(seq 1 "$n"); do if "$@"; then return 0; fi; sleep 1; done; return 1; }
 import_done() { [ -n "$(jresult import "$1")" ]; }
 inactive() { case "$(systemctl is-active "$1" 2>/dev/null || true)" in active|activating|deactivating) return 1;; esac; }
@@ -128,7 +129,8 @@ for c in symlink:ENTRY_SYMLINK hardlink:ENTRY_HARDLINK chardev:ENTRY_CHAR_DEVICE
   if [ "$(jresult quarantine "$L")" = REFUSED ] && [ "$got" = "$want" ]; then ok "archive $n refused ($want)"; else bad "archive $n: $(jline quarantine "$L")"; fi
   wait_for 10 inactive "zquarantine@$L.service" || true
   [ -z "$(jresult import "$L")" ] && ok "archive $n: import not started" || bad "archive $n: import ran"
-  [ "$(archived "$L" quarantine)" = 1 ] && ok "archive $n: in/out archived" || bad "archive $n: not archived"
+  # перенос делает zintake-archive@ после отказа; out/ этой аренды должна опустеть
+  wait_for 15 archived_now "$L" quarantine && ok "archive $n: in/out archived, out/ empty" || bad "archive $n: not archived"
   sudo test -e "$I/accepted/$L" && bad "archive $n: accepted exists" || true
 done
 L=$(newlease); manifest "$L" "{\"v\":1,\"lease\":\"$L\",\"dirs\":[\"src/\",\"tests/\"],\"max_files\":10,\"max_bytes\":65536,\"max_file_bytes\":32768,\"max_depth\":4,\"exec\":[\"tests/run.sh\"],\"extra\":1}"
@@ -258,7 +260,7 @@ sudo systemctl start "zquarantine@$Lm.service" 2>/dev/null || true
 if [ "$(jresult quarantine "$Lm")" = REFUSED ] && [ "$(jreason quarantine "$Lm")" = OS_ERROR_ENOSPC ]; then
   ok "M33-R2-04: too many files refused (no inode left)"; else bad "M33-R2-04: inodes: $(jline quarantine "$Lm")"; fi
 wait_for 10 inactive "zquarantine@$Lm.service" || true
-[ "$(sudo find "$I/archive" -maxdepth 1 -name "$Lm-*" | wc -l)" -ge 1 ] && ok "M33-R2-04: refused archive moved to archive/" || bad "M33-R2-04: not archived"
+wait_for 15 archived_now "$Lm" quarantine && ok "M33-R2-04: refused archive moved to archive/, out/ empty" || bad "M33-R2-04: not archived"
 isys1=$(sysinodes)
 [ $((isys0 - isys1)) -lt 500 ] && ok "M33-R2-04: server disk inodes untouched ($((isys0 - isys1)))" || bad "M33-R2-04: server inodes used $((isys0 - isys1))"
 # Освободить inode раздела для пробы места: перенос на диск машины CI, ничего не удаляется.

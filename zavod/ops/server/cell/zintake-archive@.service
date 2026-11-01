@@ -1,0 +1,17 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zintake-archive@.service
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 21:32 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:32 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: после отказа карантина zquarantine@%i (OnFailure= там) root переносит in/ и out/ этой аренды
+#   в archive/ (И.12г). Отдельная служба, а не ExecStopPost= карантина: внутри клетки карантина out/ подключена
+#   отдельно (ReadWritePaths=), и перенос out/ в archive/ там даёт EXDEV (перенос между подключениями
+#   невозможен) — найдено пробой M33-R2-04 в CI. Здесь пространство подключений общее с сервером.
+# ОГРАНИЧЕНИЯ: ничего не удаляет, только переносит; запускает её только systemd по отказу карантина.
+[Unit]
+Description=Zavod intake: archive in/ and out/ of refused quarantine %i
+RequiresMountsFor=/var/lib/zavod/intake
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zavod_intake.py archive %i quarantine
+RuntimeMaxSec=120
