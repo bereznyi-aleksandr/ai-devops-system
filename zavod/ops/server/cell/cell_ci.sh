@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
 # ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -152,6 +152,34 @@ wait_for 30 is_active "$L7" && ok "C33-01: next lease started" || bad "C33-01: L
 sudo -u zkernel touch "/run/zavod/stop/$L7"; pass
 older "$L7"; pass
 [ "$(state "$L7")" = START_FAILED ] && ok "C33-01: stopped L7 released" || bad "C33-01: L7 state $(state "$L7")"
+
+echo "=== аудит M33-02: остановка только при открытой аренде"
+L8=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L8"; pass
+wait_for 30 is_active "$L8" && ok "M33-02: L8 started" || bad "M33-02: L8 not started"
+X=$(printf '%032x' 777777)
+sudo -u zkernel touch "/run/zavod/stop/$X"; pass
+[ "$(marker /var/lib/zavod/start-archive "${X}_STOP_LEASE_NOT_OPEN")" = 1 ] && ok "M33-02: no lease — archived, nothing stopped" || bad "M33-02: unknown lease stop"
+pgsu "UPDATE bem_control.chat_lease SET status = 'COMPLETED', closed_at = clock_timestamp(),
+      completion_evidence_id = gen_random_uuid(), result_evidence_id = gen_random_uuid(),
+      memory_evidence_id = gen_random_uuid(), next_evidence_id = gen_random_uuid(), report_id = gen_random_uuid()
+      WHERE lease_id = '$L8'::uuid" >/dev/null
+sudo -u zkernel touch "/run/zavod/stop/$L8"; pass
+is_active "$L8" && ok "M33-02: closed lease — request does not stop" || bad "M33-02: closed lease stopped"
+[ "$(marker /var/lib/zavod/start-archive "${L8}_STOP_LEASE_NOT_OPEN")" = 1 ] && ok "M33-02: closed lease request archived" || bad "M33-02: closed lease marker"
+sudo systemctl stop "zagent@$L8.service"; older "$L8"; pass
+[ "$(state "$L8")" = START_FAILED ] && ok "M33-02: L8 released" || bad "M33-02: L8 state $(state "$L8")"
+L9=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L9"; pass
+wait_for 30 is_active "$L9" && ok "M33-02: L9 started" || bad "M33-02: L9 not started"
+sudo systemctl stop postgresql.service
+sudo -u zkernel touch "/run/zavod/stop/$L9"
+pass || true
+if is_active "$L9" && sudo test -e "/run/zavod/stop/$L9"; then ok "M33-02: db down — not stopped, request kept"; else bad "M33-02: db down stop"; fi
+sudo systemctl start postgresql.service
+wait_for 30 sudo -u postgres psql -X -d bem -c 'select 1' >/dev/null 2>&1 || bad "postgres back"
+pass
+[ "$(active "$L9")" != active ] && ok "M33-02: db back — stopped" || bad "M33-02: L9 still active"
+older "$L9"; pass
+[ "$(state "$L9")" = START_FAILED ] && ok "M33-02: L9 released" || bad "M33-02: L9 state $(state "$L9")"
 
 echo "=== аудит C33-02: сбой systemctl — живая сессия не теряется, новых запусков нет"
 # Подменный systemctl только для прохода zagent-start (через PATH службы): list-units падает или даёт мусор.

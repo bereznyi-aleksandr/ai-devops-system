@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zagent-start
 # ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается)
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: один проход по запросам на запуск и остановку сессий агента (протокол v3.1 И.12а, карта 3.3.8.4).
 #   Работает от root (zagent-start.service). Порядок: замок → сверка живых сессий с базой → остановки → запуски.
@@ -180,12 +180,28 @@ def remember_boot(now, path):
     os.replace(tmp, path)
 
 
-def do_stops(mover):
+def do_stops(mover, db_ok):
+    # Протокол И.12 п.4 (аудит M33-02): останавливается только сеанс с открытой арендой. База недоступна —
+    # заявки ждут следующего прохода; аренда закрыта или её нет — заявка в архив, сеанс гаснет по RuntimeMaxSec.
     dfd = os.open(STOP, OPEN_DIR)
     try:
         for name in screen(dfd, mover, 'stop'):
-            r = systemctl('stop', f'zagent@{name}.service')
-            mover.move(dfd, os.fsencode(name), ARCHIVE, 'STOPPED' if r.returncode == 0 else 'STOP_FAILED', 'file')
+            if not db_ok:
+                log('ZAGENT_START DB_UNAVAILABLE: nothing stopped')
+                return
+            try:
+                res = db("SELECT bem_control.lease_stop_check(:'lease'::uuid);\n", lease=as_uuid(name))
+            except DbError as e:
+                log(f'ZAGENT_START DB_UNAVAILABLE: {e}')
+                return
+            if res == 'OPEN':
+                r = systemctl('stop', f'zagent@{name}.service')
+                mover.move(dfd, os.fsencode(name), ARCHIVE, 'STOPPED' if r.returncode == 0 else 'STOP_FAILED', 'file')
+            elif res == 'LEASE_NOT_OPEN':
+                mover.move(dfd, os.fsencode(name), ARCHIVE, 'STOP_LEASE_NOT_OPEN', 'file')
+            else:
+                log(f'ZAGENT_START UNKNOWN_ANSWER {res!r}: stop')
+                return
     finally:
         os.close(dfd)
 
@@ -227,7 +243,7 @@ def main():
     if live is None:
         # Без точного списка живых сессий нельзя ни сверять состояние, ни запускать: можно получить второй сеанс.
         alert('systemctl list-units failed: reconcile and starts skipped')
-        do_stops(mover)
+        do_stops(mover, True)
         return 1
     db_ok = True
     try:
@@ -247,7 +263,7 @@ def main():
     except DbError as e:
         db_ok = False
         log(f'ZAGENT_START DB_UNAVAILABLE: {e}')
-    do_stops(mover)
+    do_stops(mover, db_ok)
     do_starts(mover, db_ok)
     return 0
 

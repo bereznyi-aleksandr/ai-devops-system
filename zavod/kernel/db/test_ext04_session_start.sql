@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/test_ext04_session_start.sql
 -- ВЕРСИЯ: v0.2  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-01 — живая сессия место не освобождает)
+-- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-01 — живая сессия место не освобождает; M33-02 — lease_stop_check)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 -- НАЗНАЧЕНИЕ: проверка Z-EXT-04 (карта 3.3.8.5): ответы lease_reserve_start, lease_mark_running,
 --   lease_start_reconcile; одна живая сессия на ячейку; предел 6 запусков в минуту; кто что может вызвать.
@@ -83,6 +83,9 @@ BEGIN
     SET LOCAL ROLE zstarter;
     v := bem_control.lease_reserve_start(f);   IF v <> 'RESERVED'        THEN RAISE EXCEPTION 'T22 %', v; END IF;
     IF bem_control.lease_start_overdue() <> '{}'::uuid[] THEN RAISE EXCEPTION 'T22a'; END IF;
+    v := bem_control.lease_stop_check(f);      IF v <> 'OPEN'            THEN RAISE EXCEPTION 'T22b %', v; END IF;
+    v := bem_control.lease_stop_check(d);      IF v <> 'LEASE_NOT_OPEN'  THEN RAISE EXCEPTION 'T22c %', v; END IF;
+    v := bem_control.lease_stop_check(e);      IF v <> 'LEASE_NOT_OPEN'  THEN RAISE EXCEPTION 'T22d closed %', v; END IF;
     BEGIN
         PERFORM bem_control.lease_mark_running(f);
         RAISE EXCEPTION 'T23 zstarter marked running';
@@ -113,6 +116,11 @@ BEGIN
     BEGIN
         PERFORM bem_control.lease_start_overdue();
         RAISE EXCEPTION 'T27a kernel read overdue';
+    EXCEPTION WHEN insufficient_privilege THEN NULL;
+    END;
+    BEGIN
+        PERFORM bem_control.lease_stop_check(f);
+        RAISE EXCEPTION 'T27b kernel checked a stop';
     EXCEPTION WHEN insufficient_privilege THEN NULL;
     END;
     v := bem_control.lease_mark_running(f);    IF v <> 'RUNNING'         THEN RAISE EXCEPTION 'T28 %', v; END IF;

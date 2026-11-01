@@ -3,7 +3,7 @@
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
 -- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
 -- РАСШИРЕНИЕ 04: sha256 fa6bdf4dfcf6717215d2239e99f83ef0870c352d5dc1483ca87e88353098f675
--- РАСШИРЕНИЕ 06: sha256 66fe4e661ad7101f71d303de20f8eb2c955da1122f9138a5cea7f80c58ff81f2
+-- РАСШИРЕНИЕ 06: sha256 7c3f1cd837c72593b5438961b4fe021c09357b97c3ed32c84928e773c79e386b
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03 и Z-EXT-04 (см. сборщик).
 \set ON_ERROR_STOP on
 
@@ -574,6 +574,8 @@ DECLARE
         'FUNCTION|bem_control.lease_start_reconcile(uuid[], boolean)|zstarter|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.lease_start_overdue()|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.lease_start_overdue()|zstarter|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lease_stop_check(uuid)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lease_stop_check(uuid)|zstarter|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.transport_context(uuid, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.set_role_actor(uuid, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.set_role_actor(uuid, text, text)|bem_governance|EXECUTE|bem_control_owner',
@@ -1530,7 +1532,8 @@ BEGIN
         ('lease_reserve_start', '646283c2a704babe1d83c66c6096a348102c5752dbff5aed560de826a9870958'),
         ('lease_mark_running', '76b8cca5430662920a8df4ef7cfb5507a12d45b029ee9f74719ebcd7de576d4c'),
         ('lease_start_reconcile', 'aaa1d730ae506baccd2973ea8a7012f277ea4d658c093f2821bcb5e891ddb131'),
-        ('lease_start_overdue', '68e0888f834c210482c4b4da26a181c47358acd03fb57176424cab4c0c0247c1')
+        ('lease_start_overdue', '68e0888f834c210482c4b4da26a181c47358acd03fb57176424cab4c0c0247c1'),
+        ('lease_stop_check', '5807f1a7514934526da0ac4d14110f49464b73928c01e5438616bd0aab6a732c')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got
@@ -1589,7 +1592,8 @@ BEGIN
         ('lease_reserve_start', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('lease_mark_running', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('lease_start_reconcile', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
-        ('lease_start_overdue', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp')
+        ('lease_start_overdue', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('lease_stop_check', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp')
     ) AS x(fn, want) LOOP
         SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'
                    || coalesce((SELECT string_agg(c, ';' ORDER BY c COLLATE "C") FROM unnest(p.proconfig) c), 'none'))
