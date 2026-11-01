@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.4: аудит M33-06 — очередь
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:26 +02:00 (v0.5: аудит M33-03 — база
+#   под zdb, свои папки служб; вопрос аудитора «д» — раздел сеансов /var/lib/zavod/session-fs.img; v0.4: аудит M33-06 — очередь
 #   тревог /var/lib/zavod/alerts, служба доставки zavod-alert-notify, канал Telegram /etc/zavod/alert-deliver; v0.3: аудит M33-01 — вход zkernel → bem_kernel_rw
 #   по сопоставлению zavod_kernel; v0.2: карантин и приём
 #   архива — папки /var/lib/zavod/intake, zavod_intake.py, zquarantine@ и zimport@; карта 3.3.9)
@@ -11,7 +12,7 @@
 #   группа zagent.slice; (4) zagent-start с папками запросов 1730 root:zkernel; (5) вход root → роль базы
 #   zstarter (peer, сопоставление zavod_cell); (6) карантин и доверенный приём архива (И.12г, И.12д).
 #   Повторный запуск даёт тот же результат.
-# ВЫЗОВ: sudo bash install_cell.sh [--pg-conf-dir /etc/postgresql/16/main | --no-pg]
+# ВЫЗОВ: sudo bash install_cell.sh [--pg-conf-dir /etc/postgresql/16/main | --no-pg] [--session-fs-size 10G]
 # ОГРАНИЧЕНИЯ: ничего не удаляет; прежние pg_hba.conf и pg_ident.conf сохраняются копией рядом. Функции базы
 #   (db/06_zavod_ext_04.sql) ставятся цепочкой базы, не этим файлом. Пароли и ключи не нужны и не пишутся.
 set -euo pipefail
@@ -20,9 +21,11 @@ ACCOUNTS=(zdb zkernel zgate zgithub ztelegram zquarantine zimport zbackup zbrows
 ADMIN_GROUPS=(sudo adm wheel admin root lxd docker systemd-journal)
 PG_CONF=''
 NO_PG=0
+SESSION_FS_SIZE=10G
 while [ $# -gt 0 ]; do
   case "$1" in
     --pg-conf-dir) PG_CONF=$2; shift 2 ;;
+    --session-fs-size) SESSION_FS_SIZE=$2; shift 2 ;;
     --no-pg) NO_PG=1; shift ;;
     *) echo "REFUSED: unknown argument $1" >&2; exit 2 ;;
   esac
@@ -85,6 +88,25 @@ for d in start stop; do
 done
 echo "DIR /run/zavod/start $(stat -c '%U:%G %a' /run/zavod/start)"
 echo "DIR /run/zavod/stop $(stat -c '%U:%G %a' /run/zavod/stop)"
+
+echo "=== раздел сеансов с пределом места (вопрос аудитора «д», И.12б)"
+# Рабочие папки сеансов (StateDirectory с DynamicUser) лежат в /var/lib/private/zagent — это отдельный раздел
+# из файла-образа. Уже созданный образ не пересоздаётся: данные сеансов не теряются при повторной установке.
+IMG=/var/lib/zavod/session-fs.img
+if [ ! -e "$IMG" ]; then
+  truncate -s "$SESSION_FS_SIZE" "$IMG"
+  chmod 0600 "$IMG"
+  mkfs.ext4 -q -F -L zagent -m 0 "$IMG"
+fi
+[ "$(blkid -o value -s TYPE "$IMG")" = ext4 ] || die "$IMG is not ext4"
+install -d -o root -g root -m 0700 /var/lib/private
+install -d -o root -g root -m 0755 /var/lib/private/zagent
+install -o root -g root -m 0644 "$HERE/var-lib-private-zagent.mount" /etc/systemd/system/var-lib-private-zagent.mount
+systemctl daemon-reload
+systemctl enable --now var-lib-private-zagent.mount
+chown root:root /var/lib/private/zagent
+chmod 0755 /var/lib/private/zagent
+echo "SESSION_FS $(findmnt -n -o FSTYPE,SIZE /var/lib/private/zagent)"
 
 echo "=== 3.3.9 карантин и приём архива (И.12г, И.12д)"
 # Опись пишет ядро (zkernel), читают все: она не тайна, важна её целостность. Архив кладёт привратник (zgate),
@@ -170,6 +192,7 @@ systemctl daemon-reload
 systemctl enable --now zagent-start.path zagent-start.timer zavod-alert-notify.timer
 systemd-analyze verify --man=no /etc/systemd/system/zagent-start.service /etc/systemd/system/zagent-start.path \
   /etc/systemd/system/zavod-alert-notify.service /etc/systemd/system/zavod-alert-notify.timer \
+  /etc/systemd/system/var-lib-private-zagent.mount \
   /etc/systemd/system/zagent-start.timer /etc/systemd/system/zagent.slice "zagent@00000000000000000000000000000000.service" \
   "zquarantine@00000000000000000000000000000000.service" "zimport@00000000000000000000000000000000.service"
 echo "ZAVOD_CELL_INSTALL=OK"

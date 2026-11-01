@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/06_zavod_ext_04.sql (расширение Z-EXT-04: запуск сессий агента, карта 3.3.8.5)
--- ВЕРСИЯ: v0.4  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.4: аудит M33-06 — тревоги клетки в таблице cell_alert с доставкой оператору; v0.3: аудит M33-02 — остановка только при открытой аренде; v0.2: аудит C33-01 — живая служба место не освобождает)
+-- ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:24 +02:00 (v0.5: срок аренды — LEASE_EXPIRED через 30 минут, сеанс 4 часа; v0.4: аудит M33-06 — тревоги клетки в таблице cell_alert с доставкой оператору; v0.3: аудит M33-02 — остановка только при открытой аренде; v0.2: аудит C33-01 — живая служба место не освобождает)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 -- ОСНОВАНИЕ: протокол v3.1 И.12а (zagent-start, lease_reserve_start, lease_mark_running, после перезагрузки).
 -- НАЗНАЧЕНИЕ: (1) входная роль zstarter — её получает только root ячейки (peer, сопоставление zavod_cell);
@@ -8,6 +8,7 @@
 --       ЗАПУСК_НЕ_УДАЛСЯ (START_FAILED) — нет отметки «работает» за 2 минуты или перезагрузка;
 --       ПРЕРВАНА (INTERRUPTED) — служба не жива, аренда открыта; ЗАВЕРШЕНА (ENDED) — служба не жива, аренда закрыта;
 --   (3) журнал bem_control.session_start_log — по нему считается предел 6 запусков в минуту;
+--   (3а) срок аренды (вопрос аудитора «а»): запуск не позже 30 минут после открытия (LEASE_EXPIRED), сеанс не дольше 4 часов;
 --   (4) lease_reserve_start — одной операцией: аренда открыта, запуска у неё не было, нет другой сессии в
 --       STARTING или RUNNING, предел минуты не превышен → STARTING и строка журнала. Ответ — слово, без исключений;
 --   (5) lease_mark_running — STARTING → RUNNING не позже 2 минут, иначе TOO_LATE без смены состояния (вызывает ядро);
@@ -19,7 +20,7 @@
 --   Правило аудита C33-01: сессия из списка живых служб место не освобождает никогда.
 -- ОГРАНИЧЕНИЯ: ставится после 04_zavod_ext_03.sql и до итоговой проверки одной транзакцией; не меняет
 --   существующие таблицы, строки и функции. Срока у аренды bem_control.chat_lease нет — условие протокола
---   «аренда не истекла» сведено к «аренда OPEN» (вопрос аудитору). Повторный запуск той же аренды не
+--   «аренда не истекла» проверяется сроком: 30 минут на запуск от opened_at, 4 часа на сеанс. Повторный запуск той же аренды не
 --   разрешён: новая сессия — новая аренда.
 
 -- (0) Входная роль запуска. Без пароля, без особых признаков, без членств.
@@ -50,7 +51,7 @@ GRANT SELECT ON bem_control.session_start TO backup_reader;
 CREATE TABLE bem_control.session_start_log (
     log_id   uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     lease_id uuid NOT NULL,
-    outcome  text NOT NULL CHECK (outcome IN ('RESERVED', 'ALREADY_STARTED', 'LEASE_NOT_OPEN', 'RUNNING',
+    outcome  text NOT NULL CHECK (outcome IN ('RESERVED', 'ALREADY_STARTED', 'LEASE_NOT_OPEN', 'LEASE_EXPIRED', 'RUNNING',
                                               'START_FAILED', 'INTERRUPTED', 'ENDED')),
     at       timestamptz NOT NULL DEFAULT clock_timestamp()
 );
@@ -81,6 +82,11 @@ BEGIN
     IF v_status IS DISTINCT FROM 'OPEN' THEN
         INSERT INTO bem_control.session_start_log (lease_id, outcome) VALUES (p_lease_id, 'LEASE_NOT_OPEN');
         RETURN 'LEASE_NOT_OPEN';
+    END IF;
+    -- Срок аренды (вопрос аудитора «а»): запуск — не позже 30 минут после открытия аренды.
+    IF (SELECT opened_at FROM bem_control.chat_lease WHERE lease_id = p_lease_id) <= clock_timestamp() - interval '30 minutes' THEN
+        INSERT INTO bem_control.session_start_log (lease_id, outcome) VALUES (p_lease_id, 'LEASE_EXPIRED');
+        RETURN 'LEASE_EXPIRED';
     END IF;
     IF EXISTS (SELECT 1 FROM bem_control.session_start WHERE status IN ('STARTING', 'RUNNING')) THEN
         RETURN 'BUSY';
@@ -169,7 +175,8 @@ ALTER FUNCTION bem_control.lease_start_reconcile(uuid[], boolean) OWNER TO bem_c
 REVOKE EXECUTE ON FUNCTION bem_control.lease_start_reconcile(uuid[], boolean) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION bem_control.lease_start_reconcile(uuid[], boolean) TO zstarter;
 
--- (6) Зависшие запуски (аудит C33-01): брони STARTING старше 2 минут. zagent-start останавливает их живые
+-- (6) Зависшие запуски (аудит C33-01): брони STARTING старше 2 минут; сеансы RUNNING дольше 4 часов 5 минут
+--     (срок сеанса — 4 часа, RuntimeMaxSec службы; вопрос аудитора «а»). zagent-start останавливает их живые
 --     службы; место освобождает только сверка (5), когда службы уже нет в списке живых.
 CREATE FUNCTION bem_control.lease_start_overdue()
 RETURNS uuid[]
@@ -179,7 +186,8 @@ SET search_path = bem_control, bem_core, pg_catalog, pg_temp
 AS $$
 BEGIN
     RETURN coalesce((SELECT array_agg(lease_id ORDER BY lease_id) FROM bem_control.session_start
-                      WHERE status = 'STARTING' AND reserved_at <= clock_timestamp() - interval '2 minutes'),
+                      WHERE (status = 'STARTING' AND reserved_at <= clock_timestamp() - interval '2 minutes')
+                         OR (status = 'RUNNING' AND running_at <= clock_timestamp() - interval '4 hours 5 minutes')),
                     '{}'::uuid[]);
 END;
 $$;

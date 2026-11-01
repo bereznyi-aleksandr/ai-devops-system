@@ -3,7 +3,7 @@
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
 -- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
 -- РАСШИРЕНИЕ 04: sha256 fa6bdf4dfcf6717215d2239e99f83ef0870c352d5dc1483ca87e88353098f675
--- РАСШИРЕНИЕ 06: sha256 e425dfd23eeccf7f8930e1e27da6a0f77f60577e713b65c091f75192653ccbff
+-- РАСШИРЕНИЕ 06: sha256 e8c22f8da5178d7bd8520b04d48a820c16710d5830865e28fda420974643522a
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03 и Z-EXT-04 (см. сборщик).
 \set ON_ERROR_STOP on
 
@@ -55,7 +55,7 @@ DECLARE
         'TABLE|bem_control.session_start|session_start_pkey|PRIMARY KEY (lease_id)',
         'TABLE|bem_control.session_start|session_start_shape|CHECK ((((status = ''STARTING''::text) AND (running_at IS NULL) AND (ended_at IS NULL)) OR ((status = ''RUNNING''::text) AND (running_at IS NOT NULL) AND (ended_at IS NULL)) OR ((status = ''START_FAILED''::text) AND (running_at IS NULL) AND (ended_at IS NOT NULL)) OR ((status = ANY (ARRAY[''INTERRUPTED''::text, ''ENDED''::text])) AND (running_at IS NOT NULL) AND (ended_at IS NOT NULL))))',
         'TABLE|bem_control.session_start|session_start_status_check|CHECK ((status = ANY (ARRAY[''STARTING''::text, ''RUNNING''::text, ''START_FAILED''::text, ''INTERRUPTED''::text, ''ENDED''::text])))',
-        'TABLE|bem_control.session_start_log|session_start_log_outcome_check|CHECK ((outcome = ANY (ARRAY[''RESERVED''::text, ''ALREADY_STARTED''::text, ''LEASE_NOT_OPEN''::text, ''RUNNING''::text, ''START_FAILED''::text, ''INTERRUPTED''::text, ''ENDED''::text])))',
+        'TABLE|bem_control.session_start_log|session_start_log_outcome_check|CHECK ((outcome = ANY (ARRAY[''RESERVED''::text, ''ALREADY_STARTED''::text, ''LEASE_NOT_OPEN''::text, ''LEASE_EXPIRED''::text, ''RUNNING''::text, ''START_FAILED''::text, ''INTERRUPTED''::text, ''ENDED''::text])))',
         'TABLE|bem_control.session_start_log|session_start_log_pkey|PRIMARY KEY (log_id)',
         'TABLE|bem_control.cell_alert|cell_alert_attempts_check|CHECK ((attempts >= 0))',
         'TABLE|bem_control.cell_alert|cell_alert_delivery_pair|CHECK (((delivered_at IS NULL) = (receipt IS NULL)))',
@@ -1554,10 +1554,10 @@ BEGIN
         ('hold_operator_actor', 'd74fa66a16593ffd024d958ab1f7413c08ee00c34abd3aa78bc75b49f48b5ea4'),
         ('credential_expired', 'f1c3db18479871a0430733e7f9e222a2a1b4cd4f4aeba63a0361dc7422bd80db'),
         ('revoke_session_credential', 'a79e8b00176a86cbf069d5a8adc95f65b537c1bea2dbb885bf49104756c535aa'),
-        ('lease_reserve_start', '646283c2a704babe1d83c66c6096a348102c5752dbff5aed560de826a9870958'),
+        ('lease_reserve_start', '046e5b30c97d3e0fec315d347301eb48021c0b406458b394c8a2d3307e17e134'),
         ('lease_mark_running', '76b8cca5430662920a8df4ef7cfb5507a12d45b029ee9f74719ebcd7de576d4c'),
         ('lease_start_reconcile', 'aaa1d730ae506baccd2973ea8a7012f277ea4d658c093f2821bcb5e891ddb131'),
-        ('lease_start_overdue', '68e0888f834c210482c4b4da26a181c47358acd03fb57176424cab4c0c0247c1'),
+        ('lease_start_overdue', '5049ca6849f3074c76dce342ca93f61021a3b90976959ffb3871e324da2466f9'),
         ('lease_stop_check', '5807f1a7514934526da0ac4d14110f49464b73928c01e5438616bd0aab6a732c'),
         ('cell_alert_store', '6e46df4680e36dcb03c0064fc24b515a3dca1165afcaceeb48c144224712e048'),
         ('cell_alert_due', '8974f880190a6373e777e1f24912e789edb018241f1a6f50db6c2830a98dd80e'),

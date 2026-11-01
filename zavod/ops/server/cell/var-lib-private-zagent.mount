@@ -1,0 +1,22 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/var-lib-private-zagent.mount
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 16:26 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:26 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: отдельный раздел для рабочих папок сеансов агента (вопрос аудитора «д», И.12б): файл-образ
+#   /var/lib/zavod/session-fs.img (ext4, по умолчанию 10 ГБ) монтируется в /var/lib/private/zagent — туда systemd
+#   кладёт StateDirectory сеансов с DynamicUser. Сеанс, заполнивший раздел, получает «нет места», а диск сервера
+#   (база, копии, журналы) остаётся свободным.
+# ОГРАНИЧЕНИЯ: образ создаёт install_cell.sh (--session-fs-size); исполняемые файлы с битом SUID и устройства
+#   в разделе не работают (nosuid, nodev).
+[Unit]
+Description=Zavod agent sessions, separate size-limited filesystem
+Before=zagent.slice
+
+[Mount]
+What=/var/lib/zavod/session-fs.img
+Where=/var/lib/private/zagent
+Type=ext4
+Options=loop,nosuid,nodev
+
+[Install]
+WantedBy=multi-user.target

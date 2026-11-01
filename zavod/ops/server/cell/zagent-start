@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zagent-start
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.3: аудит M33-06 — тревога сначала файлом в /var/lib/zavod/alerts/spool, потом в базу bem_control.cell_alert; v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:24 +02:00 (v0.4: срок аренды — LEASE_EXPIRED в архив, сеанс сверх срока останавливается; v0.3: аудит M33-06 — тревога сначала файлом в /var/lib/zavod/alerts/spool, потом в базу bem_control.cell_alert; v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: один проход по запросам на запуск и остановку сессий агента (протокол v3.1 И.12а, карта 3.3.8.4).
 #   Работает от root (zagent-start.service). Порядок: замок → сверка живых сессий с базой → остановки → запуски.
@@ -279,7 +279,7 @@ def do_starts(mover, db_ok):
                 r = systemctl('start', '--no-block', f'zagent@{name}.service')
                 mover.move(dfd, os.fsencode(name), ARCHIVE, 'STARTED' if r.returncode == 0 else 'START_CALL_FAILED',
                            'file')
-            elif res in ('ALREADY_STARTED', 'LEASE_NOT_OPEN'):
+            elif res in ('ALREADY_STARTED', 'LEASE_NOT_OPEN', 'LEASE_EXPIRED'):
                 mover.move(dfd, os.fsencode(name), ARCHIVE, res, 'file')
             elif res in ('BUSY', 'RATE_LIMITED'):
                 log(f'ZAGENT_START {res} {name}: left for the next pass')
@@ -310,14 +310,15 @@ def main():
         log(f'ZAGENT_START RECONCILE boot={changed} live={len(live)} changed_rows={n}')
         if changed:
             remember_boot(boot_id, boot_path)
-        # Аудит C33-01: зависший запуск (STARTING дольше 2 минут) сначала останавливается; место освободит
+        # Аудит C33-01: зависший запуск (STARTING дольше 2 минут) и сеанс сверх срока (RUNNING дольше 4 часов
+        # 5 минут, вопрос аудитора «а») сначала останавливаются; место освободит
         # следующая сверка, когда службы не будет в списке живых. Не остановилась — место остаётся занятым.
         overdue = db("SELECT array_to_string(bem_control.lease_start_overdue(), ' ');\n").split()
         for u in overdue:
             name = uuid.UUID(u).hex
             if name in live:
                 r = systemctl('stop', f'zagent@{name}.service')
-                alert(f'start overdue {name}: stop rc={r.returncode}')
+                alert(f'session overdue {name}: stop rc={r.returncode}')
     except DbError as e:
         db_ok = False
         log(f'ZAGENT_START DB_UNAVAILABLE: {e}')

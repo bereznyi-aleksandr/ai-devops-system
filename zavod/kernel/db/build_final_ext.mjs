@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.12  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.12: аудит M33-06 — таблица cell_alert и четыре функции тревог; v0.11: аудит C33-01 и M33-02 — функции lease_start_overdue и lease_stop_check; v0.10: карта 3.3.8.5 — Z-EXT-04
+// ВЕРСИЯ: v0.13  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:24 +02:00 (v0.13: исход LEASE_EXPIRED в журнале запуска; v0.12: аудит M33-06 — таблица cell_alert и четыре функции тревог; v0.11: аудит C33-01 и M33-02 — функции lease_start_overdue и lease_stop_check; v0.10: карта 3.3.8.5 — Z-EXT-04
 //   (db/06_zavod_ext_04.sql): входная роль zstarter во всех списках ролей, таблицы session_start и session_start_log,
 //   три функции запуска сессий — права, режим definer, отпечатки тел, точный набор индексов; v0.9 2026-10-18 11:38 +03:00: v0.9: ChatGPT R25 — функция hold_operator_actor:
 //   вызывает только входная роль, режим definer; v0.8 10:52: ChatGPT R24 — функции hold_session_credential и
@@ -265,7 +265,7 @@ const EXT04_CONSTRAINTS = [
   "TABLE|bem_control.session_start|session_start_pkey|PRIMARY KEY (lease_id)",
   "TABLE|bem_control.session_start|session_start_shape|CHECK ((((status = 'STARTING'::text) AND (running_at IS NULL) AND (ended_at IS NULL)) OR ((status = 'RUNNING'::text) AND (running_at IS NOT NULL) AND (ended_at IS NULL)) OR ((status = 'START_FAILED'::text) AND (running_at IS NULL) AND (ended_at IS NOT NULL)) OR ((status = ANY (ARRAY['INTERRUPTED'::text, 'ENDED'::text])) AND (running_at IS NOT NULL) AND (ended_at IS NOT NULL))))",
   "TABLE|bem_control.session_start|session_start_status_check|CHECK ((status = ANY (ARRAY['STARTING'::text, 'RUNNING'::text, 'START_FAILED'::text, 'INTERRUPTED'::text, 'ENDED'::text])))",
-  "TABLE|bem_control.session_start_log|session_start_log_outcome_check|CHECK ((outcome = ANY (ARRAY['RESERVED'::text, 'ALREADY_STARTED'::text, 'LEASE_NOT_OPEN'::text, 'RUNNING'::text, 'START_FAILED'::text, 'INTERRUPTED'::text, 'ENDED'::text])))",
+  "TABLE|bem_control.session_start_log|session_start_log_outcome_check|CHECK ((outcome = ANY (ARRAY['RESERVED'::text, 'ALREADY_STARTED'::text, 'LEASE_NOT_OPEN'::text, 'LEASE_EXPIRED'::text, 'RUNNING'::text, 'START_FAILED'::text, 'INTERRUPTED'::text, 'ENDED'::text])))",
   "TABLE|bem_control.session_start_log|session_start_log_pkey|PRIMARY KEY (log_id)",
   "TABLE|bem_control.cell_alert|cell_alert_attempts_check|CHECK ((attempts >= 0))",
   "TABLE|bem_control.cell_alert|cell_alert_delivery_pair|CHECK (((delivered_at IS NULL) = (receipt IS NULL)))",

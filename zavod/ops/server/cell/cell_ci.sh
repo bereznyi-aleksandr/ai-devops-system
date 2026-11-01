@@ -112,6 +112,17 @@ uid=$(echo "$J" | sed -n 's/.*ZAGENT_SESSION start .* uid=\([0-9]*\) .*/\1/p' | 
 [ -n "$uid" ] && [ "$uid" -ge 61184 ] && [ "$uid" -le 65519 ] && ok "dynamic uid $uid" || bad "uid $uid not dynamic"
 [ "$(systemctl show -p RuntimeMaxUSec --value "zagent@$L1.service")" = 4h ] && ok "RuntimeMaxSec 4h" || bad "RuntimeMaxSec"
 systemd-analyze security --no-pager "zagent@$L1.service" | tail -1 || true
+
+echo "=== раздел сеансов с пределом места (вопрос аудитора «д»)"
+[ "$(findmnt -n -o FSTYPE /var/lib/private/zagent)" = ext4 ] && ok "session fs: ext4 mounted" || bad "session fs not mounted"
+[ "$(sudo findmnt -n -o TARGET -T "/var/lib/private/zagent/$L1")" = /var/lib/private/zagent ] \
+  && ok "session fs: workdir of $L1 on it" || bad "session fs: workdir elsewhere"
+fs_bytes=$(findmnt -n -b -o SIZE /var/lib/private/zagent)
+if sudo dd if=/dev/zero of=/var/lib/private/zagent/ci-fill bs=1M count=200 status=none 2>/dev/null; then fill_rc=0; else fill_rc=1; fi
+filled=$(sudo stat -c %s /var/lib/private/zagent/ci-fill)
+[ "$fill_rc" = 1 ] && [ "$filled" -le "$fs_bytes" ] && ok "session fs: write stops at the limit ($filled of 200M)" \
+  || bad "session fs: no limit (rc=$fill_rc, $filled bytes)"
+sudo truncate -s 0 /var/lib/private/zagent/ci-fill
 [ "$(pgsu "SELECT bem_control.lease_mark_running('$L1'::uuid)")" = RUNNING ] && ok "marked RUNNING" || bad "mark running"
 
 echo "=== одна сессия за раз"
@@ -183,7 +194,7 @@ pass
 [ "$(active "$L6")" != active ] && ok "C33-01: overdue session stopped" || bad "C33-01: L6 still active"
 [ "$(state "$L6")" = STARTING ] && ok "C33-01: slot held until service gone" || bad "C33-01: L6 state $(state "$L6")"
 if [ "$(active "$L7")" != active ] && sudo test -e "/run/zavod/start/$L7"; then ok "C33-01: no second session"; else bad "C33-01: second session"; fi
-sudo journalctl -t zagent-start --no-pager | grep -q "ZAVOD_ALERT start overdue $L6" && ok "C33-01: alert" || bad "C33-01: no alert"
+sudo journalctl -t zagent-start --no-pager | grep -q "ZAVOD_ALERT session overdue $L6" && ok "C33-01: alert" || bad "C33-01: no alert"
 pass
 [ "$(state "$L6")" = START_FAILED ] && ok "C33-01: released after stop" || bad "C33-01: L6 state $(state "$L6")"
 start_wait "$L7" && ok "C33-01: next lease started" || bad "C33-01: L7 not started"

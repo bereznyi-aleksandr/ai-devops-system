@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/test_ext04_session_start.sql
--- ВЕРСИЯ: v0.3  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.3: аудит M33-06 — тревоги клетки T30–T46; v0.2: аудит C33-01 — живая сессия место не освобождает; M33-02 — lease_stop_check)
+-- ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:24 +02:00 (v0.4: срок аренды T47–T49; v0.3: аудит M33-06 — тревоги клетки T30–T46; v0.2: аудит C33-01 — живая сессия место не освобождает; M33-02 — lease_stop_check)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 -- НАЗНАЧЕНИЕ: проверка Z-EXT-04 (карта 3.3.8.5): ответы lease_reserve_start, lease_mark_running,
 --   lease_start_reconcile; одна живая сессия на ячейку; предел 6 запусков в минуту; кто что может вызвать.
@@ -79,6 +79,15 @@ BEGIN
     IF v <> 'ENDED' THEN RAISE EXCEPTION 'T20 %', v; END IF;
     v := bem_control.lease_reserve_start(e);   IF v <> 'ALREADY_STARTED' THEN RAISE EXCEPTION 'T21 %', v; END IF;
 
+    -- Срок аренды (вопрос аудитора «а»): запуск позже 30 минут после открытия — LEASE_EXPIRED, без брони.
+    x := gen_random_uuid();
+    INSERT INTO bem_control.chat_lease (lease_id, tenant_id, role_key, chat_number, generation, work_item_id,
+                                        holder_session, rules_commit, code_commit, status, opened_by, opened_at)
+    VALUES (x, tenant, '07_ci_start', 'Z00007', 1, gen_random_uuid(), 'ci-session-7',
+            repeat('a', 40), repeat('b', 40), 'OPEN', 'ci', clock_timestamp() - interval '31 minutes');
+    v := bem_control.lease_reserve_start(x);   IF v <> 'LEASE_EXPIRED'   THEN RAISE EXCEPTION 'T47 %', v; END IF;
+    IF EXISTS (SELECT 1 FROM bem_control.session_start WHERE lease_id = x) THEN RAISE EXCEPTION 'T48'; END IF;
+
     -- Права: zstarter бронирует и сверяет, но не отмечает «работает» и не читает таблицы.
     SET LOCAL ROLE zstarter;
     v := bem_control.lease_reserve_start(f);   IF v <> 'RESERVED'        THEN RAISE EXCEPTION 'T22 %', v; END IF;
@@ -132,6 +141,9 @@ BEGIN
         RAISE EXCEPTION 'T29 second live row accepted';
     EXCEPTION WHEN unique_violation THEN NULL;
     END;
+    -- Сеанс дольше срока (4 часа 5 минут) попадает в список на остановку.
+    UPDATE bem_control.session_start SET running_at = clock_timestamp() - interval '4 hours 10 minutes' WHERE lease_id = f;
+    IF bem_control.lease_start_overdue() <> ARRAY[f] THEN RAISE EXCEPTION 'T49 %', bem_control.lease_start_overdue(); END IF;
 
     -- Тревоги клетки (аудит M33-06): запись, повтор ключа, плохая запись, доставка, ошибка канала, права.
     DECLARE
