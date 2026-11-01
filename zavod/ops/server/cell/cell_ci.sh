@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
 # ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.4: пробы M33-01 — вход zkernel, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -59,6 +59,37 @@ if sudo -u zkernel psql -X -U zstarter -d bem -c 'select 1' >/dev/null 2>&1; the
   && ok "M33-01: zkernel -> bem_kernel_rw over socket" || bad "M33-01: zkernel cannot log in as bem_kernel_rw"
 if psql -X -h /var/run/postgresql -U bem_kernel_rw -d bem -c 'select 1' >/dev/null 2>&1; then bad "M33-01: runner logged in as bem_kernel_rw"; else ok "M33-01: runner refused as bem_kernel_rw"; fi
 if sudo -u zkernel psql -X -h /var/run/postgresql -U postgres -d bem -c 'select 1' >/dev/null 2>&1; then bad "M33-01: zkernel logged in as postgres"; else ok "M33-01: zkernel refused as postgres"; fi
+
+# Аудит M33-03 (И.7, Л.16–Л.25): каждая служба видит только свою папку; сервер базы — под zdb, и только он
+# читает файлы базы; служебные папки стартера и тревог закрыты для всех служб.
+SVC=(zkernel zgate zgithub ztelegram zquarantine zimport zbackup zbrowser)
+PGDATA_DIR=$(sudo -u postgres psql -X -A -t -c 'show data_directory')
+[ "$(sudo stat -c %U "$PGDATA_DIR")" = zdb ] && ok "M33-03: database files owned by zdb" || bad "M33-03: database files owner $(sudo stat -c %U "$PGDATA_DIR")"
+[ "$(ps -o user= -C postgres | sort -u | tr '\n' ' ')" = 'zdb ' ] && ok "M33-03: postgres server processes run as zdb" || bad "M33-03: server runs as $(ps -o user= -C postgres | sort -u | tr '\n' ' ')"
+if sudo -u postgres test -r "$PGDATA_DIR/PG_VERSION"; then bad "M33-03: OS user postgres reads database files"; else ok "M33-03: OS user postgres cannot read database files"; fi
+[ "$(sudo -u postgres psql -X -A -t -c 'show listen_addresses')" = '' ] && ok "M33-03: no network listen" || bad "M33-03: listen_addresses not empty"
+own_bad=0; cross_bad=0
+for a in "${SVC[@]}"; do
+  sudo -u "$a" test -r "/var/lib/zavod/svc/$a" -a -w "/var/lib/zavod/svc/$a" || own_bad=$((own_bad + 1))
+  for b in "${SVC[@]}" zdb; do
+    [ "$a" != "$b" ] || continue
+    if [ "$b" = zdb ]; then t="$PGDATA_DIR"; else t="/var/lib/zavod/svc/$b"; fi
+    if sudo -u "$a" ls "$t" >/dev/null 2>&1; then cross_bad=$((cross_bad + 1)); echo "CELL_INFO $a reads $t"; fi
+  done
+  for k in zgithub ztelegram zbackup; do
+    [ "$a" != "$k" ] || continue
+    if sudo -u "$a" ls "/etc/zavod/keys/$k" >/dev/null 2>&1; then cross_bad=$((cross_bad + 1)); echo "CELL_INFO $a reads keys of $k"; fi
+  done
+  for p in /var/lib/zavod/start-archive /var/lib/zavod/start-rejected /var/lib/zavod/start-state /var/lib/zavod/alerts \
+           /var/lib/zavod/intake/archive; do
+    if sudo -u "$a" ls "$p" >/dev/null 2>&1; then cross_bad=$((cross_bad + 1)); echo "CELL_INFO $a reads $p"; fi
+  done
+  for p in /etc/zavod /usr/local/lib/zavod /etc/systemd/system "$(dirname "$PGDATA_DIR")"; do
+    if sudo -u "$a" test -w "$p"; then cross_bad=$((cross_bad + 1)); echo "CELL_INFO $a writes $p"; fi
+  done
+done
+[ "$own_bad" = 0 ] && ok "M33-03: each service owns its folder" || bad "M33-03: $own_bad services cannot use their folder"
+[ "$cross_bad" = 0 ] && ok "M33-03: no service reads another's folder, keys or starter data" || bad "M33-03: $cross_bad cross-access cases"
 
 echo "=== права запуска служб"
 if sudo -u zkernel systemctl start zagent@0123456789abcdef0123456789abcdef.service >/dev/null 2>&1; then bad "zkernel started a unit"

@@ -112,6 +112,14 @@ else
   echo "POLKIT not present: units are managed by root only"
 fi
 
+echo "=== свои папки служб (И.7, Л.16–Л.25; аудит M33-03)"
+# Рабочая папка каждой службы — только её (0700). Папка ключей — у служб с ключами внешних сервисов:
+# GitHub (zgithub), бот Telegram (ztelegram), копия (zbackup); ключи кладёт оператор, установщик их не пишет.
+dir /var/lib/zavod/svc root root 0755
+for a in zkernel zgate zgithub ztelegram zquarantine zimport zbackup zbrowser; do dir "/var/lib/zavod/svc/$a" "$a" "$a" 0700; done
+dir /etc/zavod/keys root root 0755
+for a in zgithub ztelegram zbackup; do dir "/etc/zavod/keys/$a" "$a" "$a" 0700; done
+
 if [ "$NO_PG" = 0 ]; then
   echo "=== 3.3.8.5 вход root → zstarter (zavod_cell), zkernel → bem_kernel_rw (zavod_kernel, аудит M33-01); peer"
   if [ -z "$PG_CONF" ]; then
@@ -119,6 +127,26 @@ if [ "$NO_PG" = 0 ]; then
   fi
   [ -n "$PG_CONF" ] && [ -f "$PG_CONF/pg_hba.conf" ] || die "PostgreSQL config not found (use --pg-conf-dir or --no-pg)"
   ts=$(date -u '+%Y%m%dT%H%M%SZ')
+  # И.7, Л.17 (аудит M33-03): сервер базы работает под zdb и видит только свои файлы. Учётная запись postgres
+  # остаётся входом администратора в базу (sudo -u postgres psql), файлов базы она больше не читает.
+  # Настройки — root:zdb 0640: сервер их читает, но поменять не может. Сокет — в /var/run/postgresql
+  # (2775 postgres:postgres), поэтому zdb входит в группу postgres. Сети нет (Л.17), значит и SSL не нужен.
+  PG_VER=$(basename "$(dirname "$PG_CONF")"); PG_NAME=$(basename "$PG_CONF")
+  PG_DATA=$(sed -n "s/^data_directory[[:space:]]*=[[:space:]]*'\([^']*\)'.*/\1/p" "$PG_CONF/postgresql.conf")
+  [ -n "$PG_DATA" ] && [ -d "$PG_DATA" ] || die "data_directory not found in $PG_CONF/postgresql.conf"
+  if [ "$(stat -c '%U' "$PG_DATA")" != zdb ] || [ "$(stat -c '%U' "$PG_CONF")" != root ]; then
+    pg_ctlcluster "$PG_VER" "$PG_NAME" stop || true
+    printf "listen_addresses = ''\nssl = off\n" > "$PG_CONF/conf.d/20-zavod-zdb.conf"
+    chown -R zdb:zdb "$PG_DATA"
+    chown -R root:zdb "$PG_CONF"
+    find "$PG_CONF" -type d -exec chmod 0750 {} +
+    find "$PG_CONF" -type f -exec chmod 0640 {} +
+    PG_LOG="/var/log/postgresql/postgresql-$PG_VER-$PG_NAME.log"
+    if [ -e "$PG_LOG" ]; then chown zdb:adm "$PG_LOG"; fi
+    usermod -aG postgres zdb
+    systemctl start "postgresql@$PG_VER-$PG_NAME.service"
+  fi
+  echo "PG server owner $(stat -c '%U:%G %a' "$PG_DATA"), config $(stat -c '%U:%G %a' "$PG_CONF")"
   # Пары «сопоставление, учётная запись Linux, роль базы»; у каждой своя строка pg_hba (только база bem).
   for pair in 'zavod_cell root zstarter' 'zavod_kernel zkernel bem_kernel_rw'; do
     read -r MAP OSUSER DBROLE <<< "$pair"
