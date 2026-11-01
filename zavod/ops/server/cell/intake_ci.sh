@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/intake_ci.sh
 # ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:12 +02:00 (v0.2: пробы M33-R2-03 — карантин после проверки приёма
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:19 +02:00 (v0.2: пробы M33-R2-03 — карантин после проверки приёма
 #   ждёт; M33-R2-04 — раздел приёма: предел inode и места, диск сервера не тратится)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проба ПБ-4 (протокол v3.1 И.13; карта 3.3.9.4) на машине GitHub ubuntu-24.04 после install_cell.sh:
@@ -261,6 +261,7 @@ isys1=$(sysinodes)
 [ $((isys0 - isys1)) -lt 500 ] && ok "M33-R2-04: server disk inodes untouched ($((isys0 - isys1)))" || bad "M33-R2-04: server inodes used $((isys0 - isys1))"
 # Освободить inode раздела для пробы места: перенос на диск машины CI, ничего не удаляется.
 sudo sh -c "mv '$I'/archive/$Lm-* '$TMP'/"
+echo "INTAKE_INFO after inode probe: $(df --output=used,avail -B1M "$I" | tail -1) MB, inodes $(df --output=iused,iavail "$I" | tail -1)"
 # Предел места: архивы по 20 МБ, пока раздел не откажет.
 python3 -I "$HERE/intake_gen.py" big "$TMP/big.tar"
 sys0=$(sysfree); full=''
@@ -269,15 +270,16 @@ for n in 1 2 3 4 5 6 7 8 9 10; do
   mb="{\"v\":1,\"lease\":\"$Lb\",\"dirs\":[\"src/\",\"tests/\"],\"max_files\":10,\"max_bytes\":33554432,\"max_file_bytes\":33554432,\"max_depth\":4,\"exec\":[\"tests/run.sh\"]}"
   if ! printf '%s' "$mb" | sudo -u zkernel tee "$I/manifest/$Lb.json" >/dev/null 2>&1; then full="manifest $n"; break; fi
   sudo -u zkernel chmod 0644 "$I/manifest/$Lb.json"
-  if ! sudo install -o zgate -g zquarantine -m 0640 "$TMP/big.tar" "$I/in/$Lb.tar" 2>/dev/null; then full="upload $n"; break; fi
+  if ! err=$(sudo install -o zgate -g zquarantine -m 0640 "$TMP/big.tar" "$I/in/$Lb.tar" 2>&1); then full="upload $n: $err"; break; fi
   sudo systemctl start "zquarantine@$Lb.service" 2>/dev/null || true
   if [ "$(jresult quarantine "$Lb")" != ACCEPTED ]; then full="quarantine $n $(jreason quarantine "$Lb")"; break; fi
   wait_for 60 import_done "$Lb" || true
   if [ "$(jresult import "$Lb")" != ACCEPTED ]; then full="import $n $(jreason import "$Lb")"; break; fi
 done
-echo "INTAKE_INFO intake partition full at: ${full:-never} ($(df --output=used,avail -B1M "$I" | tail -1))"
+echo "INTAKE_INFO intake partition full at: ${full:-never}; MB used/avail $(df --output=used,avail -B1M "$I" | tail -1); inodes $(df --output=iused,iavail "$I" | tail -1)"
 case "$full" in
-  "manifest "*|"upload "*|*OS_ERROR_ENOSPC) ok "M33-R2-04: full partition refuses ($full)" ;;
+  # отказ засчитывается только из-за нехватки места и только после хотя бы одного принятого архива
+  "manifest "[2-9]*"No space"*|"upload "[2-9]*"No space"*|"quarantine "*OS_ERROR_ENOSPC|"import "*OS_ERROR_ENOSPC) ok "M33-R2-04: full partition refuses ($full)" ;;
   *) bad "M33-R2-04: partition did not refuse (${full:-never})" ;;
 esac
 sys1=$(sysfree)
