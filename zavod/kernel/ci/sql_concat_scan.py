@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 00:07 +02:00 (v0.2: аудит M3310-R1B-02 —
+#   текст запроса отслеживается и через переменные: «q = 'SELECT …'; q += v», промежуточная переменная, куски
+#   «'SEL' + 'ECT …'» (куски складываются в один текст до проверки); то же для JavaScript)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка сборки (карта 3.3.10.2, протокол И.7а п.2): запрос к базе — только заранее написанный текст,
 #   значения — только параметрами. Находит склейку запросов (текст запроса, собранный из кусков во время работы)
 #   и роняет сборку (код выхода 1, строки SQL_CONCAT ...).
-#   Python (службы ячейки): f-строка, «+», «%», .format() или .join() с текстом, похожим на запрос.
-#   JavaScript (ядро, движок): шаблон `...${...}...` или «+» рядом с текстом запроса.
+#   Python (службы ячейки): f-строка с подстановкой, «+», «+=», «%», .format(), .join(), .replace() — если
+#   сложенный текст всех известных кусков похож на запрос. Кусок известен, если он записан в коде прямо или
+#   лежит в переменной, которой в этом файле присвоен такой текст (по всем присваиваниям, до неподвижной точки).
+#   JavaScript (ядро, движок): шаблон `...${...}...` с текстом запроса; «+», «+=», .concat() рядом с текстом
+#   запроса или с переменной, которой присвоен текст запроса; цепочка строк через «+», вместе похожая на запрос.
 #   Исключения — только из файла разрешений: строка «путь<TAB>точный текст строки кода», для каждой — причина.
 # ВЫЗОВ: python3 -I sql_concat_scan.py [--allow файл] путь…   (папки обходятся целиком: *.py, *.mjs, *.js и файлы
 #   без расширения с первой строкой «#!…python3»)
-# ОГРАНИЧЕНИЯ: проверка по тексту и дереву разбора, а не по смыслу программы; ловит склейку там, где кусок запроса
-#   записан прямо в коде. Неиспользованная строка разрешений — тоже отказ: разрешения не копятся.
+# ОГРАНИЧЕНИЯ: проверка по тексту и дереву разбора, а не по смыслу программы. Текст, пришедший из другого файла,
+#   из функции или извне, сканер не видит; поэтому запросы пишутся постоянными в том же файле, где выполняются.
+#   Неиспользованная строка разрешений — тоже отказ: разрешения не копятся.
 import ast
 import os
 import re
@@ -21,38 +27,114 @@ import sys
 SQL = re.compile(r'\b(SELECT|INSERT\s+INTO|UPDATE\s+\w|DELETE\s+FROM|CREATE\s|ALTER\s|DROP\s|GRANT\s|REVOKE\s|TRUNCATE\s'
                  r'|COPY\s|EXECUTE\s|SET\s+(LOCAL\s+)?ROLE|WHERE\s|VALUES\s*\()')
 JS_TEMPLATE = re.compile(r'`[^`]*`', re.S)
-JS_PLUS = re.compile(r'''(['"])((?:(?!\1)[^\\\n]|\\.)*)\1\s*\+|\+\s*(['"])((?:(?!\3)[^\\\n]|\\.)*)\3''')
+JS_LIT = r'''(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`[^`]*`)'''
+JS_PLUS = re.compile(r'''(['"])((?:(?!\1)[^\\\n]|\\.)*)\1\s*\+|\+=?\s*(['"])((?:(?!\3)[^\\\n]|\\.)*)\3''')
+JS_CHAIN = re.compile(JS_LIT + r'(?:\s*\+\s*' + JS_LIT + r')+', re.S)
+JS_ASSIGN = re.compile(r'([A-Za-z_$][\w$.]*)\s*(\+?=)(?![=>])\s*(' + JS_LIT + r'(?:\s*\+\s*' + JS_LIT + r')*)', re.S)
+JS_ALIAS = re.compile(r'([A-Za-z_$][\w$.]*)\s*=(?![=>])\s*([A-Za-z_$][\w$.]*)\s*[;\n]')
+MAX_TEXT = 20000
+STR_METHODS = ('format', 'format_map', 'join', 'replace', 'strip', 'lstrip', 'rstrip', 'lower', 'upper',
+               'casefold', 'encode', 'decode', 'removeprefix', 'removesuffix', '__add__', '__mod__')
 
 
 def sqlish(s):
     return isinstance(s, str) and SQL.search(s) is not None
 
 
+def dotted(node):
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        base = dotted(node.value)
+        return base + '.' + node.attr if base else None
+    return None
+
+
 def py_findings(path, text):
     try:
         tree = ast.parse(text, path)
     except SyntaxError as e:
-        return [(e.lineno or 0, f'syntax error: {e.msg}')]
+        return [(e.lineno or 0, f'syntax error: {e.msg}', '')]
     out = []
     lines = text.splitlines()
+    env = {}  # имя (или a.b) → сложенный текст всех кусков, когда-либо присвоенных в этом файле
 
-    def const_sql(node):
-        return isinstance(node, ast.Constant) and sqlish(node.value)
+    def fold(node):
+        """Текст всех строковых кусков выражения по порядку; имя — его известный текст."""
+        if isinstance(node, ast.Constant):
+            return node.value if isinstance(node.value, str) else ''
+        if isinstance(node, (ast.Name, ast.Attribute)):
+            d = dotted(node)
+            if d in env:
+                return env[d]
+            return fold(node.value) if isinstance(node, ast.Attribute) else ''
+        if isinstance(node, ast.JoinedStr):
+            return ''.join(fold(v) for v in node.values)
+        if isinstance(node, ast.FormattedValue):
+            return fold(node.value)
+        if isinstance(node, ast.BinOp):
+            return fold(node.left) + fold(node.right)
+        if isinstance(node, ast.Call):
+            # Текст несут только строковые методы и str(); результат любой другой функции — не текст запроса.
+            if isinstance(node.func, ast.Attribute) and node.func.attr in STR_METHODS:
+                return ''.join(fold(a) for a in [node.func.value] + list(node.args))
+            if isinstance(node.func, ast.Name) and node.func.id == 'str':
+                return ''.join(fold(a) for a in node.args)
+            return ''
+        if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+            return ''.join(fold(e) for e in node.elts)
+        if isinstance(node, ast.IfExp):
+            return fold(node.body) + '\n' + fold(node.orelse)
+        if isinstance(node, (ast.Subscript, ast.Starred)):
+            return fold(node.value)
+        return ''
 
-    def has_sql(node):
-        return any(const_sql(n) for n in ast.walk(node))
+    def sqlv(node):
+        return sqlish(fold(node))
+
+    # Неподвижная точка: присваивания читаются, пока известные тексты имён меняются.
+    assigns = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            assigns += [(t, node.value) for t in node.targets]
+        elif isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.NamedExpr)) and node.value is not None:
+            assigns.append((node.target, node.value))
+        elif isinstance(node, (ast.For, ast.comprehension)):
+            assigns.append((node.target, node.iter))
+    for _ in range(20):
+        changed = False
+        for target, value in assigns:
+            v = fold(value)
+            if not v:
+                continue
+            for t in (target.elts if isinstance(target, (ast.Tuple, ast.List)) else [target]):
+                d = dotted(t)
+                if d is None:
+                    continue
+                old = env.get(d, '')
+                if v not in old.split('\n'):
+                    env[d] = (old + '\n' + v if old else v)[:MAX_TEXT]
+                    changed = changed or env[d] != old
+        if not changed:
+            break
+
+    def listy(node):
+        return isinstance(node, (ast.List, ast.Tuple, ast.ListComp, ast.Set, ast.Dict))
 
     for node in ast.walk(tree):
         bad = None
-        if isinstance(node, ast.JoinedStr) and any(const_sql(v) for v in node.values):
+        if isinstance(node, ast.JoinedStr) and any(isinstance(v, ast.FormattedValue) for v in node.values) \
+                and sqlv(node):
             bad = 'f-string with SQL text'
-        elif isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Mod)) and (has_sql(node.left)
-                                                                                         or has_sql(node.right)):
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Mod)) \
+                and not (listy(node.left) or listy(node.right)) and sqlv(node):
             bad = 'SQL text joined with + or %'
-        elif isinstance(node, ast.AugAssign) and isinstance(node.op, ast.Add) and has_sql(node.value):
+        elif isinstance(node, ast.AugAssign) and isinstance(node.op, (ast.Add, ast.Mod)) \
+                and not listy(node.value) and (sqlv(node.value) or sqlish(env.get(dotted(node.target), ''))):
             bad = 'SQL text appended with +='
-        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in ('format', 'join'):
-            if const_sql(node.func.value) or any(has_sql(a) for a in node.args):
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                and node.func.attr in ('format', 'join', 'replace', 'format_map', '__add__', '__mod__'):
+            if sqlv(node.func.value) or any(sqlv(a) for a in node.args):
                 bad = f'SQL text built with .{node.func.attr}()'
         if bad:
             ln = getattr(node, 'lineno', 0)
@@ -62,22 +144,53 @@ def py_findings(path, text):
     return out
 
 
+def js_unquote(chain):
+    """Текст цепочки строк «'a' + "b" + `c`» без кавычек; ${...} шаблона заменяется пробелом."""
+    return ''.join(re.sub(r'\$\{[^}]*\}', ' ', m.group(0)[1:-1]) for m in re.finditer(JS_LIT, chain, re.S))
+
+
 def js_findings(path, text):
     out = []
     lines = text.splitlines()
 
     def line_of(pos):
         return text.count('\n', 0, pos) + 1
+
+    def add(pos, why):
+        ln = line_of(pos)
+        item = (ln, why, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
+        if item not in out:
+            out.append(item)
+
     for m in JS_TEMPLATE.finditer(text):
         body = m.group(0)
         if '${' in body and sqlish(body):
-            ln = line_of(m.start() + body.index('${'))
-            out.append((ln, 'template literal with SQL text and ${}', lines[ln - 1].strip()))
+            add(m.start() + body.index('${'), 'template literal with SQL text and ${}')
     for m in JS_PLUS.finditer(text):
         s = m.group(2) if m.group(2) is not None else m.group(4)
         if sqlish(s or ''):
-            ln = line_of(m.start())
-            out.append((ln, 'SQL text joined with +', lines[ln - 1].strip()))
+            add(m.start(), 'SQL text joined with +')
+    for m in JS_CHAIN.finditer(text):
+        if sqlish(js_unquote(m.group(0))):
+            add(m.start(), 'SQL text pieces joined with +')
+    # Имена, которым в файле присвоен текст запроса (в том числе кусками и через другое имя).
+    env = {}
+    for m in JS_ASSIGN.finditer(text):
+        env[m.group(1)] = env.get(m.group(1), '') + '\n' + js_unquote(m.group(3))
+    for _ in range(5):
+        for m in JS_ALIAS.finditer(text):
+            if m.group(2) in env and env[m.group(2)] not in env.get(m.group(1), ''):
+                env[m.group(1)] = env.get(m.group(1), '') + '\n' + env[m.group(2)]
+    for name in sorted(n for n, v in env.items() if sqlish(v)):
+        q = re.escape(name)
+        for pat, why in ((r'(?<![\w$.])' + q + r'\s*\+=', 'SQL text variable appended with +='),
+                         (r'(?<![\w$.])' + q + r'\s*\+(?![+=])', 'SQL text variable joined with +'),
+                         (r'(?<!\+)\+\s*' + q + r'(?![\w$])', 'SQL text variable joined with +'),
+                         (r'\$\{\s*' + q + r'\s*\}', 'SQL text variable inside a template'),
+                         (r'(?<![\w$.])' + q + r'\s*\.\s*(?:concat|replace|replaceAll)\s*\(',
+                          'SQL text variable built with a string method')):
+            for m in re.finditer(pat, text):
+                add(m.start(), why)
     return out
 
 

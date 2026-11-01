@@ -1,7 +1,9 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod-proxy
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:12 +02:00 (v0.2: пустой список — служба работает и отказывает всем)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 00:13 +02:00 (v0.3: аудит M3310-R1B-03 — туннель только для сессии (uid 61184–65519), остальным
+#   NOT_A_SESSION; M3310-R1B-04 — GitHub узнаётся по окончанию имени (api.github.com, raw.githubusercontent.com и
+#   т.п.): в списке — отказ запуска, в запросе — отказ; проверка списка для установщика: --check-allow ФАЙЛ; v0.2: пустой список — служба работает и отказывает всем)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: посредник сети (прокси) для сессий агента (протокол v3.1 И.12в, карта 3.3.10.4, проба ПБ-3).
 #   Слушает 127.0.0.2:3128. Принимает только туннель CONNECT <имя>:443 к имени из списка /etc/zavod/proxy-allow.conf
@@ -9,6 +11,10 @@
 #   сам посредник (сессии своего DNS не имеют); адрес внутренней сети после перевода — тоже отказ.
 #   Журнал каждого соединения — строка ZAVOD_PROXY {...} в журнал службы: время, кто (uid и имя учётной записи по
 #   таблице соединений ядра), куда, решение, адрес, байты в обе стороны, длительность.
+#   Туннель — только сессии агента: uid собеседника (по таблице соединений ядра) в диапазоне 61184–65519, иначе 403
+#   и NOT_A_SESSION в журнале. GitHub (И.12в п.2) — имя равно или оканчивается на «.» + одно из GITHUB: такое имя в
+#   списке не даёт службе запуститься, в запросе — отказ.
+# ВЫЗОВ: служба — без аргументов; установщик — zavod-proxy --check-allow ФАЙЛ (код 0 — список годен, иначе 1).
 # ОГРАНИЧЕНИЯ: содержимое туннеля не видит (TLS); утечка через сам разрешённый адрес не закрывается (И.12в п.4,
 #   учтено в И.2п). Список — общий для всех сессий; разделение «Anthropic для Claude, OpenAI для Codex» по роли
 #   сессии — допущение до шага подключения Codex (вопрос аудитору).
@@ -32,6 +38,10 @@ TUNNEL_MAX_SECONDS = 4 * 3600
 MAX_TUNNELS = 64
 HOST = re.compile(r'\A(?=.{1,253}\Z)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}\Z')
 REQ = re.compile(r'\A([A-Z]{1,16}) (\S{1,300}) HTTP/1\.[01]\Z')
+SESSION_UIDS = range(61184, 65520)  # динамические uid systemd: так ядро выдаёт uid сессиям zagent@
+# Имена GitHub (И.12в п.2): само имя и любое имя внутри него. Один список для службы и установщика.
+GITHUB = ('github.com', 'githubusercontent.com', 'githubassets.com', 'github.io', 'githubapp.com', 'ghcr.io',
+          'github.dev', 'githubcopilot.com')
 
 
 def log(**kw):
@@ -39,18 +49,26 @@ def log(**kw):
     print('ZAVOD_PROXY ' + json.dumps(kw, sort_keys=True, ensure_ascii=True), flush=True)
 
 
-def load_allow():
+def github(host):
+    """Имя GitHub: равно одному из GITHUB или оканчивается на «.» + он (сравнение по меткам, не по подстроке)."""
+    h = host.lower().rstrip('.')
+    return any(h == d or h.endswith('.' + d) for d in GITHUB)
+
+
+def load_allow(path=ALLOW_FILE):
     """Строка файла: «группа имя», например «docs example.org». Пустые и # — пропуск. Пустой список — все туннели отказ. Плохая строка —
-    отказ запуска: лучше ни одного туннеля, чем список, который понят не так."""
+    отказ запуска: лучше ни одного туннеля, чем список, который понят не так. Имя GitHub — тоже плохая строка."""
     allow = {}
-    with open(ALLOW_FILE, encoding='ascii') as f:
+    with open(path, encoding='ascii') as f:
         for n, raw in enumerate(f, 1):
             line = raw.strip()
             if not line or line.startswith('#'):
                 continue
             parts = line.split()
             if len(parts) != 2 or not re.fullmatch(r'[a-z][a-z0-9-]{0,31}', parts[0]) or not HOST.match(parts[1]):
-                raise SystemExit(f'ZAVOD_PROXY bad line {n} in {ALLOW_FILE}')
+                raise SystemExit(f'ZAVOD_PROXY bad line {n} in {path}')
+            if github(parts[1]):
+                raise SystemExit(f'ZAVOD_PROXY GitHub name on line {n} in {path} (I.12v)')
             allow[parts[1]] = parts[0]
     return allow
 
@@ -122,6 +140,10 @@ def handle(c, addr, allow, slots):
     rec = {'peer': f'{addr[0]}:{addr[1]}', 'uid': uid, 'user': user}
     up = None
     try:
+        if uid not in SESSION_UIDS:
+            rec['decision'] = 'NOT_A_SESSION'
+            c.sendall(b'HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n')
+            return
         got = read_head(c)
         if got is None:
             rec['decision'] = 'BAD_REQUEST'
@@ -146,7 +168,7 @@ def handle(c, addr, allow, slots):
             return
         host, sep, port = target.rpartition(':')
         host = host.lower()
-        if not sep or port != '443' or host not in allow:
+        if not sep or port != '443' or host not in allow or github(host):
             rec['decision'] = 'NOT_ALLOWED'
             c.sendall(b'HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n')
             return
@@ -201,6 +223,16 @@ def handle(c, addr, allow, slots):
 
 
 def main():
+    if len(sys.argv) == 3 and sys.argv[1] == '--check-allow':
+        try:
+            print(f'ZAVOD_PROXY allow list OK: {len(load_allow(sys.argv[2]))} names')
+        except (OSError, UnicodeDecodeError, SystemExit) as e:
+            print(e if isinstance(e, SystemExit) else f'ZAVOD_PROXY cannot read {sys.argv[2]}: {e}', file=sys.stderr)
+            return 1
+        return 0
+    if len(sys.argv) != 1:
+        print('usage: zavod-proxy [--check-allow FILE]', file=sys.stderr)
+        return 2
     if os.geteuid() == 0:
         print('ZAVOD_PROXY refuse to run as root', file=sys.stderr)
         return 2

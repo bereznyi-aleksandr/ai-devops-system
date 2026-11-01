@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod-gate
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:37 +02:00 (v0.2: в \bind значения без кавычек — :'имя' psql передавал вместе с кавычками; отказ psql — строка DB_ERROR в журнале, значения в кавычках скрыты; «процесс жив» — опрос pidfd без сигнала: сигнал 0 чужому uid даёт EPERM, и каждый сеанс получал NOT_A_SESSION)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 00:07 +02:00 (v0.3: аудит M3310-R1B-01 — дескриптор процесса (pidfd) обязателен: нет его — NOT_A_SESSION; он открыт до конца соединения, перед базой процесс-собеседник обязан быть жив; v0.2: в \bind значения без кавычек — :'имя' psql передавал вместе с кавычками; отказ psql — строка DB_ERROR в журнале, значения в кавычках скрыты; «процесс жив» — опрос pidfd без сигнала: сигнал 0 чужому uid даёт EPERM, и каждый сеанс получал NOT_A_SESSION)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: привратник команд агента (протокол v3.1 И.7а п.1–2, карта 3.3.10.1–3.3.10.2, проба ПБ-5).
 #   Слушает /run/zavod-gate/agent.sock. Одно соединение — одна строка JSON и один ответ:
@@ -86,36 +86,42 @@ def strict_json(text):
         raise Refuse('BAD_COMMAND') from None
 
 
+def alive(pidfd):
+    """pidfd становится читаемым, когда процесс завершился. Сигнал 0 не годится: чужому uid ядро отвечает EPERM."""
+    pl = select.poll()
+    pl.register(pidfd, select.POLLIN)
+    return not pl.poll(0)
+
+
 def peer_session(conn):
-    """Аренда собеседника по данным ядра Linux. pid из SO_PEERCRED; дескриптор процесса (pidfd) закрывает подмену
-    номера процесса: после чтения /proc он обязан ещё указывать на живой процесс с тем же uid."""
+    """Аренда собеседника по данным ядра Linux: pid из SO_PEERCRED и дескриптор процесса (pidfd) из SO_PEERPIDFD.
+    pidfd обязателен (аудит M3310-R1B-01): без него номер процесса мог бы достаться другому процессу. Пока pidfd
+    открыт и процесс жив, его номер никому не выдаётся, поэтому /proc читается про тот самый процесс. Возвращает
+    pidfd открытым: вызывающий держит его до конца соединения и закрывает сам."""
     pid, uid, _gid = struct.unpack('3i', conn.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i')))
-    pidfd = None
     try:
         pidfd = struct.unpack('i', conn.getsockopt(socket.SOL_SOCKET, SO_PEERPIDFD, 4))[0]
-    except OSError:
-        pidfd = None
+    except (OSError, struct.error):
+        raise Refuse('NOT_A_SESSION') from None
+    if pidfd < 0:
+        raise Refuse('NOT_A_SESSION')
     try:
+        if not alive(pidfd):
+            raise ValueError('peer exited')
         with open(f'/proc/{pid}/cgroup', encoding='ascii') as f:
             cg = f.read().strip()
         with open(f'/proc/{pid}/status', encoding='ascii') as f:
             uids = next((ln.split()[1:] for ln in f if ln.startswith('Uid:')), [])
-        # pidfd становится читаемым, когда процесс завершился; сигнал 0 не годится — чужому uid ядро отвечает EPERM.
-        if pidfd is not None:
-            pl = select.poll()
-            pl.register(pidfd, select.POLLIN)
-            if pl.poll(0):
-                raise ValueError('peer exited')
+        if not alive(pidfd):
+            raise ValueError('peer exited')
+        m = UNIT.match(cg)
+        if not m or not uids or any(int(u) != uid for u in uids):
+            raise ValueError('not a session')
     except (OSError, ValueError, StopIteration):
+        os.close(pidfd)
         raise Refuse('NOT_A_SESSION') from None
-    finally:
-        if pidfd is not None:
-            os.close(pidfd)
-    m = UNIT.match(cg)
-    if not m or not uids or any(int(u) != uid for u in uids):
-        raise Refuse('NOT_A_SESSION')
     h = m.group(1)
-    return pid, uid, f'{h[:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:]}'
+    return pid, uid, f'{h[:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:]}', pidfd
 
 
 def check_body(body):
@@ -174,11 +180,11 @@ RATE_LIMIT = Rate()
 
 def handle(conn):
     started = time.monotonic()
-    pid = uid = peer = lease = nonce = kind = None
+    pid = uid = peer = lease = nonce = kind = pidfd = None
     result = 'BAD_COMMAND'
     try:
         conn.settimeout(CONN_SECONDS)
-        pid, uid, peer = peer_session(conn)
+        pid, uid, peer, pidfd = peer_session(conn)
         buf = b''
         while not buf.endswith(b'\n'):
             if time.monotonic() - started > CONN_SECONDS:
@@ -204,6 +210,9 @@ def handle(conn):
         raw, kind = check_body(env['body'])
         if not RATE_LIMIT.allow(peer):
             raise Refuse('RATE_LIMITED')
+        # Команду принимаем только от того процесса, который соединился: вышел он, пока шла строка, — отказ.
+        if not alive(pidfd):
+            raise Refuse('NOT_A_SESSION')
         vals = {'ZG_LEASE': lease, 'ZG_PEER': peer, 'ZG_NONCE': nonce, 'ZG_SHA': env['sha256'], 'ZG_BODY': raw.hex()}
         try:
             result = db(SQL_ACCEPT, vals)
@@ -218,6 +227,9 @@ def handle(conn):
         result = str(e)
     except (OSError, struct.error):
         result = 'NOT_A_SESSION' if peer is None else 'BAD_COMMAND'
+    finally:
+        if pidfd is not None:
+            os.close(pidfd)
     word, _, cid = result.partition(' ')
     answer = {'result': word} if not cid else {'result': word, 'command_id': cid}
     try:

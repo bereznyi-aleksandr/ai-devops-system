@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/egress_ci.sh
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:27 +02:00 (v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 00:13 +02:00 (v0.3: аудит M3310-R1B-01 — команда после выхода соединившегося процесса; M3310-R1B-03 — службы без сети не достают посредника, петлю IPv4/IPv6 и DNS по UDP, посредник отказывает не-сессии; M3310-R1B-04 — GitHub по окончанию имени в списке и в запросе; v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка шага 3.3.10 на машине GitHub ubuntu-24.04 после install_cell.sh, cell_ci.sh и intake_ci.sh:
 #   привратник (ПБ-5) и выход только через посредника (ПБ-3) — изнутри настоящей клетки zagent@<аренда>
@@ -35,6 +35,27 @@ try:
     socket.create_connection((sys.argv[1], int(sys.argv[2])), timeout=5).close(); print("OPEN")
 except OSError as e:
     print("DENIED", e.errno)'
+PY_DNS='import os,socket,sys
+q=os.urandom(2)+b"\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x01\x00\x01"
+s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.settimeout(3)
+try:
+    s.connect((sys.argv[1],53)); s.send(q); s.recv(512); print("ANSWER")
+except socket.timeout:
+    print("TIMEOUT")
+except OSError as e:
+    print("DENIED", e.errno)'
+PY_PROXY='import socket
+try:
+    s=socket.create_connection(("127.0.0.2",3128),timeout=10); s.sendall(b"CONNECT example.com:443 HTTP/1.1\r\nHost: example.com:443\r\n\r\n")
+    d=s.recv(200); print(d.split(b" ",2)[1].decode() if d.startswith(b"HTTP/1.") else "BAD_ANSWER")
+except OSError as e:
+    print("DENIED", e.errno)'
+PY_LISTEN='import socket,threading
+def serve(fam,host):
+    s=socket.socket(fam); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); s.bind((host,18443)); s.listen(64)
+    while True: s.accept()[0].close()
+threading.Thread(target=serve,args=(socket.AF_INET6,"::1"),daemon=True).start()
+serve(socket.AF_INET,"127.0.0.1")'
 PY_GATE='import json,socket
 s=socket.socket(socket.AF_UNIX); s.settimeout(10); s.connect("/run/zavod-gate/agent.sock")
 s.sendall(b"{\"v\":1}\n"); print(json.loads(s.recv(200))["result"])'
@@ -83,11 +104,14 @@ want gate_replay NONCE_REPLAY
 want gate_bad_sha SHA_MISMATCH
 want gate_other_lease PEER_MISMATCH
 for p in gate_dup_keys gate_unknown_kind gate_extra_arg gate_extra_field gate_not_json; do want "$p" BAD_COMMAND; done
+want gate_first_exited NOT_A_SESSION
 want gate_sql_text ACCEPTED
 for p in net_direct_https net_dns_local_udp net_dns_public_udp net_dns_local_tcp net_resolve_name net_db_tcp net_db_socket \
-         net_dbus net_resolved_varlink; do want "$p" 'DENIED_*'; done
+         net_dbus net_resolved_varlink net_ipv6_direct net_ipv6_loopback; do want "$p" 'DENIED_*'; done
 want proxy_allowed 200
 want proxy_github 403
+want proxy_github_api 403
+want proxy_github_raw 403
 want proxy_ip_literal 403
 want proxy_plain_get 405
 want proxy_other_port 403
@@ -140,11 +164,49 @@ done
 r=$(sudo -u zproxy python3 -I -c "$PY_TCP" 1.1.1.1 443); [ "$r" = OPEN ] && ok "zproxy reaches :443" || echo "EGRESS_INFO zproxy :443 $r"
 r=$(sudo -u zproxy python3 -I -c "$PY_TCP" 1.1.1.1 80); case "$r" in DENIED*) ok "zproxy cannot reach :80 ($r)" ;; *) bad "zproxy :80 $r" ;; esac
 r=$(sudo -u zproxy python3 -I -c "$PY_TCP" 8.8.8.8 53); case "$r" in DENIED*) ok "zproxy cannot use public DNS ($r)" ;; *) bad "zproxy public DNS $r" ;; esac
+r=$(sudo -u zproxy python3 -I -c "$PY_DNS" 127.0.0.53); [ "$r" = ANSWER ] && ok "zproxy uses local DNS" || echo "EGRESS_INFO zproxy local DNS $r"
+
+echo "=== M3310-R1B-03: порядок правил — службы без сети и сессии: посредник, петля IPv4/IPv6, DNS по UDP"
+python3 -I -c "$PY_LISTEN" & LISTEN_PID=$!
+sleep 1
+for h in 127.0.0.1 ::1; do
+  [ "$(python3 -I -c "$PY_TCP" "$h" 18443)" = OPEN ] && ok "control: runner reaches $h:18443" || bad "control listener $h:18443 not reachable"
+  r=$(sudo systemd-run --quiet --wait --pipe -p DynamicUser=yes /usr/bin/python3 -I -c "$PY_TCP" "$h" 18443)
+  case "$r" in DENIED*) ok "nft alone: dynamic user to $h:18443 -> $r" ;; *) bad "nft alone: dynamic user to $h:18443 $r" ;; esac
+done
+[ "$(python3 -I -c "$PY_DNS" 127.0.0.53)" = ANSWER ] && ok "control: runner gets a DNS answer over UDP" || echo "EGRESS_INFO runner local DNS: UDP probes below prove nothing alone"
+r=$(sudo systemd-run --quiet --wait --pipe -p DynamicUser=yes /usr/bin/python3 -I -c "$PY_DNS" 127.0.0.53)
+[ "$r" != ANSWER ] && ok "nft alone: dynamic user DNS over UDP -> $r" || bad "nft alone: dynamic user DNS over UDP answered"
+for a in zgate zdb zquarantine zimport zbrowser; do
+  r=$(sudo -u "$a" python3 -I -c "$PY_TCP" 127.0.0.2 3128)
+  case "$r" in DENIED*) ok "$a cannot reach the proxy ($r)" ;; *) bad "$a reaches the proxy: $r" ;; esac
+  for h in 127.0.0.1 ::1; do
+    r=$(sudo -u "$a" python3 -I -c "$PY_TCP" "$h" 18443)
+    case "$r" in DENIED*) ok "$a cannot reach $h:18443 ($r)" ;; *) bad "$a reaches $h:18443: $r" ;; esac
+  done
+  r=$(sudo -u "$a" python3 -I -c "$PY_DNS" 127.0.0.53)
+  [ "$r" != ANSWER ] && ok "$a has no DNS over UDP ($r)" || bad "$a DNS over UDP answered"
+done
+kill "$LISTEN_PID"
+r=$(python3 -I -c "$PY_PROXY")
+[ "$r" = 403 ] && ok "proxy refuses a non-session uid (runner) -> 403" || bad "proxy to runner: $r"
+
+echo "=== M3310-R1B-04: GitHub по окончанию имени — список с поддоменом не принимается"
+P=/usr/local/lib/zavod/zavod-proxy
+for n in github.com api.github.com raw.githubusercontent.com objects.githubusercontent.com x.github.io ghcr.io codeload.github.com; do
+  printf 'ci %s\n' "$n" > "$RUNNER_TEMP/allow_gh.conf"
+  if python3 -I "$P" --check-allow "$RUNNER_TEMP/allow_gh.conf" 2>/dev/null; then bad "allow list with $n accepted"; else ok "allow list with $n refused"; fi
+done
+for n in example.com notgithub.com github.com.example.org; do
+  printf 'ci %s\n' "$n" > "$RUNNER_TEMP/allow_gh.conf"
+  if python3 -I "$P" --check-allow "$RUNNER_TEMP/allow_gh.conf" >/dev/null; then ok "allow list with $n accepted"; else bad "allow list with $n refused"; fi
+done
 
 echo "=== посредник: журнал каждого соединения"
 PJ=$(sudo journalctl -u zavod-proxy.service --no-pager -o cat)
 for d in '"decision": "ALLOWED".*"target": "example.com:443"' '"decision": "NOT_ALLOWED".*"target": "github.com:443"' \
-         '"decision": "NOT_ALLOWED".*"target": "1.1.1.1:443"' '"decision": "METHOD_REFUSED"'; do
+         '"decision": "NOT_ALLOWED".*"target": "1.1.1.1:443"' '"decision": "METHOD_REFUSED"' \
+         '"decision": "NOT_ALLOWED".*"target": "api.github.com:443"' '"decision": "NOT_A_SESSION"'; do
   echo "$PJ" | grep -qE "$d" && ok "proxy log: $d" || bad "proxy log missing: $d"
 done
 PU=$(echo "$PJ" | grep '"target": "github.com:443"' | sed -n 's/.*"uid": \([0-9]*\).*/\1/p' | tail -1)

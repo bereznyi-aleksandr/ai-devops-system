@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00 (v0.9: карта 3.3.10 — учётная запись zproxy; привратник zavod-gate (вход zgate → роль zgate, сопоставление zavod_gate), посредник zavod-proxy со списком /etc/zavod/proxy-allow.conf, общий фильтр сервера nftables /etc/zavod/zavod-egress.nft (служба zavod-nft); v0.8: аудит M33-R3-02 — образ сеансов занимает место сразу, проверка запаса диска сервера --min-free; M33-R3-03 — журналы приёма на своём разделе intake-journal.img; M33-R3-04 — 1% раздела приёма для root; v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 00:13 +02:00 (v0.10: аудит M3310-R1B-04 — список посредника проверяет сам посредник (zavod-proxy --check-allow): GitHub по окончанию имени, поддомены тоже; v0.9: карта 3.3.10 — учётная запись zproxy; привратник zavod-gate (вход zgate → роль zgate, сопоставление zavod_gate), посредник zavod-proxy со списком /etc/zavod/proxy-allow.conf, общий фильтр сервера nftables /etc/zavod/zavod-egress.nft (служба zavod-nft); v0.8: аудит M33-R3-02 — образ сеансов занимает место сразу, проверка запаса диска сервера --min-free; M33-R3-03 — журналы приёма на своём разделе intake-journal.img; M33-R3-04 — 1% раздела приёма для root; v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
 #   /var/lib/zavod/intake-fs.img с пределом места и inode, журналы приёма в /var/lib/zavod/intake-journal; v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
 #   v0.5: аудит M33-03 — база
 #   под zdb, свои папки служб; вопрос аудитора «д» — раздел сеансов /var/lib/zavod/session-fs.img; v0.4: аудит M33-06 — очередь
@@ -224,7 +224,9 @@ done
 install -o root -g root -m 0644 "$HERE/zavod-egress.nft" /etc/zavod/zavod-egress.nft
 [ -e /etc/zavod/proxy-allow.conf ] || install -o root -g root -m 0644 "$HERE/proxy-allow.conf" /etc/zavod/proxy-allow.conf
 [ "$(stat -c '%U:%a' /etc/zavod/proxy-allow.conf)" = root:644 ] || die "/etc/zavod/proxy-allow.conf must be root 644"
-if grep -qiE '(^|[[:space:].])github(usercontent)?\.com' /etc/zavod/proxy-allow.conf; then die "GitHub in proxy-allow.conf (I.12v)"; fi
+# Та же проверка, что при запуске службы (один список имён GitHub, аудит M3310-R1B-04).
+/usr/bin/python3 -I /usr/local/lib/zavod/zavod-proxy --check-allow /etc/zavod/proxy-allow.conf \
+  || die "proxy-allow.conf refused (GitHub name or bad line, I.12v)"
 nft -c -f /etc/zavod/zavod-egress.nft || die "nft rules do not load"
 
 echo "=== свои папки служб (И.7, Л.16–Л.25; аудит M33-03)"
