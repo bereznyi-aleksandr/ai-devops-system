@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: src/settings.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-31 17:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:28 +02:00 (v0.2: полный путь проверяется по правилам указанной системы, а не той, где идёт проверка; v0.1: этап 3.3.2.1 и 3.3.2.4
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-31 17:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:07 +02:00 (v0.3: аудит M33-04 — обязательная проверка файла настроек при запуске; v0.2: полный путь проверяется по правилам указанной системы, а не той, где идёт проверка; v0.1: этап 3.3.2.1 и 3.3.2.4
 //   дорожной карты v3.1 — один файл настроек вместо путей в коде, база по сокету Linux по умолчанию)
 // ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 // НАЗНАЧЕНИЕ: настройки Завода приходят только из окружения процесса. Окружение заполняет один файл
@@ -76,6 +76,27 @@ export function requireSetting(key, env = process.env) {
   const v = env[key];
   if (v === undefined || v === '') throw new SettingsError('SETTING_REQUIRED', key);
   return v;
+}
+
+// Обязательная проверка при запуске ядра (аудит M33-04): путь к единственному файлу настроек приходит из
+// ZAVOD_SETTINGS_FILE (служба: Environment=, в самом файле этого ключа быть не может). Файл проверяется строго,
+// и каждое значение окружения из SETTINGS_KEYS должно совпасть с файлом: подмена окружения мимо файла — отказ.
+export const SETTINGS_FILE_ENV = 'ZAVOD_SETTINGS_FILE';
+export function loadStartupSettings(env = process.env, opts) {
+  const path = env[SETTINGS_FILE_ENV];
+  if (!path || !path.trim()) throw new SettingsError('ZAVOD_SETTINGS_FILE_REQUIRED', SETTINGS_FILE_ENV);
+  let s;
+  try {
+    s = readSettingsFile(path, opts);
+  } catch (e) {
+    if (e instanceof SettingsError) throw e;
+    throw new SettingsError('SETTINGS_FILE_UNREADABLE', e.code || 'ERROR');
+  }
+  const norm = (v) => (v === undefined || v === '' ? undefined : v);
+  for (const key of Object.keys(SETTINGS_KEYS)) {
+    if (norm(env[key]) !== norm(s[key])) throw new SettingsError('SETTINGS_ENV_MISMATCH', key);
+  }
+  return s;
 }
 
 // Подключение к базе. Без PGHOST на Linux — сокет (вход peer, И.7 п. 3), на Windows — 127.0.0.1 как раньше,
