@@ -59,7 +59,7 @@ def load_allow(path=ALLOW_FILE):
     """Строка файла: «группа имя», например «docs example.org». Пустые и # — пропуск. Пустой список — все туннели отказ. Плохая строка —
     отказ запуска: лучше ни одного туннеля, чем список, который понят не так. Имя GitHub — тоже плохая строка."""
     allow = {}
-    with open(path, encoding='ascii') as f:
+    with open(path, encoding='utf-8') as f:  # комментарии по-русски; имена — только латиница (HOST)
         for n, raw in enumerate(f, 1):
             line = raw.strip()
             if not line or line.startswith('#'):
