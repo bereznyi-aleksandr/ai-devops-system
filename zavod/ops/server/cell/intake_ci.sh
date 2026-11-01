@@ -264,6 +264,7 @@ isys1=$(sysinodes)
 # Освободить inode раздела для пробы места: перенос на диск машины CI, ничего не удаляется.
 sudo sh -c "mv '$I'/archive/$Lm-* '$TMP'/"
 inode_map after
+sudo journalctl -u "zquarantine@$Lm.service" --no-pager -o cat | grep -a ZAVOD_INTAKE | sed "s/^/INTAKE_INFO svc: /" || true
 sudo find "$I" -xdev -maxdepth 3 -path "*$Lm*" | head -5 | sed "s/^/INTAKE_INFO left: /"
 # Предел места: архивы по 20 МБ, пока раздел не откажет.
 python3 -I "$HERE/intake_gen.py" big "$TMP/big.tar"
