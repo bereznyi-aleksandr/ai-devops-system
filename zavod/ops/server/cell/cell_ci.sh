@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:58 +02:00 (v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -27,6 +27,7 @@ newlease() { # → 32 hex; аренда OPEN напрямую (только CI)
 state() { pgsu "SELECT coalesce((SELECT status FROM bem_control.session_start WHERE lease_id = '$1'::uuid), 'NONE')"; }
 pass() { sudo systemctl start zagent-start.service; }
 active() { systemctl is-active "zagent@$1.service" 2>/dev/null || true; }
+is_active() { [ "$(active "$1")" = active ]; }
 wait_for() { # секунды команда… — ждать, пока команда не станет успешной
   local n=$1; shift
   for _ in $(seq 1 "$n"); do if "$@"; then return 0; fi; sleep 1; done
@@ -59,7 +60,7 @@ else ok "zkernel cannot start units"; fi
 echo "=== запуск сессии по файлу ядра (через zagent-start.path)"
 L1=$(newlease)
 sudo -u zkernel touch "/run/zavod/start/$L1"
-if wait_for 30 test "$(active "$L1")" = active; then ok "session $L1 active"; else bad "session not started"; sudo journalctl -u zagent-start.service --no-pager | tail -20; fi
+if wait_for 30 is_active "$L1"; then ok "session $L1 active"; else bad "session not started"; sudo journalctl -u zagent-start.service --no-pager | tail -20; fi
 [ "$(state "$L1")" = STARTING ] && ok "lease STARTING" || bad "lease state $(state "$L1")"
 [ "$(marker /var/lib/zavod/start-archive "${L1}_STARTED")" = 1 ] && ok "request archived" || bad "no archive marker"
 if sudo test -e "/run/zavod/start/$L1"; then bad "request left in start"; fi
@@ -99,13 +100,16 @@ pass
 [ "$(marker /var/lib/zavod/start-archive "${L1}_STOPPED")" = 1 ] && ok "stop archived" || bad "stop marker"
 pass
 [ "$(state "$L1")" = INTERRUPTED ] && ok "lease INTERRUPTED after stop" || bad "L1 state $(state "$L1")"
-wait_for 30 test "$(active "$L2")" = active && ok "waiting request started" || bad "L2 not started"
+wait_for 30 is_active "$L2" && ok "waiting request started" || bad "L2 not started"
 [ "$(pgsu "SELECT bem_control.lease_mark_running('$L2'::uuid)")" = RUNNING ] && ok "L2 marked RUNNING" || bad "L2 mark running"
 sudo -u zkernel touch "/run/zavod/stop/$L2"
 pass
 
 echo "=== переполнение"
+# Будильники на время раскладки выключены: иначе проход разбирает файлы по частям, пока их меньше 101.
+sudo systemctl stop zagent-start.path zagent-start.timer
 for i in $(seq 1 101); do sudo -u zkernel touch "/run/zavod/stop/$(printf '%032x' "$i")"; done
+sudo systemctl start zagent-start.path zagent-start.timer
 pass
 [ "$(marker /var/lib/zavod/start-rejected OVERFLOW)" -ge 101 ] && ok "overflow: all rejected" || bad "overflow"
 sudo journalctl -t zagent-start --no-pager | grep -q 'ZAVOD_ALERT stop: 101 entries' && ok "overflow alert" || bad "no alert"
@@ -119,7 +123,7 @@ if [ "$(active "$L3")" != active ] && sudo test -e "/run/zavod/start/$L3"; then 
 sudo systemctl start postgresql.service
 wait_for 30 sudo -u postgres psql -X -d bem -c 'select 1' >/dev/null 2>&1 || bad "postgres back"
 pass
-wait_for 30 test "$(active "$L3")" = active && ok "db back: started" || bad "L3 not started"
+wait_for 30 is_active "$L3" && ok "db back: started" || bad "L3 not started"
 
 echo "=== первый проход после загрузки"
 echo 00000000-0000-0000-0000-000000000000 | sudo tee /var/lib/zavod/start-state/boot_id >/dev/null
