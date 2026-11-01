@@ -1,0 +1,112 @@
+#!/usr/bin/python3 -I
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-alert-notify
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 16:14 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: доставка тревог клетки оператору (аудит M33-06, протокол И.12 п.7). Один проход: берёт из базы
+#   недоставленные тревоги (bem_control.cell_alert_due), каждую передаёт программе канала /etc/zavod/alert-deliver
+#   (текст — на вход, первая строка ответа — квитанция канала, код 0 — доставлено) и отмечает итог
+#   (cell_alert_result): квитанция или ошибка со следующей попыткой. Потом считает тревоги, не доставленные
+#   дольше 15 минут: есть — аварийная строка журнала и состояние DOWN в /run/zavod/alert-channel.
+# ОГРАНИЧЕНИЯ: работает от root (вход в базу ролью zstarter, как zagent-start). Программа канала должна быть
+#   обычным файлом root, без права записи для группы и остальных; иначе она не запускается (CHANNEL_UNSAFE).
+#   Ничего не удаляет. Секретов не читает: ключ канала читает только сама программа канала.
+import json
+import os
+import stat
+import subprocess
+import sys
+
+DELIVER = '/etc/zavod/alert-deliver'
+STATE = '/run/zavod/alert-channel'
+STALE = '15 minutes'
+PSQL = ['psql', '-X', '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1', '-U', 'zstarter', '-d', 'bem', '-f', '-']
+CLEAN_ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LANG': 'C.UTF-8'}
+
+
+class DbError(Exception):
+    pass
+
+
+def log(msg):
+    print(msg, flush=True)
+
+
+def db(sql, **params):
+    args = list(PSQL)
+    for k, v in params.items():
+        args[1:1] = ['-v', f'{k}={v}']
+    try:
+        r = subprocess.run(args, input=sql, capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise DbError(type(e).__name__) from None
+    if r.returncode != 0:
+        raise DbError(r.stderr.strip().splitlines()[-1][:200] if r.stderr.strip() else f'rc={r.returncode}')
+    return r.stdout.strip()
+
+
+def emerg(msg):
+    subprocess.run(['logger', '-p', 'auth.emerg', '-t', 'zavod-alert-notify', msg], check=False)
+    log(msg)
+
+
+def set_state(text):
+    tmp = STATE + '.new'
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644)
+    with os.fdopen(fd, 'w', encoding='ascii') as f:
+        f.write(text + '\n')
+    os.replace(tmp, STATE)
+
+
+def channel_problem():
+    try:
+        st = os.stat(DELIVER, follow_symlinks=False)
+    except FileNotFoundError:
+        return 'NO_CHANNEL'
+    if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_mode & 0o022 or not st.st_mode & 0o100:
+        return 'CHANNEL_UNSAFE'
+    return None
+
+
+def deliver(row):
+    problem = channel_problem()
+    if problem:
+        return None, problem
+    text = f"ZAVOD ALERT {row['source']} {row['raised_at']}\n{row['message']}\n"
+    try:
+        r = subprocess.run([DELIVER], input=text, capture_output=True, text=True, timeout=30, env=CLEAN_ENV)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return None, f'CHANNEL_CALL {type(e).__name__}'
+    receipt = (r.stdout.splitlines() or [''])[0].strip()
+    if r.returncode != 0:
+        return None, f'CHANNEL_EXIT {r.returncode} {r.stderr.strip()[:200]}'
+    if not 1 <= len(receipt) <= 200 or not receipt.isprintable():
+        return None, 'CHANNEL_NO_RECEIPT'
+    return receipt, None
+
+
+def main():
+    try:
+        rows = json.loads(db('SELECT coalesce(json_agg(d), \'[]\') FROM bem_control.cell_alert_due(20) d;\n') or '[]')
+        for row in rows:
+            receipt, err = deliver(row)
+            if receipt:
+                res = db("SELECT bem_control.cell_alert_result(:'id'::uuid, :'r', NULL);\n", id=row['alert_id'], r=receipt)
+            else:
+                res = db("SELECT bem_control.cell_alert_result(:'id'::uuid, NULL, :'e');\n", id=row['alert_id'], e=err)
+            log(f"ZAVOD_ALERT_NOTIFY {row['alert_id']} {res} {receipt or err}")
+        stale = int(db("SELECT bem_control.cell_alert_stale(:'age'::interval);\n", age=STALE))
+    except DbError as e:
+        emerg(f'ZAVOD_ALERT_NOTIFY DB_UNAVAILABLE {e}')
+        set_state('DB_UNAVAILABLE')
+        return 1
+    if stale:
+        emerg(f'ZAVOD_ALERT_UNDELIVERED {stale} older than {STALE}')
+        set_state(f'DOWN {stale}')
+        return 1
+    set_state('OK')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

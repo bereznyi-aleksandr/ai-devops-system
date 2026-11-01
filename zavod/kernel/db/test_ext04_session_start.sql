@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/test_ext04_session_start.sql
--- ВЕРСИЯ: v0.2  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-01 — живая сессия место не освобождает; M33-02 — lease_stop_check)
+-- ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.3: аудит M33-06 — тревоги клетки T30–T46; v0.2: аудит C33-01 — живая сессия место не освобождает; M33-02 — lease_stop_check)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 -- НАЗНАЧЕНИЕ: проверка Z-EXT-04 (карта 3.3.8.5): ответы lease_reserve_start, lease_mark_running,
 --   lease_start_reconcile; одна живая сессия на ячейку; предел 6 запусков в минуту; кто что может вызвать.
@@ -131,6 +131,57 @@ BEGIN
         INSERT INTO bem_control.session_start (lease_id, status) VALUES (g, 'STARTING');
         RAISE EXCEPTION 'T29 second live row accepted';
     EXCEPTION WHEN unique_violation THEN NULL;
+    END;
+
+    -- Тревоги клетки (аудит M33-06): запись, повтор ключа, плохая запись, доставка, ошибка канала, права.
+    DECLARE
+        k1 text := repeat('a', 32);
+        k2 text := repeat('b', 32);
+        x  uuid;
+        n  integer;
+        w  text;
+    BEGIN
+        SET LOCAL ROLE zstarter;
+        w := bem_control.cell_alert_store(k1, 'zagent-start', 'overflow', clock_timestamp()); IF w <> 'STORED'    THEN RAISE EXCEPTION 'T30 %', w; END IF;
+        w := bem_control.cell_alert_store(k1, 'zagent-start', 'overflow', clock_timestamp()); IF w <> 'DUPLICATE' THEN RAISE EXCEPTION 'T31 %', w; END IF;
+        w := bem_control.cell_alert_store('BAD', 'zagent-start', 'x', clock_timestamp());    IF w <> 'INVALID'   THEN RAISE EXCEPTION 'T32 %', w; END IF;
+        w := bem_control.cell_alert_store(k2, 'zagent-start', '', clock_timestamp());        IF w <> 'INVALID'   THEN RAISE EXCEPTION 'T32a %', w; END IF;
+        SELECT d.alert_id INTO x FROM bem_control.cell_alert_due(10) d;
+        IF x IS NULL THEN RAISE EXCEPTION 'T33 nothing due'; END IF;
+        w := bem_control.cell_alert_result(x, NULL, 'channel down');  IF w <> 'RETRY' THEN RAISE EXCEPTION 'T34 %', w; END IF;
+        SELECT count(*) INTO n FROM bem_control.cell_alert_due(10);   IF n <> 0 THEN RAISE EXCEPTION 'T35 retried alert due at once (%)', n; END IF;
+        BEGIN
+            PERFORM bem_control.cell_alert_result(x, 'r', 'e');
+            RAISE EXCEPTION 'T36 both receipt and error accepted';
+        EXCEPTION WHEN raise_exception THEN
+            IF SQLERRM <> 'CELL_ALERT_RESULT_SHAPE' THEN RAISE; END IF;
+        END;
+        w := bem_control.cell_alert_result(x, 'telegram:42', NULL);   IF w <> 'DELIVERED' THEN RAISE EXCEPTION 'T37 %', w; END IF;
+        w := bem_control.cell_alert_result(x, 'telegram:43', NULL);   IF w <> 'ALREADY_DELIVERED' THEN RAISE EXCEPTION 'T38 %', w; END IF;
+        w := bem_control.cell_alert_result(gen_random_uuid(), 'r', NULL); IF w <> 'UNKNOWN' THEN RAISE EXCEPTION 'T39 %', w; END IF;
+        n := bem_control.cell_alert_stale(interval '0 seconds');     IF n <> 0 THEN RAISE EXCEPTION 'T40 delivered counted stale (%)', n; END IF;
+        w := bem_control.cell_alert_store(k2, 'zagent-start', 'second', clock_timestamp()); IF w <> 'STORED' THEN RAISE EXCEPTION 'T41 %', w; END IF;
+        n := bem_control.cell_alert_stale(interval '0 seconds');     IF n <> 1 THEN RAISE EXCEPTION 'T42 stale %', n; END IF;
+        BEGIN
+            UPDATE bem_control.cell_alert SET receipt = 'forged';
+            RAISE EXCEPTION 'T43 zstarter wrote cell_alert';
+        EXCEPTION WHEN insufficient_privilege THEN NULL;
+        END;
+        RESET ROLE;
+        SELECT receipt INTO w FROM bem_control.cell_alert WHERE alert_id = x;
+        IF w IS DISTINCT FROM 'telegram:42' THEN RAISE EXCEPTION 'T44 receipt %', w; END IF;
+        SET LOCAL ROLE bem_kernel_rw;
+        BEGIN
+            PERFORM bem_control.cell_alert_store(repeat('c', 32), 'zagent-start', 'x', clock_timestamp());
+            RAISE EXCEPTION 'T45 kernel stored an alert';
+        EXCEPTION WHEN insufficient_privilege THEN NULL;
+        END;
+        BEGIN
+            PERFORM bem_control.cell_alert_result(x, NULL, 'e');
+            RAISE EXCEPTION 'T46 kernel marked an alert';
+        EXCEPTION WHEN insufficient_privilege THEN NULL;
+        END;
+        RESET ROLE;
     END;
 END
 $t$;

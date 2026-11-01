@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.11  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.11: аудит C33-01 и M33-02 — функции lease_start_overdue и lease_stop_check; v0.10: карта 3.3.8.5 — Z-EXT-04
+// ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.12: аудит M33-06 — таблица cell_alert и четыре функции тревог; v0.11: аудит C33-01 и M33-02 — функции lease_start_overdue и lease_stop_check; v0.10: карта 3.3.8.5 — Z-EXT-04
 //   (db/06_zavod_ext_04.sql): входная роль zstarter во всех списках ролей, таблицы session_start и session_start_log,
 //   три функции запуска сессий — права, режим definer, отпечатки тел, точный набор индексов; v0.9 2026-10-18 11:38 +03:00: v0.9: ChatGPT R25 — функция hold_operator_actor:
 //   вызывает только входная роль, режим definer; v0.8 10:52: ChatGPT R24 — функции hold_session_credential и
@@ -267,23 +267,37 @@ const EXT04_CONSTRAINTS = [
   "TABLE|bem_control.session_start|session_start_status_check|CHECK ((status = ANY (ARRAY['STARTING'::text, 'RUNNING'::text, 'START_FAILED'::text, 'INTERRUPTED'::text, 'ENDED'::text])))",
   "TABLE|bem_control.session_start_log|session_start_log_outcome_check|CHECK ((outcome = ANY (ARRAY['RESERVED'::text, 'ALREADY_STARTED'::text, 'LEASE_NOT_OPEN'::text, 'RUNNING'::text, 'START_FAILED'::text, 'INTERRUPTED'::text, 'ENDED'::text])))",
   "TABLE|bem_control.session_start_log|session_start_log_pkey|PRIMARY KEY (log_id)",
+  "TABLE|bem_control.cell_alert|cell_alert_attempts_check|CHECK ((attempts >= 0))",
+  "TABLE|bem_control.cell_alert|cell_alert_delivery_pair|CHECK (((delivered_at IS NULL) = (receipt IS NULL)))",
+  "TABLE|bem_control.cell_alert|cell_alert_last_error_check|CHECK ((length(last_error) <= 300))",
+  "TABLE|bem_control.cell_alert|cell_alert_message_check|CHECK (((length(message) >= 1) AND (length(message) <= 2000)))",
+  "TABLE|bem_control.cell_alert|cell_alert_pkey|PRIMARY KEY (alert_id)",
+  "TABLE|bem_control.cell_alert|cell_alert_receipt_check|CHECK (((length(receipt) >= 1) AND (length(receipt) <= 200)))",
+  "TABLE|bem_control.cell_alert|cell_alert_source_check|CHECK ((source ~ '^[a-z][a-z0-9-]{0,31}$'::text))",
+  "TABLE|bem_control.cell_alert|cell_alert_spool_key_check|CHECK ((spool_key ~ '^[0-9a-f]{32}$'::text))",
+  "TABLE|bem_control.cell_alert|cell_alert_spool_key_key|UNIQUE (spool_key)",
 ];
 t = after(t, 'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)', EXT04_CONSTRAINTS.map(sqlLit));
 // Таблицы запуска никто не читает и не пишет напрямую — только функции; копия читает.
-const EXT04_TABLES = ['session_start', 'session_start_log'];
+const EXT04_TABLES = ['session_start', 'session_start_log', 'cell_alert'];
 t = after(t, 'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner', EXT04_TABLES.flatMap((n) => [
   ...OWNER_PRIVS.map((p) => `TABLE|bem_control.${n}|bem_control_owner|${p}|bem_control_owner`),
   `TABLE|bem_control.${n}|backup_reader|SELECT|bem_control_owner`,
 ]));
 // Кто вызывает: бронь и сверку — только root ячейки (zstarter); отметку «работает» — ядро от имени сессии.
 const EXT04_FUNCS = { lease_reserve_start: 'uuid', lease_mark_running: 'uuid', lease_start_reconcile: 'uuid[], boolean',
-  lease_start_overdue: '', lease_stop_check: 'uuid' };
+  lease_start_overdue: '', lease_stop_check: 'uuid', cell_alert_store: 'text, text, text, timestamp with time zone',
+  cell_alert_due: 'integer', cell_alert_result: 'uuid, text, text', cell_alert_stale: 'interval' };
 const EXT04_CALLERS = {
   lease_reserve_start: ['bem_control_owner', 'zstarter'],
   lease_mark_running: KR,
   lease_start_reconcile: ['bem_control_owner', 'zstarter'],
   lease_start_overdue: ['bem_control_owner', 'zstarter'],
   lease_stop_check: ['bem_control_owner', 'zstarter'],
+  cell_alert_store: ['bem_control_owner', 'zstarter'],
+  cell_alert_due: ['bem_control_owner', 'zstarter'],
+  cell_alert_result: ['bem_control_owner', 'zstarter'],
+  cell_alert_stale: ['bem_control_owner', 'zstarter'],
 };
 t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
   Object.entries(EXT04_FUNCS).flatMap(([n, a]) => EXT04_CALLERS[n]
@@ -293,7 +307,10 @@ const EXT04_INDEXES = [
   "CREATE UNIQUE INDEX session_start_log_pkey ON bem_control.session_start_log USING btree (log_id)",
   "CREATE UNIQUE INDEX session_start_one_live ON bem_control.session_start USING btree ((true)) WHERE (status = ANY (ARRAY['STARTING'::text, 'RUNNING'::text]))",
   "CREATE UNIQUE INDEX session_start_pkey ON bem_control.session_start USING btree (lease_id)",
-];
+  "CREATE INDEX cell_alert_pending ON bem_control.cell_alert USING btree (next_attempt_at) WHERE (delivered_at IS NULL)",
+  "CREATE UNIQUE INDEX cell_alert_pkey ON bem_control.cell_alert USING btree (alert_id)",
+  "CREATE UNIQUE INDEX cell_alert_spool_key_key ON bem_control.cell_alert USING btree (spool_key)",
+].sort();
 
 // Отпечатки тел функций расширения: исходный текст между ограничителями $tag$ последнего
 // определения функции в 02 — ровно то, что PostgreSQL хранит в pg_proc.prosrc.
@@ -366,7 +383,7 @@ ${Object.entries(EXT03_MODE).map(([f, m]) => `        ('${f}', 'bem_control_owne
 END
 $zavod_ext03$;
 
--- Z-EXT-04: владелец, режим исполнения и настройки трёх функций запуска; точный набор индексов двух таблиц.
+-- Z-EXT-04: владелец, режим исполнения и настройки функций запуска и тревог; точный набор индексов трёх таблиц.
 DO $zavod_ext04$
 DECLARE
     r     record;
@@ -387,7 +404,7 @@ ${Object.keys(EXT04_FUNCS).map((f) => `        ('${f}', 'bem_control_owner|defin
     SELECT string_agg(d, ' ; ' ORDER BY d COLLATE "C") INTO v_got
       FROM (SELECT pg_get_indexdef(i.indexrelid) AS d FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid
               JOIN pg_namespace n ON n.oid = c.relnamespace
-             WHERE n.nspname = 'bem_control' AND c.relname IN ('session_start', 'session_start_log')) s;
+             WHERE n.nspname = 'bem_control' AND c.relname IN ('session_start', 'session_start_log', 'cell_alert')) s;
     IF v_got IS DISTINCT FROM '${EXT04_INDEXES.map(sqlLit).join(' ; ')}' THEN
         RAISE EXCEPTION 'FINAL_ZAVOD_INDEX_MISMATCH: %', v_got;
     END IF;

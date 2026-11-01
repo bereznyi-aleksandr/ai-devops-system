@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:09 +02:00 (v0.3: аудит M33-01 — вход zkernel → bem_kernel_rw
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.4: аудит M33-06 — очередь
+#   тревог /var/lib/zavod/alerts, служба доставки zavod-alert-notify, канал Telegram /etc/zavod/alert-deliver; v0.3: аудит M33-01 — вход zkernel → bem_kernel_rw
 #   по сопоставлению zavod_kernel; v0.2: карантин и приём
 #   архива — папки /var/lib/zavod/intake, zavod_intake.py, zquarantine@ и zimport@; карта 3.3.9)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
@@ -63,11 +64,18 @@ fi
 dir /var/lib/zavod/start-archive root root 0700
 dir /var/lib/zavod/start-rejected root root 0700
 dir /var/lib/zavod/start-state root root 0700
+# Очередь тревог (аудит M33-06): spool — ещё не в базе, stored — записаны в базу, rejected — испорчены.
+for d in alerts alerts/spool alerts/stored alerts/rejected; do dir "/var/lib/zavod/$d" root root 0700; done
 dir /usr/local/lib/zavod root root 0755
 
-echo "=== 3.3.8.3–3.3.8.4 программы, клетка, папки запросов"
-install -o root -g root -m 0755 "$HERE/zagent-start" "$HERE/zagent-session" /usr/local/lib/zavod/
-for u in zagent@.service zagent.slice zagent-start.service zagent-start.path zagent-start.timer; do
+echo "=== 3.3.8.3–3.3.8.4 программы, клетка, папки запросов, тревоги"
+install -o root -g root -m 0755 "$HERE/zagent-start" "$HERE/zagent-session" "$HERE/zavod-alert-notify" \
+  "$HERE/zavod-alert-telegram" /usr/local/lib/zavod/
+# Канал тревог: по умолчанию Telegram; ключ бота кладёт оператор в /etc/zavod/alert-telegram.env (0600).
+# Уже стоящий канал не заменяется.
+[ -e /etc/zavod/alert-deliver ] || install -o root -g root -m 0755 "$HERE/zavod-alert-telegram" /etc/zavod/alert-deliver
+for u in zagent@.service zagent.slice zagent-start.service zagent-start.path zagent-start.timer \
+         zavod-alert-notify.service zavod-alert-notify.timer; do
   install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
 done
 install -o root -g root -m 0644 "$HERE/zavod-cell.tmpfiles.conf" /etc/tmpfiles.d/zavod-cell.conf
@@ -131,8 +139,9 @@ if [ "$NO_PG" = 0 ]; then
 fi
 
 systemctl daemon-reload
-systemctl enable --now zagent-start.path zagent-start.timer
+systemctl enable --now zagent-start.path zagent-start.timer zavod-alert-notify.timer
 systemd-analyze verify --man=no /etc/systemd/system/zagent-start.service /etc/systemd/system/zagent-start.path \
+  /etc/systemd/system/zavod-alert-notify.service /etc/systemd/system/zavod-alert-notify.timer \
   /etc/systemd/system/zagent-start.timer /etc/systemd/system/zagent.slice "zagent@00000000000000000000000000000000.service" \
   "zquarantine@00000000000000000000000000000000.service" "zimport@00000000000000000000000000000000.service"
 echo "ZAVOD_CELL_INSTALL=OK"

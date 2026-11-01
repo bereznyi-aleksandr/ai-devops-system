@@ -3,7 +3,7 @@
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
 -- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
 -- РАСШИРЕНИЕ 04: sha256 fa6bdf4dfcf6717215d2239e99f83ef0870c352d5dc1483ca87e88353098f675
--- РАСШИРЕНИЕ 06: sha256 7c3f1cd837c72593b5438961b4fe021c09357b97c3ed32c84928e773c79e386b
+-- РАСШИРЕНИЕ 06: sha256 e425dfd23eeccf7f8930e1e27da6a0f77f60577e713b65c091f75192653ccbff
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03 и Z-EXT-04 (см. сборщик).
 \set ON_ERROR_STOP on
 
@@ -57,6 +57,15 @@ DECLARE
         'TABLE|bem_control.session_start|session_start_status_check|CHECK ((status = ANY (ARRAY[''STARTING''::text, ''RUNNING''::text, ''START_FAILED''::text, ''INTERRUPTED''::text, ''ENDED''::text])))',
         'TABLE|bem_control.session_start_log|session_start_log_outcome_check|CHECK ((outcome = ANY (ARRAY[''RESERVED''::text, ''ALREADY_STARTED''::text, ''LEASE_NOT_OPEN''::text, ''RUNNING''::text, ''START_FAILED''::text, ''INTERRUPTED''::text, ''ENDED''::text])))',
         'TABLE|bem_control.session_start_log|session_start_log_pkey|PRIMARY KEY (log_id)',
+        'TABLE|bem_control.cell_alert|cell_alert_attempts_check|CHECK ((attempts >= 0))',
+        'TABLE|bem_control.cell_alert|cell_alert_delivery_pair|CHECK (((delivered_at IS NULL) = (receipt IS NULL)))',
+        'TABLE|bem_control.cell_alert|cell_alert_last_error_check|CHECK ((length(last_error) <= 300))',
+        'TABLE|bem_control.cell_alert|cell_alert_message_check|CHECK (((length(message) >= 1) AND (length(message) <= 2000)))',
+        'TABLE|bem_control.cell_alert|cell_alert_pkey|PRIMARY KEY (alert_id)',
+        'TABLE|bem_control.cell_alert|cell_alert_receipt_check|CHECK (((length(receipt) >= 1) AND (length(receipt) <= 200)))',
+        'TABLE|bem_control.cell_alert|cell_alert_source_check|CHECK ((source ~ ''^[a-z][a-z0-9-]{0,31}$''::text))',
+        'TABLE|bem_control.cell_alert|cell_alert_spool_key_check|CHECK ((spool_key ~ ''^[0-9a-f]{32}$''::text))',
+        'TABLE|bem_control.cell_alert|cell_alert_spool_key_key|UNIQUE (spool_key)',
         'TABLE|bem_control.role_actor|role_actor_actor_id_fkey|FOREIGN KEY (actor_id) REFERENCES bem_core.actor(actor_id)',
         'TABLE|bem_control.role_actor|role_actor_pkey|PRIMARY KEY (tenant_id, role_key)',
         'TABLE|bem_control.role_actor|role_actor_role_key_check|CHECK (((role_key ~ ''^0[1-9]_[^/\\]{1,60}$''::text) OR (role_key = ''OPERATOR''::text)))',
@@ -576,6 +585,14 @@ DECLARE
         'FUNCTION|bem_control.lease_start_overdue()|zstarter|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.lease_stop_check(uuid)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.lease_stop_check(uuid)|zstarter|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.cell_alert_store(text, text, text, timestamp with time zone)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.cell_alert_store(text, text, text, timestamp with time zone)|zstarter|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.cell_alert_due(integer)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.cell_alert_due(integer)|zstarter|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.cell_alert_result(uuid, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.cell_alert_result(uuid, text, text)|zstarter|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.cell_alert_stale(interval)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.cell_alert_stale(interval)|zstarter|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.transport_context(uuid, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.set_role_actor(uuid, text, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.set_role_actor(uuid, text, text)|bem_governance|EXECUTE|bem_control_owner',
@@ -707,6 +724,14 @@ DECLARE
         'TABLE|bem_control.session_start_log|bem_control_owner|TRUNCATE|bem_control_owner',
         'TABLE|bem_control.session_start_log|bem_control_owner|UPDATE|bem_control_owner',
         'TABLE|bem_control.session_start_log|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.cell_alert|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.cell_alert|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.cell_alert|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.cell_alert|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.cell_alert|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.cell_alert|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.cell_alert|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.cell_alert|backup_reader|SELECT|bem_control_owner',
         'TABLE|bem_control.role_actor|bem_control_owner|DELETE|bem_control_owner',
         'TABLE|bem_control.role_actor|bem_control_owner|INSERT|bem_control_owner',
         'TABLE|bem_control.role_actor|bem_control_owner|REFERENCES|bem_control_owner',
@@ -1533,7 +1558,11 @@ BEGIN
         ('lease_mark_running', '76b8cca5430662920a8df4ef7cfb5507a12d45b029ee9f74719ebcd7de576d4c'),
         ('lease_start_reconcile', 'aaa1d730ae506baccd2973ea8a7012f277ea4d658c093f2821bcb5e891ddb131'),
         ('lease_start_overdue', '68e0888f834c210482c4b4da26a181c47358acd03fb57176424cab4c0c0247c1'),
-        ('lease_stop_check', '5807f1a7514934526da0ac4d14110f49464b73928c01e5438616bd0aab6a732c')
+        ('lease_stop_check', '5807f1a7514934526da0ac4d14110f49464b73928c01e5438616bd0aab6a732c'),
+        ('cell_alert_store', '6e46df4680e36dcb03c0064fc24b515a3dca1165afcaceeb48c144224712e048'),
+        ('cell_alert_due', '8974f880190a6373e777e1f24912e789edb018241f1a6f50db6c2830a98dd80e'),
+        ('cell_alert_result', '214771799afe38953c1f7250c60470442194ddf5a6cf4f296a5316aea050f7fe'),
+        ('cell_alert_stale', '671ae7d24894b7a4626f477b705c3d35a2fa1df0d9868a449b712ea2bfcaed4b')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got
@@ -1582,7 +1611,7 @@ BEGIN
 END
 $zavod_ext03$;
 
--- Z-EXT-04: владелец, режим исполнения и настройки трёх функций запуска; точный набор индексов двух таблиц.
+-- Z-EXT-04: владелец, режим исполнения и настройки функций запуска и тревог; точный набор индексов трёх таблиц.
 DO $zavod_ext04$
 DECLARE
     r     record;
@@ -1593,7 +1622,11 @@ BEGIN
         ('lease_mark_running', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('lease_start_reconcile', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
         ('lease_start_overdue', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
-        ('lease_stop_check', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp')
+        ('lease_stop_check', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('cell_alert_store', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('cell_alert_due', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('cell_alert_result', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('cell_alert_stale', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp')
     ) AS x(fn, want) LOOP
         SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'
                    || coalesce((SELECT string_agg(c, ';' ORDER BY c COLLATE "C") FROM unnest(p.proconfig) c), 'none'))
@@ -1607,8 +1640,8 @@ BEGIN
     SELECT string_agg(d, ' ; ' ORDER BY d COLLATE "C") INTO v_got
       FROM (SELECT pg_get_indexdef(i.indexrelid) AS d FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid
               JOIN pg_namespace n ON n.oid = c.relnamespace
-             WHERE n.nspname = 'bem_control' AND c.relname IN ('session_start', 'session_start_log')) s;
-    IF v_got IS DISTINCT FROM 'CREATE INDEX session_start_log_at ON bem_control.session_start_log USING btree (at) WHERE (outcome = ''RESERVED''::text) ; CREATE UNIQUE INDEX session_start_log_pkey ON bem_control.session_start_log USING btree (log_id) ; CREATE UNIQUE INDEX session_start_one_live ON bem_control.session_start USING btree ((true)) WHERE (status = ANY (ARRAY[''STARTING''::text, ''RUNNING''::text])) ; CREATE UNIQUE INDEX session_start_pkey ON bem_control.session_start USING btree (lease_id)' THEN
+             WHERE n.nspname = 'bem_control' AND c.relname IN ('session_start', 'session_start_log', 'cell_alert')) s;
+    IF v_got IS DISTINCT FROM 'CREATE INDEX cell_alert_pending ON bem_control.cell_alert USING btree (next_attempt_at) WHERE (delivered_at IS NULL) ; CREATE INDEX session_start_log_at ON bem_control.session_start_log USING btree (at) WHERE (outcome = ''RESERVED''::text) ; CREATE UNIQUE INDEX cell_alert_pkey ON bem_control.cell_alert USING btree (alert_id) ; CREATE UNIQUE INDEX cell_alert_spool_key_key ON bem_control.cell_alert USING btree (spool_key) ; CREATE UNIQUE INDEX session_start_log_pkey ON bem_control.session_start_log USING btree (log_id) ; CREATE UNIQUE INDEX session_start_one_live ON bem_control.session_start USING btree ((true)) WHERE (status = ANY (ARRAY[''STARTING''::text, ''RUNNING''::text])) ; CREATE UNIQUE INDEX session_start_pkey ON bem_control.session_start USING btree (lease_id)' THEN
         RAISE EXCEPTION 'FINAL_ZAVOD_INDEX_MISMATCH: %', v_got;
     END IF;
 END

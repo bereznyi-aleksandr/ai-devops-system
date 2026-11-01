@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zagent-start
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.3: аудит M33-06 — тревога сначала файлом в /var/lib/zavod/alerts/spool, потом в базу bem_control.cell_alert; v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: один проход по запросам на запуск и остановку сессий агента (протокол v3.1 И.12а, карта 3.3.8.4).
 #   Работает от root (zagent-start.service). Порядок: замок → сверка живых сессий с базой → остановки → запуски.
@@ -9,7 +9,7 @@
 #   дальше всё относительно неё. Плохое имя или не обычный файл — в отказ; больше 100 записей — все в отказ
 #   с причиной OVERFLOW и тревога. Запуск — только после lease_reserve_start (роль zstarter): база сама
 #   держит «одна сессия за раз», «не больше 6 запусков в минуту» и состояние аренды. База недоступна —
-#   ничего не запускается. Остановке база не нужна: проверяется только вид имени.
+#   ничего не запускается и не останавливается (аудит M33-02).
 # ОГРАНИЧЕНИЯ: ничего не удаляет. Разобранная запись переносится в /run/zavod/held (та же файловая система,
 #   любой вид записи), отметка с причиной — файлом в /var/lib/zavod/start-archive или start-rejected.
 import errno
@@ -27,7 +27,10 @@ RUN = '/run/zavod'
 START, STOP, HELD = RUN + '/start', RUN + '/stop', RUN + '/held'
 LIB = '/var/lib/zavod'
 ARCHIVE, REJECTED, STATE = LIB + '/start-archive', LIB + '/start-rejected', LIB + '/start-state'
+ALERTS = LIB + '/alerts'
+SPOOL, SPOOL_STORED, SPOOL_REJECTED = ALERTS + '/spool', ALERTS + '/stored', ALERTS + '/rejected'
 NAME = re.compile(r'\A[0-9a-f]{32}\Z')
+ALERT_FILE = re.compile(r'\A[0-9a-f]{32}\.json\Z')
 MAX_ENTRIES = 100
 PSQL = ['psql', '-X', '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1', '-U', 'zstarter', '-d', 'bem', '-f', '-']
 OPEN_DIR = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
@@ -126,10 +129,64 @@ def screen(dfd, mover, alert_name):
 
 
 def alert(msg):
-    # Тревога оператору: строка журнала systemd с высоким приоритетом и отметка в папке отказов.
-    # Доставка в Telegram — через очередь ядра на следующих шагах карты (вопрос аудитору).
+    # Тревога оператору (аудит M33-06): сначала файл в местной очереди на диске — он переживает отказ базы
+    # и перезагрузку; потом строка журнала systemd. В базу (bem_control.cell_alert) файл переносит
+    # flush_alerts, оператору тревогу доставляет служба zavod-alert-notify и отмечает квитанцию канала.
+    key = uuid.uuid4().hex
+    rec = {'key': key, 'source': 'zagent-start', 'message': msg[:2000],
+           'raised_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
+    try:
+        d = os.open(SPOOL, OPEN_DIR)
+        try:
+            fd = os.open(key + '.tmp', os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=d)
+            with os.fdopen(fd, 'w', encoding='ascii') as f:
+                json.dump(rec, f, ensure_ascii=True)
+                f.write('\n')
+                f.flush()
+                os.fsync(f.fileno())
+            os.rename(key + '.tmp', key + '.json', src_dir_fd=d, dst_dir_fd=d)
+            os.fsync(d)
+        finally:
+            os.close(d)
+    except OSError as e:
+        log(f'ZAVOD_ALERT SPOOL_FAILED {e.strerror}')
     subprocess.run(['logger', '-p', 'auth.crit', '-t', 'zagent-start', f'ZAVOD_ALERT {msg}'], check=False)
     log(f'ZAVOD_ALERT {msg}')
+
+
+def flush_alerts():
+    """Переносит тревоги из местной очереди в базу. База недоступна — файлы ждут следующего прохода.
+    Записанная тревога — файл в stored, испорченная — в rejected; файлы не удаляются."""
+    d = os.open(SPOOL, OPEN_DIR)
+    try:
+        for name in sorted(n for n in os.listdir(d) if ALERT_FILE.match(n)):
+            try:
+                fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=d)
+                with os.fdopen(fd, encoding='ascii') as f:
+                    rec = json.loads(f.read(8192))
+                if rec['key'] + '.json' != name:
+                    raise ValueError('key')
+                res = db("SELECT bem_control.cell_alert_store(:'key', :'src', :'msg', :'at'::timestamptz);\n",
+                         key=rec['key'], src=rec['source'], msg=rec['message'], at=rec['raised_at'])
+            except (OSError, ValueError, KeyError, TypeError):
+                res = 'INVALID'
+            where = SPOOL_STORED if res in ('STORED', 'DUPLICATE') else SPOOL_REJECTED
+            dst = os.open(where, OPEN_DIR)
+            try:
+                os.rename(name, name, src_dir_fd=d, dst_dir_fd=dst)
+                os.fsync(dst)
+            finally:
+                os.close(dst)
+            log(f'ZAGENT_START ALERT_{res} {name}')
+    finally:
+        os.close(d)
+
+
+def flush_alerts_quietly():
+    try:
+        flush_alerts()
+    except DbError as e:
+        log(f'ZAGENT_START DB_UNAVAILABLE: alerts kept in spool ({e})')
 
 
 def systemctl(*args):
@@ -244,6 +301,7 @@ def main():
         # Без точного списка живых сессий нельзя ни сверять состояние, ни запускать: можно получить второй сеанс.
         alert('systemctl list-units failed: reconcile and starts skipped')
         do_stops(mover, True)
+        flush_alerts_quietly()
         return 1
     db_ok = True
     try:
@@ -265,6 +323,8 @@ def main():
         log(f'ZAGENT_START DB_UNAVAILABLE: {e}')
     do_stops(mover, db_ok)
     do_starts(mover, db_ok)
+    if db_ok:
+        flush_alerts_quietly()
     return 0
 
 

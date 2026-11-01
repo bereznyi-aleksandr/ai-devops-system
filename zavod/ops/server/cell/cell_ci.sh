@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00 (v0.4: пробы M33-01 — вход zkernel, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -215,6 +215,53 @@ for mode in fail garbage; do
   sudo -u zkernel touch "/run/zavod/stop/$L5"; pass
 done
 sudo -u zkernel touch "/run/zavod/stop/$L4"; pass
+
+echo "=== тревоги: очередь на диске, база, доставка оператору (аудит M33-06)"
+sudo systemctl stop zavod-alert-notify.timer
+alerts_in_db() { pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE message LIKE '$1%'"; }
+spool_n() { sudo find /var/lib/zavod/alerts/spool -maxdepth 1 -name '*.json' -printf . | wc -c; }
+notify() { sudo systemctl start zavod-alert-notify.service || true; }
+[ "$(alerts_in_db 'stop: 101 entries')" -ge 1 ] && ok "M33-06: overflow alert stored in db" || bad "M33-06: overflow alert not in db"
+[ "$(spool_n)" = 0 ] && ok "M33-06: spool empty after pass" || bad "M33-06: spool not empty ($(spool_n))"
+# База недоступна: тревога остаётся файлом на диске и переносится в базу после её возврата.
+sudo systemctl stop zagent-start.path zagent-start.timer
+sudo systemctl stop postgresql.service
+for i in $(seq 1 101); do sudo -u zkernel touch "/run/zavod/stop/$(printf 'e%031x' "$i")"; done
+pass
+[ "$(spool_n)" -ge 1 ] && ok "M33-06: db down, alert kept on disk" || bad "M33-06: db down, no spool file"
+sudo systemctl start postgresql.service
+wait_for 30 sudo -u postgres psql -X -d bem -c 'select 1' >/dev/null 2>&1 || bad "M33-06: postgres back"
+sudo systemctl start zagent-start.path zagent-start.timer
+pass
+[ "$(spool_n)" = 0 ] && ok "M33-06: spool drained after db back" || bad "M33-06: spool after db back ($(spool_n))"
+[ "$(alerts_in_db 'stop: 101 entries')" -ge 2 ] && ok "M33-06: spooled alert in db" || bad "M33-06: spooled alert missing in db"
+# Канал Telegram без ключа: попытка записана ошибкой, тревога ждёт следующей попытки.
+notify
+[ "$(pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE delivered_at IS NULL AND attempts >= 1 AND last_error LIKE 'CHANNEL_EXIT 3 NO_TELEGRAM_CONF%'")" -ge 1 ] \
+  && ok "M33-06: no telegram key, failed attempt recorded" || bad "M33-06: failed attempt not recorded"
+# Рабочий учебный канал: текст доходит, квитанция записана, состояние OK.
+printf '#!/bin/sh\ncat >> /run/zavod/ci-alert-received\necho ci-receipt-1\n' | sudo tee /etc/zavod/alert-deliver >/dev/null
+pgsu "UPDATE bem_control.cell_alert SET next_attempt_at = now() WHERE delivered_at IS NULL" >/dev/null
+notify
+[ "$(pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE delivered_at IS NULL")" = 0 ] && ok "M33-06: all alerts delivered" || bad "M33-06: undelivered after channel fixed"
+[ "$(pgsu "SELECT string_agg(DISTINCT receipt, ',') FROM bem_control.cell_alert")" = ci-receipt-1 ] && ok "M33-06: receipt stored" || bad "M33-06: receipt"
+sudo grep -q 'stop: 101 entries' /run/zavod/ci-alert-received && ok "M33-06: operator channel got the text" || bad "M33-06: channel got nothing"
+[ "$(sudo cat /run/zavod/alert-channel)" = OK ] && ok "M33-06: channel state OK" || bad "M33-06: channel state $(sudo cat /run/zavod/alert-channel)"
+# Канал сломан дольше 15 минут: аварийная строка журнала и состояние DOWN.
+printf '#!/bin/sh\nexit 7\n' | sudo tee /etc/zavod/alert-deliver >/dev/null
+[ "$(pgsu "SELECT bem_control.cell_alert_store(md5('ci-stale'), 'zagent-start', 'ci stale alert', now())")" = STORED ] || bad "M33-06: stale alert store"
+pgsu "UPDATE bem_control.cell_alert SET stored_at = now() - interval '20 minutes' WHERE spool_key = md5('ci-stale')" >/dev/null
+notify
+[ "$(pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE spool_key = md5('ci-stale') AND last_error LIKE 'CHANNEL_EXIT 7%'")" = 1 ] \
+  && ok "M33-06: broken channel attempt recorded" || bad "M33-06: broken channel attempt"
+[ "$(sudo cat /run/zavod/alert-channel)" = 'DOWN 1' ] && ok "M33-06: channel DOWN state" || bad "M33-06: channel state $(sudo cat /run/zavod/alert-channel)"
+sudo journalctl -t zavod-alert-notify --no-pager | grep -q 'ZAVOD_ALERT_UNDELIVERED 1' && ok "M33-06: emergency journal line" || bad "M33-06: no emergency line"
+# Канал, который может править не только root, не запускается.
+sudo chmod 0777 /etc/zavod/alert-deliver
+pgsu "UPDATE bem_control.cell_alert SET next_attempt_at = now() WHERE spool_key = md5('ci-stale')" >/dev/null
+notify
+[ "$(pgsu "SELECT last_error FROM bem_control.cell_alert WHERE spool_key = md5('ci-stale')")" = CHANNEL_UNSAFE ] && ok "M33-06: unsafe channel refused" || bad "M33-06: unsafe channel ran"
+sudo chmod 0755 /etc/zavod/alert-deliver
 
 echo "=== итог"
 if [ "$FAILS" = 0 ]; then echo "CELL_CI=PASS"; else echo "CELL_CI=FAIL ($FAILS)"; exit 1; fi

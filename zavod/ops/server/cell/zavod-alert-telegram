@@ -1,0 +1,55 @@
+#!/usr/bin/python3 -I
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-alert-telegram
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 16:14 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: программа канала для zavod-alert-notify (аудит M33-06): текст тревоги со входа отправляется
+#   оператору в Telegram; квитанция — номер сообщения, который вернул Telegram: «telegram:<номер>».
+#   Установщик кладёт её как /etc/zavod/alert-deliver, если там ещё ничего нет.
+# ОГРАНИЧЕНИЯ: ключ бота и номер чата — только в /etc/zavod/alert-telegram.env (root, 0600, строки
+#   BOT_TOKEN=… и CHAT_ID=…); файл заполняет оператор. Файла нет или права шире 0600 — отказ с кодом 3,
+#   тревога остаётся недоставленной и через 15 минут поднимает аварию. Ключ не печатается и не попадает
+#   в командную строку.
+import json
+import os
+import stat
+import sys
+import urllib.parse
+import urllib.request
+
+CONF = '/etc/zavod/alert-telegram.env'
+
+
+def fail(code, msg):
+    print(msg, file=sys.stderr)
+    sys.exit(code)
+
+
+def main():
+    try:
+        fd = os.open(CONF, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    except OSError:
+        fail(3, 'NO_TELEGRAM_CONF')
+    with os.fdopen(fd, encoding='utf-8') as f:
+        st = os.fstat(f.fileno())
+        if not stat.S_ISREG(st.st_mode) or st.st_uid != 0 or st.st_mode & 0o077:
+            fail(3, 'TELEGRAM_CONF_UNSAFE')
+        conf = dict(line.strip().split('=', 1) for line in f if '=' in line and not line.startswith('#'))
+    token, chat = conf.get('BOT_TOKEN', ''), conf.get('CHAT_ID', '')
+    if not token or not chat:
+        fail(3, 'TELEGRAM_CONF_INCOMPLETE')
+    text = sys.stdin.read(4000)
+    data = urllib.parse.urlencode({'chat_id': chat, 'text': text}).encode()
+    req = urllib.request.Request(f'https://api.telegram.org/bot{token}/sendMessage', data=data, method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            ans = json.loads(r.read(65536))
+    except Exception as e:  # noqa: BLE001 — текст ошибки без адреса: в адресе ключ
+        fail(4, f'TELEGRAM_CALL {type(e).__name__}')
+    if not ans.get('ok') or not isinstance(ans.get('result', {}).get('message_id'), int):
+        fail(5, 'TELEGRAM_NOT_OK')
+    print(f"telegram:{ans['result']['message_id']}")
+
+
+if __name__ == '__main__':
+    main()
