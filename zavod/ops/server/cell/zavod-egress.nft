@@ -1,0 +1,46 @@
+#!/usr/sbin/nft -f
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-egress.nft (ставится в /etc/zavod/zavod-egress.nft)
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: общий фильтр сервера nftables (протокол v3.1 И.12в п.1–3, карта 3.3.10.5, проба ПБ-3) — вторая стена
+#   после IPAddressDeny у служб: ошибка в одной настройке не открывает выход.
+#   Выход: сессии агента (динамические uid systemd 61184–65519) — только к посреднику 127.0.0.2:3128; ни своего
+#   перевода имён (127.0.0.53 и любой :53), ни прямых адресов. Службы без сети (zdb, zgate, zquarantine, zimport,
+#   zbrowser) — то же. Посредник zproxy — только порт 443 и местный перевод имён 127.0.0.53.
+#   Вход: только SSH администратора (порт 22), ответы на свои соединения, местная петля, ICMP, ответ DHCP.
+# ОГРАНИЧЕНИЯ: таблица своя (inet zavod), чужие таблицы не трогает; повторная загрузка заменяет её целиком одной
+#   операцией. Остальные учётные записи (root, администратор, zkernel, zgithub, ztelegram, zbackup) правилом не
+#   ограничены: им выход нужен по И.12в п.3; их сужение — шаг пакета установки (3.3.11, вопрос аудитору).
+table inet zavod
+delete table inet zavod
+table inet zavod {
+	chain egress_closed {
+		counter log prefix "zavod-egress-refused " level warn
+		meta l4proto tcp reject with tcp reset
+		reject with icmpx admin-prohibited
+	}
+
+	chain output {
+		type filter hook output priority filter; policy accept;
+		ct state established,related accept
+		oifname "lo" ip daddr 127.0.0.2 tcp dport 3128 accept
+		meta skuid 61184-65519 jump egress_closed
+		meta skuid { "zdb", "zgate", "zquarantine", "zimport", "zbrowser" } jump egress_closed
+		meta skuid "zproxy" oifname "lo" ip daddr 127.0.0.53 meta l4proto { tcp, udp } th dport 53 accept
+		meta skuid "zproxy" tcp dport 443 accept
+		meta skuid "zproxy" jump egress_closed
+	}
+
+	chain input {
+		type filter hook input priority filter; policy drop;
+		iifname "lo" accept
+		ct state established,related accept
+		ct state invalid drop
+		tcp dport 22 accept
+		meta l4proto { icmp, ipv6-icmp } accept
+		udp dport 68 accept
+		udp dport 546 accept
+		counter log prefix "zavod-ingress-refused " level info
+	}
+}

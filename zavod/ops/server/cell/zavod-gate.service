@@ -1,0 +1,55 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-gate.service
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: служба привратника команд агента (протокол v3.1 И.7а, карта 3.3.10.1). Сокет
+#   /run/zavod-gate/agent.sock для сессий zagent@; в базу — ролью zgate через сокет PostgreSQL (peer).
+# ОГРАНИЧЕНИЯ: сети нет (только AF_UNIX); видит процессы других пользователей (нужно для /proc/<pid>/cgroup
+#   собеседника), поэтому ProtectProc не включён; пишет только в свою папку сокета.
+[Unit]
+Description=Zavod gate for agent commands (protocol I.7a)
+After=postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=exec
+User=zgate
+Group=zgate
+UMask=0077
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate
+RuntimeDirectory=zavod-gate
+RuntimeDirectoryMode=0755
+Restart=always
+RestartSec=2
+MemoryMax=256M
+CPUQuota=100%
+TasksMax=64
+LimitNOFILE=256
+PrivateNetwork=yes
+IPAddressDeny=any
+RestrictAddressFamilies=AF_UNIX
+InaccessiblePaths=-/run/zavod -/var/lib/zavod -/etc/zavod
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateIPC=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

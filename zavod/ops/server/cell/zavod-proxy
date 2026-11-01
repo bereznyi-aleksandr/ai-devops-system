@@ -1,0 +1,229 @@
+#!/usr/bin/python3 -I
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-proxy
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: посредник сети (прокси) для сессий агента (протокол v3.1 И.12в, карта 3.3.10.4, проба ПБ-3).
+#   Слушает 127.0.0.2:3128. Принимает только туннель CONNECT <имя>:443 к имени из списка /etc/zavod/proxy-allow.conf
+#   (точное совпадение; адрес цифрами, чужое имя, другой порт — 403; другой метод — 405). Имя переводит в адрес
+#   сам посредник (сессии своего DNS не имеют); адрес внутренней сети после перевода — тоже отказ.
+#   Журнал каждого соединения — строка ZAVOD_PROXY {...} в журнал службы: время, кто (uid и имя учётной записи по
+#   таблице соединений ядра), куда, решение, адрес, байты в обе стороны, длительность.
+# ОГРАНИЧЕНИЯ: содержимое туннеля не видит (TLS); утечка через сам разрешённый адрес не закрывается (И.12в п.4,
+#   учтено в И.2п). Список — общий для всех сессий; разделение «Anthropic для Claude, OpenAI для Codex» по роли
+#   сессии — допущение до шага подключения Codex (вопрос аудитору).
+import ipaddress
+import json
+import os
+import pwd
+import re
+import select
+import socket
+import sys
+import threading
+import time
+
+LISTEN = ('127.0.0.2', 3128)
+ALLOW_FILE = '/etc/zavod/proxy-allow.conf'
+HEAD_MAX = 8192
+HEAD_SECONDS = 10
+IDLE_SECONDS = 300
+TUNNEL_MAX_SECONDS = 4 * 3600
+MAX_TUNNELS = 64
+HOST = re.compile(r'\A(?=.{1,253}\Z)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}\Z')
+REQ = re.compile(r'\A([A-Z]{1,16}) (\S{1,300}) HTTP/1\.[01]\Z')
+
+
+def log(**kw):
+    kw['at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+    print('ZAVOD_PROXY ' + json.dumps(kw, sort_keys=True, ensure_ascii=True), flush=True)
+
+
+def load_allow():
+    """Строка файла: «группа имя», например «anthropic api.anthropic.com». Пустые и # — пропуск. Плохая строка —
+    отказ запуска: лучше ни одного туннеля, чем список, который понят не так."""
+    allow = {}
+    with open(ALLOW_FILE, encoding='ascii') as f:
+        for n, raw in enumerate(f, 1):
+            line = raw.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = line.split()
+            if len(parts) != 2 or not re.fullmatch(r'[a-z][a-z0-9-]{0,31}', parts[0]) or not HOST.match(parts[1]):
+                raise SystemExit(f'ZAVOD_PROXY bad line {n} in {ALLOW_FILE}')
+            allow[parts[1]] = parts[0]
+    if not allow:
+        raise SystemExit(f'ZAVOD_PROXY empty {ALLOW_FILE}')
+    return allow
+
+
+def peer_uid(addr):
+    """uid владельца сокета собеседника по /proc/net/tcp: строка, где local = адрес собеседника, remote = наш."""
+    want_local = f'{socket.htonl(int(ipaddress.IPv4Address(addr[0]))):08X}:{addr[1]:04X}'
+    want_remote = f'{socket.htonl(int(ipaddress.IPv4Address(LISTEN[0]))):08X}:{LISTEN[1]:04X}'
+    try:
+        with open('/proc/net/tcp', encoding='ascii') as f:
+            next(f)
+            for ln in f:
+                p = ln.split()
+                if p[1] == want_local and p[2] == want_remote:
+                    uid = int(p[7])
+                    try:
+                        name = pwd.getpwuid(uid).pw_name
+                    except KeyError:
+                        name = None
+                    return uid, name
+    except (OSError, ValueError, IndexError):
+        pass
+    return None, None
+
+
+def public(ip):
+    a = ipaddress.ip_address(ip)
+    return a.is_global and not a.is_multicast
+
+
+def read_head(c):
+    c.settimeout(HEAD_SECONDS)
+    buf = b''
+    while b'\r\n\r\n' not in buf:
+        chunk = c.recv(1024)
+        if not chunk:
+            return None
+        buf += chunk
+        if len(buf) > HEAD_MAX:
+            return None
+    head, _, rest = buf.partition(b'\r\n\r\n')
+    return head, rest
+
+
+def pump(a, b, counters):
+    a.settimeout(None)
+    b.settimeout(None)
+    socks = [a, b]
+    last = started = time.monotonic()
+    while True:
+        r, _, _ = select.select(socks, [], [], 5)
+        now = time.monotonic()
+        if not r:
+            if now - last > IDLE_SECONDS or now - started > TUNNEL_MAX_SECONDS:
+                return 'IDLE_TIMEOUT'
+            continue
+        last = now
+        for s in r:
+            data = s.recv(65536)
+            if not data:
+                return 'CLOSED'
+            (b if s is a else a).sendall(data)
+            counters['up' if s is a else 'down'] += len(data)
+
+
+def handle(c, addr, allow, slots):
+    started = time.monotonic()
+    uid, user = peer_uid(addr)
+    rec = {'peer': f'{addr[0]}:{addr[1]}', 'uid': uid, 'user': user}
+    up = None
+    try:
+        got = read_head(c)
+        if got is None:
+            rec['decision'] = 'BAD_REQUEST'
+            c.sendall(b'HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n')
+            return
+        head, rest = got
+        try:
+            first = head.split(b'\r\n', 1)[0].decode('ascii')
+        except UnicodeDecodeError:
+            first = ''
+        m = REQ.match(first)
+        if not m:
+            rec['decision'] = 'BAD_REQUEST'
+            c.sendall(b'HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n')
+            return
+        method, target = m.group(1), m.group(2)
+        rec['method'] = method
+        rec['target'] = target[:300]
+        if method != 'CONNECT':
+            rec['decision'] = 'METHOD_REFUSED'
+            c.sendall(b'HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n')
+            return
+        host, sep, port = target.rpartition(':')
+        host = host.lower()
+        if not sep or port != '443' or host not in allow:
+            rec['decision'] = 'NOT_ALLOWED'
+            c.sendall(b'HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n')
+            return
+        rec['group'] = allow[host]
+        try:
+            infos = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+        except OSError:
+            rec['decision'] = 'DNS_FAILED'
+            c.sendall(b'HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n')
+            return
+        addrs = [i for i in infos if public(i[4][0])]
+        if not addrs:
+            rec['decision'] = 'PRIVATE_ADDRESS'
+            rec['resolved'] = [i[4][0] for i in infos][:4]
+            c.sendall(b'HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n')
+            return
+        for fam, typ, proto, _, sa in addrs:
+            try:
+                up = socket.socket(fam, typ, proto)
+                up.settimeout(HEAD_SECONDS)
+                up.connect(sa)
+                rec['ip'] = sa[0]
+                break
+            except OSError:
+                up.close()
+                up = None
+        if up is None:
+            rec['decision'] = 'CONNECT_FAILED'
+            c.sendall(b'HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n')
+            return
+        c.sendall(b'HTTP/1.1 200 Connection established\r\n\r\n')
+        counters = {'up': 0, 'down': 0}
+        if rest:
+            up.sendall(rest)
+            counters['up'] += len(rest)
+        rec['decision'] = 'ALLOWED'
+        rec['end'] = pump(c, up, counters)
+        rec.update(bytes_up=counters['up'], bytes_down=counters['down'])
+    except OSError as e:
+        rec.setdefault('decision', 'ERROR')
+        rec['error'] = type(e).__name__
+    finally:
+        for s in (c, up):
+            if s is not None:
+                try:
+                    s.close()
+                except OSError:
+                    pass
+        rec['ms'] = int((time.monotonic() - started) * 1000)
+        log(**rec)
+        slots.release()
+
+
+def main():
+    if os.geteuid() == 0:
+        print('ZAVOD_PROXY refuse to run as root', file=sys.stderr)
+        return 2
+    allow = load_allow()
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.bind(LISTEN)
+    srv.listen(128)
+    slots = threading.BoundedSemaphore(MAX_TUNNELS)
+    log(decision='READY', listen=f'{LISTEN[0]}:{LISTEN[1]}', allow=sorted(allow))
+    while True:
+        c, addr = srv.accept()
+        if not slots.acquire(blocking=False):
+            try:
+                c.sendall(b'HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\n\r\n')
+            except OSError:
+                pass
+            c.close()
+            log(decision='BUSY', peer=f'{addr[0]}:{addr[1]}')
+            continue
+        threading.Thread(target=handle, args=(c, addr, allow, slots), daemon=True).start()
+
+
+if __name__ == '__main__':
+    sys.exit(main())

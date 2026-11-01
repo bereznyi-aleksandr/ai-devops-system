@@ -278,8 +278,10 @@ jobs:
         run: |
           set -euo pipefail
           C=zavod/ops/server/cell
-          shellcheck -S warning "$C/install_cell.sh" "$C/cell_ci.sh" "$C/zagent-session" "$C/intake_ci.sh"
-          for f in zagent-start zavod_intake.py intake_gen.py zavod-alert-notify zavod-alert-telegram; do
+          command -v nft >/dev/null || sudo apt-get install -y -qq nftables > /dev/null
+          shellcheck -S warning "$C/install_cell.sh" "$C/cell_ci.sh" "$C/zagent-session" "$C/intake_ci.sh" "$C/egress_ci.sh"
+          for f in zagent-start zavod_intake.py intake_gen.py zavod-alert-notify zavod-alert-telegram zavod-gate zavod-proxy \
+                   egress_session_probe.py; do
             python3 -I -c 'import ast, sys; ast.parse(open(sys.argv[1], encoding="utf-8").read())' "$C/$f"
           done
           sudo bash "$C/install_cell.sh" --pg-conf-dir /etc/postgresql/16/main --session-fs-size 64M --intake-fs-size 192M --intake-fs-inodes 2048 --intake-journal-size 16M --min-free 1G | tee "$RUNNER_TEMP/install1.out"
@@ -288,6 +290,17 @@ jobs:
           grep -qx ZAVOD_CELL_INSTALL=OK "$RUNNER_TEMP/install2.out"
           test "$(sudo grep -c 'map=zavod_cell' /etc/postgresql/16/main/pg_hba.conf)" = 1
           test "$(sudo grep -c '^zavod_cell' /etc/postgresql/16/main/pg_ident.conf)" = 1
+      - name: query concatenation check, build fails on a probe (3.3.10.2, SQL_CONCAT_SCAN=PASS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          S=zavod/kernel/ci/sql_concat_scan.py
+          python3 -I "$S" --allow zavod/kernel/ci/sql_concat_allow.txt zavod/kernel/src zavod/kernel/cli zavod/engine/src \
+            zavod/ops/server/cell | tee "$RUNNER_TEMP/scan.out"
+          grep -qx SQL_CONCAT_SCAN=PASS "$RUNNER_TEMP/scan.out"
+          if python3 -I "$S" zavod/kernel/ci/sql_concat_probe > "$RUNNER_TEMP/scan_probe.out"; then echo 'probe passed the scan'; exit 1; fi
+          grep -qx 'SQL_CONCAT_SCAN files=2 findings=6' "$RUNNER_TEMP/scan_probe.out"
+          echo SQL_CONCAT_PROBE=caught
       - name: cell checks (CELL_CI=PASS)
         shell: bash
         run: |
@@ -300,6 +313,12 @@ jobs:
           set -euo pipefail
           bash zavod/ops/server/cell/intake_ci.sh | tee "$RUNNER_TEMP/intake_ci.out"
           grep -qx INTAKE_CI=PASS "$RUNNER_TEMP/intake_ci.out"
+      - name: gate and egress only through the proxy, probes PB-5 and PB-3 (EGRESS_CI=PASS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash zavod/ops/server/cell/egress_ci.sh | tee "$RUNNER_TEMP/egress_ci.out"
+          grep -qx EGRESS_CI=PASS "$RUNNER_TEMP/egress_ci.out"
 
   ops:
     name: stage 6 ops (E6-1..E6-4) local checks

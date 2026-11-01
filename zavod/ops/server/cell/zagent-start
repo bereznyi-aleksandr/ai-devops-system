@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zagent-start
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.6: аудит M33-R3-03 — тревога, когда раздел журналов приёма или раздел приёма почти полон; v0.5: аудит M33-R2-01 — проверка аренды и остановка в одной транзакции базы; v0.4: срок аренды — LEASE_EXPIRED в архив, сеанс сверх срока останавливается; v0.3: аудит M33-06 — тревога сначала файлом в /var/lib/zavod/alerts/spool, потом в базу bem_control.cell_alert; v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00 (v0.7: карта 3.3.10.2 — текст остановки постоянный, имя службы приходит переменной psql, а не вклеивается в текст; v0.6: аудит M33-R3-03 — тревога, когда раздел журналов приёма или раздел приёма почти полон; v0.5: аудит M33-R2-01 — проверка аренды и остановка в одной транзакции базы; v0.4: срок аренды — LEASE_EXPIRED в архив, сеанс сверх срока останавливается; v0.3: аудит M33-06 — тревога сначала файлом в /var/lib/zavod/alerts/spool, потом в базу bem_control.cell_alert; v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: один проход по запросам на запуск и остановку сессий агента (протокол v3.1 И.12а, карта 3.3.8.4).
 #   Работает от root (zagent-start.service). Порядок: замок → сверка живых сессий с базой → остановки → запуски.
@@ -72,9 +72,10 @@ def stop_locked(name):
     sql = ("SET lock_timeout = '5s';\nBEGIN;\n"
            "SELECT bem_control.lease_stop_check(:'lease'::uuid) = 'OPEN' AS lease_open \\gset\n"
            "\\if :lease_open\n"
-           f"\\! systemctl stop zagent@{name}.service; echo ZSTOP_RC=$?\n"
+           "\\setenv ZSTOP_UNIT :unit\n"
+           "\\! systemctl stop \"zagent@$ZSTOP_UNIT.service\"; echo ZSTOP_RC=$?\n"
            "\\else\n\\echo ZSTOP_NOT_OPEN\n\\endif\nCOMMIT;\n")
-    out = db(sql, timeout=100, lease=as_uuid(name)).splitlines()
+    out = db(sql, timeout=100, lease=as_uuid(name), unit=name).splitlines()
     if 'ZSTOP_NOT_OPEN' in out:
         return 'LEASE_NOT_OPEN', None
     for line in out:

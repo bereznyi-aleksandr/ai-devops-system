@@ -1,0 +1,264 @@
+#!/usr/bin/python3 -I
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-gate
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: привратник команд агента (протокол v3.1 И.7а п.1–2, карта 3.3.10.1–3.3.10.2, проба ПБ-5).
+#   Слушает /run/zavod-gate/agent.sock. Одно соединение — одна строка JSON и один ответ:
+#     {"v":1,"lease_id":"<uuid>","nonce":"<64 hex>","sha256":"<64 hex>","body":"<текст команды JSON>"}
+#   Тело — {"kind": вид, "args": {...}} строгого вида (список видов ниже). Собеседник определяется ядром Linux:
+#   SO_PEERCRED и дескриптор процесса (SO_PEERPIDFD) → группа процессов (cgroup) → служба zagent@<аренда>.service.
+#   Чужой процесс — NOT_A_SESSION. Дальше одна операция базы bem_control.gate_accept: аренда команды = аренда
+#   собеседника, сумма тела, аренда открыта, сессия работает, одноразовый номер не встречался.
+#   Запрос к базе — постоянный текст; значения уходят параметрами (\bind в psql), а не вклеиваются (И.7а п.2).
+#   Итог записи неизвестен (обрыв, предел времени) — сначала сверка gate_command_status, потом ответ.
+# ОГРАНИЧЕНИЯ: работает от zgate, вход в базу ролью zgate (peer); полномочий ядра нет: ядро проверяет каждую
+#   команду заново (И.7а п.4). Тело команды не пишется в журнал службы — только итог. Список видов команд и их
+#   аргументов — допущение до описания команд ядра (вопрос аудитору).
+import json
+import os
+import re
+import signal
+import socket
+import struct
+import subprocess
+import sys
+import threading
+import time
+
+SOCK_DIR = '/run/zavod-gate'
+SOCK = SOCK_DIR + '/agent.sock'
+MAX_LINE = 128 * 1024          # строка конверта: тело до 16 КБ, экранированное в JSON
+MAX_BODY = 16 * 1024           # байт UTF-8 тела команды (тот же предел в gate_accept)
+CONN_SECONDS = 10              # на всё соединение: чтение, база, ответ
+DB_SECONDS = 8
+MAX_CONN = 16
+RATE = 60                      # команд в минуту на одну сессию
+SO_PEERPIDFD = getattr(socket, 'SO_PEERPIDFD', 77)
+UNIT = re.compile(r'\A0::/zagent\.slice/zagent@([0-9a-f]{32})\.service(?:/[^\n]*)?\Z')
+UUID = re.compile(r'\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z')
+HEX64 = re.compile(r'\A[0-9a-f]{64}\Z')
+ENVELOPE = {'v', 'lease_id', 'nonce', 'sha256', 'body'}
+TEXT = lambda limit: lambda v: isinstance(v, str) and 1 <= len(v) <= limit and '\x00' not in v  # noqa: E731
+KINDS = {  # вид → {аргумент: проверка}; лишний или недостающий аргумент — отказ
+    'HEARTBEAT': {},
+    'PROGRESS': {'text': TEXT(2000)},
+    'QUESTION': {'text': TEXT(4000)},
+    'ARCHIVE_READY': {},
+}
+PSQL = ['psql', '-X', '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1', '-U', 'zgate', '-d', 'bem', '-f', '-']
+# Постоянные тексты запросов. Значения — только из окружения psql (\getenv) и только параметрами (\bind).
+SQL_ACCEPT = ("\\getenv zl ZG_LEASE\n\\getenv zp ZG_PEER\n\\getenv zn ZG_NONCE\n\\getenv zs ZG_SHA\n\\getenv zb ZG_BODY\n"
+              "SELECT bem_control.gate_accept($1::uuid, $2::uuid, $3, $4, decode($5, 'hex')) "
+              "\\bind :'zl' :'zp' :'zn' :'zs' :'zb' \\g\n")
+SQL_STATUS = ("\\getenv zl ZG_LEASE\n\\getenv zn ZG_NONCE\n"
+              "SELECT bem_control.gate_command_status($1::uuid, $2) \\bind :'zl' :'zn' \\g\n")
+DB_ANSWER = re.compile(r'\A(ACCEPTED [0-9a-f-]{36}|BAD_COMMAND|PEER_MISMATCH|SHA_MISMATCH|LEASE_NOT_OPEN|'
+                       r'SESSION_NOT_RUNNING|NONCE_REPLAY|NONE)\Z')
+
+
+class Refuse(Exception):
+    pass
+
+
+def log(**kw):
+    kw['at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+    print('ZAVOD_GATE ' + json.dumps(kw, sort_keys=True, ensure_ascii=True), flush=True)
+
+
+def no_dupes(pairs):
+    keys = [k for k, _ in pairs]
+    if len(keys) != len(set(keys)):
+        raise Refuse('BAD_COMMAND')
+    return dict(pairs)
+
+
+def no_constant(name):
+    raise Refuse('BAD_COMMAND')
+
+
+def strict_json(text):
+    try:
+        return json.loads(text, object_pairs_hook=no_dupes, parse_constant=no_constant)
+    except (ValueError, RecursionError):
+        raise Refuse('BAD_COMMAND') from None
+
+
+def peer_session(conn):
+    """Аренда собеседника по данным ядра Linux. pid из SO_PEERCRED; дескриптор процесса (pidfd) закрывает подмену
+    номера процесса: после чтения /proc он обязан ещё указывать на живой процесс с тем же uid."""
+    pid, uid, _gid = struct.unpack('3i', conn.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i')))
+    pidfd = None
+    try:
+        pidfd = struct.unpack('i', conn.getsockopt(socket.SOL_SOCKET, SO_PEERPIDFD, 4))[0]
+    except OSError:
+        pidfd = None
+    try:
+        with open(f'/proc/{pid}/cgroup', encoding='ascii') as f:
+            cg = f.read().strip()
+        with open(f'/proc/{pid}/status', encoding='ascii') as f:
+            uids = next((ln.split()[1:] for ln in f if ln.startswith('Uid:')), [])
+        if pidfd is not None:
+            signal.pidfd_send_signal(pidfd, 0)
+    except (OSError, ValueError, StopIteration):
+        raise Refuse('NOT_A_SESSION') from None
+    finally:
+        if pidfd is not None:
+            os.close(pidfd)
+    m = UNIT.match(cg)
+    if not m or not uids or any(int(u) != uid for u in uids):
+        raise Refuse('NOT_A_SESSION')
+    h = m.group(1)
+    return pid, uid, f'{h[:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:]}'
+
+
+def check_body(body):
+    if not isinstance(body, str):
+        raise Refuse('BAD_COMMAND')
+    raw = body.encode('utf-8', 'surrogatepass')
+    if not 2 <= len(raw) <= MAX_BODY:
+        raise Refuse('BAD_COMMAND')
+    try:
+        raw.decode('utf-8')
+    except UnicodeDecodeError:
+        raise Refuse('BAD_COMMAND') from None
+    cmd = strict_json(body)
+    if not isinstance(cmd, dict) or set(cmd) != {'kind', 'args'} or cmd['kind'] not in KINDS \
+            or not isinstance(cmd['args'], dict):
+        raise Refuse('BAD_COMMAND')
+    spec = KINDS[cmd['kind']]
+    if set(cmd['args']) != set(spec) or not all(spec[k](v) for k, v in cmd['args'].items()):
+        raise Refuse('BAD_COMMAND')
+    return raw, cmd['kind']
+
+
+def db(sql, env):
+    run_env = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', **env}
+    r = subprocess.run(PSQL, input=sql, capture_output=True, text=True, timeout=DB_SECONDS, env=run_env)
+    out = r.stdout.strip()
+    if r.returncode != 0 or not DB_ANSWER.match(out):
+        raise OSError(f'psql rc={r.returncode}')
+    return out
+
+
+class Rate:
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.seen = {}
+
+    def allow(self, lease):
+        now = time.monotonic()
+        with self.lock:
+            lst = [t for t in self.seen.get(lease, []) if now - t < 60]
+            ok = len(lst) < RATE
+            if ok:
+                lst.append(now)
+            self.seen[lease] = lst
+            for k in [k for k, v in self.seen.items() if not v]:
+                del self.seen[k]
+            return ok
+
+
+RATE_LIMIT = Rate()
+
+
+def handle(conn):
+    started = time.monotonic()
+    pid = uid = peer = lease = nonce = kind = None
+    result = 'BAD_COMMAND'
+    try:
+        conn.settimeout(CONN_SECONDS)
+        pid, uid, peer = peer_session(conn)
+        buf = b''
+        while not buf.endswith(b'\n'):
+            if time.monotonic() - started > CONN_SECONDS:
+                raise Refuse('TIMEOUT')
+            chunk = conn.recv(65536)
+            if not chunk:
+                raise Refuse('BAD_COMMAND')
+            buf += chunk
+            if len(buf) > MAX_LINE:
+                raise Refuse('BAD_COMMAND')
+        try:
+            line = buf[:-1].decode('utf-8')
+        except UnicodeDecodeError:
+            raise Refuse('BAD_COMMAND') from None
+        env = strict_json(line)
+        if not isinstance(env, dict) or set(env) != ENVELOPE or env['v'] != 1 or type(env['v']) is not int:
+            raise Refuse('BAD_COMMAND')
+        if not (isinstance(env['lease_id'], str) and UUID.match(env['lease_id'])
+                and isinstance(env['nonce'], str) and HEX64.match(env['nonce'])
+                and isinstance(env['sha256'], str) and HEX64.match(env['sha256'])):
+            raise Refuse('BAD_COMMAND')
+        lease, nonce = env['lease_id'], env['nonce']
+        raw, kind = check_body(env['body'])
+        if not RATE_LIMIT.allow(peer):
+            raise Refuse('RATE_LIMITED')
+        vals = {'ZG_LEASE': lease, 'ZG_PEER': peer, 'ZG_NONCE': nonce, 'ZG_SHA': env['sha256'], 'ZG_BODY': raw.hex()}
+        try:
+            result = db(SQL_ACCEPT, vals)
+        except (OSError, subprocess.TimeoutExpired):
+            # Итог записи неизвестен: сначала сверка с базой (И.7а п.1), потом ответ.
+            try:
+                st = db(SQL_STATUS, {'ZG_LEASE': lease, 'ZG_NONCE': nonce})
+                result = st if st.startswith('ACCEPTED ') else 'DB_UNAVAILABLE'
+            except (OSError, subprocess.TimeoutExpired):
+                result = 'DB_UNAVAILABLE'
+    except Refuse as e:
+        result = str(e)
+    except (OSError, struct.error):
+        result = 'NOT_A_SESSION' if peer is None else 'BAD_COMMAND'
+    word, _, cid = result.partition(' ')
+    answer = {'result': word} if not cid else {'result': word, 'command_id': cid}
+    try:
+        conn.sendall(json.dumps(answer).encode('ascii') + b'\n')
+    except OSError:
+        pass
+    finally:
+        conn.close()
+    log(result=word, command_id=cid or None, peer_pid=pid, peer_uid=uid, peer_lease=peer, lease=lease, nonce=nonce,
+        kind=kind, ms=int((time.monotonic() - started) * 1000))
+
+
+def main():
+    if os.geteuid() == 0:
+        print('ZAVOD_GATE refuse to run as root', file=sys.stderr)
+        return 2
+    st = os.stat(SOCK_DIR)
+    if st.st_uid != os.geteuid() or st.st_mode & 0o022:
+        print('ZAVOD_GATE bad socket directory', file=sys.stderr)
+        return 2
+    try:
+        os.unlink(SOCK)  # остаток прошлого запуска в своей папке службы
+    except FileNotFoundError:
+        pass
+    srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    old = os.umask(0o111)  # сокет rw для всех: кто говорит — решает SO_PEERCRED, а не права файла
+    try:
+        srv.bind(SOCK)
+    finally:
+        os.umask(old)
+    srv.listen(64)
+    slots = threading.BoundedSemaphore(MAX_CONN)
+    log(result='READY', socket=SOCK)
+
+    def run(c):
+        try:
+            handle(c)
+        finally:
+            slots.release()
+    while True:
+        conn, _ = srv.accept()
+        if not slots.acquire(blocking=False):
+            try:
+                conn.sendall(b'{"result": "BUSY"}\n')
+            except OSError:
+                pass
+            conn.close()
+            log(result='BUSY')
+            continue
+        threading.Thread(target=run, args=(conn,), daemon=True).start()
+
+
+if __name__ == '__main__':
+    sys.exit(main())

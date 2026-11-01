@@ -1,0 +1,52 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-proxy.service
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: служба посредника сети для сессий агента (протокол v3.1 И.12в, карта 3.3.10.4): 127.0.0.2:3128,
+#   только CONNECT к именам из /etc/zavod/proxy-allow.conf, журнал каждого соединения.
+# ОГРАНИЧЕНИЯ: работает от zproxy; выход в интернет у zproxy — только порт 443 и местный перевод имён
+#   (правила nftables zavod-egress.nft); ничего не пишет на диск.
+[Unit]
+Description=Zavod egress proxy for agent sessions (protocol I.12v)
+After=network-online.target zavod-nft.service
+Wants=network-online.target
+Requires=zavod-nft.service
+
+[Service]
+Type=exec
+User=zproxy
+Group=zproxy
+UMask=0077
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zavod-proxy
+Restart=always
+RestartSec=2
+MemoryMax=512M
+CPUQuota=100%
+TasksMax=160
+LimitNOFILE=1024
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+InaccessiblePaths=-/run/zavod -/run/zavod-gate -/var/lib/zavod -/run/postgresql -/var/run/postgresql
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateIPC=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

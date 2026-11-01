@@ -1,0 +1,20 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-nft.service
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: загрузка общего фильтра сервера /etc/zavod/zavod-egress.nft при старте — до сети и до сессий
+#   агента (карта 3.3.10.5). Не загрузился — сессии и посредник не стартуют (Requires= у них).
+[Unit]
+Description=Zavod server filter nftables (protocol I.12v)
+DefaultDependencies=no
+Before=network-pre.target zagent-start.service zavod-proxy.service
+Wants=network-pre.target
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/zavod/zavod-egress.nft
+
+[Install]
+WantedBy=multi-user.target

@@ -60,7 +60,7 @@ BEGIN
         v := bem_control.gate_accept(a, a, n2, encode(sha256(bad), 'hex'), bad);
         IF v <> 'BAD_COMMAND' THEN RAISE EXCEPTION 'T07.% %', i, v; END IF;
     END LOOP;
-    v := bem_control.gate_accept(a, a, upper(n2), encode(sha256(hb), 'hex'), hb);
+    v := bem_control.gate_accept(a, a, repeat('C', 64), encode(sha256(hb), 'hex'), hb);
     IF v <> 'BAD_COMMAND' THEN RAISE EXCEPTION 'T07u %', v; END IF;
     v := bem_control.gate_accept(a, a, n2, encode(sha256(hb), 'hex'), NULL);
     IF v <> 'BAD_COMMAND' THEN RAISE EXCEPTION 'T07n %', v; END IF;
