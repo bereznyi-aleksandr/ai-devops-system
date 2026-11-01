@@ -3,7 +3,7 @@
 -- РАСШИРЕНИЕ 02: sha256 2d0801dc6aad1a3f29a7c57bf5f85a23314afc011fe4230ceee1ddea0f2414ea
 -- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
 -- РАСШИРЕНИЕ 04: sha256 fa6bdf4dfcf6717215d2239e99f83ef0870c352d5dc1483ca87e88353098f675
--- РАСШИРЕНИЕ 06: sha256 e8c22f8da5178d7bd8520b04d48a820c16710d5830865e28fda420974643522a
+-- РАСШИРЕНИЕ 06: sha256 9cf493d23ea20f2c42fff4cbec20e2d12421fccb0d3cd47a88e6c596dec09f71
 -- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03 и Z-EXT-04 (см. сборщик).
 \set ON_ERROR_STOP on
 
@@ -1558,7 +1558,7 @@ BEGIN
         ('lease_mark_running', '76b8cca5430662920a8df4ef7cfb5507a12d45b029ee9f74719ebcd7de576d4c'),
         ('lease_start_reconcile', 'aaa1d730ae506baccd2973ea8a7012f277ea4d658c093f2821bcb5e891ddb131'),
         ('lease_start_overdue', '5049ca6849f3074c76dce342ca93f61021a3b90976959ffb3871e324da2466f9'),
-        ('lease_stop_check', '5807f1a7514934526da0ac4d14110f49464b73928c01e5438616bd0aab6a732c'),
+        ('lease_stop_check', '3d64e4ba30ccdf7bd8c20ec908bd7b717a1b2785c19dcd83d6019a9c59a36abb'),
         ('cell_alert_store', '6e46df4680e36dcb03c0064fc24b515a3dca1165afcaceeb48c144224712e048'),
         ('cell_alert_due', '8974f880190a6373e777e1f24912e789edb018241f1a6f50db6c2830a98dd80e'),
         ('cell_alert_result', '214771799afe38953c1f7250c60470442194ddf5a6cf4f296a5316aea050f7fe'),

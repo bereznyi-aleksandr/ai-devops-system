@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod-alert-notify
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 16:14 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:14 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 16:14 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:03 +02:00 (v0.2: программа канала — от ztelegram, аудит M33-R2-02)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: доставка тревог клетки оператору (аудит M33-06, протокол И.12 п.7). Один проход: берёт из базы
 #   недоставленные тревоги (bem_control.cell_alert_due), каждую передаёт программе канала /etc/zavod/alert-deliver
@@ -10,7 +10,8 @@
 #   дольше 15 минут: есть — аварийная строка журнала и состояние DOWN в /run/zavod/alert-channel.
 # ОГРАНИЧЕНИЯ: работает от root (вход в базу ролью zstarter, как zagent-start). Программа канала должна быть
 #   обычным файлом root, без права записи для группы и остальных; иначе она не запускается (CHANNEL_UNSAFE).
-#   Ничего не удаляет. Секретов не читает: ключ канала читает только сама программа канала.
+#   Программа канала запускается от ztelegram (без root): ключ бота лежит в /etc/zavod/secrets/ztelegram/
+#   (И.7 п.4). Ничего не удаляет. Секретов не читает: ключ канала читает только сама программа канала.
 import json
 import os
 import stat
@@ -18,6 +19,7 @@ import subprocess
 import sys
 
 DELIVER = '/etc/zavod/alert-deliver'
+CHANNEL_USER = 'ztelegram'
 STATE = '/run/zavod/alert-channel'
 STALE = '15 minutes'
 PSQL = ['psql', '-X', '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1', '-U', 'zstarter', '-d', 'bem', '-f', '-']
@@ -74,7 +76,8 @@ def deliver(row):
         return None, problem
     text = f"ZAVOD ALERT {row['source']} {row['raised_at']}\n{row['message']}\n"
     try:
-        r = subprocess.run([DELIVER], input=text, capture_output=True, text=True, timeout=30, env=CLEAN_ENV)
+        r = subprocess.run([DELIVER], input=text, capture_output=True, text=True, timeout=30, env=CLEAN_ENV,
+                           user=CHANNEL_USER, group=CHANNEL_USER, extra_groups=[], cwd='/')
     except (OSError, subprocess.TimeoutExpired) as e:
         return None, f'CHANNEL_CALL {type(e).__name__}'
     receipt = (r.stdout.splitlines() or [''])[0].strip()

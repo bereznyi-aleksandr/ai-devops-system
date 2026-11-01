@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zagent-start
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:24 +02:00 (v0.4: срок аренды — LEASE_EXPIRED в архив, сеанс сверх срока останавливается; v0.3: аудит M33-06 — тревога сначала файлом в /var/lib/zavod/alerts/spool, потом в базу bem_control.cell_alert; v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:03 +02:00 (v0.5: аудит M33-R2-01 — проверка аренды и остановка в одной транзакции базы; v0.4: срок аренды — LEASE_EXPIRED в архив, сеанс сверх срока останавливается; v0.3: аудит M33-06 — тревога сначала файлом в /var/lib/zavod/alerts/spool, потом в базу bem_control.cell_alert; v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: один проход по запросам на запуск и остановку сессий агента (протокол v3.1 И.12а, карта 3.3.8.4).
 #   Работает от root (zagent-start.service). Порядок: замок → сверка живых сессий с базой → остановки → запуски.
@@ -48,17 +48,37 @@ def stamp():
     return time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
 
 
-def db(sql, **params):
+def db(sql, timeout=30, **params):
     args = list(PSQL)
     for k, v in params.items():
         args[1:1] = ['-v', f'{k}={v}']
     try:
-        r = subprocess.run(args, input=sql, capture_output=True, text=True, timeout=30)
+        r = subprocess.run(args, input=sql, capture_output=True, text=True, timeout=timeout)
     except (OSError, subprocess.TimeoutExpired) as e:
         raise DbError(type(e).__name__) from None
     if r.returncode != 0:
         raise DbError(r.stderr.strip().splitlines()[-1][:200] if r.stderr.strip() else f'rc={r.returncode}')
     return r.stdout.strip()
+
+
+def stop_locked(name):
+    """Аудит M33-R2-01: проверка аренды и остановка — в одной транзакции базы. lease_stop_check запирает
+    строку аренды до COMMIT, а systemctl stop идёт изнутри psql (\\!), пока замок держится: закрыть аренду
+    между проверкой и остановкой нельзя, закрытие ждёт. Имя прошло NAME (только 32 знака 0-9a-f).
+    Ответ: ('OPEN', код systemctl stop) или ('LEASE_NOT_OPEN', None); сбой базы или замка — DbError."""
+    sql = ("SET lock_timeout = '5s';\nBEGIN;\n"
+           "SELECT bem_control.lease_stop_check(:'lease'::uuid) = 'OPEN' AS lease_open \\gset\n"
+           "\\if :lease_open\n"
+           f"\\! systemctl stop zagent@{name}.service; echo ZSTOP_RC=$?\n"
+           "\\else\n\\echo ZSTOP_NOT_OPEN\n\\endif\nCOMMIT;\n")
+    out = db(sql, timeout=100, lease=as_uuid(name)).splitlines()
+    if 'ZSTOP_NOT_OPEN' in out:
+        return 'LEASE_NOT_OPEN', None
+    for line in out:
+        m = re.fullmatch(r'ZSTOP_RC=(\d+)', line.strip())
+        if m:
+            return 'OPEN', int(m.group(1))
+    raise DbError('NO_STOP_ANSWER')
 
 
 def as_uuid(name):
@@ -247,18 +267,14 @@ def do_stops(mover, db_ok):
                 log('ZAGENT_START DB_UNAVAILABLE: nothing stopped')
                 return
             try:
-                res = db("SELECT bem_control.lease_stop_check(:'lease'::uuid);\n", lease=as_uuid(name))
+                res, rc = stop_locked(name)
             except DbError as e:
                 log(f'ZAGENT_START DB_UNAVAILABLE: {e}')
                 return
             if res == 'OPEN':
-                r = systemctl('stop', f'zagent@{name}.service')
-                mover.move(dfd, os.fsencode(name), ARCHIVE, 'STOPPED' if r.returncode == 0 else 'STOP_FAILED', 'file')
-            elif res == 'LEASE_NOT_OPEN':
-                mover.move(dfd, os.fsencode(name), ARCHIVE, 'STOP_LEASE_NOT_OPEN', 'file')
+                mover.move(dfd, os.fsencode(name), ARCHIVE, 'STOPPED' if rc == 0 else 'STOP_FAILED', 'file')
             else:
-                log(f'ZAGENT_START UNKNOWN_ANSWER {res!r}: stop')
-                return
+                mover.move(dfd, os.fsencode(name), ARCHIVE, 'STOP_LEASE_NOT_OPEN', 'file')
     finally:
         os.close(dfd)
 

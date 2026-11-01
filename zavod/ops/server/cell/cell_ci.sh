@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:36 +02:00 (v0.5: предел раздела сеансов — по размеру образа; v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:07 +02:00 (v0.6: пробы M33-R2-01 — закрыть аренду во время остановки нельзя, M33-R2-02 — ключи в /etc/zavod/secrets, канал тревог от ztelegram; v0.5: предел раздела сеансов — по размеру образа; v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -78,7 +78,7 @@ for a in "${SVC[@]}"; do
   done
   for k in zgithub ztelegram zbackup; do
     [ "$a" != "$k" ] || continue
-    if sudo -u "$a" ls "/etc/zavod/keys/$k" >/dev/null 2>&1; then cross_bad=$((cross_bad + 1)); echo "CELL_INFO $a reads keys of $k"; fi
+    if sudo -u "$a" ls "/etc/zavod/secrets/$k" >/dev/null 2>&1; then cross_bad=$((cross_bad + 1)); echo "CELL_INFO $a reads keys of $k"; fi
   done
   for p in /var/lib/zavod/start-archive /var/lib/zavod/start-rejected /var/lib/zavod/start-state /var/lib/zavod/alerts \
            /var/lib/zavod/intake/archive; do
@@ -88,6 +88,12 @@ for a in "${SVC[@]}"; do
     if sudo -u "$a" test -w "$p"; then cross_bad=$((cross_bad + 1)); echo "CELL_INFO $a writes $p"; fi
   done
 done
+# Аудит M33-R2-02: ключи — в /etc/zavod/secrets/<служба>/ (И.7 п.4), служба читает только свою папку.
+for k in zgithub ztelegram zbackup; do
+  [ "$(sudo stat -c '%U %a' "/etc/zavod/secrets/$k")" = "$k 700" ] && sudo -u "$k" test -r "/etc/zavod/secrets/$k" -a -x "/etc/zavod/secrets/$k" \
+    || own_bad=$((own_bad + 1))
+done
+[ -e /etc/zavod/keys ] && bad "M33-R2-02: old /etc/zavod/keys exists" || ok "M33-R2-02: keys only under /etc/zavod/secrets"
 [ "$own_bad" = 0 ] && ok "M33-03: each service owns its folder" || bad "M33-03: $own_bad services cannot use their folder"
 [ "$cross_bad" = 0 ] && ok "M33-03: no service reads another's folder, keys or starter data" || bad "M33-03: $cross_bad cross-access cases"
 
@@ -231,6 +237,28 @@ pass
 older "$L9"; pass
 [ "$(state "$L9")" = START_FAILED ] && ok "M33-02: L9 released" || bad "M33-02: L9 state $(state "$L9")"
 
+echo "=== аудит M33-R2-01: аренду нельзя закрыть, пока идёт остановка по заявке"
+close_lease() { pgsu "SET lock_timeout = '1s'; UPDATE bem_control.chat_lease SET status = 'COMPLETED', closed_at = clock_timestamp(),
+      completion_evidence_id = gen_random_uuid(), result_evidence_id = gen_random_uuid(),
+      memory_evidence_id = gen_random_uuid(), next_evidence_id = gen_random_uuid(), report_id = gen_random_uuid()
+      WHERE lease_id = '$1'::uuid" >/dev/null 2>&1; }
+L10=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L10"
+start_wait "$L10" && ok "M33-R2-01: L10 started" || bad "M33-R2-01: L10 not started"
+# Остановка службы длится 8 секунд (учебная задержка после остановки) — окно, в котором раньше была гонка.
+sudo install -d -m 0755 "/run/systemd/system/zagent@$L10.service.d"
+printf '[Service]\nExecStopPost=/bin/sleep 8\n' | sudo tee "/run/systemd/system/zagent@$L10.service.d/ci-slow.conf" >/dev/null
+sudo systemctl daemon-reload
+sudo -u zkernel touch "/run/zavod/stop/$L10"
+pass & stopper=$!
+sleep 3
+if close_lease "$L10"; then bad "M33-R2-01: lease closed during stop"; else ok "M33-R2-01: close waits while stop runs"; fi
+wait "$stopper" || true
+[ "$(active "$L10")" != active ] && ok "M33-R2-01: L10 stopped" || bad "M33-R2-01: L10 still active"
+[ "$(marker /var/lib/zavod/start-archive "${L10}_STOPPED")" = 1 ] && ok "M33-R2-01: stop archived as STOPPED" || bad "M33-R2-01: stop marker"
+close_lease "$L10" && ok "M33-R2-01: close goes through after stop" || bad "M33-R2-01: close after stop"
+sudo rm -f "/run/systemd/system/zagent@$L10.service.d/ci-slow.conf"; sudo systemctl daemon-reload
+older "$L10"; pass
+
 echo "=== аудит C33-02: сбой systemctl — живая сессия не теряется, новых запусков нет"
 # Подменный systemctl только для прохода zagent-start (через PATH службы): list-units падает или даёт мусор.
 L4=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L4"
@@ -283,12 +311,14 @@ notify
 [ "$(pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE delivered_at IS NULL AND attempts >= 1 AND last_error LIKE 'CHANNEL_EXIT 3 NO_TELEGRAM_CONF%'")" -ge 1 ] \
   && ok "M33-06: no telegram key, failed attempt recorded" || bad "M33-06: failed attempt not recorded"
 # Рабочий учебный канал: текст доходит, квитанция записана, состояние OK.
-printf '#!/bin/sh\ncat >> /run/zavod/ci-alert-received\necho ci-receipt-1\n' | sudo tee /etc/zavod/alert-deliver >/dev/null
+# Канал работает от ztelegram (аудит M33-R2-02): пишет в свою папку, а не в /run/zavod.
+sudo install -d -o ztelegram -g ztelegram -m 0700 /run/zavod/ci-alert
+printf '#!/bin/sh\n[ "$(id -un)" = ztelegram ] || exit 9\ncat >> /run/zavod/ci-alert/received\necho ci-receipt-1\n' | sudo tee /etc/zavod/alert-deliver >/dev/null
 pgsu "UPDATE bem_control.cell_alert SET next_attempt_at = now() WHERE delivered_at IS NULL" >/dev/null
 notify
 [ "$(pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE delivered_at IS NULL")" = 0 ] && ok "M33-06: all alerts delivered" || bad "M33-06: undelivered after channel fixed"
 [ "$(pgsu "SELECT string_agg(DISTINCT receipt, ',') FROM bem_control.cell_alert")" = ci-receipt-1 ] && ok "M33-06: receipt stored" || bad "M33-06: receipt"
-sudo grep -q 'stop: 101 entries' /run/zavod/ci-alert-received && ok "M33-06: operator channel got the text" || bad "M33-06: channel got nothing"
+sudo grep -q 'stop: 101 entries' /run/zavod/ci-alert/received && ok "M33-06: operator channel got the text" || bad "M33-06: channel got nothing"
 [ "$(sudo cat /run/zavod/alert-channel)" = OK ] && ok "M33-06: channel state OK" || bad "M33-06: channel state $(sudo cat /run/zavod/alert-channel)"
 # Канал сломан дольше 15 минут: аварийная строка журнала и состояние DOWN.
 printf '#!/bin/sh\nexit 7\n' | sudo tee /etc/zavod/alert-deliver >/dev/null

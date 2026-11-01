@@ -1,6 +1,6 @@
 -- ДОКУМЕНТ: db/06_zavod_ext_04.sql (расширение Z-EXT-04: запуск сессий агента, карта 3.3.8.5)
--- ВЕРСИЯ: v0.5  СТАТУС: DRAFT
--- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:24 +02:00 (v0.5: срок аренды — LEASE_EXPIRED через 30 минут, сеанс 4 часа; v0.4: аудит M33-06 — тревоги клетки в таблице cell_alert с доставкой оператору; v0.3: аудит M33-02 — остановка только при открытой аренде; v0.2: аудит C33-01 — живая служба место не освобождает)
+-- ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+-- ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:03 +02:00 (v0.6: аудит M33-R2-01 — lease_stop_check запирает строку аренды до конца транзакции; v0.5: срок аренды — LEASE_EXPIRED через 30 минут, сеанс 4 часа; v0.4: аудит M33-06 — тревоги клетки в таблице cell_alert с доставкой оператору; v0.3: аудит M33-02 — остановка только при открытой аренде; v0.2: аудит C33-01 — живая служба место не освобождает)
 -- ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 -- ОСНОВАНИЕ: протокол v3.1 И.12а (zagent-start, lease_reserve_start, lease_mark_running, после перезагрузки).
 -- НАЗНАЧЕНИЕ: (1) входная роль zstarter — её получает только root ячейки (peer, сопоставление zavod_cell);
@@ -15,6 +15,7 @@
 --   (6) lease_start_reconcile — сверка с живыми службами (вызывает zagent-start каждый проход);
 --   (7) lease_start_overdue — брони STARTING старше 2 минут: их живые службы zagent-start останавливает;
 --   (8) lease_stop_check — остановка по заявке ядра только при открытой аренде (И.12 п.4, аудит M33-02);
+--       строка аренды заперта до конца транзакции: закрыть аренду, пока идёт остановка, нельзя (M33-R2-01);
 --   (9) тревоги клетки bem_control.cell_alert: запись из местной очереди, доставка оператору с квитанцией,
 --       повтор при ошибке канала, счёт недоставленных (аудит M33-06).
 --   Правило аудита C33-01: сессия из списка живых служб место не освобождает никогда.
@@ -197,14 +198,19 @@ GRANT  EXECUTE ON FUNCTION bem_control.lease_start_overdue() TO zstarter;
 
 -- (7) Можно ли остановить сеанс по заявке (протокол И.12 п.4, аудит M33-02): OPEN — аренда открыта, остановить;
 --     LEASE_NOT_OPEN — аренды нет или она закрыта: заявка в архив без остановки (сеанс гаснет по RuntimeMaxSec).
+--     Аудит M33-R2-01: строка аренды запирается (FOR SHARE) до конца транзакции вызывающего. zagent-start
+--     держит транзакцию открытой, пока systemctl stop не закончит; закрытие аренды (UPDATE) в это время ждёт.
 CREATE FUNCTION bem_control.lease_stop_check(p_lease_id uuid)
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = bem_control, bem_core, pg_catalog, pg_temp
 AS $$
+DECLARE
+    v_status text;
 BEGIN
-    IF EXISTS (SELECT 1 FROM bem_control.chat_lease WHERE lease_id = p_lease_id AND status = 'OPEN') THEN
+    SELECT status INTO v_status FROM bem_control.chat_lease WHERE lease_id = p_lease_id FOR SHARE;
+    IF v_status = 'OPEN' THEN
         RETURN 'OPEN';
     END IF;
     RETURN 'LEASE_NOT_OPEN';

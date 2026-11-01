@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:26 +02:00 (v0.5: аудит M33-03 — база
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:03 +02:00 (v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
+#   v0.5: аудит M33-03 — база
 #   под zdb, свои папки служб; вопрос аудитора «д» — раздел сеансов /var/lib/zavod/session-fs.img; v0.4: аудит M33-06 — очередь
 #   тревог /var/lib/zavod/alerts, служба доставки zavod-alert-notify, канал Telegram /etc/zavod/alert-deliver; v0.3: аудит M33-01 — вход zkernel → bem_kernel_rw
 #   по сопоставлению zavod_kernel; v0.2: карантин и приём
@@ -74,7 +75,8 @@ dir /usr/local/lib/zavod root root 0755
 echo "=== 3.3.8.3–3.3.8.4 программы, клетка, папки запросов, тревоги"
 install -o root -g root -m 0755 "$HERE/zagent-start" "$HERE/zagent-session" "$HERE/zavod-alert-notify" \
   "$HERE/zavod-alert-telegram" /usr/local/lib/zavod/
-# Канал тревог: по умолчанию Telegram; ключ бота кладёт оператор в /etc/zavod/alert-telegram.env (0600).
+# Канал тревог: по умолчанию Telegram; работает от ztelegram, ключ бота кладёт оператор в
+# /etc/zavod/secrets/ztelegram/alert-telegram.env (владелец ztelegram, 0400; И.7 п.4).
 # Уже стоящий канал не заменяется.
 [ -e /etc/zavod/alert-deliver ] || install -o root -g root -m 0755 "$HERE/zavod-alert-telegram" /etc/zavod/alert-deliver
 for u in zagent@.service zagent.slice zagent-start.service zagent-start.path zagent-start.timer \
@@ -135,12 +137,13 @@ else
 fi
 
 echo "=== свои папки служб (И.7, Л.16–Л.25; аудит M33-03)"
-# Рабочая папка каждой службы — только её (0700). Папка ключей — у служб с ключами внешних сервисов:
-# GitHub (zgithub), бот Telegram (ztelegram), копия (zbackup); ключи кладёт оператор, установщик их не пишет.
+# Рабочая папка каждой службы — только её (0700). Папка ключей (И.7 п.4: /etc/zavod/secrets/<учётная запись>/,
+# читает только сама служба) — у служб с ключами внешних сервисов: GitHub (zgithub), бот Telegram (ztelegram),
+# копия (zbackup); ключи (файлы 0400) кладёт оператор, установщик их не пишет.
 dir /var/lib/zavod/svc root root 0755
 for a in zkernel zgate zgithub ztelegram zquarantine zimport zbackup zbrowser; do dir "/var/lib/zavod/svc/$a" "$a" "$a" 0700; done
-dir /etc/zavod/keys root root 0755
-for a in zgithub ztelegram zbackup; do dir "/etc/zavod/keys/$a" "$a" "$a" 0700; done
+dir /etc/zavod/secrets root root 0755
+for a in zgithub ztelegram zbackup; do dir "/etc/zavod/secrets/$a" "$a" "$a" 0700; done
 
 if [ "$NO_PG" = 0 ]; then
   echo "=== 3.3.8.5 вход root → zstarter (zavod_cell), zkernel → bem_kernel_rw (zavod_kernel, аудит M33-01); peer"
