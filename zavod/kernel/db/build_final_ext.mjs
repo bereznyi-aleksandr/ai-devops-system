@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: db/build_final_ext.mjs
-// ВЕРСИЯ: v0.13  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:24 +02:00 (v0.13: исход LEASE_EXPIRED в журнале запуска; v0.12: аудит M33-06 — таблица cell_alert и четыре функции тревог; v0.11: аудит C33-01 и M33-02 — функции lease_start_overdue и lease_stop_check; v0.10: карта 3.3.8.5 — Z-EXT-04
+// ВЕРСИЯ: v0.14  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 16:19 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00 (v0.14: карта 3.3.10 — Z-EXT-05 (db/07_zavod_ext_05.sql): входная роль zgate,
+//   таблицы gate_command (правила строк с FORCE и политика tenant_isolation) и gate_command_log, функции gate_accept и
+//   gate_command_status — права, режим definer, отпечатки тел, точный набор индексов; v0.13: исход LEASE_EXPIRED в журнале запуска; v0.12: аудит M33-06 — таблица cell_alert и четыре функции тревог; v0.11: аудит C33-01 и M33-02 — функции lease_start_overdue и lease_stop_check; v0.10: карта 3.3.8.5 — Z-EXT-04
 //   (db/06_zavod_ext_04.sql): входная роль zstarter во всех списках ролей, таблицы session_start и session_start_log,
 //   три функции запуска сессий — права, режим definer, отпечатки тел, точный набор индексов; v0.9 2026-10-18 11:38 +03:00: v0.9: ChatGPT R25 — функция hold_operator_actor:
 //   вызывает только входная роль, режим definer; v0.8 10:52: ChatGPT R24 — функции hold_session_credential и
@@ -328,10 +330,55 @@ function body(name, src = ext) {
   if (to < 0) throw new Error(`unterminated body for ${name}`);
   return src.slice(from, to);
 }
+// Z-EXT-05 (карта 3.3.10, протокол И.7а): входная роль zgate — во всех списках ролей 05; таблица команд агента
+// с правилами строк (FORCE) и политикой tenant_isolation; журнал привратника; две функции — вызывает только zgate.
+const ext05 = readFileSync(here('./07_zavod_ext_05.sql'), 'utf8').replace(/\r\n/g, '\n');
+t = after(t, 'zstarter|yes|no|no|no|no|no|yes|-1', ['zgate|yes|no|no|no|no|no|yes|-1']);
+t = after(t, 'zstarter|password:none|valid_until:none|config:none', ['zgate|password:none|valid_until:none|config:none']);
+t = once(t, "        'zstarter'];\n    v_rls", "        'zstarter',\n        'zgate'];\n    v_rls");
+t = after(t, 'DATABASE|bem|zstarter|CONNECT|bem_core_owner', ['DATABASE|bem|zgate|CONNECT|bem_core_owner']);
+t = after(t, 'SCHEMA|bem_control|zstarter|USAGE|bem_control_owner', ['SCHEMA|bem_control|zgate|USAGE|bem_control_owner']);
+t = once(t, "        'bem_core.work_item'];\n    -- Политика целиком",
+  "        'bem_core.work_item',\n        'bem_control.gate_command'];\n    -- Политика целиком");
+const POLICY_TAIL = "|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current_tenant())";
+t = once(t, `        'bem_core.work_item${POLICY_TAIL}'];`,
+  `        'bem_core.work_item${POLICY_TAIL}',\n        'bem_control.gate_command${POLICY_TAIL}'];`);
+const EXT05_CONSTRAINTS = [
+  "TABLE|bem_control.gate_command|gate_command_args_check|CHECK ((jsonb_typeof(args) = 'object'::text))",
+  "TABLE|bem_control.gate_command|gate_command_body_sha256_check|CHECK ((body_sha256 ~ '^[0-9a-f]{64}$'::text))",
+  "TABLE|bem_control.gate_command|gate_command_kind_check|CHECK ((kind = ANY (ARRAY['HEARTBEAT'::text, 'PROGRESS'::text, 'QUESTION'::text, 'ARCHIVE_READY'::text])))",
+  "TABLE|bem_control.gate_command|gate_command_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)",
+  "TABLE|bem_control.gate_command|gate_command_nonce_check|CHECK ((nonce ~ '^[0-9a-f]{64}$'::text))",
+  "TABLE|bem_control.gate_command|gate_command_nonce_once|UNIQUE (nonce)",
+  "TABLE|bem_control.gate_command|gate_command_pkey|PRIMARY KEY (command_id)",
+  "TABLE|bem_control.gate_command_log|gate_command_log_nonce_check|CHECK ((nonce ~ '^[0-9a-f]{64}$'::text))",
+  "TABLE|bem_control.gate_command_log|gate_command_log_outcome_check|CHECK ((outcome = ANY (ARRAY['ACCEPTED'::text, 'BAD_COMMAND'::text, 'PEER_MISMATCH'::text, 'SHA_MISMATCH'::text, 'LEASE_NOT_OPEN'::text, 'SESSION_NOT_RUNNING'::text, 'NONCE_REPLAY'::text])))",
+  "TABLE|bem_control.gate_command_log|gate_command_log_pkey|PRIMARY KEY (log_id)",
+];
+t = after(t, 'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)', EXT05_CONSTRAINTS.map(sqlLit));
+// Команды читает ядро (в рамках заказчика) и копия; журнал — только копия. Пишут только функции.
+t = after(t, 'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner', [
+  ...['gate_command', 'gate_command_log'].flatMap((n) => [
+    ...OWNER_PRIVS.map((p) => `TABLE|bem_control.${n}|bem_control_owner|${p}|bem_control_owner`),
+    `TABLE|bem_control.${n}|backup_reader|SELECT|bem_control_owner`]),
+  'TABLE|bem_control.gate_command|bem_kernel_rw|SELECT|bem_control_owner',
+]);
+const EXT05_FUNCS = { gate_accept: 'uuid, uuid, text, text, bytea', gate_command_status: 'uuid, text' };
+t = after(t, 'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+  Object.entries(EXT05_FUNCS).flatMap(([n, a]) => ['bem_control_owner', 'zgate']
+    .map((who) => `FUNCTION|bem_control.${n}(${a})|${who}|EXECUTE|bem_control_owner`)));
+const EXT05_INDEXES = [
+  "CREATE INDEX gate_command_log_at ON bem_control.gate_command_log USING btree (at)",
+  "CREATE UNIQUE INDEX gate_command_log_pkey ON bem_control.gate_command_log USING btree (log_id)",
+  "CREATE UNIQUE INDEX gate_command_nonce_once ON bem_control.gate_command USING btree (nonce)",
+  "CREATE UNIQUE INDEX gate_command_pkey ON bem_control.gate_command USING btree (command_id)",
+].sort();
+
 const prints = [...FUNCS.map((f) => [f, sha(body(f))]),
   ...Object.keys(EXT02_FUNCS).map((f) => [f, sha(body(f, ext02))]),
   ...Object.keys(EXT03_FUNCS).map((f) => [f, sha(body(f, ext03))]),
-  ...Object.keys(EXT04_FUNCS).map((f) => [f, sha(body(f, ext04))])];
+  ...Object.keys(EXT04_FUNCS).map((f) => [f, sha(body(f, ext04))]),
+  ...Object.keys(EXT05_FUNCS).map((f) => [f, sha(body(f, ext05))])];
 const fpBlock = `-- Z-EXT-01 (аудит Z3 M-Z3-01), Z-EXT-02 и Z-EXT-03: тела функций расширений совпадают с
 -- db/02_zavod_ext_01.sql, db/03_zavod_ext_02.sql и db/04_zavod_ext_03.sql.
 -- У каждого имени ровно одна функция в bem_control; лишняя перегрузка или подменённое тело — отказ.
@@ -411,6 +458,34 @@ ${Object.keys(EXT04_FUNCS).map((f) => `        ('${f}', 'bem_control_owner|defin
 END
 $zavod_ext04$;
 
+-- Z-EXT-05: владелец, режим исполнения и настройки функций привратника; точный набор индексов двух таблиц.
+DO $zavod_ext05$
+DECLARE
+    r     record;
+    v_got text;
+BEGIN
+    FOR r IN SELECT * FROM (VALUES
+${Object.keys(EXT05_FUNCS).map((f) => `        ('${f}', 'bem_control_owner|definer|${DEF_PATH}')`).join(',\n')}
+    ) AS x(fn, want) LOOP
+        SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'
+                   || coalesce((SELECT string_agg(c, ';' ORDER BY c COLLATE "C") FROM unnest(p.proconfig) c), 'none'))
+          INTO v_got
+          FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'bem_control' AND p.proname = r.fn;
+        IF v_got IS DISTINCT FROM r.want THEN
+            RAISE EXCEPTION 'FINAL_ZAVOD_FN_MODE_MISMATCH: % (найдено %)', r.fn, v_got;
+        END IF;
+    END LOOP;
+    SELECT string_agg(d, ' ; ' ORDER BY d COLLATE "C") INTO v_got
+      FROM (SELECT pg_get_indexdef(i.indexrelid) AS d FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE n.nspname = 'bem_control' AND c.relname IN ('gate_command', 'gate_command_log')) s;
+    IF v_got IS DISTINCT FROM '${EXT05_INDEXES.map(sqlLit).join(' ; ')}' THEN
+        RAISE EXCEPTION 'FINAL_ZAVOD_INDEX_MISMATCH: %', v_got;
+    END IF;
+END
+$zavod_ext05$;
+
 `;
 t = once(t, '-- Ни одной команды безопасности после этой строки быть не должно.\n',
   fpBlock + '-- Ни одной команды безопасности после этой строки быть не должно.\n');
@@ -421,7 +496,8 @@ const out = `-- ДОКУМЕНТ: db/05_final_state_check_ext01.sql — СОБР
 -- РАСШИРЕНИЕ 03: sha256 ${sha(ext02)}
 -- РАСШИРЕНИЕ 04: sha256 ${sha(ext03)}
 -- РАСШИРЕНИЕ 06: sha256 ${sha(ext04)}
--- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03 и Z-EXT-04 (см. сборщик).
+-- РАСШИРЕНИЕ 07: sha256 ${sha(ext05)}
+-- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03, Z-EXT-04 и Z-EXT-05 (см. сборщик).
 ${t}`;
 
 const target = here('./05_final_state_check_ext01.sql');

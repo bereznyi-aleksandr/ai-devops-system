@@ -265,7 +265,7 @@ jobs:
           node run_migration.mjs --files 01_database_migration.sql > chain_wrapper.out
           node "$K/db/build_ext.mjs" 01_database_migration.sql --check
           psql -X -v ON_ERROR_STOP=1 -U postgres -d bem -f "$K/db/02_zavod_ext_01.sql" > chain_ext.out
-          for f in 03_zavod_ext_02 04_zavod_ext_03 06_zavod_ext_04; do
+          for f in 03_zavod_ext_02 04_zavod_ext_03 06_zavod_ext_04 07_zavod_ext_05; do
             psql -X -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$K/db/$f.sql" > "chain_$f.out"
           done
           node "$K/db/build_final_ext.mjs" 05_final_state_check.sql --check
