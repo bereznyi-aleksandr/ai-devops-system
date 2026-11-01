@@ -1,0 +1,50 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/zimport@.service
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:33 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: доверенный приём файлов аренды %i (протокол v3.1 И.12д, Л.23; карта 3.3.9.3). Запускается после
+#   успешной остановки zquarantine@%i (OnSuccess= там). Без сети и базы; читает out/ и опись, пишет только в
+#   accepted/ и свой журнал. После любого итога root переносит in/ и out/ аренды в archive/ (ExecStopPost=+).
+# ОГРАНИЧЕНИЯ: ProtectProc оставлен по умолчанию: программа сама проверяет по /proc, что процессов zquarantine нет.
+[Unit]
+Description=Zavod trusted import of archive %i (protocol I.12d)
+After=zquarantine@%i.service
+
+[Service]
+Type=oneshot
+User=zimport
+Group=zimport
+UMask=0027
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zavod_intake.py import %i
+ExecStopPost=+/usr/bin/python3 -I /usr/local/lib/zavod/zavod_intake.py archive %i import
+RuntimeMaxSec=300
+MemoryMax=512M
+CPUQuota=100%
+TasksMax=8
+LimitFSIZE=4G
+LimitNOFILE=256
+PrivateNetwork=yes
+IPAddressDeny=any
+RestrictAddressFamilies=AF_UNIX
+InaccessiblePaths=-/run/postgresql -/var/run/postgresql -/run/zavod -/var/lib/zavod/start-archive -/var/lib/zavod/start-rejected -/var/lib/zavod/start-state
+ProtectSystem=strict
+ReadWritePaths=/var/lib/zavod/intake/accepted /var/lib/zavod/intake/journal/import
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateIPC=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+SystemCallFilter=@system-service
+SystemCallArchitectures=native

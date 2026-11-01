@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:33 +02:00 (v0.2: карантин и приём
+#   архива — папки /var/lib/zavod/intake, zavod_intake.py, zquarantine@ и zimport@; карта 3.3.9)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: установщик ячейки Завода на Ubuntu 24.04 (карта 3.3.8, протокол v3.1 Л.16–Л.28, И.12–И.12б):
 #   (1) учётные записи служб без входа и без прав администратора; (2) папки с правами; (3) клетка zagent@ и
 #   группа zagent.slice; (4) zagent-start с папками запросов 1730 root:zkernel; (5) вход root → роль базы
-#   zstarter (peer, сопоставление zavod_cell). Повторный запуск даёт тот же результат.
+#   zstarter (peer, сопоставление zavod_cell); (6) карантин и доверенный приём архива (И.12г, И.12д).
+#   Повторный запуск даёт тот же результат.
 # ВЫЗОВ: sudo bash install_cell.sh [--pg-conf-dir /etc/postgresql/16/main | --no-pg]
 # ОГРАНИЧЕНИЯ: ничего не удаляет; прежние pg_hba.conf и pg_ident.conf сохраняются копией рядом. Функции базы
 #   (db/06_zavod_ext_04.sql) ставятся цепочкой базы, не этим файлом. Пароли и ключи не нужны и не пишутся.
@@ -74,6 +76,24 @@ for d in start stop; do
 done
 echo "DIR /run/zavod/start $(stat -c '%U:%G %a' /run/zavod/start)"
 echo "DIR /run/zavod/stop $(stat -c '%U:%G %a' /run/zavod/stop)"
+
+echo "=== 3.3.9 карантин и приём архива (И.12г, И.12д)"
+# Опись пишет ядро (zkernel), читают все: она не тайна, важна её целостность. Архив кладёт привратник (zgate),
+# карантин только читает. out/ — карантин пишет, приём читает по группе. accepted/ — приём пишет, zgithub читает.
+dir /var/lib/zavod/intake root root 0755
+dir /var/lib/zavod/intake/manifest zkernel zkernel 0755
+dir /var/lib/zavod/intake/in zgate zquarantine 2750
+dir /var/lib/zavod/intake/out zquarantine zimport 2750
+dir /var/lib/zavod/intake/accepted zimport zgithub 2750
+dir /var/lib/zavod/intake/accepted/.staging zimport zgithub 2700
+dir /var/lib/zavod/intake/journal root root 0755
+dir /var/lib/zavod/intake/journal/quarantine zquarantine zquarantine 0750
+dir /var/lib/zavod/intake/journal/import zimport zimport 0750
+dir /var/lib/zavod/intake/archive root root 0700
+install -o root -g root -m 0755 "$HERE/zavod_intake.py" /usr/local/lib/zavod/zavod_intake.py
+for u in zquarantine@.service zimport@.service; do
+  install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
+done
 # Л.16–Л.28: ни у одной службы нет прав запуска через polkit. По умолчанию polkit спрашивает пароль
 # администратора; правило ниже отвечает «нет» сразу и для учётных записей Завода, и для динамических сессий.
 if [ -d /etc/polkit-1/rules.d ]; then
@@ -109,5 +129,6 @@ fi
 systemctl daemon-reload
 systemctl enable --now zagent-start.path zagent-start.timer
 systemd-analyze verify --man=no /etc/systemd/system/zagent-start.service /etc/systemd/system/zagent-start.path \
-  /etc/systemd/system/zagent-start.timer /etc/systemd/system/zagent.slice "zagent@00000000000000000000000000000000.service"
+  /etc/systemd/system/zagent-start.timer /etc/systemd/system/zagent.slice "zagent@00000000000000000000000000000000.service" \
+  "zquarantine@00000000000000000000000000000000.service" "zimport@00000000000000000000000000000000.service"
 echo "ZAVOD_CELL_INSTALL=OK"
