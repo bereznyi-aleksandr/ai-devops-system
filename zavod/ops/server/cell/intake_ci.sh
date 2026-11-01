@@ -249,6 +249,8 @@ sysinodes() { df --output=iavail / | tail -1 | tr -d ' '; }
 [ "$(stat -c %d "$I/out")" != "$(stat -c %d /var/lib/zavod)" ] && ok "M33-R2-04: intake partition is not the server disk" || bad "M33-R2-04: same device"
 itotal=$(df --output=itotal "$I" | tail -1 | tr -d ' ')
 [ "$itotal" -le 4096 ] && ok "M33-R2-04: inode limit $itotal" || bad "M33-R2-04: inode limit $itotal"
+alloc=$(sudo du -B1M /var/lib/zavod/intake-fs.img | cut -f1)
+[ "$alloc" -ge 190 ] && ok "M33-R2-04: image space reserved on install (${alloc} MB)" || bad "M33-R2-04: image sparse (${alloc} MB)"
 # Предел числа файлов: архив из 2500 пустых файлов не помещается.
 Lm=$(newlease)
 manifest "$Lm" "{\"v\":1,\"lease\":\"$Lm\",\"dirs\":[\"src/\"],\"max_files\":3000,\"max_bytes\":65536,\"max_file_bytes\":32768,\"max_depth\":4,\"exec\":[]}"

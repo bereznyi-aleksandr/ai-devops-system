@@ -129,16 +129,18 @@ if ! mountpoint -q "$INTAKE" && [ -n "$(ls -A "$INTAKE")" ]; then
   die "$INTAKE has files outside the intake partition: move them away first"
 fi
 if [ ! -e "$INTAKE_IMG" ]; then
-  truncate -s "$INTAKE_FS_SIZE" "$INTAKE_IMG"
+  # Всё место образа занимается сразу (не «разреженный» файл): заполнение раздела потом не тратит диск сервера.
+  # Места на диске сервера не хватает — fallocate откажет, установка остановится.
+  fallocate -l "$INTAKE_FS_SIZE" "$INTAKE_IMG"
   chmod 0600 "$INTAKE_IMG"
-  mkfs.ext4 -q -F -L zintake -m 0 -N "$INTAKE_FS_INODES" "$INTAKE_IMG"
+  mkfs.ext4 -q -F -L zintake -m 0 -E nodiscard -N "$INTAKE_FS_INODES" "$INTAKE_IMG"  # nodiscard: иначе mkfs снова делает файл разреженным
 fi
 [ "$(blkid -o value -s TYPE "$INTAKE_IMG")" = ext4 ] || die "$INTAKE_IMG is not ext4"
 install -o root -g root -m 0644 "$HERE/var-lib-zavod-intake.mount" /etc/systemd/system/var-lib-zavod-intake.mount
 systemctl daemon-reload
 systemctl enable --now var-lib-zavod-intake.mount
 mountpoint -q "$INTAKE" || die "$INTAKE is not mounted"
-echo "INTAKE_FS $(findmnt -n -o FSTYPE,SIZE "$INTAKE") inodes=$(df --output=itotal "$INTAKE" | tail -1 | tr -d ' ')"
+echo "INTAKE_FS $(findmnt -n -o FSTYPE,SIZE "$INTAKE") inodes=$(df --output=itotal "$INTAKE" | tail -1 | tr -d ' ') image_allocated_MB=$(du -B1M "$INTAKE_IMG" | cut -f1)"
 dir /var/lib/zavod/intake root root 0755
 dir /var/lib/zavod/intake/manifest zkernel zkernel 0755
 dir /var/lib/zavod/intake/in zgate zquarantine 2750
