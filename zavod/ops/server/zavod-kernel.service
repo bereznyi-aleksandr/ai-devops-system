@@ -1,0 +1,40 @@
+# ДОКУМЕНТ: zavod/ops/server/zavod-kernel.service
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-10-31 17:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:07 +02:00 (v0.2: аудит M33-04 — путь файла настроек для его
+#   обязательной проверки ядром; v0.1: этап 3.3.2.3)
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: служба ядра Завода на сервере (протокол v3.1, И.7): учётная запись zkernel без прав администратора,
+#   настройки — единственный файл /etc/zavod/zavod.env, база — только через сокет, перезапуск после сбоя.
+#   На компьютере оператора автозапуска ядра не было: ядро запускалось вручную (список 3.3.1), поэтому служба новая.
+# ОГРАНИЧЕНИЯ: учётные записи, права папок и клетка сеансов агентов (zagent@.service) — этап 3.3.8; ограждение
+#   процессов через sudo в этой службе не работает (NoNewPrivileges) и переходит на zagent@.service (И.12).
+[Unit]
+Description=Zavod kernel
+After=postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=zkernel
+Group=zkernel
+WorkingDirectory=/opt/zavod/current/zavod/kernel
+EnvironmentFile=/etc/zavod/zavod.env
+Environment=ZAVOD_SETTINGS_FILE=/etc/zavod/zavod.env
+ExecStart=/usr/bin/node src/server.mjs
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+ReadWritePaths=/var/lib/zavod
+
+[Install]
+WantedBy=multi-user.target

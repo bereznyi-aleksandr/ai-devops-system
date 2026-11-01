@@ -1,15 +1,17 @@
 // ДОКУМЕНТ: cli/rules_check.mjs
-// ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 00:08 +03:00 (v0.1: пакет Z-RULES-01, проект v1.2 §4)
+// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-18 00:08 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.2: этап 3.3.2 — подключение к базе
+//   из src/settings.mjs, на Linux по умолчанию сокет; v0.1: пакет Z-RULES-01, проект v1.2 §4)
 // ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 // НАЗНАЧЕНИЕ: местный вход только для чтения: действующая версия правил заказчика (GetActiveRules) и итог проверки
 //   перед арендой (src/rules_gate.mjs checkWorkingCopy) для рабочей копии. Ничего не пишет: изменяющих команд нет.
-// ЗАПУСК: PGHOST=127.0.0.1 PGPORT=<порт> PGDATABASE=bem KERNEL_STOP_FILE=<путь> node cli/rules_check.mjs
+// ЗАПУСК: node --env-file=<файл настроек> или PGHOST=127.0.0.1 PGPORT=<порт> PGDATABASE=bem KERNEL_STOP_FILE=<путь> node cli/rules_check.mjs
 //   --tenant <uuid> --actor <участник> --role <роль Kernel> --repo-dir <рабочая копия> [--no-fetch]
 // ВЫХОД: одна строка JSON; код 0 — правила действуют и копия совпадает, 1 — отказ (код в поле error.code), 2 — аргументы.
 // ОГРАНИЧЕНИЯ: посредника нет, поэтому команды аренды отсюда недоступны (проект §3.2). Токен GitHub не нужен.
 
 import { Kernel } from '../src/kernel.mjs';
+import { pgConnection } from '../src/settings.mjs';
 import { createRulesGate } from '../src/rules_gate.mjs';
 
 function arg(name) {
@@ -24,8 +26,7 @@ const out = (o, code) => { process.stdout.write(JSON.stringify(o) + '\n'); proce
 if (!tenant || !actor || !role || !repoDir || !process.env.KERNEL_STOP_FILE) {
   out({ ok: false, error: { code: 'BAD_ARGS', message: '--tenant --actor --role --repo-dir and KERNEL_STOP_FILE required' } }, 2);
 } else {
-  const kernel = new Kernel({ connection: { host: process.env.PGHOST || '127.0.0.1', port: Number(process.env.PGPORT || 5432),
-    database: process.env.PGDATABASE || 'bem', max: 1 }, stopFile: process.env.KERNEL_STOP_FILE });
+  const kernel = new Kernel({ connection: pgConnection(process.env, { max: 1 }), stopFile: process.env.KERNEL_STOP_FILE });
   try {
     const r = await kernel.execute({ actor_id: actor, role }, { type: 'GetActiveRules', actor_id: actor, tenant_id: tenant, payload: {} });
     if (!r.ok) {

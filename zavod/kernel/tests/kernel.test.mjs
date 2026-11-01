@@ -435,3 +435,34 @@ test('M-E35-05 server.mjs без KERNEL_STOP_FILE не стартует (код 
     assert.doesNotMatch(p.stdout + p.stderr, /ECONNREFUSED|connect/i);
   }
 });
+
+test('M33-04 server.mjs без проверенного файла настроек не стартует (код 3) и к базе не подключается', () => {
+  const SERVER = fileURLToPath(new URL('../src/server.mjs', import.meta.url));
+  const dir = mkdtempSync(join(tmpdir(), 'zavod-settings-'));
+  const stop = join(dir, 'kernel.stop');
+  const good = `PGHOST=127.0.0.1\nPGPORT=1\nPGDATABASE=bem\nKERNEL_STOP_FILE=${stop}\n`;
+  const base = { ...process.env };
+  for (const k of Object.keys(base)) if (/^(PG|KERNEL_|ZAVOD_|P1_)/.test(k)) delete base[k];
+  const fromFile = { PGHOST: '127.0.0.1', PGPORT: '1', PGDATABASE: 'bem', KERNEL_STOP_FILE: stop };
+  const cases = [
+    ['ZAVOD_SETTINGS_FILE_REQUIRED', null, fromFile],
+    ['SETTINGS_FILE_UNREADABLE', join(dir, 'missing.env'), fromFile],
+    ['SETTINGS_UNKNOWN_KEY', good + 'ZAVOD_EXTRA=1\n', fromFile],
+    ['SETTINGS_DUPLICATE_KEY', good + 'PGPORT=1\n', fromFile],
+    ['SETTINGS_SECRET_KEY', good + 'PGPASSWORD=x\n', fromFile],
+    ['SETTINGS_ENV_MISMATCH', good, { ...fromFile, PGPORT: '2' }],
+    ['SETTINGS_ENV_MISMATCH', good, { ...fromFile, PGUSER: 'postgres' }],
+  ];
+  cases.forEach(([code, content, vars], i) => {
+    const env = { ...base, ...vars };
+    if (content !== null) {
+      let f = content;
+      if (!content.startsWith(dir)) { f = join(dir, `s${i}.env`); writeFileSync(f, content); }
+      env.ZAVOD_SETTINGS_FILE = f;
+    }
+    const p = spawnSync(process.execPath, [SERVER], { env, encoding: 'utf8', timeout: 20000 });
+    assert.equal(p.status, 3, `${code}: ${p.stdout}${p.stderr}`);
+    assert.match(p.stdout, new RegExp(`"code":"${code}"`));
+    assert.doesNotMatch(p.stdout + p.stderr, /ECONNREFUSED|connect/i);
+  });
+});

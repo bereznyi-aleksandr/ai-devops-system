@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: zavod/engine/ci/e5_egress_refusals.mjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-12 08:16 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 08:24 +03:00 (v0.2: на тех же строках
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-12 08:16 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-31 17:16 +02:00 (v0.3, этап 3.3.2.1:
+//   путь компьютера оператора убран — P1_PRODUCT_CLONE или ZAVOD_RUNTIME_DIR из настроек; v0.2: на тех же строках
 //   пилота — отказы E5-3 (предмет WORKING, область BEM954_PROTOCOL, нет решения оператора, решение не человека)
 //   и выгрузка авторства E5-2 (subject_author + audit_record, checkAuthorship) с суммой SHA-256)
 // ИСПОЛНИТЕЛЬ: Claude (ГД Завода, сессия 9951b86f-676a-4a39-84f8-eeef3f226cd1)
@@ -12,7 +13,7 @@
 //   обязан случиться до счётчика. Чужой заказчик — RLS: строка outbox под другим заказчиком (из другого прогона
 //   на том же Kernel) не читается. Чужой заказ и согласованный чужой репозиторий — подмена полей манифеста с
 //   новой печатью (как если бы строки Kernel их называли).
-// ВЫЗОВ: из zavod/engine: PGPORT=5436 P1_RUN_DIR=<папка прогона> P1_FOREIGN_RUN_DIR=<папка другого прогона>
+// ВЫЗОВ: из zavod/engine: node --env-file=<файл настроек> или PGPORT=5436 P1_RUN_DIR=<папка прогона> P1_FOREIGN_RUN_DIR=<папка другого прогона>
 //   node ci/e5_egress_refusals.mjs. Результат: <P1_RUN_DIR>/out/e5_egress_refusals.{log,json}.
 // ОГРАНИЧЕНИЯ: только чтение Kernel (роль bem_kernel_rw, SELECT) и git/gh на чтение; ничего не пишет в Kernel и
 //   в продукт; секретов нет.
@@ -25,12 +26,14 @@ import { withRole } from '../../kernel/tests/helpers.mjs';
 import { loadReleaseRows, verifyRelease, sealManifest } from '../../kernel/src/release_manifest.mjs';
 import { productEgress } from '../src/product_egress.mjs';
 import { checkAuthorship, loadAuthorship } from '../../kernel/src/authorship_check.mjs';
+import { requireSetting } from '../../kernel/src/settings.mjs';
 
-const RT = 'C:/AI/multiagent-runtime';
 const DIR = process.env.P1_RUN_DIR;
 const FOREIGN_DIR = process.env.P1_FOREIGN_RUN_DIR;
 if (!DIR || !FOREIGN_DIR) { console.error('need P1_RUN_DIR and P1_FOREIGN_RUN_DIR'); process.exit(2); }
-const CLONE = process.env.P1_PRODUCT_CLONE || `${RT}/state/zavod_20261007/stage5_pilot/zavod-p1-bot`;
+// Путь — только из настроек (src/settings.mjs, этап 3.3.2.1).
+const CLONE = process.env.P1_PRODUCT_CLONE
+  || (process.env.ZAVOD_RUNTIME_DIR ? `${process.env.ZAVOD_RUNTIME_DIR}/state/zavod_20261007/stage5_pilot/zavod-p1-bot` : requireSetting('P1_PRODUCT_CLONE'));
 const PRODUCT = 'bereznyi-aleksandr/zavod-p1-bot';
 const PRODUCT_ID = 1412203481;
 const TAG = process.env.P1_TAG || 'p1-v0.1.0';
