@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zagent-start
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:03 +02:00 (v0.5: аудит M33-R2-01 — проверка аренды и остановка в одной транзакции базы; v0.4: срок аренды — LEASE_EXPIRED в архив, сеанс сверх срока останавливается; v0.3: аудит M33-06 — тревога сначала файлом в /var/lib/zavod/alerts/spool, потом в базу bem_control.cell_alert; v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.6: аудит M33-R3-03 — тревога, когда раздел журналов приёма или раздел приёма почти полон; v0.5: аудит M33-R2-01 — проверка аренды и остановка в одной транзакции базы; v0.4: срок аренды — LEASE_EXPIRED в архив, сеанс сверх срока останавливается; v0.3: аудит M33-06 — тревога сначала файлом в /var/lib/zavod/alerts/spool, потом в базу bem_control.cell_alert; v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски; C33-01 — зависший запуск останавливается; M33-02 — остановка только при открытой аренде)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: один проход по запросам на запуск и остановку сессий агента (протокол v3.1 И.12а, карта 3.3.8.4).
 #   Работает от root (zagent-start.service). Порядок: замок → сверка живых сессий с базой → остановки → запуски.
@@ -27,6 +27,9 @@ RUN = '/run/zavod'
 START, STOP, HELD = RUN + '/start', RUN + '/stop', RUN + '/held'
 LIB = '/var/lib/zavod'
 ARCHIVE, REJECTED, STATE = LIB + '/start-archive', LIB + '/start-rejected', LIB + '/start-state'
+# Аудит M33-R3-03: разделы приёма, за местом которых следит каждый проход: путь, имя в тревоге, порог в % свободного.
+DISKS = ((LIB + '/intake-journal', 'intake journal partition', 10), (LIB + '/intake', 'intake partition', 5))
+DISK_ALERT_EVERY = 6 * 3600  # секунд: повтор тревоги о том же разделе, пока он не освободится
 ALERTS = LIB + '/alerts'
 SPOOL, SPOOL_STORED, SPOOL_REJECTED = ALERTS + '/spool', ALERTS + '/stored', ALERTS + '/rejected'
 NAME = re.compile(r'\A[0-9a-f]{32}\Z')
@@ -174,6 +177,47 @@ def alert(msg):
     log(f'ZAVOD_ALERT {msg}')
 
 
+def read_mark(path):
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    except FileNotFoundError:
+        return 0.0
+    with os.fdopen(fd, 'rb') as f:
+        try:
+            return float(f.read(64) or b'0')
+        except ValueError:
+            return 0.0
+
+
+def write_mark(path, value):
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+    with os.fdopen(fd, 'w', encoding='ascii') as f:
+        f.write(f'{value:.0f}\n')
+
+
+def check_disks():
+    # Аудит M33-R3-03: раздел журналов приёма или сам раздел приёма почти полон (или не смонтирован) — тревога
+    # оператору; повтор не чаще раза в DISK_ALERT_EVERY, пока раздел не освободится (отметка в start-state).
+    now = time.time()
+    for path, name, limit in DISKS:
+        try:
+            if not os.path.ismount(path):
+                problem = f'{name} not mounted'
+            else:
+                st = os.statvfs(path)
+                free = st.f_bavail * 100 // max(st.f_blocks, 1)
+                problem = f'{name} low: {free}% free' if free < limit else ''
+        except OSError as e:
+            problem = f'{name} unreadable: {e.strerror}'
+        mark = STATE + '/disk-alert-' + os.path.basename(path)
+        last = read_mark(mark)
+        if problem and now - last >= DISK_ALERT_EVERY:
+            alert(problem)
+            write_mark(mark, now)
+        elif not problem and last:
+            write_mark(mark, 0)
+
+
 def flush_alerts():
     """Переносит тревоги из местной очереди в базу. База недоступна — файлы ждут следующего прохода.
     Записанная тревога — файл в stored, испорченная — в rejected; файлы не удаляются."""
@@ -311,6 +355,10 @@ def main():
     lock = os.open(STATE + '/lock', os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
     fcntl.flock(lock, fcntl.LOCK_EX)
     mover = Mover()
+    try:
+        check_disks()
+    except OSError as e:
+        log(f'ZAGENT_START DISK_CHECK_FAILED {e.strerror}')
     changed, boot_id, boot_path = boot_changed()
     live = live_sessions()
     if live is None:

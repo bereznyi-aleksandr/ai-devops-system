@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:32 +02:00 (v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.8: аудит M33-R3-02 — образ сеансов занимает место сразу, проверка запаса диска сервера --min-free; M33-R3-03 — журналы приёма на своём разделе intake-journal.img; M33-R3-04 — 1% раздела приёма для root; v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
 #   /var/lib/zavod/intake-fs.img с пределом места и inode, журналы приёма в /var/lib/zavod/intake-journal; v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
 #   v0.5: аудит M33-03 — база
 #   под zdb, свои папки служб; вопрос аудитора «д» — раздел сеансов /var/lib/zavod/session-fs.img; v0.4: аудит M33-06 — очередь
@@ -15,7 +15,7 @@
 #   zstarter (peer, сопоставление zavod_cell); (6) карантин и доверенный приём архива (И.12г, И.12д).
 #   Повторный запуск даёт тот же результат.
 # ВЫЗОВ: sudo bash install_cell.sh [--pg-conf-dir /etc/postgresql/16/main | --no-pg] [--session-fs-size 10G]
-#   [--intake-fs-size 20G] [--intake-fs-inodes 1000000]
+#   [--intake-fs-size 20G] [--intake-fs-inodes 1000000] [--intake-journal-size 1G] [--min-free 5G]
 # ОГРАНИЧЕНИЯ: ничего не удаляет; прежние pg_hba.conf и pg_ident.conf сохраняются копией рядом. Функции базы
 #   (db/06_zavod_ext_04.sql) ставятся цепочкой базы, не этим файлом. Пароли и ключи не нужны и не пишутся.
 set -euo pipefail
@@ -27,12 +27,16 @@ NO_PG=0
 SESSION_FS_SIZE=10G
 INTAKE_FS_SIZE=20G
 INTAKE_FS_INODES=1000000
+INTAKE_JOURNAL_SIZE=1G
+MIN_FREE=5G
 while [ $# -gt 0 ]; do
   case "$1" in
     --pg-conf-dir) PG_CONF=$2; shift 2 ;;
     --session-fs-size) SESSION_FS_SIZE=$2; shift 2 ;;
     --intake-fs-size) INTAKE_FS_SIZE=$2; shift 2 ;;
     --intake-fs-inodes) INTAKE_FS_INODES=$2; shift 2 ;;
+    --intake-journal-size) INTAKE_JOURNAL_SIZE=$2; shift 2 ;;
+    --min-free) MIN_FREE=$2; shift 2 ;;
     --no-pg) NO_PG=1; shift ;;
     *) echo "REFUSED: unknown argument $1" >&2; exit 2 ;;
   esac
@@ -97,15 +101,34 @@ done
 echo "DIR /run/zavod/start $(stat -c '%U:%G %a' /run/zavod/start)"
 echo "DIR /run/zavod/stop $(stat -c '%U:%G %a' /run/zavod/stop)"
 
+echo "=== место на диске сервера под образы разделов (аудит M33-R3-02)"
+# Образы разделов (сеансы, приём, журналы приёма) занимают своё место на диске сервера сразу (fallocate),
+# поэтому их заполнение потом диск сервера не тратит. До резервирования проверяем, что после него на диске
+# сервера останется не меньше --min-free для базы, копий и журналов; иначе установка останавливается.
+to_bytes() { numfmt --from=iec "$1"; }
+still_needed() { # образ размер → сколько байт образ ещё займёт на диске сервера
+  local want have
+  if [ -e "$1" ]; then want=$(stat -c %s "$1"); have=$(du -B1 "$1" | cut -f1); else want=$(to_bytes "$2"); have=0; fi
+  if [ "$want" -gt "$have" ]; then echo $((want - have)); else echo 0; fi
+}
+NEED=$(( $(still_needed /var/lib/zavod/session-fs.img "$SESSION_FS_SIZE") + $(still_needed /var/lib/zavod/intake-fs.img "$INTAKE_FS_SIZE") + $(still_needed /var/lib/zavod/intake-journal.img "$INTAKE_JOURNAL_SIZE") ))
+AVAIL=$(df --output=avail -B1 /var/lib/zavod | tail -1 | tr -d ' ')
+[ $((AVAIL - NEED)) -ge "$(to_bytes "$MIN_FREE")" ] \
+  || die "server disk: images need $((NEED >> 20)) MB, free $((AVAIL >> 20)) MB, must keep $MIN_FREE free"
+echo "SERVER_DISK free_MB=$((AVAIL >> 20)) images_need_MB=$((NEED >> 20)) keep=$MIN_FREE"
+
 echo "=== раздел сеансов с пределом места (вопрос аудитора «д», И.12б)"
 # Рабочие папки сеансов (StateDirectory с DynamicUser) лежат в /var/lib/private/zagent — это отдельный раздел
 # из файла-образа. Уже созданный образ не пересоздаётся: данные сеансов не теряются при повторной установке.
 IMG=/var/lib/zavod/session-fs.img
 if [ ! -e "$IMG" ]; then
-  truncate -s "$SESSION_FS_SIZE" "$IMG"
+  fallocate -l "$SESSION_FS_SIZE" "$IMG"
   chmod 0600 "$IMG"
-  mkfs.ext4 -q -F -L zagent -m 0 "$IMG"
+  mkfs.ext4 -q -F -L zagent -m 0 -E nodiscard "$IMG"  # nodiscard: иначе mkfs снова делает файл разреженным
 fi
+# Аудит M33-R3-02: образ, созданный прежней версией «разреженным», получает всё своё место сейчас;
+# содержимое не меняется (заполняются только пустоты файла).
+fallocate -l "$(stat -c %s "$IMG")" "$IMG"
 [ "$(blkid -o value -s TYPE "$IMG")" = ext4 ] || die "$IMG is not ext4"
 install -d -o root -g root -m 0700 /var/lib/private
 install -d -o root -g root -m 0755 /var/lib/private/zagent
@@ -114,13 +137,15 @@ systemctl daemon-reload
 systemctl enable --now var-lib-private-zagent.mount
 chown root:root /var/lib/private/zagent
 chmod 0755 /var/lib/private/zagent
-echo "SESSION_FS $(findmnt -n -o FSTYPE,SIZE /var/lib/private/zagent)"
+echo "SESSION_FS $(findmnt -n -o FSTYPE,SIZE /var/lib/private/zagent) image_allocated_MB=$(du -B1M "$IMG" | cut -f1)"
 
 echo "=== 3.3.9 карантин и приём архива (И.12г, И.12д)"
 # Опись пишет ядро (zkernel), читают все: она не тайна, важна её целостность. Архив кладёт привратник (zgate),
 # карантин только читает. out/ — карантин пишет, приём читает по группе. accepted/ — приём пишет, zgithub читает.
 # Аудит M33-R2-04: всё это — на своём разделе из файла-образа с пределом места и числа файлов (inode). Отказы и их
 # перенос в archive/ остаются внутри раздела; журналы приёма — вне его, чтобы итог записался и при полном разделе.
+# Аудит M33-R3-04: 1% раздела отложен для root (-m 1): карантин и приём (не root) упираются в «нет места» раньше,
+# и архиватор (root) переносит отказ и при полном разделе.
 # Уже созданный образ не пересоздаётся. Файлы в /var/lib/zavod/intake до раздела — отказ установки (ничего не удаляем).
 INTAKE=/var/lib/zavod/intake
 INTAKE_IMG=/var/lib/zavod/intake-fs.img
@@ -133,13 +158,16 @@ if [ ! -e "$INTAKE_IMG" ]; then
   # Места на диске сервера не хватает — fallocate откажет, установка остановится.
   fallocate -l "$INTAKE_FS_SIZE" "$INTAKE_IMG"
   chmod 0600 "$INTAKE_IMG"
-  mkfs.ext4 -q -F -L zintake -m 0 -E nodiscard -N "$INTAKE_FS_INODES" "$INTAKE_IMG"  # nodiscard: иначе mkfs снова делает файл разреженным
+  mkfs.ext4 -q -F -L zintake -m 1 -E nodiscard -N "$INTAKE_FS_INODES" "$INTAKE_IMG"  # nodiscard: иначе mkfs снова делает файл разреженным
 fi
+fallocate -l "$(stat -c %s "$INTAKE_IMG")" "$INTAKE_IMG"
 [ "$(blkid -o value -s TYPE "$INTAKE_IMG")" = ext4 ] || die "$INTAKE_IMG is not ext4"
 install -o root -g root -m 0644 "$HERE/var-lib-zavod-intake.mount" /etc/systemd/system/var-lib-zavod-intake.mount
 systemctl daemon-reload
 systemctl enable --now var-lib-zavod-intake.mount
 mountpoint -q "$INTAKE" || die "$INTAKE is not mounted"
+# раздел прежней версии (-m 0) получает запас для root на ходу, через своё устройство
+tune2fs -m 1 "$(findmnt -n -o SOURCE "$INTAKE")" >/dev/null
 echo "INTAKE_FS $(findmnt -n -o FSTYPE,SIZE "$INTAKE") inodes=$(df --output=itotal "$INTAKE" | tail -1 | tr -d ' ') image_allocated_MB=$(du -B1M "$INTAKE_IMG" | cut -f1)"
 dir /var/lib/zavod/intake root root 0755
 dir /var/lib/zavod/intake/manifest zkernel zkernel 0755
@@ -147,6 +175,26 @@ dir /var/lib/zavod/intake/in zgate zquarantine 2750
 dir /var/lib/zavod/intake/out zquarantine zimport 2750
 dir /var/lib/zavod/intake/accepted zimport zgithub 2750
 dir /var/lib/zavod/intake/accepted/.staging zimport zgithub 2700
+# Аудит M33-R3-03: журналы приёма — на своём разделе из файла-образа (место занято сразу), не на диске сервера.
+JOURNAL_DIR=/var/lib/zavod/intake-journal
+JOURNAL_IMG=/var/lib/zavod/intake-journal.img
+JOURNAL_UNIT=$(systemd-escape --path --suffix=mount "$JOURNAL_DIR")
+install -d -o root -g root -m 0755 "$JOURNAL_DIR"
+if ! mountpoint -q "$JOURNAL_DIR" && [ -n "$(ls -A "$JOURNAL_DIR")" ]; then
+  die "$JOURNAL_DIR has files outside the journal partition: move them away first"
+fi
+if [ ! -e "$JOURNAL_IMG" ]; then
+  fallocate -l "$INTAKE_JOURNAL_SIZE" "$JOURNAL_IMG"
+  chmod 0600 "$JOURNAL_IMG"
+  mkfs.ext4 -q -F -L zijournal -m 0 -E nodiscard -N 1024 "$JOURNAL_IMG"
+fi
+fallocate -l "$(stat -c %s "$JOURNAL_IMG")" "$JOURNAL_IMG"
+[ "$(blkid -o value -s TYPE "$JOURNAL_IMG")" = ext4 ] || die "$JOURNAL_IMG is not ext4"
+install -o root -g root -m 0644 "$HERE/intake-journal.mount" "/etc/systemd/system/$JOURNAL_UNIT"
+systemctl daemon-reload
+systemctl enable --now "$JOURNAL_UNIT"
+mountpoint -q "$JOURNAL_DIR" || die "$JOURNAL_DIR is not mounted"
+echo "INTAKE_JOURNAL_FS $(findmnt -n -o FSTYPE,SIZE "$JOURNAL_DIR") image_allocated_MB=$(du -B1M "$JOURNAL_IMG" | cut -f1)"
 dir /var/lib/zavod/intake-journal root root 0755
 dir /var/lib/zavod/intake-journal/quarantine zquarantine zquarantine 0750
 dir /var/lib/zavod/intake-journal/import zimport zimport 0750
@@ -224,6 +272,7 @@ systemctl enable --now zagent-start.path zagent-start.timer zavod-alert-notify.t
 systemd-analyze verify --man=no /etc/systemd/system/zagent-start.service /etc/systemd/system/zagent-start.path \
   /etc/systemd/system/zavod-alert-notify.service /etc/systemd/system/zavod-alert-notify.timer \
   /etc/systemd/system/var-lib-private-zagent.mount /etc/systemd/system/var-lib-zavod-intake.mount \
+  "/etc/systemd/system/$JOURNAL_UNIT" \
   /etc/systemd/system/zagent-start.timer /etc/systemd/system/zagent.slice "zagent@00000000000000000000000000000000.service" \
   "zquarantine@00000000000000000000000000000000.service" "zimport@00000000000000000000000000000000.service" \
   "zintake-archive@00000000000000000000000000000000.service"

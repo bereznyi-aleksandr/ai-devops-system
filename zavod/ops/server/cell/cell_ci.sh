@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:12 +02:00 (v0.6: пробы M33-R2-01 — закрыть аренду во время остановки нельзя, M33-R2-02 — ключи в /etc/zavod/secrets, канал тревог от ztelegram; v0.5: предел раздела сеансов — по размеру образа; v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.7: проба M33-R3-02 — образ сеансов занят сразу, заполнение раздела сеансов не тратит диск сервера; v0.6: пробы M33-R2-01 — закрыть аренду во время остановки нельзя, M33-R2-02 — ключи в /etc/zavod/secrets, канал тревог от ztelegram; v0.5: предел раздела сеансов — по размеру образа; v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -125,7 +125,15 @@ echo "=== раздел сеансов с пределом места (вопро
   && ok "session fs: workdir of $L1 on it" || bad "session fs: workdir elsewhere"
 # Предел — размер файла-образа раздела (папка закрыта 0700, findmnt без root размер не видит).
 fs_bytes=$(sudo stat -c %s /var/lib/zavod/session-fs.img)
+# Аудит M33-R3-02: место образа занято при установке, заполнение раздела сеансов не тратит диск сервера.
+s_alloc=$(sudo du -B1 /var/lib/zavod/session-fs.img | cut -f1)
+[ "$s_alloc" -ge "$fs_bytes" ] && ok "M33-R3-02: session image space reserved ($((s_alloc >> 20)) MB)" \
+  || bad "M33-R3-02: session image sparse ($s_alloc of $fs_bytes bytes)"
+s_free0=$(df --output=avail -B1M / | tail -1 | tr -d ' ')
 if sudo dd if=/dev/zero of=/var/lib/private/zagent/ci-fill bs=1M count=200 status=none 2>/dev/null; then fill_rc=0; else fill_rc=1; fi
+s_free1=$(df --output=avail -B1M / | tail -1 | tr -d ' ')
+[ $((s_free0 - s_free1)) -lt 8 ] && ok "M33-R3-02: full session fs used no server disk ($((s_free0 - s_free1)) MB)" \
+  || bad "M33-R3-02: full session fs used $((s_free0 - s_free1)) MB of server disk"
 filled=$(sudo stat -c %s /var/lib/private/zagent/ci-fill)
 [ "$fill_rc" = 1 ] && [ -n "$fs_bytes" ] && [ "$filled" -le "$fs_bytes" ] && ok "session fs: write stops at the limit ($filled of 200M)" \
   || bad "session fs: no limit (rc=$fill_rc, $filled bytes)"

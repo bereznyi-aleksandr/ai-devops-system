@@ -1,0 +1,23 @@
+# ДОКУМЕНТ: zavod/ops/server/cell/intake-journal.mount
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 21:57 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: аудит M33-R3-03 — свой раздел для журналов приёма: файл-образ /var/lib/zavod/intake-journal.img
+#   (ext4, место занято сразу) монтируется в /var/lib/zavod/intake-journal. Поток отказов не тратит диск сервера
+#   сверх размера образа (--intake-journal-size). Места меньше 1 МБ — карантин и приём не начинаются
+#   (INTAKE_JOURNAL_FULL), меньше 10% — тревога оператору от zagent-start.
+# УСТАНОВКА: install_cell.sh кладёт файл под именем, которое требует systemd для этого пути:
+#   /etc/systemd/system/$(systemd-escape --path --suffix=mount /var/lib/zavod/intake-journal)
+#   (в имени есть обратная косая черта, поэтому в хранилище файл назван иначе).
+# ОГРАНИЧЕНИЯ: файлы раздела не запускаются (noexec), бит SUID и устройства не работают (nosuid, nodev).
+[Unit]
+Description=Zavod intake journals, separate size-limited filesystem
+
+[Mount]
+What=/var/lib/zavod/intake-journal.img
+Where=/var/lib/zavod/intake-journal
+Type=ext4
+Options=loop,nosuid,nodev,noexec
+
+[Install]
+WantedBy=multi-user.target

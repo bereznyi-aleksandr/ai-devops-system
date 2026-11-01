@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod_intake.py
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:12 +02:00 (v0.3: аудит M33-R2-03 — один замок на out/ на весь
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.4: аудит M33-R3-01 — ждущий замок карантин не мешает приёму; M33-R3-03 — запас места журналов; M33-R3-04 — в архив уходит и недописанная копия приёма; v0.3: аудит M33-R2-03 — один замок на out/ на весь
 #   цикл карантин → приём; M33-R2-04 — журналы вне раздела приёма, перенос в архив и при полном разделе)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # ОСНОВАНИЕ: протокол v3.1, И.12г (опись ядра и карантин), И.12д (доверенный приём), Л.44 (правило имён),
@@ -19,6 +19,12 @@
 # Замок (аудит M33-R2-03): карантин и приём берут один исключительный замок flock на папку out/ и держат его до
 #   выхода. Карантин берёт его раньше, чем читает опись и архив; приём — раньше проверки процессов карантина.
 #   Новый карантин, начатый после проверки приёма, ждёт конца приёма и out/ не трогает.
+# Аудит M33-R3-01: замок ждут в ядре (flock без LOCK_NB), поэтому ждущий карантин виден в /proc/locks строкой «->».
+#   Приём, взяв замок, не считает такой карантин работающим: тот ещё ничего не сделал и стоит до конца приёма.
+# Аудит M33-R3-03: журналы — на своём разделе /var/lib/zavod/intake-journal; места меньше JOURNAL_RESERVE —
+#   карантин и приём отказывают (INTAKE_JOURNAL_FULL), тревогу оператору поднимает zagent-start.
+# Аудит M33-R3-04: часть раздела приёма отложена для root (mkfs -m 1): карантин и приём (не root) упираются в
+#   «нет места» раньше, архиватор (root) и тогда переносит отказ; недописанная копия приёма тоже уходит в архив.
 import ctypes
 import errno
 import fcntl
@@ -27,14 +33,17 @@ import json
 import os
 import pwd
 import re
+import signal
 import stat
 import sys
 import time
 import unicodedata
 
 BASE = "/var/lib/zavod/intake"
-JOURNAL = "/var/lib/zavod/intake-journal"  # вне раздела приёма: итог отказа пишется и при полном разделе
+JOURNAL = "/var/lib/zavod/intake-journal"  # свой раздел (M33-R3-03): итог отказа пишется и при полном разделе приёма
+JOURNAL_RESERVE = 1024 * 1024  # байт; меньше — новый карантин и приём не начинаются
 LOCK_WAIT = {"quarantine": 240, "import": 120}  # секунд; меньше RuntimeMaxSec=300 служб
+ALIVE_WAIT = 15  # секунд: столько приём ждёт, пока только что запущенный карантин встанет в очередь замка
 LEASE_RE = re.compile(r"[0-9a-f]{32}")
 MANIFEST_KEYS = {"v", "lease", "dirs", "max_files", "max_bytes", "max_file_bytes", "max_depth", "exec"}
 REPORT_KEYS = {"v", "lease", "files"}
@@ -227,26 +236,44 @@ def journal(sub, lease, result, reason, **extra):
     rec = {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "stage": sub, "lease": lease,
            "result": result, "reason": reason, **extra}
     line = (json.dumps(rec, ensure_ascii=False, separators=(",", ":")) + "\n").encode()
-    fd = os.open(f"{JOURNAL}/{jdir}/{sub}.jsonl", os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW
-                 | os.O_CLOEXEC, 0o640)
+    # раздел журналов полон — итог остаётся в журнале systemd (строка выше), программа не падает
     try:
-        os.write(fd, line)
-        os.fsync(fd)
-    finally:
-        os.close(fd)
+        fd = os.open(f"{JOURNAL}/{jdir}/{sub}.jsonl", os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW
+                     | os.O_CLOEXEC, 0o640)
+        try:
+            os.write(fd, line)
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError as e:
+        print(f"ZAVOD_INTAKE {sub} {lease} JOURNAL_WRITE_FAILED {errno.errorcode.get(e.errno, e.errno)}", flush=True)
+
+
+def journal_room(sub):
+    """Аудит M33-R3-03: на разделе журналов меньше JOURNAL_RESERVE — новый этап не начинается."""
+    st = os.statvfs(f"{JOURNAL}/{sub}")
+    if st.f_bavail * st.f_frsize < JOURNAL_RESERVE:
+        raise Refuse("INTAKE_JOURNAL_FULL")
+
+
+class LockTimeout(Exception):
+    pass
 
 
 def lock_out(fd, stage):
-    """Аудит M33-R2-03: исключительный замок на out/ до выхода процесса. Занят дольше LOCK_WAIT — отказ."""
-    end = time.monotonic() + LOCK_WAIT[stage]
-    while True:
-        try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            return
-        except BlockingIOError:
-            if time.monotonic() >= end:
-                raise Refuse("INTAKE_LOCK_BUSY")
-            time.sleep(0.2)
+    """Аудит M33-R2-03: исключительный замок на out/ до выхода процесса. Занят дольше LOCK_WAIT — отказ.
+    Аудит M33-R3-01: ждём в ядре (без LOCK_NB) — ждущий процесс виден в /proc/locks строкой «->»."""
+    def expired(signum, frame):
+        raise LockTimeout
+    signal.signal(signal.SIGALRM, expired)
+    signal.alarm(LOCK_WAIT[stage])
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+    except LockTimeout:
+        raise Refuse("INTAKE_LOCK_BUSY")
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
 
 # ---------- карантин ----------
@@ -297,6 +324,7 @@ def mkdirs(root_fd, parts, created):
 def quarantine(lease):
     if os.geteuid() != uid_of("zquarantine"):
         raise Refuse("NOT_ZQUARANTINE")
+    journal_room("quarantine")
     # замок раньше описи и архива; дескриптор не закрывается — замок держится до выхода
     out_fd = os.open(f"{BASE}/out", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
     lock_out(out_fd, "quarantine")
@@ -503,7 +531,28 @@ def open_beneath(dirfd, rel, flags, use_openat2):
         raise
 
 
-def quarantine_alive(qu):
+def lock_waiters(out_id):
+    """Процессы, которые сейчас стоят в очереди ядра на замок out/ (строки «->» в /proc/locks)."""
+    pids = set()
+    with open("/proc/locks", "rb") as f:
+        for line in f:
+            t = line.split()
+            if b"->" not in t or b"FLOCK" not in t:
+                continue
+            i = t.index(b"FLOCK")
+            try:
+                pid, dev = int(t[i + 3]), t[i + 4].split(b":")
+                if (int(dev[0], 16), int(dev[1], 16), int(dev[2])) == out_id:
+                    pids.add(pid)
+            except (IndexError, ValueError):
+                continue
+    return pids
+
+
+def quarantine_active(qu, out_id):
+    """Аудит M33-R3-01: живые процессы карантина, кроме ждущих замок out/ (они ещё ничего не сделали и
+    стоят, пока приём держит замок). Остальные — работающий или чужой процесс: приём их не допускает."""
+    pids = set()
     for pid in os.listdir("/proc"):
         if not pid.isdigit():
             continue
@@ -512,11 +561,11 @@ def quarantine_alive(qu):
                 for line in f:
                     if line.startswith(b"Uid:"):
                         if str(qu).encode() in line.split()[1:]:
-                            return True
+                            pids.add(int(pid))
                         break
         except OSError:
             continue
-    return False
+    return pids - lock_waiters(out_id) if pids else pids
 
 
 def walk_out(fd, rel, qu, dev, found):
@@ -543,11 +592,18 @@ def do_import(lease, use_openat2):
     if os.geteuid() != uid_of("zimport"):
         raise Refuse("NOT_ZIMPORT")
     qu = uid_of("zquarantine")
+    journal_room("import")
     # сначала замок (новый карантин дальше замка не пройдёт), потом проверка уже живых процессов карантина
     base_fd = os.open(f"{BASE}/out", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
     lock_out(base_fd, "import")
-    if quarantine_alive(qu):
-        raise Refuse("QUARANTINE_PROCESS_ALIVE")
+    out_st = os.fstat(base_fd)
+    out_id = (os.major(out_st.st_dev), os.minor(out_st.st_dev), out_st.st_ino)
+    # только что запущенный карантин может ещё не дойти до замка: ждём ALIVE_WAIT, пока он встанет в очередь
+    end = time.monotonic() + ALIVE_WAIT
+    while quarantine_active(qu, out_id):
+        if time.monotonic() >= end:
+            raise Refuse("QUARANTINE_PROCESS_ALIVE")
+        time.sleep(0.2)
     m = load_manifest(lease)
     dirs, ex = m["dirs"], set(m["exec"])
     try:
@@ -720,6 +776,12 @@ def archive(lease, stage):
             continue
         os.rename(src, f"{dest}{sep}{name}")
         moved.append(name)
+    # аудит M33-R3-04: недописанная копия отказавшего приёма (accepted/.staging/LEASE.<pid>.<время>) — тоже в архив
+    stg = f"{BASE}/accepted/.staging"
+    for name in sorted(os.listdir(stg)):
+        if name.startswith(lease + "."):
+            os.rename(f"{stg}/{name}", f"{dest}{sep}staging.{name}")
+            moved.append("staging")
     return ("MOVED_" if sep == "/" else "MOVED_FLAT_") + ("+".join(moved) or "NOTHING")
 
 

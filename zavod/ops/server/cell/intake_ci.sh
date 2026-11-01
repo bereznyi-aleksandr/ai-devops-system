@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/intake_ci.sh
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:32 +02:00 (v0.2: отказ карантина проверяет пустую out/; пробы M33-R2-03 — карантин после проверки приёма
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.3: пробы M33-R3-01 — карантин уже ждёт замок, приём другой аренды принят; M33-R3-03 — журналы на своём разделе, полный журнал — отказ и тревога; M33-R3-04 — полный раздел: отказ приёма уходит в архив целиком; архивы кладёт zgate, а не root; v0.2: отказ карантина проверяет пустую out/; пробы M33-R2-03 — карантин после проверки приёма
 #   ждёт; M33-R2-04 — раздел приёма: предел inode и места, диск сервера не тратится)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проба ПБ-4 (протокол v3.1 И.13; карта 3.3.9.4) на машине GitHub ubuntu-24.04 после install_cell.sh:
@@ -24,9 +24,11 @@ manifest() { # аренда [json вместо стандартной описи
   printf '%s' "$m" | sudo -u zkernel tee "$I/manifest/$1.json" >/dev/null
   sudo -u zkernel chmod 0644 "$I/manifest/$1.json"
 }
+as_zgate() { sudo -u zgate sh -c 'umask 027; cat > "$1"' sh "$1"; } # файл ← stdin, от zgate (группа zquarantine по папке)
+sysfree() { df --output=avail -B1M / | tail -1 | tr -d ' '; }
 put_tar() { # аренда случай — архив кладёт «привратник» zgate
   python3 -I "$HERE/intake_gen.py" "$2" "$TMP/$1.tar"
-  sudo install -o zgate -g zquarantine -m 0640 "$TMP/$1.tar" "$I/in/$1.tar"
+  as_zgate "$I/in/$1.tar" < "$TMP/$1.tar"
 }
 jline() { sudo grep -h "\"lease\":\"$2\"" "/var/lib/zavod/intake-journal/$1/$1.jsonl" 2>/dev/null | tail -1 || true; }
 jreason() { jline "$1" "$2" | sed -n 's/.*"reason":"\([^"]*\)".*/\1/p'; }
@@ -217,12 +219,12 @@ sudo -u zimport python3 -I - "$PROG" "$LA" >/dev/null 2>&1 <<'EOF' &
 import importlib.util, sys, time
 spec = importlib.util.spec_from_file_location("zi", sys.argv[1]); zi = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(zi)
-check = zi.quarantine_alive
-def slow(qu):
-    alive = check(qu)
+check = zi.quarantine_active
+def slow(*a):
+    alive = check(*a)
     time.sleep(10)
     return alive
-zi.quarantine_alive = slow
+zi.quarantine_active = slow
 sys.argv = [sys.argv[1], "import", sys.argv[2]]
 sys.exit(zi.main())
 EOF
@@ -242,8 +244,68 @@ wait_for 30 import_done "$LB" || true
 [ "$(jresult import "$LB")" = ACCEPTED ] && ok "M33-R2-03: next import accepted" || bad "M33-R2-03: import LB $(jline import "$LB")"
 sudo python3 -I "$PROG" archive "$LA" import >/dev/null
 
+echo "=== аудит M33-R3-01: карантин уже ждёт замок — приём другой аренды принят"
+LC=$(newlease); staged "$LC"
+LD=$(newlease); manifest "$LD"; put_tar "$LD" ok
+# Обёртка только для CI: приём LC берёт замок и 10 секунд ждёт до первой проверки процессов карантина.
+sudo -u zimport python3 -I - "$PROG" "$LC" >/dev/null 2>&1 <<'EOF' &
+import importlib.util, sys, time
+spec = importlib.util.spec_from_file_location("zi", sys.argv[1]); zi = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(zi)
+check = zi.quarantine_active
+first = [True]
+def slow(*a):
+    if first[0]:
+        first[0] = False
+        time.sleep(10)
+    return check(*a)
+zi.quarantine_active = slow
+sys.argv = [sys.argv[1], "import", sys.argv[2]]
+sys.exit(zi.main())
+EOF
+imp=$!
+wait_for 10 lock_busy && ok "M33-R3-01: import holds the intake lock" || bad "M33-R3-01: import took no lock"
+sudo systemctl start "zquarantine@$LD.service" 2>/dev/null & qpid=$!
+sleep 3
+waiters=$(grep -c -- '->' /proc/locks || true)
+[ "$waiters" -ge 1 ] && ok "M33-R3-01: quarantine waits in the lock queue ($waiters)" || bad "M33-R3-01: no lock waiter"
+grep -- '->' /proc/locks | sed "s/^/INTAKE_INFO lock waiter: /" || true
+wait "$imp" || true
+[ "$(jresult import "$LC")" = ACCEPTED ] && ok "M33-R3-01: import accepted while a quarantine waited" \
+  || bad "M33-R3-01: import $(jline import "$LC")"
+wait "$qpid" || true
+[ "$(jresult quarantine "$LD")" = ACCEPTED ] && ok "M33-R3-01: waiting quarantine ran after import" \
+  || bad "M33-R3-01: quarantine $(jline quarantine "$LD")"
+wait_for 30 import_done "$LD" || true
+[ "$(jresult import "$LD")" = ACCEPTED ] && ok "M33-R3-01: its import accepted" || bad "M33-R3-01: import LD $(jline import "$LD")"
+sudo python3 -I "$PROG" archive "$LC" import >/dev/null
+
+echo "=== аудит M33-R3-03: журналы приёма на своём разделе; журнал полон — приём не начинается, тревога"
+J=/var/lib/zavod/intake-journal
+[ "$(findmnt -n -o TARGET --target "$J/quarantine")" = "$J" ] && ok "M33-R3-03: journals on their own partition" \
+  || bad "M33-R3-03: journals not on their partition"
+jalloc=$(sudo du -B1M /var/lib/zavod/intake-journal.img | cut -f1)
+[ "$jalloc" -ge 15 ] && ok "M33-R3-03: journal image space reserved (${jalloc} MB)" || bad "M33-R3-03: journal image sparse (${jalloc} MB)"
+Lj=$(newlease); manifest "$Lj"; put_tar "$Lj" ok
+jsys0=$(sysfree)
+sudo dd if=/dev/zero of="$J/ci-fill" bs=64K status=none 2>/dev/null || true
+echo "INTAKE_INFO journal partition: $(df --output=used,avail -B1K "$J" | tail -1) KB used/avail"
+sudo systemctl start "zquarantine@$Lj.service" 2>/dev/null || true
+wait_for 10 inactive "zquarantine@$Lj.service" || true
+if sudo journalctl -u "zquarantine@$Lj.service" -o cat --no-pager | grep -q "ZAVOD_INTAKE quarantine $Lj REFUSED INTAKE_JOURNAL_FULL"; then
+  ok "M33-R3-03: full journal partition, quarantine refused"; else bad "M33-R3-03: quarantine not refused on full journal"; fi
+sudo journalctl -u "zquarantine@$Lj.service" -o cat --no-pager | grep -a ZAVOD_INTAKE | sed "s/^/INTAKE_INFO svc: /" || true
+wait_for 15 archived_now "$Lj" quarantine && ok "M33-R3-03: refused archive moved to archive/" || bad "M33-R3-03: not archived"
+sudo systemctl start zagent-start.service 2>/dev/null || true
+if sudo journalctl -u zagent-start.service -o cat --no-pager | grep -q "ZAVOD_ALERT intake journal partition low"; then
+  ok "M33-R3-03: operator alert raised"; else bad "M33-R3-03: no alert"; fi
+jsys1=$(sysfree)
+[ $((jsys0 - jsys1)) -lt 4 ] && ok "M33-R3-03: full journal used no server disk ($((jsys0 - jsys1)) MB)" \
+  || bad "M33-R3-03: full journal used $((jsys0 - jsys1)) MB of server disk"
+# Освободить раздел журналов для следующих проб: файл заполнения обнуляется (не удаляется).
+sudo truncate -s 0 "$J/ci-fill"
+
 echo "=== аудит M33-R2-04: приём на своём разделе с пределом места и числа файлов"
-sysfree() { df --output=avail -B1M / | tail -1 | tr -d ' '; }
 sysinodes() { df --output=iavail / | tail -1 | tr -d ' '; }
 [ "$(findmnt -n -o TARGET --target "$I/out")" = "$I" ] && ok "M33-R2-04: out/ is on the intake partition" || bad "M33-R2-04: out/ not on its partition"
 [ "$(stat -c %d "$I/out")" != "$(stat -c %d /var/lib/zavod)" ] && ok "M33-R2-04: intake partition is not the server disk" || bad "M33-R2-04: same device"
@@ -251,6 +313,8 @@ itotal=$(df --output=itotal "$I" | tail -1 | tr -d ' ')
 [ "$itotal" -le 4096 ] && ok "M33-R2-04: inode limit $itotal" || bad "M33-R2-04: inode limit $itotal"
 alloc=$(sudo du -B1M /var/lib/zavod/intake-fs.img | cut -f1)
 [ "$alloc" -ge 190 ] && ok "M33-R2-04: image space reserved on install (${alloc} MB)" || bad "M33-R2-04: image sparse (${alloc} MB)"
+rsv=$(sudo tune2fs -l "$(findmnt -n -o SOURCE "$I")" | sed -n 's/^Reserved block count: *//p')
+[ "${rsv:-0}" -gt 0 ] && ok "M33-R3-04: $rsv blocks reserved for root (archiver)" || bad "M33-R3-04: no root reserve"
 # Предел числа файлов: архив из 2500 пустых файлов не помещается.
 Lm=$(newlease)
 manifest "$Lm" "{\"v\":1,\"lease\":\"$Lm\",\"dirs\":[\"src/\"],\"max_files\":3000,\"max_bytes\":65536,\"max_file_bytes\":32768,\"max_depth\":4,\"exec\":[]}"
@@ -270,6 +334,8 @@ sudo sh -c "mv '$I'/archive/$Lm-* '$TMP'/"
 inode_map after
 sudo journalctl -u "zquarantine@$Lm.service" --no-pager -o cat | grep -a ZAVOD_INTAKE | sed "s/^/INTAKE_INFO svc: /" || true
 sudo find "$I" -xdev -maxdepth 3 -path "*$Lm*" | head -5 | sed "s/^/INTAKE_INFO left: /"
+# Аудит M33-R3-04: аренда Ls прошла карантин; её приём запускается, когда раздел уже полон.
+Ls=$(newlease); staged "$Ls"
 # Предел места: архивы по 20 МБ, пока раздел не откажет.
 python3 -I "$HERE/intake_gen.py" big "$TMP/big.tar"
 sys0=$(sysfree); full=''
@@ -278,7 +344,7 @@ for n in 1 2 3 4 5 6 7 8 9 10; do
   mb="{\"v\":1,\"lease\":\"$Lb\",\"dirs\":[\"src/\",\"tests/\"],\"max_files\":10,\"max_bytes\":33554432,\"max_file_bytes\":33554432,\"max_depth\":4,\"exec\":[\"tests/run.sh\"]}"
   if ! printf '%s' "$mb" | sudo -u zkernel tee "$I/manifest/$Lb.json" >/dev/null 2>&1; then full="manifest $n"; break; fi
   sudo -u zkernel chmod 0644 "$I/manifest/$Lb.json"
-  if ! err=$(sudo install -o zgate -g zquarantine -m 0640 "$TMP/big.tar" "$I/in/$Lb.tar" 2>&1); then full="upload $n: $err"; break; fi
+  if ! err=$(as_zgate "$I/in/$Lb.tar" < "$TMP/big.tar" 2>&1); then full="upload $n: $err"; break; fi
   sudo systemctl start "zquarantine@$Lb.service" 2>/dev/null || true
   if [ "$(jresult quarantine "$Lb")" != ACCEPTED ]; then full="quarantine $n $(jreason quarantine "$Lb")"; break; fi
   wait_for 60 import_done "$Lb" || true
@@ -290,6 +356,20 @@ case "$full" in
   "manifest "[2-9]*"No space"*|"upload "[2-9]*"No space"*|"quarantine "*OS_ERROR_ENOSPC|"import "*OS_ERROR_ENOSPC) ok "M33-R2-04: full partition refuses ($full)" ;;
   *) bad "M33-R2-04: partition did not refuse (${full:-never})" ;;
 esac
+# Аудит M33-R3-04: раздел заполнен до конца от zgate (не root); приём Ls отказывает, архиватор переносит всё.
+as_zgate "$I/in/ci-fill" < /dev/zero 2>/dev/null || true
+echo "INTAKE_INFO before import Ls: $(df --output=used,avail -B1K "$I" | tail -1) KB used/avail (zgate view)"
+run_import "$Ls"
+[ "$(jreason import "$Ls")" = OS_ERROR_ENOSPC ] && ok "M33-R3-04: import on full partition refused (OS_ERROR_ENOSPC)" \
+  || bad "M33-R3-04: import Ls $(jline import "$Ls")"
+wait_for 10 inactive "zimport@$Ls.service" || true
+arch_line=$(sudo journalctl -u "zimport@$Ls.service" -o cat --no-pager | grep -a "ZAVOD_INTAKE archive $Ls" | tail -1)
+echo "INTAKE_INFO $arch_line"
+case "$arch_line" in *" OK MOVED"*in.tar*out*) ok "M33-R3-04: archiver moved in/ and out/ on full partition" ;;
+  *) bad "M33-R3-04: archiver: ${arch_line:-no line}" ;; esac
+if archived_now "$Ls" import && ! sudo test -e "$I/in/$Ls.tar" && [ -z "$(sudo find "$I/accepted/.staging" -maxdepth 1 -name "$Ls.*")" ]; then
+  ok "M33-R3-04: nothing of the refused import left in in/, out/, staging"; else bad "M33-R3-04: leftovers of $Ls"; fi
+sudo find "$I/archive" -maxdepth 1 -name "$Ls-*" | sed "s/^/INTAKE_INFO archived: /"
 sys1=$(sysfree)
 [ $((sys0 - sys1)) -lt 16 ] && ok "M33-R2-04: server disk not used ($((sys0 - sys1)) MB)" || bad "M33-R2-04: server disk used $((sys0 - sys1)) MB"
 
