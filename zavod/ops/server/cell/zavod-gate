@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod-gate
 # ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:19 +02:00 (v0.2: «процесс жив» — опрос pidfd без сигнала: сигнал 0 чужому uid даёт EPERM, и каждый сеанс получал NOT_A_SESSION)
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:27 +02:00 (v0.2: отказ psql — строка DB_ERROR в журнале, значения в кавычках скрыты; «процесс жив» — опрос pidfd без сигнала: сигнал 0 чужому uid даёт EPERM, и каждый сеанс получал NOT_A_SESSION)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: привратник команд агента (протокол v3.1 И.7а п.1–2, карта 3.3.10.1–3.3.10.2, проба ПБ-5).
 #   Слушает /run/zavod-gate/agent.sock. Одно соединение — одна строка JSON и один ответ:
@@ -141,6 +141,10 @@ def db(sql, env):
     r = subprocess.run(PSQL, input=sql, capture_output=True, text=True, timeout=DB_SECONDS, env=run_env)
     out = r.stdout.strip()
     if r.returncode != 0 or not DB_ANSWER.match(out):
+        # Причина — в журнал службы: первая строка ошибки psql без значений в кавычках (там могут быть данные команды).
+        err = next((ln for ln in r.stderr.splitlines() if ln.strip()), '')
+        log(result='DB_ERROR', rc=r.returncode, error=re.sub(r'"[^"]*"|\'[^\']*\'', '<value>', err)[:200],
+            answer_ok=bool(DB_ANSWER.match(out)))
         raise OSError(f'psql rc={r.returncode}')
     return out
 

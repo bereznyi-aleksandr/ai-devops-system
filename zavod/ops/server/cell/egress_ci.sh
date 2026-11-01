@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/egress_ci.sh
 # ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:12 +02:00 (v0.2: учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:27 +02:00 (v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка шага 3.3.10 на машине GitHub ubuntu-24.04 после install_cell.sh, cell_ci.sh и intake_ci.sh:
 #   привратник (ПБ-5) и выход только через посредника (ПБ-3) — изнутри настоящей клетки zagent@<аренда>
@@ -112,7 +112,10 @@ TEN=$(pgsu "SELECT tenant_id FROM bem_control.chat_lease WHERE lease_id = '$LPD'
   && ok "RLS: other tenant sees nothing" || bad "RLS: other tenant sees rows"
 [ "$(sudo -u zkernel psql -X -A -t -h /var/run/postgresql -U bem_kernel_rw -d bem -c "SET app.tenant_id = '$TEN'; SELECT count(*) FROM bem_control.gate_command" | tail -1)" = 2 ] \
   && ok "RLS: own tenant sees its 2 commands" || bad "RLS: own tenant"
-if sudo -u zgate psql -X -A -t -U zgate -d bem -c "SELECT count(*) FROM bem_control.gate_command" >/dev/null 2>&1; then bad "zgate reads gate_command"; else ok "zgate cannot read gate_command"; fi
+r=$(sudo -u zgate psql -X -A -t -U zgate -d bem -c 'SELECT current_user' 2>&1 || true)
+[ "$r" = zgate ] && ok "zgate logs in to the database as zgate" || bad "zgate login: $r"
+r=$(sudo -u zgate psql -X -A -t -U zgate -d bem -c "SELECT count(*) FROM bem_control.gate_command" 2>&1 || true)
+case "$r" in *'permission denied'*) ok "zgate cannot read gate_command" ;; *) bad "zgate reads gate_command: $r" ;; esac
 if psql -X -U zgate -d bem -c 'select 1' >/dev/null 2>&1; then bad "runner logged in as zgate"; else ok "runner refused as zgate"; fi
 sudo journalctl -u zavod-gate.service --no-pager -o cat | grep -q "\"peer_lease\": \"$LPD\"" && ok "gate journal names the peer lease" || bad "gate journal"
 if sudo journalctl -u zavod-gate.service --no-pager -o cat | grep -q 'DROP TABLE'; then bad "gate journal holds command text"; else ok "gate journal holds no command text"; fi
