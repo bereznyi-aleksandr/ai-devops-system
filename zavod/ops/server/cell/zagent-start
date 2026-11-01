@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zagent-start
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:47 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.2: аудит C33-02 — сбой systemctl останавливает сверку и запуски)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: один проход по запросам на запуск и остановку сессий агента (протокол v3.1 И.12а, карта 3.3.8.4).
 #   Работает от root (zagent-start.service). Порядок: замок → сверка живых сессий с базой → остановки → запуски.
@@ -137,13 +137,25 @@ def systemctl(*args):
 
 
 def live_sessions():
-    r = systemctl('list-units', '--plain', '--no-legend', '--all', '--state=active,activating,deactivating',
-                  'zagent@*.service')
+    """Живые сессии по systemd или None, если ответ неполный (аудит C33-02: сбой не равен «сессий нет»)."""
+    try:
+        r = systemctl('list-units', '--plain', '--no-legend', '--all', '--state=active,activating,deactivating',
+                      'zagent@*.service')
+    except (OSError, subprocess.TimeoutExpired) as e:
+        log(f'ZAGENT_START SYSTEMCTL_UNAVAILABLE {e}')
+        return None
+    if r.returncode != 0:
+        log(f'ZAGENT_START SYSTEMCTL_UNAVAILABLE exit={r.returncode}')
+        return None
     found = []
     for line in r.stdout.splitlines():
+        if not line.strip():
+            continue
         m = re.match(r'\Azagent@([0-9a-f]{32})\.service\s', line.strip() + ' ')
-        if m:
-            found.append(m.group(1))
+        if not m:
+            log('ZAGENT_START SYSTEMCTL_UNAVAILABLE unexpected line')
+            return None
+        found.append(m.group(1))
     return found
 
 
@@ -212,6 +224,11 @@ def main():
     mover = Mover()
     changed, boot_id, boot_path = boot_changed()
     live = live_sessions()
+    if live is None:
+        # Без точного списка живых сессий нельзя ни сверять состояние, ни запускать: можно получить второй сеанс.
+        alert('systemctl list-units failed: reconcile and starts skipped')
+        do_stops(mover)
+        return 1
     db_ok = True
     try:
         n = db("SELECT bem_control.lease_start_reconcile(:'live'::uuid[], :'boot'::boolean);\n",

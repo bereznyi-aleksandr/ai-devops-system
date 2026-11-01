@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 13:58 +02:00 (v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.3: проба C33-02 — сбой systemctl; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -131,6 +131,34 @@ pass
 [ "$(state "$L3")" = START_FAILED ] && ok "boot: STARTING -> START_FAILED" || bad "boot state $(state "$L3")"
 sudo -u zkernel touch "/run/zavod/stop/$L3"
 pass
+
+echo "=== аудит C33-02: сбой systemctl — живая сессия не теряется, новых запусков нет"
+# Подменный systemctl только для прохода zagent-start (через PATH службы): list-units падает или даёт мусор.
+L4=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L4"; pass
+wait_for 30 is_active "$L4" && ok "C33-02: L4 started" || bad "C33-02: L4 not started"
+[ "$(pgsu "SELECT bem_control.lease_mark_running('$L4'::uuid)")" = RUNNING ] && ok "C33-02: L4 RUNNING" || bad "C33-02: L4 mark running"
+for mode in fail garbage; do
+  sudo install -d -m 0755 /usr/local/lib/zavod-ci-fakebin
+  if [ "$mode" = fail ]; then body='[ "$1" = list-units ] && exit 1'; else body='[ "$1" = list-units ] && { echo "garbage"; exit 0; }'; fi
+  printf '#!/bin/sh\n%s\nexec /usr/bin/systemctl "$@"\n' "$body" | sudo tee /usr/local/lib/zavod-ci-fakebin/systemctl >/dev/null
+  sudo chmod 0755 /usr/local/lib/zavod-ci-fakebin/systemctl
+  sudo install -d -m 0755 /run/systemd/system/zagent-start.service.d
+  printf '[Service]\nEnvironment=PATH=/usr/local/lib/zavod-ci-fakebin:/usr/sbin:/usr/bin\n' | sudo tee /run/systemd/system/zagent-start.service.d/ci-fakebin.conf >/dev/null
+  sudo systemctl daemon-reload
+  L5=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L5"
+  pass || true
+  [ "$(state "$L4")" = RUNNING ] && ok "C33-02 $mode: L4 stays RUNNING" || bad "C33-02 $mode: L4 state $(state "$L4")"
+  is_active "$L4" && ok "C33-02 $mode: L4 still active" || bad "C33-02 $mode: L4 not active"
+  if [ "$(active "$L5")" != active ] && sudo test -e "/run/zavod/start/$L5"; then ok "C33-02 $mode: no new start, request kept"; else bad "C33-02 $mode: second start"; fi
+  sudo journalctl -t zagent-start --no-pager | grep -q 'ZAVOD_ALERT systemctl list-units failed' && ok "C33-02 $mode: alert" || bad "C33-02 $mode: no alert"
+  sudo mv /run/systemd/system/zagent-start.service.d/ci-fakebin.conf "/run/ci-fakebin-$mode.conf.off"
+  sudo systemctl daemon-reload
+  pass
+  [ "$(state "$L4")" = RUNNING ] && ok "C33-02 $mode: after repair L4 RUNNING" || bad "C33-02 $mode: after repair L4 $(state "$L4")"
+  [ "$(active "$L5")" != active ] && ok "C33-02 $mode: L5 waits for L4" || bad "C33-02 $mode: L5 started beside L4"
+  sudo -u zkernel touch "/run/zavod/stop/$L5"; pass
+done
+sudo -u zkernel touch "/run/zavod/stop/$L4"; pass
 
 echo "=== итог"
 if [ "$FAILS" = 0 ]; then echo "CELL_CI=PASS"; else echo "CELL_CI=FAIL ($FAILS)"; exit 1; fi
