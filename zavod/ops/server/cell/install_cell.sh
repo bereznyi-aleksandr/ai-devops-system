@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:33 +02:00 (v0.2: карантин и приём
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:09 +02:00 (v0.3: аудит M33-01 — вход zkernel → bem_kernel_rw
+#   по сопоставлению zavod_kernel; v0.2: карантин и приём
 #   архива — папки /var/lib/zavod/intake, zavod_intake.py, zquarantine@ и zimport@; карта 3.3.9)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: установщик ячейки Завода на Ubuntu 24.04 (карта 3.3.8, протокол v3.1 Л.16–Л.28, И.12–И.12б):
@@ -104,26 +105,29 @@ else
 fi
 
 if [ "$NO_PG" = 0 ]; then
-  echo "=== 3.3.8.5 вход root → роль базы zstarter (peer, сопоставление zavod_cell)"
+  echo "=== 3.3.8.5 вход root → zstarter (zavod_cell), zkernel → bem_kernel_rw (zavod_kernel, аудит M33-01); peer"
   if [ -z "$PG_CONF" ]; then
     PG_CONF=$(find /etc/postgresql -mindepth 2 -maxdepth 2 -type d -name main 2>/dev/null | sort | tail -1)
   fi
   [ -n "$PG_CONF" ] && [ -f "$PG_CONF/pg_hba.conf" ] || die "PostgreSQL config not found (use --pg-conf-dir or --no-pg)"
   ts=$(date -u '+%Y%m%dT%H%M%SZ')
-  IDENT_LINE='zavod_cell      root                    zstarter'
-  HBA_LINE='local   bem             zstarter                                peer map=zavod_cell'
-  if ! grep -qE '^zavod_cell[[:space:]]+root[[:space:]]+zstarter[[:space:]]*$' "$PG_CONF/pg_ident.conf"; then
-    cp -p "$PG_CONF/pg_ident.conf" "$PG_CONF/pg_ident.conf.before-zavod-$ts"
-    printf '%s\n' "$IDENT_LINE" >> "$PG_CONF/pg_ident.conf"
-  fi
-  if ! grep -qE '^local[[:space:]]+bem[[:space:]]+zstarter[[:space:]]+peer[[:space:]]+map=zavod_cell' "$PG_CONF/pg_hba.conf"; then
-    cp -p "$PG_CONF/pg_hba.conf" "$PG_CONF/pg_hba.conf.before-zavod-$ts"
-    # Строка встаёт первой: pg_hba.conf читается сверху, первая подходящая строка решает.
-    awk -v line="$HBA_LINE" 'BEGIN{done=0} !done && $0 !~ /^[[:space:]]*(#|$)/ {print line; done=1} {print} END{if(!done) print line}' \
-      "$PG_CONF/pg_hba.conf.before-zavod-$ts" > "$PG_CONF/pg_hba.conf"
-  fi
+  # Пары «сопоставление, учётная запись Linux, роль базы»; у каждой своя строка pg_hba (только база bem).
+  for pair in 'zavod_cell root zstarter' 'zavod_kernel zkernel bem_kernel_rw'; do
+    read -r MAP OSUSER DBROLE <<< "$pair"
+    if ! grep -qE "^${MAP}[[:space:]]+${OSUSER}[[:space:]]+${DBROLE}[[:space:]]*\$" "$PG_CONF/pg_ident.conf"; then
+      cp -p "$PG_CONF/pg_ident.conf" "$PG_CONF/pg_ident.conf.before-zavod-$MAP-$ts"
+      printf '%-15s %-23s %s\n' "$MAP" "$OSUSER" "$DBROLE" >> "$PG_CONF/pg_ident.conf"
+    fi
+    if ! grep -qE "^local[[:space:]]+bem[[:space:]]+${DBROLE}[[:space:]]+peer[[:space:]]+map=${MAP}" "$PG_CONF/pg_hba.conf"; then
+      cp -p "$PG_CONF/pg_hba.conf" "$PG_CONF/pg_hba.conf.before-zavod-$MAP-$ts"
+      HBA_LINE=$(printf 'local   bem             %-31s peer map=%s' "$DBROLE" "$MAP")
+      # Строка встаёт первой: pg_hba.conf читается сверху, первая подходящая строка решает.
+      awk -v line="$HBA_LINE" 'BEGIN{done=0} !done && $0 !~ /^[[:space:]]*(#|$)/ {print line; done=1} {print} END{if(!done) print line}' \
+        "$PG_CONF/pg_hba.conf.before-zavod-$MAP-$ts" > "$PG_CONF/pg_hba.conf"
+    fi
+  done
   systemctl reload postgresql.service
-  echo "PG $PG_CONF: $(grep -cE 'map=zavod_cell' "$PG_CONF/pg_hba.conf") hba line, $(grep -cE '^zavod_cell' "$PG_CONF/pg_ident.conf") ident line"
+  echo "PG $PG_CONF: $(grep -cE 'map=zavod_(cell|kernel)' "$PG_CONF/pg_hba.conf") hba lines, $(grep -cE '^zavod_(cell|kernel)' "$PG_CONF/pg_ident.conf") ident lines"
 fi
 
 systemctl daemon-reload

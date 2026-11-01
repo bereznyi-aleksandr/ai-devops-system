@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
 # ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:57 +02:00 (v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -33,6 +33,8 @@ wait_for() { # секунды команда… — ждать, пока ком�
   for _ in $(seq 1 "$n"); do if "$@"; then return 0; fi; sleep 1; done
   return 1
 }
+# Запуск с ожиданием: предел 6 запусков в минуту (Z-EXT-04) — проход повторяется, пока сессия не поднимется.
+start_wait() { for _ in $(seq 1 20); do pass; if is_active "$1"; then return 0; fi; sleep 5; done; return 1; }
 marker() { sudo find "$1" -maxdepth 1 -name "*_$2" -printf . | wc -c; }
 
 echo "=== учётные записи"
@@ -52,6 +54,11 @@ echo "=== вход в базу ролью zstarter"
 [ "$(sudo psql -X -A -t -U zstarter -d bem -c 'select current_user')" = zstarter ] && ok "root -> zstarter" || bad "root cannot log in as zstarter"
 if psql -X -U zstarter -d bem -c 'select 1' >/dev/null 2>&1; then bad "runner logged in as zstarter"; else ok "runner refused as zstarter"; fi
 if sudo -u zkernel psql -X -U zstarter -d bem -c 'select 1' >/dev/null 2>&1; then bad "zkernel logged in as zstarter"; else ok "zkernel refused as zstarter"; fi
+# Аудит M33-01: служба ядра (zkernel) входит ролью bem_kernel_rw через сокет, без пароля и без TCP.
+[ "$(sudo -u zkernel psql -X -A -t -h /var/run/postgresql -U bem_kernel_rw -d bem -c "select current_user || '|' || coalesce(inet_client_addr()::text, 'socket')")" = 'bem_kernel_rw|socket' ] \
+  && ok "M33-01: zkernel -> bem_kernel_rw over socket" || bad "M33-01: zkernel cannot log in as bem_kernel_rw"
+if psql -X -h /var/run/postgresql -U bem_kernel_rw -d bem -c 'select 1' >/dev/null 2>&1; then bad "M33-01: runner logged in as bem_kernel_rw"; else ok "M33-01: runner refused as bem_kernel_rw"; fi
+if sudo -u zkernel psql -X -h /var/run/postgresql -U postgres -d bem -c 'select 1' >/dev/null 2>&1; then bad "M33-01: zkernel logged in as postgres"; else ok "M33-01: zkernel refused as postgres"; fi
 
 echo "=== права запуска служб"
 if sudo -u zkernel systemctl start zagent@0123456789abcdef0123456789abcdef.service >/dev/null 2>&1; then bad "zkernel started a unit"
@@ -135,8 +142,8 @@ fakeboot; pass
 
 echo "=== аудит C33-01: запуск дольше 2 минут — служба останавливается, второй сеанс не стартует"
 older() { pgsu "UPDATE bem_control.session_start SET reserved_at = now() - interval '3 minutes' WHERE lease_id = '$1'::uuid" >/dev/null; }
-L6=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L6"; pass
-wait_for 30 is_active "$L6" && ok "C33-01: L6 started" || bad "C33-01: L6 not started"
+L6=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L6"
+start_wait "$L6" && ok "C33-01: L6 started" || bad "C33-01: L6 not started"
 older "$L6"
 [ "$(pgsu "SELECT bem_control.lease_mark_running('$L6'::uuid)")" = TOO_LATE ] && ok "C33-01: late mark refused" || bad "C33-01: late mark"
 [ "$(state "$L6")" = STARTING ] && ok "C33-01: TOO_LATE keeps the slot" || bad "C33-01: L6 state $(state "$L6")"
@@ -148,14 +155,14 @@ if [ "$(active "$L7")" != active ] && sudo test -e "/run/zavod/start/$L7"; then 
 sudo journalctl -t zagent-start --no-pager | grep -q "ZAVOD_ALERT start overdue $L6" && ok "C33-01: alert" || bad "C33-01: no alert"
 pass
 [ "$(state "$L6")" = START_FAILED ] && ok "C33-01: released after stop" || bad "C33-01: L6 state $(state "$L6")"
-wait_for 30 is_active "$L7" && ok "C33-01: next lease started" || bad "C33-01: L7 not started"
+start_wait "$L7" && ok "C33-01: next lease started" || bad "C33-01: L7 not started"
 sudo -u zkernel touch "/run/zavod/stop/$L7"; pass
 older "$L7"; pass
 [ "$(state "$L7")" = START_FAILED ] && ok "C33-01: stopped L7 released" || bad "C33-01: L7 state $(state "$L7")"
 
 echo "=== аудит M33-02: остановка только при открытой аренде"
-L8=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L8"; pass
-wait_for 30 is_active "$L8" && ok "M33-02: L8 started" || bad "M33-02: L8 not started"
+L8=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L8"
+start_wait "$L8" && ok "M33-02: L8 started" || bad "M33-02: L8 not started"
 X=$(printf '%032x' 777777)
 sudo -u zkernel touch "/run/zavod/stop/$X"; pass
 [ "$(marker /var/lib/zavod/start-archive "${X}_STOP_LEASE_NOT_OPEN")" = 1 ] && ok "M33-02: no lease — archived, nothing stopped" || bad "M33-02: unknown lease stop"
@@ -168,8 +175,8 @@ is_active "$L8" && ok "M33-02: closed lease — request does not stop" || bad "M
 [ "$(marker /var/lib/zavod/start-archive "${L8}_STOP_LEASE_NOT_OPEN")" = 1 ] && ok "M33-02: closed lease request archived" || bad "M33-02: closed lease marker"
 sudo systemctl stop "zagent@$L8.service"; older "$L8"; pass
 [ "$(state "$L8")" = START_FAILED ] && ok "M33-02: L8 released" || bad "M33-02: L8 state $(state "$L8")"
-L9=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L9"; pass
-wait_for 30 is_active "$L9" && ok "M33-02: L9 started" || bad "M33-02: L9 not started"
+L9=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L9"
+start_wait "$L9" && ok "M33-02: L9 started" || bad "M33-02: L9 not started"
 sudo systemctl stop postgresql.service
 sudo -u zkernel touch "/run/zavod/stop/$L9"
 pass || true
@@ -183,8 +190,8 @@ older "$L9"; pass
 
 echo "=== аудит C33-02: сбой systemctl — живая сессия не теряется, новых запусков нет"
 # Подменный systemctl только для прохода zagent-start (через PATH службы): list-units падает или даёт мусор.
-L4=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L4"; pass
-wait_for 30 is_active "$L4" && ok "C33-02: L4 started" || bad "C33-02: L4 not started"
+L4=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L4"
+start_wait "$L4" && ok "C33-02: L4 started" || bad "C33-02: L4 not started"
 [ "$(pgsu "SELECT bem_control.lease_mark_running('$L4'::uuid)")" = RUNNING ] && ok "C33-02: L4 RUNNING" || bad "C33-02: L4 mark running"
 for mode in fail garbage; do
   sudo install -d -m 0755 /usr/local/lib/zavod-ci-fakebin
