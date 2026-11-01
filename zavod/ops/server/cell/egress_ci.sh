@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/egress_ci.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 00:13 +02:00 (v0.3: аудит M3310-R1B-01 — команда после выхода соединившегося процесса; M3310-R1B-03 — службы без сети не достают посредника, петлю IPv4/IPv6 и DNS по UDP, посредник отказывает не-сессии; M3310-R1B-04 — GitHub по окончанию имени в списке и в запросе; v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 01:21 +02:00 (v0.4: аудит M3310-R2-02 — посредник отказывает службе с динамическим uid вне zagent@ и в zagent.slice без zagent@; журнал посредника называет аренду сессии; v0.3: аудит M3310-R1B-01 — команда после выхода соединившегося процесса; M3310-R1B-03 — службы без сети не достают посредника, петлю IPv4/IPv6 и DNS по UDP, посредник отказывает не-сессии; M3310-R1B-04 — GitHub по окончанию имени в списке и в запросе; v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка шага 3.3.10 на машине GitHub ubuntu-24.04 после install_cell.sh, cell_ci.sh и intake_ci.sh:
 #   привратник (ПБ-5) и выход только через посредника (ПБ-3) — изнутри настоящей клетки zagent@<аренда>
@@ -190,6 +190,11 @@ done
 kill "$LISTEN_PID"
 r=$(python3 -I -c "$PY_PROXY")
 [ "$r" = 403 ] && ok "proxy refuses a non-session uid (runner) -> 403" || bad "proxy to runner: $r"
+# M3310-R2-02: динамический uid из диапазона сессий, но не служба zagent@<аренда> — тоже отказ (фильтр его пропускает).
+r=$(sudo systemd-run --quiet --wait --pipe -p DynamicUser=yes /usr/bin/python3 -I -c "$PY_PROXY")
+[ "$r" = 403 ] && ok "proxy refuses a dynamic user outside zagent@ -> 403" || bad "proxy to a foreign dynamic user: $r"
+r=$(sudo systemd-run --quiet --wait --pipe -p DynamicUser=yes -p Slice=zagent.slice /usr/bin/python3 -I -c "$PY_PROXY")
+[ "$r" = 403 ] && ok "proxy refuses a dynamic user in zagent.slice, not zagent@ -> 403" || bad "proxy to zagent.slice non-session: $r"
 
 echo "=== M3310-R1B-04: GitHub по окончанию имени — список с поддоменом не принимается"
 P=/usr/local/lib/zavod/zavod-proxy
@@ -209,6 +214,10 @@ for d in '"decision": "ALLOWED".*"target": "example.com:443"' '"decision": "NOT_
          '"decision": "NOT_ALLOWED".*"target": "api.github.com:443"' '"decision": "NOT_A_SESSION"'; do
   echo "$PJ" | grep -qE "$d" && ok "proxy log: $d" || bad "proxy log missing: $d"
 done
+echo "$PJ" | grep -qE "\"decision\": \"ALLOWED\".*\"lease\": \"$LP\".*\"target\": \"example.com:443\"" \
+  && ok "proxy log names the session lease" || bad "proxy log has no session lease for the allowed tunnel"
+[ "$(echo "$PJ" | grep -c '"decision": "NOT_A_SESSION"')" -ge 3 ] && ok "proxy log: three NOT_A_SESSION refusals" \
+  || bad "proxy log NOT_A_SESSION count $(echo "$PJ" | grep -c '"decision": "NOT_A_SESSION"')"
 PU=$(echo "$PJ" | grep '"target": "github.com:443"' | sed -n 's/.*"uid": \([0-9]*\).*/\1/p' | tail -1)
 [ -n "$PU" ] && [ "$PU" -ge 61184 ] && [ "$PU" -le 65519 ] && ok "proxy log names the session uid $PU" || bad "proxy log uid '$PU'"
 

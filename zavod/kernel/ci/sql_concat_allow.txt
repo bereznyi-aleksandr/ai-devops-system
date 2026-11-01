@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_allow.txt — разрешения проверки склейки запросов (sql_concat_scan.py)
-# ВЕРСИЯ: v0.1  ДАТА: 2026-11-01 22:56 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# ВЕРСИЯ: v0.2  ДАТА: 2026-11-02 01:15 +02:00 (v0.2: вызов обёртки q( в fencer.mjs — тот же текст с ${FENCER_GROUP}, проверка по месту вызова, аудит M3310-R2-01)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # Формат: путь<TAB>точный текст строки кода. Каждое разрешение — постоянная из самого кода, не значение извне.
 # kernel.mjs: ${cols} — постоянный список колонок в той же функции; значения идут параметрами $1, $2.
-# fencer.mjs: ${FENCER_GROUP} — постоянное имя роли из начала файла.
+# fencer.mjs: ${FENCER_GROUP} — постоянное имя роли из начала файла (export const FENCER_GROUP = 'bem_governance'); вызов q( — тот же запрос.
 zavod/kernel/src/fencer.mjs	pg_has_role(session_user, '${FENCER_GROUP}', 'USAGE') AS gov,
 zavod/kernel/src/kernel.mjs	({ rows } = await c.query(`SELECT ${cols} FROM bem_control.chat_lease WHERE tenant_id = $1 AND lease_id = $2`,
 zavod/kernel/src/kernel.mjs	({ rows } = await c.query(`SELECT ${cols} FROM bem_control.chat_lease WHERE tenant_id = $1 AND role_key = $2
+zavod/kernel/src/fencer.mjs	const { rows } = await q(
