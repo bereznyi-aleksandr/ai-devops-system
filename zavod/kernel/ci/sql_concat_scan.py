@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 01:37 +02:00 (v0.4: аудит M3310-R3-01 — все формы вызова query:
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 01:56 +02:00 (v0.5: аудит M3310-R4-01 — вызов по вычисляемому имени
+#   запрещён целиком (кроме таблицы-литерала файла), имя не вычисляется; строки раскрываются как в JavaScript
+#   ('\u0071uery' = 'query'); call/apply/bind, Reflect, Proxy, смена прототипа, import(), экранирование вне строк,
+#   вычисляемое имя свойства, перенос метода в свойство другого объекта, свойство как цель разбора и цикла — находка;
+#   v0.4: аудит M3310-R3-01 — все формы вызова query:
 #   db['query'](…), db.query?.(…), имя метода, собранное из постоянных кусков; слово query где-либо ещё (псевдоним,
 #   bind/call, деструктуризация, своё определение) — находка; вызов метода по непостоянному имени — только у
 #   объекта-литерала этого файла; eval и Function — находка; v0.3: аудит M3310-R2-01 — проверка
@@ -22,9 +26,13 @@
 #   находка — текст из функции, параметра, .join() и любой другой склейки сюда попадает. Вызов query засчитывается
 #   в любой форме: .query(…), ?.query(…), .query?.(…), ['query'](…) и имя из постоянных кусков ['qu' + 'ery'](…).
 #   Метод query разрешено только вызывать: слово query в коде в любом другом месте (const q = db.query, .bind,
-#   .call, { query } = db, своё определение query) и строка 'query' вне [ ](…) — находка. Вызов по непостоянному
-#   имени X[k](…) разрешён только если X — объект-литерал этого файла без «...» на верхнем уровне (таблица
-#   обработчиков); eval и Function — находка. Сверх того: шаблон `...${...}...` с текстом запроса; «+», «+=», .concat(), .join() рядом с текстом запроса или с переменной, которой
+#   .call, { query } = db, своё определение query) и строка со значением 'query' (после раскрытия экранирований, как
+#   в JavaScript) — находка. Вызов по вычисляемому имени X[k](…), X[k]`…`, X[k]?.(…) — находка при любом k, если X
+#   не объект-литерал этого файла без «...» на верхнем уровне (таблица обработчиков). Находка и всё, чем метод можно
+#   вызвать с чужим объектом в обход «.query(»: call, apply, bind, Reflect, Proxy, __proto__, Object.create,
+#   Object.setPrototypeOf, eval, Function, import(), \u и \x вне строк, вычисляемое имя свойства { [k]: … },
+#   значение X[k] (k не число), записанное в свойство объекта (o.f = X[k], { f: X[k] }), свойство объекта как цель
+#   разбора ([o.f] = …, { a: o.f } = …) и как переменная цикла (for (o.f of …)). Сверх того: шаблон `...${...}...` с текстом запроса; «+», «+=», .concat(), .join() рядом с текстом запроса или с переменной, которой
 #   присвоен текст запроса (в том числе массив); цепочка строк через «+», вместе похожая на запрос.
 #   Исключения — только из файла разрешений: строка «путь<TAB>точный текст строки кода», для каждой — причина.
 # ВЫЗОВ: python3 -I sql_concat_scan.py [--allow файл] путь…   (папки обходятся целиком: *.py, *.mjs, *.js и файлы
@@ -50,6 +58,22 @@ JS_INLINE_JOIN = re.compile(r'\[([^\[\]]*)\]\s*\.\s*join\s*\(', re.S)
 JS_ALIAS = re.compile(r'([A-Za-z_$][\w$.]*)\s*=(?![=>])\s*([A-Za-z_$][\w$.]*)\s*[;\n]')
 JS_QUERY_CALL = re.compile(r'\.\s*query\s*(?:\?\.\s*)?\(')
 JS_CALL_AFTER = re.compile(r'\s*(?:\?\.\s*)?\(')
+JS_COMPUTED_READ = r'[A-Za-z_$][\w$.]*\s*(?:\?\.\s*)?\[(?!\s*\d+\s*\])'
+JS_BYPASS = (
+    (r'\.\s*(?:call|apply|bind)\s*\(', 'function called through call, apply or bind'),
+    (r'(?<![\w$])(?:Reflect|Proxy|__proto__|__defineGetter__|__defineSetter__)(?![\w$])',
+     'Reflect, Proxy or a prototype change'),
+    (r'\bObject\s*\.\s*(?:create|setPrototypeOf)\b', 'Reflect, Proxy or a prototype change'),
+    (r'(?<![\w$.])(?:eval|Function)\s*\(', 'code built at run time (eval, Function)'),
+    (r'(?<![\w$.])import\s*\(', 'module loaded at run time (import())'),
+    (r'\\[ux]', 'escape sequence in a name outside strings'),
+    (r'[{,]\s*\[[^\[\]]*\]\s*[:(]', 'computed property name in an object'),
+    (r'(?:\.\s*[A-Za-z_$][\w$]*|\])\s*=(?![=>])\s*' + JS_COMPUTED_READ,
+     'value read by a computed name stored into an object property'),
+    (r'[{,]\s*(?:[A-Za-z_$][\w$]*|\'[^\'\n]*\'|"[^"\n]*")\s*:\s*' + JS_COMPUTED_READ,
+     'value read by a computed name stored into an object property'),
+    (r'\bfor\s*\(\s*(?!(?:const|let|var)\b)[A-Za-z_$][\w$]*\s*[.\[]', 'object property as a loop variable'),
+)
 # Постоянный кусок текста: строка в кавычках или шаблон без ${…}.
 JS_FIXED_LIT = r'''(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`$\\]|\\.|\$(?!\{))*`)'''
 JS_FIXED = JS_FIXED_LIT + r'(?:\s*\+\s*' + JS_FIXED_LIT + r')*'
@@ -184,6 +208,47 @@ def js_unquote(chain):
     return ''.join(re.sub(r'\$\{[^}]*\}', ' ', m.group(0)[1:-1]) for m in re.finditer(JS_LIT, chain, re.S))
 
 
+JS_ESC = {'n': '\n', 't': '\t', 'r': '\r', 'b': '\b', 'f': '\f', 'v': '\v', '0': '\0'}
+
+
+def js_decode_chain(chain):
+    r"""Значение цепочки постоянных строк так, как его получит JavaScript: экранирования \xHH, \uHHHH, \u{…}, \n и
+    прочие раскрываются, перенос строки после «\» убирается. Не удалось прочитать — None (это тоже находка)."""
+    out = []
+    for m in re.finditer(JS_FIXED_LIT, chain, re.S):
+        body = m.group(0)[1:-1]
+        if m.group(0)[0] == '`':
+            body = body.replace('\r\n', '\n')
+        i = 0
+        try:
+            while i < len(body):
+                c = body[i]
+                if c != '\\':
+                    out.append(c)
+                    i += 1
+                    continue
+                n = body[i + 1]
+                i += 2
+                if n == 'x':
+                    out.append(chr(int(body[i:i + 2], 16)))
+                    i += 2
+                elif n == 'u' and body[i] == '{':
+                    j = body.index('}', i)
+                    out.append(chr(int(body[i + 1:j], 16)))
+                    i = j + 1
+                elif n == 'u':
+                    out.append(chr(int(body[i:i + 4], 16)))
+                    i += 4
+                elif n in '\r\n\u2028\u2029':
+                    if n == '\r' and body[i:i + 1] == '\n':
+                        i += 1
+                else:
+                    out.append(JS_ESC.get(n, n))
+        except (ValueError, IndexError):
+            return None
+    return ''.join(out)
+
+
 def js_blank(text):
     """Код, где содержимое строк, шаблонов (кроме ${…}) и комментариев заменено пробелами: скобки и запятые внутри
     строк не мешают искать границы аргумента. Переводы строк сохраняются — номера строк те же."""
@@ -305,34 +370,39 @@ def js_findings(path, text):
     def_pos = {d[1] for d in defs}
     wrappers = {}
     todo = [(m.start(), m.end()) for m in JS_QUERY_CALL.finditer(code)]
-    # Аудит M3310-R3-01: другие формы того же вызова и обходы.
+    # Аудит M3310-R3-01, M3310-R4-01: метод query достаётся только прямым вызовом «.query(». Правила ниже закрывают
+    # все пути взять метод объекта по имени, которое не написано в коде буквами, и вызвать его с тем же объектом:
+    # вызов по вычисляемому имени, call/apply/bind, Reflect и Proxy, подмена прототипа, перенос метода в свойство
+    # другого объекта, экранирование в имени, код из строки. Ни одно правило не вычисляет имя — форма запрещена целиком.
     objects = set()
     for m in re.finditer(r'\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:Object\.freeze\(\s*)?(?=\{)', code):
         if not js_top_spread(code, m.end()):
             objects.add(m.group(1))
-    keys = set()
-    for m in re.finditer(r'\]\s*(?:\?\.\s*)?\(', code):
+    for m in re.finditer(r'\]\s*(?:\?\.\s*)?[(`]', code):
         lb = js_open(code, m.start())
-        key = text[lb + 1:m.start()].strip()
-        if re.fullmatch(JS_FIXED, key, re.S):
-            if js_unquote(key) == 'query':
-                keys.add(lb)
-                todo.append((lb, m.end()))
-            continue
         recv = re.search(r'([A-Za-z_$][\w$]*)\s*(?:\?\.\s*)?$', code[:lb])
-        if not (recv and recv.group(1) in objects):
-            add(lb, 'method called by a name that is not fixed')
+        own = recv is not None and recv.group(1) in objects and not code[:recv.start(1)].rstrip().endswith('.')
+        if not own:
+            add(lb, 'method called by a computed name (allowed only on a table object of this file)')
+    for rx, why in JS_BYPASS:
+        for m in re.finditer(rx, code, re.M):
+            add(m.start(), why)
+    for m in re.finditer(r'[\]}]\s*=(?![=>])', code):
+        ob = js_open(code, m.start())
+        if re.search(r'[\w$)\].]\s*$', code[:ob]):
+            continue  # o[k] = … — запись в свойство, а не разбор
+        pat = re.sub(r'=[^,\]}]*', '', code[ob:m.start() + 1])  # значения по умолчанию — не цели
+        if re.search(r'[\w$\])]\s*(?:\.\s*[A-Za-z_$]|\[)', pat[1:-1]):
+            add(m.start(), 'object property as a destructuring target')
     for m in re.finditer(r'(?<![\w$])query(?![\w$])', code):
         if not (re.search(r'\.\s*$', code[:m.start()]) and JS_CALL_AFTER.match(code, m.end())):
             add(m.start(), 'query used other than as a direct call (alias, bind, destructuring, own definition)')
-    for m in re.finditer(r"""(['"`])query\1""", text):
-        if code[m.start()] != m.group(1):
+    for m in re.finditer(JS_FIXED, text, re.S):
+        if code[m.start()] != text[m.start()]:
             continue  # внутри другой строки или комментария
-        lb = len(code[:m.start()].rstrip()) - 1
-        if lb not in keys:
-            add(m.start(), "method name 'query' kept in a string")
-    for m in re.finditer(r'(?<![\w$.])(?:eval|Function)\s*\(', code):
-        add(m.start(), 'code built at run time (eval, Function)')
+        value = js_decode_chain(m.group(0))
+        if value is None or value.strip() == 'query':
+            add(m.start(), "method name 'query' kept in a string (escapes decoded as JavaScript does)")
     while todo:
         at, start = todo.pop()
         arg = text[start:js_arg_end(code, start)].strip()
