@@ -71,6 +71,7 @@ if start_wait "$LP"; then ok "probe session started"; else bad "probe session no
 wait_for 120 sh -c "sudo journalctl -u 'zagent@$LP.service' --no-pager | grep -q EGRESS_PROBE_DONE" || bad "session probes did not finish"
 J=$(sudo journalctl -u "zagent@$LP.service" --no-pager -o cat)
 echo "$J" | grep EGRESS_PROBE || true
+sudo journalctl -u zavod-gate.service --no-pager -o cat | tail -15 | sed "s/^/EGRESS_INFO gate: /"
 want() { # имя ожидаемое — ожидаемое: точное слово или шаблон DENIED_*
   local got
   got=$(echo "$J" | sed -n "s/^EGRESS_PROBE $1=//p" | tail -1)

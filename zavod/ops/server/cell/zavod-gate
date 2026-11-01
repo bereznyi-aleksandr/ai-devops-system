@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod-gate
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:19 +02:00 (v0.2: «процесс жив» — опрос pidfd без сигнала: сигнал 0 чужому uid даёт EPERM, и каждый сеанс получал NOT_A_SESSION)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: привратник команд агента (протокол v3.1 И.7а п.1–2, карта 3.3.10.1–3.3.10.2, проба ПБ-5).
 #   Слушает /run/zavod-gate/agent.sock. Одно соединение — одна строка JSON и один ответ:
@@ -18,7 +18,7 @@
 import json
 import os
 import re
-import signal
+import select
 import socket
 import struct
 import subprocess
@@ -98,8 +98,12 @@ def peer_session(conn):
             cg = f.read().strip()
         with open(f'/proc/{pid}/status', encoding='ascii') as f:
             uids = next((ln.split()[1:] for ln in f if ln.startswith('Uid:')), [])
+        # pidfd становится читаемым, когда процесс завершился; сигнал 0 не годится — чужому uid ядро отвечает EPERM.
         if pidfd is not None:
-            signal.pidfd_send_signal(pidfd, 0)
+            pl = select.poll()
+            pl.register(pidfd, select.POLLIN)
+            if pl.poll(0):
+                raise ValueError('peer exited')
     except (OSError, ValueError, StopIteration):
         raise Refuse('NOT_A_SESSION') from None
     finally:
