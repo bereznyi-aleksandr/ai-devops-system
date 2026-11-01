@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/cell/zimport@.service
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:45 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:53 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: доверенный приём файлов аренды %i (протокол v3.1 И.12д, Л.23; карта 3.3.9.3). Запускается после
 #   успешной остановки zquarantine@%i (OnSuccess= там). Без сети и базы; читает out/ и опись, пишет только в
@@ -36,7 +36,8 @@ PrivateIPC=yes
 NoNewPrivileges=yes
 CapabilityBoundingSet=
 AmbientCapabilities=
-RestrictSUIDSGID=yes
+# RestrictSUIDSGID= не включён: systemd тогда отвечает ENOSYS на openat2 (режим файла внутри структуры нельзя проверить),
+#   и приём уходит на запасной путь (CI 41313174440, OPENAT2_DIAG). Права файлов приём ставит сам: 0640, 0750 только по описи.
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectKernelLogs=yes
@@ -47,6 +48,4 @@ LockPersonality=yes
 RestrictRealtime=yes
 RestrictNamespaces=yes
 SystemCallFilter=@system-service
-# openat2 нужен приёму явно: без этой строки приём (вероятно, из-за фильтра) уходил на запасной путь (CI 41312448624).
-SystemCallFilter=openat2
 SystemCallArchitectures=native

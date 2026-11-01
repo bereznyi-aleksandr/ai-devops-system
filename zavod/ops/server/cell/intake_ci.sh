@@ -89,6 +89,7 @@ print("fd",fd,"errno",ctypes.get_errno())'
   echo "OPENAT2_DIAG nofilter: $(sudo systemd-run -q --wait --pipe python3 -I -c "$probe" 2>&1)"
   echo "OPENAT2_DIAG system-service: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service python3 -I -c "$probe" 2>&1)"
   echo "OPENAT2_DIAG +openat2: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service -p SystemCallFilter=openat2 python3 -I -c "$probe" 2>&1)"
+  echo "OPENAT2_DIAG +suidsgid: $(sudo systemd-run -q --wait --pipe -p RestrictSUIDSGID=yes python3 -I -c "$probe" 2>&1)"
   echo "OPENAT2_DIAG +native: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service -p SystemCallArchitectures=native python3 -I -c "$probe" 2>&1)"
   echo "OPENAT2_DIAG unit filter has openat2: $(systemctl show zimport@00000000000000000000000000000000.service -p SystemCallFilter | tr ' ' '\n' | grep -cx openat2)"
 }
