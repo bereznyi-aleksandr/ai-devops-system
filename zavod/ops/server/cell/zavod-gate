@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod-gate
 # ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:27 +02:00 (v0.2: отказ psql — строка DB_ERROR в журнале, значения в кавычках скрыты; «процесс жив» — опрос pidfd без сигнала: сигнал 0 чужому uid даёт EPERM, и каждый сеанс получал NOT_A_SESSION)
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 23:37 +02:00 (v0.2: в \bind значения без кавычек — :'имя' psql передавал вместе с кавычками; отказ psql — строка DB_ERROR в журнале, значения в кавычках скрыты; «процесс жив» — опрос pidfd без сигнала: сигнал 0 чужому uid даёт EPERM, и каждый сеанс получал NOT_A_SESSION)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: привратник команд агента (протокол v3.1 И.7а п.1–2, карта 3.3.10.1–3.3.10.2, проба ПБ-5).
 #   Слушает /run/zavod-gate/agent.sock. Одно соединение — одна строка JSON и один ответ:
@@ -48,11 +48,13 @@ KINDS = {  # вид → {аргумент: проверка}; лишний ил�
 }
 PSQL = ['psql', '-X', '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1', '-U', 'zgate', '-d', 'bem', '-f', '-']
 # Постоянные тексты запросов. Значения — только из окружения psql (\getenv) и только параметрами (\bind).
+# В \bind имя без кавычек: :'имя' psql отдаёт вместе с кавычками. Значения до базы уже проверены (UUID, 64 hex,
+# hex тела) — пробелов и кавычек в них нет; текстом запроса они не становятся ни в каком виде.
 SQL_ACCEPT = ("\\getenv zl ZG_LEASE\n\\getenv zp ZG_PEER\n\\getenv zn ZG_NONCE\n\\getenv zs ZG_SHA\n\\getenv zb ZG_BODY\n"
               "SELECT bem_control.gate_accept($1::uuid, $2::uuid, $3, $4, decode($5, 'hex')) "
-              "\\bind :'zl' :'zp' :'zn' :'zs' :'zb' \\g\n")
+              "\\bind :zl :zp :zn :zs :zb \\g\n")
 SQL_STATUS = ("\\getenv zl ZG_LEASE\n\\getenv zn ZG_NONCE\n"
-              "SELECT bem_control.gate_command_status($1::uuid, $2) \\bind :'zl' :'zn' \\g\n")
+              "SELECT bem_control.gate_command_status($1::uuid, $2) \\bind :zl :zn \\g\n")
 DB_ANSWER = re.compile(r'\A(ACCEPTED [0-9a-f-]{36}|BAD_COMMAND|PEER_MISMATCH|SHA_MISMATCH|LEASE_NOT_OPEN|'
                        r'SESSION_NOT_RUNNING|NONCE_REPLAY|NONE)\Z')
 
