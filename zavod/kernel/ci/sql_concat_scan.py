@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 01:15 +02:00 (v0.3: аудит M3310-R2-01 — проверка
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 01:37 +02:00 (v0.4: аудит M3310-R3-01 — все формы вызова query:
+#   db['query'](…), db.query?.(…), имя метода, собранное из постоянных кусков; слово query где-либо ещё (псевдоним,
+#   bind/call, деструктуризация, своё определение) — находка; вызов метода по непостоянному имени — только у
+#   объекта-литерала этого файла; eval и Function — находка; v0.3: аудит M3310-R2-01 — проверка
 #   по месту вызова: у каждого .query(…) в JavaScript текст запроса — постоянный, иначе находка; массив с текстом
 #   запроса и .join(); в Python — текст, который возвращает функция этого файла; v0.2: аудит M3310-R1B-02 — текст
 #   запроса отслеживается и через переменные: «q = 'SELECT …'; q += v», промежуточная переменная, куски
@@ -16,8 +19,12 @@
 #   присваиваниям и return, до неподвижной точки).
 #   JavaScript (ядро, движок): у каждого вызова .query(…) первый аргумент — постоянный текст: строка, шаблон без
 #   ${}, цепочка таких строк через «+» или имя, объявленное const с таким текстом и больше не присваиваемое; иначе
-#   находка — текст из функции, параметра, .join() и любой другой склейки сюда попадает. Сверх того: шаблон
-#   `...${...}...` с текстом запроса; «+», «+=», .concat(), .join() рядом с текстом запроса или с переменной, которой
+#   находка — текст из функции, параметра, .join() и любой другой склейки сюда попадает. Вызов query засчитывается
+#   в любой форме: .query(…), ?.query(…), .query?.(…), ['query'](…) и имя из постоянных кусков ['qu' + 'ery'](…).
+#   Метод query разрешено только вызывать: слово query в коде в любом другом месте (const q = db.query, .bind,
+#   .call, { query } = db, своё определение query) и строка 'query' вне [ ](…) — находка. Вызов по непостоянному
+#   имени X[k](…) разрешён только если X — объект-литерал этого файла без «...» на верхнем уровне (таблица
+#   обработчиков); eval и Function — находка. Сверх того: шаблон `...${...}...` с текстом запроса; «+», «+=», .concat(), .join() рядом с текстом запроса или с переменной, которой
 #   присвоен текст запроса (в том числе массив); цепочка строк через «+», вместе похожая на запрос.
 #   Исключения — только из файла разрешений: строка «путь<TAB>точный текст строки кода», для каждой — причина.
 # ВЫЗОВ: python3 -I sql_concat_scan.py [--allow файл] путь…   (папки обходятся целиком: *.py, *.mjs, *.js и файлы
@@ -41,7 +48,8 @@ JS_ASSIGN = re.compile(r'([A-Za-z_$][\w$.]*)\s*(\+?=)(?![=>])\s*(' + JS_LIT + r'
 JS_ARRAY = re.compile(r'([A-Za-z_$][\w$.]*)\s*=(?![=>])\s*\[([^\[\]]*)\]', re.S)
 JS_INLINE_JOIN = re.compile(r'\[([^\[\]]*)\]\s*\.\s*join\s*\(', re.S)
 JS_ALIAS = re.compile(r'([A-Za-z_$][\w$.]*)\s*=(?![=>])\s*([A-Za-z_$][\w$.]*)\s*[;\n]')
-JS_QUERY_CALL = re.compile(r'\.\s*query\s*\(')
+JS_QUERY_CALL = re.compile(r'\.\s*query\s*(?:\?\.\s*)?\(')
+JS_CALL_AFTER = re.compile(r'\s*(?:\?\.\s*)?\(')
 # Постоянный кусок текста: строка в кавычках или шаблон без ${…}.
 JS_FIXED_LIT = r'''(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`$\\]|\\.|\$(?!\{))*`)'''
 JS_FIXED = JS_FIXED_LIT + r'(?:\s*\+\s*' + JS_FIXED_LIT + r')*'
@@ -297,6 +305,34 @@ def js_findings(path, text):
     def_pos = {d[1] for d in defs}
     wrappers = {}
     todo = [(m.start(), m.end()) for m in JS_QUERY_CALL.finditer(code)]
+    # Аудит M3310-R3-01: другие формы того же вызова и обходы.
+    objects = set()
+    for m in re.finditer(r'\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:Object\.freeze\(\s*)?(?=\{)', code):
+        if not js_top_spread(code, m.end()):
+            objects.add(m.group(1))
+    keys = set()
+    for m in re.finditer(r'\]\s*(?:\?\.\s*)?\(', code):
+        lb = js_open(code, m.start())
+        key = text[lb + 1:m.start()].strip()
+        if re.fullmatch(JS_FIXED, key, re.S):
+            if js_unquote(key) == 'query':
+                keys.add(lb)
+                todo.append((lb, m.end()))
+            continue
+        recv = re.search(r'([A-Za-z_$][\w$]*)\s*(?:\?\.\s*)?$', code[:lb])
+        if not (recv and recv.group(1) in objects):
+            add(lb, 'method called by a name that is not fixed')
+    for m in re.finditer(r'(?<![\w$])query(?![\w$])', code):
+        if not (re.search(r'\.\s*$', code[:m.start()]) and JS_CALL_AFTER.match(code, m.end())):
+            add(m.start(), 'query used other than as a direct call (alias, bind, destructuring, own definition)')
+    for m in re.finditer(r"""(['"`])query\1""", text):
+        if code[m.start()] != m.group(1):
+            continue  # внутри другой строки или комментария
+        lb = len(code[:m.start()].rstrip()) - 1
+        if lb not in keys:
+            add(m.start(), "method name 'query' kept in a string")
+    for m in re.finditer(r'(?<![\w$.])(?:eval|Function)\s*\(', code):
+        add(m.start(), 'code built at run time (eval, Function)')
     while todo:
         at, start = todo.pop()
         arg = text[start:js_arg_end(code, start)].strip()
@@ -341,6 +377,34 @@ def js_arg_end(code, start):
             break
         k += 1
     return k
+
+
+def js_top_spread(code, i):
+    """Есть ли «...» на верхнем уровне объекта-литерала, начатого скобкой code[i] (вложенные скобки не в счёт)."""
+    depth = 0
+    for k in range(i, len(code)):
+        if code[k] in '([{':
+            depth += 1
+        elif code[k] in ')]}':
+            depth -= 1
+            if depth == 0:
+                return False
+        elif depth == 1 and code.startswith('...', k):
+            return True
+    return False
+
+
+def js_open(code, i):
+    """Позиция парной открывающей скобки к закрывающей code[i]."""
+    depth = 0
+    for k in range(i, -1, -1):
+        if code[k] in ')]}':
+            depth += 1
+        elif code[k] in '([{':
+            depth -= 1
+            if depth == 0:
+                return k
+    return 0
 
 
 def js_close(code, i):
