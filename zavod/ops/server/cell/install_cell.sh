@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:03 +02:00 (v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:12 +02:00 (v0.7: аудит M33-R2-04 — приём на своём разделе
+#   /var/lib/zavod/intake-fs.img с пределом места и inode, журналы приёма в /var/lib/zavod/intake-journal; v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
 #   v0.5: аудит M33-03 — база
 #   под zdb, свои папки служб; вопрос аудитора «д» — раздел сеансов /var/lib/zavod/session-fs.img; v0.4: аудит M33-06 — очередь
 #   тревог /var/lib/zavod/alerts, служба доставки zavod-alert-notify, канал Telegram /etc/zavod/alert-deliver; v0.3: аудит M33-01 — вход zkernel → bem_kernel_rw
@@ -14,6 +15,7 @@
 #   zstarter (peer, сопоставление zavod_cell); (6) карантин и доверенный приём архива (И.12г, И.12д).
 #   Повторный запуск даёт тот же результат.
 # ВЫЗОВ: sudo bash install_cell.sh [--pg-conf-dir /etc/postgresql/16/main | --no-pg] [--session-fs-size 10G]
+#   [--intake-fs-size 20G] [--intake-fs-inodes 1000000]
 # ОГРАНИЧЕНИЯ: ничего не удаляет; прежние pg_hba.conf и pg_ident.conf сохраняются копией рядом. Функции базы
 #   (db/06_zavod_ext_04.sql) ставятся цепочкой базы, не этим файлом. Пароли и ключи не нужны и не пишутся.
 set -euo pipefail
@@ -23,10 +25,14 @@ ADMIN_GROUPS=(sudo adm wheel admin root lxd docker systemd-journal)
 PG_CONF=''
 NO_PG=0
 SESSION_FS_SIZE=10G
+INTAKE_FS_SIZE=20G
+INTAKE_FS_INODES=1000000
 while [ $# -gt 0 ]; do
   case "$1" in
     --pg-conf-dir) PG_CONF=$2; shift 2 ;;
     --session-fs-size) SESSION_FS_SIZE=$2; shift 2 ;;
+    --intake-fs-size) INTAKE_FS_SIZE=$2; shift 2 ;;
+    --intake-fs-inodes) INTAKE_FS_INODES=$2; shift 2 ;;
     --no-pg) NO_PG=1; shift ;;
     *) echo "REFUSED: unknown argument $1" >&2; exit 2 ;;
   esac
@@ -113,15 +119,35 @@ echo "SESSION_FS $(findmnt -n -o FSTYPE,SIZE /var/lib/private/zagent)"
 echo "=== 3.3.9 карантин и приём архива (И.12г, И.12д)"
 # Опись пишет ядро (zkernel), читают все: она не тайна, важна её целостность. Архив кладёт привратник (zgate),
 # карантин только читает. out/ — карантин пишет, приём читает по группе. accepted/ — приём пишет, zgithub читает.
+# Аудит M33-R2-04: всё это — на своём разделе из файла-образа с пределом места и числа файлов (inode). Отказы и их
+# перенос в archive/ остаются внутри раздела; журналы приёма — вне его, чтобы итог записался и при полном разделе.
+# Уже созданный образ не пересоздаётся. Файлы в /var/lib/zavod/intake до раздела — отказ установки (ничего не удаляем).
+INTAKE=/var/lib/zavod/intake
+INTAKE_IMG=/var/lib/zavod/intake-fs.img
+install -d -o root -g root -m 0755 "$INTAKE"
+if ! mountpoint -q "$INTAKE" && [ -n "$(ls -A "$INTAKE")" ]; then
+  die "$INTAKE has files outside the intake partition: move them away first"
+fi
+if [ ! -e "$INTAKE_IMG" ]; then
+  truncate -s "$INTAKE_FS_SIZE" "$INTAKE_IMG"
+  chmod 0600 "$INTAKE_IMG"
+  mkfs.ext4 -q -F -L zintake -m 0 -N "$INTAKE_FS_INODES" "$INTAKE_IMG"
+fi
+[ "$(blkid -o value -s TYPE "$INTAKE_IMG")" = ext4 ] || die "$INTAKE_IMG is not ext4"
+install -o root -g root -m 0644 "$HERE/var-lib-zavod-intake.mount" /etc/systemd/system/var-lib-zavod-intake.mount
+systemctl daemon-reload
+systemctl enable --now var-lib-zavod-intake.mount
+mountpoint -q "$INTAKE" || die "$INTAKE is not mounted"
+echo "INTAKE_FS $(findmnt -n -o FSTYPE,SIZE "$INTAKE") inodes=$(df --output=itotal "$INTAKE" | tail -1 | tr -d ' ')"
 dir /var/lib/zavod/intake root root 0755
 dir /var/lib/zavod/intake/manifest zkernel zkernel 0755
 dir /var/lib/zavod/intake/in zgate zquarantine 2750
 dir /var/lib/zavod/intake/out zquarantine zimport 2750
 dir /var/lib/zavod/intake/accepted zimport zgithub 2750
 dir /var/lib/zavod/intake/accepted/.staging zimport zgithub 2700
-dir /var/lib/zavod/intake/journal root root 0755
-dir /var/lib/zavod/intake/journal/quarantine zquarantine zquarantine 0750
-dir /var/lib/zavod/intake/journal/import zimport zimport 0750
+dir /var/lib/zavod/intake-journal root root 0755
+dir /var/lib/zavod/intake-journal/quarantine zquarantine zquarantine 0750
+dir /var/lib/zavod/intake-journal/import zimport zimport 0750
 dir /var/lib/zavod/intake/archive root root 0700
 install -o root -g root -m 0755 "$HERE/zavod_intake.py" /usr/local/lib/zavod/zavod_intake.py
 for u in zquarantine@.service zimport@.service; do
@@ -195,7 +221,7 @@ systemctl daemon-reload
 systemctl enable --now zagent-start.path zagent-start.timer zavod-alert-notify.timer
 systemd-analyze verify --man=no /etc/systemd/system/zagent-start.service /etc/systemd/system/zagent-start.path \
   /etc/systemd/system/zavod-alert-notify.service /etc/systemd/system/zavod-alert-notify.timer \
-  /etc/systemd/system/var-lib-private-zagent.mount \
+  /etc/systemd/system/var-lib-private-zagent.mount /etc/systemd/system/var-lib-zavod-intake.mount \
   /etc/systemd/system/zagent-start.timer /etc/systemd/system/zagent.slice "zagent@00000000000000000000000000000000.service" \
   "zquarantine@00000000000000000000000000000000.service" "zimport@00000000000000000000000000000000.service"
 echo "ZAVOD_CELL_INSTALL=OK"

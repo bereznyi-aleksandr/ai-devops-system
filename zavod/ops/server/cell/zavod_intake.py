@@ -1,6 +1,7 @@
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod_intake.py
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:45 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:12 +02:00 (v0.3: аудит M33-R2-03 — один замок на out/ на весь
+#   цикл карантин → приём; M33-R2-04 — журналы вне раздела приёма, перенос в архив и при полном разделе)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # ОСНОВАНИЕ: протокол v3.1, И.12г (опись ядра и карантин), И.12д (доверенный приём), Л.44 (правило имён),
 #   Л.22–Л.23 (zquarantine, zimport); карта 3.3.9.1–3.3.9.3.
@@ -14,9 +15,13 @@
 #                                 сверка с отчётом и описью, права по описи, один перенос в accepted/LEASE;
 #   archive LEASE STAGE         — от root (ExecStopPost=+): in/ и out/ этой аренды — в archive/, ничего не удаляет.
 # Отказ — код 2 и строка «ZAVOD_INTAKE <режим> <аренда> REFUSED <причина>»; приём — код 0 и ACCEPTED.
-# Каждый итог пишется ещё и в журнал JSONL своей учётной записи (journal/quarantine, journal/import).
+# Каждый итог пишется ещё и в журнал JSONL своей учётной записи (/var/lib/zavod/intake-journal/quarantine, …/import).
+# Замок (аудит M33-R2-03): карантин и приём берут один исключительный замок flock на папку out/ и держат его до
+#   выхода. Карантин берёт его раньше, чем читает опись и архив; приём — раньше проверки процессов карантина.
+#   Новый карантин, начатый после проверки приёма, ждёт конца приёма и out/ не трогает.
 import ctypes
 import errno
+import fcntl
 import hashlib
 import json
 import os
@@ -28,6 +33,8 @@ import time
 import unicodedata
 
 BASE = "/var/lib/zavod/intake"
+JOURNAL = "/var/lib/zavod/intake-journal"  # вне раздела приёма: итог отказа пишется и при полном разделе
+LOCK_WAIT = {"quarantine": 240, "import": 120}  # секунд; меньше RuntimeMaxSec=300 служб
 LEASE_RE = re.compile(r"[0-9a-f]{32}")
 MANIFEST_KEYS = {"v", "lease", "dirs", "max_files", "max_bytes", "max_file_bytes", "max_depth", "exec"}
 REPORT_KEYS = {"v", "lease", "files"}
@@ -220,13 +227,26 @@ def journal(sub, lease, result, reason, **extra):
     rec = {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "stage": sub, "lease": lease,
            "result": result, "reason": reason, **extra}
     line = (json.dumps(rec, ensure_ascii=False, separators=(",", ":")) + "\n").encode()
-    fd = os.open(f"{BASE}/journal/{jdir}/{sub}.jsonl", os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW
+    fd = os.open(f"{JOURNAL}/{jdir}/{sub}.jsonl", os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW
                  | os.O_CLOEXEC, 0o640)
     try:
         os.write(fd, line)
         os.fsync(fd)
     finally:
         os.close(fd)
+
+
+def lock_out(fd, stage):
+    """Аудит M33-R2-03: исключительный замок на out/ до выхода процесса. Занят дольше LOCK_WAIT — отказ."""
+    end = time.monotonic() + LOCK_WAIT[stage]
+    while True:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return
+        except BlockingIOError:
+            if time.monotonic() >= end:
+                raise Refuse("INTAKE_LOCK_BUSY")
+            time.sleep(0.2)
 
 
 # ---------- карантин ----------
@@ -277,9 +297,11 @@ def mkdirs(root_fd, parts, created):
 def quarantine(lease):
     if os.geteuid() != uid_of("zquarantine"):
         raise Refuse("NOT_ZQUARANTINE")
+    # замок раньше описи и архива; дескриптор не закрывается — замок держится до выхода
+    out_fd = os.open(f"{BASE}/out", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    lock_out(out_fd, "quarantine")
     m = load_manifest(lease)
     dirs, ex = m["dirs"], set(m["exec"])
-    out_fd = os.open(f"{BASE}/out", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
     for name in (lease, lease + ".partial"):
         try:
             os.lstat(name, dir_fd=out_fd)
@@ -521,11 +543,13 @@ def do_import(lease, use_openat2):
     if os.geteuid() != uid_of("zimport"):
         raise Refuse("NOT_ZIMPORT")
     qu = uid_of("zquarantine")
+    # сначала замок (новый карантин дальше замка не пройдёт), потом проверка уже живых процессов карантина
+    base_fd = os.open(f"{BASE}/out", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    lock_out(base_fd, "import")
     if quarantine_alive(qu):
         raise Refuse("QUARANTINE_PROCESS_ALIVE")
     m = load_manifest(lease)
     dirs, ex = m["dirs"], set(m["exec"])
-    base_fd = os.open(f"{BASE}/out", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
     try:
         lfd = os.open(lease, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=base_fd)
     except FileNotFoundError:
@@ -679,7 +703,14 @@ def archive(lease, stage):
     if stage == "quarantine" and os.environ.get("SERVICE_RESULT") == "success":
         return "SKIPPED_IMPORT_ARCHIVES"
     dest = f"{BASE}/archive/{lease}-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{stage}"
-    os.mkdir(dest, 0o700)
+    # аудит M33-R2-04: раздел полон (нет места или inode на новую папку) — переносим без папки, именами dest.<что>
+    sep = "/"
+    try:
+        os.mkdir(dest, 0o700)
+    except OSError as e:
+        if e.errno not in (errno.ENOSPC, errno.EDQUOT):
+            raise
+        sep = "."
     moved = []
     for src, name in ((f"{BASE}/in/{lease}.tar", "in.tar"), (f"{BASE}/out/{lease}", "out"),
                       (f"{BASE}/out/{lease}.partial", "out.partial")):
@@ -687,9 +718,9 @@ def archive(lease, stage):
             os.lstat(src)
         except FileNotFoundError:
             continue
-        os.rename(src, f"{dest}/{name}")
+        os.rename(src, f"{dest}{sep}{name}")
         moved.append(name)
-    return "MOVED_" + ("+".join(moved) or "NOTHING")
+    return ("MOVED_" if sep == "/" else "MOVED_FLAT_") + ("+".join(moved) or "NOTHING")
 
 
 def main():

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
 # ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:07 +02:00 (v0.6: пробы M33-R2-01 — закрыть аренду во время остановки нельзя, M33-R2-02 — ключи в /etc/zavod/secrets, канал тревог от ztelegram; v0.5: предел раздела сеансов — по размеру образа; v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:12 +02:00 (v0.6: пробы M33-R2-01 — закрыть аренду во время остановки нельзя, M33-R2-02 — ключи в /etc/zavod/secrets, канал тревог от ztelegram; v0.5: предел раздела сеансов — по размеру образа; v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -256,7 +256,7 @@ wait "$stopper" || true
 [ "$(active "$L10")" != active ] && ok "M33-R2-01: L10 stopped" || bad "M33-R2-01: L10 still active"
 [ "$(marker /var/lib/zavod/start-archive "${L10}_STOPPED")" = 1 ] && ok "M33-R2-01: stop archived as STOPPED" || bad "M33-R2-01: stop marker"
 close_lease "$L10" && ok "M33-R2-01: close goes through after stop" || bad "M33-R2-01: close after stop"
-sudo rm -f "/run/systemd/system/zagent@$L10.service.d/ci-slow.conf"; sudo systemctl daemon-reload
+sudo mv "/run/systemd/system/zagent@$L10.service.d/ci-slow.conf" "/run/zavod-ci-slow-$L10.conf.off"; sudo systemctl daemon-reload
 older "$L10"; pass
 
 echo "=== аудит C33-02: сбой systemctl — живая сессия не теряется, новых запусков нет"

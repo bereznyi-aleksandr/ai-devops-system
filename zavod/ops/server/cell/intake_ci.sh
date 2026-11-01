@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/intake_ci.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 15:33 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:12 +02:00 (v0.2: пробы M33-R2-03 — карантин после проверки приёма
+#   ждёт; M33-R2-04 — раздел приёма: предел inode и места, диск сервера не тратится)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проба ПБ-4 (протокол v3.1 И.13; карта 3.3.9.4) на машине GitHub ubuntu-24.04 после install_cell.sh:
 #   строгая опись (лишнее поле — отказ), правильный архив принят, испорченные архивы отклонены карантином,
@@ -27,7 +28,7 @@ put_tar() { # аренда случай — архив кладёт «привр
   python3 -I "$HERE/intake_gen.py" "$2" "$TMP/$1.tar"
   sudo install -o zgate -g zquarantine -m 0640 "$TMP/$1.tar" "$I/in/$1.tar"
 }
-jline() { sudo grep -h "\"lease\":\"$2\"" "$I/journal/$1/$1.jsonl" 2>/dev/null | tail -1 || true; }
+jline() { sudo grep -h "\"lease\":\"$2\"" "/var/lib/zavod/intake-journal/$1/$1.jsonl" 2>/dev/null | tail -1 || true; }
 jreason() { jline "$1" "$2" | sed -n 's/.*"reason":"\([^"]*\)".*/\1/p'; }
 jresult() { jline "$1" "$2" | sed -n 's/.*"result":"\([^"]*\)".*/\1/p'; }
 archived() { sudo find "$I/archive" -maxdepth 1 -name "$1-*-$2" | wc -l; }
@@ -204,6 +205,83 @@ for use in (True, False):
             pass
 print("OPEN_BENEATH_OK")
 EOF
+
+echo "=== аудит M33-R2-03: карантин, начатый после проверки приёма, ждёт конца приёма"
+lock_busy() { local rc=0; sudo flock -n -E 7 "$I/out" true || rc=$?; [ "$rc" = 7 ]; }
+LA=$(newlease); staged "$LA"
+LB=$(newlease); manifest "$LB"; put_tar "$LB" ok
+# Приём LA от zimport. Обёртка только для CI: сразу после проверки процессов карантина приём ждёт 10 секунд.
+sudo -u zimport python3 -I - "$PROG" "$LA" >/dev/null 2>&1 <<'EOF' &
+import importlib.util, sys, time
+spec = importlib.util.spec_from_file_location("zi", sys.argv[1]); zi = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(zi)
+check = zi.quarantine_alive
+def slow(qu):
+    alive = check(qu)
+    time.sleep(10)
+    return alive
+zi.quarantine_alive = slow
+sys.argv = [sys.argv[1], "import", sys.argv[2]]
+sys.exit(zi.main())
+EOF
+imp=$!
+wait_for 10 lock_busy && ok "M33-R2-03: import holds the intake lock" || bad "M33-R2-03: import took no lock"
+sleep 2
+sudo systemctl start "zquarantine@$LB.service" 2>/dev/null & qpid=$!
+sleep 4
+if sudo test -e "$I/out/$LB.partial" || sudo test -e "$I/out/$LB" || [ -n "$(jresult quarantine "$LB")" ]; then
+  bad "M33-R2-03: quarantine ran during import"
+else ok "M33-R2-03: quarantine started after the import check waits"; fi
+wait "$imp" || true
+[ "$(jresult import "$LA")" = ACCEPTED ] && ok "M33-R2-03: import finished" || bad "M33-R2-03: import $(jline import "$LA")"
+wait "$qpid" || true
+[ "$(jresult quarantine "$LB")" = ACCEPTED ] && ok "M33-R2-03: quarantine ran after import" || bad "M33-R2-03: quarantine $(jline quarantine "$LB")"
+wait_for 30 import_done "$LB" || true
+[ "$(jresult import "$LB")" = ACCEPTED ] && ok "M33-R2-03: next import accepted" || bad "M33-R2-03: import LB $(jline import "$LB")"
+sudo python3 -I "$PROG" archive "$LA" import >/dev/null
+
+echo "=== аудит M33-R2-04: приём на своём разделе с пределом места и числа файлов"
+sysfree() { df --output=avail -B1M / | tail -1 | tr -d ' '; }
+sysinodes() { df --output=iavail / | tail -1 | tr -d ' '; }
+[ "$(findmnt -n -o TARGET --target "$I/out")" = "$I" ] && ok "M33-R2-04: out/ is on the intake partition" || bad "M33-R2-04: out/ not on its partition"
+[ "$(stat -c %d "$I/out")" != "$(stat -c %d /var/lib/zavod)" ] && ok "M33-R2-04: intake partition is not the server disk" || bad "M33-R2-04: same device"
+itotal=$(df --output=itotal "$I" | tail -1 | tr -d ' ')
+[ "$itotal" -le 4096 ] && ok "M33-R2-04: inode limit $itotal" || bad "M33-R2-04: inode limit $itotal"
+# Предел числа файлов: архив из 2500 пустых файлов не помещается.
+Lm=$(newlease)
+manifest "$Lm" "{\"v\":1,\"lease\":\"$Lm\",\"dirs\":[\"src/\"],\"max_files\":3000,\"max_bytes\":65536,\"max_file_bytes\":32768,\"max_depth\":4,\"exec\":[]}"
+put_tar "$Lm" many
+isys0=$(sysinodes)
+sudo systemctl start "zquarantine@$Lm.service" 2>/dev/null || true
+if [ "$(jresult quarantine "$Lm")" = REFUSED ] && [ "$(jreason quarantine "$Lm")" = OS_ERROR_ENOSPC ]; then
+  ok "M33-R2-04: too many files refused (no inode left)"; else bad "M33-R2-04: inodes: $(jline quarantine "$Lm")"; fi
+wait_for 10 inactive "zquarantine@$Lm.service" || true
+[ "$(sudo find "$I/archive" -maxdepth 1 -name "$Lm-*" | wc -l)" -ge 1 ] && ok "M33-R2-04: refused archive moved to archive/" || bad "M33-R2-04: not archived"
+isys1=$(sysinodes)
+[ $((isys0 - isys1)) -lt 500 ] && ok "M33-R2-04: server disk inodes untouched ($((isys0 - isys1)))" || bad "M33-R2-04: server inodes used $((isys0 - isys1))"
+# Освободить inode раздела для пробы места: перенос на диск машины CI, ничего не удаляется.
+sudo sh -c "mv '$I'/archive/$Lm-* '$TMP'/"
+# Предел места: архивы по 20 МБ, пока раздел не откажет.
+python3 -I "$HERE/intake_gen.py" big "$TMP/big.tar"
+sys0=$(sysfree); full=''
+for n in 1 2 3 4 5 6 7 8 9 10; do
+  Lb=$(newlease)
+  mb="{\"v\":1,\"lease\":\"$Lb\",\"dirs\":[\"src/\",\"tests/\"],\"max_files\":10,\"max_bytes\":33554432,\"max_file_bytes\":33554432,\"max_depth\":4,\"exec\":[\"tests/run.sh\"]}"
+  if ! printf '%s' "$mb" | sudo -u zkernel tee "$I/manifest/$Lb.json" >/dev/null 2>&1; then full="manifest $n"; break; fi
+  sudo -u zkernel chmod 0644 "$I/manifest/$Lb.json"
+  if ! sudo install -o zgate -g zquarantine -m 0640 "$TMP/big.tar" "$I/in/$Lb.tar" 2>/dev/null; then full="upload $n"; break; fi
+  sudo systemctl start "zquarantine@$Lb.service" 2>/dev/null || true
+  if [ "$(jresult quarantine "$Lb")" != ACCEPTED ]; then full="quarantine $n $(jreason quarantine "$Lb")"; break; fi
+  wait_for 60 import_done "$Lb" || true
+  if [ "$(jresult import "$Lb")" != ACCEPTED ]; then full="import $n $(jreason import "$Lb")"; break; fi
+done
+echo "INTAKE_INFO intake partition full at: ${full:-never} ($(df --output=used,avail -B1M "$I" | tail -1))"
+case "$full" in
+  "manifest "*|"upload "*|*OS_ERROR_ENOSPC) ok "M33-R2-04: full partition refuses ($full)" ;;
+  *) bad "M33-R2-04: partition did not refuse (${full:-never})" ;;
+esac
+sys1=$(sysfree)
+[ $((sys0 - sys1)) -lt 16 ] && ok "M33-R2-04: server disk not used ($((sys0 - sys1)) MB)" || bad "M33-R2-04: server disk used $((sys0 - sys1)) MB"
 
 echo "=== итог"
 if [ "$FAILS" = 0 ]; then echo "INTAKE_CI=PASS"; else echo "INTAKE_CI=FAIL ($FAILS)"; exit 1; fi
