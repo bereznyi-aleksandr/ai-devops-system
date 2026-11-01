@@ -251,6 +251,8 @@ itotal=$(df --output=itotal "$I" | tail -1 | tr -d ' ')
 Lm=$(newlease)
 manifest "$Lm" "{\"v\":1,\"lease\":\"$Lm\",\"dirs\":[\"src/\"],\"max_files\":3000,\"max_bytes\":65536,\"max_file_bytes\":32768,\"max_depth\":4,\"exec\":[]}"
 put_tar "$Lm" many
+inode_map() { echo "INTAKE_INFO inodes $1: $(df --output=iused,iavail "$I" | tail -1); by folder:" "$(sudo find "$I" -xdev | cut -d/ -f6 | sort | uniq -c | tr '\n' ' ')"; }
+inode_map before
 isys0=$(sysinodes)
 sudo systemctl start "zquarantine@$Lm.service" 2>/dev/null || true
 if [ "$(jresult quarantine "$Lm")" = REFUSED ] && [ "$(jreason quarantine "$Lm")" = OS_ERROR_ENOSPC ]; then
@@ -261,7 +263,8 @@ isys1=$(sysinodes)
 [ $((isys0 - isys1)) -lt 500 ] && ok "M33-R2-04: server disk inodes untouched ($((isys0 - isys1)))" || bad "M33-R2-04: server inodes used $((isys0 - isys1))"
 # Освободить inode раздела для пробы места: перенос на диск машины CI, ничего не удаляется.
 sudo sh -c "mv '$I'/archive/$Lm-* '$TMP'/"
-echo "INTAKE_INFO after inode probe: $(df --output=used,avail -B1M "$I" | tail -1) MB, inodes $(df --output=iused,iavail "$I" | tail -1)"
+inode_map after
+sudo find "$I" -xdev -maxdepth 3 -path "*$Lm*" | head -5 | sed "s/^/INTAKE_INFO left: /"
 # Предел места: архивы по 20 МБ, пока раздел не откажет.
 python3 -I "$HERE/intake_gen.py" big "$TMP/big.tar"
 sys0=$(sysfree); full=''
