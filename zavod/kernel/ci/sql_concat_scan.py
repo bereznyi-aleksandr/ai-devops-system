@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.17  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 15:12 +02:00 (v0.17: аудит M3310-R15B-02..07 — файл дерева только полным путём папки установки; getattr только у модуля закрытого списка без вызова результата; $'…' с обратной чертой — имя не постоянное; опции ssh, которые запускают команды, и -F; среда службы — закрытый список имён, EnvironmentFile — находка; CHILD_OPTS не снимается разрешением; прежняя 2026-11-02 10:42 +02:00 — v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
+# ВЕРСИЯ: v0.18  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 15:58 +02:00 (v0.18: аудит M3310-R16-01..06 и на опережение — закрытый мир оболочки и юнитов: программа только из списка SH_PROGRAMS_OK, обёртка только из WRAP_OPTS со своими опциями, среда программе не передаётся, имена PATH, BASH_ENV, LD_*, NODE_*, PYTHON* … не присваиваются, вложенность глубже предела — находка SH_PARSE, awk и sed — без запуска и записи, systemctl, find, flock, ip — закрытые подкоманды и опции, запись в папки кода — SH_EXEC; юнит: приставка | — UNIT_SHELL без разрешения, + и ! — UNIT_PRIV, закрытые разделы и ключи, без $ и ;, вставки *.conf, tmpfiles только d, polkit без запуска, nft без include; v0.17 от 15:12: аудит M3310-R15B-02..07 — файл дерева только полным путём папки установки; getattr только у модуля закрытого списка без вызова результата; $'…' с обратной чертой — имя не постоянное; опции ssh, которые запускают команды, и -F; среда службы — закрытый список имён, EnvironmentFile — находка; CHILD_OPTS не снимается разрешением; прежняя 2026-11-02 10:42 +02:00 — v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
 #   -04, -05 — закрытый мир: global/nonlocal делают имя во внешних областях не постоянным; импорт модуля Python вне
 #   PY_MODULES и относительный импорт — находка PY_IMPORT; psql в любом месте команды и программа за docker/ssh/… —
 #   по своим правилам, команда ssh одним словом разбирается, из подстановки — находка; python/bash/node запускают
@@ -633,6 +633,58 @@ SSH_EXEC_OPTS = {'proxycommand', 'localcommand', 'permitlocalcommand', 'knownhos
 # Имена среды, которые служба может задать (аудит M3310-R15B-06): свои ZAVOD_* и адрес посредника. Ни одно не
 # загружает код; NODE_OPTIONS, PYTHONPATH, BASH_ENV, LD_PRELOAD и прочие — вне списка.
 UNIT_ENV_OK = re.compile(r'^(ZAVOD_[A-Z0-9_]+|HTTPS_PROXY|HTTP_PROXY|NO_PROXY)$')
+# Аудит M3310-R16: закрытый мир оболочки. Программа — только из этого списка (то, что сценарии проекта вызывают на
+# деле) или своя функция файла; любая другая (ed, git, tar, su, ssh …) — находка SH_CMD. Программа с путём — только
+# из /usr/bin, /usr/sbin, /bin, /sbin.
+SH_PROGRAMS_OK = {
+    ':', '[', 'test', 'true', 'false', 'break', 'continue', 'exit', 'return', 'shift', 'wait', 'read', 'set', 'cd',
+    'pwd', 'umask', 'trap', 'local', 'echo', 'printf', 'sleep', 'awk', 'sed', 'grep', 'cut', 'tr', 'sort', 'uniq',
+    'wc', 'head', 'tail', 'cat', 'tee', 'od', 'numfmt', 'seq', 'date', 'basename', 'dirname', 'stat', 'ls', 'du',
+    'df', 'id', 'getent', 'uname', 'ps', 'ss', 'kill', 'pkill', 'mkdir', 'mktemp', 'touch', 'truncate', 'chmod',
+    'chown', 'cp', 'mv', 'ln', 'install', 'dd', 'fallocate', 'find', 'flock', 'ip', 'nft', 'blkid', 'findmnt',
+    'mountpoint', 'mkfs.ext4', 'tune2fs', 'useradd', 'usermod', 'passwd', 'journalctl', 'systemctl',
+    'systemd-analyze', 'systemd-escape', 'systemd-tmpfiles', 'pg_ctlcluster', 'psql', 'python3', 'sh',
+    'sudo', 'exec', 'timeout', 'command', 'systemd-run'}
+SH_SYS_DIRS = ('/usr/bin/', '/usr/sbin/', '/bin/', '/sbin/')
+# Обёртки (аудит M3310-R16-03): у каждой закрытый список опций; число — сколько слов опция берёт за собой.
+# env -S/--split-string, sudo -E/-s/-i, runuser, setpriv, chroot, nsenter … — вне списка, находка.
+WRAP_OPTS = {
+    'sudo': {'-u': 1, '-g': 1, '-n': 0, '-l': 0, '-U': 1, '--': 0},
+    'env': {'-i': 0, '--ignore-environment': 0, '-u': 1, '-': 0, '--': 0},
+    'exec': {'-a': 1},
+    'timeout': {'-s': 1, '-k': 1, '--signal': 1, '--kill-after': 1, '--preserve-status': 0, '--foreground': 0},
+    'command': {'-v': 0, '-V': 0, '-p': 0},
+    'nohup': {}, 'setsid': {}, 'builtin': {},
+    'systemd-run': {'--quiet': 0, '-q': 0, '--wait': 0, '--pipe': 0, '-p': 1, '--property': 1},
+}
+RUN_PROPS = {'DynamicUser', 'Slice', 'User', 'IPAddressDeny', 'IPAddressAllow', 'RestrictSUIDSGID',
+             'SystemCallFilter', 'SystemCallArchitectures'}
+# Имена, которые читает сама оболочка или загрузчик программ (PATH, BASH_ENV, IFS, LD_PRELOAD, NODE_OPTIONS,
+# PYTHONPATH, PSQLRC …): присваивать их в сценарии нельзя. Переменная из среды запуска остаётся в среде и после
+# простого присваивания, поэтому список действует и без export.
+SH_SPECIAL = re.compile(r'^(PATH|CDPATH|IFS|ENV|BASH\w*|SHELLOPTS|PS[0-4]|PROMPT_COMMAND|GLOBIGNORE|FPATH|HOME'
+                        r'|EXECIGNORE|FUNCNEST|POSIXLY_CORRECT|INPUTRC|HIST\w*|TMPDIR|LANG|LC_\w*|LD_\w*|NODE_\w*'
+                        r'|PYTHON\w*|PERL\w*|RUBY\w*|PSQLRC|PG[A-Z]+|GIT_\w*|SYSTEMD_\w*|GCONV_PATH|LOCPATH|NLSPATH'
+                        r'|MALLOC_\w*|OPENSSL_\w*|SSL_\w*|TERMINFO\w*|EDITOR|VISUAL|PAGER|LESS\w*|XDG_\w*)$')
+SYSTEMCTL_CMDS = {'start', 'stop', 'restart', 'reload', 'is-active', 'is-enabled', 'is-failed', 'status', 'show',
+                  'enable', 'disable', 'daemon-reload', 'mask', 'unmask', 'list-units', 'reset-failed'}
+SYSTEMCTL_OPTS = {'--runtime': 0, '--now': 0, '--no-pager': 0, '--quiet': 0, '-q': 0, '-p': 1, '--property': 1,
+                  '--value': 0, '--failed': 0, '--no-block': 0, '--no-legend': 0, '--plain': 0, '--all': 0,
+                  '-a': 0, '--state': 1, '--type': 1, '--version': 0}
+FIND_OPTS = {'-maxdepth': 1, '-mindepth': 1, '-name': 1, '-type': 1, '-path': 1, '-newer': 1, '-mmin': 1,
+             '-size': 1, '-user': 1, '-group': 1, '-perm': 1, '-empty': 0, '-print': 0, '-print0': 0, '-quit': 0,
+             '-o': 0, '-a': 0, '-not': 0, '-exec': 0, '-printf': 1, '-xdev': 0}
+FLOCK_OPTS = {'-n': 0, '-x': 0, '-s': 0, '-o': 0, '-u': 0, '-E': 1, '-w': 1}
+SED_SCRIPT = re.compile(r'^\s*(?:(?:\d+|\$|/(?:[^/\\\n]|\\.)*/)\s*[dpq=]|s(?P<d>[^\\\n\w\s])'
+                        r'(?:(?!(?P=d))[^\\]|\\.)*(?P=d)(?:(?!(?P=d))[^\\]|\\.)*(?P=d)[gpI0-9]*)\s*$', re.S)
+# Папки, откуда система берёт код или настройку запуска (на опережение аудита): запись туда из оболочки — находка
+# SH_EXEC; установщик копирует туда только файлы проверенного дерева ("$HERE/…" командой install или cp).
+CODE_DIRS = ('/usr/local/lib/zavod/', '/etc/zavod/', '/etc/systemd/', '/run/systemd/', '/usr/lib/systemd/',
+             '/lib/systemd/', '/etc/tmpfiles.d/', '/usr/lib/tmpfiles.d/', '/run/tmpfiles.d/', '/etc/polkit-1/',
+             '/usr/share/polkit-1/', '/etc/sudoers', '/etc/profile', '/etc/bash', '/etc/environment', '/etc/ld.so',
+             '/etc/cron', '/var/spool/cron', '/usr/local/bin/', '/usr/local/sbin/', '/usr/bin/', '/usr/sbin/',
+             '/bin/', '/sbin/', '/usr/lib/python3', '/usr/local/lib/python3', '/usr/lib/node_modules',
+             '/usr/local/lib/node_modules', '/etc/apt/', '/root/', '/etc/postgresql/')
 # Файлы проверенного дерева: имя → вид ('py', 'sh', 'js'). Заполняет main до проверки; интерпретатор и служба systemd
 # запускают только такие файлы (аудит M3310-R14-05).
 SCRIPTS = {}
@@ -914,6 +966,25 @@ class ShLex:
                     if op == '\n' and pending:
                         self.heredocs(pending)
                         pending = []
+                elif op == '(' and cur['words'] and cur['words'][-1]['val'].endswith('=') and \
+                        SH_ASSIGN.match(cur['words'][-1]['val']):
+                    # Массив X=(a b) — значения присваивания, а не команда (аудит M3310-R16, закрытый список программ)
+                    a = cur['words'][-1]
+                    while True:
+                        self.blanks()
+                        if self.peek() == ')':
+                            self.adv()
+                            break
+                        if self.peek() == '\n':
+                            self.adv()
+                            continue
+                        at = self.i
+                        w = self.word()
+                        if self.i == at or self.i >= len(self.t):
+                            raise ShError('array value not parsed')
+                        a['val'] += ' ' + w['val']
+                        a['raw'] += ' ' + w['raw']
+                        a['lit'] = a['lit'] and w['lit']
                 elif op == '(':
                     self.blanks()
                     if len(cur['words']) == 1 and self.peek() == ')':
@@ -982,23 +1053,28 @@ def sh_prog(words, k):
         p = os.path.basename(w['val'])
         if p not in SH_WRAP:
             return k, None
+        if p not in WRAP_OPTS:
+            return k, f'wrapper {p} outside the closed list'
+        opts = WRAP_OPTS[p]
         k += 1
-        if p == 'timeout':
-            while k < n and words[k]['lit'] and words[k]['val'].startswith('-'):
-                k += 1 + (words[k]['val'] in ('-s', '-k', '--signal', '--kill-after'))
-            k += 1
-            continue
-        while k < n and ((words[k]['lit'] and words[k]['val'].startswith('-')) or SH_ASSIGN.match(words[k]['val'])):
+        while k < n and words[k]['val'].startswith('-'):
             v = words[k]['val']
-            k += 1
-            if v == '--':
+            if not words[k]['lit']:
+                return k, f'wrapper {p} option is not fixed text'
+            key, eq, val = v.partition('=') if v.startswith('--') else (v, '', '')
+            if key not in opts or (eq and opts[key] != 1):
+                return k, f'wrapper {p} option {v} outside the closed list'
+            if p == 'systemd-run' and key in ('-p', '--property'):
+                prop = val if eq else (words[k + 1]['val'] if k + 1 < n else X)
+                if prop.split('=', 1)[0] not in RUN_PROPS:
+                    return k, f'systemd-run property {prop.split("=", 1)[0].replace(X, "?")} outside the closed list'
+            k += 1 + (0 if eq else opts[key])
+            if v in ('--', '-'):
                 break
-            if (p in ('sudo', 'doas', 'runuser') and v in ('-u', '-g', '-C', '-D', '-h', '-p', '-r', '-t', '-U', '-T'))\
-                    or (p == 'env' and v in ('-u', '-C', '-S')) or (p == 'exec' and v == '-a') \
-                    or (p in ('nice', 'ionice') and v in ('-n', '-c')) or (p == 'stdbuf' and v in ('-i', '-o', '-e')):
-                k += 1
-        if p == 'chroot':
-            k += 1
+        if k < n and SH_ASSIGN.match(words[k]['val']):
+            return k, f'wrapper {p} passes environment to the program'
+        if p == 'timeout':
+            k += 1  # срок
     return None, None
 
 
@@ -1040,6 +1116,15 @@ def sh_findings(path, text, line=1, depth=0):
                 r'|printf\s+-v\s*' + n + r'\b|\$\{' + n + r':?[=?]|\(\([^)]*\b' + n + r'\b', text):
             continue
         consts[name] = w['val'][len(name) + 1:]
+    # Установщик: HERE — папка самого сценария, присвоена один раз; переменная цикла for — только по постоянным
+    # именам файлов без «/» (так "$HERE/$u" — файл проверенного дерева).
+    here_ok = len(re.findall(r'(?<![\w$])HERE\+?=', text)) == 1 and 'HERE=$(cd "$(dirname "$0")" && pwd)' in text
+    forvars = set()
+    for c in cmds:
+        ws = c['words']
+        if len(ws) > 3 and ws[0]['val'] == 'for' and ws[2]['val'] == 'in' and all(
+                w['lit'] and '/' not in w['val'] and w['val'] not in ('.', '..') for w in ws[3:]):
+            forvars.add(ws[1]['val'])
     one_var = re.compile(r'^"?\$(\{)?([A-Za-z_]\w*)(?(1)\})"?$')
     for c in cmds:
         for w in c['words'] + c['hstr'] + [r[1] for r in c['redir']]:
@@ -1109,8 +1194,28 @@ def sh_findings(path, text, line=1, depth=0):
                 add(ws[j + 1]['line'], f'text after {v} is not fixed', 'SH_DYN_C')
             if v.startswith('--command=') and not w['lit']:
                 add(w['line'], 'text after --command= is not fixed', 'SH_DYN_C')
-        if ws and ws[0]['lit'] and ws[0]['val'] in ('for', 'select', 'case', 'local', 'export', 'declare',
-                                                    'readonly', 'typeset'):
+        # Аудит M3310-R16-03: среда программы. Присваивание перед программой (X=1 prog) — только IFS=… перед read;
+        # export, declare, readonly, typeset — не используются и запрещены; имена, которые читает оболочка или
+        # загрузчик (SH_SPECIAL), не присваиваются нигде.
+        if ws and ws[0]['lit'] and ws[0]['val'] in ('export', 'declare', 'readonly', 'typeset'):
+            add(ws[0]['line'], f'{ws[0]["val"]} changes the environment of programs', 'SH_CMD')
+            return
+        i0 = 1 if ws and ws[0]['lit'] and ws[0]['val'] == 'local' else 0
+        na = i0
+        while na < len(ws) and SH_ASSIGN.match(ws[na]['val']):
+            name = ws[na]['val'].split('=', 1)[0].rstrip('+').split('[', 1)[0]
+            if SH_SPECIAL.match(name) and not (name == 'IFS' and na + 1 < len(ws) and ws[na + 1]['val'] == 'read'):
+                add(ws[na]['line'], f'assignment to {name}: the shell or the program loader reads it', 'SH_CMD')
+            na += 1
+        if i0:
+            for w in ws[1:]:
+                if not SH_ASSIGN.match(w['val']) and (not w['lit'] or SH_SPECIAL.match(w['val'])):
+                    add(w['line'], 'local with a name that is not a plain fixed name', 'SH_CMD')
+            return
+        if 0 < na < len(ws) and not (ws[na]['val'] == 'read' and all(
+                ws[q]['val'].startswith('IFS=') for q in range(na))):
+            add(ws[0]['line'], 'program gets environment from an assignment before it', 'SH_CMD')
+        if ws and ws[0]['lit'] and ws[0]['val'] in ('for', 'select', 'case'):
             return
         k, why = sh_prog(ws, 0)
         if k is None:
@@ -1127,6 +1232,76 @@ def sh_findings(path, text, line=1, depth=0):
             return
         if ws[k]['val'] in lx.fdefs and ws[k]['val'] not in psqlf:
             return  # своя функция: её тело проверено как команды
+        if ws[k]['val'] not in psqlf:
+            # Аудит M3310-R16: закрытый список программ; путь — только системные папки.
+            if '/' in ws[k]['val'] and not unit_path(ws[k]['val'], SH_SYS_DIRS):
+                add(ws[k]['line'], f'shell runs {ws[k]["val"]}: not from /usr/bin, /usr/sbin, /bin, /sbin', 'SH_CMD')
+                return
+            if p not in SH_PROGRAMS_OK and p not in ('eval', 'source', '.', 'xargs', 'parallel') and \
+                    p not in SH_SHELLS and p not in SH_CODE and not p.startswith('python'):
+                add(ws[k]['line'], f'shell runs {p}: program outside the closed list', 'SH_CMD')
+                return
+        writes(c, ws[k:])
+        if p == 'set':
+            for w in rest:
+                if not (w['lit'] and (re.fullmatch(r'[-+][eux]+o?', w['val']) or w['val'] == 'pipefail')):
+                    add(w['line'], f'set option {w["val"].replace(X, "?")} outside the closed list', 'SH_CMD')
+            return
+        if p == 'awk':
+            awk_ok(c, rest)
+            return
+        if p == 'sed':
+            sed_ok(rest)
+            return
+        if p == 'systemctl':
+            sub = None
+            j = 0
+            while j < len(rest):
+                v = rest[j]['val']
+                if v.startswith('-'):
+                    key, eq, _ = v.partition('=') if v.startswith('--') else (v, '', '')
+                    if not rest[j]['lit'] or key not in SYSTEMCTL_OPTS:
+                        add(rest[j]['line'], f'systemctl option {v.replace(X, "?")} outside the closed list', 'SH_CMD')
+                    j += 1 + (0 if eq else SYSTEMCTL_OPTS.get(key, 0))
+                    continue
+                if sub is None:
+                    sub = v
+                    if not rest[j]['lit'] or v not in SYSTEMCTL_CMDS:
+                        add(rest[j]['line'], f'systemctl {v.replace(X, "?")}: command outside the closed list', 'SH_CMD')
+                j += 1
+            return
+        if p == 'find':
+            j = 0
+            while j < len(rest):
+                v = rest[j]['val']
+                if v in ('-exec',) and rest[j]['lit']:
+                    end = next((q for q in range(j + 1, len(rest)) if rest[q]['val'] in (';', '+')), len(rest))
+                    one(c, rest[j + 1:end])
+                    j = end + 1
+                    continue
+                if v.startswith('-') and len(v) > 1:
+                    if not rest[j]['lit'] or v not in FIND_OPTS:
+                        add(rest[j]['line'], f'find option {v.replace(X, "?")} outside the closed list', 'SH_CMD')
+                    j += 1 + FIND_OPTS.get(v, 0)
+                    continue
+                j += 1
+            return
+        if p == 'flock':
+            j = 0
+            while j < len(rest) and rest[j]['val'].startswith('-'):
+                v = rest[j]['val']
+                if not rest[j]['lit'] or v not in FLOCK_OPTS:
+                    add(rest[j]['line'], f'flock option {v.replace(X, "?")} outside the closed list', 'SH_CMD')
+                j += 1 + FLOCK_OPTS.get(v, 0)
+            if j + 1 < len(rest):
+                one(c, rest[j + 1:])
+            return
+        if p == 'ip':
+            if rest and (not rest[0]['lit'] or rest[0]['val'].startswith('-')):
+                add(rest[0]['line'], 'ip option before the object (-batch, -netns …) outside the closed list', 'SH_CMD')
+            elif len(rest) > 3 and rest[0]['val'] == 'netns' and rest[1]['val'] == 'exec':
+                one(c, rest[3:])
+            return
         if p in ('eval', 'source', '.', 'xargs', 'parallel'):
             add(ws[k]['line'], f'{p} runs text as commands', 'SH_EVAL')
         elif p == 'psql':
@@ -1185,8 +1360,8 @@ def sh_findings(path, text, line=1, depth=0):
                    for w in opts):
                 at = next(j for j, w in enumerate(rest) if w['lit'] and w['val'].startswith('-') and
                           not w['val'].startswith('--') and 'c' in w['val'][1:])
-                if at + 1 < len(rest) and rest[at + 1]['lit'] and depth < 4:
-                    out.extend(sh_findings(path, rest[at + 1]['val'], rest[at + 1]['line'], depth + 1))
+                if at + 1 < len(rest) and rest[at + 1]['lit']:
+                    nested(rest[at + 1]['val'], rest[at + 1]['line'])
                 elif at + 1 < len(rest) and not rest[at + 1]['lit']:
                     add(rest[at + 1]['line'], f'{p} -c with text that is not fixed', 'SH_DYN_C')
             else:
@@ -1195,8 +1370,7 @@ def sh_findings(path, text, line=1, depth=0):
                     script_ok(files_[0], 'sh', p)
                 if not files_ or any(w['val'] == '-s' for w in opts):
                     for h in stdin_ok(c, p, 'SH_INLINE'):
-                        if depth < 4:
-                            out.extend(sh_findings(path, h['val'], h['line'], depth + 1))
+                        nested(h['val'], h['line'])
         elif p.startswith('python'):
             j, code_text, script = 0, None, False
             while j < len(rest):
@@ -1260,8 +1434,102 @@ def sh_findings(path, text, line=1, depth=0):
                 if b == 'psql' or remote and (b in SH_SHELLS or b.startswith('python') or b in SH_CODE):
                     one(c, rest[j:])
                     break
-                if remote and re.search(r'\s', w['val']) and depth < 4:
-                    out.extend(sh_findings(path, w['val'], w['line'], depth + 1))
+                if remote and re.search(r'\s', w['val']):
+                    nested(w['val'], w['line'])
+
+    def nested(s, ln):
+        # Аудит M3310-R16-04: вложенный текст оболочки глубже предела — находка (закрыто при отказе), не пропуск.
+        if depth >= 4:
+            add(ln, 'shell text nested deeper than the limit', 'SH_PARSE')
+        else:
+            out.extend(sh_findings(path, s, ln, depth + 1))
+
+    def code_dir(w):
+        v = w['val']
+        m_ = re.match(r'^"?\$\{?([A-Za-z_]\w*)\}?', w['raw'])
+        if v.startswith(X) and m_ and m_.group(1) in consts:
+            v = consts[m_.group(1)] + v[1:]
+        v = re.sub(r'/+', '/', v)
+        return v.startswith(CODE_DIRS) or v.rstrip('/') + '/' in CODE_DIRS
+
+    def writes(c, ws_):
+        # Запись в папки кода и настроек запуска (CODE_DIRS): перенаправление, tee, dd of=, touch, truncate — всегда
+        # находка; install/cp/mv/ln — находка, кроме install (cp) файлов проверенного дерева "$HERE/…" установщиком
+        # и install -d (папка).
+        for op, w in c['redir']:
+            if op in ('>', '>>', '>|', '&>', '<>') and code_dir(w):
+                add(w['line'], 'shell writes into a folder of code or start settings', 'SH_EXEC')
+        p_ = os.path.basename(ws_[0]['val'])
+        args = ws_[1:]
+        if p_ in ('tee', 'touch', 'truncate'):
+            bad = [w for w in args if not w['val'].startswith('-') and code_dir(w)]
+        elif p_ == 'dd':
+            bad = [w for w in args if w['val'].startswith('of=') and
+                   code_dir({'val': w['val'][3:], 'raw': w['raw'].replace('of=', '', 1)})]
+        elif p_ in ('install', 'cp', 'mv', 'ln'):
+            files_ = [w for w in args if not (w['lit'] and w['val'].startswith('-'))]
+            opts_ = [w['val'] for w in args if w['lit'] and w['val'].startswith('-')]
+            j = 0
+            while j < len(args):  # значения опций -o -g -m -t -S у install/cp/mv/ln не файлы
+                if args[j]['lit'] and args[j]['val'] in ('-o', '-g', '-m', '-S', '--suffix') and j + 1 < len(args):
+                    files_ = [w for w in files_ if w is not args[j + 1]]
+                    j += 1
+                j += 1
+            if any(o.startswith('-t') or o.startswith('--target') for o in opts_):
+                bad = [w for w in args if w['val'].startswith(('-t', '--target'))]
+            elif p_ == 'install' and '-d' in opts_:
+                bad = []
+            elif files_ and code_dir(files_[-1]):
+                from_tree = p_ in ('install', 'cp') and here_ok and all(
+                    re.match(r'^"\$HERE/[^"$`\\/]+"$', w['raw']) or (
+                        re.match(r'^"\$HERE/\$([a-z_]+)"$', w['raw']) and
+                        re.match(r'^"\$HERE/\$([a-z_]+)"$', w['raw']).group(1) in forvars) for w in files_[:-1])
+                bad = [] if from_tree else [files_[-1]]
+            else:
+                bad = []
+        else:
+            bad = []
+        for w in bad:
+            add(w['line'], f'{p_} writes into a folder of code or start settings', 'SH_EXEC')
+
+    def awk_ok(c, rest):
+        # awk запускает программы (system(), "cmd" | getline, print | "cmd"), пишет файлы (print > "f") и читает
+        # программу из файла (-f) или подключает её (@include, @load). Разрешён только постоянный текст без этого.
+        j = 0
+        while j < len(rest) and rest[j]['val'].startswith('-'):
+            if not rest[j]['lit'] or rest[j]['val'] not in ('-v', '-F'):
+                add(rest[j]['line'], f'awk option {rest[j]["val"].replace(X, "?")} outside the closed list', 'SH_INLINE')
+                return
+            j += 2
+        if j >= len(rest) or not rest[j]['lit']:
+            add(rest[j]['line'] if j < len(rest) else c['line'], 'awk program is not fixed text', 'SH_INLINE')
+            return
+        t = re.sub(r'"(?:[^"\\]|\\.)*"', '""', rest[j]['val'])
+        t = re.sub(r'(?<![\w)\]$])/(?:[^/\\\n]|\\.)*/', '//', t).replace('||', ' ')
+        if re.search(r'\bsystem\s*\(|\bgetline\b|\||@\s*(include|load|namespace)|\bprintf?\b[^;{}]*>', t):
+            add(rest[j]['line'], 'awk program runs commands or writes files', 'SH_INLINE')
+
+    def sed_ok(rest):
+        # sed выполняет команды (e, s///e) и пишет файлы (w, s///w, -i); разрешены -n, -E, -r, -e и сценарий из
+        # одной команды s или d/p/q с адресом (SED_SCRIPT).
+        scripts, j, e_ = [], 0, False
+        while j < len(rest):
+            w = rest[j]
+            if w['val'].startswith('-') and w['val'] != '-':
+                if not w['lit'] or w['val'] not in ('-n', '-E', '-r', '-e'):
+                    add(w['line'], f'sed option {w["val"].replace(X, "?")} outside the closed list', 'SH_INLINE')
+                    return
+                if w['val'] == '-e':
+                    e_ = True
+                    if j + 1 < len(rest):
+                        scripts.append(rest[j + 1])
+                    j += 1
+            elif not e_ and not scripts:
+                scripts.append(w)
+            j += 1
+        for w in scripts:
+            if not w['lit'] or not SED_SCRIPT.match(w['val']):
+                add(w['line'], 'sed script outside the closed form (one s command, or d/p/q)', 'SH_INLINE')
 
     def script_ok(w, kind, prog):
         # Файл, который запускает интерпретатор (аудит M3310-R14-05): python3 worker.data исполняет текст без #!
@@ -1368,8 +1636,9 @@ def files(paths):
 # Строка разрешения не должна касаться объекта базы: пул, клиент, вызов запроса (аудит M3310-R6-04).
 ALLOW_DB = re.compile(r'\bpg\.|\b(Pool|Client|pool|client|db|rulesPool)\b|\.query\b')
 ALLOW_CODE = re.compile(r'^[A-Z_]+$')
-# Находки, которые строка разрешений не снимает никогда (аудит M3310-R15B-07): cwd и среда загрузки кода у запуска.
-NO_ALLOW = {'CHILD_OPTS'}
+# Находки, которые строка разрешений не снимает никогда: cwd и среда загрузки кода у запуска (аудит M3310-R15B-07),
+# строка запуска юнита через оболочку «|» (аудит M3310-R16-01).
+NO_ALLOW = {'CHILD_OPTS', 'UNIT_SHELL'}
 # Находки, разрешение которых требует закрепить файл суммой (PIN): запуск программ и кода.
 PIN_RULES = {'CHILD', 'CHILD_IMPORT', 'PY_RUN'}
 UNCHECKED_EXT = ('.ts', '.mts', '.cts', '.tsx', '.jsx', '.node', '.wasm', '.so', '.dll', '.dylib', '.pyc', '.pyo',
@@ -1379,8 +1648,26 @@ UNCHECKED_EXT = ('.ts', '.mts', '.cts', '.tsx', '.jsx', '.node', '.wasm', '.so',
 # сценариев с #!…python3 или #!…sh) — только эти виды данных и настроек. Любой другой файл (*.txt, *.data …) — находка
 # FORMAT: текст программы без #! под чужим суффиксом исполняет «python3 файл».
 DATA_EXT = ('.conf', '.mount', '.nft', '.path', '.rules', '.service', '.slice', '.timer')
-UNIT_EXT = ('.service',)
+UNIT_EXT = ('.service', '.mount', '.timer', '.path', '.slice')
 UNIT_PROGRAMS = {'nft'}
+# Аудит M3310-R16-05: закрытый список разделов и ключей юнита (то, что юниты проекта используют на деле).
+# RootDirectory, RootImage, BindPaths, ExecSearchPath, ExecStartPre, LoadCredential … — вне списка, находка UNIT_EXEC.
+UNIT_SECTIONS = {'Unit', 'Service', 'Install', 'Mount', 'Timer', 'Path', 'Slice'}
+UNIT_KEYS = {
+    'AccuracySec', 'After', 'AmbientCapabilities', 'Before', 'CPUQuota', 'CapabilityBoundingSet',
+    'DefaultDependencies', 'Description', 'DynamicUser', 'Environment', 'ExecStart', 'ExecStopPost', 'Group',
+    'IPAddressAllow', 'IPAddressDeny', 'InaccessiblePaths', 'LimitFSIZE', 'LimitNOFILE', 'LockPersonality',
+    'MemoryDenyWriteExecute', 'MemoryMax', 'NoNewPrivileges', 'OnBootSec', 'OnCalendar', 'OnFailure', 'OnSuccess',
+    'OnUnitActiveSec', 'Options', 'PathChanged', 'PrivateDevices', 'PrivateIPC', 'PrivateNetwork', 'PrivateTmp',
+    'ProcSubset', 'ProtectClock', 'ProtectControlGroups', 'ProtectHome', 'ProtectHostname', 'ProtectKernelLogs',
+    'ProtectKernelModules', 'ProtectKernelTunables', 'ProtectProc', 'ProtectSystem', 'ReadWritePaths',
+    'RemainAfterExit', 'Requires', 'RequiresMountsFor', 'Restart', 'RestartSec', 'RestrictAddressFamilies',
+    'RestrictNamespaces', 'RestrictRealtime', 'RestrictSUIDSGID', 'RuntimeDirectory', 'RuntimeDirectoryMode',
+    'RuntimeMaxSec', 'Slice', 'StartLimitIntervalSec', 'StateDirectory', 'StateDirectoryMode',
+    'SystemCallArchitectures', 'SystemCallFilter', 'TasksMax', 'TemporaryFileSystem', 'TimeoutStartSec', 'Type',
+    'UMask', 'Unit', 'User', 'WantedBy', 'Wants', 'What', 'Where', 'WorkingDirectory'}
+# Куда служба может писать (ReadWritePaths) и куда монтировать (Where): только папки данных, не папки кода.
+UNIT_DATA_DIRS = ('/run/zavod', '/var/lib/zavod/', '/var/lib/private/zagent')
 CODE_EXT = ('.py', '.mjs', '.js', '.cjs', '.sh')
 # Папки службы (самопроверка R15): файл дерева служба запускает только из папки установки, программу системы — из
 # /usr/bin или /usr/sbin; /tmp/zagent-session с именем файла дерева — находка.
@@ -1397,6 +1684,28 @@ def unit_findings(text):
     из дерева; интерпретатор — только с файлом дерева своего вида, без -c, -m, -e и чтения со входа."""
     out = []
     for i, raw in enumerate(text.splitlines(), 1):
+        s = raw.strip()
+        if not s or s.startswith(('#', ';')):
+            continue
+        if s.endswith('\\'):
+            out.append((i, 'unit line continues on the next line', 'UNIT_EXEC'))
+            continue
+        sec = re.fullmatch(r'\[([^\]]*)\]', s)
+        if sec:
+            if sec.group(1) not in UNIT_SECTIONS:
+                out.append((i, f'unit section [{sec.group(1)}] outside the closed list', 'UNIT_EXEC'))
+            continue
+        kv = re.fullmatch(r'([A-Za-z][A-Za-z0-9]*)\s*=\s*(.*)', s)
+        if not kv or kv.group(1) not in UNIT_KEYS:
+            out.append((i, f'unit key {kv.group(1) if kv else s[:40]} outside the closed list', 'UNIT_EXEC'))
+            continue
+        if kv.group(1) in ('ReadWritePaths', 'Where'):
+            for d in kv.group(2).split():
+                d = d.lstrip('-')
+                if not unit_path(d, UNIT_DATA_DIRS) or d.startswith('/run/zavod') and \
+                        not re.fullmatch(r'/run/zavod(/[\w.-]+)*', d):
+                    out.append((i, f'unit {kv.group(1)} {d}: outside the data folders', 'UNIT_EXEC'))
+            continue
         # Аудит M3310-R15B-06: среда процесса тоже загружает код до проверенного сценария (NODE_OPTIONS=--require,
         # PYTHONPATH, BASH_ENV, LD_PRELOAD …). Закрытый мир: Environment= и PassEnvironment= — только имена из
         # UNIT_ENV_OK; EnvironmentFile= — находка (его текст проверка не видит).
@@ -1418,12 +1727,33 @@ def unit_findings(text):
         m = re.match(r'\s*Exec[A-Za-z]*\s*=\s*(.*)$', raw)
         if not m or not m.group(1).strip():
             continue
+        # Аудит M3310-R16-01/02: приставки строки запуска. «|» — запуск через оболочку (хвост «; psql -f» не виден
+        # проверке): находка, которую разрешение не снимает. «+», «!», «!!» — запуск с полными правами мимо User= и
+        # ограничений: находка UNIT_PRIV, снимается только точной строкой разрешения. «@» — имя программы отдельно от
+        # программы: находка. Разрешены «-» и «:».
+        val = m.group(1).strip()
+        pre = re.match(r'[-@:+!|]*', val).group(0)
+        body = val[len(pre):]
+        if '|' in pre:
+            out.append((i, 'unit runs the command line through a shell (prefix |)', 'UNIT_SHELL'))
+            continue
+        if '+' in pre or '!' in pre:
+            out.append((i, 'unit runs the command with full privileges (prefix + or !)', 'UNIT_PRIV'))
+        if '@' in pre:
+            out.append((i, 'unit gives the program another name (prefix @)', 'UNIT_EXEC'))
+            continue
+        if '$' in body:
+            out.append((i, 'unit command uses environment substitution ($)', 'UNIT_EXEC'))
+            continue
         try:
-            words = shlex.split(m.group(1))
+            words = shlex.split(body)
         except ValueError:
             out.append((i, 'unit command not parsed', 'UNIT_EXEC'))
             continue
-        prog = words[0].lstrip('-@:+!|')
+        if not words or ';' in words or any(re.search(r'%(?![iI])', w) for w in words):
+            out.append((i, 'unit command has several commands (;) or a specifier other than %i', 'UNIT_EXEC'))
+            continue
+        prog = words[0]
         b = os.path.basename(prog)
         rest = words[1:]
         if not unit_path(prog, UNIT_TREE_DIRS if SCRIPTS.get(b) in ('py', 'sh') else UNIT_SYS_DIRS):
@@ -1446,6 +1776,28 @@ def unit_findings(text):
             continue
         else:
             out.append((i, f'unit runs {b}: program outside the closed list', 'UNIT_EXEC'))
+    return out
+
+
+def data_findings(norm, text):
+    """Файлы настроек дерева (аудит M3310-R16-05/06). Юнит и вставка к юниту (drop-in: *.conf с разделом [Service] …)
+    — правила unit_findings; tmpfiles.d — только строки вида d (папка); правило polkit (*.rules, JavaScript) — без
+    запуска программ и загрузки кода; правила nft — без include. Прочие *.conf — данные."""
+    if norm.endswith(UNIT_EXT) or re.search(r'(?m)^\s*\[[A-Za-z]+\]\s*$', text):
+        return unit_findings(text)
+    out = []
+    for i, raw in enumerate(text.splitlines(), 1):
+        s = raw.strip()
+        if not s or s.startswith('#'):
+            continue
+        if norm.endswith('.rules') and re.search(r'\b(spawn|eval|Function|require|import|load|exec)\b', s):
+            out.append((i, 'polkit rule runs programs or loads code', 'UNIT_EXEC'))
+        elif norm.endswith('.nft') and re.match(r'include\b', s):
+            out.append((i, 'nft rules include a file the scan does not see', 'UNIT_EXEC'))
+        elif norm.endswith('.conf'):
+            f = s.split()
+            if len(f) >= 2 and re.fullmatch(r'[A-Za-z][-+!=~^]*', f[0]) and f[1].startswith('/') and f[0] != 'd':
+                out.append((i, f'tmpfiles line of type {f[0]}: only d (folder) is allowed', 'UNIT_EXEC'))
     return out
 
 
@@ -1485,8 +1837,8 @@ def main(argv):
             SCRIPTS[b] = kind if SCRIPTS.get(b, kind) == kind else 'two files with one name'
     for path in tree:
         norm = path.replace('\\', '/')
-        if norm.endswith(UNIT_EXT):
-            todo.append((norm, 'unit'))
+        if norm.endswith(DATA_EXT):
+            todo.append((norm, 'data'))
         if norm.endswith(('.mjs', '.js', '.cjs')):
             todo.append((norm, 'js'))
         elif norm.endswith(UNCHECKED_EXT):
@@ -1519,8 +1871,9 @@ def main(argv):
         elif kind == 'sh':
             items = [(ln, why, rule, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
                      for ln, why, rule in sh_findings(norm, text)]
-        elif kind == 'unit':
-            items = [(ln, why, rule, lines[ln - 1].strip()) for ln, why, rule in unit_findings(text)]
+        elif kind == 'data':
+            items = [(ln, why, rule, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
+                     for ln, why, rule in data_findings(norm, text)]
         else:
             items = [(ln, *py_rule(why), code) for ln, why, code in py_findings(norm, text)]
         launch = False

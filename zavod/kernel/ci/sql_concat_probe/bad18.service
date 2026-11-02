@@ -1,0 +1,16 @@
+# ДОКУМЕНТ: zavod/kernel/ci/sql_concat_probe/bad18.service — проба 3.3.10.2 (аудит M3310-R16): приставки строки запуска и ключи, меняющие корень службы.
+# ДАТА: 2026-11-02 15:54 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+[Service]
+ExecStart=|/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate ; psql -f /tmp/query.sql
+ExecStart=+/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate
+ExecStart=!/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate
+ExecStart=!!/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate
+RootDirectory=/tmp/root
+BindPaths=/tmp/evil:/usr/local/lib/zavod
+RootImage=/tmp/root.img
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate $ARGS
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate ; /usr/bin/psql -f /tmp/query.sql
+ExecStart=@/usr/bin/python3 psql -I /usr/local/lib/zavod/zavod-gate
+ReadWritePaths=/usr/local/lib/zavod
+[X-Extra]
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate \
