@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.19  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 20:53 +02:00 (v0.19: аудит M3310-R17B-01..05 — trap вне списка программ; read, printf -v, wait -p, ${ИМЯ:=}, (( ИМЯ= )) для имён SH_SPECIAL — находка; путь записи с .. — находка, путь нормализуется; cd и ln в папку кода — SH_EXEC; правило polkit — закрытый мир имён и без вычисляемых свойств; nft и systemd-tmpfiles — только закрытые формы с файлом дерева; v0.18 от 15:58: аудит M3310-R16-01..06 и на опережение — закрытый мир оболочки и юнитов: программа только из списка SH_PROGRAMS_OK, обёртка только из WRAP_OPTS со своими опциями, среда программе не передаётся, имена PATH, BASH_ENV, LD_*, NODE_*, PYTHON* … не присваиваются, вложенность глубже предела — находка SH_PARSE, awk и sed — без запуска и записи, systemctl, find, flock, ip — закрытые подкоманды и опции, запись в папки кода — SH_EXEC; юнит: приставка | — UNIT_SHELL без разрешения, + и ! — UNIT_PRIV, закрытые разделы и ключи, без $ и ;, вставки *.conf, tmpfiles только d, polkit без запуска, nft без include; v0.17 от 15:12: аудит M3310-R15B-02..07 — файл дерева только полным путём папки установки; getattr только у модуля закрытого списка без вызова результата; $'…' с обратной чертой — имя не постоянное; опции ssh, которые запускают команды, и -F; среда службы — закрытый список имён, EnvironmentFile — находка; CHILD_OPTS не снимается разрешением; прежняя 2026-11-02 10:42 +02:00 — v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
+# ВЕРСИЯ: v0.20  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 21:20 +02:00 (v0.20: аудит M3310-R18-01, -02 — printf с %n в формате (с флагами, шириной, длиной) и кодами \0-7 \x \u — находка; for/select в имя оболочки — находка; systemd-tmpfiles --create — только файл, который этот же сценарий поставил install/cp из "$HERE/*.tmpfiles.conf" проверенного дерева; v0.19 от 20:53: аудит M3310-R17B-01..05 — trap вне списка программ; read, printf -v, wait -p, ${ИМЯ:=}, (( ИМЯ= )) для имён SH_SPECIAL — находка; путь записи с .. — находка, путь нормализуется; cd и ln в папку кода — SH_EXEC; правило polkit — закрытый мир имён и без вычисляемых свойств; nft и systemd-tmpfiles — только закрытые формы с файлом дерева; v0.18 от 15:58: аудит M3310-R16-01..06 и на опережение — закрытый мир оболочки и юнитов: программа только из списка SH_PROGRAMS_OK, обёртка только из WRAP_OPTS со своими опциями, среда программе не передаётся, имена PATH, BASH_ENV, LD_*, NODE_*, PYTHON* … не присваиваются, вложенность глубже предела — находка SH_PARSE, awk и sed — без запуска и записи, systemctl, find, flock, ip — закрытые подкоманды и опции, запись в папки кода — SH_EXEC; юнит: приставка | — UNIT_SHELL без разрешения, + и ! — UNIT_PRIV, закрытые разделы и ключи, без $ и ;, вставки *.conf, tmpfiles только d, polkit без запуска, nft без include; v0.17 от 15:12: аудит M3310-R15B-02..07 — файл дерева только полным путём папки установки; getattr только у модуля закрытого списка без вызова результата; $'…' с обратной чертой — имя не постоянное; опции ssh, которые запускают команды, и -F; среда службы — закрытый список имён, EnvironmentFile — находка; CHILD_OPTS не снимается разрешением; прежняя 2026-11-02 10:42 +02:00 — v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
 #   -04, -05 — закрытый мир: global/nonlocal делают имя во внешних областях не постоянным; импорт модуля Python вне
 #   PY_MODULES и относительный импорт — находка PY_IMPORT; psql в любом месте команды и программа за docker/ssh/… —
 #   по своим правилам, команда ssh одним словом разбирается, из подстановки — находка; python/bash/node запускают
@@ -703,6 +703,10 @@ CODE_DIRS = ('/usr/local/lib/zavod/', '/etc/zavod/', '/etc/systemd/', '/run/syst
 # Файлы проверенного дерева: имя → вид ('py', 'sh', 'js'). Заполняет main до проверки; интерпретатор и служба systemd
 # запускают только такие файлы (аудит M3310-R14-05).
 SCRIPTS = {}
+# Имена файлов настроек дерева (DATA_EXT), строки которых проверяет data_findings (аудит M3310-R18-02).
+DATA_FILES = set()
+# Спецификатор %n формата printf с флагами, шириной, точностью и длиной (аудит M3310-R18-01).
+PRINTF_N = re.compile(r"%[-+ #0'I]*(?:\d+|\*)?(?:\.(?:\d+|\*)?)?[hlLqjzt]*n")
 SH_OPS = ('<<<', '<<-', '&&', '||', ';;', '>>', '<<', '<&', '>&', '&>', '>|', '<>', '|&', '|', '&', ';',
           '<', '>', '(', ')', '\n')
 SH_ASSIGN = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*(\[[^\]]*\])?\+?=')
@@ -1138,6 +1142,7 @@ def sh_findings(path, text, line=1, depth=0):
     # именам файлов без «/» (так "$HERE/$u" — файл проверенного дерева).
     here_ok = len(re.findall(r'(?<![\w$])HERE\+?=', text)) == 1 and 'HERE=$(cd "$(dirname "$0")" && pwd)' in text
     forvars = set()
+    tmp_installed = set()  # аудит M3310-R18-02: файлы /etc/tmpfiles.d/, поставленные этим файлом из дерева
     for c in cmds:
         ws = c['words']
         if len(ws) > 3 and ws[0]['val'] == 'for' and ws[2]['val'] == 'in' and all(
@@ -1234,6 +1239,11 @@ def sh_findings(path, text, line=1, depth=0):
                 ws[q]['val'].startswith('IFS=') for q in range(na))):
             add(ws[0]['line'], 'program gets environment from an assignment before it', 'SH_CMD')
         if ws and ws[0]['lit'] and ws[0]['val'] in ('for', 'select', 'case'):
+            # for/select ИМЯ in … присваивает ИМЯ (аудит M3310-R18-01, на опережение): имя — простое, не SH_SPECIAL
+            if ws[0]['val'] != 'case' and len(ws) > 1 and (
+                    not ws[1]['lit'] or not SH_NAME.match(ws[1]['val']) or SH_SPECIAL.match(ws[1]['val'])):
+                add(ws[1]['line'], f'{ws[0]["val"]} loop writes {ws[1]["val"].replace(X, "?")}: not a plain name or '
+                    'a name the shell reads', 'SH_CMD')
             return
         k, why = sh_prog(ws, 0)
         if k is None:
@@ -1291,6 +1301,12 @@ def sh_findings(path, text, line=1, depth=0):
         if p == 'printf' and rest and (not rest[0]['lit'] or rest[0]['val'].startswith('-')):
             add(rest[0]['line'], 'printf option (-v writes a variable) or a format that is not fixed', 'SH_CMD')
             return
+        # Аудит M3310-R18-01: %n в формате пишет число в переменную с именем из аргумента (printf '%n' PATH). Любое
+        # «%…n» (с флагами, шириной, точностью, длиной) и коды \0-7, \x, \u, \U в формате — находка, без исключений.
+        if p == 'printf' and rest and (PRINTF_N.search(rest[0]['val'].replace('%%', '')) or
+                                       re.search(r'\\[0-7xuU]', rest[0]['val'])):
+            add(rest[0]['line'], 'printf format with %n (writes a variable by name) or a coded character', 'SH_CMD')
+            return
         # Аудит M3310-R17B-03: cd в папку кода — тогда запись по относительному пути попадёт туда.
         if p == 'cd':
             for w in rest:
@@ -1312,10 +1328,11 @@ def sh_findings(path, text, line=1, depth=0):
             return
         if p == 'systemd-tmpfiles':
             vals = [w['val'] if w['lit'] else X for w in rest]
-            if not (len(vals) == 2 and vals[0] == '--create' and norm_path(vals[1]) == vals[1] and
-                    vals[1].startswith('/etc/tmpfiles.d/') and vals[1].endswith('.conf')):
-                add(ws[k]['line'], 'systemd-tmpfiles outside the closed form (--create one file of /etc/tmpfiles.d/)',
-                    'SH_EXEC')
+            # Аудит M3310-R18-02: файл — только тот, что этот же сценарий раньше поставил командой install/cp из
+            # "$HERE/*.tmpfiles.conf" проверенного дерева (его строки проверяет data_findings); иной файл — находка.
+            if not (len(vals) == 2 and vals[0] == '--create' and vals[1] in tmp_installed):
+                add(ws[k]['line'], 'systemd-tmpfiles outside the closed form (--create a checked tree file this '
+                    'script installed into /etc/tmpfiles.d/)', 'SH_EXEC')
             return
         if p == 'awk':
             awk_ok(c, rest)
@@ -1561,6 +1578,13 @@ def sh_findings(path, text, line=1, depth=0):
                         re.match(r'^"\$HERE/\$([a-z_]+)"$', w['raw']) and
                         re.match(r'^"\$HERE/\$([a-z_]+)"$', w['raw']).group(1) in forvars) for w in files_[:-1])
                 bad = [] if from_tree else [files_[-1]]
+                src_ = re.match(r'^"\$HERE/([^"$`\\/]+)"$', files_[0]['raw']) if len(files_) == 2 else None
+                if from_tree and src_ and files_[-1]['lit'] and src_.group(1).endswith('.tmpfiles.conf') and \
+                        src_.group(1) in DATA_FILES and files_[-1]['val'].startswith('/etc/tmpfiles.d/') and \
+                        norm_path(files_[-1]['val']) == files_[-1]['val']:
+                    tmp_installed.add(files_[-1]['val'])
+                else:
+                    tmp_installed.discard(norm_path(files_[-1]['val']))
             else:
                 bad = []
         else:
@@ -1946,6 +1970,7 @@ def main(argv):
         norm = path.replace('\\', '/')
         if norm.endswith(DATA_EXT):
             todo.append((norm, 'data'))
+            DATA_FILES.add(os.path.basename(norm))
         if norm.endswith(('.mjs', '.js', '.cjs')):
             todo.append((norm, 'js'))
         elif norm.endswith(UNCHECKED_EXT):
