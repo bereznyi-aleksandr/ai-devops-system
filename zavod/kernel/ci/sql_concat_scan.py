@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.13  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 08:40 +02:00 (v0.13: аудит M3310-R12-01..03 —
+# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 09:06 +02:00 (v0.14: аудит M3310-R13-01..03 —
+#   в *.py параметр функции верхнего уровня или метода не постоянный (её вызывают из другого файла); .fetch, .fetchrow,
+#   .fetchval, .copy, .copy_from, .copy_to, .prepare, .query, .stream — методы запроса; файл с #!, исполняемым или
+#   архивным содержимым под чужим суффиксом — FORMAT, кроме правил сети *.nft); прежняя: 2026-11-02 08:40 +02:00 (v0.13: аудит M3310-R12-01..03 —
 #   getattr/setattr/delattr/eval/exec/compile только прямым вызовом, attrgetter/methodcaller в любом виде, правка
 #   sys.path/meta_path/path_hooks и addsitedir — PY_RUN; архивы (.zip, .egg, .whl …) и .pyd — находка FORMAT);
 #   прежняя дата: 2026-11-02 07:26 +02:00 (v0.12: аудит M3310-R11-01..03 —
@@ -58,7 +61,9 @@ SQL = re.compile(r'\b(SELECT|INSERT\s+INTO|UPDATE\s+\w|DELETE\s+FROM|CREATE\s|AL
 # Аудит M3310-R8-03: SQL узнаётся в любом регистре (select … where — тоже SQL). Кроме того, у мест выполнения
 # запроса (.execute и родня, psql через subprocess с текстом на входе) текст обязан быть постоянным — не «похожим
 # на SQL», а известным целиком: неизвестная форма — находка.
-EXEC_METHODS = {'execute', 'executemany', 'executescript', 'mogrify', 'copy_expert', 'callproc'}
+EXEC_METHODS = {'execute', 'executemany', 'executescript', 'mogrify', 'copy_expert', 'callproc',
+                # asyncpg и psycopg 3 тоже отправляют текст как запрос (аудит M3310-R13-02)
+                'fetch', 'fetchrow', 'fetchval', 'copy', 'copy_from', 'copy_to', 'prepare', 'query', 'stream'}
 CODE_BUILTINS = {'eval', 'exec', 'compile', '__import__'}
 # Запуск программ из Python (аудит M3310-R9-04): только subprocess.run/Popen/call/check_call/check_output по имени
 # модуля, без shell; программа — постоянное имя, не оболочка и не исполнитель кода. Остальные пути запуска — находка.
@@ -216,14 +221,14 @@ def py_findings(path, text):
             item = (ln, bad, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
             if item not in out:  # «a + b + c» — два узла сложения на одной строке, находка одна
                 out.append(item)
-    for ln, bad in py_exec_findings(tree):
+    for ln, bad in py_exec_findings(tree, path.endswith(".py")):
         item = (ln, bad, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
         if item not in out:
             out.append(item)
     return out
 
 
-def py_exec_findings(tree):
+def py_exec_findings(tree, importable=True):
     """Места выполнения запроса (аудит M3310-R8-03): текст — постоянный. Постоянно: строка, сумма строк, f-строка без
     подстановок, имя, которому в файле присваивают только постоянное, параметр своей функции, которую вызывают только
     напрямую и всегда с постоянным текстом на этом месте. Остальное — находка."""
@@ -333,6 +338,11 @@ def py_exec_findings(tree):
         return False
 
     def param_fixed(f, name, index, depth, seen):
+        # Функцию верхнего уровня и метод класса можно импортировать из другого файла и вызвать с любым текстом
+        # (аудит M3310-R13-01): в файле *.py постоянство параметра выводится только для функции, вложенной в другую.
+        # Сценарий без суффикса .py обычным import не загрузить, а importlib, runpy и правка sys.path — находки.
+        if importable and not isinstance(parents.get(f), (ast.FunctionDef, ast.AsyncFunctionDef)):
+            return False
         calls = []
         for n in ast.walk(tree):
             if isinstance(n, ast.Name) and n.id == f.name and isinstance(n.ctx, ast.Load):
@@ -1187,6 +1197,24 @@ def is_python(path):
     return first.startswith(b'#!') and b'python3' in first
 
 
+EXEC_MAGIC = (b'#!', b'PK\x03\x04', b'PK\x05\x06', b'\x7fELF', b'MZ', b'\x1f\x8b', b'BZh', b'\xfd7zXZ',
+              b"7z\xbc\xaf'\x1c", b'\x00asm', b'\xca\xfe\xba\xbe', b'\xcf\xfa\xed\xfe', b'\xce\xfa\xed\xfe')
+
+
+def exec_content(path):
+    try:
+        with open(path, 'rb') as f:
+            head = f.read(8)
+            first = head + f.readline(200)
+    except OSError:
+        return False
+    # правила сети nft (*.nft, ровно «#!/usr/sbin/nft -f»): язык правил фильтра, программ и кода не запускает
+    if path.endswith('.nft') and first == b'#!/usr/sbin/nft -f\n':
+        return False
+    # .pyc без суффикса: 2 байта номера версии (старший 0x0c..0x0e), затем \r\n
+    return head.startswith(EXEC_MAGIC) or len(head) >= 4 and head[1] in (0x0c, 0x0d, 0x0e) and head[2:4] == b'\r\n'
+
+
 def is_shell(path):
     if path.endswith('.sh'):
         return True
@@ -1261,6 +1289,10 @@ def main(argv):
             todo.append((norm, 'py'))
         elif is_shell(path):
             todo.append((norm, 'sh'))
+        elif exec_content(path):
+            # код или архив под чужим суффиксом (.txt, .data …) — запускается по #! или из архива (аудит M3310-R13-03)
+            found += 1
+            print(f'SQL_CONCAT {norm}:0: FORMAT: executable content (#! or binary or archive) the scan does not check')
     js_found = js_findings([p for p, k in todo if k == 'js'])
     if js_found is None:
         print('SQL_CONCAT_SCAN=FAIL')
