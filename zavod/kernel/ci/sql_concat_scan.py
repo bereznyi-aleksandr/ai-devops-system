@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:26 +02:00 (v0.12: аудит M3310-R11-01..03 —
+# ВЕРСИЯ: v0.13  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 08:40 +02:00 (v0.13: аудит M3310-R12-01..03 —
+#   getattr/setattr/delattr/eval/exec/compile только прямым вызовом, attrgetter/methodcaller в любом виде, правка
+#   sys.path/meta_path/path_hooks и addsitedir — PY_RUN; архивы (.zip, .egg, .whl …) и .pyd — находка FORMAT);
+#   прежняя дата: 2026-11-02 07:26 +02:00 (v0.12: аудит M3310-R11-01..03 —
 #   специальные имена и атрибуты (__dict__, __globals__, __getattribute__ …), .modules, кадры стека, getattr с именем
 #   не ПОСТОЯННОЙ, .system/.popen/.exec*/.spawn* у любого объекта — PY_RUN; *.cjs проверяется; исполняемые форматы,
 #   которые проверка не разбирает (.ts, .node, .pyc …, в том числе в __pycache__), — находка FORMAT); прежняя дата: 2026-11-02 07:05 +02:00 (v0.11: аудит M3310-R10-05..07 —
@@ -84,6 +87,12 @@ PY_REFLECT_ATTRS = {'modules', 'f_globals', 'f_locals', 'f_builtins', 'f_back', 
                     'ag_frame', 'tb_frame', '_getframe', 'attrgetter', 'methodcaller', 'get_referrers', 'get_objects'}
 PY_GETATTR_OK = re.compile(r'^[A-Z][A-Z0-9_]*$')  # getattr(модуль, 'ИМЯ_ПОСТОЯННОЙ', запасное) — только постоянные
 PY_CODE_NAMES = {'__builtins__', 'globals', 'vars', 'locals', '__loader__', '__spec__'}
+# Встроенные функции рефлексии и кода — только прямым вызовом; имя как значение (pick = getattr; fn = eval) прячет
+# вызов под другим именем (аудит M3310-R12-01, -02). attrgetter/methodcaller — в любом виде.
+PY_CALL_ONLY = {'getattr', 'setattr', 'delattr'} | CODE_BUILTINS
+PY_NEVER_NAMES = {'attrgetter', 'methodcaller', 'addsitedir'}
+# Пути поиска модулей: правка sys.path и др. подключает код мимо проверки, например из архива (аудит M3310-R12-03).
+PY_IMPORT_PATH_ATTRS = {'meta_path', 'path_hooks', 'path_importer_cache', 'addsitedir'}
 MAX_TEXT = 20000
 STR_METHODS = ('format', 'format_map', 'join', 'replace', 'strip', 'lstrip', 'rstrip', 'lower', 'upper',
                'casefold', 'encode', 'decode', 'removeprefix', 'removesuffix', '__add__', '__mod__')
@@ -499,6 +508,13 @@ def py_exec_findings(tree):
             out.append((ln, f'RUN: .{n.attr} runs code from a string'))
         if isinstance(n, ast.Attribute) and n.attr in PY_LOAD_ATTRS:
             out.append((ln, f'RUN: .{n.attr} loads or runs a module by name'))
+        if isinstance(n, ast.Name) and n.id in PY_CALL_ONLY and not is_callee:
+            out.append((ln, f'RUN: {n.id} used other than by a direct call'))
+        if isinstance(n, ast.Name) and n.id in PY_NEVER_NAMES:
+            out.append((ln, f'RUN: {n.id} calls a method or loads code by name'))
+        if isinstance(n, ast.Attribute) and (n.attr in PY_IMPORT_PATH_ATTRS or
+                                             n.attr == 'path' and isinstance(n.value, ast.Name) and n.value.id == 'sys'):
+            out.append((ln, f'RUN: .{n.attr} changes where modules are loaded from'))
         if isinstance(n, ast.Name) and n.id in PY_CODE_NAMES:
             out.append((ln, f'RUN: {n.id} gives access to code and names of the program'))
         elif isinstance(n, ast.Name) and n.id.startswith('__') and n.id not in PY_SAFE_DUNDER:
@@ -514,7 +530,7 @@ def py_exec_findings(tree):
             out.append((ln, f'RUN: {n.func.id}() with name {n.args[1].value}'))
         if isinstance(n, ast.Import):
             for a in n.names:
-                if a.name in ('subprocess', 'pty', 'os', 'asyncio', 'importlib') and a.asname:
+                if a.name in ('subprocess', 'pty', 'os', 'asyncio', 'importlib', 'sys', 'operator', 'site') and a.asname:
                     out.append((ln, f'RUN: import {a.name} as {a.asname}'))
                 if a.name.split('.')[0] in PY_RUN_MODULES:
                     out.append((ln, f'RUN: module {a.name} starts programs or code (file must be pinned)'))
@@ -524,6 +540,9 @@ def py_exec_findings(tree):
                     mod == 'os' and any(a.name == '*' or PY_OS_RUN.match(a.name) for a in n.names) or \
                     mod == 'asyncio' and any(a.name == '*' or a.name.startswith('create_subprocess') for a in n.names):
                 out.append((ln, f'RUN: from {mod} import … (run calls must use the module name)'))
+            elif mod in ('sys', 'operator', 'site') and any(a.name == '*' or a.name in PY_IMPORT_PATH_ATTRS | PY_NEVER_NAMES
+                                                            | {'path', 'modules'} for a in n.names):
+                out.append((ln, f'RUN: from {mod} import … (module paths or call by name)'))
             elif mod.split('.')[0] in PY_RUN_MODULES:
                 out.append((ln, f'RUN: module {mod} starts programs or code (file must be pinned)'))
     return out
@@ -1199,7 +1218,8 @@ ALLOW_CODE = re.compile(r'^[A-Z_]+$')
 # Находки, разрешение которых требует закрепить файл суммой (PIN): запуск программ и кода.
 PIN_RULES = {'CHILD', 'CHILD_IMPORT', 'PY_RUN'}
 UNCHECKED_EXT = ('.ts', '.mts', '.cts', '.tsx', '.jsx', '.node', '.wasm', '.so', '.dll', '.dylib', '.pyc', '.pyo',
-                 '.pyw', '.pyz', '.pth', '.cmd', '.bat', '.ps1', '.exe')
+                 '.pyw', '.pyz', '.pth', '.cmd', '.bat', '.ps1', '.exe', '.pyd', '.zip', '.egg', '.whl', '.jar',
+                 '.tar', '.gz', '.tgz', '.bz2', '.xz', '.7z')
 
 
 def main(argv):
