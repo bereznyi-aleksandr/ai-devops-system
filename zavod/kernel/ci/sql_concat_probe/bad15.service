@@ -1,0 +1,7 @@
+# ДОКУМЕНТ: zavod/kernel/ci/sql_concat_probe/bad15.service — проба 3.3.10.2 (аудит M3310-R14-05): служба запускает
+#   файл не из проверенного дерева, код из строки и программу вне закрытого списка.
+# ДАТА: 2026-11-02 10:25 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+[Service]
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/worker15.data
+ExecStartPre=/usr/bin/python3 -I -c "import os"
+ExecStopPost=/usr/bin/perl /usr/local/lib/zavod/x.pl

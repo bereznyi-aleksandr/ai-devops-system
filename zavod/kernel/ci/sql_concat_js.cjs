@@ -1,8 +1,10 @@
 'use strict';
 // ДОКУМЕНТ: zavod/kernel/ci/sql_concat_js.cjs
-// ВЕРСИЯ: v0.7  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-11-02 02:21 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
-// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:26 +02:00 (v0.7: аудит M3310-R11-03 — *.cjs разбирается как script; импорт своего
+// ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-11-02 02:21 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.8 — сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 10:25 +02:00 (v0.8: аудит M3310-R14-03, -06, -07 — импорт модуля вне закрытого
+//   списка JS_MODULES (сторонний пакет: postgres.js, execa …) — находка MODULE; копия «...x.map/flatMap(…)» в списке
+//   запуска — только у настоящего массива (литерал, const-список, Object.entries/keys/values)); прежняя дата: 2026-11-02 07:26 +02:00 (v0.7: аудит M3310-R11-03 — *.cjs разбирается как script; импорт своего
 //   файла не формата .mjs/.js/.cjs и «#имя» — находка MODULE); прежняя дата: 2026-11-02 07:05 +02:00 (v0.6: аудит M3310-R10-01..04 — список запуска строго: литерал в
 //   вызове или параметр своей функции, упомянутый один раз; любой не постоянный элемент — находка (разрешается
 //   точной строкой, файл закрепляется суммой PIN); раннего выхода после «node --» нет; v0.5: аудит M3310-R9-01 — список запуска из переменной только
@@ -83,6 +85,10 @@ const BANNED = new Set(['eval', 'Function', 'constructor', 'prototype', '__proto
 // Внутренности драйвера pg: опасно только ЧТЕНИЕ свойства (x.connection, { connection } = x), не имя переменной.
 const DRIVER = new Set(['connection']);
 const BANNED_MODULES = new Set(['vm', 'module', 'repl', 'inspector', 'worker_threads', 'cluster', 'sqlite', 'test']);
+// Модули, которые можно импортировать (аудит M3310-R14-03, -06): встроенные Node, которыми пользуются ядро и
+// движок, и драйвер pg (его запросы — только .query с постоянным текстом). Новый модуль — правкой этого списка с аудитом.
+const JS_MODULES = new Set(['node:child_process', 'node:crypto', 'node:events', 'node:fs', 'node:http', 'node:net',
+  'node:os', 'node:path', 'node:url', 'pg']);
 const BANNED_STRINGS = new Set(['psql', '-e', '--eval', '-p', '--print', '-r', '--require', '--import', '--loader']);
 // Запуск программ: что можно взять из child_process, какие программы запускать и у каких аргументы — только данные.
 const CHILD_FUNCS = new Set(['spawn', 'spawnSync', 'execFile', 'execFileSync']);
@@ -723,6 +729,23 @@ function check(path, text) {
   function argvSource(id, depth) {
     if (!paramSource(id, id, depth, false)) add(id, ARGV_BAD);
   }
+  // У x.flatMap(() => [...]) результат задаёт сам x (аудит M3310-R14-07): свой объект с методом flatMap вернёт любой
+  // список. Принимается только настоящий массив: литерал, const со списком-литералом, который читают лишь как
+  // x.map/x.flatMap, или Object.entries/keys/values(…) (Object защищён от подмены правилом встроенных объектов).
+  function realArray(o) {
+    if (o.type === 'ArrayExpression') return true;
+    if (o.type === 'CallExpression' && o.callee.type === 'MemberExpression' && !o.callee.computed &&
+      o.callee.object.type === 'Identifier' && o.callee.object.name === 'Object' && !bindingOf.get(o.callee.object) &&
+      ['entries', 'keys', 'values'].includes(o.callee.property.name)) return true;
+    if (o.type !== 'Identifier') return false;
+    const b = bindingOf.get(o);
+    return Boolean(constBinding(b) && b.decl.init && b.decl.init.type === 'ArrayExpression' && b.refs.every((r) => {
+      const m = parent.get(r);
+      const c = m && parent.get(m);
+      return m && m.type === 'MemberExpression' && m.object === r && !m.computed && ['map', 'flatMap'].includes(m.property.name) &&
+        c && c.type === 'CallExpression' && c.callee === m;
+    }));
+  }
   function argvArray(arr, depth) {
     for (const x of arr.elements) {
       if (!x) continue;
@@ -741,7 +764,8 @@ function check(path, text) {
       }
       if (s.type === 'CallExpression' && s.callee.type === 'MemberExpression' && !s.callee.computed &&
         ['map', 'flatMap'].includes(s.callee.property.name) && s.arguments.length === 1 &&
-        s.arguments[0].type === 'ArrowFunctionExpression' && s.arguments[0].body.type === 'ArrayExpression') {
+        s.arguments[0].type === 'ArrowFunctionExpression' && s.arguments[0].body.type === 'ArrayExpression' &&
+        realArray(s.callee.object)) {
         argvArray(s.arguments[0].body, depth + 1);
         continue;
       }
@@ -893,6 +917,9 @@ function check(path, text) {
         if (n.source && typeof n.source.value === 'string') {
           const m = n.source.value.replace(/^node:/, '');
           if (BANNED_MODULES.has(m) || /^(data|https?):/i.test(n.source.value)) add(n, `module ${n.source.value} runs code from a string`);
+          // Закрытый список модулей (аудит M3310-R14-03, -06): сторонний пакет (postgres.js sql.unsafe, execa …)
+          // шлёт запрос или запускает программу мимо проверки .query и child_process. Разрешены только JS_MODULES.
+          else if (!/^(\.|\/|file:|#)/i.test(n.source.value) && !JS_MODULES.has(n.source.value)) add(n, `module ${n.source.value} is not in the closed list of modules`);
           // Свой файл — только формата, который проверяет сканер (аудит M3310-R11-03); «#имя» (карта imports
           // package.json) ведёт к файлу, которого проверка не видит.
           if (/^(\.|\/|file:)/i.test(n.source.value) && !/\.(mjs|js|cjs)$/.test(n.source.value.split(/[?#]/)[0])) add(n, `module ${n.source.value} has a format the scan does not check`);

@@ -1,6 +1,11 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 09:06 +02:00 (v0.14: аудит M3310-R13-01..03 —
+# ВЕРСИЯ: v0.15  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 10:25 +02:00 (v0.15: аудит M3310-R14-01, -02,
+#   -04, -05 — закрытый мир: global/nonlocal делают имя во внешних областях не постоянным; импорт модуля Python вне
+#   PY_MODULES и относительный импорт — находка PY_IMPORT; psql в любом месте команды и программа за docker/ssh/… —
+#   по своим правилам, команда ssh одним словом разбирается, из подстановки — находка; python/bash/node запускают
+#   только файл проверенного дерева своего вида (SH_EXEC); строки Exec…= служб *.service — только сценарии дерева
+#   и nft -f (UNIT_EXEC); файл вне закрытого списка видов — FORMAT); прежняя: 2026-11-02 09:06 +02:00 (v0.14: аудит M3310-R13-01..03 —
 #   в *.py параметр функции верхнего уровня или метода не постоянный (её вызывают из другого файла); .fetch, .fetchrow,
 #   .fetchval, .copy, .copy_from, .copy_to, .prepare, .query, .stream — методы запроса; файл с #!, исполняемым или
 #   архивным содержимым под чужим суффиксом — FORMAT, кроме правил сети *.nft); прежняя: 2026-11-02 08:40 +02:00 (v0.13: аудит M3310-R12-01..03 —
@@ -29,7 +34,7 @@
 #   прежняя проверка JavaScript по регулярным выражениям (v0.2–v0.5) удалена; v0.5: аудит M3310-R4-01; v0.4: аудит
 #   M3310-R3-01; v0.3: аудит M3310-R2-01 — проверка по месту вызова; v0.2: аудит M3310-R1B-02 — текст запроса
 #   через переменные)
-# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.15 — сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: проверка сборки (карта 3.3.10.2, протокол И.7а п.2): запрос к базе — только заранее написанный текст,
 #   значения — только параметрами. Находит склейку запросов (текст запроса, собранный из кусков во время работы)
 #   и роняет сборку (код выхода 1, строки SQL_CONCAT ...).
@@ -53,6 +58,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 
@@ -83,6 +89,11 @@ PSQL_DANGER = {'-c', '--command', '-f', '--file'}
 # где она разрешена, обязан быть закреплён суммой (PIN в файле разрешений).
 PY_RUN_MODULES = {'subprocess', 'pty', 'importlib', 'builtins', 'runpy', 'ctypes', 'code', 'codeop', 'multiprocessing',
                   'pickle', 'marshal', 'shelve', 'imp', 'zipimport', 'cffi', '_posixsubprocess', 'posix', 'nt'}
+# Закрытый список модулей Python (аудит M3310-R14-02): только стандартная библиотека, которой пользуются службы
+# ячейки и их проверки. Модули запуска (subprocess, importlib, ctypes) здесь есть, но остаются находкой PY_RUN.
+PY_MODULES = {'errno', 'fcntl', 'hashlib', 'io', 'ipaddress', 'json', 'os', 'pwd', 're', 'select', 'signal', 'socket',
+              'stat', 'struct', 'sys', 'tarfile', 'tempfile', 'threading', 'time', 'unicodedata', 'unittest', 'urllib',
+              'uuid', 'subprocess', 'importlib', 'ctypes'}
 PY_LOAD_ATTRS = {'import_module', 'exec_module', 'load_module', 'run_path', 'run_module', 'spec_from_file_location'}
 # Рефлексия (аудит M3310-R11-01, -02): специальные атрибуты (__dict__, __globals__, __getattribute__ …), таблица
 # загруженных модулей и кадры стека дают метод базы или запуска по строке-ключу, мимо проверки вызовов. Разрешены
@@ -105,6 +116,14 @@ STR_METHODS = ('format', 'format_map', 'join', 'replace', 'strip', 'lstrip', 'rs
 
 def sqlish(s):
     return isinstance(s, str) and SQL.search(s) is not None
+
+
+def py_rule(why):
+    """Причина находки Python → (причина без приставки, код правила)."""
+    for pre, rule in (('RUN: ', 'PY_RUN'), ('IMPORT: ', 'PY_IMPORT')):
+        if why.startswith(pre):
+            return why[len(pre):], rule
+    return why, 'PY_SQL'
 
 
 def dotted(node):
@@ -293,8 +312,15 @@ def py_exec_findings(tree, importable=True):
                 if isinstance(e, ast.Name):
                     put(n, e.id, None)
         elif isinstance(n, (ast.Global, ast.Nonlocal)):
+            # global/nonlocal (аудит M3310-R14-01): запись в функции меняет имя модуля или внешней функции — у этого
+            # имени во всех внешних областях значение больше не прочитать.
             for name in n.names:
                 put(n, name, None)
+                g = enclosing(enclosing(n)) if enclosing(n) is not None else None
+                while g is not None:
+                    values.setdefault((g, name), []).append(None)
+                    g = enclosing(g)
+                values.setdefault((None, name), []).append(None)
         elif isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and isinstance(n.func.value, ast.Name) \
                 and n.func.attr in ('append', 'extend', 'insert', 'pop', 'remove', 'clear', 'reverse', 'sort',
                                     '__setitem__', '__iadd__'):
@@ -538,6 +564,16 @@ def py_exec_findings(tree, importable=True):
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in ('getattr', 'setattr', 'delattr') \
                 and len(n.args) >= 2 and isinstance(n.args[1], ast.Constant) and isinstance(n.args[1].value, str)                 and not PY_GETATTR_OK.match(n.args[1].value):
             out.append((ln, f'RUN: {n.func.id}() with name {n.args[1].value}'))
+        # Закрытый список модулей (аудит M3310-R14-02): сторонний пакет (psycopg2.extras.execute_values,
+        # pandas.read_sql, sqlalchemy …) отправляет запрос свободной функцией мимо проверки методов. Разрешены только
+        # модули из PY_MODULES; новый модуль добавляется в список правкой сканера и проходит аудит.
+        mods = [a.name for a in n.names] if isinstance(n, ast.Import) else \
+            [n.module or ''] if isinstance(n, ast.ImportFrom) and not n.level else []
+        for m in mods:
+            if m.split('.')[0] not in PY_MODULES:
+                out.append((ln, f'IMPORT: module {m} is not in the closed list of modules'))
+        if isinstance(n, ast.ImportFrom) and n.level:
+            out.append((ln, 'IMPORT: relative import (the scan checks one file at a time)'))
         if isinstance(n, ast.Import):
             for a in n.names:
                 if a.name in ('subprocess', 'pty', 'os', 'asyncio', 'importlib', 'sys', 'operator', 'site') and a.asname:
@@ -578,6 +614,15 @@ SH_WRAP = {'sudo', 'env', 'exec', 'timeout', 'nohup', 'setsid', 'nice', 'command
            'setpriv', 'stdbuf', 'ionice', 'chroot', 'unshare', 'nsenter', 'systemd-run', 'doas'}
 SH_SHELLS = {'sh', 'bash', 'dash', 'ash', 'zsh', 'ksh', 'busybox'}
 SH_CODE = {'node', 'nodejs', 'perl', 'ruby', 'php', 'deno', 'bun', 'lua', 'tclsh', 'osascript'}
+# Исполнители, которые запускают программу из своих аргументов на другом уровне (контейнер, другой узел, другое
+# пространство имён): их список аргументов проверяется на psql, оболочку и интерпретатор (аудит M3310-R14-04).
+SH_REMOTE = {'docker', 'podman', 'nerdctl', 'kubectl', 'oc', 'ssh', 'ip', 'lxc', 'lxc-attach', 'machinectl',
+             'systemd-nspawn', 'flatpak', 'toolbox', 'distrobox', 'firejail', 'bwrap', 'proot', 'schroot', 'sg', 'su',
+             'script', 'watch', 'flock', 'strace', 'ltrace', 'gdb', 'valgrind', 'xvfb-run', 'dbus-run-session',
+             'unbuffer', 'faketime', 'torsocks', 'proxychains', 'proxychains4', 'find'}
+# Файлы проверенного дерева: имя → вид ('py', 'sh', 'js'). Заполняет main до проверки; интерпретатор и служба systemd
+# запускают только такие файлы (аудит M3310-R14-05).
+SCRIPTS = {}
 SH_OPS = ('<<<', '<<-', '&&', '||', ';;', '>>', '<<', '<&', '>&', '&>', '>|', '<>', '|&', '|', '&', ';',
           '<', '>', '(', ')', '\n')
 SH_ASSIGN = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*(\[[^\]]*\])?\+?=')
@@ -1114,6 +1159,8 @@ def sh_findings(path, text, line=1, depth=0):
                     add(rest[at + 1]['line'], f'{p} -c with text that is not fixed', 'SH_DYN_C')
             else:
                 files_ = [w for w in rest if not (w['lit'] and w['val'].startswith('-'))]
+                if files_ and not any(w['val'] == '-s' for w in opts):
+                    script_ok(files_[0], 'sh', p)
                 if not files_ or any(w['val'] == '-s' for w in opts):
                     for h in stdin_ok(c, p, 'SH_INLINE'):
                         if depth < 4:
@@ -1136,20 +1183,49 @@ def sh_findings(path, text, line=1, depth=0):
                     j += 1
                     continue
                 script = v != '-'
+                if script:
+                    script_ok(rest[j], 'py', p)
                 break
             if code_text is None and not script:
                 for h in stdin_ok(c, 'python', 'SH_INLINE'):
                     code_text = (h['val'], h['line'])
             if code_text:
                 for ln, why, _ in py_findings(path, code_text[0]):
-                    if why.startswith('RUN: '):
-                        add(code_text[1] + ln - 1, why[5:], 'PY_RUN')
-                    else:
-                        add(code_text[1] + ln - 1, why, 'PY_SQL')
+                    add(code_text[1] + ln - 1, *py_rule(why))
         elif p in SH_CODE:
             if any(w['lit'] and w['val'] in ('-e', '-E', '-p', '-r', '--eval', '--print', '-', '-x') or
                    w['val'].startswith(('--eval=', '--print=')) for w in rest) or not rest:
                 add(ws[k]['line'], f'{p} runs inline code', 'SH_INLINE')
+            elif p in ('node', 'nodejs'):
+                first = next((w for w in rest if not (w['lit'] and w['val'].startswith('-'))), None)
+                if first is not None:
+                    script_ok(first, 'js', p)
+        else:
+            # Программа за ещё одним уровнем исполнения (аудит M3310-R14-04): docker/ssh/kubectl … запускают
+            # программу из своих аргументов. psql в любом месте списка проверяется как psql; оболочка, python, node
+            # у исполнителя из SH_REMOTE — по своим правилам; текст команды одним словом (ssh host 'psql -f x') —
+            # разбирается как сценарий; не постоянное слово у ssh (вся команда — текст) — находка.
+            remote = p in SH_REMOTE
+            for j, w in enumerate(rest):
+                if not w['lit']:
+                    if p == 'ssh':
+                        add(w['line'], 'ssh runs a remote command built from substitutions', 'SH_CMD')
+                    continue
+                b = os.path.basename(w['val'])
+                if b == 'psql' or remote and (b in SH_SHELLS or b.startswith('python') or b in SH_CODE):
+                    one(c, rest[j:])
+                    break
+                if remote and re.search(r'\s', w['val']) and depth < 4:
+                    out.extend(sh_findings(path, w['val'], w['line'], depth + 1))
+
+    def script_ok(w, kind, prog):
+        # Файл, который запускает интерпретатор (аудит M3310-R14-05): python3 worker.data исполняет текст без #!
+        # под любым суффиксом. Разрешён только файл проверенного дерева своего вида (по имени файла).
+        b = w['val'].rsplit('/', 1)[-1]
+        if not b or X in b or '$' in b or '`' in b:
+            add(w['line'], f'{prog} runs a file whose name is not fixed', 'SH_EXEC')
+        elif SCRIPTS.get(b) != kind:
+            add(w['line'], f'{prog} runs {b}: not a checked {kind} file of the scanned tree', 'SH_EXEC')
 
     for c in cmds:
         one(c, c['words'])
@@ -1248,6 +1324,47 @@ PIN_RULES = {'CHILD', 'CHILD_IMPORT', 'PY_RUN'}
 UNCHECKED_EXT = ('.ts', '.mts', '.cts', '.tsx', '.jsx', '.node', '.wasm', '.so', '.dll', '.dylib', '.pyc', '.pyo',
                  '.pyw', '.pyz', '.pth', '.cmd', '.bat', '.ps1', '.exe', '.pyd', '.zip', '.egg', '.whl', '.jar',
                  '.tar', '.gz', '.tgz', '.bz2', '.xz', '.7z')
+# Закрытый список файлов дерева (аудит M3310-R14-05): кроме проверяемого кода (*.py, *.sh, *.mjs, *.js, *.cjs и
+# сценариев с #!…python3 или #!…sh) — только эти виды данных и настроек. Любой другой файл (*.txt, *.data …) — находка
+# FORMAT: текст программы без #! под чужим суффиксом исполняет «python3 файл».
+DATA_EXT = ('.conf', '.mount', '.nft', '.path', '.rules', '.service', '.slice', '.timer')
+UNIT_EXT = ('.service',)
+UNIT_PROGRAMS = {'nft'}
+
+
+def unit_findings(text):
+    """Строки Exec…= службы systemd (аудит M3310-R14-05): программа — сценарий проверенного дерева или nft -f правил
+    из дерева; интерпретатор — только с файлом дерева своего вида, без -c, -m, -e и чтения со входа."""
+    out = []
+    for i, raw in enumerate(text.splitlines(), 1):
+        m = re.match(r'\s*Exec[A-Za-z]*\s*=\s*(.*)$', raw)
+        if not m or not m.group(1).strip():
+            continue
+        try:
+            words = shlex.split(m.group(1))
+        except ValueError:
+            out.append((i, 'unit command not parsed', 'UNIT_EXEC'))
+            continue
+        b = os.path.basename(words[0].lstrip('-@:+!|'))
+        rest = words[1:]
+        if PY_RUNNERS.match(b):
+            kind = 'py' if b.startswith(('python', 'pypy')) else 'sh' if b in SH_SHELLS else \
+                'js' if b in ('node', 'nodejs') else None
+            at = next((j for j, w in enumerate(rest) if not w.startswith('-')), None)
+            opts = rest[:at] if at is not None else rest
+            if kind is None:
+                out.append((i, f'unit runs interpreter {b}: outside the closed list', 'UNIT_EXEC'))
+            elif at is None or any(w in ('-c', '-m', '-e', '--eval', '-p', '-', '-s') for w in opts):
+                out.append((i, f'unit runs {b} with inline code, a module or standard input', 'UNIT_EXEC'))
+            elif SCRIPTS.get(os.path.basename(rest[at])) != kind:
+                out.append((i, f'unit runs {rest[at]}: not a checked {kind} file of the scanned tree', 'UNIT_EXEC'))
+        elif SCRIPTS.get(b) in ('py', 'sh'):
+            continue
+        elif b in UNIT_PROGRAMS and rest[:1] == ['-f'] and len(rest) == 2 and SCRIPTS.get(os.path.basename(rest[1])) == 'nft':
+            continue
+        else:
+            out.append((i, f'unit runs {b}: program outside the closed list', 'UNIT_EXEC'))
+    return out
 
 
 def main(argv):
@@ -1277,8 +1394,17 @@ def main(argv):
     found = 0
     scanned = 0
     todo = []
-    for path in files(argv):
+    tree = list(files(argv))
+    for path in tree:
+        b = os.path.basename(path)
+        kind = 'js' if b.endswith(('.mjs', '.js', '.cjs')) else None if b.endswith(UNCHECKED_EXT) else \
+            'py' if is_python(path) else 'sh' if is_shell(path) else 'nft' if b.endswith('.nft') else None
+        if kind:
+            SCRIPTS[b] = kind if SCRIPTS.get(b, kind) == kind else 'two files with one name'
+    for path in tree:
         norm = path.replace('\\', '/')
+        if norm.endswith(UNIT_EXT):
+            todo.append((norm, 'unit'))
         if norm.endswith(('.mjs', '.js', '.cjs')):
             todo.append((norm, 'js'))
         elif norm.endswith(UNCHECKED_EXT):
@@ -1293,6 +1419,9 @@ def main(argv):
             # код или архив под чужим суффиксом (.txt, .data …) — запускается по #! или из архива (аудит M3310-R13-03)
             found += 1
             print(f'SQL_CONCAT {norm}:0: FORMAT: executable content (#! or binary or archive) the scan does not check')
+        elif not norm.endswith(DATA_EXT):
+            found += 1
+            print(f'SQL_CONCAT {norm}:0: FORMAT: file type outside the closed list of the scanned tree')
     js_found = js_findings([p for p, k in todo if k == 'js'])
     if js_found is None:
         print('SQL_CONCAT_SCAN=FAIL')
@@ -1308,9 +1437,10 @@ def main(argv):
         elif kind == 'sh':
             items = [(ln, why, rule, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
                      for ln, why, rule in sh_findings(norm, text)]
+        elif kind == 'unit':
+            items = [(ln, why, rule, lines[ln - 1].strip()) for ln, why, rule in unit_findings(text)]
         else:
-            items = [(ln, why[5:], 'PY_RUN', code) if why.startswith('RUN: ') else (ln, why, 'PY_SQL', code)
-                     for ln, why, code in py_findings(norm, text)]
+            items = [(ln, *py_rule(why), code) for ln, why, code in py_findings(norm, text)]
         launch = False
         for ln, why, rule, code in items:
             key = (norm, rule, code)
