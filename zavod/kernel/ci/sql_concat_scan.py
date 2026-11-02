@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.16  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 10:42 +02:00 (v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
+# ВЕРСИЯ: v0.17  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 15:12 +02:00 (v0.17: аудит M3310-R15B-02..07 — файл дерева только полным путём папки установки; getattr только у модуля закрытого списка без вызова результата; $'…' с обратной чертой — имя не постоянное; опции ssh, которые запускают команды, и -F; среда службы — закрытый список имён, EnvironmentFile — находка; CHILD_OPTS не снимается разрешением; прежняя 2026-11-02 10:42 +02:00 — v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
 #   -04, -05 — закрытый мир: global/nonlocal делают имя во внешних областях не постоянным; импорт модуля Python вне
 #   PY_MODULES и относительный импорт — находка PY_IMPORT; psql в любом месте команды и программа за docker/ssh/… —
 #   по своим правилам, команда ssh одним словом разбирается, из подстановки — находка; python/bash/node запускают
@@ -524,6 +524,12 @@ def py_exec_findings(tree, importable=True):
             check_run(n, ln)
     # Метод запроса или запуска, взятый как значение (send = cur.execute; run = subprocess.run): вызов под другим
     # именем проверка не видит (аудит M3310-R9-02). Модули запуска — только по своему имени, без «as» и «from».
+    # getattr с именем постоянной (аудит M3310-R15B-03) — только у модуля закрытого списка, подключённого «import
+    # имя» и нигде не переназначенного, и без вызова результата: getattr(adapter, 'EXECUTE')(sql) — находка.
+    mod_names = {a.name for x in ast.walk(tree) if isinstance(x, ast.Import) for a in x.names
+                 if a.asname is None and a.name in PY_MODULES}
+    rebound = {x.id for x in ast.walk(tree) if isinstance(x, ast.Name) and not isinstance(x.ctx, ast.Load)} |         {x.arg for x in ast.walk(tree) if isinstance(x, ast.arg)} |         {x.name for x in ast.walk(tree) if isinstance(x, ast.ExceptHandler) and x.name} |         {(a.asname or a.name) for x in ast.walk(tree) if isinstance(x, ast.ImportFrom) for a in x.names} |         {a.asname for x in ast.walk(tree) if isinstance(x, ast.Import) for a in x.names if a.asname} |         {nm for x in ast.walk(tree) if isinstance(x, (ast.Global, ast.Nonlocal)) for nm in x.names}
+    called = {id(x.func) for x in ast.walk(tree) if isinstance(x, ast.Call)}
     for n in ast.walk(tree):
         ln = getattr(n, 'lineno', 0)
         p = parents.get(n)
@@ -564,6 +570,8 @@ def py_exec_findings(tree, importable=True):
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in ('getattr', 'setattr', 'delattr') \
                 and len(n.args) >= 2 and isinstance(n.args[1], ast.Constant) and isinstance(n.args[1].value, str)                 and not PY_GETATTR_OK.match(n.args[1].value):
             out.append((ln, f'RUN: {n.func.id}() with name {n.args[1].value}'))
+        elif isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'getattr' and len(n.args) >= 2                 and not (isinstance(n.args[0], ast.Name) and n.args[0].id in mod_names - rebound and id(n) not in called):
+            out.append((ln, 'RUN: getattr() from an object that is not a closed-list module, or its result is called'))
         # Закрытый список модулей (аудит M3310-R14-02): сторонний пакет (psycopg2.extras.execute_values,
         # pandas.read_sql, sqlalchemy …) отправляет запрос свободной функцией мимо проверки методов. Разрешены только
         # модули из PY_MODULES; новый модуль добавляется в список правкой сканера и проходит аудит.
@@ -620,6 +628,11 @@ SH_REMOTE = {'docker', 'podman', 'nerdctl', 'kubectl', 'oc', 'ssh', 'ip', 'lxc',
              'systemd-nspawn', 'flatpak', 'toolbox', 'distrobox', 'firejail', 'bwrap', 'proot', 'schroot', 'sg', 'su',
              'script', 'watch', 'flock', 'strace', 'ltrace', 'gdb', 'valgrind', 'xvfb-run', 'dbus-run-session',
              'unbuffer', 'faketime', 'torsocks', 'proxychains', 'proxychains4', 'find'}
+# Опции ssh, значение которых — команда для запуска (аудит M3310-R15B-05); Match может нести «exec команда».
+SSH_EXEC_OPTS = {'proxycommand', 'localcommand', 'permitlocalcommand', 'knownhostscommand', 'remotecommand', 'match'}
+# Имена среды, которые служба может задать (аудит M3310-R15B-06): свои ZAVOD_* и адрес посредника. Ни одно не
+# загружает код; NODE_OPTIONS, PYTHONPATH, BASH_ENV, LD_PRELOAD и прочие — вне списка.
+UNIT_ENV_OK = re.compile(r'^(ZAVOD_[A-Z0-9_]+|HTTPS_PROXY|HTTP_PROXY|NO_PROXY)$')
 # Файлы проверенного дерева: имя → вид ('py', 'sh', 'js'). Заполняет main до проверки; интерпретатор и служба systemd
 # запускают только такие файлы (аудит M3310-R14-05).
 SCRIPTS = {}
@@ -705,15 +718,22 @@ class ShLex:
                 quoted = True
                 self.adv(2)
                 buf = []
+                esc = False
                 while self.peek() not in ("'", ''):
                     if self.peek() == '\\':
-                        buf.append(self.peek(1))
+                        esc = True
                         self.adv(2)
                     else:
                         buf.append(self.peek())
                         self.adv()
                 self.adv()
-                val.append(''.join(buf))
+                # Аудит M3310-R15B-04: Bash раскрывает \xHH, \NNN, \uHHHH, \cX — $'\x70sql' это psql. Значение с
+                # любой обратной косой чертой сканер не угадывает: оно не постоянное (имя программы, флаг, путь).
+                if esc:
+                    val.append(X)
+                    lit = False
+                else:
+                    val.append(''.join(buf))
             elif c in '$`':
                 if self.expansion():
                     val.append(X)
@@ -1218,6 +1238,19 @@ def sh_findings(path, text, line=1, depth=0):
             # у исполнителя из SH_REMOTE — по своим правилам; текст команды одним словом (ssh host 'psql -f x') —
             # разбирается как сценарий; не постоянное слово у ssh (вся команда — текст) — находка.
             remote = p in SH_REMOTE
+            if p in ('ssh', 'scp', 'sftp'):
+                # Аудит M3310-R15B-05: опция ssh сама бывает командой (-o ProxyCommand=psql -f …, LocalCommand,
+                # KnownHostsCommand, Match exec); файл настроек -F может нести те же опции. Такие опции — находка.
+                for j, w in enumerate(rest):
+                    v = w['val'] if w['lit'] else X
+                    opt = v[2:] if v.startswith('-o') and len(v) > 2 else \
+                        ((rest[j + 1]['val'] if rest[j + 1]['lit'] else X) if v == '-o' and j + 1 < len(rest) else None)
+                    if v.startswith('-F'):
+                        add(w['line'], f'{p} reads options from a settings file (-F)', 'SH_CMD')
+                    if opt is not None:
+                        key = re.split(r'[=\s]', opt.strip(), maxsplit=1)[0].lower()
+                        if X in opt or key in SSH_EXEC_OPTS:
+                            add(w['line'], f'{p} option {key.replace(X, "?")} runs a command', 'SH_CMD')
             for j, w in enumerate(rest):
                 if not w['lit']:
                     if p == 'ssh':
@@ -1238,9 +1271,10 @@ def sh_findings(path, text, line=1, depth=0):
             add(w['line'], f'{prog} runs a file whose name is not fixed', 'SH_EXEC')
         elif SCRIPTS.get(b) != kind:
             add(w['line'], f'{prog} runs {b}: not a checked {kind} file of the scanned tree', 'SH_EXEC')
-        elif w['val'].startswith('/') and not unit_path(w['val'], UNIT_TREE_DIRS):
-            # Самопроверка R15: /tmp/kernel.mjs носит имя файла дерева, но это другой файл.
-            add(w['line'], f'{prog} runs {b} from a folder outside the install folder', 'SH_EXEC')
+        elif not unit_path(w['val'], UNIT_TREE_DIRS):
+            # Самопроверка R15 и аудит M3310-R15B-02: /tmp/kernel.mjs, ../../tmp/zavod-gate.py и ./zavod-gate.py после
+            # cd носят имя файла дерева, но это другой файл. Разрешён только полный путь в папке установки.
+            add(w['line'], f'{prog} runs {b} not by its full path in the install folder', 'SH_EXEC')
 
     for c in cmds:
         one(c, c['words'])
@@ -1334,6 +1368,8 @@ def files(paths):
 # Строка разрешения не должна касаться объекта базы: пул, клиент, вызов запроса (аудит M3310-R6-04).
 ALLOW_DB = re.compile(r'\bpg\.|\b(Pool|Client|pool|client|db|rulesPool)\b|\.query\b')
 ALLOW_CODE = re.compile(r'^[A-Z_]+$')
+# Находки, которые строка разрешений не снимает никогда (аудит M3310-R15B-07): cwd и среда загрузки кода у запуска.
+NO_ALLOW = {'CHILD_OPTS'}
 # Находки, разрешение которых требует закрепить файл суммой (PIN): запуск программ и кода.
 PIN_RULES = {'CHILD', 'CHILD_IMPORT', 'PY_RUN'}
 UNCHECKED_EXT = ('.ts', '.mts', '.cts', '.tsx', '.jsx', '.node', '.wasm', '.so', '.dll', '.dylib', '.pyc', '.pyo',
@@ -1361,6 +1397,24 @@ def unit_findings(text):
     из дерева; интерпретатор — только с файлом дерева своего вида, без -c, -m, -e и чтения со входа."""
     out = []
     for i, raw in enumerate(text.splitlines(), 1):
+        # Аудит M3310-R15B-06: среда процесса тоже загружает код до проверенного сценария (NODE_OPTIONS=--require,
+        # PYTHONPATH, BASH_ENV, LD_PRELOAD …). Закрытый мир: Environment= и PassEnvironment= — только имена из
+        # UNIT_ENV_OK; EnvironmentFile= — находка (его текст проверка не видит).
+        e = re.match(r'\s*(Environment|PassEnvironment|EnvironmentFile)\s*=\s*(.*)$', raw)
+        if e:
+            if e.group(1) == 'EnvironmentFile':
+                out.append((i, 'unit reads its environment from a file the scan does not see', 'UNIT_EXEC'))
+                continue
+            try:
+                items = shlex.split(e.group(2))
+            except ValueError:
+                out.append((i, 'unit environment not parsed', 'UNIT_EXEC'))
+                continue
+            for it in items:
+                name = it.split('=', 1)[0] if e.group(1) == 'Environment' else it
+                if e.group(1) == 'Environment' and '=' not in it or not UNIT_ENV_OK.match(name):
+                    out.append((i, f'unit sets environment {name}: outside the closed list', 'UNIT_EXEC'))
+            continue
         m = re.match(r'\s*Exec[A-Za-z]*\s*=\s*(.*)$', raw)
         if not m or not m.group(1).strip():
             continue
@@ -1411,7 +1465,7 @@ def main(argv):
                 if not raw.strip() or raw.startswith('#'):
                     continue
                 parts = raw.rstrip('\n').split('\t', 2)
-                if len(parts) != 3 or not ALLOW_CODE.match(parts[1]) or ALLOW_DB.search(parts[2]):
+                if len(parts) != 3 or not ALLOW_CODE.match(parts[1]) or parts[1] in NO_ALLOW or ALLOW_DB.search(parts[2]):
                     print(f'SQL_CONCAT_ALLOW_BAD {raw.strip()[:160]}')
                     bad_allow = True
                     continue
