@@ -1,6 +1,11 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.20  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 21:20 +02:00 (v0.20: аудит M3310-R18-01, -02 — printf с %n в формате (с флагами, шириной, длиной) и кодами \0-7 \x \u — находка; for/select в имя оболочки — находка; systemd-tmpfiles --create — только файл, который этот же сценарий поставил install/cp из "$HERE/*.tmpfiles.conf" проверенного дерева; v0.19 от 20:53: аудит M3310-R17B-01..05 — trap вне списка программ; read, printf -v, wait -p, ${ИМЯ:=}, (( ИМЯ= )) для имён SH_SPECIAL — находка; путь записи с .. — находка, путь нормализуется; cd и ln в папку кода — SH_EXEC; правило polkit — закрытый мир имён и без вычисляемых свойств; nft и systemd-tmpfiles — только закрытые формы с файлом дерева; v0.18 от 15:58: аудит M3310-R16-01..06 и на опережение — закрытый мир оболочки и юнитов: программа только из списка SH_PROGRAMS_OK, обёртка только из WRAP_OPTS со своими опциями, среда программе не передаётся, имена PATH, BASH_ENV, LD_*, NODE_*, PYTHON* … не присваиваются, вложенность глубже предела — находка SH_PARSE, awk и sed — без запуска и записи, systemctl, find, flock, ip — закрытые подкоманды и опции, запись в папки кода — SH_EXEC; юнит: приставка | — UNIT_SHELL без разрешения, + и ! — UNIT_PRIV, закрытые разделы и ключи, без $ и ;, вставки *.conf, tmpfiles только d, polkit без запуска, nft без include; v0.17 от 15:12: аудит M3310-R15B-02..07 — файл дерева только полным путём папки установки; getattr только у модуля закрытого списка без вызова результата; $'…' с обратной чертой — имя не постоянное; опции ssh, которые запускают команды, и -F; среда службы — закрытый список имён, EnvironmentFile — находка; CHILD_OPTS не снимается разрешением; прежняя 2026-11-02 10:42 +02:00 — v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
+# ВЕРСИЯ: v0.21  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 21:55 +02:00 (v0.21: аудит M3310-R19-01..03 —
+#   systemctl start/restart/reload/enable — только юнит, который сценарий дерева ставит всегда из файла своей папки
+#   в /etc/systemd/system/, или юнит ОС (SYSTEM_UNITS_OK), имя постоянное или "$ИМЯ" с одним присваиванием; установка
+#   файла для systemd-tmpfiles и nft засчитывается, только если выполняется всегда (не в if/while/case/функции/&&/||/
+#   трубе/фоне/$( ), только for по постоянному списку без break/continue) при set -e и из файла своей папки дерева;
+#   любая иная запись в путь снимает разрешение; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; прежняя: 2026-11-02 21:20 +02:00 (v0.20: аудит M3310-R18-01, -02 — printf с %n в формате (с флагами, шириной, длиной) и кодами \0-7 \x \u — находка; for/select в имя оболочки — находка; systemd-tmpfiles --create — только файл, который этот же сценарий поставил install/cp из "$HERE/*.tmpfiles.conf" проверенного дерева; v0.19 от 20:53: аудит M3310-R17B-01..05 — trap вне списка программ; read, printf -v, wait -p, ${ИМЯ:=}, (( ИМЯ= )) для имён SH_SPECIAL — находка; путь записи с .. — находка, путь нормализуется; cd и ln в папку кода — SH_EXEC; правило polkit — закрытый мир имён и без вычисляемых свойств; nft и systemd-tmpfiles — только закрытые формы с файлом дерева; v0.18 от 15:58: аудит M3310-R16-01..06 и на опережение — закрытый мир оболочки и юнитов: программа только из списка SH_PROGRAMS_OK, обёртка только из WRAP_OPTS со своими опциями, среда программе не передаётся, имена PATH, BASH_ENV, LD_*, NODE_*, PYTHON* … не присваиваются, вложенность глубже предела — находка SH_PARSE, awk и sed — без запуска и записи, systemctl, find, flock, ip — закрытые подкоманды и опции, запись в папки кода — SH_EXEC; юнит: приставка | — UNIT_SHELL без разрешения, + и ! — UNIT_PRIV, закрытые разделы и ключи, без $ и ;, вставки *.conf, tmpfiles только d, polkit без запуска, nft без include; v0.17 от 15:12: аудит M3310-R15B-02..07 — файл дерева только полным путём папки установки; getattr только у модуля закрытого списка без вызова результата; $'…' с обратной чертой — имя не постоянное; опции ssh, которые запускают команды, и -F; среда службы — закрытый список имён, EnvironmentFile — находка; CHILD_OPTS не снимается разрешением; прежняя 2026-11-02 10:42 +02:00 — v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
 #   -04, -05 — закрытый мир: global/nonlocal делают имя во внешних областях не постоянным; импорт модуля Python вне
 #   PY_MODULES и относительный импорт — находка PY_IMPORT; psql в любом месте команды и программа за docker/ssh/… —
 #   по своим правилам, команда ssh одним словом разбирается, из подстановки — находка; python/bash/node запускают
@@ -705,6 +710,18 @@ CODE_DIRS = ('/usr/local/lib/zavod/', '/etc/zavod/', '/etc/systemd/', '/run/syst
 SCRIPTS = {}
 # Имена файлов настроек дерева (DATA_EXT), строки которых проверяет data_findings (аудит M3310-R18-02).
 DATA_FILES = set()
+# Полные пути файлов проверенного дерева: "$HERE/имя" — файл папки самого сценария, а не любой файл с тем же
+# именем (аудит M3310-R19-03).
+TREE_PATHS = set()
+# Аудит M3310-R19-01: systemctl start/restart/reload/enable — только юнит, который сценарий дерева ставит без
+# условий из файла дерева в /etc/systemd/system/ (имя юнита или ('$', сценарий, ПЕРЕМЕННАЯ)), или юнит ОС из
+# SYSTEM_UNITS_OK. Запуски сверяются с установками после разбора всех файлов (ставит install_cell.sh, запускают и
+# проверки CI).
+SD_DIR = '/etc/systemd/system/'
+UNITS_INSTALLED = set()
+UNITS_STARTED = []
+SYSTEM_UNITS_OK = {'postgresql.service', 'postgresql@.service'}
+SYSTEMCTL_START = {'start', 'restart', 'reload', 'enable'}
 # Спецификатор %n формата printf с флагами, шириной, точностью и длиной (аудит M3310-R18-01).
 PRINTF_N = re.compile(r"%[-+ #0'I]*(?:\d+|\*)?(?:\.(?:\d+|\*)?)?[hlLqjzt]*n")
 SH_OPS = ('<<<', '<<-', '&&', '||', ';;', '>>', '<<', '<&', '>&', '&>', '>|', '<>', '|&', '|', '&', ';',
@@ -720,12 +737,20 @@ class ShError(Exception):
 class ShLex:
     """Разбор оболочки: простые команды (слова, трубы, перенаправления, heredoc) с функцией, в которой стоят."""
 
-    def __init__(self, text, line=1, fn=None):
+    def __init__(self, text, line=1, fn=None, inner=False):
         self.t, self.i, self.line = text, 0, line
         self.cmds = []
         self.fdefs = {}
         self.fn = [(fn, -1)] if fn else []
         self.depth = 0
+        # Аудит M3310-R19-02: где стоит команда. nest — открытые составные команды: ('c',) — if/while/until/case,
+        # { }, ( ); ('f', ИМЯ, значения) — for/select по постоянному списку. subst — внутри $( ), <( ); inner — текст
+        # `…` или heredoc. Команда «на верхнем уровне» (top) — не там, не в функции, не в трубе, не рядом с &&, ||,
+        # & и не после «!».
+        self.nest = []
+        self.subst = 0
+        self.inner = inner
+        self.loop = None  # слова for/select, у которых ещё не было do
 
     def peek(self, k=0):
         j = self.i + k
@@ -749,7 +774,11 @@ class ShLex:
 
     def new_cmd(self):
         return {'words': [], 'line': self.line, 'pin': False, 'pout': False, 'redir': [], 'here': [], 'hstr': [],
-                'fn': self.fn[-1][0] if self.fn else None}
+                'fn': self.fn[-1][0] if self.fn else None, 'chain': False}
+
+    def close(self):
+        if self.nest:
+            self.nest.pop()
 
     def word(self):
         """Слово до разделителя: {'val' (подстановка = X), 'lit', 'quoted', 'line', 'raw'}."""
@@ -759,7 +788,9 @@ class ShLex:
             if c == '' or c in ' \t\n;&|()<>':
                 if c in '<>' and self.peek(1) == '(' and not val:
                     self.adv(2)
+                    self.subst += 1
                     self.seq(')')
+                    self.subst -= 1
                     val.append(X)
                     lit = False
                     continue
@@ -872,14 +903,18 @@ class ShLex:
                     raise ShError('unterminated arithmetic')
                 if ch == '$' and self.peek(1) == '(' and self.peek(2) != '(':
                     self.adv(2)
+                    self.subst += 1
                     self.seq(')')
+                    self.subst -= 1
                     continue
                 depth += (ch == '(') - (ch == ')')
                 self.adv()
             return True
         if n == '(':
             self.adv(2)
+            self.subst += 1
             self.seq(')')
+            self.subst -= 1
             return True
         if n == '{':
             self.adv(2)
@@ -903,7 +938,7 @@ class ShLex:
         return False
 
     def sub(self, text, line):
-        lx = ShLex(text, line, self.fn[-1][0] if self.fn else None)
+        lx = ShLex(text, line, self.fn[-1][0] if self.fn else None, True)
         lx.seq(None)
         self.cmds.extend(lx.cmds)
         self.fdefs.update(lx.fdefs)
@@ -924,7 +959,7 @@ class ShLex:
             text = '\n'.join(body)
             ok = True
             if not quoted:
-                lx = ShLex(text, line, cmd['fn'])
+                lx = ShLex(text, line, cmd['fn'], True)
                 text, ok = lx.dq(None)
                 self.cmds.extend(lx.cmds)
             cmd['here'].append({'val': text, 'lit': ok, 'quoted': quoted, 'line': line})
@@ -936,7 +971,11 @@ class ShLex:
             nonlocal cur
             if cur['words'] or cur['here'] or cur['redir'] or cur['hstr']:
                 cur['pout'] = pout
+                cur['top'] = not (self.inner or self.subst or cur['chain'] or cur['pin'] or pout or cur['fn'])
+                cur['nest'] = tuple(self.nest)
                 self.cmds.append(cur)
+                if cur['words'] and cur['words'][0]['val'] in ('for', 'select'):
+                    self.loop = cur['words']
             pin = pout
             cur = self.new_cmd()
             cur['pin'] = pin
@@ -956,6 +995,7 @@ class ShLex:
                 w = self.word()
                 if w['val'] == 'esac':
                     case = 0
+                    self.close()
                     continue
                 if w['val'] == '' and self.peek() == '(':
                     self.adv()
@@ -979,7 +1019,11 @@ class ShLex:
                 if op in ('|', '|&'):
                     done(True)
                 elif op in ('&&', '||', ';', '&', ';;', '\n'):
+                    if op in ('&&', '||', '&'):
+                        cur['chain'] = True
                     done()
+                    if op in ('&&', '||'):
+                        cur['chain'] = True
                     if op == ';;':
                         case = 2
                     if op == '\n' and pending:
@@ -1012,8 +1056,10 @@ class ShLex:
                         cur = self.new_cmd()
                     else:
                         done()
+                        self.nest.append(('c',))
                 elif op == ')':
                     done()
+                    self.close()
                 else:
                     self.blanks()
                     w = self.word()
@@ -1031,6 +1077,7 @@ class ShLex:
                 v = w['val']
                 if v == '{':
                     self.depth += 1
+                    self.nest.append(('c',))
                     if fname:
                         self.fn.append((fname, self.depth))
                         self.fdefs[fname] = w['line']
@@ -1041,9 +1088,18 @@ class ShLex:
                     if self.fn and self.fn[-1][1] == self.depth:
                         self.fn.pop()
                     self.depth -= 1
+                    self.close()
                     cur['fn'] = self.fn[-1][0] if self.fn else None
                     continue
                 if v in SH_KEYS:
+                    if v in ('if', 'while', 'until'):
+                        self.nest.append(('c',))
+                    elif v == 'do' and self.loop:
+                        self.push_loop()
+                    elif v in ('fi', 'done', 'esac'):
+                        self.close()
+                    elif v == '!':
+                        cur['chain'] = True
                     continue
                 if v == 'function':
                     self.blanks()
@@ -1054,10 +1110,19 @@ class ShLex:
             cur['words'].append(w)
             if cur['words'][0]['val'] == 'case' and w['val'] == 'in' and len(cur['words']) > 1:
                 done()
+                self.nest.append(('c',))
                 case = 2
             if cur['words'] and cur['words'][0]['val'] in ('for', 'select') and w['val'] == 'do':
                 cur['words'].pop()
                 done()
+                self.push_loop()
+
+    def push_loop(self):
+        # for ИМЯ in постоянные имена без «/» — тело выполняется для каждого (если в тексте нет break/continue)
+        fw, self.loop = self.loop, None
+        self.nest.append(('f', fw[1]['val'], tuple(x['val'] for x in fw[3:])) if
+                         fw and fw[0]['val'] == 'for' and len(fw) > 3 and fw[2]['val'] == 'in' and
+                         all(x['lit'] and '/' not in x['val'] for x in fw[3:]) else ('c',))
 
 
 def sh_prog(words, k):
@@ -1127,22 +1192,31 @@ def sh_findings(path, text, line=1, depth=0):
                 break
             name = w['val'][:m.end()].rstrip('=+')
             assigned.setdefault(name, []).append(w)
+    def single(name):
+        # имя присвоено ровно один раз и ничем больше не меняется
+        if len(assigned.get(name, [])) != 1 or '[' in name:
+            return False
+        n = re.escape(name)
+        return len(re.findall(r'(?<![\w$])' + n + r'\+?=', text)) == 1 and not re.search(
+            r'\b(read|mapfile|readarray|getopts|unset|let)\b[^\n;|&]*\b' + n + r'\b|\bfor\s+' + n + r'\b'
+            r'|printf\s+-v\s*' + n + r'\b|\$\{' + n + r':?[=?]|\(\([^)]*\b' + n + r'\b', text)
+
     consts = {}
     for name, ws_ in assigned.items():
-        w = ws_[0]
-        if len(ws_) != 1 or not w['lit'] or '[' in name:
-            continue
-        n = re.escape(name)
-        if len(re.findall(r'(?<![\w$])' + n + r'\+?=', text)) != 1 or re.search(
-                r'\b(read|mapfile|readarray|getopts|unset|let)\b[^\n;|&]*\b' + n + r'\b|\bfor\s+' + n + r'\b'
-                r'|printf\s+-v\s*' + n + r'\b|\$\{' + n + r':?[=?]|\(\([^)]*\b' + n + r'\b', text):
-            continue
-        consts[name] = w['val'][len(name) + 1:]
+        if single(name) and ws_[0]['lit']:
+            consts[name] = ws_[0]['val'][len(name) + 1:]
+    # Аудит M3310-R19-02: команда выполняется ровно один раз при каждом проходе сценария (once) — на верхнем уровне
+    # или только в for по постоянному списку (и в тексте нет break/continue). Установку файла настроек засчитывает
+    # только такая команда при включённом set -e (сбой установки останавливает сценарий).
+    loopy = any(c['words'] and c['words'][0]['val'] in ('break', 'continue') for c in cmds)
+    for c in cmds:
+        c['once'] = c['top'] and all(f[0] == 'f' for f in c['nest']) and not (loopy and c['nest'])
+    state = {'errexit': False}
+    installed, tainted = set(), set()  # файлы /etc/tmpfiles.d/ и /etc/zavod/*.nft, поставленные из дерева; чужая запись
     # Установщик: HERE — папка самого сценария, присвоена один раз; переменная цикла for — только по постоянным
     # именам файлов без «/» (так "$HERE/$u" — файл проверенного дерева).
     here_ok = len(re.findall(r'(?<![\w$])HERE\+?=', text)) == 1 and 'HERE=$(cd "$(dirname "$0")" && pwd)' in text
     forvars = set()
-    tmp_installed = set()  # аудит M3310-R18-02: файлы /etc/tmpfiles.d/, поставленные этим файлом из дерева
     for c in cmds:
         ws = c['words']
         if len(ws) > 3 and ws[0]['val'] == 'for' and ws[2]['val'] == 'in' and all(
@@ -1274,6 +1348,10 @@ def sh_findings(path, text, line=1, depth=0):
             for w in rest:
                 if not (w['lit'] and (re.fullmatch(r'[-+][eux]+o?', w['val']) or w['val'] == 'pipefail')):
                     add(w['line'], f'set option {w["val"].replace(X, "?")} outside the closed list', 'SH_CMD')
+            if any(w['lit'] and re.fullmatch(r'\+\w*e\w*', w['val']) for w in rest):
+                state['errexit'] = False
+            elif c['once'] and any(w['lit'] and re.fullmatch(r'-\w*e\w*', w['val']) for w in rest):
+                state['errexit'] = True
             return
         # Аудит M3310-R17B-02: встроенные, которые записывают переменную по имени из своих слов (read ИМЯ,
         # printf -v ИМЯ, wait -p ИМЯ): опции — закрытый список, имя — постоянное и не из SH_SPECIAL.
@@ -1321,16 +1399,19 @@ def sh_findings(path, text, line=1, depth=0):
             if vals[:1] == ['list'] and X not in vals:
                 return
             fi = vals.index('-f') if '-f' in vals else None
+            # Аудит M3310-R19-03: файл — только тот, что этот же сценарий раньше поставил ровно в этот путь из файла
+            # своей папки дерева (как у systemd-tmpfiles ниже), а не любой файл дерева с тем же именем.
             if not (fi is not None and vals[:fi] in ([], ['-c']) and len(vals) == fi + 2 and
-                    norm_path(vals[-1]) == vals[-1] and vals[-1].startswith('/etc/zavod/') and
-                    SCRIPTS.get(os.path.basename(vals[-1])) == 'nft'):
-                add(ws[k]['line'], 'nft outside the closed forms (list …; -f checked *.nft in /etc/zavod/)', 'SH_EXEC')
+                    vals[-1].startswith('/etc/zavod/') and vals[-1].endswith('.nft') and from_tree_file(vals[-1])):
+                add(ws[k]['line'], 'nft outside the closed forms (list …; -f a checked *.nft this script installed '
+                    'into /etc/zavod/)', 'SH_EXEC')
             return
         if p == 'systemd-tmpfiles':
             vals = [w['val'] if w['lit'] else X for w in rest]
-            # Аудит M3310-R18-02: файл — только тот, что этот же сценарий раньше поставил командой install/cp из
-            # "$HERE/*.tmpfiles.conf" проверенного дерева (его строки проверяет data_findings); иной файл — находка.
-            if not (len(vals) == 2 and vals[0] == '--create' and vals[1] in tmp_installed):
+            # Аудит M3310-R18-02, M3310-R19-02: файл — только тот, что этот же сценарий раньше поставил командой
+            # install/cp из "$HERE/*.tmpfiles.conf" своей папки дерева (его строки проверяет data_findings), причём
+            # установка выполняется всегда (once, set -e), а других записей в этот путь нет; иначе — находка.
+            if not (len(vals) == 2 and vals[0] == '--create' and from_tree_file(vals[1])):
                 add(ws[k]['line'], 'systemd-tmpfiles outside the closed form (--create a checked tree file this '
                     'script installed into /etc/tmpfiles.d/)', 'SH_EXEC')
             return
@@ -1355,6 +1436,8 @@ def sh_findings(path, text, line=1, depth=0):
                     sub = v
                     if not rest[j]['lit'] or v not in SYSTEMCTL_CMDS:
                         add(rest[j]['line'], f'systemctl {v.replace(X, "?")}: command outside the closed list', 'SH_CMD')
+                elif sub in SYSTEMCTL_START:
+                    unit_use(rest[j])
                 j += 1
             return
         if p == 'find':
@@ -1549,6 +1632,7 @@ def sh_findings(path, text, line=1, depth=0):
         for op, w in c['redir']:
             if op in ('>', '>>', '>|', '&>', '<>') and code_dir(w):
                 add(w['line'], 'shell writes into a folder of code or start settings', 'SH_EXEC')
+                taint(w)
         p_ = os.path.basename(ws_[0]['val'])
         args = ws_[1:]
         if p_ in ('tee', 'touch', 'truncate'):
@@ -1565,8 +1649,13 @@ def sh_findings(path, text, line=1, depth=0):
                     files_ = [w for w in files_ if w is not args[j + 1]]
                     j += 1
                 j += 1
+            if p_ == 'mv':  # перенос из папки кода тоже меняет файл, который потом прочтут
+                for w in files_[:-1]:
+                    if code_dir(w):
+                        taint(w)
             if any(o.startswith('-t') or o.startswith('--target') for o in opts_):
                 bad = [w for w in args if w['val'].startswith(('-t', '--target'))]
+                tainted.add('*')
             elif p_ == 'install' and '-d' in opts_:
                 bad = []
             elif p_ == 'ln' and any(code_dir(w) for w in files_):
@@ -1578,19 +1667,74 @@ def sh_findings(path, text, line=1, depth=0):
                         re.match(r'^"\$HERE/\$([a-z_]+)"$', w['raw']) and
                         re.match(r'^"\$HERE/\$([a-z_]+)"$', w['raw']).group(1) in forvars) for w in files_[:-1])
                 bad = [] if from_tree else [files_[-1]]
+                dest = files_[-1]
                 src_ = re.match(r'^"\$HERE/([^"$`\\/]+)"$', files_[0]['raw']) if len(files_) == 2 else None
-                if from_tree and src_ and files_[-1]['lit'] and src_.group(1).endswith('.tmpfiles.conf') and \
-                        src_.group(1) in DATA_FILES and files_[-1]['val'].startswith('/etc/tmpfiles.d/') and \
-                        norm_path(files_[-1]['val']) == files_[-1]['val']:
-                    tmp_installed.add(files_[-1]['val'])
+                # Аудит M3310-R19-02/03: установка засчитывается, только если выполняется всегда (once, set -e) и
+                # источник — файл папки самого сценария в дереве; иначе путь назначения помечен как чужая запись.
+                good = from_tree and c['once'] and state['errexit'] and src_ is not None and \
+                    posixpath.join(posixpath.dirname(path), src_.group(1)) in TREE_PATHS
+                if good and dest['lit'] and norm_path(dest['val']) == dest['val'] and (
+                        src_.group(1).endswith('.tmpfiles.conf') and dest['val'].startswith('/etc/tmpfiles.d/') or
+                        src_.group(1).endswith('.nft') and dest['val'].startswith('/etc/zavod/') and
+                        dest['val'].endswith('.nft')):
+                    installed.add(dest['val'])
                 else:
-                    tmp_installed.discard(norm_path(files_[-1]['val']))
+                    taint(dest)
+                if from_tree and c['once'] and state['errexit'] and len(files_) == 2:
+                    unit_install(files_[0], dest, c)
             else:
                 bad = []
         else:
             bad = []
         for w in bad:
             add(w['line'], f'{p_} writes into a folder of code or start settings', 'SH_EXEC')
+            taint(w)
+
+    def taint(w):
+        # запись в путь, который потом может прочесть nft или systemd-tmpfiles; путь из подстановки — любой путь
+        v = re.sub(r'/+', '/', w['val'])
+        if w['lit']:
+            tainted.add(norm_path(v))
+        elif v.startswith((X, '/etc/tmpfiles.d/', '/etc/zavod/')) or '..' in v.split('/'):
+            tainted.add('*')
+
+    def from_tree_file(v):
+        return v in installed and v not in tainted and '*' not in tainted and norm_path(v) == v
+
+    def unit_install(src, dest, c):
+        # Аудит M3310-R19-01: юнит, который сценарий ставит всегда из файла своей папки дерева в /etc/systemd/system/:
+        # постоянное имя; for u in … — каждое имя списка; "$ИМЯ" (ИМЯ присвоено один раз) — ('$', сценарий, ИМЯ).
+        d = posixpath.dirname(path)
+        m_src = re.match(r'^"\$HERE/([^"$`\\/]+)"$', src['raw'])
+        m_var = re.match(r'^"\$HERE/\$([a-z_]+)"$', src['raw'])
+        m_dv = re.match(r'^"' + re.escape(SD_DIR) + r'\$\{?([A-Za-z_]\w*)\}?"$', dest['raw'])
+        if dest['lit'] and dest['val'].startswith(SD_DIR) and norm_path(dest['val']) == dest['val'] and \
+                '/' not in dest['val'][len(SD_DIR):] and m_src and posixpath.join(d, m_src.group(1)) in TREE_PATHS:
+            UNITS_INSTALLED.add(dest['val'][len(SD_DIR):])
+        elif m_dv and m_var and m_var.group(1) == m_dv.group(1):
+            fr = next((f for f in reversed(c['nest']) if f[0] == 'f' and f[1] == m_var.group(1)), None)
+            for v in fr[2] if fr else ():
+                if posixpath.join(d, v) in TREE_PATHS:
+                    UNITS_INSTALLED.add(v)
+        elif m_dv and m_src and posixpath.join(d, m_src.group(1)) in TREE_PATHS and single(m_dv.group(1)):
+            UNITS_INSTALLED.add(('$', path, m_dv.group(1)))
+
+    def unit_use(w):
+        # имя юнита у systemctl start/restart/reload/enable: постоянное (без шаблонов поиска *?[), экземпляр шаблона
+        # имя@….service (экземпляр выбирает только аргумент юнита дерева) или "$ИМЯ", присвоенное один раз
+        if w['lit']:
+            u = w['val'] if '.' in w['val'] else w['val'] + '.service'
+            m_t = re.fullmatch(r'([A-Za-z][\w:.-]*)@[^/*?\[]+(\.service)', u)
+            key = None if re.search(r'[*?\[/]', u) else m_t.group(1) + '@' + m_t.group(2) if m_t else u
+        else:
+            m_t = re.fullmatch(r'"([A-Za-z][\w:.-]*)@[^"/`\\*?\[]+(\.service)"', w['raw'])
+            m_v = re.fullmatch(r'"\$\{?([A-Za-z_]\w*)\}?"', w['raw'])
+            key = m_t.group(1) + '@' + m_t.group(2) if m_t else \
+                ('$', path, m_v.group(1)) if m_v and single(m_v.group(1)) else None
+        if key is None:
+            add(w['line'], f'systemctl starts unit {w["val"].replace(X, "?")}: name is not fixed', 'SH_EXEC')
+        elif key not in SYSTEM_UNITS_OK:
+            UNITS_STARTED.append((path, w['line'], key))
 
     def awk_ok(c, rest):
         # awk запускает программы (system(), "cmd" | getline, print | "cmd"), пишет файлы (print > "f") и читает
@@ -1968,6 +2112,7 @@ def main(argv):
             SCRIPTS[b] = kind if SCRIPTS.get(b, kind) == kind else 'two files with one name'
     for path in tree:
         norm = path.replace('\\', '/')
+        TREE_PATHS.add(norm)
         if norm.endswith(DATA_EXT):
             todo.append((norm, 'data'))
             DATA_FILES.add(os.path.basename(norm))
@@ -2029,6 +2174,16 @@ def main(argv):
             if not want or want[0] != got:
                 found += 1
                 print(f'SQL_CONCAT {norm}:0: PIN: file that starts programs is {"not pinned" if not want else "changed"}: sha256 {got}')
+    # Аудит M3310-R19-01: каждый юнит, который запускает сценарий дерева, ставит всегда какой-то сценарий дерева из
+    # своего файла (или это юнит ОС из SYSTEM_UNITS_OK). Разрешением не снимается.
+    for norm, ln, key in UNITS_STARTED:
+        if key not in UNITS_INSTALLED:
+            with open(norm, encoding='utf-8') as f:
+                lines = f.read().splitlines()
+            name = '$' + key[2] if isinstance(key, tuple) else key
+            found += 1
+            print(f'SQL_CONCAT {norm}:{ln}: SH_EXEC: systemctl starts unit {name}: no scanned script installs it '
+                  f'from the tree every time: {(lines[ln - 1].strip() if 0 < ln <= len(lines) else "")[:160]}')
     for p, (want, used) in pins.items():
         if not used:
             found += 1
