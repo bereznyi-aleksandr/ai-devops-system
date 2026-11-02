@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/build_server_package.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 11:33 +02:00 (v0.1: карта 3.3.11.1 и 3.3.11.4)
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 12:21 +02:00 (v0.2: war движка собирается с драйверами pgjdbc и junixsocket — engine/flowable-rest-pg.war; v0.1 от 11:33: карта 3.3.11.1 и 3.3.11.4)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: сборка пакета установки сервера Завода одним архивом (протокол v3.1 И.7, Р.59; карта 3.3.11):
 #   файлы берутся только из закрытого списка папок хранилища (по git, без тестов, проверок CI и Windows), модули ядра
@@ -39,6 +39,18 @@ ENGINE_CI = 'zavod/engine/ci/engine_ci.sh'
 # сумма — из https://nodejs.org/dist/v22.23.3/SHASUMS256.txt (прочитано 2026-11-02).
 NODE_PIN = ('node-v22.23.3-linux-x64.tar.xz', 'https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz',
             'df450af89261115ef9f9e3830c3eeb2cc9213b63c720b1af623cb5dcbe2e02de')
+# junixsocket 2.10.1 (2024-09-23): драйвер pgjdbc входит в базу только через сокет Linux, вход peer без пароля
+# (PostgreSQL сервера слушает только сокет). Maven Central публикует для них только sha1 (прочитано 2026-11-02 с
+# repo1.maven.org); sha256 закрепляется по первому прогону CI, где sha1 совпал. Пока sha256 = None, сборка
+# проверяет sha1 и печатает sha256.
+MVN = 'https://repo1.maven.org/maven2/com/kohlschutter/junixsocket'
+JUNIX_PINS = [
+    ('junixsocket-common-2.10.1.jar', f'{MVN}/junixsocket-common/2.10.1/junixsocket-common-2.10.1.jar',
+     'a057996cbf023e8bd5e4aededeba97fa1b1d3a9a', None),
+    ('junixsocket-native-common-2.10.1.jar',
+     f'{MVN}/junixsocket-native-common/2.10.1/junixsocket-native-common-2.10.1.jar',
+     '0c9d8cc10a38ceca64695829ea6b4ee84e46d72f', None),
+]
 
 
 def sha(b):
@@ -68,23 +80,55 @@ def pins():
     ], v['WAR_SHA256']
 
 
+def fetch(src, name, url):
+    if src:
+        return open(os.path.join(src, name), 'rb').read()
+    with urllib.request.urlopen(url, timeout=300) as r:
+        return r.read()
+
+
+def war_with_drivers(war, jars):
+    """Как engine_ci.sh: драйверы кладутся в WEB-INF/lib без сжатия и дописываются в WEB-INF/classpath.idx.
+    Время записей — исходное у файлов war и 1980-01-01 у добавленных: тот же вход — тот же war."""
+    out = io.BytesIO()
+    with zipfile.ZipFile(io.BytesIO(war)) as zi, zipfile.ZipFile(out, 'w') as zo:
+        for info in zi.infolist():
+            data = zi.read(info)
+            if info.filename == 'WEB-INF/classpath.idx':
+                data += ''.join(f'- "WEB-INF/lib/{n}"\n' for n in sorted(jars)).encode()
+            ni = zipfile.ZipInfo(info.filename, date_time=info.date_time)
+            ni.compress_type, ni.external_attr = info.compress_type, info.external_attr
+            zo.writestr(ni, data)
+        for n in sorted(jars):
+            zi2 = zipfile.ZipInfo(f'WEB-INF/lib/{n}', date_time=(1980, 1, 1, 0, 0, 0))
+            zi2.compress_type, zi2.external_attr = zipfile.ZIP_STORED, 0o644 << 16
+            zo.writestr(zi2, jars[n])
+    return out.getvalue()
+
+
 def externals(src):
     ((zip_name, zip_url, zip_sha), (jar_name, jar_url, jar_sha)), war_sha = pins()
     got = {}
     for name, url, want in ((zip_name, zip_url, zip_sha), (jar_name, jar_url, jar_sha), NODE_PIN):
-        if src:
-            data = open(os.path.join(src, name), 'rb').read()
-        else:
-            with urllib.request.urlopen(url, timeout=300) as r:
-                data = r.read()
+        data = fetch(src, name, url)
         if sha(data) != want:
             raise SystemExit(f'ZAVOD_SERVER_PACKAGE=FAIL {name} sha256 {sha(data)} != {want}')
+        got[name] = data
+    for name, url, want1, want256 in JUNIX_PINS:
+        data = fetch(src, name, url)
+        if hashlib.sha1(data).hexdigest() != want1:
+            raise SystemExit(f'ZAVOD_SERVER_PACKAGE=FAIL {name} sha1 {hashlib.sha1(data).hexdigest()} != {want1}')
+        if want256 is None:
+            print(f'ZAVOD_SERVER_PACKAGE_PIN_TODO {name} sha256={sha(data)}')
+        elif sha(data) != want256:
+            raise SystemExit(f'ZAVOD_SERVER_PACKAGE=FAIL {name} sha256 {sha(data)} != {want256}')
         got[name] = data
     with zipfile.ZipFile(io.BytesIO(got[zip_name])) as z:
         war = z.read('wars/flowable-rest.war')
     if sha(war) != war_sha:
         raise SystemExit(f'ZAVOD_SERVER_PACKAGE=FAIL flowable-rest.war sha256 {sha(war)} != {war_sha}')
-    return {'engine/flowable-rest.war': war, f'engine/{jar_name}': got[jar_name], f'runtime/{NODE_PIN[0]}': got[NODE_PIN[0]]}
+    jars = {n: got[n] for n in [jar_name] + [p[0] for p in JUNIX_PINS]}
+    return {'engine/flowable-rest-pg.war': war_with_drivers(war, jars), f'runtime/{NODE_PIN[0]}': got[NODE_PIN[0]]}
 
 
 def node_modules():

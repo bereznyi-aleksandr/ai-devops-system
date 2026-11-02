@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_server.sh
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 11:44 +02:00 (v0.2: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 12:19 +02:00 (v0.3: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: установка сервера Завода из пакета build_server_package.py на чистую Ubuntu 24.04 (протокол v3.1 И.7,
 #   Р.59; карта 3.3.11). Порядок (3.3.11.2):
@@ -13,11 +13,12 @@
 #      проверка состояния базы при каждом запуске;
 #   6) ячейка install_cell.sh (учётные записи И.7, клетка, привратник, посредник, фильтр, приём архивов);
 #   7) служба ядра zavod-kernel (zkernel) и файл настроек (из примера, если файла ещё нет);
+#   7б) служба движка zavod-engine (zflowable, база bem_engine, только 127.0.0.1:8091), ENGINE=OK;
 #   8) отчёт: ZAVOD_SERVER_INSTALL=OK и сумма описи установленных файлов (3.3.11.4).
 #   Повторный запуск даёт тот же результат.
 # ВЫЗОВ: sudo bash install_server.sh <папка распакованного пакета> [параметры install_cell.sh …]
-# ОГРАНИЧЕНИЯ: ничего не удаляет; прежние выпуски остаются в /opt/zavod/releases. Ключей и паролей не создаёт,
-#   не читает и не пишет. Движок процессов Flowable (war и драйвер в пакете) — следующая версия установщика.
+# ОГРАНИЧЕНИЯ: ничего не удаляет; прежние выпуски остаются в /opt/zavod/releases. Ключей не создаёт и не читает.
+#   Единственный пароль — администратора движка: создаётся один раз в файл root:root 0600 и не выводится.
 set -euo pipefail
 export LC_ALL=C
 PKG=${1:?usage: install_server.sh PACKAGE_DIR [install_cell.sh options]}
@@ -138,6 +139,44 @@ fi
 install -o root -g root -m 0644 "$REL/zavod/ops/server/zavod-kernel.service" /etc/systemd/system/zavod-kernel.service
 systemctl daemon-reload
 systemctl enable zavod-kernel.service > /dev/null
+
+echo "=== 7б. служба движка процессов"
+id zflowable > /dev/null 2>&1 || useradd --system --no-create-home --home-dir /var/lib/zavod-engine \
+  --shell /usr/sbin/nologin zflowable
+install -d -o zflowable -g zflowable -m 0750 /var/lib/zavod-engine
+psqlq -d postgres -Atc "select 1 from pg_roles where rolname = 'zflowable'" | grep -qx 1 ||
+  psqlq -d postgres -c "CREATE ROLE zflowable LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT"
+if ! psqlq -d postgres -Atc "select 1 from pg_database where datname = 'bem_engine'" | grep -qx 1; then
+  psqlq -d postgres -c "CREATE DATABASE bem_engine OWNER zflowable"
+  psqlq -d bem_engine -c "REVOKE ALL ON SCHEMA public FROM PUBLIC" -c "CREATE SCHEMA bem_engine AUTHORIZATION zflowable"
+fi
+psqlq -d postgres -c "REVOKE CONNECT, TEMPORARY ON DATABASE bem_engine FROM PUBLIC"
+# Учётная запись администратора движка (решение оператора 2026-11-02): создаётся здесь один раз, из случайных
+# байтов, сразу в файл root:root 0600. Значение не выводится и не пишется в журнал; systemd передаёт его службе.
+ADMIN=/etc/zavod/engine_admin.conf
+if [ ! -e "$ADMIN" ]; then
+  (umask 077
+   t=$(mktemp /etc/zavod/.engine_admin.XXXXXX)
+   { echo FLOWABLE_REST_APP_ADMIN_USERID=zavod-engine-admin
+     printf 'FLOWABLE_REST_APP_ADMIN_PASSWORD=%s\n' "$(head -c 32 /dev/urandom | base64 -w0 | tr -d '/+=')"; } > "$t"
+   mv "$t" "$ADMIN")
+fi
+[ "$(stat -c '%U:%G %a' "$ADMIN")" = "root:root 600" ] || die "$ADMIN must be root:root 600"
+install -o root -g root -m 0644 "$REL/zavod/ops/server/zavod-engine.service" /etc/systemd/system/zavod-engine.service
+systemctl daemon-reload
+systemctl enable zavod-engine.service > /dev/null
+systemctl restart zavod-engine.service
+# Готовность: движок отвечает на 127.0.0.1:8091 и без учётной записи отказывает (401) — демо-входа нет.
+code=
+for _ in $(seq 1 120); do
+  code=$(/usr/bin/node -e "fetch('http://127.0.0.1:8091/flowable-rest/service/management/engine')
+    .then(r => console.log(r.status), () => console.log(0))")
+  [ "$code" = 401 ] && break
+  systemctl is-active --quiet zavod-engine.service || break
+  sleep 2
+done
+[ "$code" = 401 ] || { journalctl -u zavod-engine.service -n 40 --no-pager >&2; die "engine is not up (http $code)"; }
+echo "ENGINE=OK"
 
 echo "=== 8. отчёт"
 INV=$(cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum | cut -c1-64)
