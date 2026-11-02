@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.39
+# ВЕРСИЯ: v0.40
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-02 10:42 +02:00 (v0.39: самопроверка R15 — пробы bad_flow16.sh, bad_flow16.mjs, bad16.service (запись кода оболочкой, пакет по пути, папки службы), files=31 findings=273; v0.38 от 10:25: аудит M3310-R14 — пробы bad_flow15.py, bad_flow15.mjs, bad_flow15.sh, bad15.service, worker15.data (global/nonlocal, сторонние модули Python и JS, psql за docker/ssh, файл не из дерева у интерпретатора и службы, flatMap своего объекта; files=31 findings=273); Claude, сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.37: аудит M3310-R13 — пробы bad_flow14_a.py и bad_flow14_b.py (3 места: параметр функции, которую вызывает другой файл; .fetch; .copy), runner14.txt и extra14.data (код и архив под чужим суффиксом — FORMAT)); прежняя: 2026-11-02 08:40 +02:00 (v0.36: аудит M3310-R12 — пробы bad_flow13.py (4 места: getattr и eval/exec под другим именем, sys.path) и extra13.zip (архив — FORMAT)); прежняя: 2026-11-02 07:26 +02:00 (v0.35: аудит M3310-R11 — тест привратника с -B (без *.pyc); пробы bad_flow12.py (7 мест), bad_flow12.mjs, extra12.cjs, bad_flow12.ts (4 места)); прежняя: 2026-11-02 07:06 +02:00 (v0.34: аудит M3310-R10 — пробы bad_flow11.mjs (4 места) и bad_flow11.py (10 мест), проба закрепления bad_pin.txt; v0.33: аудит M3310-R9 — пробы bad_flow10.mjs (6 мест) и bad_flow10.py (8 мест); v0.32: аудит M3310-R8 — пробы bad_flow9.mjs (9 мест) и bad_flow9.py (6 мест); v0.31: аудит M3310-R7 — пробы bad_flow7.mjs (8 мест) и bad_flow8.sh (16 мест); v0.30: аудит M3310-R6 — проба bad_flow6.mjs (19 мест) и проба файла разрешений bad_allow.txt; v0.29: раздел журналов приёма 16 МБ, запас диска сервера 1 ГБ в CI (аудит M33-R3-02, M33-R3-03); v0.28: раздел приёма 192 МБ и 2048 inode в CI (аудит M33-R2-04); v0.27: раздел сеансов 64 МБ в CI (вопрос аудитора «д»); аудит M33-06 — проверка синтаксиса zavod-alert-notify и zavod-alert-telegram; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.26: карта 3.3.9 — в задании cell проба ПБ-4: строгая опись, карантин
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-02 11:38 +02:00 (v0.40: карта 3.3.11 — задание server_package: пакет собирается дважды с одинаковой суммой и ставится install_server.sh дважды на чистую Ubuntu 24.04, отказ при изменённом и лишнем файле; Claude, сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.39 от 10:42: самопроверка R15 — пробы bad_flow16.sh, bad_flow16.mjs, bad16.service (запись кода оболочкой, пакет по пути, папки службы), files=31 findings=273; v0.38 от 10:25: аудит M3310-R14 — пробы bad_flow15.py, bad_flow15.mjs, bad_flow15.sh, bad15.service, worker15.data (global/nonlocal, сторонние модули Python и JS, psql за docker/ssh, файл не из дерева у интерпретатора и службы, flatMap своего объекта; files=31 findings=273); Claude, сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.37: аудит M3310-R13 — пробы bad_flow14_a.py и bad_flow14_b.py (3 места: параметр функции, которую вызывает другой файл; .fetch; .copy), runner14.txt и extra14.data (код и архив под чужим суффиксом — FORMAT)); прежняя: 2026-11-02 08:40 +02:00 (v0.36: аудит M3310-R12 — пробы bad_flow13.py (4 места: getattr и eval/exec под другим именем, sys.path) и extra13.zip (архив — FORMAT)); прежняя: 2026-11-02 07:26 +02:00 (v0.35: аудит M3310-R11 — тест привратника с -B (без *.pyc); пробы bad_flow12.py (7 мест), bad_flow12.mjs, extra12.cjs, bad_flow12.ts (4 места)); прежняя: 2026-11-02 07:06 +02:00 (v0.34: аудит M3310-R10 — пробы bad_flow11.mjs (4 места) и bad_flow11.py (10 мест), проба закрепления bad_pin.txt; v0.33: аудит M3310-R9 — пробы bad_flow10.mjs (6 мест) и bad_flow10.py (8 мест); v0.32: аудит M3310-R8 — пробы bad_flow9.mjs (9 мест) и bad_flow9.py (6 мест); v0.31: аудит M3310-R7 — пробы bad_flow7.mjs (8 мест) и bad_flow8.sh (16 мест); v0.30: аудит M3310-R6 — проба bad_flow6.mjs (19 мест) и проба файла разрешений bad_allow.txt; v0.29: раздел журналов приёма 16 МБ, запас диска сервера 1 ГБ в CI (аудит M33-R3-02, M33-R3-03); v0.28: раздел приёма 192 МБ и 2048 inode в CI (аудит M33-R2-04); v0.27: раздел сеансов 64 МБ в CI (вопрос аудитора «д»); аудит M33-06 — проверка синтаксиса zavod-alert-notify и zavod-alert-telegram; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.26: карта 3.3.9 — в задании cell проба ПБ-4: строгая опись, карантин
 #   архива, доверенный приём (intake_ci.sh, INTAKE_CI=PASS); Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.25: карта 3.3.8 — задание cell: цепочка базы с Z-EXT-04 на PostgreSQL 16 машины,
 #   установщик ячейки дважды, запуск сессии по файлу ядра, стены клетки, отказы; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.24: этап 3.3.2.4 — задание kernel_socket: ядро подключается к PostgreSQL 16 через сокет Linux, вход peer; v0.23: этап 3.3.2.3 — systemd-analyze verify и для службы ядра
 #   zavod-kernel.service; /usr/bin/node на машине GitHub — ссылка на её Node.js; v0.22: L-S6-R12-01 и аудит Codex R14 — модульных ops 64; число проверок
@@ -377,6 +377,59 @@ jobs:
           set -euo pipefail
           bash zavod/ops/server/cell/egress_ci.sh | tee "$RUNNER_TEMP/egress_ci.out"
           grep -qx EGRESS_CI=PASS "$RUNNER_TEMP/egress_ci.out"
+
+  server_package:
+    name: server package built and installed twice on a fresh Ubuntu 24.04 (3.3.11)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.23.3'
+      - name: build the package (closed file list, pinned externals, MANIFEST.sha256)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out" | tee "$RUNNER_TEMP/build1.out"
+          grep -q '^ZAVOD_SERVER_PACKAGE=OK ' "$RUNNER_TEMP/build1.out"
+          # тот же вход — тот же архив (3.3.11.4: суммы доказывают, что установлен проверенный пакет)
+          python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out2" | tee "$RUNNER_TEMP/build2.out"
+          test "$(sed 's/.* sha256=//' "$RUNNER_TEMP/build1.out")" = "$(sed 's/.* sha256=//' "$RUNNER_TEMP/build2.out")"
+          mkdir "$RUNNER_TEMP/pkg"
+          tar -C "$RUNNER_TEMP/pkg" -xf "$RUNNER_TEMP"/out/zavod-server-*.tar
+          echo SERVER_PACKAGE_BUILD=OK
+      - name: install twice (same result), refusals on a changed package
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$RUNNER_TEMP/pkg"
+          # Node.js машины GitHub убирается с пути службы ядра (переименование, не удаление): установщик ставит свой.
+          if [ -e /usr/bin/node ]; then sudo mv /usr/bin/node /usr/bin/node.runner-image; fi
+          O='--session-fs-size 64M --intake-fs-size 192M --intake-fs-inodes 2048 --intake-journal-size 16M --min-free 1G'
+          # shellcheck disable=SC2086
+          sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O | tee "$RUNNER_TEMP/server1.out"
+          grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server1.out"
+          # shellcheck disable=SC2086
+          sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O | tee "$RUNNER_TEMP/server2.out"
+          grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server2.out"
+          test "$(grep '^ZAVOD_SERVER_RELEASE=' "$RUNNER_TEMP/server1.out")" = "$(grep '^ZAVOD_SERVER_RELEASE=' "$RUNNER_TEMP/server2.out")"
+          grep -q 'база bem уже есть' "$RUNNER_TEMP/server2.out"
+          /usr/bin/node --version | grep -q '^v22\.23\.3$'
+          test "$(sudo -u postgres psql -Atc 'show listen_addresses')" = ''
+          systemctl is-enabled zavod-kernel.service | grep -qx enabled
+          systemd-analyze verify /etc/systemd/system/zavod-kernel.service
+          # изменённый файл пакета — отказ до установки
+          cp -a "$P" "$RUNNER_TEMP/bad"
+          printf '\n' >> "$RUNNER_TEMP/bad/zavod/kernel/src/server.mjs"
+          if sudo bash "$RUNNER_TEMP/bad/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad" > "$RUNNER_TEMP/bad1.out" 2>&1; then exit 1; fi
+          grep -q 'REFUSED: package files differ from the manifest' "$RUNNER_TEMP/bad1.out"
+          # лишний файл — отказ
+          cp -a "$P" "$RUNNER_TEMP/bad2"
+          printf 'x' > "$RUNNER_TEMP/bad2/zavod/extra.txt"
+          if sudo bash "$RUNNER_TEMP/bad2/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad2" > "$RUNNER_TEMP/bad2.out" 2>&1; then exit 1; fi
+          grep -q 'REFUSED: files not in the manifest' "$RUNNER_TEMP/bad2.out"
+          echo SERVER_PACKAGE_CI=PASS
 
   ops:
     name: stage 6 ops (E6-1..E6-4) local checks
