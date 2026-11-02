@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_server.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 11:33 +02:00 (v0.1: карта 3.3.11.1–3.3.11.4)
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 11:44 +02:00 (v0.2: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: установка сервера Завода из пакета build_server_package.py на чистую Ubuntu 24.04 (протокол v3.1 И.7,
 #   Р.59; карта 3.3.11). Порядок (3.3.11.2):
@@ -97,6 +97,16 @@ cp -R "$REL/bem954/H1_31_PACKAGE_R51/." "$W/"
 chown -R postgres:postgres "$W"
 if ! psqlq -d postgres -Atc "select 1 from pg_database where datname = 'bem'" | grep -qx 1; then
   echo "цепочка базы: первая установка"
+  # Цепочка входит в базу под своими ролями (владелец схемы и др.) через сокет. На время цепочки системная запись
+  # postgres (владелец кластера, у неё и так все права) получает вход под любой ролью: строка peer с картой
+  # zavod_install. После цепочки — и при любом выходе — строки убираются. Пароля и trust нет.
+  HBA=$PG_CONF/pg_hba.conf IDENT=$PG_CONF/pg_ident.conf
+  chain_access_off() { sed -i '/# zavod-install-chain$/d' "$HBA" "$IDENT"; systemctl reload postgresql.service; }
+  trap chain_access_off EXIT
+  sed -i '1i local all all peer map=zavod_install # zavod-install-chain' "$HBA"
+  printf 'zavod_install postgres all # zavod-install-chain\n' >> "$IDENT"
+  systemctl reload postgresql.service
+  sleep 1
   (cd "$W" && psqlq -d postgres -f 00_cluster_bootstrap.sql > "$W/chain_00.out")
   (cd "$W" && as_pg /usr/bin/node run_migration.mjs --files 01_database_migration.sql > "$W/chain_wrapper.out")
   (cd "$W" && as_pg /usr/bin/node "$K/db/build_ext.mjs" 01_database_migration.sql --check)
@@ -104,6 +114,9 @@ if ! psqlq -d postgres -Atc "select 1 from pg_database where datname = 'bem'" | 
   for f in 03_zavod_ext_02 04_zavod_ext_03 06_zavod_ext_04 07_zavod_ext_05; do
     psqlq --single-transaction -d bem -f "$K/db/$f.sql" > "$W/chain_$f.out"
   done
+  chain_access_off
+  trap - EXIT
+  grep -q 'zavod-install-chain' "$HBA" "$IDENT" && die "temporary chain access is still in pg_hba/pg_ident"
 else
   echo "цепочка базы: база bem уже есть, ставится только проверка"
 fi
