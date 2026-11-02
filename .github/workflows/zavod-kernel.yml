@@ -2,7 +2,7 @@
 # ВЕРСИЯ: v0.35
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:26 +02:00 (v0.35: аудит M3310-R11 — у задания cell PYTHONDONTWRITEBYTECODE=1; пробы bad_flow12.py (7 мест), bad_flow12.mjs, extra12.cjs, bad_flow12.ts (4 места)); прежняя: 2026-11-02 07:06 +02:00 (v0.34: аудит M3310-R10 — пробы bad_flow11.mjs (4 места) и bad_flow11.py (10 мест), проба закрепления bad_pin.txt; v0.33: аудит M3310-R9 — пробы bad_flow10.mjs (6 мест) и bad_flow10.py (8 мест); v0.32: аудит M3310-R8 — пробы bad_flow9.mjs (9 мест) и bad_flow9.py (6 мест); v0.31: аудит M3310-R7 — пробы bad_flow7.mjs (8 мест) и bad_flow8.sh (16 мест); v0.30: аудит M3310-R6 — проба bad_flow6.mjs (19 мест) и проба файла разрешений bad_allow.txt; v0.29: раздел журналов приёма 16 МБ, запас диска сервера 1 ГБ в CI (аудит M33-R3-02, M33-R3-03); v0.28: раздел приёма 192 МБ и 2048 inode в CI (аудит M33-R2-04); v0.27: раздел сеансов 64 МБ в CI (вопрос аудитора «д»); аудит M33-06 — проверка синтаксиса zavod-alert-notify и zavod-alert-telegram; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.26: карта 3.3.9 — в задании cell проба ПБ-4: строгая опись, карантин
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:26 +02:00 (v0.35: аудит M3310-R11 — тест привратника с -B (без *.pyc); пробы bad_flow12.py (7 мест), bad_flow12.mjs, extra12.cjs, bad_flow12.ts (4 места)); прежняя: 2026-11-02 07:06 +02:00 (v0.34: аудит M3310-R10 — пробы bad_flow11.mjs (4 места) и bad_flow11.py (10 мест), проба закрепления bad_pin.txt; v0.33: аудит M3310-R9 — пробы bad_flow10.mjs (6 мест) и bad_flow10.py (8 мест); v0.32: аудит M3310-R8 — пробы bad_flow9.mjs (9 мест) и bad_flow9.py (6 мест); v0.31: аудит M3310-R7 — пробы bad_flow7.mjs (8 мест) и bad_flow8.sh (16 мест); v0.30: аудит M3310-R6 — проба bad_flow6.mjs (19 мест) и проба файла разрешений bad_allow.txt; v0.29: раздел журналов приёма 16 МБ, запас диска сервера 1 ГБ в CI (аудит M33-R3-02, M33-R3-03); v0.28: раздел приёма 192 МБ и 2048 inode в CI (аудит M33-R2-04); v0.27: раздел сеансов 64 МБ в CI (вопрос аудитора «д»); аудит M33-06 — проверка синтаксиса zavod-alert-notify и zavod-alert-telegram; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.26: карта 3.3.9 — в задании cell проба ПБ-4: строгая опись, карантин
 #   архива, доверенный приём (intake_ci.sh, INTAKE_CI=PASS); Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.25: карта 3.3.8 — задание cell: цепочка базы с Z-EXT-04 на PostgreSQL 16 машины,
 #   установщик ячейки дважды, запуск сессии по файлу ядра, стены клетки, отказы; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.24: этап 3.3.2.4 — задание kernel_socket: ядро подключается к PostgreSQL 16 через сокет Linux, вход peer; v0.23: этап 3.3.2.3 — systemd-analyze verify и для службы ядра
 #   zavod-kernel.service; /usr/bin/node на машине GitHub — ссылка на её Node.js; v0.22: L-S6-R12-01 и аудит Codex R14 — модульных ops 64; число проверок
@@ -241,10 +241,6 @@ jobs:
   cell:
     name: Linux cell installer, session start and refusals (3.3.8), archive intake (3.3.9)
     runs-on: ubuntu-24.04
-    # Python не пишет *.pyc в рабочую папку: проверка склейки считает скомпилированный файл непроверяемым форматом
-    # (аудит M3310-R11-03), а тесты этого задания загружают файлы ячейки до шага проверки.
-    env:
-      PYTHONDONTWRITEBYTECODE: '1'
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -288,7 +284,9 @@ jobs:
                    egress_session_probe.py test_zavod_gate.py; do
             python3 -I -c 'import ast, sys; ast.parse(open(sys.argv[1], encoding="utf-8").read())' "$C/$f"
           done
-          python3 -I "$C/test_zavod_gate.py" | tee "$RUNNER_TEMP/gate_unit.out"
+          # -B: тест не пишет *.pyc рядом с файлами ячейки — проверка склейки считает его непроверяемым форматом
+          # (аудит M3310-R11-03); переменная PYTHONDONTWRITEBYTECODE при -I не действует
+          python3 -I -B "$C/test_zavod_gate.py" | tee "$RUNNER_TEMP/gate_unit.out"
           grep -qx ZAVOD_GATE_UNIT=PASS "$RUNNER_TEMP/gate_unit.out"
           sudo bash "$C/install_cell.sh" --pg-conf-dir /etc/postgresql/16/main --session-fs-size 64M --intake-fs-size 192M --intake-fs-inodes 2048 --intake-journal-size 16M --min-free 1G | tee "$RUNNER_TEMP/install1.out"
           grep -qx ZAVOD_CELL_INSTALL=OK "$RUNNER_TEMP/install1.out"
