@@ -130,7 +130,7 @@ function ghFake({ log, polls = 1, conclusion = 'success', extraRuns = () => [], 
   let views = 0;
   let title = null;
   let rid = null;
-  const exec = async (cmd, args) => {
+  const exec = async (args, cmd = 'gh') => {
     calls.push([cmd, args]);
     assert.equal(cmd, 'gh');
     if (args[0] === 'workflow') {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/intake_ci.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.3: пробы M33-R3-01 — карантин уже ждёт замок, приём другой аренды принят; M33-R3-03 — журналы на своём разделе, полный журнал — отказ и тревога; M33-R3-04 — полный раздел: отказ приёма уходит в архив целиком; архивы кладёт zgate, а не root; v0.2: отказ карантина проверяет пустую out/; пробы M33-R2-03 — карантин после проверки приёма
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 15:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 03:47 +02:00 (v0.4: аудит M3310-R7-03 — sh -c только постоянным сценарием, значения позиционными аргументами; v0.3: пробы M33-R3-01 — карантин уже ждёт замок, приём другой аренды принят; M33-R3-03 — журналы на своём разделе, полный журнал — отказ и тревога; M33-R3-04 — полный раздел: отказ приёма уходит в архив целиком; архивы кладёт zgate, а не root; v0.2: отказ карантина проверяет пустую out/; пробы M33-R2-03 — карантин после проверки приёма
 #   ждёт; M33-R2-04 — раздел приёма: предел inode и места, диск сервера не тратится)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проба ПБ-4 (протокол v3.1 И.13; карта 3.3.9.4) на машине GitHub ubuntu-24.04 после install_cell.sh:
@@ -157,13 +157,13 @@ expect_import() { # аренда причина имя
 }
 F=files
 L=$(newlease); staged "$L"
-sudo -u zquarantine sh -c "printf Z | dd of=$I/out/$L/$F/src/a.py bs=1 count=1 conv=notrunc status=none"
+sudo -u zquarantine sh -c 'printf Z | dd of="$1/src/a.py" bs=1 count=1 conv=notrunc status=none' sh "$I/out/$L/$F"
 run_import "$L"; expect_import "$L" SHA256_MISMATCH "file swapped after quarantine"
 L=$(newlease); staged "$L"
-sudo -u zquarantine sh -c "mv $I/out/$L/$F/src $I/out/$L/$F/src.real && ln -s src.real $I/out/$L/$F/src"
+sudo -u zquarantine sh -c 'mv "$1/src" "$1/src.real" && ln -s src.real "$1/src"' sh "$I/out/$L/$F"
 run_import "$L"; expect_import "$L" OUT_NOT_REGULAR "parent folder swapped for a symlink"
 L=$(newlease); staged "$L"
-sudo -u zquarantine sh -c "ln $I/out/$L/$F/src/sub/b.txt $I/out/$L/$F/src/a.new && mv -f $I/out/$L/$F/src/a.new $I/out/$L/$F/src/a.py"
+sudo -u zquarantine sh -c 'ln "$1/src/sub/b.txt" "$1/src/a.new" && mv -f "$1/src/a.new" "$1/src/a.py"' sh "$I/out/$L/$F"
 run_import "$L"; expect_import "$L" HARDLINK_IN_OUT "file with two hard links"
 L=$(newlease); staged "$L"
 sudo -u zquarantine touch "$I/out/$L/$F/src/extra.txt"
@@ -172,7 +172,7 @@ L=$(newlease); staged "$L"
 sudo -u zquarantine mv "$I/out/$L/$F/src/sub/b.txt" "$I/out/$L/b.moved"
 run_import "$L"; expect_import "$L" FILE_MISSING "missing file after report"
 L=$(newlease); staged "$L"
-sudo sh -c "printf x > $I/out/$L/$F/src/root.txt"
+sudo sh -c 'printf x > "$1/src/root.txt"' sh "$I/out/$L/$F"
 run_import "$L"; expect_import "$L" OUT_FOREIGN_ENTRY "file of another owner"
 L=$(newlease); staged "$L"
 sudo -u zquarantine sleep 120 &
@@ -330,7 +330,7 @@ wait_for 15 archived_now "$Lm" quarantine && ok "M33-R2-04: refused archive move
 isys1=$(sysinodes)
 [ $((isys0 - isys1)) -lt 500 ] && ok "M33-R2-04: server disk inodes untouched ($((isys0 - isys1)))" || bad "M33-R2-04: server inodes used $((isys0 - isys1))"
 # Освободить inode раздела для пробы места: перенос на диск машины CI, ничего не удаляется.
-sudo sh -c "mv '$I'/archive/$Lm-* '$TMP'/"
+sudo sh -c 'mv "$1"/archive/"$2"-* "$3"/' sh "$I" "$Lm" "$TMP"
 inode_map after
 sudo journalctl -u "zquarantine@$Lm.service" --no-pager -o cat | grep -a ZAVOD_INTAKE | sed "s/^/INTAKE_INFO svc: /" || true
 sudo find "$I" -xdev -maxdepth 3 -path "*$Lm*" | head -5 | sed "s/^/INTAKE_INFO left: /"

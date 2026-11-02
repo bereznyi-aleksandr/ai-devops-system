@@ -1,8 +1,11 @@
 'use strict';
 // ДОКУМЕНТ: zavod/kernel/ci/sql_concat_js.cjs
-// ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
 // ДАТА СОЗДАНИЯ: 2026-11-02 02:21 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
-// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 02:55 +02:00 (v0.2: аудит M3310-R6-01..04 — таблица и список ключей только для
+// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 03:47 +02:00 (v0.3: аудит M3310-R7-01 — обратный вызов map/forEach/… только стрелкой без
+//   третьего параметра и thisArg, вызов метода таблицы с this — не чтение, цепочка от свойства (push.call) — не чтение;
+//   M3310-R7-02 — сценарий после -c в любом списке файла: исполняющий аргументы — только из SHELL_SCRIPTS; своя
+//   обёртка запуска (run(file, args)) проверяется по каждому вызову; v0.2: аудит M3310-R6-01..04 — таблица и список ключей только для
 //   чтения; process.getBuiltinModule и другие пути к встроенным модулям запрещены; запуск программ — только spawn,
 //   spawnSync, execFile, execFileSync прямым вызовом, программа — постоянное имя из списка, без оболочки; у каждой
 //   находки есть код правила, разрешение снимает только находку своего кода)
@@ -76,6 +79,15 @@ const BANNED_STRINGS = new Set(['psql', '-e', '--eval', '-p', '--print', '-r', '
 const CHILD_FUNCS = new Set(['spawn', 'spawnSync', 'execFile', 'execFileSync']);
 const PROGRAMS = new Set(['gh', 'git', 'docker', 'podman', 'sudo', 'sh', 'bash']);
 const DATA_PROGRAMS = new Set(['gh', 'git', 'docker', 'podman']);
+// Сценарии после «-c» (аудит M3310-R7-02): постоянный сценарий может исполнить свои аргументы (eval "$1", "$@").
+// Поэтому сценарий с $, `, eval, source, exec или «.» принимается, только если он — один из этих (ограждение fencer.mjs:
+// вход в группу cgroup и запуск argv исполнителя под setpriv; остановка группы; проверка и остановка процесса в
+// контейнере). Любой другой такой сценарий — находка.
+const SHELL_SCRIPTS = new Set([
+  'L=$1; U=$2; G=$3; shift 3; mkdir "$L" && echo $$ > "$L/cgroup.procs" && ' +
+    'exec setpriv --reuid="$U" --regid="$G" --clear-groups --no-new-privs -- "$@"',
+  'echo 1 > "$1/cgroup.kill"', 'kill -0 "$1"', 'kill -9 "$1"']);
+const SHELL_RUNS = /[$`]|\b(eval|source|exec)\b|(^|[\s;&|(])\.\s/;
 const SKIP_KEYS = new Set(['type', 'start', 'end', 'loc', 'range']);
 // Код правила у каждой находки: разрешение снимает только находку своего кода.
 const CODES = [[/^(query text|function passing query text)/, 'QUERY_TEXT'], [/^name containing query/, 'QUERY_NAME'],
@@ -382,6 +394,24 @@ function check(path, text) {
   // не таблица и не список.
   const READ_METHODS = new Set(['map', 'filter', 'forEach', 'some', 'every', 'find', 'findIndex', 'flatMap',
     'includes', 'indexOf', 'slice', 'join', 'at', 'hasOwnProperty']);
+  // Аудит M3310-R7-01: обратный вызов этих методов получает сам массив третьим аргументом (и как this у function).
+  // Поэтому принимается только стрелка (у неё нет своих this и arguments) с одним-двумя простыми параметрами,
+  // без второго аргумента метода (thisArg). Иначе массив можно изменить под другим именем: names.forEach((_, i, a) =>
+  // { a[0] = 'qu' + 'ery'; }).
+  const CALLBACK_METHODS = new Set(['map', 'filter', 'forEach', 'some', 'every', 'find', 'findIndex', 'flatMap']);
+  const safeCallback = (c) => c.arguments.length === 1 && c.arguments[0].type === 'ArrowFunctionExpression' &&
+    c.arguments[0].params.length <= 2 && c.arguments[0].params.every((x) => x.type !== 'RestElement');
+  // Метод объекта-литерала, написанный как function или f() {}, получает сам объект как this и может его изменить
+  // (this.a = 'query', super.a = …). Вызов метода такой таблицы разрешён, только если ни один её метод не берёт
+  // this или super (стрелки внутри метода берут this метода — тоже считается).
+  const thisUsers = new Set();
+  for (const n of all) {
+    if (n.type !== 'ThisExpression' && n.type !== 'Super') continue;
+    let f = parent.get(n);
+    while (f && (f.type !== 'FunctionExpression' && f.type !== 'FunctionDeclaration')) f = parent.get(f);
+    if (f) thisUsers.add(f);
+  }
+  const thisMethods = (lit) => lit.type === 'ObjectExpression' && lit.properties.some((pr) => thisUsers.has(pr.value));
   const writeTarget = (m) => {
     const up = parent.get(m);
     return !up || (up.type === 'AssignmentExpression' && up.left === m) || up.type === 'UpdateExpression' ||
@@ -409,8 +439,12 @@ function check(path, text) {
         // Вызов из объекта-литерала (T.f(…), T[k](…)) — своя функция таблицы: у Object.prototype меняющих методов,
         // кроме запрещённых имён, нет. У массива — только не меняющие методы.
         if (c && c.type === 'CallExpression' && c.callee === p) {
-          return (lit && lit.type === 'ObjectExpression') || (!p.computed && READ_METHODS.has(p.property.name));
+          if (lit && lit.type === 'ObjectExpression') return !thisMethods(lit);
+          if (p.computed || !READ_METHODS.has(p.property.name)) return false;
+          return !CALLBACK_METHODS.has(p.property.name) || safeCallback(c);
         }
+        // Цепочка от свойства (names.push.call(…), T.list[0] = …) — уже не чтение самого имени.
+        if (c && c.type === 'MemberExpression' && c.object === p) return false;
         return true;
       }
       if (p.type === 'ForOfStatement' && p.right === r) return true;
@@ -442,7 +476,7 @@ function check(path, text) {
     if (e.type === 'CallExpression' && e.callee.type === 'MemberExpression' && !e.callee.computed) {
       const m = e.callee.property.name;
       if ((m === 'sort' || m === 'slice') && e.arguments.length === 0) return listNames(e.callee.object, seen);
-      if (m === 'filter') return listNames(e.callee.object, seen);
+      if (m === 'filter' && safeCallback(e)) return listNames(e.callee.object, seen);
       if (m === 'keys' && e.callee.object.type === 'Identifier' && e.callee.object.name === 'Object' &&
           !bindingOf.get(e.callee.object) && e.arguments.length === 1 && e.arguments[0].type === 'Identifier') {
         const tb = bindingOf.get(e.arguments[0]);
@@ -563,9 +597,33 @@ function check(path, text) {
       }
     }
   }
-  function checkChild(call) {
+  // Обёртка запуска (функция run(file, args) над execFile): программа или аргументы — параметры своей функции. Тогда
+  // функция — своя функция файла, не выставлена наружу, используется только прямым вызовом, и КАЖДЫЙ вызов
+  // проверяется как запуск программы с теми аргументами, что пришли на место параметров.
+  function wrapperChild(call, depth) {
+    const pos = new Map();
+    let fn = null;
+    call.arguments.forEach((a, i) => {
+      const b = a.type === 'Identifier' ? bindingOf.get(a) : null;
+      if (b && b.kind === 'param' && b.index >= 0 && !b.writes.length && (!fn || fn === b.fn)) { fn = b.fn; pos.set(i, b.index); }
+    });
+    if (!fn || !pos.has(0) || depth > 4) return;
+    const fb = wrapperBinding(fn);
+    if (!fb) return;
+    if (exported(fb)) add(call, 'child process: wrapper function that starts programs is exported');
+    for (const r of fb.refs) {
+      const cs = parent.get(r);
+      if (!cs || cs.type !== 'CallExpression' || cs.callee !== r) { add(r, 'child process: wrapper function used other than by a direct call'); continue; }
+      if (cs.arguments.some((a) => a.type === 'SpreadElement')) { add(cs, 'child process call with spread arguments'); continue; }
+      const none = { type: 'Identifier', name: 'undefined', start: cs.start, end: cs.end, loc: cs.loc };
+      const pseudo = call.arguments.map((a, i) => (pos.has(i) ? cs.arguments[pos.get(i)] || none : a));
+      checkChild({ type: 'CallExpression', arguments: pseudo, start: cs.start, end: cs.end, loc: cs.loc }, depth + 1);
+    }
+  }
+  function checkChild(call, depth = 0) {
     const args = call.arguments;
     if (args.some((a) => a.type === 'SpreadElement')) { add(call, 'child process call with spread arguments'); return; }
+    wrapperChild(call, depth);
     const prog = isExecPath(args[0]) ? 'node' : constValue(args[0]);
     if (prog !== 'node' && !PROGRAMS.has(prog)) add(call, 'child process: program is not a fixed allowed name');
     if (prog !== null && !DATA_PROGRAMS.has(prog) && !(args[1] && args[1].type === 'ArrayExpression')) {
@@ -573,13 +631,7 @@ function check(path, text) {
     }
     args.slice(1).forEach((a, i) => {
       if (a.type === 'ArrayExpression') {
-        const el = a.elements;
-        el.forEach((x, j) => {
-          if (x && x.type !== 'SpreadElement' && constValue(x) === '-c' && !isConst(el[j + 1])) {
-            add(x, 'child process: shell script after -c is not a fixed string');
-          }
-        });
-        if (i === 0) checkArgv(prog, el, 0, a);
+        if (i === 0) checkArgv(prog, a.elements, 0, a);
       } else if (a.type === 'ObjectExpression') {
         for (const pr of a.properties) {
           if (pr.type !== 'Property' || pr.computed) { add(pr, 'child process options with spread or computed key'); continue; }
@@ -590,6 +642,19 @@ function check(path, text) {
         // аргументы программы-данных (gh, git, docker, podman) могут прийти списком из переменной
       } else if (!(i >= 1 && isFunc(a))) {
         add(a, 'child process: arguments or options are not a literal');
+      }
+    });
+  }
+  // «-c» в ЛЮБОМ списке файла (прямой вызов, своя обёртка this.docker([...]), список в переменной): после него —
+  // постоянный сценарий; сценарий, который исполняет свои аргументы или переменные, — только из SHELL_SCRIPTS.
+  function checkDashC(a) {
+    const el = a.elements;
+    el.forEach((x, j) => {
+      if (!x || x.type === 'SpreadElement' || !isConst(x) || constValue(x) !== '-c') return;
+      const s = el[j + 1] && el[j + 1].type !== 'SpreadElement' && isConst(el[j + 1]) ? constValue(el[j + 1]) : null;
+      if (typeof s !== 'string') add(x, 'child process: shell script after -c is not a fixed string');
+      else if (SHELL_RUNS.test(s) && !SHELL_SCRIPTS.has(s)) {
+        add(el[j + 1], 'child process: script after -c runs its arguments or variables and is not one of SHELL_SCRIPTS');
       }
     });
   }
@@ -689,6 +754,7 @@ function check(path, text) {
         }
         break;
       }
+      case 'ArrayExpression': checkDashC(n); break;
       case 'ImportExpression': add(n, 'module loaded at run time (import())'); break;
       case 'WithStatement': add(n, 'with statement'); break;
       case 'ImportDeclaration': case 'ExportNamedDeclaration': case 'ExportAllDeclaration':

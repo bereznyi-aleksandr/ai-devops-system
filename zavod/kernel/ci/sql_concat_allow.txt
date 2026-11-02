@@ -1,5 +1,5 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_allow.txt — разрешения проверки склейки запросов (sql_concat_scan.py)
-# ВЕРСИЯ: v0.5  ДАТА: 2026-11-02 02:55 +02:00 (v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# ВЕРСИЯ: v0.6  ДАТА: 2026-11-02 03:43 +02:00 (v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # Формат: путь<TAB>КОД<TAB>точный текст строки кода. Любая правка строки снимает разрешение (строка снова — находка);
 # неиспользованная строка — тоже отказ. Ни одна строка ниже не держит объект базы и не передаёт текст запроса извне
 # (сканер отказывает строке, где есть pg., Pool, Client, pool, client, db или .query).
@@ -21,8 +21,12 @@
 # rules_gate.mjs: execFileSync(bin, ['-C', repoDir, …]) — git (bin по умолчанию 'git', подменяется только в тестах),
 #   без оболочки; разбор реестра правил и билета (JSON) — данные, база не трогается.
 # deploy_egress.mjs: '-e' — флаг события у команды gh (gh run list -e workflow_dispatch), не запуск кода;
-#   execFile(file, args, { env }) — своя функция run файла: вызовы run('bash', [файл сценария установки …]) и
-#   exec('gh', […]) (exec = run); без оболочки.
+#   execFile(file, args, { env }) — своя функция run файла; проверка сборки проверяет каждый её вызов: ghRun —
+#   run('gh', args), localInstall — run('bash', [script, …]): bash исполняет ФАЙЛ сценария установки
+#   install_release.sh (путь из параметра script; localInstall вызывают только проверки с путём файла хранилища),
+#   а не текст после -c; остальные аргументы — имена файлов пакета. Без оболочки.
+# cell_ci.sh, egress_ci.sh: pgv и pgk — помощники запроса к базе: постоянный текст запроса ($1, первым аргументом
+#   при каждом вызове — это проверяет сам сканер) идёт в psql через трубу, значения — переменными psql (-v имя=значение).
 # engine_client.mjs: defineProperty(this, '_auth') — скрытое поле своего объекта; Object.assign(this, extra) — поля
 #   ошибки; Object.entries(o) — разбор ответа службы движка (JSON).
 # orchestrator.mjs: Object.assign(this, {…}) — поля своего объекта из параметров конструктора; Object.values(TOPICS) и
@@ -34,7 +38,8 @@
 # stage_gates.mjs: разбор таблицы этапов и критериев (JSON) — данные.
 zavod/engine/src/deploy_egress.mjs	CHILD	execFile(file, args, { env }, (e, stdout, stderr) => {
 zavod/engine/src/deploy_egress.mjs	CHILD_IMPORT	import { execFile } from 'node:child_process';
-zavod/engine/src/deploy_egress.mjs	CODE_STRING	const { stdout } = await exec('gh', ['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
+zavod/engine/src/deploy_egress.mjs	CHILD	const r = await run('bash', [script, m, a, t, s, c], { env: { ...process.env, ...env, INCOMING: dir } }).catch((e) => ({ stdout: e.stdout || '' }));
+zavod/engine/src/deploy_egress.mjs	CODE_STRING	const { stdout } = await exec(['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
 zavod/engine/src/engine_client.mjs	BANNED_NAME	Object.defineProperty(this, '_auth', { value: 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64'), enumerable: false });
 zavod/engine/src/engine_client.mjs	BANNED_NAME	constructor(code, message, extra = {}) { super(`${code}: ${message}`); this.code = code; Object.assign(this, extra); }
 zavod/engine/src/engine_client.mjs	BANNED_NAME	return Object.entries(o).map(([name, value]) => ({
@@ -98,3 +103,6 @@ zavod/kernel/src/stage_gates.mjs	COMPUTED	const st = stages[sid];
 zavod/kernel/src/stage_gates.mjs	COMPUTED	else if (rc !== '*' && !stages[rs].criteria?.[rc]) errors.push(`${sid}: ${key} unknown criterion ${ref}`);
 zavod/kernel/src/stage_gates.mjs	COMPUTED	for (const id of ids) if (crit[id].status !== 'PASS') out.push(`${rs}:${id}=${crit[id].status}`);
 zavod/kernel/src/stage_gates.mjs	COMPUTED	if (!stages[rs]) errors.push(`${sid}: ${key} unknown stage ${rs}`);
+zavod/ops/server/cell/cell_ci.sh	SH_PSQL	  printf '%s\n' "$q" | sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem "${v[@]}"
+zavod/ops/server/cell/egress_ci.sh	SH_PSQL	  printf '%s\n' "$q" | sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem "${v[@]}"
+zavod/ops/server/cell/egress_ci.sh	SH_PSQL	  printf '%s\n' "$q" | sudo -u zkernel psql -X -A -t -q -v ON_ERROR_STOP=1 -h /var/run/postgresql -U bem_kernel_rw -d bem "${v[@]}"

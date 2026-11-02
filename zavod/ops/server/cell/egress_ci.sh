@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/egress_ci.sh
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 01:21 +02:00 (v0.4: аудит M3310-R2-02 — посредник отказывает службе с динамическим uid вне zagent@ и в zagent.slice без zagent@; журнал посредника называет аренду сессии; v0.3: аудит M3310-R1B-01 — команда после выхода соединившегося процесса; M3310-R1B-03 — службы без сети не достают посредника, петлю IPv4/IPv6 и DNS по UDP, посредник отказывает не-сессии; M3310-R1B-04 — GitHub по окончанию имени в списке и в запросе; v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 03:33 +02:00 (v0.5: аудит M3310-R7-03 — запросы к базе только постоянным текстом, значения переменными psql (pgv, pgk); v0.4: аудит M3310-R2-02 — посредник отказывает службе с динамическим uid вне zagent@ и в zagent.slice без zagent@; журнал посредника называет аренду сессии; v0.3: аудит M3310-R1B-01 — команда после выхода соединившегося процесса; M3310-R1B-03 — службы без сети не достают посредника, петлю IPv4/IPv6 и DNS по UDP, посредник отказывает не-сессии; M3310-R1B-04 — GitHub по окончанию имени в списке и в запросе; v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка шага 3.3.10 на машине GitHub ubuntu-24.04 после install_cell.sh, cell_ci.sh и intake_ci.sh:
 #   привратник (ПБ-5) и выход только через посредника (ПБ-3) — изнутри настоящей клетки zagent@<аренда>
@@ -15,15 +15,27 @@ set -euo pipefail
 FAILS=0
 ok() { echo "EGRESS_OK $*"; }
 bad() { echo "EGRESS_FAIL $*"; FAILS=$((FAILS + 1)); }
-pgsu() { sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem -c "$1"; }
+# Запрос к базе — только постоянный текст: значения идут переменными psql (-v имя=значение), в тексте
+# запроса — :'имя' (psql сам берёт значение в кавычки). Текст запроса из подстановок оболочки не собирается
+# (карта 3.3.10.2, аудит M3310-R7-03); проверка сборки sql_concat_scan.py читает и этот файл.
+pgv() { # $1 — постоянный текст запроса, дальше — имя=значение
+  local q=$1 a v=(); shift
+  for a in "$@"; do v+=(-v "$a"); done
+  printf '%s\n' "$q" | sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem "${v[@]}"
+}
+pgk() { # то же от имени ядра (zkernel → bem_kernel_rw)
+  local q=$1 a v=(); shift
+  for a in "$@"; do v+=(-v "$a"); done
+  printf '%s\n' "$q" | sudo -u zkernel psql -X -A -t -q -v ON_ERROR_STOP=1 -h /var/run/postgresql -U bem_kernel_rw -d bem "${v[@]}"
+}
 K=0
 newlease() { # → 32 hex; аренда OPEN напрямую (только CI)
   local id
   id=$(cat /proc/sys/kernel/random/uuid); K=$((K + 1))
-  pgsu "INSERT INTO bem_control.chat_lease (lease_id, tenant_id, role_key, chat_number, generation, work_item_id,
+  pgv "INSERT INTO bem_control.chat_lease (lease_id, tenant_id, role_key, chat_number, generation, work_item_id,
         holder_session, rules_commit, code_commit, status, opened_by)
-        VALUES ('$id', gen_random_uuid(), '09_ci_egress', 'E$(printf '%05d' "$K")', 1, gen_random_uuid(), 'ci-egress-$K',
-        repeat('a', 40), repeat('b', 40), 'OPEN', 'ci')" >/dev/null
+        VALUES (:'id', gen_random_uuid(), '09_ci_egress', :'chat', 1, gen_random_uuid(), :'holder',
+        repeat('a', 40), repeat('b', 40), 'OPEN', 'ci')" "id=$id" "chat=E$(printf '%05d' "$K")" "holder=ci-egress-$K" >/dev/null
   echo "${id//-/}"
 }
 dash() { echo "${1:0:8}-${1:8:4}-${1:12:4}-${1:16:4}-${1:20:12}"; }
@@ -88,8 +100,8 @@ printf '[Service]\nExecStart=\nExecStart=/usr/bin/python3 -I /usr/local/lib/zavo
 sudo systemctl daemon-reload
 sudo touch "/run/zavod/start/$LP"
 if start_wait "$LP"; then ok "probe session started"; else bad "probe session not started"; sudo journalctl -u zagent-start.service --no-pager | tail -20; fi
-[ "$(pgsu "SELECT bem_control.lease_mark_running('$(dash "$LP")'::uuid)")" = RUNNING ] && ok "probe session RUNNING" || bad "mark running"
-wait_for 120 sh -c "sudo journalctl -u 'zagent@$LP.service' --no-pager | grep -q EGRESS_PROBE_DONE" || bad "session probes did not finish"
+[ "$(pgv "SELECT bem_control.lease_mark_running(:'l'::uuid)" "l=$(dash "$LP")")" = RUNNING ] && ok "probe session RUNNING" || bad "mark running"
+wait_for 120 sh -c 'sudo journalctl -u "zagent@$1.service" --no-pager | grep -q EGRESS_PROBE_DONE' sh "$LP" || bad "session probes did not finish"
 J=$(sudo journalctl -u "zagent@$LP.service" --no-pager -o cat)
 echo "$J" | grep EGRESS_PROBE || true
 sudo journalctl -u zavod-gate.service --no-pager -o cat | tail -15 | sed "s/^/EGRESS_INFO gate: /"
@@ -118,23 +130,23 @@ want proxy_other_port 403
 
 echo "=== база: записи привратника и правила строк"
 LPD=$(dash "$LP")
-[ "$(pgsu "SELECT string_agg(kind, ',' ORDER BY received_at) FROM bem_control.gate_command WHERE lease_id = '$LPD'")" = HEARTBEAT,PROGRESS ] \
-  && ok "two commands stored for the probe lease" || bad "stored commands: $(pgsu "SELECT string_agg(kind, ',') FROM bem_control.gate_command WHERE lease_id = '$LPD'")"
-[ "$(pgsu "SELECT args->>'text' FROM bem_control.gate_command WHERE lease_id = '$LPD' AND kind = 'PROGRESS'")" = "x'); DROP TABLE bem_control.gate_command; --" ] \
+[ "$(pgv "SELECT string_agg(kind, ',' ORDER BY received_at) FROM bem_control.gate_command WHERE lease_id = :'l'" "l=$LPD")" = HEARTBEAT,PROGRESS ] \
+  && ok "two commands stored for the probe lease" || bad "stored commands: $(pgv "SELECT string_agg(kind, ',') FROM bem_control.gate_command WHERE lease_id = :'l'" "l=$LPD")"
+[ "$(pgv "SELECT args->>'text' FROM bem_control.gate_command WHERE lease_id = :'l' AND kind = 'PROGRESS'" "l=$LPD")" = "x'); DROP TABLE bem_control.gate_command; --" ] \
   && ok "SQL text kept as data, table in place" || bad "SQL text"
 # Строгий вид проверяет сам привратник до базы; в журнал базы попадают решения базы. Чужая аренда пишется под
 # номером из команды (вторая аренда), а не под номером собеседника.
 LOD=$(dash "$LO")
-[ "$(pgsu "SELECT bool_and(o IN (SELECT outcome FROM bem_control.gate_command_log WHERE lease_id = '$LPD'))
-            FROM unnest(ARRAY['ACCEPTED', 'NONCE_REPLAY', 'SHA_MISMATCH']) o")" = t ] \
-  && [ "$(pgsu "SELECT string_agg(outcome, ',') FROM bem_control.gate_command_log WHERE lease_id = '$LOD'")" = PEER_MISMATCH ] \
-  && ok "gate decisions logged in the database" || bad "gate log: $(pgsu "SELECT string_agg(lease_id || ':' || outcome, ',') FROM bem_control.gate_command_log")"
-TEN=$(pgsu "SELECT tenant_id FROM bem_control.chat_lease WHERE lease_id = '$LPD'")
-[ "$(sudo -u zkernel psql -X -A -t -h /var/run/postgresql -U bem_kernel_rw -d bem -c "SELECT count(*) FROM bem_control.gate_command")" = 0 ] \
+[ "$(pgv "SELECT bool_and(o IN (SELECT outcome FROM bem_control.gate_command_log WHERE lease_id = :'l'))
+            FROM unnest(ARRAY['ACCEPTED', 'NONCE_REPLAY', 'SHA_MISMATCH']) o" "l=$LPD")" = t ] \
+  && [ "$(pgv "SELECT string_agg(outcome, ',') FROM bem_control.gate_command_log WHERE lease_id = :'l'" "l=$LOD")" = PEER_MISMATCH ] \
+  && ok "gate decisions logged in the database" || bad "gate log: $(pgv "SELECT string_agg(lease_id || ':' || outcome, ',') FROM bem_control.gate_command_log")"
+TEN=$(pgv "SELECT tenant_id FROM bem_control.chat_lease WHERE lease_id = :'l'" "l=$LPD")
+[ "$(pgk "SELECT count(*) FROM bem_control.gate_command")" = 0 ] \
   && ok "RLS: kernel without tenant sees nothing" || bad "RLS: kernel without tenant sees rows"
-[ "$(sudo -u zkernel psql -X -A -t -h /var/run/postgresql -U bem_kernel_rw -d bem -c "SET app.tenant_id = '$(cat /proc/sys/kernel/random/uuid)'; SELECT count(*) FROM bem_control.gate_command" | tail -1)" = 0 ] \
+[ "$(pgk "SET app.tenant_id = :'t'; SELECT count(*) FROM bem_control.gate_command" "t=$(cat /proc/sys/kernel/random/uuid)" | tail -1)" = 0 ] \
   && ok "RLS: other tenant sees nothing" || bad "RLS: other tenant sees rows"
-[ "$(sudo -u zkernel psql -X -A -t -h /var/run/postgresql -U bem_kernel_rw -d bem -c "SET app.tenant_id = '$TEN'; SELECT count(*) FROM bem_control.gate_command" | tail -1)" = 2 ] \
+[ "$(pgk "SET app.tenant_id = :'t'; SELECT count(*) FROM bem_control.gate_command" "t=$TEN" | tail -1)" = 2 ] \
   && ok "RLS: own tenant sees its 2 commands" || bad "RLS: own tenant"
 r=$(sudo -u zgate psql -X -A -t -U zgate -d bem -c 'SELECT current_user' 2>&1 || true)
 [ "$r" = zgate ] && ok "zgate logs in to the database as zgate" || bad "zgate login: $r"

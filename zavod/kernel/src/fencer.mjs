@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/fencer.mjs
 // ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 02:55 +02:00 (v0.6: аудит M3310-R6-03, -04 — сценарий sh -c постоянный, uid и gid позиционными аргументами; текст проверки роли — сумма постоянных частей; v0.5: E4-8 — единица «контейнер»
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 03:47 +02:00 (v0.6.1: аудит M3310-R7-02 — kill -0/-9 в контейнере постоянным сценарием, номер
+//   процесса — позиционным аргументом; v0.6: аудит M3310-R6-03, -04 — сценарий sh -c постоянный, uid и gid позиционными аргументами; текст проверки роли — сумма постоянных частей; v0.5: E4-8 — единица «контейнер»
 //   (ContainerUnit, способ CONTAINER_TERMINATED): PID 1 контейнера — держатель src/container_holder.mjs, исполнитель
 //   и его потомки внутри; ограждение — docker kill и ожидание остановки; выбор единицы — параметр unit;
 //   мутация leader-only гасит ведущий процесс средствами самой единицы (killLeader). v0.4: слияние v0.3 (Job Object) и
@@ -215,13 +216,13 @@ export class ContainerUnit {
   }
 
   // Жив ли процесс с номером внутри контейнера (для теста; остановленный контейнер — нет).
-  nsAlive(pid) { return this.docker(['exec', this.name, 'sh', '-c', `kill -0 ${Number(pid)}`]).status === 0; }
+  nsAlive(pid) { return this.docker(['exec', this.name, 'sh', '-c', 'kill -0 "$1"', 'sh', String(Number(pid))]).status === 0; }
 
   async refresh() { /* состояние читается у docker напрямую */ }
   handle() { /* сообщения держателя: только JOB_LEADER_EXIT */ }
 
   // Только для мутации E4-8: завершить ведущий процесс внутри контейнера.
-  async killLeader(pid) { this.docker(['exec', this.name, 'sh', '-c', `kill -9 ${Number(pid)}`]); }
+  async killLeader(pid) { this.docker(['exec', this.name, 'sh', '-c', 'kill -9 "$1"', 'sh', String(Number(pid))]); }
 
   async kill(timeoutMs) {
     const r = this.docker(['kill', this.name]);
