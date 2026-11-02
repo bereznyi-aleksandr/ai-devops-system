@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.18  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 15:58 +02:00 (v0.18: аудит M3310-R16-01..06 и на опережение — закрытый мир оболочки и юнитов: программа только из списка SH_PROGRAMS_OK, обёртка только из WRAP_OPTS со своими опциями, среда программе не передаётся, имена PATH, BASH_ENV, LD_*, NODE_*, PYTHON* … не присваиваются, вложенность глубже предела — находка SH_PARSE, awk и sed — без запуска и записи, systemctl, find, flock, ip — закрытые подкоманды и опции, запись в папки кода — SH_EXEC; юнит: приставка | — UNIT_SHELL без разрешения, + и ! — UNIT_PRIV, закрытые разделы и ключи, без $ и ;, вставки *.conf, tmpfiles только d, polkit без запуска, nft без include; v0.17 от 15:12: аудит M3310-R15B-02..07 — файл дерева только полным путём папки установки; getattr только у модуля закрытого списка без вызова результата; $'…' с обратной чертой — имя не постоянное; опции ssh, которые запускают команды, и -F; среда службы — закрытый список имён, EnvironmentFile — находка; CHILD_OPTS не снимается разрешением; прежняя 2026-11-02 10:42 +02:00 — v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
+# ВЕРСИЯ: v0.19  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 20:53 +02:00 (v0.19: аудит M3310-R17B-01..05 — trap вне списка программ; read, printf -v, wait -p, ${ИМЯ:=}, (( ИМЯ= )) для имён SH_SPECIAL — находка; путь записи с .. — находка, путь нормализуется; cd и ln в папку кода — SH_EXEC; правило polkit — закрытый мир имён и без вычисляемых свойств; nft и systemd-tmpfiles — только закрытые формы с файлом дерева; v0.18 от 15:58: аудит M3310-R16-01..06 и на опережение — закрытый мир оболочки и юнитов: программа только из списка SH_PROGRAMS_OK, обёртка только из WRAP_OPTS со своими опциями, среда программе не передаётся, имена PATH, BASH_ENV, LD_*, NODE_*, PYTHON* … не присваиваются, вложенность глубже предела — находка SH_PARSE, awk и sed — без запуска и записи, systemctl, find, flock, ip — закрытые подкоманды и опции, запись в папки кода — SH_EXEC; юнит: приставка | — UNIT_SHELL без разрешения, + и ! — UNIT_PRIV, закрытые разделы и ключи, без $ и ;, вставки *.conf, tmpfiles только d, polkit без запуска, nft без include; v0.17 от 15:12: аудит M3310-R15B-02..07 — файл дерева только полным путём папки установки; getattr только у модуля закрытого списка без вызова результата; $'…' с обратной чертой — имя не постоянное; опции ssh, которые запускают команды, и -F; среда службы — закрытый список имён, EnvironmentFile — находка; CHILD_OPTS не снимается разрешением; прежняя 2026-11-02 10:42 +02:00 — v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
 #   -04, -05 — закрытый мир: global/nonlocal делают имя во внешних областях не постоянным; импорт модуля Python вне
 #   PY_MODULES и относительный импорт — находка PY_IMPORT; psql в любом месте команды и программа за docker/ssh/… —
 #   по своим правилам, команда ssh одним словом разбирается, из подстановки — находка; python/bash/node запускают
@@ -57,6 +57,7 @@ import ast
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shlex
 import subprocess
@@ -638,7 +639,7 @@ UNIT_ENV_OK = re.compile(r'^(ZAVOD_[A-Z0-9_]+|HTTPS_PROXY|HTTP_PROXY|NO_PROXY)$'
 # из /usr/bin, /usr/sbin, /bin, /sbin.
 SH_PROGRAMS_OK = {
     ':', '[', 'test', 'true', 'false', 'break', 'continue', 'exit', 'return', 'shift', 'wait', 'read', 'set', 'cd',
-    'pwd', 'umask', 'trap', 'local', 'echo', 'printf', 'sleep', 'awk', 'sed', 'grep', 'cut', 'tr', 'sort', 'uniq',
+    'pwd', 'umask', 'local', 'echo', 'printf', 'sleep', 'awk', 'sed', 'grep', 'cut', 'tr', 'sort', 'uniq',
     'wc', 'head', 'tail', 'cat', 'tee', 'od', 'numfmt', 'seq', 'date', 'basename', 'dirname', 'stat', 'ls', 'du',
     'df', 'id', 'getent', 'uname', 'ps', 'ss', 'kill', 'pkill', 'mkdir', 'mktemp', 'touch', 'truncate', 'chmod',
     'chown', 'cp', 'mv', 'ln', 'install', 'dd', 'fallocate', 'find', 'flock', 'ip', 'nft', 'blkid', 'findmnt',
@@ -666,6 +667,20 @@ SH_SPECIAL = re.compile(r'^(PATH|CDPATH|IFS|ENV|BASH\w*|SHELLOPTS|PS[0-4]|PROMPT
                         r'|EXECIGNORE|FUNCNEST|POSIXLY_CORRECT|INPUTRC|HIST\w*|TMPDIR|LANG|LC_\w*|LD_\w*|NODE_\w*'
                         r'|PYTHON\w*|PERL\w*|RUBY\w*|PSQLRC|PG[A-Z]+|GIT_\w*|SYSTEMD_\w*|GCONV_PATH|LOCPATH|NLSPATH'
                         r'|MALLOC_\w*|OPENSSL_\w*|SSL_\w*|TERMINFO\w*|EDITOR|VISUAL|PAGER|LESS\w*|XDG_\w*)$')
+# Аудит M3310-R17B-02: те же имена меняются и без слова «ИМЯ=»: ${ИМЯ:=…}, ${ИМЯ=…}, арифметика (( ИМЯ=… )),
+# $(( ИМЯ+=… )); встроенные read и printf -v проверяются у самой команды. trap (аудит M3310-R17B-01) исполняет свой
+# текст при выходе или сигнале — его нет в SH_PROGRAMS_OK.
+SH_SPECIAL_SET = re.compile(r'\$\{' + SH_SPECIAL.pattern[1:-1] + r'(?!\w):?=|\(\([^)]*?(?<![\w$])'
+                            + SH_SPECIAL.pattern[1:-1] + r'(?!\w)\s*(?:[-+*/%&|^]|<<|>>)?=(?!=)')
+SH_NAME = re.compile(r'^[A-Za-z_]\w*$')
+
+
+def norm_path(v):
+    """Путь без //, /./ и /../ (аудит M3310-R17B-03); пустой — как есть."""
+    return posixpath.normpath(re.sub(r'/+', '/', v)) if v else v
+
+READ_OPTS = {'-r': 0}
+WAIT_OPTS = {'-n': 0, '-f': 0}
 SYSTEMCTL_CMDS = {'start', 'stop', 'restart', 'reload', 'is-active', 'is-enabled', 'is-failed', 'status', 'show',
                   'enable', 'disable', 'daemon-reload', 'mask', 'unmask', 'list-units', 'reset-failed'}
 SYSTEMCTL_OPTS = {'--runtime': 0, '--now': 0, '--no-pager': 0, '--quiet': 0, '-q': 0, '-p': 1, '--property': 1,
@@ -1090,6 +1105,9 @@ def sh_findings(path, text, line=1, depth=0):
     except Exception as e:  # неразобранное — находка, не пропуск
         return [(line, f'shell text not parsed: {e}', 'SH_PARSE')]
     cmds = lx.cmds
+    for m in SH_SPECIAL_SET.finditer(text):
+        add(line + text.count('\n', 0, m.start()), 'assignment to a name the shell or the program loader reads '
+            '(${…:=}, (( … = )))', 'SH_CMD')
     # Постоянные переменные: присвоены один раз постоянным текстом (X='…' или local X='…') и нигде больше не
     # меняются (read, for, printf -v, ${X:=}, (( )), let, unset, повторное присваивание). "$X" такой переменной —
     # постоянный текст (так код python в PY_TCP='…' проверяется правилами Python).
@@ -1246,6 +1264,58 @@ def sh_findings(path, text, line=1, depth=0):
             for w in rest:
                 if not (w['lit'] and (re.fullmatch(r'[-+][eux]+o?', w['val']) or w['val'] == 'pipefail')):
                     add(w['line'], f'set option {w["val"].replace(X, "?")} outside the closed list', 'SH_CMD')
+            return
+        # Аудит M3310-R17B-02: встроенные, которые записывают переменную по имени из своих слов (read ИМЯ,
+        # printf -v ИМЯ, wait -p ИМЯ): опции — закрытый список, имя — постоянное и не из SH_SPECIAL.
+        if p in ('wait', 'read', 'printf', 'cd', 'nft', 'systemd-tmpfiles') and ws[0]['val'] == 'command' and any(
+                w['lit'] and w['val'] in ('-v', '-V') for w in ws[1:k]):
+            return  # command -v nft только печатает путь программы
+        if p == 'wait':  # номер процесса из переменной — только последним словом (иначе "$a" "$b" = -p ИМЯ)
+            for j, w in enumerate(rest):
+                if not (w['lit'] and (w['val'] in WAIT_OPTS or w['val'].isdigit()) or
+                        not w['lit'] and j == len(rest) - 1):
+                    add(w['line'], f'wait word {w["val"].replace(X, "?")} outside the closed list', 'SH_CMD')
+            return
+        if p == 'read':
+            opts_ok, j = READ_OPTS, 0
+            while j < len(rest) and (not rest[j]['lit'] or rest[j]['val'].startswith('-')):
+                if not rest[j]['lit'] or rest[j]['val'] not in opts_ok:
+                    add(rest[j]['line'], f'{p} option {rest[j]["val"].replace(X, "?")} outside the closed list', 'SH_CMD')
+                    return
+                j += 1
+            for w in rest[j:] if p == 'read' else []:
+                if not w['lit'] or not SH_NAME.match(w['val']) or SH_SPECIAL.match(w['val']):
+                    add(w['line'], f'read into {w["val"].replace(X, "?")}: not a plain name or a name the shell '
+                        'reads', 'SH_CMD')
+            return
+        if p == 'printf' and rest and (not rest[0]['lit'] or rest[0]['val'].startswith('-')):
+            add(rest[0]['line'], 'printf option (-v writes a variable) or a format that is not fixed', 'SH_CMD')
+            return
+        # Аудит M3310-R17B-03: cd в папку кода — тогда запись по относительному пути попадёт туда.
+        if p == 'cd':
+            for w in rest:
+                if code_dir(w):
+                    add(w['line'], 'cd into a folder of code or start settings', 'SH_EXEC')
+            return
+        # Аудит M3310-R17B-05: nft и systemd-tmpfiles читают файл настроек. Разрешено: nft list …; nft [-c] -f файл
+        # *.nft проверенного дерева в /etc/zavod/; systemd-tmpfiles --create один файл из /etc/tmpfiles.d/ (туда
+        # оболочка пишет только файлы дерева, см. writes). Остальное (nft -f /tmp/…, nft flush, --prefix …) — находка.
+        if p == 'nft':
+            vals = [w['val'] if w['lit'] else X for w in rest]
+            if vals[:1] == ['list'] and X not in vals:
+                return
+            fi = vals.index('-f') if '-f' in vals else None
+            if not (fi is not None and vals[:fi] in ([], ['-c']) and len(vals) == fi + 2 and
+                    norm_path(vals[-1]) == vals[-1] and vals[-1].startswith('/etc/zavod/') and
+                    SCRIPTS.get(os.path.basename(vals[-1])) == 'nft'):
+                add(ws[k]['line'], 'nft outside the closed forms (list …; -f checked *.nft in /etc/zavod/)', 'SH_EXEC')
+            return
+        if p == 'systemd-tmpfiles':
+            vals = [w['val'] if w['lit'] else X for w in rest]
+            if not (len(vals) == 2 and vals[0] == '--create' and norm_path(vals[1]) == vals[1] and
+                    vals[1].startswith('/etc/tmpfiles.d/') and vals[1].endswith('.conf')):
+                add(ws[k]['line'], 'systemd-tmpfiles outside the closed form (--create one file of /etc/tmpfiles.d/)',
+                    'SH_EXEC')
             return
         if p == 'awk':
             awk_ok(c, rest)
@@ -1450,6 +1520,9 @@ def sh_findings(path, text, line=1, depth=0):
         if v.startswith(X) and m_ and m_.group(1) in consts:
             v = consts[m_.group(1)] + v[1:]
         v = re.sub(r'/+', '/', v)
+        if '..' in v.split('/'):  # аудит M3310-R17B-03: /tmp/../etc/… — это /etc/…; «..» в пути записи — находка
+            return True
+        v = norm_path(v) + ('/' if v.endswith('/') else '')
         return v.startswith(CODE_DIRS) or v.rstrip('/') + '/' in CODE_DIRS
 
     def writes(c, ws_):
@@ -1479,6 +1552,9 @@ def sh_findings(path, text, line=1, depth=0):
                 bad = [w for w in args if w['val'].startswith(('-t', '--target'))]
             elif p_ == 'install' and '-d' in opts_:
                 bad = []
+            elif p_ == 'ln' and any(code_dir(w) for w in files_):
+                # ссылка на файл или папку кода даёт путь записи вне CODE_DIRS (аудит M3310-R17B-03, на опережение)
+                bad = [w for w in files_ if code_dir(w)]
             elif files_ and code_dir(files_[-1]):
                 from_tree = p_ in ('install', 'cp') and here_ok and all(
                     re.match(r'^"\$HERE/[^"$`\\/]+"$', w['raw']) or (
@@ -1779,13 +1855,44 @@ def unit_findings(text):
     return out
 
 
+# Аудит M3310-R17B-04: правило polkit (*.rules) — JavaScript с правами root. Закрытый мир: без [ ] после имени
+# (вычисляемое свойство polkit['sp' + 'awn']), без `…`, имена после точки — только из RULES_MEMBERS, прочие имена —
+# из RULES_NAMES или объявлены в файле (var/let/const, параметры function).
+RULES_MEMBERS = {'addRule', 'Result', 'NOT_HANDLED', 'NO', 'YES', 'AUTH_SELF', 'AUTH_SELF_KEEP', 'AUTH_ADMIN',
+                 'AUTH_ADMIN_KEEP', 'id', 'user', 'indexOf', 'length', 'log', 'lookup', 'isInGroup', 'local',
+                 'active'}
+RULES_NAMES = {'var', 'let', 'const', 'function', 'return', 'if', 'else', 'polkit', 'String', 'true', 'false',
+               'null'}
+
+
+def rules_findings(text):
+    out = []
+    code = re.sub(r'/\*.*?\*/', lambda m: re.sub(r'[^\n]', ' ', m.group(0)), text, flags=re.S)
+    code = re.sub(r'//[^\n]*', '', code)
+    code = re.sub(r'"(?:[^"\\\n]|\\.)*"|\'(?:[^\'\\\n]|\\.)*\'', '""', code)
+    declared = set(re.findall(r'\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)', code))
+    for m in re.finditer(r'\bfunction\s*[\w$]*\s*\(([^)]*)\)', code):
+        declared |= {a.strip() for a in m.group(1).split(',') if a.strip()}
+    for m in re.finditer(r'(\.\s*)?([A-Za-z_$][\w$]*)|([\[`\\])', code):
+        ln = code.count('\n', 0, m.start()) + 1
+        if m.group(3):
+            prev = code[:m.start()].rstrip()[-1:]
+            if m.group(3) != '[' or re.match(r'[\w$)\]"]', prev or ' '):
+                out.append((ln, 'polkit rule: computed property, template text or escape', 'UNIT_EXEC'))
+        elif m.group(1) and m.group(2) not in RULES_MEMBERS:
+            out.append((ln, f'polkit rule: property {m.group(2)} outside the closed list', 'UNIT_EXEC'))
+        elif not m.group(1) and m.group(2) not in RULES_NAMES and m.group(2) not in declared:
+            out.append((ln, f'polkit rule: name {m.group(2)} outside the closed list', 'UNIT_EXEC'))
+    return out
+
+
 def data_findings(norm, text):
     """Файлы настроек дерева (аудит M3310-R16-05/06). Юнит и вставка к юниту (drop-in: *.conf с разделом [Service] …)
     — правила unit_findings; tmpfiles.d — только строки вида d (папка); правило polkit (*.rules, JavaScript) — без
     запуска программ и загрузки кода; правила nft — без include. Прочие *.conf — данные."""
     if norm.endswith(UNIT_EXT) or re.search(r'(?m)^\s*\[[A-Za-z]+\]\s*$', text):
         return unit_findings(text)
-    out = []
+    out = rules_findings(text) if norm.endswith('.rules') else []
     for i, raw in enumerate(text.splitlines(), 1):
         s = raw.strip()
         if not s or s.startswith('#'):
