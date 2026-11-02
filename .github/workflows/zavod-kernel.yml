@@ -323,7 +323,10 @@ jobs:
                     bad_flow7.mjs:23 bad_flow7.mjs:24 \
                     bad_flow8.sh:4 bad_flow8.sh:5 bad_flow8.sh:6 bad_flow8.sh:7 bad_flow8.sh:8 bad_flow8.sh:9 bad_flow8.sh:11 \
                     bad_flow8.sh:13 bad_flow8.sh:14 bad_flow8.sh:15 bad_flow8.sh:16 bad_flow8.sh:17 bad_flow8.sh:18 \
-                    bad_flow8.sh:19 bad_flow8.sh:20 \n                    bad_flow9.mjs:5 bad_flow9.mjs:9 bad_flow9.mjs:10 bad_flow9.mjs:11 bad_flow9.mjs:12 bad_flow9.mjs:15 \n                    bad_flow9.mjs:16 bad_flow9.mjs:17 bad_flow9.mjs:18 \n                    bad_flow9.py:5 bad_flow9.py:7 bad_flow9.py:9 bad_flow9.py:11 bad_flow9.py:13 bad_flow9.py:14; do
+                    bad_flow8.sh:19 bad_flow8.sh:20 \
+                    bad_flow9.mjs:5 bad_flow9.mjs:9 bad_flow9.mjs:10 bad_flow9.mjs:11 bad_flow9.mjs:12 bad_flow9.mjs:15 \
+                    bad_flow9.mjs:16 bad_flow9.mjs:17 bad_flow9.mjs:18 \
+                    bad_flow9.py:5 bad_flow9.py:7 bad_flow9.py:9 bad_flow9.py:11 bad_flow9.py:13 bad_flow9.py:14; do
             grep -q "^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/$at: " "$RUNNER_TEMP/scan_probe.out" || { echo "probe case $at not caught"; exit 1; }
           done
           # файл разрешений (аудит M3310-R6-04): строка с объектом базы и строка без кода правила — отказ;
