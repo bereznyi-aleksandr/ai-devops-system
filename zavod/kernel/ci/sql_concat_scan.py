@@ -1,9 +1,10 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
 # ВЕРСИЯ: v0.22  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 01:48 +02:00 (v0.22: аудит M3310-R20-01 —
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 01:56 +02:00 (v0.22: аудит M3310-R20-01 —
 #   break/continue любым словом команды (builtin continue) снимает «выполняется всегда» с циклов; M3310-R20-02 —
-#   помечается каждый путь записи (перенаправление, tee, dd of=, sort -o, psql -o/-L, truncate, fallocate, mkfs.ext4,
-#   cp/install/mv, ln и cp -s/-l — любой путь): постоянный путь — сам путь и всё под ним; "…$ПОСТОЯННАЯ…" и
+#   помечается каждый путь записи (перенаправление и >&ФАЙЛ, tee, dd of=, опции SH_OUT_OPTS — sort -o, psql -o/-L,
+#   blkid -c, useradd/usermod -d, в том числе в группе коротких опций, usermod -m — любой путь; truncate, fallocate,
+#   mkfs.ext4, cp/install/mv, ln и cp -s/-l — любой путь): постоянный путь — сам путь и всё под ним; "…$ПОСТОЯННАЯ…" и
 #   переменная for по постоянным именам — каждый вариант пути; иначе ИМЯ или ОКОНЧАНИЕ части пути по хвосту после
 #   последней подстановки, без хвоста — любой путь; запись в любом месте сценария (два прохода) и во вложенном тексте
 #   оболочки; touch не помечает (меняет только время); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.21: аудит M3310-R19-01..03 —
@@ -658,6 +659,10 @@ SH_PROGRAMS_OK = {
     'systemd-analyze', 'systemd-escape', 'systemd-tmpfiles', 'pg_ctlcluster', 'psql', 'python3', 'sh',
     'sudo', 'exec', 'timeout', 'command', 'systemd-run'}
 SH_SYS_DIRS = ('/usr/bin/', '/usr/sbin/', '/bin/', '/sbin/')
+# Опции программ SH_PROGRAMS_OK, значение которых — путь записи (аудит M3310-R20-02): путь помечается (taint).
+# tune2fs не помечает: пишет только в файл с файловой системой ext4, файл настроек nft или tmpfiles он не меняет.
+SH_OUT_OPTS = {'sort': ('-o', '--output'), 'psql': ('-o', '--output', '-L', '--log-file'), 'blkid': ('-c',),
+               'useradd': ('-d', '--home-dir'), 'usermod': ('-d', '--home')}
 # Обёртки (аудит M3310-R16-03): у каждой закрытый список опций; число — сколько слов опция берёт за собой.
 # env -S/--split-string, sudo -E/-s/-i, runuser, setpriv, chroot, nsenter … — вне списка, находка.
 WRAP_OPTS = {
@@ -1667,16 +1672,27 @@ def sh_findings(path, text, line=1, depth=0, shared=None):
                 if w['val'].startswith('of=') or not w['lit']:
                     taint({'val': w['val'][3:] if w['val'].startswith('of=') else w['val'], 'lit': w['lit'],
                            'raw': w['raw'].replace('of=', '', 1)})
-        elif p_ in ('sort', 'psql'):
+        elif p_ in SH_OUT_OPTS:
+            # опция, значение которой — путь записи: --опция=ПУТЬ, --опция ПУТЬ, -о ПУТЬ, -оПУТЬ и -ао… (буква опции в
+            # группе коротких опций: остаток группы или следующее слово)
+            oo = SH_OUT_OPTS[p_]
             for j_, w in enumerate(args):
-                if w['val'].startswith(('--output=', '--log-file=')):
-                    taint({'val': w['val'].partition('=')[2], 'lit': w['lit'], 'raw': w['raw'].partition('=')[2]})
-                elif w['lit'] and w['val'] in (('-o', '--output') if p_ == 'sort' else ('-o', '--output', '-L', '--log-file')) \
-                        and j_ + 1 < len(args):
-                    taint(args[j_ + 1])
-                elif w['lit'] and w['val'].startswith(('-o', '-L')) and len(w['val']) > 2 and \
-                        (p_ == 'psql' or w['val'].startswith('-o')):
-                    taint({'val': w['val'][2:], 'lit': True})
+                v_ = w['val']
+                if v_.startswith('--'):
+                    if v_.partition('=')[0] in oo and '=' in v_:
+                        taint({'val': v_.partition('=')[2], 'lit': w['lit'], 'raw': w['raw'].partition('=')[2]})
+                    elif v_ in oo and j_ + 1 < len(args):
+                        taint(args[j_ + 1])
+                elif v_.startswith('-') and len(v_) > 1:
+                    k_ = next((k for k in range(1, len(v_)) if '-' + v_[k] in oo), None)
+                    if k_ is not None and k_ + 1 < len(v_):
+                        taint({'val': v_[k_ + 1:], 'lit': w['lit'], 'raw': w['raw'][k_ + 1:] if w['lit'] else ''})
+                    elif k_ is not None and j_ + 1 < len(args):
+                        taint(args[j_ + 1])
+            # usermod -m переносит прежнюю домашнюю папку (путь неизвестен) в новую
+            if p_ == 'usermod' and any(w['val'] == '--move-home' or re.fullmatch(r'-[A-Za-z]*m[A-Za-z]*', w['val'])
+                                       for w in args):
+                tainted.add('*')
         if p_ in ('tee', 'touch', 'truncate'):
             bad = [w for w in args if not w['val'].startswith('-') and code_dir(w)]
         elif p_ == 'dd':
