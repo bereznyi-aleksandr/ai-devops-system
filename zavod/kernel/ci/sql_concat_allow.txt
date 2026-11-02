@@ -4,7 +4,10 @@
 # неиспользованная строка — тоже отказ. Ни одна строка ниже не держит объект базы и не передаёт текст запроса извне
 # (сканер отказывает строке, где есть pg., Pool, Client, pool, client, db или .query).
 # Коды: COMPUTED — чтение по вычисляемому имени; BANNED_NAME — запрещённое имя (assign, entries, values,
-#   defineProperty); DRIVER — чтение свойства connection; CODE_STRING — строка "-e"; CHILD — запуск программы.
+#   defineProperty); DRIVER — чтение свойства connection; CODE_STRING — строка "-e"; CHILD — запуск программы;
+#   CHILD_IMPORT — файл может запускать программы. Таких файлов пять: fencer.mjs, container_holder.mjs (ограждение и
+#   держатель контейнера), worker_sandbox.mjs (node с файлом работника), rules_gate.mjs (git, gh), deploy_egress.mjs
+#   (gh, bash со сценарием установки); в остальных импорт child_process — находка.
 # kernel.mjs: Object.assign(this, extra) — поля своей ошибки; opts.connection — настройки входа из параметров
 #   конструктора (const login), уходят в new pg.Pool на следующей строке; сама строка пула не разрешена.
 # fencer.mjs: '-e' — флаг переменной окружения у docker; process.env[k] — копия окружения по постоянному списку
@@ -30,6 +33,7 @@
 # settings.mjs: чтение переменных окружения и файла настроек по имени ключа — строки.
 # stage_gates.mjs: разбор таблицы этапов и критериев (JSON) — данные.
 zavod/engine/src/deploy_egress.mjs	CHILD	execFile(file, args, { env }, (e, stdout, stderr) => {
+zavod/engine/src/deploy_egress.mjs	CHILD_IMPORT	import { execFile } from 'node:child_process';
 zavod/engine/src/deploy_egress.mjs	CODE_STRING	const { stdout } = await exec('gh', ['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
 zavod/engine/src/engine_client.mjs	BANNED_NAME	Object.defineProperty(this, '_auth', { value: 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64'), enumerable: false });
 zavod/engine/src/engine_client.mjs	BANNED_NAME	constructor(code, message, extra = {}) { super(`${code}: ${message}`); this.code = code; Object.assign(this, extra); }
@@ -56,13 +60,16 @@ zavod/engine/src/orchestrator.mjs	BANNED_NAME	const ALL_TOPICS = Object.freeze([
 zavod/engine/src/orchestrator.mjs	COMPUTED	const { job, vars } = own[i];
 zavod/engine/src/orchestrator.mjs	COMPUTED	if (TOPICS[node] !== topic) throw new EngineError('JOB_UNEXPECTED', `${topic} ${node}`);
 zavod/engine/src/worker_sandbox.mjs	CHILD	const child = spawn(process.execPath, [script], { env: workerEnv(), stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+zavod/engine/src/worker_sandbox.mjs	CHILD_IMPORT	import { spawn } from 'node:child_process';
 zavod/kernel/cli/lease_status.mjs	COMPUTED	return i > 0 ? process.argv[i + 1] : undefined;
 zavod/kernel/cli/rules_check.mjs	COMPUTED	return i > 0 ? process.argv[i + 1] : undefined;
 zavod/kernel/src/container_holder.mjs	CHILD	const leader = spawn(cmd, args, { stdio: ['ignore', 'inherit', 'inherit'] });
+zavod/kernel/src/container_holder.mjs	CHILD_IMPORT	import { spawn } from 'node:child_process';
 zavod/kernel/src/fencer.mjs	BANNED_NAME	...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
 zavod/kernel/src/fencer.mjs	BANNED_NAME	const pairs = Object.entries(env).map(([k, v]) => `${k}=${v}`);
 zavod/kernel/src/fencer.mjs	BANNED_NAME	for (const r of this.runtimes.values()) r.unit.child?.stdin.end();
 zavod/kernel/src/fencer.mjs	CHILD	this.child = spawn(this.host, argv, { env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+zavod/kernel/src/fencer.mjs	CHILD_IMPORT	import { spawn, spawnSync } from 'node:child_process';
 zavod/kernel/src/fencer.mjs	CODE_STRING	...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
 zavod/kernel/src/fencer.mjs	COMPUTED	const base = Object.fromEntries(PASS_ENV.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]]));
 zavod/kernel/src/fencer.mjs	DRIVER	constructor({ connection, killTimeoutMs = 10000, observer, cgroupRoot = process.env.ZAVOD_CGROUP_ROOT,
@@ -73,6 +80,7 @@ zavod/kernel/src/release_manifest.mjs	COMPUTED	return Object.fromEntries(MANIFES
 zavod/kernel/src/release_manifest.mjs	COMPUTED	return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
 zavod/kernel/src/rules_gate.mjs	BANNED_NAME	const lines = [...blobs.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([p, h]) => `${p}\t${h}\n`);
 zavod/kernel/src/rules_gate.mjs	CHILD	return (args) => execFileSync(bin, ['-C', repoDir, ...args], { windowsHide: true, maxBuffer: 64 << 20 });
+zavod/kernel/src/rules_gate.mjs	CHILD_IMPORT	import { execFileSync } from 'node:child_process';
 zavod/kernel/src/rules_gate.mjs	COMPUTED	cur = Object.hasOwn(parents, cur) ? parents[cur] : null;
 zavod/kernel/src/rules_gate.mjs	COMPUTED	if (!ROLE_KEY.test(k) || typeof parents[k] !== 'string') fail('RULES_REGISTRY_BAD', `role ${k}`);
 zavod/kernel/src/rules_gate.mjs	COMPUTED	if (canonicalJson(ticket[k]) !== canonicalJson(v)) fail('RULES_SIGNATURE_MISMATCH', k);

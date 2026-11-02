@@ -33,13 +33,15 @@
 //      него только query и __proto__; constructor класса допустим). Object.entries/values у таблицы этого файла —
 //      допустимы. Чтение свойства connection (нижний слой драйвера pg: x.connection, x['connection'],
 //      { connection } = x) — находка. import(…), with, модули vm, module, repl, inspector, worker_threads, cluster,
-//      sqlite, источники data:/http(s): — находка; постоянная строка (и сумма постоянных строк), где словом стоит
+//      sqlite, test, источники data:/http(s): — находка; постоянная строка (и сумма постоянных строк), где словом стоит
 //      psql, -e, --eval, -p, --print, -r, --require, --import, --loader (в том числе «node -e …», «--eval=…»), —
 //      находка (запуск кода или psql из строки).
 //   5) Склейка, похожая на запрос: «+», «+=», шаблон с ${}, .join/.concat/.replace(All), где известный текст
 //      (строки, значения имён по всем присваиваниям, массивы) похож на запрос. Сумма, где ВСЕ части постоянны
 //      (строки и const), — не склейка: её текст известен при проверке целиком.
-//   6) Запуск программ (аудит M3310-R6-03). Из child_process можно взять только по имени spawn, spawnSync, execFile,
+//   6) Запуск программ (аудит M3310-R6-03). Импорт child_process — находка CHILD_IMPORT в любом файле, кроме файлов,
+//      чья строка импорта есть в файле разрешений: иначе файл мог бы записать код во временный файл и запустить его
+//      node. Из child_process можно взять только по имени spawn, spawnSync, execFile,
 //      execFileSync (не exec, execSync, fork, не весь модуль) и вызывать только прямо (без promisify и без передачи
 //      функции дальше). Программа — постоянное имя из списка PROGRAMS или process.execPath (сам node: первый
 //      аргумент — не флаг, постоянный); после «-c» — только постоянный текст сценария; параметры — объект-литерал
@@ -68,7 +70,7 @@ const BANNED = new Set(['eval', 'Function', 'constructor', 'prototype', '__proto
   'NODE_OPTIONS']);
 // Внутренности драйвера pg: опасно только ЧТЕНИЕ свойства (x.connection, { connection } = x), не имя переменной.
 const DRIVER = new Set(['connection']);
-const BANNED_MODULES = new Set(['vm', 'module', 'repl', 'inspector', 'worker_threads', 'cluster', 'sqlite']);
+const BANNED_MODULES = new Set(['vm', 'module', 'repl', 'inspector', 'worker_threads', 'cluster', 'sqlite', 'test']);
 const BANNED_STRINGS = new Set(['psql', '-e', '--eval', '-p', '--print', '-r', '--require', '--import', '--loader']);
 // Запуск программ: что можно взять из child_process, какие программы запускать и у каких аргументы — только данные.
 const CHILD_FUNCS = new Set(['spawn', 'spawnSync', 'execFile', 'execFileSync']);
@@ -81,7 +83,7 @@ const CODES = [[/^(query text|function passing query text)/, 'QUERY_TEXT'], [/^n
   [/^property .* \(driver internals\)/, 'DRIVER'], [/^string .* starts code/, 'CODE_STRING'],
   [/^property accessed by a computed name/, 'COMPUTED'], [/^computed property name/, 'COMPUTED_KEY'],
   [/SQL text|template literal with SQL/, 'SQL_CONCAT'], [/^(module|with statement)/, 'MODULE'],
-  [/^child process/, 'CHILD'], [/^global object changed/, 'GLOBAL_WRITE'],
+  [/^child process module imported/, 'CHILD_IMPORT'], [/^child process/, 'CHILD'], [/^global object changed/, 'GLOBAL_WRITE'],
   [/^(file cannot be parsed|template text cannot)/, 'PARSE']];
 const GLOBALS = new Set(['Object', 'Array', 'Function', 'String', 'Number', 'Boolean', 'Symbol', 'JSON', 'Math',
   'Promise', 'Map', 'Set', 'globalThis', 'global']);
@@ -693,7 +695,12 @@ function check(path, text) {
         if (n.source && typeof n.source.value === 'string') {
           const m = n.source.value.replace(/^node:/, '');
           if (BANNED_MODULES.has(m) || /^(data|https?):/i.test(n.source.value)) add(n, `module ${n.source.value} runs code from a string`);
-          if (m === 'child_process') childImport(n);
+          if (m === 'child_process') {
+            // Запускать программы может только файл, чья строка импорта есть в файле разрешений (код CHILD_IMPORT):
+            // иначе любой файл мог бы записать код во временный файл и запустить его node.
+            add(n, 'child process module imported (only files listed in the allow file may start programs)');
+            childImport(n);
+          }
         }
         break;
       default: break;
