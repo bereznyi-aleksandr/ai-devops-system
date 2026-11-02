@@ -1,14 +1,25 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_allow.txt — разрешения проверки склейки запросов (sql_concat_scan.py)
-# ВЕРСИЯ: v0.4  ДАТА: 2026-11-02 02:26 +02:00 (v0.4: аудит M3310-R5-01, -02, -03 — проверка JavaScript по дереву разбора с разрешающими правилами: всё, что не доказано безопасным, — находка; ниже — проверенные строки, каждая с причиной; v0.3: копии данных по постоянному списку — теперь доказываются правилом, записи сняты; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
-# Формат: путь<TAB>точный текст строки кода. Любая правка строки снимает разрешение (строка снова — находка);
-# неиспользованная строка — тоже отказ. Ни одна строка ниже не держит объект базы и не передаёт текст запроса извне.
-# kernel.mjs: ${cols} — постоянный список колонок в той же функции; значения — параметрами $1, $2. Object.assign(this,
-#   extra) — поля своей ошибки; opts.connection — настройки входа из параметров, уходят в new pg.Pool.
-# fencer.mjs: шаблон с ${FENCER_GROUP} — постоянное имя роли (export const FENCER_GROUP = 'bem_governance'); вызов q( —
-#   тот же запрос; '-e' — флаг переменной окружения у podman; process.env[k] — копия окружения по постоянному списку
+# ВЕРСИЯ: v0.5  ДАТА: 2026-11-02 02:55 +02:00 (v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# Формат: путь<TAB>КОД<TAB>точный текст строки кода. Любая правка строки снимает разрешение (строка снова — находка);
+# неиспользованная строка — тоже отказ. Ни одна строка ниже не держит объект базы и не передаёт текст запроса извне
+# (сканер отказывает строке, где есть pg., Pool, Client, pool, client, db или .query).
+# Коды: COMPUTED — чтение по вычисляемому имени; BANNED_NAME — запрещённое имя (assign, entries, values,
+#   defineProperty); DRIVER — чтение свойства connection; CODE_STRING — строка "-e"; CHILD — запуск программы.
+# kernel.mjs: Object.assign(this, extra) — поля своей ошибки; opts.connection — настройки входа из параметров
+#   конструктора (const login), уходят в new pg.Pool на следующей строке; сама строка пула не разрешена.
+# fencer.mjs: '-e' — флаг переменной окружения у docker; process.env[k] — копия окружения по постоянному списку
 #   PASS_ENV; Object.entries(env) — строки окружения; { connection } — настройки входа оператора из параметров
-#   конструктора; this.runtimes.values() — Map своих процессов.
-# deploy_egress.mjs: '-e' — флаг события у команды gh (gh run list -e workflow_dispatch), не запуск кода.
+#   конструктора; this.runtimes.values() — Map своих процессов; spawn(this.host, …) — хозяин единицы Windows
+#   (zavod_jobhost.exe, путь из DEFAULT_JOBHOST или ZAVOD_JOBHOST), без оболочки; аргументы — argv исполнителя.
+# container_holder.mjs: spawn(cmd, args) — держатель внутри контейнера запускает программу, которую ему передал
+#   fencer (docker run … node файл); без оболочки; сам контейнер — граница ограждения.
+# worker_sandbox.mjs: spawn(process.execPath, [script]) — node с файлом работника, путь из параметра childWorker
+#   (вызывает оркестратор с путём файла из хранилища); без оболочки.
+# rules_gate.mjs: execFileSync(bin, ['-C', repoDir, …]) — git (bin по умолчанию 'git', подменяется только в тестах),
+#   без оболочки; разбор реестра правил и билета (JSON) — данные, база не трогается.
+# deploy_egress.mjs: '-e' — флаг события у команды gh (gh run list -e workflow_dispatch), не запуск кода;
+#   execFile(file, args, { env }) — своя функция run файла: вызовы run('bash', [файл сценария установки …]) и
+#   exec('gh', […]) (exec = run); без оболочки.
 # engine_client.mjs: defineProperty(this, '_auth') — скрытое поле своего объекта; Object.assign(this, extra) — поля
 #   ошибки; Object.entries(o) — разбор ответа службы движка (JSON).
 # orchestrator.mjs: Object.assign(this, {…}) — поля своего объекта из параметров конструктора; Object.values(TOPICS) и
@@ -16,63 +27,66 @@
 # lease_status.mjs, rules_check.mjs: process.argv[i + 1] — аргумент командной строки, индекс — число.
 # release_manifest.mjs: v[k] — обход ключей самого v (Object.keys(v)) для канонической записи манифеста (JSON).
 # graph_check.mjs: разбор XML схемы процесса (BPMN) в простые объекты той же функции; ключи — id из схемы.
-# rules_gate.mjs: разбор реестра правил и билета (JSON) — данные, база не трогается.
 # settings.mjs: чтение переменных окружения и файла настроек по имени ключа — строки.
 # stage_gates.mjs: разбор таблицы этапов и критериев (JSON) — данные.
-zavod/engine/src/deploy_egress.mjs	const { stdout } = await exec('gh', ['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
-zavod/engine/src/engine_client.mjs	Object.defineProperty(this, '_auth', { value: 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64'), enumerable: false });
-zavod/engine/src/engine_client.mjs	constructor(code, message, extra = {}) { super(`${code}: ${message}`); this.code = code; Object.assign(this, extra); }
-zavod/engine/src/engine_client.mjs	return Object.entries(o).map(([name, value]) => ({
-zavod/engine/src/graph_check.mjs	attrs[a[1]] = decode(a[2] ?? a[3]);
-zavod/engine/src/graph_check.mjs	const el = nodes[id]?.el;
-zavod/engine/src/graph_check.mjs	const f = flows[id];
-zavod/engine/src/graph_check.mjs	const list = Object.values(flows);
-zavod/engine/src/graph_check.mjs	const msgNames = Object.values(messages).sort().join(',');
-zavod/engine/src/graph_check.mjs	else if (nodes[id].type !== type) errs.push(`${tag} ${id} тип ${nodes[id].type} (надо ${type})`);
-zavod/engine/src/graph_check.mjs	flows[c.attrs.id] = { s: c.attrs.sourceRef, t: c.attrs.targetRef, cond: cond.length ? cond[0].text.trim() : null, el: c };
-zavod/engine/src/graph_check.mjs	for (const [id, [s, t, cond]] of Object.entries(wantFlows)) {
-zavod/engine/src/graph_check.mjs	for (const [id, n] of Object.entries(nodes)) if (n.el.attrs.default) errs.push(`${tag} ${id} default-поток запрещён`);
-zavod/engine/src/graph_check.mjs	for (const [id, n] of Object.entries(nodes)) {
-zavod/engine/src/graph_check.mjs	for (const [id, type] of Object.entries(wantNodes)) {
-zavod/engine/src/graph_check.mjs	for (const id of Object.keys(nodes)) if (!(id in wantNodes)) errs.push(`${tag} лишний узел ${id} (${nodes[id].type})`);
-zavod/engine/src/graph_check.mjs	if (!nodes[id]) errs.push(`${tag} нет узла ${id}`);
-zavod/engine/src/graph_check.mjs	if (md.length !== 1 || messages[md[0].attrs.messageRef] !== 'bemIntake') errs.push('n1 стартует не сообщением bemIntake');
-zavod/engine/src/graph_check.mjs	if (md.length !== 1 || messages[md[0].attrs.messageRef] !== 'subtaskAck') errs.push(`${tag} s3 ждёт не subtaskAck`);
-zavod/engine/src/graph_check.mjs	if (xml[lt + 1] === '/') {
-zavod/engine/src/graph_check.mjs	nodes[c.attrs.id] = { type: nm, el: c };
-zavod/engine/src/orchestrator.mjs	Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log, pilot });
-zavod/engine/src/orchestrator.mjs	const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
-zavod/engine/src/orchestrator.mjs	const { job, vars } = own[i];
-zavod/engine/src/orchestrator.mjs	if (TOPICS[node] !== topic) throw new EngineError('JOB_UNEXPECTED', `${topic} ${node}`);
-zavod/kernel/cli/lease_status.mjs	return i > 0 ? process.argv[i + 1] : undefined;
-zavod/kernel/cli/rules_check.mjs	return i > 0 ? process.argv[i + 1] : undefined;
-zavod/kernel/src/fencer.mjs	...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
-zavod/kernel/src/fencer.mjs	`SELECT current_user AS cu, session_user AS su, r.rolsuper, r.rolbypassrls, r.rolcreaterole,
-zavod/kernel/src/fencer.mjs	const base = Object.fromEntries(PASS_ENV.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]]));
-zavod/kernel/src/fencer.mjs	const pairs = Object.entries(env).map(([k, v]) => `${k}=${v}`);
-zavod/kernel/src/fencer.mjs	const { rows } = await q(
-zavod/kernel/src/fencer.mjs	constructor({ connection, killTimeoutMs = 10000, observer, cgroupRoot = process.env.ZAVOD_CGROUP_ROOT,
-zavod/kernel/src/fencer.mjs	for (const r of this.runtimes.values()) r.unit.child?.stdin.end();
-zavod/kernel/src/kernel.mjs	({ rows } = await c.query(`SELECT ${cols} FROM bem_control.chat_lease WHERE tenant_id = $1 AND lease_id = $2`,
-zavod/kernel/src/kernel.mjs	({ rows } = await c.query(`SELECT ${cols} FROM bem_control.chat_lease WHERE tenant_id = $1 AND role_key = $2
-zavod/kernel/src/kernel.mjs	Object.assign(this, extra);
-zavod/kernel/src/kernel.mjs	this.pool = opts.pool || new pg.Pool({ ...(opts.connection || {}), user: KERNEL_ROLE, max: opts.max || 5 });
-zavod/kernel/src/release_manifest.mjs	return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
-zavod/kernel/src/rules_gate.mjs	const lines = [...blobs.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([p, h]) => `${p}\t${h}\n`);
-zavod/kernel/src/rules_gate.mjs	cur = Object.hasOwn(parents, cur) ? parents[cur] : null;
-zavod/kernel/src/rules_gate.mjs	if (!ROLE_KEY.test(k) || typeof parents[k] !== 'string') fail('RULES_REGISTRY_BAD', `role ${k}`);
-zavod/kernel/src/rules_gate.mjs	if (canonicalJson(ticket[k]) !== canonicalJson(v)) fail('RULES_SIGNATURE_MISMATCH', k);
-zavod/kernel/src/rules_gate.mjs	return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonicalJson(v[k])}`).join(',')}}`;
-zavod/kernel/src/rules_gate.mjs	return { files: [...reg.files].sort(), role_parents: Object.fromEntries(keys.sort().map((k) => [k, parents[k]])) };
-zavod/kernel/src/settings.mjs	const path = env[SETTINGS_FILE_ENV];
-zavod/kernel/src/settings.mjs	const v = env[key];
-zavod/kernel/src/settings.mjs	out[key] = value;
-zavod/kernel/src/stage_gates.mjs	const crit = gates.stages[rs].criteria;
-zavod/kernel/src/stage_gates.mjs	const have = st[key] === undefined ? [] : st[key];
-zavod/kernel/src/stage_gates.mjs	const st = gates.stages[String(stageId)];
-zavod/kernel/src/stage_gates.mjs	const st = stages[sid];
-zavod/kernel/src/stage_gates.mjs	else if (rc !== '*' && !stages[rs].criteria?.[rc]) errors.push(`${sid}: ${key} unknown criterion ${ref}`);
-zavod/kernel/src/stage_gates.mjs	for (const [cid, c] of Object.entries(crit)) {
-zavod/kernel/src/stage_gates.mjs	for (const [sid, st] of Object.entries(stages)) {
-zavod/kernel/src/stage_gates.mjs	for (const id of ids) if (crit[id].status !== 'PASS') out.push(`${rs}:${id}=${crit[id].status}`);
-zavod/kernel/src/stage_gates.mjs	if (!stages[rs]) errors.push(`${sid}: ${key} unknown stage ${rs}`);
+zavod/engine/src/deploy_egress.mjs	CHILD	execFile(file, args, { env }, (e, stdout, stderr) => {
+zavod/engine/src/deploy_egress.mjs	CODE_STRING	const { stdout } = await exec('gh', ['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
+zavod/engine/src/engine_client.mjs	BANNED_NAME	Object.defineProperty(this, '_auth', { value: 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64'), enumerable: false });
+zavod/engine/src/engine_client.mjs	BANNED_NAME	constructor(code, message, extra = {}) { super(`${code}: ${message}`); this.code = code; Object.assign(this, extra); }
+zavod/engine/src/engine_client.mjs	BANNED_NAME	return Object.entries(o).map(([name, value]) => ({
+zavod/engine/src/graph_check.mjs	BANNED_NAME	const list = Object.values(flows);
+zavod/engine/src/graph_check.mjs	BANNED_NAME	const msgNames = Object.values(messages).sort().join(',');
+zavod/engine/src/graph_check.mjs	BANNED_NAME	for (const [id, [s, t, cond]] of Object.entries(wantFlows)) {
+zavod/engine/src/graph_check.mjs	BANNED_NAME	for (const [id, n] of Object.entries(nodes)) if (n.el.attrs.default) errs.push(`${tag} ${id} default-поток запрещён`);
+zavod/engine/src/graph_check.mjs	BANNED_NAME	for (const [id, n] of Object.entries(nodes)) {
+zavod/engine/src/graph_check.mjs	BANNED_NAME	for (const [id, type] of Object.entries(wantNodes)) {
+zavod/engine/src/graph_check.mjs	COMPUTED	attrs[a[1]] = decode(a[2] ?? a[3]);
+zavod/engine/src/graph_check.mjs	COMPUTED	const el = nodes[id]?.el;
+zavod/engine/src/graph_check.mjs	COMPUTED	const f = flows[id];
+zavod/engine/src/graph_check.mjs	COMPUTED	else if (nodes[id].type !== type) errs.push(`${tag} ${id} тип ${nodes[id].type} (надо ${type})`);
+zavod/engine/src/graph_check.mjs	COMPUTED	flows[c.attrs.id] = { s: c.attrs.sourceRef, t: c.attrs.targetRef, cond: cond.length ? cond[0].text.trim() : null, el: c };
+zavod/engine/src/graph_check.mjs	COMPUTED	for (const id of Object.keys(nodes)) if (!(id in wantNodes)) errs.push(`${tag} лишний узел ${id} (${nodes[id].type})`);
+zavod/engine/src/graph_check.mjs	COMPUTED	if (!nodes[id]) errs.push(`${tag} нет узла ${id}`);
+zavod/engine/src/graph_check.mjs	COMPUTED	if (md.length !== 1 || messages[md[0].attrs.messageRef] !== 'bemIntake') errs.push('n1 стартует не сообщением bemIntake');
+zavod/engine/src/graph_check.mjs	COMPUTED	if (md.length !== 1 || messages[md[0].attrs.messageRef] !== 'subtaskAck') errs.push(`${tag} s3 ждёт не subtaskAck`);
+zavod/engine/src/graph_check.mjs	COMPUTED	if (xml[lt + 1] === '/') {
+zavod/engine/src/graph_check.mjs	COMPUTED	nodes[c.attrs.id] = { type: nm, el: c };
+zavod/engine/src/orchestrator.mjs	BANNED_NAME	Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log, pilot });
+zavod/engine/src/orchestrator.mjs	BANNED_NAME	const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
+zavod/engine/src/orchestrator.mjs	COMPUTED	const { job, vars } = own[i];
+zavod/engine/src/orchestrator.mjs	COMPUTED	if (TOPICS[node] !== topic) throw new EngineError('JOB_UNEXPECTED', `${topic} ${node}`);
+zavod/engine/src/worker_sandbox.mjs	CHILD	const child = spawn(process.execPath, [script], { env: workerEnv(), stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+zavod/kernel/cli/lease_status.mjs	COMPUTED	return i > 0 ? process.argv[i + 1] : undefined;
+zavod/kernel/cli/rules_check.mjs	COMPUTED	return i > 0 ? process.argv[i + 1] : undefined;
+zavod/kernel/src/container_holder.mjs	CHILD	const leader = spawn(cmd, args, { stdio: ['ignore', 'inherit', 'inherit'] });
+zavod/kernel/src/fencer.mjs	BANNED_NAME	...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
+zavod/kernel/src/fencer.mjs	BANNED_NAME	const pairs = Object.entries(env).map(([k, v]) => `${k}=${v}`);
+zavod/kernel/src/fencer.mjs	BANNED_NAME	for (const r of this.runtimes.values()) r.unit.child?.stdin.end();
+zavod/kernel/src/fencer.mjs	CHILD	this.child = spawn(this.host, argv, { env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+zavod/kernel/src/fencer.mjs	CODE_STRING	...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
+zavod/kernel/src/fencer.mjs	COMPUTED	const base = Object.fromEntries(PASS_ENV.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]]));
+zavod/kernel/src/fencer.mjs	DRIVER	constructor({ connection, killTimeoutMs = 10000, observer, cgroupRoot = process.env.ZAVOD_CGROUP_ROOT,
+zavod/kernel/src/kernel.mjs	BANNED_NAME	Object.assign(this, extra);
+zavod/kernel/src/kernel.mjs	DRIVER	const login = opts.connection || {};
+zavod/kernel/src/release_manifest.mjs	COMPUTED	for (const k of MANIFEST_FIELDS) need(SHAPE[k](m[k]), 'BAD_MANIFEST', k);
+zavod/kernel/src/release_manifest.mjs	COMPUTED	return Object.fromEntries(MANIFEST_FIELDS.map((k) => [k, m[k]]));
+zavod/kernel/src/release_manifest.mjs	COMPUTED	return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
+zavod/kernel/src/rules_gate.mjs	BANNED_NAME	const lines = [...blobs.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([p, h]) => `${p}\t${h}\n`);
+zavod/kernel/src/rules_gate.mjs	CHILD	return (args) => execFileSync(bin, ['-C', repoDir, ...args], { windowsHide: true, maxBuffer: 64 << 20 });
+zavod/kernel/src/rules_gate.mjs	COMPUTED	cur = Object.hasOwn(parents, cur) ? parents[cur] : null;
+zavod/kernel/src/rules_gate.mjs	COMPUTED	if (!ROLE_KEY.test(k) || typeof parents[k] !== 'string') fail('RULES_REGISTRY_BAD', `role ${k}`);
+zavod/kernel/src/rules_gate.mjs	COMPUTED	if (canonicalJson(ticket[k]) !== canonicalJson(v)) fail('RULES_SIGNATURE_MISMATCH', k);
+zavod/kernel/src/rules_gate.mjs	COMPUTED	return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonicalJson(v[k])}`).join(',')}}`;
+zavod/kernel/src/rules_gate.mjs	COMPUTED	return { files: [...reg.files].sort(), role_parents: Object.fromEntries(keys.sort().map((k) => [k, parents[k]])) };
+zavod/kernel/src/settings.mjs	COMPUTED	const path = env[SETTINGS_FILE_ENV];
+zavod/kernel/src/settings.mjs	COMPUTED	const v = env[key];
+zavod/kernel/src/settings.mjs	COMPUTED	out[key] = value;
+zavod/kernel/src/stage_gates.mjs	BANNED_NAME	for (const [cid, c] of Object.entries(crit)) {
+zavod/kernel/src/stage_gates.mjs	BANNED_NAME	for (const [sid, st] of Object.entries(stages)) {
+zavod/kernel/src/stage_gates.mjs	COMPUTED	const crit = gates.stages[rs].criteria;
+zavod/kernel/src/stage_gates.mjs	COMPUTED	const have = st[key] === undefined ? [] : st[key];
+zavod/kernel/src/stage_gates.mjs	COMPUTED	const st = gates.stages[String(stageId)];
+zavod/kernel/src/stage_gates.mjs	COMPUTED	const st = stages[sid];
+zavod/kernel/src/stage_gates.mjs	COMPUTED	else if (rc !== '*' && !stages[rs].criteria?.[rc]) errors.push(`${sid}: ${key} unknown criterion ${ref}`);
+zavod/kernel/src/stage_gates.mjs	COMPUTED	for (const id of ids) if (crit[id].status !== 'PASS') out.push(`${rs}:${id}=${crit[id].status}`);
+zavod/kernel/src/stage_gates.mjs	COMPUTED	if (!stages[rs]) errors.push(`${sid}: ${key} unknown stage ${rs}`);

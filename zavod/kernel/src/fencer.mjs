@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: src/fencer.mjs
-// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 08:55 +03:00 (v0.5: E4-8 — единица «контейнер»
+// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 02:55 +02:00 (v0.6: аудит M3310-R6-03, -04 — сценарий sh -c постоянный, uid и gid позиционными аргументами; текст проверки роли — сумма постоянных частей; v0.5: E4-8 — единица «контейнер»
 //   (ContainerUnit, способ CONTAINER_TERMINATED): PID 1 контейнера — держатель src/container_holder.mjs, исполнитель
 //   и его потомки внутри; ограждение — docker kill и ожидание остановки; выбор единицы — параметр unit;
 //   мутация leader-only гасит ведущий процесс средствами самой единицы (killLeader). v0.4: слияние v0.3 (Job Object) и
@@ -90,10 +90,11 @@ export class CgroupUnit {
   spawn(argv, env) {
     const uid = process.getuid();
     const gid = process.getgid();
-    const script = 'L=$1; shift; mkdir "$L" && echo $$ > "$L/cgroup.procs" && '
-      + `exec setpriv --reuid=${uid} --regid=${gid} --clear-groups --no-new-privs -- "$@"`;
+    // Сценарий — постоянный текст; uid и gid идут позиционными аргументами $2 и $3 (аудит M3310-R6-03).
+    const script = 'L=$1; U=$2; G=$3; shift 3; mkdir "$L" && echo $$ > "$L/cgroup.procs" && '
+      + 'exec setpriv --reuid="$U" --regid="$G" --clear-groups --no-new-privs -- "$@"';
     const pairs = Object.entries(env).map(([k, v]) => `${k}=${v}`);
-    return spawn('sudo', ['-n', 'sh', '-c', script, 'sh', this.path, 'env', '-i', ...pairs, ...argv],
+    return spawn('sudo', ['-n', 'sh', '-c', script, 'sh', this.path, String(uid), String(gid), 'env', '-i', ...pairs, ...argv],
       { stdio: ['ignore', 'pipe', 'pipe'] });
   }
 
@@ -259,9 +260,10 @@ export class SendSupervisor {
   // record_outbox_fence (assert_authority) — без него AUTHORITY_REQUIRED.
   async assertOperatorIdentity(client = null) {
     const q = (sql) => (client ? client.query(sql) : this.pool.query(sql));
+    // Текст запроса — сумма постоянных частей и постоянного FENCER_GROUP (проверка сборки видит его целиком).
     const { rows } = await q(
       `SELECT current_user AS cu, session_user AS su, r.rolsuper, r.rolbypassrls, r.rolcreaterole,
-              pg_has_role(session_user, '${FENCER_GROUP}', 'USAGE') AS gov,
+              pg_has_role(session_user, '` + FENCER_GROUP + `', 'USAGE') AS gov,
               pg_has_role(session_user, 'bem_kernel_rw', 'MEMBER') AS kern
          FROM pg_roles r WHERE r.rolname = session_user`);
     const r = rows[0];

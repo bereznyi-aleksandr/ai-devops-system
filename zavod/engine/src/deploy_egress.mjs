@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: zavod/engine/src/deploy_egress.mjs
-// ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:52 +03:00 (v0.8: аудит ChatGPT S6-prep R11A M-S6-R11-01 —
+// ВЕРСИЯ: v0.9  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 02:55 +02:00 (v0.9: аудит M3310-R6-03 — запуск
+//   программ без promisify: своя функция run вызывает execFile прямо, без оболочки; v0.8: аудит ChatGPT S6-prep R11A M-S6-R11-01 —
 //   сервер (install_release.sh v0.4) требует пятый файл: объект коммита head; localInstall берёт его функцией
 //   commitObject(head) и кладёт рядом (commit_<h8>.obj); в боевом пути его делает workflow продукта; v0.7: аудит ChatGPT S6-prep R6, M-S6-R6-01 —
 //   исполняемый код не менялся; комментарий честно называет роль проверки: Engine запускает агент той же учётной
@@ -49,12 +50,18 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
 import { ReleaseRefused } from '../../kernel/src/release_manifest.mjs';
 import { productEgress } from './product_egress.mjs';
 import { fingerprint, parseEd25519PublicKey, verifySshSig } from './sshsig.mjs';
 
-const run = promisify(execFile);
+// Запуск программы без оболочки (то же, что promisify(execFile)): { stdout, stderr }; ошибка несёт stdout и stderr.
+function run(file, args, { env } = {}) {
+  return new Promise((resolve, reject) => {
+    execFile(file, args, { env }, (e, stdout, stderr) => {
+      if (e) { e.stdout = stdout; e.stderr = stderr; reject(e); } else resolve({ stdout, stderr });
+    });
+  });
+}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const OK_LINE = /^INSTALL_OK state=(installed|already_present) head=([0-9a-f]{40})$/m;
 const REFUSED_LINE = /^INSTALL_REFUSED code=([A-Z_]+)$/m;

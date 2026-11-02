@@ -1,6 +1,8 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 02:26 +02:00 (v0.6: аудит M3310-R5-01, -02, -03 —
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 02:55 +02:00 (v0.7: аудит M3310-R6-04 —
+#   разрешение снимает только находку своего кода правила: строка «путь<TAB>КОД<TAB>точный текст»; строка разрешения,
+#   где есть объект базы (pg., Pool, Client, pool, client, db, .query), — отказ; v0.6: аудит M3310-R5-01, -02, -03 —
 #   JavaScript проверяется не по тексту, а полным разбором кода: sql_concat_js.cjs (разборщик acorn из Node, имена
 #   связываются с объявлениями по областям видимости, правила разрешающие — что не доказано постоянным, то находка);
 #   прежняя проверка JavaScript по регулярным выражениям (v0.2–v0.5) удалена; v0.5: аудит M3310-R4-01; v0.4: аудит
@@ -18,7 +20,8 @@
 #   шапке): у каждого .query(…) текст доказан постоянным по дереву разбора; имя query, вычисляемое имя свойства,
 #   код из строки, отражение (reflection — доступ к свойствам и прототипу в обход имени) и нижний слой драйвера —
 #   находка. Разборщик печатается строкой SQL_CONCAT_JS_PARSER=…; сбой разборщика — отказ.
-#   Исключения — только из файла разрешений: строка «путь<TAB>точный текст строки кода», для каждой — причина.
+#   Исключения — только из файла разрешений: строка «путь<TAB>КОД<TAB>точный текст строки кода», для каждой — причина;
+#   КОД — код правила находки (QUERY_TEXT, COMPUTED, CHILD …, у Python — PY_SQL), снимается только он.
 # ВЫЗОВ: python3 -I sql_concat_scan.py [--allow файл] путь…   (папки обходятся целиком: *.py, *.mjs, *.js и файлы
 #   без расширения с первой строкой «#!…python3»). Node — из переменной ZAVOD_NODE, иначе node из PATH.
 # ОГРАНИЧЕНИЯ: в Python текст, пришедший из другого файла или извне, сканер не видит; поэтому запросы пишутся
@@ -183,7 +186,7 @@ def js_findings(paths):
     print(f"SQL_CONCAT_JS_PARSER={head['parser']} node {head['node']}")
     out = {}
     for f in found:
-        out.setdefault(f['path'], []).append((int(f['line']), f['why']))
+        out.setdefault(f['path'], []).append((int(f['line']), f['why'], f['code']))
     return out
 
 
@@ -211,6 +214,11 @@ def files(paths):
             yield p
 
 
+# Строка разрешения не должна касаться объекта базы: пул, клиент, вызов запроса (аудит M3310-R6-04).
+ALLOW_DB = re.compile(r'\bpg\.|\b(Pool|Client|pool|client|db|rulesPool)\b|\.query\b')
+ALLOW_CODE = re.compile(r'^[A-Z_]+$')
+
+
 def main(argv):
     allow_path = None
     if len(argv) >= 2 and argv[0] == '--allow':
@@ -219,13 +227,18 @@ def main(argv):
         print('usage: sql_concat_scan.py [--allow file] path...', file=sys.stderr)
         return 2
     allow = {}
+    bad_allow = False
     if allow_path:
         with open(allow_path, encoding='utf-8') as f:
             for raw in f:
                 if not raw.strip() or raw.startswith('#'):
                     continue
-                p, _, code = raw.rstrip('\n').partition('\t')
-                allow[(p.replace('\\', '/'), code.strip())] = False
+                parts = raw.rstrip('\n').split('\t', 2)
+                if len(parts) != 3 or not ALLOW_CODE.match(parts[1]) or ALLOW_DB.search(parts[2]):
+                    print(f'SQL_CONCAT_ALLOW_BAD {raw.strip()[:160]}')
+                    bad_allow = True
+                    continue
+                allow[(parts[0].replace('\\', '/'), parts[1], parts[2].strip())] = False
     found = 0
     scanned = 0
     todo = []
@@ -245,20 +258,22 @@ def main(argv):
         scanned += 1
         lines = text.splitlines()
         if kind == 'js':
-            items = [(ln, why, lines[ln - 1].strip() if 0 < ln <= len(lines) else '') for ln, why in js_found.get(norm, [])]
+            items = [(ln, why, rule, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
+                     for ln, why, rule in js_found.get(norm, [])]
         else:
-            items = py_findings(norm, text)
-        for ln, why, code in items:
-            key = (norm, code)
+            items = [(ln, why, 'PY_SQL', code) for ln, why, code in py_findings(norm, text)]
+        for ln, why, rule, code in items:
+            key = (norm, rule, code)
             if key in allow:
                 allow[key] = True
                 continue
             found += 1
-            print(f'SQL_CONCAT {norm}:{ln}: {why}: {code[:160]}')
-    for (p, code), used in allow.items():
+            print(f'SQL_CONCAT {norm}:{ln}: {rule}: {why}: {code[:160]}')
+    for (p, rule, code), used in allow.items():
         if not used:
             found += 1
-            print(f'SQL_CONCAT_ALLOW_UNUSED {p}: {code[:160]}')
+            print(f'SQL_CONCAT_ALLOW_UNUSED {p}: {rule}: {code[:160]}')
+    found += bad_allow
     print(f'SQL_CONCAT_SCAN files={scanned} findings={found}')
     print('SQL_CONCAT_SCAN=' + ('FAIL' if found or not scanned else 'PASS'))
     return 1 if found or not scanned else 0
