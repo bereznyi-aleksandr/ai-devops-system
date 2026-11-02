@@ -1,6 +1,12 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.21  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 21:55 +02:00 (v0.21: аудит M3310-R19-01..03 —
+# ВЕРСИЯ: v0.22  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 01:48 +02:00 (v0.22: аудит M3310-R20-01 —
+#   break/continue любым словом команды (builtin continue) снимает «выполняется всегда» с циклов; M3310-R20-02 —
+#   помечается каждый путь записи (перенаправление, tee, dd of=, sort -o, psql -o/-L, truncate, fallocate, mkfs.ext4,
+#   cp/install/mv, ln и cp -s/-l — любой путь): постоянный путь — сам путь и всё под ним; "…$ПОСТОЯННАЯ…" и
+#   переменная for по постоянным именам — каждый вариант пути; иначе ИМЯ или ОКОНЧАНИЕ части пути по хвосту после
+#   последней подстановки, без хвоста — любой путь; запись в любом месте сценария (два прохода) и во вложенном тексте
+#   оболочки; touch не помечает (меняет только время); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.21: аудит M3310-R19-01..03 —
 #   systemctl start/restart/reload/enable — только юнит, который сценарий дерева ставит всегда из файла своей папки
 #   в /etc/systemd/system/, или юнит ОС (SYSTEM_UNITS_OK), имя постоянное или "$ИМЯ" с одним присваиванием; установка
 #   файла для systemd-tmpfiles и nft засчитывается, только если выполняется всегда (не в if/while/case/функции/&&/||/
@@ -1162,7 +1168,7 @@ def sh_prog(words, k):
     return None, None
 
 
-def sh_findings(path, text, line=1, depth=0):
+def sh_findings(path, text, line=1, depth=0, shared=None):
     out = []
 
     def add(ln, why, code):
@@ -1208,11 +1214,17 @@ def sh_findings(path, text, line=1, depth=0):
     # Аудит M3310-R19-02: команда выполняется ровно один раз при каждом проходе сценария (once) — на верхнем уровне
     # или только в for по постоянному списку (и в тексте нет break/continue). Установку файла настроек засчитывает
     # только такая команда при включённом set -e (сбой установки останавливает сценарий).
-    loopy = any(c['words'] and c['words'][0]['val'] in ('break', 'continue') for c in cmds)
+    # Аудит M3310-R20-01: break/continue в любом месте команды (в том числе после обёртки builtin, command, exec) —
+    # тело цикла может прерваться до установки.
+    loopy = any(w['val'] in ('break', 'continue') for c in cmds for w in c['words'])
     for c in cmds:
         c['once'] = c['top'] and all(f[0] == 'f' for f in c['nest']) and not (loopy and c['nest'])
     state = {'errexit': False}
-    installed, tainted = set(), set()  # файлы /etc/tmpfiles.d/ и /etc/zavod/*.nft, поставленные из дерева; чужая запись
+    # файлы /etc/tmpfiles.d/ и /etc/zavod/*.nft, поставленные из дерева; чужая запись: полные пути, ИМЕНА частей
+    # пути, ОКОНЧАНИЯ частей пути. Вложенный текст оболочки (sh -c '…') делит их с внешним сценарием.
+    if shared is None:
+        shared = (set(), set(), set(), set())
+    installed, tainted, names, suffixes = shared
     # Установщик: HERE — папка самого сценария, присвоена один раз; переменная цикла for — только по постоянным
     # именам файлов без «/» (так "$HERE/$u" — файл проверенного дерева).
     here_ok = len(re.findall(r'(?<![\w$])HERE\+?=', text)) == 1 and 'HERE=$(cd "$(dirname "$0")" && pwd)' in text
@@ -1612,7 +1624,7 @@ def sh_findings(path, text, line=1, depth=0):
         if depth >= 4:
             add(ln, 'shell text nested deeper than the limit', 'SH_PARSE')
         else:
-            out.extend(sh_findings(path, s, ln, depth + 1))
+            out.extend(sh_findings(path, s, ln, depth + 1, shared))
 
     def code_dir(w):
         v = w['val']
@@ -1629,12 +1641,42 @@ def sh_findings(path, text, line=1, depth=0):
         # Запись в папки кода и настроек запуска (CODE_DIRS): перенаправление, tee, dd of=, touch, truncate — всегда
         # находка; install/cp/mv/ln — находка, кроме install (cp) файлов проверенного дерева "$HERE/…" установщиком
         # и install -d (папка).
+        # Аудит M3310-R20-02: КАЖДЫЙ путь записи помечается (taint) — не только путь в CODE_DIRS (см. taint).
+        state['c'] = c
         for op, w in c['redir']:
-            if op in ('>', '>>', '>|', '&>', '<>') and code_dir(w):
-                add(w['line'], 'shell writes into a folder of code or start settings', 'SH_EXEC')
+            # >&ФАЙЛ (не номер потока и не «-») — тоже запись в файл
+            if op in ('>', '>>', '>|', '&>', '<>') or op == '>&' and not (
+                    w['lit'] and re.fullmatch(r'\d+-?|-', w['val'])):
                 taint(w)
+                if code_dir(w):
+                    add(w['line'], 'shell writes into a folder of code or start settings', 'SH_EXEC')
         p_ = os.path.basename(ws_[0]['val'])
         args = ws_[1:]
+        # touch меняет только время файла, не его байты: не помечает
+        if p_ in ('tee', 'truncate', 'fallocate', 'mkfs.ext4'):
+            # значение опции (размер, метка) — не путь; опция вне списка — её значение помечается как путь
+            vopt = {'truncate': ('-s', '-r', '--size', '--reference'), 'fallocate': ('-o', '-l', '--offset', '--length'),
+                    'mkfs.ext4': ('-b', '-C', '-d', '-E', '-e', '-g', '-G', '-i', '-I', '-J', '-L', '-l', '-m', '-M',
+                                  '-N', '-o', '-O', '-r', '-t', '-T', '-U')}.get(p_, ())
+            for j_, w in enumerate(args):
+                if not (w['lit'] and w['val'].startswith('-')) and not (
+                        j_ and args[j_ - 1]['lit'] and args[j_ - 1]['val'] in vopt):
+                    taint(w)
+        elif p_ == 'dd':
+            for w in args:
+                if w['val'].startswith('of=') or not w['lit']:
+                    taint({'val': w['val'][3:] if w['val'].startswith('of=') else w['val'], 'lit': w['lit'],
+                           'raw': w['raw'].replace('of=', '', 1)})
+        elif p_ in ('sort', 'psql'):
+            for j_, w in enumerate(args):
+                if w['val'].startswith(('--output=', '--log-file=')):
+                    taint({'val': w['val'].partition('=')[2], 'lit': w['lit'], 'raw': w['raw'].partition('=')[2]})
+                elif w['lit'] and w['val'] in (('-o', '--output') if p_ == 'sort' else ('-o', '--output', '-L', '--log-file')) \
+                        and j_ + 1 < len(args):
+                    taint(args[j_ + 1])
+                elif w['lit'] and w['val'].startswith(('-o', '-L')) and len(w['val']) > 2 and \
+                        (p_ == 'psql' or w['val'].startswith('-o')):
+                    taint({'val': w['val'][2:], 'lit': True})
         if p_ in ('tee', 'touch', 'truncate'):
             bad = [w for w in args if not w['val'].startswith('-') and code_dir(w)]
         elif p_ == 'dd':
@@ -1649,10 +1691,13 @@ def sh_findings(path, text, line=1, depth=0):
                     files_ = [w for w in files_ if w is not args[j + 1]]
                     j += 1
                 j += 1
-            if p_ == 'mv':  # перенос из папки кода тоже меняет файл, который потом прочтут
+            if p_ == 'mv':  # перенос из любого пути тоже меняет файл, который потом прочтут
                 for w in files_[:-1]:
-                    if code_dir(w):
-                        taint(w)
+                    taint(w)
+            # ссылка (ln, cp -s, cp -l) даёт файлу второе имя: запись по любому имени меняет поставленный файл
+            if p_ == 'ln' or p_ == 'cp' and any(o in ('--link', '--symbolic-link') or not o.startswith('--') and (
+                    's' in o or 'l' in o) for o in opts_):
+                tainted.add('*')
             if any(o.startswith('-t') or o.startswith('--target') for o in opts_):
                 bad = [w for w in args if w['val'].startswith(('-t', '--target'))]
                 tainted.add('*')
@@ -1684,6 +1729,8 @@ def sh_findings(path, text, line=1, depth=0):
                     unit_install(files_[0], dest, c)
             else:
                 bad = []
+                if files_:
+                    taint(files_[-1])
         else:
             bad = []
         for w in bad:
@@ -1691,15 +1738,75 @@ def sh_findings(path, text, line=1, depth=0):
             taint(w)
 
     def taint(w):
-        # запись в путь, который потом может прочесть nft или systemd-tmpfiles; путь из подстановки — любой путь
-        v = re.sub(r'/+', '/', w['val'])
-        if w['lit']:
+        # Запись в путь, который потом может прочесть nft или systemd-tmpfiles. Аудит M3310-R20-02: помечается путь
+        # любого начала. Постоянный полный путь — сам путь. Путь из подстановки — по постоянному хвосту после
+        # последней подстановки: «…/ИМЯ» — ИМЯ части пути; «…ОКОНЧАНИЕ» без «/» — ОКОНЧАНИЕ части пути. Путь без
+        # подстановки, но относительный (зависит от cd) или с «..» — ИМЯ последней части. Нет хвоста, ИМЯ «.» или
+        # «..», шаблон *?[ — любой путь.
+        ex = expand(w.get('raw', ''))
+        if ex is not None:
+            for p in ex:  # «папка/X» — любая часть пути в постоянной папке: помечена вся папка
+                taint({'val': p[:-2] if p.endswith('/' + X) else p, 'lit': True})
+            return
+        v = w['val']
+        m_ = re.match(r'^"?\$\{?([A-Za-z_]\w*)\}?', w.get('raw', ''))
+        if v.startswith(X) and m_ and m_.group(1) in consts:
+            v = consts[m_.group(1)] + v[1:]
+        v = re.sub(r'/+', '/', v)
+        tail = v.rsplit(X, 1)[-1]
+        b = tail.rsplit('/', 1)[-1]
+        if re.search(r'[*?\[]', v):
+            tainted.add('*')
+        elif X not in v and v.startswith('/') and '..' not in v.split('/'):
             tainted.add(norm_path(v))
-        elif v.startswith((X, '/etc/tmpfiles.d/', '/etc/zavod/')) or '..' in v.split('/'):
+        elif (X not in v or '/' in tail) and b not in ('', '.', '..'):
+            names.add(b)
+        elif X in v and '/' not in tail and tail:
+            suffixes.add(tail)
+        else:
             tainted.add('*')
 
+    def expand(raw):
+        # Путь записи "текст$ИМЯ…" в двойных кавычках без других подстановок: ИМЯ — постоянная переменная (её текст),
+        # переменная объемлющего for по постоянным именам без «/» (каждое имя) или последняя часть пути — переменная,
+        # присвоенная один раз выводом systemd-escape без -u (в выводе нет «/», «.» и «..»; X). Ответ — варианты пути
+        # (не больше 64); иначе None.
+        if not re.fullmatch(r'"[^"\\`]*"', raw) or '$' not in raw:
+            return None
+        bits = re.split(r'\$(?:\{([A-Za-z_]\w*)\}|([A-Za-z_]\w*))', raw[1:-1])
+        alts = ['']
+        for k in range(0, len(bits), 3):
+            if '$' in bits[k]:
+                return None
+            alts = [a + bits[k] for a in alts]
+            if k + 1 >= len(bits):
+                break
+            name = bits[k + 1] or bits[k + 2]
+            fr = next((f for f in reversed(state['c']['nest']) if f[0] == 'f' and f[1] == name), None)
+            a0 = assigned[name][0]['raw'][len(name) + 1:] if single(name) else ''
+            if name in consts:
+                vals = [consts[name]]
+            elif fr:
+                vals = list(fr[2])
+            elif k + 4 == len(bits) and bits[-1] == '' and re.fullmatch(r'"?\$\(systemd-escape\s[^()`]*\)"?', a0) \
+                    and all(o in ('-p', '--path') or o.startswith(('--suffix=', '--template='))
+                            for o in a0.split() if o.startswith('-')):
+                vals = [X]
+            else:
+                return None
+            alts = [a + v for a in alts for v in vals]
+        if len(alts) > 64 or any(X in a and not (a.endswith('/' + X) and a.count(X) == 1) for a in alts):
+            return None
+        return alts
+
     def from_tree_file(v):
-        return v in installed and v not in tainted and '*' not in tainted and norm_path(v) == v
+        # путь поставлен из дерева, и запись сценария его не меняет: ни сам путь, ни папка на пути не помечены, ни
+        # одна часть пути не равна помеченному ИМЕНИ и не кончается помеченным ОКОНЧАНИЕМ
+        if not (v in installed and '*' not in tainted and norm_path(v) == v):
+            return False
+        parts = v.split('/')
+        return not any('/'.join(parts[:k]) in tainted or parts[k - 1] in names or
+                       parts[k - 1].endswith(tuple(suffixes)) for k in range(2, len(parts) + 1))
 
     def unit_install(src, dest, c):
         # Аудит M3310-R19-01: юнит, который сценарий ставит всегда из файла своей папки дерева в /etc/systemd/system/:
@@ -1788,6 +1895,13 @@ def sh_findings(path, text, line=1, depth=0):
             # cd носят имя файла дерева, но это другой файл. Разрешён только полный путь в папке установки.
             add(w['line'], f'{prog} runs {b} not by its full path in the install folder', 'SH_EXEC')
 
+    # Аудит M3310-R20-02: запись в любом месте сценария (и ниже nft -f по тексту: функция, цикл) снимает разрешение.
+    # Первый проход собирает пути установки и записи, его находки не берутся; второй проход проверяет.
+    n0, k0 = len(UNITS_STARTED), len(out)
+    for c in cmds:
+        one(c, c['words'])
+    del UNITS_STARTED[n0:], out[k0:]
+    state['errexit'] = False
     for c in cmds:
         one(c, c['words'])
     return list(dict.fromkeys(out))
