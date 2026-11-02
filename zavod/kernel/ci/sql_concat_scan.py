@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.15  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 10:25 +02:00 (v0.15: аудит M3310-R14-01, -02,
+# ВЕРСИЯ: v0.16  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 10:42 +02:00 (v0.16: самопроверка R15 — запись файла кода перенаправлением и tee, файл дерева из папки вне установки, службы только из /usr/local/lib/zavod, /etc/zavod, /usr/bin, /usr/sbin; v0.15: аудит M3310-R14-01, -02,
 #   -04, -05 — закрытый мир: global/nonlocal делают имя во внешних областях не постоянным; импорт модуля Python вне
 #   PY_MODULES и относительный импорт — находка PY_IMPORT; psql в любом месте команды и программа за docker/ssh/… —
 #   по своим правилам, команда ssh одним словом разбирается, из подстановки — находка; python/bash/node запускают
@@ -1071,6 +1071,18 @@ def sh_findings(path, text, line=1, depth=0):
         for w in ws + c['hstr'] + [h for h in c['here']] + [r[1] for r in c['redir']]:
             if not w['lit'] and SH_SQL.search(w['val'].replace(X, ' ')):
                 add(w['line'], 'SQL-like text built with shell substitutions', 'SH_SQL_TEXT')
+        # Запись кода во время работы (самопроверка R15): «> /tmp/kernel.mjs» создаёт файл с именем файла дерева
+        # или с суффиксом кода, а запуск по имени его пропустит. Вывод в такой файл — находка.
+        for op, w in c['redir']:
+            b = w['val'].rsplit('/', 1)[-1]
+            if op in ('>', '>>', '>|', '&>', '<>') and (b in SCRIPTS or b.endswith(CODE_EXT)):
+                add(w['line'], f'shell writes code file {b.replace(X, "?")}', 'SH_EXEC')
+        for j, w in enumerate(ws):
+            if w['lit'] and w['val'].rsplit('/', 1)[-1] == 'tee':
+                for t in ws[j + 1:]:
+                    b = t['val'].rsplit('/', 1)[-1]
+                    if b in SCRIPTS or b.endswith(CODE_EXT):
+                        add(t['line'], f'tee writes code file {b.replace(X, "?")}', 'SH_EXEC')
         for j, w in enumerate(ws):
             v = w['val']
             if w['lit'] and v in ('-c', '--command') and j + 1 < len(ws) and not ws[j + 1]['lit']:
@@ -1226,6 +1238,9 @@ def sh_findings(path, text, line=1, depth=0):
             add(w['line'], f'{prog} runs a file whose name is not fixed', 'SH_EXEC')
         elif SCRIPTS.get(b) != kind:
             add(w['line'], f'{prog} runs {b}: not a checked {kind} file of the scanned tree', 'SH_EXEC')
+        elif w['val'].startswith('/') and not unit_path(w['val'], UNIT_TREE_DIRS):
+            # Самопроверка R15: /tmp/kernel.mjs носит имя файла дерева, но это другой файл.
+            add(w['line'], f'{prog} runs {b} from a folder outside the install folder', 'SH_EXEC')
 
     for c in cmds:
         one(c, c['words'])
@@ -1330,6 +1345,15 @@ UNCHECKED_EXT = ('.ts', '.mts', '.cts', '.tsx', '.jsx', '.node', '.wasm', '.so',
 DATA_EXT = ('.conf', '.mount', '.nft', '.path', '.rules', '.service', '.slice', '.timer')
 UNIT_EXT = ('.service',)
 UNIT_PROGRAMS = {'nft'}
+CODE_EXT = ('.py', '.mjs', '.js', '.cjs', '.sh')
+# Папки службы (самопроверка R15): файл дерева служба запускает только из папки установки, программу системы — из
+# /usr/bin или /usr/sbin; /tmp/zagent-session с именем файла дерева — находка.
+UNIT_TREE_DIRS = ('/usr/local/lib/zavod/', '/etc/zavod/')
+UNIT_SYS_DIRS = ('/usr/bin/', '/usr/sbin/')
+
+
+def unit_path(p, dirs):
+    return p.startswith(dirs) and '/../' not in p and '/./' not in p and not re.search(r'[%$`\\]', p)
 
 
 def unit_findings(text):
@@ -1345,9 +1369,12 @@ def unit_findings(text):
         except ValueError:
             out.append((i, 'unit command not parsed', 'UNIT_EXEC'))
             continue
-        b = os.path.basename(words[0].lstrip('-@:+!|'))
+        prog = words[0].lstrip('-@:+!|')
+        b = os.path.basename(prog)
         rest = words[1:]
-        if PY_RUNNERS.match(b):
+        if not unit_path(prog, UNIT_TREE_DIRS if SCRIPTS.get(b) in ('py', 'sh') else UNIT_SYS_DIRS):
+            out.append((i, f'unit runs {prog}: not from the install folder or /usr/bin, /usr/sbin', 'UNIT_EXEC'))
+        elif PY_RUNNERS.match(b):
             kind = 'py' if b.startswith(('python', 'pypy')) else 'sh' if b in SH_SHELLS else \
                 'js' if b in ('node', 'nodejs') else None
             at = next((j for j, w in enumerate(rest) if not w.startswith('-')), None)
@@ -1356,11 +1383,12 @@ def unit_findings(text):
                 out.append((i, f'unit runs interpreter {b}: outside the closed list', 'UNIT_EXEC'))
             elif at is None or any(w in ('-c', '-m', '-e', '--eval', '-p', '-', '-s') for w in opts):
                 out.append((i, f'unit runs {b} with inline code, a module or standard input', 'UNIT_EXEC'))
-            elif SCRIPTS.get(os.path.basename(rest[at])) != kind:
-                out.append((i, f'unit runs {rest[at]}: not a checked {kind} file of the scanned tree', 'UNIT_EXEC'))
+            elif SCRIPTS.get(os.path.basename(rest[at])) != kind or not unit_path(rest[at], UNIT_TREE_DIRS):
+                out.append((i, f'unit runs {rest[at]}: not a checked {kind} file of the install folder', 'UNIT_EXEC'))
         elif SCRIPTS.get(b) in ('py', 'sh'):
             continue
-        elif b in UNIT_PROGRAMS and rest[:1] == ['-f'] and len(rest) == 2 and SCRIPTS.get(os.path.basename(rest[1])) == 'nft':
+        elif b in UNIT_PROGRAMS and rest[:1] == ['-f'] and len(rest) == 2 and \
+                SCRIPTS.get(os.path.basename(rest[1])) == 'nft' and unit_path(rest[1], UNIT_TREE_DIRS):
             continue
         else:
             out.append((i, f'unit runs {b}: program outside the closed list', 'UNIT_EXEC'))

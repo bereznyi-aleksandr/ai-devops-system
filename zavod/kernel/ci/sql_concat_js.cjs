@@ -1,8 +1,8 @@
 'use strict';
 // ДОКУМЕНТ: zavod/kernel/ci/sql_concat_js.cjs
-// ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+// ВЕРСИЯ: v0.9  СТАТУС: DRAFT
 // ДАТА СОЗДАНИЯ: 2026-11-02 02:21 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.8 — сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
-// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 10:25 +02:00 (v0.8: аудит M3310-R14-03, -06, -07 — импорт модуля вне закрытого
+// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 10:42 +02:00 (v0.9: самопроверка R15 — импорт по пути к node_modules или по абсолютному пути — находка MODULE; v0.8: аудит M3310-R14-03, -06, -07 — импорт модуля вне закрытого
 //   списка JS_MODULES (сторонний пакет: postgres.js, execa …) — находка MODULE; копия «...x.map/flatMap(…)» в списке
 //   запуска — только у настоящего массива (литерал, const-список, Object.entries/keys/values)); прежняя дата: 2026-11-02 07:26 +02:00 (v0.7: аудит M3310-R11-03 — *.cjs разбирается как script; импорт своего
 //   файла не формата .mjs/.js/.cjs и «#имя» — находка MODULE); прежняя дата: 2026-11-02 07:05 +02:00 (v0.6: аудит M3310-R10-01..04 — список запуска строго: литерал в
@@ -924,6 +924,8 @@ function check(path, text) {
           // package.json) ведёт к файлу, которого проверка не видит.
           if (/^(\.|\/|file:)/i.test(n.source.value) && !/\.(mjs|js|cjs)$/.test(n.source.value.split(/[?#]/)[0])) add(n, `module ${n.source.value} has a format the scan does not check`);
           if (n.source.value.startsWith('#')) add(n, `module ${n.source.value} is resolved through the imports map`);
+          // Самопроверка R15: путь к пакету (../node_modules/postgres/…) или абсолютный путь обходит закрытый список.
+          if (/(^|\/)node_modules(\/|$)/.test(n.source.value) || /^(\/|file:)/i.test(n.source.value)) add(n, `module ${n.source.value} is outside the scanned tree`);
           if (m === 'child_process') {
             // Запускать программы может только файл, чья строка импорта есть в файле разрешений (код CHILD_IMPORT):
             // иначе любой файл мог бы записать код во временный файл и запустить его node.
