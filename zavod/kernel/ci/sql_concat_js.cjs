@@ -1,8 +1,11 @@
 'use strict';
 // ДОКУМЕНТ: zavod/kernel/ci/sql_concat_js.cjs
-// ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+// ВЕРСИЯ: v0.5  СТАТУС: DRAFT
 // ДАТА СОЗДАНИЯ: 2026-11-02 02:21 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
-// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 04:16 +02:00 (v0.4: аудит M3310-R8-01 — встроенные объекты (Object, Array, globalThis …) только как
+// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 06:11 +02:00 (v0.5: аудит M3310-R9-01 — список запуска из переменной только
+//   доказанного происхождения: const со списком-литералом или параметр своей функции / закрытого метода, без push,
+//   другого имени и передачи дальше; копии «...x» в списке — того же происхождения или map/flatMap со списком-литералом;
+//   v0.4: аудит M3310-R8-01 — встроенные объекты (Object, Array, globalThis …) только как
 //   X.член или вызов, запись в любую цепочку от них — находка; запись в элемент замороженного литерала — не таблица;
 //   M3310-R8-02 — имя оболочки в любом списке — только «-c сценарий из SHELL_SCRIPTS», имя исполнителя кода
 //   (python, perl, node …) в списке — находка; v0.3: аудит M3310-R7-01 — обратный вызов map/forEach/… только стрелкой без
@@ -645,19 +648,101 @@ function check(path, text) {
     }
     args.slice(1).forEach((a, i) => {
       if (a.type === 'ArrayExpression') {
-        if (i === 0) checkArgv(prog, a.elements, 0, a);
+        if (i === 0) { checkArgv(prog, a.elements, 0, a); argvArray(a, depth); }
       } else if (a.type === 'ObjectExpression') {
         for (const pr of a.properties) {
           if (pr.type !== 'Property' || pr.computed) { add(pr, 'child process options with spread or computed key'); continue; }
           const k = pr.key.type === 'Identifier' ? pr.key.name : pr.key.value;
           if (k === 'shell' && !(pr.value.type === 'Literal' && pr.value.value === false)) add(pr, 'child process started through a shell');
         }
-      } else if (i === 0 && DATA_PROGRAMS.has(prog)) {
-        // аргументы программы-данных (gh, git, docker, podman) могут прийти списком из переменной
+      } else if (i === 0 && DATA_PROGRAMS.has(prog) && a.type === 'Identifier') {
+        argvSource(a, depth); // список программы-данных (gh, git, docker, podman) из переменной — только доказанного происхождения
       } else if (!(i >= 1 && isFunc(a))) {
         add(a, 'child process: arguments or options are not a literal');
       }
     });
+  }
+  // Список аргументов из переменной (аудит M3310-R9-01: const argv = [...]; argv.push('sh', '-c', line)). Переменная —
+  // const со списком-литералом или параметр своей функции (не выставленной наружу) либо закрытого метода (#имя).
+  // Её упоминают только как список запуска (второй аргумент вызова с постоянной программой) или копией «...x» в
+  // другом списке: дописать (push, splice, [i] = …), передать дальше или взять другое имя нельзя. У параметра
+  // проверяется каждый вызов функции: на этом месте — список-литерал или такая же переменная.
+  const ARGV_BAD = 'child process: argument list is not a list literal or a variable of proven origin';
+  function argvRefsOk(b) {
+    return b.refs.every((r) => {
+      const pr = parent.get(r);
+      if (pr && pr.type === 'SpreadElement') return !!parent.get(pr) && parent.get(pr).type === 'ArrayExpression';
+      return !!pr && pr.type === 'CallExpression' && pr.arguments.indexOf(r) === 1 && typeof constValue(pr.arguments[0]) === 'string';
+    });
+  }
+  function bindingCalls(fb, at, depth) {
+    const sites = [];
+    for (const r of fb.refs) {
+      const cs = parent.get(r);
+      if (cs && cs.type === 'CallExpression' && cs.callee === r) { sites.push(cs); continue; }
+      // значение параметра по умолчанию (exec = ghRun): вызовы этого параметра
+      if (cs && cs.type === 'AssignmentPattern' && cs.right === r && cs.left.type === 'Identifier' && depth < 3) {
+        const pb = resolveDecl(cs.left);
+        const more = pb && !pb.writes.length ? bindingCalls(pb, at, depth + 1) : null;
+        if (more) { sites.push(...more); continue; }
+      }
+      add(r, 'child process: function that gets the argument list used other than by a direct call');
+      return null;
+    }
+    return sites;
+  }
+  function callSites(fn, at) {
+    const m = parent.get(fn);
+    if (m && m.type === 'MethodDefinition') {
+      if (m.computed || m.key.type !== 'PrivateIdentifier') { add(at, `${ARGV_BAD} (parameter of a public method)`); return null; }
+      const sites = [];
+      for (const n of all) {
+        if (n.type !== 'MemberExpression' || n.property.type !== 'PrivateIdentifier' || n.property.name !== m.key.name) continue;
+        const cs = parent.get(n);
+        if (!cs || cs.type !== 'CallExpression' || cs.callee !== n) { add(n, 'child process: private method that starts programs used other than by a direct call'); return null; }
+        sites.push(cs);
+      }
+      return sites;
+    }
+    const fb = wrapperBinding(fn);
+    if (!fb || exported(fb)) { add(at, `${ARGV_BAD} (parameter of a function that is not a local one)`); return null; }
+    return bindingCalls(fb, at, 0);
+  }
+  function argvSource(id, depth) {
+    const b = id.type === 'Identifier' ? bindingOf.get(id) : null;
+    if (!b || depth > 6) { add(id, ARGV_BAD); return; }
+    if (b.writes.length || !argvRefsOk(b)) { add(id, 'child process: argument list variable is changed, passed on or renamed (push, alias …)'); return; }
+    if (constBinding(b) && b.decl.init && b.decl.init.type === 'ArrayExpression') { argvArray(b.decl.init, depth + 1); return; }
+    if (b.kind === 'param' && b.index >= 0) {
+      const sites = callSites(b.fn, id);
+      for (const cs of sites || []) {
+        if (cs.arguments.some((a) => a.type === 'SpreadElement')) { add(cs, 'child process call with spread arguments'); continue; }
+        const a = cs.arguments[b.index];
+        if (!a) continue;
+        if (a.type === 'ArrayExpression') argvArray(a, depth + 1);
+        else argvSource(a, depth + 1);
+      }
+      return;
+    }
+    add(id, ARGV_BAD);
+  }
+  // Копия «...x» внутри списка запуска: x — переменная доказанного происхождения или map/flatMap со стрелкой, которая
+  // возвращает список-литерал (его проверяет checkDashC). После «process.execPath --» или «process.execPath файл»
+  // (файл — const) — файл node и его аргументы, не ключи node и не программы запуска.
+  function argvArray(arr, depth) {
+    const el = arr.elements;
+    for (let j = 0; j < el.length; j++) {
+      const x = el[j];
+      if (isExecPath(x) && el[j + 1] && (el[j + 1].type === 'Identifier' && constBinding(bindingOf.get(el[j + 1])) ||
+        el[j + 1].type !== 'SpreadElement' && constValue(el[j + 1]) === '--')) return;
+      if (!x || x.type !== 'SpreadElement') continue;
+      const s = x.argument;
+      if (s.type === 'Identifier') { argvSource(s, depth + 1); continue; }
+      if (s.type === 'CallExpression' && s.callee.type === 'MemberExpression' && !s.callee.computed &&
+        ['map', 'flatMap'].includes(s.callee.property.name) && s.arguments.length === 1 &&
+        s.arguments[0].type === 'ArrowFunctionExpression' && s.arguments[0].body.type === 'ArrayExpression') continue;
+      add(x, 'child process: argument list copies (...) a value of unknown origin');
+    }
   }
   // Любой список файла (прямой вызов, своя обёртка this.docker([...]), список в переменной; аудит M3310-R8-02):
   // имя оболочки — только «оболочка -c сценарий из SHELL_SCRIPTS» (любой другой сценарий может запустить

@@ -1,6 +1,10 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 04:16 +02:00 (v0.9: аудит M3310-R8-03 — SQL узнаётся в любом регистре;
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 06:11 +02:00 (v0.10: аудит M3310-R9-02..04 —
+#   метод запроса, взятый как значение (send = cur.execute), — находка; цикл доказательства (функция передаёт параметр
+#   сама себе) — не постоянно; запуск программ из Python — только subprocess.run/Popen/call/check_* по имени модуля,
+#   без shell, программа — постоянное имя, не оболочка и не исполнитель кода, список — литерал без изменений методами;
+#   os.system/popen/exec*/spawn*, pty.spawn, asyncio.create_subprocess_*, импорт «from subprocess» и «as» — находка; v0.9: аудит M3310-R8-03 — SQL узнаётся в любом регистре;
 #   у мест выполнения запроса в Python (.execute и родня, psql через subprocess с текстом на входе) текст обязан
 #   быть постоянным, параметр своей функции — только если все её вызовы в файле дают постоянный текст; eval, exec,
 #   compile, getattr с не постоянным именем — находка; v0.8: аудит M3310-R7-03 — проверяются и сценарии оболочки (*.sh и файлы с #!…sh): запрос к базе только
@@ -46,6 +50,20 @@ SQL = re.compile(r'\b(SELECT|INSERT\s+INTO|UPDATE\s+\w|DELETE\s+FROM|CREATE\s|AL
 # на SQL», а известным целиком: неизвестная форма — находка.
 EXEC_METHODS = {'execute', 'executemany', 'executescript', 'mogrify', 'copy_expert', 'callproc'}
 CODE_BUILTINS = {'eval', 'exec', 'compile', '__import__'}
+# Запуск программ из Python (аудит M3310-R9-04): только subprocess.run/Popen/call/check_call/check_output по имени
+# модуля, без shell; программа — постоянное имя, не оболочка и не исполнитель кода. Остальные пути запуска — находка.
+PY_RUN = {'run', 'Popen', 'call', 'check_call', 'check_output'}
+PY_SUBPROCESS_OK = PY_RUN | {'TimeoutExpired', 'CalledProcessError', 'SubprocessError', 'PIPE', 'DEVNULL', 'STDOUT',
+                             'CompletedProcess'}
+PY_OS_RUN = re.compile(r'^(system|popen|exec\w*|spawn\w*|posix_spawn\w*|startfile)$')
+PY_RUNNERS = re.compile(r'^(sh|bash|dash|zsh|ash|ksh|mksh|csh|tcsh|fish|busybox|toybox|python[0-9.]*|pypy[0-9.]*'
+                        r'|perl[0-9.]*|ruby|php|lua[0-9.]*|tclsh|wish|expect|awk|gawk|mawk|nawk|node|nodejs|deno|bun'
+                        r'|osascript|pwsh|powershell|sqlite3|R|Rscript|julia|guile|racket|scheme)$')
+# Программы, которые запускают другую программу из своих аргументов: у них все аргументы — постоянные слова.
+PY_WRAPPERS = {'sudo', 'doas', 'env', 'exec', 'timeout', 'nohup', 'setsid', 'nice', 'runuser', 'su', 'setpriv',
+               'stdbuf', 'ionice', 'chroot', 'unshare', 'nsenter', 'systemd-run', 'docker', 'podman', 'ssh', 'xargs',
+               'find', 'flock', 'watch', 'strace', 'gdb', 'script', 'busybox'}
+PSQL_DANGER = {'-c', '--command', '-f', '--file'}
 MAX_TEXT = 20000
 STR_METHODS = ('format', 'format_map', 'join', 'replace', 'strip', 'lstrip', 'rstrip', 'lower', 'upper',
                'casefold', 'encode', 'decode', 'removeprefix', 'removesuffix', '__add__', '__mod__')
@@ -200,11 +218,32 @@ def py_exec_findings(tree):
     def put(n, name, v):
         values.setdefault((enclosing(n), name), []).append(v)
 
+    def var_insert(tg, v):
+        # args[1:1] = ['-v', f'{k}={v}']: вставка после программы; вставляют постоянные ключи (не -c/-f) и значения
+        # только после -v (переменная psql). Такое присваивание программу и запрос не меняет.
+        if not (isinstance(tg, ast.Subscript) and isinstance(tg.value, ast.Name) and isinstance(tg.slice, ast.Slice)):
+            return False
+        lo = tg.slice.lower
+        if not (isinstance(lo, ast.Constant) and isinstance(lo.value, int) and lo.value >= 1 and tg.slice.step is None
+                and isinstance(tg.slice.upper, ast.Constant) and tg.slice.upper.value == lo.value):
+            return False
+        if not isinstance(v, ast.List):
+            return False
+        prev = None
+        for x in v.elts:
+            c = x.value if isinstance(x, ast.Constant) and isinstance(x.value, str) else None
+            if prev != '-v' and (c is None or c in PSQL_DANGER):
+                return False
+            prev = c
+        return True
+
     for n in ast.walk(tree):
         if isinstance(n, ast.Assign):
             for tg in n.targets:
                 if isinstance(tg, ast.Name):
                     put(n, tg.id, n.value)
+                elif len(n.targets) == 1 and var_insert(tg, n.value):
+                    pass
                 else:
                     for e in ast.walk(tg):
                         if isinstance(e, ast.Name):
@@ -222,6 +261,15 @@ def py_exec_findings(tree):
         elif isinstance(n, (ast.Global, ast.Nonlocal)):
             for name in n.names:
                 put(n, name, None)
+        elif isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and isinstance(n.func.value, ast.Name) \
+                and n.func.attr in ('append', 'extend', 'insert', 'pop', 'remove', 'clear', 'reverse', 'sort',
+                                    '__setitem__', '__iadd__'):
+            put(n, n.func.value.id, None)  # список меняют методом — его состав не прочитать
+        elif isinstance(n, ast.Delete):
+            for tg in n.targets:
+                for e in ast.walk(tg):
+                    if isinstance(e, ast.Name):
+                        put(n, e.id, None)
 
     def fixed(e, at, depth=0, seen=None):
         seen = seen or set()
@@ -244,7 +292,7 @@ def py_exec_findings(tree):
                     if (f, e.id) in values:
                         return False  # параметр, которому в функции присваивают ещё что-то
                     if (f, e.id) in seen:
-                        return True
+                        return False  # цикл (функция передаёт параметр сама себе) — постоянный текст не доказан
                     return param_fixed(f, e.id, pos.index(e.id) if e.id in pos else None, depth, seen | {(f, e.id)})
                 if (f, e.id) in values:
                     vs = values[(f, e.id)]
@@ -277,6 +325,93 @@ def py_exec_findings(tree):
                 return False
         return True
 
+    def strs(e, depth=0):
+        """Все возможные постоянные строки выражения или None, если значение не прочитать."""
+        if depth > 6 or e is None:
+            return None
+        if isinstance(e, ast.Constant) and isinstance(e.value, str):
+            return {e.value}
+        if isinstance(e, ast.Name):
+            vs = values.get((enclosing(e), e.id)) or values.get((None, e.id))
+            if not vs or any(v is None for v in vs):
+                return None
+            out = set()
+            for v in vs:
+                s = strs(v, depth + 1)
+                if s is None:
+                    return None
+                out |= s
+            return out
+        return None
+
+    def argv_lists(e, depth=0):
+        """Списки-литералы, которые могут прийти на место списка программы, или None, если происхождение не прочитать
+        (собран сложением, изменён методом, пришёл параметром)."""
+        if depth > 6 or e is None:
+            return None
+        if isinstance(e, ast.Call) and isinstance(e.func, ast.Name) and e.func.id in ('list', 'tuple') \
+                and len(e.args) == 1 and not e.keywords:
+            return argv_lists(e.args[0], depth + 1)
+        if isinstance(e, (ast.List, ast.Tuple)):
+            return [e]
+        if isinstance(e, ast.Name):
+            vs = values.get((enclosing(e), e.id)) or values.get((None, e.id))
+            if not vs or any(v is None for v in vs):
+                return None
+            out = []
+            for v in vs:
+                ls = argv_lists(v, depth + 1)
+                if ls is None:
+                    return None
+                out += ls
+            return out
+        return None
+
+    def check_run(n, ln):
+        for k in n.keywords:
+            if k.arg == 'shell' and not (isinstance(k.value, ast.Constant) and k.value.value is False):
+                out.append((ln, 'subprocess started through a shell'))
+            if k.arg == 'executable':
+                out.append((ln, 'subprocess with executable= (the real program differs from the list)'))
+            if k.arg is None:
+                out.append((ln, 'subprocess with **keywords'))
+        if any(isinstance(a, ast.Starred) for a in n.args):
+            out.append((ln, 'subprocess call with *arguments'))
+            return
+        argv = n.args[0] if n.args else next((k.value for k in n.keywords if k.arg == 'args'), None)
+        ls = argv_lists(argv)
+        if not ls:
+            out.append((ln, 'subprocess: argument list is not a list literal of fixed origin'))
+            return
+        for lst in ls:
+            el = lst.elts
+            prog = strs(el[0]) if el and not isinstance(el[0], ast.Starred) else None
+            if not prog:
+                out.append((ln, 'subprocess: program is not a fixed name'))
+                continue
+            names = {os.path.basename(s) for s in prog}
+            if any(PY_RUNNERS.match(s) for s in names):
+                out.append((ln, 'subprocess: program is a shell or a code interpreter'))
+            wrap = bool(names & PY_WRAPPERS)
+            words = []
+            for x in el[1:]:
+                s = strs(x) if not isinstance(x, ast.Starred) else None
+                if s is None and (wrap or isinstance(x, ast.Starred) and names & {'psql'}):
+                    out.append((ln, 'subprocess: a program that runs other programs gets an argument that is not fixed'))
+                words.append(s)
+                for w in s or ():
+                    if PY_RUNNERS.match(os.path.basename(w)) or os.path.basename(w) == 'psql' and 'psql' not in names:
+                        out.append((ln, f'subprocess: {w} inside the argument list'))
+            if 'psql' in names:
+                for j, s in enumerate(words):
+                    if s and s & PSQL_DANGER:
+                        nx = words[j + 1] if j + 1 < len(words) else None
+                        if not (s & {'-f', '--file'} and nx == {'-'}) and not (s & {'-c', '--command'} and nx):
+                            out.append((ln, 'psql: -c or -f with text or a file that is not fixed'))
+                for k in n.keywords:
+                    if k.arg == 'input' and not fixed(k.value, n):
+                        out.append((ln, 'psql gets text on input that is not fixed'))
+
     def psql_list(e):
         if isinstance(e, ast.Call) and isinstance(e.func, ast.Name) and e.func.id == 'list' and e.args:
             e = e.args[0]
@@ -302,11 +437,35 @@ def py_exec_findings(tree):
         if isinstance(fn, ast.Attribute) and fn.attr in EXEC_METHODS:
             if not n.args or not fixed(n.args[0], n):
                 out.append((ln, f'.{fn.attr}() gets query text that is not fixed'))
-        d = dotted(fn) or ''
-        if d.startswith('subprocess.') and n.args and psql_list(n.args[0]):
-            for k in n.keywords:
-                if k.arg == 'input' and not fixed(k.value, n):
-                    out.append((ln, 'psql gets text on input that is not fixed'))
+        if dotted(fn) in {'subprocess.' + x for x in PY_RUN}:
+            check_run(n, ln)
+    # Метод запроса или запуска, взятый как значение (send = cur.execute; run = subprocess.run): вызов под другим
+    # именем проверка не видит (аудит M3310-R9-02). Модули запуска — только по своему имени, без «as» и «from».
+    for n in ast.walk(tree):
+        ln = getattr(n, 'lineno', 0)
+        p = parents.get(n)
+        is_callee = isinstance(p, ast.Call) and p.func is n
+        if isinstance(n, ast.Attribute) and n.attr in EXEC_METHODS and not is_callee:
+            out.append((ln, f'query method .{n.attr} used other than by a direct call'))
+        d = dotted(n) if isinstance(n, ast.Attribute) else None
+        if d and d.startswith('subprocess.') and d.count('.') == 1:
+            if n.attr not in PY_SUBPROCESS_OK or n.attr in PY_RUN and not is_callee:
+                out.append((ln, f'{d} used other than as a direct run call'))
+        if d and (d.count('.') == 1 and d.split('.')[0] == 'os' and PY_OS_RUN.match(n.attr)
+                  or d in ('pty.spawn', 'asyncio.create_subprocess_shell', 'asyncio.create_subprocess_exec')):
+            out.append((ln, f'{d} starts a program'))
+        if isinstance(n, ast.Name) and n.id == 'subprocess' and not (isinstance(p, ast.Attribute) and p.value is n):
+            out.append((ln, 'subprocess module used other than as subprocess.name'))
+        if isinstance(n, ast.Import):
+            for a in n.names:
+                if a.name in ('subprocess', 'pty', 'os', 'asyncio', 'importlib') and a.asname:
+                    out.append((ln, f'import {a.name} as {a.asname}'))
+        if isinstance(n, ast.ImportFrom):
+            mod = n.module or ''
+            if mod in ('subprocess', 'pty', 'asyncio.subprocess') or mod.startswith('_posixsubprocess') or \
+                    mod == 'os' and any(a.name == '*' or PY_OS_RUN.match(a.name) for a in n.names) or \
+                    mod == 'asyncio' and any(a.name == '*' or a.name.startswith('create_subprocess') for a in n.names):
+                out.append((ln, f'from {mod} import … (run calls must use the module name)'))
     return out
 
 
