@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 06:11 +02:00 (v0.10: аудит M3310-R9-02..04 —
+# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:05 +02:00 (v0.11: аудит M3310-R10-05..07 —
+#   любой не постоянный аргумент запуска — находка PY_RUN; параметр затеняет внешнее имя; модули запуска (subprocess,
+#   importlib, builtins, ctypes …), .eval/.exec, getattr(…, 'exec'), globals/vars, import_module/exec_module — находка
+#   PY_RUN; файл с разрешённым запуском (CHILD, CHILD_IMPORT, PY_RUN) обязан быть закреплён суммой (строка PIN); v0.10: аудит M3310-R9-02..04 —
 #   метод запроса, взятый как значение (send = cur.execute), — находка; цикл доказательства (функция передаёт параметр
 #   сама себе) — не постоянно; запуск программ из Python — только subprocess.run/Popen/call/check_* по имени модуля,
 #   без shell, программа — постоянное имя, не оболочка и не исполнитель кода, список — литерал без изменений методами;
@@ -37,6 +40,7 @@
 #   постоянными в том же файле, где выполняются (службы ячейки шлют запросы только через psql с постоянным
 #   текстом). Неиспользованная строка разрешений — тоже отказ: разрешения не копятся.
 import ast
+import hashlib
 import json
 import os
 import re
@@ -64,6 +68,12 @@ PY_WRAPPERS = {'sudo', 'doas', 'env', 'exec', 'timeout', 'nohup', 'setsid', 'nic
                'stdbuf', 'ionice', 'chroot', 'unshare', 'nsenter', 'systemd-run', 'docker', 'podman', 'ssh', 'xargs',
                'find', 'flock', 'watch', 'strace', 'gdb', 'script', 'busybox'}
 PSQL_DANGER = {'-c', '--command', '-f', '--file'}
+# Модули, через которые Python запускает программы или код (аудит M3310-R10-07): их импорт — находка PY_RUN; файл,
+# где она разрешена, обязан быть закреплён суммой (PIN в файле разрешений).
+PY_RUN_MODULES = {'subprocess', 'pty', 'importlib', 'builtins', 'runpy', 'ctypes', 'code', 'codeop', 'multiprocessing',
+                  'pickle', 'marshal', 'shelve', 'imp', 'zipimport', 'cffi', '_posixsubprocess', 'posix', 'nt'}
+PY_LOAD_ATTRS = {'import_module', 'exec_module', 'load_module', 'run_path', 'run_module', 'spec_from_file_location'}
+PY_CODE_NAMES = {'__builtins__', 'globals', 'vars', 'locals', '__loader__', '__spec__'}
 MAX_TEXT = 20000
 STR_METHODS = ('format', 'format_map', 'join', 'replace', 'strip', 'lstrip', 'rstrip', 'lower', 'upper',
                'casefold', 'encode', 'decode', 'removeprefix', 'removesuffix', '__add__', '__mod__')
@@ -297,6 +307,8 @@ def py_exec_findings(tree):
                 if (f, e.id) in values:
                     vs = values[(f, e.id)]
                     return all(v is not None and fixed(v, v, depth + 1, seen) for v in vs)
+                vs = lookup(e)
+                return bool(vs) and all(v is not None and fixed(v, v, depth + 1, seen) for v in vs)
             vs = values.get((None, e.id))
             return bool(vs) and all(v is not None and fixed(v, v, depth + 1, seen) for v in vs)
         return False
@@ -325,6 +337,23 @@ def py_exec_findings(tree):
                 return False
         return True
 
+    def params(f):
+        a = f.args
+        names = [x.arg for x in a.posonlyargs + a.args + a.kwonlyargs]
+        names += [x.arg for x in (a.vararg, a.kwarg) if x is not None]
+        return names
+
+    def lookup(e):
+        """Значения имени по областям изнутри наружу; параметр или лямбда на пути — None (значение неизвестно)."""
+        f = enclosing(e)
+        while f is not None:
+            if isinstance(f, ast.Lambda) or e.id in params(f):
+                return None
+            if (f, e.id) in values:
+                return values[(f, e.id)]
+            f = enclosing(f)
+        return values.get((None, e.id))
+
     def strs(e, depth=0):
         """Все возможные постоянные строки выражения или None, если значение не прочитать."""
         if depth > 6 or e is None:
@@ -332,7 +361,7 @@ def py_exec_findings(tree):
         if isinstance(e, ast.Constant) and isinstance(e.value, str):
             return {e.value}
         if isinstance(e, ast.Name):
-            vs = values.get((enclosing(e), e.id)) or values.get((None, e.id))
+            vs = lookup(e)
             if not vs or any(v is None for v in vs):
                 return None
             out = set()
@@ -355,7 +384,7 @@ def py_exec_findings(tree):
         if isinstance(e, (ast.List, ast.Tuple)):
             return [e]
         if isinstance(e, ast.Name):
-            vs = values.get((enclosing(e), e.id)) or values.get((None, e.id))
+            vs = lookup(e)
             if not vs or any(v is None for v in vs):
                 return None
             out = []
@@ -370,53 +399,52 @@ def py_exec_findings(tree):
     def check_run(n, ln):
         for k in n.keywords:
             if k.arg == 'shell' and not (isinstance(k.value, ast.Constant) and k.value.value is False):
-                out.append((ln, 'subprocess started through a shell'))
+                out.append((ln, 'RUN: subprocess started through a shell'))
             if k.arg == 'executable':
-                out.append((ln, 'subprocess with executable= (the real program differs from the list)'))
+                out.append((ln, 'RUN: subprocess with executable= (the real program differs from the list)'))
             if k.arg is None:
-                out.append((ln, 'subprocess with **keywords'))
+                out.append((ln, 'RUN: subprocess with **keywords'))
         if any(isinstance(a, ast.Starred) for a in n.args):
-            out.append((ln, 'subprocess call with *arguments'))
+            out.append((ln, 'RUN: subprocess call with *arguments'))
             return
         argv = n.args[0] if n.args else next((k.value for k in n.keywords if k.arg == 'args'), None)
         ls = argv_lists(argv)
         if not ls:
-            out.append((ln, 'subprocess: argument list is not a list literal of fixed origin'))
+            out.append((ln, 'RUN: subprocess: argument list is not a list literal of fixed origin'))
             return
         for lst in ls:
             el = lst.elts
             prog = strs(el[0]) if el and not isinstance(el[0], ast.Starred) else None
             if not prog:
-                out.append((ln, 'subprocess: program is not a fixed name'))
+                out.append((ln, 'RUN: subprocess: program is not a fixed name'))
                 continue
             names = {os.path.basename(s) for s in prog}
             if any(PY_RUNNERS.match(s) for s in names):
-                out.append((ln, 'subprocess: program is a shell or a code interpreter'))
-            wrap = bool(names & PY_WRAPPERS)
+                out.append((ln, 'RUN: subprocess: program is a shell or a code interpreter'))
             words = []
             for x in el[1:]:
                 s = strs(x) if not isinstance(x, ast.Starred) else None
-                if s is None and (wrap or isinstance(x, ast.Starred) and names & {'psql'}):
-                    out.append((ln, 'subprocess: a program that runs other programs gets an argument that is not fixed'))
+                if s is None:
+                    out.append((ln, 'RUN: subprocess: argument is not a fixed string'))
                 words.append(s)
                 for w in s or ():
                     if PY_RUNNERS.match(os.path.basename(w)) or os.path.basename(w) == 'psql' and 'psql' not in names:
-                        out.append((ln, f'subprocess: {w} inside the argument list'))
+                        out.append((ln, f'RUN: subprocess: {w} inside the argument list'))
             if 'psql' in names:
                 for j, s in enumerate(words):
                     if s and s & PSQL_DANGER:
                         nx = words[j + 1] if j + 1 < len(words) else None
                         if not (s & {'-f', '--file'} and nx == {'-'}) and not (s & {'-c', '--command'} and nx):
-                            out.append((ln, 'psql: -c or -f with text or a file that is not fixed'))
+                            out.append((ln, 'RUN: psql: -c or -f with text or a file that is not fixed'))
                 for k in n.keywords:
                     if k.arg == 'input' and not fixed(k.value, n):
-                        out.append((ln, 'psql gets text on input that is not fixed'))
+                        out.append((ln, 'RUN: psql gets text on input that is not fixed'))
 
     def psql_list(e):
         if isinstance(e, ast.Call) and isinstance(e.func, ast.Name) and e.func.id == 'list' and e.args:
             e = e.args[0]
         if isinstance(e, ast.Name):
-            vs = values.get((enclosing(e), e.id)) or values.get((None, e.id)) or []
+            vs = lookup(e) or []
             return any(v is not None and psql_list(v) for v in vs)
         if isinstance(e, (ast.List, ast.Tuple)):
             return any(isinstance(x, ast.Constant) and isinstance(x.value, str) and os.path.basename(x.value) == 'psql'
@@ -429,7 +457,7 @@ def py_exec_findings(tree):
         ln = getattr(n, 'lineno', 0)
         fn = n.func
         if isinstance(fn, ast.Name) and fn.id in CODE_BUILTINS:
-            out.append((ln, f'{fn.id}() runs code from a string'))
+            out.append((ln, f'RUN: {fn.id}() runs code from a string'))
         if isinstance(fn, ast.Name) and fn.id in ('getattr', 'setattr', 'delattr') and len(n.args) >= 2:
             k = n.args[1]
             if not (isinstance(k, ast.Constant) and isinstance(k.value, str)) or k.value in EXEC_METHODS:
@@ -450,22 +478,36 @@ def py_exec_findings(tree):
         d = dotted(n) if isinstance(n, ast.Attribute) else None
         if d and d.startswith('subprocess.') and d.count('.') == 1:
             if n.attr not in PY_SUBPROCESS_OK or n.attr in PY_RUN and not is_callee:
-                out.append((ln, f'{d} used other than as a direct run call'))
+                out.append((ln, f'RUN: {d} used other than as a direct run call'))
         if d and (d.count('.') == 1 and d.split('.')[0] == 'os' and PY_OS_RUN.match(n.attr)
                   or d in ('pty.spawn', 'asyncio.create_subprocess_shell', 'asyncio.create_subprocess_exec')):
-            out.append((ln, f'{d} starts a program'))
+            out.append((ln, f'RUN: {d} starts a program'))
         if isinstance(n, ast.Name) and n.id == 'subprocess' and not (isinstance(p, ast.Attribute) and p.value is n):
-            out.append((ln, 'subprocess module used other than as subprocess.name'))
+            out.append((ln, 'RUN: subprocess module used other than as subprocess.name'))
+        # код из строки через другой объект (builtins.eval, getattr(x, 'exec')) и словари областей (globals()['eval'])
+        if isinstance(n, ast.Attribute) and n.attr in CODE_BUILTINS and                 not (n.attr == 'compile' and isinstance(n.value, ast.Name) and n.value.id == 're'):
+            out.append((ln, f'RUN: .{n.attr} runs code from a string'))
+        if isinstance(n, ast.Attribute) and n.attr in PY_LOAD_ATTRS:
+            out.append((ln, f'RUN: .{n.attr} loads or runs a module by name'))
+        if isinstance(n, ast.Name) and n.id in PY_CODE_NAMES:
+            out.append((ln, f'RUN: {n.id} gives access to code and names of the program'))
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in ('getattr', 'setattr', 'delattr') \
+                and len(n.args) >= 2 and isinstance(n.args[1], ast.Constant) and n.args[1].value in CODE_BUILTINS:
+            out.append((ln, f'RUN: {n.func.id}() with name {n.args[1].value}'))
         if isinstance(n, ast.Import):
             for a in n.names:
                 if a.name in ('subprocess', 'pty', 'os', 'asyncio', 'importlib') and a.asname:
-                    out.append((ln, f'import {a.name} as {a.asname}'))
+                    out.append((ln, f'RUN: import {a.name} as {a.asname}'))
+                if a.name.split('.')[0] in PY_RUN_MODULES:
+                    out.append((ln, f'RUN: module {a.name} starts programs or code (file must be pinned)'))
         if isinstance(n, ast.ImportFrom):
             mod = n.module or ''
             if mod in ('subprocess', 'pty', 'asyncio.subprocess') or mod.startswith('_posixsubprocess') or \
                     mod == 'os' and any(a.name == '*' or PY_OS_RUN.match(a.name) for a in n.names) or \
                     mod == 'asyncio' and any(a.name == '*' or a.name.startswith('create_subprocess') for a in n.names):
-                out.append((ln, f'from {mod} import … (run calls must use the module name)'))
+                out.append((ln, f'RUN: from {mod} import … (run calls must use the module name)'))
+            elif mod.split('.')[0] in PY_RUN_MODULES:
+                out.append((ln, f'RUN: module {mod} starts programs or code (file must be pinned)'))
     return out
 
 
@@ -1053,7 +1095,10 @@ def sh_findings(path, text, line=1, depth=0):
                     code_text = (h['val'], h['line'])
             if code_text:
                 for ln, why, _ in py_findings(path, code_text[0]):
-                    add(code_text[1] + ln - 1, why, 'PY_SQL')
+                    if why.startswith('RUN: '):
+                        add(code_text[1] + ln - 1, why[5:], 'PY_RUN')
+                    else:
+                        add(code_text[1] + ln - 1, why, 'PY_SQL')
         elif p in SH_CODE:
             if any(w['lit'] and w['val'] in ('-e', '-E', '-p', '-r', '--eval', '--print', '-', '-x') or
                    w['val'].startswith(('--eval=', '--print=')) for w in rest) or not rest:
@@ -1132,6 +1177,8 @@ def files(paths):
 # Строка разрешения не должна касаться объекта базы: пул, клиент, вызов запроса (аудит M3310-R6-04).
 ALLOW_DB = re.compile(r'\bpg\.|\b(Pool|Client|pool|client|db|rulesPool)\b|\.query\b')
 ALLOW_CODE = re.compile(r'^[A-Z_]+$')
+# Находки, разрешение которых требует закрепить файл суммой (PIN): запуск программ и кода.
+PIN_RULES = {'CHILD', 'CHILD_IMPORT', 'PY_RUN'}
 
 
 def main(argv):
@@ -1142,6 +1189,7 @@ def main(argv):
         print('usage: sql_concat_scan.py [--allow file] path...', file=sys.stderr)
         return 2
     allow = {}
+    pins = {}  # путь → [sha256, файл проверен]
     bad_allow = False
     if allow_path:
         with open(allow_path, encoding='utf-8') as f:
@@ -1152,6 +1200,9 @@ def main(argv):
                 if len(parts) != 3 or not ALLOW_CODE.match(parts[1]) or ALLOW_DB.search(parts[2]):
                     print(f'SQL_CONCAT_ALLOW_BAD {raw.strip()[:160]}')
                     bad_allow = True
+                    continue
+                if parts[1] == 'PIN':
+                    pins[parts[0].replace('\\', '/')] = [parts[2].strip(), False]
                     continue
                 allow[(parts[0].replace('\\', '/'), parts[1], parts[2].strip())] = False
     found = 0
@@ -1181,14 +1232,33 @@ def main(argv):
             items = [(ln, why, rule, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
                      for ln, why, rule in sh_findings(norm, text)]
         else:
-            items = [(ln, why, 'PY_SQL', code) for ln, why, code in py_findings(norm, text)]
+            items = [(ln, why[5:], 'PY_RUN', code) if why.startswith('RUN: ') else (ln, why, 'PY_SQL', code)
+                     for ln, why, code in py_findings(norm, text)]
+        launch = False
         for ln, why, rule, code in items:
             key = (norm, rule, code)
             if key in allow:
                 allow[key] = True
+                launch = launch or rule in PIN_RULES
                 continue
             found += 1
             print(f'SQL_CONCAT {norm}:{ln}: {rule}: {why}: {code[:160]}')
+        # Закрепление (аудит M3310-R10): файл, которому разрешено запускать программы или код, закреплён суммой SHA-256
+        # всего файла. Любая правка такого файла — находка, пока сумма в файле разрешений не обновлена (это видно
+        # в изменениях и проверяется аудитом). Так код, который проверка не разбирает до конца, не меняется молча.
+        if launch or norm in pins:
+            with open(norm, 'rb') as f:
+                got = hashlib.sha256(f.read()).hexdigest()
+            want = pins.get(norm)
+            if want:
+                want[1] = True
+            if not want or want[0] != got:
+                found += 1
+                print(f'SQL_CONCAT {norm}:0: PIN: file that starts programs is {"not pinned" if not want else "changed"}: sha256 {got}')
+    for p, (want, used) in pins.items():
+        if not used:
+            found += 1
+            print(f'SQL_CONCAT_ALLOW_UNUSED {p}: PIN: {want}')
     for (p, rule, code), used in allow.items():
         if not used:
             found += 1

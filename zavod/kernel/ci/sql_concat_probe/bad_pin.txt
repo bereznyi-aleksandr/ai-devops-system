@@ -1,0 +1,8 @@
+# ДОКУМЕНТ: zavod/kernel/ci/sql_concat_probe/bad_pin.txt — проба закрепления (аудит M3310-R10): файл с разрешённым
+#   запуском программ и неверной суммой — находка PIN «changed»; такой файл без строки PIN — находка «not pinned».
+# ДАТА: 2026-11-02 07:05 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+zavod/engine/src/worker_sandbox.mjs	CHILD	const child = spawn(process.execPath, [script], { env: workerEnv(), stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+zavod/engine/src/worker_sandbox.mjs	CHILD_IMPORT	import { spawn } from 'node:child_process';
+zavod/kernel/src/container_holder.mjs	CHILD	const leader = spawn(cmd, args, { stdio: ['ignore', 'inherit', 'inherit'] });
+zavod/kernel/src/container_holder.mjs	CHILD_IMPORT	import { spawn } from 'node:child_process';
+zavod/engine/src/worker_sandbox.mjs	PIN	0000000000000000000000000000000000000000000000000000000000000000

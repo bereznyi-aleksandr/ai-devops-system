@@ -1,5 +1,15 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_allow.txt — разрешения проверки склейки запросов (sql_concat_scan.py)
-# ВЕРСИЯ: v0.7  ДАТА: 2026-11-02 06:11 +02:00 (v0.7: аудит M3310-R9-01 — строка env у fencer перенесена в список запуска; v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# ВЕРСИЯ: v0.8  ДАТА: 2026-11-02 07:05 +02:00 (v0.8: аудит M3310-R10 — строки PIN и точные строки запуска; v0.7: аудит M3310-R9-01 — строка env у fencer перенесена в список запуска; v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# PIN (аудит M3310-R10): путь<TAB>PIN<TAB>sha256 всего файла. Файл, которому разрешён запуск программ или кода
+#   (CHILD, CHILD_IMPORT, PY_RUN), обязан иметь такую строку с верной суммой: любая правка файла — находка, пока сумма
+#   не обновлена здесь (это видно в изменениях и проверяется аудитом). Закреплены 11 файлов: fencer.mjs,
+#   container_holder.mjs, rules_gate.mjs, deploy_egress.mjs, worker_sandbox.mjs, zagent-start, zavod-alert-notify,
+#   zavod-gate, zavod_intake.py (ctypes — вызов openat2), test_zavod_gate.py и intake_ci.sh (загрузка проверяемого
+#   файла importlib), — список ниже.
+# CHILD «argument is not a fixed string»: элемент списка запуска — данные (имя контейнера, путь cgroup, uid, pid,
+#   имя хранилища, номер прогона, поля билета). Программа и ключи в этих строках постоянные, оболочки с данными нет.
+# PY_RUN: logger — текст тревоги последним аргументом (не ключ); systemctl — аргументы из вызовов своего файла;
+#   import subprocess / importlib / ctypes — сам модуль запуска в закреплённом файле.
 # Формат: путь<TAB>КОД<TAB>точный текст строки кода. Любая правка строки снимает разрешение (строка снова — находка);
 # неиспользованная строка — тоже отказ. Ни одна строка ниже не держит объект базы и не передаёт текст запроса извне
 # (сканер отказывает строке, где есть pg., Pool, Client, pool, client, db или .query).
@@ -106,3 +116,55 @@ zavod/kernel/src/stage_gates.mjs	COMPUTED	if (!stages[rs]) errors.push(`${sid}: 
 zavod/ops/server/cell/cell_ci.sh	SH_PSQL	  printf '%s\n' "$q" | sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem "${v[@]}"
 zavod/ops/server/cell/egress_ci.sh	SH_PSQL	  printf '%s\n' "$q" | sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem "${v[@]}"
 zavod/ops/server/cell/egress_ci.sh	SH_PSQL	  printf '%s\n' "$q" | sudo -u zkernel psql -X -A -t -q -v ON_ERROR_STOP=1 -h /var/run/postgresql -U bem_kernel_rw -d bem "${v[@]}"
+zavod/engine/src/deploy_egress.mjs	CHILD	'-f', `manifest_b64=${b64(JSON.stringify({ manifest }))}`, '-f', `request_id=${outbox_id}`,
+zavod/engine/src/deploy_egress.mjs	CHILD	'-f', `ticket_b64=${b64(ticket)}`, '-f', `sig_b64=${b64(ticket_sig)}`]);
+zavod/engine/src/deploy_egress.mjs	CHILD	await exec(['workflow', 'run', workflow, ...R, '--ref', ref, '-f', `head_sha=${manifest.head_sha}`,
+zavod/engine/src/deploy_egress.mjs	CHILD	const R = ['-R', repo_full_name];
+zavod/engine/src/deploy_egress.mjs	CHILD	const log = await exec(['run', 'view', id, ...R, '--log']).catch((e) => ({ stdout: e.stdout || '' }));
+zavod/engine/src/deploy_egress.mjs	CHILD	const { stdout } = await exec(['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
+zavod/engine/src/deploy_egress.mjs	CHILD	const { stdout } = await exec(['run', 'view', id, ...R, '--json', 'status,conclusion,event,displayTitle']);
+zavod/kernel/src/fencer.mjs	CHILD	'--security-opt', 'no-new-privileges', '--pids-limit', '64', '-u', `${process.getuid()}:${process.getgid()}`,
+zavod/kernel/src/fencer.mjs	CHILD	...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
+zavod/kernel/src/fencer.mjs	CHILD	...Object.entries(env).flatMap(([k, v]) => [`${k}=${v}`]), process.execPath, '--', modulePath, ...args],
+zavod/kernel/src/fencer.mjs	CHILD	...ro.flatMap((d) => ['-v', `${d}:${d}:ro`]), '-v', `${tmpdir()}:${tmpdir()}`, '-w', KERNEL_DIR,
+zavod/kernel/src/fencer.mjs	CHILD	async killLeader(pid) { this.#docker(['exec', this.name, 'sh', '-c', 'kill -9 "$1"', 'sh', String(Number(pid))]); }
+zavod/kernel/src/fencer.mjs	CHILD	const r = spawnSync('sudo', ['-n', 'sh', '-c', 'echo 1 > "$1/cgroup.kill"', 'sh', this.path], { encoding: 'utf8' });
+zavod/kernel/src/fencer.mjs	CHILD	const r = this.#docker(['inspect', '-f', '{{.State.Running}}', this.name]);
+zavod/kernel/src/fencer.mjs	CHILD	const r = this.#docker(['kill', this.name]);
+zavod/kernel/src/fencer.mjs	CHILD	const r = this.#docker(['top', this.name, '-eo', 'pid']);
+zavod/kernel/src/fencer.mjs	CHILD	nsAlive(pid) { return this.#docker(['exec', this.name, 'sh', '-c', 'kill -0 "$1"', 'sh', String(Number(pid))]).status === 0; }
+zavod/kernel/src/fencer.mjs	CHILD	return spawn('docker', ['run', '-i', '--name', this.name, '--network', 'host', '--cap-drop', 'ALL',
+zavod/kernel/src/fencer.mjs	CHILD	return spawn('sudo', ['-n', 'sh', '-c', script, 'sh', this.path, String(uid), String(gid), 'env', '-i',
+zavod/kernel/src/fencer.mjs	CHILD	this.image, process.execPath, HOLDER, process.execPath, '--', modulePath, ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
+zavod/kernel/src/rules_gate.mjs	CHILD	return JSON.parse(execFileSync('gh', ['api', path], { encoding: 'utf8', windowsHide: true, maxBuffer: 16 << 20 }));
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG +native: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service -p SystemCallArchitectures=native python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG +openat2: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service -p SystemCallFilter=openat2 python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG +suidsgid: $(sudo systemd-run -q --wait --pipe -p RestrictSUIDSGID=yes python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG direct: $(sudo python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG nofilter: $(sudo systemd-run -q --wait --pipe python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG system-service: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	import importlib.util, os, sys, tempfile
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	import importlib.util, sys, time
+zavod/ops/server/cell/test_zavod_gate.py	PY_RUN	import importlib.machinery
+zavod/ops/server/cell/test_zavod_gate.py	PY_RUN	import importlib.util
+zavod/ops/server/cell/zagent-start	PY_RUN	import subprocess
+zavod/ops/server/cell/zagent-start	PY_RUN	return subprocess.run(['systemctl', *args], capture_output=True, text=True, timeout=60)
+zavod/ops/server/cell/zagent-start	PY_RUN	subprocess.run(['logger', '-p', 'auth.crit', '-t', 'zagent-start', f'ZAVOD_ALERT {msg}'], check=False)
+zavod/ops/server/cell/zavod-alert-notify	PY_RUN	import subprocess
+zavod/ops/server/cell/zavod-alert-notify	PY_RUN	subprocess.run(['logger', '-p', 'auth.emerg', '-t', 'zavod-alert-notify', msg], check=False)
+zavod/ops/server/cell/zavod-gate	PY_RUN	import subprocess
+zavod/ops/server/cell/zavod_intake.py	PY_RUN	import ctypes
+zavod/engine/src/deploy_egress.mjs	PIN	73cda66f9b27aa47f9416b8e847e5b9a368c884a1677245811f00015fb253351
+zavod/engine/src/worker_sandbox.mjs	PIN	03b52c084f07c96e48d48d567e7dd4b3987dca8ccc8494e0789e138dc93377ab
+zavod/kernel/src/container_holder.mjs	PIN	7f71d96a1b858da6daadfb720f4ce5633adefabf26a43192124200a65a40223d
+zavod/kernel/src/fencer.mjs	PIN	f22073e9c15c2399a06eab43dd21aaa59eac966d6d3592a1648b32d2304576b8
+zavod/kernel/src/rules_gate.mjs	PIN	0dbc41c5972af519397535ab32f39f90386eca90c3c0c52d41523d214f56f8cc
+zavod/ops/server/cell/intake_ci.sh	PIN	0513a63f78035513d55f6c8ee4793cbcd91ecffca3b5533b4dcb1a09cafc8800
+zavod/ops/server/cell/test_zavod_gate.py	PIN	c9c10cbfb4769a0ca8237955dc49632e14ee7a329dded6739d431f9fd4649f09
+zavod/ops/server/cell/zagent-start	PIN	ded74fc4ff66c78e6b7e833304758bfdf93a4b49a89c60fff1259d72ff2b501f
+zavod/ops/server/cell/zavod-alert-notify	PIN	232792bd6a845dfa485442d2f79be9880248e5676b84c6874b143173bcb67f13
+zavod/ops/server/cell/zavod-gate	PIN	f664bff0a514f77459b9385366c5178c9d1eeffdff3fcf3956a5e59b2dfa8608
+zavod/ops/server/cell/zavod_intake.py	PIN	7c0bb7d79205b16aff69e99c87c3e323efaadcab193b81831ed4ad1e01bc45be
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	spec = importlib.util.spec_from_file_location("zi", sys.argv[1]); zi = importlib.util.module_from_spec(spec)
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	spec.loader.exec_module(zi)
+zavod/ops/server/cell/test_zavod_gate.py	PY_RUN	_loader.exec_module(gate)

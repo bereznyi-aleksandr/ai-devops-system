@@ -1,6 +1,7 @@
 // ДОКУМЕНТ: src/fencer.mjs
 // ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 06:11 +02:00 (v0.6.2: аудит M3310-R9-01 — единица
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:05 +02:00 (v0.6.3: аудит M3310-R10 — список
+//   docker run встроен в вызов spawn; файл закреплён суммой в sql_concat_allow.txt; v0.6.2: аудит M3310-R9-01 — единица
 //   запускает исполнителя сама: spawnNode(modulePath, args, env) собирает «node -- файл аргументы» списком-литералом
 //   («--» — дальше только файл и его аргументы, не ключи node); docker — закрытым методом #docker; v0.6.1: аудит M3310-R7-02 — kill -0/-9 в контейнере постоянным сценарием, номер
 //   процесса — позиционным аргументом; v0.6: аудит M3310-R6-03, -04 — сценарий sh -c постоянный, uid и gid позиционными аргументами; текст проверки роли — сумма постоянных частей; v0.5: E4-8 — единица «контейнер»
@@ -200,12 +201,11 @@ export class ContainerUnit {
 
   spawnNode(modulePath, args, env) {
     const ro = [dirname(dirname(process.execPath)), KERNEL_DIR];
-    const dockerArgs = ['run', '-i', '--name', this.name, '--network', 'host', '--cap-drop', 'ALL',
+    return spawn('docker', ['run', '-i', '--name', this.name, '--network', 'host', '--cap-drop', 'ALL',
       '--security-opt', 'no-new-privileges', '--pids-limit', '64', '-u', `${process.getuid()}:${process.getgid()}`,
       ...ro.flatMap((d) => ['-v', `${d}:${d}:ro`]), '-v', `${tmpdir()}:${tmpdir()}`, '-w', KERNEL_DIR,
       ...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
-      this.image, process.execPath, HOLDER, process.execPath, '--', modulePath, ...args];
-    return spawn('docker', dockerArgs, { stdio: ['pipe', 'pipe', 'pipe'] });
+      this.image, process.execPath, HOLDER, process.execPath, '--', modulePath, ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
   }
 
   // Не удалось спросить docker — единица считается непустой (отказ в безопасную сторону).
