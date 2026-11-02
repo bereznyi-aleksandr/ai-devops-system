@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 03:47 +02:00 (v0.8: аудит M3310-R7-03 — проверяются и сценарии оболочки (*.sh и файлы с #!…sh): запрос к базе только
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 04:16 +02:00 (v0.9: аудит M3310-R8-03 — SQL узнаётся в любом регистре;
+#   у мест выполнения запроса в Python (.execute и родня, psql через subprocess с текстом на входе) текст обязан
+#   быть постоянным, параметр своей функции — только если все её вызовы в файле дают постоянный текст; eval, exec,
+#   compile, getattr с не постоянным именем — находка; v0.8: аудит M3310-R7-03 — проверяются и сценарии оболочки (*.sh и файлы с #!…sh): запрос к базе только
 #   постоянным текстом (psql -c, помощник запроса, труба и heredoc в psql), eval, source, программа из подстановки,
 #   код из строки (python -c, node -e) — находка; v0.7: аудит M3310-R6-04 —
 #   разрешение снимает только находку своего кода правила: строка «путь<TAB>КОД<TAB>точный текст»; строка разрешения,
@@ -37,7 +40,12 @@ import subprocess
 import sys
 
 SQL = re.compile(r'\b(SELECT|INSERT\s+INTO|UPDATE\s+\w|DELETE\s+FROM|CREATE\s|ALTER\s|DROP\s|GRANT\s|REVOKE\s|TRUNCATE\s'
-                 r'|COPY\s|EXECUTE\s|SET\s+(LOCAL\s+)?ROLE|WHERE\s|VALUES\s*\()')
+                 r'|COPY\s|EXECUTE\s|SET\s+(LOCAL\s+)?ROLE|WHERE\s|VALUES\s*\()', re.IGNORECASE)
+# Аудит M3310-R8-03: SQL узнаётся в любом регистре (select … where — тоже SQL). Кроме того, у мест выполнения
+# запроса (.execute и родня, psql через subprocess с текстом на входе) текст обязан быть постоянным — не «похожим
+# на SQL», а известным целиком: неизвестная форма — находка.
+EXEC_METHODS = {'execute', 'executemany', 'executescript', 'mogrify', 'copy_expert', 'callproc'}
+CODE_BUILTINS = {'eval', 'exec', 'compile', '__import__'}
 MAX_TEXT = 20000
 STR_METHODS = ('format', 'format_map', 'join', 'replace', 'strip', 'lstrip', 'rstrip', 'lower', 'upper',
                'casefold', 'encode', 'decode', 'removeprefix', 'removesuffix', '__add__', '__mod__')
@@ -161,6 +169,144 @@ def py_findings(path, text):
             item = (ln, bad, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
             if item not in out:  # «a + b + c» — два узла сложения на одной строке, находка одна
                 out.append(item)
+    for ln, bad in py_exec_findings(tree):
+        item = (ln, bad, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
+        if item not in out:
+            out.append(item)
+    return out
+
+
+def py_exec_findings(tree):
+    """Места выполнения запроса (аудит M3310-R8-03): текст — постоянный. Постоянно: строка, сумма строк, f-строка без
+    подстановок, имя, которому в файле присваивают только постоянное, параметр своей функции, которую вызывают только
+    напрямую и всегда с постоянным текстом на этом месте. Остальное — находка."""
+    out = []
+    parents = {}
+    for n in ast.walk(tree):
+        for c in ast.iter_child_nodes(n):
+            parents[c] = n
+
+    def enclosing(n):
+        while n in parents:
+            n = parents[n]
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                return n
+        return None
+
+    # (функция или None для модуля, имя) → значения всех присваиваний в этой области (None — присваивание, которое
+    # не прочитать: цикл, +=, распаковка, with)
+    values = {}
+
+    def put(n, name, v):
+        values.setdefault((enclosing(n), name), []).append(v)
+
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Assign):
+            for tg in n.targets:
+                if isinstance(tg, ast.Name):
+                    put(n, tg.id, n.value)
+                else:
+                    for e in ast.walk(tg):
+                        if isinstance(e, ast.Name):
+                            put(n, e.id, None)
+        elif isinstance(n, (ast.AugAssign, ast.AnnAssign, ast.NamedExpr)) and isinstance(n.target, ast.Name):
+            put(n, n.target.id, n.value if isinstance(n, ast.AnnAssign) else None)
+        elif isinstance(n, (ast.For, ast.AsyncFor, ast.comprehension)):
+            for e in ast.walk(n.target):
+                if isinstance(e, ast.Name):
+                    put(n, e.id, None)
+        elif isinstance(n, ast.withitem) and n.optional_vars is not None:
+            for e in ast.walk(n.optional_vars):
+                if isinstance(e, ast.Name):
+                    put(n, e.id, None)
+        elif isinstance(n, (ast.Global, ast.Nonlocal)):
+            for name in n.names:
+                put(n, name, None)
+
+    def fixed(e, at, depth=0, seen=None):
+        seen = seen or set()
+        if e is None or depth > 6:
+            return False
+        if isinstance(e, ast.Constant):
+            return isinstance(e.value, str)
+        if isinstance(e, ast.BinOp) and isinstance(e.op, ast.Add):
+            return fixed(e.left, at, depth, seen) and fixed(e.right, at, depth, seen)
+        if isinstance(e, ast.JoinedStr):
+            return all(isinstance(v, ast.Constant) for v in e.values)
+        if isinstance(e, ast.Name):
+            f = enclosing(at)
+            if isinstance(f, ast.Lambda):
+                return False
+            if f is not None:
+                a = f.args
+                pos = [x.arg for x in a.posonlyargs + a.args]
+                if e.id in pos + [x.arg for x in a.kwonlyargs]:
+                    if (f, e.id) in values:
+                        return False  # параметр, которому в функции присваивают ещё что-то
+                    if (f, e.id) in seen:
+                        return True
+                    return param_fixed(f, e.id, pos.index(e.id) if e.id in pos else None, depth, seen | {(f, e.id)})
+                if (f, e.id) in values:
+                    vs = values[(f, e.id)]
+                    return all(v is not None and fixed(v, v, depth + 1, seen) for v in vs)
+            vs = values.get((None, e.id))
+            return bool(vs) and all(v is not None and fixed(v, v, depth + 1, seen) for v in vs)
+        return False
+
+    def param_fixed(f, name, index, depth, seen):
+        calls = []
+        for n in ast.walk(tree):
+            if isinstance(n, ast.Name) and n.id == f.name and isinstance(n.ctx, ast.Load):
+                c = parents.get(n)
+                if not (isinstance(c, ast.Call) and c.func is n):
+                    return False  # функция передаётся дальше — вызовы не прочитать
+                calls.append(c)
+            elif isinstance(n, ast.Attribute) and n.attr == f.name:
+                return False
+        if sum(1 for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == f.name) != 1:
+            return False
+        if not calls:
+            return False  # функцию никто в файле не вызывает — её могут вызвать извне с любым текстом
+        for c in calls:
+            if any(isinstance(a, ast.Starred) for a in c.args) or any(k.arg is None for k in c.keywords):
+                return False
+            arg = next((k.value for k in c.keywords if k.arg == name), None)
+            if arg is None and index is not None and index < len(c.args):
+                arg = c.args[index]
+            if arg is None or not fixed(arg, c, depth + 1, seen):
+                return False
+        return True
+
+    def psql_list(e):
+        if isinstance(e, ast.Call) and isinstance(e.func, ast.Name) and e.func.id == 'list' and e.args:
+            e = e.args[0]
+        if isinstance(e, ast.Name):
+            vs = values.get((enclosing(e), e.id)) or values.get((None, e.id)) or []
+            return any(v is not None and psql_list(v) for v in vs)
+        if isinstance(e, (ast.List, ast.Tuple)):
+            return any(isinstance(x, ast.Constant) and isinstance(x.value, str) and os.path.basename(x.value) == 'psql'
+                       for x in e.elts)
+        return False
+
+    for n in ast.walk(tree):
+        if not isinstance(n, ast.Call):
+            continue
+        ln = getattr(n, 'lineno', 0)
+        fn = n.func
+        if isinstance(fn, ast.Name) and fn.id in CODE_BUILTINS:
+            out.append((ln, f'{fn.id}() runs code from a string'))
+        if isinstance(fn, ast.Name) and fn.id in ('getattr', 'setattr', 'delattr') and len(n.args) >= 2:
+            k = n.args[1]
+            if not (isinstance(k, ast.Constant) and isinstance(k.value, str)) or k.value in EXEC_METHODS:
+                out.append((ln, f'{fn.id}() with a name that is not fixed or is a query method'))
+        if isinstance(fn, ast.Attribute) and fn.attr in EXEC_METHODS:
+            if not n.args or not fixed(n.args[0], n):
+                out.append((ln, f'.{fn.attr}() gets query text that is not fixed'))
+        d = dotted(fn) or ''
+        if d.startswith('subprocess.') and n.args and psql_list(n.args[0]):
+            for k in n.keywords:
+                if k.arg == 'input' and not fixed(k.value, n):
+                    out.append((ln, 'psql gets text on input that is not fixed'))
     return out
 
 

@@ -1,8 +1,11 @@
 'use strict';
 // ДОКУМЕНТ: zavod/kernel/ci/sql_concat_js.cjs
-// ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+// ВЕРСИЯ: v0.4  СТАТУС: DRAFT
 // ДАТА СОЗДАНИЯ: 2026-11-02 02:21 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
-// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 03:47 +02:00 (v0.3: аудит M3310-R7-01 — обратный вызов map/forEach/… только стрелкой без
+// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 04:16 +02:00 (v0.4: аудит M3310-R8-01 — встроенные объекты (Object, Array, globalThis …) только как
+//   X.член или вызов, запись в любую цепочку от них — находка; запись в элемент замороженного литерала — не таблица;
+//   M3310-R8-02 — имя оболочки в любом списке — только «-c сценарий из SHELL_SCRIPTS», имя исполнителя кода
+//   (python, perl, node …) в списке — находка; v0.3: аудит M3310-R7-01 — обратный вызов map/forEach/… только стрелкой без
 //   третьего параметра и thisArg, вызов метода таблицы с this — не чтение, цепочка от свойства (push.call) — не чтение;
 //   M3310-R7-02 — сценарий после -c в любом списке файла: исполняющий аргументы — только из SHELL_SCRIPTS; своя
 //   обёртка запуска (run(file, args)) проверяется по каждому вызову; v0.2: аудит M3310-R6-01..04 — таблица и список ключей только для
@@ -87,6 +90,8 @@ const SHELL_SCRIPTS = new Set([
   'L=$1; U=$2; G=$3; shift 3; mkdir "$L" && echo $$ > "$L/cgroup.procs" && ' +
     'exec setpriv --reuid="$U" --regid="$G" --clear-groups --no-new-privs -- "$@"',
   'echo 1 > "$1/cgroup.kill"', 'kill -0 "$1"', 'kill -9 "$1"']);
+const SHELLS = /^(sh|bash|dash|zsh|ash|ksh|mksh|csh|tcsh|fish|busybox|toybox)$/;
+const INTERPRETERS = /^(python[0-9.]*|pypy[0-9.]*|perl[0-9.]*|ruby|php|lua[0-9.]*|tclsh|wish|expect|awk|gawk|mawk|nawk|node|nodejs|deno|bun|osascript|pwsh|powershell|psql|sqlite3|R|Rscript|julia|guile|racket|scheme)$/;
 const SHELL_RUNS = /[$`]|\b(eval|source|exec)\b|(^|[\s;&|(])\.\s/;
 const SKIP_KEYS = new Set(['type', 'start', 'end', 'loc', 'range']);
 // Код правила у каждой находки: разрешение снимает только находку своего кода.
@@ -423,12 +428,21 @@ function check(path, text) {
   const objectCall = (c, names) => c && c.type === 'CallExpression' && c.callee.type === 'MemberExpression' &&
     !c.callee.computed && c.callee.object.type === 'Identifier' && c.callee.object.name === 'Object' &&
     !bindingOf.get(c.callee.object) && names.includes(c.callee.property.name) && c.arguments.length === 1;
-  // Литерал под Object.freeze (глобальный Object, не своё имя) заморожен с самого объявления: его элементы и ключи
-  // не меняются никем, поэтому упоминания имени не важны.
+  // Литерал под Object.freeze (глобальный Object, не своё имя): его можно выставить наружу и передавать дальше —
+  // настоящий Object.freeze не даёт менять элементы. Подменить Object.freeze проверка не даёт: встроенный объект —
+  // только как Object.член, запись в Object.… — находка (аудит M3310-R8-01: const A = Object; A.freeze = (x) => x).
+  // Запись в элемент замороженного литерала в этом файле — всё равно не таблица (аудит M3310-R8-01).
   function readOnly(b) {
     if (!constBinding(b)) return false;
     const lit = unfreeze(b.decl.init);
-    if (lit !== b.decl.init) return true;
+    if (lit !== b.decl.init) {
+      return b.refs.every((r) => {
+        let m = parent.get(r);
+        if (!m || m.type !== 'MemberExpression' || m.object !== r) return true;
+        while (m.type === 'MemberExpression' && parent.get(m) && parent.get(m).type === 'MemberExpression' && parent.get(m).object === m) m = parent.get(m);
+        return !writeTarget(m);
+      });
+    }
     if (exported(b)) return false;
     return b.refs.every((r) => {
       const p = parent.get(r);
@@ -645,18 +659,35 @@ function check(path, text) {
       }
     });
   }
-  // «-c» в ЛЮБОМ списке файла (прямой вызов, своя обёртка this.docker([...]), список в переменной): после него —
-  // постоянный сценарий; сценарий, который исполняет свои аргументы или переменные, — только из SHELL_SCRIPTS.
+  // Любой список файла (прямой вызов, своя обёртка this.docker([...]), список в переменной; аудит M3310-R8-02):
+  // имя оболочки — только «оболочка -c сценарий из SHELL_SCRIPTS» (любой другой сценарий может запустить
+  // python3 -c, eval и т. п.; слитые флаги -ec — тоже находка); имя другого исполнителя кода (python, perl, node …) —
+  // находка; после «-c» у любой программы — постоянный текст, исполняющий аргументы — только из SHELL_SCRIPTS.
+  const word = (x) => (x && x.type !== 'SpreadElement' && isConst(x) ? constValue(x) : null);
+  const base = (s) => (typeof s === 'string' ? s.split('/').pop() : null);
   function checkDashC(a) {
     const el = a.elements;
-    el.forEach((x, j) => {
-      if (!x || x.type === 'SpreadElement' || !isConst(x) || constValue(x) !== '-c') return;
-      const s = el[j + 1] && el[j + 1].type !== 'SpreadElement' && isConst(el[j + 1]) ? constValue(el[j + 1]) : null;
+    for (let j = 0; j < el.length; j++) {
+      const x = el[j];
+      const v = word(x);
+      if (typeof v !== 'string') continue;
+      if (SHELLS.test(base(v))) {
+        if (word(el[j + 1]) !== '-c' || !SHELL_SCRIPTS.has(word(el[j + 2]))) {
+          add(x, 'child process: shell in an argument list without -c and a script from SHELL_SCRIPTS');
+          continue;
+        }
+        // «sh -c сценарий sh …»: слово после сценария — имя $0, не запуск.
+        j += SHELLS.test(base(word(el[j + 3]))) ? 3 : 2;
+        continue;
+      }
+      if (INTERPRETERS.test(base(v))) { add(x, `child process: interpreter ${v} in an argument list`); continue; }
+      if (v !== '-c') continue;
+      const s = word(el[j + 1]);
       if (typeof s !== 'string') add(x, 'child process: shell script after -c is not a fixed string');
       else if (SHELL_RUNS.test(s) && !SHELL_SCRIPTS.has(s)) {
         add(el[j + 1], 'child process: script after -c runs its arguments or variables and is not one of SHELL_SCRIPTS');
       }
-    });
+    }
   }
   // Что именно запускают: node — с постоянным файлом первым (не флагом: -e, -, --eval=…), оболочка — только
   // «-c постоянный сценарий» (не чтение со входа), sudo — программу из списка, её аргументы — по тем же правилам.
@@ -665,7 +696,7 @@ function check(path, text) {
     if (prog === 'node') {
       if (v(from) === null || v(from).startsWith('-')) add(at, 'child process: node is started with a first argument that is not a fixed file name');
     } else if (prog === 'sh' || prog === 'bash') {
-      if (v(from) !== '-c' || !isConst(el[from + 1])) add(at, 'child process: shell started without a fixed script after -c');
+      if (v(from) !== '-c' || !SHELL_SCRIPTS.has(v(from + 1))) add(at, 'child process: shell started without -c and a script from SHELL_SCRIPTS');
     } else if (prog === 'sudo') {
       let j = from;
       while (v(j) !== null && v(j).startsWith('-')) j++;
@@ -678,6 +709,17 @@ function check(path, text) {
     const p = parent.get(n);
     switch (n.type) {
       case 'Identifier': {
+        // Встроенный объект (Object, Array, JSON, globalThis …) — только как X.член, вызов X(…), new X(…), x instanceof
+        // X, typeof X; другое имя для него (const A = Object), запись в само имя или передача дальше — находка: так
+        // встроенный меняют в обход проверки записи (аудит M3310-R8-01). Boolean, String, Number можно передать
+        // функцией (filter(Boolean)).
+        if (identScope.has(n) && !bindingOf.get(n) && GLOBALS.has(n.name) && !(p && (
+          (p.type === 'MemberExpression' && p.object === n) || ((p.type === 'CallExpression' || p.type === 'NewExpression') && p.callee === n) ||
+          (p.type === 'BinaryExpression' && p.operator === 'instanceof' && p.right === n) ||
+          (p.type === 'UnaryExpression' && p.operator === 'typeof') ||
+          (p.type === 'CallExpression' && p.arguments.includes(n) && ['Boolean', 'String', 'Number'].includes(n.name))))) {
+          add(n, `global object changed: ${n.name} used other than as ${n.name}.member or a call`);
+        }
         const directCall = n.name === 'query' && p && p.type === 'MemberExpression' && p.property === n && !p.computed &&
           parent.get(p) && parent.get(p).type === 'CallExpression' && parent.get(p).callee === p;
         // Object.entries(T) и Object.values(T) у таблицы этого файла отдают только то, что записано в литерале.
@@ -713,6 +755,13 @@ function check(path, text) {
         if (n.expressions.length && sqlish(textOf(n))) add(n, 'template literal with SQL text and ${}');
         break;
       case 'MemberExpression':
+        // Подмена встроенного (Object.freeze = …, разбор в Object.x, delete, ++): на нём держатся правила таблиц
+        // и списков. Корень цепочки — глобальное имя (не своё).
+        if (writeTarget(n)) {
+          let root = n.object;
+          while (root.type === 'MemberExpression') root = root.object;
+          if (root.type === 'Identifier' && !bindingOf.get(root) && GLOBALS.has(root.name)) add(n, `global object changed: ${root.name}`);
+        }
         if (n.computed) {
           const k = n.property;
           const fixedKey = (k.type === 'Literal' && (typeof k.value === 'string' || typeof k.value === 'number')) ||
@@ -746,12 +795,6 @@ function check(path, text) {
         break;
       case 'AssignmentExpression': {
         if (n.operator === '+=' && sqlish(textOf(n.left) + textOf(n.right))) add(n, 'SQL text appended with +=');
-        // Подмена встроенного (Object.freeze = …, Array.prototype…): на нём держатся правила таблиц и списков.
-        let root = n.left;
-        while (root.type === 'MemberExpression') root = root.object;
-        if (n.left.type === 'MemberExpression' && root.type === 'Identifier' && !bindingOf.get(root) && GLOBALS.has(root.name)) {
-          add(n, `global object changed: ${root.name}`);
-        }
         break;
       }
       case 'ArrayExpression': checkDashC(n); break;
