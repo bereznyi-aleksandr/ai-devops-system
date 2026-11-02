@@ -1,18 +1,11 @@
-#!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 01:56 +02:00 (v0.5: аудит M3310-R4-01 — вызов по вычисляемому имени
-#   запрещён целиком (кроме таблицы-литерала файла), имя не вычисляется; строки раскрываются как в JavaScript
-#   ('\u0071uery' = 'query'); call/apply/bind, Reflect, Proxy, смена прототипа, import(), экранирование вне строк,
-#   вычисляемое имя свойства, перенос метода в свойство другого объекта, свойство как цель разбора и цикла — находка;
-#   v0.4: аудит M3310-R3-01 — все формы вызова query:
-#   db['query'](…), db.query?.(…), имя метода, собранное из постоянных кусков; слово query где-либо ещё (псевдоним,
-#   bind/call, деструктуризация, своё определение) — находка; вызов метода по непостоянному имени — только у
-#   объекта-литерала этого файла; eval и Function — находка; v0.3: аудит M3310-R2-01 — проверка
-#   по месту вызова: у каждого .query(…) в JavaScript текст запроса — постоянный, иначе находка; массив с текстом
-#   запроса и .join(); в Python — текст, который возвращает функция этого файла; v0.2: аудит M3310-R1B-02 — текст
-#   запроса отслеживается и через переменные: «q = 'SELECT …'; q += v», промежуточная переменная, куски
-#   «'SEL' + 'ECT …'»; то же для JavaScript)
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 02:26 +02:00 (v0.6: аудит M3310-R5-01, -02, -03 —
+#   JavaScript проверяется не по тексту, а полным разбором кода: sql_concat_js.cjs (разборщик acorn из Node, имена
+#   связываются с объявлениями по областям видимости, правила разрешающие — что не доказано постоянным, то находка);
+#   прежняя проверка JavaScript по регулярным выражениям (v0.2–v0.5) удалена; v0.5: аудит M3310-R4-01; v0.4: аудит
+#   M3310-R3-01; v0.3: аудит M3310-R2-01 — проверка по месту вызова; v0.2: аудит M3310-R1B-02 — текст запроса
+#   через переменные)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка сборки (карта 3.3.10.2, протокол И.7а п.2): запрос к базе — только заранее написанный текст,
 #   значения — только параметрами. Находит склейку запросов (текст запроса, собранный из кусков во время работы)
@@ -21,62 +14,25 @@
 #   сложенный текст всех известных кусков похож на запрос. Кусок известен, если он записан в коде прямо, лежит в
 #   переменной, которой в этом файле присвоен такой текст, или его возвращает функция этого файла (по всем
 #   присваиваниям и return, до неподвижной точки).
-#   JavaScript (ядро, движок): у каждого вызова .query(…) первый аргумент — постоянный текст: строка, шаблон без
-#   ${}, цепочка таких строк через «+» или имя, объявленное const с таким текстом и больше не присваиваемое; иначе
-#   находка — текст из функции, параметра, .join() и любой другой склейки сюда попадает. Вызов query засчитывается
-#   в любой форме: .query(…), ?.query(…), .query?.(…), ['query'](…) и имя из постоянных кусков ['qu' + 'ery'](…).
-#   Метод query разрешено только вызывать: слово query в коде в любом другом месте (const q = db.query, .bind,
-#   .call, { query } = db, своё определение query) и строка со значением 'query' (после раскрытия экранирований, как
-#   в JavaScript) — находка. Вызов по вычисляемому имени X[k](…), X[k]`…`, X[k]?.(…) — находка при любом k, если X
-#   не объект-литерал этого файла без «...» на верхнем уровне (таблица обработчиков). Находка и всё, чем метод можно
-#   вызвать с чужим объектом в обход «.query(»: call, apply, bind, Reflect, Proxy, __proto__, Object.create,
-#   Object.setPrototypeOf, eval, Function, import(), \u и \x вне строк, вычисляемое имя свойства { [k]: … },
-#   значение X[k] (k не число), записанное в свойство объекта (o.f = X[k], { f: X[k] }), свойство объекта как цель
-#   разбора ([o.f] = …, { a: o.f } = …) и как переменная цикла (for (o.f of …)). Сверх того: шаблон `...${...}...` с текстом запроса; «+», «+=», .concat(), .join() рядом с текстом запроса или с переменной, которой
-#   присвоен текст запроса (в том числе массив); цепочка строк через «+», вместе похожая на запрос.
+#   JavaScript (ядро, движок): все файлы *.mjs и *.js одним вызовом передаются в sql_concat_js.cjs (правила — в его
+#   шапке): у каждого .query(…) текст доказан постоянным по дереву разбора; имя query, вычисляемое имя свойства,
+#   код из строки, отражение (reflection — доступ к свойствам и прототипу в обход имени) и нижний слой драйвера —
+#   находка. Разборщик печатается строкой SQL_CONCAT_JS_PARSER=…; сбой разборщика — отказ.
 #   Исключения — только из файла разрешений: строка «путь<TAB>точный текст строки кода», для каждой — причина.
 # ВЫЗОВ: python3 -I sql_concat_scan.py [--allow файл] путь…   (папки обходятся целиком: *.py, *.mjs, *.js и файлы
-#   без расширения с первой строкой «#!…python3»)
-# ОГРАНИЧЕНИЯ: проверка по тексту и дереву разбора, а не по смыслу программы. В Python текст, пришедший из другого
-#   файла или извне, сканер не видит; поэтому запросы пишутся постоянными в том же файле, где выполняются (службы
-#   ячейки шлют запросы только через psql с постоянным текстом). В JavaScript это закрывает проверка по месту вызова.
-#   Неиспользованная строка разрешений — тоже отказ: разрешения не копятся.
+#   без расширения с первой строкой «#!…python3»). Node — из переменной ZAVOD_NODE, иначе node из PATH.
+# ОГРАНИЧЕНИЯ: в Python текст, пришедший из другого файла или извне, сканер не видит; поэтому запросы пишутся
+#   постоянными в том же файле, где выполняются (службы ячейки шлют запросы только через psql с постоянным
+#   текстом). Неиспользованная строка разрешений — тоже отказ: разрешения не копятся.
 import ast
+import json
 import os
 import re
+import subprocess
 import sys
 
 SQL = re.compile(r'\b(SELECT|INSERT\s+INTO|UPDATE\s+\w|DELETE\s+FROM|CREATE\s|ALTER\s|DROP\s|GRANT\s|REVOKE\s|TRUNCATE\s'
                  r'|COPY\s|EXECUTE\s|SET\s+(LOCAL\s+)?ROLE|WHERE\s|VALUES\s*\()')
-JS_TEMPLATE = re.compile(r'`[^`]*`', re.S)
-JS_LIT = r'''(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`[^`]*`)'''
-JS_PLUS = re.compile(r'''(['"])((?:(?!\1)[^\\\n]|\\.)*)\1\s*\+|\+=?\s*(['"])((?:(?!\3)[^\\\n]|\\.)*)\3''')
-JS_CHAIN = re.compile(JS_LIT + r'(?:\s*\+\s*' + JS_LIT + r')+', re.S)
-JS_ASSIGN = re.compile(r'([A-Za-z_$][\w$.]*)\s*(\+?=)(?![=>])\s*(' + JS_LIT + r'(?:\s*\+\s*' + JS_LIT + r')*)', re.S)
-JS_ARRAY = re.compile(r'([A-Za-z_$][\w$.]*)\s*=(?![=>])\s*\[([^\[\]]*)\]', re.S)
-JS_INLINE_JOIN = re.compile(r'\[([^\[\]]*)\]\s*\.\s*join\s*\(', re.S)
-JS_ALIAS = re.compile(r'([A-Za-z_$][\w$.]*)\s*=(?![=>])\s*([A-Za-z_$][\w$.]*)\s*[;\n]')
-JS_QUERY_CALL = re.compile(r'\.\s*query\s*(?:\?\.\s*)?\(')
-JS_CALL_AFTER = re.compile(r'\s*(?:\?\.\s*)?\(')
-JS_COMPUTED_READ = r'[A-Za-z_$][\w$.]*\s*(?:\?\.\s*)?\[(?!\s*\d+\s*\])'
-JS_BYPASS = (
-    (r'\.\s*(?:call|apply|bind)\s*\(', 'function called through call, apply or bind'),
-    (r'(?<![\w$])(?:Reflect|Proxy|__proto__|__defineGetter__|__defineSetter__)(?![\w$])',
-     'Reflect, Proxy or a prototype change'),
-    (r'\bObject\s*\.\s*(?:create|setPrototypeOf)\b', 'Reflect, Proxy or a prototype change'),
-    (r'(?<![\w$.])(?:eval|Function)\s*\(', 'code built at run time (eval, Function)'),
-    (r'(?<![\w$.])import\s*\(', 'module loaded at run time (import())'),
-    (r'\\[ux]', 'escape sequence in a name outside strings'),
-    (r'[{,]\s*\[[^\[\]]*\]\s*[:(]', 'computed property name in an object'),
-    (r'(?:\.\s*[A-Za-z_$][\w$]*|\])\s*=(?![=>])\s*' + JS_COMPUTED_READ,
-     'value read by a computed name stored into an object property'),
-    (r'[{,]\s*(?:[A-Za-z_$][\w$]*|\'[^\'\n]*\'|"[^"\n]*")\s*:\s*' + JS_COMPUTED_READ,
-     'value read by a computed name stored into an object property'),
-    (r'\bfor\s*\(\s*(?!(?:const|let|var)\b)[A-Za-z_$][\w$]*\s*[.\[]', 'object property as a loop variable'),
-)
-# Постоянный кусок текста: строка в кавычках или шаблон без ${…}.
-JS_FIXED_LIT = r'''(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`$\\]|\\.|\$(?!\{))*`)'''
-JS_FIXED = JS_FIXED_LIT + r'(?:\s*\+\s*' + JS_FIXED_LIT + r')*'
 MAX_TEXT = 20000
 STR_METHODS = ('format', 'format_map', 'join', 'replace', 'strip', 'lstrip', 'rstrip', 'lower', 'upper',
                'casefold', 'encode', 'decode', 'removeprefix', 'removesuffix', '__add__', '__mod__')
@@ -203,328 +159,32 @@ def py_findings(path, text):
     return out
 
 
-def js_unquote(chain):
-    """Текст цепочки строк «'a' + "b" + `c`» без кавычек; ${...} шаблона заменяется пробелом."""
-    return ''.join(re.sub(r'\$\{[^}]*\}', ' ', m.group(0)[1:-1]) for m in re.finditer(JS_LIT, chain, re.S))
-
-
-JS_ESC = {'n': '\n', 't': '\t', 'r': '\r', 'b': '\b', 'f': '\f', 'v': '\v', '0': '\0'}
-
-
-def js_decode_chain(chain):
-    r"""Значение цепочки постоянных строк так, как его получит JavaScript: экранирования \xHH, \uHHHH, \u{…}, \n и
-    прочие раскрываются, перенос строки после «\» убирается. Не удалось прочитать — None (это тоже находка)."""
-    out = []
-    for m in re.finditer(JS_FIXED_LIT, chain, re.S):
-        body = m.group(0)[1:-1]
-        if m.group(0)[0] == '`':
-            body = body.replace('\r\n', '\n')
-        i = 0
-        try:
-            while i < len(body):
-                c = body[i]
-                if c != '\\':
-                    out.append(c)
-                    i += 1
-                    continue
-                n = body[i + 1]
-                i += 2
-                if n == 'x':
-                    out.append(chr(int(body[i:i + 2], 16)))
-                    i += 2
-                elif n == 'u' and body[i] == '{':
-                    j = body.index('}', i)
-                    out.append(chr(int(body[i + 1:j], 16)))
-                    i = j + 1
-                elif n == 'u':
-                    out.append(chr(int(body[i:i + 4], 16)))
-                    i += 4
-                elif n in '\r\n\u2028\u2029':
-                    if n == '\r' and body[i:i + 1] == '\n':
-                        i += 1
-                else:
-                    out.append(JS_ESC.get(n, n))
-        except (ValueError, IndexError):
-            return None
-    return ''.join(out)
-
-
-def js_blank(text):
-    """Код, где содержимое строк, шаблонов (кроме ${…}) и комментариев заменено пробелами: скобки и запятые внутри
-    строк не мешают искать границы аргумента. Переводы строк сохраняются — номера строк те же."""
-    out = list(text)
-    n = len(text)
-    i = depth = 0
-    stack = []  # глубина фигурных скобок, на которой открыт каждый ${
-
-    def blank(a, b):
-        for k in range(a, min(b, n)):
-            if out[k] != '\n':
-                out[k] = ' '
-
-    while i < n:
-        c = text[i]
-        if text.startswith('//', i):
-            j = text.find('\n', i)
-            j = n if j < 0 else j
-            blank(i, j)
-            i = j
-            continue
-        if text.startswith('/*', i):
-            j = text.find('*/', i + 2)
-            j = n if j < 0 else j + 2
-            blank(i, j)
-            i = j
-            continue
-        if c in '\'"':
-            j = i + 1
-            while j < n and text[j] != c and text[j] != '\n':
-                j += 2 if text[j] == '\\' else 1
-            blank(i + 1, j)
-            i = j + 1
-            continue
-        if c == '`' or (c == '}' and stack and stack[-1] == depth):
-            if c == '}':
-                stack.pop()
-            j = i + 1
-            while j < n and text[j] != '`' and not text.startswith('${', j):
-                j += 2 if text[j] == '\\' else 1
-            blank(i + 1, j)
-            if j >= n or text[j] == '`':
-                i = j + 1
-                continue
-            stack.append(depth)
-            i = j + 2
-            continue
-        if c == '{':
-            depth += 1
-        elif c == '}':
-            depth -= 1
-        i += 1
-    return ''.join(out)
-
-
-def js_fixed_consts(text):
-    """Имена «const ИМЯ = постоянный текст», которым больше нигде ничего не присваивается."""
-    names = set()
-    for m in re.finditer(r'\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(' + JS_FIXED + r')\s*[;\n]', text, re.S):
-        n = re.escape(m.group(1))
-        if len(re.findall(r'(?<![\w$.])' + n + r'\s*(?:[-+*/%&|^]|\?\?|\|\||&&)?=(?![=>])', text)) == 1:
-            names.add(m.group(1))
-    return names
-
-
-def js_findings(path, text):
-    out = []
-    lines = text.splitlines()
-
-    def line_of(pos):
-        return text.count('\n', 0, pos) + 1
-
-    def add(pos, why):
-        ln = line_of(pos)
-        item = (ln, why, lines[ln - 1].strip() if 0 < ln <= len(lines) else '')
-        if item not in out:
-            out.append(item)
-
-    for m in JS_TEMPLATE.finditer(text):
-        body = m.group(0)
-        if '${' in body and sqlish(body):
-            add(m.start() + body.index('${'), 'template literal with SQL text and ${}')
-    for m in JS_PLUS.finditer(text):
-        s = m.group(2) if m.group(2) is not None else m.group(4)
-        if sqlish(s or ''):
-            add(m.start(), 'SQL text joined with +')
-    for m in JS_CHAIN.finditer(text):
-        if sqlish(js_unquote(m.group(0))):
-            add(m.start(), 'SQL text pieces joined with +')
-    for m in JS_INLINE_JOIN.finditer(text):
-        if sqlish(js_unquote(m.group(1))):
-            add(m.start(), 'SQL text array joined with .join()')
-    # Имена, которым в файле присвоен текст запроса (в том числе кусками, массивом и через другое имя).
-    env = {}
-    for m in JS_ASSIGN.finditer(text):
-        env[m.group(1)] = env.get(m.group(1), '') + '\n' + js_unquote(m.group(3))
-    for m in JS_ARRAY.finditer(text):
-        env[m.group(1)] = env.get(m.group(1), '') + '\n' + js_unquote(m.group(2))
-    for _ in range(5):
-        for m in JS_ALIAS.finditer(text):
-            if m.group(2) in env and env[m.group(2)] not in env.get(m.group(1), ''):
-                env[m.group(1)] = env.get(m.group(1), '') + '\n' + env[m.group(2)]
-    for name in sorted(n for n, v in env.items() if sqlish(v)):
-        q = re.escape(name)
-        for pat, why in ((r'(?<![\w$.])' + q + r'\s*\+=', 'SQL text variable appended with +='),
-                         (r'(?<![\w$.])' + q + r'\s*\+(?![+=])', 'SQL text variable joined with +'),
-                         (r'(?<!\+)\+\s*' + q + r'(?![\w$])', 'SQL text variable joined with +'),
-                         (r'\$\{\s*' + q + r'\s*\}', 'SQL text variable inside a template'),
-                         (r'(?<![\w$.])' + q + r'\s*\.\s*(?:concat|replace|replaceAll|join)\s*\(',
-                          'SQL text variable built with a string method')):
-            for m in re.finditer(pat, text):
-                add(m.start(), why)
-    # Проверка по месту вызова (аудит M3310-R2-01): текст каждого .query(…) — постоянный. Если текст — первый
-    # параметр функции этого файла (обёртка вроде «const one = (sql) => c.query(sql)»), то постоянным обязан быть
-    # первый аргумент у каждого вызова этой обёртки; и так далее по цепочке обёрток.
-    code = js_blank(text)
-    fixed_names = js_fixed_consts(text)
-    defs = js_defs(code)
-    def_pos = {d[1] for d in defs}
-    wrappers = {}
-    todo = [(m.start(), m.end()) for m in JS_QUERY_CALL.finditer(code)]
-    # Аудит M3310-R3-01, M3310-R4-01: метод query достаётся только прямым вызовом «.query(». Правила ниже закрывают
-    # все пути взять метод объекта по имени, которое не написано в коде буквами, и вызвать его с тем же объектом:
-    # вызов по вычисляемому имени, call/apply/bind, Reflect и Proxy, подмена прототипа, перенос метода в свойство
-    # другого объекта, экранирование в имени, код из строки. Ни одно правило не вычисляет имя — форма запрещена целиком.
-    objects = set()
-    for m in re.finditer(r'\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:Object\.freeze\(\s*)?(?=\{)', code):
-        if not js_top_spread(code, m.end()):
-            objects.add(m.group(1))
-    for m in re.finditer(r'\]\s*(?:\?\.\s*)?[(`]', code):
-        lb = js_open(code, m.start())
-        recv = re.search(r'([A-Za-z_$][\w$]*)\s*(?:\?\.\s*)?$', code[:lb])
-        own = recv is not None and recv.group(1) in objects and not code[:recv.start(1)].rstrip().endswith('.')
-        if not own:
-            add(lb, 'method called by a computed name (allowed only on a table object of this file)')
-    for rx, why in JS_BYPASS:
-        for m in re.finditer(rx, code, re.M):
-            add(m.start(), why)
-    for m in re.finditer(r'[\]}]\s*=(?![=>])', code):
-        ob = js_open(code, m.start())
-        if re.search(r'[\w$)\].]\s*$', code[:ob]):
-            continue  # o[k] = … — запись в свойство, а не разбор
-        pat = re.sub(r'=[^,\]}]*', '', code[ob:m.start() + 1])  # значения по умолчанию — не цели
-        if re.search(r'[\w$\])]\s*(?:\.\s*[A-Za-z_$]|\[)', pat[1:-1]):
-            add(m.start(), 'object property as a destructuring target')
-    for m in re.finditer(r'(?<![\w$])query(?![\w$])', code):
-        if not (re.search(r'\.\s*$', code[:m.start()]) and JS_CALL_AFTER.match(code, m.end())):
-            add(m.start(), 'query used other than as a direct call (alias, bind, destructuring, own definition)')
-    for m in re.finditer(JS_FIXED, text, re.S):
-        if code[m.start()] != text[m.start()]:
-            continue  # внутри другой строки или комментария
-        value = js_decode_chain(m.group(0))
-        if value is None or value.strip() == 'query':
-            add(m.start(), "method name 'query' kept in a string (escapes decoded as JavaScript does)")
-    while todo:
-        at, start = todo.pop()
-        arg = text[start:js_arg_end(code, start)].strip()
-        if re.fullmatch(JS_FIXED, arg, re.S) or arg in fixed_names:
-            continue
-        owner = min((d for d in defs if d[2] == arg and d[3] < at < d[4]), key=lambda d: d[4] - d[3], default=None)
-        if owner is None:
-            add(at, 'query text is not a fixed string')
-            continue
-        name = owner[0]
-        if name in wrappers:
-            continue
-        wrappers[name] = True
-        for m in re.finditer(r'(?<![\w$])' + re.escape(name) + r'\s*\(', code):
-            if m.start() not in def_pos:
-                todo.append((m.start(), m.end()))
+def js_findings(paths):
+    """Находки JavaScript от sql_concat_js.cjs: {путь: [(строка, причина)]}; сбой разборщика — None (отказ)."""
+    if not paths:
+        return {}
+    here = os.path.dirname(os.path.abspath(__file__))
+    node = os.environ.get('ZAVOD_NODE') or 'node'
+    try:
+        run = subprocess.run([node, '--expose-internals', os.path.join(here, 'sql_concat_js.cjs')] + paths,
+                             capture_output=True, encoding='utf-8', timeout=300)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        print(f'SQL_CONCAT_JS_ERROR {e}')
+        return None
+    rows = run.stdout.splitlines()
+    try:
+        head = json.loads(rows[0]) if rows else {}
+        found = [json.loads(r) for r in rows[1:]]
+    except ValueError:
+        head, found = {}, None
+    if run.returncode != 0 or 'parser' not in head or found is None:
+        print(f'SQL_CONCAT_JS_ERROR exit={run.returncode} {run.stderr.strip()[:300]}')
+        return None
+    print(f"SQL_CONCAT_JS_PARSER={head['parser']} node {head['node']}")
+    out = {}
+    for f in found:
+        out.setdefault(f['path'], []).append((int(f['line']), f['why']))
     return out
-
-
-JS_DEFS = (
-    re.compile(r'\bfunction\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)'),
-    re.compile(r'\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(\s*([A-Za-z_$][\w$]*)[^()]*\)\s*=>'),
-    re.compile(r'\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s+)?([A-Za-z_$][\w$]*)\s*=>'),
-    re.compile(r'^[ \t]*(?:async\s+)?([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)[^()]*\)\s*\{', re.M),
-)
-JS_KEYWORDS = {'if', 'for', 'while', 'switch', 'catch', 'function', 'return', 'with'}
-
-
-def js_arg_end(code, start):
-    """Конец первого аргумента вызова: запятая или закрывающая скобка на том же уровне вложенности."""
-    k = start
-    depth = 0
-    while k < len(code):
-        ch = code[k]
-        if ch in '([{':
-            depth += 1
-        elif ch in ')]}':
-            if depth == 0:
-                break
-            depth -= 1
-        elif ch == ',' and depth == 0:
-            break
-        k += 1
-    return k
-
-
-def js_top_spread(code, i):
-    """Есть ли «...» на верхнем уровне объекта-литерала, начатого скобкой code[i] (вложенные скобки не в счёт)."""
-    depth = 0
-    for k in range(i, len(code)):
-        if code[k] in '([{':
-            depth += 1
-        elif code[k] in ')]}':
-            depth -= 1
-            if depth == 0:
-                return False
-        elif depth == 1 and code.startswith('...', k):
-            return True
-    return False
-
-
-def js_open(code, i):
-    """Позиция парной открывающей скобки к закрывающей code[i]."""
-    depth = 0
-    for k in range(i, -1, -1):
-        if code[k] in ')]}':
-            depth += 1
-        elif code[k] in '([{':
-            depth -= 1
-            if depth == 0:
-                return k
-    return 0
-
-
-def js_close(code, i):
-    """Позиция за парной скобкой к code[i]."""
-    depth = 0
-    for k in range(i, len(code)):
-        if code[k] in '([{':
-            depth += 1
-        elif code[k] in ')]}':
-            depth -= 1
-            if depth == 0:
-                return k + 1
-    return len(code)
-
-
-def js_defs(code):
-    """Функции файла: (имя, позиция имени, первый параметр, начало тела, конец тела)."""
-    defs = []
-    for kind, rx in enumerate(JS_DEFS):
-        for m in rx.finditer(code):
-            if m.group(1) in JS_KEYWORDS:
-                continue
-            if kind == 0:  # function ИМЯ(параметры) { … }
-                body = code.find('{', js_close(code, code.index('(', m.start(1))))
-                end = js_close(code, body) if body >= 0 else len(code)
-            elif kind == 3:  # метод ИМЯ(параметры) { … }
-                body = m.end() - 1
-                end = js_close(code, body)
-            else:  # стрелка: тело в {…} или выражение до конца оператора
-                body = m.end()
-                while body < len(code) and code[body] in ' \t\r\n':
-                    body += 1
-                if body < len(code) and code[body] == '{':
-                    end = js_close(code, body)
-                else:
-                    end = body
-                    depth = 0
-                    while end < len(code):
-                        ch = code[end]
-                        if ch in '([{':
-                            depth += 1
-                        elif ch in ')]}':
-                            if depth == 0:
-                                break
-                            depth -= 1
-                        elif depth == 0 and ch in ';,\n':
-                            break
-                        end += 1
-            defs.append((m.group(1), m.start(1), m.group(2), body, end))
-    return defs
 
 
 def is_python(path):
@@ -568,18 +228,27 @@ def main(argv):
                 allow[(p.replace('\\', '/'), code.strip())] = False
     found = 0
     scanned = 0
+    todo = []
     for path in files(argv):
         norm = path.replace('\\', '/')
         if norm.endswith(('.mjs', '.js')):
-            kind = 'js'
+            todo.append((norm, 'js'))
         elif is_python(path):
-            kind = 'py'
-        else:
-            continue
-        with open(path, encoding='utf-8') as f:
+            todo.append((norm, 'py'))
+    js_found = js_findings([p for p, k in todo if k == 'js'])
+    if js_found is None:
+        print('SQL_CONCAT_SCAN=FAIL')
+        return 1
+    for norm, kind in todo:
+        with open(norm, encoding='utf-8') as f:
             text = f.read()
         scanned += 1
-        for ln, why, code in (js_findings if kind == 'js' else py_findings)(norm, text):
+        lines = text.splitlines()
+        if kind == 'js':
+            items = [(ln, why, lines[ln - 1].strip() if 0 < ln <= len(lines) else '') for ln, why in js_found.get(norm, [])]
+        else:
+            items = py_findings(norm, text)
+        for ln, why, code in items:
             key = (norm, code)
             if key in allow:
                 allow[key] = True

@@ -300,9 +300,10 @@ jobs:
           python3 -I "$S" --allow zavod/kernel/ci/sql_concat_allow.txt zavod/kernel/src zavod/kernel/cli zavod/engine/src \
             zavod/ops/server/cell | tee "$RUNNER_TEMP/scan.out"
           grep -qx SQL_CONCAT_SCAN=PASS "$RUNNER_TEMP/scan.out"
+          grep -q '^SQL_CONCAT_JS_PARSER=acorn ' "$RUNNER_TEMP/scan.out"
           if python3 -I "$S" zavod/kernel/ci/sql_concat_probe > "$RUNNER_TEMP/scan_probe.out"; then echo 'probe passed the scan'; exit 1; fi
-          grep -qx 'SQL_CONCAT_SCAN files=8 findings=62' "$RUNNER_TEMP/scan_probe.out"
-          # каждый случай пробы пойман на своём месте (аудит M3310-R1B-02: +=, промежуточная переменная, куски, .join, JS; M3310-R2-01: массив и .join в JS, текст из функции, параметра, обёртки; M3310-R3-01: db['query'], ?.(), bind, call, деструктуризация, имя в строке, куски имени, eval; M3310-R4-01: экранирование имени, вызов по вычисляемому имени, перенос метода, Reflect, Proxy, прототип, разбор и цикл в свойство, import())
+          grep -qx 'SQL_CONCAT_SCAN files=9 findings=80' "$RUNNER_TEMP/scan_probe.out"
+          # каждый случай пробы пойман на своём месте (аудит M3310-R1B-02: +=, промежуточная переменная, куски, .join, JS; M3310-R2-01: массив и .join в JS, текст из функции, параметра, обёртки; M3310-R3-01: db['query'], ?.(), bind, call, деструктуризация, имя в строке, куски имени, eval; M3310-R4-01: экранирование имени, вызов по вычисляемому имени, перенос метода, Reflect, Proxy, прототип, разбор и цикл в свойство, import(); M3310-R5-01: переназначенная и затенённая таблица; M3310-R5-02: «+» после переноса строки, затенённая константа; M3310-R5-03: constructor, код в строке, нижний слой драйвера, Object.values, node -e, psql, vm, смена прототипа через запись по ключу)
           for at in bad_gate.py:4 bad_gate.py:5 bad_gate.py:6 bad_gate.py:7 bad_kernel.mjs:4 bad_kernel.mjs:5 \
                     bad_flow.py:8 bad_flow.py:15 bad_flow.py:16 bad_flow.py:21 bad_flow.py:26 bad_flow.mjs:6 \
                     bad_flow.mjs:12 bad_flow.mjs:15 bad_flow.mjs:19 bad_flow2.mjs:5 bad_flow2.mjs:6 \
@@ -311,7 +312,10 @@ jobs:
                     bad_flow3.mjs:22 bad_flow3.mjs:25 bad_flow3.mjs:26 bad_flow3.mjs:29 bad_flow3.mjs:32 \
                     bad_flow4.mjs:8 bad_flow4.mjs:11 bad_flow4.mjs:14 bad_flow4.mjs:15 bad_flow4.mjs:16 bad_flow4.mjs:19 \
                     bad_flow4.mjs:22 bad_flow4.mjs:26 bad_flow4.mjs:30 bad_flow4.mjs:34 bad_flow4.mjs:38 bad_flow4.mjs:41 \
-                    bad_flow4.mjs:42 bad_flow4.mjs:45 bad_flow4.mjs:48 bad_flow4.mjs:51; do
+                    bad_flow4.mjs:42 bad_flow4.mjs:45 bad_flow4.mjs:48 bad_flow4.mjs:51 \
+                    bad_flow5.mjs:8 bad_flow5.mjs:9 bad_flow5.mjs:13 bad_flow5.mjs:17 bad_flow5.mjs:19 bad_flow5.mjs:23 \
+                    bad_flow5.mjs:26 bad_flow5.mjs:27 bad_flow5.mjs:31 bad_flow5.mjs:32 bad_flow5.mjs:35 bad_flow5.mjs:39 \
+                    bad_flow5.mjs:40 bad_flow5.mjs:42 bad_flow5.mjs:45; do
             grep -q "^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/$at: " "$RUNNER_TEMP/scan_probe.out" || { echo "probe case $at not caught"; exit 1; }
           done
           echo SQL_CONCAT_PROBE=caught
