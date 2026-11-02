@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:05 +02:00 (v0.11: аудит M3310-R10-05..07 —
+# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:26 +02:00 (v0.12: аудит M3310-R11-01..03 —
+#   специальные имена и атрибуты (__dict__, __globals__, __getattribute__ …), .modules, кадры стека, getattr с именем
+#   не ПОСТОЯННОЙ, .system/.popen/.exec*/.spawn* у любого объекта — PY_RUN; *.cjs проверяется; исполняемые форматы,
+#   которые проверка не разбирает (.ts, .node, .pyc …, в том числе в __pycache__), — находка FORMAT); прежняя дата: 2026-11-02 07:05 +02:00 (v0.11: аудит M3310-R10-05..07 —
 #   любой не постоянный аргумент запуска — находка PY_RUN; параметр затеняет внешнее имя; модули запуска (subprocess,
 #   importlib, builtins, ctypes …), .eval/.exec, getattr(…, 'exec'), globals/vars, import_module/exec_module — находка
 #   PY_RUN; файл с разрешённым запуском (CHILD, CHILD_IMPORT, PY_RUN) обязан быть закреплён суммой (строка PIN); v0.10: аудит M3310-R9-02..04 —
@@ -73,6 +76,13 @@ PSQL_DANGER = {'-c', '--command', '-f', '--file'}
 PY_RUN_MODULES = {'subprocess', 'pty', 'importlib', 'builtins', 'runpy', 'ctypes', 'code', 'codeop', 'multiprocessing',
                   'pickle', 'marshal', 'shelve', 'imp', 'zipimport', 'cffi', '_posixsubprocess', 'posix', 'nt'}
 PY_LOAD_ATTRS = {'import_module', 'exec_module', 'load_module', 'run_path', 'run_module', 'spec_from_file_location'}
+# Рефлексия (аудит M3310-R11-01, -02): специальные атрибуты (__dict__, __globals__, __getattribute__ …), таблица
+# загруженных модулей и кадры стека дают метод базы или запуска по строке-ключу, мимо проверки вызовов. Разрешены
+# только безвредные имена; остальное — находка PY_RUN.
+PY_SAFE_DUNDER = {'__name__', '__qualname__', '__doc__', '__module__', '__file__', '__main__', '__init__'}
+PY_REFLECT_ATTRS = {'modules', 'f_globals', 'f_locals', 'f_builtins', 'f_back', 'f_code', 'gi_frame', 'cr_frame',
+                    'ag_frame', 'tb_frame', '_getframe', 'attrgetter', 'methodcaller', 'get_referrers', 'get_objects'}
+PY_GETATTR_OK = re.compile(r'^[A-Z][A-Z0-9_]*$')  # getattr(модуль, 'ИМЯ_ПОСТОЯННОЙ', запасное) — только постоянные
 PY_CODE_NAMES = {'__builtins__', 'globals', 'vars', 'locals', '__loader__', '__spec__'}
 MAX_TEXT = 20000
 STR_METHODS = ('format', 'format_map', 'join', 'replace', 'strip', 'lstrip', 'rstrip', 'lower', 'upper',
@@ -491,8 +501,16 @@ def py_exec_findings(tree):
             out.append((ln, f'RUN: .{n.attr} loads or runs a module by name'))
         if isinstance(n, ast.Name) and n.id in PY_CODE_NAMES:
             out.append((ln, f'RUN: {n.id} gives access to code and names of the program'))
+        elif isinstance(n, ast.Name) and n.id.startswith('__') and n.id not in PY_SAFE_DUNDER:
+            out.append((ln, f'RUN: special name {n.id} (reflection)'))
+        if isinstance(n, ast.Attribute) and n.attr.startswith('__') and n.attr not in PY_SAFE_DUNDER:
+            out.append((ln, f'RUN: special attribute .{n.attr} (reflection)'))
+        if isinstance(n, ast.Attribute) and n.attr in PY_REFLECT_ATTRS:
+            out.append((ln, f'RUN: .{n.attr} gives access to modules or stack frames'))
+        if isinstance(n, ast.Attribute) and PY_OS_RUN.match(n.attr) and n.attr not in EXEC_METHODS and                 not (d and d.count('.') == 1 and d.split('.')[0] == 'os'):
+            out.append((ln, f'RUN: .{n.attr} starts a program (any object)'))
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in ('getattr', 'setattr', 'delattr') \
-                and len(n.args) >= 2 and isinstance(n.args[1], ast.Constant) and n.args[1].value in CODE_BUILTINS:
+                and len(n.args) >= 2 and isinstance(n.args[1], ast.Constant) and isinstance(n.args[1].value, str)                 and not PY_GETATTR_OK.match(n.args[1].value):
             out.append((ln, f'RUN: {n.func.id}() with name {n.args[1].value}'))
         if isinstance(n, ast.Import):
             for a in n.names:
@@ -1167,7 +1185,8 @@ def files(paths):
     for p in paths:
         if os.path.isdir(p):
             for root, dirs, names in os.walk(p):
-                dirs[:] = sorted(d for d in dirs if d not in ('node_modules', '__pycache__', '.git'))
+                # __pycache__ не пропускается: скомпилированный *.pyc — непроверяемый формат (аудит M3310-R11-03)
+                dirs[:] = sorted(d for d in dirs if d not in ('node_modules', '.git'))
                 for n in sorted(names):
                     yield os.path.join(root, n)
         else:
@@ -1179,6 +1198,8 @@ ALLOW_DB = re.compile(r'\bpg\.|\b(Pool|Client|pool|client|db|rulesPool)\b|\.quer
 ALLOW_CODE = re.compile(r'^[A-Z_]+$')
 # Находки, разрешение которых требует закрепить файл суммой (PIN): запуск программ и кода.
 PIN_RULES = {'CHILD', 'CHILD_IMPORT', 'PY_RUN'}
+UNCHECKED_EXT = ('.ts', '.mts', '.cts', '.tsx', '.jsx', '.node', '.wasm', '.so', '.dll', '.dylib', '.pyc', '.pyo',
+                 '.pyw', '.pyz', '.pth', '.cmd', '.bat', '.ps1', '.exe')
 
 
 def main(argv):
@@ -1210,8 +1231,12 @@ def main(argv):
     todo = []
     for path in files(argv):
         norm = path.replace('\\', '/')
-        if norm.endswith(('.mjs', '.js')):
+        if norm.endswith(('.mjs', '.js', '.cjs')):
             todo.append((norm, 'js'))
+        elif norm.endswith(UNCHECKED_EXT):
+            # исполняемый формат, который проверка не разбирает (аудит M3310-R11-03), — отказ
+            found += 1
+            print(f'SQL_CONCAT {norm}:0: FORMAT: executable file format the scan does not check')
         elif is_python(path):
             todo.append((norm, 'py'))
         elif is_shell(path):

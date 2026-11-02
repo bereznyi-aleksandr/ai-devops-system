@@ -1,8 +1,9 @@
 'use strict';
 // ДОКУМЕНТ: zavod/kernel/ci/sql_concat_js.cjs
-// ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+// ВЕРСИЯ: v0.7  СТАТУС: DRAFT
 // ДАТА СОЗДАНИЯ: 2026-11-02 02:21 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
-// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:05 +02:00 (v0.6: аудит M3310-R10-01..04 — список запуска строго: литерал в
+// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:26 +02:00 (v0.7: аудит M3310-R11-03 — *.cjs разбирается как script; импорт своего
+//   файла не формата .mjs/.js/.cjs и «#имя» — находка MODULE); прежняя дата: 2026-11-02 07:05 +02:00 (v0.6: аудит M3310-R10-01..04 — список запуска строго: литерал в
 //   вызове или параметр своей функции, упомянутый один раз; любой не постоянный элемент — находка (разрешается
 //   точной строкой, файл закрепляется суммой PIN); раннего выхода после «node --» нет; v0.5: аудит M3310-R9-01 — список запуска из переменной только
 //   доказанного происхождения: const со списком-литералом или параметр своей функции / закрытого метода, без push,
@@ -136,7 +137,8 @@ function check(path, text) {
   const add = (node, why) => found.push({ path, line: node.loc.start.line, code: codeOf(why), why });
   let tree;
   try {
-    tree = acorn.parse(text, { ecmaVersion: 'latest', sourceType: 'module', locations: true, allowHashBang: true });
+    // *.cjs — сценарий CommonJS (аудит M3310-R11-03): разбирается как script и проверяется теми же правилами.
+    tree = acorn.parse(text, { ecmaVersion: 'latest', sourceType: path.endsWith('.cjs') ? 'script' : 'module', locations: true, allowHashBang: true });
   } catch (e) {
     found.push({ path, line: (e.loc && e.loc.line) || 1, code: 'PARSE', why: 'file cannot be parsed as a JavaScript module' });
     return found;
@@ -891,6 +893,10 @@ function check(path, text) {
         if (n.source && typeof n.source.value === 'string') {
           const m = n.source.value.replace(/^node:/, '');
           if (BANNED_MODULES.has(m) || /^(data|https?):/i.test(n.source.value)) add(n, `module ${n.source.value} runs code from a string`);
+          // Свой файл — только формата, который проверяет сканер (аудит M3310-R11-03); «#имя» (карта imports
+          // package.json) ведёт к файлу, которого проверка не видит.
+          if (/^(\.|\/|file:)/i.test(n.source.value) && !/\.(mjs|js|cjs)$/.test(n.source.value.split(/[?#]/)[0])) add(n, `module ${n.source.value} has a format the scan does not check`);
+          if (n.source.value.startsWith('#')) add(n, `module ${n.source.value} is resolved through the imports map`);
           if (m === 'child_process') {
             // Запускать программы может только файл, чья строка импорта есть в файле разрешений (код CHILD_IMPORT):
             // иначе любой файл мог бы записать код во временный файл и запустить его node.
