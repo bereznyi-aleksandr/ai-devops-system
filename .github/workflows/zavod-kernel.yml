@@ -416,6 +416,9 @@ jobs:
           sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O | tee "$RUNNER_TEMP/server2.out"
           grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server2.out"
           test "$A1" = "$(sudo sha256sum /etc/zavod/engine_admin.conf)"
+          echo ADMIN_FILE_STABLE=OK
+          # дальше каждая команда видна в журнале: провал сразу показывает, какая проверка не прошла
+          set -x
           test "$(grep '^ZAVOD_SERVER_RELEASE=' "$RUNNER_TEMP/server1.out")" = "$(grep '^ZAVOD_SERVER_RELEASE=' "$RUNNER_TEMP/server2.out")"
           grep -q 'база bem уже есть' "$RUNNER_TEMP/server2.out"
           /usr/bin/node --version | grep -q '^v22\.23\.3$'

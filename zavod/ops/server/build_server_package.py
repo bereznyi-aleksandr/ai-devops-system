@@ -41,15 +41,15 @@ NODE_PIN = ('node-v22.23.3-linux-x64.tar.xz', 'https://nodejs.org/dist/v22.23.3/
             'df450af89261115ef9f9e3830c3eeb2cc9213b63c720b1af623cb5dcbe2e02de')
 # junixsocket 2.10.1 (2024-09-23): драйвер pgjdbc входит в базу только через сокет Linux, вход peer без пароля
 # (PostgreSQL сервера слушает только сокет). Maven Central публикует для них только sha1 (прочитано 2026-11-02 с
-# repo1.maven.org); sha256 закрепляется по первому прогону CI, где sha1 совпал. Пока sha256 = None, сборка
+# repo1.maven.org); sha256 закреплён по прогону CI 41428183172 (2026-11-02), где sha1 совпал. При sha256 = None сборка
 # проверяет sha1 и печатает sha256.
 MVN = 'https://repo1.maven.org/maven2/com/kohlschutter/junixsocket'
 JUNIX_PINS = [
     ('junixsocket-common-2.10.1.jar', f'{MVN}/junixsocket-common/2.10.1/junixsocket-common-2.10.1.jar',
-     'a057996cbf023e8bd5e4aededeba97fa1b1d3a9a', None),
+     'a057996cbf023e8bd5e4aededeba97fa1b1d3a9a', '19e5f7615ad2293f3532bc3f991b31396c1161834e89d9a6aa0c7def939c6729'),
     ('junixsocket-native-common-2.10.1.jar',
      f'{MVN}/junixsocket-native-common/2.10.1/junixsocket-native-common-2.10.1.jar',
-     '0c9d8cc10a38ceca64695829ea6b4ee84e46d72f', None),
+     '0c9d8cc10a38ceca64695829ea6b4ee84e46d72f', '0126ce0baf1ceb575ef517807d4d2b14b9f32f06180204e12ec73ab4a772567a'),
 ]
 
 
