@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/build_server_package.py
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 12:21 +02:00 (v0.2: war движка собирается с драйверами pgjdbc и junixsocket — engine/flowable-rest-pg.war; v0.1 от 11:33: карта 3.3.11.1 и 3.3.11.4)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:34 +02:00 (v0.3: аудит M3311-R1-03 — архив движка в пакете назван engine/flowable-rest-postgres.war (строка службы проходит проверку разрешений сканера); M3311-R1-02 — права файлов в описи строками #mode; аудит M3311-R1-01 — байты файлов берутся из объектов git коммита HEAD (git cat-file), а не из рабочей папки; отказ, если отслеживаемые файлы папок пакета отличаются от HEAD, и на любой режим git, кроме 100644 и 100755 (символическая ссылка 120000, подмодуль 160000); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.2 от 12:21: war движка собирается с драйверами pgjdbc и junixsocket — engine/flowable-rest-pg.war; v0.1 от 11:33: карта 3.3.11.1 и 3.3.11.4)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: сборка пакета установки сервера Завода одним архивом (протокол v3.1 И.7, Р.59; карта 3.3.11):
 #   файлы берутся только из закрытого списка папок хранилища (по git, без тестов, проверок CI и Windows), модули ядра
@@ -57,13 +57,32 @@ def sha(b):
     return hashlib.sha256(b).hexdigest()
 
 
+def clean_tree():
+    """Аудит M3311-R1-01: сборка только из зафиксированного коммита — отслеживаемые файлы папок пакета (и файл сумм
+    движка) не должны отличаться от HEAD ни в рабочей папке, ни в индексе."""
+    paths = [t for t, _ in TREES] + [ENGINE_CI, 'zavod/kernel/package.json', 'zavod/kernel/package-lock.json']
+    out = subprocess.run(['git', '-C', ROOT, 'status', '--porcelain', '--untracked-files=no', '--'] + paths,
+                         capture_output=True, text=True, check=True).stdout
+    if out.strip():
+        raise SystemExit('ZAVOD_SERVER_PACKAGE=FAIL worktree differs from HEAD: ' + out.split('\n')[0].strip())
+
+
+def blob(path):
+    """Байты файла из объекта git коммита HEAD (не из рабочей папки)."""
+    return subprocess.run(['git', '-C', ROOT, 'cat-file', 'blob', f'HEAD:{path}'], capture_output=True,
+                          check=True).stdout
+
+
 def git_files():
-    out = subprocess.run(['git', '-C', ROOT, 'ls-files', '-s', '--'] + [t for t, _ in TREES],
+    out = subprocess.run(['git', '-C', ROOT, 'ls-tree', '-r', '--full-tree', 'HEAD', '--'] + [t for t, _ in TREES],
                          capture_output=True, text=True, check=True).stdout
     for line in out.splitlines():
-        mode, _obj, _stage, path = line.split(None, 3)
+        meta, path = line.split('\t', 1)
+        mode, kind, _obj = meta.split()
         for tree, skip in TREES:
             if path.startswith(tree + '/') and not re.search(skip, path):
+                if kind != 'blob' or mode not in ('100644', '100755'):
+                    raise SystemExit(f'ZAVOD_SERVER_PACKAGE=FAIL git mode {mode} {kind} is not a regular file: {path}')
                 if SECRET.search(path) and not path.endswith('.example'):
                     raise SystemExit(f'ZAVOD_SERVER_PACKAGE=FAIL secret-like file in the tree: {path}')
                 yield path, 0o755 if mode == '100755' else 0o644
@@ -71,7 +90,7 @@ def git_files():
 
 
 def pins():
-    text = open(os.path.join(ROOT, ENGINE_CI), encoding='utf-8').read()
+    text = blob(ENGINE_CI).decode('utf-8')
     v = dict(re.findall(r'^([A-Z_0-9]+)=(\S+)$', text, re.M))
     ver = v['PGJDBC_VER']
     return [
@@ -128,7 +147,7 @@ def externals(src):
     if sha(war) != war_sha:
         raise SystemExit(f'ZAVOD_SERVER_PACKAGE=FAIL flowable-rest.war sha256 {sha(war)} != {war_sha}')
     jars = {n: got[n] for n in [jar_name] + [p[0] for p in JUNIX_PINS]}
-    return {'engine/flowable-rest-pg.war': war_with_drivers(war, jars), f'runtime/{NODE_PIN[0]}': got[NODE_PIN[0]]}
+    return {'engine/flowable-rest-postgres.war': war_with_drivers(war, jars), f'runtime/{NODE_PIN[0]}': got[NODE_PIN[0]]}
 
 
 def node_modules():
@@ -136,8 +155,8 @@ def node_modules():
     out = {}
     with tempfile.TemporaryDirectory() as d:
         for f in ('package.json', 'package-lock.json'):
-            with open(os.path.join(ROOT, 'zavod/kernel', f), 'rb') as a, open(os.path.join(d, f), 'wb') as b:
-                b.write(a.read())
+            with open(os.path.join(d, f), 'wb') as b:
+                b.write(blob('zavod/kernel/' + f))
         subprocess.run(['npm', 'ci', '--ignore-scripts', '--no-fund', '--no-audit', '--omit=dev'], cwd=d, check=True,
                        stdout=subprocess.DEVNULL)
         base = os.path.join(d, 'node_modules')
@@ -163,15 +182,18 @@ def main(argv):
         ext = argv[2]
     head = subprocess.run(['git', '-C', ROOT, 'rev-parse', 'HEAD'], capture_output=True, text=True,
                           check=True).stdout.strip()
+    clean_tree()
     files = {}
     for path, mode in git_files():
-        files[path] = (open(os.path.join(ROOT, path), 'rb').read(), mode)
+        files[path] = (blob(path), mode)
     for path, data in node_modules().items():
         files[path] = (data, 0o644)
     for path, data in externals(ext).items():
         files[path] = (data, 0o644)
     manifest = ''.join(f'{sha(d)}  {p}\n' for p, (d, _m) in sorted(files.items()))
-    manifest = f'# zavod server package; source commit {head}\n' + manifest
+    # Аудит M3311-R1-02: права каждого файла тоже в описи; установщик сверяет их до установки и после копирования.
+    modes = ''.join(f'#mode {m:o} {p}\n' for p, (_d, m) in sorted(files.items()))
+    manifest = f'# zavod server package; source commit {head}\n' + modes + manifest
     files['MANIFEST.sha256'] = (manifest.encode(), 0o644)
     os.makedirs(out_dir, exist_ok=True)
     name = f'zavod-server-{head[:12]}.tar'

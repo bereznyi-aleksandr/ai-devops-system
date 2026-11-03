@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_server.sh
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:02 +02:00 (v0.4: учётную запись zflowable создаёт install_cell.sh (фильтр nft ссылается на её имя); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 12:19: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:33 +02:00 (v0.5: аудит M3311-R1-03 — после проверки копии выпуска установщик перезапускает себя из неё (exec), службы и настройки ставятся из "$HERE/…" (сканер И.7а); M3311-R1-04 — в отчёте ОС, ядро, версии пакетов APT и сумма списка всех пакетов; M3311-R1-02 — до сверки сумм в пакете только обычные файлы и папки, без жёстких ссылок, путь пакета без ссылок (pwd -P); права файлов сверяются с описью в пакете и в выпуске; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.4 от 03:02: учётную запись zflowable создаёт install_cell.sh (фильтр nft ссылается на её имя); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 12:19: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: установка сервера Завода из пакета build_server_package.py на чистую Ubuntu 24.04 (протокол v3.1 И.7,
 #   Р.59; карта 3.3.11). Порядок (3.3.11.2):
@@ -23,7 +23,9 @@ set -euo pipefail
 export LC_ALL=C
 PKG=${1:?usage: install_server.sh PACKAGE_DIR [install_cell.sh options]}
 shift
-PKG=$(cd "$PKG" && pwd)
+PKG=$(cd "$PKG" && pwd -P)
+# Папка самого сценария: первый проход — пакет, второй (после exec ниже) — закрытая копия выпуска.
+HERE=$(cd "$(dirname "$0")" && pwd)
 die() { echo "REFUSED: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || die "run as root"
 . /etc/os-release
@@ -32,12 +34,25 @@ die() { echo "REFUSED: $*" >&2; exit 1; }
 echo "=== 1. сверка пакета с MANIFEST.sha256"
 M="$PKG/MANIFEST.sha256"
 [ -f "$M" ] || die "no MANIFEST.sha256"
+# Аудит M3311-R1-02: до любой сверки сумм — в пакете только обычные файлы и папки (sha256sum идёт по ссылке,
+# find -type f её не видит), без жёстких ссылок; путь пакета — настоящий (pwd -P), без ссылок в предках.
+odd=$(cd "$PKG" && find . -mindepth 1 ! -type f ! -type d -printf '%P\n' -quit)
+[ -z "$odd" ] || die "not a regular file or directory: $odd"
+hard=$(cd "$PKG" && find . -type f -links +1 -printf '%P\n' -quit)
+[ -z "$hard" ] || die "hard link in the package: $hard"
+# Права каждого файла — как в описи (строки «#mode ППП путь»); опись перечисляет права всех файлов.
+# (цикл читает из подстановки процесса, не из конвейера: ранний выход не роняет sed по pipefail)
+modes_differ() { local m p; while read -r m p; do [ "$(stat -c %a -- "$1/$p")" = "$m" ] || { echo "$p"; return 0; }; done \
+  < <(sed -n 's/^#mode \([0-7][0-7][0-7]\) \(.*\)$/\1 \2/p' "$M"); }
 COMMIT=$(sed -n '1s/^# zavod server package; source commit \([0-9a-f]\{40\}\)$/\1/p' "$M")
 [ -n "$COMMIT" ] || die "manifest has no source commit"
 (cd "$PKG" && grep -v '^#' "$M" | sha256sum --check --strict --quiet) || die "package files differ from the manifest"
 # Лишний файл в пакете — тоже отказ: ставится только то, что перечислено.
 extra=$(cd "$PKG" && find . -type f ! -name MANIFEST.sha256 -printf '%P\n' | sort | comm -23 - <(grep -v '^#' "$M" | cut -c67- | sort))
 [ -z "$extra" ] || die "files not in the manifest: $(echo "$extra" | head -3 | tr '\n' ' ')"
+[ "$(grep -c '^#mode ' "$M")" = "$(grep -vc '^#' "$M")" ] || die "manifest modes do not cover every file"
+bad=$(modes_differ "$PKG")
+[ -z "$bad" ] || die "file mode differs from the manifest: $bad"
 echo "PACKAGE_MATCH commit=$COMMIT files=$(grep -vc '^#' "$M")"
 
 echo "=== 2. пакеты системы"
@@ -76,9 +91,20 @@ if [ ! -d "$REL" ]; then
   chmod 0755 "$tmp"
   mv "$tmp" "$REL"
 fi
+odd=$(cd "$REL" && find . -mindepth 1 ! -type f ! -type d -printf '%P\n' -quit)
+[ -z "$odd" ] || die "$REL: not a regular file or directory: $odd"
+cmp -s "$M" "$REL/MANIFEST.sha256" || die "$REL has another manifest"
 (cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum --check --strict --quiet) || die "$REL differs from the manifest"
+bad=$(modes_differ "$REL")
+[ -z "$bad" ] || die "$REL: file mode differs from the manifest: $bad"
 ln -sfn "$REL" /opt/zavod/current.new
 mv -T /opt/zavod/current.new /opt/zavod/current
+# Аудит M3311-R1-03: дальше всё ставится только из проверенной копии выпуска (root, без записи для других) —
+# установщик перезапускает себя оттуда; второй проход повторяет шаги 1–4 над копией (они повторяемы) и идёт дальше.
+# Так службы и настройки ставятся из "$HERE/…" — папки самого сценария, которую проверяет сканер И.7а.
+if ! [ "$HERE" -ef "$REL/zavod/ops/server" ]; then
+  exec bash "$REL/zavod/ops/server/install_server.sh" "$REL" "$@"
+fi
 
 echo "=== 5. PostgreSQL 16 и цепочка базы"
 PG_CONF=/etc/postgresql/16/main
@@ -133,10 +159,10 @@ grep -qx ZAVOD_CELL_INSTALL=OK "$W/cell.out" || die "cell installer"
 echo "=== 7. служба ядра"
 SETTINGS=/etc/zavod/zavod.env
 if [ ! -e "$SETTINGS" ]; then
-  install -o root -g zkernel -m 0640 "$REL/zavod/ops/server/zavod.env.example" "$SETTINGS"
+  install -o root -g zkernel -m 0640 "$HERE/zavod.env.example" "$SETTINGS"
 fi
 [ "$(stat -c '%U:%G %a' "$SETTINGS")" = "root:zkernel 640" ] || die "$SETTINGS must be root:zkernel 640"
-install -o root -g root -m 0644 "$REL/zavod/ops/server/zavod-kernel.service" /etc/systemd/system/zavod-kernel.service
+install -o root -g root -m 0644 "$HERE/zavod-kernel.service" /etc/systemd/system/zavod-kernel.service
 systemctl daemon-reload
 systemctl enable zavod-kernel.service > /dev/null
 
@@ -162,7 +188,7 @@ if [ ! -e "$ADMIN" ]; then
    mv "$t" "$ADMIN")
 fi
 [ "$(stat -c '%U:%G %a' "$ADMIN")" = "root:root 600" ] || die "$ADMIN must be root:root 600"
-install -o root -g root -m 0644 "$REL/zavod/ops/server/zavod-engine.service" /etc/systemd/system/zavod-engine.service
+install -o root -g root -m 0644 "$HERE/zavod-engine.service" /etc/systemd/system/zavod-engine.service
 systemctl daemon-reload
 systemctl enable zavod-engine.service > /dev/null
 systemctl restart zavod-engine.service
@@ -179,6 +205,11 @@ done
 echo "ENGINE=OK"
 
 echo "=== 8. отчёт"
+# Аудит M3311-R1-04: версии программ ОС пакет не закрепляет — отчёт называет фактические: ОС, ядро, версии пакетов
+# APT и сумму полного списка установленных пакетов (сверяется с отдельно учтённым образом сервера).
+for p in "${APT[@]}"; do echo "ZAVOD_SERVER_OS_PACKAGE=$(dpkg-query -W -f='${Package}=${Version}' "$p")"; done
+BOM=$(dpkg-query -W -f='${Package}=${Version}\n' | sort | sha256sum | cut -c1-64)
+echo "ZAVOD_SERVER_OS=$ID-$VERSION_ID kernel=$(uname -r) packages=$(dpkg-query -W -f='.\n' | wc -l) bom_sha256=$BOM"
 INV=$(cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum | cut -c1-64)
 echo "ZAVOD_SERVER_RELEASE=$COMMIT inventory_sha256=$INV node=$(/usr/bin/node --version)"
 echo ZAVOD_SERVER_INSTALL=OK

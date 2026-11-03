@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/zavod-engine.service
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 12:19 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:02 +02:00 (v0.3: user.home — /var/lib/zavod-engine (учётная запись из install_cell.sh с домом /nonexistent); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.2 от 12:38: только IPv4 — без него Java слушает [::ffff:127.0.0.1]; v0.1 от 12:19: карта 3.3.11)
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 12:19 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:34 +02:00 (v0.4: аудит M3311-R1-03 — архив движка flowable-rest-postgres.war; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 03:02: user.home — /var/lib/zavod-engine (учётная запись из install_cell.sh с домом /nonexistent); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.2 от 12:38: только IPv4 — без него Java слушает [::ffff:127.0.0.1]; v0.1 от 12:19: карта 3.3.11)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: служба движка процессов Flowable REST 8.0.0 на сервере (протокол v3.1, И.7): учётная запись zflowable,
 #   своя база bem_engine и схема bem_engine (H1.28 §8.4), вход в базу только через сокет Linux по peer
@@ -19,7 +19,7 @@ User=zflowable
 Group=zflowable
 WorkingDirectory=/var/lib/zavod-engine
 EnvironmentFile=/etc/zavod/engine_admin.conf
-ExecStart=/usr/bin/java -Xmx768m -Djava.net.preferIPv4Stack=true -Duser.home=/var/lib/zavod-engine -jar /opt/zavod/current/engine/flowable-rest-pg.war --server.address=127.0.0.1 --server.port=8091 "--spring.datasource.url=jdbc:postgresql://localhost/bem_engine?socketFactory=org.newsclub.net.unix.AFUNIXSocketFactory$$FactoryArg&socketFactoryArg=/var/run/postgresql/.s.PGSQL.5432&currentSchema=bem_engine" --spring.datasource.username=zflowable --flowable.database-schema=bem_engine --flowable.rest.app.create-demo-definitions=false --flowable.async-executor-activate=true
+ExecStart=/usr/bin/java -Xmx768m -Djava.net.preferIPv4Stack=true -Duser.home=/var/lib/zavod-engine -jar /opt/zavod/current/engine/flowable-rest-postgres.war --server.address=127.0.0.1 --server.port=8091 "--spring.datasource.url=jdbc:postgresql://localhost/bem_engine?socketFactory=org.newsclub.net.unix.AFUNIXSocketFactory$$FactoryArg&socketFactoryArg=/var/run/postgresql/.s.PGSQL.5432&currentSchema=bem_engine" --spring.datasource.username=zflowable --flowable.database-schema=bem_engine --flowable.rest.app.create-demo-definitions=false --flowable.async-executor-activate=true
 Restart=on-failure
 RestartSec=10
 NoNewPrivileges=true
