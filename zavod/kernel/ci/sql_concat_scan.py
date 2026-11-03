@@ -1,6 +1,11 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.22  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 01:56 +02:00 (v0.22: аудит M3310-R20-01 —
+# ВЕРСИЯ: v0.23  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 02:19 +02:00 (v0.23: аудит M3310-R21-01 —
+#   systemctl stop, disable --now и mask --now (в любом месте команды) проверяют юнит как запуск, в stop ещё
+#   ИМЯ@*.service — экземпляры шаблона; M3310-R21-02 — sort и install только с закрытым списком опций (без
+#   --compress-program, -s, --strip-program и сокращений длинных опций), у sort слово из подстановки с неизвестным
+#   первым знаком — находка; systemd-analyze только verify и security с --man=no и --no-pager; pg_ctlcluster вне
+#   списка программ (установщик останавливает базу через systemctl); v0.22 от 01:56: аудит M3310-R20-01 —
 #   break/continue любым словом команды (builtin continue) снимает «выполняется всегда» с циклов; M3310-R20-02 —
 #   помечается каждый путь записи (перенаправление и >&ФАЙЛ, tee, dd of=, опции SH_OUT_OPTS — sort -o, psql -o/-L,
 #   blkid -c, useradd/usermod -d, в том числе в группе коротких опций, usermod -m — любой путь; truncate, fallocate,
@@ -656,7 +661,7 @@ SH_PROGRAMS_OK = {
     'df', 'id', 'getent', 'uname', 'ps', 'ss', 'kill', 'pkill', 'mkdir', 'mktemp', 'touch', 'truncate', 'chmod',
     'chown', 'cp', 'mv', 'ln', 'install', 'dd', 'fallocate', 'find', 'flock', 'ip', 'nft', 'blkid', 'findmnt',
     'mountpoint', 'mkfs.ext4', 'tune2fs', 'useradd', 'usermod', 'passwd', 'journalctl', 'systemctl',
-    'systemd-analyze', 'systemd-escape', 'systemd-tmpfiles', 'pg_ctlcluster', 'psql', 'python3', 'sh',
+    'systemd-analyze', 'systemd-escape', 'systemd-tmpfiles', 'psql', 'python3', 'sh',
     'sudo', 'exec', 'timeout', 'command', 'systemd-run'}
 SH_SYS_DIRS = ('/usr/bin/', '/usr/sbin/', '/bin/', '/sbin/')
 # Опции программ SH_PROGRAMS_OK, значение которых — путь записи (аудит M3310-R20-02): путь помечается (taint).
@@ -733,6 +738,24 @@ UNITS_INSTALLED = set()
 UNITS_STARTED = []
 SYSTEM_UNITS_OK = {'postgresql.service', 'postgresql@.service'}
 SYSTEMCTL_START = {'start', 'restart', 'reload', 'enable'}
+# Аудит M3310-R21-01: остановка исполняет ExecStop и ExecStopPost юнита — systemctl stop, а также disable и mask с
+# --now проверяют имя юнита так же, как запуск. В stop имя может быть шаблоном экземпляров ИМЯ@*.service: под него
+# подходят только экземпляры шаблона ИМЯ@.service.
+SYSTEMCTL_STOP = {'stop'}
+SYSTEMCTL_NOW = {'disable', 'mask'}
+# Аудит M3310-R21-02: программы с опцией, которая запускает другую программу (sort --compress-program, install -s и
+# --strip-program): опции — только из закрытого списка, длинные целиком (сокращения длинных опций — вне списка).
+# Вид: (короткие без значения, короткие со значением, длинные без значения, длинные со значением).
+CLOSED_OPTS = {
+    'sort': ('unrVzbfhcm', 'okt', {'--unique', '--numeric-sort', '--reverse', '--version-sort', '--zero-terminated'},
+             {'--output', '--key', '--field-separator'}),
+    'install': ('dDpvCT', 'gmotS', {'--directory', '--preserve-timestamps', '--verbose', '--compare',
+                                    '--no-target-directory'},
+                {'--owner', '--group', '--mode', '--target-directory', '--suffix'}),
+}
+# systemd-analyze: только verify и security (ни одна не запускает команды юнита) с опциями --man=no и --no-pager.
+ANALYZE_CMDS = {'verify', 'security'}
+ANALYZE_OPTS = {'--man=no', '--no-pager'}
 # Спецификатор %n формата printf с флагами, шириной, точностью и длиной (аудит M3310-R18-01).
 PRINTF_N = re.compile(r"%[-+ #0'I]*(?:\d+|\*)?(?:\.(?:\d+|\*)?)?[hlLqjzt]*n")
 SH_OPS = ('<<<', '<<-', '&&', '||', ';;', '>>', '<<', '<&', '>&', '&>', '>|', '<>', '|&', '|', '&', ';',
@@ -1432,6 +1455,15 @@ def sh_findings(path, text, line=1, depth=0, shared=None):
                 add(ws[k]['line'], 'systemd-tmpfiles outside the closed form (--create a checked tree file this '
                     'script installed into /etc/tmpfiles.d/)', 'SH_EXEC')
             return
+        if p in CLOSED_OPTS:
+            opts_closed(p, rest)
+        if p == 'systemd-analyze':
+            subs = [w for w in rest if not (w['lit'] and w['val'].startswith('-'))]
+            if any(w['lit'] and w['val'].startswith('-') and w['val'] not in ANALYZE_OPTS for w in rest) or \
+                    not subs or not subs[0]['lit'] or subs[0]['val'] not in ANALYZE_CMDS:
+                add(ws[k]['line'], 'systemd-analyze outside the closed forms (verify, security; --man=no, '
+                    '--no-pager)', 'SH_CMD')
+            return
         if p == 'awk':
             awk_ok(c, rest)
             return
@@ -1439,7 +1471,7 @@ def sh_findings(path, text, line=1, depth=0, shared=None):
             sed_ok(rest)
             return
         if p == 'systemctl':
-            sub = None
+            sub, now, units = None, False, []
             j = 0
             while j < len(rest):
                 v = rest[j]['val']
@@ -1447,15 +1479,22 @@ def sh_findings(path, text, line=1, depth=0, shared=None):
                     key, eq, _ = v.partition('=') if v.startswith('--') else (v, '', '')
                     if not rest[j]['lit'] or key not in SYSTEMCTL_OPTS:
                         add(rest[j]['line'], f'systemctl option {v.replace(X, "?")} outside the closed list', 'SH_CMD')
+                    now = now or key == '--now'
                     j += 1 + (0 if eq else SYSTEMCTL_OPTS.get(key, 0))
                     continue
                 if sub is None:
                     sub = v
                     if not rest[j]['lit'] or v not in SYSTEMCTL_CMDS:
                         add(rest[j]['line'], f'systemctl {v.replace(X, "?")}: command outside the closed list', 'SH_CMD')
-                elif sub in SYSTEMCTL_START:
-                    unit_use(rest[j])
+                else:
+                    units.append(rest[j])
                 j += 1
+            # --now может стоять и после имён юнитов, поэтому имена проверяются после разбора всей команды
+            for w in units:
+                if sub in SYSTEMCTL_START:
+                    unit_use(w)
+                elif sub in SYSTEMCTL_STOP or sub in SYSTEMCTL_NOW and now:
+                    unit_use(w, 'stops')
             return
         if p == 'find':
             j = 0
@@ -1842,22 +1881,61 @@ def sh_findings(path, text, line=1, depth=0, shared=None):
         elif m_dv and m_src and posixpath.join(d, m_src.group(1)) in TREE_PATHS and single(m_dv.group(1)):
             UNITS_INSTALLED.add(('$', path, m_dv.group(1)))
 
-    def unit_use(w):
-        # имя юнита у systemctl start/restart/reload/enable: постоянное (без шаблонов поиска *?[), экземпляр шаблона
-        # имя@….service (экземпляр выбирает только аргумент юнита дерева) или "$ИМЯ", присвоенное один раз
+    def unit_use(w, verb='starts'):
+        # имя юнита у systemctl start/restart/reload/enable (и у остановки, аудит M3310-R21-01): постоянное (без
+        # шаблонов поиска *?[), экземпляр шаблона имя@….service (экземпляр выбирает только аргумент юнита дерева) или
+        # "$ИМЯ", присвоенное один раз; у остановки ещё имя@*.service — все экземпляры шаблона
         if w['lit']:
             u = w['val'] if '.' in w['val'] else w['val'] + '.service'
-            m_t = re.fullmatch(r'([A-Za-z][\w:.-]*)@[^/*?\[]+(\.service)', u)
-            key = None if re.search(r'[*?\[/]', u) else m_t.group(1) + '@' + m_t.group(2) if m_t else u
+            m_t = re.fullmatch(r'([A-Za-z][\w:.-]*)@(?:[^/*?\[]+|\*)(\.service)' if verb == 'stops' else
+                               r'([A-Za-z][\w:.-]*)@[^/*?\[]+(\.service)', u)
+            key = m_t.group(1) + '@' + m_t.group(2) if m_t else None if re.search(r'[*?\[/]', u) else u
         else:
             m_t = re.fullmatch(r'"([A-Za-z][\w:.-]*)@[^"/`\\*?\[]+(\.service)"', w['raw'])
             m_v = re.fullmatch(r'"\$\{?([A-Za-z_]\w*)\}?"', w['raw'])
             key = m_t.group(1) + '@' + m_t.group(2) if m_t else \
                 ('$', path, m_v.group(1)) if m_v and single(m_v.group(1)) else None
         if key is None:
-            add(w['line'], f'systemctl starts unit {w["val"].replace(X, "?")}: name is not fixed', 'SH_EXEC')
+            add(w['line'], f'systemctl {verb} unit {w["val"].replace(X, "?")}: name is not fixed', 'SH_EXEC')
         elif key not in SYSTEM_UNITS_OK:
-            UNITS_STARTED.append((path, w['line'], key))
+            UNITS_STARTED.append((path, w['line'], key, verb))
+
+    def opts_closed(p, rest):
+        # Аудит M3310-R21-02: опции программы из CLOSED_OPTS — только из её закрытого списка: короткие (и в группе
+        # -ab, -oПУТЬ), длинные целиком (--опция=ЗНАЧЕНИЕ или --опция ЗНАЧЕНИЕ); после «--» опций нет. У sort слово из
+        # подстановки с неизвестным первым знаком вне значения опции — находка: оно может стать опцией.
+        s0, s1, l0, l1 = CLOSED_OPTS[p]
+        j = 0
+        while j < len(rest):
+            w = rest[j]
+            v = w['val']
+
+            def fixed(n):
+                # первые n знаков слова написаны буквами, а не взяты из подстановки
+                return w['lit'] or X not in v[:n] and w['raw'].startswith(v[:n])
+            if v == '--' and w['lit']:
+                return
+            if v.startswith('--'):
+                key, eq, _ = v.partition('=')
+                if not fixed(len(key) + len(eq)) or key not in l0 | l1 or key in l0 and eq:
+                    add(w['line'], f'{p} option {key.replace(X, "?")} outside the closed list', 'SH_CMD')
+                j += 2 if key in l1 and not eq else 1
+                continue
+            if v.startswith('-') and len(v) > 1:
+                step = 1
+                for q in range(1, len(v)):
+                    if not fixed(q + 1) or v[q] not in s0 + s1:
+                        add(w['line'], f'{p} option -{v[q].replace(X, "?")} outside the closed list', 'SH_CMD')
+                        break
+                    if v[q] in s1:
+                        step = 1 if q + 1 < len(v) else 2
+                        break
+                j += step
+                continue
+            if p == 'sort' and not w['lit'] and v[:1] == X:
+                add(w['line'], 'sort word from a substitution may become an option (--compress-program runs a '
+                    'program)', 'SH_CMD')
+            j += 1
 
     def awk_ok(c, rest):
         # awk запускает программы (system(), "cmd" | getline, print | "cmd"), пишет файлы (print > "f") и читает
@@ -2306,13 +2384,13 @@ def main(argv):
                 print(f'SQL_CONCAT {norm}:0: PIN: file that starts programs is {"not pinned" if not want else "changed"}: sha256 {got}')
     # Аудит M3310-R19-01: каждый юнит, который запускает сценарий дерева, ставит всегда какой-то сценарий дерева из
     # своего файла (или это юнит ОС из SYSTEM_UNITS_OK). Разрешением не снимается.
-    for norm, ln, key in UNITS_STARTED:
+    for norm, ln, key, verb in UNITS_STARTED:
         if key not in UNITS_INSTALLED:
             with open(norm, encoding='utf-8') as f:
                 lines = f.read().splitlines()
             name = '$' + key[2] if isinstance(key, tuple) else key
             found += 1
-            print(f'SQL_CONCAT {norm}:{ln}: SH_EXEC: systemctl starts unit {name}: no scanned script installs it '
+            print(f'SQL_CONCAT {norm}:{ln}: SH_EXEC: systemctl {verb} unit {name}: no scanned script installs it '
                   f'from the tree every time: {(lines[ln - 1].strip() if 0 < ln <= len(lines) else "")[:160]}')
     for p, (want, used) in pins.items():
         if not used:

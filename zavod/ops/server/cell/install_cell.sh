@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 01:44 +02:00 (v0.11: аудит M3310-R20-02 —
+# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 02:19 +02:00 (v0.12: аудит M3310-R21-01 —
+#   база останавливается через systemctl stop postgresql@ВЕРСИЯ-ИМЯ.service, а не pg_ctlcluster; v0.11 от 01:44: аудит M3310-R20-02 —
 #   копии pg_ident.conf и pg_hba.conf до правки кончаются на .bak: постоянное окончание пути записи; v0.10: аудит M3310-R1B-04 — список посредника проверяет сам посредник (zavod-proxy --check-allow): GitHub по окончанию имени, поддомены тоже; v0.9: карта 3.3.10 — учётная запись zproxy; привратник zavod-gate (вход zgate → роль zgate, сопоставление zavod_gate), посредник zavod-proxy со списком /etc/zavod/proxy-allow.conf, общий фильтр сервера nftables /etc/zavod/zavod-egress.nft (служба zavod-nft); v0.8: аудит M33-R3-02 — образ сеансов занимает место сразу, проверка запаса диска сервера --min-free; M33-R3-03 — журналы приёма на своём разделе intake-journal.img; M33-R3-04 — 1% раздела приёма для root; v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
 #   /var/lib/zavod/intake-fs.img с пределом места и inode, журналы приёма в /var/lib/zavod/intake-journal; v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
 #   v0.5: аудит M33-03 — база
@@ -254,7 +255,7 @@ if [ "$NO_PG" = 0 ]; then
   PG_DATA=$(sed -n "s/^data_directory[[:space:]]*=[[:space:]]*'\([^']*\)'.*/\1/p" "$PG_CONF/postgresql.conf")
   [ -n "$PG_DATA" ] && [ -d "$PG_DATA" ] || die "data_directory not found in $PG_CONF/postgresql.conf"
   if [ "$(stat -c '%U' "$PG_DATA")" != zdb ] || [ "$(stat -c '%U' "$PG_CONF")" != root ]; then
-    pg_ctlcluster "$PG_VER" "$PG_NAME" stop || true
+    systemctl stop "postgresql@$PG_VER-$PG_NAME.service" || true
     printf "listen_addresses = ''\nssl = off\n" > "$PG_CONF/conf.d/20-zavod-zdb.conf"
     chown -R zdb:zdb "$PG_DATA"
     chown -R root:zdb "$PG_CONF"
