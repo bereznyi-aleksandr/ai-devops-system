@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.47
+# ВЕРСИЯ: v0.48
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-03 02:59 +02:00 (v0.47: ветка 3.3.11 слита с main после PR #50 — задание
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:02 +02:00 (v0.48: сужение фильтра в задании server_package — ядро достаёт только
+#   движок 127.0.0.1:8091, ядро и движок без интернета (EGRESS_NARROW=OK); v0.47 от 02:59: ветка 3.3.11 слита с main после PR #50 — задание
 #   server_package (пакет сервера дважды, служба движка zavod-engine; ветвь v0.40–v0.42 от 2026-11-02 11:44–12:32)
 #   поверх сканера v0.23; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.46 от 02:19: аудит M3310-R21 — проба bad_flow25.sh и foreign25.service
 #   (остановка чужого юнита: stop, disable --now, mask --now, шаблон экземпляров; sort --compress-program и сокращение,
@@ -538,6 +539,17 @@ jobs:
           # порт 8091 слушается только на 127.0.0.1 (без grep -q в конвейере: он обрывает awk, и pipefail даёт провал)
           L=$(ss -ltnH 'sport = :8091' | awk '{print $4}' | sort -u)
           test "$L" = '127.0.0.1:8091'
+          # сужение фильтра (3.3.11): ядро достаёт только движок; движок и ядро не выходят в интернет
+          T='import socket,sys
+          try:
+              socket.create_connection((sys.argv[1], int(sys.argv[2])), timeout=5).close(); print("OPEN")
+          except OSError as e:
+              print("DENIED", e.errno)'
+          test "$(sudo -u zkernel python3 -I -c "$T" 127.0.0.1 8091)" = OPEN
+          r=$(sudo -u zkernel python3 -I -c "$T" 1.1.1.1 443); test "${r%% *}" = DENIED
+          r=$(sudo -u zflowable python3 -I -c "$T" 1.1.1.1 443); test "${r%% *}" = DENIED
+          r=$(sudo -u zkernel python3 -I -c "$T" 127.0.0.2 3128); test "${r%% *}" = DENIED
+          echo EGRESS_NARROW=OK
           # изменённый файл пакета — отказ до установки
           cp -a "$P" "$RUNNER_TEMP/bad"
           printf '\n' >> "$RUNNER_TEMP/bad/zavod/kernel/src/server.mjs"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_server.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 12:19 +02:00 (v0.3: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:02 +02:00 (v0.4: учётную запись zflowable создаёт install_cell.sh (фильтр nft ссылается на её имя); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 12:19: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: установка сервера Завода из пакета build_server_package.py на чистую Ubuntu 24.04 (протокол v3.1 И.7,
 #   Р.59; карта 3.3.11). Порядок (3.3.11.2):
@@ -141,8 +141,8 @@ systemctl daemon-reload
 systemctl enable zavod-kernel.service > /dev/null
 
 echo "=== 7б. служба движка процессов"
-id zflowable > /dev/null 2>&1 || useradd --system --no-create-home --home-dir /var/lib/zavod-engine \
-  --shell /usr/sbin/nologin zflowable
+# учётную запись zflowable создаёт install_cell.sh (шаг 6): правило фильтра nft ссылается на её имя
+id zflowable > /dev/null 2>&1 || die "zflowable must be created by install_cell.sh"
 install -d -o zflowable -g zflowable -m 0750 /var/lib/zavod-engine
 psqlq -d postgres -Atc "select 1 from pg_roles where rolname = 'zflowable'" | grep -qx 1 ||
   psqlq -d postgres -c "CREATE ROLE zflowable LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT"
